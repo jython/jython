@@ -747,9 +747,35 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException;
 
         /**
+         * Test whether this View has the given prefix, that is, that the first bytes of this View
+         * match all the bytes of the given prefix. By implication, the test returns false if there
+         * are too few bytes in this view.
+         *
+         * @param prefix pattern to match
+         * @return true if and only if this view has the given prefix
+         */
+        public boolean startswith(View prefix);
+
+        /**
+         * Test whether the slice <code>[offset:]</code> of this View has the given prefix, that is,
+         * that the bytes of this View from index <code>offset</code> match all the bytes of the
+         * give prefix. By implication, the test returns false if the offset puts the start or end
+         * of the prefix outside this view (when <code>offset&lt;0</code> or
+         * <code>offset+prefix.size()>size()</code>). Python slice semantics are <em>not</em>
+         * applied to <code>offset</code>.
+         *
+         * @param prefix pattern to match
+         * @param offset at which to start the comparison in this view
+         * @return true if and only if the slice [offset:<code>]</code> this view has the given
+         *         prefix
+         */
+        public boolean startswith(View prefix, int offset);
+
+        /**
          * The standard memoryview out of bounds message (does not refer to the underlying type).
          */
         public static final String OUT_OF_BOUNDS = "index out of bounds";
+
     }
 
     /**
@@ -805,6 +831,46 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
                 dest[p++] = byteAt(i);
             }
         }
+
+        /**
+         * Test whether this View has the given prefix, that is, that the first bytes of this View
+         * match all the bytes of the given prefix. This class provides an implementation of
+         * {@link View#startswith(View)} that simply returns <code>startswith(prefix,0)</code>
+         */
+        @Override
+        public boolean startswith(View prefix) {
+            return startswith(prefix, 0);
+        }
+
+        /**
+         * Test whether this View has the given prefix, that is, that the first bytes of this View
+         * match all the bytes of the given prefix. This class provides an implementation of
+         * {@link View#startswith(View,int)} that loops over
+         * <code>byteAt(i+offset)==prefix.byteAt(i)</code>
+         */
+        @Override
+        public boolean startswith(View prefix, int offset) {
+            int j = offset; // index in this
+            if (j < 0) {
+                // // Start of prefix is outside this view
+                return false;
+            } else {
+                int len = prefix.size();
+                if (j + len > this.size()) {
+                    // End of prefix is outside this view
+                    return false;
+                } else {
+                    // Last resort: we have actually to look at the bytes!
+                    for (int i = 0; i < len; i++) {
+                        if (byteAt(j++) != prefix.byteAt(i)) {
+                            return false;
+                        }
+                    }
+                    return true; // They must all have matched
+                }
+            }
+        }
+
     }
 
     /**
@@ -1448,6 +1514,58 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             Finder finder = new Finder(targetView);
             finder.setText(this);
             return finder.nextIndex() >= 0;
+        }
+    }
+
+    /**
+     * Almost ready-to-expose implementation serving both Python
+     * <code>startswith( prefix [, start [, end ]] )</code> and
+     * <code>endswith( suffix [, start [, end ]] )</code>. An extra boolean argument specifies which
+     * to implement on a given call, that is, whether the target is a suffix or prefix. The target
+     * may also be a tuple of targets.
+     *
+     * @param target prefix or suffix sequence to find (of a type viewable as a byte sequence) or a
+     *            tuple of those.
+     * @param start of slice to search.
+     * @param end of slice to search.
+     * @param endswith true if we are doing endswith, false if startswith.
+     * @return true if and only if this bytearray ends with (one of) <code>target</code>.
+     */
+    protected final synchronized boolean basebytes_starts_or_endswith(PyObject target,
+                                                                      PyObject start,
+                                                                      PyObject end,
+                                                                      boolean endswith) {
+        /*
+         * This cheap trick saves us from maintaining two almost identical methods and mirrors
+         * CPython's _bytearray_tailmatch().
+         *
+         * Start with a view of the slice we are searching.
+         */
+        View v = new ViewOfBytes(this).slice(start, end);
+        int len = v.size();
+        int offset = 0;
+
+        if (target instanceof PyTuple) {
+            // target is a tuple of suffixes/prefixes and only one need match
+            for (PyObject s : ((PyTuple)target).getList()) {
+                // Error if not something we can treat as a view of bytes
+                View vt = getViewOrError(s);
+                if (endswith) {
+                    offset = len - vt.size();
+                }
+                if (v.startswith(vt, offset)) {
+                    return true;
+                }
+            }
+            return false; // None of them matched
+
+        } else {
+            // Error if target is not something we can treat as a view of bytes
+            View vt = getViewOrError(target);
+            if (endswith) {
+                offset = len - vt.size();
+            }
+            return v.startswith(vt, offset);
         }
     }
 

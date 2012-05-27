@@ -881,6 +881,60 @@ public class PyByteArray extends BaseBytes {
         return basebytes_count(sub, start, end);
     }
 
+    /**
+     * Implementation of Python <code>endswith(suffix)</code>.
+     *
+     * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
+     * <code>suffix</code> can also be a tuple of suffixes to look for.
+     *
+     * @param suffix byte array to match, or object viewable as such, or a tuple of them
+     * @return true if and only if this bytearray ends with the suffix (or one of them)
+     */
+    public boolean endswith(PyObject suffix) {
+        return basebytes_starts_or_endswith(suffix, null, null, true);
+    }
+
+    /**
+     * Implementation of Python <code>endswith( suffix [, start ] )</code>.
+     *
+     * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
+     * <code>suffix</code> can also be a tuple of suffixes to look for. With optional
+     * <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define the
+     * effective bytearray to be the slice <code>[start:]</code> of this bytearray.
+     *
+     * @param suffix byte array to match, or object viewable as such, or a tuple of them
+     * @param start of slice in this bytearray to match
+     * @return true if and only if this[start:] ends with the suffix (or one of them)
+     */
+    public boolean endswith(PyObject suffix, PyObject start) {
+        return basebytes_starts_or_endswith(suffix, start, null, true);
+    }
+
+    /**
+     * Implementation of Python <code>endswith( suffix [, start [, end ]] )</code>.
+     *
+     * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
+     * <code>suffix</code> can also be a tuple of suffixes to look for. With optional
+     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code>), define the effective bytearray to be the slice
+     * <code>[start:end]</code> of this bytearray.
+     *
+     * @param suffix byte array to match, or object viewable as such, or a tuple of them
+     * @param start of slice in this bytearray to match
+     * @param end of slice in this bytearray to match
+     * @return true if and only if this[start:end] ends with the suffix (or one of them)
+     */
+    public boolean endswith(PyObject suffix, PyObject start, PyObject end) {
+        return basebytes_starts_or_endswith(suffix, start, end, true);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_endswith_doc)
+    final boolean bytearray_endswith(PyObject suffix, PyObject start, PyObject end) {
+        return basebytes_starts_or_endswith(suffix, start, end, true);
+    }
 
     /**
      * Append the elements in the argument sequence to the end of the array, equivalent to:
@@ -1198,6 +1252,61 @@ public class PyByteArray extends BaseBytes {
             throw Py.ValueError("subsection not found");
         }
         return pos;
+    }
+
+    /**
+     * Implementation of Python <code>startswith(prefix)</code>.
+     *
+     * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
+     * <code>prefix</code> can also be a tuple of prefixes to look for.
+     *
+     * @param prefix byte array to match, or object viewable as such, or a tuple of them
+     * @return true if and only if this bytearray starts with the prefix (or one of them)
+     */
+    public boolean startswith(PyObject prefix) {
+        return basebytes_starts_or_endswith(prefix, null, null, false);
+    }
+
+    /**
+     * Implementation of Python <code>startswith( prefix [, start ] )</code>.
+     *
+     * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
+     * <code>prefix</code> can also be a tuple of prefixes to look for. With optional
+     * <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define the
+     * effective bytearray to be the slice <code>[start:]</code> of this bytearray.
+     *
+     * @param prefix byte array to match, or object viewable as such, or a tuple of them
+     * @param start of slice in this bytearray to match
+     * @return true if and only if this[start:] starts with the prefix (or one of them)
+     */
+    public boolean startswith(PyObject prefix, PyObject start) {
+        return basebytes_starts_or_endswith(prefix, start, null, false);
+    }
+
+    /**
+     * Implementation of Python <code>startswith( prefix [, start [, end ]] )</code>.
+     *
+     * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
+     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
+     * <code>prefix</code> can also be a tuple of prefixes to look for. With optional
+     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code>), define the effective bytearray to be the slice
+     * <code>[start:end]</code> of this bytearray.
+     *
+     * @param prefix byte array to match, or object viewable as such, or a tuple of them
+     * @param start of slice in this bytearray to match
+     * @param end of slice in this bytearray to match
+     * @return true if and only if this[start:end] starts with the prefix (or one of them)
+     */
+    public boolean startswith(PyObject prefix, PyObject start, PyObject end) {
+        return basebytes_starts_or_endswith(prefix, start, end, false);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_startswith_doc)
+    final boolean bytearray_startswith(PyObject prefix, PyObject start, PyObject end) {
+        return basebytes_starts_or_endswith(prefix, start, end, false);
     }
 
 // Based on PyList and not yet properly implemented.
