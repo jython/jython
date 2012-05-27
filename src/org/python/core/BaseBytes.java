@@ -937,9 +937,12 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     protected static View getViewOrError(PyObject b) {
         View res = getView(b);
         if (res == null) {
-            // String fmt = "type %s doesn't support the buffer API"; // CPython
             String fmt = "cannot access type %s as bytes";
-            throw Py.NotImplementedError(String.format(fmt, b.getType().fastGetName()));
+            throw Py.TypeError(String.format(fmt, b.getType().fastGetName()));
+            // A more honest response here would have been:
+            // . String fmt = "type %s doesn't support the buffer API"; // CPython
+            // . throw Py.NotImplementedError(String.format(fmt, b.getType().fastGetName()));
+            // since our inability to handle certain types is lack of a buffer API generally.
         }
         return res;
     }
