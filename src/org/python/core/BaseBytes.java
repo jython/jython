@@ -2111,6 +2111,63 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Almost ready-to-expose implementation of Python <code>join(iterable)</code>. Return ...
+     *
+     * @param iter
+     * @return
+     */
+    final synchronized PyByteArray basebytes_join(Iterable<? extends PyObject> iter) {
+
+        List<View> iterList = new LinkedList<View>();
+        long mysize = this.size;
+        long totalSize = 0;
+        boolean first = true;
+
+        for (PyObject o : iter) {
+            // Scan the iterable into a list, checking type and accumulating size
+            View v = getView(o);
+            if (v == null) {
+                // Unsuitable object to be in this join
+                String fmt = "can only join an iterable of bytes (item %d has type '%.80s')";
+                throw Py.TypeError(String.format(fmt, iterList.size(), o.getType().fastGetName()));
+            }
+            iterList.add(v);
+            totalSize += v.size();
+
+            // Each element after the first is preceded by a copy of this
+            if (!first) {
+                totalSize += mysize;
+            } else {
+                first = false;
+            }
+
+            if (totalSize > Integer.MAX_VALUE) {
+                throw Py.OverflowError("join() result would be too long");
+            }
+        }
+
+        // Load the Views from the iterator into a new PyByteArray
+        PyByteArray result = new PyByteArray((int)totalSize);
+        int p = result.offset; // Copy-to pointer
+        first = true;
+
+        for (View v : iterList) {
+            // Each element after the first is preceded by a copy of this
+            if (!first) {
+                System.arraycopy(storage, offset, result.storage, p, size);
+                p += size;
+            } else {
+                first = false;
+            }
+            // Then the element from the iterable
+            v.copyTo(result.storage, p);
+            p += v.size();
+        }
+
+        return result;
+    }
+
+    /**
      * Ready-to-expose implementation of Python <code>rfind( sub [, start [, end ]] )</code>. Return
      * the highest index in the byte array where byte sequence <code>sub</code> is found, such that
      * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments

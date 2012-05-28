@@ -1057,6 +1057,24 @@ public class PyByteArray extends BaseBytes {
         pyinsert(boundToSequence(index.asIndex()), value);
     }
 
+
+    /**
+     * str.join(iterable)
+    Return a bytearray which is the concatenation of the strings in the iterable <code>iterable</code>. The separator between elements is the string providing this method.
+     *
+     * @param iterable of byte array objects, or objects viewable as such.
+.
+     */
+    public PyByteArray join(PyObject iterable) {
+        return bytearray_join(iterable);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_join_doc)
+    final PyByteArray bytearray_join(PyObject iterable) {
+        return basebytes_join(iterable.asIterable());
+    }
+
+
     @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
     final int bytearray___len__() {
         return __len__();
