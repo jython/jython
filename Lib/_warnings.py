@@ -1,4 +1,7 @@
-"""Python part of the warnings subsystem."""
+"""
+XXX: faked out Java part of the warnings subsystem, mostly copied from
+     warnings.py. TODO: rewrite in Java!
+"""
 
 # Note: function level imports should *not* be used
 # in this module as it may cause import lock deadlock.
