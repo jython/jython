@@ -2141,6 +2141,10 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         return new int[] {iStartAdjusted, iEnd, iStart};
     }
 
+    public String translate() {
+        return str_translate(null, null);
+    }
+
     public String translate(String table) {
         return str_translate(table, null);
     }
@@ -2149,8 +2153,11 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         return str_translate(table, deletechars);
     }
 
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_translate_doc)
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
     final String str_translate(String table, String deletechars) {
+        if (table == null) {
+            return getString();
+        }
         if (table.length() != 256)
             throw Py.ValueError(
                 "translation table must be 256 characters long");
