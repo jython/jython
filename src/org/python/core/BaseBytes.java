@@ -2113,6 +2113,113 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Convenience routine producing a ValueError for "empty separator" if the View is of an object with zero length,
+     * and returning the length otherwise.
+     *
+     * @param separator view to test
+     * @return the length of the separator
+     * @throws PyException if the View is zero length
+     */
+    protected final static int checkForEmptySeparator(View separator) throws PyException {
+        int n = separator.size();
+        if (n == 0) {
+            throw Py.ValueError("empty separator");
+        }
+        return n;
+    }
+
+    /**
+     * Return the index [0..size-1] of the leftmost byte not matching any in <code>byteSet</code>,
+     * or <code>size</code> if they are all strippable.
+     *
+     * @param byteSet list of byte values to skip over
+     * @return index of first unstrippable byte
+     */
+    protected int lstripIndex(View byteSet) {
+        int limit = offset + size;
+        int j, m = byteSet.size();
+        // Run up the storage checking against byteSet (or until we hit the end)
+        for (int left = offset; left < limit; left++) {
+            byte curr = storage[left];
+            // Check against the byteSet to see if this is one to strip.
+            for (j = 0; j < m; j++) {
+                if (curr == byteSet.byteAt(j)) {
+                    break;
+                }
+            }
+            if (j == m) {
+                // None of them matched: this is the leftmost non-strippable byte
+                return left - offset;
+            }
+        }
+        // We went through the whole array and they can all be stripped
+        return size;
+    }
+
+    /**
+     * Return the index [0..size-1] of the leftmost non-whitespace byte, or <code>size</code> if
+     * they are all whitespace.
+     *
+     * @return index of first non-whitespace byte
+     */
+    protected int lstripIndex() {
+        int limit = offset + size;
+        // Run up the storage until non-whitespace (or hit end)t
+        for (int left = offset; left < limit; left++) {
+            if (!Character.isWhitespace(storage[left] & 0xff)) {
+                return left - offset;
+            }
+        }
+        // We went through the whole array and they are all whitespace
+        return size;
+    }
+
+    /**
+     * Return the index [0..size-1] such that all bytes from here to the right match one in
+     * <code>byteSet</code>, that is, the index of the matching tail, or <code>size</code> if there
+     * is no matching tail byte.
+     *
+     * @param byteSet list of byte values to strip
+     * @return index of strippable tail
+     */
+    protected int rstripIndex(View byteSet) {
+        int j, m = byteSet.size();
+        // Run down the storage checking the next byte against byteSet (or until we hit the start)
+        for (int right = offset + size; right > offset; --right) {
+            byte next = storage[right - 1];
+            // Check against the byteSet to see if this is one to strip.
+            for (j = 0; j < m; j++) {
+                if (next == byteSet.byteAt(j)) {
+                    break;
+                }
+            }
+            if (j == m) {
+                // None of them matched: this is the rightmost strippable byte
+                return right - offset;
+            }
+        }
+        // We went through the whole array and they can all be stripped
+        return 0;
+    }
+
+    /**
+     * Return the index [0..size-1] such that all bytes from here to the right are whitespace, that
+     * is, the index of the whitespace tail, or <code>size</code> if there is no whitespace tail.
+     *
+     * @return index of strippable tail
+     */
+    protected int rstripIndex() {
+        // Run down the storage until next is non-whitespace (or hit start)
+        for (int right = offset + size; right > offset; --right) {
+            if (!Character.isWhitespace(storage[right - 1] & 0xff)) {
+                return right - offset;
+            }
+        }
+        // We went through the whole array and they are all whitespace
+        return size;
+    }
+
+    /**
      * Ready-to-expose implementation of Python <code>count( sub [, start [, end ]] )</code>. Return
      * the number of non-overlapping occurrences of <code>sub</code> in the range [start, end].
      * Optional arguments <code>start</code> and <code>end</code> (which may be <code>null</code> or
@@ -2153,10 +2260,10 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
-     * Almost ready-to-expose implementation of Python <code>join(iterable)</code>. Return ...
+     * Almost ready-to-expose implementation of Python <code>join(iterable)</code>.
      *
-     * @param iter
-     * @return
+     * @param iter iterable of objects capable of being regarded as byte arrays
+     * @return the byte array that is their join
      */
     final synchronized PyByteArray basebytes_join(Iterable<? extends PyObject> iter) {
 
@@ -2210,6 +2317,62 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Implementation of Python <code>partition(sep)</code>, returning a 3-tuple of byte arrays (of
+     * the same type as <code>this</code>).
+     *
+     * Split the string at the first occurrence of <code>sep</code>, and return a 3-tuple containing
+     * the part before the separator, the separator itself, and the part after the separator. If the
+     * separator is not found, return a 3-tuple containing the string itself, followed by two empty
+     * byte arrays.
+     *
+     * @param sep the separator on which to partition this byte array
+     * @return a tuple of (head, separator, tail)
+     */
+    public PyTuple partition(PyObject sep) {
+        return basebytes_partition(sep);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>partition(sep)</code>.
+     *
+     * @param sep the separator on which to partition this byte array
+     * @return a tuple of (head, separator, tail)
+     */
+    final synchronized PyTuple basebytes_partition(PyObject sep) {
+
+        // Create a Finder for the separtor and set it on this byte array
+        View separator = getViewOrError(sep);
+        int n = checkForEmptySeparator(separator);
+        Finder finder = new Finder(separator);
+        finder.setText(this);
+
+        // We only uuse it once, to find the first occurrence
+        int p = finder.nextIndex() - offset;
+        if (p >= 0) {
+            // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
+            return partition(p, p + n);
+        } else {
+            // Not found: choose values leading to ([0:size], '', '')
+            return partition(size, size);
+        }
+    }
+
+    /**
+     * Construct return value for implementation of Python <code>partition(sep)</code> or
+     * <code>rpartition(sep)</code>, returns [0:p], [p:q], [q:]
+     *
+     * @param p start of separator
+     * @param q start of tail
+     * @return ([0:p], [p:q], [q:])
+     */
+    private PyTuple partition(int p, int q) {
+        BaseBytes head = this.getslice(0, p);
+        BaseBytes sep = this.getslice(p, q);
+        BaseBytes tail = this.getslice(q, size);
+        return new PyTuple(head, sep, tail);
+    }
+
+   /**
      * Ready-to-expose implementation of Python <code>rfind( sub [, start [, end ]] )</code>. Return
      * the highest index in the byte array where byte sequence <code>sub</code> is found, such that
      * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments
@@ -2555,6 +2718,46 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return new PyByteArray(r);
     }
 
+    /**
+     * Implementation of Python <code>rpartition(sep)</code>, returning a 3-tuple of byte arrays (of
+     * the same type as <code>this</code>).
+     *
+     * Split the string at the rightmost occurrence of <code>sep</code>, and return a 3-tuple
+     * containing the part before the separator, the separator itself, and the part after the
+     * separator. If the separator is not found, return a 3-tuple containing two empty byte arrays,
+     * followed by the byte array itself.
+     *
+     * @param sep the separator on which to partition this byte array
+     * @return a tuple of (head, separator, tail)
+     */
+    public PyTuple rpartition(PyObject sep) {
+        return basebytes_rpartition(sep);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>rpartition(sep)</code>.
+     *
+     * @param sep the separator on which to partition this byte array
+     * @return a tuple of (head, separator, tail)
+     */
+    final synchronized PyTuple basebytes_rpartition(PyObject sep) {
+
+        // Create a Finder for the separtor and set it on this byte array
+        View separator = getViewOrError(sep);
+        int n = checkForEmptySeparator(separator);
+        Finder finder = new ReverseFinder(separator);
+        finder.setText(this);
+
+        // We only use it once, to find the first (from the right) occurrence
+        int p = finder.nextIndex() - offset;
+        if (p >= 0) {
+            // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
+            return partition(p, p + n);
+        } else {
+            // Not found: choose values leading to ('', '', [0:size])
+            return partition(0, 0);
+        }
+    }
 
     /**
      * Implementation of Python <code>rsplit()</code>, that returns a list of the words in the byte
@@ -2635,45 +2838,40 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
         // The separator may be presented as anything viewable as bytes
         View separator = getViewOrError(sep);
-        if (separator.size() == 0) {
-            throw Py.ValueError("empty separator");
+        int n = checkForEmptySeparator(separator);
 
-        } else {
+        PyList result = new PyList();
 
-            PyList result = new PyList();
+        // Use the Finder class to search in the storage of this byte array
+        Finder finder = new ReverseFinder(separator);
+        finder.setText(this);
 
-            // Use the Finder class to search in the storage of this byte array
-            Finder finder = new ReverseFinder(separator);
-            finder.setText(this);
+        int q = offset + size; // q points to "honorary separator"
+        int p;
 
-            int n = separator.size();
-            int q = offset + size; // q points to "honorary separator"
-            int p;
-
-            // At this point storage[q-1] is the last byte of the rightmost unsplit word, or
-            // q=offset if there aren't any. While we have some splits left to do ...
-            while (q > offset && maxsplit-- != 0) {
-                // Delimit the word whose last byte is storage[q-1]
-                int r = q;
-                // Skip p backwards over the word and the separator
-                q = finder.nextIndex();
-                if (q < 0) {
-                    p = offset;
-                } else {
-                    p = q + n;
-                }
-                // storage[p] is the first byte of the word.
-                BaseBytes word = getslice(p - offset, r - offset);
-                result.add(0, word);
+        // At this point storage[q-1] is the last byte of the rightmost unsplit word, or
+        // q=offset if there aren't any. While we have some splits left to do ...
+        while (q > offset && maxsplit-- != 0) {
+            // Delimit the word whose last byte is storage[q-1]
+            int r = q;
+            // Skip p backwards over the word and the separator
+            q = finder.nextIndex();
+            if (q < 0) {
+                p = offset;
+            } else {
+                p = q + n;
             }
-
-            // Prepend the remaining unsplit text if any
-            if (q >= offset) {
-                BaseBytes word = getslice(0, q - offset);
-                result.add(0, word);
-            }
-            return result;
+            // storage[p] is the first byte of the word.
+            BaseBytes word = getslice(p - offset, r - offset);
+            result.add(0, word);
         }
+
+        // Prepend the remaining unsplit text if any
+        if (q >= offset) {
+            BaseBytes word = getslice(0, q - offset);
+            result.add(0, word);
+        }
+        return result;
     }
 
     /**
@@ -2819,35 +3017,31 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
         // The separator may be presented as anything viewable as bytes
         View separator = getViewOrError(sep);
-        if (separator.size() == 0) {
-            throw Py.ValueError("empty separator");
+        checkForEmptySeparator(separator);
 
-        } else {
+        PyList result = new PyList();
 
-            PyList result = new PyList();
+        // Use the Finder class to search in the storage of this byte array
+        Finder finder = new Finder(separator);
+        finder.setText(this);
 
-            // Use the Finder class to search in the storage of this byte array
-            Finder finder = new Finder(separator);
-            finder.setText(this);
+        // Look for the first separator
+        int p = finder.currIndex(); // = offset
+        int q = finder.nextIndex(); // First separator (or <0 if not found)
 
-            // Look for the first separator
-            int p = finder.currIndex(); // = offset
-            int q = finder.nextIndex(); // First separator (or <0 if not found)
+        // Note: bytearray().split(' ') == [bytearray(b'')]
 
-            // Note: bytearray().split(' ') == [bytearray(b'')]
-
-            // While we found a separator, and we have some splits left (if maxsplit started>=0)
-            while (q >= 0 && maxsplit-- != 0) {
-                // Note the Finder works in terms of indexes into this.storage
-                result.append(getslice(p - offset, q - offset));
-                p = finder.currIndex(); // Start of unsplit text
-                q = finder.nextIndex(); // Next separator (or <0 if not found)
-            }
-
-            // Append the remaining unsplit text
-            result.append(getslice(p - offset, size));
-            return result;
+        // While we found a separator, and we have some splits left (if maxsplit started>=0)
+        while (q >= 0 && maxsplit-- != 0) {
+            // Note the Finder works in terms of indexes into this.storage
+            result.append(getslice(p - offset, q - offset));
+            p = finder.currIndex(); // Start of unsplit text
+            q = finder.nextIndex(); // Next separator (or <0 if not found)
         }
+
+        // Append the remaining unsplit text
+        result.append(getslice(p - offset, size));
+        return result;
     }
 
     /**

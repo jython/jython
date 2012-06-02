@@ -1067,13 +1067,13 @@ public class PyByteArray extends BaseBytes {
         pyinsert(boundToSequence(index.asIndex()), value);
     }
 
-
     /**
-     * str.join(iterable)
-    Return a bytearray which is the concatenation of the strings in the iterable <code>iterable</code>. The separator between elements is the string providing this method.
+     * Implementation of Python <code>join(iterable)</code>. Return a bytearray which is the
+     * concatenation of the byte arrays in the iterable <code>iterable</code>. The separator between
+     * elements is the byte array providing this method.
      *
      * @param iterable of byte array objects, or objects viewable as such.
-.
+     * @return byte array produced by concatenation.
      */
     public PyByteArray join(PyObject iterable) {
         return bytearray_join(iterable);
@@ -1084,10 +1084,53 @@ public class PyByteArray extends BaseBytes {
         return basebytes_join(iterable.asIterable());
     }
 
-
     @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
     final int bytearray___len__() {
         return __len__();
+    }
+
+    /**
+     * Implementation of Python <code>lstrip()</code>. Return a copy of the byte array with the leading
+     * whitespace characters removed.
+     *
+     * @return a byte array containing this value stripped of those bytes
+     */
+    public PyByteArray lstrip() {
+        return bytearray_lstrip(null);
+    }
+
+    /**
+     * Implementation of Python <code>lstrip(bytes)</code>
+     *
+     * Return a copy of the byte array with the leading characters removed. The bytes
+     * argument is an object specifying the set of characters to be removed. If null or None, the
+     * bytes argument defaults to removing whitespace. The bytes argument is not a prefix;
+     * rather, all combinations of its values are stripped.
+     *
+     * @param bytes treated as a set of bytes defining what values to strip
+     * @return a byte array containing this value stripped of those bytes (at the left)
+     */
+    public PyByteArray lstrip(PyObject bytes) {
+        return bytearray_lstrip(bytes);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_lstrip_doc)
+    final synchronized PyByteArray bytearray_lstrip(PyObject bytes) {
+        int left;
+        if (bytes == null || bytes == Py.None) {
+            // Find left bound of the slice that results from the stripping of whitespace
+            left = lstripIndex();
+        } else {
+            // Find left bound of the slice that results from the stripping of the specified bytes
+            View byteSet = getViewOrError(bytes);
+            left = lstripIndex(byteSet);
+        }
+        return getslice(left, size);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_partition_doc)
+    final PyTuple bytearray_partition(PyObject sep) {
+        return basebytes_partition(sep);
     }
 
     @ExposedMethod(doc = BuiltinDocs.bytearray___reduce___doc)
@@ -1248,9 +1291,52 @@ public class PyByteArray extends BaseBytes {
         return pos;
     }
 
+    @ExposedMethod(doc = BuiltinDocs.bytearray_rpartition_doc)
+    final PyTuple bytearray_rpartition(PyObject sep) {
+        return basebytes_rpartition(sep);
+    }
+
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.bytearray_rsplit_doc)
     final PyList bytearray_rsplit(PyObject sep, int maxsplit) {
         return basebytes_rsplit(sep, maxsplit);
+    }
+
+    /**
+     * Implementation of Python <code>rstrip()</code>. Return a copy of the byte array with the trailing whitespace characters removed.
+     *
+     * @return a byte array containing this value stripped of those bytes (at right)
+     */
+    public PyByteArray rstrip() {
+        return bytearray_rstrip(null);
+    }
+
+    /**
+     * Implementation of Python <code>rstrip(bytes)</code>
+     *
+     * Return a copy of the byte array with the trailing characters removed. The bytes
+     * argument is an object specifying the set of characters to be removed. If null or None, the
+     * bytes argument defaults to removing whitespace. The bytes argument is not a suffix;
+     * rather, all combinations of its values are stripped.
+     *
+     * @param bytes treated as a set of bytes defining what values to strip
+     * @return a byte array containing this value stripped of those bytes (at right)
+     */
+    public PyByteArray rstrip(PyObject bytes) {
+        return bytearray_rstrip(bytes);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_rstrip_doc)
+    final synchronized PyByteArray bytearray_rstrip(PyObject bytes) {
+        int right;
+        if (bytes == null || bytes == Py.None) {
+            // Find right bound of the slice that results from the stripping of whitespace
+            right = rstripIndex();
+        } else {
+            // Find right bound of the slice that results from the stripping of the specified bytes
+            View byteSet = getViewOrError(bytes);
+            right = rstripIndex(byteSet);
+        }
+        return getslice(0, right);
     }
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.bytearray_split_doc)
@@ -1311,6 +1397,49 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_startswith_doc)
     final boolean bytearray_startswith(PyObject prefix, PyObject start, PyObject end) {
         return basebytes_starts_or_endswith(prefix, start, end, false);
+    }
+
+    /**
+     * Implementation of Python <code>strip()</code>. Return a copy of the byte array with the leading
+     * and trailing whitespace characters removed.
+     *
+     * @return a byte array containing this value stripped of those bytes (left and right)
+     */
+    public PyByteArray strip() {
+        return bytearray_strip(null);
+    }
+
+    /**
+     * Implementation of Python <code>strip(bytes)</code>
+     *
+     * Return a copy of the byte array with the leading and trailing characters removed. The bytes
+     * argument is anbyte arrayt specifying the set of characters to be removed. If null or None, the
+     * bytes argument defaults to removing whitespace. The bytes argument is not a prefix or suffix;
+     * rather, all combinations of its values are stripped.
+     *
+     * @param bytes treated as a set of bytes defining what values to strip
+     * @return a byte array containing this value stripped of those bytes (left and right)
+     */
+    public PyByteArray strip(PyObject bytes) {
+        return bytearray_strip(bytes);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_strip_doc)
+    final synchronized PyByteArray bytearray_strip(PyObject bytes) {
+        int left, right;
+        if (bytes == null || bytes == Py.None) {
+            // Find bounds of the slice that results from the stripping of whitespace
+            left = lstripIndex();
+            // If we hit the end that time, no need to work backwards
+            right = (left == size) ? size : rstripIndex();
+        } else {
+            // Find bounds of the slice that results from the stripping of the specified bytes
+            View byteSet = getViewOrError(bytes);
+            left = lstripIndex(byteSet);
+            // If we hit the end that time, no need to work backwards
+            right = (left == size) ? size : rstripIndex(byteSet);
+        }
+        return getslice(left, right);
     }
 
     @ExposedMethod(doc = BuiltinDocs.bytearray___setitem___doc)
