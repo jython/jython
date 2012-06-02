@@ -357,7 +357,11 @@ class BaseBytesTest(unittest.TestCase):
             self.assertEqual(b.split(None, 2), [b'arf', b'barf'])
         for b in (b'a\x1Cb', b'a\x1Db', b'a\x1Eb', b'a\x1Fb'):
             b = self.type2test(b)
-            self.assertEqual(b.split(), [b])
+            if not test.test_support.is_jython:
+                self.assertEqual(b.split(), [b])
+            else:
+                # \x1c .. \x1f are whitespace Jython (which follows Java)
+                self.assertEqual(b.split(), [b'a', b'b'])
         self.assertEqual(self.type2test(b'  a  bb  c  ').split(None, 0), [b'a  bb  c  '])
         self.assertEqual(self.type2test(b'  a  bb  c  ').split(None, 1), [b'a', b'bb  c  '])
         self.assertEqual(self.type2test(b'  a  bb  c  ').split(None, 2), [b'a', b'bb', b'c  '])
@@ -368,7 +372,11 @@ class BaseBytesTest(unittest.TestCase):
 
     def test_split_unicodewhitespace(self):
         b = self.type2test(b"\x09\x0A\x0B\x0C\x0D\x1C\x1D\x1E\x1F")
-        self.assertEqual(b.split(), [b'\x1c\x1d\x1e\x1f'])
+        if not test.test_support.is_jython:
+            self.assertEqual(b.split(), [b'\x1c\x1d\x1e\x1f'])
+        else:
+            # \x1c .. \x1f are whitespace Jython
+            self.assertEqual(b.split(), [])
 
     def test_rsplit(self):
         b = self.type2test(b'mississippi')
@@ -393,7 +401,11 @@ class BaseBytesTest(unittest.TestCase):
 
     def test_rsplit_unicodewhitespace(self):
         b = self.type2test(b"\x09\x0A\x0B\x0C\x0D\x1C\x1D\x1E\x1F")
-        self.assertEqual(b.rsplit(), [b'\x1c\x1d\x1e\x1f'])
+        if not test.test_support.is_jython:
+            self.assertEqual(b.rsplit(), [b'\x1c\x1d\x1e\x1f'])
+        else:
+            # \x1c .. \x1f are whitespace Jython
+            self.assertEqual(b.rsplit(), [])
 
     def test_partition(self):
         b = self.type2test(b'mississippi')

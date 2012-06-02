@@ -214,14 +214,7 @@ public class PyByteArray extends BaseBytes {
     protected synchronized PyByteArray getslice(int start, int stop, int step) {
         if (step == 1) {
             // Efficiently copy contiguous slice
-            int n = stop - start;
-            if (n <= 0) {
-                return new PyByteArray();
-            } else {
-                PyByteArray ret = new PyByteArray(n);
-                System.arraycopy(storage, offset + start, ret.storage, ret.offset, n);
-                return ret;
-            }
+            return this.getslice(start, stop);
         } else {
             int n = sliceLength(start, stop, step);
             PyByteArray ret = new PyByteArray(n);
@@ -230,6 +223,23 @@ public class PyByteArray extends BaseBytes {
             for (int io = start + offset, jo = ret.offset; jo < n; io += step, jo++) {
                 dst[jo] = storage[io];
             }
+            return ret;
+        }
+    }
+
+    /**
+     * Specialisation of {@link #getslice(int, int, int)} to contiguous slices (of step size 1) for
+     * brevity and efficiency.
+     */
+    @Override
+    protected synchronized PyByteArray getslice(int start, int stop) {
+        // Efficiently copy contiguous slice
+        int n = stop - start;
+        if (n <= 0) {
+            return new PyByteArray();
+        } else {
+            PyByteArray ret = new PyByteArray(n);
+            System.arraycopy(storage, offset + start, ret.storage, ret.offset, n);
             return ret;
         }
     }
@@ -1236,6 +1246,16 @@ public class PyByteArray extends BaseBytes {
             throw Py.ValueError("subsection not found");
         }
         return pos;
+    }
+
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.bytearray_rsplit_doc)
+    final PyList bytearray_rsplit(PyObject sep, int maxsplit) {
+        return basebytes_rsplit(sep, maxsplit);
+    }
+
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.bytearray_split_doc)
+    final PyList bytearray_split(PyObject sep, int maxsplit) {
+        return basebytes_split(sep, maxsplit);
     }
 
     /**

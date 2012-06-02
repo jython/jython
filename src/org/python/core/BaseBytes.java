@@ -1141,6 +1141,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     }
 
+    protected static final ViewOfNothing viewOfNothing = new ViewOfNothing();
 
     /*
      * ============================================================================================
@@ -1178,6 +1179,19 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         // This won't succeed: it just produces the right error.
         // storageReplace(index, 0, 1);
         pyset(index, element);
+    }
+
+    /**
+     * Specialisation of {@link #getslice(int, int, int)} to contiguous slices (of step size 1) for
+     * brevity and efficiency. The default implementation is <code>getslice(start, stop, 1)</code>
+     * but it is worth overriding.
+     *
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @return a subclass instance of BaseBytes corresponding the the given range of elements.
+     */
+    protected BaseBytes getslice(int start, int stop) {
+        return getslice(start, stop, 1);
     }
 
     /*
@@ -1353,8 +1367,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __eq__ (equality) operator, capable of comparison with another byte array
      * or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___eq__(PyObject other) {
         int cmp = basebytes_cmpeq(other);
@@ -1371,8 +1385,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __ne__ (not equals) operator, capable of comparison with another byte array
      * or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___ne__(PyObject other) {
         int cmp = basebytes_cmpeq(other);
@@ -1389,8 +1403,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __lt__ (less than) operator, capable of comparison with another byte array
      * or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___lt__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -1407,8 +1421,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __le__ (less than or equal to) operator, capable of comparison with another
      * byte array or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___le__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -1425,8 +1439,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __ge__ (greater than or equal to) operator, capable of comparison with
      * another byte array or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___ge__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -1443,8 +1457,8 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of __gt__ (greater than) operator, capable of comparison with another byte
      * array or bytes. Comparison with an invalid type returns null.
      *
-     * @param other
-     * @return
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
      */
     final PyObject basebytes___gt__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -1832,7 +1846,27 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         protected int right = 0; // Rightmost pattern position + 1
 
         /**
-         * Find the next index in the text array where the pattern starts. Successive callls to
+         * Return the  index in the text array where the preceding pattern match ends (one beyond the last
+         * character matched), which may also be one beyond the effective end ofthe text.
+         * Between a call to setText() and the first call to
+         * <code>nextIndex()</code> return the start position.
+         * <p>
+         * The following idiom may be used:
+         * <pre>
+         * f.setText(text);
+         * int p = f.nextIndex();
+         * int q = f.currIndex();
+         * // The range text[p:q] is the matched segment.
+         * </pre>
+         *
+         * @return index beyond end of last match found, i.e. where search will resume
+         */
+        public int currIndex() {
+            return left;
+        }
+
+        /**
+         * Find the next index in the text array where the pattern starts. Successive calls to
          * <code>nextIndex()</code> return the successive (non-overlapping) occurrences of the
          * pattern in the text.
          *
@@ -1997,8 +2031,16 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         }
 
         /**
+         *
+         * @return the new effective end of the text
+         */
+        public int currIndex() {
+            return right+pattern.size()-1;
+        }
+
+        /**
          * Find the next index in the text array where the pattern starts, but working backwards.
-         * Successive callls to <code>nextIndex()</code> return the successive (non-overlapping)
+         * Successive calls to <code>nextIndex()</code> return the successive (non-overlapping)
          * occurrences of the pattern in the text.
          *
          * @return matching index or -1 if no (further) occurrences found
@@ -2514,6 +2556,352 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
 
+    /**
+     * Implementation of Python <code>rsplit()</code>, that returns a list of the words in the byte
+     * array, using whitespace as the delimiter. See {@link #rsplit(PyObject, int)}.
+     *
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList rsplit() {
+        return basebytes_rsplit_whitespace(-1);
+    }
+
+    /**
+     * Implementation of Python <code>rsplit(sep)</code>, that returns a list of the words in the
+     * byte array, using sep as the delimiter. See {@link #rsplit(PyObject, int)} for the semantics
+     * of the separator.
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList rsplit(PyObject sep) {
+        return basebytes_rsplit(sep, -1);
+    }
+
+    /**
+     * Implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a list of the words
+     * in the byte array, using sep as the delimiter. If maxsplit is given, at most maxsplit splits
+     * are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
+     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * <p>
+     * The semantics of sep and maxcount are identical to those of
+     * <code>split(sep, maxsplit)</code>, except that splits are generated from the right (and pushed onto the front of the result list). The result is only different from that of <code>split</code> if <code>maxcount</code> limits the number of splits.
+     * For example,
+     * <ul>
+     * <li><code>bytearray(b' 1  2   3  ').rsplit()</code> returns
+     * <code>[bytearray(b'1'), bytearray(b'2'), bytearray(b'3')]</code>, and</li>
+     * <li><code>bytearray(b'  1  2   3  ').rsplit(None, 1)</code> returns
+     * <code>[bytearray(b'  1 2'), bytearray(b'3')]</code></li>.
+     * </ul>
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList rsplit(PyObject sep, int maxsplit) {
+        return basebytes_rsplit(sep, maxsplit);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a
+     * list of the words in the byte array, using sep as the delimiter. Use the defines whitespace
+     * semantics if sep is null.
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final PyList basebytes_rsplit(PyObject sep, int maxsplit) {
+        if (sep == null || sep == Py.None) {
+            return basebytes_rsplit_whitespace(maxsplit);
+        } else {
+            return basebytes_rsplit_explicit(sep, maxsplit);
+        }
+    }
+
+    /**
+     * Implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a list of the words
+     * in the byte array, using sep (which is not null) as the delimiter. If maxsplit>=0, at most
+     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If
+     * maxsplit&lt;0, then there is no limit on the number of splits (all possible splits are made).
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final synchronized PyList basebytes_rsplit_explicit(PyObject sep, int maxsplit) {
+
+        // The separator may be presented as anything viewable as bytes
+        View separator = getViewOrError(sep);
+        if (separator.size() == 0) {
+            throw Py.ValueError("empty separator");
+
+        } else {
+
+            PyList result = new PyList();
+
+            // Use the Finder class to search in the storage of this byte array
+            Finder finder = new ReverseFinder(separator);
+            finder.setText(this);
+
+            int n = separator.size();
+            int q = offset + size; // q points to "honorary separator"
+            int p;
+
+            // At this point storage[q-1] is the last byte of the rightmost unsplit word, or
+            // q=offset if there aren't any. While we have some splits left to do ...
+            while (q > offset && maxsplit-- != 0) {
+                // Delimit the word whose last byte is storage[q-1]
+                int r = q;
+                // Skip p backwards over the word and the separator
+                q = finder.nextIndex();
+                if (q < 0) {
+                    p = offset;
+                } else {
+                    p = q + n;
+                }
+                // storage[p] is the first byte of the word.
+                BaseBytes word = getslice(p - offset, r - offset);
+                result.add(0, word);
+            }
+
+            // Prepend the remaining unsplit text if any
+            if (q >= offset) {
+                BaseBytes word = getslice(0, q - offset);
+                result.add(0, word);
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Implementation of Python <code>rsplit(None, maxsplit)</code>, that returns a list of the
+     * words in the byte array, using whitespace as the delimiter. If maxsplit is given, at most
+     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit
+     * is not specified, then there is no limit on the number of splits (all possible splits are
+     * made).
+     * <p>
+     * Runs of consecutive whitespace are regarded as a single separator, and the result will
+     * contain no empty strings at the start or end if the string has leading or trailing
+     * whitespace. Consequently, splitting an empty string or a string consisting of just whitespace
+     * with a None separator returns [].
+     *
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final synchronized PyList basebytes_rsplit_whitespace(int maxsplit) {
+
+        PyList result = new PyList();
+        int p, q; // Indexes of unsplit text and whitespace
+
+        // Scan backwards over trailing whitespace
+        for (q = offset + size; q > offset; --q) {
+            if (!Character.isWhitespace(storage[q - 1] & 0xff)) {
+                break;
+            }
+        }
+
+        // Note: bytearray().rsplit() = bytearray(b' ').rsplit() = []
+
+        // At this point storage[q-1] is the rightmost non-space byte, or
+        // q=offset if there aren't any. While we have some splits left ...
+        while (q > offset && maxsplit-- != 0) {
+            // Delimit the word whose last byte is storage[q-1]
+            // Skip p backwards over the non-whitespace
+            for (p = q; p > offset; --p) {
+                if (Character.isWhitespace(storage[p - 1] & 0xff)) {
+                    break;
+                }
+            }
+            // storage[p] is the first byte of the word. (p=offset or storage[p-1] is whitespace.)
+            BaseBytes word = getslice(p - offset, q - offset);
+            result.add(0, word);
+            // Skip q backwards over the whitespace
+            for (q = p; q > offset; --q) {
+                if (!Character.isWhitespace(storage[q - 1] & 0xff)) {
+                    break;
+                }
+            }
+        }
+
+        // Prepend the remaining unsplit text if any
+        if (q > offset) {
+            BaseBytes word = getslice(0, q - offset);
+            result.add(0, word);
+        }
+        return result;
+    }
+
+    /**
+     * Implementation of Python <code>split()</code>, that returns a list of the words in the byte
+     * array, using whitespace as the delimiter. See {@link #split(PyObject, int)}.
+     *
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList split() {
+        return basebytes_split_whitespace(-1);
+    }
+
+    /**
+     * Implementation of Python <code>split(sep)</code>, that returns a list of the words in the
+     * byte array, using sep as the delimiter. See {@link #split(PyObject, int)} for the semantics
+     * of the separator.
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList split(PyObject sep) {
+        return basebytes_split(sep, -1);
+    }
+
+    /**
+     * Implementation of Python <code>split(sep, maxsplit)</code>, that returns a list of the words
+     * in the byte array, using sep as the delimiter. If maxsplit is given, at most maxsplit splits
+     * are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
+     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * <p>
+     * If sep is given, consecutive delimiters are not grouped together and are deemed to delimit
+     * empty strings (for example, '1,,2'.split(',') returns ['1', '', '2']). The sep argument may
+     * consist of multiple characters (for example, '1&lt;>2&lt;>3'.split('&lt;>') returns ['1',
+     * '2', '3']). Splitting an empty string with a specified separator returns [''].
+     * <p>
+     * If sep is not specified or is None, a different splitting algorithm is applied: runs of
+     * consecutive whitespace are regarded as a single separator, and the result will contain no
+     * empty strings at the start or end if the string has leading or trailing whitespace.
+     * Consequently, splitting an empty string or a string consisting of just whitespace with a None
+     * separator returns []. For example,
+     *
+     * <ul>
+     * <li><code>bytearray(b' 1  2   3  ').split()</code> returns
+     * <code>[bytearray(b'1'), bytearray(b'2'), bytearray(b'3')]</code>, and</li>
+     * <li><code>bytearray(b'  1  2   3  ').split(None, 1)</code> returns
+     * <code>[bytearray(b'1'), bytearray(b'2   3  ')]</code>.</li>
+     * </ul>
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    public PyList split(PyObject sep, int maxsplit) {
+        return basebytes_split(sep, maxsplit);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>split(sep, maxsplit)</code>, that returns a
+     * list of the words in the byte array, using sep as the delimiter. Use the defines whitespace
+     * semantics if sep is null.
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final PyList basebytes_split(PyObject sep, int maxsplit) {
+        if (sep == null || sep==Py.None) {
+            return basebytes_split_whitespace(maxsplit);
+        } else {
+            return basebytes_split_explicit(sep, maxsplit);
+        }
+    }
+
+    /**
+     * Implementation of Python <code>split(sep, maxsplit)</code>, that returns a list of the words
+     * in the byte array, using sep (which is not null) as the delimiter. If maxsplit>=0, at most
+     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If
+     * maxsplit&lt;0, then there is no limit on the number of splits (all possible splits are made).
+     *
+     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final synchronized PyList basebytes_split_explicit(PyObject sep, int maxsplit) {
+
+        // The separator may be presented as anything viewable as bytes
+        View separator = getViewOrError(sep);
+        if (separator.size() == 0) {
+            throw Py.ValueError("empty separator");
+
+        } else {
+
+            PyList result = new PyList();
+
+            // Use the Finder class to search in the storage of this byte array
+            Finder finder = new Finder(separator);
+            finder.setText(this);
+
+            // Look for the first separator
+            int p = finder.currIndex(); // = offset
+            int q = finder.nextIndex(); // First separator (or <0 if not found)
+
+            // Note: bytearray().split(' ') == [bytearray(b'')]
+
+            // While we found a separator, and we have some splits left (if maxsplit started>=0)
+            while (q >= 0 && maxsplit-- != 0) {
+                // Note the Finder works in terms of indexes into this.storage
+                result.append(getslice(p - offset, q - offset));
+                p = finder.currIndex(); // Start of unsplit text
+                q = finder.nextIndex(); // Next separator (or <0 if not found)
+            }
+
+            // Append the remaining unsplit text
+            result.append(getslice(p - offset, size));
+            return result;
+        }
+    }
+
+    /**
+     * Implementation of Python <code>split(None, maxsplit)</code>, that returns a list of the words
+     * in the byte array, using whitespace as the delimiter. If maxsplit is given, at most maxsplit
+     * splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
+     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * <p>
+     * Runs of consecutive whitespace are regarded as a single separator, and the result will
+     * contain no empty strings at the start or end if the string has leading or trailing
+     * whitespace. Consequently, splitting an empty string or a string consisting of just whitespace
+     * with a None separator returns [].
+     *
+     * @param maxsplit maximum number of splits
+     * @return PyList of byte arrays that result from the split
+     */
+    final synchronized PyList basebytes_split_whitespace(int maxsplit) {
+
+        PyList result = new PyList();
+        int limit = offset + size;
+        int p, q; // Indexes of unsplit text and whitespace
+
+        // Scan over leading whitespace
+        for (p = offset; p < limit && Character.isWhitespace(storage[p] & 0xff); p++) {
+            ; // continue
+        }
+
+        // Note: bytearray().split() = bytearray(b' ').split() = []
+
+        // At this point if p<limit it points to the start of a word.
+        // While we have some splits left (if maxsplit started>=0)
+        while (p < limit && maxsplit-- != 0) {
+            // Delimit a word at p
+            // storage[p] is not whitespace or at the limit: it is the start of a word
+            // Skip q over the non-whitespace at p
+            for (q = p; q < limit && !Character.isWhitespace(storage[q] & 0xff); q++) {
+                ; // continue
+            }
+            // storage[q] is whitespace or it is at the limit
+            result.append(getslice(p - offset, q - offset));
+            // Skip p over the whitespace at q
+            for (p = q; p < limit && Character.isWhitespace(storage[p] & 0xff); p++) {
+                ; // continue
+            }
+        }
+
+        // Append the remaining unsplit text if any
+        if (p<limit) {
+            result.append(getslice(p - offset, size));
+        }
+        return result;
+    }
+
+
     /*
      * ============================================================================================
      * Java API for access as byte[]
@@ -2746,11 +3134,28 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         listDelegate.clear();
     }
 
-    /*
+    /**
+     * Test for the equality of (the value of) this byte array to the object <code>other</code>. In
+     * the case where <code>other</code> is a <code>PyObject</code>, the comparison used is the
+     * standard Python <code>==</code> operation through <code>PyObject</code>. When
+     * <code>other</code> is not a <code>PyObject</code>, this object acts as a
+     * <code>List&lt;PyInteger></code>.
+     *
      * @see java.util.List#equals(java.lang.Object)
+     *
+     * @param other object to compare this byte array to
+     * @return <code>true</code> if and only if this byte array is equal (in value) to
+     *         <code>other</code>
      */
-    public boolean equals(Object o) {
-        return listDelegate.equals(o);
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        } else if (other instanceof PyObject) {
+            return super.equals(other);
+        } else {
+            return listDelegate.equals(other);
+        }
     }
 
     /*
