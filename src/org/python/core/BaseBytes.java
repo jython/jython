@@ -511,22 +511,25 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             Fragment curr = null;
 
             // Allocate series of fragments as needed, while the iterator runs to completion
-
-            for (PyObject value : iter) {
-                if (curr == null) {
-                    // Need a new Fragment
-                    curr = new Fragment(fragSize);
-                    add(curr);
-                    if (fragSize < Fragment.MAXSIZE) {
-                        fragSize <<= 1;
+            try {
+                for (PyObject value : iter) {
+                    if (curr == null) {
+                        // Need a new Fragment
+                        curr = new Fragment(fragSize);
+                        add(curr);
+                        if (fragSize < Fragment.MAXSIZE) {
+                            fragSize <<= 1;
+                        }
+                    }
+                    // Insert next item from iterator.
+                    if (curr.isFilledBy(value)) {
+                        // Fragment is now full: signal a new one will be needed
+                        totalCount += curr.count;
+                        curr = null;
                     }
                 }
-                // Insert next item from iterator.
-                if (curr.isFilledBy(value)) {
-                    // Fragment is now full: signal a new one will be needed
-                    totalCount += curr.count;
-                    curr = null;
-                }
+            } catch (OutOfMemoryError e) {
+                throw Py.MemoryError(e.getMessage());
             }
 
             // Don't forget the bytes in the final Fragment
@@ -623,7 +626,11 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     protected void newStorage(int needed) {
         // The implementation for immutable arrays allocates only as many bytes as needed.
         if (needed > 0) {
-            setStorage(new byte[needed]); // guaranteed zero (by JLS 2ed para 4.5.5)
+            try {
+                setStorage(new byte[needed]); // guaranteed zero (by JLS 2ed para 4.5.5)
+            } catch (OutOfMemoryError e) {
+                throw Py.MemoryError(e.getMessage());
+            }
         } else {
             setStorage(emptyStorage);
         }
@@ -2520,12 +2527,14 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
         // Calculate length of result and check for too big
         long result_len = size + count * (to_len - from_len);
-        if (result_len > Integer.MAX_VALUE) {
-            Py.OverflowError("replace bytes is too long");
+        byte[] r; // Build result here
+        try {
+            // Good to go. As we know the ultimate size, we can do all our allocation in one
+            r = new byte[(int)result_len];
+        } catch (OutOfMemoryError e) {
+            throw Py.OverflowError("replace bytes is too long");
         }
 
-        // Good to go. As we know the ultimate size, we can do all our allocation in one
-        byte[] r = new byte[(int)result_len];
         int p = offset; // Copy-from index in this.storage
         int rp = 0;     // Copy-to index in r
 
@@ -2585,12 +2594,14 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
         // Calculate length of result and check for too big
         long result_len = ((long)count) * to_len + size;
-        if (result_len > Integer.MAX_VALUE) {
-            Py.OverflowError("replace bytes is too long");
+        byte[] r; // Build result here
+        try {
+            // Good to go. As we know the ultimate size, we can do all our allocation in one
+            r = new byte[(int)result_len];
+        } catch (OutOfMemoryError e) {
+            throw Py.OverflowError("replace bytes is too long");
         }
 
-        // Good to go. As we know the ultimate size, we can do all our allocation in one
-        byte[] r = new byte[(int)result_len];
         int p = offset; // Copy-from index in this.storage
         int rp = 0;     // Copy-to index in r
 
@@ -2640,8 +2651,14 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         long result_len = size - (count * from_len);
         assert (result_len >= 0);
 
-        // Good to go. As we know the ultimate size, we can do all our allocation in one
-        byte[] r = new byte[(int)result_len];
+        byte[] r; // Build result here
+        try {
+            // Good to go. As we know the ultimate size, we can do all our allocation in one
+            r = new byte[(int)result_len];
+        } catch (OutOfMemoryError e) {
+            throw Py.OverflowError("replace bytes is too long");
+        }
+
         int p = offset; // Copy-from index in this.storage
         int rp = 0;     // Copy-to index in r
 
@@ -2698,7 +2715,13 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         int count = maxcount;
 
         // The result will be this.size
-        byte[] r = new byte[size];
+        byte[] r; // Build result here
+        try {
+            r = new byte[this.size];
+        } catch (OutOfMemoryError e) {
+            throw Py.OverflowError("replace bytes is too long");
+        }
+
         System.arraycopy(storage, offset, r, 0, size);
 
         // Change everything in-place: easiest if we search the destination
@@ -3142,11 +3165,23 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * @return this byte array repeated count times.
      */
     protected synchronized byte[] repeatImpl(int count) {
-        byte[] dst = new byte[count * size];
-        for (int i = 0, p = 0; i < count; i++, p += size) {
-            System.arraycopy(storage, offset, dst, p, size);
+        if (count <= 0) {
+            return emptyStorage;
+        } else {
+            // Allocate new storage, in a guarded way
+            long newSize = ((long)count) * size;
+            byte[] dst;
+            try {
+                dst = new byte[(int)newSize];
+            } catch (OutOfMemoryError e) {
+                throw Py.MemoryError(e.getMessage());
+            }
+            // Now fill with the repetitions needed
+            for (int i = 0, p = 0; i < count; i++, p += size) {
+                System.arraycopy(storage, offset, dst, p, size);
+            }
+            return dst;
         }
-        return dst;
     }
 
     /*

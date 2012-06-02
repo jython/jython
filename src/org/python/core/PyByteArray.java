@@ -259,6 +259,16 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Replace the contents of this PyByteArray with the given number of repeats of the original
+     * contents, as in the implementation of <tt>__mul__</tt> for strings.
+     *
+     * @param count the number of times to repeat this.
+     */
+    protected synchronized void irepeat(int count) {
+        this.setStorage(repeatImpl(count));
+    }
+
+    /**
      * Sets the indexed element of the bytearray to the given value. This is an extension point
      * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
      * PySequence that the index is within the bounds of the array. Any other clients calling
@@ -781,6 +791,58 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Equivalent to the standard Python <code>__imul__</code> method, that for a byte array returns
+     * a new byte array containing the same thing n times.
+     */
+    @Override
+    public PyObject __imul__(PyObject n) {
+        return bytearray___imul__(n);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___mul___doc)
+    final PyObject bytearray___imul__(PyObject n) {
+        if (!n.isIndex()) {
+            return null;
+        }
+        irepeat(n.asIndex(Py.OverflowError));
+        return this;
+    }
+
+    /**
+     * Equivalent to the standard Python <code>__mul__</code> method, that for a byte array returns
+     * a new byte array containing the same thing n times.
+     */
+    @Override
+    public PyObject __mul__(PyObject n) {
+        return bytearray___mul__(n);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___mul___doc)
+    final PyObject bytearray___mul__(PyObject n) {
+        if (!n.isIndex()) {
+            return null;
+        }
+        return repeat(n.asIndex(Py.OverflowError));
+    }
+
+    /**
+     * Equivalent to the standard Python <code>__rmul__</code> method, that for a byte array returns
+     * a new byte array containing the same thing n times.
+     */
+    @Override
+    public PyObject __rmul__(PyObject n) {
+        return bytearray___rmul__(n);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___rmul___doc)
+    final PyObject bytearray___rmul__(PyObject n) {
+        if (!n.isIndex()) {
+            return null;
+        }
+        return repeat(n.asIndex(Py.OverflowError));
+    }
+
+    /**
      * Append a single element to the end of the array, equivalent to:
      * <code>s[len(s):len(s)] = o</code>. The argument must be a PyInteger, PyLong or string of
      * length 1.
@@ -1133,6 +1195,38 @@ public class PyByteArray extends BaseBytes {
         return basebytes_partition(sep);
     }
 
+    /**
+     * Removes and return the last element in the byte array.
+     * @return PyInteger representing the value
+     */
+    public PyInteger pop() {
+        return bytearray_pop(-1);
+    }
+
+    /**
+     * Remove and return the <code>n</code>th byte element in the array.
+     *
+     * @param i the index of the byte to remove and return.
+     * @return PyInteger representing the value
+     */
+    public PyInteger pop(int i) {
+        return bytearray_pop(i);
+    }
+
+    @ExposedMethod(defaults = "-1", doc = BuiltinDocs.bytearray_pop_doc)
+    final synchronized PyInteger bytearray_pop(int i) {
+        if (size == 0) {
+            throw Py.IndexError("pop from empty list");
+        } else {
+            // Deal with slice interpretation of single index
+            if (i < 0) {
+                i += size;
+            }
+            // Use List.remove(int)
+            return remove(i);
+        }
+    }
+
     @ExposedMethod(doc = BuiltinDocs.bytearray___reduce___doc)
     final PyObject bytearray___reduce__() {
         return basebytes___reduce__();
@@ -1147,7 +1241,7 @@ public class PyByteArray extends BaseBytes {
      * @throws PyException ValueError if o not found in bytearray
      */
     public void remove(PyObject o) throws PyException {
-        bytearray_append(o);
+        bytearray_remove(o);
     }
 
     @ExposedMethod(doc = BuiltinDocs.bytearray_remove_doc)
@@ -1525,8 +1619,12 @@ public class PyByteArray extends BaseBytes {
     protected void newStorage(int needed) {
         if (needed > 0) {
             final int L = recLength(needed);
-            byte[] s = new byte[L]; // guaranteed zero (by JLS 2ed para 4.5.5)
-            setStorage(s, needed, (L - needed) / 2);
+            try {
+                byte[] s = new byte[L]; // guaranteed zero (by JLS 2ed para 4.5.5)
+                setStorage(s, needed, (L - needed) / 2);
+            } catch (OutOfMemoryError e) {
+                throw Py.MemoryError(e.getMessage());
+            }
         } else {
             setStorage(emptyStorage);
         }
