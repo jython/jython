@@ -1027,7 +1027,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         }
 
         /**
-         * Create a byte-oriented view of a byte array explicitly. If the size<0, a zero-length
+         * Create a byte-oriented view of a slice of a byte array explicitly. If the size<=0, a zero-length
          * slice results.
          *
          * @param storage storage array
@@ -2120,6 +2120,56 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Class for quickly determining whether a given byte is a member of a defined set. this class
+     * provides an efficient mechanism when a lot of bytes must be tested against the same set.
+     */
+    protected static class ByteSet {
+
+        protected final long[] map = new long[4];   // 256 bits
+
+        /**
+         * Construct a set from a byte oriented view.
+         *
+         * @param bytes to be in the set.
+         */
+        public ByteSet(View bytes) {
+            int n = bytes.size();
+            for (int i = 0; i < n; i++) {
+                int c = bytes.intAt(i);
+                long mask = 1L << c; // Only uses low 6 bits of c (JLS)
+                int word = c >> 6;
+                map[word] |= mask;
+            }
+        }
+
+        /**
+         * Test to see if the byte is in the set.
+         *
+         * @param b value of the byte
+         * @return true iff b is in the set
+         */
+        public boolean contains(byte b) {
+            int word = (b & 0xff) >> 6;
+            long mask = 1L << b; // Only uses low 6 bits of b (JLS)
+            return (map[word] & mask) != 0;
+        }
+
+        /**
+         * Test to see if the byte (expressed an an integer) is in the set.
+         *
+         * @param b integer value of the byte
+         * @return true iff b is in the set
+         * @throws ArrayIndexOutOfBoundsException if b>255 or b&lt;0
+         */
+        public boolean contains(int b) {
+            int word = b >> 6;
+            long mask = 1L << b; // Only uses low 6 bits of b (JLS)
+            return (map[word] & mask) != 0;
+        }
+
+    }
+
+    /**
      * Convenience routine producing a ValueError for "empty separator" if the View is of an object with zero length,
      * and returning the length otherwise.
      *
@@ -2139,22 +2189,15 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Return the index [0..size-1] of the leftmost byte not matching any in <code>byteSet</code>,
      * or <code>size</code> if they are all strippable.
      *
-     * @param byteSet list of byte values to skip over
+     * @param byteSet set of byte values to skip over
      * @return index of first unstrippable byte
      */
-    protected int lstripIndex(View byteSet) {
+    protected int lstripIndex(ByteSet byteSet) {
         int limit = offset + size;
-        int j, m = byteSet.size();
         // Run up the storage checking against byteSet (or until we hit the end)
         for (int left = offset; left < limit; left++) {
-            byte curr = storage[left];
             // Check against the byteSet to see if this is one to strip.
-            for (j = 0; j < m; j++) {
-                if (curr == byteSet.byteAt(j)) {
-                    break;
-                }
-            }
-            if (j == m) {
+            if (!byteSet.contains(storage[left])) {
                 // None of them matched: this is the leftmost non-strippable byte
                 return left - offset;
             }
@@ -2186,22 +2229,15 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * <code>byteSet</code>, that is, the index of the matching tail, or <code>size</code> if there
      * is no matching tail byte.
      *
-     * @param byteSet list of byte values to strip
+     * @param byteSet set of byte values to strip
      * @return index of strippable tail
      */
-    protected int rstripIndex(View byteSet) {
-        int j, m = byteSet.size();
+    protected int rstripIndex(ByteSet byteSet) {
         // Run down the storage checking the next byte against byteSet (or until we hit the start)
         for (int right = offset + size; right > offset; --right) {
-            byte next = storage[right - 1];
             // Check against the byteSet to see if this is one to strip.
-            for (j = 0; j < m; j++) {
-                if (next == byteSet.byteAt(j)) {
-                    break;
-                }
-            }
-            if (j == m) {
-                // None of them matched: this is the rightmost strippable byte
+            if (!byteSet.contains(storage[right - 1])) {
+                // None of them matched: this is the first strippable byte in the tail
                 return right - offset;
             }
         }

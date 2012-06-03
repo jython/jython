@@ -843,20 +843,33 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Append a single byte to the end of the array.
+     *
+     * @param element the byte to append.
+     */
+    public void append(byte element) {
+        // Open a space at the end.
+        storageExtend(1);
+        storage[offset + size - 1] = element;
+    }
+
+    /**
      * Append a single element to the end of the array, equivalent to:
      * <code>s[len(s):len(s)] = o</code>. The argument must be a PyInteger, PyLong or string of
      * length 1.
      *
-     * @param o the item to append to the list.
+     * @param element the item to append.
+     * @throws PyException(ValueError) if element<0 or element>255
      */
-    public void append(PyObject o) {
-        bytearray_append(o);
+    public void append(PyObject element) {
+        bytearray_append(element);
     }
 
     @ExposedMethod(doc = BuiltinDocs.bytearray_append_doc)
-    final synchronized void bytearray_append(PyObject o) {
+    final synchronized void bytearray_append(PyObject element) {
         // Insert at the end, checked for type and range
-        pyinsert(size, o);
+        storageExtend(1);
+        storage[offset + size - 1] = byteCheck(element);
     }
 
     /**
@@ -1184,7 +1197,7 @@ public class PyByteArray extends BaseBytes {
             left = lstripIndex();
         } else {
             // Find left bound of the slice that results from the stripping of the specified bytes
-            View byteSet = getViewOrError(bytes);
+            ByteSet byteSet = new ByteSet(getViewOrError(bytes));
             left = lstripIndex(byteSet);
         }
         return getslice(left, size);
@@ -1427,7 +1440,7 @@ public class PyByteArray extends BaseBytes {
             right = rstripIndex();
         } else {
             // Find right bound of the slice that results from the stripping of the specified bytes
-            View byteSet = getViewOrError(bytes);
+            ByteSet byteSet = new ByteSet(getViewOrError(bytes));
             right = rstripIndex(byteSet);
         }
         return getslice(0, right);
@@ -1528,7 +1541,7 @@ public class PyByteArray extends BaseBytes {
             right = (left == size) ? size : rstripIndex();
         } else {
             // Find bounds of the slice that results from the stripping of the specified bytes
-            View byteSet = getViewOrError(bytes);
+            ByteSet byteSet = new ByteSet(getViewOrError(bytes));
             left = lstripIndex(byteSet);
             // If we hit the end that time, no need to work backwards
             right = (left == size) ? size : rstripIndex(byteSet);
@@ -1549,6 +1562,104 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.bytearray___repr___doc)
     final synchronized String bytearray_toString() {
         return "bytearray(b'" + asEscapedString() + "')";
+    }
+
+    /**
+     * Implementation of Python <code>translate(table).</code>
+     *
+     * Return a copy of the byte array where all bytes occurring in the optional argument
+     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the given
+     * translation table, which must be of length 256.
+     *
+     * @param table length 256 translation table (of a type that may be regarded as a byte array)
+     * @return translated byte array
+     */
+     public PyByteArray translate(PyObject table) {
+        return bytearray_translate(table, null);
+    }
+
+    /**
+     * Implementation of Python <code>translate(table[, deletechars]).</code>
+     *
+     * Return a copy of the byte array where all bytes occurring in the optional argument
+     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the given
+     * translation table, which must be of length 256.
+     *
+     * You can use the maketrans() helper function in the string module to create a translation
+     * table. For string objects, set the table argument to None for translations that only delete
+     * characters:
+     *
+     * @param table length 256 translation table (of a type that may be regarded as a byte array)
+     * @param deletechars object that may be regarded as a byte array, defining bytes to delete
+     * @return translated byte array
+     */
+    public PyByteArray translate(PyObject table, PyObject deletechars) {
+        return bytearray_translate(table, deletechars);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_translate_doc)
+    final PyByteArray bytearray_translate(PyObject table, PyObject deletechars) {
+
+        // Normalise the translation table to a View
+        View tab = null;
+        if (table != null && table != Py.None) {
+            tab = getViewOrError(table);
+            if (tab.size() != 256) {
+                throw Py.ValueError("translation table must be 256 bytes long");
+            }
+        }
+
+        // Accumulate the result here
+        PyByteArray result = new PyByteArray();
+
+        // There are 4 cases depending on presence/absence of table and deletechars
+
+        if (deletechars != null) {
+
+            // Use a ByteSet to express which bytes to delete
+            ByteSet del;
+            del = new ByteSet(getViewOrError(deletechars));
+
+            // Now, loop over this byte array and write translated bytes to the result
+            int limit = offset + size;
+
+            if (tab != null) {
+                for (int i = offset; i < limit; i++) {
+                    int b = storage[i] & 0xff;
+                    if (!del.contains(b)) {
+                        result.append(tab.byteAt(b));
+                    }
+                }
+
+            } else {
+                // No translation table
+                for (int i = offset; i < limit; i++) {
+                    int b = storage[i] & 0xff;
+                    if (!del.contains(b)) {
+                        result.append((byte)b);
+                    }
+                }
+            }
+
+        } else {
+            // No deletion set.
+
+            // Now, loop over this byte array and write translated bytes to the result
+            int limit = offset + size;
+            if (tab != null) {
+                for (int i = offset; i < limit; i++) {
+                    int b = storage[i] & 0xff;
+                    result.append(tab.byteAt(b));
+                }
+
+            } else {
+                // No translation table or deletion set: just copy
+                result.extend(this);
+            }
+
+        }
+
+        return result;
     }
 
     /*
@@ -1934,6 +2045,8 @@ public class PyByteArray extends BaseBytes {
      * @param e size of hole to open (will be x[a, a+e-1]) where a = size before call
      */
     private void storageExtend(int e) {
+
+        // XXX Do a better job here or where called of checking offset+size+e <= storage.length
 
         if (e == 0) {
             return; // Everything stays where it is.

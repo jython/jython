@@ -534,6 +534,23 @@ class BaseBytesTest(unittest.TestCase):
         self.assertRaisesRegexp(TypeError, r'\bendswith\b', b.endswith,
                                 x, None, None, None)
 
+    def test_translate(self):
+        # adapted from AssortedBytesTest.test_translate
+        b = self.type2test(b'hello')
+        rosetta = self.type2test().join(map(chr,range(256)))
+        rosetta[ord('o')] = ord('e')
+        c = b.translate(rosetta, b'l')
+        self.assertEqual(b, b'hello')
+        self.assertEqual(c, b'hee')
+        c = b.translate(None, b'e')
+        self.assertEqual(c, b'hllo')
+        c = b.translate(None, b'the larch')
+        self.assertEqual(c, b'o')
+        stone = self.type2test(''.join(map(chr,range(1,256))))
+        self.assertRaises(ValueError, b.translate, stone, b'short')
+        self.assertRaises(TypeError, b.translate, rosetta, None)
+        self.assertRaises(TypeError, b.translate, None, None)
+
 
 class ByteArrayTest(BaseBytesTest):
     type2test = bytearray
