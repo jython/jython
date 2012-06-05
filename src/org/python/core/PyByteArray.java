@@ -1451,6 +1451,11 @@ public class PyByteArray extends BaseBytes {
         return basebytes_split(sep, maxsplit);
     }
 
+    @ExposedMethod(defaults = "false", doc = BuiltinDocs.bytearray_splitlines_doc)
+    final PyList bytearray_splitlines(boolean keepends) {
+        return basebytes_splitlines(keepends);
+    }
+    
     /**
      * Implementation of Python <code>startswith(prefix)</code>.
      *

@@ -3154,6 +3154,71 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return result;
     }
 
+    /**
+     * Implementation of Python <code>splitlines()</code>, returning a list of the lines in the byte
+     * array, breaking at line boundaries. Line breaks are not included in the resulting segments.
+     * 
+     * @return List of segments
+     */
+    public PyList splitlines() {
+        return basebytes_splitlines(false);
+    }
+
+    /**
+     * Implementation of Python <code>splitlines(keepends)</code>, returning a list of the lines in
+     * the string, breaking at line boundaries. Line breaks are not included in the resulting list
+     * unless <code>keepends</code> is true.
+     * 
+     * @param keepends if true, include the end of line bytes(s)
+     * @return PyList of segments
+     */
+    public PyList splitlines(boolean keepends) {
+        return basebytes_splitlines(keepends);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>splitlines(keepends)</code>, returning a list
+     * of the lines in the string, breaking at line boundaries. Line breaks are not included in the
+     * resulting list unless keepends is given and true.
+     * 
+     * @param keepends if true, include the end of line bytes(s)
+     * @return List of segments
+     */
+    protected final synchronized PyList basebytes_splitlines(boolean keepends) {
+
+        PyList list = new PyList();
+        int limit = offset + size;
+
+        for (int p = offset; p < limit; /* p advanced in loop */) {
+            int q, lenEOL = 0;
+            // Scan q to the end of the line (or buffer) including the EOL bytes
+            for (q = p; q < limit; q++) {
+                byte b = storage[q];
+                if (b == '\r') {
+                    lenEOL = (storage[q + 1] == '\n') ? 2 : 1;
+                    break;
+                } else if (b == '\n') {
+                    lenEOL = 1; // Just one EOL byte \n
+                    break;
+                }
+            }
+
+            // lenEOL =2: the line ended \r\n, and q points at \r;
+            // lenEOL =1: the line ended \n or \r (only), and q points at it;
+            // lenEOL =0: the line ended with the end of the data (and q=limit)
+
+            if (keepends) {
+                list.append(getslice(p - offset, q + lenEOL - offset));
+            } else {
+                list.append(getslice(p - offset, q - offset));
+            }
+
+            // Start next line after what terminated it
+            p = q + lenEOL;
+        }
+
+        return list;
+    }
 
     /*
      * ============================================================================================
