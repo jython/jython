@@ -260,9 +260,9 @@ class BaseBytesTest(unittest.TestCase):
         self.assertRaises(TypeError, self.type2test.fromhex)
         self.assertRaises(TypeError, self.type2test.fromhex, 1)
         self.assertEqual(self.type2test.fromhex(u''), self.type2test())
-        b = bytearray([0x1a, 0x2b, 0x30])
-        self.assertEqual(self.type2test.fromhex(u'1a2B30'), b)
-        self.assertEqual(self.type2test.fromhex(u'  1A 2B  30   '), b)
+        b = bytearray([0x1a, 0x2b, 0x30, 0xca, 0xfe, 0xba, 0xbe]) # challenging signs
+        self.assertEqual(self.type2test.fromhex(u'1a2B30CafEBabe'), b)
+        self.assertEqual(self.type2test.fromhex(u'  1A 2B  30 CafeBabe   '), b)
         self.assertEqual(self.type2test.fromhex(u'0000'), b'\0\0')
         self.assertRaises(ValueError, self.type2test.fromhex, u'a')
         self.assertRaises(ValueError, self.type2test.fromhex, u'rt')

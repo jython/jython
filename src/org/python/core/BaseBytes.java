@@ -2303,6 +2303,80 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     }
 
     /**
+     * Almost ready-to-expose implementation of Python class method <code>fromhex(string)</code>.
+     * This assigns a value to the passed byte array object from a string of two-digit hexadecimal
+     * numbers. Spaces (but not whitespace in general) are acceptable around the numbers, not
+     * within. Non-hexadecimal characters or un-paired hex digits raise a <code>ValueError</code>.
+     * Example:
+     *
+     * <pre>
+     * bytearray.fromhex('B9 01EF') -> * bytearray(b'\xb9\x01\xef')."
+     * </pre>
+     *
+     * @param result to receive the decoded values
+     * @param hex specification of the bytes
+     * @throws PyException(ValueError) if non-hex characters, or isolated ones, are encountered
+     */
+    static void basebytes_fromhex(BaseBytes result, String hex) throws PyException {
+
+        final int hexlen = hex.length();
+        result.newStorage(hexlen / 2); // Over-provides storage if hex has spaces
+
+        // We might produce a ValueError with this message.
+        String fmt = "non-hexadecimal number found in fromhex() arg at position %d";
+
+        // Output pointer in the result array
+        byte[] r = result.storage;
+        int p = result.offset;
+
+        /*
+         * When charAt(i) is a hex digit, we will always access hex.charAt(i+1), and catch the
+         * exception if that is beyond the end of the array.
+         */
+        for (int i = 0; i < hexlen; /* i incremented in loop by 1 or 2 */) {
+            char c = hex.charAt(i++);
+            if (c != ' ') {
+                try {
+                    // hexDigit throws IllegalArgumentException if non-hexadecimal character found
+                    int value = hexDigit(c);
+                    c = hex.charAt(i++); // Throw IndexOutOfBoundsException if no second digit
+                    value = (value << 4) + hexDigit(c);
+                    r[p++] = (byte)value;
+                } catch (IllegalArgumentException e) {
+                    throw Py.ValueError(String.format(fmt, i-1));
+                } catch (IndexOutOfBoundsException e) {
+                    throw Py.ValueError(String.format(fmt, i-2));
+                }
+            }
+        }
+        result.size = p - result.offset;
+    }
+
+    /**
+     * Translate one character to its hexadecimal value.
+     *
+     * @param c to translate
+     * @return value 0-15
+     * @throws IllegalArgumentException if c is not '0-'9', 'A'-'F' or 'a'-'f'.
+     */
+    private static int hexDigit(char c) throws IllegalArgumentException {
+        int result = c - '0';
+        if (result >= 0) {
+            if (result < 10) { // digit
+                return result;
+            } else {
+                // If c is a letter, c & 0xDF is its uppercase.
+                // If c is not a letter c & 0xDF is still not a letter.
+                result = (c & 0xDF) - 'A';
+                if (result >= 0 && result < 6) { // A-F or a-f
+                    return result + 10;
+                }
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+
+    /**
      * Almost ready-to-expose implementation of Python <code>join(iterable)</code>.
      *
      * @param iter iterable of objects capable of being regarded as byte arrays
@@ -3157,7 +3231,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     /**
      * Implementation of Python <code>splitlines()</code>, returning a list of the lines in the byte
      * array, breaking at line boundaries. Line breaks are not included in the resulting segments.
-     * 
+     *
      * @return List of segments
      */
     public PyList splitlines() {
@@ -3168,7 +3242,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Implementation of Python <code>splitlines(keepends)</code>, returning a list of the lines in
      * the string, breaking at line boundaries. Line breaks are not included in the resulting list
      * unless <code>keepends</code> is true.
-     * 
+     *
      * @param keepends if true, include the end of line bytes(s)
      * @return PyList of segments
      */
@@ -3180,7 +3254,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Ready-to-expose implementation of Python <code>splitlines(keepends)</code>, returning a list
      * of the lines in the string, breaking at line boundaries. Line breaks are not included in the
      * resulting list unless keepends is given and true.
-     * 
+     *
      * @param keepends if true, include the end of line bytes(s)
      * @return List of segments
      */

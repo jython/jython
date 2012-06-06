@@ -2,6 +2,7 @@ package org.python.core;
 
 import java.util.Arrays;
 
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -161,11 +162,24 @@ public class PyByteArray extends BaseBytes {
     /**
      * Construct bytearray by re-using an array of byte as storage initialised by the client.
      *
-     * @param newStorage pre-initialised storage: the caller should not keep a reference
+     * @param storage pre-initialised with desired value: the caller should not keep a reference
      */
-    PyByteArray(byte[] newStorage) {
+    PyByteArray(byte[] storage) {
         super(TYPE);
-        setStorage(newStorage);
+        setStorage(storage);
+    }
+
+    /**
+     * Construct bytearray by re-using an array of byte as storage initialised by the client.
+     *
+     * @param storage pre-initialised with desired value: the caller should not keep a reference
+     * @param size number of bytes actually used
+     * @throws IllegalArgumentException if the range [0:size] is not within the array bounds of
+     *             the storage.
+     */
+    PyByteArray(byte[] storage, int size) {
+        super(TYPE);
+        setStorage(storage, size);
     }
 
     /**
@@ -1054,6 +1068,33 @@ public class PyByteArray extends BaseBytes {
         return basebytes_find(sub, start, end);
     }
 
+    /**
+     * Implementation of Python class method <code>bytearray.fromhex(string)</code>, that returns .
+     * a new <code>PyByteArray</code> with a value taken from a string of two-digit hexadecimal
+     * numbers. Spaces (but not whitespace in general) are acceptable around the numbers, not
+     * within. Non-hexadecimal characters or un-paired hex digits raise a <code>ValueError</code>. *
+     * Example:
+     *
+     * <pre>
+     * bytearray.fromhex('B9 01EF') -> * bytearray(b'\xb9\x01\xef')."
+     * </pre>
+     *
+     * @param hex specification of the bytes
+     * @throws PyException(ValueError) if non-hex characters, or isolated ones, are encountered
+     */
+    static PyByteArray fromhex(String hex) throws PyException {
+        return bytearray_fromhex(TYPE, hex);
+    }
+
+    @ExposedClassMethod(doc = BuiltinDocs.bytearray_fromhex_doc)
+    static PyByteArray bytearray_fromhex(PyType type, String hex) {
+        // I think type tells us the actual class but we always return exactly a bytearray
+        // PyObject ba = type.__call__();
+        PyByteArray result = new PyByteArray();
+        basebytes_fromhex(result, hex);
+        return result;
+    }
+
     @Override
     public PyObject __iadd__(PyObject o) {
         return bytearray___iadd__(o);
@@ -1455,7 +1496,7 @@ public class PyByteArray extends BaseBytes {
     final PyList bytearray_splitlines(boolean keepends) {
         return basebytes_splitlines(keepends);
     }
-    
+
     /**
      * Implementation of Python <code>startswith(prefix)</code>.
      *
