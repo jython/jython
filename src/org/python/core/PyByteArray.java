@@ -53,21 +53,6 @@ public class PyByteArray extends BaseBytes {
         init(size);
     }
 
-//    /**
-//     * Create zero-filled Python bytearray of specified size and capacity for appending to. The
-//     * capacity is the (minimum) storage allocated, while the size is the number of zero-filled
-//     * bytes it currently contains. Simple append and extend operations on a bytearray will not
-//     * shrink the allocated capacity, but insertions and deletions may cause it to be reallocated at
-//     * the size then in use.
-//     *
-//     * @param size of bytearray
-//     * @param capacity allocated
-//     */
-//    public PyByteArray(int size, int capacity) {
-//        super(TYPE);
-//        setStorage(new byte[capacity], size);
-//    }
-//
     /**
      * Construct bytearray by copying values from int[].
      *
@@ -1095,6 +1080,12 @@ public class PyByteArray extends BaseBytes {
         return result;
     }
 
+    @ExposedMethod(doc = BuiltinDocs.bytearray___getitem___doc)
+    final synchronized PyObject bytearray___getitem__(PyObject index) {
+        // Let the SequenceIndexDelegate take care of it
+        return delegator.checkIdxAndGetItem(index);
+    }
+
     @Override
     public PyObject __iadd__(PyObject o) {
         return bytearray___iadd__(o);
@@ -1343,6 +1334,26 @@ public class PyByteArray extends BaseBytes {
     final PyByteArray bytearray_replace(PyObject oldB, PyObject newB, PyObject count) {
         int maxcount = (count == null) ? -1 : count.asInt(); // or count.asIndex() ?
         return basebytes_replace(oldB, newB, maxcount);
+    }
+
+    /**
+     * Reverses the contents of the byte array in place. The reverse() methods modify in place for
+     * economy of space when reversing a large array. It doesn't return the reversed array to remind
+     * you that it works by side effect.
+     */
+    public void reverse() {
+        bytearray_reverse();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_reverse_doc)
+    final synchronized void bytearray_reverse() {
+        // In place reverse
+        int a = offset, b = offset + size;
+        while (--b > a) {
+            byte t = storage[b];
+            storage[b] = storage[a];
+            storage[a++] = t;
+        }
     }
 
     /**
@@ -1596,8 +1607,9 @@ public class PyByteArray extends BaseBytes {
     }
 
     @ExposedMethod(doc = BuiltinDocs.bytearray___setitem___doc)
-    final synchronized void bytearray___setitem__(PyObject o, PyObject def) {
-        seq___setitem__(o, def);
+    final synchronized void bytearray___setitem__(PyObject index, PyObject value) {
+        // Let the SequenceIndexDelegate take care of it
+        delegator.checkIdxAndSetItem(index, value);
     }
 
     @Override
