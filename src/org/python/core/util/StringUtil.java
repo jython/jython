@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import org.python.core.Py;
+import org.python.core.BaseBytes;
 
 /**
  * String Utility methods.
@@ -66,7 +67,20 @@ public class StringUtil {
     }
 
     /**
-     * Decapitalize a String if it begins with a capital letter, e.g.:
+     * Return a new String with chars corresponding to b.
+     *
+     * @param b a BaseBytes containing bytes
+     * @return a new String corresponding to the bytes in b
+     */
+    public static String fromBytes(BaseBytes b) {
+
+         int size = b.__len__();
+         StringBuilder buf = new StringBuilder(size);
+         for (int j = 0; j < size; j++)  buf.append((char) b.intAt(j));
+         return buf.toString();
+     }
+
+    /** Decapitalize a String if it begins with a capital letter, e.g.:
      * FooBar -> fooBar
      *
      * @param string a String

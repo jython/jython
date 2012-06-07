@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 
 import org.python.core.ArgParser;
+import org.python.core.BaseBytes;
 import org.python.core.BuiltinDocs;
 import org.python.core.Py;
 import org.python.core.PyArray;
@@ -231,6 +232,8 @@ public class PyFileIO extends PyObject {
             return ((PyString) obj).getString();
         } else if (obj instanceof PyArray) {
             return ((PyArray)obj).tostring();
+        } else if (obj instanceof BaseBytes) {
+            return StringUtil.fromBytes((BaseBytes)obj);
         }
         if (message == null) {
             message = String.format("argument 1 must be string or buffer, not %.200s",
