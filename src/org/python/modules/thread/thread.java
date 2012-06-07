@@ -33,7 +33,7 @@ public class thread implements ClassDictInit {
 
     public static void start_new_thread(PyObject func, PyTuple args) {
         Thread pt = _newFunctionThread(func, args);
-        PyObject currentThread = func.__findattr__("im_self");
+        PyObject currentThread = func.__findattr__("__self__");
         if (currentThread != null) {
             PyObject isDaemon = currentThread.__findattr__("isDaemon");
             if (isDaemon != null && isDaemon.isCallable()) {

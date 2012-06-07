@@ -19,21 +19,33 @@ public class PyMethod extends PyObject {
     @ExposedGet(doc = BuiltinDocs.instancemethod_im_class_doc)
     public PyObject im_class;
 
-    /** The function (or other callable) implementing a method. */
-    @ExposedGet(doc = BuiltinDocs.instancemethod_im_func_doc)
-    public PyObject im_func;
+    /** The function (or other callable) implementing a method, also available via im_func */
+    @ExposedGet(doc = BuiltinDocs.instancemethod___func___doc)
+    public PyObject __func__;
 
-    /** The instance to which a method is bound; None for unbound methods. */
-    @ExposedGet(doc = BuiltinDocs.instancemethod_im_self_doc)
-    public PyObject im_self;
+    /** The instance to which a method is bound; None for unbound methods also available via im_self  */
+    @ExposedGet(doc = BuiltinDocs.instancemethod___self___doc)
+    public PyObject __self__;
+
+    @Deprecated
+    @ExposedGet(name = "im_func")
+    public PyObject getFunc() {
+        return __func__;
+    }
+
+    @Deprecated
+    @ExposedGet(name = "im_self")
+    public PyObject getSelf() {
+        return __self__;
+    }
 
     public PyMethod(PyObject function, PyObject self, PyObject type) {
         super(TYPE);
         if (self == Py.None){
             self = null;
         }
-        im_func = function;
-        im_self = self;
+        __func__ = function;
+        __self__ = self;
         im_class = type;
     }
 
@@ -65,7 +77,7 @@ public class PyMethod extends PyObject {
         if (ret != null) {
             return ret;
         }
-        return im_func.__findattr_ex__(name);
+        return __func__.__findattr_ex__(name);
     }
     
     @ExposedMethod(doc = BuiltinDocs.instancemethod___getattribute___doc)
@@ -86,10 +98,10 @@ public class PyMethod extends PyObject {
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.instancemethod___get___doc)
     final PyObject instancemethod___get__(PyObject obj, PyObject type) {
         // Only if classes are compatible
-        if (obj == null || im_self != null) {
+        if (obj == null || __self__ != null) {
             return this;
         } else if (Py.isSubClass(obj.fastGetClass(), im_class)) {
-            return new PyMethod(im_func, obj, im_class);
+            return new PyMethod(__func__, obj, im_class);
         } else {
             return this;
         }
@@ -104,9 +116,9 @@ public class PyMethod extends PyObject {
     public PyObject __call__(ThreadState state) {
         PyObject self = checkSelf(null, null);
         if (self == null) {
-            return im_func.__call__(state);
+            return __func__.__call__(state);
         } else {
-            return im_func.__call__(state, self);
+            return __func__.__call__(state, self);
         }
     }
     
@@ -119,9 +131,9 @@ public class PyMethod extends PyObject {
     public PyObject __call__(ThreadState state, PyObject arg0) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
-            return im_func.__call__(state, arg0);
+            return __func__.__call__(state, arg0);
         } else {
-            return im_func.__call__(state, self, arg0);
+            return __func__.__call__(state, self, arg0);
         }
     }
     
@@ -134,9 +146,9 @@ public class PyMethod extends PyObject {
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
-            return im_func.__call__(state, arg0, arg1);
+            return __func__.__call__(state, arg0, arg1);
         } else {
-            return im_func.__call__(state, self, arg0, arg1);
+            return __func__.__call__(state, self, arg0, arg1);
         }
     }
     
@@ -149,9 +161,9 @@ public class PyMethod extends PyObject {
     public PyObject __call__(ThreadState state, PyObject arg0, PyObject arg1, PyObject arg2) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
-            return im_func.__call__(state, arg0, arg1, arg2);
+            return __func__.__call__(state, arg0, arg1, arg2);
         } else {
-            return im_func.__call__(state, self, arg0, arg1, arg2);
+            return __func__.__call__(state, self, arg0, arg1, arg2);
         }
     }
     
@@ -165,9 +177,9 @@ public class PyMethod extends PyObject {
                              PyObject arg3) {
         PyObject self = checkSelf(arg0, null);
         if (self == null) {
-            return im_func.__call__(state, arg0, arg1, arg2, arg3);
+            return __func__.__call__(state, arg0, arg1, arg2, arg3);
         } else {
-            return im_func.__call__(state, self, new PyObject[]{arg0, arg1, arg2, arg3},
+            return __func__.__call__(state, self, new PyObject[]{arg0, arg1, arg2, arg3},
                                     Py.NoKeywords);
         }
     }
@@ -182,12 +194,12 @@ public class PyMethod extends PyObject {
                              String[] keywords) {
         PyObject self = checkSelf(arg1, args);
         if (self == null) {
-            return im_func.__call__(state, arg1, args, keywords);
+            return __func__.__call__(state, arg1, args, keywords);
         } else {
             PyObject[] newArgs = new PyObject[args.length + 1];
             System.arraycopy(args, 0, newArgs, 1, args.length);
             newArgs[0] = arg1;
-            return im_func.__call__(state, self, newArgs, keywords);
+            return __func__.__call__(state, self, newArgs, keywords);
         }
     }
     
@@ -215,14 +227,14 @@ public class PyMethod extends PyObject {
     final PyObject instancemethod___call__(ThreadState state, PyObject[] args, String[] keywords) {
         PyObject self = checkSelf(null, args);
         if (self == null) {
-            return im_func.__call__(state, args, keywords);
+            return __func__.__call__(state, args, keywords);
         } else {
-            return im_func.__call__(state, self, args, keywords);
+            return __func__.__call__(state, self, args, keywords);
         }
     }
 
     private PyObject checkSelf(PyObject arg, PyObject[] args) {
-        PyObject self = im_self;
+        PyObject self = __self__;
         if (self == null) {
             // Unbound methods must be called with an instance of the
             // class (or a derived class) as first argument
@@ -264,30 +276,30 @@ public class PyMethod extends PyObject {
             return -2;
         }
         PyMethod otherMethod = (PyMethod)other;
-        int cmp = im_func._cmp(otherMethod.im_func);
+        int cmp = __func__._cmp(otherMethod.__func__);
         if (cmp != 0) {
             return cmp;
         }
-        if (im_self == otherMethod.im_self) {
+        if (__self__ == otherMethod.__self__) {
             return 0;
         }
-        if (im_self == null || otherMethod.im_self == null) {
-            return System.identityHashCode(im_self) < System.identityHashCode(otherMethod.im_self)
+        if (__self__ == null || otherMethod.__self__ == null) {
+            return System.identityHashCode(__self__) < System.identityHashCode(otherMethod.__self__)
                     ? -1 : 1;
         } else {
-            return im_self._cmp(otherMethod.im_self);
+            return __self__._cmp(otherMethod.__self__);
         }
     }
 
     @Override
     public int hashCode() {
-        int hashCode = im_self == null ? Py.None.hashCode() : im_self.hashCode();
-        return hashCode ^ im_func.hashCode();
+        int hashCode = __self__ == null ? Py.None.hashCode() : __self__.hashCode();
+        return hashCode ^ __func__.hashCode();
     }
 
     @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
-        return im_func.__getattr__("__doc__");
+        return __func__.__getattr__("__doc__");
     }
 
     @Override
@@ -296,11 +308,11 @@ public class PyMethod extends PyObject {
         if (im_class != null) {
             className = getClassName(im_class);
         }
-        if (im_self == null) {
+        if (__self__ == null) {
             return String.format("<unbound method %s.%s>", className, getFuncName());
         } else {
             return String.format("<bound method %s.%s of %s>", className, getFuncName(),
-                                 im_self.__str__());
+                                 __self__.__str__());
         }
     }
 
@@ -328,7 +340,7 @@ public class PyMethod extends PyObject {
     private String getFuncName() {
         PyObject funcName = null;
         try {
-            funcName = im_func.__findattr__("__name__");
+            funcName = __func__.__findattr__("__name__");
         } catch (PyException pye) {
             // continue
         }

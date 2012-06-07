@@ -72,8 +72,8 @@ public class ProxyMaker implements ClassConstants, Opcodes
         PyObject ret = o.__findattr__(name);
         if (ret instanceof PyMethod) {
             PyMethod meth = ((PyMethod)ret);
-            if (meth.im_func instanceof PyReflectedFunction) {
-                PyReflectedFunction func = (PyReflectedFunction)meth.im_func;
+            if (meth.__func__ instanceof PyReflectedFunction) {
+                PyReflectedFunction func = (PyReflectedFunction)meth.__func__;
                 if (func.nargs > 0 && proxy.getClass() == func.argslist[0].declaringClass) {
                     // This function is the default return for the proxy type if the Python instance
                     // hasn't returned something of its own from __findattr__, so do the standard
