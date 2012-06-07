@@ -1133,6 +1133,19 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * This type is not hashable.
+     */
+    @Override
+    public int hashCode() {
+        return bytearray___hash__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray___hash___doc)
+    final int bytearray___hash__() {
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
+    }
+
+    /**
      * Implementation of Python <code>index( sub [, start [, end ]] )</code>. Like
      * {@link #find(PyObject,PyObject,PyObject)} but raise {@link Py#ValueError} if <code>sub</code>
      * is not found.
