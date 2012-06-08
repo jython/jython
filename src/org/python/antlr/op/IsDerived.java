@@ -157,6 +157,14 @@ public class IsDerived extends Is implements Slotted {
         return super.__reduce__();
     }
 
+    public PyObject __dir__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__dir__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__();
+        return super.__dir__();
+    }
+
     public PyObject __add__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__add__");

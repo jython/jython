@@ -12,6 +12,7 @@ unary1: __neg__
 unary1: __abs__
 unary1: __invert__
 unary1: __reduce__
+unary1: __dir__
 binary: __add__ __radd__ \
   __sub__ __rsub__ \
   __mul__ __rmul__ \
