@@ -792,6 +792,7 @@ class BufferedReaderTest(unittest.TestCase, CommonBufferedTests):
         self.assertEqual(bufio.readinto(b), 0)
         self.assertEqual(b, b"gf")
 
+    @unittest.skipIf(support.is_jython, "FIXME: hangs in Jython")
     def test_readlines(self):
         def bufio():
             rawio = self.MockRawIO((b"abc\n", b"d\n", b"ef"))
@@ -1261,6 +1262,7 @@ class BufferedRWPairTest(unittest.TestCase):
         pair = self.tp(self.BytesIO(b"abc"), self.MockRawIO())
         self.assertEqual(pair.read(None), b"abc")
 
+    @unittest.skipIf(support.is_jython, "FIXME: hangs in Jython")
     def test_readlines(self):
         pair = lambda: self.tp(self.BytesIO(b"abc\ndef\nh"), self.MockRawIO())
         self.assertEqual(pair().readlines(), [b"abc\n", b"def\n", b"h"])
