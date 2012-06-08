@@ -14,6 +14,9 @@ public class PyGenerator extends PyIterator {
     protected PyFrame gi_frame;
 
     @ExposedGet
+    protected PyCode gi_code = null;
+
+    @ExposedGet
     protected boolean gi_running;
 
     private PyObject closure;
@@ -21,6 +24,9 @@ public class PyGenerator extends PyIterator {
     public PyGenerator(PyFrame frame, PyObject closure) {
         super(TYPE);
         gi_frame = frame;
+        if (gi_frame != null) {
+            gi_code = gi_frame.f_code;
+        }
         this.closure = closure;
     }
 

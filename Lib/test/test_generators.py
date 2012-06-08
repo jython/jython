@@ -382,7 +382,7 @@ From the Iterators list, about the types of these things.
 >>> type(i)
 <type 'generator'>
 >>> [s for s in dir(i) if not s.startswith('_')]
-['close', 'gi_frame', 'gi_running', 'next', 'send', 'throw']
+['close', 'gi_code', 'gi_frame', 'gi_running', 'next', 'send', 'throw']
 >>> print i.next.__doc__
 x.next() -> the next value, or raise StopIteration
 >>> iter(i) is i
