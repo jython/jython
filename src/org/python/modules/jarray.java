@@ -18,4 +18,8 @@ public class jarray {
     public static PyArray zeros(int n, Class type) {
         return PyArray.zeros(n, type);
     }
+    
+    public static Class<?> array_class(PyObject type) {
+        return PyArray.array_class((Class<?>)type.__tojava__(Class.class));
+    }
 }

@@ -149,6 +149,10 @@ public class PyArray extends PySequence implements Cloneable {
         array.typecode = Character.toString(typecode);
         return array;
     }
+    
+    public static Class<?> array_class(Class<?> type) {
+         return Array.newInstance(type, 0).getClass();
+    }
 
     /**
      * Create a PyArray storing <em>ctype</em> types and being initialised
