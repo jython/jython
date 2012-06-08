@@ -4375,6 +4375,8 @@ class TestEncoding(TestCase):
 
     def _test_module_encoding(self, path):
         path, _ = os.path.splitext(path)
+        if path.endswith(r'$py'):
+            path = path[:-3]
         path += ".py"
         with codecs.open(path, 'r', 'utf8') as f:
             f.read()
