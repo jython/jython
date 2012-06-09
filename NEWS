@@ -1,6 +1,8 @@
 Jython NEWS
 
 Jython 2.7a3
+  Bugs Fixed
+    - [ 1897 ] 2.7.0ax only has partial ssl support
     - array_class in jarray module returns the "Array of a type" class
 
 Jython 2.7a2
