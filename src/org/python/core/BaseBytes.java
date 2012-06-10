@@ -2922,9 +2922,10 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
      * specified, then there is no limit on the number of splits (all possible splits are made).
      * <p>
-     * The semantics of sep and maxcount are identical to those of
-     * <code>split(sep, maxsplit)</code>, except that splits are generated from the right (and pushed onto the front of the result list). The result is only different from that of <code>split</code> if <code>maxcount</code> limits the number of splits.
-     * For example,
+     * The semantics of sep and maxcount are identical to those of <code>split(sep, maxsplit)</code>
+     * , except that splits are generated from the right (and pushed onto the front of the result
+     * list). The result is only different from that of <code>split</code> if <code>maxcount</code>
+     * limits the number of splits. For example,
      * <ul>
      * <li><code>bytearray(b' 1  2   3  ').rsplit()</code> returns
      * <code>[bytearray(b'1'), bytearray(b'2'), bytearray(b'3')]</code>, and</li>
@@ -3294,6 +3295,191 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return list;
     }
 
+    //
+    // Padding, filling and centering
+    //
+
+    /**
+     * Helper to check the fill byte for {@link #rjust(String)}, {@link #ljust(String)} and
+     * {@link #center(String)}, which is required to be a single character string, treated as a
+     * byte.
+     *
+     * @param function name
+     * @param fillchar or null
+     * @return
+     */
+    protected static byte fillByteCheck(String function, String fillchar) {
+        if (fillchar == null) {
+            return ' ';
+        } else if (fillchar.length() == 1) {
+            return (byte)fillchar.charAt(0);
+        } else {
+            throw Py.TypeError(function + "() argument 2 must be char, not str");
+        }
+    }
+
+    /**
+     * Helper function to construct the return value for {@link #rjust(String)},
+     * {@link #ljust(String)} and {@link #center(String)}. Clients calculate the left and right fill
+     * values according to their nature, and ignoring the possibility that the desired
+     * <code>width=left+size+right</code> may be less than <code>this.size</code>. This method does
+     * all the work, and deals with that exceptional case by returning <code>self[:]</code>.
+     *
+     * @param pad byte to fill with
+     * @param left padding requested
+     * @param right padding requested
+     * @return (possibly new) byte array containing the result
+     */
+    private BaseBytes padHelper(byte pad, int left, int right) {
+
+        if (left + right <= 0) {
+            // Deal here with the case wher width <= size, and no padding is necessary.
+            // If this is immutable getslice may return this same object
+            return getslice(0, size);
+        }
+
+        // Construct the result in a Builder of the desired width
+        Builder builder = getBuilder(left + size + right);
+        builder.repeat(pad, left);
+        builder.append(this);
+        builder.repeat(pad, right);
+        return builder.getResult();
+    }
+
+    /**
+     * A ready-to-expose implementation of Python <code>center(width [, fillchar])</code>: return
+     * the bytes centered in an array of length <code>width</code>. Padding is done using the
+     * specified fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>. (Immutable subclasses may return
+     * exactly the original object.)
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return (possibly new) byte array containing the result
+     */
+    final BaseBytes basebytes_center(int width, String fillchar) {
+        // Argument check and default
+        byte pad = fillByteCheck("center", fillchar);
+        // How many pads will I need?
+        int fill = width - size;
+        // CPython uses this formula, which makes a difference when width is odd and size even
+        int left = fill / 2 + (fill & width & 1);
+        return padHelper(pad, left, fill - left);
+    }
+
+    /**
+     * A ready-to-expose implementation of Python <code>ljust(width [, fillchar])</code>: return the
+     * bytes left-justified in an array of length <code>width</code>. Padding is done using the
+     * specified fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>. (Immutable subclasses may return
+     * exactly the original object.)
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return (possibly new) byte array containing the result
+     */
+    final BaseBytes basebytes_ljust(int width, String fillchar) {
+        // Argument check and default
+        byte pad = fillByteCheck("rjust", fillchar);
+        // How many pads will I need?
+        int fill = width - size;
+        return padHelper(pad, 0, fill);
+    }
+
+    /**
+     * A ready-to-expose implementation of Python <code>rjust(width [, fillchar])</code>: return the
+     * bytes right-justified in an array of length <code>width</code>. Padding is done using the
+     * specified fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>. (Immutable subclasses may return
+     * exactly the original object.)
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return (possibly new) byte array containing the result
+     */
+    final BaseBytes basebytes_rjust(int width, String fillchar) {
+        // Argument check and default
+        byte pad = fillByteCheck("rjust", fillchar);
+        // How many pads will I need?
+        int fill = width - size;
+        return padHelper(pad, fill, 0);
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>expandtabs([tabsize])</code>: return a copy of
+     * the byte array where all tab characters are replaced by one or more spaces, depending on the
+     * current column and the given tab size. The column number is reset to zero after each newline
+     * occurring in the array. This treats other non-printing characters or escape sequences as
+     * regular characters.
+     * <p>
+     * The actual class of the returned object is determined by {@link #getBuilder(int)}.
+     *
+     * @param tabsize number of character positions between tab stops
+     * @return copy of this byte array with tabs expanded
+     */
+    final BaseBytes basebytes_expandtabs(int tabsize) {
+        // We could only work out the true size by doing the work twice,
+        // so make a guess and let the Builder re-size if it's not enough.
+        int estimatedSize = size + size/8;
+        Builder builder = getBuilder(estimatedSize);
+
+        int carriagePosition = 0;
+        int limit = offset + size;
+
+        for (int i = offset; i < limit; i++) {
+            byte c = storage[i];
+            if (c == '\t') {
+                // Number of spaces is 1..tabsize
+                int spaces = tabsize - carriagePosition % tabsize;
+                builder.repeat((byte)' ', spaces);
+                carriagePosition += spaces;
+            } else {
+                // Transfer the character, but if it is a line break, reset the carriage
+                builder.append(c);
+                carriagePosition = (c == '\n' || c == '\r') ? 0 : carriagePosition + 1;
+            }
+        }
+
+        return builder.getResult();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>zfill(width):</code> return the numeric string
+     * left filled with zeros in a byte array of length width. A sign prefix is handled correctly if
+     * it is in the first byte. A copy of the original is returned if width is less than the current
+     * size of the array.
+     *
+     * @param width desired
+     * @return left-filled byte array
+     */
+    final BaseBytes basebytes_zfill(int width) {
+        // How many zeros will I need?
+        int fill = width - size;
+        Builder builder = getBuilder((fill > 0) ? width : size);
+
+        if (fill <= 0) {
+            // width <= size so result is just a copy of this array
+            builder.append(this);
+        } else {
+            // At least one zero must be added. Transfer the sign byte (if any) first.
+            int p = 0;
+            if (size > 0) {
+                byte sign = storage[offset];
+                if (sign == '-' || sign == '+') {
+                    builder.append(sign);
+                    p = 1;
+                }
+            }
+            // Now insert enough zeros
+            builder.repeat((byte)'0', fill);
+            // And finally the numeric part. Note possibility of no text eg. ''.zfill(6).
+            if (size > p) {
+                builder.append(this, p, size);
+            }
+        }
+        return builder.getResult();
+    }
+
     /*
      * ============================================================================================
      * Java API for access as byte[]
@@ -3631,5 +3817,211 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     public List<PyInteger> subList(int fromIndex, int toIndex) {
         return listDelegate.subList(fromIndex, toIndex);
     }
+
+    /*
+     * ============================================================================================
+     * Support for Builder
+     * ============================================================================================
+     */
+
+    /**
+     * A <code>Builder</code> holds a buffer of bytes to which new bytes may be appended while
+     * constructing the value of byte array, even when the type ultimately constructed is immutable.
+     * The value it builds may be transferred (normally without copying) to a new instance of the
+     * type being built.
+     * <p>
+     * <code>Builder</code> is an abstract class. The each sub-class of <code>BaseBytes</code> may
+     * define its own concrete implementation in which {@link Builder#getResult()} returns an object
+     * of its own type, taking its value from the <code>Builder</code> contents using
+     * {@link #getStorage()} and {@link #getSize()}. Methods in <code>BaseBytes</code> obtain a
+     * <code>Builder</code> by calling the abstract method {@link BaseBytes#getBuilder(int)}, which
+     * the sub-class also defines, to return an isnstance of its characteristic <code>Builder</code>
+     * sub-class. The subclass that uses a method from <code>BaseBytes</code> returning a
+     * <code>BaseBytes</code> has to cast a returned from a BaseBytes method to its proper type.
+     * which it can do without error, since it was responsible for its actual type.
+     * <p>
+     * <b>Implementation note:</b> This can be done in a type-safe way but, in the present design,
+     * only by making <code>BaseBytes</code> parameterised class.
+     *
+     */
+    protected static abstract class Builder /* <B> */{
+
+        /**
+         * Return an object of type B extends <code>BaseBytes</code> whose content is what we built.
+         */
+        abstract BaseBytes getResult();
+
+        // Internal state
+        private byte[] storage = emptyStorage;
+        private int size = 0;
+
+        /**
+         * Construct a builder with specified initial capacity.
+         *
+         * @param capacity
+         */
+        Builder(int capacity) {
+            makeRoomFor(capacity);
+        }
+
+        /**
+         * Get an array of bytes containing the accumulated value, and clear the existing contents
+         * of the Builder. {@link #getCount()} returns the number of valid bytes in this array,
+         * which may be longer than the valid data.
+         * <p>
+         * It is intended the client call this method only once to get the result of a series of
+         * append operations. A second call to {@link #getCount()}, before any further appending,
+         * returns a zero-length array. This is to ensure that the same array is not given out
+         * twice. However, {@link #getCount()} continues to return the number bytes accumuated until
+         * an append next occurs.
+         *
+         * @return an array containing the accumulated result
+         */
+        byte[] getStorage() {
+            byte[] s = storage;
+            storage = emptyStorage;
+            return s;
+        }
+
+        /**
+         * Number of bytes accumulated. In conjunctin with {@link #getStorage()}, this provides the
+         * result. Unlike {@link #getStorage()}, it does not affect the contents.
+         *
+         * @return number of bytes accumulated
+         */
+        final int getSize() {
+            return size;
+        }
+
+        /**
+         * Append a single byte to the value.
+         *
+         * @param b
+         */
+        void append(byte b) {
+            makeRoomFor(1);
+            storage[size++] = b;
+        }
+
+        /**
+         * Append a number of repeats of a single byte to the value, fo example in padding.
+         *
+         * @param b byte to repeat
+         * @param n number of repeats (none if n<=0)
+         */
+        void repeat(byte b, int n) {
+            if (n > 0) {
+                makeRoomFor(n);
+                while (n-- > 0) {
+                    storage[size++] = b;
+                }
+            }
+        }
+
+        /**
+         * Append the contents of the given byte array.
+         *
+         * @param b
+         */
+        void append(BaseBytes b) {
+            append(b, 0, b.size);
+        }
+
+        /**
+         * Append the contents of a slice of the given byte array.
+         *
+         * @param b
+         * @param start index of first byte copied
+         * @param end index of fisrt byte not copied
+         */
+        void append(BaseBytes b, int start, int end) {
+            int n = end - start;
+            makeRoomFor(n);
+            System.arraycopy(b.storage, b.offset+start, storage, size, n);
+            size += n;
+        }
+
+        /**
+         * Append the contents of the given {@link View}.
+         *
+         * @param b
+         */
+        void append(View v) {
+            int n = v.size();
+            makeRoomFor(n);
+            v.copyTo(storage, size);
+            size += n;
+        }
+
+        // Ensure there is enough free space for n bytes (or allocate some)
+        void makeRoomFor(int n) throws PyException {
+            int needed = size + n;
+            if (needed > storage.length) {
+                try {
+                    if (storage == emptyStorage) {
+                        /*
+                         * After getStorage(): size deliberately retains its prior value, even
+                         * though storage is set to emptyStorage. However, the first (non-empty)
+                         * append() operation after that lands us here, because storage.length==0.
+                         */
+                        size = 0;
+                        if (n > 0) {
+                            // When previously empty (incluing the constructor) allocate exactly n.
+                            storage = new byte[n];
+                        }
+                    } else {
+                        // We are expanding an existing allocation: be imaginative
+                        byte[] old = storage;
+                        storage = new byte[roundUp(needed)];
+                        System.arraycopy(old, 0, storage, 0, size);
+                    }
+                } catch (OutOfMemoryError e) {
+                    /*
+                     * MemoryError is right for most clients. Some (e.g. bytearray.replace()) should
+                     * convert it to an overflow, with a customised message.
+                     */
+                    throw Py.MemoryError(e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Choose a size appropriate to store the given number of bytes, with some room for growth, when
+     * allocating storage for mutable types or <code>Builder</code>. We'll be more generous than
+     * CPython for small array sizes to avoid needless reallocation.
+     *
+     * @param size of storage actually needed
+     * @return n >= size a recommended storage array size
+     */
+    protected static final int roundUp(int size) {
+        /*
+         * The CPython formula is: size + (size >> 3) + (size < 9 ? 3 : 6). But when the array
+         * grows, CPython can use a realloc(), which will often be able to extend the allocation
+         * into memory already secretly allocated by the initial malloc(). Extension in Java means
+         * that we have to allocate a new array of bytes and copy to it.
+         */
+        final int ALLOC = 16;   // Must be power of two!
+        final int SIZE2 = 10;   // Smallest size leading to a return value of 2*ALLOC
+        if (size >= SIZE2) {       // Result > ALLOC, so work it out
+            // Same recommendation as CPython, but rounded up to multiple of ALLOC
+            return (size + (size >> 3) + (6 + ALLOC - 1)) & ~(ALLOC - 1);
+        } else if (size > 0) {  // Easy: save arithmetic
+            return ALLOC;
+        } else {                // Very easy
+            return 0;
+        }
+    }
+
+    /**
+     * Every sub-class of BaseBytes overrides this method to return a <code>Builder&lt;B></code>
+     * where <code>B</code> is (normally) that class's particular type, and it extends
+     * <code>Builder&lt;B></code> so that {@link Builder#getResult()} produces an instance of
+     * <code>B</code> from the contents..
+     *
+     * @param capacity of the <code>Builder&lt;B></code> returned
+     * @return a <code>Builder&lt;B></code> for the correct sub-class
+     */
+    protected abstract Builder/* <? extends BaseBytes> */getBuilder(int capacity);
 
 }

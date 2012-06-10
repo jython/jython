@@ -232,6 +232,7 @@ public class PyByteArray extends BaseBytes {
      */
     @Override
     protected synchronized PyByteArray getslice(int start, int stop) {
+        // If this were immutable, start==0 and end==size we would return (this).
         // Efficiently copy contiguous slice
         int n = stop - start;
         if (n <= 0) {
@@ -667,6 +668,27 @@ public class PyByteArray extends BaseBytes {
 
     }
 
+    /*
+     * ============================================================================================
+     * Support for Builder
+     * ============================================================================================
+     *
+     * Extend BaseBytes.Builder so that it can return a PyByteArray and give the superclass a hook
+     * for it.
+     */
+
+    @Override
+    protected Builder getBuilder(int capacity) {
+        // Return a Builder specialised for my class
+        return new Builder(capacity) {
+
+            @Override
+            PyByteArray getResult() {
+                // Create a PyByteArray from the storage that the builder holds
+                return new PyByteArray(getStorage(), getSize());
+            }
+        };
+    }
 
     /* ============================================================================================
      * Python API rich comparison operations
@@ -893,6 +915,37 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
+     * Java API equivalent of Python <code>center(width)</code>: return the bytes centered in an
+     * array of length <code>width</code>, padded by spaces. A copy of the original byte array is
+     * returned if width is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @return new byte array containing result
+     */
+    public PyByteArray center(int width) {
+        return (PyByteArray)basebytes_center(width, " ");
+    }
+
+    /**
+     * Java API equivalent of Python <code>center(width [, fillchar])</code>: return the bytes
+     * centered in an array of length <code>width</code>. Padding is done using the specified
+     * fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return new byte array containing the result
+     */
+    public PyByteArray center(int width, String fillchar) {
+        return (PyByteArray)basebytes_center(width, fillchar);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_center_doc)
+    final PyByteArray bytearray_center(int width, String fillchar) {
+        return (PyByteArray)basebytes_center(width, fillchar);
+    }
+
+    /**
      * Implementation of Python <code>count(sub)</code>. Return the number of non-overlapping
      * occurrences of <code>sub</code> in this byte array.
      *
@@ -988,6 +1041,36 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.bytearray_endswith_doc)
     final boolean bytearray_endswith(PyObject suffix, PyObject start, PyObject end) {
         return basebytes_starts_or_endswith(suffix, start, end, true);
+    }
+
+    /**
+     * Implementation of Python <code>expandtabs()</code>: return a copy of the byte array where all
+     * tab characters are replaced by one or more spaces, as {@link #expandtabs(int)} with a tab
+     * size of 8 characters.
+     *
+     * @return copy of this byte array with tabs expanded
+     */
+    public PyByteArray expandtabs() {
+        return (PyByteArray)basebytes_expandtabs(8);
+    }
+
+    /**
+     * Implementation of Python <code>expandtabs(tabsize)</code>: return a copy of the byte array
+     * where all tab characters are replaced by one or more spaces, depending on the current column
+     * and the given tab size. The column number is reset to zero after each newline occurring in
+     * the array. This treats other non-printing characters or escape sequences as regular
+     * characters.
+     *
+     * @param tabsize number of character positions between tab stops
+     * @return copy of this byte array with tabs expanded
+     */
+    public PyByteArray expandtabs(int tabsize) {
+        return (PyByteArray)basebytes_expandtabs(tabsize);
+    }
+
+    @ExposedMethod(defaults = "8", doc = BuiltinDocs.bytearray_expandtabs_doc)
+    final PyByteArray bytearray_expandtabs(int tabsize) {
+        return (PyByteArray)basebytes_expandtabs(tabsize);
     }
 
     /**
@@ -1207,6 +1290,38 @@ public class PyByteArray extends BaseBytes {
     @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
     final int bytearray___len__() {
         return __len__();
+    }
+
+    /**
+     * Java API equivalent of Python <code>ljust(width)</code>: return the bytes left justified in
+     * an array of length <code>width</code>, padded by spaces. A copy of the original byte array is
+     * returned if width is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @return new byte array containing result
+     */
+    public PyByteArray ljust(int width) {
+        return (PyByteArray)basebytes_ljust(width, " ");
+    }
+
+    /**
+     * Java API equivalent of Python <code>ljust(width [, fillchar])</code>: return the bytes
+     * left-justified in an array of length <code>width</code>. Padding is done using the specified
+     * fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return new byte array containing the result
+     */
+    public PyByteArray ljust(int width, String fillchar) {
+        return (PyByteArray)basebytes_ljust(width, fillchar);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_ljust_doc)
+    final PyByteArray bytearray_ljust(int width, String fillchar) {
+        // If this was immutable and width<=this.size we could return (this).
+        return (PyByteArray)basebytes_ljust(width, fillchar);
     }
 
     /**
@@ -1437,6 +1552,37 @@ public class PyByteArray extends BaseBytes {
      */
     public int rindex(PyObject sub, PyObject start) {
         return bytearray_rindex(sub, start, null);
+    }
+
+    /**
+     * Java API equivalent of Python <code>rjust(width)</code>: return the bytes right justified in
+     * an array of length <code>width</code>, padded by spaces. A copy of the original byte array is
+     * returned if width is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @return new byte array containing result
+     */
+    public PyByteArray rjust(int width) {
+        return (PyByteArray)basebytes_rjust(width, " ");
+    }
+
+    /**
+     * Java API equivalent of Python <code>rjust(width [, fillchar])</code>: return the bytes
+     * right-justified in an array of length <code>width</code>. Padding is done using the specified
+     * fillchar (default is a space). A copy of the original byte array is returned if
+     * <code>width</code> is less than <code>this.size()</code>.
+     *
+     * @param width desired
+     * @param fillchar one-byte String to fill with, or null implying space
+     * @return new byte array containing the result
+     */
+    public PyByteArray rjust(int width, String fillchar) {
+        return (PyByteArray)basebytes_rjust(width, fillchar);
+    }
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_rjust_doc)
+    final PyByteArray bytearray_rjust(int width, String fillchar) {
+        return (PyByteArray)basebytes_rjust(width, fillchar);
     }
 
     /**
@@ -1733,6 +1879,24 @@ public class PyByteArray extends BaseBytes {
         return result;
     }
 
+    /**
+     * Implementation of Python <code>zfill(width):</code> return the numeric string left filled
+     * with zeros in a byte array of length <code>width</code>. A sign prefix is handled correctly
+     * if it is in the first byte. A copy of the original is returned if width is less than the
+     * current size of the array.
+     *
+     * @param width desired
+     * @return left-filled byte array
+     */
+    public PyByteArray zfill(int width) {
+        return (PyByteArray)basebytes_zfill(width);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_zfill_doc)
+    final PyByteArray bytearray_zfill(int width) {
+        return (PyByteArray)basebytes_zfill(width);
+    }
+
     /*
      * ============================================================================================
      * Manipulation of storage capacity
@@ -1741,32 +1905,6 @@ public class PyByteArray extends BaseBytes {
      * Here we add to the inherited variables defining byte storage, the methods necessary to resize
      * it.
      */
-
-    /**
-     * Choose a size appropriate to store the given number of bytes, with some room for growth.
-     * We'll be more generous than CPython for small array sizes to avoid needless reallocation.
-     *
-     * @param size of storage actually needed
-     * @return n >= size a recommended storage array size
-     */
-    private static final int roundUp(int size) {
-        /*
-         * The CPython formula is: size + (size >> 3) + (size < 9 ? 3 : 6). But when the array
-         * grows, CPython can use a realloc(), which will often be able to extend the allocation
-         * into memory already secretly allocated by the initial malloc(). Extension in Java means
-         * that we have to allocate a new array of bytes and copy to it.
-         */
-        final int ALLOC = 16;   // Must be power of two!
-        final int SIZE2 = 10;   // Smallest size leading to a return value of 2*ALLOC
-        if (size >= SIZE2) {       // Result > ALLOC, so work it out
-            // Same recommendation as Python, but rounded up to multiple of ALLOC
-            return (size + (size >> 3) + (6 + ALLOC - 1)) & ~(ALLOC - 1);
-        } else if (size > 0) {  // Easy: save arithmetic
-            return ALLOC;
-        } else {                // Very easy
-            return 0;
-        }
-    }
 
     /**
      * Recommend a length for (but don't allocate) a new storage array, taking into account the
