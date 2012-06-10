@@ -1270,6 +1270,45 @@ public class PyByteArray extends BaseBytes {
         pyinsert(boundToSequence(index.asIndex()), value);
     }
 
+    //
+    // Character class operations
+    //
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_isalnum_doc)
+    final boolean bytearray_isalnum() {
+        return basebytes_isalnum();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_isalpha_doc)
+    final boolean bytearray_isalpha() {
+        return basebytes_isalpha();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_isdigit_doc)
+    final boolean bytearray_isdigit() {
+        return basebytes_isdigit();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_islower_doc)
+    final boolean bytearray_islower() {
+        return basebytes_islower();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_isspace_doc)
+    final boolean bytearray_isspace() {
+        return basebytes_isspace();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_istitle_doc)
+    final boolean bytearray_istitle() {
+        return basebytes_istitle();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_isupper_doc)
+    final boolean bytearray_isupper() {
+        return basebytes_isupper();
+    }
+
     /**
      * Implementation of Python <code>join(iterable)</code>. Return a bytearray which is the
      * concatenation of the byte arrays in the iterable <code>iterable</code>. The separator between

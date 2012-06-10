@@ -3253,7 +3253,7 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     /**
      * Ready-to-expose implementation of Python <code>splitlines(keepends)</code>, returning a list
-     * of the lines in the string, breaking at line boundaries. Line breaks are not included in the
+     * of the lines in the array, breaking at line boundaries. Line breaks are not included in the
      * resulting list unless keepends is given and true.
      *
      * @param keepends if true, include the end of line bytes(s)
@@ -3480,6 +3480,259 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return builder.getResult();
     }
 
+    //
+    // Character class operations
+    //
+
+    /**
+     * Java API equivalent of Python <code>isalnum()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isLetterOrDigit(char)}.
+     *
+     * @return true if all bytes in the array are point codes for alphanumerics and there is at
+     *         least one byte, false otherwise.
+     */
+    public boolean isalnum() {
+        return basebytes_isalnum();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>isalnum()</code>.
+     *
+     * @return true if all bytes in the array are point codes for alphanumerics and there is at
+     *         least one byte, false otherwise.
+     */
+    final boolean basebytes_isalnum() {
+        if (size <= 0) {
+            // Treat empty string as special case
+            return false;
+        } else {
+            // Test the bytes
+            for (int i = 0; i < size; i++) {
+                if (!Character.isLetterOrDigit(charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Java API equivalent of Python <code>isalpha()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isLetter(char)}.
+     *
+     * @return true if all bytes in the array are alphabetic and there is at least one byte, false
+     *         otherwise
+     */
+    public boolean isalpha() {
+        return basebytes_isalpha();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>isalpha()</code>.
+     *
+     * @return true if all bytes in the array are alphabetic and there is at least one byte, false
+     *         otherwise
+     */
+    final boolean basebytes_isalpha() {
+        if (size <= 0) {
+            // Treat empty string as special case
+            return false;
+        } else {
+            // Test the bytes
+            for (int i = 0; i < size; i++) {
+                if (!Character.isLetter(charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Java API equivalent of Python <code>isdigit()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isDigit(char)}.
+     *
+     * @return true if all bytes in the array are point codes for digits and there is at least one
+     *         byte, false otherwise.
+     */
+    public boolean isdigit() {
+        return basebytes_isdigit();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>isdigit()</code>.
+     *
+     * @return true if all bytes in the array are point codes for digits and there is at least one
+     *         byte, false otherwise.
+     */
+    final boolean basebytes_isdigit() {
+        if (size <= 0) {
+            // Treat empty string as special case
+            return false;
+        } else {
+            // Test the bytes
+            for (int i = 0; i < size; i++) {
+                if (!Character.isDigit(charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Java API equivalent of Python <code>islower()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isLowerCase(char)}.
+     *
+     * @return true if all cased bytes in the array are point codes for lowercase characters and
+     *         there is at least one cased byte, false otherwise.
+     */
+    public boolean islower() {
+        return basebytes_islower();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>islower()</code>.
+     *
+     * @return true if all cased bytes in the array are point codes for lowercase characters and
+     *         there is at least one cased byte, false otherwise.
+     */
+    final boolean basebytes_islower() {
+        boolean hasCased = false;
+        // Test the bytes
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isUpperCase(c)) {
+                return false;
+            } else if (hasCased) {
+                continue;   // Don't need to keep checking for cased characters
+            } else if (Character.isLowerCase(c)) {
+                hasCased = true;
+            }
+        }
+        // Found no upper case bytes, but did we find any cased bytes at all?
+        return hasCased;
+    }
+
+    /**
+     * Java API equivalent of Python <code>isspace()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isWhitespace(char)}.
+     *
+     * @return true if all the bytes in the array are point codes for whitespace characters and
+     *         there is at least one byte, false otherwise.
+     */
+    public boolean isspace() {
+        return basebytes_isspace();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>isspace()</code>.
+     *
+     * @return true if all the bytes in the array are point codes for whitespace characters and
+     *         there is at least one byte, false otherwise.
+     */
+    final boolean basebytes_isspace() {
+        if (size <= 0) {
+            // Treat empty string as special case
+            return false;
+        } else {
+            // Test the bytes
+            for (int i = 0; i < size; i++) {
+                if (!Character.isWhitespace(charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Java API equivalent of Python <code>istitle()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isUpperCase(char)} and
+     * {@link Character#isLowerCase(char)}.
+     *
+     * @return true if the string is a titlecased string and there is at least one cased byte, for example
+     *         uppercase characters may only follow uncased bytes and lowercase characters only
+     *         cased ones. Return false otherwise.
+     */
+    public boolean istitle() {
+        return basebytes_istitle();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>istitle()</code>.
+     *
+     * @return true if the string is a titlecased string and there is at least one cased byte, for example
+     *         uppercase characters may only follow uncased bytes and lowercase characters only
+     *         cased ones. Return false otherwise.
+     */
+    final boolean basebytes_istitle() {
+
+        int state = 0;
+        // 0 = have seen no cased characters (can't be in a word)
+        // 1 = have seen cased character, but am not in a word
+        // 2 = in a word (hence have have seen cased character)
+
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isUpperCase(c)) {
+                if (state == 2) {
+                    // Violation: can't continue a word in upper case
+                    return false;
+                } else {
+                    // Validly in a word
+                    state = 2;
+                }
+            } else if (Character.isLowerCase(c)) {
+                if (state != 2) {
+                    // Violation: can't start a word in lower case
+                    return false;
+                }
+            } else {
+                if (state == 2) {
+                    // Uncased character: end of the word as we know it
+                    state = 1;
+                }
+            }
+        }
+        // Found no case violations, but did we find any cased bytes at all?
+        return state != 0;
+    }
+
+    /**
+     * Java API equivalent of Python <code>isupper()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#isUpperCase(char)}.
+     *
+     * @return true if all cased bytes in the array are point codes for uppercase characters and
+     *         there is at least one cased byte, false otherwise.
+     */
+    public boolean isupper() {
+        return basebytes_isupper();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>isupper()</code>.
+     *
+     * @return true if all cased bytes in the array are point codes for uppercase characters and
+     *         there is at least one cased byte, false otherwise.
+     */
+    final boolean basebytes_isupper() {
+        boolean hasCased = false;
+        // Test the bytes
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isLowerCase(c)) {
+                return false;
+            } else if (hasCased) {
+                continue;   // Don't need to keep checking for cased characters
+            } else if (Character.isUpperCase(c)) {
+                hasCased = true;
+            }
+        }
+        // Found no lower case bytes, but did we find any cased bytes at all?
+        return hasCased;
+    }
+
     /*
      * ============================================================================================
      * Java API for access as byte[]
@@ -3508,6 +3761,18 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
     public synchronized int intAt(int index) throws PyException {
         indexCheck(index);
         return 0xff & byteAt(index);
+    }
+
+    /**
+     * Return the Python byte (in range 0 to 255 inclusive) at the given index, interpreted as an
+     * unsigned point code, without checking the index.
+     *
+     * @param index of value in byte array
+     * @return the char value at the index
+     * @throws IndexOutOfBoundsException if outside storage array
+     */
+    private final char charAt(int index) throws IndexOutOfBoundsException {
+        return (char)(0xff & storage[index + offset]);
     }
 
     /**
