@@ -3733,6 +3733,201 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         return hasCased;
     }
 
+    //
+    // Case transformations
+    //
+
+    /**
+     * Java API equivalent of Python <code>capitalize()</code>. This method treats the bytes as
+     * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
+     * {@link Character#toLowerCase(char)}.
+     *
+     * @return a copy of the array with its first character capitalized and the rest lowercased.
+     */
+    public BaseBytes capitalize() {
+        return basebytes_capitalize();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>capitalize()</code>.
+     *
+     * @return a copy of the array with its first character capitalized and the rest lowercased.
+     */
+    final BaseBytes basebytes_capitalize() {
+
+        Builder builder = getBuilder(size);
+
+        if (size > 0) {
+            // Treat first character
+            char c = charAt(0);
+            if (Character.isLowerCase(c)) {
+                c = Character.toUpperCase(c);
+            }
+            // Put the adjusted character in the output as a byte
+            builder.append((byte)c);
+
+            // Treat the rest
+            for (int i = 1; i < size; i++) {
+                c = charAt(i);
+                if (Character.isUpperCase(c)) {
+                    c = Character.toLowerCase(c);
+                }
+                // Put the adjusted character in the output as a byte
+                builder.append((byte)c);
+            }
+        }
+
+        return builder.getResult();
+    }
+
+    /**
+     * Java API equivalent of Python <code>lower()</code>. This method treats the bytes as Unicode
+     * pont codes and is consistent with Java's {@link Character#toLowerCase(char)}.
+     *
+     * @return a copy of the array with all the cased characters converted to lowercase.
+     */
+    public BaseBytes lower() {
+        return basebytes_lower();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>lower()</code>.
+     *
+     * @return a copy of the array with all the cased characters converted to lowercase.
+     */
+    final BaseBytes basebytes_lower() {
+
+        Builder builder = getBuilder(size);
+
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isUpperCase(c)) {
+                c = Character.toLowerCase(c);
+            }
+            // Put the adjusted character in the output as a byte
+            builder.append((byte)c);
+        }
+
+        return builder.getResult();
+    }
+
+    /**
+     * Java API equivalent of Python <code>swapcase()</code>. This method treats the bytes as
+     * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
+     * {@link Character#toLowerCase(char)}.
+     *
+     * @return a copy of the array with uppercase characters converted to lowercase and vice versa.
+     */
+    public BaseBytes swapcase() {
+        return basebytes_swapcase();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>swapcase()</code>.
+     *
+     * @return a copy of the array with uppercase characters converted to lowercase and vice versa.
+     */
+    final BaseBytes basebytes_swapcase() {
+
+        Builder builder = getBuilder(size);
+
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isUpperCase(c)) {
+                c = Character.toLowerCase(c);
+            } else if (Character.isLowerCase(c)) {
+                c = Character.toUpperCase(c);
+            }
+            // Put the adjusted character in the output as a byte
+            builder.append((byte)c);
+        }
+
+        return builder.getResult();
+    }
+
+    /**
+     * Java API equivalent of Python <code>title()</code>. The algorithm uses a simple
+     * language-independent definition of a word as groups of consecutive letters. The definition
+     * works in many contexts but it means that apostrophes in contractions and possessives form
+     * word boundaries, which may not be the desired result.
+     *
+     * @return a titlecased version of the array where words start with an uppercase character and
+     *         the remaining characters are lowercase.
+     */
+    public BaseBytes title() {
+        return basebytes_title();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>title()</code>.
+     *
+     * @return a titlecased version of the array where words start with an uppercase character and
+     *         the remaining characters are lowercase.
+     */
+    final BaseBytes basebytes_title() {
+
+        Builder builder = getBuilder(size);
+        boolean inWord = false; // We begin, not in a word (sequence of cased characters)
+
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+
+            if (!inWord) {
+                // When we are not in a word ...
+                if (Character.isLowerCase(c)) {
+                    c = Character.toUpperCase(c);   // ... a lowercase letter must be upcased
+                    inWord = true;                  // and it starts a word.
+                } else if (Character.isUpperCase(c)) {
+                    inWord = true;                  // ... an uppercase letter just starts the word
+                }
+
+            } else {
+                // When we are in a word ...
+                if (Character.isUpperCase(c)) {
+                    c = Character.toLowerCase(c);   // ... an uppercase letter must be downcased
+                } else if (!Character.isLowerCase(c)) {
+                    inWord = false;                 // ... and a non-letter ends the word
+                }
+            }
+            // Put the adjusted character in the output as a byte
+            builder.append((byte)c);
+        }
+        return builder.getResult();
+    }
+
+    /**
+     * Java API equivalent of Python <code>upper()</code>. Note that
+     * <code>x.upper().isupper()</code> might be <code>false</code> if the array contains uncased
+     * characters.
+     * 
+     *
+     * @return a copy of the array with all the cased characters converted to uppercase.
+     */
+    public BaseBytes upper() {
+        return basebytes_upper();
+    }
+
+    /**
+     * Ready-to-expose implementation of Python <code>upper()</code>.
+     *
+     * @return a copy of the array with all the cased characters converted to uppercase.
+     */
+    final BaseBytes basebytes_upper() {
+
+        Builder builder = getBuilder(size);
+
+        for (int i = 0; i < size; i++) {
+            char c = charAt(i);
+            if (Character.isLowerCase(c)) {
+                c = Character.toUpperCase(c);
+            }
+            // Put the adjusted character in the output as a byte
+            builder.append((byte)c);
+        }
+
+        return builder.getResult();
+    }
+
     /*
      * ============================================================================================
      * Java API for access as byte[]

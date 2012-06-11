@@ -1309,7 +1309,36 @@ public class PyByteArray extends BaseBytes {
         return basebytes_isupper();
     }
 
-    /**
+    //
+    // Case transformations
+    //
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_capitalize_doc)
+    final PyByteArray bytearray_capitalize() {
+        return (PyByteArray)basebytes_capitalize();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_lower_doc)
+    final PyByteArray bytearray_lower() {
+        return (PyByteArray)basebytes_lower();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_swapcase_doc)
+    final PyByteArray bytearray_swapcase() {
+        return (PyByteArray)basebytes_swapcase();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_title_doc)
+    final PyByteArray bytearray_title() {
+        return (PyByteArray)basebytes_title();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.bytearray_upper_doc)
+    final PyByteArray bytearray_upper() {
+        return (PyByteArray)basebytes_upper();
+    }
+
+   /**
      * Implementation of Python <code>join(iterable)</code>. Return a bytearray which is the
      * concatenation of the byte arrays in the iterable <code>iterable</code>. The separator between
      * elements is the byte array providing this method.
