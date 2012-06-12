@@ -13,10 +13,8 @@ import types
 __all__ = ["filters", "default_action", "once_registry", "warn",
            "warn_explicit"]
 
-once_registry = {}
-onceregistry = once_registry
-default_action = "default"
-defaultaction = default_action
+onceregistry = once_registry = {}
+defaultaction = default_action = "default"
 
 def warnpy3k(message, category=None, stacklevel=1):
     """Issue a deprecation warning for Python 3.x related changes.
@@ -177,6 +175,27 @@ def _getcategory(category):
         raise _OptionError("invalid warning category: %r" % (category,))
     return cat
 
+class SysGlobals:
+    '''sys.__dict__ values are reflectedfields, so we use this.'''
+    def __getitem__(self, key):
+        try:
+            return getattr(sys, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def get(self, key, default=None):
+        if key in self:
+            return self[key]
+        return default
+
+    def setdefault(self, key, default=None):
+        if key not in self:
+            sys.__dict__[key] = default
+        return self[key]
+
+    def __contains__(self, key):
+        return key in sys.__dict__
+
 # Code typically replaced by _warnings
 def warn(message, category=None, stacklevel=1):
     """Issue a warning, or maybe ignore it or raise an exception."""
@@ -191,7 +210,7 @@ def warn(message, category=None, stacklevel=1):
     try:
         caller = sys._getframe(stacklevel)
     except ValueError:
-        globals = sys.__dict__
+        globals = SysGlobals()
         lineno = 1
     else:
         globals = caller.f_globals
@@ -262,11 +281,12 @@ def warn_explicit(message, category, filename, lineno,
         raise message
     # Other actions
     if action == "once":
+        _onceregistry = globals().get('onceregistry', once_registry)
         registry[key] = 1
         oncekey = (text, category)
-        if onceregistry.get(oncekey):
+        if _onceregistry.get(oncekey):
             return
-        onceregistry[oncekey] = 1
+        _onceregistry[oncekey] = 1
     elif action == "always":
         pass
     elif action == "module":
@@ -283,7 +303,8 @@ def warn_explicit(message, category, filename, lineno,
               "Unrecognized action (%r) in warnings.filters:\n %s" %
               (action, item))
     # Print message and context
-    showwarning(message, category, filename, lineno)
+    fn = globals().get('showwarning', _show_warning)
+    fn(message, category, filename. lineno)
 
 
 class WarningMessage(object):
@@ -349,7 +370,7 @@ class catch_warnings(object):
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
-        self._module.filters = self._filters[:]
+        self._module.filters = self._module._filters = self._filters[:]
         self._showwarning = self._module.showwarning
         if self._record:
             log = []
@@ -363,5 +384,5 @@ class catch_warnings(object):
     def __exit__(self, *exc_info):
         if not self._entered:
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        self._module.filters = self._filters
+        self._module.filters = self._module._filters = self._filters
         self._module.showwarning = self._showwarning
