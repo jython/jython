@@ -738,6 +738,33 @@ public class BaseBytesTest extends TestCase {
             return size;
         }
 
+        /**
+         * Construct the MyBytes from a builder object.
+         *
+         * @param builder
+         */
+        protected MyBytes(Builder builder) {
+            super(TYPE);
+            setStorage(builder.getStorage(), builder.getSize());
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see org.python.core.BaseBytes#getBuilder(int)
+         */
+        @Override
+        protected Builder getBuilder(int capacity) {
+            // Return a Builder specialised for my class
+            return new Builder(capacity) {
+
+                @Override
+                MyBytes getResult() {
+                    // Create a MyBytes from the storage that the builder holds
+                    return new MyBytes(this);
+                }
+            };
+        }
     }
 
     /**
