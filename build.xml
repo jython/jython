@@ -940,6 +940,23 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
+        <mkdir dir="${junit.reports}"/>
+        <junit fork="true" printsummary="true">
+            <formatter type="xml"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
+            <classpath refid="test.classpath"/>
+            <classpath refid="test.classpath"/>
+            <classpath>
+                <pathelement location="${jython.base.dir}/tests/python"/>
+            </classpath>
+            <batchtest todir="${junit.reports}">
+                <fileset dir="${test.source.dir}" includes="org/python/tests/imp/*Test*.java">
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
     <target name="idxtest" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true" showoutput="true">

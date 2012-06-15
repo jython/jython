@@ -1013,6 +1013,12 @@ public class imp {
         PyObject[] submods = new PyObject[names.length];
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
+            //XXX: Temporary fix for http://bugs.jython.org/issue1900
+            if (submod == null) {
+                submod = module.impAttr(names[i]);
+            }
+            //end temporary fix.
+
             if (submod == null) {
                 throw Py.ImportError("cannot import name " + names[i]);
             }
