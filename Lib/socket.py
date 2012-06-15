@@ -109,7 +109,7 @@ _exception_map = {
 
 (java.net.BindException, ALL)            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
 (java.net.ConnectException, ALL)         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
-(java.net.NoRouteToHostException, ALL)   : None,
+(java.net.NoRouteToHostException, ALL)   : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
 (java.net.PortUnreachableException, ALL) : None,
 (java.net.ProtocolException, ALL)        : None,
 (java.net.SocketException, ALL)          : java_net_socketexception_handler,
