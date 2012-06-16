@@ -17,11 +17,14 @@
 		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
-			<triggers>full,incremental,</triggers>
 			<arguments>
 				<dictionary>
 					<key>LaunchConfigHandle</key>
-					<value>&lt;project&gt;/.externalToolBuilders/New_Builder.launch</value>
+					<value>&lt;project&gt;/.externalToolBuilders/ant_expose.launch</value>
+				</dictionary>
+				<dictionary>
+					<key>incclean</key>
+					<value>true</value>
 				</dictionary>
 			</arguments>
 		</buildCommand>
