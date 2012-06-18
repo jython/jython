@@ -1,0 +1,4 @@
+base_class: chain
+want_dict: true
+ctr:
+incl: object

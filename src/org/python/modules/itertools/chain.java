@@ -41,7 +41,7 @@ public class chain extends PyObject {
     }
 
     @ExposedClassMethod
-    public static final PyObject from_iterable(PyObject iterable) {
+    public static final PyObject from_iterable(PyType type, PyObject iterable) {
         ArrayList<PyObject> iterables = new ArrayList<PyObject>();
         for (PyObject i: iterable.asIterable()) {
             iterables.add(i);
@@ -55,7 +55,7 @@ public class chain extends PyObject {
     @ExposedNew
     @ExposedMethod
     final void chain___init__(final PyObject[] args, String[] kwds) {
-        ArgParser ap = new ArgParser("chain", args, kwds, new String[] {"iterables"});
+        ArgParser ap = new ArgParser("chain", args, kwds, "iterables");
 
         //ArgParser always returns a PyTuple - I wonder why we make it pass back a PyObject?
         PyTuple tuple = (PyTuple)ap.getList(0);

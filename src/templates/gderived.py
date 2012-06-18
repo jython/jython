@@ -206,8 +206,10 @@ class Gen:
         return derived_templ.texpand({'base': self.base_class, 'decls': self.decls })
 
 def process(fn, outfile, lazy=False):
-    if lazy and os.stat(fn).st_mtime < os.stat(outfile).st_mtime:
-	return
+    if (lazy and
+        os.path.exists(outfile) and 
+        os.stat(fn).st_mtime < os.stat(outfile).st_mtime):
+	    return
     print 'Processing %s into %s' % (fn, outfile)
     gen = Gen()
     directives.execute(directives.load(fn),gen)
