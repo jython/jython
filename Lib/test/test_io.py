@@ -390,9 +390,17 @@ class IOTest(unittest.TestCase):
         # On Windows and Mac OSX this test comsumes large resources; It takes
         # a long time to build the >2GB file and takes >2GB of disk space
         # therefore the resource must be enabled to run this test.
-        if sys.platform[:3] == 'win' or sys.platform == 'darwin':
-            if not support.is_resource_enabled("largefile"):
-                print("\nTesting large file ops skipped on %s." % sys.platform,
+        if not support.is_resource_enabled("largefile"):
+            skip_platform = None
+            # Cases in which to skip this test
+            if sys.platform[:3] == 'win' or sys.platform == 'darwin':
+                skip_platform = sys.platform;
+            elif sys.platform[:4] == "java":
+                # Jython cases in which to skip this test
+                if os._name == "nt":
+                    skip_platform = 'Jython + ' + os._name;
+            if skip_platform:
+                print("\nTesting large file ops skipped on %s." % skip_platform,
                       file=sys.stderr)
                 print("It requires %d bytes and a long time." % self.LARGE,
                       file=sys.stderr)
