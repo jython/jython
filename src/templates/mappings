@@ -21,6 +21,7 @@ enumerate.derived:org.python.core.PyEnumerateDerived
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
 frozenset.derived:org.python.core.PyFrozenSetDerived
+ifilter.derived:org.python.modules.itertools.ifilterDerived
 ifilterfalse.derived:org.python.modules.itertools.ifilterfalseDerived
 int.derived:org.python.core.PyIntegerDerived
 list.derived:org.python.core.PyListDerived
