@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.nio.charset.Charset;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1476,45 +1477,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
         } else {
             return null;
         }
-    }
-
-    /**
-     * Equivalent of the 'string_escape' decode to a String that is all-printable, showing non
-     * printable charater as lowercase hex escapes, except '\t', '\n', and '\r'. This supports
-     * <code>__repr__()</code>.
-     *
-     * @return the byte array as a String, still encoded
-     */
-    protected synchronized String asEscapedString() {
-        StringBuilder buf = new StringBuilder(size + (size >> 8) + 10);
-        int jmax = offset + size;
-        for (int j = offset; j < jmax; j++) {
-            int c = 0xff & storage[j];
-            if (c >= 0x7f) {    // Unprintable high 128 and DEL
-                appendHexEscape(buf, c);
-            } else if (c >= ' ') { // Printable
-                if (c == '\\') {    // Special case
-                    buf.append("\\\\");
-                } else {
-                    buf.append((char)c);
-                }
-            } else if (c == '\t') { // Spacial cases in the low 32
-                buf.append("\\t");
-            } else if (c == '\n') {
-                buf.append("\\n");
-            } else if (c == '\r') {
-                buf.append("\\r");
-            } else {
-                appendHexEscape(buf, c);
-            }
-        }
-        return buf.toString();
-    }
-
-    private static final void appendHexEscape(StringBuilder buf, int c) {
-        buf.append("\\x")
-                .append(Character.forDigit((c & 0xf0) >> 4, 16))
-                .append(Character.forDigit(c & 0xf, 16));
     }
 
     /**
@@ -3899,7 +3861,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
      * Java API equivalent of Python <code>upper()</code>. Note that
      * <code>x.upper().isupper()</code> might be <code>false</code> if the array contains uncased
      * characters.
-     * 
      *
      * @return a copy of the array with all the cased characters converted to uppercase.
      */
@@ -4004,6 +3965,99 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
             return dst;
         }
     }
+
+    //
+    // str() and repr() have different behaviour (despite PEP 3137)
+    //
+
+    /**
+     * Helper for __repr__()
+     *
+     * @param buf destination for characters
+     * @param c curren (maybe unprintable) character
+     */
+    private static final void appendHexEscape(StringBuilder buf, int c) {
+        buf.append("\\x")
+                .append(Character.forDigit((c & 0xf0) >> 4, 16))
+                .append(Character.forDigit(c & 0xf, 16));
+    }
+
+    /**
+     * Almost ready-to-expose Python <code>__repr__()</code>, based on treating the bytes as point
+     * codes. The value added by this method is conversion of non-printing point codes to
+     * hexadecimal escapes in printable ASCII, and bracketed by the given before and after strings.
+     * These are used to get the required presentation:
+     *
+     * <pre>
+     * bytearray(b'Hello world!')
+     * </pre>
+     *
+     * with the possibility that subclasses might choose something different.
+     *
+     * @param before String to insert before the quoted text
+     * @param after String to insert after the quoted text
+     * @return string representation: <code>before + "'" + String(this) + "'" + after</code>
+     */
+    final synchronized String basebytes_repr(String before, String after) {
+
+        // Safety
+        if (before == null) {
+            before = "";
+        }
+        if (after == null) {
+            after = "";
+        }
+
+        // Guess how long the result might be
+        int guess = size + (size >> 2) + before.length() + after.length() + 10;
+        StringBuilder buf = new StringBuilder(guess);
+        buf.append(before).append('\'');
+
+        // Scan and translate the bytes of the array
+        int jmax = offset + size;
+        for (int j = offset; j < jmax; j++) {
+            int c = 0xff & storage[j];
+            if (c >= 0x7f) {    // Unprintable high 128 and DEL
+                appendHexEscape(buf, c);
+            } else if (c >= ' ') { // Printable
+                if (c == '\\' || c == '\'') {    // Special cases
+                    buf.append('\\');
+                }
+                buf.append((char)c);
+            } else if (c == '\t') { // Special cases in the low 32
+                buf.append("\\t");
+            } else if (c == '\n') {
+                buf.append("\\n");
+            } else if (c == '\r') {
+                buf.append("\\r");
+            } else {
+                appendHexEscape(buf, c);
+            }
+        }
+
+        buf.append('\'').append(after);
+        return buf.toString();
+    }
+
+    /**
+     * Ready-to-expose Python <code>__str__()</code>, returning a <code>PyString</code> by treating
+     * the bytes as point codes. The built-in function <code>str()</code> is expected to call this
+     * method.
+     */
+    final synchronized PyString basebytes_str() {
+        // Get hold of the decoder for ISO-8859-1, which is one-for-one with Unicode
+        if (defaultCharset == null) {
+            defaultCharset = Charset.forName("ISO-8859-1");
+        }
+        String s = new String(storage, offset, size, defaultCharset);
+        return new PyString(s);
+    }
+
+    /**
+     * Used in {@link #basebytes_str()}, and when not null, points to the identity Charset for
+     * decoding bytes to char.
+     */
+    private static Charset defaultCharset;
 
     /*
      * ============================================================================================
