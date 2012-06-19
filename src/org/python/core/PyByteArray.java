@@ -1839,14 +1839,36 @@ public class PyByteArray extends BaseBytes {
         delegator.checkIdxAndSetItem(index, value);
     }
 
+    /**
+     * An overriding of the standard Java {@link #toString()} method, returning a printable
+     * expression of this byte array in the form <code>bytearray(b'hello')</code>, where in the
+     * "inner string", any special characters are escaped to their well-known backslash equivalents
+     * or a hexadecimal escape. The built-in function <code>repr()</code> is expected to call this
+     * method, and wraps the result in a Python <code>str</code>.
+     */
     @Override
     public String toString() {
-        return bytearray_toString();
+        return bytearray_repr();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.bytearray___repr___doc)
-    final synchronized String bytearray_toString() {
-        return "bytearray(b'" + asEscapedString() + "')";
+    @ExposedMethod(names = {"__repr__"}, doc = BuiltinDocs.bytearray___repr___doc)
+    final synchronized String bytearray_repr() {
+        return basebytes_repr("bytearray(b", ")");
+    }
+
+    /**
+     * An overriding of the {@link PyObject#__str__()} method, returning <code>PyString</code>,
+     * where in the characters are simply those with a point-codes given in this byte array. The
+     * built-in function <code>str()</code> is expected to call this method.
+     */
+    @Override
+    public PyString __str__() {
+        return basebytes_str();
+    }
+
+    @ExposedMethod(names = {"__str__"}, doc = BuiltinDocs.bytearray___str___doc)
+    final PyString bytearray_str() {
+        return basebytes_str();
     }
 
     /**
