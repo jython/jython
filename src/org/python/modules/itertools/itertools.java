@@ -83,6 +83,7 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("itertools"));
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("chain", chain.TYPE);
+        dict.__setitem__("count", count.TYPE);
         dict.__setitem__("imap", imap.TYPE);
         dict.__setitem__("ifilter", ifilter.TYPE);
         dict.__setitem__("ifilterfalse", ifilterfalse.TYPE);
@@ -93,55 +94,6 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("initClassExceptions", null);
     }
     
-
-    public static PyString __doc__count = new PyString(
-        "count(start=0, step=1) --> count object\n\n" +
-        "Return a count object whose .next() method returns consecutive values.\n" +
-        "  Equivalent to:\n" +
-        "\n" +
-        "      def count(firstval=0, step=1):\n" +
-        "      x = firstval\n" +
-        "      while 1:\n" +
-        "          yield x\n" +
-        "          x += step\n");
-
-
-    /**
-     * Creates an iterator that returns consecutive integers starting at <code>init</code> with <code>step</code> step.
-     */
-    public static PyIterator count(final int init, final int step) {
-        return new PyIterator() {
-            int counter = init;
-            int stepper = step;
-
-            public PyObject __iternext__() {
-                int result = counter;
-                counter += stepper;
-                return new PyInteger(result);
-            }
-            
-            public PyString __repr__() {
-                return (PyString)(Py.newString("count(%d, %d)").__mod__(new PyTuple(
-                                Py.newInteger(counter), Py.newInteger(stepper))));
-            }
-
-        };
-    }
-
-    /**
-     * Creates an iterator that returns consecutive integers starting at <code>init</code>.
-     */
-    public static PyIterator count(final int init) {
-        return count(init, 1);
-    }
-
-    /**
-     * Creates an iterator that returns consecutive integers starting at 0.
-     */
-    public static PyIterator count() {
-        return itertools.count(0);
-    }
-
 
     public static PyString __doc__cycle = new PyString(
             "cycle(iterable) --> cycle object\n\nReturn elements from the iterable "

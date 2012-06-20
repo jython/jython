@@ -12,8 +12,9 @@ PyFileIO.derived:org.python.modules._fileio.PyFileIODerived
 array.derived:org.python.core.PyArrayDerived
 bytearray.derived:org.python.core.PyByteArrayDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
-complex.derived:org.python.core.PyComplexDerived
 chain.derived:org.python.modules.itertools.chainDerived
+complex.derived:org.python.core.PyComplexDerived
+count.derived:org.python.modules.itertools.countDerived
 defaultdict.derived:org.python.modules._collections.PyDefaultDictDerived
 deque.derived:org.python.modules._collections.PyDequeDerived
 dialect.derived:org.python.modules._csv.PyDialectDerived
