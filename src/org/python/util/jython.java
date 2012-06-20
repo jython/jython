@@ -162,18 +162,23 @@ public class jython {
     }
 
     private static List<String> validWarnActions = Arrays.asList(
-        "error", "ignore", "always", "default", "module", "once",
-        "i");
+        "error", "ignore", "always", "default", "module", "once");
 
     private static void addWarnings(List<String> from, PyList to) {
-        for (String opt : from) {
+        outerLoop : for (String opt : from) {
             String action = opt.split(":")[0];
-            if (!validWarnActions.contains(action)) {
-                System.err.println(String.format(
-                            "Invalid -W option ignored: invalid action: '%s'", action));
-                continue;
+            for (String validWarnAction : validWarnActions) {
+                if (validWarnAction.startsWith(action)) {
+                    if (opt.contains(":")) {
+                        to.append(Py.newString(validWarnAction + opt.substring(opt.indexOf(":"))));
+                    }
+                    else {
+                        to.append(Py.newString(validWarnAction));
+                    }
+                    continue outerLoop;
+                }
             }
-            to.append(Py.newString(opt));
+            System.err.println(String.format("Invalid -W option ignored: invalid action: '%s'", action));
         }
     }
 
