@@ -64,6 +64,7 @@ org/python/modules/_fileio/PyFileIO.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_hashlib$Hash.class
 org/python/modules/itertools/chain.class
+org/python/modules/itertools/cycle.class
 org/python/modules/itertools/count.class
 org/python/modules/itertools/ifilterfalse.class
 org/python/modules/itertools/ifilter.class

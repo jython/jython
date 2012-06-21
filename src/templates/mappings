@@ -13,6 +13,7 @@ array.derived:org.python.core.PyArrayDerived
 bytearray.derived:org.python.core.PyByteArrayDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 chain.derived:org.python.modules.itertools.chainDerived
+cycle.derived:org.python.modules.itertools.cycleDerived
 complex.derived:org.python.core.PyComplexDerived
 count.derived:org.python.modules.itertools.countDerived
 defaultdict.derived:org.python.modules._collections.PyDefaultDictDerived

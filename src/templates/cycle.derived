@@ -1,0 +1,4 @@
+base_class: cycle
+want_dict: true
+ctr:
+incl: object
