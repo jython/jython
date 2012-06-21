@@ -83,6 +83,7 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("itertools"));
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("chain", chain.TYPE);
+        dict.__setitem__("compress", compress.TYPE);
         dict.__setitem__("cycle", cycle.TYPE);
         dict.__setitem__("count", count.TYPE);
         dict.__setitem__("imap", imap.TYPE);
@@ -559,41 +560,6 @@ public class itertools implements ClassDictInit {
                 }
                 return makeIndexedTuple(pool, indices);
             }
-        };
-    }
-
-    public static PyString __doc__compress = new PyString(
-        "compress(data, selectors) --> iterator over selected data\n\n" +
-        "Return data elements corresponding to true selector elements.\n" +
-        "Forms a shorter iterator from selected data elements using the\n" +
-        "selectors to choose the data elements.");
-    
-    public static PyIterator compress(PyObject [] args, String [] kws) {
-        ArgParser ap = new ArgParser("compress", args, kws, "data", "selectors");
-        if (args.length > 2) {
-            throw Py.TypeError(String.format("compress() takes at most 2 arguments (%s given)", args.length));
-        }
-        final PyObject data = ap.getPyObject(0).__iter__();
-        final PyObject selectors = ap.getPyObject(1, null).__iter__();
-
-        return new ItertoolsIterator() {
-
-            @Override
-            public PyObject __iternext__() {
-                while (true) {
-                    PyObject datum = nextElement(data);
-                    if (datum == null) { return null; }
-                    PyObject selector = nextElement(selectors);
-                    if (selector == null) { return null; }
-                    if (selector.__nonzero__()) {
-                        return datum;
-                        }
-                }
-            }
-            public PyString __repr__() {
-                return new PyString(String.format("itertools.compress object at 0x%x", Py.id(this)));
-            }
-
         };
     }
 
