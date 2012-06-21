@@ -49,7 +49,7 @@ public class ifilter extends PyObject {
     @ExposedNew
     @ExposedMethod
     final void ifilter___init__(PyObject[] args, String[] kwds) {
-        ArgParser ap = new ArgParser("ifilter", args, kwds, "predicate", "iterable");
+        ArgParser ap = new ArgParser("ifilter", args, kwds, new String[] {"predicate", "iterable"}, 2);
         ap.noKeywords();
         PyObject predicate = ap.getPyObject(0);
         PyObject iterable = ap.getPyObject(1);
