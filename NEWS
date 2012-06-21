@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1931 ] Check that there are exactly 2 filter args
     - [ 1913 ] Support short -W options
     - [ 1897 ] 2.7.0ax only has partial ssl support
     - array_class in jarray module returns the "Array of a type" class
