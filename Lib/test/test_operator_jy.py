@@ -73,6 +73,19 @@ class OperatorTestCase(unittest.TestCase):
         self.assertEqual(func(obj), result, '%s %s should be: %s' %
                          (type(obj), func.__name__, result))
 
+    def test_foo(self):
+        class Foo(object):
+                pass
+
+        class Bar(object):
+                pass
+
+        f = Foo()
+        f.bar = Bar()
+        f.bar.bat = 5
+
+        self.assertEqual(operator.attrgetter("bar.bat")(f), 5)
+
 
 def test_main():
     test_support.run_unittest(OperatorTestCase)
