@@ -73,7 +73,7 @@ class OperatorTestCase(unittest.TestCase):
         self.assertEqual(func(obj), result, '%s %s should be: %s' %
                          (type(obj), func.__name__, result))
 
-    def test_foo(self):
+    def test_nested_attrgetter(self):
         class Foo(object):
                 pass
 
