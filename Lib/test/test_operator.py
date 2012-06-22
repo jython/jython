@@ -367,7 +367,6 @@ class OperatorTestCase(unittest.TestCase):
         self.failIf(operator.is_not(a, b))
         self.failUnless(operator.is_not(a,c))
 
-    @unittest.skip("FIXME: broken")
     def test_attrgetter(self):
         class A:
             pass

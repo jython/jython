@@ -325,7 +325,11 @@ public class operator extends PyObject implements ClassDictInit
                 throw Py.TypeError(String.format("attribute name must be string, not '%.200s'",
                                                  name.getType().fastGetName()));
             }
-            return obj.__getattr__(nameStr.intern());
+            String[] components = nameStr.split("\\.");
+            for (String component : components) {
+                obj = obj.__getattr__(component.intern());
+            }
+            return obj;
         }
 
     }
