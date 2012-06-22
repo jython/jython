@@ -115,6 +115,7 @@ posixfile.py
 pprint.py
 profile.py
 pstats.py
+pty.py
 pyclbr.py
 pydoc_topics.py
 Queue.py
@@ -154,6 +155,7 @@ token.py
 tokenize.py
 trace.py
 traceback.py
+tty.py
 tzparse.py
 urllib2.py
 urlparse.py

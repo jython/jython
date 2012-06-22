@@ -447,7 +447,6 @@ class OperatorTestCase(unittest.TestCase):
         self.assertEqual(operator.itemgetter(2,10,5)(data), ('2', '10', '5'))
         self.assertRaises(TypeError, operator.itemgetter(2, 'x', 5), data)
 
-    @unittest.skip("FIXME: broken")
     def test_methodcaller(self):
         self.assertRaises(TypeError, operator.methodcaller)
         class A:

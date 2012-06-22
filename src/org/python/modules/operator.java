@@ -6,12 +6,14 @@ import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyIgnoreMethodTag;
+import org.python.core.PyMethod;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -243,6 +245,7 @@ public class operator extends PyObject implements ClassDictInit
 
         dict.__setitem__("attrgetter", PyAttrGetter.TYPE);
         dict.__setitem__("itemgetter", PyItemGetter.TYPE);
+        dict.__setitem__("methodcaller", PyMethodCaller.TYPE);
     }
 
     public static int countOf(PyObject seq, PyObject item) {
@@ -316,15 +319,7 @@ public class operator extends PyObject implements ClassDictInit
             // XXX: We should probably have a PyObject.__getattr__(PyObject) that does
             // this. This is different than __builtin__.getattr (in how it handles
             // exceptions)
-            String nameStr;
-            if (name instanceof PyUnicode) {
-                nameStr = ((PyUnicode)name).encode();
-            } else if (name instanceof PyString) {
-                nameStr = name.asString();
-            } else {
-                throw Py.TypeError(String.format("attribute name must be string, not '%.200s'",
-                                                 name.getType().fastGetName()));
-            }
+            String nameStr = ensureStringAttribute(name);
             String[] components = nameStr.split("\\.");
             for (String component : components) {
                 obj = obj.__getattr__(component.intern());
@@ -378,5 +373,74 @@ public class operator extends PyObject implements ClassDictInit
             }
             return new PyTuple(result);
         }
+    }
+
+    /**
+     * The methodcaller type.
+     */
+    @ExposedType(name = "operator.methodcaller", isBaseType = false)
+    static class PyMethodCaller extends PyObject {
+
+        public static final PyType TYPE = PyType.fromClass(PyMethodCaller.class);
+
+        public String name;
+        public PyObject[] args;
+        public String[] keywords;
+
+        @ExposedGet
+        public static PyString __doc__ = new PyString(
+                "methodcaller(name, ...) --> methodcaller object\n\n"
+                    + "Return a callable object that calls the given method on its operand.\n"
+                    + "After, f = methodcaller('name'), the call f(r) returns r.name().\n"
+                    + "After, g = methodcaller('name', 'date', foo=1), the call g(r) returns\n"
+                    + "r.name('date', foo=1)");
+
+        public PyMethodCaller(String name, PyObject[] args, String[] keywords) {
+            this.name = name;
+            this.args = args;
+            this.keywords = keywords;
+        }
+
+        @ExposedNew
+        final static PyObject methodcaller___new__(PyNewWrapper new_, boolean init,
+                                                  PyType subtype, PyObject[] args,
+                                                  String[] keywords) {
+
+            if (args.length == 0) {
+                throw Py.TypeError("methodcaller needs at least one argument, the method name");
+            }
+            String nameStr = ensureStringAttribute(args[0]);
+            PyObject[] newArgs = new PyObject[args.length-1];
+            System.arraycopy(args, 1, newArgs, 0, args.length-1);
+            return new PyMethodCaller(nameStr, newArgs, keywords);
+        }
+
+        @Override
+        public PyObject __call__(PyObject[] args, String[] keywords) {
+            return methodcaller___call__(args, keywords);
+        }
+
+        @ExposedMethod
+        final PyObject methodcaller___call__(PyObject[] args, String[] keywords) {
+            if (args.length > 1) {
+                throw Py.TypeError("methodcaller expected 1 arguments, got " + args.length);
+            }
+            ArgParser ap = new ArgParser("methodcaller", args, Py.NoKeywords, "obj");
+            PyObject obj = ap.getPyObject(0);
+            return obj.invoke(name, this.args, this.keywords);
+        }
+    }
+
+    private static String ensureStringAttribute(PyObject name) {
+        String nameStr;
+        if (name instanceof PyUnicode) {
+            nameStr = ((PyUnicode)name).encode();
+        } else if (name instanceof PyString) {
+            nameStr = name.asString();
+        } else {
+            throw Py.TypeError(String.format("attribute name must be string, not '%.200s'",
+                    name.getType().fastGetName()));
+        }
+        return nameStr;
     }
 }

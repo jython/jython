@@ -2,9 +2,11 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1909 ] attrgetter does not parse dotted attributes
+    - [ 1924 ] Implement operator.methodcaller
     - [ 1934 ] Break itertools.compress into a separate class 
-    - [ 1932 ] Make check for iterability in chain() arguments lazy
     - [ 1933 ] Break itertools.cycle into a separate class
+    - [ 1932 ] Make check for iterability in chain() arguments lazy
     - [ 1931 ] Check that there are exactly 2 filter args
     - [ 1913 ] Support short -W options
     - [ 1897 ] 2.7.0ax only has partial ssl support
