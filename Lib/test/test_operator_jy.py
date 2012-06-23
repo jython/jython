@@ -56,7 +56,7 @@ class OperatorTestCase(unittest.TestCase):
         (HasInt(), True, False, False),
         (HasFloat(), True, False, False),
         )
-    
+
     def test_isNumberType(self):
         for obj, isNumberType, _, _ in self.tests:
             self.assert_istype(operator.isNumberType, obj, isNumberType)
@@ -72,19 +72,6 @@ class OperatorTestCase(unittest.TestCase):
     def assert_istype(self, func, obj, result):
         self.assertEqual(func(obj), result, '%s %s should be: %s' %
                          (type(obj), func.__name__, result))
-
-    def test_nested_attrgetter(self):
-        class Foo(object):
-                pass
-
-        class Bar(object):
-                pass
-
-        f = Foo()
-        f.bar = Bar()
-        f.bar.bat = 5
-
-        self.assertEqual(operator.attrgetter("bar.bat")(f), 5)
 
 
 def test_main():
