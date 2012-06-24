@@ -401,26 +401,6 @@ class OtherFileTests(unittest.TestCase):
             self.assertRaises(ValueError, _FileIO, "/some/invalid/name", "rt")
             self.assertEqual(w.warnings, [])
 
-    def test_surrogates(self):
-        # Issue #8438: try to open a filename containing surrogates.
-        # It should either fail because the file doesn't exist or the filename
-        # can't be represented using the filesystem encoding, but not because
-        # of a LookupError for the error handler "surrogateescape".
-        filename = u'\udc80.txt'
-        try:
-            with _FileIO(filename):
-                pass
-        except (UnicodeEncodeError, IOError):
-            pass
-        # Spawn a separate Python process with a different "file system
-        # default encoding", to exercise this further.
-        env = dict(os.environ)
-        env[b'LC_CTYPE'] = b'C'
-        _, out = run_python('-c', 'import _io; _io.FileIO(%r)' % filename, env=env)
-        if ('UnicodeEncodeError' not in out and
-            'IOError: [Errno 2] No such file or directory' not in out):
-            self.fail('Bad output: %r' % out)
-
 def test_main():
     # Historically, these tests have been sloppy about removing TESTFN.
     # So get rid of it no matter what.
