@@ -164,6 +164,7 @@ class HashRandomizationTests(unittest.TestCase):
         out = test_support.strip_python_stderr(out)
         return int(out.strip())
 
+    @unittest.skipIf(test_support.is_jython, "No randomized hash in Jython")
     def test_randomized_hash(self):
         # two runs should return different hashes
         run1 = self.get_hash(self.repr_, seed='random')
@@ -199,18 +200,21 @@ class StringlikeHashRandomizationTests(HashRandomizationTests):
                 h = -1024014457
         self.assertEqual(self.get_hash(self.repr_, seed=42), h)
 
+@unittest.skipIf(test_support.is_jython, "No randomized hash in Jython")
 class StrHashRandomizationTests(StringlikeHashRandomizationTests):
     repr_ = repr('abc')
 
     def test_empty_string(self):
         self.assertEqual(hash(""), 0)
 
+@unittest.skipIf(test_support.is_jython, "No randomized hash in Jython")
 class UnicodeHashRandomizationTests(StringlikeHashRandomizationTests):
     repr_ = repr(u'abc')
 
     def test_empty_string(self):
         self.assertEqual(hash(u""), 0)
 
+@unittest.skipIf(test_support.is_jython, "No buffer in Jython")
 class BufferHashRandomizationTests(StringlikeHashRandomizationTests):
     repr_ = 'buffer("abc")'
 
