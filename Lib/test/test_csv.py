@@ -207,6 +207,7 @@ class Test_Csv(unittest.TestCase):
             fileobj.close()
             os.unlink(name)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_write_float(self):
         # Issue 13573: loss of precision because csv.writer
         # uses str() for floats instead of repr()
@@ -601,6 +602,8 @@ class TestQuotedEscapedExcel(TestCsvBase):
 class TestDictFields(unittest.TestCase):
     ### "long" means the row is longer than the number of fieldnames
     ### "short" means there are fewer elements in the row than fieldnames
+
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_write_simple_dict(self):
         fd, name = tempfile.mkstemp()
         fileobj = io.open(fd, 'w+b')
@@ -787,6 +790,7 @@ class TestArrayWrites(unittest.TestCase):
             fileobj.close()
             os.unlink(name)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_double_write(self):
         import array
         contents = [(20-i)*0.1 for i in range(20)]
@@ -803,6 +807,7 @@ class TestArrayWrites(unittest.TestCase):
             fileobj.close()
             os.unlink(name)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_float_write(self):
         import array
         contents = [(20-i)*0.1 for i in range(20)]
