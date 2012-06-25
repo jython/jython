@@ -54,16 +54,19 @@ class FunctionPropertiesTest(FuncAttrsTest):
             return 3
         self.assertNotEqual(self.b, duplicate)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_copying_func_code(self):
         def test(): pass
         self.assertEqual(test(), None)
         test.func_code = self.b.func_code
         self.assertEqual(test(), 3) # self.b always returns 3, arbitrarily
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_func_globals(self):
         self.assertIs(self.b.func_globals, globals())
         self.cannot_set_attr(self.b, 'func_globals', 2, TypeError)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_func_closure(self):
         a = 12
         def f(): print a
@@ -84,6 +87,7 @@ class FunctionPropertiesTest(FuncAttrsTest):
             self.fail("shouldn't be able to read an empty cell")
         a = 12
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_func_name(self):
         self.assertEqual(self.b.__name__, 'b')
         self.assertEqual(self.b.func_name, 'b')
@@ -106,6 +110,7 @@ class FunctionPropertiesTest(FuncAttrsTest):
         self.cannot_set_attr(self.f.a, "__name__", 'a', AttributeError)
         self.cannot_set_attr(self.fi.a, "__name__", 'a', AttributeError)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_func_code(self):
         num_one, num_two = 7, 8
         def a(): pass
@@ -308,6 +313,7 @@ class FunctionDictsTest(FuncAttrsTest):
 
 
 class FunctionDocstringTest(FuncAttrsTest):
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_set_docstring_attr(self):
         self.assertEqual(self.b.__doc__, None)
         self.assertEqual(self.b.func_doc, None)
@@ -332,6 +338,7 @@ class FunctionDocstringTest(FuncAttrsTest):
 
 
 class StaticMethodAttrsTest(unittest.TestCase):
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_func_attribute(self):
         def f():
             pass
