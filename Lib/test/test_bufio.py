@@ -62,6 +62,7 @@ class BufferSizeTest(unittest.TestCase):
         self.drive_one(bytes(1000))
 
 
+@unittest.skipIf(support.is_jython, "FIXME: Not working on Jython")
 class CBufferSizeTest(BufferSizeTest):
     open = io.open
 
