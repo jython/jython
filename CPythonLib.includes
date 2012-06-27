@@ -90,6 +90,7 @@ linecache.py
 locale.py
 macpath.py
 macurl2path.py
+mailbox.py
 mailcap.py
 markupbase.py
 md5.py
