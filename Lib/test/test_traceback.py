@@ -28,6 +28,7 @@ class TracebackCases(unittest.TestCase):
     def syntax_error_bad_indentation(self):
         compile("def spam():\n  print 1\n print 2", "?", "exec")
 
+    @unittest.skipIf(is_jython, "FIXME: Jython lexer not catching bad '!'")
     def test_caret(self):
         err = self.get_exception_format(self.syntax_error_with_caret,
                                         SyntaxError)
