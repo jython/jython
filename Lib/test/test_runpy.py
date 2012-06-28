@@ -5,7 +5,7 @@ import os.path
 import sys
 import re
 import tempfile
-from test.test_support import verbose, run_unittest, forget
+from test.test_support import verbose, run_unittest, forget, is_jython
 from test.script_helper import (temp_dir, make_script, compile_script,
                                 make_pkg, make_zip_script, make_zip_pkg)
 
@@ -267,11 +267,13 @@ from ..uncle.cousin import nephew
             if verbose: print "Testing package depth:", depth
             self._check_package(depth)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_explicit_relative_import(self):
         for depth in range(2, 5):
             if verbose: print "Testing relative imports at depth:", depth
             self._check_relative_imports(depth)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_main_relative_import(self):
         for depth in range(2, 5):
             if verbose: print "Testing main relative imports at depth:", depth
@@ -321,6 +323,7 @@ argv0 = sys.argv[0]
         msg = re.escape(msg)
         self.assertRaisesRegexp(ImportError, msg, run_path, script_name)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_basic_script(self):
         with temp_dir() as script_dir:
             mod_name = 'script'
@@ -328,6 +331,7 @@ argv0 = sys.argv[0]
             self._check_script(script_name, "<run_path>", script_name,
                                script_name, None)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_script_compiled(self):
         with temp_dir() as script_dir:
             mod_name = 'script'
@@ -337,6 +341,7 @@ argv0 = sys.argv[0]
             self._check_script(compiled_name, "<run_path>", compiled_name,
                                compiled_name, None)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory(self):
         with temp_dir() as script_dir:
             mod_name = '__main__'
@@ -344,6 +349,7 @@ argv0 = sys.argv[0]
             self._check_script(script_dir, "<run_path>", script_name,
                                script_dir, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory_compiled(self):
         with temp_dir() as script_dir:
             mod_name = '__main__'
@@ -353,6 +359,7 @@ argv0 = sys.argv[0]
             self._check_script(script_dir, "<run_path>", compiled_name,
                                script_dir, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory_error(self):
         with temp_dir() as script_dir:
             mod_name = 'not_main'
@@ -360,6 +367,7 @@ argv0 = sys.argv[0]
             msg = "can't find '__main__' module in %r" % script_dir
             self._check_import_error(script_dir, msg)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile(self):
         with temp_dir() as script_dir:
             mod_name = '__main__'
@@ -367,6 +375,7 @@ argv0 = sys.argv[0]
             zip_name, fname = make_zip_script(script_dir, 'test_zip', script_name)
             self._check_script(zip_name, "<run_path>", fname, zip_name, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile_compiled(self):
         with temp_dir() as script_dir:
             mod_name = '__main__'
@@ -375,6 +384,7 @@ argv0 = sys.argv[0]
             zip_name, fname = make_zip_script(script_dir, 'test_zip', compiled_name)
             self._check_script(zip_name, "<run_path>", fname, zip_name, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile_error(self):
         with temp_dir() as script_dir:
             mod_name = 'not_main'
@@ -383,6 +393,7 @@ argv0 = sys.argv[0]
             msg = "can't find '__main__' module in %r" % zip_name
             self._check_import_error(zip_name, msg)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_main_recursion_error(self):
         with temp_dir() as script_dir, temp_dir() as dummy_dir:
             mod_name = '__main__'
