@@ -1236,6 +1236,7 @@ _expectations = {
         test_parser
         test_plistlib
         test_poll
+        test_profile
         test_pty
         test_resource
         test_rgbimg
