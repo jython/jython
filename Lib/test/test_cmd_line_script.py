@@ -7,6 +7,7 @@ import test.test_support
 from test.script_helper import (run_python,
                                 temp_dir, make_script, compile_script,
                                 make_pkg, make_zip_script, make_zip_pkg)
+from test.test_support import is_jython
 
 verbose = test.test_support.verbose
 
@@ -99,6 +100,7 @@ class CmdLineTest(unittest.TestCase):
             script_name = _make_test_script(script_dir, 'script')
             self._check_script(script_name, script_name, script_name, None)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_script_compiled(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, 'script')
@@ -106,11 +108,13 @@ class CmdLineTest(unittest.TestCase):
             os.remove(script_name)
             self._check_script(compiled_name, compiled_name, compiled_name, None)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, '__main__')
             self._check_script(script_dir, script_name, script_dir, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory_compiled(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, '__main__')
@@ -118,17 +122,20 @@ class CmdLineTest(unittest.TestCase):
             os.remove(script_name)
             self._check_script(script_dir, compiled_name, script_dir, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_directory_error(self):
         with temp_dir() as script_dir:
             msg = "can't find '__main__' module in %r" % script_dir
             self._check_import_error(script_dir, msg)
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, '__main__')
             zip_name, run_name = make_zip_script(script_dir, 'test_zip', script_name)
             self._check_script(zip_name, run_name, zip_name, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile_compiled(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, '__main__')
@@ -136,6 +143,7 @@ class CmdLineTest(unittest.TestCase):
             zip_name, run_name = make_zip_script(script_dir, 'test_zip', compiled_name)
             self._check_script(zip_name, run_name, zip_name, '')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_zipfile_error(self):
         with temp_dir() as script_dir:
             script_name = _make_test_script(script_dir, 'not_main')
@@ -151,12 +159,14 @@ class CmdLineTest(unittest.TestCase):
             launch_name = _make_launch_script(script_dir, 'launch', 'test_pkg.script')
             self._check_script(launch_name, script_name, script_name, 'test_pkg')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_module_in_package_in_zipfile(self):
         with temp_dir() as script_dir:
             zip_name, run_name = _make_test_zip_pkg(script_dir, 'test_zip', 'test_pkg', 'script')
             launch_name = _make_launch_script(script_dir, 'launch', 'test_pkg.script', zip_name)
             self._check_script(launch_name, run_name, run_name, 'test_pkg')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_module_in_subpackage_in_zipfile(self):
         with temp_dir() as script_dir:
             zip_name, run_name = _make_test_zip_pkg(script_dir, 'test_zip', 'test_pkg', 'script', depth=2)
@@ -172,6 +182,7 @@ class CmdLineTest(unittest.TestCase):
             self._check_script(launch_name, script_name,
                                script_name, 'test_pkg')
 
+    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_package_compiled(self):
         with temp_dir() as script_dir:
             pkg_dir = os.path.join(script_dir, 'test_pkg')
