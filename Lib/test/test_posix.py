@@ -365,6 +365,7 @@ class PosixTester(unittest.TestCase):
         finally:
             posix.lchflags(_DUMMY_SYMLINK, dummy_symlink_st.st_flags)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_getcwd_long_pathnames(self):
         if hasattr(posix, 'getcwd'):
             dirname = 'getcwd-test-directory-0123456789abcdef-01234567890abcdef'
@@ -408,6 +409,7 @@ class PosixTester(unittest.TestCase):
                 os.chdir(curdir)
                 shutil.rmtree(base_path)
 
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     @unittest.skipUnless(hasattr(os, 'getegid'), "test needs os.getegid()")
     def test_getgroups(self):
         with os.popen('id -G') as idg:
