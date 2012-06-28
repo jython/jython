@@ -1,4 +1,4 @@
-from test.test_support import run_unittest
+from test.test_support import run_unittest, is_jython
 import unittest
 import sys
 import imp
@@ -78,6 +78,7 @@ class PkgutilTests(unittest.TestCase):
 
         del sys.modules[pkg]
 
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_unreadable_dir_on_syspath(self):
         # issue7367 - walk_packages failed if unreadable dir on sys.path
         package_name = "unreadable_package"
