@@ -22,6 +22,8 @@ public class count extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(count.class);
     private PyIterator iter;
+    private int counter;
+    private int stepper;
 
     @ExposedGet
     public static PyString __doc__ = new PyString(
@@ -66,7 +68,7 @@ public class count extends PyObject {
     @ExposedNew
     @ExposedMethod
     final void count___init__(final PyObject[] args, String[] kwds) {
-        ArgParser ap = new ArgParser("count", args, kwds, new String[] {"start", "step"});
+        ArgParser ap = new ArgParser("count", args, kwds, new String[] {"start", "step"}, 0);
 
         int start = ap.getInt(0, 0);
         int step = ap.getInt(1, 1);
@@ -74,20 +76,17 @@ public class count extends PyObject {
     }
 
     private void count___init__(final int start, final int step) {
+        counter = start;
+        stepper = step;
+
         iter = new PyIterator() {
-            int counter = start;
-            int stepper = step;
 
             public PyObject __iternext__() {
                 int result = counter;
                 counter += stepper;
                 return new PyInteger(result);
             }
-            
-            public PyString __repr__() {
-                return (PyString)(Py.newString("count(%d, %d)").__mod__(new PyTuple(
-                                Py.newInteger(counter), Py.newInteger(stepper))));
-            }
+
         };
     }
 
@@ -99,6 +98,17 @@ public class count extends PyObject {
     @ExposedMethod
     public PyObject next() {
         return iter.next();
+    }
+
+    @ExposedMethod
+    public PyString __repr__() {
+        if (stepper == 1) {
+            return (PyString)(Py.newString("count(%d)").__mod__(Py.newInteger(counter)));
+        }
+        else {
+            return (PyString)(Py.newString("count(%d, %d)").__mod__(new PyTuple(
+                    Py.newInteger(counter), Py.newInteger(stepper))));
+        }
     }
 
 }

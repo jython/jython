@@ -1,0 +1,4 @@
+base_class: izipLongest
+want_dict: true
+ctr:
+incl: object

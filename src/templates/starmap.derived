@@ -1,0 +1,4 @@
+base_class: starmap
+want_dict: true
+ctr:
+incl: object

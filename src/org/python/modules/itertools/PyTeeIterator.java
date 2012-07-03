@@ -16,17 +16,63 @@ import org.python.util.Generic;
 @ExposedType(name = "itertools.tee", base = PyObject.class, isBaseType = false)
 public class PyTeeIterator extends PyIterator {
 
-    private final int position;
-    private int count = 0;
-    private final PyObject iterator;
-    private final Map<Integer, PyObject> buffer;
-    private final int[] offsets;
+    private static class PyTeeData {
+        private PyObject iterator;
+        private int total;
+        private Map<Integer, PyObject> buffer;
+        public PyException stopException;
+        private Object lock;
 
-    PyTeeIterator(PyObject iterator, Map<Integer, PyObject> buffer, int[] offsets, int position) {
-        this.iterator = iterator;
-        this.buffer = buffer;
-        this.offsets = offsets;
-        this.position = position;
+        public PyTeeData(PyObject iterator) {
+            this.iterator = iterator;
+            buffer = Generic.concurrentMap();
+            total = 0;
+            lock = new Object();
+        }
+
+        public PyObject getItem(int pos) {
+            if (pos == total) {
+                synchronized (lock) {
+                    if (pos == total) {
+                        PyObject obj = nextElement(iterator);
+                        if (obj == null) {
+                            return null;
+                        }
+                        buffer.put(total++, obj);
+                    }
+                }
+            }
+            return buffer.get(pos);
+        }
+
+        private PyObject nextElement(PyObject pyIter) {
+            PyObject element = null;
+            try {
+                element = pyIter.__iternext__();
+            } catch (PyException pyEx) {
+                if (pyEx.match(Py.StopIteration)) {
+                    stopException = pyEx;
+                } else {
+                    throw pyEx;
+                }
+            }
+            return element;
+        }
+    }
+
+    private int position;
+    private PyTeeData teeData;
+
+    public PyTeeIterator() {
+        super();
+    }
+
+    public PyTeeIterator(PyType subType) {
+        super(subType);
+    }
+
+    public PyTeeIterator(PyTeeData teeData) {
+        this.teeData = teeData;
     }
     
     @ExposedNew
@@ -37,37 +83,41 @@ public class PyTeeIterator extends PyIterator {
         if (nargs < 1 || nargs > 1) {
             throw Py.TypeError("tee expected 1 arguments, got " + nargs);
         }
-        return makeTees(args[0], 1)[0];
+        return fromIterable(args[0]);
     }
 
-    public static PyTeeIterator[] makeTees(PyObject iterable, int n) {
+    public static PyObject[] makeTees(PyObject iterable, int n) {
         if (n < 0) {
             throw Py.ValueError("n must be >= 0");
         }
-        PyObject iterator = iterable.__iter__();
-        Map<Integer, PyObject> buffer = Generic.concurrentMap();
-        int[] offsets = new int[n];
-        PyTeeIterator[] tees = new PyTeeIterator[n];
-        for (int i = 0; i < n; i++) {
-            offsets[i] = -1;
-            tees[i] = new PyTeeIterator(iterator, buffer, offsets, i);
+
+        PyObject[] tees = new PyTeeIterator[n];
+
+        if (n == 0) {
+            return tees;
+        }
+
+        PyObject copyFunc = iterable.__findattr__("__copy__");
+        if (copyFunc == null) {
+            tees[0] = fromIterable(iterable);
+            copyFunc = tees[0].__getattr__("__copy__");
+        }
+        else {
+            tees[0] = iterable;
+        }
+        for (int i = 1; i < n; i++) {
+            tees[i] = copyFunc.__call__();
         }
         return tees;
     }
 
-    protected PyObject nextElement(PyObject pyIter) {
-        PyObject element = null;
-        try {
-            element = pyIter.__iternext__();//next();
-        } catch (PyException pyEx) {
-            if (pyEx.match(Py.StopIteration)) {
-                // store exception - will be used by PyIterator.next()
-                stopException = pyEx;
-            } else {
-                throw pyEx;
-            }
+    private static PyTeeIterator fromIterable(PyObject iterable) {
+        if (iterable instanceof PyTeeIterator) {
+            return ((PyTeeIterator) iterable).tee___copy__();
         }
-        return element;
+        PyObject iterator = (PyObject)iterable.__iter__();
+        PyTeeData teeData = new PyTeeData(iterator);
+        return new PyTeeIterator(teeData);
     }
 
     @ExposedMethod
@@ -76,31 +126,15 @@ public class PyTeeIterator extends PyIterator {
     }
     
     public PyObject __iternext__() {
-        final PyObject item;
-        int max = Integer.MIN_VALUE;
-        int min = Integer.MAX_VALUE;
-        for (int j = 0; j < offsets.length; j++) {
-            if (max < offsets[j]) {
-                max = offsets[j];
-            }
-            if (min > offsets[j]) {
-                min = offsets[j];
-            }
+        PyObject obj = teeData.getItem(position++);
+        if (obj == null) {
+            stopException = teeData.stopException;
         }
-        if (count > max) {
-            item = nextElement(iterator);
-            if (item != null) {
-                buffer.put(count, item);
-            }
-        } else if (count < min) {
-            item = buffer.remove(count);
-        } else {
-            item = buffer.get(count);
-        }
-        offsets[position] = count;
-        count++;
-        return item;
+        return obj;
+    }
+
+    @ExposedMethod
+    public final PyTeeIterator tee___copy__() {
+        return new PyTeeIterator(teeData);
     }
 }
-
-

@@ -1,23 +1,14 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.itertools;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.python.core.__builtin__;
-import org.python.core.ArgParser;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.core.PyInteger;
 import org.python.core.PyIterator;
 import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.PyXRange;
-
-import java.util.Arrays; //XXX
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -83,64 +74,28 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("itertools"));
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("chain", chain.TYPE);
+        dict.__setitem__("combinations", combinations.TYPE);
+        dict.__setitem__("combinations_with_replacement", combinationsWithReplacement.TYPE);
         dict.__setitem__("compress", compress.TYPE);
         dict.__setitem__("cycle", cycle.TYPE);
         dict.__setitem__("count", count.TYPE);
+        dict.__setitem__("dropwhile", dropwhile.TYPE);
+        dict.__setitem__("groupby", groupby.TYPE);
         dict.__setitem__("imap", imap.TYPE);
         dict.__setitem__("ifilter", ifilter.TYPE);
         dict.__setitem__("ifilterfalse", ifilterfalse.TYPE);
+        dict.__setitem__("islice", islice.TYPE);
         dict.__setitem__("izip", izip.TYPE);
+        dict.__setitem__("izip_longest", izipLongest.TYPE);
+        dict.__setitem__("permutations", permutations.TYPE);
+        dict.__setitem__("product", product.TYPE);
+        dict.__setitem__("repeat", repeat.TYPE);
+        dict.__setitem__("starmap", starmap.TYPE);
+        dict.__setitem__("takewhile", takewhile.TYPE);
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);
         dict.__setitem__("initClassExceptions", null);
-    }
-    
-    public static PyString __doc__repeat = new PyString(
-            "'repeat(element [,times]) -> create an iterator which returns the element\n"
-                    + "for the specified number of times.  If not specified, returns the element\nendlessly.");
-
-    /**
-     * Creates an iterator that returns the same object the number of times given by
-     * <code>times</code>.
-     */
-    public static PyIterator repeat(final PyObject object, final int times) {
-        return new PyIterator() {
-            int counter = times;
-
-            public PyObject __iternext__() {
-                if (counter > 0) {
-                    counter--;
-                    return object;
-                }
-                return null;
-            }
-            
-            public int __len__() {
-               return times; 
-            }
-            
-            public PyString __repr__() {
-                return (PyString)(Py.newString("repeat(%r, %d)").
-                        __mod__(new PyTuple(object, Py.newInteger(counter))));
-            }
-        };
-    }
-
-    /**
-     * Creates an iterator that returns the same object over and over again.
-     */
-    public static PyIterator repeat(final PyObject object) {
-        return new PyIterator() {
-            public PyObject __iternext__() {
-                return object;
-            }
-                        
-            public PyString __repr__() {
-                return (PyString)(Py.newString("repeat(%r)").
-                        __mod__(new PyTuple(object)));
-            }
-        };
     }
 
     public static PyString __doc__islice = new PyString(
@@ -151,7 +106,7 @@ public class itertools implements ClassDictInit {
                     + "skipped between successive calls.  Works like a slice() on a list\nbut returns an iterator.");
 
     
-    private static int py2int(PyObject obj, int defaultValue, String msg) {
+    static int py2int(PyObject obj, int defaultValue, String msg) {
         if (obj instanceof PyNone) {
             return defaultValue;
         } else {
@@ -168,71 +123,6 @@ public class itertools implements ClassDictInit {
             }
             return value;
         }
-    }
-    /**
-     * Creates an iterator that returns selected values from an iterable.
-     * 
-     * @param startObj
-     *            the index of where in the iterable to start returning values
-     * @param stopObj
-     *            the index of where in the iterable to stop returning values
-     * @param stepObj
-     *            the number of steps to take beween each call to <code>next()</code>
-     */
-    public static PyIterator islice(final PyObject iterable, PyObject startObj,
-            PyObject stopObj, PyObject stepObj) {
-        final int stop = py2int(stopObj, 0, "Stop argument must be a non-negative integer or None");
-        final int start = py2int(startObj, 0, "Start argument must be a non-negative integer or None");
-        final int step = py2int(stepObj, 1, "Step argument must be a non-negative integer or None");
-        final boolean stopNone = stopObj instanceof PyNone;
-
-        if (start < 0 || step < 0 || stop < 0) {
-            throw Py.ValueError("Indices for islice() must be non-negative integers");
-        }
-
-        if (step == 0) {
-            throw Py.ValueError("Step must be one or larger for islice()");
-        }
-
-        return new ItertoolsIterator() {
-            int counter = start;
-
-            int lastCount = 0;
-
-            PyObject iter = iterable.__iter__();
-
-            public PyObject __iternext__() {
-                PyObject result = null;
-
-                if (counter >= stop && !stopNone) {
-                    return null;
-                }
-
-                while (lastCount <= counter) {
-                    result = nextElement(iter);
-                    lastCount++;
-                }
-                counter += step;
-                return result;
-            }
-
-        };
-
-    }
-
-    /**
-     * @see #islice(PyObject, PyObject, PyObject, PyObject) startObj defaults to 0 and stepObj to 1
-     */
-    public static PyIterator islice(PyObject iterable, PyObject stopObj) {
-        return islice(iterable, new PyInteger(0), stopObj, new PyInteger(1));
-    }
-
-    /**
-     * @see #islice(PyObject, PyObject, PyObject, PyObject) stepObj defaults to 1
-     */
-    public static PyIterator islice(PyObject iterable, PyObject start,
-            PyObject stopObj) {
-        return islice(iterable, start, stopObj, new PyInteger(1));
     }
 
     /**
@@ -278,47 +168,6 @@ public class itertools implements ClassDictInit {
                 }
             }
         }
-    }
-
-    public static PyString __doc__starmap = new PyString(
-            "starmap(function, sequence) --> starmap object\n\nReturn an "
-                    + "iterator whose values are returned from the function evaluated\nwith an argument tuple taken from the "
-                    + "given sequence.");
-
-    /**
-     * Create an iterator whose <code>next()</code> method returns the result
-     * of calling the function (first argument) with a tuple of arguments
-     * returned from the iterable (second argument).
-     * 
-     * @param starargs
-     *            [0] = callable function, [1] = iterable with argument tuples
-     */
-    public static PyIterator starmap(PyObject[] starargs) {
-        if (starargs.length != 2) {
-            throw Py.TypeError("starmap requires 2 arguments, got "
-                    + starargs.length);
-        }
-        final PyObject callable = starargs[0];
-        final PyObject iterator = starargs[1].__iter__();
-
-        return new ItertoolsIterator() {
-
-            public PyObject __iternext__() {
-                PyObject args = nextElement(iterator);
-                PyObject result = null;
-
-                if (args != null) {
-                    if (!args.getClass().isAssignableFrom(PyTuple.class)) {
-                        throw Py.TypeError("iterator must return a tuple");
-                    }
-                    PyTuple argTuple = (PyTuple) args;
-                    // convert to array of PyObjects in call to function
-                    result = callable.__call__(argTuple.getArray());
-                }
-                return result;
-            }
-
-        };
     }
 
     /**
@@ -371,104 +220,6 @@ public class itertools implements ClassDictInit {
         }
     }
 
-    public static PyString __doc__dropwhile = new PyString(
-            "dropwhile(predicate, iterable) --> dropwhile object\n\nDrop items "
-                    + "from the iterable while predicate(item) is true.\nAfterwards, return every element until theiterable is exhausted.");
-
-    /**
-     * Create an iterator that drops items from the iterable while <code>prdicate(item)</code>
-     * equals true. After which every remaining item of the iterable is returned.
-     */
-    public static PyIterator dropwhile(PyObject predicate, PyObject iterable) {
-        return new WhileIterator(predicate, iterable, true);
-    }
-
-    public static PyString __doc__takewhile = new PyString(
-            "takewhile(predicate, iterable) --> takewhile object\n\nReturn "
-                    + "successive entries from an iterable as long as the \npredicate evaluates to true for each entry.");
-
-    /**
-     * Create an iterator that returns items from the iterable while <code>predicate(item)</code>
-     * is true. After which iteration is stopped.
-     */
-    public static PyIterator takewhile(PyObject predicate, PyObject iterable) {
-        return new WhileIterator(predicate, iterable, false);
-    }
-
-    private final static class GroupBy extends ItertoolsIterator {
-
-        private final PyObject iterator;
-        private final PyObject keyFunc;
-        private PyObject currentKey;
-        private PyObject currentValue;
-        private PyObject targetKey;
-
-        private GroupBy(PyObject iterable, PyObject key) {
-            iterator = iterable.__iter__();
-            keyFunc = key;
-            targetKey = currentKey = currentValue = new PyXRange(0);
-        }
-
-        public PyObject __iternext__() {
-            while (currentKey.equals(targetKey)) {
-                currentValue = nextElement(iterator);
-                if (currentValue == null) {
-                    return null;
-                }
-                if (keyFunc == null) {
-                    currentKey = currentValue;
-                } else {
-                    currentKey = keyFunc.__call__(currentValue);
-                }
-            }
-            targetKey = currentKey;
-            return new PyTuple(currentKey, new GroupByIterator());
-        }
-
-        private class GroupByIterator extends ItertoolsIterator {
-
-            private boolean completed = false;
-
-            public PyObject __iternext__() {
-                final PyObject item = currentValue;
-                if (completed) {
-                    return null;
-                }
-                currentValue = nextElement(iterator);
-                if (currentValue == null) {
-                    completed = true;
-                } else {
-                    if (keyFunc == null) {
-                        currentKey = currentValue;
-                    } else {
-                        currentKey = keyFunc.__call__(currentValue);
-                    }
-                }
-                if (!currentKey.equals(targetKey)) {
-                    completed = true;
-                }
-                return item;
-            }
-        }
-    }
-
-    public static PyString __doc__groupby = new PyString(
-            "groupby(iterable[, keyfunc]) -> create an iterator which returns\n" +
-            "(key, sub-iterator) grouped by each value of key(value).");
-
-    /**
-     * Create an iterator which returns the pair (key, sub-iterator) grouped by key(value).
-     */
-    public static PyIterator groupby(PyObject [] args, String [] kws) {
-        ArgParser ap = new ArgParser("groupby", args, kws, "iterable", "key");
-        if(args.length > 2){
-            throw Py.TypeError("groupby takes two arguments, iterable and key");
-        }
-        PyObject iterable = ap.getPyObject(0);
-        PyObject key = ap.getPyObject(1, null);
-        return new GroupBy(iterable, key);
-    }
-    
     public static PyString __doc__tee = new PyString(
             "tee(iterable, n=2) --> tuple of n independent iterators.");
 
@@ -486,235 +237,15 @@ public class itertools implements ClassDictInit {
         return tee(iterable, 2);
     }
 
-    private static PyTuple makeIndexedTuple(PyTuple pool, int indices[]) {
+    static PyTuple makeIndexedTuple(PyTuple pool, int indices[]) {
         return makeIndexedTuple(pool, indices, indices.length);
     }
     
-    private static PyTuple makeIndexedTuple(PyTuple pool, int indices[], int end) {
+    static PyTuple makeIndexedTuple(PyTuple pool, int indices[], int end) {
         PyObject items[] = new PyObject[end];
         for (int i = 0; i < end; i++) {
             items[i] = pool.__getitem__(indices[i]);
         }
         return new PyTuple(items);
     }
-    
-    public static PyIterator combinations(PyObject iterable, final int r) {
-        if (r < 0) throw Py.ValueError("r must be non-negative");
-        final PyTuple pool = PyTuple.fromIterable(iterable);
-        final int n = pool.__len__();
-        final int indices[] = new int[r];
-        for (int i = 0; i < r; i++) {
-            indices[i] = i;
-        }
-
-        return new ItertoolsIterator() {
-            boolean firstthru = true;
-
-            @Override
-            public PyObject __iternext__() {
-                if (r > n) { return null; }
-                if (firstthru) {
-                    firstthru = false;
-                    return makeIndexedTuple(pool, indices);
-                }
-                int i;
-                for (i = r-1; i >= 0 && indices[i] == i+n-r ; i--);
-                if (i < 0) return null;
-                indices[i]++;
-                for (int j = i+1; j < r; j++) {
-                    indices[j] = indices[j-1] + 1;
-                }
-                return makeIndexedTuple(pool, indices);
-            }
-            
-
-        };
-    }
-
-    public static PyIterator combinations_with_replacement(PyObject iterable, final int r) {
-        final PyTuple pool = PyTuple.fromIterable(iterable);
-        final int n = pool.__len__();
-        final int indices[] = new int[r];
-        for (int i = 0; i < r; i++) {
-            indices[i] = 0;
-        }
-
-        return new ItertoolsIterator() {
-            boolean firstthru = true;
-
-            @Override
-            public PyObject __iternext__() {
-                if (n == 0 || r == 0) {
-                    return null;
-                }
-                if (firstthru) {
-                    firstthru = false;
-                    return makeIndexedTuple(pool, indices);
-                }
-                int i;
-                for (i= r - 1 ; i >= 0 && indices[i] == n - 1; i--);
-                if (i < 0) return null;
-                indices[i]++;
-                for (int j = i + 1; j < r; j++) {
-                    indices[j] = indices[j-1];
-                }
-                return makeIndexedTuple(pool, indices);
-            }
-        };
-    }
-
-    public static PyIterator izip_longest(PyObject[] args, String[] kws) {
-        final int num_iterables;
-        final PyObject fillvalue;
-        if (kws.length == 1 && kws[0] == "fillvalue") {
-            fillvalue = args[args.length - 1];
-            num_iterables = args.length - 1;
-        } else {
-            fillvalue = Py.None;
-            num_iterables = args.length;
-        }
-
-        //XXX error checking on args
-        final PyObject iterators[] = new PyObject[num_iterables];
-        final boolean exhausted[] = new boolean[num_iterables];
-        for (int i = 0; i < num_iterables; i++) {
-            iterators[i] = args[i].__iter__();
-            exhausted[i] = false;
-        }
-
-        return new ItertoolsIterator() {
-            int unexhausted = num_iterables;
-
-            @Override
-            public PyObject __iternext__() {
-                PyObject item[] = new PyObject[num_iterables];
-                for (int i = 0; i < num_iterables; i++) {
-                    if (exhausted[i]) {
-                        item[i] = fillvalue;
-                    } else {
-                        PyObject elem = iterators[i].__iternext__();
-                        if (elem == null) {
-                            unexhausted--;
-                            exhausted[i] = true;
-                            item[i] = fillvalue;
-                        } else {
-                            item[i] = elem;
-                        }
-                    }
-                }
-                if (unexhausted == 0) {
-                    return null;
-                } else {
-                    return new PyTuple(item);
-                }
-            }
-        };
-    }
-
-    public static PyIterator permutations(PyObject iterable, final int r) {
-        //XXX keyword args support
-        if (r < 0) throw Py.ValueError("r must be non-negative");
-        final PyTuple pool = PyTuple.fromIterable(iterable);
-        final int n = pool.__len__();
-        final int indices[] = new int[n];
-        for (int i = 0; i < n; i++) {
-            indices[i] = i;
-        }
-        final int cycles[] = new int[r];
-        for (int i = 0; i < r; i++) {
-            cycles[i] = n - i;
-        }
-
-        return new ItertoolsIterator() {
-            boolean firstthru = true;
-
-            @Override
-            public PyObject __iternext__() {
-                if (r > n) return null;
-                if (firstthru) {
-                    firstthru = false;
-                    return makeIndexedTuple(pool, indices, r);
-                }
-                for (int i = r - 1; i >= 0; i--) {
-                    cycles[i] -= 1;
-                    if (cycles[i] == 0) {
-                        // rotate indices at the ith position
-                        int first = indices[i];
-                        for (int j = i; j < n - 1; j++) {
-                            indices[j] = indices[j + 1];
-                        }
-                        indices[n - 1] = first;
-                        cycles[i] = n - i;
-                    } else {
-                        int j = cycles[i];
-                        int index = indices[i];
-                        indices[i] = indices[n - j];
-                        indices[n - j] = index;
-                        return makeIndexedTuple(pool, indices, r);
-                    }
-                }
-                return null;
-            }
-        };
-    }
-
-    public static PyIterator product(PyObject [] args, String [] kws) {
-        final int repeat;
-        final int num_iterables;
-        if (kws.length == 1 && kws[0] == "repeat") {
-            repeat = args[args.length -1].asInt();
-            num_iterables = args.length - 1;
-        } else {
-            repeat = 1;
-            num_iterables = args.length;
-        }
-        // XXX error checking on args! XXX
-        final int num_pools = num_iterables * repeat;
-        final PyTuple pools[] = new PyTuple[num_pools];
-        for (int i = 0; i < num_iterables; i++) {
-            pools[i] = PyTuple.fromIterable(args[i]);
-        }
-        // Make repeat - 1 duplicates, in order
-        for (int r = 1; r < repeat; r++) {
-            for (int i = 0; i < num_iterables; i++) {
-                pools[r * num_iterables + i] = pools[i];
-            }
-        }
-        final int indices[] = new int[num_pools];
-        for (int i = 0; i < num_pools; i++) {
-            indices[i] = 0;
-        }
-
-        return new ItertoolsIterator() {
-            boolean firstthru = true;
-
-            @Override
-            public PyObject __iternext__() {
-                if (firstthru) {
-                    firstthru = false;
-                    return makeTuple();
-                }
-                for (int i = num_pools - 1; i >= 0; i--) {
-                    indices[i]++;
-
-                    if (indices[i] == pools[i].__len__()) {
-                        indices[i] = 0;
-                    } else {
-                        return makeTuple();         
-                    }
-                }
-                return null;
-            }
-
-            private PyTuple makeTuple() {
-                PyObject items[] = new PyObject[num_pools];
-                for (int i = 0; i < num_pools; i++) {
-                    items[i] = pools[i].__getitem__(indices[i]);
-                }
-                return new PyTuple(items);
-            }
-
-        };
-    }
-
 }

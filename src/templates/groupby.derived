@@ -1,0 +1,4 @@
+base_class: groupby
+want_dict: true
+ctr:
+incl: object

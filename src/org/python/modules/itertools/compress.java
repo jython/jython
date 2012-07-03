@@ -18,7 +18,7 @@ public class compress extends PyObject {
     private itertools.ItertoolsIterator iter;
 
     @ExposedGet
-    public static PyString __doc__compress = new PyString(
+    public static PyString __doc__ = new PyString(
             "compress(data, selectors) --> iterator over selected data\n\n" +
                     "Return data elements corresponding to true selector elements.\n" +
                     "Forms a shorter iterator from selected data elements using the\n" +

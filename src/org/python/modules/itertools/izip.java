@@ -51,6 +51,8 @@ public class izip extends PyObject {
      * (Code in this method is based on __builtin__.zip()).
      * 
      */
+    @ExposedNew
+    @ExposedMethod
     final void izip___init__(PyObject[] args, String[] kwds) {
         if (kwds.length > 0) {
             throw Py.TypeError(String.format("izip does not take keyword arguments"));

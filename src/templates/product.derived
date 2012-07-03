@@ -1,0 +1,4 @@
+base_class: product
+want_dict: true
+ctr:
+incl: object
