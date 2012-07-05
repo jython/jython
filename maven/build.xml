@@ -31,7 +31,7 @@
 
   <property file="${basedir}/default.properties"/>
 
-  <property name="project.version" value="2.7.0-SNAPSHOT"/>
+  <property name="project.version" value="2.5.3-SNAPSHOT"/>
 
   <property name="m2.repo" value="${user.home}/.m2/repository"/>
   <property name="m2.groupDir" value="org/python"/>
