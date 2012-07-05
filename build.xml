@@ -385,7 +385,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="checkout" depends="prepare" if="do.checkout">
         <exec executable="hg">
-            <arg line="clone http://hg.python.org/jython-releasing/2.5.3 -b 2.5 ${checkout.dir}/${hg.code.dir}"/>
+            <arg line="clone http://hg.python.org/jython -b 2.5 ${checkout.dir}/${hg.code.dir}"/>
         </exec>
 
         <svn javahl="${javahl.dir}" >
