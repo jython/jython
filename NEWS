@@ -19,8 +19,13 @@ Jython 2.7a1
   Bugs Fixed
     - [ 1880 ] Sha 224 library not present in Jython
 
+Jython 2.5.3b3
+  Bugs Fixed
+    - [ 1754 ] modjy does not provide appropriate wsgi.input file-like object
+
 Jython 2.5.3b2
   Bugs Fixed
+    - [ 1908 ] Patch for 'Unmapped exception: java.net.NoRouteToHostException'
     - [ 1871 ] Relative import in module gets imported to top level (regression)
     - [ 1854 ] set().pop() race condition
     - [ 1730 ] functools.partial incorrectly makes __doc__ property readonly
