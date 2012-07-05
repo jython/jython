@@ -226,6 +226,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
         <property name="jython.dev.jar" value="jython-dev.jar" />
         <property name="jython.deploy.jar" value="jython.jar" />
+        <property name="jython.standalone.jar" value="jython-standalone.jar" />
     </target>
 
     <target name="full-preinit">
@@ -673,6 +674,29 @@ The readme text for the next release will be like:
         </jarjar>
     </target>
 
+<target name="jar-standalone" depends="jar-complete, copy-lib">
+        <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
+        <jarjar destfile="${dist.dir}/${jython.standalone.jar}">
+            <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
+            <fileset dir="${dist.dir}" includes="Lib/**" excludes="Lib/test/**,Lib/email/test/**"/>
+
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="svn-build" value="${do.checkout}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
+        </jarjar>
+    </target>
+
     <target name="jar" depends="compile,expose">
        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
            <classpath>
@@ -843,7 +867,7 @@ The readme text for the next release will be like:
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="brand-readme-version, install-init, jar-complete, javadoc, copy-full">
+    <target name="install" depends="brand-readme-version, install-init, jar-standalone, javadoc, copy-full">
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
@@ -876,6 +900,7 @@ The readme text for the next release will be like:
         <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" update="true">
             <fileset dir="${dist.dir}">
                 <exclude name="${jython.dev.jar}"/>
+                <exclude name="${jython.standalone.jar}"/>
                 <exclude name="callbacker_test.jar"/>
                 <exclude name="extlibs/svnant-jars/**" />
                 <exclude name="extlibs/antlr*.jar" />
