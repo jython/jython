@@ -3,6 +3,10 @@ Jython NEWS
 Jython 2.7a1
   Bugs Fixed
 
+Jython 2.5.3b3
+  Bugs Fixed
+    - [ 1754 ] modjy does not provide appropriate wsgi.input file-like object
+
 Jython 2.5.3b2
   Bugs Fixed
     - [ 1908 ] Patch for 'Unmapped exception: java.net.NoRouteToHostException'
