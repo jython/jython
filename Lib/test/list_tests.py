@@ -529,11 +529,9 @@ class CommonTest(seq_tests.CommonTest):
         a[::2] = tuple(range(5))
         self.assertEqual(a, self.type2test([0, 1, 1, 3, 2, 5, 3, 7, 4, 9]))
 
-        #FIXME: not working on Jython
-        if not test_support.is_jython:
-            # test issue7788
-            a = self.type2test(range(10))
-            del a[9::1<<333]
+        # test issue7788
+        a = self.type2test(range(10))
+        del a[9::1<<333]
 
     # XXX: CPython specific, PyList doesn't len() during init
     def _test_constructor_exception_handling(self):

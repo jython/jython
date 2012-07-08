@@ -50,8 +50,8 @@ public abstract class SequenceIndexDelegate implements Serializable {
         if (idx.isIndex()) {
             delItem(checkIdx(idx.asIndex(Py.IndexError)));
         } else if (idx instanceof PySlice) {
-            int[] indices = ((PySlice)idx).indicesEx(len());
-            delSlice(indices[0], indices[1], indices[2]);
+            PySlice slice = (PySlice) idx;
+            delSlice(slice.indicesEx(len()));
         } else {
             throw Py.TypeError(getTypeName() + " indices must be integers");
         }
@@ -109,20 +109,27 @@ public abstract class SequenceIndexDelegate implements Serializable {
         }
     }
 
-    private void delSlice(int start, int stop, int step) {
-        if(step == 1) {
-            if (stop > start) {
-                delItems(start, stop);
+    private void delSlice(int[] indices) {
+        int p = indices[0], step = indices[2], count = indices[3];
+        if (step > 1) {
+            /*
+             * Key observation: each deletion causes material to the right (not yet visited) to move
+             * one place left, so the deletion pointer moves by step-1 not by step as might be
+             * expected.
+             */
+            step = step - 1;
+            for (; count > 0; --count, p += step) {
+                delItem(p);
             }
-        } else if(step > 1) {
-            for(int i = start; i < stop; i += step) {
-                delItem(i);
-                i--;
-                stop--;
+        } else if (step < 1) {
+            // Deletion pointer moves leftwards, and moving data is to the right
+            for (; count > 0; --count, p += step) {
+                delItem(p);
             }
-        } else if(step < 0) {
-            for(int i = start; i >= 0 && i > stop; i += step) {
-                delItem(i);
+        } else { // step == 1, since it is never == 0
+            // Slice is contiguous: use range delete
+            if (count > 0) {
+                delItems(p, p + count);
             }
         }
     }
