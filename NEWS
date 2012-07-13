@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1914 ] Float formatting broken in many non-English locales in Jython 2.7
     - [ 1909 ] attrgetter does not parse dotted attributes
     - [ 1924 ] Implement operator.methodcaller
     - [ 1934 ] Break itertools.compress into a separate class 

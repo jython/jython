@@ -2954,7 +2954,7 @@ final class StringFormatter
     static class DecimalFormatTemplate {
         static DecimalFormat template;
         static {
-            template = new DecimalFormat("#,##0.#####");
+            template = new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(java.util.Locale.US));
             DecimalFormatSymbols symbols = template.getDecimalFormatSymbols();
             symbols.setNaN("nan");
             symbols.setInfinity("inf");
