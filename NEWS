@@ -2,6 +2,8 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1921 ] compiler module broken in Jython 2.7 
+    - [ 1920 ] Backport CO_FUTURE_PRINT_FUNCTION to Lib/compiler/pycodegen.py
     - [ 1914 ] Float formatting broken in many non-English locales in Jython 2.7
     - [ 1909 ] attrgetter does not parse dotted attributes
     - [ 1924 ] Implement operator.methodcaller
