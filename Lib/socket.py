@@ -298,9 +298,6 @@ class _nio_impl:
     timeout = None
     mode = MODE_BLOCKING
 
-    def getpeername(self):
-        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
-
     def config(self, mode, timeout):
         self.mode = mode
         if self.mode == MODE_BLOCKING:
@@ -414,6 +411,12 @@ class _client_socket_impl(_nio_impl):
         if how in (SHUT_WR, SHUT_RDWR):
             self.jsocket.shutdownOutput()
 
+    def getsockname(self):
+        return (self.jsocket.getLocalAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
+
 class _server_socket_impl(_nio_impl):
 
     options = {
@@ -447,6 +450,13 @@ class _server_socket_impl(_nio_impl):
         # java/jython. But we can't call that here because that would then
         # later cause the user explicit close() call to fail
         pass
+
+    def getsockname(self):
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        # Not a meaningful operation for server sockets.
+        raise error(errno.ENOTCONN, "Socket is not connected")
 
 class _datagram_socket_impl(_nio_impl):
 
@@ -556,6 +566,15 @@ class _datagram_socket_impl(_nio_impl):
             return self._do_receive_net(0, num_bytes, flags)
         else:
             return self._do_receive_nio(0, num_bytes, flags)
+
+    def getsockname(self):
+        return (self.jsocket.getLocalAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        peer_address = self.jsocket.getInetAddress()
+        if peer_address is None:
+            raise error(errno.ENOTCONN, "Socket is not connected")
+        return (peer_address.getHostAddress(), self.jsocket.getPort() )
 
 has_ipv6 = True # IPV6 FTW!
 
@@ -1039,6 +1058,27 @@ class _nonblocking_api_mixin:
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
+    def getsockname(self):
+        try:
+            if self.sock_impl is None:
+                # If the user has already bound an address, return that
+                if self.local_addr:
+                    return self.local_addr
+                # The user has not bound, connected or listened
+                # This is what cpython raises in this scenario
+                raise error(errno.EINVAL, "Invalid argument")
+            return self.sock_impl.getsockname()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def getpeername(self):
+        try:
+            if self.sock_impl is None:
+                raise error(errno.ENOTCONN, "Socket is not connected")
+            return self.sock_impl.getpeername()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl:
@@ -1175,31 +1215,6 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     sendall = send
 
-    def getsockname(self):
-        try:
-            if not self.sock_impl:
-                host, port = self.local_addr or ("", 0)
-                host = java.net.InetAddress.getByName(host).getHostAddress()
-            else:
-                if self.server:
-                    host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-                else:
-                    host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
-                port = self.sock_impl.jsocket.getLocalPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getpeername(self):
-        try:
-            assert self.sock_impl
-            assert not self.server
-            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
     def close(self):
         try:
             if self.istream:
@@ -1216,14 +1231,19 @@ class _udpsocket(_nonblocking_api_mixin):
 
     sock_impl = None
     connected = False
+    local_addr = None
 
     def __init__(self):
         _nonblocking_api_mixin.__init__(self)
 
     def bind(self, addr):
-        try:
+        try:            
             assert not self.sock_impl
-            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE), 
+            assert not self.local_addr
+            # Do the address format check
+            _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
+            self.local_addr = addr
+            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
                                                     self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
@@ -1235,7 +1255,7 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-                self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
+            self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
             self.connected = True
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1293,24 +1313,6 @@ class _udpsocket(_nonblocking_api_mixin):
         if not self.sock_impl: raise error(errno.ENOTCONN, "Socket is not connected")
         try:
             return self.sock_impl.recv(num_bytes, flags)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getsockname(self):
-        try:
-            assert self.sock_impl
-            host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getLocalPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getpeername(self):
-        try:
-            assert self.sock
-            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getPort()
-            return (host, port)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 

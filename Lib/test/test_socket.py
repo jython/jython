@@ -2201,6 +2201,118 @@ class TestInvalidUsage(unittest.TestCase):
         else:
             self.fail("Shutdown on unconnected socket should have raised socket exception")
 
+class TestGetSockAndPeerName:
+
+    def testGetpeernameNoImpl(self):
+        try:
+            self.s.getpeername()
+        except socket.error, se:
+            if se[0] == errno.ENOTCONN:
+                return
+        self.fail("getpeername() on unconnected socket should have raised socket.error")
+
+    def testGetsocknameUnboundNoImpl(self):
+        try:
+            self.s.getsockname()
+        except socket.error, se:
+            if se[0] == errno.EINVAL:
+                return
+        self.fail("getsockname() on unconnected socket should have raised socket.error")
+
+    def testGetsocknameBoundNoImpl(self):
+        self.s.bind( ("localhost", 0) )
+        try:
+            self.s.getsockname()
+        except socket.error, se:
+            self.fail("getsockname() on bound socket should have not raised socket.error")
+
+    def testGetsocknameImplCreated(self):
+        self._create_impl_socket()
+        try:
+            self.s.getsockname()
+        except socket.error, se:
+            self.fail("getsockname() on active socket should not have raised socket.error")
+
+    def tearDown(self):
+        self.s.close()
+
+class TestGetSockAndPeerNameTCPClient(unittest.TestCase, TestGetSockAndPeerName):
+
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # This server is not needed for all tests, but create it anyway
+        # It uses an ephemeral port, so there should be no port clashes or
+        # problems with reuse.
+        self.server_peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_peer.bind( ("localhost", 0) )
+        self.server_peer.listen(5)
+
+    def _create_impl_socket(self):
+        self.s.connect(self.server_peer.getsockname())
+
+    def testGetpeernameImplCreated(self):
+        self._create_impl_socket()
+        try:
+            self.s.getpeername()
+        except socket.error, se:
+            self.fail("getpeername() on active socket should not have raised socket.error")
+        self.failUnlessEqual(self.s.getpeername(), self.server_peer.getsockname())
+
+    def tearDown(self):
+        self.server_peer.close()
+
+class TestGetSockAndPeerNameTCPServer(unittest.TestCase, TestGetSockAndPeerName):
+
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def _create_impl_socket(self):
+        self.s.bind(("localhost", 0))
+        self.s.listen(5)
+
+    def testGetpeernameImplCreated(self):
+        self._create_impl_socket()
+        try:
+            self.s.getpeername()
+        except socket.error, se:
+            if se[0] == errno.ENOTCONN:
+                return
+        self.fail("getpeername() on listening socket should have raised socket.error")
+
+class TestGetSockAndPeerNameUDP(unittest.TestCase, TestGetSockAndPeerName):
+
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def _create_impl_socket(self):
+        # Binding is enough to cause socket impl creation
+        self.s.bind(("localhost", 0))
+
+    def testGetpeernameImplCreatedNotConnected(self):
+        self._create_impl_socket()
+        try:
+            self.s.getpeername()
+        except socket.error, se:
+            if se[0] == errno.ENOTCONN:
+                return
+        self.fail("getpeername() on unconnected UDP socket should have raised socket.error")
+
+    def testGetpeernameImplCreatedAndConnected(self):
+        # This test also tests that an UDP socket can be bound and connected at the same time
+        self._create_impl_socket()
+        # Need to connect to an UDP port
+        self._udp_peer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._udp_peer.bind( ("localhost", 0) )
+        self.s.connect(self._udp_peer.getsockname())
+        try:
+            try:
+                self.s.getpeername()
+            except socket.error, se:
+                self.fail("getpeername() on connected UDP socket should not have raised socket.error")
+            self.failUnlessEqual(self.s.getpeername(), self._udp_peer.getsockname())
+        finally:
+            self._udp_peer.close()
+
 def test_main():
     tests = [
         GeneralModuleTests,
@@ -2231,6 +2343,9 @@ def test_main():
         SmallBufferedFileObjectClassTestCase,
         UnicodeTest,
         IDNATest,
+        TestGetSockAndPeerNameTCPClient, 
+        TestGetSockAndPeerNameTCPServer, 
+        TestGetSockAndPeerNameUDP,
     ]
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)
