@@ -2,6 +2,7 @@ package org.python.core;
 
 import java.util.Arrays;
 
+import org.python.core.buffer.SimpleBuffer;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -23,7 +24,7 @@ import org.python.expose.MethodType;
  *
  */
 @ExposedType(name = "bytearray", base = PyObject.class, doc = BuiltinDocs.bytearray_doc)
-public class PyByteArray extends BaseBytes {
+public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     public static final PyType TYPE = PyType.fromClass(PyByteArray.class);
 
@@ -85,14 +86,14 @@ public class PyByteArray extends BaseBytes {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source, which is a
-     * memoryview.
+     * Create a new array filled exactly by a copy of the contents of the source, which is an
+     * object supporting the Jython version of the PEP 3118 buffer API.
      *
      * @param value source of the bytes (and size)
      */
-    public PyByteArray(MemoryViewProtocol value) {
+    public PyByteArray(BufferProtocol value) {
         super(TYPE);
-        init(value.getMemoryView());
+        init(value);
     }
 
     /**
@@ -195,6 +196,55 @@ public class PyByteArray extends BaseBytes {
         super(TYPE);
         init(arg);
     }
+
+    /*
+     * ============================================================================================
+     * Support for the Buffer API
+     * ============================================================================================
+     *
+     * The buffer API allows other classes to access the storage directly.
+     */
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The {@link PyBuffer} returned from this method is a one-dimensional array of single byte
+     * items, that allows modification of the object state but <b>prohibits resizing</b> the byte array.
+     * This prohibition is not only on the consumer of the view but extends to any other operations,
+     * such as any kind or insertion or deletion.
+     */
+    @Override
+    public synchronized PyBuffer getBuffer(int flags) {
+        exportCount++;
+        return new SimpleBuffer(this, new BufferPointer(storage, offset, size), flags) {
+
+            @Override
+            public void releaseAction() {
+                // synchronise on the same object as getBuffer()
+                synchronized (obj) {
+                    exportCount--;
+                }
+            }
+        };
+    }
+
+    /**
+     * Test to see if the byte array may be resized and raise a BufferError if not.
+     *
+     * @throws PyException (BufferError) if there are buffer exports preventing a resize
+     */
+    protected void resizeCheck() throws PyException {
+         // XXX Quite likely this is not called in all the places it should be
+         if (exportCount!=0) {
+            throw Py.BufferError("Existing exports of data: object cannot be re-sized");
+        }
+    }
+
+    /**
+     * Count of PyBuffer exports not yet released, used to prevent untimely resizing.
+     */
+    private int exportCount;
+
 
     /* ============================================================================================
      * API for org.python.core.PySequence
@@ -368,12 +418,12 @@ public class PyByteArray extends BaseBytes {
              */
             setslice(start, stop, step, (BaseBytes)value);
 
-        } else if (value instanceof MemoryViewProtocol) {
+        } else if (value instanceof BufferProtocol) {
             /*
              * Value supports Jython implementation of PEP 3118, and can be can be inserted without
              * making a copy.
              */
-            setslice(start, stop, step, ((MemoryViewProtocol)value).getMemoryView());
+            setslice(start, stop, step, (BufferProtocol)value);
 
         } else {
             /*
@@ -449,12 +499,31 @@ public class PyByteArray extends BaseBytes {
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
-     * @param value a memoryview object consistent with the slice assignment
+     * @param value an object supporting the buffer API consistent with the slice assignment
      * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
      */
-    private void setslice(int start, int stop, int step, MemoryView value) throws PyException {
-        // XXX Support memoryview once means of access to bytes is defined
-        throw Py.NotImplementedError("memoryview not yet supported in bytearray");
+    private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
+        PyBuffer view = value.getBuffer(PyBUF.SIMPLE);
+
+
+        int len = view.getLen();
+
+        if (step == 1) {
+            // Delete this[start:stop] and open a space of the right size
+            storageReplace(start, stop - start, len);
+            view.copyTo(storage, start+offset);
+
+        } else {
+            // This is an extended slice which means we are replacing elements
+            int n = sliceLength(start, stop, step);
+            if (n != len) {
+                throw SliceSizeError("bytes", len, n);
+            }
+
+            for (int io = start + offset, j = 0; j < n; io += step, j++) {
+                storage[io] = view.byteAt(j);    // Assign this[i] = value[j]
+            }
+        }
     }
 
     /**
@@ -2089,6 +2158,9 @@ public class PyByteArray extends BaseBytes {
             return;
         }
 
+        // This will not be possible if this object has buffer exports
+        resizeCheck();
+
         // Compute some handy points of reference
         final int L = storage.length;
         final int f = offset;
@@ -2351,6 +2423,9 @@ public class PyByteArray extends BaseBytes {
             return; // Everything stays where it is.
         }
 
+        // This will not be possible if this object has buffer exports
+        resizeCheck();
+
         // Compute some handy points of reference
         final int L = storage.length;
         final int f = offset;
@@ -2429,6 +2504,9 @@ public class PyByteArray extends BaseBytes {
          {
             return; // Everything stays where it is.
         }
+
+        // This will not be possible if this object has buffer exports
+        resizeCheck();
 
         // Compute some handy points of reference
         final int L = storage.length;

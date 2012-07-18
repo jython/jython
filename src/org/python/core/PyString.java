@@ -1,6 +1,12 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.math.BigInteger;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+
+import org.python.core.StringFormatter.DecimalFormatTemplate;
+import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
@@ -12,15 +18,11 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
-import java.math.BigInteger;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-
 /**
  * A builtin python string.
  */
 @ExposedType(name = "str", doc = BuiltinDocs.str_doc)
-public class PyString extends PyBaseString implements MemoryViewProtocol
+public class PyString extends PyBaseString implements BufferProtocol
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string; // cannot make final because of Python intern support
@@ -93,28 +95,19 @@ public class PyString extends PyBaseString implements MemoryViewProtocol
         return codePoints;
     }
 
-    public MemoryView getMemoryView() {
-        return new MemoryView() {
-            // beginning of support
-            public String get_format() {
-                 return "B";
-            }
-            public int get_itemsize() {
-                return 2;
-            }
-            public PyTuple get_shape() {
-                return new PyTuple(Py.newInteger(getString().length()));
-            }
-            public int get_ndim() {
-                return 1;
-            }
-            public PyTuple get_strides() {
-                return new PyTuple(Py.newInteger(1));
-            }
-            public boolean get_readonly() {
-                return true;
-            }
-        };
+    /**
+     * Create a read-only buffer view of the contents of the string, treating it as a sequence of
+     * unsigned bytes. The caller specifies its requirements and navigational capabilities in the
+     * <code>flags</code> argument (see the constants in class {@link PyBUF} for an explanation).
+     * 
+     * @param flags consumer requirements
+     * @return the requested buffer
+     */
+    public PyBuffer getBuffer(int flags) {
+        /*
+         * Return a buffer, but specialised to defer construction of the buf object.
+         */
+        return new SimpleStringBuffer(this, getString(), flags);
     }
 
     public String substring(int start, int end) {

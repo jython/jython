@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.python.core.buffer.SimpleReadonlyBuffer;
+
 /**
  * Base class for Jython bytearray (and bytes in due course) that provides most of the Java API,
  * including Java List behaviour. Attempts to modify the contents through this API will throw a
@@ -31,7 +33,7 @@ import java.util.ListIterator;
  * </ul>
  * since the default implementations will otherwise throw an exception.
  */
-public abstract class BaseBytes extends PySequence implements MemoryViewProtocol, List<PyInteger> {
+public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Simple constructor of empty zero-length array of defined type.
@@ -141,75 +143,6 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     /*
      * ============================================================================================
-     * Support for memoryview
-     * ============================================================================================
-     *
-     * This is present in order to facilitate development of PyMemoryView which a full
-     * implementation of bytearray would depend on, while at the same time a full implementation of
-     * memoryview depends on bytearray.
-     */
-    /**
-     * Get hold of a <code>memoryview</code> on the current byte array.
-     *
-     * @see MemoryViewProtocol#getMemoryView()
-     */
-    @Override
-    public MemoryView getMemoryView() {
-        if (mv == null) {
-            mv = new MemoryViewImpl();
-        }
-        return mv;
-    }
-
-    private MemoryView mv;
-
-    /**
-     * All instances of BaseBytes have one dimension with stride one.
-     */
-    private static final PyTuple STRIDES = new PyTuple(Py.One);
-
-    /**
-     * Very simple MemoryView for one-dimensional byte array. This lacks any actual access to the
-     * underlying storage as the interface is not presently defined.
-     */
-    private class MemoryViewImpl implements MemoryView {
-
-        private final PyTuple SHAPE = new PyTuple(new PyInteger(storage.length));
-
-        @Override
-        public String get_format() {
-            return "B";
-        }
-
-        @Override
-        public int get_itemsize() {
-            return 1;
-        }
-
-        @Override
-        public PyTuple get_shape() {
-            return SHAPE;
-        }
-
-        @Override
-        public int get_ndim() {
-            return 1;
-        }
-
-        @Override
-        public PyTuple get_strides() {
-            return STRIDES;
-        }
-
-        @Override
-        public boolean get_readonly() {
-            return true;
-        }
-
-    }
-
-    /*
-     * ============================================================================================
      * Support for construction and initialisation
      * ============================================================================================
      *
@@ -257,11 +190,11 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
              */
             init((BaseBytes)arg);
 
-        } else if (arg instanceof MemoryViewProtocol) {
+        } else if (arg instanceof BufferProtocol) {
             /*
              * bytearray copy of object supporting Jython implementation of PEP 3118
              */
-            init(((MemoryViewProtocol)arg).getMemoryView());
+            init((BufferProtocol)arg);
 
         } else {
             /*
@@ -387,29 +320,21 @@ public abstract class BaseBytes extends PySequence implements MemoryViewProtocol
 
     /**
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from
-     * objects supporting the Jython implementation of PEP 3118 (memoryview) in subclasses.
+     * objects supporting the Jython implementation of PEP 3118 (Buffer API) in subclasses.
      *
-     * @param value a memoryview object consistent with the slice assignment
-     * @throws PyException(NotImplementedError) until memoryview is properly supported
-     * @throws PyException(TypeError) if the memoryview is not byte-oriented
+     * @param value an object bearing the Buffer API and consistent with the slice assignment
      */
-    protected void init(MemoryView value) throws PyException {
-        // XXX Support memoryview once means of access to bytes is defined
-        Py.NotImplementedError("memoryview not yet supported in bytearray");
-        String format = value.get_format();
-        boolean isBytes = format == null || "B".equals(format);
-        if (value.get_ndim() != 1 || !isBytes) {
-            Py.TypeError("memoryview value must be byte-oriented");
-        } else {
-            // Dimensions are given as a PyTuple (although only one)
-            int len = value.get_shape().pyget(0).asInt();
-            // XXX Access to memoryview bytes to go here
-        }
+    protected void init(BufferProtocol value) throws PyException {
+        // Get the buffer view
+        PyBuffer view = value.getBuffer(PyBUF.SIMPLE);
+        // Create storage for the bytes and have the view drop them in
+        newStorage(view.getLen());
+        view.copyTo(storage, offset);
     }
 
     /**
-     * Helper for the Java API constructor from a {@link #View}. View is (perhaps) a stop-gap while
-     * there is no Jython implementation of PEP 3118 (memoryview).
+     * Helper for the Java API constructor from a {@link #View}. View is (perhaps) a stop-gap until
+     * the Jython implementation of PEP 3118 (buffer API) is embedded.
      *
      * @param value a byte-oriented view
      */
