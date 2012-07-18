@@ -42,7 +42,7 @@ public class PyClass extends PyObject {
     }
 
     public static PyObject classobj___new__(PyObject name, PyObject bases, PyObject dict) {
-        if (!name.getType().isSubType(PyBaseString.TYPE)) {
+        if (!name.getType().isSubType(PyString.TYPE)) {
             throw Py.TypeError("PyClass_New: name must be a string");
         }
         if (!(dict instanceof PyStringMap || dict instanceof PyDictionary)) {
@@ -278,7 +278,7 @@ public class PyClass extends PyObject {
     }
 
     public void setName(PyObject value) {
-        if (value == null || !Py.isInstance(value, PyBaseString.TYPE)) {
+        if (value == null || !Py.isInstance(value, PyString.TYPE)) {
             throw Py.TypeError("__name__ must be a string object");
         }
         String name = value.toString();
