@@ -869,7 +869,7 @@ public class imp {
 
             StringBuilder modNameBuffer = new StringBuilder(name);
             for (PyObject item : fromlist.asIterable()) {
-                if (!Py.isInstance(item, PyString.TYPE)) {
+                if (!Py.isInstance(item, PyBaseString.TYPE)) {
                     throw Py.TypeError("Item in ``from list'' not a string");
                 }
                 if (item.toString().equals("*")) {

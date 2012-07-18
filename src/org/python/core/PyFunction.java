@@ -104,7 +104,7 @@ public class PyFunction extends PyObject implements InvocationHandler {
             throw Py.TypeError("function() argument 1 must be code, not " +
                                code.getType().fastGetName());
         }
-        if (name != Py.None && !Py.isInstance(name, PyString.TYPE)) {
+        if (name != Py.None && !Py.isInstance(name, PyBaseString.TYPE)) {
             throw Py.TypeError("arg 3 (name) must be None or string");
         }
         if (defaults != Py.None && !(defaults instanceof PyTuple)) {
