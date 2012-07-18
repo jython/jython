@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.python.util.PythonInterpreter;
-
 import junit.framework.TestCase;
+
+import org.python.core.buffer.SimpleBuffer;
+import org.python.util.PythonInterpreter;
 
 /**
  * Unit test of org.python.core.BaseBytes, a class that supplies much of the behaviour of the Jython
@@ -517,7 +518,7 @@ public class BaseBytesTest extends TestCase {
         return new MyBytes(value);
     }
 
-    public BaseBytes getInstance(MemoryViewProtocol value) throws PyException {
+    public BaseBytes getInstance(BufferProtocol value) throws PyException {
         return new MyBytes(value);
     }
 
@@ -599,9 +600,9 @@ public class BaseBytesTest extends TestCase {
          * 
          * @param value source of the bytes (and size)
          */
-        public MyBytes(MemoryViewProtocol value) {
+        public MyBytes(BufferProtocol value) {
             super(TYPE);
-            init(value.getMemoryView());
+            init((BufferProtocol)value.getBuffer(PyBUF.SIMPLE));
         }
 
         /**
@@ -769,13 +770,12 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * An object that for test purposes (of construction and slice assignment) contains an array of
-     * values that it is able to offer for reading through the MemoryView interface.
+     * values that it is able to offer for reading through the PyBuffer interface.
      */
-    public static class MemoryViewable extends PyObject implements MemoryViewProtocol {
+    public static class BufferedObject extends PyObject implements BufferProtocol {
 
-        public static final PyType TYPE = PyType.fromClass(MemoryViewable.class);
+        public static final PyType TYPE = PyType.fromClass(BufferedObject.class);
 
-        private MemoryView mv;
         private byte[] store;
 
         /**
@@ -783,7 +783,7 @@ public class BaseBytesTest extends TestCase {
          * 
          * @param value integers to store
          */
-        MemoryViewable(int[] value) {
+        BufferedObject(int[] value) {
             super(TYPE);
             int n = value.length;
             store = new byte[n];
@@ -793,56 +793,10 @@ public class BaseBytesTest extends TestCase {
         }
 
         @Override
-        public MemoryView getMemoryView() {
-            if (mv == null) {
-                mv = new MemoryViewImpl();
-            }
-            return mv;
+        public PyBuffer getBuffer(int flags) {
+            return new SimpleBuffer(this, new BufferPointer(store), flags);
         }
 
-        /**
-         * All instances of MemoryViewable have one dimension with stride one.
-         */
-        private static final PyTuple STRIDES = new PyTuple(Py.One);
-
-        /**
-         * Very simple MemoryView for one-dimensional byte array.
-         */
-        class MemoryViewImpl implements MemoryView {
-
-            private final PyTuple shape = new PyTuple(new PyInteger(store.length));
-
-            @Override
-            public String get_format() {
-                return "B";
-            }
-
-            @Override
-            public int get_itemsize() {
-                return 1;
-            }
-
-            @Override
-            public PyTuple get_shape() {
-                return shape;
-            }
-
-            @Override
-            public int get_ndim() {
-                return 1;
-            }
-
-            @Override
-            public PyTuple get_strides() {
-                return STRIDES;
-            }
-
-            @Override
-            public boolean get_readonly() {
-                return true;
-            }
-
-        }
     }
 
     /**

@@ -363,7 +363,12 @@ public final class Py {
     public static PyException MemoryError(String message) {
         return new PyException(Py.MemoryError, message);
     }
+
     public static PyObject BufferError;
+    public static PyException BufferError(String message) {
+        return new PyException(Py.BufferError, message);
+    }
+
     public static PyObject ArithmeticError;
     public static PyObject LookupError;
     public static PyObject StandardError;
