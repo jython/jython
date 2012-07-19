@@ -1932,12 +1932,12 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
     @Override
     public PyString __str__() {
-        return basebytes_str();
+        return bytearray_str();
     }
 
     @ExposedMethod(names = {"__str__"}, doc = BuiltinDocs.bytearray___str___doc)
     final PyString bytearray_str() {
-        return basebytes_str();
+        return new PyString(this.asString());
     }
 
     /**

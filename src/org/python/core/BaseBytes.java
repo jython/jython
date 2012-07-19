@@ -1479,18 +1479,21 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Copy the bytes of a byte array to the characters of a String with no change in ordinal value.
-     * This could also be described as 'latin-1' decoding of the byte array to a String.
-     *
-     * @return the byte array as a String, still encoded
+     * Present the bytes of a byte array, with no decoding, as a Java String. The bytes are treated
+     * as unsigned character codes, and copied to the to the characters of a String with no change
+     * in ordinal value. This could also be described as 'latin-1' or 'ISO-8859-1' decoding of the
+     * byte array to a String, since this character encoding is numerically equal to Unicode.
+     * 
+     * @return the byte array as a String
      */
-    private synchronized String asEncodedString() {
-        StringBuilder buf = new StringBuilder(size);
-        int jmax = offset + size;
-        for (int j = offset; j < jmax; j++) {
-            buf.append((char)(0xff & storage[j]));
+    @Override
+    public synchronized String asString() {
+        char[] buf = new char[size];
+        int j = offset + size;
+        for (int i = size; --i >= 0;) {
+            buf[i] = (char)(0xff & storage[--j]);
         }
-        return buf.toString();
+        return new String(buf);
     }
 
     /**
@@ -1530,7 +1533,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * expects a PyString. (In Python 3k the codecs decode from the <code>bytes</code> type, so
          * we can pass this directly.)
          */
-        PyString this_ = new PyString(this.asEncodedString());
+        PyString this_ = new PyString(this.asString());
         return codecs.decode(this_, encoding, errors);
     }
 
@@ -1578,7 +1581,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return required tuple of type, arguments needed by init, and any user-added attributes.
      */
     final PyTuple basebytes___reduce__() {
-        PyUnicode encoded = new PyUnicode(this.asEncodedString());
+        PyUnicode encoded = new PyUnicode(this.asString());
         PyObject args = new PyTuple(encoded, getPickleEncoding());
         PyObject dict = __findattr__("__dict__");
         return new PyTuple(getType(), args, (dict != null) ? dict : Py.None);
@@ -3963,26 +3966,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         buf.append('\'').append(after);
         return buf.toString();
     }
-
-    /**
-     * Ready-to-expose Python <code>__str__()</code>, returning a <code>PyString</code> by treating
-     * the bytes as point codes. The built-in function <code>str()</code> is expected to call this
-     * method.
-     */
-    final synchronized PyString basebytes_str() {
-        // Get hold of the decoder for ISO-8859-1, which is one-for-one with Unicode
-        if (defaultCharset == null) {
-            defaultCharset = Charset.forName("ISO-8859-1");
-        }
-        String s = new String(storage, offset, size, defaultCharset);
-        return new PyString(s);
-    }
-
-    /**
-     * Used in {@link #basebytes_str()}, and when not null, points to the identity Charset for
-     * decoding bytes to char.
-     */
-    private static Charset defaultCharset;
 
     /*
      * ============================================================================================
