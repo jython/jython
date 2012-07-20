@@ -14,8 +14,35 @@ package org.python.core;
  */
 public abstract class PySequence extends PyObject {
 
+    /**
+     * A delegate that handles index checking and manipulation for get, set and del operations on
+     * this sequence in the form of a "pluggable behaviour". Because different types of sequence
+     * exhibit subtly different behaviour, there is scope for subclasses to customise the behaviour
+     * with their own extension of <code>SequenceIndexDelegate</code>.
+     */
+    protected SequenceIndexDelegate delegator;
+
+    /**
+     * Construct a PySequence for the given sub-type with the default index behaviour.
+     * 
+     * @param type actual (Python) type of sub-class
+     */
     protected PySequence(PyType type) {
         super(type);
+        delegator = new DefaultIndexDelegate();
+    }
+
+    /**
+     * Construct a PySequence for the given sub-type with custom index behaviour. In practice,
+     * restrictions on the construction of inner classes will mean null has to be passed and the
+     * actual delegator assigned later.
+     * 
+     * @param type actual (Python) type of sub-class
+     * @param behaviour specific index behaviour (or null)
+     */
+    protected PySequence(PyType type, SequenceIndexDelegate behaviour) {
+        super(type);
+        delegator = behaviour;
     }
 
     // These methods must be defined for any sequence
@@ -451,7 +478,11 @@ public abstract class PySequence extends PyObject {
         return true;
     }
 
-    protected final SequenceIndexDelegate delegator = new SequenceIndexDelegate() {
+    /**
+     * Class defining the default behaviour of sequences with respect to slice assignment, etc.,
+     * which is the one correct for <code>list</code>.
+     */
+    protected class DefaultIndexDelegate extends SequenceIndexDelegate {
 
         @Override
         public String getTypeName() {

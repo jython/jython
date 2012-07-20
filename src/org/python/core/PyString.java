@@ -740,15 +740,19 @@ public class PyString extends PyBaseString implements BufferProtocol
     public PyObject __add__(PyObject other) {
         return str___add__(other);
     }
-    
+
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___add___doc)
     final PyObject str___add__(PyObject other) {
         if (other instanceof PyUnicode) {
             return decode().__add__(other);
-        }
-        if (other instanceof PyString) {
+
+        } else if (other instanceof PyString) {
             PyString otherStr = (PyString)other;
             return new PyString(getString().concat(otherStr.getString()));
+
+        } else if (other instanceof PyByteArray) {
+            return new PyString(getString().concat(other.asString()));
+
         }
         return null;
     }
