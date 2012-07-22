@@ -52,75 +52,104 @@ public class PyInteger extends PyObject {
     @ExposedNew
     public static PyObject int_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
+
         ArgParser ap = new ArgParser("int", args, keywords, new String[] {"x", "base"}, 0);
         PyObject x = ap.getPyObject(0, null);
         int base = ap.getInt(1, -909);
-        if (new_.for_type == subtype) {
+
+        if (new_.for_type == subtype) { // A substantive PyInteger is required as the return value
+
             if (x == null) {
                 return Py.Zero;
-            }
-            if (base == -909) {
+
+            } else if (base == -909) {
                 if (x instanceof PyBoolean) {
                     return (coerce(x) == 0) ? Py.Zero : Py.One;
+                } else if (x instanceof PyByteArray) {
+                    // Make use of the string to int conversion in PyString
+                    PyString xs = new PyString(x.asString());
+                    return asPyInteger(xs);
+                } else {
+                    return asPyInteger(x);
                 }
-                return asPyInteger(x);
-            }
-            if (!(x instanceof PyString)) {
+            } else if (!(x instanceof PyString)) {
                 throw Py.TypeError("int: can't convert non-string with explicit base");
             }
+
             try {
-                return Py.newInteger(((PyString) x).atoi(base));
+                return Py.newInteger(((PyString)x).atoi(base));
             } catch (PyException pye) {
                 if (pye.match(Py.OverflowError)) {
-                    return ((PyString) x).atol(base);
+                    return ((PyString)x).atol(base);
                 }
                 throw pye;
             }
-        } else {
+
+        } else { // A PyIntegerDerived(subtype, ... ) is required as the return value
+
             if (x == null) {
                 return new PyIntegerDerived(subtype, 0);
-            }
-            if (base == -909) {
+            } else if (base == -909) {
                 PyObject intOrLong = asPyInteger(x);
+
                 if (intOrLong instanceof PyInteger) {
-                    return new PyIntegerDerived(subtype, ((PyInteger) intOrLong).getValue());
+                    return new PyIntegerDerived(subtype, ((PyInteger)intOrLong).getValue());
                 } else {
                     throw Py.OverflowError("long int too large to convert to int");
                 }
-            }
-            if (!(x instanceof PyString)) {
+
+            } else if (!(x instanceof PyString)) {
                 throw Py.TypeError("int: can't convert non-string with explicit base");
             }
-            return new PyIntegerDerived(subtype, ((PyString) x).atoi(base));
+
+            return new PyIntegerDerived(subtype, ((PyString)x).atoi(base));
         }
     } // xxx
 
     /**
-     * @return convert to an int.
-     * @throws TypeError and AttributeError.
+     * Convert all sorts of object types to either <code>PyInteger</code> or <code>PyLong</code>,
+     * using their {@link PyObject#__int__()} method, whether exposed or not, or if that raises an
+     * exception (as the base <code>PyObject</code> one does), using any <code>__trunc__()</code>
+     * the type may have exposed. If all this fails, this method raises an exception. Equivalent to CPython
+     * <code>PyNumber_Int()</code>.
+     * 
+     * @param x to convert to an int
+     * @return int or long result.
+     * @throws PyException (TypeError) if no method of conversion can be found
+     * @throws PyException (AttributeError) if neither __int__ nor __trunc__ found (?)
      */
-    private static PyObject asPyInteger(PyObject x) {
-        //XXX: Not sure that this perfectly matches CPython semantics.
+    private static PyObject asPyInteger(PyObject x) throws PyException {
+        // XXX: Not sure that this perfectly matches CPython semantics.
         try {
+            // Try the object itself (raises AttributeError if not overridden from PyObject)
             return x.__int__();
+
         } catch (PyException pye) {
             if (!pye.match(Py.AttributeError)) {
+                // x had an __int__ method, but something else went wrong: pass it on
                 throw pye;
-            }
-            try {
-                PyObject integral = x.invoke("__trunc__");
-                return convertIntegralToInt(integral);
-            } catch (PyException pye2) {
-                if (!pye2.match(Py.AttributeError)) {
-                    throw pye2;
+
+            } else {
+                // x did not have an __int__ method, but maybe __trunc__ will work
+                try {
+                    PyObject integral = x.invoke("__trunc__");
+                    return convertIntegralToInt(integral);
+
+                } catch (PyException pye2) {
+                    if (!pye2.match(Py.AttributeError)) {
+                        throw pye2;
+                    }
+                    String fmt = "int() argument must be a string or a number, not '%.200s'";
+                    throw Py.TypeError(String.format(fmt, x));
                 }
-                throw Py.TypeError(
-                    String.format("int() argument must be a string or a number, not '%.200s'", x));
             }
         }
     }
 
     /**
+     * Helper called on whatever exposed method <code>__trunc__</code> returned: it may be
+     * <code>int</code>, <code>long</code> or something with an exposed <code>__int__</code>.
+     * 
      * @return convert to an int.
      * @throws TypeError and AttributeError.
      */

@@ -64,10 +64,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 2:
                 return __builtin__.range(arg1);
             case 3:
-                if (!(arg1 instanceof PyString)) {
-                    throw Py.TypeError("ord() expected string of length 1, but " +
-                                       arg1.getType().fastGetName() + " found");
-                }
                 return Py.newInteger(__builtin__.ord(arg1));
             case 5:
                 return __builtin__.hash(arg1);
@@ -766,22 +762,48 @@ public class __builtin__ {
         return o.__oct__();
     }
 
-    public static final int ord(PyObject c) {
+    /**
+     * Built-in Python function ord() applicable to the string-like types <code>str</code>,
+     * <code>bytearray</code>, <code>unicode</code>.
+     * 
+     * @param c string-like object of length 1
+     * @return ordinal value of character or byte value in
+     * @throws PyException (TypeError) if not a string-like type
+     */
+    public static final int ord(PyObject c) throws PyException {
         final int length;
-        PyString x = (PyString) c;
-        if (x instanceof PyUnicode) {
-            length = x.getString().codePointCount(0, x.getString().length());
+
+        if (c instanceof PyUnicode) {
+            String cu = ((PyUnicode)c).getString();
+            length = cu.codePointCount(0, cu.length());
             if (length == 1) {
-                return x.getString().codePointAt(0);
+                return cu.codePointAt(0);
             }
+
+        } else if (c instanceof PyString) {
+            String cs = ((PyString)c).getString();
+            length = cs.length();
+            if (length == 1) {
+                return cs.charAt(0);
+            }
+
+        } else if (c instanceof BaseBytes) {
+            BaseBytes cb = (BaseBytes)c;
+            length = cb.__len__();
+            if (length == 1) {
+                return cb.intAt(0);
+            }
+
         } else {
-            length = x.getString().length();
-            if (length == 1) {
-                return x.getString().charAt(0);
-            }
+            // Not any of the acceptable types
+            throw Py.TypeError("ord() expected string of length 1, but "
+                    + c.getType().fastGetName() + " found");
         }
-        throw Py.TypeError("ord() expected a character, but string of length " +
-                           length + " found");
+        /*
+         * It was a qualifying string-like object, but if we didn't return or throw by now, the
+         * problem was the length.
+         */
+        throw Py.TypeError("ord() expected a character, but string of length " + length + " found");
     }
 
     public static PyObject pow(PyObject x, PyObject y) {
