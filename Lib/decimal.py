@@ -3340,9 +3340,6 @@ class Decimal(object):
 
     # support for Jython __tojava__:
     def __tojava__(self, java_class):
-        from java.lang import Object
-        from java.math import BigDecimal
-        from org.python.core import Py
         if java_class not in (BigDecimal, Object):
             return Py.NoConversion
         return BigDecimal(str(self))
