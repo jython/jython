@@ -3689,6 +3689,12 @@ class Decimal(object):
         # of the formatting to the _format_number function
         return _format_number(self._sign, intpart, fracpart, exp, spec)
 
+    # support for Jython __tojava__:
+    def __tojava__(self, java_class):
+        if java_class not in (BigDecimal, Object):
+            return Py.NoConversion
+        return BigDecimal(str(self))
+
 def _dec_from_triple(sign, coefficient, exponent, special=False):
     """Create a decimal instance directly, without any validation,
     normalization (e.g. removal of leading zeros) or argument
