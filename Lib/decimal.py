@@ -392,6 +392,14 @@ except ImportError:
     del sys, MockThreading
 
 try:
+    from java.lang import Object
+    from java.math import BigDecimal
+    from org.python.core import Py
+except ImportError:
+    #Not Jython, ignore.
+    pass
+
+try:
     threading.local
 
 except AttributeError:

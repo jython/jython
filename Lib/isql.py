@@ -1,5 +1,8 @@
 import dbexts, cmd, sys, os
 
+if sys.platform.startswith("java"):
+    import java.lang.String
+
 """
 Isql works in conjunction with dbexts to provide an interactive environment
 for database work.
@@ -24,9 +27,8 @@ class Prompt:
         if len(self.isql.sqlbuffer) > 0:
             prompt = "... "
         return prompt
-    if os.name == 'java':
+    if sys.platform.startswith("java"):
         def __tojava__(self, cls):
-            import java.lang.String
             if cls == java.lang.String:
                 return self.__str__()
             return False
