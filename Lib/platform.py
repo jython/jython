@@ -114,6 +114,10 @@ __version__ = '1.0.6'
 
 import sys,string,os,re
 
+if sys.platform.startswith("java"):
+    from java.lang import System
+    from org.python.core.Py import newString
+
 ### Platform specific APIs
 
 _libc_search = re.compile(r'(__libc_init)'
@@ -805,8 +809,6 @@ def mac_ver(release='',versioninfo=('','',''),machine=''):
 
 def _java_getprop(name,default):
 
-    from java.lang import System
-    from org.python.core.Py import newString
     try:
         value = System.getProperty(name)
         if value is None:
