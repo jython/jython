@@ -18,6 +18,7 @@ package org.python.modules.sre;
 
 import java.util.*;
 import org.python.core.*;
+import org.python.core.util.StringUtil;
 
 public class PatternObject extends PyObject {
     int[] code; /* link to the code string object */
@@ -362,17 +363,37 @@ public class PatternObject extends PyObject {
         _error(status);
         return null;
     }
-    
-    private static PyString extractPyString(ArgParser ap, int pos){
+
+    private static PyString extractPyString(ArgParser ap, int pos) {
         PyObject obj = ap.getPyObject(pos);
-        if(!(obj instanceof PyString)){
-            if (obj instanceof PyArray) {
-                return new PyString(obj.toString());
+
+        if (obj instanceof PyString) {
+            // Easy case
+            return (PyString)obj;
+
+        } else if (obj instanceof BufferProtocol) {
+            // Try to get a simple byte-oriented buffer
+            PyBuffer buf = null;
+            try {
+                buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+                // ... and treat those bytes as a PyString
+                String s = StringUtil.fromBytes(buf);
+                return new PyString(s);
+            } catch (Exception e) {
+                // Wrong kind of buffer: generic error message will do
+            } finally {
+                // If we got a buffer, we should release it
+                if (buf != null) {
+                    buf.release();
+                }
             }
-            throw Py.TypeError("expected str or unicode but got " + obj.getType());
+
+        } else if (obj instanceof PyArray) {
+            // PyArray can do something similar
+            return new PyString(obj.toString());
         }
-        return (PyString)obj;
+
+        // None of those things worked
+        throw Py.TypeError("expected string or buffer, but got " + obj.getType());
     }
 }
-
-

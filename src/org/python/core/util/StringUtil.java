@@ -4,8 +4,10 @@ package org.python.core.util;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import org.python.core.BufferPointer;
 import org.python.core.Py;
 import org.python.core.BaseBytes;
+import org.python.core.PyBuffer;
 
 /**
  * String Utility methods.
@@ -64,6 +66,18 @@ public class StringUtil {
     public static String fromBytes(ByteBuffer buf) {
         return fromBytes(buf.array(), buf.arrayOffset() + buf.position(),
                          buf.arrayOffset() + buf.limit());
+    }
+
+    /**
+     * Return a new String with chars corresponding to buf, which is a byte-oriented buffer obtained
+     * through the buffer API.
+     * 
+     * @param buf a PyBuffer of bytes
+     * @return a new String corresponding to the bytes in buf
+     */
+    public static String fromBytes(PyBuffer buf) {
+        BufferPointer bp = buf.getBuf();
+        return fromBytes(bp.storage, bp.offset, bp.size);
     }
 
     /**
