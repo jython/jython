@@ -22,6 +22,7 @@ import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
 import org.python.core.io.TextIOWrapper;
 import org.python.core.io.UniversalIOWrapper;
+import org.python.core.util.StringUtil;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -379,10 +380,28 @@ public class PyFile extends PyObject {
      * Return a String for writing to the underlying file from obj.
      */
     private String asWritable(PyObject obj, String message) {
+
         if (obj instanceof PyUnicode) {
             return ((PyUnicode)obj).encode();
+
         } else if (obj instanceof PyString) {
             return ((PyString) obj).getString();
+
+        } else if (obj instanceof BufferProtocol) {
+            // Try to get a simple byte-oriented buffer
+            PyBuffer buf = null;
+            try {
+                buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+                return StringUtil.fromBytes(buf);
+            } catch (Exception e) {
+                // Wrong kind of buffer: generic error message will do
+            } finally {
+                // If we got a buffer, we should release it
+                if (buf != null) {
+                    buf.release();
+                }
+            }
+
         } else if (binary && obj instanceof PyArray) {
             return ((PyArray)obj).tostring();
         }

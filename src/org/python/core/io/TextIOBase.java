@@ -5,10 +5,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import org.python.core.BufferPointer;
+import org.python.core.BufferProtocol;
 import org.python.core.Py;
 import org.python.core.PyArray;
+import org.python.core.PyBUF;
+import org.python.core.PyBuffer;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.util.StringUtil;
 
 /**
  * Base class for text I/O.
@@ -91,29 +96,48 @@ public abstract class TextIOBase extends IOBase {
     }
 
     /**
-     * Read into the given PyObject that implements the read-write
-     * buffer interface (currently just a PyArray).
-     *
-     * @param buf a PyObject implementing the read-write buffer interface
+     * Read into the given PyObject that implements the Jython buffer API (with write access) or is
+     * a PyArray.
+     * 
+     * @param buf a PyObject compatible with the buffer API
      * @return the amount of data read as an int
      */
     public int readinto(PyObject buf) {
         // This is an inefficient version of readinto: but readinto is
         // not recommended for use in Python 2.x anyway
-        if (!(buf instanceof PyArray)) {
-            // emulate PyArg_ParseTuple
-            if (buf instanceof PyString) {
-                throw Py.TypeError("Cannot use string as modifiable buffer");
+        if (buf instanceof BufferProtocol) {
+            PyBuffer view = ((BufferProtocol)buf).getBuffer(PyBUF.SIMPLE);
+            if (view.isReadonly()) {
+                // More helpful than falling through to CPython message
+                throw Py.TypeError("cannot read into read-only "
+                        + buf.getType().fastGetName());
+            } else {
+                try {
+                    // Inefficiently, we have to go via a String
+                    String read = read(view.getLen());
+                    int n = read.length();
+                    for (int i = 0; i < n; i++) {
+                        view.storeAt((byte)read.charAt(i), i);
+                    }
+                    return read.length();
+                } finally {
+                    // We should release the buffer explicitly
+                    view.release();
+                }
             }
-            throw Py.TypeError("argument 1 must be read-write buffer, not "
-                               + buf.getType().fastGetName());
+
+        } else if (buf instanceof PyArray) {
+            PyArray array = (PyArray)buf;
+            String read = read(array.__len__());
+            for (int i = 0; i < read.length(); i++) {
+                array.set(i, new PyString(read.charAt(i)));
+            }
+            return read.length();
         }
-        PyArray array = (PyArray)buf;
-        String read = read(array.__len__());
-        for (int i = 0; i < read.length(); i++) {
-            array.set(i, new PyString(read.charAt(i)));
-        }
-        return read.length();
+
+        // No valid alternative worked
+        throw Py.TypeError("argument 1 must be read-write buffer, not "
+                + buf.getType().fastGetName());
     }
 
     /**
