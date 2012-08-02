@@ -210,6 +210,11 @@ class ImpTestCase(unittest.TestCase):
         from test.issue1811 import foo
         self.assertTrue(foo.issue1811.foo is foo)
 
+    def test_issue1952(self):
+        # CPython 2.x ignores non-dict's in second arg to __import__
+        # The following threw an exception in Jython previously.
+        __import__("os", [], level=-1)
+
 
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,
