@@ -3,6 +3,9 @@ Jython NEWS
 Jython 2.7a1
   Bugs Fixed
 
+Jython 2.5.3rc1
+    - [ 1952 ] __import__(): Handling of non-dict globals argument incompatible with CPython
+
 Jython 2.5.3b3
   Bugs Fixed
     - [ 1754 ] modjy does not provide appropriate wsgi.input file-like object

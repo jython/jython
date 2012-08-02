@@ -809,7 +809,7 @@ public class imp {
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
-        if (modDict != null && !(modDict instanceof PyNone)) {
+        if (modDict != null && modDict.isMappingType()) {
             pkgName = get_parent(modDict, level);
             pkgMod = modules.__finditem__(pkgName);
             if (pkgMod != null && !(pkgMod instanceof PyModule)) {
