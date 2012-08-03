@@ -227,6 +227,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.dev.jar" value="jython-dev.jar" />
         <property name="jython.deploy.jar" value="jython.jar" />
         <property name="jython.standalone.jar" value="jython-standalone.jar" />
+        <property name="jython.javadoc.jar" value="javadoc.jar" />
+        <property name="jython.sources.jar" value="sources.jar" />
     </target>
 
     <target name="full-preinit">
@@ -753,6 +755,20 @@ The readme text for the next release will be like:
         </javadoc>
     </target>
 
+    <target name="all-jars" depends="jar-standalone, javadoc">
+        <jar destfile="dist/${jython.javadoc.jar}">
+            <fileset dir="${apidoc.dir}" includes="**"/>
+        </jar>
+        <jar destfile="dist/${jython.sources.jar}">
+            <fileset dir="${jython.base.dir}">
+                <exclude name="build/**" />
+                <exclude name="dist/**" />
+                <exclude name="extlibs/**" />
+                <exclude name="Doc/**" />
+            </fileset>
+        </jar>
+    </target>
+
     <target name="copy-license" if="do.checkout">
         <echo>copy CPython LICENSE from ${checkout.dir}/python</echo>
         <copy file="${checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
@@ -901,6 +917,8 @@ The readme text for the next release will be like:
             <fileset dir="${dist.dir}">
                 <exclude name="${jython.dev.jar}"/>
                 <exclude name="${jython.standalone.jar}"/>
+                <exclude name="${jython.javadoc.jar}"/>
+                <exclude name="${jython.sources.jar}"/>
                 <exclude name="callbacker_test.jar"/>
                 <exclude name="extlibs/svnant-jars/**" />
                 <exclude name="extlibs/antlr*.jar" />
@@ -961,6 +979,8 @@ The readme text for the next release will be like:
                     <exclude name="javatests/**/*" />
                     <exclude name="**/InterpTestCase.java" />
                     <exclude name="org/python/antlr/**" />
+                    <exclude name=".classpath" />
+                    <exclude name=".project" />
                 </fileset>
             </batchtest>
         </junit>

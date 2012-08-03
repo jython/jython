@@ -29,6 +29,7 @@
 <!-- ================================================= -->
 <project name="jython-maven" default="bundle-all" basedir="..">
 
+  <property file="${user.home}/ant.properties" />
   <property file="${basedir}/default.properties"/>
 
   <property name="project.version" value="2.5.3-SNAPSHOT"/>
@@ -137,7 +138,11 @@
     <sequential>
       <delete dir="${build.dir}"/>
       <mkdir dir="${build.dir}"/>
-      <copy file="maven/pom-template.xml" tofile="${build.dir}/pom.xml">
+      <copy file="maven/pom-template.xml"
+            tofile="maven/pom.xml">
+<!--        
+            tofile="@{build.dir}/@{artifactId}-{project.version}.pom">
+-->
         <filterset>
           <filter token="PROJECT-VERSION" value="${project.version}"/>
           <filter token="ARTIFACT-ID" value="@{artifactId}"/>
@@ -148,9 +153,27 @@
       <copy file="${dist.base}/@{artifactId}.jar"
             tofile="${build.dir}/@{artifactId}-${project.version}.jar"/>
 
-      <jar jarfile="${build.dir}/@{artifactId}-${project.version}-sources.jar">
-        <fileset dir="${src.dir}" includes="**/*.java"/>
-      </jar>
+      <copy file="dist/sources.jar" tofile="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
+      <copy file="dist/javadoc.jar" tofile="${build.dir}/@{artifactId}-${project.version}-javadoc.jar"/>
+
+<!-- TODO: make the gpg sign step optional - for now it is commented out.
+      <exec executable="gpg">
+          <arg value="-ab"/>
+          <arg value="${build.dir}/@{artifactId}-${project.version}.jar"/>
+      </exec>
+
+      <exec executable="gpg">
+          <arg value="-ab"/>
+          <arg value="${build.dir}/@{artifactId}-${project.version}-javadoc.jar"/>
+      </exec>
+
+      <exec executable="gpg">
+          <arg value="-ab"/>
+          <arg value="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
+      </exec>
+
+-->
+
     </sequential>
   </macrodef>
 
@@ -172,7 +195,7 @@
   </target>
 
   <target name="build-jython" if="do.build">
-    <ant antfile="build.xml" target="jar-standalone"/>
+    <ant antfile="build.xml" target="all-jars"/>
   </target>
 
   <target name="prep" depends="build-jython, validate-pom"/>
