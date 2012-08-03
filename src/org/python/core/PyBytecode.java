@@ -43,7 +43,7 @@ public class PyBytecode extends PyBaseCode {
     public final byte[] co_code; // widened to char to avoid signed byte issues
     public final PyObject[] co_consts;
     public final String[] co_names;
-    public final int co_stacksize; // XXX - use to convert PyStack to use PyObject[] instead of ArrayList<PyObject>
+    public final int co_stacksize;
     public final byte[] co_lnotab;
     private final static int CALL_FLAG_VAR = 1;
     private final static int CALL_FLAG_KW = 2;
@@ -1359,8 +1359,6 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
-    // XXX - perhaps add support for max stack size (presumably from co_stacksize)
-    // and capacity hints
     private static class PyStack {
 
         final PyObject[] stack;
