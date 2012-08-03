@@ -255,7 +255,7 @@ public class PyBytecode extends PyBaseCode {
 
     @Override
     protected PyObject interpret(PyFrame f, ThreadState ts) {
-        final PyStack stack = new PyStack();
+        final PyStack stack = new PyStack(co_stacksize);
         int next_instr = -1;
         int opcode;	/* Current opcode */
         int oparg = 0; /* Current opcode argument, if any */
@@ -1363,97 +1363,99 @@ public class PyBytecode extends PyBaseCode {
     // and capacity hints
     private static class PyStack {
 
-        final List<PyObject> stack;
+        final PyObject[] stack;
+        int top = -1;
 
-        PyStack() {
-            stack = new ArrayList<PyObject>();
+        PyStack(int size) {
+            stack = new PyObject[size];
         }
 
         PyObject top() {
-            return stack.get(stack.size() - 1);
+            return stack[top];
         }
 
         PyObject top(int n) {
-            return stack.get(stack.size() - n);
+            return stack[top - n + 1];
         }
 
         PyObject pop() {
-            return stack.remove(stack.size() - 1);
+            return stack[top--];
         }
 
         void push(PyObject v) {
-            stack.add(v);
+            stack[++top] = v;
         }
 
         void set_top(PyObject v) {
-            stack.set(stack.size() - 1, v);
+            stack[top] = v;
         }
 
         void dup() {
-            stack.add(top());
+            stack[top + 1] = stack[top];
+            top++;
         }
 
         void dup(int n) {
-            int length = stack.size();
-            for (int i = n; i > 0; i--) {
-                stack.add(stack.get(length - i));
+            int oldTop = top;
+            top += n;
+
+            for (int i = 0; i < n; i++) {
+                stack[top - i] = stack[oldTop - i];
             }
         }
 
         PyObject[] popN(int n) {
-            int end = stack.size(); // exclusive
             PyObject ret[] = new PyObject[n];
-            List<PyObject> lastN = stack.subList(end - n, end);
-            lastN.toArray(ret);
-            lastN.clear();
+            top -= n;
+
+            for (int i = 0; i < n; i++) {
+                ret[i] = stack[top + i + 1];
+            }
+
             return ret;
         }
 
         void rot2() {
-            int length = stack.size();
-            PyObject v = stack.get(length - 1);
-            PyObject w = stack.get(length - 2);
-            stack.set(length - 1, w);
-            stack.set(length - 2, v);
+            PyObject topv = stack[top];
+            stack[top] = stack[top - 1];
+            stack[top - 1] = topv;
         }
 
         void rot3() {
-            int length = stack.size();
-            PyObject v = stack.get(length - 1);
-            PyObject w = stack.get(length - 2);
-            PyObject x = stack.get(length - 3);
-            stack.set(length - 1, w);
-            stack.set(length - 2, x);
-            stack.set(length - 3, v);
+            PyObject v = stack[top];
+            PyObject w = stack[top - 1];
+            PyObject x = stack[top - 2];
+            stack[top] = w;
+            stack[top - 1] = x;
+            stack[top - 2] = v;
         }
 
         void rot4() {
-            int length = stack.size();
-            PyObject u = stack.get(length - 1);
-            PyObject v = stack.get(length - 2);
-            PyObject w = stack.get(length - 3);
-            PyObject x = stack.get(length - 4);
-            stack.set(length - 1, v);
-            stack.set(length - 2, w);
-            stack.set(length - 3, x);
-            stack.set(length - 4, u);
+            PyObject u = stack[top];
+            PyObject v = stack[top - 1];
+            PyObject w = stack[top - 2];
+            PyObject x = stack[top - 3];
+            stack[top] = v;
+            stack[top - 1] = w;
+            stack[top - 2] = x;
+            stack[top - 3] = u;
         }
 
         int size() {
-            return stack.size();
+            return top + 1;
         }
 
         @Override
         public String toString() {
             StringBuilder buffer = new StringBuilder();
-            int size = stack.size();
+            int size = size();
             int N = size > 4 ? 4 : size;
             buffer.append("[");
             for (int i = 0; i < N; i++) {
                 if (i > 0) {
                     buffer.append(", ");
                 }
-                PyObject item = stack.get(size - (i + 1));
+                PyObject item = stack[N - i - 1];
                 buffer.append(upto(item.__repr__().toString()));
             }
             if (N < size) {
