@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.3rc1
     - [ 1952 ] __import__(): Handling of non-dict globals argument incompatible with CPython
+    - [ 1900 ] Python imports from Java cause some Python imports to fail
 
 Jython 2.5.3b3
   Bugs Fixed
