@@ -139,24 +139,26 @@
       <delete dir="${build.dir}"/>
       <mkdir dir="${build.dir}"/>
       <copy file="maven/pom-template.xml"
-            tofile="maven/pom.xml">
-<!--        
-            tofile="@{build.dir}/@{artifactId}-{project.version}.pom">
--->
+            tofile="${build.dir}/@{artifactId}-${project.version}.pom">
         <filterset>
           <filter token="PROJECT-VERSION" value="${project.version}"/>
           <filter token="ARTIFACT-ID" value="@{artifactId}"/>
         </filterset>
       </copy>
 
+      <!-- XXX: License is already in the jars and maven central is
+                rejecting this in the bundle - investigate.
+
       <copy file="LICENSE.txt" tofile="${build.dir}/LICENSE.txt"/>
+      -->
+
       <copy file="${dist.base}/@{artifactId}.jar"
             tofile="${build.dir}/@{artifactId}-${project.version}.jar"/>
 
       <copy file="dist/sources.jar" tofile="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
       <copy file="dist/javadoc.jar" tofile="${build.dir}/@{artifactId}-${project.version}-javadoc.jar"/>
 
-<!-- TODO: make the gpg sign step optional - for now it is commented out.
+      <!-- TODO: make the gpg sign step optional -->
       <exec executable="gpg">
           <arg value="-ab"/>
           <arg value="${build.dir}/@{artifactId}-${project.version}.jar"/>
@@ -169,10 +171,14 @@
 
       <exec executable="gpg">
           <arg value="-ab"/>
+          <arg value="${build.dir}/@{artifactId}-${project.version}.pom"/>
+      </exec>
+
+      <exec executable="gpg">
+          <arg value="-ab"/>
           <arg value="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
       </exec>
 
--->
 
     </sequential>
   </macrodef>

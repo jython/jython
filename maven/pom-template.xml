@@ -27,4 +27,11 @@
         <developerConnection>scm:hg:ssh://hg@hg.python.org/jython</developerConnection>
         <url>http://hg.python.org/jython</url>
     </scm>
+    <!-- Just put my name in for now to make the maven uploader happy -->
+    <developers>
+        <developer>
+            <id>fwierzbicki</id>
+            <name>Frank Wierzbicki</name>
+        </developer>
+    </developers>
 </project>
