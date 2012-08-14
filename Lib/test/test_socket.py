@@ -277,8 +277,20 @@ class GeneralModuleTests(unittest.TestCase):
 
     def testConstantToNameMapping(self):
         # Testing for mission critical constants
-        for name in ['SOL_SOCKET', 'IPPROTO_TCP', 'IPPROTO_UDP', 'SO_BROADCAST', 'SO_KEEPALIVE', 'TCP_NODELAY', 'SO_ACCEPTCONN', 'SO_DEBUG']:
-            self.failUnlessEqual(socket._constant_to_name(getattr(socket, name)), name)
+        for name, expected_name_starts in [
+            ('IPPROTO_ICMP',  ['IPPROTO_']),
+            ('IPPROTO_TCP',   ['IPPROTO_']),
+            ('IPPROTO_UDP',   ['IPPROTO_']),
+            ('SO_BROADCAST',  ['SO_', 'TCP_']),
+            ('SO_KEEPALIVE',  ['SO_', 'TCP_']),
+            ('SO_ACCEPTCONN', ['SO_', 'TCP_']),
+            ('SO_DEBUG',      ['SO_', 'TCP_']),
+            ('SOCK_DGRAM',    ['SOCK_']),
+            ('SOCK_RAW',      ['SOCK_']),
+            ('SOL_SOCKET',    ['SOL_', 'IPPROTO_']),
+            ('TCP_NODELAY',   ['SO_', 'TCP_']),
+            ]:
+            self.failUnlessEqual(socket._constant_to_name(getattr(socket, name), expected_name_starts), name)
 
     def testHostnameRes(self):
         # Testing hostname resolution mechanisms
@@ -1638,6 +1650,46 @@ class TestGetAddrInfo(unittest.TestCase):
         else:
             self.fail("getaddrinfo with bad family should have raised exception")
 
+    def testBadSockType(self):
+        for socktype in [socket.SOCK_RAW, socket.SOCK_RDM, socket.SOCK_SEQPACKET]:
+            try:
+                socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socktype)
+            except socket.error, se:
+                self.failUnlessEqual(se[0], errno.ESOCKTNOSUPPORT)
+            except Exception, x:
+                self.fail("getaddrinfo with bad socktype raised wrong exception: %s" % x)
+            else:
+                self.fail("getaddrinfo with bad socktype should have raised exception")
+
+    def testBadSockTypeProtoCombination(self):
+        for socktype, proto in [
+            (socket.SOCK_STREAM, socket.IPPROTO_UDP),
+            (socket.SOCK_STREAM, socket.IPPROTO_ICMP),
+            (socket.SOCK_DGRAM,  socket.IPPROTO_TCP),
+            (socket.SOCK_DGRAM,  socket.IPPROTO_FRAGMENT),
+            ]:
+            try:
+                results = socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socktype, proto)
+                self.failUnless(len(results) == 0, "getaddrinfo with bad socktype/proto combo should not have returned results")
+            except Exception, x:
+                self.fail("getaddrinfo with bad socktype/proto combo should not have raised exception")
+
+    def testNoSockTypeWithProto(self):
+        for expect_results, proto in [
+            (True,  socket.IPPROTO_UDP),
+            (False, socket.IPPROTO_ICMP),
+            (True,  socket.IPPROTO_TCP),
+            (False, socket.IPPROTO_FRAGMENT),
+            ]:
+            try:
+                results = socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, 0, proto)
+                if expect_results:
+                    self.failUnless(len(results) > 0, "getaddrinfo with no socktype and supported proto combo should have returned results")
+                else:
+                    self.failUnless(len(results) == 0, "getaddrinfo with no socktype and unsupported proto combo should not have returned results")
+            except Exception, x:
+                self.fail("getaddrinfo with no socktype (un)supported proto combo should not have raised exception")
+
     def testReturnsAreStrings(self):
         addrinfos = socket.getaddrinfo(HOST, PORT)
         for addrinfo in addrinfos:
@@ -1772,12 +1824,15 @@ class TestGetAddrInfo(unittest.TestCase):
             self.fail("getaddrinfo for unknown service name failed to raise exception")
 
     def testHostNames(self):
-        # None is always acceptable
-        for flags in [0, socket.AI_NUMERICHOST]:
+        # None is only acceptable if AI_NUMERICHOST is not specified
+        for flags, expect_exception in [(0, False), (socket.AI_NUMERICHOST, True)]:
             try:
                 socket.getaddrinfo(None, 80, 0, 0, 0, flags)
+                if expect_exception:
+                    self.fail("Non-numeric hostname == None should have raised exception")
             except Exception, x:
-                self.fail("hostname == None should not have raised exception: %s" % str(x))
+                if not expect_exception:
+                    self.fail("hostname == None should not have raised exception: %s" % str(x))
 
         # Check enforcement of AI_NUMERICHOST
         for host in ["", " ", "localhost"]:
@@ -1905,7 +1960,7 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             (socket.AF_INET,  ("localhost", 80), java.net.Inet4Address, ["127.0.0.1"]),
             (socket.AF_INET6, ("localhost", 80), java.net.Inet6Address, ["::1", "0:0:0:0:0:0:0:1"]),
             ]:
-            sockaddr = socket._get_jsockaddr(addr_tuple, family, None, 0, 0)
+            sockaddr = socket._get_jsockaddr(addr_tuple, family, 0, 0, 0)
             self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
             self.failUnless(isinstance(sockaddr.address, jaddress_type), "_get_jsockaddr returned wrong address type: '%s'(family=%d)" % (str(type(sockaddr.address)), family))
             self.failUnless(sockaddr.address.hostAddress in expected)
@@ -1916,7 +1971,7 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             ("localhost", 80),
             ("localhost", 80, 0, 0),
             ]:
-            sockaddr = socket._get_jsockaddr(addr_tuple, socket.AF_INET6, None, 0, 0)
+            sockaddr = socket._get_jsockaddr(addr_tuple, socket.AF_INET6, 0, 0, 0)
             self.failUnless(isinstance(sockaddr, java.net.InetSocketAddress), "_get_jsockaddr returned wrong type: '%s'" % str(type(sockaddr)))
             self.failUnless(isinstance(sockaddr.address, java.net.Inet6Address), "_get_jsockaddr returned wrong address type: '%s'" % str(type(sockaddr.address)))
             self.failUnless(sockaddr.address.hostAddress in ["::1", "0:0:0:0:0:0:0:1"])
@@ -1925,10 +1980,10 @@ class TestJython_get_jsockaddr(unittest.TestCase):
 
     def testSpecialHostnames(self):
         for family, sock_type, flags, addr_tuple, expected in [
-            ( socket.AF_INET,  None,              0,                 ("", 80),            ["localhost"]),
-            ( socket.AF_INET,  None,              socket.AI_PASSIVE, ("", 80),            [socket.INADDR_ANY]),
-            ( socket.AF_INET6, None,              0,                 ("", 80),            ["localhost"]),
-            ( socket.AF_INET6, None,              socket.AI_PASSIVE, ("", 80),            [socket.IN6ADDR_ANY_INIT, "0:0:0:0:0:0:0:0"]),
+            ( socket.AF_INET,  0,                 0,                 ("", 80),            ["localhost"]),
+            ( socket.AF_INET,  0,                 socket.AI_PASSIVE, ("", 80),            [socket.INADDR_ANY]),
+            ( socket.AF_INET6, 0,                 0,                 ("", 80),            ["localhost"]),
+            ( socket.AF_INET6, 0,                 socket.AI_PASSIVE, ("", 80),            [socket.IN6ADDR_ANY_INIT, "0:0:0:0:0:0:0:0"]),
             ( socket.AF_INET,  socket.SOCK_DGRAM, 0,                 ("<broadcast>", 80), [socket.INADDR_BROADCAST]),
             ]:
             sockaddr = socket._get_jsockaddr(addr_tuple, family, sock_type, 0, flags)
@@ -1941,7 +1996,7 @@ class TestJython_get_jsockaddr(unittest.TestCase):
             ( socket.AF_INET6, 0,                 ["localhost"]),
             ( socket.AF_INET6, socket.AI_PASSIVE, [socket.IN6ADDR_ANY_INIT, "0:0:0:0:0:0:0:0"]),
             ]:
-            sockaddr = socket._get_jsockaddr(None, family, None, 0, flags)
+            sockaddr = socket._get_jsockaddr(None, family, 0, 0, flags)
             self.failUnless(sockaddr.hostName in expected, "_get_jsockaddr returned wrong hostname '%s' for sock tuple == None (family=%d)" % (sockaddr.hostName, family))
 
     def testBadAddressTuples(self):
