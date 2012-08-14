@@ -90,7 +90,7 @@ def _unmapped_exception(exc):
 
 def java_net_socketexception_handler(exc):
     if exc.message.startswith("Address family not supported by protocol family"):
-        return error(errno.EAFNOSUPPORT, 'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6addresssupport')
+        return error(errno.EAFNOSUPPORT, 'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6_address_support')
     return _unmapped_exception(exc)
 
 def would_block_error(exc=None):
@@ -215,8 +215,28 @@ SOCK_RDM       = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
 
 SOL_SOCKET = 0xFFFF
-IPPROTO_TCP = 6
-IPPROTO_UDP = 17
+
+IPPROTO_AH       =  51 # not supported
+IPPROTO_DSTOPTS  =  60 # not supported
+IPPROTO_ESP      =  50 # not supported
+IPPROTO_FRAGMENT =  44 # not supported
+IPPROTO_GGP      =   3 # not supported
+IPPROTO_HOPOPTS  =   0 # not supported
+IPPROTO_ICMP     =   1 # not supported
+IPPROTO_ICMPV6   =  58 # not supported
+IPPROTO_IDP      =  22 # not supported
+IPPROTO_IGMP     =   2 # not supported
+IPPROTO_IP       =   0
+IPPROTO_IPV4     =   4 # not supported
+IPPROTO_IPV6     =  41 # not supported
+IPPROTO_MAX      = 256 # not supported
+IPPROTO_ND       =  77 # not supported
+IPPROTO_NONE     =  59 # not supported
+IPPROTO_PUP      =  12 # not supported
+IPPROTO_RAW      = 255 # not supported
+IPPROTO_ROUTING  =  43 # not supported
+IPPROTO_TCP      =   6
+IPPROTO_UDP      =  17
 
 SO_BROADCAST   = 1
 SO_KEEPALIVE   = 2
@@ -251,26 +271,58 @@ SO_SNDTIMEO         = -512
 SO_TYPE             = -1024
 SO_USELOOPBACK      = -2048
 
-__all__ = ['AF_UNSPEC', 'AF_INET', 'AF_INET6', 'AI_PASSIVE', 'SOCK_DGRAM',
-        'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SO_BROADCAST', 'SO_ERROR', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
-        'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
-        'INADDR_ANY', 'INADDR_BROADCAST', 'IPPROTO_TCP', 'IPPROTO_UDP',
-        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
-        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
-        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
-        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
-        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
-        ]
+__all__ = [
+    # Families
+    'AF_UNSPEC', 'AF_INET', 'AF_INET6', 
+    # getaddrinfo and getnameinfo flags
+    'AI_PASSIVE', 'AI_CANONNAME', 'AI_NUMERICHOST', 'AI_V4MAPPED',
+    'AI_ALL', 'AI_ADDRCONFIG', 'AI_NUMERICSERV', 'EAI_NONAME', 
+    'EAI_SERVICE', 'EAI_ADDRFAMILY',
+    'NI_NUMERICHOST', 'NI_NUMERICSERV', 'NI_NOFQDN', 'NI_NAMEREQD',
+    'NI_DGRAM', 'NI_MAXSERV', 'NI_IDN', 'NI_IDN_ALLOW_UNASSIGNED',
+    'NI_IDN_USE_STD3_ASCII_RULES', 'NI_MAXHOST',
+    # socket types
+    'SOCK_DGRAM', 'SOCK_STREAM', 'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET',
+    # levels
+    'SOL_SOCKET',
+    # protocols
+    'IPPROTO_AH', 'IPPROTO_DSTOPTS', 'IPPROTO_ESP', 'IPPROTO_FRAGMENT',
+    'IPPROTO_GGP', 'IPPROTO_HOPOPTS', 'IPPROTO_ICMP', 'IPPROTO_ICMPV6',
+    'IPPROTO_IDP', 'IPPROTO_IGMP', 'IPPROTO_IP', 'IPPROTO_IPV4',
+    'IPPROTO_IPV6', 'IPPROTO_MAX', 'IPPROTO_ND', 'IPPROTO_NONE',
+    'IPPROTO_PUP', 'IPPROTO_RAW', 'IPPROTO_ROUTING', 'IPPROTO_TCP', 
+    'IPPROTO_UDP',
+    # Special hostnames
+    'INADDR_ANY', 'INADDR_BROADCAST', 'IN6ADDR_ANY_INIT',
+    # support socket options
+    'SO_BROADCAST', 'SO_KEEPALIVE', 'SO_LINGER', 'SO_OOBINLINE',
+    'SO_RCVBUF', 'SO_REUSEADDR', 'SO_SNDBUF', 'SO_TIMEOUT', 'TCP_NODELAY',
+    # unsupported socket options
+    'SO_ACCEPTCONN', 'SO_DEBUG', 'SO_DONTROUTE', 'SO_ERROR',
+    'SO_EXCLUSIVEADDRUSE', 'SO_RCVLOWAT', 'SO_RCVTIMEO', 'SO_REUSEPORT',
+    'SO_SNDLOWAT', 'SO_SNDTIMEO', 'SO_TYPE', 'SO_USELOOPBACK',
+    # functions
+    'getfqdn', 'gethostname', 'gethostbyname', 'gethostbyaddr',
+    'getservbyname', 'getservbyport', 'getprotobyname', 'getaddrinfo',
+    'getnameinfo', 'getdefaulttimeout', 'setdefaulttimeout', 'htons',
+    'htonl', 'ntohs', 'ntohl', 'inet_pton', 'inet_ntop', 'inet_aton',
+    'inet_ntoa', 'create_connection', 'socket', 'ssl',
+    # exceptions
+    'error', 'herror', 'gaierror', 'timeout', 'sslerror,
+    # classes
+    'SocketType', 
+    # Misc flags     
+    'has_ipv6', 'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
+]
 
-def _constant_to_name(const_value):
+def _constant_to_name(const_value, expected_name_starts):
     sock_module = sys.modules['socket']
     try:
         for name in dir(sock_module):
-            if getattr(sock_module, name) is const_value and \
-                (name.startswith('SO_') or name.startswith('SOL_') or \
-                name.startswith('TCP_') or name.startswith('IPPROTO_')):
-                return name
+            if getattr(sock_module, name) is const_value:
+                for name_start in expected_name_starts:
+                    if name.startswith(name_start):
+                        return name
         return "Unknown"
     finally:
         sock_module = None
@@ -320,7 +372,8 @@ class _nio_impl:
                 return struct.pack('ii', enabled, linger_time)
             return result
         else:
-            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % (_constant_to_name(option), _constant_to_name(level), str(self.jsocket)))
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % \
+                (_constant_to_name(option, ['SO_', 'TCP_']), _constant_to_name(level, ['SOL_', 'IPPROTO_']), str(self.jsocket)))
 
     def setsockopt(self, level, option, value):
         if (level, option) in self.options:
@@ -330,7 +383,8 @@ class _nio_impl:
             else:
                 getattr(self.jsocket, "set%s" % self.options[ (level, option) ])(value)
         else:
-            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % (_constant_to_name(option), _constant_to_name(level), str(self.jsocket)))
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % \
+                (_constant_to_name(option, ['SO_', 'TCP_']), _constant_to_name(level,  ['SOL_', 'IPPROTO_']), str(self.jsocket)))
 
     def close(self):
         self.jsocket.close()
@@ -780,15 +834,18 @@ def _get_jsockaddr(address_object, family, sock_type, proto, flags):
     error_message = "Address must be a 2-tuple (ipv4: (host, port)) or a 4-tuple (ipv6: (host, port, flow, scope))"
     if not isinstance(address_object, tuple) or \
             ((family == AF_INET and len(address_object) != 2) or (family == AF_INET6 and len(address_object) not in [2,4] )) or \
-            not isinstance(address_object[0], basestring) or \
+            not isinstance(address_object[0], (basestring, types.NoneType)) or \
             not isinstance(address_object[1], (int, long)):
         raise TypeError(error_message)
     if len(address_object) == 4 and not isinstance(address_object[3], (int, long)):
         raise TypeError(error_message)
-    hostname, port = address_object[0].strip(), address_object[1]
+    hostname = address_object[0]
+    if hostname is not None:
+        hostname = hostname.strip()
+    port = address_object[1]
     if family == AF_INET and sock_type == SOCK_DGRAM and hostname == "<broadcast>":
         hostname = INADDR_BROADCAST
-    if hostname == "":
+    if hostname in ["", None]:
         if flags & AI_PASSIVE:
             hostname = {AF_INET: INADDR_ANY, AF_INET6: IN6ADDR_ANY_INIT}[family]
         else:
@@ -810,9 +867,7 @@ def _use_ipv4_addresses_only(value):
     _ipv4_addresses_only = value
 
 def _getaddrinfo_get_host(host, family, flags):
-    if host is None:
-        return host
-    if not isinstance(host, basestring):
+    if not isinstance(host, basestring) and host is not None:
         raise TypeError("getaddrinfo() argument 1 must be string or None")
     if flags & AI_NUMERICHOST:
         if not is_ip_address(host):
@@ -845,7 +900,7 @@ def _getaddrinfo_get_port(port, flags):
         int_port = int(port)
     return int_port % 65536
 
-def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=0):
+def getaddrinfo(host, port, family=AF_UNSPEC, socktype=0, proto=0, flags=0):
     try:
         if _ipv4_addresses_only:
             family = AF_INET
@@ -853,29 +908,43 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=0):
             raise gaierror(errno.EIO, 'ai_family not supported')
         host = _getaddrinfo_get_host(host, family, flags)
         port = _getaddrinfo_get_port(port, flags)
+        if socktype not in [0, SOCK_DGRAM, SOCK_STREAM]:
+            raise error(errno.ESOCKTNOSUPPORT, "Socket type %s is not supported" % _constant_to_name(socktype, ['SOCK_']))
         filter_fns = []
         filter_fns.append({
             AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
             AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
             AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
         }[family])
-        passive_mode = flags is not None and flags & AI_PASSIVE
-        canonname_mode = flags is not None and flags & AI_CANONNAME
+        if host in [None, ""]:
+            if flags & AI_PASSIVE:
+                 hosts = {AF_INET: [INADDR_ANY], AF_INET6: [IN6ADDR_ANY_INIT], AF_UNSPEC: [INADDR_ANY, IN6ADDR_ANY_INIT]}[family]
+            else:
+                 hosts = ["localhost"]
+        else:
+            hosts = [host]
         results = []
-        for a in java.net.InetAddress.getAllByName(host):
-            if len([f for f in filter_fns if f(a)]):
-                family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
-                if passive_mode and not canonname_mode:
-                    canonname = ""
-                else:
-                    canonname = asPyString(a.getCanonicalHostName())
-                if host is None and passive_mode and not canonname_mode:
-                    sockaddr = INADDR_ANY
-                else:
+        for h in hosts:
+            for a in java.net.InetAddress.getAllByName(h):
+                if len([f for f in filter_fns if f(a)]):
+                    family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
+                    if flags & AI_CANONNAME:
+                        canonname = asPyString(a.getCanonicalHostName())
+                    else:
+                        canonname = ""
                     sockaddr = asPyString(a.getHostAddress())
-                # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
-                sock_tuple = {AF_INET : _ipv4_address_t, AF_INET6 : _ipv6_address_t}[family](sockaddr, port, a)
-                results.append((family, socktype, proto, canonname, sock_tuple))
+                    # TODO: Include flowinfo and scopeid in a 4-tuple for IPv6 addresses
+                    sock_tuple = {AF_INET : _ipv4_address_t, AF_INET6 : _ipv6_address_t}[family](sockaddr, port, a)
+                    if socktype == 0:
+                        socktypes = [SOCK_DGRAM, SOCK_STREAM]
+                    else:
+                        socktypes = [socktype]
+                    for result_socktype in socktypes:
+                        result_proto = {SOCK_DGRAM: IPPROTO_UDP, SOCK_STREAM: IPPROTO_TCP}[result_socktype]
+                        if proto in [0, result_proto]:
+                            # The returned socket will only support the result_proto
+                            # If this does not match the requested proto, don't return it
+                            results.append((family, result_socktype, result_proto, canonname, sock_tuple))
         return results
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
@@ -1115,7 +1184,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         assert not self.sock_impl
         assert not self.local_addr
         # Do the address format check
-        _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
+        _get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE)
         self.local_addr = addr
 
     def listen(self, backlog):
@@ -1241,7 +1310,7 @@ class _udpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             assert not self.local_addr
             # Do the address format check
-            _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
+            _get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE)
             self.local_addr = addr
             self.sock_impl = _datagram_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
                                                     self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
