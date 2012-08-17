@@ -24,7 +24,6 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 import org.python.core.ThreadState;
-import org.python.util.Generic;
 
 import com.ziclix.python.sql.util.PyArgParser;
 
@@ -90,10 +89,10 @@ public class PyConnection extends PyObject implements ClassDictInit, ContextMana
      */
     public PyConnection(Connection connection) throws SQLException {
         this.closed = false;
-        cursors = Generic.newSetFromMap(new WeakHashMap<PyCursor, Boolean>());
+        cursors = Collections.newSetFromMap(new WeakHashMap<PyCursor, Boolean>());
         cursors = Collections.synchronizedSet(cursors);
         this.connection = connection;
-        statements = Generic.newSetFromMap(new WeakHashMap<PyStatement, Boolean>());
+        statements = Collections.newSetFromMap(new WeakHashMap<PyStatement, Boolean>());
         statements = Collections.synchronizedSet(statements);
         this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
         this.supportsMultipleResultSets =
