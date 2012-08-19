@@ -9,9 +9,9 @@ import org.python.core.util.StringUtil;
  * but which is actually backed by a Java String. Some of the buffer API absolutely needs access to
  * the data as a byte array (those parts that involve a {@link BufferPointer} result), and therefore
  * this class must create a byte array from the String for them. However, it defers creation of a
- * byte array until that part of the API is actually used. This class overrides those methods in
- * SimpleReadonlyBuffer that would access the <code>buf</code> attribute to work out their results
- * from the String instead.
+ * byte array until that part of the API is actually used. Where possible, this class overrides
+ * those methods in SimpleReadonlyBuffer that would otherwise access the byte array attribute to use
+ * the String instead.
  */
 public class SimpleStringBuffer extends SimpleReadonlyBuffer {
 
@@ -22,44 +22,20 @@ public class SimpleStringBuffer extends SimpleReadonlyBuffer {
     private String bufString;
 
     /**
-     * Partial counterpart to CPython <code>PyBuffer_FillInfo()</code> specific to the simple type
-     * of buffer and called from the constructor. The base constructor will already have been
-     * called, filling {@link #bufString} and {@link #obj}. And the method
-     * {@link #assignCapabilityFlags(int, int, int, int)} has set {@link #capabilityFlags}.
-     */
-    protected void fillInfo(String bufString) {
-        /*
-         * We will already have called: assignCapabilityFlags(flags, requiredFlags, allowedFlags,
-         * impliedFlags); So capabilityFlags holds the requests for shape, strides, writable, etc..
-         */
-        // Save the backing string
-        this.bufString = bufString;
-
-        // Difference from CPython: never null, even when the consumer doesn't request it
-        shape = new int[1];
-        shape[0] = bufString.length();
-
-        // Following CPython: provide strides only when the consumer requests it
-        if ((capabilityFlags & STRIDES) == STRIDES) {
-            strides = SIMPLE_STRIDES;
-        }
-
-        // Even when the consumer requests suboffsets, the exporter is allowed to supply null.
-        // In theory, the exporter could require that it be requested and still supply null.
-    }
-
-    /**
      * Provide an instance of SimpleReadonlyBuffer meeting the consumer's expectations as expressed
      * in the flags argument.
-     *
+     * 
      * @param exporter the exporting object
      * @param bufString storing the implementation of the object
      * @param flags consumer requirements
      */
     public SimpleStringBuffer(BufferProtocol exporter, String bufString, int flags) {
         super(exporter, null);
-        assignCapabilityFlags(flags, REQUIRED_FLAGS, ALLOWED_FLAGS, IMPLIED_FLAGS);
-        fillInfo(bufString);
+        setFeatureFlags(FEATURE_FLAGS);
+        checkRequestFlags(flags);
+        // Save the backing string
+        this.bufString = bufString;
+        shape[0] = bufString.length();
     }
 
     /**

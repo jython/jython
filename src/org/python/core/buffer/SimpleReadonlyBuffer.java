@@ -5,66 +5,41 @@ import org.python.core.BufferProtocol;
 
 /**
  * Buffer API over a one-dimensional array of one-byte items providing read-only API. A writable
- * simple buffer will extend this implementation.
+ * simple buffer extends this implementation.
  */
 public class SimpleReadonlyBuffer extends BaseBuffer {
 
     /**
-     * Using the PyBUF constants, express capabilities the consumer must request if it is to
-     * navigate the storage successfully. (None.)
+     * Using the PyBUF constants, express capabilities implied by the type, therefore ok for the
+     * consumer to request. (One-dimensional arrays, including those sliced with step size one, are
+     * C- and F-contiguous.) Also express capabilities the consumer must request if it is to
+     * navigate the storage successfully. (None required for simple buffers.)
      */
-    public static final int REQUIRED_FLAGS = 0;
-    /**
-     * Using the PyBUF constants, express capabilities the consumer may request so it can navigate
-     * the storage in its chosen way. The buffer instance has to implement these mechanisms if and
-     * only if they are requested. (FORMAT | ND | STRIDES | INDIRECT)
-     */
-    public static final int ALLOWED_FLAGS = FORMAT | ND | STRIDES | INDIRECT;
-    /**
-     * Using the PyBUF constants, express capabilities the consumer doesn't need to request because
-     * they will be there anyway. (One-dimensional arrays (including those sliced with step size
-     * one) are C- and F-contiguous.)
-     */
-    public static final int IMPLIED_FLAGS = CONTIGUITY;
+    static final int FEATURE_FLAGS = CONTIGUITY | FORMAT | 0;
     /**
      * The strides array for this type is always a single element array with a 1 in it.
      */
     protected static final int[] SIMPLE_STRIDES = {1};
 
     /**
-     * Partial counterpart to CPython <code>PyBuffer_FillInfo()</code> specific to the simple type
-     * of buffer and called from the constructor. The base constructor will already have been
-     * called, filling {@link #buf} and {@link #obj}. And the method
-     * {@link #assignCapabilityFlags(int, int, int, int)} has set {@link #capabilityFlags}.
-     */
-    protected void fillInfo() {
-        /*
-         * We will already have called: assignCapabilityFlags(flags, requiredFlags, allowedFlags,
-         * impliedFlags); So capabilityFlags holds the requests for shape, strides, writable, etc..
-         */
-        // Difference from CPython: never null, even when the consumer doesn't request it
-        shape = new int[1];
-        shape[0] = getLen();
-
-        // Following CPython: provide strides only when the consumer requests it
-        if ((capabilityFlags & STRIDES) == STRIDES) {
-            strides = SIMPLE_STRIDES;
-        }
-
-        // Even when the consumer requests suboffsets, the exporter is allowed to supply null.
-        // In theory, the exporter could require that it be requested and still supply null.
-    }
-
-    /**
      * Provide an instance of <code>SimpleReadonlyBuffer</code> in a default, semi-constructed
-     * state. The sub-class constructor takes responsibility for completing construction including a
-     * call to {@link #assignCapabilityFlags(int, int, int, int)}.
+     * state. The sub-class constructor takes responsibility for checking flags and
+     * completing construction. If the passed in <code>buf</code> is null,
+     * fields <code>buf</code> and <code>shape[0]</code> must be set by the sub-class.
      *
      * @param exporter the exporting object
      * @param buf wrapping the array of bytes storing the implementation of the object
      */
     protected SimpleReadonlyBuffer(BufferProtocol exporter, BufferPointer buf) {
-        super(exporter, buf);
+        super(exporter);
+        // Difference from CPython: shape and strides are always provided
+        shape = new int[1];
+        if (buf != null) {
+            this.buf = buf;
+            shape[0] = buf.size;
+        }
+        strides = SIMPLE_STRIDES;
+        // suboffsets is always null for this type.
     }
 
     /**
@@ -76,9 +51,9 @@ public class SimpleReadonlyBuffer extends BaseBuffer {
      * @param flags consumer requirements
      */
     public SimpleReadonlyBuffer(BufferProtocol exporter, BufferPointer buf, int flags) {
-        super(exporter, buf);
-        assignCapabilityFlags(flags, REQUIRED_FLAGS, ALLOWED_FLAGS, IMPLIED_FLAGS);
-        fillInfo();
+        this(exporter, buf);
+        setFeatureFlags(FEATURE_FLAGS);
+        checkRequestFlags(flags);
     }
 
     @Override

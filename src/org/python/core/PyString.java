@@ -1,6 +1,8 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -27,6 +29,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string; // cannot make final because of Python intern support
     protected transient boolean interned=false;
+    /** Supports the buffer API, see {@link #getBuffer(int)}. */
+    private Reference<PyBuffer> export;
 
     public String getString() {
         return string;
@@ -96,18 +100,44 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Create a read-only buffer view of the contents of the string, treating it as a sequence of
+     * Return a read-only buffer view of the contents of the string, treating it as a sequence of
      * unsigned bytes. The caller specifies its requirements and navigational capabilities in the
-     * <code>flags</code> argument (see the constants in class {@link PyBUF} for an explanation).
+     * <code>flags</code> argument (see the constants in interface {@link PyBUF} for an
+     * explanation). The method may return the same PyBuffer object to more than one consumer.
      * 
      * @param flags consumer requirements
      * @return the requested buffer
      */
-    public PyBuffer getBuffer(int flags) {
-        /*
-         * Return a buffer, but specialised to defer construction of the buf object.
-         */
-        return new SimpleStringBuffer(this, getString(), flags);
+    public synchronized PyBuffer getBuffer(int flags) {
+        // If we have already exported a buffer it may still be available for re-use
+        PyBuffer pybuf = getExistingBuffer(flags);
+        if (pybuf == null) {
+            /*
+             * No existing export we can re-use. Return a buffer, but specialised to defer
+             * construction of the buf object, and cache a soft reference to it.
+             */
+            pybuf = new SimpleStringBuffer(this, getString(), flags);
+            export = new SoftReference<PyBuffer>(pybuf);
+        }
+        return pybuf;
+    }
+
+    /**
+     * Helper for {@link #getBuffer(int)} that tries to re-use an existing exported buffer, or
+     * returns null if can't.
+     */
+    private PyBuffer getExistingBuffer(int flags) {
+        PyBuffer pybuf = null;
+        if (export != null) {
+            // A buffer was exported at some time.
+            pybuf = export.get();
+            if (pybuf != null) {
+                // And this buffer still exists: expect this to provide a further reference.
+                // We do not test for pybuf.isReleased() since it is safe to re-acquire.
+                pybuf = pybuf.getBuffer(flags);
+            }
+        }
+        return pybuf;
     }
 
     public String substring(int start, int end) {

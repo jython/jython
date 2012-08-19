@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
 import org.python.core.buffer.SimpleBuffer;
@@ -206,45 +207,98 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
 
     /**
+     * Hold weakly a reference to a PyBuffer export not yet released, used to prevent untimely
+     * resizing.
+     */
+    private WeakReference<PyBuffer> export;
+
+    /**
      * {@inheritDoc}
      * <p>
      * The {@link PyBuffer} returned from this method is a one-dimensional array of single byte
-     * items, that allows modification of the object state but <b>prohibits resizing</b> the byte array.
-     * This prohibition is not only on the consumer of the view but extends to any other operations,
-     * such as any kind or insertion or deletion.
+     * items that allows modification of the object state. The existence of this export <b>prohibits
+     * resizing</b> the byte array. This prohibition is not only on the consumer of the view but
+     * extends to any other operations, such as any kind or insertion or deletion.
      */
     @Override
     public synchronized PyBuffer getBuffer(int flags) {
-        exportCount++;
-        return new SimpleBuffer(this, new BufferPointer(storage, offset, size), flags) {
 
-            @Override
-            public void releaseAction() {
-                // synchronise on the same object as getBuffer()
-                synchronized (obj) {
-                    exportCount--;
+        // If we have already exported a buffer it may still be available for re-use
+        PyBuffer pybuf = getExistingBuffer(flags);
+
+        if (pybuf == null) {
+
+            // No existing export we can re-use: create a new one
+            pybuf = new SimpleBuffer(this, new BufferPointer(storage, offset, size), flags) {
+
+                // Customise so that the final release drops the local reference
+                protected void releaseAction() {
+                    // synchronise on the same object as getBuffer()
+                    synchronized (obj) {
+                        export = null;
+                    }
                 }
-            }
-        };
+
+                // If anyone tries to resurrect an old buffer, give them the latest one
+                @Override
+                public synchronized PyBuffer getBuffer(int flags) {
+                    return isReleased() ? obj.getBuffer(flags) : super.getBuffer(flags);
+                }
+
+            };
+
+            // Hold a reference for possible re-use
+            export = new WeakReference<PyBuffer>(pybuf);
+        }
+        return pybuf;
     }
 
     /**
-     * Test to see if the byte array may be resized and raise a BufferError if not.
+     * Try to re-use an existing exported buffer, or return <code>null</code> if there is none.
+     *
+     * @throws PyException (BufferError) if the the flags are incompatible with the buffer
+     */
+    protected PyBuffer getExistingBuffer(int flags) throws PyException {
+        PyBuffer pybuf = null;
+        if (export != null) {
+            // A buffer was exported at some time.
+            pybuf = export.get();
+            if (pybuf != null) {
+                // And this buffer still exists: expect this to provide further counted reference.
+                // We did not test for !pybuf.isReleased() as release implies export==null.
+                pybuf = pybuf.getBuffer(flags);
+            }
+        }
+        return pybuf;
+    }
+
+    /**
+     * Test to see if the byte array may be resized and raise a BufferError if not. This must be
+     * called by the implementation of any append or insert that changes the number of bytes in the
+     * array.
      *
      * @throws PyException (BufferError) if there are buffer exports preventing a resize
      */
     protected void resizeCheck() throws PyException {
-         // XXX Quite likely this is not called in all the places it should be
-         if (exportCount!=0) {
-            throw Py.BufferError("Existing exports of data: object cannot be re-sized");
+        if (export != null) {
+            /*
+             * A buffer was exported at some time and has not been released by all its getters. This
+             * ought to be enough to decide we will raise the error, but the weak reference allows
+             * us to tolerate consumers who simply leave the buffer for the garbage collector.
+             */
+            PyBuffer pybuf = export.get();
+            if (pybuf != null) {
+                // Not strictly necessary to test isReleased()?
+                throw Py.BufferError("Existing exports of data: object cannot be re-sized");
+            } else {
+                /*
+                 * The reference has expired and we can allow the operation: this happens when the
+                 * consumer forgets to call release(). Simulate the release action here.
+                 */
+                export = null;
+            }
         }
     }
-
-    /**
-     * Count of PyBuffer exports not yet released, used to prevent untimely resizing.
-     */
-    private int exportCount;
-
 
     /* ============================================================================================
      * API for org.python.core.PySequence

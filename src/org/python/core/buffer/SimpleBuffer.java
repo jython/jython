@@ -12,7 +12,7 @@ public class SimpleBuffer extends SimpleReadonlyBuffer {
      * <code>SimpleBuffer</code> allows consumer requests that are the same as
      * <code>SimpleReadonlyBuffer</code>, with the addition of WRITABLE.
      */
-    protected static final int ALLOWED_FLAGS = WRITABLE | SimpleReadonlyBuffer.ALLOWED_FLAGS;
+    static final int FEATURE_FLAGS = WRITABLE | SimpleReadonlyBuffer.FEATURE_FLAGS;
 
     /**
      * Provide an instance of <code>SimpleBuffer</code> in a default, semi-constructed state. The
@@ -36,8 +36,8 @@ public class SimpleBuffer extends SimpleReadonlyBuffer {
      */
     public SimpleBuffer(BufferProtocol exporter, BufferPointer buf, int flags) {
         super(exporter, buf);
-        assignCapabilityFlags(flags, REQUIRED_FLAGS, ALLOWED_FLAGS, IMPLIED_FLAGS);
-        fillInfo();
+        setFeatureFlags(FEATURE_FLAGS);
+        checkRequestFlags(flags);
     }
 
     @Override
