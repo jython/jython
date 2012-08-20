@@ -413,13 +413,16 @@ class _client_socket_impl(_nio_impl):
         (IPPROTO_TCP, TCP_NODELAY):    'TcpNoDelay',
     }
 
-    def __init__(self, socket=None):
+    def __init__(self, socket=None, pending_options=None):
         if socket:
             self.jchannel = socket.getChannel()
         else:
             self.jchannel = java.nio.channels.SocketChannel.open()
         self.jsocket = self.jchannel.socket()
         self.socketio = org.python.core.io.SocketIO(self.jchannel, 'rw')
+        if pending_options:
+            for level, optname in pending_options.keys():
+                self.setsockopt(level, optname, pending_options[ (level, optname) ])
 
     def bind(self, jsockaddr, reuse_addr):
         self.jsocket.setReuseAddress(reuse_addr)
@@ -485,6 +488,7 @@ class _server_socket_impl(_nio_impl):
     }
 
     def __init__(self, jsockaddr, backlog, reuse_addr):
+        self.pending_client_options = {}
         self.jchannel = java.nio.channels.ServerSocketChannel.open()
         self.jsocket = self.jchannel.socket()
         self.jsocket.setReuseAddress(reuse_addr)
@@ -495,13 +499,13 @@ class _server_socket_impl(_nio_impl):
         if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
             new_cli_chan = self.jchannel.accept()
             if new_cli_chan is not None:
-                return _client_socket_impl(new_cli_chan.socket())
+                return _client_socket_impl(new_cli_chan.socket(), self.pending_client_options)
             else:
                 return None
         else:
             # In timeout mode now
             new_cli_sock = self.jsocket.accept()
-            return _client_socket_impl(new_cli_sock)
+            return _client_socket_impl(new_cli_sock, self.pending_client_options)
 
     def shutdown(self, how):
         # This is no-op on java, for server sockets.
@@ -509,6 +513,24 @@ class _server_socket_impl(_nio_impl):
         # java/jython. But we can't call that here because that would then
         # later cause the user explicit close() call to fail
         pass
+
+    def getsockopt(self, level, option):
+        if self.options.has_key( (level, option) ):
+            return _nio_impl.getsockopt(self, level, option)
+        elif _client_socket_impl.options.has_key( (level, option) ):
+            return self.pending_client_options.get( (level, option), None)
+        else:
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % \
+                (_constant_to_name(option, ['SO_', 'TCP_']), _constant_to_name(level,  ['SOL_', 'IPPROTO_']), str(self.jsocket)))
+
+    def setsockopt(self, level, option, value):
+        if self.options.has_key( (level, option) ):
+            _nio_impl.setsockopt(self, level, option, value)
+        elif _client_socket_impl.options.has_key( (level, option) ):
+            self.pending_client_options[ (level, option) ] = value
+        else:
+            raise error(errno.ENOPROTOOPT, "Socket option '%s' (level '%s') not supported on socket(%s)" % \
+                (_constant_to_name(option, ['SO_', 'TCP_']), _constant_to_name(level,  ['SOL_', 'IPPROTO_']), str(self.jsocket)))
 
     def getsockname(self):
         return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getLocalPort())
