@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1309 ] Server sockets do not support client options and propagate them to 'accept'ed client sockets.
     - [ 1951 ] Bytecode Interpreter stack optimization for larger arguments
     - [ 1921 ] compiler module broken in Jython 2.7 
     - [ 1920 ] Backport CO_FUTURE_PRINT_FUNCTION to Lib/compiler/pycodegen.py
