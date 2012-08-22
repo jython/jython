@@ -898,19 +898,54 @@ class TestSupportedOptions(TestSocketOptions):
         self._testOption(socket.IPPROTO_TCP, socket.TCP_NODELAY, [0, 1])
         self._testInheritedOption(socket.IPPROTO_TCP, socket.TCP_NODELAY, [0, 1])
 
-class TestUnsupportedOptions(TestSocketOptions):
+class TestPseudoOptions(unittest.TestCase):
 
     def testSO_ACCEPTCONN(self):
-        self.failUnless(hasattr(socket, 'SO_ACCEPTCONN'))
+        for socket_type, listen, expected_result in [
+            #(socket.SOCK_STREAM, 0, 0),
+            #(socket.SOCK_STREAM, 1, 1),
+            (socket.SOCK_DGRAM,   0, Exception),
+            ]:
+            s = socket.socket(socket.AF_INET, socket_type)
+            if listen:
+                s.listen(1)
+            try:
+                result = s.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN)
+                if expected_result is not Exception:
+                    self.failUnlessEqual(result, expected_result)
+            except socket.error, se:
+                if expected_result is Exception:
+                    if se[0] != errno.ENOPROTOOPT:
+                        self.fail("getsockopt(SO_ACCEPTCONN) on wrong socket type raised wrong exception: %s" % str(se))
+                else:
+                    self.fail("getsocket(SO_ACCEPTCONN) on valid socket type should not have raised exception: %s" % (str(se)))
+
+    def testSO_ERROR(self):
+        for socket_type in [socket.SOCK_STREAM, socket.SOCK_DGRAM]:
+            s = socket.socket(socket.AF_INET, socket_type)
+            self.failUnlessEqual(s.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR), 0)
+            try:
+                # Now cause an error
+                s.connect(("localhost", 100000))
+                self.fail("Operation '%s' that should have failed to generate SO_ERROR did not" % operation)
+            except socket.error, se:
+                so_error = s.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                self.failUnlessEqual(so_error, se[0])
+            # Now retrieve the option again - it should be zero
+            self.failUnlessEqual(s.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR), 0)
+
+    def testSO_TYPE(self):
+        for socket_type in [socket.SOCK_STREAM, socket.SOCK_DGRAM]:
+            s = socket.socket(socket.AF_INET, socket_type)
+            self.failUnlessEqual(s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE), socket_type)
+
+class TestUnsupportedOptions(TestSocketOptions):
 
     def testSO_DEBUG(self):
         self.failUnless(hasattr(socket, 'SO_DEBUG'))
 
     def testSO_DONTROUTE(self):
         self.failUnless(hasattr(socket, 'SO_DONTROUTE'))
-
-    def testSO_ERROR(self):
-        self.failUnless(hasattr(socket, 'SO_ERROR'))
 
     def testSO_EXCLUSIVEADDRUSE(self):
         # this is an MS specific option that will not be appearing on java
@@ -934,9 +969,6 @@ class TestUnsupportedOptions(TestSocketOptions):
 
     def testSO_SNDTIMEO(self):
         self.failUnless(hasattr(socket, 'SO_SNDTIMEO'))
-
-    def testSO_TYPE(self):
-        self.failUnless(hasattr(socket, 'SO_TYPE'))
 
     def testSO_USELOOPBACK(self):
         self.failUnless(hasattr(socket, 'SO_USELOOPBACK'))
@@ -2429,6 +2461,7 @@ def test_main():
         GeneralModuleTests,
         IPAddressTests,
         TestSupportedOptions,
+        TestPseudoOptions,
         TestUnsupportedOptions,
         BasicTCPTest,
         TCPServerTimeoutTest,
