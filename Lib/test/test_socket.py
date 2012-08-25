@@ -902,8 +902,8 @@ class TestPseudoOptions(unittest.TestCase):
 
     def testSO_ACCEPTCONN(self):
         for socket_type, listen, expected_result in [
-            #(socket.SOCK_STREAM, 0, 0),
-            #(socket.SOCK_STREAM, 1, 1),
+            (socket.SOCK_STREAM, 0, 0),
+            (socket.SOCK_STREAM, 1, 1),
             (socket.SOCK_DGRAM,   0, Exception),
             ]:
             s = socket.socket(socket.AF_INET, socket_type)

@@ -150,15 +150,13 @@ _exception_map = {
 
 }
 
-def _map_exception(sock_object, java_exception, circumstance=ALL):
+def _map_exception(java_exception, circumstance=ALL):
     mapped_exception = _exception_map.get((java_exception.__class__, circumstance))
     if mapped_exception:
         py_exception = mapped_exception(java_exception)
     else:
         py_exception = error(-1, 'Unmapped exception: %s' % java_exception)
     setattr(py_exception, 'java_exception', java_exception)
-    if sock_object is not None:
-        setattr(sock_object, '_last_error', py_exception[0])
     return _add_exception_attrs(py_exception)
 
 _feature_support_map = {
@@ -694,13 +692,13 @@ def gethostname():
     try:
         return asPyString(java.net.InetAddress.getLocalHost().getHostName())
     except java.lang.Exception, jlx:
-        raise _map_exception(None, jlx)
+        raise _map_exception(jlx)
 
 def gethostbyname(name):
     try:
         return asPyString(java.net.InetAddress.getByName(name).getHostAddress())
     except java.lang.Exception, jlx:
-        raise _map_exception(None, jlx)
+        raise _map_exception(jlx)
 
 def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
@@ -976,7 +974,7 @@ def getaddrinfo(host, port, family=AF_UNSPEC, socktype=0, proto=0, flags=0):
                             results.append((family, result_socktype, result_proto, canonname, sock_tuple))
         return results
     except java.lang.Exception, jlx:
-        raise _map_exception(None, jlx)
+        raise _map_exception(jlx)
 
 def _getnameinfo_get_host(address, flags):
     if not isinstance(address, basestring):
@@ -1059,7 +1057,7 @@ def inet_pton(family, ip_string):
                 bytes.append(byte)
         return "".join([chr(byte) for byte in bytes])
     except java.lang.Exception, jlx:
-        raise _map_exception(None, jlx)
+        raise _map_exception(jlx)
 
 def inet_ntop(family, packed_ip):
     try:
@@ -1075,13 +1073,25 @@ def inet_ntop(family, packed_ip):
         ia = java.net.InetAddress.getByAddress(jByteArray)
         return ia.getHostAddress()
     except java.lang.Exception, jlx:
-        raise _map_exception(None, jlx)
+        raise _map_exception(jlx)
 
 def inet_aton(ip_string):
     return inet_pton(AF_INET, ip_string)
 
 def inet_ntoa(packed_ip):
     return inet_ntop(AF_INET, packed_ip)
+
+from functools import wraps
+def raises_error(method):
+    @wraps(method)
+    def set_last_error(obj, *args, **kwargs):
+        try:
+            setattr(obj, '_last_error', 0)
+            return method(obj, *args, **kwargs)
+        except error, e:
+            setattr(obj, '_last_error', e[0])
+            raise
+    return set_last_error
 
 class _nonblocking_api_mixin:
 
@@ -1122,15 +1132,15 @@ class _nonblocking_api_mixin:
     def getblocking(self):
         return self.mode == MODE_BLOCKING
 
+    @raises_error
     def setsockopt(self, level, optname, value):
         try:
-            self._last_error = 0
             if self.sock_impl:
                 self.sock_impl.setsockopt(level, optname, value)
             else:
                 self.pending_options[ (level, optname) ] = value
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def getsockopt(self, level, optname):
         # Handle "pseudo" options first
@@ -1147,29 +1157,29 @@ class _nonblocking_api_mixin:
             else:
                 return self.pending_options.get( (level, optname), None)
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def shutdown(self, how):
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
         if not self.sock_impl:
             raise error(errno.ENOTCONN, "Transport endpoint is not connected")
         try:
-            self._last_error = 0
             self.sock_impl.shutdown(how)
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def close(self):
         try:
-            self._last_error = 0
             if self.sock_impl:
                 self.sock_impl.close()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def getsockname(self):
         try:
-            self._last_error = 0
             if self.sock_impl is None:
                 # If the user has already bound an address, return that
                 if self.local_addr:
@@ -1179,16 +1189,16 @@ class _nonblocking_api_mixin:
                 raise error(errno.EINVAL, "Invalid argument")
             return self.sock_impl.getsockname()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def getpeername(self):
         try:
-            self._last_error = 0
             if self.sock_impl is None:
                 raise error(errno.ENOTCONN, "Socket is not connected")
             return self.sock_impl.getpeername()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def _config(self):
         assert self.mode in _permitted_modes
@@ -1228,36 +1238,35 @@ class _tcpsocket(_nonblocking_api_mixin):
             return self.server
         return _nonblocking_api_mixin.getsockopt(self, level, optname)
 
+    @raises_error
     def bind(self, addr):
-        self._last_error = 0
         assert not self.sock_impl
         assert not self.local_addr
         # Do the address format check
         _get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE)
         self.local_addr = addr
 
+    @raises_error
     def listen(self, backlog):
         "This signifies a server socket"
         try:
-            self._last_error = 0
             assert not self.sock_impl
             self.server = 1
             self.sock_impl = _server_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
                                   backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def accept(self):
         "This signifies a server socket"
         try:
-            self._last_error = 0
             if not self.sock_impl:
                 self.listen()
             assert self.server
             new_sock = self.sock_impl.accept()
             if not new_sock:
-                self._last_error = errno.EWOULDBLOCK
                 raise would_block_error()
             cliconn = _tcpsocket()
             cliconn.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ] = new_sock.jsocket.getReuseAddress()
@@ -1265,11 +1274,11 @@ class _tcpsocket(_nonblocking_api_mixin):
             cliconn._setup()
             return cliconn, new_sock.getpeername()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def _do_connect(self, addr):
         try:
-            self._last_error = 0
             assert not self.sock_impl
             self.sock_impl = _client_socket_impl()
             if self.local_addr: # Has the socket been bound to a local address?
@@ -1278,7 +1287,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             self._config() # Configure timeouts, etc, now that the socket exists
             self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def connect(self, addr):
         "This signifies a client socket"
@@ -1301,9 +1310,9 @@ class _tcpsocket(_nonblocking_api_mixin):
             self.istream = self.sock_impl.jsocket.getInputStream()
             self.ostream = self.sock_impl.jsocket.getOutputStream()
 
+    @raises_error
     def recv(self, n):
         try:
-            self._last_error = 0
             if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
             if self.sock_impl.jchannel.isConnectionPending():
                 self.sock_impl.jchannel.finishConnect()
@@ -1313,37 +1322,35 @@ class _tcpsocket(_nonblocking_api_mixin):
                 return ""
             elif m <= 0:
                 if self.mode == MODE_NONBLOCKING:
-                    self._last_error = errno.EWOULDBLOCK
                     raise would_block_error()
                 return ""
             if m < n:
                 data = data[:m]
             return data.tostring()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def recvfrom(self, n):
         return self.recv(n), None
 
+    @raises_error
     def send(self, s):
         try:
-            self._last_error = 0
             if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
             if self.sock_impl.jchannel.isConnectionPending():
                 self.sock_impl.jchannel.finishConnect()
             numwritten = self.sock_impl.write(s)
             if numwritten == 0 and self.mode == MODE_NONBLOCKING:
-                self._last_error = errno.EWOULDBLOCK
                 raise would_block_error()
             return numwritten
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     sendall = send
 
+    @raises_error
     def close(self):
         try:
-            self._last_error = 0
             if self.istream:
                 self.istream.close()
             if self.ostream:
@@ -1351,7 +1358,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             if self.sock_impl:
                 self.sock_impl.close()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
 
 class _udpsocket(_nonblocking_api_mixin):
@@ -1364,9 +1371,9 @@ class _udpsocket(_nonblocking_api_mixin):
     def __init__(self):
         _nonblocking_api_mixin.__init__(self)
 
+    @raises_error
     def bind(self, addr):
-        try:            
-            self._last_error = 0
+        try:
             assert not self.sock_impl
             assert not self.local_addr
             # Do the address format check
@@ -1376,11 +1383,11 @@ class _udpsocket(_nonblocking_api_mixin):
                                                     self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def _do_connect(self, addr):
         try:
-            self._last_error = 0
             assert not self.connected, "Datagram Socket is already connected"
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
@@ -1388,7 +1395,7 @@ class _udpsocket(_nonblocking_api_mixin):
             self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
             self.connected = True
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def connect(self, addr):
         self._do_connect(addr)
@@ -1398,9 +1405,9 @@ class _udpsocket(_nonblocking_api_mixin):
             self._do_connect(addr)
         return 0
 
+    @raises_error
     def sendto(self, data, p1, p2=None):
         try:
-            self._last_error = 0
             if not p2:
                 flags, addr = 0, p1
             else:
@@ -1412,14 +1419,14 @@ class _udpsocket(_nonblocking_api_mixin):
             result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, self.family, self.type, self.proto, 0), flags)
             return result
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def send(self, data, flags=None):
-        self._last_error = 0
         if not self.connected: raise error(errno.ENOTCONN, "Socket is not connected")
         byte_array = java.lang.String(data).getBytes('iso-8859-1')
         return self.sock_impl.send(byte_array, flags)
 
+    @raises_error
     def recvfrom(self, num_bytes, flags=None):
         """
         There is some disagreement as to what the behaviour should be if
@@ -1429,7 +1436,6 @@ class _udpsocket(_nonblocking_api_mixin):
         http://bugs.sun.com/view_bug.do?bug_id=6621689
         """
         try:
-            self._last_error = 0
             # This is the old 2.1 behaviour
             #assert self.sock_impl
             # This is amak's preferred interpretation
@@ -1440,15 +1446,15 @@ class _udpsocket(_nonblocking_api_mixin):
                 self._config()
             return self.sock_impl.recvfrom(num_bytes, flags)
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
+    @raises_error
     def recv(self, num_bytes, flags=None):
         if not self.sock_impl: raise error(errno.ENOTCONN, "Socket is not connected")
         try:
-            self._last_error = 0
             return self.sock_impl.recv(num_bytes, flags)
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def __del__(self):
         self.close()
@@ -1850,7 +1856,7 @@ class ssl:
             self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
             self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def _make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
@@ -1873,7 +1879,7 @@ class ssl:
                 data = data[:m]
             return data.tostring()
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def write(self, s):
         try:
@@ -1881,13 +1887,13 @@ class ssl:
             self._out_buf.flush()
             return len(s)
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def _get_server_cert(self):
         try:
             return self.ssl_sock.getSession().getPeerCertificates()[0]
         except java.lang.Exception, jlx:
-            raise _map_exception(self, jlx)
+            raise _map_exception(jlx)
 
     def server(self):
         cert = self._get_server_cert()
