@@ -174,31 +174,34 @@ def poll2(timeout=0.0, map=None):
     if timeout is not None:
         # timeout is in milliseconds
         timeout = int(timeout*1000)
-    pollster = select.poll()
     if map:
-        for fd, obj in map.items():
-            flags = 0
-            if obj.readable():
-                flags |= select.POLLIN | select.POLLPRI
-            # accepting sockets should not be writable
-            if obj.writable() and not obj.accepting:
-                flags |= select.POLLOUT
-            if flags:
-                # Only check for exceptions if object was either readable
-                # or writable.
-                flags |= select.POLLERR | select.POLLHUP | select.POLLNVAL
-                pollster.register(fd, flags)
         try:
-            r = pollster.poll(timeout)
-        except select.error, err:
-            if err.args[0] != EINTR:
-                raise
-            r = []
-        for fd, flags in r:
-            obj = map.get(fd)
-            if obj is None:
-                continue
-            readwrite(obj, flags)
+            pollster = select._poll_object_cache.get_poll_object()
+            for fd, obj in map.items():
+                flags = 0
+                if obj.readable():
+                    flags |= select.POLLIN | select.POLLPRI
+                # accepting sockets should not be writable
+                if obj.writable() and not obj.accepting:
+                    flags |= select.POLLOUT
+                if flags:
+                    # Only check for exceptions if object was either readable
+                    # or writable.
+                    flags |= select.POLLERR | select.POLLHUP | select.POLLNVAL
+                    pollster.register(obj, flags)
+            try:
+                r = pollster.poll(timeout)
+            except select.error, err:
+                if err.args[0] != EINTR:
+                    raise
+                r = []
+            for obj, flags in r:
+                # obj = map.get(fd)
+                if obj is None:
+                    continue
+                readwrite(obj, flags)
+        finally:
+            select._poll_object_cache.release_poll_object(pollster)
 
 poll3 = poll2                           # Alias for backward compatibility
 
@@ -210,6 +213,8 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None):
         poll_fun = poll2
     else:
         poll_fun = poll
+    if sys.platform.startswith('java'):
+        poll_fun = poll2
 
     if count is None:
         while map:
@@ -301,7 +306,7 @@ class dispatcher:
     def set_socket(self, sock, map=None):
         self.socket = sock
 ##        self.__dict__['socket'] = sock
-        self._fileno = sock.fileno()
+        self._fileno = sock
         self.add_channel(map)
 
     def set_reuse_addr(self):

@@ -1,5 +1,5 @@
 """
-This is an select module for use on JVMs > 1.5.
+This is an select module for use on JVMs >= 1.5.
 It is documented, along with known issues and workarounds, on the jython wiki.
 http://wiki.python.org/jython/SelectModule
 """
@@ -22,6 +22,8 @@ _exception_map = {
 
 # (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
 
+(java.nio.channels.ClosedChannelException, ALL) : error(errno.ENOTCONN, 'Socket is not connected'),
+(java.nio.channels.CancelledKeyException, ALL) : error(errno.ENOTCONN, 'Socket is not connected'),
 (java.nio.channels.IllegalBlockingModeException, ALL) : error(errno.ESOCKISBLOCKING, 'socket must be in non-blocking mode'),
 }
 

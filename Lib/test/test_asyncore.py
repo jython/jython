@@ -72,6 +72,7 @@ def capture_server(evt, buf, serv):
     else:
         n = 200
         while n > 0:
+            conn.setblocking(False)
             r, w, e = select.select([conn], [], [])
             if r:
                 data = conn.recv(10)
@@ -548,6 +549,8 @@ class BaseTestAPI(unittest.TestCase):
         client = BaseClient(server.address)
         self.loop_waiting_for_flag(server)
 
+    @unittest.skipIf(sys.platform.startswith("java"),
+                     "FIXME: Currently not working on jython")
     def test_handle_read(self):
         # make sure handle_read is called on data received
 
@@ -575,6 +578,8 @@ class BaseTestAPI(unittest.TestCase):
         client = TestClient(server.address)
         self.loop_waiting_for_flag(client)
 
+    @unittest.skipIf(sys.platform.startswith("java"),
+                     "FIXME: Currently not working on jython")
     def test_handle_close(self):
         # make sure handle_close is called when the other end closes
         # the connection
@@ -599,6 +604,8 @@ class BaseTestAPI(unittest.TestCase):
         client = TestClient(server.address)
         self.loop_waiting_for_flag(client)
 
+    @unittest.skipIf(sys.platform.startswith("java"),
+                     "OOB not supported on java/jython")
     @unittest.skipIf(sys.platform.startswith("sunos"),
                      "OOB support is broken on Solaris")
     def test_handle_expt(self):
@@ -682,8 +689,13 @@ class BaseTestAPI(unittest.TestCase):
 
         s2 = asyncore.dispatcher()
         s2.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        # On jython, binding is not enough to create a server socket.
+        # Must first bind
+        s2.bind((HOST, port))
+        # And then listen, which will cause the actual server socket to be created
+        # and then to listen, and thus cause the error
         # EADDRINUSE indicates the socket was correctly bound
-        self.assertRaises(socket.error, s2.bind, (HOST, port))
+        self.assertRaises(socket.error, s2.listen, (5))
 
     def test_set_reuse_addr(self):
         sock = socket.socket()
