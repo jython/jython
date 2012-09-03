@@ -10,9 +10,7 @@ import org.python.expose.ExposedType;
  * missing.
  */
 @ExposedType(name = "memoryview", base = PyObject.class, isBaseType = false)
-public class PyMemoryView extends PyObject implements BufferProtocol {
-
-    // XXX This should probably extend PySequence to get the slice behaviour
+public class PyMemoryView extends PySequence implements BufferProtocol {
 
     public static final PyType TYPE = PyType.fromClass(PyMemoryView.class);
 
@@ -25,23 +23,22 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
      */
     private boolean released;
     /** Cache the result of getting shape here. */
-    private PyTuple shape;
+    private PyObject shape;
     /** Cache the result of getting strides here. */
-    private PyTuple strides;
+    private PyObject strides;
+    /** Cache the result of getting suboffsets here. */
+    private PyObject suboffsets;
 
     /**
-     * Construct a PyMemoryView from an object that bears the necessary BufferProtocol interface.
-     * The buffer so obtained will be writable if the underlying object permits it.
+     * Construct a PyMemoryView from a PyBuffer interface. The buffer so obtained will be writable
+     * if the underlying object permits it. The <code>memoryview</code> takes a new lease on the
+     * <code>PyBuffer</code>.
      *
-     * @param obj object that will export the buffer
+     * @param pybuf buffer exported by some underlying object
      */
-    public PyMemoryView(BufferProtocol obj) {
-        /*
-         * Ask for the full set of facilities (strides, indirect, etc.) from the object in case they
-         * are necessary for navigation, but only ask for read access. If the object is writable,
-         * the PyBuffer will be writable.
-         */
-        backing = obj.getBuffer(PyBUF.FULL_RO);
+    public PyMemoryView(PyBuffer pybuf) {
+        super(TYPE);
+        backing = pybuf.getBuffer(PyBUF.FULL_RO);
     }
 
     @ExposedNew
@@ -49,7 +46,12 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
             PyObject[] args, String[] keywords) {
         PyObject obj = args[0];
         if (obj instanceof BufferProtocol) {
-            return new PyMemoryView((BufferProtocol)obj);
+            /*
+             * Ask for the full set of facilities (strides, indirect, etc.) from the object in case
+             * they are necessary for navigation, but only ask for read access. If the object is
+             * writable, the PyBuffer will be writable.
+             */
+            return new PyMemoryView(((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO));
         } else {
             throw Py.TypeError("cannot make memory view because object does not have "
                     + "the buffer interface");
@@ -67,7 +69,7 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
     }
 
     @ExposedGet(doc = shape_doc)
-    public PyTuple shape() {
+    public PyObject shape() {
         if (shape == null) {
             shape = tupleOf(backing.getShape());
         }
@@ -80,11 +82,19 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
     }
 
     @ExposedGet(doc = strides_doc)
-    public PyTuple strides() {
+    public PyObject strides() {
         if (strides == null) {
             strides = tupleOf(backing.getStrides());
         }
         return strides;
+    }
+
+    @ExposedGet(doc = suboffsets_doc)
+    public PyObject suboffsets() {
+        if (suboffsets == null) {
+            suboffsets = tupleOf(backing.getSuboffsets());
+        }
+        return suboffsets;
     }
 
     @ExposedGet(doc = readonly_doc)
@@ -93,17 +103,26 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
     }
 
     /**
-     * Make an integer array into a PyTuple of PyInteger values.
+     * Make an integer array into a PyTuple of PyLong values or None if the argument is null.
      *
-     * @param x the array
-     * @return the PyTuple
+     * @param x the array (or null)
+     * @return the PyTuple (or Py.None)
      */
-    private PyTuple tupleOf(int[] x) {
-        PyInteger[] pyx = new PyInteger[x.length];
-        for (int k = 0; k < x.length; k++) {
-            pyx[k] = new PyInteger(x[k]);
+    private PyObject tupleOf(int[] x) {
+        if (x != null) {
+            PyLong[] pyx = new PyLong[x.length];
+            for (int k = 0; k < x.length; k++) {
+                pyx[k] = new PyLong(x[k]);
+            }
+            return new PyTuple(pyx, false);
+        } else {
+            return Py.None;
         }
-        return new PyTuple(pyx, false);
+    }
+
+    @Override
+    public int __len__() {
+        return backing.getLen();
     }
 
     /*
@@ -136,6 +155,10 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
     private final static String strides_doc = "strides\n"
             + "A tuple of integers the length of ndim giving the size in bytes to access\n"
             + "each element for each dimension of the array.\n";
+
+    private final static String suboffsets_doc = "suboffsets\n"
+            + "A tuple of integers the length of ndim, or None, used to access\n"
+            + "each element for each dimension of an indirect array.\n";
 
     private final static String readonly_doc = "readonly\n"
             + "A bool indicating whether the memory is read only.\n";
@@ -190,6 +213,151 @@ public class PyMemoryView extends PyObject implements BufferProtocol {
             backing.release();
             // Remember we've been released
             released = true;
+        }
+    }
+
+    /*
+     * ============================================================================================
+     * API for org.python.core.PySequence
+     * ============================================================================================
+     */
+    /**
+     * Gets the indexed element of the memoryview as an integer. This is an extension point
+     * called by PySequence in its implementation of {@link #__getitem__}. It is guaranteed by
+     * PySequence that the index is within the bounds of the memoryview.
+     *
+     * @param index index of the element to get.
+     */
+    @Override
+    protected PyInteger pyget(int index) {
+        return new PyInteger(backing.intAt(index));
+    }
+
+    /**
+     * Returns a slice of elements from this sequence as a PyMemoryView.
+     *
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @param step the step size.
+     * @return a PyMemoryView corresponding the the given range of elements.
+     */
+    @Override
+    protected synchronized PyMemoryView getslice(int start, int stop, int step) {
+        int n = sliceLength(start, stop, step);
+        PyBuffer view = backing.getBufferSlice(PyBUF.FULL_RO, start, n, step);
+        PyMemoryView ret = new PyMemoryView(view);
+        view.release(); // We've finished (new PyMemoryView holds a lease)
+        return ret;
+    }
+
+    /**
+     * memoryview*int is not implemented in Python, so this should never be called. We still have to override
+     * it to satisfy PySequence.
+     *
+     * @param count the number of times to repeat this.
+     * @return never
+     * @throws PyException(NotImlemented) always
+     */
+    @Override
+    protected synchronized PyMemoryView repeat(int count) throws PyException {
+        throw Py.NotImplementedError("memoryview.repeat()");
+    }
+
+    /**
+     * Sets the indexed element of the memoryview to the given value. This is an extension point
+     * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
+     * PySequence that the index is within the bounds of the memoryview. Any other clients calling
+     * <tt>pyset(int)</tt> must make the same guarantee.
+     *
+     * @param index index of the element to set.
+     * @param value the value to set this element to.
+     * @throws PyException(AttributeError) if value cannot be converted to an integer
+     * @throws PyException(ValueError) if value<0 or value>255
+     */
+    public synchronized void pyset(int index, PyObject value) throws PyException {
+        backing.storeAt(BaseBytes.byteCheck(value), index);
+    }
+
+    /**
+     * Sets the given range of elements according to Python slice assignment semantics. If the step
+     * size is one, it is a simple slice and the operation is equivalent to replacing that slice,
+     * with the value, accessing the value via the buffer protocol.
+     *
+     * <pre>
+     * a = bytearray(b'abcdefghijklmnopqrst')
+     * m = memoryview(a)
+     * m[2:7] = "ABCDE"
+     * </pre>
+     *
+     * Results in <code>a=bytearray(b'abABCDEhijklmnopqrst')</code>.
+     * <p>
+     * If the step size is one, but stop-start does not match the length of the right-hand-side a
+     * ValueError is thrown.
+     * <p>
+     * If the step size is not one, and start!=stop, the slice defines a certain number of elements
+     * to be replaced. This function is not available in Python 2.7 (but it is in Python 3.3).
+     * <p>
+     *
+     * <pre>
+     * a = bytearray(b'abcdefghijklmnopqrst')
+     * a[2:12:2] = iter( [65, 66, 67, long(68), "E"] )
+     * </pre>
+     *
+     * Results in <code>a=bytearray(b'abAdBfChDjElmnopqrst')</code> in Python 3.3.
+     *
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @param step the step size.
+     * @param value an object consistent with the slice assignment
+     */
+    @Override
+    protected synchronized void setslice(int start, int stop, int step, PyObject value) {
+
+        if (step == 1 && stop < start) {
+            // Because "b[5:2] = v" means insert v just before 5 not 2.
+            // ... although "b[5:2:-1] = v means b[5]=v[0], b[4]=v[1], b[3]=v[2]
+            stop = start;
+        }
+
+        if (!(value instanceof BufferProtocol)) {
+            String fmt = "'%s' does not support the buffer interface";
+            throw Py.TypeError(String.format(fmt, value.getType().getName()));
+        }
+
+        // We'll try to get two new buffers: and finally release them.
+        PyBuffer valueBuf = null, backingSlice = null;
+
+        try {
+            // Get a buffer API on the value being assigned
+            valueBuf = ((BufferProtocol)value).getBuffer(PyBUF.FULL_RO);
+
+            // How many destination items? Has to match size of value.
+            int n = sliceLength(start, stop, step);
+            if (n != valueBuf.getLen()) {
+                // CPython 2.7 message
+                throw Py.ValueError("cannot modify size of memoryview object");
+            }
+
+            /*
+             * In the next section, we get a sliced view of the backing and write the value to it.
+             * The approach to errors is unusual for compatibility with CPython. We pretend we will
+             * not need a WRITABLE buffer in order to avoid throwing a BufferError. This does not
+             * stop the returned object being writable, simply avoids the check. If in fact it is
+             * read-only, then trying to write raises TypeError.
+             */
+
+            backingSlice = backing.getBufferSlice(PyBUF.FULL_RO, start, n, step);
+            backing.copyFrom(valueBuf);
+
+        } finally {
+
+            // Release the buffers we obtained (if we did)
+            if (backingSlice != null) {
+                backingSlice.release();
+            }
+            if (valueBuf != null) {
+                valueBuf.release();
+            }
         }
     }
 

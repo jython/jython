@@ -1,6 +1,5 @@
 package org.python.core;
 
-import java.nio.charset.Charset;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,8 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-
-import org.python.core.buffer.SimpleReadonlyBuffer;
 
 /**
  * Base class for Jython bytearray (and bytes in due course) that provides most of the Java API,
@@ -330,7 +327,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     protected void init(BufferProtocol value) throws PyException {
         // Get the buffer view
-        PyBuffer view = value.getBuffer(PyBUF.SIMPLE);
+        PyBuffer view = value.getBuffer(PyBUF.FULL_RO);
         // Create storage for the bytes and have the view drop them in
         newStorage(view.getLen());
         view.copyTo(storage, offset);
@@ -685,31 +682,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException;
 
         /**
-         * Test whether this View has the given prefix, that is, that the first bytes of this View
-         * match all the bytes of the given prefix. By implication, the test returns false if there
-         * are too few bytes in this view.
-         *
-         * @param prefix pattern to match
-         * @return true if and only if this view has the given prefix
-         */
-        public boolean startswith(View prefix);
-
-        /**
-         * Test whether the slice <code>[offset:]</code> of this View has the given prefix, that is,
-         * that the bytes of this View from index <code>offset</code> match all the bytes of the
-         * give prefix. By implication, the test returns false if the offset puts the start or end
-         * of the prefix outside this view (when <code>offset&lt;0</code> or
-         * <code>offset+prefix.size()>size()</code>). Python slice semantics are <em>not</em>
-         * applied to <code>offset</code>.
-         *
-         * @param prefix pattern to match
-         * @param offset at which to start the comparison in this view
-         * @return true if and only if the slice [offset:<code>]</code> this view has the given
-         *         prefix
-         */
-        public boolean startswith(View prefix, int offset);
-
-        /**
          * The standard memoryview out of bounds message (does not refer to the underlying type).
          */
         public static final String OUT_OF_BOUNDS = "index out of bounds";
@@ -770,45 +742,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             }
         }
 
-        /**
-         * Test whether this View has the given prefix, that is, that the first bytes of this View
-         * match all the bytes of the given prefix. This class provides an implementation of
-         * {@link View#startswith(View)} that simply returns <code>startswith(prefix,0)</code>
-         */
-        @Override
-        public boolean startswith(View prefix) {
-            return startswith(prefix, 0);
-        }
-
-        /**
-         * Test whether this View has the given prefix, that is, that the first bytes of this View
-         * match all the bytes of the given prefix. This class provides an implementation of
-         * {@link View#startswith(View,int)} that loops over
-         * <code>byteAt(i+offset)==prefix.byteAt(i)</code>
-         */
-        @Override
-        public boolean startswith(View prefix, int offset) {
-            int j = offset; // index in this
-            if (j < 0) {
-                // // Start of prefix is outside this view
-                return false;
-            } else {
-                int len = prefix.size();
-                if (j + len > this.size()) {
-                    // End of prefix is outside this view
-                    return false;
-                } else {
-                    // Last resort: we have actually to look at the bytes!
-                    for (int i = 0; i < len; i++) {
-                        if (byteAt(j++) != prefix.byteAt(i)) {
-                            return false;
-                        }
-                    }
-                    return true; // They must all have matched
-                }
-            }
-        }
-
     }
 
     /**
@@ -848,20 +781,51 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Return a wrapper providing a byte-oriented view for a slice of whatever object is passed, or
-     * return <code>null</code> if we don't know how.
+     * Test whether View v has the given prefix, that is, that the first bytes of this View
+     * match all the bytes of the given prefix. By implication, the test returns false if there
+     * are too few bytes in this view.
      *
-     * @param b object to wrap
-     * @param start index of first byte to include
-     * @param end index of first byte after slice
-     * @return byte-oriented view or null
+     * @param v subject to test
+     * @param prefix pattern to match
+     * @return true if and only if v has the given prefix
      */
-    protected static View getView(PyObject b, PyObject start, PyObject end) {
-        View whole = getView(b);
-        if (whole != null) {
-            return whole.slice(start, end);
+    private static boolean startswith(View v,View prefix) {
+        return startswith(v,prefix, 0);
+    }
+
+    /**
+     * Test whether the slice <code>v[offset:]</code> of has the given prefix, that is,
+     * that the bytes of v from index <code>offset</code> match all the bytes of the
+     * given prefix. By implication, the test returns false if the offset puts the start or end
+     * of the prefix outside v (when <code>offset&lt;0</code> or
+     * <code>offset+prefix.size()>v.size()</code>). Python slice semantics are <em>not</em>
+     * applied to <code>offset</code>.
+     *
+     * @param v subject to test
+     * @param prefix pattern to match
+     * @param offset at which to start the comparison in v
+     * @return true if and only if the slice v[offset:<code>]</code> has the given
+     *         prefix
+     */
+    private static boolean startswith(View v, View prefix, int offset) {
+        int j = offset; // index in this
+        if (j < 0) {
+            // // Start of prefix is outside this view
+            return false;
         } else {
-            return null;
+            int len = prefix.size();
+            if (j + len > v.size()) {
+                // End of prefix is outside this view
+                return false;
+            } else {
+                // Last resort: we have actually to look at the bytes!
+                for (int i = 0; i < len; i++) {
+                    if (v.byteAt(j++) != prefix.byteAt(i)) {
+                        return false;
+                    }
+                }
+                return true; // They must all have matched
+            }
         }
     }
 
@@ -885,19 +849,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         return res;
     }
 
-    /**
-     * Return a wrapper providing a byte-oriented view for a slice of whatever object is passed, or
-     * raise an exception if we don't know how.
-     *
-     * @param b object to wrap
-     * @param start index of first byte to include
-     * @param end index of first byte after slice
-     * @return byte-oriented view or null
-     */
-    protected static View getViewOrError(PyObject b, PyObject start, PyObject end) {
-        View whole = getViewOrError(b);
-        return whole.slice(start, end);
-    }
 
     /**
      * Wrapper providing a byte-oriented view for String (or PyString).
@@ -1477,9 +1428,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return true if and only if this bytearray ends with (one of) <code>target</code>.
      */
     protected final synchronized boolean basebytes_starts_or_endswith(PyObject target,
-                                                                      PyObject start,
-                                                                      PyObject end,
-                                                                      boolean endswith) {
+            PyObject start, PyObject end, boolean endswith) {
         /*
          * This cheap trick saves us from maintaining two almost identical methods and mirrors
          * CPython's _bytearray_tailmatch().
@@ -1498,7 +1447,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 if (endswith) {
                     offset = len - vt.size();
                 }
-                if (v.startswith(vt, offset)) {
+                if (startswith(v, vt, offset)) {
                     return true;
                 }
             }
@@ -1510,7 +1459,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             if (endswith) {
                 offset = len - vt.size();
             }
-            return v.startswith(vt, offset);
+            return startswith(v, vt, offset);
         }
     }
 
@@ -1519,7 +1468,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * as unsigned character codes, and copied to the to the characters of a String with no change
      * in ordinal value. This could also be described as 'latin-1' or 'ISO-8859-1' decoding of the
      * byte array to a String, since this character encoding is numerically equal to Unicode.
-     * 
+     *
      * @return the byte array as a String
      */
     @Override
@@ -2822,7 +2771,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Implementation of Python <code>rsplit()</code>, that returns a list of the words in the byte
      * array, using whitespace as the delimiter. See {@link #rsplit(PyObject, int)}.
      *
-     * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
     public PyList rsplit() {
@@ -2835,7 +2783,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * of the separator.
      *
      * @param sep bytes, or object viewable as bytes, defining the separator
-     * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
     public PyList rsplit(PyObject sep) {

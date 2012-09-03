@@ -5,35 +5,42 @@ import org.python.core.BufferProtocol;
 import org.python.core.Py;
 import org.python.core.PyBUF;
 import org.python.core.PyBuffer;
-import org.python.core.PyByteArray;
 import org.python.core.PyException;
 
 /**
- * Base implementation of the Buffer API providing default method implementations appropriate to
- * read-only buffers of bytes in one dimension (mainly), and access to the navigational arrays.
- * There are methods for expressing the valid buffer request flags and one for checking an actual
- * request against them. All methods for write access raise a Buffer error, so readonly buffers can
- * simply omit to implement them.
+ * Base implementation of the Buffer API providing variables and accessors for the navigational
+ * arrays (without actually creating the arrays), methods for expressing and checking the buffer
+ * request flags, methods and mechanism for get-release counting, boilerplate error checks and their
+ * associated exceptions, and default implementations of some methods for access to the buffer
+ * content. The design aim is to ensure unglamorous common code need only be implemented once.
  * <p>
- * This base implementation raises a read-only exception for those methods specified to store data
- * in the buffer, and {@link #isReadonly()} returns <code>true</code>. Writable types must override
- * this implementation. The implementors of simple buffers will find it more efficient to override
- * methods to which performance might be sensitive with a calculation specific to their actual type.
+ * Where provided, the buffer access methods are appropriate to 1-dimensional arrays where the units
+ * are single bytes, stored contiguously. Sub-classes that deal with N-dimensional arrays,
+ * discontiguous storage and items that are not single bytes must override the default
+ * implementations.
  * <p>
- * At the time of writing, only the SIMPLE organisation (one-dimensional, of item size one) is used
- * in the Jython core.
+ * This base implementation is writable only if {@link PyBUF#WRITABLE} is in the feature flags
+ * passed to the constructor. Otherwise, all methods for write access raise a
+ * <code>BufferError</code> read-only exception and {@link #isReadonly()} returns <code>true</code>.
+ * Sub-classes can follow the same pattern, setting {@link PyBUF#WRITABLE} in the constructor and,
+ * if they have to override the operations that write (<code>storeAt</code> and
+ * <code>copyFrom</code>). The recommended pattern is:
+ *
+ * <pre>
+ * if (isReadonly()) {
+ *     throw notWritable();
+ * }
+ * // ... implementation of the write operation
+ * </pre>
+ *
+ * The implementors of simple buffers will find it efficient to override the generic access methods
+ * to which performance might be sensitive, with a calculation specific to their actual type.
+ * <p>
+ * At the time of writing, only one-dimensional buffers of item size one are used in the Jython
+ * core.
  */
 public abstract class BaseBuffer implements PyBuffer {
 
-    /**
-     * The object from which this buffer export must be released (see {@link PyBuffer#release()}).
-     * This is normally the original exporter of this buffer and the owner of the underlying
-     * storage. Exceptions to this occur when some other object is managing release (this is the
-     * case when a <code>memoryview</code> has provided the buffer), and when disposal can safely be
-     * left to the Java garbage collector (local temporaries and perhaps exports from immutable
-     * objects).
-     */
-    protected BufferProtocol obj;
     /**
      * The dimensions of the array represented by the buffer. The length of the <code>shape</code>
      * array is the number of dimensions. The <code>shape</code> array should always be created and
@@ -91,14 +98,38 @@ public abstract class BaseBuffer implements PyBuffer {
      * </pre>
      *
      * Which permits the check in one XOR and one AND operation instead of four ANDs and an OR. The
-     * downside is that we have to provide methods for setting and getting the actual flags in terms
-     * a client might expect them to be expressed. We can recover the original <code>F</code> since:
+     * down-side is that we have to provide methods for setting and getting the actual flags in
+     * terms a client might expect them to be expressed. We can recover the original <code>F</code>
+     * since:
      *
      * <pre>
      * N G + N'G' = F
      * </pre>
      */
     private int gFeatureFlags = ~NAVIGATION; // featureFlags = 0
+
+    /**
+     * Construct an instance of BaseBuffer in support of a sub-class, specifying the 'feature
+     * flags', or at least a starting set to be adjusted later. These are the features of the buffer
+     * exported, not the flags that form the consumer's request. The buffer will be read-only unless
+     * {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} is implicitly added
+     * to the feature flags. The navigation arrays are all null, awaiting action by the sub-class
+     * constructor. To complete initialisation, the sub-class normally must assign: {@link #buf},
+     * {@link #shape}, and {@link #strides}, and call {@link #checkRequestFlags(int)} passing the
+     * consumer's request flags.
+     *
+     * <pre>
+     * this.buf = buf;                  // Wraps exported data
+     * this.shape = shape;              // Array of dimensions of exported data (in units)
+     * this.strides = strides;          // Byte offset between successive items in each dimension
+     * checkRequestFlags(flags);        // Check request is compatible with type
+     * </pre>
+     *
+     * @param featureFlags bit pattern that specifies the actual features allowed/required
+     */
+    protected BaseBuffer(int featureFlags) {
+        setFeatureFlags(featureFlags | FORMAT);
+    }
 
     /**
      * Get the features of this buffer expressed using the constants defined in {@link PyBUF}. A
@@ -167,21 +198,9 @@ public abstract class BaseBuffer implements PyBuffer {
         }
     }
 
-    /**
-     * Provide an instance of BaseBuffer or a sub-class meeting the consumer's expectations as
-     * expressed in the flags argument.
-     *
-     * @param exporter the exporting object
-     */
-    protected BaseBuffer(BufferProtocol exporter) {
-        // Exporting object (is allowed to be null?)
-        this.obj = exporter;
-    }
-
     @Override
     public boolean isReadonly() {
-        // Default position is read only: mutable buffers must override
-        return true;
+        return (gFeatureFlags & WRITABLE) == 0;
     }
 
     @Override
@@ -197,13 +216,14 @@ public abstract class BaseBuffer implements PyBuffer {
 
     @Override
     public int getLen() {
-        // Correct if contiguous. Override if strided or indirect with itemsize*product(shape).
-        // Also override if buf==null !
-        return buf.size;
+        // Correct if one-dimensional. Override if N-dimensional with itemsize*product(shape).
+        return shape[0];
     }
 
-    // Let the sub-class implement:
-    // @Override public byte byteAt(int index) throws IndexOutOfBoundsException {}
+    @Override
+    public byte byteAt(int index) throws IndexOutOfBoundsException {
+        return buf.storage[calcIndex(index)];
+    }
 
     @Override
     public int intAt(int index) throws IndexOutOfBoundsException {
@@ -212,11 +232,28 @@ public abstract class BaseBuffer implements PyBuffer {
 
     @Override
     public void storeAt(byte value, int index) throws IndexOutOfBoundsException, PyException {
-        throw notWritable();
+        if (isReadonly()) {
+            throw notWritable();
+        }
+        buf.storage[calcIndex(index)] = value;
     }
 
-    // Let the sub-class implement:
-    // @Override public byte byteAt(int... indices) throws IndexOutOfBoundsException {}
+    /**
+     * Convert an item index (for a one-dimensional buffer) to an absolute byte index in the actual
+     * storage being shared by the exporter. See {@link #calcIndex(int...)} for discussion.
+     *
+     * @param index from consumer
+     * @return index in actual storage
+     */
+    protected int calcIndex(int index) throws IndexOutOfBoundsException {
+        // Treat as one-dimensional
+        return buf.offset + index * getStrides()[0];
+    }
+
+    @Override
+    public byte byteAt(int... indices) throws IndexOutOfBoundsException {
+        return buf.storage[calcIndex(indices)];
+    }
 
     @Override
     public int intAt(int... indices) throws IndexOutOfBoundsException {
@@ -225,76 +262,223 @@ public abstract class BaseBuffer implements PyBuffer {
 
     @Override
     public void storeAt(byte value, int... indices) throws IndexOutOfBoundsException, PyException {
-        throw notWritable();
+        if (isReadonly()) {
+            throw notWritable();
+        }
+        buf.storage[calcIndex(indices)] = value;
     }
 
-    @Override
-    public void copyTo(byte[] dest, int destPos) throws IndexOutOfBoundsException {
-        // Correct for contiguous arrays (if destination expects same F or C contiguity)
-        copyTo(0, dest, destPos, getLen());
-    }
-
-    // Let the sub-class implement:
-    // @Override public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
-    // throws IndexOutOfBoundsException {}
-
-    @Override
-    public void copyFrom(byte[] src, int srcPos, int destIndex, int length)
-            throws IndexOutOfBoundsException, PyException {
-        throw notWritable();
+    /**
+     * Convert a multi-dimensional item index (if we are not using indirection) to an absolute byte
+     * index in the actual storage array being shared by the exporter. The purpose of this method is
+     * to allow a sub-class to define, in one place, an indexing calculation that maps the index as
+     * provided by the consumer into an index in the storage as seen by the buffer.
+     * <p>
+     * In the usual case where the storage is referenced via the <code>BufferPointer</code> member
+     * {@link #buf}, the buffer implementation may use <code>buf.storage[calcIndex(i)]</code> to
+     * reference the (first byte of) the item x[i]. This is what the default implementation of
+     * accessors in <code>BaseBuffer</code> will do. In the simplest cases, this is fairly
+     * inefficient, and an implementation will override the accessors to in-line the calculation.
+     * The default implementation here is suited to N-dimensional arrays.
+     *
+     * @param indices of the item from the consumer
+     * @return index relative to item x[0,...,0] in actual storage
+     */
+    protected int calcIndex(int... indices) throws IndexOutOfBoundsException {
+        final int N = checkDimension(indices);
+        // In general: buf.offset + sum(k=0,N-1) indices[k]*strides[k]
+        int index = buf.offset;
+        if (N > 0) {
+            int[] strides = getStrides();
+            for (int k = 0; k < N; k++) {
+                index += indices[k] * strides[k];
+            }
+        }
+        return index;
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * It is possible to call <code>getBuffer</code> on a buffer that has been "finally" released,
-     * and it is allowable that the buffer implementation should still return itself as the result,
-     * simply incrementing the getBuffer count, thus making it live. In fact, this is what the
-     * <code>BaseBuffer</code> implementation does. On return, it <i>and the exporting object</i>
-     * must then be in effectively the same state as if the buffer had just been constructed by the
-     * exporter's <code>getBuffer</code> method. In many simple cases this is perfectly
-     * satisfactory.
-     * <p>
-     * Exporters that destroy related resources on final release of their buffer (by overriding
-     * {@link #releaseAction()}), or permit themeselves structural change invalidating the buffer,
-     * must either reconstruct the missing resources or return a fresh buffer when
-     * <code>PyBuffer.getBuffer</code> is called on their export. Resurrecting a buffer, when it
-     * needs exporter action, may be implemented by specialising a library <code>PyBuffer</code>
-     * implementation like this:
-     *
-     * <pre>
-     * public synchronized PyBuffer getBuffer(int flags) {
-     *     if (isReleased()) {
-     *         // ... exporter actions necessary to make the buffer valid again
-     *     }
-     *     return super.getBuffer(flags);
-     * }
-     * </pre>
-     *
-     * Re-use can be prohibited by overriding <code>PyBuffer.getBuffer</code> so that a released
-     * buffer gets a fresh buffer from the exporter. This is the approach taken in
-     * {@link PyByteArray#getBuffer(int)}.
-     *
-     * <pre>
-     * public synchronized PyBuffer getBuffer(int flags) {
-     *     if (isReleased()) {
-     *         // Force creation of a new buffer
-     *         return obj.getBuffer(flags);
-     *         // Or other exporter actions necessary and return this
-     *     } else {
-     *         return super.getBuffer(flags);
-     *     }
-     * }
-     * </pre>
-     *
-     * Take care to avoid indefinite recursion if the exporter's <code>getBuffer</code> depends in
-     * turn on <code>PyBuffer.getBuffer</code>.
-     * <p>
-     * Simply overriding {@link #releaseAction()} does not in itself make it necessary to override
-     * <code>PyBuffer.getBuffer</code>, since <code>isReleased()</code> may do all that is needed.
+     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
+     * case of arbitrary item size and stride.
      */
     @Override
+    public void copyTo(byte[] dest, int destPos) throws IndexOutOfBoundsException {
+        // Note shape[0] is the number of items in the array
+        copyTo(0, dest, destPos, shape[0]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
+     * case of arbitrary item size and stride.
+     */
+    @Override
+    public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
+            throws IndexOutOfBoundsException {
+
+        // Data is here in the buffers
+        int s = calcIndex(srcIndex);
+        int d = destPos;
+
+        // Pick up attributes necessary to choose an efficient copy strategy
+        int itemsize = getItemsize();
+        int stride = getStrides()[0];
+        int skip = stride - itemsize;
+
+        // Strategy depends on whether items are laid end-to-end contiguously or there are gaps
+        if (skip == 0) {
+            // stride == itemsize: straight copy of contiguous bytes
+            System.arraycopy(buf.storage, s, dest, d, length * itemsize);
+
+        } else if (itemsize == 1) {
+            // Discontiguous copy: single byte items
+            int limit = s + length * stride;
+            for (; s < limit; s += stride) {
+                dest[d++] = buf.storage[s];
+            }
+
+        } else {
+            // Discontiguous copy: each time, copy itemsize bytes then skip
+            int limit = s + length * stride;
+            for (; s < limit; s += skip) {
+                int t = s + itemsize;
+                while (s < t) {
+                    dest[d++] = buf.storage[s++];
+                }
+            }
+        }
+
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
+     * case of arbitrary item size and stride.
+     */
+    @Override
+    public void copyFrom(byte[] src, int srcPos, int destIndex, int length)
+            throws IndexOutOfBoundsException, PyException {
+
+        // Block operation if read-only
+        if (isReadonly()) {
+            throw notWritable();
+        }
+
+        // Data is here in the buffers
+        int s = srcPos;
+        int d = calcIndex(destIndex);
+
+        // Pick up attributes necessary to choose an efficient copy strategy
+        int itemsize = getItemsize();
+        int stride = getStrides()[0];
+        int skip = stride - itemsize;
+
+        // Strategy depends on whether items are laid end-to-end or there are gaps
+        if (skip == 0) {
+            // Straight copy of contiguous bytes
+            System.arraycopy(src, srcPos, buf.storage, d, length * itemsize);
+
+        } else if (itemsize == 1) {
+            // Discontiguous copy: single byte items
+            int limit = d + length * stride;
+            for (; d != limit; d += stride) {
+                buf.storage[d] = src[s++];
+            }
+
+        } else {
+            // Discontiguous copy: each time, copy itemsize bytes then skip
+            int limit = d + length * stride;
+            for (; d != limit; d += skip) {
+                int t = d + itemsize;
+                while (d < t) {
+                    buf.storage[d++] = src[s++];
+                }
+            }
+        }
+
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
+     * case.
+     */
+    @Override
+    public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
+
+        // Block operation if read-only and same length
+        if (isReadonly()) {
+            throw notWritable();
+        } else if (src.getLen() != buf.size || src.getItemsize() != getItemsize()) {
+            throw differentStructure();
+        }
+
+        // Data is here in the buffers
+        int s = 0;
+        int d = calcIndex(0);
+
+        // Pick up attributes necessary to choose an efficient copy strategy
+        int itemsize = getItemsize();
+        int stride = getStrides()[0];
+
+        // Strategy depends on whether items are laid end-to-end or there are gaps
+        if (stride == itemsize) {
+            // Straight copy to contiguous bytes
+            src.copyTo(buf.storage, d);
+
+        } else if (itemsize == 1) {
+            // Discontiguous copy: single byte items
+            int limit = d + src.getLen() * stride;
+            for (; d != limit; d += stride) {
+                buf.storage[d] = src.byteAt(s++);
+            }
+
+        } else {
+            // Discontiguous copy: each time, copy itemsize bytes then skip
+            int limit = d + src.getShape()[0] * stride;
+            for (; d != limit; d += stride) {
+                BufferPointer srcItem = src.getPointer(s++);
+                System.arraycopy(srcItem.storage, srcItem.offset, buf.storage, d, itemsize);
+            }
+        }
+
+    }
+
+    @Override
     public synchronized PyBuffer getBuffer(int flags) {
+        if (exports > 0) {
+            // Always safe to re-export if the current count is not zero
+            return getBufferAgain(flags);
+        } else {
+            // exports==0 so refuse
+            throw bufferReleased("getBuffer");
+        }
+    }
+
+    /**
+     * Allow an exporter to re-use a BaseBytes even if it has been "finally" released. Many
+     * sub-classes of <code>BaseBytes</code> can be re-used even after a final release by consumers,
+     * simply by incrementing the <code>exports</code> count again: the navigation arrays and the
+     * buffer view of the exporter's state all remain valid. We do not let consumers do this through
+     * the {@link PyBuffer} interface: from their perspective, calling {@link PyBuffer#release()}
+     * should mean the end of their access, although we can't stop them holding a reference to the
+     * PyBuffer. Only the exporting object, which is handles the implementation type is trusted to
+     * know when re-use is safe.
+     * <p>
+     * An exporter will use this method as part of its implementation of
+     * {@link BufferProtocol#getBuffer(int)}. On return from that, the buffer <i>and the exporting
+     * object</i> must then be in effectively the same state as if the buffer had just been
+     * constructed by that method. Exporters that destroy related resources on final release of
+     * their buffer (by overriding {@link #releaseAction()}), or permit themselves structural change
+     * invalidating the buffer, must either reconstruct the missing resources or avoid
+     * <code>getBufferAgain</code>.
+     */
+    public synchronized BaseBuffer getBufferAgain(int flags) {
         // If only the request flags are correct for this type, we can re-use this buffer
         checkRequestFlags(flags);
         // Count another consumer of this
@@ -318,7 +502,7 @@ public abstract class BaseBuffer implements PyBuffer {
         } else if (exports < 0) {
             // Buffer already had 0 exports. (Put this right, in passing.)
             exports = 0;
-            throw Py.BufferError("attempt to release already-released buffer");
+            throw bufferReleased("release");
         }
     }
 
@@ -328,13 +512,27 @@ public abstract class BaseBuffer implements PyBuffer {
     }
 
     @Override
+    public PyBuffer getBufferSlice(int flags, int start, int length) {
+        return getBufferSlice(flags, start, length, 1);
+    }
+
+    // Let the sub-class implement
+    // @Override public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {}
+
+    @Override
     public BufferPointer getBuf() {
         return buf;
     }
 
-    // Let the sub-class implement:
-    // @Override public BufferPointer getPointer(int index) { return null; }
-    // @Override public BufferPointer getPointer(int... indices) { return null; }
+    @Override
+    public BufferPointer getPointer(int index) {
+        return new BufferPointer(buf.storage, calcIndex(index), getItemsize());
+    }
+
+    @Override
+    public BufferPointer getPointer(int... indices) {
+        return new BufferPointer(buf.storage, calcIndex(indices), getItemsize());
+    }
 
     @Override
     public int[] getStrides() {
@@ -343,6 +541,7 @@ public abstract class BaseBuffer implements PyBuffer {
 
     @Override
     public int[] getSuboffsets() {
+        // No actual 'suboffsets' member until a sub-class needs it
         return null;
     }
 
@@ -355,7 +554,6 @@ public abstract class BaseBuffer implements PyBuffer {
     @Override
     public String getFormat() {
         // Avoid having to have an actual 'format' member
-        // return ((featureFlags & FORMAT) == 0) ? null : "B";
         return "B";
     }
 
@@ -376,6 +574,20 @@ public abstract class BaseBuffer implements PyBuffer {
     protected void releaseAction() {}
 
     /**
+     * Some <code>PyBuffer</code>s, those created by slicing a <code>PyBuffer</code> are related to
+     * a root <code>PyBuffer</code>. During creation of such a slice, we need to supply a value for
+     * this root. If the present object is not itself a slice, this is root is the object itself; if
+     * the buffer is already a slice, it is the root it was given at creation time. Often this is
+     * the only difference between a slice-view and a directly-exported buffer. Override this method
+     * in slices to return the root buffer of the slice.
+     *
+     * @return this buffer (or the root buffer if this is a sliced view)
+     */
+    protected PyBuffer getRoot() {
+        return this;
+    }
+
+    /**
      * Check the number of indices (but not their values), raising a Python BufferError if this does
      * not match the number of dimensions. This is a helper for N-dimensional arrays.
      *
@@ -383,16 +595,63 @@ public abstract class BaseBuffer implements PyBuffer {
      * @return number of dimensions
      * @throws PyException (BufferError) if wrong number of indices
      */
-    final int checkDimension(int[] indices) throws PyException {
-        int ndim = shape.length;
-        if (indices.length != ndim) {
-            if (indices.length < ndim) {
-                throw Py.BufferError("too few indices supplied");
-            } else {
-                throw Py.BufferError("too many indices supplied");
-            }
+    int checkDimension(int[] indices) throws PyException {
+        int n = indices.length;
+        checkDimension(n);
+        return n;
+    }
+
+    /**
+     * Check that the number offered is in fact the number of dimensions in this buffer, raising a
+     * Python BufferError if this does not match the number of dimensions. This is a helper for
+     * N-dimensional arrays.
+     *
+     * @param n number of dimensions being assumed by caller
+     * @throws PyException (BufferError) if wrong number of indices
+     */
+    void checkDimension(int n) throws PyException {
+        int ndim = getNdim();
+        if (n != ndim) {
+            String fmt = "buffer with %d dimension%s accessed as having %d dimension%s";
+            String msg = String.format(fmt, ndim, ndim == 1 ? "" : "s", n, n, n == 1 ? "" : "s");
+            throw Py.BufferError(msg);
         }
-        return ndim;
+    }
+
+    /**
+     * Check that the argument is within the buffer <code>buf</code>. An exception is raised if
+     * <code>i&lt;buf.offset</code> or <code>i&gt;buf.offset+buf.size-1</code>
+     *
+     * @param i index to check
+     * @throws IndexOutOfBoundsException if <code>i&lt;buf.offset</code> or
+     *             <code>i&gt;buf.offset+buf.size-1</code>.
+     */
+    protected void checkInBuf(int i) throws IndexOutOfBoundsException {
+        int a = buf.offset;
+        int b = a + buf.size - 1;
+        // Check: b >= i >= a. Cheat.
+        if (((i - a) | (b - i)) < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+    }
+
+    /**
+     * Check that the both arguments are within the buffer <code>buf</code>. An exception is raised
+     * if <code>i&lt;buf.offset</code>, <code>j&lt;buf.offset</code>,
+     * <code>i&gt;buf.offset+buf.size-1</code>, or <code>j&gt;buf.offset+buf.size-1</code>
+     *
+     * @param i index to check
+     * @param j index to check
+     * @throws IndexOutOfBoundsException if <code>i&lt;buf.offset</code> or
+     *             <code>i&gt;buf.offset+buf.size-1</code>
+     */
+    protected void checkInBuf(int i, int j) throws IndexOutOfBoundsException {
+        int a = buf.offset;
+        int b = a + buf.size - 1;
+        // Check: b >= i >= a and b >= j >= a. Cheat.
+        if (((i - a) | (j - a) | (b - i) | (b - j)) < 0) {
+            throw new IndexOutOfBoundsException();
+        }
     }
 
     /**
@@ -410,7 +669,7 @@ public abstract class BaseBuffer implements PyBuffer {
         } else if ((syndrome & INDIRECT) != 0) {
             return bufferRequires("suboffsets");
         } else if ((syndrome & WRITABLE) != 0) {
-            return notWritable();
+            return bufferIsNot("writable");
         } else if ((syndrome & C_CONTIGUOUS) != 0) {
             return bufferIsNot("C-contiguous");
         } else if ((syndrome & F_CONTIGUOUS) != 0) {
@@ -425,12 +684,12 @@ public abstract class BaseBuffer implements PyBuffer {
 
     /**
      * Convenience method to create (for the caller to throw) a
-     * <code>BufferError("underlying buffer is not writable")</code>.
+     * <code>TypeError("cannot modify read-only memory")</code>.
      *
      * @return the error as a PyException
      */
     protected static PyException notWritable() {
-        return bufferIsNot("writable");
+        return Py.TypeError("cannot modify read-only memory");
     }
 
     /**
@@ -446,6 +705,16 @@ public abstract class BaseBuffer implements PyBuffer {
 
     /**
      * Convenience method to create (for the caller to throw) a
+     * <code>ValueError("buffer ... different structures")</code>.
+     *
+     * @return the error as a PyException
+     */
+    protected static PyException differentStructure() {
+        return Py.ValueError("buffer assignment: lvalue and rvalue have different structures");
+    }
+
+    /**
+     * Convenience method to create (for the caller to throw) a
      * <code>BufferError("underlying buffer requires {feature}")</code>.
      *
      * @param feature
@@ -453,6 +722,18 @@ public abstract class BaseBuffer implements PyBuffer {
      */
     protected static PyException bufferRequires(String feature) {
         return Py.BufferError("underlying buffer requires " + feature);
+    }
+
+    /**
+     * Convenience method to create (for the caller to throw) a
+     * <code>BufferError("{operation} operation forbidden on released buffer object")</code>.
+     *
+     * @param operation name of operation or null
+     * @return the error as a PyException
+     */
+    protected static PyException bufferReleased(String operation) {
+        String op = (operation == null) ? "" : operation + " ";
+        return Py.BufferError(op + "operation forbidden on released buffer object");
     }
 
 }

@@ -1,7 +1,7 @@
 package org.python.core.buffer;
 
 import org.python.core.BufferPointer;
-import org.python.core.BufferProtocol;
+import org.python.core.PyBuffer;
 import org.python.core.util.StringUtil;
 
 /**
@@ -10,10 +10,10 @@ import org.python.core.util.StringUtil;
  * the data as a byte array (those parts that involve a {@link BufferPointer} result), and therefore
  * this class must create a byte array from the String for them. However, it defers creation of a
  * byte array until that part of the API is actually used. Where possible, this class overrides
- * those methods in SimpleReadonlyBuffer that would otherwise access the byte array attribute to use
- * the String instead.
+ * those methods in SimpleBuffer that would otherwise access the byte array attribute to use the
+ * String instead.
  */
-public class SimpleStringBuffer extends SimpleReadonlyBuffer {
+public class SimpleStringBuffer extends SimpleBuffer {
 
     /**
      * The string backing this PyBuffer. A substitute for {@link #buf} until we can no longer avoid
@@ -22,20 +22,19 @@ public class SimpleStringBuffer extends SimpleReadonlyBuffer {
     private String bufString;
 
     /**
-     * Provide an instance of SimpleReadonlyBuffer meeting the consumer's expectations as expressed
-     * in the flags argument.
-     * 
-     * @param exporter the exporting object
+     * Provide an instance of SimpleStringBuffer meeting the consumer's expectations as expressed in
+     * the flags argument.
+     *
      * @param bufString storing the implementation of the object
      * @param flags consumer requirements
      */
-    public SimpleStringBuffer(BufferProtocol exporter, String bufString, int flags) {
-        super(exporter, null);
-        setFeatureFlags(FEATURE_FLAGS);
-        checkRequestFlags(flags);
+    public SimpleStringBuffer(int flags, String bufString) {
+        super();
         // Save the backing string
         this.bufString = bufString;
         shape[0] = bufString.length();
+        // Check request is compatible with type
+        checkRequestFlags(flags);
     }
 
     /**
@@ -89,6 +88,33 @@ public class SimpleStringBuffer extends SimpleReadonlyBuffer {
     /**
      * {@inheritDoc}
      * <p>
+     * The <code>SimpleStringBuffer</code> implementation avoids creation of a byte buffer.
+     */
+    @Override
+    public PyBuffer getBufferSlice(int flags, int start, int length) {
+        // The new string content is just a sub-string. (Non-copy operation in Java.)
+        return new SimpleStringView(getRoot(), flags, bufString.substring(start, start + length));
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The <code>SimpleStringBuffer</code> implementation creates an actual byte buffer.
+     */
+    public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
+        if (stride == 1) {
+            // Unstrided slice of simple buffer is itself simple
+            return getBufferSlice(flags, start, length);
+        } else {
+            // Force creation of the actual byte buffer be a SimpleBuffer
+            getBuf();
+            return super.getBufferSlice(flags, start, length, stride);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
      * This method creates an actual byte buffer from the String if none yet exists.
      */
     @Override
@@ -122,4 +148,40 @@ public class SimpleStringBuffer extends SimpleReadonlyBuffer {
         return super.getPointer(indices);
     }
 
+    /**
+     * A <code>SimpleStringBuffer.SimpleStringView</code> represents a contiguous subsequence of
+     * another <code>SimpleStringBuffer</code>.
+     */
+    static class SimpleStringView extends SimpleStringBuffer {
+
+        /** The buffer on which this is a slice view */
+        PyBuffer root;
+
+        /**
+         * Construct a slice of a SimpleStringBuffer.
+         *
+         * @param root buffer which will be acquired and must be released ultimately
+         * @param flags the request flags of the consumer that requested the slice
+         * @param buf becomes the buffer of bytes for this object
+         */
+        public SimpleStringView(PyBuffer root, int flags, String bufString) {
+            // Create a new SimpleStringBuffer on the string passed in
+            super(flags, bufString);
+            // Get a lease on the root PyBuffer
+            this.root = root.getBuffer(FULL_RO);
+        }
+
+        @Override
+        protected PyBuffer getRoot() {
+            return root;
+        }
+
+        @Override
+        public void release() {
+            // We have to release both this and the root
+            super.release();
+            root.release();
+        }
+
+    }
 }

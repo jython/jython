@@ -3,7 +3,8 @@ package org.python.core;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
-import org.python.core.buffer.SimpleBuffer;
+import org.python.core.buffer.BaseBuffer;
+import org.python.core.buffer.SimpleWritableBuffer;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -210,7 +211,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Hold weakly a reference to a PyBuffer export not yet released, used to prevent untimely
      * resizing.
      */
-    private WeakReference<PyBuffer> export;
+    private WeakReference<BaseBuffer> export;
 
     /**
      * {@inheritDoc}
@@ -224,49 +225,36 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     public synchronized PyBuffer getBuffer(int flags) {
 
         // If we have already exported a buffer it may still be available for re-use
-        PyBuffer pybuf = getExistingBuffer(flags);
+        BaseBuffer pybuf = getExistingBuffer(flags);
 
         if (pybuf == null) {
-
             // No existing export we can re-use: create a new one
-            pybuf = new SimpleBuffer(this, new BufferPointer(storage, offset, size), flags) {
-
-                // Customise so that the final release drops the local reference
-                protected void releaseAction() {
-                    // synchronise on the same object as getBuffer()
-                    synchronized (obj) {
-                        export = null;
-                    }
-                }
-
-                // If anyone tries to resurrect an old buffer, give them the latest one
-                @Override
-                public synchronized PyBuffer getBuffer(int flags) {
-                    return isReleased() ? obj.getBuffer(flags) : super.getBuffer(flags);
-                }
-
-            };
-
+            pybuf = new SimpleWritableBuffer(flags, storage, offset, size);
             // Hold a reference for possible re-use
-            export = new WeakReference<PyBuffer>(pybuf);
+            export = new WeakReference<BaseBuffer>(pybuf);
         }
+
         return pybuf;
     }
 
     /**
-     * Try to re-use an existing exported buffer, or return <code>null</code> if there is none.
+     * Try to re-use an existing exported buffer, or return <code>null</code> if we can't.
      *
      * @throws PyException (BufferError) if the the flags are incompatible with the buffer
      */
-    protected PyBuffer getExistingBuffer(int flags) throws PyException {
-        PyBuffer pybuf = null;
+    private BaseBuffer getExistingBuffer(int flags) throws PyException {
+        BaseBuffer pybuf = null;
         if (export != null) {
             // A buffer was exported at some time.
             pybuf = export.get();
             if (pybuf != null) {
-                // And this buffer still exists: expect this to provide further counted reference.
-                // We did not test for !pybuf.isReleased() as release implies export==null.
-                pybuf = pybuf.getBuffer(flags);
+                /*
+                 * We do not test for pybuf.isReleased() as, if any operation had taken place that
+                 * invalidated the buffer, resizeCheck() would have set export=null. The exported
+                 * buffer (navigation, buf member, etc.) remains valid through any operation that
+                 * does not need a resizeCheck.
+                 */
+                pybuf = pybuf.getBufferAgain(flags);
             }
         }
         return pybuf;
@@ -281,19 +269,15 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
     protected void resizeCheck() throws PyException {
         if (export != null) {
-            /*
-             * A buffer was exported at some time and has not been released by all its getters. This
-             * ought to be enough to decide we will raise the error, but the weak reference allows
-             * us to tolerate consumers who simply leave the buffer for the garbage collector.
-             */
+            // A buffer was exported at some time and we have not explicitly discarded it.
             PyBuffer pybuf = export.get();
-            if (pybuf != null) {
-                // Not strictly necessary to test isReleased()?
+            if (pybuf != null && !pybuf.isReleased()) {
+                // A consumer still has the exported buffer
                 throw Py.BufferError("Existing exports of data: object cannot be re-sized");
             } else {
                 /*
-                 * The reference has expired and we can allow the operation: this happens when the
-                 * consumer forgets to call release(). Simulate the release action here.
+                 * Either the reference has expired or all consumers have released it. Either way,
+                 * the weak reference is useless now.
                  */
                 export = null;
             }
@@ -444,10 +428,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
          * The actual behaviour depends on the nature (type) of value. It may be any kind of
          * PyObject (but not other kinds of Java Object). The function is implementing assignment to
          * a slice. PEP 3137 declares that the value may be "any type that implements the PEP 3118
-         * buffer interface, which isn't implemented yet in Jython.
-         */
-        // XXX correct this when the buffer interface is available in Jython
-        /*
+         * buffer interface".
+         *
          * The following is essentially equivalent to b[start:stop[:step]]=bytearray(value) except
          * we avoid constructing a copy of value if we can easily do so. The logic is the same as
          * BaseBytes.init(PyObject), without support for value==null.
@@ -557,8 +539,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
-        PyBuffer view = value.getBuffer(PyBUF.SIMPLE);
 
+        PyBuffer view = value.getBuffer(PyBUF.FULL_RO);
 
         int len = view.getLen();
 
@@ -895,7 +877,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         PyByteArray sum = null;
 
 
-        // XXX re-write using View
+        // XXX re-write using buffer API
 
 
         if (o instanceof BaseBytes) {

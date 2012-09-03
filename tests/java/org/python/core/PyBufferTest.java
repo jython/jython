@@ -10,8 +10,8 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.python.core.buffer.SimpleBuffer;
-import org.python.core.buffer.SimpleReadonlyBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
+import org.python.core.buffer.SimpleWritableBuffer;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -66,10 +66,10 @@ public class PyBufferTest extends TestCase {
         interp = new PythonInterpreter();
 
         // Tests using local examples
-        queueWrite(new SimpleExporter(abcMaterial.getBytes()), abcMaterial);
-        queueReadonly(new SimpleReadonlyExporter(byteMaterial.getBytes()), byteMaterial);
+        queueWrite(new SimpleWritableExporter(abcMaterial.getBytes()), abcMaterial);
+        queueReadonly(new SimpleExporter(byteMaterial.getBytes()), byteMaterial);
         queueReadonly(new StringExporter(stringMaterial.string), stringMaterial);
-        queueWrite(new SimpleExporter(emptyMaterial.getBytes()), emptyMaterial);
+        queueWrite(new SimpleWritableExporter(emptyMaterial.getBytes()), emptyMaterial);
 
         // Tests with PyByteArray
         queueWrite(new PyByteArray(abcMaterial.getBytes()), abcMaterial);
@@ -586,37 +586,43 @@ public class PyBufferTest extends TestCase {
         for (BufferTestPair test : buffersToRead) {
             System.out.println("release: " + test);
             BufferProtocol obj = test.exporter;
+
             // The object should already be exporting test.simple and test.strided = 2 exports
             PyBuffer a = test.simple; // 1 exports
             PyBuffer b = test.strided; // 2 exports
             PyBuffer c = obj.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT); // = 3 exports
             checkExporting(obj);
+
             // Now see that releasing in some other order works correctly
             b.release(); // = 2 exports
             a.release(); // = 1 export
             checkExporting(obj);
             int flags = PyBUF.STRIDES | PyBUF.FORMAT;
-            PyBuffer d = a.getBuffer(flags); // = 2 exports
+
+            // You can get a buffer from a buffer (for SimpleExporter only c is alive)
+            PyBuffer d = c.getBuffer(flags); // = 2 exports
             c.release(); // = 1 export
             checkExporting(obj);
             d.release(); // = 0 exports
             checkNotExporting(obj);
-            // Further releases are an error
+
+            // But fails if buffer has been finally released
+            try {
+                a = d.getBuffer(flags); // = 0 exports (since disallowed)
+                fail("getBuffer after final release not detected");
+            } catch (Exception e) {
+                // Detected *and* prevented?
+                checkNotExporting(obj);
+            }
+
+            // Further releases are also an error
             try {
                 a.release(); // = -1 exports (oops)
                 fail("excess release not detected");
             } catch (Exception e) {
                 // Success
             }
-            // Test resurrecting a PyBuffer
-            PyBuffer e = d.getBuffer(flags); // = 1 export
-            checkExporting(obj);
-            checkReusable(obj, d, e);
-            a = e.getBuffer(flags); // = 2 exports
-            e.release(); // = 1 export
-            checkExporting(obj);
-            a.release(); // = 0 exports
-            checkNotExporting(obj);
+
         }
     }
 
@@ -764,7 +770,7 @@ public class PyBufferTest extends TestCase {
      * same internal storage) and it does not track their fate. You are most likely to use this
      * approach with an exporting object that is immutable (or at least fixed in size).
      */
-    static class SimpleReadonlyExporter implements BufferProtocol {
+    static class SimpleExporter implements BufferProtocol {
 
         protected byte[] storage;
 
@@ -773,14 +779,13 @@ public class PyBufferTest extends TestCase {
          *
          * @param storage
          */
-        public SimpleReadonlyExporter(byte[] storage) {
+        public SimpleExporter(byte[] storage) {
             this.storage = storage;
         }
 
         @Override
         public PyBuffer getBuffer(int flags) {
-            BufferPointer mb = new BufferPointer(storage);
-            return new SimpleReadonlyBuffer(this, mb, flags);
+            return new SimpleBuffer(flags, storage);
         }
 
     }
@@ -866,7 +871,7 @@ public class PyBufferTest extends TestCase {
             PyBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new SimpleStringBuffer(this, storage, flags);
+                pybuf = new SimpleStringBuffer(flags, storage);
                 // Hold a reference for possible re-use
                 export = new SoftReference<PyBuffer>(pybuf);
             }
@@ -886,7 +891,7 @@ public class PyBufferTest extends TestCase {
      * PyByteArray, which prohibits operations that would resize it, while there are outstanding
      * exports.
      */
-    static class SimpleExporter extends TestableExporter {
+    static class SimpleWritableExporter extends TestableExporter {
 
         protected byte[] storage;
 
@@ -895,7 +900,7 @@ public class PyBufferTest extends TestCase {
          *
          * @param storage
          */
-        public SimpleExporter(byte[] storage) {
+        public SimpleWritableExporter(byte[] storage) {
             this.storage = storage;
             reusable = false;
         }
@@ -906,25 +911,13 @@ public class PyBufferTest extends TestCase {
             PyBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                BufferPointer mb = new BufferPointer(storage);
-                pybuf = new SimpleBuffer(this, mb, flags) {
+                pybuf = new SimpleWritableBuffer(flags, storage) {
 
                     protected void releaseAction() {
                         export = null;
                     }
-
-                    @Override
-                    public synchronized PyBuffer getBuffer(int flags) {
-                        // Example how to override so released buffers cannot be got again
-                        if (isReleased()) {
-                            // Depend on releaseAction setting export=null to avoid recursion
-                            return obj.getBuffer(flags);
-                        } else {
-                            return super.getBuffer(flags);
-                        }
-                    }
-
                 };
+
                 // Hold a reference for possible re-use
                 export = new WeakReference<PyBuffer>(pybuf);
             }

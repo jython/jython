@@ -200,11 +200,16 @@ public interface PyBUF {
      */
     static final int RECORDS_RO = STRIDES | FORMAT;
     /**
-     * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>
+     * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this as the request flags
+     * if you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>
+     * , <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
+     * {@link PyBuffer#getBuf()}.
      */
     static final int FULL = INDIRECT | WRITABLE | FORMAT;
     /**
-     * Equivalent to <code>(INDIRECT | FORMAT)</code>
+     * Equivalent to <code>(INDIRECT | FORMAT)</code> Also use this as the request flags if you plan
+     * only to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.),
+     * without ever calling {@link PyBuffer#getBuf()}.
      */
     static final int FULL_RO = INDIRECT | FORMAT;
 
@@ -238,7 +243,7 @@ public interface PyBUF {
      */
     static final int IS_F_CONTIGUOUS = F_CONTIGUOUS & ~STRIDES;
     /**
-     * Field mask, use as in <code>if (flags&CONTIGUITY== ... ) ...</code>.
+     * Field mask, use as in <code>if ((flags&CONTIGUITY)== ... ) ...</code>.
      */
     static final int CONTIGUITY = (C_CONTIGUOUS | F_CONTIGUOUS | ANY_CONTIGUOUS) & ~STRIDES;
 }

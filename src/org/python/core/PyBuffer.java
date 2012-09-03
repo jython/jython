@@ -79,7 +79,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * navigating the structure of the buffer. The indices must be correct in number and range for
      * the array shape. Results are undefined where <code>itemsize&gt;1</code>.
      *
-     * @param index to retrieve from
+     * @param indices specifying location to retrieve from
      * @return the item at location, treated as an unsigned byte, <code>=0xff & byteAt(index)</code>
      */
     int intAt(int... indices) throws IndexOutOfBoundsException;
@@ -107,35 +107,50 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * @param destPos index in the destination array of the byte [0]
      * @throws IndexOutOfBoundsException if the destination cannot hold it
      */
-    void copyTo(byte[] dest, int destPos) throws IndexOutOfBoundsException;
+    void copyTo(byte[] dest, int destPos) throws IndexOutOfBoundsException, PyException;
 
     /**
      * Copy a simple slice of the buffer to the destination byte array, defined by a starting index
      * and length in the source buffer. This may validly be done only for a one-dimensional buffer,
-     * as the meaning of the starting index is otherwise not defined.
+     * as the meaning of the starting index is otherwise not defined. The length (like the source
+     * index) is in source buffer <b>items</b>: <code>length*itemsize</code> bytes will be occupied
+     * in the destination.
      *
      * @param srcIndex starting index in the source buffer
      * @param dest destination byte array
-     * @param destPos index in the destination array of the byte [0,...]
-     * @param length number of bytes to copy
+     * @param destPos index in the destination array of the item [0,...]
+     * @param length number of items to copy
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
      */
     void copyTo(int srcIndex, byte[] dest, int destPos, int length)     // mimic arraycopy args
-            throws IndexOutOfBoundsException;
+            throws IndexOutOfBoundsException, PyException;
 
     /**
      * Copy bytes from a slice of a (Java) byte array into the buffer. This may validly be done only
-     * for a one-dimensional buffer, as the meaning of the starting index is otherwise not defined.
+     * for a one-dimensional buffer, as the meaning of the starting index is not otherwise defined.
+     * The length (like the destination index) is in buffer <b>items</b>:
+     * <code>length*itemsize</code> bytes will be read from the source.
      *
      * @param src source byte array
      * @param srcPos location in source of first byte to copy
      * @param destIndex starting index in the destination (i.e. <code>this</code>)
      * @param length number of bytes to copy in
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
-     * @throws PyException (BufferError) if read-only buffer
+     * @throws PyException (TypeError) if read-only buffer
      */
     void copyFrom(byte[] src, int srcPos, int destIndex, int length)    // mimic arraycopy args
             throws IndexOutOfBoundsException, PyException;
+
+    /**
+     * Copy the whole of another PyBuffer into this buffer. This may validly be done only for
+     * buffers that are consistent in their dimensions. When it is necessary to copy partial
+     * buffers, this may be achieved using a buffer slice on the source or destination.
+     *
+     * @param src source buffer
+     * @throws IndexOutOfBoundsException if access out of bounds in source or destination
+     * @throws PyException (TypeError) if read-only buffer
+     */
+    void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException;
 
     // Bulk access in n-dimensions may be added here if desired semantics can be settled
     //
@@ -145,12 +160,12 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     /**
      * {@inheritDoc}
      * <p>
-     * When a PyBuffer is the target, the reference returned may be a reference to this
-     * <code>PyBuffer</code> or to a new buffer. The original exporter is still the exporter of the
-     * buffer that is returned. A Jython <code>PyBuffer</code>s keep count of these re-exports in
-     * order to match them with the number of calls to {@link #release()}. When the last matching
-     * release() arrives it is considered "final", and release actions may then take place on the
-     * exporting object.
+     * When a <code>PyBuffer</code> is the target, the same checks are carried out on the consumer
+     * flags, and a return will normally be a reference to that buffer. A Jython
+     * <code>PyBuffer</code> keeps count of these re-exports in order to match them with the number
+     * of calls to {@link #release()}. When the last matching release() arrives it is considered
+     * "final", and release actions may then take place on the exporting object. After the final
+     * release of a buffer, a call to <code>getBuffer</code> should raise an exception.
      */
     @Override
     PyBuffer getBuffer(int flags) throws PyException;
@@ -164,7 +179,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * matching call to {@link #release()}. The consumer may be sharing the <code>PyBuffer</code>
      * with other consumers and the buffer uses the pairing of <code>getBuffer</code> and
      * <code>release</code> to manage the lock on behalf of the exporter. It is an error to make
-     * more than one such call for a single call to <code>getBuffer</code>.
+     * more than one call to <code>release</code> for a single call to <code>getBuffer</code>.
      */
     void release();
 
@@ -175,6 +190,47 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * called <code>getBuffer</code> have called <code>release</code>.
      */
     boolean isReleased();
+
+    /**
+     * Equivalent to {@link #getBufferSlice(int, int, int, int)} with stride 1.
+     *
+     * @param flags specifying features demanded and the navigational capabilities of the consumer
+     * @param start index in the current buffer
+     * @param length number of items in the required slice
+     * @return a buffer representing the slice
+     */
+    public PyBuffer getBufferSlice(int flags, int start, int length);
+
+    /**
+     * Get a <code>PyBuffer</code> that represents a slice of the current one described in terms of
+     * a start index, number of items to include in the slice, and the stride in the current buffer.
+     * A consumer that obtains a <code>PyBuffer</code> with <code>getBufferSlice</code> must release
+     * it with {@link PyBuffer#release} just as if it had been obtained with
+     * {@link PyBuffer#getBuffer(int)}
+     * <p>
+     * Suppose that <i>x(i)</i> denotes the <i>i</i>th element of the current buffer, that is, the
+     * byte retrieved by <code>this.byteAt(i)</code> or the unit indicated by
+     * <code>this.getPointer(i)</code>. A request for a slice where <code>start</code> <i>= s</i>,
+     * <code>length</code> <i>= N</i> and <code>stride</code> <i>= m</i>, results in a buffer
+     * <i>y</i> such that <i>y(k) = x(s+km)</i> where <i>k=0..(N-1)</i>. In Python terms, this is
+     * the slice <i>x[s : s+(N-1)m+1 : m]</i> (if m&gt;0) or the slice <i>x[s : s+(N-1)m-1 : m]</i>
+     * (if m&lt;0). Implementations should check that this range is entirely within the current
+     * buffer.
+     * <p>
+     * In a simple buffer backed by a contiguous byte array, the result is a strided PyBuffer on the
+     * same storage but where the offset is adjusted by <i>s</i> and the stride is as supplied. If
+     * the current buffer is already strided and/or has an item size larger than single bytes, the
+     * new offset, size and stride will be translated from the arguments given, through this
+     * buffer's stride and item size. The consumer always expresses <code>start</code> and
+     * <code>strides</code> in terms of the abstract view of this buffer.
+     *
+     * @param flags specifying features demanded and the navigational capabilities of the consumer
+     * @param start index in the current buffer
+     * @param length number of items in the required slice
+     * @param stride index-distance in the current buffer between consecutive items in the slice
+     * @return a buffer representing the slice
+     */
+    public PyBuffer getBufferSlice(int flags, int start, int length, int stride);
 
     // Direct access to actual storage
     //
@@ -230,12 +286,13 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
 
     /**
      * Return a structure describing the slice of a byte array that holds a single item from the
-     * data being exported to the consumer, in the case that array may be multi-dimensional. For an
+     * data being exported to the consumer, in the case that array may be multi-dimensional. For a
      * 3-dimensional contiguous buffer, assuming the following client code where <code>obj</code>
      * has type <code>BufferProtocol</code>:
      *
      * <pre>
-     * int i, j, k = ... ;
+     * int i, j, k;
+     * // ... calculation that assigns i, j, k
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
      * BufferPointer b = a.getPointer(i,j,k);
