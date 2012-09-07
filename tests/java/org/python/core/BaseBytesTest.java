@@ -794,7 +794,7 @@ public class BaseBytesTest extends TestCase {
 
         @Override
         public PyBuffer getBuffer(int flags) {
-            return new SimpleBuffer(this, new BufferPointer(store), flags);
+            return new SimpleBuffer(flags, store);
         }
 
     }

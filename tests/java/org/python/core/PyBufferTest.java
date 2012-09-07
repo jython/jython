@@ -1,5 +1,8 @@
 package org.python.core;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,8 +10,8 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.python.core.buffer.SimpleBuffer;
-import org.python.core.buffer.SimpleReadonlyBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
+import org.python.core.buffer.SimpleWritableBuffer;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -63,10 +66,10 @@ public class PyBufferTest extends TestCase {
         interp = new PythonInterpreter();
 
         // Tests using local examples
-        queueWrite(new SimpleExporter(abcMaterial.getBytes()), abcMaterial);
-        queueReadonly(new SimpleExporter(byteMaterial.getBytes(), true), byteMaterial);
+        queueWrite(new SimpleWritableExporter(abcMaterial.getBytes()), abcMaterial);
+        queueReadonly(new SimpleExporter(byteMaterial.getBytes()), byteMaterial);
         queueReadonly(new StringExporter(stringMaterial.string), stringMaterial);
-        queueWrite(new SimpleExporter(emptyMaterial.getBytes()), emptyMaterial);
+        queueWrite(new SimpleWritableExporter(emptyMaterial.getBytes()), emptyMaterial);
 
         // Tests with PyByteArray
         queueWrite(new PyByteArray(abcMaterial.getBytes()), abcMaterial);
@@ -108,15 +111,16 @@ public class PyBufferTest extends TestCase {
     private int[] validFlags = {PyBUF.SIMPLE, PyBUF.ND, PyBUF.STRIDES, PyBUF.INDIRECT};
 
     /** To which we can add any of these (in one dimension, anyway) */
-    private int[] validTassles = {PyBUF.FORMAT,
+    private int[] validTassles = {0,
+                                  PyBUF.FORMAT,
                                   PyBUF.C_CONTIGUOUS,
                                   PyBUF.F_CONTIGUOUS,
                                   PyBUF.ANY_CONTIGUOUS};
 
     /**
-     * Test method for {@link org.python.core.PyBuffer#getBuf()}.
+     * Test method for {@link org.python.core.BufferProtocol#getBuffer()}.
      */
-    public void testGetBuffer() {
+    public void testExporterGetBuffer() {
 
         for (BufferTestPair test : buffersToRead) {
             System.out.println("getBuffer(): " + test);
@@ -451,9 +455,9 @@ public class PyBufferTest extends TestCase {
                     // A variety of lengths from zero to (n-destIndex)-ish
                     for (int length = 0; destIndex + length <= n; length = 2 * length + 1) {
 
-                        System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
-                                          srcPos + length, n, destIndex, destIndex + length,
-                                          actual.length);
+                        // System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
+                        // srcPos + length, n, destIndex, destIndex + length,
+                        // actual.length);
 
                         // Initialise the object (have to do each time) and expected value
                         for (int i = 0; i < n; i++) {
@@ -475,9 +479,10 @@ public class PyBufferTest extends TestCase {
                     // And from exactly n-destIndex down to zero-ish
                     for (int trim = 0; destIndex + trim <= n; trim = 2 * trim + 1) {
                         int length = n - destIndex - trim;
-                        System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
-                                          srcPos + length, n, destIndex, destIndex + length,
-                                          actual.length);
+
+                        // System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
+                        // srcPos + length, n, destIndex, destIndex + length,
+                        // actual.length);
 
                         // Initialise the object (have to do each time) and expected value
                         for (int i = 0; i < n; i++) {
@@ -581,27 +586,43 @@ public class PyBufferTest extends TestCase {
         for (BufferTestPair test : buffersToRead) {
             System.out.println("release: " + test);
             BufferProtocol obj = test.exporter;
-            // The object should already be exporting test.simple and test.strided
-            PyBuffer a = test.simple; // 1
-            PyBuffer b = test.strided; // 2
-            PyBuffer c = obj.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT); // 3
+
+            // The object should already be exporting test.simple and test.strided = 2 exports
+            PyBuffer a = test.simple; // 1 exports
+            PyBuffer b = test.strided; // 2 exports
+            PyBuffer c = obj.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT); // = 3 exports
             checkExporting(obj);
-            // Multiple releases of the same buffer are just one release
-            b.release(); // 2
-            b.release();
-            b.release();
-            b.release();
-            checkExporting(obj);
+
             // Now see that releasing in some other order works correctly
-            a.release(); // 1
+            b.release(); // = 2 exports
+            a.release(); // = 1 export
             checkExporting(obj);
-            PyBuffer d = obj.getBuffer(PyBUF.STRIDES | PyBUF.FORMAT); // 2
-            c.release(); // 1
+            int flags = PyBUF.STRIDES | PyBUF.FORMAT;
+
+            // You can get a buffer from a buffer (for SimpleExporter only c is alive)
+            PyBuffer d = c.getBuffer(flags); // = 2 exports
+            c.release(); // = 1 export
             checkExporting(obj);
-            d.release(); // 0
+            d.release(); // = 0 exports
             checkNotExporting(obj);
-            d.release(); // 0
-            checkNotExporting(obj);
+
+            // But fails if buffer has been finally released
+            try {
+                a = d.getBuffer(flags); // = 0 exports (since disallowed)
+                fail("getBuffer after final release not detected");
+            } catch (Exception e) {
+                // Detected *and* prevented?
+                checkNotExporting(obj);
+            }
+
+            // Further releases are also an error
+            try {
+                a.release(); // = -1 exports (oops)
+                fail("excess release not detected");
+            } catch (Exception e) {
+                // Success
+            }
+
         }
     }
 
@@ -611,12 +632,12 @@ public class PyBufferTest extends TestCase {
      * @param exporter
      */
     private void checkExporting(BufferProtocol exporter) {
-        if (exporter instanceof SimpleExporter) {
-            assertTrue("exports not being counted", ((SimpleExporter)exporter).exportCount >= 1);
+        if (exporter instanceof TestableExporter) {
+            assertTrue("exports not being counted", ((TestableExporter)exporter).isExporting());
         } else if (exporter instanceof PyByteArray) {
             // Size-changing access should fail
             try {
-                ((PyByteArray)exporter).bytearray_extend(Py.One);
+                ((PyByteArray)exporter).bytearray_extend(Py.One); // Appends one zero byte
                 fail("bytearray_extend with exports should fail");
             } catch (Exception e) {
                 // Success
@@ -631,8 +652,8 @@ public class PyBufferTest extends TestCase {
      * @param exporter
      */
     private void checkNotExporting(BufferProtocol exporter) {
-        if (exporter instanceof SimpleExporter) {
-            assertFalse("exports falsely counted", ((SimpleExporter)exporter).exportCount >= 1);
+        if (exporter instanceof TestableExporter) {
+            assertFalse("exports falsely counted", ((TestableExporter)exporter).isExporting());
         } else if (exporter instanceof PyByteArray) {
             // Size-changing access should fail
             try {
@@ -645,16 +666,37 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
+     * Check that reusable PyBuffer is re-used, and that non-reusable PyBuffer is not re-used.
+     *
+     * @param exporter
+     */
+    private void checkReusable(BufferProtocol exporter, PyBuffer previous, PyBuffer latest) {
+        assertNotNull("Re-used PyBuffer reference null", latest);
+        if (exporter instanceof PyByteArray) {
+            // Re-use prohibited because might have resized while released
+            assertFalse("PyByteArray buffer reused unexpectedly", latest == previous);
+        } else if (exporter instanceof TestableExporter && !((TestableExporter)exporter).reusable) {
+            // Special test case where re-use prohibited
+            assertFalse("PyBuffer reused unexpectedly", latest == previous);
+        } else {
+            // Other types of TestableExporter and PyString all re-use
+            assertTrue("PyBuffer not re-used as expected", latest == previous);
+        }
+    }
+
+    /**
      * Test method for {@link org.python.core.PyBUF#getStrides()}.
      */
     public void testGetStrides() {
         for (BufferTestPair test : buffersToRead) {
             System.out.println("getStrides: " + test);
-            // When not requested ...
-            assertNull(test.simple.getStrides());
-            // When requested, ought to be as expected
-            int[] strides = test.strided.getStrides();
-            assertNotNull(strides);
+            // When not requested ... (different from CPython)
+            int[] strides = test.simple.getStrides();
+            assertNotNull("strides[] should always be provided", strides);
+            assertIntsEqual("simple.strides", test.strides, strides);
+            // And when requested, ought to be as expected
+            strides = test.strided.getStrides();
+            assertNotNull("strides[] not provided when requested", strides);
             assertIntsEqual("strided.strides", test.strides, strides);
         }
     }
@@ -678,14 +720,17 @@ public class PyBufferTest extends TestCase {
         for (BufferTestPair test : buffersToRead) {
             System.out.println("isContiguous: " + test);
             // True for all test material and orders (since 1-dimensional)
-            for (char order : validOrders) {
-                assertTrue(test.simple.isContiguous(order));
-                assertTrue(test.strided.isContiguous(order));
+            for (String orderMsg : validOrders) {
+                char order = orderMsg.charAt(0);
+                assertTrue(orderMsg, test.simple.isContiguous(order));
+                assertTrue(orderMsg, test.strided.isContiguous(order));
             }
         }
     }
 
-    private static final char[] validOrders = {'C', 'F', 'A'};
+    private static final String[] validOrders = {"C-contiguous test fail",
+                                                 "F-contiguous test fail",
+                                                 "Any-contiguous test fail"};
 
     /**
      * Test method for {@link org.python.core.PyBuffer#getFormat()}.
@@ -693,10 +738,10 @@ public class PyBufferTest extends TestCase {
     public void testGetFormat() {
         for (BufferTestPair test : buffersToRead) {
             System.out.println("getFormat: " + test);
-            // Null for all test material
-            assertNull(test.simple.getFormat());
-            assertNull(test.strided.getFormat());
-            // However, we can ask for it explicitly ...
+            // When not requested ... (different from CPython)
+            assertNotNull("format should always be provided", test.simple.getFormat());
+            assertNotNull("format should always be provided", test.strided.getFormat());
+            // And, we can ask for it explicitly ...
             PyBuffer simpleWithFormat = test.exporter.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT);
             PyBuffer stridedWithFormat = test.exporter.getBuffer(PyBUF.STRIDES | PyBUF.FORMAT);
             // "B" for all test material where requested in flags
@@ -718,17 +763,19 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * A class to act as an exporter that uses the SimpleBuffer (or SimpleReadonlyBuffer). This
-     * permits testing abstracted from the Jython interpreter.
+     * A class to act as an exporter that uses the SimpleReadonlyBuffer. This permits testing
+     * abstracted from the Jython interpreter.
+     * <p>
+     * The exporter exports a new PyBuffer object to each consumer (although each references the
+     * same internal storage) and it does not track their fate. You are most likely to use this
+     * approach with an exporting object that is immutable (or at least fixed in size).
      */
     static class SimpleExporter implements BufferProtocol {
 
-        byte[] storage;
-        int exportCount;
-        boolean readonly;
+        protected byte[] storage;
 
         /**
-         * Construct a simple exporter from the bytes supplied.
+         * Construct a simple read only exporter from the bytes supplied.
          *
          * @param storage
          */
@@ -736,47 +783,78 @@ public class PyBufferTest extends TestCase {
             this.storage = storage;
         }
 
-        /**
-         * Construct a simple exporter from the bytes supplied, optionally read-only.
-         *
-         * @param storage
-         * @param readonly
-         */
-        public SimpleExporter(byte[] storage, boolean readonly) {
-            this.storage = storage;
-            this.readonly = readonly;
-        }
-
         @Override
         public PyBuffer getBuffer(int flags) {
-            BufferPointer mb = new BufferPointer(storage);
-            exportCount++;
-            if (readonly) {
-                return new SimpleReadonlyBuffer(this, mb, flags) {
-
-                    protected void releaseAction() {
-                        --exportCount;
-                    }
-                };
-            } else {
-                return new SimpleBuffer(this, mb, flags) {
-
-                    protected void releaseAction() {
-                        --exportCount;
-                    }
-                };
-            }
+            return new SimpleBuffer(flags, storage);
         }
+
+    }
+
+    /**
+     * Base class of certain exporters that permit testing abstracted from the Jython interpreter.
+     */
+    static abstract class TestableExporter implements BufferProtocol {
+
+        protected Reference<PyBuffer> export;
+
+        /**
+         * Try to re-use existing exported buffer, or return null if can't.
+         */
+        protected PyBuffer getExistingBuffer(int flags) {
+            PyBuffer pybuf = null;
+            if (export != null) {
+                // A buffer was exported at some time.
+                pybuf = export.get();
+                if (pybuf != null) {
+                    // And this buffer still exists: expect this to provide a further reference
+                    pybuf = pybuf.getBuffer(flags);
+                }
+            }
+            return pybuf;
+        }
+
+        /**
+         * Determine whether this object is exporting a buffer: modelled after
+         * {@link PyByteArray#resizeCheck()}.
+         *
+         * @return true iff exporting
+         */
+        public boolean isExporting() {
+            if (export != null) {
+                // A buffer was exported at some time.
+                PyBuffer pybuf = export.get();
+                if (pybuf != null) {
+                    return !pybuf.isReleased();
+                } else {
+                    // In fact the reference has expired: go quicker next time.
+                    export = null;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Determine whether this object permits it's buffers to re-animate themselves. If not, a
+         * call to getBuffer on a released buffer should not return the same buffer.
+         */
+        public boolean reusable = true;
+
     }
 
     /**
      * A class to act as an exporter that uses the SimpleStringBuffer. This permits testing
      * abstracted from the Jython interpreter.
+     * <p>
+     * The exporter shares a single exported buffer between all consumers but does not need to take
+     * any action when that buffer is finally released. You are most likely to use this approach
+     * with an exporting object type that does not modify its behaviour while there are active
+     * exports, but where it is worth avoiding the cost of duplicate buffers. This is the case with
+     * PyString, where some buffer operations cause construction of a byte array copy of the Java
+     * String, which it is desirable to do only once.
      */
-    static class StringExporter implements BufferProtocol {
+    static class StringExporter extends TestableExporter {
 
         String storage;
-        int exportCount;
 
         /**
          * Construct a simple exporter from the String supplied.
@@ -789,8 +867,63 @@ public class PyBufferTest extends TestCase {
 
         @Override
         public PyBuffer getBuffer(int flags) {
-            return new SimpleStringBuffer(this, storage, flags);
+            // If we have already exported a buffer it may still be available for re-use
+            PyBuffer pybuf = getExistingBuffer(flags);
+            if (pybuf == null) {
+                // No existing export we can re-use
+                pybuf = new SimpleStringBuffer(flags, storage);
+                // Hold a reference for possible re-use
+                export = new SoftReference<PyBuffer>(pybuf);
+            }
+            return pybuf;
         }
+
+    }
+
+    /**
+     * A class to act as an exporter that uses the SimpleBuffer. This permits testing abstracted
+     * from the Jython interpreter.
+     * <p>
+     * The exporter shares a single exported buffer between all consumers and needs to take any
+     * action immediately when that buffer is finally released. You are most likely to use this
+     * approach with an exporting object type that modifies its behaviour while there are active
+     * exports, but where it is worth avoiding the cost of duplicate buffers. This is the case with
+     * PyByteArray, which prohibits operations that would resize it, while there are outstanding
+     * exports.
+     */
+    static class SimpleWritableExporter extends TestableExporter {
+
+        protected byte[] storage;
+
+        /**
+         * Construct a simple exporter from the bytes supplied.
+         *
+         * @param storage
+         */
+        public SimpleWritableExporter(byte[] storage) {
+            this.storage = storage;
+            reusable = false;
+        }
+
+        @Override
+        public PyBuffer getBuffer(int flags) {
+            // If we have already exported a buffer it may still be available for re-use
+            PyBuffer pybuf = getExistingBuffer(flags);
+            if (pybuf == null) {
+                // No existing export we can re-use
+                pybuf = new SimpleWritableBuffer(flags, storage) {
+
+                    protected void releaseAction() {
+                        export = null;
+                    }
+                };
+
+                // Hold a reference for possible re-use
+                export = new WeakReference<PyBuffer>(pybuf);
+            }
+            return pybuf;
+        }
+
     }
 
     /**

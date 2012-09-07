@@ -1,8 +1,10 @@
 package org.python.core;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
-import org.python.core.buffer.SimpleBuffer;
+import org.python.core.buffer.BaseBuffer;
+import org.python.core.buffer.SimpleWritableBuffer;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -76,11 +78,11 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Create a new array filled exactly by a copy of the contents of the source, which is a
-     * byte-oriented view.
+     * byte-oriented {@link PyBuffer}.
      *
      * @param value source of the bytes (and size)
      */
-    PyByteArray(View value) {
+    PyByteArray(PyBuffer value) {
         super(TYPE);
         init(value);
     }
@@ -206,45 +208,81 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
 
     /**
+     * Hold weakly a reference to a PyBuffer export not yet released, used to prevent untimely
+     * resizing.
+     */
+    private WeakReference<BaseBuffer> export;
+
+    /**
      * {@inheritDoc}
      * <p>
      * The {@link PyBuffer} returned from this method is a one-dimensional array of single byte
-     * items, that allows modification of the object state but <b>prohibits resizing</b> the byte array.
-     * This prohibition is not only on the consumer of the view but extends to any other operations,
-     * such as any kind or insertion or deletion.
+     * items that allows modification of the object state. The existence of this export <b>prohibits
+     * resizing</b> the byte array. This prohibition is not only on the consumer of the view but
+     * extends to any other operations, such as any kind or insertion or deletion.
      */
     @Override
     public synchronized PyBuffer getBuffer(int flags) {
-        exportCount++;
-        return new SimpleBuffer(this, new BufferPointer(storage, offset, size), flags) {
 
-            @Override
-            public void releaseAction() {
-                // synchronise on the same object as getBuffer()
-                synchronized (obj) {
-                    exportCount--;
-                }
-            }
-        };
+        // If we have already exported a buffer it may still be available for re-use
+        BaseBuffer pybuf = getExistingBuffer(flags);
+
+        if (pybuf == null) {
+            // No existing export we can re-use: create a new one
+            pybuf = new SimpleWritableBuffer(flags, storage, offset, size);
+            // Hold a reference for possible re-use
+            export = new WeakReference<BaseBuffer>(pybuf);
+        }
+
+        return pybuf;
     }
 
     /**
-     * Test to see if the byte array may be resized and raise a BufferError if not.
+     * Try to re-use an existing exported buffer, or return <code>null</code> if we can't.
+     *
+     * @throws PyException (BufferError) if the the flags are incompatible with the buffer
+     */
+    private BaseBuffer getExistingBuffer(int flags) throws PyException {
+        BaseBuffer pybuf = null;
+        if (export != null) {
+            // A buffer was exported at some time.
+            pybuf = export.get();
+            if (pybuf != null) {
+                /*
+                 * We do not test for pybuf.isReleased() as, if any operation had taken place that
+                 * invalidated the buffer, resizeCheck() would have set export=null. The exported
+                 * buffer (navigation, buf member, etc.) remains valid through any operation that
+                 * does not need a resizeCheck.
+                 */
+                pybuf = pybuf.getBufferAgain(flags);
+            }
+        }
+        return pybuf;
+    }
+
+    /**
+     * Test to see if the byte array may be resized and raise a BufferError if not. This must be
+     * called by the implementation of any append or insert that changes the number of bytes in the
+     * array.
      *
      * @throws PyException (BufferError) if there are buffer exports preventing a resize
      */
     protected void resizeCheck() throws PyException {
-         // XXX Quite likely this is not called in all the places it should be
-         if (exportCount!=0) {
-            throw Py.BufferError("Existing exports of data: object cannot be re-sized");
+        if (export != null) {
+            // A buffer was exported at some time and we have not explicitly discarded it.
+            PyBuffer pybuf = export.get();
+            if (pybuf != null && !pybuf.isReleased()) {
+                // A consumer still has the exported buffer
+                throw Py.BufferError("Existing exports of data: object cannot be re-sized");
+            } else {
+                /*
+                 * Either the reference has expired or all consumers have released it. Either way,
+                 * the weak reference is useless now.
+                 */
+                export = null;
+            }
         }
     }
-
-    /**
-     * Count of PyBuffer exports not yet released, used to prevent untimely resizing.
-     */
-    private int exportCount;
-
 
     /* ============================================================================================
      * API for org.python.core.PySequence
@@ -390,10 +428,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
          * The actual behaviour depends on the nature (type) of value. It may be any kind of
          * PyObject (but not other kinds of Java Object). The function is implementing assignment to
          * a slice. PEP 3137 declares that the value may be "any type that implements the PEP 3118
-         * buffer interface, which isn't implemented yet in Jython.
-         */
-        // XXX correct this when the buffer interface is available in Jython
-        /*
+         * buffer interface".
+         *
          * The following is essentially equivalent to b[start:stop[:step]]=bytearray(value) except
          * we avoid constructing a copy of value if we can easily do so. The logic is the same as
          * BaseBytes.init(PyObject), without support for value==null.
@@ -503,8 +539,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
-        PyBuffer view = value.getBuffer(PyBUF.SIMPLE);
 
+        PyBuffer view = value.getBuffer(PyBUF.FULL_RO);
 
         int len = view.getLen();
 
@@ -841,7 +877,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         PyByteArray sum = null;
 
 
-        // XXX re-write using View
+        // XXX re-write using buffer API
 
 
         if (o instanceof BaseBytes) {
@@ -1977,10 +2013,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     final PyByteArray bytearray_translate(PyObject table, PyObject deletechars) {
 
         // Normalise the translation table to a View
-        View tab = null;
+        PyBuffer tab = null;
         if (table != null && table != Py.None) {
             tab = getViewOrError(table);
-            if (tab.size() != 256) {
+            if (tab.getLen() != 256) {
                 throw Py.ValueError("translation table must be 256 bytes long");
             }
         }
