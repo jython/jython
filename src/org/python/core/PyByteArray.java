@@ -78,11 +78,11 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Create a new array filled exactly by a copy of the contents of the source, which is a
-     * byte-oriented view.
+     * byte-oriented {@link PyBuffer}.
      *
      * @param value source of the bytes (and size)
      */
-    PyByteArray(View value) {
+    PyByteArray(PyBuffer value) {
         super(TYPE);
         init(value);
     }
@@ -2013,10 +2013,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     final PyByteArray bytearray_translate(PyObject table, PyObject deletechars) {
 
         // Normalise the translation table to a View
-        View tab = null;
+        PyBuffer tab = null;
         if (table != null && table != Py.None) {
             tab = getViewOrError(table);
-            if (tab.size() != 256) {
+            if (tab.getLen() != 256) {
                 throw Py.ValueError("translation table must be 256 bytes long");
             }
         }

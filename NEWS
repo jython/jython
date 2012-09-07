@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1894 ] bytearray does not support '+' or .join()
     - [ 1921 ] compiler module broken in Jython 2.7 
     - [ 1920 ] Backport CO_FUTURE_PRINT_FUNCTION to Lib/compiler/pycodegen.py
     - [ 1914 ] Float formatting broken in many non-English locales in Jython 2.7
@@ -14,6 +15,9 @@ Jython 2.7a3
     - [ 1913 ] Support short -W options
     - [ 1897 ] 2.7.0ax only has partial ssl support
     - array_class in jarray module returns the "Array of a type" class
+  New Features
+    - bytearray complete
+    - a buffer API
 
 Jython 2.7a2
     - [ 1892 ] site-packages is not in sys.path

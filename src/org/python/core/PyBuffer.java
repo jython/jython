@@ -173,9 +173,9 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     /**
      * A buffer is (usually) a view onto to the internal state of an exporting object, and that
      * object may have to restrict its behaviour while the buffer exists. The consumer must
-     * therefore say when it has finished with the buffer if exporting object is to be released from
-     * this constraint. Each consumer that obtains a reference to a buffer by means of a call to
-     * {@link BufferProtocol#getBuffer(int)} or {@link PyBuffer#getBuffer(int)} should make a
+     * therefore say when it has finished with the buffer if the exporting object is to be released
+     * from this constraint. Each consumer that obtains a reference to a buffer by means of a call
+     * to {@link BufferProtocol#getBuffer(int)} or {@link PyBuffer#getBuffer(int)} should make a
      * matching call to {@link #release()}. The consumer may be sharing the <code>PyBuffer</code>
      * with other consumers and the buffer uses the pairing of <code>getBuffer</code> and
      * <code>release</code> to manage the lock on behalf of the exporter. It is an error to make

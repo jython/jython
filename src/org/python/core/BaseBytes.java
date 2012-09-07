@@ -148,9 +148,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * ============================================================================================
      *
      * Methods here help subclasses set the initial state. They are designed with bytearray in mind,
-     * but note that from Python 3, bytes() has the same set of calls and behaviours. In
-     * Peterson's "sort of backport" to Python 2.x, bytes is effectively an alias for str and it
-     * shows.
+     * but note that from Python 3, bytes() has the same set of calls and behaviours. In Peterson's
+     * "sort of backport" to Python 2.x, bytes is effectively an alias for str and it shows.
      */
 
     /**
@@ -333,18 +332,19 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         view.copyTo(storage, offset);
     }
 
-    /**
-     * Helper for the Java API constructor from a {@link #View}. View is (perhaps) a stop-gap until
-     * the Jython implementation of PEP 3118 (buffer API) is embedded.
-     *
-     * @param value a byte-oriented view
-     */
-    void init(View value) {
-        int n = value.size();
-        newStorage(n);
-        value.copyTo(storage, offset);
-    }
-
+// /**
+// * Helper for the Java API constructor from a {@link #PyBuffer}. View is (perhaps) a stop-gap
+// until
+// * the Jython implementation of PEP 3118 (buffer API) is embedded.
+// *
+// * @param value a byte-oriented view
+// */
+// void init(PyBuffer value) {
+// int n = value.getLen();
+// newStorage(n);
+// value.copyTo(storage, offset);
+// }
+//
     /**
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from
      * bytearray or bytes in subclasses.
@@ -621,415 +621,52 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
     }
 
-    /*
-     * ============================================================================================
-     * Wrapper class to make other objects into byte arrays
-     * ============================================================================================
-     *
-     * In much of the bytearray and bytes API, the "other sequence" argument will accept any type
-     * that supports the buffer protocol, that is, the object can supply a memoryview through which
-     * the value is treated as a byte array. We have not implemented memoryview objects yet, and it
-     * is not clear what the Java API should be. As a temporary expedient, we define here a
-     * byte-oriented view on the key built-in types.
-     */
-
-    interface View {
-
-        /**
-         * Return the indexed byte as a byte
-         *
-         * @param index
-         * @return byte at index
-         */
-        public byte byteAt(int index);
-
-        /**
-         * Return the indexed byte as an unsigned integer
-         *
-         * @param index
-         * @return value of the byte at index
-         */
-        public int intAt(int index);
-
-        /**
-         * Number of bytes in the view: valid indexes are from <code>0</code> to
-         * <code>size()-1</code>.
-         *
-         * @return the size
-         */
-        public int size();
-
-        /**
-         * Return a new view that is a simple slice of this one defined by <code>[start:end]</code>.
-         * <code>Py.None</code> or <code>null</code> are acceptable for start and end, and have
-         * Python slice semantics. Negative values for start or end are treated as "from the end",
-         * in the usual manner of Python slices.
-         *
-         * @param start first element to include
-         * @param end first element after slice, not to include
-         * @return byte-oriented view
-         */
-        public View slice(PyObject start, PyObject end);
-
-        /**
-         * Copy the bytes of this view to the specified position in a destination array. All the
-         * bytes of the View are copied.
-         *
-         * @param dest destination array
-         * @param destPos index in the destination at which this.byteAt(0) is written
-         * @throws ArrayIndexOutOfBoundsException if the destination is too small
-         */
-        public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException;
-
-        /**
-         * The standard memoryview out of bounds message (does not refer to the underlying type).
-         */
-        public static final String OUT_OF_BOUNDS = "index out of bounds";
-
-    }
-
     /**
-     * Some common apparatus for views including the implementation of slice semantics.
-     */
-    static abstract class ViewBase implements View {
-
-        /**
-         * Provides an implementation of {@link View#slice(PyObject, PyObject)} that implements
-         * Python contiguous slice semantics so that sub-classes only receive simplified requests
-         * involving properly-bounded integer arguments via {@link #sliceImpl(int, int)}, a call to
-         * {@link #byteAt(int)}, if the slice has length 1, or in the extreme case of a zero length
-         * slice, no call at all.
-         */
-        public View slice(PyObject ostart, PyObject oend) {
-            PySlice s = new PySlice(ostart, oend, null);
-            int[] index = s.indicesEx(size());  // [ start, end, 1, end-start ]
-            int len = index[3];
-            // Provide efficient substitute when length is zero or one
-            if (len < 1) {
-                return new ViewOfNothing();
-            } else if (len == 1) {
-                return new ViewOfByte(byteAt(index[0]));
-            } else { // General case: delegate to sub-class
-                return sliceImpl(index[0], index[1]);
-            }
-        }
-
-        /**
-         * Implementation-specific part of returning a slice of the current view. This is called by
-         * the default implementations of {@link #slice(int, int)} and
-         * {@link #slice(PyObject, PyObject)} once the <code>start</code> and <code>end</code>
-         * arguments have been reduced to simple integer indexes. It is guaranteed that
-         * <code>start>=0</code> and <code>size()>=end>=start+2</code> when the method is called.
-         * View objects for slices of length zero and one are dealt with internally by the
-         * {@link #slice(PyObject, PyObject)} method, see {@link ViewOfNothing} and
-         * {@link ViewOfByte}. Implementors are encouraged to do something more efficient than
-         * piling on another wrapper.
-         *
-         * @param start first element to include
-         * @param end first element after slice, not to include
-         * @return byte-oriented view
-         */
-        protected abstract View sliceImpl(int start, int end);
-
-        /**
-         * Copy the bytes of this view to the specified position in a destination array. All the
-         * bytes of the View are copied. The Base implementation simply loops over byteAt().
-         */
-        public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException {
-            int n = this.size(), p = destPos;
-            for (int i = 0; i < n; i++) {
-                dest[p++] = byteAt(i);
-            }
-        }
-
-    }
-
-    /**
-     * Return a wrapper providing a byte-oriented view for whatever object is passed, or return
-     * <code>null</code> if we don't know how.
+     * Return a buffer exported by the argument, or return <code>null</code> if it does not bear the
+     * buffer API. The caller is responsible for calling {@link PyBuffer#release()} on the buffer,
+     * if the return value is not <code>null</code>.
      *
      * @param b object to wrap
      * @return byte-oriented view or null
      */
-    protected static View getView(PyObject b) {
+    protected static PyBuffer getView(PyObject b) {
+
         if (b == null) {
             return null;
-        } else if (b instanceof BaseBytes) {
-            BaseBytes bb = (BaseBytes)b;
-            int len = bb.size;
-            // Provide efficient substitute when length is zero or one
-            if (len < 1) {
-                return new ViewOfNothing();
-            } else if (len == 1) {
-                return new ViewOfByte(bb.byteAt(0));
-            } else { // General case
-                return new ViewOfBytes(bb);
-            }
-        } else if (b.getType() == PyString.TYPE) {
-            String bs = b.asString();
-            int len = bs.length();
-            // Provide efficient substitute when length is zero
-            if (len < 1) {
-                return new ViewOfNothing();
-            } else if (len == 1) {
-                return new ViewOfByte(byteCheck(bs.charAt(0)));
-            } else { // General case
-                return new ViewOfString(bs);
-            }
-        }
-        return null;
-    }
 
-    /**
-     * Test whether View v has the given prefix, that is, that the first bytes of this View
-     * match all the bytes of the given prefix. By implication, the test returns false if there
-     * are too few bytes in this view.
-     *
-     * @param v subject to test
-     * @param prefix pattern to match
-     * @return true if and only if v has the given prefix
-     */
-    private static boolean startswith(View v,View prefix) {
-        return startswith(v,prefix, 0);
-    }
+        } else if (b instanceof PyUnicode) {
+            /*
+             * PyUnicode has the BufferProtocol interface as it extends PyString. (It would bring
+             * you 0xff&charAt(i) in practice.) However, in CPython the unicode string does not have
+             * the buffer API.
+             */
+            return null;
 
-    /**
-     * Test whether the slice <code>v[offset:]</code> of has the given prefix, that is,
-     * that the bytes of v from index <code>offset</code> match all the bytes of the
-     * given prefix. By implication, the test returns false if the offset puts the start or end
-     * of the prefix outside v (when <code>offset&lt;0</code> or
-     * <code>offset+prefix.size()>v.size()</code>). Python slice semantics are <em>not</em>
-     * applied to <code>offset</code>.
-     *
-     * @param v subject to test
-     * @param prefix pattern to match
-     * @param offset at which to start the comparison in v
-     * @return true if and only if the slice v[offset:<code>]</code> has the given
-     *         prefix
-     */
-    private static boolean startswith(View v, View prefix, int offset) {
-        int j = offset; // index in this
-        if (j < 0) {
-            // // Start of prefix is outside this view
-            return false;
+        } else if (b instanceof BufferProtocol) {
+            return ((BufferProtocol)b).getBuffer(PyBUF.FULL_RO);
+
         } else {
-            int len = prefix.size();
-            if (j + len > v.size()) {
-                // End of prefix is outside this view
-                return false;
-            } else {
-                // Last resort: we have actually to look at the bytes!
-                for (int i = 0; i < len; i++) {
-                    if (v.byteAt(j++) != prefix.byteAt(i)) {
-                        return false;
-                    }
-                }
-                return true; // They must all have matched
-            }
+            return null;
         }
     }
 
     /**
-     * Return a wrapper providing a byte-oriented view for whatever object is passed, or raise an
-     * exception if we don't know how.
+     * Return a buffer exported by the argument or raise an exception if it does not bear the buffer
+     * API. The caller is responsible for calling {@link PyBuffer#release()} on the buffer. The
+     * return value is never <code>null</code>.
      *
      * @param b object to wrap
      * @return byte-oriented view
      */
-    protected static View getViewOrError(PyObject b) {
-        View res = getView(b);
-        if (res == null) {
-            String fmt = "cannot access type %s as bytes";
+    protected static PyBuffer getViewOrError(PyObject b) {
+        PyBuffer buffer = getView(b);
+        if (buffer != null) {
+            return buffer;
+        } else {
+            String fmt = "Type %s doesn't support the buffer API";
             throw Py.TypeError(String.format(fmt, b.getType().fastGetName()));
-            // A more honest response here would have been:
-            // . String fmt = "type %s doesn't support the buffer API"; // CPython
-            // . throw Py.NotImplementedError(String.format(fmt, b.getType().fastGetName()));
-            // since our inability to handle certain types is lack of a buffer API generally.
         }
-        return res;
     }
-
-
-    /**
-     * Wrapper providing a byte-oriented view for String (or PyString).
-     */
-    protected static class ViewOfString extends ViewBase {
-
-        private String str;
-
-        /**
-         * Create a byte-oriented view of a String.
-         *
-         * @param str
-         */
-        public ViewOfString(String str) {
-            this.str = str;
-        }
-
-        public byte byteAt(int index) {
-            return byteCheck(str.charAt(index));
-        }
-
-        public int intAt(int index) {
-            return str.charAt(index);
-        }
-
-        public int size() {
-            return str.length();
-        }
-
-        public View sliceImpl(int start, int end) {
-            return new ViewOfString(str.substring(start, end));
-        }
-
-    }
-
-    /**
-     * Wrapper providing a byte-oriented view for byte arrays descended from BaseBytes. Not that
-     * this view is not safe against concurrent modification by this or another thread: if the byte
-     * array type is mutable, and the contents change, the contents of the view are likely to be
-     * invalid.
-     */
-    protected static class ViewOfBytes extends ViewBase {
-
-        private byte[] storage;
-        private int offset;
-        private int size;
-
-        /**
-         * Create a byte-oriented view of a byte array descended from BaseBytes.
-         *
-         * @param obj
-         */
-        public ViewOfBytes(BaseBytes obj) {
-            this.storage = obj.storage;
-            this.offset = obj.offset;
-            this.size = obj.size;
-        }
-
-        /**
-         * Create a byte-oriented view of a slice of a byte array explicitly. If the size<=0, a zero-length
-         * slice results.
-         *
-         * @param storage storage array
-         * @param offset
-         * @param size
-         */
-        ViewOfBytes(byte[] storage, int offset, int size) {
-            if (size > 0) {
-                this.storage = storage;
-                this.offset = offset;
-                this.size = size;
-            } else {
-                this.storage = emptyStorage;
-                this.offset = 0;
-                this.size = 0;
-            }
-        }
-
-        public byte byteAt(int index) {
-            return storage[offset + index];
-        }
-
-        public int intAt(int index) {
-            return 0xff & storage[offset + index];
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public View sliceImpl(int start, int end) {
-            return new ViewOfBytes(storage, offset + start, end - start);
-        }
-
-        /**
-         * Copy the bytes of this view to the specified position in a destination array. All the
-         * bytes of the View are copied. The view is of a byte array, so er can provide a more
-         * efficient implementation than the default.
-         */
-        @Override
-        public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException {
-            System.arraycopy(storage, offset, dest, destPos, size);
-        }
-
-    }
-
-    /**
-     * Wrapper providing a byte-oriented view of just one byte. It looks silly, but it helps our
-     * efficiency and code re-use.
-     */
-    protected static class ViewOfByte extends ViewBase {
-
-        private byte storage;
-
-        /**
-         * Create a byte-oriented view of a byte array descended from BaseBytes.
-         *
-         * @param obj
-         */
-        public ViewOfByte(byte obj) {
-            this.storage = obj;
-        }
-
-        public byte byteAt(int index) {
-            return storage;
-        }
-
-        public int intAt(int index) {
-            return 0xff & storage;
-        }
-
-        public int size() {
-            return 1;
-        }
-
-        public View sliceImpl(int start, int end) {
-            return new ViewOfByte(storage);
-        }
-
-        /**
-         * Copy the byte the specified position in a destination array.
-         */
-        @Override
-        public void copyTo(byte[] dest, int destPos) throws ArrayIndexOutOfBoundsException {
-            dest[destPos] = storage;
-        }
-
-    }
-
-    /**
-     * Wrapper providing a byte-oriented view of an empty byte array or string. It looks even
-     * sillier than wrapping one byte, but again helps our regularity and code re-use.
-     */
-    protected static class ViewOfNothing extends ViewBase {
-
-        public byte byteAt(int index) {
-            throw Py.IndexError(OUT_OF_BOUNDS);
-        }
-
-        public int intAt(int index) {
-            throw Py.IndexError(OUT_OF_BOUNDS);
-        }
-
-        public int size() {
-            return 0;
-        }
-
-        public View sliceImpl(int start, int end) {
-            return new ViewOfNothing();
-        }
-
-        /**
-         * Copy zero bytes the specified position, i.e. do nothing, even if dest[destPos] is out of
-         * bounds.
-         */
-        @Override
-        public void copyTo(byte[] dest, int destPos) {}
-
-    }
-
-    protected static final ViewOfNothing viewOfNothing = new ViewOfNothing();
 
     /*
      * ============================================================================================
@@ -1126,68 +763,24 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Comparison function between two byte arrays returning 1, 0, or -1 as a>b, a==b, or a&lt;b
-     * respectively. The comparison is by value, using Python unsigned byte conventions, and
+     * Comparison function between a byte array and a buffer of bytes exported by some other object,
+     * such as a String, presented as a <code>PyBuffer</code>, returning 1, 0 or -1 as a>b, a==b, or
+     * a&lt;b respectively. The comparison is by value, using Python unsigned byte conventions,
      * left-to-right (low to high index). Zero bytes are significant, even at the end of the array:
-     * <code>[1,2,3]&lt;[1,2,3,0]</code>, for example and <code>[]</code> is less than every other
-     * value, even <code>[0]</code>.
-     *
-     * @param a left-hand array in the comparison
-     * @param b right-hand array in the comparison
-     * @return 1, 0 or -1 as a>b, a==b, or a&lt;b respectively
-     */
-    private static int compare(BaseBytes a, BaseBytes b) {
-
-        // Compare elements one by one in these ranges:
-        int ap = a.offset;
-        int aEnd = ap + a.size;
-        int bp = b.offset;
-        int bEnd = bp + b.size;
-
-        while (ap < aEnd) {
-            if (bp >= bEnd) {
-                // a is longer than b
-                return 1;
-            } else {
-                // Compare the corresponding bytes (as unsigned ints)
-                int aVal = 0xff & a.storage[ap++];
-                int bVal = 0xff & b.storage[bp++];
-                int diff = aVal - bVal;
-                if (diff != 0) {
-                    return (diff < 0) ? -1 : 1;
-                }
-            }
-        }
-
-        // All the bytes matched and we reached the end of a
-        if (bp < bEnd) {
-            // But we didn't reach the end of b
-            return -1;
-        } else {
-            // And the end of b at the same time, so they're equal
-            return 0;
-        }
-
-    }
-
-    /**
-     * Comparison function between a byte array and a byte-oriented View of some other object, such
-     * as a String, returning 1, 0 or -1 as a>b, a==b, or a&lt;b respectively. The comparison is by
-     * value, using Python unsigned byte conventions, left-to-right (low to high index). Zero bytes
-     * are significant, even at the end of the array: <code>[65,66,67]&lt;"ABC\u0000"</code>, for
-     * example and <code>[]</code> is less than every non-empty b, while <code>[]==""</code>.
+     * <code>[65,66,67]&lt;"ABC\u0000"</code>, for example and <code>[]</code> is less than every
+     * non-empty b, while <code>[]==""</code>.
      *
      * @param a left-hand array in the comparison
      * @param b right-hand wrapped object in the comparison
      * @return 1, 0 or -1 as a>b, a==b, or a&lt;b respectively
      */
-    private static int compare(BaseBytes a, View b) {
+    private static int compare(BaseBytes a, PyBuffer b) {
 
         // Compare elements one by one in these ranges:
         int ap = a.offset;
         int aEnd = ap + a.size;
         int bp = 0;
-        int bEnd = b.size();
+        int bEnd = b.getLen();
 
         while (ap < aEnd) {
             if (bp >= bEnd) {
@@ -1216,8 +809,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Comparison function between byte array types and any other object. The set of 6
-     * "rich comparison" operators are based on this.
+     * Comparison function between byte array types and any other object. The six "rich comparison"
+     * operators are based on this.
      *
      * @param b
      * @return 1, 0 or -1 as this>b, this==b, or this&lt;b respectively, or -2 if the comparison is
@@ -1234,16 +827,20 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         } else {
 
             // Try to get a byte-oriented view
-            View bv = getView(b);
+            PyBuffer bv = getView(b);
 
             if (bv == null) {
-                // Signifies a type mis-match. See PyObject _cmp_unsafe() and related code.
+                // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
                 return -2;
 
             } else {
-                // Object supported by our interim memory view
-                return compare(this, bv);
-
+                try {
+                    // Compare this with other object viewed as a buffer
+                    return compare(this, bv);
+                } finally {
+                    // Must alsways let go of the buffer
+                    bv.release();
+                }
             }
         }
     }
@@ -1265,20 +862,25 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         } else {
 
             // Try to get a byte-oriented view
-            View bv = getView(b);
+            PyBuffer bv = getView(b);
 
             if (bv == null) {
-                // Signifies a type mis-match. See PyObject _cmp_unsafe() and related code.
+                // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
                 return -2;
 
-            } else if (bv.size() != size) {
-                // Different size: can't be equal, and we don't care which is bigger
-                return 1;
-
             } else {
-                // Object supported by our interim memory view
-                return compare(this, bv);
-
+                try {
+                    if (bv.getLen() != size) {
+                        // Different size: can't be equal, and we don't care which is bigger
+                        return 1;
+                    } else {
+                        // Compare this with other object viewed as a buffer
+                        return compare(this, bv);
+                    }
+                } finally {
+                    // Must alsways let go of the buffer
+                    bv.release();
+                }
             }
         }
     }
@@ -1406,10 +1008,14 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return index(b) >= 0;
         } else {
             // Caller is treating this as a byte-string and looking for substring 'target'
-            View targetView = getViewOrError(target);
-            Finder finder = new Finder(targetView);
-            finder.setText(this);
-            return finder.nextIndex() >= 0;
+            PyBuffer targetView = getViewOrError(target);
+            try {
+                Finder finder = new Finder(targetView);
+                finder.setText(this);
+                return finder.nextIndex() >= 0;
+            } finally {
+                targetView.release();
+            }
         }
     }
 
@@ -1422,45 +1028,94 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param target prefix or suffix sequence to find (of a type viewable as a byte sequence) or a
      *            tuple of those.
-     * @param start of slice to search.
-     * @param end of slice to search.
+     * @param ostart of slice to search.
+     * @param oend of slice to search.
      * @param endswith true if we are doing endswith, false if startswith.
      * @return true if and only if this bytearray ends with (one of) <code>target</code>.
      */
     protected final synchronized boolean basebytes_starts_or_endswith(PyObject target,
-            PyObject start, PyObject end, boolean endswith) {
+            PyObject ostart, PyObject oend, boolean endswith) {
         /*
-         * This cheap trick saves us from maintaining two almost identical methods and mirrors
-         * CPython's _bytearray_tailmatch().
-         *
-         * Start with a view of the slice we are searching.
+         * This cheap 'endswith' trick saves us from maintaining two almost identical methods and
+         * mirrors CPython's _bytearray_tailmatch().
          */
-        View v = new ViewOfBytes(this).slice(start, end);
-        int len = v.size();
-        int offset = 0;
+        int[] index = indicesEx(ostart, oend);  // [ start, end, 1, end-start ]
 
         if (target instanceof PyTuple) {
             // target is a tuple of suffixes/prefixes and only one need match
-            for (PyObject s : ((PyTuple)target).getList()) {
-                // Error if not something we can treat as a view of bytes
-                View vt = getViewOrError(s);
-                if (endswith) {
-                    offset = len - vt.size();
-                }
-                if (startswith(v, vt, offset)) {
+            for (PyObject t : ((PyTuple)target).getList()) {
+                if (match(t, index[0], index[3], endswith)) {
                     return true;
                 }
             }
             return false; // None of them matched
 
         } else {
-            // Error if target is not something we can treat as a view of bytes
-            View vt = getViewOrError(target);
-            if (endswith) {
-                offset = len - vt.size();
-            }
-            return startswith(v, vt, offset);
+            return match(target, index[0], index[3], endswith);
         }
+    }
+
+    /**
+     * Test whether the slice <code>[pos:pos+n]</code> of this byte array matches the given target
+     * object (accessed as a {@link PyBuffer}) at one end or the orher. That is, if
+     * <code>endswith==false</code> test whether the bytes from index <code>pos</code> match all the
+     * bytes of the target; if <code>endswith==false</code> test whether the bytes up to index
+     * <code>pos+n-1</code> match all the bytes of the target. By implication, the test returns
+     * false if the target is bigger than n. The caller guarantees that the slice
+     * <code>[pos:pos+n]</code> is within the byte array.
+     *
+     * @param target pattern to match
+     * @param pos at which to start the comparison
+     * @return true if and only if the slice [offset:<code>]</code> matches the given target
+     */
+    private boolean match(PyObject target, int pos, int n, boolean endswith) {
+
+        // Error if not something we can treat as a view of bytes
+        PyBuffer vt = getViewOrError(target);
+
+        try {
+            int j = 0, len = vt.getLen();
+
+            if (!endswith) {
+                // Match is at the start of the range [pos:pos+n]
+                if (len > n) {
+                    return false;
+                }
+            } else {
+                // Match is at the end of the range [pos:pos+n]
+                j = n - len;
+                if (j < 0) {
+                    return false;
+                }
+            }
+
+            // Last resort: we have actually to look at the bytes!
+            j += offset + pos;
+            for (int i = 0; i < len; i++) {
+                if (storage[j++] != vt.byteAt(i)) {
+                    return false;
+                }
+            }
+            return true; // They must all have matched
+
+        } finally {
+            // Let go of the buffer we acquired
+            vt.release();
+        }
+    }
+
+    /**
+     * Helper to convert [ostart:oend] to integers with slice semantics relative to this byte array.
+     * The retruned array of ints contains [ start, end, 1, end-start ].
+     *
+     * @param ostart of slice to define.
+     * @param oend of slice to define.
+     * @return [ start, end, 1, end-start ]
+     */
+    private int[] indicesEx(PyObject ostart, PyObject oend) {
+        // Convert [ostart:oend] to integers with slice semantics relative to this byte array
+        PySlice s = new PySlice(ostart, oend, null);
+        return s.indicesEx(size);  // [ start, end, 1, end-start ]
     }
 
     /**
@@ -1590,10 +1245,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Python API for find and replace operations
      * ============================================================================================
      *
-     * A large part of the CPython bytearray.c is devoted to replace( old, new [, count ] ).
-     * The special section here reproduces that in Java, but whereas CPython makes heavy use
-     * of the buffer API and C memcpy(), we use View.copyTo. The logic is much the same, however,
-     * even down to variable names.
+     * A large part of the CPython bytearray.c is devoted to replace( old, new [, count ] ). The
+     * special section here reproduces that in Java, but whereas CPython makes heavy use of the
+     * buffer API and C memcpy(), we use PyBuffer.copyTo. The logic is much the same, however, even
+     * down to variable names.
      */
 
     /**
@@ -1614,23 +1269,23 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * This class implements the Boyer-Moore-Horspool Algorithm for findind a pattern in text,
-     * applied to byte arrays. The BMH algorithm uses a table of bad-character skips derived from
-     * the pattern. The bad-character skips table tells us how far from the end of the pattern is a
-     * byte that might match the text byte currently aligned with the end of the pattern. For
-     * example, suppose the pattern (of length 6) is at position 4:
+     * This class implements the Boyer-Moore-Horspool Algorithm for find a pattern in text, applied
+     * to byte arrays. The BMH algorithm uses a table of bad-character skips derived from the
+     * pattern. The bad-character skips table tells us how far from the end of the pattern is a byte
+     * that might match the text byte currently aligned with the end of the pattern. For example,
+     * suppose the pattern ("panama") is at position 6:
      *
      * <pre>
      *                    1         2         3
      *          0123456789012345678901234567890
      * Text:    a man, a map, a panama canal
-     * Pattern:     panama
+     * Pattern:       panama
      * </pre>
      *
-     * This puts the 'm' of 'map' against the last byte 'a' of the pattern. Rather than testing the
-     * pattern, we will look up 'm' in the skip table. There is an 'm' just one step from the end of
-     * the pattern, so we will move the pattern one place to the right before trying to match it.
-     * This allows us to move in large strides throughthe text.
+     * This puts the 'p' of 'map' against the last byte 'a' of the pattern. Rather than testing the
+     * pattern, we will look up 'p' in the skip table. There is an 'p' just 5 steps from the end of
+     * the pattern, so we will move the pattern 5 places to the right before trying to match it.
+     * This allows us to move in large strides through the text.
      */
     protected static class Finder {
 
@@ -1640,7 +1295,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          *
          * @param pattern A vew that presents the pattern as an array of bytes
          */
-        public Finder(View pattern) {
+        public Finder(PyBuffer pattern) {
             this.pattern = pattern;
         }
 
@@ -1666,7 +1321,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          */
         protected int[] calculateSkipTable() {
             int[] skipTable = new int[MASK + 1];
-            int m = pattern.size();
+            int m = pattern.getLen();
             // Default skip is the pattern length: for bytes not in the pattern.
             Arrays.fill(skipTable, m);
             // For each byte in the pattern, make an entry for how far it is from the end.
@@ -1710,30 +1365,31 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
             this.text = text;
             this.left = start;
-            right = start + size - pattern.size() + 1; // Last pattern position + 1
+            right = start + size - pattern.getLen() + 1; // Last pattern position + 1
 
             /*
              * We defer computing the table from construction to this point mostly because
              * calculateSkipTable() may be overridden, and we want to use the right one.
              */
-            if (pattern.size() > 1 && skipTable == null) {
+            if (pattern.getLen() > 1 && skipTable == null) {
                 skipTable = calculateSkipTable();
             }
 
         }
 
-        protected final View pattern;
+        protected final PyBuffer pattern;
         protected byte[] text = emptyStorage; // in case we forget to setText()
         protected int left = 0; // Leftmost pattern position to use
         protected int right = 0; // Rightmost pattern position + 1
 
         /**
-         * Return the  index in the text array where the preceding pattern match ends (one beyond the last
-         * character matched), which may also be one beyond the effective end ofthe text.
-         * Between a call to setText() and the first call to
-         * <code>nextIndex()</code> return the start position.
+         * Return the index in the text array where the preceding pattern match ends (one beyond the
+         * last character matched), which may also be one beyond the effective end ofthe text.
+         * Between a call to setText() and the first call to <code>nextIndex()</code> return the
+         * start position.
          * <p>
          * The following idiom may be used:
+         *
          * <pre>
          * f.setText(text);
          * int p = f.nextIndex();
@@ -1755,7 +1411,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * @return matching index or -1 if no (further) occurrences found
          */
         public int nextIndex() {
-            int m = pattern.size();
+            int m = pattern.getLen();
 
             if (skipTable != null) { // ... which it will not be if m>1 and setText() was called
                 /*
@@ -1876,7 +1532,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          *
          * @param pattern A vew that presents the pattern as an array of bytes
          */
-        public ReverseFinder(View pattern) {
+        public ReverseFinder(PyBuffer pattern) {
             super(pattern);
         }
 
@@ -1901,7 +1557,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          */
         protected int[] calculateSkipTable() {
             int[] skipTable = new int[MASK + 1];
-            int m = pattern.size();
+            int m = pattern.getLen();
             // Default skip is the pattern length: for bytes not in the pattern.
             Arrays.fill(skipTable, m);
             // For each byte in the pattern, make an entry for how far it is from the start.
@@ -1917,7 +1573,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * @return the new effective end of the text
          */
         public int currIndex() {
-            return right+pattern.size()-1;
+            return right + pattern.getLen() - 1;
         }
 
         /**
@@ -1929,7 +1585,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          */
         public int nextIndex() {
 
-            int m = pattern.size();
+            int m = pattern.getLen();
 
             if (skipTable != null) { // ... which it will not be if m>1 and setText() was called
                 /*
@@ -2007,8 +1663,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          *
          * @param bytes to be in the set.
          */
-        public ByteSet(View bytes) {
-            int n = bytes.size();
+        public ByteSet(PyBuffer bytes) {
+            int n = bytes.getLen();
             for (int i = 0; i < n; i++) {
                 int c = bytes.intAt(i);
                 long mask = 1L << c; // Only uses low 6 bits of c (JLS)
@@ -2030,7 +1686,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         /**
-         * Test to see if the byte (expressed an an integer) is in the set.
+         * Test to see if the byte (expressed as an integer) is in the set.
          *
          * @param b integer value of the byte
          * @return true iff b is in the set
@@ -2045,15 +1701,15 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Convenience routine producing a ValueError for "empty separator" if the View is of an object with zero length,
-     * and returning the length otherwise.
+     * Convenience routine producing a ValueError for "empty separator" if the PyBuffer is of an
+     * object with zero length, and returning the length otherwise.
      *
      * @param separator view to test
      * @return the length of the separator
-     * @throws PyException if the View is zero length
+     * @throws PyException if the PyBuffer is zero length
      */
-    protected final static int checkForEmptySeparator(View separator) throws PyException {
-        int n = separator.size();
+    protected final static int checkForEmptySeparator(PyBuffer separator) throws PyException {
+        int n = separator.getLen();
         if (n == 0) {
             throw Py.ValueError("empty separator");
         }
@@ -2149,14 +1805,18 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return count of occurrences of sub within this byte array
      */
     final int basebytes_count(PyObject sub, PyObject ostart, PyObject oend) {
-        Finder finder = new Finder(getViewOrError(sub));
+        PyBuffer vsub = getViewOrError(sub);
+        try {
+            Finder finder = new Finder(vsub);
 
-        // Convert [start:end] to integers
-        PySlice s = new PySlice(ostart, oend, null);
-        int[] index = s.indicesEx(size());  // [ start, end, 1, end-start ]
+            // Convert [ostart:oend] to integers
+            int[] index = indicesEx(ostart, oend);  // [ start, end, 1, end-start ]
 
-        // Make this slice the thing we count within.
-        return finder.count(storage, offset + index[0], index[3]);
+            // Make this slice the thing we count within.
+            return finder.count(storage, offset + index[0], index[3]);
+        } finally {
+            vsub.release();
+        }
     }
 
     /**
@@ -2173,8 +1833,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_find(PyObject sub, PyObject ostart, PyObject oend) {
-        Finder finder = new Finder(getViewOrError(sub));
-        return find(finder, ostart, oend);
+        PyBuffer vsub = getViewOrError(sub);
+        try {
+            Finder finder = new Finder(vsub);
+            return find(finder, ostart, oend);
+        } finally {
+            vsub.release();
+        }
     }
 
     /**
@@ -2218,9 +1883,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                     value = (value << 4) + hexDigit(c);
                     r[p++] = (byte)value;
                 } catch (IllegalArgumentException e) {
-                    throw Py.ValueError(String.format(fmt, i-1));
+                    throw Py.ValueError(String.format(fmt, i - 1));
                 } catch (IndexOutOfBoundsException e) {
-                    throw Py.ValueError(String.format(fmt, i-2));
+                    throw Py.ValueError(String.format(fmt, i - 2));
                 }
             }
         }
@@ -2259,53 +1924,62 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final synchronized PyByteArray basebytes_join(Iterable<? extends PyObject> iter) {
 
-        List<View> iterList = new LinkedList<View>();
+        List<PyBuffer> iterList = new LinkedList<PyBuffer>();
         long mysize = this.size;
         long totalSize = 0;
         boolean first = true;
 
-        for (PyObject o : iter) {
-            // Scan the iterable into a list, checking type and accumulating size
-            View v = getView(o);
-            if (v == null) {
-                // Unsuitable object to be in this join
-                String fmt = "can only join an iterable of bytes (item %d has type '%.80s')";
-                throw Py.TypeError(String.format(fmt, iterList.size(), o.getType().fastGetName()));
-            }
-            iterList.add(v);
-            totalSize += v.size();
+        try {
+            for (PyObject o : iter) {
+                // Scan the iterable into a list, checking type and accumulating size
+                PyBuffer v = getView(o);
+                if (v == null) {
+                    // Unsuitable object to be in this join
+                    String fmt = "can only join an iterable of bytes (item %d has type '%.80s')";
+                    throw Py.TypeError(String.format(fmt, iterList.size(), o.getType()
+                                                                            .fastGetName()));
+                }
+                iterList.add(v);
+                totalSize += v.getLen();
 
-            // Each element after the first is preceded by a copy of this
-            if (!first) {
-                totalSize += mysize;
-            } else {
-                first = false;
+                // Each element after the first is preceded by a copy of this
+                if (!first) {
+                    totalSize += mysize;
+                } else {
+                    first = false;
+                }
+
+                if (totalSize > Integer.MAX_VALUE) {
+                    throw Py.OverflowError("join() result would be too long");
+                }
             }
 
-            if (totalSize > Integer.MAX_VALUE) {
-                throw Py.OverflowError("join() result would be too long");
+            // Load the Views from the iterator into a new PyByteArray
+            PyByteArray result = new PyByteArray((int)totalSize);
+            int p = result.offset; // Copy-to pointer
+            first = true;
+
+            for (PyBuffer v : iterList) {
+                // Each element after the first is preceded by a copy of this
+                if (!first) {
+                    System.arraycopy(storage, offset, result.storage, p, size);
+                    p += size;
+                } else {
+                    first = false;
+                }
+                // Then the element from the iterable
+                v.copyTo(result.storage, p);
+                p += v.getLen();
+            }
+
+            return result;
+
+        } finally {
+            // All the buffers we acquired have to be realeased
+            for (PyBuffer v : iterList) {
+                v.release();
             }
         }
-
-        // Load the Views from the iterator into a new PyByteArray
-        PyByteArray result = new PyByteArray((int)totalSize);
-        int p = result.offset; // Copy-to pointer
-        first = true;
-
-        for (View v : iterList) {
-            // Each element after the first is preceded by a copy of this
-            if (!first) {
-                System.arraycopy(storage, offset, result.storage, p, size);
-                p += size;
-            } else {
-                first = false;
-            }
-            // Then the element from the iterable
-            v.copyTo(result.storage, p);
-            p += v.size();
-        }
-
-        return result;
     }
 
     /**
@@ -2332,20 +2006,26 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final synchronized PyTuple basebytes_partition(PyObject sep) {
 
-        // Create a Finder for the separtor and set it on this byte array
-        View separator = getViewOrError(sep);
-        int n = checkForEmptySeparator(separator);
-        Finder finder = new Finder(separator);
-        finder.setText(this);
+        // View the separator as a byte array (or error if we can't)
+        PyBuffer separator = getViewOrError(sep);
 
-        // We only uuse it once, to find the first occurrence
-        int p = finder.nextIndex() - offset;
-        if (p >= 0) {
-            // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
-            return partition(p, p + n);
-        } else {
-            // Not found: choose values leading to ([0:size], '', '')
-            return partition(size, size);
+        try {
+            // Create a Finder for the separator and set it on this byte array
+            int n = checkForEmptySeparator(separator);
+            Finder finder = new Finder(separator);
+            finder.setText(this);
+
+            // We only use it once, to find the first occurrence
+            int p = finder.nextIndex() - offset;
+            if (p >= 0) {
+                // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
+                return partition(p, p + n);
+            } else {
+                // Not found: choose values leading to ([0:size], '', '')
+                return partition(size, size);
+            }
+        } finally {
+            separator.release();
         }
     }
 
@@ -2364,7 +2044,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         return new PyTuple(head, sep, tail);
     }
 
-   /**
+    /**
      * Ready-to-expose implementation of Python <code>rfind( sub [, start [, end ]] )</code>. Return
      * the highest index in the byte array where byte sequence <code>sub</code> is found, such that
      * <code>sub</code> is contained in the slice <code>[start:end]</code>. Arguments
@@ -2378,14 +2058,20 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_rfind(PyObject sub, PyObject ostart, PyObject oend) {
-        Finder finder = new ReverseFinder(getViewOrError(sub));
-        return find(finder, ostart, oend);
+        PyBuffer vsub = getViewOrError(sub);
+        try {
+            Finder finder = new ReverseFinder(vsub);
+            return find(finder, ostart, oend);
+        } finally {
+            vsub.release();
+        }
     }
 
     /**
      * Common code for Python <code>find( sub [, start [, end ]] )</code> and
      * <code>rfind( sub [, start [, end ]] )</code>. Return the lowest or highest index in the byte
-     * array where byte sequence used to construct <code>finder</code> is found.
+     * array where byte sequence used to construct <code>finder</code> is found. The particular type
+     * (plain <code>Finder</code> or <code>ReverseFinder</code>) determines the direction.
      *
      * @param finder for the bytes to find, sometime forwards, sometime backwards
      * @param ostart of slice to search
@@ -2394,9 +2080,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     private final int find(Finder finder, PyObject ostart, PyObject oend) {
 
-        // Convert [start:end] to integers
-        PySlice s = new PySlice(ostart, oend, null);
-        int[] index = s.indicesEx(size());  // [ start, end, 1, end-start ]
+        // Convert [ostart:oend] to integers
+        int[] index = indicesEx(ostart, oend);  // [ start, end, 1, end-start ]
 
         // Make this slice the thing we search. Note finder works with Java index in storage.
         finder.setText(storage, offset + index[0], index[3]);
@@ -2420,70 +2105,81 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final synchronized PyByteArray basebytes_replace(PyObject oldB, PyObject newB, int maxcount) {
 
-        View from = getViewOrError(oldB);
-        View to = getViewOrError(newB);
+        // View the to and from as byte arrays (or error if we can't)
+        PyBuffer to = getViewOrError(newB), from = null;
+        try {
+            from = getViewOrError(oldB);
+            /*
+             * The logic of the first section is copied exactly from CPython in order to get the
+             * same behaviour. The "headline" description of replace is simple enough but the corner
+             * cases can be surprising:
+             */
+            // >>> bytearray(b'hello').replace(b'',b'-')
+            // bytearray(b'-h-e-l-l-o-')
+            // >>> bytearray(b'hello').replace(b'',b'-',3)
+            // bytearray(b'-h-e-llo')
+            // >>> bytearray(b'hello').replace(b'',b'-',1)
+            // bytearray(b'-hello')
+            // >>> bytearray().replace(b'',b'-')
+            // bytearray(b'-')
+            // >>> bytearray().replace(b'',b'-',1) # ?
+            // bytearray(b'')
 
-        /*
-         * The logic of the first section is copied exactly from CPython in order to get the same
-         * behaviour. The "headline" description of replace is simple enough but the corner cases
-         * can be surprising:
-         */
-        // >>> bytearray(b'hello').replace(b'',b'-')
-        // bytearray(b'-h-e-l-l-o-')
-        // >>> bytearray(b'hello').replace(b'',b'-',3)
-        // bytearray(b'-h-e-llo')
-        // >>> bytearray(b'hello').replace(b'',b'-',1)
-        // bytearray(b'-hello')
-        // >>> bytearray().replace(b'',b'-')
-        // bytearray(b'-')
-        // >>> bytearray().replace(b'',b'-',1) # ?
-        // bytearray(b'')
+            if (maxcount < 0) {
+                maxcount = Integer.MAX_VALUE;
 
-        if (maxcount < 0) {
-            maxcount = Integer.MAX_VALUE;
+            } else if (maxcount == 0 || size == 0) {
+                // nothing to do; return the original bytes
+                return new PyByteArray(this);
+            }
 
-        } else if (maxcount == 0 || size == 0) {
-            // nothing to do; return the original bytes
-            return new PyByteArray(this);
-        }
+            int from_len = from.getLen();
+            int to_len = to.getLen();
 
-        int from_len = from.size();
-        int to_len = to.size();
+            if (maxcount == 0 || (from_len == 0 && to_len == 0)) {
+                // nothing to do; return the original bytes
+                return new PyByteArray(this);
 
-        if (maxcount == 0 || (from_len == 0 && to_len == 0)) {
-            // nothing to do; return the original bytes
-            return new PyByteArray(this);
+            } else if (from_len == 0) {
+                // insert the 'to' bytes everywhere.
+                // >>> "Python".replace("", ".")
+                // '.P.y.t.h.o.n.'
+                return replace_interleave(to, maxcount);
 
-        } else if (from_len == 0) {
-            // insert the 'to' bytes everywhere.
-            // >>> "Python".replace("", ".")
-            // '.P.y.t.h.o.n.'
-            return replace_interleave(to, maxcount);
+            } else if (size == 0) {
+                // Special case for "".replace("", "A") == "A"
+                return new PyByteArray(to);
 
-        } else if (size == 0) {
-            // Special case for "".replace("", "A") == "A"
-            return new PyByteArray(to);
+            } else if (to_len == 0) {
+                // Delete occurrences of the 'from' bytes
+                return replace_delete_substring(from, maxcount);
 
-        } else if (to_len == 0) {
-            // Delete occurrences of the 'from' bytes
-            return replace_delete_substring(from, maxcount);
+            } else if (from_len == to_len) {
+                // Result is same size as this byte array, whatever the number of replacements.
+                return replace_substring_in_place(from, to, maxcount);
 
-        } else if (from_len == to_len) {
-            // The result is the same size as this byte array, whatever the number of replacements.
-            return replace_substring_in_place(from, to, maxcount);
+            } else {
+                // Otherwise use the generic algorithm
+                return replace_substring(from, to, maxcount);
+            }
 
-        } else {
-            // Otherwise use the generic algorithm
-            return replace_substring(from, to, maxcount);
+        } finally {
+            /*
+             * Release the buffers we acquired: there must be a to buffer and there might be a from
+             * buffer.
+             */
+            to.release();
+            if (from != null) {
+                from.release();
+            }
         }
     }
 
     /*
      * Algorithms for different cases of string replacement. CPython also has specialisations for
-     * when 'from' or 'to' or both are single bytes. In Java we think this is unnecessary because
-     * such speed gain as might be available that way is obtained by using the efficient one-byte
-     * View object. Because Java cannot access memory bytes directly, unlike C, there is not so much
-     * to be gained.
+     * when 'from' or 'to' or both are single bytes. This may also be worth doing in Java when the
+     * 'to' is a single byte. (The 'from' is turned into a Finder object which already makes a
+     * special case of single bytes.)
      */
 
     /**
@@ -2495,7 +2191,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param maxcount maximum number of replacements to make
      * @return the result as a new PyByteArray
      */
-    private PyByteArray replace_substring(View from, View to, int maxcount) {
+    private PyByteArray replace_substring(PyBuffer from, PyBuffer to, int maxcount) {
         // size>=1, len(from)>=1, len(to)>=1, maxcount>=1
 
         // Initialise a Finder for the 'from' pattern
@@ -2507,8 +2203,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return new PyByteArray(this);
         }
 
-        int from_len = from.size();
-        int to_len = to.size();
+        int from_len = from.getLen();
+        int to_len = to.getLen();
 
         // Calculate length of result and check for too big
         long result_len = size + count * (to_len - from_len);
@@ -2562,12 +2258,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Handle the interleaving case b'hello'.replace(b'', b'..') = b'..h..e..l..l..o..' At the call
-     * site we are guaranteed: size>=1, to.size()>=1, maxcount>=1
+     * site we are guaranteed: size>=1, to.getLen()>=1, maxcount>=1
      *
      * @param to the replacement bytes as a byte-oriented view
      * @param maxcount upper limit on number of insertions
      */
-    private PyByteArray replace_interleave(View to, int maxcount) {
+    private PyByteArray replace_interleave(PyBuffer to, int maxcount) {
 
         // Insert one at the beginning and one after every byte, or as many as allowed
         int count = size + 1;
@@ -2575,7 +2271,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             count = maxcount;
         }
 
-        int to_len = to.size();
+        int to_len = to.getLen();
 
         // Calculate length of result and check for too big
         long result_len = ((long)count) * to_len + size;
@@ -2620,7 +2316,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param maxcount maximum number of deletions to make
      * @return the result as a new PyByteArray
      */
-    private PyByteArray replace_delete_substring(View from, int maxcount) {
+    private PyByteArray replace_delete_substring(PyBuffer from, int maxcount) {
         // len(self)>=1, len(from)>=1, to="", maxcount>=1
 
         // Initialise a Finder for the 'from' pattern
@@ -2632,7 +2328,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return new PyByteArray(this);
         }
 
-        int from_len = from.size();
+        int from_len = from.getLen();
         long result_len = size - (count * from_len);
         assert (result_len >= 0);
 
@@ -2691,7 +2387,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param maxcount maximum number of replacements to make
      * @return the result as a new PyByteArray
      */
-    private PyByteArray replace_substring_in_place(View from, View to, int maxcount) {
+    private PyByteArray replace_substring_in_place(PyBuffer from, PyBuffer to, int maxcount) {
         // len(self)>=1, len(from)==len(to)>=1, maxcount>=1
 
         // Initialise a Finder for the 'from' pattern
@@ -2750,20 +2446,25 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final synchronized PyTuple basebytes_rpartition(PyObject sep) {
 
-        // Create a Finder for the separtor and set it on this byte array
-        View separator = getViewOrError(sep);
-        int n = checkForEmptySeparator(separator);
-        Finder finder = new ReverseFinder(separator);
-        finder.setText(this);
+        // View the separator as a byte array (or error if we can't)
+        PyBuffer separator = getViewOrError(sep);
+        try {
+            // Create a Finder for the separtor and set it on this byte array
+            int n = checkForEmptySeparator(separator);
+            Finder finder = new ReverseFinder(separator);
+            finder.setText(this);
 
-        // We only use it once, to find the first (from the right) occurrence
-        int p = finder.nextIndex() - offset;
-        if (p >= 0) {
-            // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
-            return partition(p, p + n);
-        } else {
-            // Not found: choose values leading to ('', '', [0:size])
-            return partition(0, 0);
+            // We only use it once, to find the first (from the right) occurrence
+            int p = finder.nextIndex() - offset;
+            if (p >= 0) {
+                // Found at p, so we'll be returning ([0:p], [p:p+n], [p+n:])
+                return partition(p, p + n);
+            } else {
+                // Not found: choose values leading to ('', '', [0:size])
+                return partition(0, 0);
+            }
+        } finally {
+            separator.release();
         }
     }
 
@@ -2844,41 +2545,46 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyList basebytes_rsplit_explicit(PyObject sep, int maxsplit) {
 
         // The separator may be presented as anything viewable as bytes
-        View separator = getViewOrError(sep);
-        int n = checkForEmptySeparator(separator);
+        PyBuffer separator = getViewOrError(sep);
 
-        PyList result = new PyList();
+        try {
+            int n = checkForEmptySeparator(separator);
 
-        // Use the Finder class to search in the storage of this byte array
-        Finder finder = new ReverseFinder(separator);
-        finder.setText(this);
+            PyList result = new PyList();
 
-        int q = offset + size; // q points to "honorary separator"
-        int p;
+            // Use the Finder class to search in the storage of this byte array
+            Finder finder = new ReverseFinder(separator);
+            finder.setText(this);
 
-        // At this point storage[q-1] is the last byte of the rightmost unsplit word, or
-        // q=offset if there aren't any. While we have some splits left to do ...
-        while (q > offset && maxsplit-- != 0) {
-            // Delimit the word whose last byte is storage[q-1]
-            int r = q;
-            // Skip p backwards over the word and the separator
-            q = finder.nextIndex();
-            if (q < 0) {
-                p = offset;
-            } else {
-                p = q + n;
+            int q = offset + size; // q points to "honorary separator"
+            int p;
+
+            // At this point storage[q-1] is the last byte of the rightmost unsplit word, or
+            // q=offset if there aren't any. While we have some splits left to do ...
+            while (q > offset && maxsplit-- != 0) {
+                // Delimit the word whose last byte is storage[q-1]
+                int r = q;
+                // Skip p backwards over the word and the separator
+                q = finder.nextIndex();
+                if (q < 0) {
+                    p = offset;
+                } else {
+                    p = q + n;
+                }
+                // storage[p] is the first byte of the word.
+                BaseBytes word = getslice(p - offset, r - offset);
+                result.add(0, word);
             }
-            // storage[p] is the first byte of the word.
-            BaseBytes word = getslice(p - offset, r - offset);
-            result.add(0, word);
-        }
 
-        // Prepend the remaining unsplit text if any
-        if (q >= offset) {
-            BaseBytes word = getslice(0, q - offset);
-            result.add(0, word);
+            // Prepend the remaining unsplit text if any
+            if (q >= offset) {
+                BaseBytes word = getslice(0, q - offset);
+                result.add(0, word);
+            }
+            return result;
+        } finally {
+            separator.release();
         }
-        return result;
     }
 
     /**
@@ -3003,7 +2709,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return PyList of byte arrays that result from the split
      */
     final PyList basebytes_split(PyObject sep, int maxsplit) {
-        if (sep == null || sep==Py.None) {
+        if (sep == null || sep == Py.None) {
             return basebytes_split_whitespace(maxsplit);
         } else {
             return basebytes_split_explicit(sep, maxsplit);
@@ -3023,32 +2729,36 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyList basebytes_split_explicit(PyObject sep, int maxsplit) {
 
         // The separator may be presented as anything viewable as bytes
-        View separator = getViewOrError(sep);
-        checkForEmptySeparator(separator);
+        PyBuffer separator = getViewOrError(sep);
+        try {
+            checkForEmptySeparator(separator);
 
-        PyList result = new PyList();
+            PyList result = new PyList();
 
-        // Use the Finder class to search in the storage of this byte array
-        Finder finder = new Finder(separator);
-        finder.setText(this);
+            // Use the Finder class to search in the storage of this byte array
+            Finder finder = new Finder(separator);
+            finder.setText(this);
 
-        // Look for the first separator
-        int p = finder.currIndex(); // = offset
-        int q = finder.nextIndex(); // First separator (or <0 if not found)
+            // Look for the first separator
+            int p = finder.currIndex(); // = offset
+            int q = finder.nextIndex(); // First separator (or <0 if not found)
 
-        // Note: bytearray().split(' ') == [bytearray(b'')]
+            // Note: bytearray().split(' ') == [bytearray(b'')]
 
-        // While we found a separator, and we have some splits left (if maxsplit started>=0)
-        while (q >= 0 && maxsplit-- != 0) {
-            // Note the Finder works in terms of indexes into this.storage
-            result.append(getslice(p - offset, q - offset));
-            p = finder.currIndex(); // Start of unsplit text
-            q = finder.nextIndex(); // Next separator (or <0 if not found)
+            // While we found a separator, and we have some splits left (if maxsplit started>=0)
+            while (q >= 0 && maxsplit-- != 0) {
+                // Note the Finder works in terms of indexes into this.storage
+                result.append(getslice(p - offset, q - offset));
+                p = finder.currIndex(); // Start of unsplit text
+                q = finder.nextIndex(); // Next separator (or <0 if not found)
+            }
+
+            // Append the remaining unsplit text
+            result.append(getslice(p - offset, size));
+            return result;
+        } finally {
+            separator.release();
         }
-
-        // Append the remaining unsplit text
-        result.append(getslice(p - offset, size));
-        return result;
     }
 
     /**
@@ -3096,7 +2806,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         // Append the remaining unsplit text if any
-        if (p<limit) {
+        if (p < limit) {
             result.append(getslice(p - offset, size));
         }
         return result;
@@ -3293,7 +3003,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final BaseBytes basebytes_expandtabs(int tabsize) {
         // We could only work out the true size by doing the work twice,
         // so make a guess and let the Builder re-size if it's not enough.
-        int estimatedSize = size + size/8;
+        int estimatedSize = size + size / 8;
         Builder builder = getBuilder(estimatedSize);
 
         int carriagePosition = 0;
@@ -3524,9 +3234,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * pont codes and is consistent with Java's {@link Character#isUpperCase(char)} and
      * {@link Character#isLowerCase(char)}.
      *
-     * @return true if the string is a titlecased string and there is at least one cased byte, for example
-     *         uppercase characters may only follow uncased bytes and lowercase characters only
-     *         cased ones. Return false otherwise.
+     * @return true if the string is a titlecased string and there is at least one cased byte, for
+     *         example uppercase characters may only follow uncased bytes and lowercase characters
+     *         only cased ones. Return false otherwise.
      */
     public boolean istitle() {
         return basebytes_istitle();
@@ -3535,9 +3245,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>istitle()</code>.
      *
-     * @return true if the string is a titlecased string and there is at least one cased byte, for example
-     *         uppercase characters may only follow uncased bytes and lowercase characters only
-     *         cased ones. Return false otherwise.
+     * @return true if the string is a titlecased string and there is at least one cased byte, for
+     *         example uppercase characters may only follow uncased bytes and lowercase characters
+     *         only cased ones. Return false otherwise.
      */
     final boolean basebytes_istitle() {
 
@@ -3888,9 +3598,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param c curren (maybe unprintable) character
      */
     private static final void appendHexEscape(StringBuilder buf, int c) {
-        buf.append("\\x")
-                .append(Character.forDigit((c & 0xf0) >> 4, 16))
-                .append(Character.forDigit(c & 0xf, 16));
+        buf.append("\\x").append(Character.forDigit((c & 0xf0) >> 4, 16))
+           .append(Character.forDigit(c & 0xf, 16));
     }
 
     /**
@@ -3956,7 +3665,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * ============================================================================================
      */
 
-   /**
+    /**
      * Access to the bytearray (or bytes) as a {@link java.util.List}. The List interface supplied
      * by BaseBytes delegates to this object.
      */
@@ -4342,17 +4051,17 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         void append(BaseBytes b, int start, int end) {
             int n = end - start;
             makeRoomFor(n);
-            System.arraycopy(b.storage, b.offset+start, storage, size, n);
+            System.arraycopy(b.storage, b.offset + start, storage, size, n);
             size += n;
         }
 
         /**
-         * Append the contents of the given {@link View}.
+         * Append the contents of the given {@link PyBuffer}.
          *
          * @param b
          */
-        void append(View v) {
-            int n = v.size();
+        void append(PyBuffer v) {
+            int n = v.getLen();
             makeRoomFor(n);
             v.copyTo(storage, size);
             size += n;
