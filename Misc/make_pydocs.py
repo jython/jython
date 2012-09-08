@@ -62,6 +62,7 @@ frozenset,
 BaseException,
 bytearray,
 #buffer,
+memoryview,
 # +
 type(f),
 type(m),

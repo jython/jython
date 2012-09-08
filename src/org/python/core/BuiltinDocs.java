@@ -4047,6 +4047,119 @@ public class BuiltinDocs {
         "Pad a numeric string B with zeros on the left, to fill a field\n" + 
         "of the specified width.  B is never truncated.";
 
+    // Docs for <type 'memoryview'>
+    public final static String memoryview___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String memoryview___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String memoryview___delitem___doc = 
+        "x.__delitem__(y) <==> del x[y]";
+
+    public final static String memoryview_doc = 
+        "memoryview(object)\n" + 
+        "\n" + 
+        "Create a new memoryview object which references the given object.";
+
+    public final static String memoryview___eq___doc = 
+        "x.__eq__(y) <==> x==y";
+
+    public final static String memoryview___format___doc = 
+        "default object formatter";
+
+    public final static String memoryview___ge___doc = 
+        "x.__ge__(y) <==> x>=y";
+
+    public final static String memoryview___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String memoryview___getitem___doc = 
+        "x.__getitem__(y) <==> x[y]";
+
+    public final static String memoryview___gt___doc = 
+        "x.__gt__(y) <==> x>y";
+
+    public final static String memoryview___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String memoryview___init___doc = 
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
+
+    public final static String memoryview___le___doc = 
+        "x.__le__(y) <==> x<=y";
+
+    public final static String memoryview___len___doc = 
+        "x.__len__() <==> len(x)";
+
+    public final static String memoryview___lt___doc = 
+        "x.__lt__(y) <==> x<y";
+
+    public final static String memoryview___ne___doc = 
+        "x.__ne__(y) <==> x!=y";
+
+    public final static String memoryview___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String memoryview___reduce___doc = 
+        "helper for pickle";
+
+    public final static String memoryview___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String memoryview___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String memoryview___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String memoryview___setitem___doc = 
+        "x.__setitem__(i, y) <==> x[i]=y";
+
+    public final static String memoryview___sizeof___doc = 
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
+
+    public final static String memoryview___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String memoryview___subclasshook___doc = 
+        "Abstract classes can override this to customize issubclass().\n" + 
+        "\n" + 
+        "This is invoked early on by abc.ABCMeta.__subclasscheck__().\n" + 
+        "It should return True, False or NotImplemented.  If it returns\n" + 
+        "NotImplemented, the normal algorithm is used.  Otherwise, it\n" + 
+        "overrides the normal algorithm (and the outcome is cached).\n" + 
+        "";
+
+    public final static String memoryview_format_doc = 
+        "";
+
+    public final static String memoryview_itemsize_doc = 
+        "";
+
+    public final static String memoryview_ndim_doc = 
+        "";
+
+    public final static String memoryview_readonly_doc = 
+        "";
+
+    public final static String memoryview_shape_doc = 
+        "";
+
+    public final static String memoryview_strides_doc = 
+        "";
+
+    public final static String memoryview_suboffsets_doc = 
+        "";
+
+    public final static String memoryview_tobytes_doc = 
+        "";
+
+    public final static String memoryview_tolist_doc = 
+        "";
+
     // Docs for <type 'function'>
     public final static String function___call___doc = 
         "x.__call__(...) <==> x(...)";

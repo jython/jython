@@ -12,7 +12,8 @@ import org.python.expose.ExposedType;
  * provides a wrapper around the Jython buffer API, but slice operations and most others are
  * missing.
  */
-@ExposedType(name = "memoryview", base = PyObject.class, isBaseType = false)
+@ExposedType(name = "memoryview", doc = BuiltinDocs.memoryview_doc, base = PyObject.class,
+        isBaseType = false)
 public class PyMemoryView extends PySequence implements BufferProtocol {
 
     public static final PyType TYPE = PyType.fromClass(PyMemoryView.class);
