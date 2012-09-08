@@ -655,6 +655,20 @@ public abstract class BaseBuffer implements PyBuffer {
     }
 
     /**
+     * The toString() method of a buffer reproduces the values in the buffer (as unsigned integers)
+     * as the character codes of a <code>String</code>.
+     */
+    @Override
+    public String toString() {
+        int n = getLen();
+        StringBuilder sb = new StringBuilder(n);
+        for (int i = 0; i < n; i++) {
+            sb.appendCodePoint(intAt(i));
+        }
+        return sb.toString();
+    }
+
+    /**
      * General purpose method to construct an exception to throw according to the syndrome.
      *
      * @param syndrome of the mis-match between buffer and requested features

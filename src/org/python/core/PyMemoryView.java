@@ -1,6 +1,9 @@
 package org.python.core;
 
+import org.python.core.buffer.BaseBuffer;
+import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
@@ -103,6 +106,53 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     }
 
     /**
+     * Implementation of Python <code>tobytes()</code>. Return the data in the buffer as a byte
+     * string (an object of class <code>str</code>).
+     *
+     * @return byte string of buffer contents.
+     */
+    /*
+     * From Python 3, this is equivalent to calling the <code>bytes</code> constructor on the
+     * <code>memoryview</code>.
+     */
+    public PyString tobytes() {
+        return memoryview_tobytes();
+    }
+
+    @ExposedMethod(doc = tobytes_doc)
+    final PyString memoryview_tobytes() {
+        if (backing instanceof BaseBuffer) {
+            // In practice, it always is
+            return new PyString(backing.toString());
+        } else {
+            // But just in case ...
+            String s = StringUtil.fromBytes(backing);
+            return new PyString(s);
+        }
+    }
+
+    /**
+     * Implementation of Python <code>tolist()</code>. Return the data in the buffer as a
+     * <code>list</code> where the elements are an appropriate type (<code>int</code> in the case of
+     * a byte-oriented buffer, which is the only case presently supported).
+     *
+     * @return a list of buffer contents.
+     */
+    public PyList tolist() {
+        return memoryview_tolist();
+    }
+
+    @ExposedMethod(doc = tolist_doc)
+    final PyList memoryview_tolist() {
+        int n = backing.getLen();
+        PyList list = new PyList();
+        for (int i = 0; i < n; i++) {
+            list.add(new PyInteger(backing.intAt(i)));
+        }
+        return list;
+    }
+
+    /**
      * Make an integer array into a PyTuple of PyLong values or None if the argument is null.
      *
      * @param x the array (or null)
@@ -126,42 +176,61 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     }
 
     /*
-     * These strings are adapted from the on-line documentation as the attributes do not come with
-     * any docstrings.
+     * These strings are adapted from the patch in CPython issue 15855 and the on-line documentation
+     * most attributes do not come with any docstrings in CPython 2.7, so the make_pydocs trick
+     * won't work. This is a complete set, although not all are needed in Python 2.7.
      */
-    private final static String memoryview_tobytes_doc = "tobytes()\n\n"
-            + "Return the data in the buffer as a bytestring (an object of class str).\n\n"
-            + ">>> m = memoryview(\"abc\")\n" + ">>> m.tobytes()\n" + "'abc'";
+    private final static String cast_doc = "M.cast(format[, shape]) -> memoryview\n\n"
+            + "Cast a memoryview to a new format or shape.";
 
-    private final static String memoryview_tolist_doc = "tolist()\n\n"
-            + "Return the data in the buffer as a list of integers.\n\n"
-            + ">>> memoryview(\"abc\").tolist()\n" + "[97, 98, 99]";
+    private final static String release_doc = "M.release() -> None\n\n"
+            + "Release the underlying buffer exposed by the memoryview object.";
+
+    private final static String tobytes_doc = "M.tobytes() -> bytes\n\n"
+            + "Return the data in the buffer as a bytestring (an object of class str).";
+
+    private final static String tolist_doc = "M.tolist() -> list\n\n"
+            + "Return the data in the buffer as a list of elements.";
+
+    private final static String c_contiguous_doc = "c_contiguous\n"
+            + "A bool indicating whether the memory is C contiguous.";
+
+    private final static String contiguous_doc = "contiguous\n"
+            + "A bool indicating whether the memory is contiguous.";
+
+    private final static String f_contiguous_doc = "c_contiguous\n"
+            + "A bool indicating whether the memory is Fortran contiguous.";
 
     private final static String format_doc = "format\n"
-            + "A string containing the format (in struct module style) for each element in\n"
-            + "the view. This defaults to 'B', a simple bytestring.\n";
+            + "A string containing the format (in struct module style)\n"
+            + " for each element in the view.";
 
     private final static String itemsize_doc = "itemsize\n"
-            + "The size in bytes of each element of the memoryview.\n";
+            + "The size in bytes of each element of the memoryview.";
 
-    private final static String shape_doc = "shape\n"
-            + "A tuple of integers the length of ndim giving the shape of the memory as an\n"
-            + "N-dimensional array.\n";
+    private final static String nbytes_doc = "nbytes\n"
+            + "The amount of space in bytes that the array would use in\n"
+            + "a contiguous representation.";
 
     private final static String ndim_doc = "ndim\n"
-            + "An integer indicating how many dimensions of a multi-dimensional array the\n"
-            + "memory represents.\n";
+            + "An integer indicating how many dimensions of a multi-dimensional\n"
+            + "array the memory represents.";
 
-    private final static String strides_doc = "strides\n"
-            + "A tuple of integers the length of ndim giving the size in bytes to access\n"
-            + "each element for each dimension of the array.\n";
-
-    private final static String suboffsets_doc = "suboffsets\n"
-            + "A tuple of integers the length of ndim, or None, used to access\n"
-            + "each element for each dimension of an indirect array.\n";
+    private final static String obj_doc = "obj\n" + "The underlying object of the memoryview.";
 
     private final static String readonly_doc = "readonly\n"
-            + "A bool indicating whether the memory is read only.\n";
+            + "A bool indicating whether the memory is read only.";
+
+    private final static String shape_doc = "shape\n"
+            + "A tuple of ndim integers giving the shape of the memory\n"
+            + "as an N-dimensional array.";
+
+    private final static String strides_doc = "strides\n"
+            + "A tuple of ndim integers giving the size in bytes to access\n"
+            + "each element for each dimension of the array.";
+
+    private final static String suboffsets_doc = "suboffsets\n"
+            + "A tuple of ndim integers used internally for PIL-style arrays\n" + "or None.";
 
     /*
      * ============================================================================================
@@ -198,7 +267,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * <code>ValueError</code> (except <code>release()</code> itself which can be called multiple
      * times with the same effect as just one call).
      * <p>
-     * This becomes an exposed method only in Python 3.2, but the Jython implementation of
+     * This becomes an exposed method from Python 3.2. The Jython implementation of
      * <code>memoryview</code> follows the Python 3.3 design internally, which is the version that
      * resolved some long-standing design issues.
      */
@@ -222,9 +291,9 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * ============================================================================================
      */
     /**
-     * Gets the indexed element of the memoryview as an integer. This is an extension point
-     * called by PySequence in its implementation of {@link #__getitem__}. It is guaranteed by
-     * PySequence that the index is within the bounds of the memoryview.
+     * Gets the indexed element of the memoryview as an integer. This is an extension point called
+     * by PySequence in its implementation of {@link #__getitem__}. It is guaranteed by PySequence
+     * that the index is within the bounds of the memoryview.
      *
      * @param index index of the element to get.
      */
@@ -251,8 +320,8 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     }
 
     /**
-     * memoryview*int is not implemented in Python, so this should never be called. We still have to override
-     * it to satisfy PySequence.
+     * memoryview*int is not implemented in Python, so this should never be called. We still have to
+     * override it to satisfy PySequence.
      *
      * @param count the number of times to repeat this.
      * @return never

@@ -149,6 +149,14 @@ public class SimpleStringBuffer extends SimpleBuffer {
     }
 
     /**
+     * The <code>toString()</code> method of a <code>SimpleStringBuffer</code> simply produces the underlying <code>String</code>.
+     */
+    @Override
+    public String toString() {
+        return bufString;
+    }
+
+    /**
      * A <code>SimpleStringBuffer.SimpleStringView</code> represents a contiguous subsequence of
      * another <code>SimpleStringBuffer</code>.
      */
