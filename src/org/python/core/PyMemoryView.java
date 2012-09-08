@@ -6,6 +6,7 @@ import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 /**
  * Class implementing the Python <code>memoryview</code> type, at present highly incomplete. It
@@ -48,7 +49,16 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     @ExposedNew
     static PyObject memoryview_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        PyObject obj = args[0];
+
+        // One 'object' argument required
+        if (args.length != 1) {
+            throw Py.TypeError("memoryview() takes exactly one argument");
+        }
+
+        // Use the ArgParser to access it
+        ArgParser ap = new ArgParser("memoryview", args, keywords, "object");
+        PyObject obj = ap.getPyObject(0);
+
         if (obj instanceof BufferProtocol) {
             /*
              * Ask for the full set of facilities (strides, indirect, etc.) from the object in case
@@ -64,16 +74,19 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedGet(doc = format_doc)
     public String format() {
+        checkNotReleased();
         return backing.getFormat();
     }
 
     @ExposedGet(doc = itemsize_doc)
     public int itemsize() {
+        checkNotReleased();
         return backing.getItemsize();
     }
 
     @ExposedGet(doc = shape_doc)
     public PyObject shape() {
+        checkNotReleased();
         if (shape == null) {
             shape = tupleOf(backing.getShape());
         }
@@ -82,11 +95,13 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedGet(doc = ndim_doc)
     public int ndim() {
+        checkNotReleased();
         return backing.getNdim();
     }
 
     @ExposedGet(doc = strides_doc)
     public PyObject strides() {
+        checkNotReleased();
         if (strides == null) {
             strides = tupleOf(backing.getStrides());
         }
@@ -95,6 +110,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedGet(doc = suboffsets_doc)
     public PyObject suboffsets() {
+        checkNotReleased();
         if (suboffsets == null) {
             suboffsets = tupleOf(backing.getSuboffsets());
         }
@@ -103,6 +119,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedGet(doc = readonly_doc)
     public boolean readonly() {
+        checkNotReleased();
         return backing.isReadonly();
     }
 
@@ -122,6 +139,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedMethod(doc = tobytes_doc)
     final PyString memoryview_tobytes() {
+        checkNotReleased();
         if (backing instanceof BaseBuffer) {
             // In practice, it always is
             return new PyString(backing.toString());
@@ -145,6 +163,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedMethod(doc = tolist_doc)
     final PyList memoryview_tolist() {
+        checkNotReleased();
         int n = backing.getLen();
         PyList list = new PyList();
         for (int i = 0; i < n; i++) {
@@ -173,7 +192,280 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @Override
     public int __len__() {
+        checkNotReleased();
         return backing.getLen();
+    }
+
+    /*
+     * ============================================================================================
+     * Python API comparison operations
+     * ============================================================================================
+     */
+
+    @Override
+    public PyObject __eq__(PyObject other) {
+        return memoryview___eq__(other);
+    }
+
+    @Override
+    public PyObject __ne__(PyObject other) {
+        return memoryview___ne__(other);
+    }
+
+    @Override
+    public PyObject __lt__(PyObject other) {
+        return memoryview___lt__(other);
+    }
+
+    @Override
+    public PyObject __le__(PyObject other) {
+        return memoryview___le__(other);
+    }
+
+    @Override
+    public PyObject __ge__(PyObject other) {
+        return memoryview___ge__(other);
+    }
+
+    @Override
+    public PyObject __gt__(PyObject other) {
+        return memoryview___gt__(other);
+    }
+
+    /**
+     * Comparison function between two buffers of bytes, returning 1, 0 or -1 as a>b, a==b, or
+     * a&lt;b respectively. The comparison is by value, using Python unsigned byte conventions,
+     * left-to-right (low to high index). Zero bytes are significant, even at the end of the array:
+     * <code>[65,66,67]&lt;"ABC\u0000"</code>, for example and <code>[]</code> is less than every
+     * non-empty b, while <code>[]==""</code>.
+     *
+     * @param a left-hand wrapped array in the comparison
+     * @param b right-hand wrapped object in the comparison
+     * @return 1, 0 or -1 as a>b, a==b, or a&lt;b respectively
+     */
+    private static int compare(PyBuffer a, PyBuffer b) {
+
+        // Compare elements one by one in these ranges:
+        int ap = 0;
+        int aEnd = ap + a.getLen();
+        int bp = 0;
+        int bEnd = b.getLen();
+
+        while (ap < aEnd) {
+            if (bp >= bEnd) {
+                // a is longer than b
+                return 1;
+            } else {
+                // Compare the corresponding bytes
+                int aVal = a.intAt(ap++);
+                int bVal = b.intAt(bp++);
+                int diff = aVal - bVal;
+                if (diff != 0) {
+                    return (diff < 0) ? -1 : 1;
+                }
+            }
+        }
+
+        // All the bytes matched and we reached the end of a
+        if (bp < bEnd) {
+            // But we didn't reach the end of b
+            return -1;
+        } else {
+            // And the end of b at the same time, so they're equal
+            return 0;
+        }
+    }
+
+    /**
+     * Comparison function between this memoryview and any other object. The inequality comparison
+     * operators are based on this.
+     *
+     * @param b
+     * @return 1, 0 or -1 as this>b, this==b, or this&lt;b respectively, or -2 if the comparison is
+     *         not implemented
+     */
+    private int memoryview_cmp(PyObject b) {
+
+        // Check the memeoryview is still alive: works here for all the inequalities
+        checkNotReleased();
+
+        // Try to get a byte-oriented view
+        PyBuffer bv = BaseBytes.getView(b);
+
+        if (bv == null) {
+            // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
+            return -2;
+
+        } else {
+
+            try {
+                if (bv == backing) {
+                    // Same buffer: quick result
+                    return 0;
+                } else {
+                    // Actually compare the contents
+                    return compare(backing, bv);
+                }
+
+            } finally {
+                // Must always let go of the buffer
+                bv.release();
+            }
+        }
+
+    }
+
+    /**
+     * Fail-fast comparison function between byte array types and any other object, for when the
+     * test is only for equality. The inequality comparison operators <code>__eq__</code> and
+     * <code>__ne__</code> are based on this.
+     *
+     * @param b
+     * @return 0 if this==b, or +1 or -1 if this!=b, or -2 if the comparison is not implemented
+     */
+    private int memoryview_cmpeq(PyObject b) {
+
+        // Check the memeoryview is still alive: works here for all the equalities
+        checkNotReleased();
+
+        // Try to get a byte-oriented view
+        PyBuffer bv = BaseBytes.getView(b);
+
+        if (bv == null) {
+            // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
+            return -2;
+
+        } else {
+
+            try {
+                if (bv == backing) {
+                    // Same buffer: quick result
+                    return 0;
+                } else if (bv.getLen() != backing.getLen()) {
+                    // Different size: can't be equal, and we don't care which is bigger
+                    return 1;
+                } else {
+                    // Actually compare the contents
+                    return compare(backing, bv);
+                }
+
+            } finally {
+                // Must always let go of the buffer
+                bv.release();
+            }
+        }
+
+    }
+
+    /**
+     * Implementation of __eq__ (equality) operator. Comparison with an invalid type returns null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___eq___doc)
+    final PyObject memoryview___eq__(PyObject other) {
+        int cmp = memoryview_cmpeq(other);
+        if (cmp == 0) {
+            return Py.True;
+        } else if (cmp > -2) {
+            return Py.False;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implementation of __ne__ (not equals) operator. Comparison with an invalid type returns null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___ne___doc)
+    final PyObject memoryview___ne__(PyObject other) {
+        int cmp = memoryview_cmpeq(other);
+        if (cmp == 0) {
+            return Py.False;
+        } else if (cmp > -2) {
+            return Py.True;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implementation of __lt__ (less than) operator. Comparison with an invalid type returns null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___lt___doc)
+    final PyObject memoryview___lt__(PyObject other) {
+        int cmp = memoryview_cmp(other);
+        if (cmp >= 0) {
+            return Py.False;
+        } else if (cmp > -2) {
+            return Py.True;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implementation of __le__ (less than or equal to) operator. Comparison with an invalid type
+     * returns null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___le___doc)
+    final PyObject memoryview___le__(PyObject other) {
+        int cmp = memoryview_cmp(other);
+        if (cmp > 0) {
+            return Py.False;
+        } else if (cmp > -2) {
+            return Py.True;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implementation of __ge__ (greater than or equal to) operator. Comparison with an invalid type
+     * returns null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___ge___doc)
+    final PyObject memoryview___ge__(PyObject other) {
+        int cmp = memoryview_cmp(other);
+        if (cmp >= 0) {
+            return Py.True;
+        } else if (cmp > -2) {
+            return Py.False;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Implementation of __gt__ (greater than) operator. Comparison with an invalid type returns
+     * null.
+     *
+     * @param other Python object to compare with
+     * @return Python boolean result or null if not implemented for the other type.
+     */
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.memoryview___gt___doc)
+    final PyObject memoryview___gt__(PyObject other) {
+        int cmp = memoryview_cmp(other);
+        if (cmp > 0) {
+            return Py.True;
+        } else if (cmp > -2) {
+            return Py.False;
+        } else {
+            return null;
+        }
     }
 
     /*
@@ -286,21 +578,39 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
         }
     }
 
+    /**
+     * Check that the memoryview is not released and raise a ValueError if it is. Almost every
+     * operation must call this before it starts work.
+     */
+    protected void checkNotReleased() {
+        if (released) {
+            throw Py.ValueError("operation forbidden on released memoryview object");
+        }
+        // The backing should not have been released if the memoryview has not been.
+        assert (!backing.isReleased());
+    }
+
     /*
      * ============================================================================================
      * API for org.python.core.PySequence
      * ============================================================================================
      */
     /**
-     * Gets the indexed element of the memoryview as an integer. This is an extension point called
-     * by PySequence in its implementation of {@link #__getitem__}. It is guaranteed by PySequence
-     * that the index is within the bounds of the memoryview.
+     * Gets the indexed element of the memoryview as a one byte string. This is an extension point
+     * called by PySequence in its implementation of {@link #__getitem__}. It is guaranteed by
+     * PySequence that the index is within the bounds of the memoryview.
      *
      * @param index index of the element to get.
+     * @return one-character string formed from the byte at the index
      */
     @Override
-    protected PyInteger pyget(int index) {
-        return new PyInteger(backing.intAt(index));
+    protected PyString pyget(int index) {
+        // Our chance to check the memoryview is still alive
+        checkNotReleased();
+        // Treat the byte at the index as a character code
+        return new PyString(String.valueOf((char)backing.intAt(index)));
+        // Originally implemented Python 3 semantics, returning a PyInteger (for byte-oriented) !
+        // return new PyInteger(backing.intAt(index));
     }
 
     /**
@@ -313,6 +623,9 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      */
     @Override
     protected synchronized PyMemoryView getslice(int start, int stop, int step) {
+        // Our chance to check the memoryview is still alive
+        checkNotReleased();
+
         int n = sliceLength(start, stop, step);
         PyBuffer view = backing.getBufferSlice(PyBUF.FULL_RO, start, n, step);
         PyMemoryView ret = new PyMemoryView(view);
@@ -334,18 +647,34 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     }
 
     /**
-     * Sets the indexed element of the memoryview to the given value. This is an extension point
-     * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
-     * PySequence that the index is within the bounds of the memoryview. Any other clients calling
-     * <tt>pyset(int)</tt> must make the same guarantee.
+     * Sets the indexed element of the memoryview to the given value, treating the operation as
+     * assignment to a slice of length one. This is different from the same operation on a byte
+     * array, where the assigned value must be an int: here it must have the buffer API and length
+     * one. This is an extension point called by PySequence in its implementation of
+     * {@link #__setitem__} It is guaranteed by PySequence that the index is within the bounds of
+     * the memoryview. Any other clients calling <tt>pyset(int, PyObject)</tt> must make the same
+     * guarantee.
      *
      * @param index index of the element to set.
-     * @param value the value to set this element to.
+     * @param value to set this element to, regarded as a buffer of length one unit.
      * @throws PyException(AttributeError) if value cannot be converted to an integer
      * @throws PyException(ValueError) if value<0 or value>255
      */
     public synchronized void pyset(int index, PyObject value) throws PyException {
-        backing.storeAt(BaseBytes.byteCheck(value), index);
+        // Our chance to check the memoryview is still alive
+        checkNotReleased();
+
+        // Get a buffer API on the value being assigned
+        PyBuffer valueBuf = BaseBytes.getViewOrError(value);
+        try {
+            if (valueBuf.getLen() != 1) {
+                // CPython 2.7 message
+                throw Py.ValueError("cannot modify size of memoryview object");
+            }
+            backing.storeAt(valueBuf.byteAt(0), index);
+        } finally {
+            valueBuf.release();
+        }
     }
 
     /**
@@ -382,6 +711,8 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      */
     @Override
     protected synchronized void setslice(int start, int stop, int step, PyObject value) {
+        // Our chance to check the memoryview is still alive
+        checkNotReleased();
 
         if (step == 1 && stop < start) {
             // Because "b[5:2] = v" means insert v just before 5 not 2.
@@ -389,18 +720,13 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
             stop = start;
         }
 
-        if (!(value instanceof BufferProtocol)) {
-            String fmt = "'%s' does not support the buffer interface";
-            throw Py.TypeError(String.format(fmt, value.getType().getName()));
-        }
+        // Get a buffer API on the value being assigned
+        PyBuffer valueBuf = BaseBytes.getViewOrError(value);
 
-        // We'll try to get two new buffers: and finally release them.
-        PyBuffer valueBuf = null, backingSlice = null;
+        // We'll also regard the assigned slice as a buffer.
+        PyBuffer backingSlice = null;
 
         try {
-            // Get a buffer API on the value being assigned
-            valueBuf = ((BufferProtocol)value).getBuffer(PyBUF.FULL_RO);
-
             // How many destination items? Has to match size of value.
             int n = sliceLength(start, stop, step);
             if (n != valueBuf.getLen()) {
@@ -417,7 +743,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
              */
 
             backingSlice = backing.getBufferSlice(PyBUF.FULL_RO, start, n, step);
-            backing.copyFrom(valueBuf);
+            backingSlice.copyFrom(valueBuf);
 
         } finally {
 
@@ -425,9 +751,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
             if (backingSlice != null) {
                 backingSlice.release();
             }
-            if (valueBuf != null) {
-                valueBuf.release();
-            }
+            valueBuf.release();
         }
     }
 

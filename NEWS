@@ -20,6 +20,7 @@ Jython 2.7a3
   New Features
     - bytearray complete
     - a buffer API
+    - memoryview
 
 Jython 2.7a2
     - [ 1892 ] site-packages is not in sys.path

@@ -185,9 +185,8 @@ public class SimpleStringBuffer extends SimpleBuffer {
         }
 
         @Override
-        public void release() {
-            // We have to release both this and the root
-            super.release();
+        public void releaseAction() {
+            // We have to release the root too if ours was final.
             root.release();
         }
 
