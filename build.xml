@@ -571,7 +571,8 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}">
+               nowarn="${nowarn}"
+               encoding="UTF-8">
             <compilerarg line="${javac.Xlint}"/>
             <classpath refid="test.classpath" />
         </javac>
