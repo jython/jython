@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -710,11 +711,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private static String getConsoleEncoding() {
         String encoding = null;
         try {
-            // the Console class is only present in java 6 - have to use reflection
-            Class<?> consoleClass = Class.forName("java.io.Console");
-            Method encodingMethod = consoleClass.getDeclaredMethod("encoding");
+            Method encodingMethod = Console.class.getDeclaredMethod("encoding");
             encodingMethod.setAccessible(true); // private static method
-            encoding = (String)encodingMethod.invoke(consoleClass);
+            encoding = (String)encodingMethod.invoke(Console.class);
         } catch (Exception e) {
             // ignore any exception
         }

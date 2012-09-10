@@ -233,14 +233,14 @@ public class DataHandler {
 
             case Types.CHAR:
             case Types.VARCHAR:
-            case Java6Types.NCHAR:
-            case Java6Types.NVARCHAR:
+            case Types.NCHAR:
+            case Types.NVARCHAR:
                 String string = set.getString(col);
                 obj = string == null ? Py.None : Py.newUnicode(string);
                 break;
 
             case Types.LONGVARCHAR:
-            case Java6Types.LONGNVARCHAR:
+            case Types.LONGNVARCHAR:
                 Reader reader = set.getCharacterStream(col);
                 obj = reader == null ? Py.None : Py.newUnicode(read(reader));
                 break;
@@ -310,8 +310,8 @@ public class DataHandler {
                 break;
 
             case Types.CLOB:
-            case Java6Types.NCLOB:
-            case Java6Types.SQLXML:
+            case Types.NCLOB:
+            case Types.SQLXML:
                 Clob clob = set.getClob(col);
                 obj = clob == null ? Py.None : Py.java2py(read(clob.getCharacterStream()));
                 break;
@@ -325,7 +325,7 @@ public class DataHandler {
                 throw createUnsupportedTypeSQLException("DISTINCT", col);
             case Types.REF:
                 throw createUnsupportedTypeSQLException("REF", col);
-            case Java6Types.ROWID:
+            case Types.ROWID:
                 throw createUnsupportedTypeSQLException("STRUCT", col);
             case Types.STRUCT:
                 throw createUnsupportedTypeSQLException("STRUCT", col);
@@ -564,60 +564,6 @@ public class DataHandler {
     public String toString() {
         return getClass().getName();
     }
-    
-    /**
-     * This interface can be removed as soon as we target java 6
-     */
-    private static interface Java6Types{
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>ROWID</code>
-         * 
-         * @since 1.6
-         *
-         */
-        public final static int ROWID = -8;
 
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>NCHAR</code>
-         *
-         * @since 1.6
-         */
-        public static final int NCHAR = -15;
-
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>NVARCHAR</code>.
-         *
-         * @since 1.6
-         */
-        public static final int NVARCHAR = -9;
-
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>LONGNVARCHAR</code>.
-         *
-         * @since 1.6
-         */
-        public static final int LONGNVARCHAR = -16;
-
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>NCLOB</code>.
-         *
-         * @since 1.6
-         */
-        public static final int NCLOB = 2011;
-
-        /**
-         * The constant in the Java programming language, sometimes referred to
-         * as a type code, that identifies the generic SQL type <code>XML</code>.
-         *
-         * @since 1.6 
-         */
-        public static final int SQLXML = 2009;
-    }
-    
 }
 
