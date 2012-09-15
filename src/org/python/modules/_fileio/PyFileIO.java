@@ -206,7 +206,7 @@ public class PyFileIO extends PyObject {
         return PyJavaType.wrapJavaObject(file.fileno());
     }
 
-    @ExposedMethod(doc = BuiltinDocs.file_read_doc)
+    @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)
     final synchronized PyString _FileIO_read(int size) {
         checkClosed();
         ByteBuffer buf = file.read(size);
