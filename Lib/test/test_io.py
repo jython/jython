@@ -2949,6 +2949,9 @@ def test_main():
     py_io_ns.update((x.__name__, globs["Py" + x.__name__]) for x in mocks)
     # Avoid turning open into a bound method.
     py_io_ns["open"] = pyio.OpenWrapper
+    # XXX: While we use _io.py, the same trick is necessary for it too
+    import _io                              # XXX
+    c_io_ns["open"] = _io.OpenWrapper       # XXX
     for test in tests:
         if test.__name__.startswith("C"):
             for name, obj in c_io_ns.items():
