@@ -2,7 +2,7 @@
 XXX: This is actually io.py pulled from CPython 2.6 with the addition of some _
 onto the names of types. Eventually we should implement this stuff in Java.
 
-The _io module provides the Python interfaces to stream handling. The
+The _jyio module provides the Python interfaces to stream handling. The
 builtin open function is defined in this module.
 
 At the top of the I/O hierarchy is the abstract base class _IOBase. It
@@ -63,7 +63,7 @@ __all__ = ["BlockingIOError", "open", "_IOBase", "_RawIOBase", "FileIO",
 import os
 import abc
 import codecs
-import _fileio
+import _io
 import threading
 
 # open() uses st_blksize whenever we can
@@ -135,7 +135,7 @@ def open(file, mode="r", buffering=None, encoding=None, errors=None,
 
     * Binary files are buffered in fixed-size chunks; the size of the buffer
       is chosen using a heuristic trying to determine the underlying device's
-      "block size" and falling back on `_io.DEFAULT_BUFFER_SIZE`.
+      "block size" and falling back on `_jyio.DEFAULT_BUFFER_SIZE`.
       On many systems, the buffer will typically be 4096 or 8192 bytes long.
 
     * "Interactive" text files (files for which isatty() returns True)
@@ -621,21 +621,22 @@ class _RawIOBase(_IOBase):
         self._unsupported("write")
 
 
-class FileIO(_fileio._FileIO, _RawIOBase):
+class FileIO(_io.FileIO, _RawIOBase):
 
     """Raw I/O implementation for OS files."""
 
-    # This multiply inherits from _FileIO and _RawIOBase to make
+    #XXX: have to read between these mangled CPython lines!
+    # This multiply inherits from FileIO and _RawIOBase to make
     # isinstance(_io.FileIO(), _io._RawIOBase) return True without requiring
-    # that _fileio._FileIO inherits from _io._RawIOBase (which would be hard
-    # to do since _fileio.c is written in C).
+    # that _io.FileIO inherits from _io._RawIOBase (which would be hard
+    # to do since fileio.c is written in C).
 
     def __init__(self, name, mode="r", closefd=True):
-        _fileio._FileIO.__init__(self, name, mode, closefd)
+        _io.FileIO.__init__(self, name, mode, closefd)
         self._name = name
 
     def close(self):
-        _fileio._FileIO.close(self)
+        _io.FileIO.close(self)
         _RawIOBase.close(self)
 
     @property

@@ -1,5 +1,5 @@
 /* Copyright (c) Jython Developers */
-package org.python.modules._fileio;
+package org.python.modules._io;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
@@ -23,7 +23,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_fileio._FileIO")
+@ExposedType(name = "_io.FileIO")
 public class PyFileIO extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFileIO.class);
@@ -52,7 +52,7 @@ public class PyFileIO extends PyObject {
 
     public PyFileIO(String name, String mode, boolean closefd) {
     	this();
-        _FileIO___init__(Py.newString(name), mode, closefd);
+        FileIO___init__(Py.newString(name), mode, closefd);
     }
 
     public PyFileIO(String name, String mode) {
@@ -61,7 +61,7 @@ public class PyFileIO extends PyObject {
 
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.file___init___doc)
-    final void _FileIO___init__(PyObject[] args, String[] kwds) {
+    final void FileIO___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "closefd"}, 1);
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {
@@ -74,11 +74,11 @@ public class PyFileIO extends PyObject {
         if (!closefd)
         	throw Py.ValueError("Cannot use closefd=False with file name");
         
-        _FileIO___init__((PyString)name, mode, closefd);
+        FileIO___init__((PyString)name, mode, closefd);
         closer = new Closer(file, Py.getSystemState());
     }
 
-    private void _FileIO___init__(PyString name, String mode, boolean closefd) {
+    private void FileIO___init__(PyString name, String mode, boolean closefd) {
     	mode = parseMode(mode);
         this.name = name;
         this.mode = mode;
@@ -107,7 +107,7 @@ public class PyFileIO extends PyObject {
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_close_doc)
-    final synchronized void _FileIO_close() {
+    final synchronized void FileIO_close() {
         if (closer != null) {
             closer.close();
             closer = null;
@@ -117,109 +117,109 @@ public class PyFileIO extends PyObject {
     }
 
     public void close() {
-        _FileIO_close();
+        FileIO_close();
     }
 
     public boolean readable() {
-        return _FileIO_readable();
+        return FileIO_readable();
     }
 
     @ExposedMethod(doc = "True if file was opened in a read mode.")
-    final boolean _FileIO_readable() {
+    final boolean FileIO_readable() {
         return file.readable();
     }
 
     @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_seek_doc)
-    final synchronized PyObject _FileIO_seek(long pos, int how) {
+    final synchronized PyObject FileIO_seek(long pos, int how) {
         checkClosed();
         return Py.java2py(file.seek(pos, how));
     }
 
     public boolean seekable() {
-        return _FileIO_seekable();
+        return FileIO_seekable();
     }
 
     @ExposedMethod(doc = "True if file supports random-access.")
-    final boolean _FileIO_seekable() {
+    final boolean FileIO_seekable() {
     	if (seekable == null)
     		seekable = file.seek(0, 0) >= 0;
     	return seekable;
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
-    final synchronized long _FileIO_tell() {
+    final synchronized long FileIO_tell() {
         checkClosed();
         return file.tell();
     }
 
     public long tell() {
-        return _FileIO_tell();
+        return FileIO_tell();
     }
 
     @ExposedMethod(defaults = {"null"}, doc = BuiltinDocs.file_truncate_doc)
-    final PyObject _FileIO_truncate(PyObject position) {
+    final PyObject FileIO_truncate(PyObject position) {
         if (position == null)
-            return Py.java2py(_FileIO_truncate());
-    	return Py.java2py(_FileIO_truncate(position.asLong()));
+            return Py.java2py(FileIO_truncate());
+    	return Py.java2py(FileIO_truncate(position.asLong()));
     }
 
-    final synchronized long _FileIO_truncate(long position) {
+    final synchronized long FileIO_truncate(long position) {
         return file.truncate(position);
     }
 
     public long truncate(long position) {
-        return _FileIO_truncate(position);
+        return FileIO_truncate(position);
     }
 
-    final synchronized long _FileIO_truncate() {
+    final synchronized long FileIO_truncate() {
         return file.truncate(file.tell());
     }
 
     public void truncate() {
-        _FileIO_truncate();
+        FileIO_truncate();
     }
 
     public boolean isatty() {
-        return _FileIO_isatty();
+        return FileIO_isatty();
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_isatty_doc)
-    final boolean _FileIO_isatty() {
+    final boolean FileIO_isatty() {
         return file.isatty();
     }
 
     public boolean writable() {
-        return _FileIO_writable();
+        return FileIO_writable();
     }
 
     @ExposedMethod(doc = "True if file was opened in a write mode.")
-    final boolean _FileIO_writable() {
+    final boolean FileIO_writable() {
         return file.writable();
     }
 
     public PyObject fileno() {
-        return _FileIO_fileno();
+        return FileIO_fileno();
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_fileno_doc)
-    final PyObject _FileIO_fileno() {
+    final PyObject FileIO_fileno() {
         return PyJavaType.wrapJavaObject(file.fileno());
     }
 
     @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)
-    final synchronized PyString _FileIO_read(int size) {
+    final synchronized PyString FileIO_read(int size) {
         checkClosed();
         ByteBuffer buf = file.read(size);
         return new PyString(StringUtil.fromBytes(buf));
     }
 
     public PyString read(int size) {
-        return _FileIO_read(size);
+        return FileIO_read(size);
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_read_doc)
-    final synchronized PyString _FileIO_readall() {
-    	return _FileIO_read(-1);
+    final synchronized PyString FileIO_readall() {
+    	return FileIO_read(-1);
     }
 
     /**
@@ -243,7 +243,7 @@ public class PyFileIO extends PyObject {
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_write_doc)
-    final PyObject _FileIO_write(PyObject obj) {
+    final PyObject FileIO_write(PyObject obj) {
     	String writable = asWritable(obj, null);
     	byte[] bytes = StringUtil.toBytes(writable);
         int written = write(ByteBuffer.wrap(bytes));
@@ -256,17 +256,17 @@ public class PyFileIO extends PyObject {
     }
 
     @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.file___str___doc)
-    final String _FileIO_toString() {
+    final String FileIO_toString() {
         if (name instanceof PyUnicode) {
             String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
-            return String.format("<_fileio.FileIO name='%s', mode='%s'>", escapedName, mode);
+            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode);
         }
-        return String.format("<_fileio.FileIO name='%s', mode='%s'>", name, mode);
+        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode);
     }
 
     @Override
     public String toString() {
-        return _FileIO_toString();
+        return FileIO_toString();
     }
 
     private void checkClosed() {

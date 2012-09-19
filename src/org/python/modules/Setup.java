@@ -61,6 +61,6 @@ public class Setup
         "_threading:org.python.modules._threading._threading",
         PosixModule.getOSName() + ":org.python.modules.posix.PosixModule",
         "jffi:org.python.modules.jffi.jffi",
-        "_fileio:org.python.modules._fileio._fileio"
+        "_io:org.python.modules._io._io"
     };
 }
