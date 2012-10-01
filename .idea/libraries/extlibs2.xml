@@ -39,7 +39,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-FreeBSD.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/postgresql-8.3-603.jdbc4.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-sparc-SunOS.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/junit-3.8.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/junit-4.10.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/guava-11.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
