@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.python.compiler.APIVersion;
 import org.python.compiler.AdapterMaker;
 import org.python.compiler.JavaMaker;
 
@@ -50,27 +51,52 @@ class MakeProxies {
     public static synchronized Class<?> makeProxy(Class<?> superclass,
             List<Class<?>> vinterfaces, String className, String proxyName,
             PyObject dict) {
+        JavaMaker javaMaker = null;
+        
+        // check if a Jython annotation exists and if yes, the class is already a Jython Proxy
+        APIVersion apiVersion = superclass.getAnnotation(org.python.compiler.APIVersion.class);
+        if (apiVersion != null) {
+            // TODO validate versions, maybe use a different annotation
+            return superclass;
+        }
+        
         Class<?>[] interfaces = vinterfaces.toArray(new Class<?>[vinterfaces.size()]);
         String fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         String pythonModuleName;
-        PyObject mn = dict.__finditem__("__module__");
-        if (mn == null) {
-            pythonModuleName = "foo";
+        PyObject module = dict.__finditem__("__module__");
+        if (module == null) {
+            pythonModuleName = "foo"; // FIXME Really, module name foo?
         } else {
-            pythonModuleName = (String) mn.__tojava__(String.class);
+            pythonModuleName = (String) module.__tojava__(String.class);
         }
-        JavaMaker jm = new JavaMaker(superclass,
-                                     interfaces,
-                                     className,
-                                     pythonModuleName,
-                                     fullProxyName,
-                                     dict);
+        
+        // Grab the proxy maker from the class if it exists, and if it does, use the proxy class
+        // name from the maker
+        PyObject customProxyMaker = dict.__finditem__("__proxymaker__");
+        if (customProxyMaker != null) {
+            if (module == null) {
+                throw Py.TypeError("Classes using __proxymaker__ must define __module__");
+            }
+            PyObject[] args = Py.javas2pys(superclass, interfaces, className, pythonModuleName, fullProxyName, dict);
+            javaMaker = Py.tojava(customProxyMaker.__call__(args), JavaMaker.class);
+            // TODO Full proxy name
+        }
+        
+        if (javaMaker == null) {
+            javaMaker = new JavaMaker(superclass,
+                        interfaces,
+                        className,
+                        pythonModuleName,
+                        fullProxyName,
+                        dict);
+        }
+        
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            jm.build(bytes);
-            Py.saveClassFile(fullProxyName, bytes);
+            javaMaker.build(bytes);
+            Py.saveClassFile(javaMaker.myClass, bytes);
 
-            return makeClass(superclass, vinterfaces, jm.myClass, bytes);
+            return makeClass(superclass, vinterfaces, javaMaker.myClass, bytes);
         } catch (Exception exc) {
             throw Py.JavaError(exc);
         }
