@@ -80,7 +80,7 @@ public class MiniClampMaker extends JavaMaker {
                 methodsToAdd.put(key, clampObj);
             }
         }
-        PyObject pyAnnotations = methods.__finditem__("_class_annotations");
+        PyObject pyAnnotations = methods.__finditem__("_clamp_class_annotations");
         if (pyAnnotations != null) {
             classAnnotations = extractAnnotation((PyDictionary)pyAnnotations);
         }

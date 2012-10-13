@@ -9,10 +9,10 @@ class AnnotatedInputStream(java.io.BufferedInputStream):
     __proxymaker__ = MiniClampMaker
     __java_package__ = 'custom_proxymaker.tests'
 
-    _class_annotations = {CustomAnnotation:
-                          {'createdBy': 'Darusik',
-                           'priority': CustomAnnotation.Priority.LOW,
-                           'changedBy': ['Darjus', 'Darjunia']},
-                          Deprecated:None}
+    _clamp_class_annotations = {CustomAnnotation:
+                                {'createdBy': 'Darusik',
+                                 'priority': CustomAnnotation.Priority.LOW,
+                                 'changedBy': ['Darjus', 'Darjunia']},
+                                Deprecated:None}
 
 

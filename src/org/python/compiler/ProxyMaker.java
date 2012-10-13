@@ -404,9 +404,6 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
         code.aload(tmp);
 
         callMethod(code, "<init>", parameters, Void.TYPE, exceptions);
-
-//        addSuperMethod("super__"+name, name, superClass, parameters,
-//                       ret, sig, access);
     }
     
     private String methodString(Method m) {
