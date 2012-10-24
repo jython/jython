@@ -19,6 +19,7 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
     protected final Class<?>[] interfaces;
     Set<String> names;
     Set<String> supernames = Generic.set();
+    Set<String> namesAndSigs; // name+signature pairs
     public ClassFile classfile;
     /** The name of the class to build. */
     public String myClass;
@@ -332,7 +333,7 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
             AnnotationDescr[] methodAnnotations,
             AnnotationDescr[][]parameterAnnotations) throws Exception {
         boolean isAbstract = false;
-
+        
         if (Modifier.isAbstract(access)) {
             access = access & ~Modifier.ABSTRACT;
             isAbstract = true;
@@ -342,6 +343,11 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
         String[] exceptionTypes = mapExceptions(exceptions);
 
         names.add(name);
+        
+        // make sure we have only one name + signature pair available per method
+        if (!namesAndSigs.add(name + sig)) {
+        	return;
+        }
 
         Code code = null;
         if (methodAnnotations != null && parameterAnnotations != null) {
@@ -608,6 +614,7 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
 
     public void build() throws Exception {
         names = Generic.set();
+        namesAndSigs = Generic.set();
         int access = superclass.getModifiers();
         if ((access & Modifier.FINAL) != 0) {
             throw new InstantiationException("can't subclass final class");
