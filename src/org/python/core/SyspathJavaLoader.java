@@ -148,7 +148,7 @@ public class SyspathJavaLoader extends ClassLoader {
                 ZipEntry ze = archive.getEntry(entryRes);
                 if (ze != null) {
                 	try {
-						return new URL("jar:file:" + entry.__str__().toString() + "!/" + entryRes);
+						return new URL("jar:file:" + archive.asUriCompatibleString() + "!/" + entryRes);
 					} catch (MalformedURLException e) {
 						throw new RuntimeException(e);
 					}

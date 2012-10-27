@@ -61,6 +61,14 @@ public class SyspathArchive extends PyString {
         return this.zipFile.getEntry(makeEntry(entryName));
     }
 
+    public String asUriCompatibleString() {
+    	String result = __str__().toString();
+        if (File.separatorChar == '\\') {
+            return result.replace(File.separatorChar, '/');
+        }
+        return result;
+    }
+
     InputStream getInputStream(ZipEntry entry) throws IOException {
         InputStream istream = this.zipFile.getInputStream(entry);
 
