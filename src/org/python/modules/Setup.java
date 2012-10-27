@@ -62,6 +62,6 @@ public class Setup
         PosixModule.getOSName() + ":org.python.modules.posix.PosixModule",
         "jffi:org.python.modules.jffi.jffi",
         "_io:org.python.modules._io._io",
-		"bz2:org.python.modules.bz2.bz2"
+        "bz2:org.python.modules.bz2.bz2"
     };
 }
