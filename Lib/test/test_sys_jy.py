@@ -148,6 +148,12 @@ class SyspathResourceTest(unittest.TestCase):
         from pck import Main
         self.assert_(Main.getResource('Main.txt'))
 
+    def test_url_from_resource_from_syspath(self):
+        from pck import Main
+        # Need to test this doesn't fail because of '\' chars in the path
+        # Really only a problem on Windows
+        self.assert_(Main.getResource('Main.txt').toURI())
+
 
 class SyspathUnicodeTest(unittest.TestCase):
     """bug 1693: importing from a unicode path threw a unicode encoding
