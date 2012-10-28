@@ -18,6 +18,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 import org.python.expose.TypeBuilder;
 import org.python.modules._weakref.WeakrefModule;
 import org.python.util.Generic;
@@ -674,6 +675,48 @@ public class PyType extends PyObject implements Serializable {
         bases = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
     }
 
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___eq___doc)
+    public PyObject type___eq__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.True : Py.False;
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___ne___doc)
+    public PyObject type___ne__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.False : Py.True;
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___le___doc)
+    public PyObject type___le__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.True : Py.False;
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___lt___doc)
+    public PyObject type___lt__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.True : Py.False;
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___ge___doc)
+    public PyObject type___ge__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.True : Py.False;
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___gt___doc)
+    public PyObject type___gt__(PyObject other) {
+        if (!(other instanceof PyType))
+            return null;
+        return equals(other) ? Py.True : Py.False;
+    }
+    
     @ExposedGet(name = "__base__")
     public PyObject getBase() {
         if (base == null)
