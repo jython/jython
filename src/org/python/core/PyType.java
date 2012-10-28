@@ -21,6 +21,7 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.expose.TypeBuilder;
 import org.python.modules._weakref.WeakrefModule;
+import org.python.antlr.ast.cmpopType;
 import org.python.util.Generic;
 
 import com.google.common.collect.MapMaker;
@@ -675,46 +676,64 @@ public class PyType extends PyObject implements Serializable {
         bases = cleanedBases.toArray(new PyObject[cleanedBases.size()]);
     }
 
+    protected PyObject richCompare(PyObject other, cmpopType op) {
+    	// Make sure the other object is a type
+    	if (!(other instanceof PyType) && other != this)
+    		return null;
+
+    	// If there is a __cmp__ method defined, let it be called instead
+        // of our dumb function designed merely to warn. See CPython bug #7491.
+    	if (__findattr__("__cmp__") != null || ((PyType)other).__findattr__("__cmp__") != null)
+    		return null;
+    	
+    	// Py3K warning if comparison isn't == or !=
+    	if (Options.py3k_warning && op != cmpopType.Eq && op != cmpopType.NotEq) {
+        	Py.warnPy3k("type inequality comparisons not supported in 3.x");
+        	return null;
+    	}
+
+    	// Compare hashes
+    	int hash1 = object___hash__();
+    	int hash2 = other.object___hash__();
+    	switch (op) {
+    	case Lt: return hash1 < hash2 ? Py.True : Py.False;
+    	case LtE: return hash1 <= hash2 ? Py.True : Py.False;
+    	case Eq: return hash1 == hash2 ? Py.True : Py.False;
+    	case NotEq: return hash1 != hash2 ? Py.True : Py.False;
+    	case Gt: return hash1 > hash2 ? Py.True : Py.False;
+    	case GtE: return hash1 >= hash2 ? Py.True : Py.False;
+    	default: return null;
+    	}
+    }
+    
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___eq___doc)
     public PyObject type___eq__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.True : Py.False;
+    	return richCompare(other, cmpopType.Eq);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___ne___doc)
     public PyObject type___ne__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.False : Py.True;
+    	return richCompare(other, cmpopType.NotEq);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___le___doc)
     public PyObject type___le__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.True : Py.False;
+    	return richCompare(other, cmpopType.LtE);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___lt___doc)
     public PyObject type___lt__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.True : Py.False;
+    	return richCompare(other, cmpopType.Lt);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___ge___doc)
     public PyObject type___ge__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.True : Py.False;
+    	return richCompare(other, cmpopType.GtE);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___gt___doc)
     public PyObject type___gt__(PyObject other) {
-        if (!(other instanceof PyType))
-            return null;
-        return equals(other) ? Py.True : Py.False;
+    	return richCompare(other, cmpopType.Gt);
     }
     
     @ExposedGet(name = "__base__")
