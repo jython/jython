@@ -1350,10 +1350,6 @@ public class PyObject implements Serializable {
     }
 
     private final int _cmp_unsafe(PyObject other) {
-        // Shortcut for equal objects
-        if (this == other)
-            return 0;
-
         int result = _try__cmp__(other);
         if (result != -2) {
             return result;
@@ -1366,10 +1362,6 @@ public class PyObject implements Serializable {
      *  thus it avoids to invoke _default_cmp.
      */
     private final int _cmpeq_unsafe(PyObject other) {
-        // Shortcut for equal objects
-        if (this == other)
-            return 0;
-
         int result = _try__cmp__(other);
         if (result != -2) {
             return result;
