@@ -1,0 +1,4 @@
+base_class: PyBZ2File
+want_dict: true
+ctr:
+incl: object

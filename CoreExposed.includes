@@ -62,6 +62,9 @@ org/python/modules/_csv/PyWriter.class
 org/python/modules/_io/PyFileIO.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_hashlib$Hash.class
+org/python/modules/bz2/PyBZ2File.class
+org/python/modules/bz2/PyBZ2Compressor.class
+org/python/modules/bz2/PyBZ2Decompressor.class
 org/python/modules/itertools/chain.class
 org/python/modules/itertools/compress.class
 org/python/modules/itertools/combinations.class
