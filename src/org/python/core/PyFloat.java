@@ -228,12 +228,14 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___hash___doc)
     final int float___hash__() {
-    	double value = getValue();
-    	if (Double.isInfinite(value))
-    		return value < 0 ? -271828 : 314159;
-    	if (Double.isNaN(value))
-    		return 0;
-    	
+        double value = getValue();
+        if (Double.isInfinite(value)) {
+            return value < 0 ? -271828 : 314159;
+        }
+        if (Double.isNaN(value)) {
+            return 0;
+        }
+        
         double intPart = Math.floor(value);
         double fractPart = value - intPart;
 
