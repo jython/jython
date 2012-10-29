@@ -199,7 +199,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___hash___doc)
     final int long___hash__() {
-        return getValue().intValue();
+        return getValue().hashCode();
     }
 
     @Override
@@ -677,8 +677,8 @@ public class PyLong extends PyObject {
 
     public static PyObject _pow(BigInteger value, BigInteger y, PyObject modulo, PyObject left,
                                 PyObject right) {
-        if (y.compareTo(BigInteger.valueOf(0)) < 0) {
-            if (value.compareTo(BigInteger.valueOf(0)) != 0) {
+        if (y.compareTo(BigInteger.ZERO) < 0) {
+            if (value.compareTo(BigInteger.ZERO) != 0) {
                 return left.__float__().__pow__(right, modulo);
             } else {
                 throw Py.ZeroDivisionError("zero to a negative power");
@@ -691,12 +691,11 @@ public class PyLong extends PyObject {
             // in modPow are fixed by SUN
 
             BigInteger z = coerce(modulo);
-            int zi = z.intValue();
             // Clear up some special cases right away
-            if (zi == 0) {
+            if (z.equals(BigInteger.ZERO)) {
                 throw Py.ValueError("pow(x, y, z) with z == 0");
             }
-            if (zi == 1 || zi == -1) {
+            if (z.abs().equals(BigInteger.ONE)) {
                 return Py.newLong(0);
             }
 

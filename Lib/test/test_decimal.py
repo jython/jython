@@ -534,7 +534,6 @@ class DecimalExplicitConstructionTest(unittest.TestCase):
         self.assertEqual(str(e), '0')
         self.assertNotEqual(id(d), id(e))
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     @requires_IEEE_754
     def test_explicit_from_float(self):
         r = Decimal(0.1)
@@ -688,7 +687,6 @@ class DecimalImplicitConstructionTest(unittest.TestCase):
 class DecimalFormatTest(unittest.TestCase):
     '''Unit tests for the format function.'''
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_formatting(self):
         # triples giving a format, a Decimal, and the expected result
         test_values = [
@@ -1251,7 +1249,6 @@ class DecimalUseOfContextTest(unittest.TestCase):
 class DecimalUsabilityTest(unittest.TestCase):
     '''Unit tests for Usability cases of Decimal.'''
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_comparison_operators(self):
 
         da = Decimal('23.42')
@@ -1297,7 +1294,6 @@ class DecimalUsabilityTest(unittest.TestCase):
             self.assertFalse(Decimal(1) < None)
             self.assertTrue(Decimal(1) > None)
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_decimal_float_comparison(self):
         da = Decimal('0.25')
         db = Decimal('3.0')
@@ -1322,7 +1318,6 @@ class DecimalUsabilityTest(unittest.TestCase):
         dc = copy.deepcopy(d)
         self.assertEqual(id(dc), id(d))
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_hash_method(self):
         #just that it's hashable
         hash(Decimal(23))
@@ -1512,7 +1507,6 @@ class DecimalUsabilityTest(unittest.TestCase):
         d = Decimal( (1, (0, 2, 7, 1), 'F') )
         self.assertEqual(d.as_tuple(), (1, (0,), 'F'))
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_immutability_operations(self):
         # Do operations and check that it didn't change change internal objects.
 
@@ -1691,7 +1685,6 @@ class DecimalPythonAPItests(unittest.TestCase):
         self.assertRaises(OverflowError, long, Decimal('inf'))
         self.assertRaises(OverflowError, long, Decimal('-inf'))
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_trunc(self):
         for x in range(-250, 250):
             s = '%0.2f' % (x / 100.0)
@@ -1702,7 +1695,6 @@ class DecimalPythonAPItests(unittest.TestCase):
             r = d.to_integral(ROUND_DOWN)
             self.assertEqual(Decimal(math.trunc(d)), r)
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_from_float(self):
 
         class  MyDecimal(Decimal):
@@ -1728,7 +1720,6 @@ class DecimalPythonAPItests(unittest.TestCase):
             x = random.expovariate(0.01) * (random.random() * 2.0 - 1.0)
             self.assertEqual(x, float(MyDecimal.from_float(x))) # roundtrip
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_create_decimal_from_float(self):
         context = Context(prec=5, rounding=ROUND_DOWN)
         self.assertEqual(
@@ -1763,7 +1754,6 @@ class ContextAPItests(unittest.TestCase):
             v2 = vars(e)[k]
             self.assertEqual(v1, v2)
 
-    @unittest.skipIf(is_jython, "FIXME #1865: not working in Jython")
     def test_equality_with_other_types(self):
         self.assertIn(Decimal(10), ['a', 1.0, Decimal(10), (1,2), {}])
         self.assertNotIn(Decimal(10), ['a', 1.0, (1,2), {}])
