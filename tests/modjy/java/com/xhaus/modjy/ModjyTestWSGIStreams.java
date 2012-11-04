@@ -63,6 +63,14 @@ public class ModjyTestWSGIStreams extends ModjyTestBase {
         doInputTest(appName, bodyContent, expectedContent, expectedLength, 0);
     }
 
+    protected String buildStringWithContents(int count, String contents) {
+    	StringBuilder builder = new StringBuilder();
+    	for (int i = 0 ; i < count ; i++) {
+            builder.append(contents);
+        };
+        return builder.toString();
+    }
+
     public void testEmptyInput() throws Exception {
         doInputTest("test_read_input_stream", "", "", 0);
     }
@@ -81,6 +89,14 @@ public class ModjyTestWSGIStreams extends ModjyTestBase {
         }
     }
 
+    public void testAsciiInputWithReadSizeLargeInput() throws Exception {
+        String one_k = buildStringWithContents(1024, "X");
+        String testData = buildStringWithContents(64, one_k);
+        for (int i = 64; i <= 65536; i=i*2) {
+            doInputTest("test_read_input_stream", testData, testData, testData.length(), i);
+        }
+    }
+
     public void testAsciiInputReadline() throws Exception {
         doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hello\n", 6);
         doInputTest("test_readline_input_stream", "Hello", "Hello", 5);
@@ -88,17 +104,40 @@ public class ModjyTestWSGIStreams extends ModjyTestBase {
 
     public void testAsciiInputReadlineWithSize() throws Exception {
         // Let's test this: although PEP-333 says it's not supported, modjy can do it
-        doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hello", 5, 5);
+        doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hello\n", 6, 6);
+    }
+
+    public void testAsciiInputReadlineWithSizeLessThanOneLine() throws Exception {
+        // Test where the size given is too small to actually reach a line end and
+        // a truncated line should be returned.
+        doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hel", 3, 3);
+    }
+
+    public void testAsciiInputReadlineWithSizeLongerThanOneLine() throws Exception {
+        // Test where the size given is long enough to take in a whole line 
+        // and part of the next line.
+        doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hello\n", 6, 10);
+    }
+
+    public void testAsciiInputReadlineWithSizeLongerThanTwoLines() throws Exception {
+        // Test where the size given is long enough to take in a whole line 
+        // and part of the next line.
+        doInputTest("test_readline_input_stream", "Hello\nWorld!\n", "Hello\n", 6, 32);
     }
 
     public void testAsciiInputWithReadlines() throws Exception {
-        doInputTest("test_readlines_input_stream", "Hello\nWorld!\n", "Hello\n$World!\n", 14);
         doInputTest("test_readlines_input_stream", "Hello", "Hello", 5);
+        doInputTest("test_readlines_input_stream", "Hello\n", "Hello\n", 6);
+        doInputTest("test_readlines_input_stream", "Hello\nWorld!\n", "Hello\n$World!\n", 14);
     }
 
     public void testAsciiInputWithReadlinesWithHint() throws Exception {
-    // Let's leave this for now
-    // doInputTest("test_readlines_input_stream", "Hello\nWorld!\n", "Hello\n", 6, 5);
+        doInputTest("test_readlines_input_stream", "Hello\nWorld!\n", "Hello\n", 6, 5);
+        doInputTest("test_readlines_input_stream", "Hello\nWorld!\n", "Hello\n$World!\n", 14, 32);
+    }
+
+    public void testInputIterator() throws Exception {
+        doInputTest("test_iter_input_stream", "Hello\nWorld!\n", "Hello\n$World!\n", 14);
     }
 
     public void testError() throws Exception {

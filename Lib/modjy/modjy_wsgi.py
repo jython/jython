@@ -28,6 +28,7 @@ except ImportError:
     create_py_file = PyFile
 
 from modjy_exceptions import *
+from modjy_input import modjy_input_object
 
 server_name = "modjy"
 server_param_prefix = "%s.param" % server_name
@@ -125,8 +126,8 @@ class modjy_wsgi:
 
     def set_wsgi_streams(self, req, resp, dict):
         try:
-            dict["wsgi.input"]  = create_py_file(req.getInputStream(), "rb")
-            dict["wsgi.errors"] =  create_py_file(System.err)
+            dict["wsgi.input"]  = modjy_input_object(req.getInputStream())
+            dict["wsgi.errors"] = create_py_file(System.err)
         except IOException, iox:
             raise ModjyIOException(iox)
 
