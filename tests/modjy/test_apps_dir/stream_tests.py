@@ -83,6 +83,14 @@ def test_readlines_input_stream(environ, start_response):
     writer(repr(output_dict))
     return []
 
+def test_iter_input_stream(environ, start_response):
+    writer = start_response("200 OK", [])
+    wsgi_input = environ['wsgi.input']
+    data = "$".join([line for line in wsgi_input])
+    output_dict = {'data': data}
+    writer(repr(output_dict))
+    return []
+
 def test_error_stream(environ, start_response):
     writer = start_response("200 OK", [])
     wsgi_errors = environ['wsgi.errors']

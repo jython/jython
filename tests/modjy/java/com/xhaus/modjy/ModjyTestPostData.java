@@ -27,7 +27,7 @@ public class ModjyTestPostData extends ModjyTestBase {
         setAppFile("post_data_tests.py");
     }
 
-    public void doHeaderTest(String appName, String postData) throws Exception {
+    public void doPostTest(String appName, String postData) throws Exception {
         postDataTestSetUp();
         setMethod("POST");
         setAppName(appName);
@@ -40,7 +40,7 @@ public class ModjyTestPostData extends ModjyTestBase {
     public void testPostDataLineEndsNotTranslated() throws Exception {
     	String testData = "this\r\ndata\r\ncontains\r\ncarriage\r\nreturns\r\n";
     	String expectedData = "'"+testData.replace("\r", "\\r").replace("\n", "\\n")+"'";
-        doHeaderTest("test_return_post_data", testData);
+        doPostTest("test_return_post_data", testData);
         assertEquals("Wrong post data returned >>" + getOutput() + "<< != >>"+expectedData+"<<", expectedData, getOutput());
     }
 
