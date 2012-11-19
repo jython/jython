@@ -53,15 +53,6 @@ class MakeProxies {
             PyObject dict) {
         JavaMaker javaMaker = null;
         
-        // check if a Jython annotation exists and if yes, the class is already a Jython Proxy
-        if (superclass != null) {
-        	APIVersion apiVersion = superclass.getAnnotation(org.python.compiler.APIVersion.class);
-        	if (apiVersion != null) {
-        		// TODO validate versions, maybe use a different annotation
-        		return superclass;
-        	}
-        }
-        
         Class<?>[] interfaces = vinterfaces.toArray(new Class<?>[vinterfaces.size()]);
         String fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         String pythonModuleName;
