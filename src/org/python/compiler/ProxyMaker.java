@@ -343,11 +343,6 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
         String[] exceptionTypes = mapExceptions(exceptions);
 
         names.add(name);
-        
-        // make sure we have only one name + signature pair available per method
-        if (!namesAndSigs.add(name + sig)) {
-        	return;
-        }
 
         Code code = null;
         if (methodAnnotations != null && parameterAnnotations != null) {
@@ -638,27 +633,34 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
      */
     protected void visitMethods(Class<?> klass) throws Exception {
         for (Method method : klass.getDeclaredMethods()) {
-                int access = method.getModifiers();
-                if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
-                    continue;
-                }
+        	
+            
+            // make sure we have only one name + signature pair available per method
+            if (!namesAndSigs.add(methodString(method))) {
+            	continue;
+            }
 
-                if (Modifier.isNative(access)) {
-                    access = access & ~Modifier.NATIVE;
-                }
+            int access = method.getModifiers();
+            if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
+            	continue;
+            }
 
-                if (Modifier.isProtected(access)) {
-                    access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
-                    if (Modifier.isFinal(access)) {
-                        addSuperMethod(method, access);
-                        continue;
-                    }
-                } else if (Modifier.isFinal(access)) {
-                    continue;
-                } else if (!Modifier.isPublic(access)) {
-                    continue; // package protected by process of elimination; we can't override
-                }
-                addMethod(method, access);
+            if (Modifier.isNative(access)) {
+            	access = access & ~Modifier.NATIVE;
+            }
+
+            if (Modifier.isProtected(access)) {
+            	access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
+            	if (Modifier.isFinal(access)) {
+            		addSuperMethod(method, access);
+            		continue;
+            	}
+            } else if (Modifier.isFinal(access)) {
+            	continue;
+            } else if (!Modifier.isPublic(access)) {
+            	continue; // package protected by process of elimination; we can't override
+            }
+            addMethod(method, access);
         }
 
         Class<?> superClass = klass.getSuperclass();
