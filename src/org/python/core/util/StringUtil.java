@@ -1,12 +1,11 @@
-/* Copyright (c) 2007 Jython Developers */
+/* Copyright (c) 2012 Jython Developers */
 package org.python.core.util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import org.python.core.BufferPointer;
-import org.python.core.Py;
 import org.python.core.BaseBytes;
+import org.python.core.Py;
 import org.python.core.PyBuffer;
 
 /**
@@ -16,8 +15,8 @@ import org.python.core.PyBuffer;
 public class StringUtil {
 
     /**
-     * Encodes this String into a sequence of bytes. Each byte
-     * contains the low-order bits of its corresponding char.
+     * Encodes this String into a sequence of bytes. Each byte contains the low-order bits of its
+     * corresponding char.
      *
      * @param string a String value
      * @return a byte array with one byte for each char in string
@@ -25,15 +24,14 @@ public class StringUtil {
     public static byte[] toBytes(String string) {
         try {
             return string.getBytes("ISO-8859-1");
-        } catch(UnsupportedEncodingException uee) {
+        } catch (UnsupportedEncodingException uee) {
             // This JVM is whacked, it doesn't even have iso-8859-1
             throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
         }
     }
 
     /**
-     * Return a new String with chars corresponding to buf from off to
-     * off + len.
+     * Return a new String with chars corresponding to buf from off to off + len.
      *
      * @param buf an array of bytes
      * @param off the initial offset
@@ -42,7 +40,7 @@ public class StringUtil {
      */
     @SuppressWarnings("deprecation")
     public static String fromBytes(byte[] buf, int off, int len) {
-        // Yes, I known the method is deprecated, but it is the fastest
+        // Yes, I know the method is deprecated, but it is the fastest
         // way of converting between between byte[] and String
         return new String(buf, 0, off, len);
     }
@@ -65,7 +63,7 @@ public class StringUtil {
      */
     public static String fromBytes(ByteBuffer buf) {
         return fromBytes(buf.array(), buf.arrayOffset() + buf.position(),
-                         buf.arrayOffset() + buf.limit());
+                buf.arrayOffset() + buf.limit());
     }
 
     /**
@@ -88,14 +86,16 @@ public class StringUtil {
      */
     public static String fromBytes(BaseBytes b) {
 
-         int size = b.__len__();
-         StringBuilder buf = new StringBuilder(size);
-         for (int j = 0; j < size; j++)  buf.append((char) b.intAt(j));
-         return buf.toString();
-     }
+        int size = b.__len__();
+        StringBuilder buf = new StringBuilder(size);
+        for (int j = 0; j < size; j++) {
+            buf.append((char)b.intAt(j));
+        }
+        return buf.toString();
+    }
 
-    /** Decapitalize a String if it begins with a capital letter, e.g.:
-     * FooBar -> fooBar
+    /**
+     * Decapitalize a String if it begins with a capital letter, e.g.: FooBar -> fooBar
      *
      * @param string a String
      * @return a decapitalized String
