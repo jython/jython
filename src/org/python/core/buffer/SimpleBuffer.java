@@ -3,6 +3,7 @@ package org.python.core.buffer;
 import org.python.core.BufferPointer;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
+import org.python.core.util.StringUtil;
 
 /**
  * Buffer API over a read-only one-dimensional array of one-byte items.
@@ -49,7 +50,7 @@ public class SimpleBuffer extends BaseBuffer {
     public SimpleBuffer(int flags, byte[] storage, int offset, int size) throws PyException {
         this();
         // Wrap the exported data on a BufferPointer object
-        this.buf = new BufferPointer(storage, offset, size);
+        this.buf = new BufferPointer(storage, offset);
         this.shape[0] = size;        // Number of units in exported data
         checkRequestFlags(flags);    // Check request is compatible with type
     }
@@ -134,12 +135,17 @@ public class SimpleBuffer extends BaseBuffer {
 
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int length) {
-        // Translate relative to underlying buffer
-        int compIndex0 = buf.offset + start;
-        // Check the arguments define a slice within this buffer
-        checkInBuf(compIndex0, compIndex0 + length - 1);
-        // Create the slice from the sub-range of the buffer
-        return new SimpleView(getRoot(), flags, buf.storage, compIndex0, length);
+        if (length > 0) {
+            // Check the arguments define a slice within this buffer
+            checkSlice(start, length);
+            // Translate relative to underlying buffer
+            int compIndex0 = buf.offset + start;
+            // Create the slice from the sub-range of the buffer
+            return new SimpleView(getRoot(), flags, buf.storage, compIndex0, length);
+        } else {
+            // Special case for length==0 where above logic would fail. Efficient too.
+            return new ZeroByteBuffer.View(getRoot(), flags);
+        }
     }
 
     /**
@@ -154,30 +160,36 @@ public class SimpleBuffer extends BaseBuffer {
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
 
-        if (stride == 1) {
+        if (stride == 1 || length < 2) {
             // Unstrided slice of simple buffer is itself simple
             return getBufferSlice(flags, start, length);
 
         } else {
+            // Check the arguments define a slice within this buffer
+            checkSlice(start, length, stride);
             // Translate relative to underlying buffer
             int compIndex0 = buf.offset + start;
-            // Check the slice sits within the present buffer (first and last indexes)
-            checkInBuf(compIndex0, compIndex0 + (length - 1) * stride);
             // Construct a view, taking a lock on the root object (this or this.root)
             return new Strided1DBuffer.SlicedView(getRoot(), flags, buf.storage, compIndex0,
-                                                  length, stride);
+                length, stride);
         }
     }
 
     @Override
     public BufferPointer getPointer(int index) {
-        return new BufferPointer(buf.storage, buf.offset + index, 1);
+        return new BufferPointer(buf.storage, buf.offset + index);
     }
 
     @Override
     public BufferPointer getPointer(int... indices) {
         checkDimension(indices.length);
         return getPointer(indices[0]);
+    }
+
+    @Override
+    public String toString() {
+        // For contiguous bytes in one dimension we can avoid the intAt() calls
+        return StringUtil.fromBytes(buf.storage, buf.offset, shape[0]);
     }
 
     /**

@@ -200,16 +200,16 @@ public interface PyBUF {
      */
     static final int RECORDS_RO = STRIDES | FORMAT;
     /**
-     * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this as the request flags
-     * if you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>
-     * , <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
+     * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this in the request if
+     * you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>,
+     * <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
      * {@link PyBuffer#getBuf()}.
      */
     static final int FULL = INDIRECT | WRITABLE | FORMAT;
     /**
-     * Equivalent to <code>(INDIRECT | FORMAT)</code> Also use this as the request flags if you plan
-     * only to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.),
-     * without ever calling {@link PyBuffer#getBuf()}.
+     * Equivalent to <code>(INDIRECT | FORMAT)</code>. Also use this in the request if you plan only
+     * to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.), read
+     * only, without ever calling {@link PyBuffer#getBuf()}.
      */
     static final int FULL_RO = INDIRECT | FORMAT;
 

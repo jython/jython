@@ -260,7 +260,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     BufferPointer getBuf();
 
     /**
-     * Return a structure describing the slice of a byte array that holds a single item from the
+     * Return a structure describing the slice of a byte array that points to a single item from the
      * data being exported to the consumer. For a one-dimensional contiguous buffer, assuming the
      * following client code where <code>obj</code> has type <code>BufferProtocol</code>:
      *
@@ -275,9 +275,9 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>
      * <p>
-     * Essentially this is a method for computing the offset of a particular index. Although
-     * <code>b.size==itemsize</code>, the client is free to navigate the underlying buffer
-     * <code>b.storage</code> without respecting these boundaries.
+     * Essentially this is a method for computing the offset of a particular index. The client is
+     * free to navigate the underlying buffer <code>b.storage</code> without respecting these
+     * boundaries.
      *
      * @param index in the buffer to position the pointer
      * @return structure defining the byte[] slice that is the shared data
@@ -285,7 +285,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     BufferPointer getPointer(int index);
 
     /**
-     * Return a structure describing the slice of a byte array that holds a single item from the
+     * Return a structure describing the slice of a byte array that points to a single item from the
      * data being exported to the consumer, in the case that array may be multi-dimensional. For a
      * 3-dimensional contiguous buffer, assuming the following client code where <code>obj</code>
      * has type <code>BufferProtocol</code>:
@@ -302,9 +302,9 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>
      * <p>
-     * Essentially this is a method for computing the offset of a particular index. Although
-     * <code>b.size==itemsize</code>, the client is free to navigate the underlying buffer
-     * <code>b.storage</code> without respecting these boundaries.
+     * Essentially this is a method for computing the offset of a particular index. The client is
+     * free to navigate the underlying buffer <code>b.storage</code> without respecting these
+     * boundaries.
      * <p>
      * If the buffer is also non-contiguous, <code>b.storage[b.offset]</code> is still the (first
      * byte of) the item at index [0,...,0]. However, it is necessary to navigate <code>b</code>
@@ -338,4 +338,11 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     // Inherited from PyBUF and belonging here
     //
     // int getItemsize();
+
+    /**
+     * The toString() method of a buffer reproduces the byte values in the buffer (treated as
+     * unsigned integers) as the character codes of a <code>String</code>.
+     */
+    @Override
+    public String toString();
 }

@@ -70,14 +70,14 @@ public class StringUtil {
 
     /**
      * Return a new String with chars corresponding to buf, which is a byte-oriented buffer obtained
-     * through the buffer API.
-     * 
+     * through the buffer API. It depends on the implementation of {@link PyBuffer#toString()}
+     * provided by each buffer implementation.
+     *
      * @param buf a PyBuffer of bytes
      * @return a new String corresponding to the bytes in buf
      */
     public static String fromBytes(PyBuffer buf) {
-        BufferPointer bp = buf.getBuf();
-        return fromBytes(bp.storage, bp.offset, bp.size);
+        return buf.toString();
     }
 
     /**

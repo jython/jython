@@ -36,15 +36,6 @@ public class Strided1DBuffer extends BaseBuffer {
     protected int stride;
 
     /**
-     * Absolute index in <code>buf.storage</code> of <code>item[0]</code>. For a positive
-     * <code>stride</code> this is equal to <code>buf.offset</code>, and for a negative
-     * <code>stride</code> it is <code>buf.offset+buf.size-1</code>. It has to be used in most of
-     * the places that buf.offset would appear in the index calculations of simpler buffers (that
-     * have unit stride).
-     */
-    protected int index0;
-
-    /**
      * Provide an instance of <code>Strided1DBuffer</code> with navigation variables partly
      * initialised, for sub-class use. To complete initialisation, the sub-class normally must
      * assign: {@link #buf}, {@link #shape}[0], and {@link #stride}, and call
@@ -90,28 +81,15 @@ public class Strided1DBuffer extends BaseBuffer {
      */
     public Strided1DBuffer(int flags, byte[] storage, int index0, int length, int stride)
             throws PyException {
-
         // Arguments programme the object directly
         this();
         this.shape[0] = length;
-        this.index0 = index0;
+        this.buf = new BufferPointer(storage, index0);
         this.stride = stride;
-
-        // Calculate buffer offset and size: start with distance of last item from first
-        int d = (length - 1) * stride;
-
-        if (stride >= 0) {
-            // Positive stride: indexing runs from first item
-            this.buf = new BufferPointer(storage, index0, 1 + d);
-            if (stride <= 1) {
-                // Really this is a simple buffer
-                addFeatureFlags(CONTIGUITY);
-            }
-        } else {
-            // Negative stride: indexing runs from last item
-            this.buf = new BufferPointer(storage, index0 + d, 1 - d);
+        if (stride == 1) {
+            // Really this is a simple buffer
+            addFeatureFlags(CONTIGUITY);
         }
-
         checkRequestFlags(flags);   // Check request is compatible with type
     }
 
@@ -122,12 +100,12 @@ public class Strided1DBuffer extends BaseBuffer {
 
     @Override
     public byte byteAt(int index) throws IndexOutOfBoundsException {
-        return buf.storage[index0 + index * stride];
+        return buf.storage[buf.offset + index * stride];
     }
 
     @Override
     protected int calcIndex(int index) throws IndexOutOfBoundsException {
-        return index0 + index * stride;
+        return buf.offset + index * stride;
     }
 
     @Override
@@ -145,7 +123,7 @@ public class Strided1DBuffer extends BaseBuffer {
     public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
             throws IndexOutOfBoundsException {
         // Data is here in the buffers
-        int s = index0 + srcIndex * stride;
+        int s = buf.offset + srcIndex * stride;
         int d = destPos;
 
         // Strategy depends on whether items are laid end-to-end contiguously or there are gaps
@@ -154,7 +132,7 @@ public class Strided1DBuffer extends BaseBuffer {
             System.arraycopy(buf.storage, s, dest, d, length);
 
         } else {
-            // Discontiguous copy: single byte items
+            // Non-contiguous copy: single byte items
             int limit = s + length * stride;
             for (; s != limit; s += stride) {
                 dest[d++] = buf.storage[s];
@@ -171,22 +149,38 @@ public class Strided1DBuffer extends BaseBuffer {
      * which <i>x</i> was created from <i>u</i>. Thus <i>y(k) = u(r+sp+kmp)</i>, that is, the
      * composite offset is <i>r+sp</i> and the composite stride is <i>mp</i>.
      */
+    @Override
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
 
-        // Translate relative to underlying buffer
-        int compStride = this.stride * stride;
-        int compIndex0 = index0 + start * stride;
+        if (length > 0) {
+            int compStride;
 
-        // Check the slice sits within the present buffer (first and last indexes)
-        checkInBuf(compIndex0, compIndex0 + (length - 1) * compStride);
+            if (stride == 1) {
+                // Check the arguments define a slice within this buffer
+                checkSlice(start, length);
+                // Composite stride is same as original stride
+                compStride = this.stride;
+            } else {
+                // Check the arguments define a slice within this buffer
+                checkSlice(start, length, stride);
+                // Composite stride is product
+                compStride = this.stride * stride;
+            }
 
-        // Construct a view, taking a lock on the root object (this or this.root)
-        return new SlicedView(getRoot(), flags, buf.storage, compIndex0, length, compStride);
+            // Translate start relative to underlying buffer
+            int compIndex0 = buf.offset + start * this.stride;
+            // Construct a view, taking a lock on the root object (this or this.root)
+            return new SlicedView(getRoot(), flags, buf.storage, compIndex0, length, compStride);
+
+        } else {
+            // Special case for length==0 where above logic would fail. Efficient too.
+            return new ZeroByteBuffer.View(getRoot(), flags);
+        }
     }
 
     @Override
     public BufferPointer getPointer(int index) {
-        return new BufferPointer(buf.storage, index0 + index, 1);
+        return new BufferPointer(buf.storage, buf.offset + index * stride);
     }
 
     @Override
@@ -206,7 +200,7 @@ public class Strided1DBuffer extends BaseBuffer {
     }
 
     /**
-     * A <code>Strided1DBuffer.SlicedView</code> represents a discontiguous subsequence of a simple
+     * A <code>Strided1DBuffer.SlicedView</code> represents a non-contiguous subsequence of a simple
      * buffer.
      */
     static class SlicedView extends Strided1DBuffer {

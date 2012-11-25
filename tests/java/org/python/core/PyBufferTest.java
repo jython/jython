@@ -4,11 +4,14 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.buffer.SimpleWritableBuffer;
@@ -30,13 +33,16 @@ import org.python.util.PythonInterpreter;
  * exception.
  * <p>
  * The Jython buffer API follows the structures of the CPython buffer API so that it supports in
- * principle the use of multi-dimensional, strided add indirect array structures as buffers.
+ * principle the use of multi-dimensional, strided and indirect array structures as buffers.
  * However, actual buffers in the Jython core, and therefore these tests, limit themselves to one
- * dimensional contiguous buffers with a simple organisation. Some tests apply directly to the
+ * dimensional (possibly non-contiguous) directly-indexed buffers. Some tests apply directly to the
  * N-dimensional cases, and some need a complete re-think. Sub-classing this test would probably be
  * a good way to extend it to a wider range.
  */
 public class PyBufferTest extends TestCase {
+
+    /** Control amount of output. Instance variable so can be adjusted temporarily per test. */
+    protected int verbosity = 0;
 
     /**
      * Generated constructor
@@ -53,51 +59,170 @@ public class PyBufferTest extends TestCase {
     /*
      * Values for initialising the exporters.
      */
-    private static final ByteMaterial byteMaterial = new ByteMaterial(0, 17, 16);
-    private static final ByteMaterial abcMaterial = new ByteMaterial("abcdef");
+    private static final ByteMaterial byteMaterial = new ByteMaterial(0, 16, 17);
+    private static final ByteMaterial abcMaterial = new ByteMaterial("abcdefgh");
     private static final ByteMaterial stringMaterial = new ByteMaterial("Mon côté fâcheux");
     private static final ByteMaterial emptyMaterial = new ByteMaterial(new byte[0]);
-    private static final ByteMaterial longMaterial = new ByteMaterial(0, 5, 1000);
+    public static final int LONG = 1000;
+    private static final ByteMaterial longMaterial = new ByteMaterial(0, LONG, 5);
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         // Exception raising requires the Jython interpreter
         interp = new PythonInterpreter();
 
-        // Tests using local examples
-        queueWrite(new SimpleWritableExporter(abcMaterial.getBytes()), abcMaterial);
-        queueReadonly(new SimpleExporter(byteMaterial.getBytes()), byteMaterial);
-        queueReadonly(new StringExporter(stringMaterial.string), stringMaterial);
-        queueWrite(new SimpleWritableExporter(emptyMaterial.getBytes()), emptyMaterial);
+        // Tests using local types of exporter
+        genWritable(new SimpleWritableExporter(abcMaterial.getBytes()), abcMaterial);
+        genReadonly(new SimpleExporter(byteMaterial.getBytes()), byteMaterial);
+        genReadonly(new StringExporter(stringMaterial.string), stringMaterial);
+        genWritable(new SimpleWritableExporter(emptyMaterial.getBytes()), emptyMaterial);
 
         // Tests with PyByteArray
-        queueWrite(new PyByteArray(abcMaterial.getBytes()), abcMaterial);
-        queueWrite(new PyByteArray(longMaterial.getBytes()), longMaterial);
-        queueWrite(new PyByteArray(), emptyMaterial);
+        genWritable(new PyByteArray(abcMaterial.getBytes()), abcMaterial);
+        genWritable(new PyByteArray(longMaterial.getBytes()), longMaterial);
+        genWritable(new PyByteArray(), emptyMaterial);
 
         // Tests with PyString
-        queueReadonly(new PyString(abcMaterial.string), abcMaterial);
-        queueReadonly(new PyString(), emptyMaterial);
+        genReadonly(new PyString(abcMaterial.string), abcMaterial);
+        genReadonly(new PyString(), emptyMaterial);
 
         // Ensure case is tested where PyByteArray has an internal offset
         PyByteArray truncated = new PyByteArray(stringMaterial.getBytes());
         truncated.delRange(0, 4);
         ByteMaterial truncatedMaterial = new ByteMaterial(stringMaterial.string.substring(4));
         assert truncated.__alloc__() > truncatedMaterial.length;
-        queueWrite(truncated, truncatedMaterial);
+        genWritable(truncated, truncatedMaterial);
     }
 
-    private void queueWrite(BufferProtocol exporter, ByteMaterial material) {
-        BufferTestPair pair = new BufferTestPair(exporter, material);
-        buffersToRead.add(pair);
-        buffersToWrite.add(pair);
+    /** Generate a series of test material for a writable object. */
+    private void genWritable(BufferProtocol exporter, ByteMaterial material) {
+        generate(exporter, material, false);
     }
 
-    private void queueReadonly(BufferProtocol exporter, ByteMaterial material) {
-        BufferTestPair pair = new BufferTestPair(exporter, material);
+    /** Generate a series of test material for a read-only object. */
+    private void genReadonly(BufferProtocol exporter, ByteMaterial material) {
+        generate(exporter, material, true);
+    }
+
+    /** Lengths we will use if we can when slicing view */
+    private static final int[] sliceLengths = {1, 2, 5, 0, LONG / 4};
+
+    /** Step sizes we will use if we can when slicing view */
+    private static final int[] sliceSteps = {1, 2, 3, 7};
+
+    /**
+     * Generate a series of test material for a read-only or writable object. Given one exporter,
+     * and its reference ByteMaterial this method first queues a BufferTestPair corresponding to the
+     * exporter as the test subject and its test material. This provides a "direct" PyBuffer view on
+     * the exporter. It then goes on to make a variety of sliced PyBuffer views of the exporter by
+     * calling {@link PyBuffer#getBufferSlice(int, int, int, int)} on the direct view. The slices
+     * are made with a variety of argument combinations, filtered down to those that make sense for
+     * the size of the direct view. Each sliced buffer (considered a test subject now), together
+     * with correspondingly sliced reference ByteMaterial is queued as BufferTestPair.
+     *
+     * @param exporter underlying object
+     * @param material reference material corresponding to the exporter
+     * @param readonly whether the exporter is of read-only type
+     */
+    private void generate(BufferProtocol exporter, ByteMaterial material, boolean readonly) {
+
+        // Generate a test using the buffer directly exported by the exporter
+        PyBuffer direct = queue(exporter, material, readonly);
+
+        // Generate some slices from the material and this direct view
+        int N = material.length;
+        int M = (N + 4) / 4;    // At least one and about N/4
+
+        // For a range of start positions up to one beyond the end
+        for (int start = 0; start <= N; start += M) {
+            // For a range of lengths
+            for (int length : sliceLengths) {
+
+                if (length == 0) {
+                    queue(direct, material, start, 0, 1, readonly);
+                    queue(direct, material, start, 0, 2, readonly);
+
+                } else if (length == 1 && start < N) {
+                    queue(direct, material, start, 1, 1, readonly);
+                    queue(direct, material, start, 1, 2, readonly);
+
+                } else if (start < N) {
+
+                    // And for a range of step sizes
+                    for (int step : sliceSteps) {
+                        // Check this is a feasible slice
+                        if (start + (length - 1) * step < N) {
+                            queue(direct, material, start, length, step, readonly);
+                        }
+                    }
+
+                    // Now use all the step sizes negatively
+                    for (int step : sliceSteps) {
+                        // Check this is a feasible slice
+                        if (start - (length - 1) * step >= 0) {
+                            queue(direct, material, start, length, -step, readonly);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Generate and queue one test of non-slice type (if getting a buffer succeeds). */
+    private PyBuffer queue(BufferProtocol exporter, ByteMaterial material, boolean readonly) {
+        if (verbosity > 2) {
+            System.out.printf("queue non-slice: length=%d, readonly=%s\n", material.length,
+                    readonly);
+        }
+        BufferTestPair pair = new BufferTestPair(exporter, material, readonly);
+        queue(pair);
+        return pair.view;
+    }
+
+    /** Generate and queue one test of slice type (if getting a buffer succeeds). */
+    private PyBuffer queue(PyBuffer direct, ByteMaterial material, int start, int length, int step,
+            boolean readonly) {
+
+        int flags = readonly ? PyBUF.FULL_RO : PyBUF.FULL;
+        PyBuffer subject = null;
+
+        /*
+         * Make a slice. We ignore this case if we fail, because we are not testing slice creation
+         * here, but making slices to be tested as buffers. We'll test slice creation in
+         * testGetBufferSlice.
+         */
+        try {
+            if (verbosity > 2) {
+                System.out.printf("  queue slice: start=%4d, length=%4d, step=%4d\n", start,
+                        length, step);
+            }
+            subject = direct.getBufferSlice(flags, start, length, step);
+            ByteMaterial sliceMaterial = material.slice(start, length, step);
+            BufferTestPair pair = new BufferTestPair(subject, sliceMaterial, step, readonly);
+            queue(pair);
+        } catch (Exception e) {
+            /*
+             * We ignore this case if we fail, because we are not testing slice creation here, but
+             * making slices to be tested as buffers. We'll test slice creation elsewhere.
+             */
+            if (verbosity > 2) {
+                System.out.printf("*** SKIP %s\n", e);
+            }
+        }
+
+        return subject;
+    }
+
+    /** Queue one instance of test material for a read-only or writable object. */
+    private void queue(BufferTestPair pair) {
         buffersToRead.add(pair);
-        buffersToFailToWrite.add(pair);
+        if (pair.readonly) {
+            buffersToFailToWrite.add(pair);
+        } else {
+            buffersToWrite.add(pair);
+        }
     }
 
     /** Read operations should succeed on all these objects. */
@@ -107,55 +232,24 @@ public class PyBufferTest extends TestCase {
     /** Write operations should fail on all these objects. */
     private List<BufferTestPair> buffersToFailToWrite = new LinkedList<BufferTestPair>();
 
-    /** We should be able to get a buffer for all these flag types. */
-    private int[] validFlags = {PyBUF.SIMPLE, PyBUF.ND, PyBUF.STRIDES, PyBUF.INDIRECT};
+    /**
+     * A one-dimensional exporter should be able to give us a buffer for all these flag types.
+     */
+    private static final int[] simpleFlags = {PyBUF.SIMPLE, PyBUF.ND, PyBUF.STRIDES,
+            PyBUF.INDIRECT, PyBUF.FULL_RO};
 
-    /** To which we can add any of these (in one dimension, anyway) */
-    private int[] validTassles = {0,
-                                  PyBUF.FORMAT,
-                                  PyBUF.C_CONTIGUOUS,
-                                  PyBUF.F_CONTIGUOUS,
-                                  PyBUF.ANY_CONTIGUOUS};
+    /** To {@link #simpleFlags} we can add any of these */
+    private static final int[] simpleTassles = {0, PyBUF.FORMAT, PyBUF.C_CONTIGUOUS,
+            PyBUF.F_CONTIGUOUS, PyBUF.ANY_CONTIGUOUS};
 
     /**
-     * Test method for {@link org.python.core.BufferProtocol#getBuffer()}.
+     * A one-dimensional exporter with stride!=1 is restricted to give us a buffer only for these
+     * flag types.
      */
-    public void testExporterGetBuffer() {
+    private static final int[] strided1DFlags = {PyBUF.STRIDES, PyBUF.INDIRECT, PyBUF.FULL_RO};
 
-        for (BufferTestPair test : buffersToRead) {
-            System.out.println("getBuffer(): " + test);
-            for (int flags : validFlags) {
-                for (int tassle : validTassles) {
-                    PyBuffer view = test.exporter.getBuffer(flags | tassle);
-                    assertNotNull(view);
-                }
-            }
-        }
-
-        for (BufferTestPair test : buffersToWrite) {
-            System.out.println("getBuffer(WRITABLE): " + test);
-            for (int flags : validFlags) {
-                for (int tassle : validTassles) {
-                    PyBuffer view = test.exporter.getBuffer(flags | tassle | PyBUF.WRITABLE);
-                    assertNotNull(view);
-                }
-            }
-        }
-
-        for (BufferTestPair test : buffersToFailToWrite) {
-            System.out.println("getBuffer(WRITABLE): " + test);
-            for (int flags : validFlags) {
-                try {
-                    test.exporter.getBuffer(flags | PyBUF.WRITABLE);
-                    fail("Write access not prevented: " + test);
-                } catch (PyException pye) {
-                    // Expect BufferError
-                    assertEquals(Py.BufferError, pye.type);
-                }
-            }
-        }
-
-    }
+    /** To {@link #strided1DFlags} we can add any of these */
+    private static final int[] strided1DTassles = {0, PyBUF.FORMAT};
 
     /**
      * Test method for {@link org.python.core.PyBUF#isReadonly()}.
@@ -163,13 +257,17 @@ public class PyBufferTest extends TestCase {
     public void testIsReadonly() {
 
         for (BufferTestPair test : buffersToWrite) {
-            System.out.println("isReadonly: " + test);
-            assertFalse(test.simple.isReadonly());
+            if (verbosity > 0) {
+                System.out.println("isReadonly: " + test);
+            }
+            assertFalse(test.view.isReadonly());
         }
 
         for (BufferTestPair test : buffersToFailToWrite) {
-            System.out.println("isReadonly: " + test);
-            assertTrue(test.simple.isReadonly());
+            if (verbosity > 0) {
+                System.out.println("isReadonly: " + test);
+            }
+            assertTrue(test.view.isReadonly());
         }
     }
 
@@ -178,8 +276,10 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetNdim() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getNdim: " + test);
-            assertEquals("simple ndim", test.shape.length, test.simple.getNdim());
+            if (verbosity > 0) {
+                System.out.println("getNdim: " + test);
+            }
+            assertEquals("unexpected ndim", test.shape.length, test.view.getNdim());
         }
     }
 
@@ -188,10 +288,12 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetShape() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getShape: " + test);
-            int[] shape = test.simple.getShape();
-            assertNotNull(shape);
-            assertIntsEqual("simple shape", test.shape, shape);
+            if (verbosity > 0) {
+                System.out.println("getShape: " + test);
+            }
+            int[] shape = test.view.getShape();
+            assertNotNull("shape[] should always be provided", shape);
+            assertIntsEqual("unexpected shape", test.shape, shape);
         }
     }
 
@@ -200,9 +302,10 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetLen() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getLen: " + test);
-            assertEquals(" simple len", test.material.bytes.length, test.simple.getLen());
-            assertEquals("strided len", test.material.bytes.length, test.strided.getLen());
+            if (verbosity > 0) {
+                System.out.println("getLen: " + test);
+            }
+            assertEquals("unexpected length", test.material.length, test.view.getLen());
         }
     }
 
@@ -211,11 +314,13 @@ public class PyBufferTest extends TestCase {
      */
     public void testByteAt() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("byteAt: " + test);
+            if (verbosity > 0) {
+                System.out.println("byteAt: " + test);
+            }
             int n = test.material.length;
             byte[] exp = test.material.bytes;
             for (int i = 0; i < n; i++) {
-                assertEquals(exp[i], test.simple.byteAt(i));
+                assertEquals(exp[i], test.view.byteAt(i));
             }
         }
     }
@@ -226,20 +331,23 @@ public class PyBufferTest extends TestCase {
     public void testByteAtNdim() {
         int[] index = new int[1];
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("byteAt(array): " + test);
-            if (test.strided.getShape().length != 1) {
-                fail("Test not implemented dimensions != 1");
+            if (verbosity > 0) {
+                System.out.println("byteAt(array): " + test);
+            }
+            if (test.view.getShape().length != 1) {
+                fail("Test not implemented if dimensions != 1");
             }
             byte[] exp = test.material.bytes;
             int n = test.material.length;
-            // Run through 1D index for simple
+            // Run through 1D index for view
             for (int i = 0; i < n; i++) {
                 index[0] = i;
-                assertEquals(exp[i], test.simple.byteAt(index));
+                assertEquals(exp[i], test.view.byteAt(index));
             }
+
             // Check 2D index throws
             try {
-                test.simple.byteAt(0, 0);
+                test.view.byteAt(0, 0);
                 fail("Use of 2D index did not raise exception");
             } catch (PyException pye) {
                 // Expect BufferError
@@ -253,11 +361,13 @@ public class PyBufferTest extends TestCase {
      */
     public void testIntAt() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("intAt: " + test);
+            if (verbosity > 0) {
+                System.out.println("intAt: " + test);
+            }
             int n = test.material.length;
             int[] exp = test.material.ints;
             for (int i = 0; i < n; i++) {
-                assertEquals(exp[i], test.simple.intAt(i));
+                assertEquals(exp[i], test.view.intAt(i));
             }
         }
     }
@@ -268,20 +378,22 @@ public class PyBufferTest extends TestCase {
     public void testIntAtNdim() {
         int[] index = new int[1];
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("intAt(array): " + test);
-            if (test.strided.getShape().length != 1) {
-                fail("Test not implemented dimensions != 1");
+            if (verbosity > 0) {
+                System.out.println("intAt(array): " + test);
+            }
+            if (test.view.getShape().length != 1) {
+                fail("Test not implemented for dimensions != 1");
             }
             int[] exp = test.material.ints;
             int n = test.material.length;
-            // Run through 1D index for simple
+            // Run through 1D index for view
             for (int i = 0; i < n; i++) {
                 index[0] = i;
-                assertEquals(exp[i], test.simple.intAt(index));
+                assertEquals(exp[i], test.view.intAt(index));
             }
             // Check 2D index throws
             try {
-                test.simple.intAt(0, 0);
+                test.view.intAt(0, 0);
                 fail("Use of 2D index did not raise exception");
             } catch (PyException pye) {
                 // Expect BufferError
@@ -295,17 +407,19 @@ public class PyBufferTest extends TestCase {
      */
     public void testStoreAt() {
         for (BufferTestPair test : buffersToWrite) {
-            System.out.println("storeAt: " + test);
+            if (verbosity > 0) {
+                System.out.println("storeAt: " + test);
+            }
             int n = test.material.length;
             int[] exp = test.material.ints;
             // Write modified test material into each location using storeAt()
             for (int i = 0; i < n; i++) {
                 byte v = (byte)(exp[i] ^ 3);    // twiddle some bits
-                test.simple.storeAt(v, i);
+                test.view.storeAt(v, i);
             }
             // Compare each location with modified test data using intAt()
             for (int i = 0; i < n; i++) {
-                assertEquals(exp[i] ^ 3, test.simple.intAt(i));
+                assertEquals(exp[i] ^ 3, test.view.intAt(i));
             }
         }
     }
@@ -315,21 +429,23 @@ public class PyBufferTest extends TestCase {
      */
     public void testStoreAtNdim() {
         for (BufferTestPair test : buffersToWrite) {
-            System.out.println("storeAt: " + test);
+            if (verbosity > 0) {
+                System.out.println("storeAt: " + test);
+            }
             int n = test.material.length;
             int[] exp = test.material.ints;
             // Write modified test material into each location using storeAt()
             for (int i = 0; i < n; i++) {
                 byte v = (byte)(exp[i] ^ 3);    // twiddle some bits
-                test.simple.storeAt(v, i);
+                test.view.storeAt(v, i);
             }
             // Compare each location with modified test data using intAt()
             for (int i = 0; i < n; i++) {
-                assertEquals(exp[i] ^ 3, test.simple.intAt(i));
+                assertEquals(exp[i] ^ 3, test.view.intAt(i));
             }
             // Check 2D index throws
             try {
-                test.simple.storeAt((byte)1, 0, 0);
+                test.view.storeAt((byte)1, 0, 0);
                 fail("Use of 2D index did not raise exception");
             } catch (PyException pye) {
                 // Expect BufferError
@@ -344,15 +460,17 @@ public class PyBufferTest extends TestCase {
     public void testCopyTo() {
         final int OFFSET = 5;
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("copyTo: " + test);
+            if (verbosity > 0) {
+                System.out.println("copyTo: " + test);
+            }
             int n = test.material.length;
             // Try with zero offset
             byte[] actual = new byte[n];
-            test.simple.copyTo(actual, 0);
+            test.view.copyTo(actual, 0);
             assertBytesEqual("copyTo() incorrect", test.material.bytes, actual, 0);
             // Try to middle of array
             actual = new byte[n + 2 * OFFSET];
-            test.simple.copyTo(actual, OFFSET);
+            test.view.copyTo(actual, OFFSET);
             assertBytesEqual("copyTo(offset) incorrect", test.material.bytes, actual, OFFSET);
             assertEquals("data before destination", 0, actual[OFFSET - 1]);
             assertEquals("data after destination", 0, actual[OFFSET + n]);
@@ -367,8 +485,10 @@ public class PyBufferTest extends TestCase {
         final byte BLANK = 7;
 
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("copyTo(from slice): " + test);
-            PyBuffer view = test.simple;
+            if (verbosity > 0) {
+                System.out.println("copyTo(from slice): " + test);
+            }
+            PyBuffer view = test.view;
 
             int n = test.material.length;
             byte[] actual = new byte[n + 2 * OFFSET];
@@ -380,11 +500,13 @@ public class PyBufferTest extends TestCase {
 
                     // A variety of lengths from zero to (n-srcIndex)-ish
                     for (int length = 0; srcIndex + length <= n; length = 2 * length + 1) {
-                        /*
-                         * System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
-                         * srcIndex, srcIndex + length, n, destPos, destPos + length,
-                         * actual.length);
-                         */
+
+                        if (verbosity > 1) {
+                            System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
+                                    srcIndex, srcIndex + length, n, destPos, destPos + length,
+                                    actual.length);
+                        }
+
                         Arrays.fill(actual, BLANK);
 
                         // Test the method
@@ -392,7 +514,7 @@ public class PyBufferTest extends TestCase {
 
                         // Check changed part of destination
                         assertBytesEqual("copyTo(slice) incorrect", test.material.bytes, srcIndex,
-                                         actual, destPos, length);
+                                actual, destPos, length);
                         if (destPos > 0) {
                             assertEquals("data before destination", BLANK, actual[destPos - 1]);
                         }
@@ -402,11 +524,13 @@ public class PyBufferTest extends TestCase {
                     // And from exactly n-srcIndex down to zero-ish
                     for (int trim = 0; srcIndex + trim <= n; trim = 2 * trim + 1) {
                         int length = n - srcIndex - trim;
-                        /*
-                         * System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
-                         * srcIndex, srcIndex + length, n, destPos, destPos + length,
-                         * actual.length);
-                         */
+
+                        if (verbosity > 1) {
+                            System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
+                                    srcIndex, srcIndex + length, n, destPos, destPos + length,
+                                    actual.length);
+                        }
+
                         Arrays.fill(actual, BLANK);
 
                         // Test the method
@@ -414,7 +538,7 @@ public class PyBufferTest extends TestCase {
 
                         // Check changed part of destination
                         assertBytesEqual("copyTo(slice) incorrect", test.material.bytes, srcIndex,
-                                         actual, destPos, length);
+                                actual, destPos, length);
                         if (destPos > 0) {
                             assertEquals("data before destination", BLANK, actual[destPos - 1]);
                         }
@@ -433,8 +557,10 @@ public class PyBufferTest extends TestCase {
         final byte BLANK = 7;
 
         for (BufferTestPair test : buffersToWrite) {
-            System.out.println("copyFrom(): " + test);
-            PyBuffer view = test.simple;
+            if (verbosity > 0) {
+                System.out.println("copyFrom(): " + test);
+            }
+            PyBuffer view = test.view;
 
             int n = test.material.length;
             byte[] actual = new byte[n];
@@ -455,9 +581,11 @@ public class PyBufferTest extends TestCase {
                     // A variety of lengths from zero to (n-destIndex)-ish
                     for (int length = 0; destIndex + length <= n; length = 2 * length + 1) {
 
-                        // System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
-                        // srcPos + length, n, destIndex, destIndex + length,
-                        // actual.length);
+                        if (verbosity > 1) {
+                            System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
+                                    srcPos, srcPos + length, n, destIndex, destIndex + length,
+                                    actual.length);
+                        }
 
                         // Initialise the object (have to do each time) and expected value
                         for (int i = 0; i < n; i++) {
@@ -480,9 +608,11 @@ public class PyBufferTest extends TestCase {
                     for (int trim = 0; destIndex + trim <= n; trim = 2 * trim + 1) {
                         int length = n - destIndex - trim;
 
-                        // System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n", srcPos,
-                        // srcPos + length, n, destIndex, destIndex + length,
-                        // actual.length);
+                        if (verbosity > 1) {
+                            System.out.printf("  copy src[%d:%d] (%d) to dst[%d:%d] (%d)\n",
+                                    srcPos, srcPos + length, n, destIndex, destIndex + length,
+                                    actual.length);
+                        }
 
                         // Initialise the object (have to do each time) and expected value
                         for (int i = 0; i < n; i++) {
@@ -506,16 +636,351 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
+     * Test method for {@link org.python.core.BufferProtocol#getBuffer()} and
+     * {@link org.python.core.PyBuffer#getBuffer()}.
+     */
+    public void testGetBuffer() {
+
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("getBuffer(): " + test);
+            }
+            for (int flags : test.validFlags) {
+                for (int tassle : test.validTassles) {
+                    PyBuffer view = test.subject.getBuffer(flags | tassle);
+                    assertNotNull(view);
+                }
+            }
+        }
+
+        for (BufferTestPair test : buffersToWrite) {
+            if (verbosity > 0) {
+                System.out.println("getBuffer(WRITABLE): " + test);
+            }
+            for (int flags : test.validFlags) {
+                for (int tassle : test.validTassles) {
+                    PyBuffer view = test.subject.getBuffer(flags | tassle | PyBUF.WRITABLE);
+                    assertNotNull(view);
+                }
+            }
+        }
+
+        for (BufferTestPair test : buffersToFailToWrite) {
+            if (verbosity > 0) {
+                System.out.println("getBuffer(WRITABLE): " + test);
+            }
+            for (int flags : test.validFlags) {
+                try {
+                    test.subject.getBuffer(flags | PyBUF.WRITABLE);
+                    fail("Write access not prevented: " + test);
+                } catch (PyException pye) {
+                    // Expect BufferError
+                    assertEquals(Py.BufferError, pye.type);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Test method for {@link org.python.core.PyBUF#release()}, exercising the release semantics of
+     * PyBuffer.
+     */
+    public void testRelease() {
+
+        /*
+         * Testing the semantics of release() is tricky when it comes to 'final' release behaviour.
+         * We'd like to test that buffers can be acquired and released, that "over release" is
+         * detected as an error, and that after final release of the buffer (where the export count
+         * becomes zero) an exporter remains capable of exporting again. Each test is constructed
+         * with a subject and a view on the subject (if the subject is an exporter), so you might
+         * think the export count would be one in every case. Two problems: in many tests, the
+         * subject is a PyBuffer, which has the option (if it would work) to return itself; and a
+         * PyBuffer is not expected to provide a new buffer view once finally released.
+         */
+
+        Set<PyBuffer> uniqueBuffers = new HashSet<PyBuffer>();
+
+        for (BufferTestPair test : buffersToRead) {
+            // Test a pattern of acquire and release with one more release than acquire
+            doTestRelease(test);
+            uniqueBuffers.add(test.view);
+        }
+
+        // All buffers are released: test that any further release is detected as an error.
+        for (PyBuffer view : uniqueBuffers) {
+            doTestOverRelease(view);
+        }
+
+        // All exporters are currently not exporting buffers
+        for (BufferTestPair test : buffersToRead) {
+            if (!(test.subject instanceof PyBuffer)) {
+                doTestGetAfterRelease(test);
+            }
+        }
+    }
+
+    /**
+     * Exercise the release semantics of one BufferTestPair. At the end, the view in the
+     * BufferTestPair should be fully released, ({@link PyBuffer#isReleased()}<code>==true</code>).
+     */
+    private void doTestRelease(BufferTestPair test) {
+
+        if (verbosity > 0) {
+            System.out.println("release: " + test);
+        }
+        int flags = PyBUF.STRIDES | PyBUF.FORMAT;
+        BufferProtocol sub = test.subject;
+
+        // The object will be exporting test.view and N other views we don't know about
+        PyBuffer a = test.view;                     // = N+1 exports
+        PyBuffer b = sub.getBuffer(PyBUF.FULL_RO);  // = N+2 export
+        PyBuffer c = sub.getBuffer(flags);          // = N+3 exports
+        checkExporting(sub);
+
+        // Now see that releasing in some other order works correctly
+        b.release();                                // = N+2 exports
+        a.release();                                // = N+1 exports
+        checkExporting(sub);
+
+        // You can get a buffer from a buffer (c is unreleased)
+        PyBuffer d = c.getBuffer(flags);            // = N+2 exports
+        c.release();                                // = N+1 export
+        checkExporting(sub);
+        d.release();                                // = N exports
+    }
+
+    /**
+     * The view argument should be a fully released buffer, ({@link PyBuffer#isReleased()}
+     * <code>==true</code>). We check that further releases raise an error.
+     */
+    private void doTestOverRelease(PyBuffer view) {
+
+        // Was it released finally?
+        assertTrue("Buffer not finally released as expected", view.isReleased());
+
+        // Further releases are an error
+        try {
+            view.release();                        // = -1 exports (oops)
+            fail("excess release not detected");
+        } catch (Exception e) {
+            // Success
+        }
+
+    }
+
+    /**
+     * The test in the argument is one where the subject is a real object (not another buffer) from
+     * which all buffer views should have been released in {@link #doTestRelease(BufferTestPair)}.
+     * We check this is true, and that a new buffer may still be acquired from the real object, but
+     * not from the released buffer.
+     */
+    private void doTestGetAfterRelease(BufferTestPair test) {
+
+        if (verbosity > 0) {
+            System.out.println("get again: " + test);
+        }
+        BufferProtocol sub = test.subject;
+
+        // Fail here if doTestRelease did not fully release, or
+        checkNotExporting(sub);
+
+        // Further gets via the released buffer are an error
+        try {
+            test.view.getBuffer(PyBUF.FULL_RO);
+            fail("PyBuffer.getBuffer after final release not detected");
+        } catch (Exception e) {
+            // Detected *and* prevented?
+            checkNotExporting(sub);
+        }
+
+        // And so are sliced gets
+        try {
+            test.view.getBufferSlice(PyBUF.FULL_RO, 0, 0);
+            fail("PyBuffer.getBufferSlice after final release not detected");
+        } catch (Exception e) {
+            // Detected *and* prevented?
+            checkNotExporting(sub);
+        }
+
+        /*
+         * Even after some abuse, we can still get and release a buffer.
+         */
+        PyBuffer b = sub.getBuffer(PyBUF.FULL_RO);      // = 1 export
+        checkExporting(sub);
+        b.release();                                    // = 0 exports
+        checkNotExporting(sub);
+    }
+
+    /**
+     * Error if subject is a PyBuffer and is released, or is a real exporter that (we can tell) is
+     * not actually exporting.
+     *
+     * @param subject
+     */
+    private void checkExporting(BufferProtocol subject) {
+        if (subject instanceof TestableExporter) {
+            assertTrue("exports not being counted", ((TestableExporter)subject).isExporting());
+        } else if (subject instanceof PyBuffer) {
+            assertFalse("exports not being counted (PyBuffer)", ((PyBuffer)subject).isReleased());
+        } else if (subject instanceof PyByteArray) {
+            // Size-changing access should fail
+            try {
+                ((PyByteArray)subject).bytearray_extend(Py.One); // Appends one zero byte
+                fail("bytearray_extend with exports should fail");
+            } catch (Exception e) {
+                // Success
+            }
+        }
+        // Other types cannot be checked
+    }
+
+    /**
+     * Error if subject is a PyBuffer that is released, or is a real exporter (that we can tell) is
+     * locked.
+     *
+     * @param subject
+     */
+    private void checkNotExporting(BufferProtocol subject) {
+        if (subject instanceof TestableExporter) {
+            assertFalse("exports counted incorrectly", ((TestableExporter)subject).isExporting());
+        } else if (subject instanceof PyBuffer) {
+            assertTrue("exports counted incorrectly (PyBuffer)", ((PyBuffer)subject).isReleased());
+        } else if (subject instanceof PyByteArray) {
+            // Size-changing access should succeed
+            try {
+                PyByteArray sub = ((PyByteArray)subject);
+                sub.bytearray_extend(Py.One);
+                sub.del(sub.__len__() - 1);
+            } catch (Exception e) {
+                fail("bytearray unexpectedly locked");
+            }
+        }
+        // Other types cannot be checked
+    }
+
+    /**
+     * Check that reusable PyBuffer is re-used, and that non-reusable PyBuffer is not re-used.
+     *
+     * @param subject
+     */
+    private void checkReusable(BufferProtocol subject, PyBuffer previous, PyBuffer latest) {
+        assertNotNull("Re-used PyBuffer reference null", latest);
+        if (subject instanceof PyByteArray) {
+            // Re-use prohibited because might have resized while released
+            assertFalse("PyByteArray buffer reused unexpectedly", latest == previous);
+        } else if (subject instanceof TestableExporter && !((TestableExporter)subject).reusable) {
+            // Special test case where re-use prohibited
+            assertFalse("PyBuffer reused unexpectedly", latest == previous);
+        } else {
+            // Other types of TestableExporter and PyString all re-use
+            assertTrue("PyBuffer not re-used as expected", latest == previous);
+        }
+    }
+
+    /**
+     * Test method for {@link org.python.core.PyBuffer#getBufferSlice(int, int, int, int)}.
+     */
+    public void testGetBufferSliceWithStride() {
+
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("getBufferSliceWithStride: " + test);
+            }
+            ByteMaterial material = test.material;
+            PyBuffer view = test.view;
+            boolean readonly = test.readonly;
+
+            // Generate some slices from the material and the test view
+            int N = material.length;
+            int M = (N + 4) / 4;    // At least one and about N/4
+
+            // For a range of start positions up to one beyond the end
+            for (int start = 0; start <= N; start += M) {
+                // For a range of lengths
+                for (int length : sliceLengths) {
+
+                    if (length == 0) {
+                        checkSlice(view, material, start, 0, 1, readonly);
+                        checkSlice(view, material, start, 0, 2, readonly);
+
+                    } else if (length == 1 && start < N) {
+                        checkSlice(view, material, start, 1, 1, readonly);
+                        checkSlice(view, material, start, 1, 2, readonly);
+
+                    } else if (start < N) {
+
+                        // And for a range of step sizes
+                        for (int step : sliceSteps) {
+                            // Check this is a feasible slice
+                            if (start + (length - 1) * step < N) {
+                                checkSlice(view, material, start, length, step, readonly);
+                            }
+                        }
+
+                        // Now use all the step sizes negatively
+                        for (int step : sliceSteps) {
+                            // Check this is a feasible slice
+                            if (start - (length - 1) * step >= 0) {
+                                checkSlice(view, material, start, length, -step, readonly);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Helper for {@link #testGetBufferSliceWithStride()} that obtains one sliced buffer to
+     * specification and checks it against the material.
+     */
+    private void checkSlice(PyBuffer view, ByteMaterial material, int start, int length, int step,
+            boolean readonly) {
+
+        int flags = readonly ? PyBUF.FULL_RO : PyBUF.FULL;
+
+        if (verbosity > 1) {
+            System.out.printf("  checkSlice: start=%4d, length=%4d, step=%4d \n", start, length,
+                    step);
+        }
+        byte[] expected = sliceBytes(material.bytes, start, length, step);
+        PyBuffer sliceView = view.getBufferSlice(flags, start, length, step);
+
+        byte[] result = bytesFromByteAt(sliceView);
+        assertBytesEqual("  testGetBufferSliceWithStride failure: ", expected, result);
+    }
+
+    /**
      * Test method for {@link org.python.core.PyBuffer#getBuf()}.
      */
     public void testGetBuf() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getBuf: " + test);
-            PyBuffer view = test.exporter.getBuffer(PyBUF.SIMPLE);
-            ByteMaterial m = test.material;
+            if (verbosity > 0) {
+                System.out.println("getBuf: " + test);
+            }
+            int stride = test.strides[0];
 
-            BufferPointer bp = view.getBuf();
-            assertBytesEqual("getBuf: ", m.bytes, bp);
+            if (stride == 1) {
+
+                // The client should not have to support navigation with the strides array
+                int flags = test.readonly ? PyBUF.SIMPLE : PyBUF.SIMPLE + PyBUF.WRITABLE;
+                PyBuffer view = test.subject.getBuffer(flags);
+
+                BufferPointer bp = view.getBuf();
+                assertBytesEqual("buffer does not match reference", test.material.bytes, bp);
+
+            } else {
+                // The client will have to navigate with the strides array
+                int flags = test.readonly ? PyBUF.STRIDED_RO : PyBUF.STRIDED;
+                PyBuffer view = test.subject.getBuffer(flags);
+
+                stride = view.getStrides()[0];  // Just possibly != test.strides when length<=1
+                BufferPointer bp = view.getBuf();
+                assertBytesEqual("buffer does not match reference", test.material.bytes, bp, stride);
+            }
+
         }
     }
 
@@ -524,8 +989,10 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetPointer() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getPointer: " + test);
-            PyBuffer view = test.strided;
+            if (verbosity > 0) {
+                System.out.println("getPointer: " + test);
+            }
+            PyBuffer view = test.view;
             int n = test.material.length, itemsize = view.getItemsize();
             byte[] exp = new byte[itemsize], bytes = test.material.bytes;
 
@@ -538,8 +1005,8 @@ public class PyBufferTest extends TestCase {
 
                 // Get pointer and check contents for correct data
                 BufferPointer bp = view.getPointer(i);
-                assertBytesEqual("getPointer value", exp, bp.storage, bp.offset);
-                assertEquals("getPointer size wrong", itemsize, bp.size);
+                int stride = view.getStrides()[0];
+                assertBytesEqual("getPointer value", exp, bp, stride);
             }
         }
     }
@@ -550,8 +1017,10 @@ public class PyBufferTest extends TestCase {
     public void testGetPointerNdim() {
         int[] index = new int[1];
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getPointer(array): " + test);
-            PyBuffer view = test.strided;
+            if (verbosity > 0) {
+                System.out.println("getPointer(array): " + test);
+            }
+            PyBuffer view = test.view;
             int n = test.material.length, itemsize = view.getItemsize();
             byte[] exp = new byte[itemsize], bytes = test.material.bytes;
 
@@ -566,8 +1035,9 @@ public class PyBufferTest extends TestCase {
                 index[0] = i;
                 BufferPointer bp = view.getPointer(index);
                 assertBytesEqual("getPointer value", exp, bp.storage, bp.offset);
-                assertEquals("getPointer size wrong", itemsize, bp.size);
+// assertEquals("getPointer size wrong", itemsize, bp.size);
             }
+
             // Check 2D index throws
             try {
                 view.getPointer(0, 0);
@@ -580,124 +1050,24 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Test method for {@link org.python.core.PyBUF#release()}.
-     */
-    public void testRelease() {
-        for (BufferTestPair test : buffersToRead) {
-            System.out.println("release: " + test);
-            BufferProtocol obj = test.exporter;
-
-            // The object should already be exporting test.simple and test.strided = 2 exports
-            PyBuffer a = test.simple; // 1 exports
-            PyBuffer b = test.strided; // 2 exports
-            PyBuffer c = obj.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT); // = 3 exports
-            checkExporting(obj);
-
-            // Now see that releasing in some other order works correctly
-            b.release(); // = 2 exports
-            a.release(); // = 1 export
-            checkExporting(obj);
-            int flags = PyBUF.STRIDES | PyBUF.FORMAT;
-
-            // You can get a buffer from a buffer (for SimpleExporter only c is alive)
-            PyBuffer d = c.getBuffer(flags); // = 2 exports
-            c.release(); // = 1 export
-            checkExporting(obj);
-            d.release(); // = 0 exports
-            checkNotExporting(obj);
-
-            // But fails if buffer has been finally released
-            try {
-                a = d.getBuffer(flags); // = 0 exports (since disallowed)
-                fail("getBuffer after final release not detected");
-            } catch (Exception e) {
-                // Detected *and* prevented?
-                checkNotExporting(obj);
-            }
-
-            // Further releases are also an error
-            try {
-                a.release(); // = -1 exports (oops)
-                fail("excess release not detected");
-            } catch (Exception e) {
-                // Success
-            }
-
-        }
-    }
-
-    /**
-     * Error if exporter is not actually exporting (and is of a type that locks on export).
-     *
-     * @param exporter
-     */
-    private void checkExporting(BufferProtocol exporter) {
-        if (exporter instanceof TestableExporter) {
-            assertTrue("exports not being counted", ((TestableExporter)exporter).isExporting());
-        } else if (exporter instanceof PyByteArray) {
-            // Size-changing access should fail
-            try {
-                ((PyByteArray)exporter).bytearray_extend(Py.One); // Appends one zero byte
-                fail("bytearray_extend with exports should fail");
-            } catch (Exception e) {
-                // Success
-            }
-        }
-        // Other types cannot be checked
-    }
-
-    /**
-     * Error if exporter is exporting (and is of a type that locks on export).
-     *
-     * @param exporter
-     */
-    private void checkNotExporting(BufferProtocol exporter) {
-        if (exporter instanceof TestableExporter) {
-            assertFalse("exports falsely counted", ((TestableExporter)exporter).isExporting());
-        } else if (exporter instanceof PyByteArray) {
-            // Size-changing access should fail
-            try {
-                ((PyByteArray)exporter).bytearray_extend(Py.One);
-            } catch (Exception e) {
-                fail("bytearray unexpectedly locked");
-            }
-        }
-        // Other types cannot be checked
-    }
-
-    /**
-     * Check that reusable PyBuffer is re-used, and that non-reusable PyBuffer is not re-used.
-     *
-     * @param exporter
-     */
-    private void checkReusable(BufferProtocol exporter, PyBuffer previous, PyBuffer latest) {
-        assertNotNull("Re-used PyBuffer reference null", latest);
-        if (exporter instanceof PyByteArray) {
-            // Re-use prohibited because might have resized while released
-            assertFalse("PyByteArray buffer reused unexpectedly", latest == previous);
-        } else if (exporter instanceof TestableExporter && !((TestableExporter)exporter).reusable) {
-            // Special test case where re-use prohibited
-            assertFalse("PyBuffer reused unexpectedly", latest == previous);
-        } else {
-            // Other types of TestableExporter and PyString all re-use
-            assertTrue("PyBuffer not re-used as expected", latest == previous);
-        }
-    }
-
-    /**
      * Test method for {@link org.python.core.PyBUF#getStrides()}.
      */
     public void testGetStrides() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getStrides: " + test);
-            // When not requested ... (different from CPython)
-            int[] strides = test.simple.getStrides();
-            assertNotNull("strides[] should always be provided", strides);
-            assertIntsEqual("simple.strides", test.strides, strides);
-            // And when requested, ought to be as expected
-            strides = test.strided.getStrides();
-            assertNotNull("strides[] not provided when requested", strides);
-            assertIntsEqual("strided.strides", test.strides, strides);
+            if (verbosity > 0) {
+                System.out.println("getStrides: " + test);
+            }
+            for (int flags : test.validFlags) {
+                PyBuffer view = test.subject.getBuffer(flags);
+                // Strides array irrespective of the client flags ... (different from CPython)
+                int[] strides = view.getStrides();
+                assertNotNull("strides[] should always be provided", strides);
+
+                // The strides must have the expected value if length >1
+                if (test.material.bytes.length > 1) {
+                    assertIntsEqual("unexpected strides", test.strides, strides);
+                }
+            }
         }
     }
 
@@ -706,10 +1076,11 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetSuboffsets() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getSuboffsets: " + test);
+            if (verbosity > 0) {
+                System.out.println("getSuboffsets: " + test);
+            }
             // Null for all test material
-            assertNull(test.simple.getSuboffsets());
-            assertNull(test.strided.getSuboffsets());
+            assertNull(test.view.getSuboffsets());
         }
     }
 
@@ -718,35 +1089,37 @@ public class PyBufferTest extends TestCase {
      */
     public void testIsContiguous() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("isContiguous: " + test);
+            if (verbosity > 0) {
+                System.out.println("isContiguous: " + test);
+            }
             // True for all test material and orders (since 1-dimensional)
             for (String orderMsg : validOrders) {
                 char order = orderMsg.charAt(0);
-                assertTrue(orderMsg, test.simple.isContiguous(order));
-                assertTrue(orderMsg, test.strided.isContiguous(order));
+                assertTrue(orderMsg, test.view.isContiguous(order));
             }
         }
     }
 
     private static final String[] validOrders = {"C-contiguous test fail",
-                                                 "F-contiguous test fail",
-                                                 "Any-contiguous test fail"};
+            "F-contiguous test fail", "Any-contiguous test fail"};
 
     /**
      * Test method for {@link org.python.core.PyBuffer#getFormat()}.
      */
     public void testGetFormat() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getFormat: " + test);
-            // When not requested ... (different from CPython)
-            assertNotNull("format should always be provided", test.simple.getFormat());
-            assertNotNull("format should always be provided", test.strided.getFormat());
-            // And, we can ask for it explicitly ...
-            PyBuffer simpleWithFormat = test.exporter.getBuffer(PyBUF.SIMPLE | PyBUF.FORMAT);
-            PyBuffer stridedWithFormat = test.exporter.getBuffer(PyBUF.STRIDES | PyBUF.FORMAT);
-            // "B" for all test material where requested in flags
-            assertEquals("B", simpleWithFormat.getFormat());
-            assertEquals("B", stridedWithFormat.getFormat());
+            if (verbosity > 0) {
+                System.out.println("getFormat: " + test);
+            }
+            for (int flags : test.validFlags) {
+                PyBuffer view = test.subject.getBuffer(flags);
+                // Format given irrespective of the client flags ... (different from CPython)
+                assertNotNull("format should always be provided", view.getFormat());
+                assertEquals("B", view.getFormat());
+                // And, we can ask for it explicitly ...
+                view = test.subject.getBuffer(flags | PyBUF.FORMAT);
+                assertEquals("B", view.getFormat());
+            }
         }
     }
 
@@ -755,20 +1128,39 @@ public class PyBufferTest extends TestCase {
      */
     public void testGetItemsize() {
         for (BufferTestPair test : buffersToRead) {
-            System.out.println("getItemsize: " + test);
+            if (verbosity > 0) {
+                System.out.println("getItemsize: " + test);
+            }
             // Unity for all test material
-            assertEquals(1, test.simple.getItemsize());
-            assertEquals(1, test.strided.getItemsize());
+            assertEquals(1, test.view.getItemsize());
         }
     }
 
     /**
-     * A class to act as an exporter that uses the SimpleReadonlyBuffer. This permits testing
-     * abstracted from the Jython interpreter.
-     * <p>
-     * The exporter exports a new PyBuffer object to each consumer (although each references the
-     * same internal storage) and it does not track their fate. You are most likely to use this
-     * approach with an exporting object that is immutable (or at least fixed in size).
+     * Test method for {@link org.python.core.PyBuffer#toString()}.
+     */
+    public void testToString() {
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("toString: " + test);
+            }
+            String r = test.view.toString();
+            assertEquals("buffer does not match reference", test.material.string, r);
+        }
+    }
+
+    /*
+     * ------------------------------------------------------------------------------------------- A
+     * series of custom exporters to permit testing abstracted from the Jython interpreter. These
+     * use the implementation classes in org.python.core.buffer in ways very similar to the
+     * implementations of bytearray and str.
+     * -------------------------------------------------------------------------------------------
+     */
+    /**
+     * A class to act as an exporter that uses the SimpleReadonlyBuffer. The exporter exports a new
+     * PyBuffer object to each consumer (although each references the same internal storage) and it
+     * does not track their fate. You are most likely to use this approach with an exporting object
+     * that is immutable (or at least fixed in size).
      */
     static class SimpleExporter implements BufferProtocol {
 
@@ -795,19 +1187,19 @@ public class PyBufferTest extends TestCase {
      */
     static abstract class TestableExporter implements BufferProtocol {
 
-        protected Reference<PyBuffer> export;
+        protected Reference<BaseBuffer> export;
 
         /**
          * Try to re-use existing exported buffer, or return null if can't.
          */
-        protected PyBuffer getExistingBuffer(int flags) {
-            PyBuffer pybuf = null;
+        protected BaseBuffer getExistingBuffer(int flags) {
+            BaseBuffer pybuf = null;
             if (export != null) {
                 // A buffer was exported at some time.
                 pybuf = export.get();
                 if (pybuf != null) {
                     // And this buffer still exists: expect this to provide a further reference
-                    pybuf = pybuf.getBuffer(flags);
+                    pybuf = pybuf.getBufferAgain(flags);
                 }
             }
             return pybuf;
@@ -842,15 +1234,13 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * A class to act as an exporter that uses the SimpleStringBuffer. This permits testing
-     * abstracted from the Jython interpreter.
-     * <p>
-     * The exporter shares a single exported buffer between all consumers but does not need to take
-     * any action when that buffer is finally released. You are most likely to use this approach
-     * with an exporting object type that does not modify its behaviour while there are active
-     * exports, but where it is worth avoiding the cost of duplicate buffers. This is the case with
-     * PyString, where some buffer operations cause construction of a byte array copy of the Java
-     * String, which it is desirable to do only once.
+     * A class to act as an exporter that uses the SimpleStringBuffer. The exporter shares a single
+     * exported buffer between all consumers but does not need to take any action when that buffer
+     * is finally released. You are most likely to use this approach with an exporting object type
+     * that does not modify its behaviour while there are active exports, but where it is worth
+     * avoiding the cost of duplicate buffers. This is the case with PyString, where some buffer
+     * operations cause construction of a byte array copy of the Java String, which it is desirable
+     * to do only once.
      */
     static class StringExporter extends TestableExporter {
 
@@ -868,12 +1258,12 @@ public class PyBufferTest extends TestCase {
         @Override
         public PyBuffer getBuffer(int flags) {
             // If we have already exported a buffer it may still be available for re-use
-            PyBuffer pybuf = getExistingBuffer(flags);
+            BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
                 pybuf = new SimpleStringBuffer(flags, storage);
                 // Hold a reference for possible re-use
-                export = new SoftReference<PyBuffer>(pybuf);
+                export = new SoftReference<BaseBuffer>(pybuf);
             }
             return pybuf;
         }
@@ -908,18 +1298,19 @@ public class PyBufferTest extends TestCase {
         @Override
         public PyBuffer getBuffer(int flags) {
             // If we have already exported a buffer it may still be available for re-use
-            PyBuffer pybuf = getExistingBuffer(flags);
+            BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
                 pybuf = new SimpleWritableBuffer(flags, storage) {
 
+                    @Override
                     protected void releaseAction() {
-                        export = null;
+                        export = null;  // Final release really is final (not reusable)
                     }
                 };
 
                 // Hold a reference for possible re-use
-                export = new WeakReference<PyBuffer>(pybuf);
+                export = new WeakReference<BaseBuffer>(pybuf);
             }
             return pybuf;
         }
@@ -981,7 +1372,7 @@ public class PyBufferTest extends TestCase {
         }
 
         /** Construct from pattern on values (used modulo 256). */
-        public ByteMaterial(int start, int inc, int count) {
+        public ByteMaterial(int start, int count, int inc) {
             length = count;
             StringBuilder buf = new StringBuilder(length);
             bytes = new byte[length];
@@ -1021,6 +1412,53 @@ public class PyBufferTest extends TestCase {
         byte[] getBytes() {
             return bytes.clone();
         }
+
+        /**
+         * Create material equivalent to a slice. this will not be used to create an exporter, but
+         * rather to specify data equivalent to the export.
+         *
+         * @param start first index to include
+         * @param length number of indices
+         * @param stride between indices
+         * @return ByteMaterial in which the arrays are a slice of this one
+         */
+        ByteMaterial slice(int start, int length, int stride) {
+            return new ByteMaterial(sliceBytes(bytes, start, length, stride));
+        }
+    }
+
+    /**
+     * Create a byte array from the values of the PyBuffer obtained using
+     * {@link PyBuffer#byteAt(int)}, to a length obtained from {@link PyBuffer#getLen()}.
+     *
+     * @param v the buffer
+     * @return the byte array
+     */
+    static byte[] bytesFromByteAt(PyBuffer v) {
+        final int N = v.getLen();
+        byte[] a = new byte[N];
+        for (int i = 0; i < N; i++) {
+            a[i] = v.byteAt(i);
+        }
+        return a;
+    }
+
+    /**
+     * Create a byte array that is a strided copy of the one passed in. The specifications are
+     * assumed correct for the size of that array.
+     *
+     * @param b source array
+     * @param start first index to include
+     * @param length number of indices
+     * @param stride between indices
+     * @return slice of b
+     */
+    static byte[] sliceBytes(byte[] b, int start, int length, int stride) {
+        byte[] a = new byte[length];
+        for (int i = 0, j = start; i < length; i++, j += stride) {
+            a[i] = b[j];
+        }
+        return a;
     }
 
     /**
@@ -1031,27 +1469,21 @@ public class PyBufferTest extends TestCase {
      * @param expected expected byte array
      * @param bp result to test
      */
-    void assertBytesEqual(String message, byte[] expected, BufferPointer bp) {
-        int size = bp.size;
-        if (size != expected.length) {
-            fail(message + " (size)");
-        } else {
-            int len = bp.storage.length;
-            if (bp.offset < 0 || bp.offset + size > len) {
-                fail(message + " (offset)");
-            } else {
-                // Should be safe to compare the bytes
-                int i = bp.offset, j;
-                for (j = 0; j < size; j++) {
-                    if (bp.storage[i++] != expected[j]) {
-                        break;
-                    }
-                }
-                if (j < size) {
-                    fail(message + " (byte at " + j + ")");
-                }
-            }
-        }
+    static void assertBytesEqual(String message, byte[] expected, BufferPointer bp) {
+        assertBytesEqual(message, expected, bp, 1);
+    }
+
+    /**
+     * Customised assert method comparing a buffer pointer to a byte array, usually the one from
+     * ByteMaterial.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param bp result to test
+     * @param stride in the storage array
+     */
+    static void assertBytesEqual(String message, byte[] expected, BufferPointer bp, int stride) {
+        assertBytesEqual(message, expected, 0, bp.storage, bp.offset, expected.length, stride);
     }
 
     /**
@@ -1061,12 +1493,25 @@ public class PyBufferTest extends TestCase {
      * @param expected expected byte array
      * @param bp result to test
      */
-    void assertBytesEqual(byte[] expected, BufferPointer bp) {
+    static void assertBytesEqual(byte[] expected, BufferPointer bp) {
         assertBytesEqual("", expected, bp);
     }
 
     /**
-     * Customised assert method comparing a byte arrays: values in the actual value starting at
+     * Customised assert method comparing a byte arrays: values in the actual value must match all
+     * those in expected[], and they must be the same length.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param actual result to test
+     */
+    static void assertBytesEqual(String message, byte[] expected, byte[] actual) {
+        assertEquals(message, expected.length, actual.length);
+        assertBytesEqual(message, expected, 0, actual, 0, expected.length, 1);
+    }
+
+    /**
+     * Customised assert method comparing byte arrays: values in the actual value starting at
      * actual[actualStart] must match all those in expected[], and there must be enough of them.
      *
      * @param message to issue on failure
@@ -1074,13 +1519,13 @@ public class PyBufferTest extends TestCase {
      * @param actual result to test
      * @param actualStart where to start the comparison in actual
      */
-    void assertBytesEqual(String message, byte[] expected, byte[] actual, int actualStart) {
-        assertBytesEqual(message, expected, 0, actual, actualStart, expected.length);
+    static void assertBytesEqual(String message, byte[] expected, byte[] actual, int actualStart) {
+        assertBytesEqual(message, expected, 0, actual, actualStart, expected.length, 1);
     }
 
     /**
-     * Customised assert method comparing a byte arrays: values starting at actual[actualStart] must
-     * those starting at actual[actualStart], for a distance of n bytes.
+     * Customised assert method comparing byte arrays: values starting at actual[actualStart] must
+     * those starting at expected[expectedStart], for a distance of n bytes.
      *
      * @param message to issue on failure
      * @param expected expected byte array
@@ -1089,26 +1534,58 @@ public class PyBufferTest extends TestCase {
      * @param actualStart where to start the comparison in actual
      * @param n number of bytes to test
      */
-    void assertBytesEqual(String message, byte[] expected, int expectedStart, byte[] actual,
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, byte[] actual,
             int actualStart, int n) {
-        if (actualStart < 0 || expectedStart < 0) {
-            fail(message + " (start<0)");
-        } else if (actualStart + n > actual.length || expectedStart + n > expected.length) {
-            fail(message + " (too short)");
+
+        assertBytesEqual(message, expected, expectedStart, actual, actualStart, n, 1);
+    }
+
+    /**
+     * Customised assert method comparing byte arrays: values starting at actual[actualStart] must
+     * those starting at expected[expectedStart], for a distance of n bytes.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param expectedStart where to start the comparison in expected
+     * @param actual result to test
+     * @param actualStart where to start the comparison in actual
+     * @param n number of bytes to test
+     * @param stride spacing of bytes in actual array
+     */
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, byte[] actual,
+            int actualStart, int n, int stride) {
+
+        if (actualStart < 0) {
+            fail(message + " (start<0 in result)");
+
+        } else if (expectedStart < 0) {
+            fail(message + " (start<0 in expected result): bug in test?");
+
+        } else if (actualStart + (n - 1) * stride + 1 > actual.length) {
+            fail(message + " (result too short)");
+
+        } else if (expectedStart + n > expected.length) {
+            fail(message + " (expected result too short): bug in test?");
+
         } else {
             // Should be safe to compare the values
             int i = actualStart, j, jLimit = expectedStart + n;
             for (j = expectedStart; j < jLimit; j++) {
-                if (actual[i++] != expected[j]) {
+                if (actual[i] != expected[j]) {
                     break;
                 }
+                i += stride;
             }
+
+            // If we stopped early, diagnose the problem
             if (j < jLimit) {
                 System.out.println("  expected:"
                         + Arrays.toString(Arrays.copyOfRange(expected, expectedStart, expectedStart
                                 + n)));
-                System.out.println("    actual:"
-                        + Arrays.toString(Arrays.copyOfRange(actual, actualStart, actualStart + n)));
+                System.out
+                        .println("    actual:"
+                                + Arrays.toString(Arrays.copyOfRange(actual, actualStart,
+                                        actualStart + n)));
                 System.out.println("  _actual_:" + Arrays.toString(actual));
                 fail(message + " (byte at " + j + ")");
             }
@@ -1124,7 +1601,7 @@ public class PyBufferTest extends TestCase {
      * @param actual result to test
      * @param offset where to start the comparison in actual
      */
-    void assertIntsEqual(String message, int[] expected, int[] actual, int offset) {
+    static void assertIntsEqual(String message, int[] expected, int[] actual, int offset) {
         int n = expected.length;
         if (offset < 0) {
             fail(message + " (offset<0)");
@@ -1154,7 +1631,7 @@ public class PyBufferTest extends TestCase {
      * @param expected expected array
      * @param actual result to test
      */
-    void assertIntsEqual(String message, int[] expected, int[] actual) {
+    static void assertIntsEqual(String message, int[] expected, int[] actual) {
         int n = expected.length;
         assertEquals(message, n, actual.length);
         // Should be safe to compare the values
@@ -1172,55 +1649,134 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Element for queueing tests, wraps an exporter object with (a copy of) the material from which
-     * it was created, and several PyBuffer views.
+     * Within a given test case (e.g. the test of one particular method) we run many data sets, and
+     * these are created by {@link PyBufferTest#setUp()} as instances of this class. The main
+     * contents of the BufferTestPair are the test subject and the material. The subject may be one
+     * of the base objects specified in <code>setUp()</code>, or it may itself be a
+     * <code>PyBuffer</code> onto one of these (often a sliced buffer). The material contains an
+     * array of bytes (and equivalent int array and String) that is the array of bytes equivalent to
+     * the subject.
      */
-    static class BufferTestPair {
+    private static class BufferTestPair {
+
+        /**
+         * An object (or PyBuffer) that is the subject of the test
+         */
+        final BufferProtocol subject;
+
+        /**
+         * Test material (a byte array and its value as several different types) that has a value
+         * equivalent to the subject of the test.
+         */
+        final ByteMaterial material;
+
+        /**
+         * As a convenience for the simple tests (which is most of them!) this element is guaranteed
+         * to be a PyBuffer: if {@link #subject} is a {@link PyBuffer}, this member is simply
+         * another reference to the <code>subject</code>. If <code>subject</code> is a real
+         * exporter, {@link #view} is a new view on the subject.
+         */
+        final PyBuffer view;
+
+        /** The base exporter is of a type that can only provide read-only views. */
+        final boolean readonly;
+
+        /**
+         * Flags that may be used in {@link BufferProtocol#getBuffer(int)} or
+         * {@link PyBuffer#getBufferSlice(int, int, int, int)}.
+         */
+        final int[] validFlags;
+
+        /**
+         * Modifier flags that may be used in {@link BufferProtocol#getBuffer(int)} or
+         * {@link PyBuffer#getBufferSlice(int, int, int, int)}.
+         */
+        final int[] validTassles;
 
         static final int[] STRIDES_1D = {1};
 
-        BufferProtocol exporter;
-        ByteMaterial material;
-        PyBuffer simple, strided;
-        int[] shape, strides;
+        /** The shape array that the subject should match (will be single element in present tests) */
+        int[] shape;
+
+        /** The shape array that the subject should match (will be single element in present tests) */
+        int[] strides;
 
         /**
-         * A test to do and the material for constructing it (and its results).
+         * A subject and its reference material, together with explicit shape and strides arrays
+         * expected.
          *
-         * @param exporter
-         * @param material
+         * @param subject of the test
+         * @param material containing a Java byte array that a view of the subject should equal
          * @param shape of the array, when testing in N-dimensions
-         * @param stride of the array, when testing in N-dimensions
+         * @param strides of the array, when testing sliced views
+         * @param readonly if true the base exporter can only provide read-only views
          */
-        public BufferTestPair(BufferProtocol exporter, ByteMaterial material, int[] shape,
-                int[] strides) {
-            this.exporter = exporter;
-            this.material = new ByteMaterial(material.ints);
+        public BufferTestPair(BufferProtocol subject, ByteMaterial material, int[] shape,
+                int[] strides, boolean readonly, int[] validFlags, int[] validTassles) {
+            this.subject = subject;
+            this.material = new ByteMaterial(material.ints);    // Copy in case modified
             this.shape = shape;
             this.strides = strides;
-            try {
-                simple = exporter.getBuffer(PyBUF.SIMPLE);
-                strided = exporter.getBuffer(PyBUF.STRIDES);
-            } catch (Exception e) {
-                // Leave them null if we can't get a PyBuffer: test being set up will fail.
-                // Silent here, but explicit test of getBuffer will reproduce and log this failure.
+            this.readonly = readonly;
+            this.validFlags = validFlags;
+            this.validTassles = validTassles;
+
+            int flags = readonly ? PyBUF.FULL_RO : PyBUF.FULL;
+
+            if (subject instanceof PyBuffer) {
+                this.view = (PyBuffer)subject;
+            } else {
+                PyBuffer v = null;
+                try {
+                    // System.out.printf("BufferTestPair: length=%d, readonly=%s\n",
+                    // material.length, readonly);
+                    v = subject.getBuffer(flags);
+                } catch (Exception e) {
+                    /*
+                     * We ignore this case if we fail, because we are not testing buffer creation
+                     * here, but making buffers to be tested. We'll test buffer creation in
+                     * testGetBuffer.
+                     */
+                }
+                this.view = v;
             }
         }
 
         /**
-         * A test to do and the material for constructing it (and its results) in one dimension.
+         * Short constructor for contiguous arrays in one dimension.
          *
-         * @param exporter
-         * @param material
+         * @param subject of the test
+         * @param material containing a Java byte array that a view of the subject should equal
+         * @param readonly if true the base exporter can only provide read-only views
          */
-        public BufferTestPair(BufferProtocol exporter, ByteMaterial material) {
-            this(exporter, material, new int[1], STRIDES_1D);
+        public BufferTestPair(BufferProtocol subject, ByteMaterial material, boolean readonly) {
+            this(subject, material, new int[1], STRIDES_1D, readonly, simpleFlags, simpleTassles);
             shape[0] = material.length;
+        }
+
+        /**
+         * Short constructor for strided arrays in one dimension.
+         *
+         * @param subject of the test
+         * @param material containing a Java byte array that a view of the subject should equal
+         * @param stride of the array, when testing sliced views
+         * @param readonly if true the base exporter can only provide read-only views
+         */
+        public BufferTestPair(PyBuffer subject, ByteMaterial material, int stride, boolean readonly) {
+            this(subject, material, new int[1], new int[1], readonly, strided1DFlags,
+                    strided1DTassles);
+            shape[0] = material.length;
+            strides[0] = stride;
         }
 
         @Override
         public String toString() {
-            return exporter.getClass().getSimpleName() + "( " + material.toString() + " )";
+            int offset = view.getBuf().offset;
+            String offsetSpec = offset > 0 ? "[0@(" + offset + "):" : "[:";
+            int stride = strides[0];
+            String sliceSpec = offsetSpec + shape[0] + (stride != 1 ? "*(" + stride + ")]" : "]");
+            return subject.getClass().getSimpleName() + sliceSpec + " ( " + material.toString()
+                    + " )";
         }
 
     }
