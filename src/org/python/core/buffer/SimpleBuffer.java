@@ -1,6 +1,5 @@
 package org.python.core.buffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 import org.python.core.util.StringUtil;
@@ -17,16 +16,10 @@ public class SimpleBuffer extends BaseBuffer {
 
     /**
      * Provide an instance of <code>SimpleBuffer</code> with navigation variables partly
-     * initialised, for sub-class use. One-dimensional arrays without slicing are C- and
-     * F-contiguous. To complete initialisation, the sub-class normally must assign: {@link #buf}
-     * and {@link #shape}[0], and call {@link #checkRequestFlags(int)} passing the consumer's
-     * request flags.
-     *
-     * <pre>
-     * this.buf = buf;              // Wraps exported data
-     * this.shape[0] = n;           // Number of units in exported data
-     * checkRequestFlags(flags);    // Check request is compatible with type
-     * </pre>
+     * initialised, for sub-class use. One-dimensional arrays without strides are C- and
+     * F-contiguous. To complete initialisation, the sub-class must normally assign the buffer (
+     * {@link #storage}, {@link #index0}), and the navigation ({@link #shape} array), and then call
+     * {@link #checkRequestFlags(int)} passing the consumer's request flags.
      */
     protected SimpleBuffer() {
         super(CONTIGUITY | SIMPLE);
@@ -37,22 +30,70 @@ public class SimpleBuffer extends BaseBuffer {
     }
 
     /**
+     * Provide an instance of <code>SimpleBuffer</code> with navigation variables initialised, for
+     * sub-class use. The buffer ({@link #storage}, {@link #index0}), and the {@link #shape} array
+     * will be initialised from the arguments (which are checked for range). The {@link #strides} is
+     * set for (one-byte) unit stride. Only the call to {@link #checkRequestFlags(int)}, passing the
+     * consumer's request flags really remains for the sub-class constructor to do.
+     *
+     * <pre>
+     * super(storage, index0, size);
+     * checkRequestFlags(flags);        // Check request is compatible with type
+     * </pre>
+     *
+     * @param storage the array of bytes storing the implementation of the exporting object
+     * @param index0 offset where the data starts in that array (item[0])
+     * @param size the number of bytes occupied
+     * @throws NullPointerException if <code>storage</code> is null
+     * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
+     *             inconsistent with <code>storage.length</code>
+     */
+    public SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
+            ArrayIndexOutOfBoundsException {
+        this();
+        this.storage = storage;         // Exported data
+        this.index0 = index0;           // Index to be treated as item[0]
+        this.shape[0] = size;           // Number of items in exported data
+
+        // Check arguments using the "all non-negative" trick
+        if ((index0 | size | storage.length - (index0 + size)) < 0) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+    }
+
+    /**
      * Provide an instance of <code>SimpleBuffer</code>, on a slice of a byte array, meeting the
      * consumer's expectations as expressed in the <code>flags</code> argument, which is checked
      * against the capabilities of the buffer type.
      *
      * @param flags consumer requirements
      * @param storage the array of bytes storing the implementation of the exporting object
-     * @param offset where the data starts in that array (item[0])
+     * @param index0 offset where the data starts in that array (item[0])
      * @param size the number of bytes occupied
+     * @throws NullPointerException if <code>storage</code> is null
+     * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
+     *             inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleBuffer(int flags, byte[] storage, int offset, int size) throws PyException {
+    public SimpleBuffer(int flags, byte[] storage, int index0, int size) throws PyException,
+            ArrayIndexOutOfBoundsException, NullPointerException {
+        this(storage, index0, size);    // Construct checked SimpleBuffer
+        checkRequestFlags(flags);       // Check request is compatible with type
+    }
+
+    /**
+     * Provide an instance of <code>SimpleBuffer</code>, on the entirety of a byte array, with
+     * navigation variables initialised, for sub-class use. The buffer ( {@link #storage},
+     * {@link #index0}), and the navigation ({@link #shape} array) will be initialised from the
+     * array argument.
+     *
+     * @param storage the array of bytes storing the implementation of the exporting object
+     * @throws NullPointerException if <code>storage</code> is null
+     */
+    public SimpleBuffer(byte[] storage) throws NullPointerException {
         this();
-        // Wrap the exported data on a BufferPointer object
-        this.buf = new BufferPointer(storage, offset);
-        this.shape[0] = size;        // Number of units in exported data
-        checkRequestFlags(flags);    // Check request is compatible with type
+        this.storage = storage;         // Exported data (index0=0 from initialisation)
+        this.shape[0] = storage.length; // Number of units in whole array
     }
 
     /**
@@ -62,10 +103,12 @@ public class SimpleBuffer extends BaseBuffer {
      *
      * @param flags consumer requirements
      * @param storage the array of bytes storing the implementation of the exporting object
+     * @throws NullPointerException if <code>storage</code> is null
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleBuffer(int flags, byte[] storage) throws PyException {
-        this(flags, storage, 0, storage.length);
+    public SimpleBuffer(int flags, byte[] storage) throws PyException, NullPointerException {
+        this(storage);                  // Construct SimpleBuffer on whole array
+        checkRequestFlags(flags);       // Check request is compatible with type
     }
 
     @Override
@@ -80,9 +123,21 @@ public class SimpleBuffer extends BaseBuffer {
      * one-dimension.
      */
     @Override
+    public int getLen() {
+        // Simplify for one-dimensional contiguous bytes
+        return shape[0];
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * <code>SimpleBuffer</code> provides an implementation optimised for contiguous bytes in
+     * one-dimension.
+     */
+    @Override
     public byte byteAt(int index) throws IndexOutOfBoundsException {
         // Implement directly: a bit quicker than the default
-        return buf.storage[buf.offset + index];
+        return storage[index0 + index];
     }
 
     /**
@@ -94,12 +149,12 @@ public class SimpleBuffer extends BaseBuffer {
     @Override
     public int intAt(int index) throws IndexOutOfBoundsException {
         // Implement directly: a bit quicker than the default
-        return 0xff & buf.storage[buf.offset + index];
+        return 0xff & storage[index0 + index];
     }
 
     @Override
     protected int calcIndex(int index) throws IndexOutOfBoundsException {
-        return buf.offset + index;
+        return index0 + index;
     }
 
     /**
@@ -130,18 +185,16 @@ public class SimpleBuffer extends BaseBuffer {
     @Override
     public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
             throws IndexOutOfBoundsException {
-        System.arraycopy(buf.storage, buf.offset + srcIndex, dest, destPos, length);
+        System.arraycopy(storage, index0 + srcIndex, dest, destPos, length);
     }
 
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int length) {
         if (length > 0) {
-            // Check the arguments define a slice within this buffer
-            checkSlice(start, length);
             // Translate relative to underlying buffer
-            int compIndex0 = buf.offset + start;
+            int compIndex0 = index0 + start;
             // Create the slice from the sub-range of the buffer
-            return new SimpleView(getRoot(), flags, buf.storage, compIndex0, length);
+            return new SimpleView(getRoot(), flags, storage, compIndex0, length);
         } else {
             // Special case for length==0 where above logic would fail. Efficient too.
             return new ZeroByteBuffer.View(getRoot(), flags);
@@ -165,23 +218,21 @@ public class SimpleBuffer extends BaseBuffer {
             return getBufferSlice(flags, start, length);
 
         } else {
-            // Check the arguments define a slice within this buffer
-            checkSlice(start, length, stride);
             // Translate relative to underlying buffer
-            int compIndex0 = buf.offset + start;
+            int compIndex0 = index0 + start;
             // Construct a view, taking a lock on the root object (this or this.root)
-            return new Strided1DBuffer.SlicedView(getRoot(), flags, buf.storage, compIndex0,
-                length, stride);
+            return new Strided1DBuffer.SlicedView(getRoot(), flags, storage, compIndex0, length,
+                    stride);
         }
     }
 
     @Override
-    public BufferPointer getPointer(int index) {
-        return new BufferPointer(buf.storage, buf.offset + index);
+    public Pointer getPointer(int index) throws IndexOutOfBoundsException {
+        return new Pointer(storage, index0 + index);
     }
 
     @Override
-    public BufferPointer getPointer(int... indices) {
+    public Pointer getPointer(int... indices) throws IndexOutOfBoundsException {
         checkDimension(indices.length);
         return getPointer(indices[0]);
     }
@@ -189,7 +240,7 @@ public class SimpleBuffer extends BaseBuffer {
     @Override
     public String toString() {
         // For contiguous bytes in one dimension we can avoid the intAt() calls
-        return StringUtil.fromBytes(buf.storage, buf.offset, shape[0]);
+        return StringUtil.fromBytes(storage, index0, shape[0]);
     }
 
     /**

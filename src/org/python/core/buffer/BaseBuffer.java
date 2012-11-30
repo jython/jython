@@ -1,6 +1,5 @@
 package org.python.core.buffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.BufferProtocol;
 import org.python.core.Py;
 import org.python.core.PyBUF;
@@ -47,6 +46,7 @@ public abstract class BaseBuffer implements PyBuffer {
      * filled (difference from CPython). This value is returned by {@link #getShape()}.
      */
     protected int[] shape;
+
     /**
      * Step sizes in the underlying buffer essential to correct translation of an index (or indices)
      * into an index into the storage. The <code>strides</code> array should always be created and
@@ -54,11 +54,24 @@ public abstract class BaseBuffer implements PyBuffer {
      * CPython). This value is returned by {@link #getStrides()}.
      */
     protected int[] strides;
+
     /**
-     * Reference to a structure that wraps the underlying storage that the exporter is sharing with
-     * the consumer.
+     * Reference to the underlying <code>byte[]</code> storage that the exporter is sharing with the
+     * consumer. The data need not occupy the whole array: in the constructor of a particular type
+     * of buffer, the exporter usually indicates an offset to the first significant byte and length
+     * (contiguous cases) or the index in <code>storage</code> that should be treated as the item
+     * with index zero (retrieved say by {@link #byteAt(int)}).
      */
-    protected BufferPointer buf;
+    protected byte[] storage;
+
+    /**
+     * Absolute index in <code>storage</code> of <code>item[0]</code>. In one dimension, for a
+     * positive <code>stride</code> this is equal to the offset of the first byte used in
+     * {@link #storage}, and for a negative <code>stride</code> it is the last. In an N-dimensional
+     * buffer with strides of mixed sign, it could be anywhere in the data.
+     */
+    protected int index0;
+
     /**
      * Count the number of times {@link #release()} must be called before actual release actions
      * need to take place. Equivalently, this is the number of calls to
@@ -114,16 +127,10 @@ public abstract class BaseBuffer implements PyBuffer {
      * exported, not the flags that form the consumer's request. The buffer will be read-only unless
      * {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} is implicitly added
      * to the feature flags. The navigation arrays are all null, awaiting action by the sub-class
-     * constructor. To complete initialisation, the sub-class normally must assign: {@link #buf},
-     * {@link #shape}, and {@link #strides}, and call {@link #checkRequestFlags(int)} passing the
-     * consumer's request flags.
-     *
-     * <pre>
-     * this.buf = buf;                  // Wraps exported data
-     * this.shape = shape;              // Array of dimensions of exported data (in units)
-     * this.strides = strides;          // Byte offset between successive items in each dimension
-     * checkRequestFlags(flags);        // Check request is compatible with type
-     * </pre>
+     * constructor. To complete initialisation, the sub-class normally must assign: the buffer (
+     * {@link #storage}, {@link #index0}), and the navigation arrays ({@link #shape},
+     * {@link #strides}), and call {@link #checkRequestFlags(int)} passing the consumer's request
+     * flags.
      *
      * @param featureFlags bit pattern that specifies the actual features allowed/required
      */
@@ -215,15 +222,21 @@ public abstract class BaseBuffer implements PyBuffer {
         return shape;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
+     * case, with any item size and stride.
+     */
     @Override
     public int getLen() {
-        // Correct if one-dimensional bytes. Override with itemsize*product(shape).
-        return shape[0];
+        // Correct if one-dimensional. Override with itemsize*product(shape).
+        return shape[0] * getItemsize();
     }
 
     @Override
     public byte byteAt(int index) throws IndexOutOfBoundsException {
-        return buf.storage[calcIndex(index)];
+        return storage[calcIndex(index)];
     }
 
     @Override
@@ -236,7 +249,7 @@ public abstract class BaseBuffer implements PyBuffer {
         if (isReadonly()) {
             throw notWritable();
         }
-        buf.storage[calcIndex(index)] = value;
+        storage[calcIndex(index)] = value;
     }
 
     /**
@@ -248,12 +261,12 @@ public abstract class BaseBuffer implements PyBuffer {
      */
     protected int calcIndex(int index) throws IndexOutOfBoundsException {
         // Treat as one-dimensional
-        return buf.offset + index * getStrides()[0];
+        return index0 + index * getStrides()[0];
     }
 
     @Override
     public byte byteAt(int... indices) throws IndexOutOfBoundsException {
-        return buf.storage[calcIndex(indices)];
+        return storage[calcIndex(indices)];
     }
 
     @Override
@@ -266,29 +279,29 @@ public abstract class BaseBuffer implements PyBuffer {
         if (isReadonly()) {
             throw notWritable();
         }
-        buf.storage[calcIndex(indices)] = value;
+        storage[calcIndex(indices)] = value;
     }
 
     /**
      * Convert a multi-dimensional item index (if we are not using indirection) to an absolute byte
      * index in the actual storage array being shared by the exporter. The purpose of this method is
      * to allow a sub-class to define, in one place, an indexing calculation that maps the index as
-     * provided by the consumer into an index in the storage as seen by the buffer.
+     * provided by the consumer into an index in the storage known to the buffer.
      * <p>
-     * In the usual case where the storage is referenced via the <code>BufferPointer</code> member
-     * {@link #buf}, the buffer implementation may use <code>buf.storage[calcIndex(i)]</code> to
-     * reference the (first byte of) the item x[i]. This is what the default implementation of
-     * accessors in <code>BaseBuffer</code> will do. In the simplest cases, this is fairly
-     * inefficient, and an implementation will override the accessors to in-line the calculation.
-     * The default implementation here is suited to N-dimensional arrays.
+     * In the usual case where the storage is referenced via the {@link #storage} and
+     * {@link #index0} members, the buffer implementation may use <code>storage[calcIndex(i)]</code>
+     * to reference the (first byte of) the item x[i]. This is what the default implementation of
+     * accessors in <code>BaseBuffer</code> will do. In the simplest cases, calling
+     * <code>calcIndex</code> may be an overhead to avoid, and an implementation will specialise the
+     * accessors. The default implementation here is suited to N-dimensional arrays.
      *
      * @param indices of the item from the consumer
      * @return index relative to item x[0,...,0] in actual storage
      */
     protected int calcIndex(int... indices) throws IndexOutOfBoundsException {
         final int N = checkDimension(indices);
-        // In general: buf.offset + sum(k=0,N-1) indices[k]*strides[k]
-        int index = buf.offset;
+        // In general: index0 + sum(k=0,N-1) indices[k]*strides[k]
+        int index = index0;
         if (N > 0) {
             int[] strides = getStrides();
             for (int k = 0; k < N; k++) {
@@ -332,13 +345,13 @@ public abstract class BaseBuffer implements PyBuffer {
         // Strategy depends on whether items are laid end-to-end contiguously or there are gaps
         if (skip == 0) {
             // stride == itemsize: straight copy of contiguous bytes
-            System.arraycopy(buf.storage, s, dest, d, length * itemsize);
+            System.arraycopy(storage, s, dest, d, length * itemsize);
 
         } else if (itemsize == 1) {
             // Non-contiguous copy: single byte items
             int limit = s + length * stride;
             for (; s < limit; s += stride) {
-                dest[d++] = buf.storage[s];
+                dest[d++] = storage[s];
             }
 
         } else {
@@ -347,7 +360,7 @@ public abstract class BaseBuffer implements PyBuffer {
             for (; s < limit; s += skip) {
                 int t = s + itemsize;
                 while (s < t) {
-                    dest[d++] = buf.storage[s++];
+                    dest[d++] = storage[s++];
                 }
             }
         }
@@ -381,13 +394,13 @@ public abstract class BaseBuffer implements PyBuffer {
         // Strategy depends on whether items are laid end-to-end or there are gaps
         if (skip == 0) {
             // Straight copy of contiguous bytes
-            System.arraycopy(src, srcPos, buf.storage, d, length * itemsize);
+            System.arraycopy(src, srcPos, storage, d, length * itemsize);
 
         } else if (itemsize == 1) {
             // Non-contiguous copy: single byte items
             int limit = d + length * stride;
             for (; d != limit; d += stride) {
-                buf.storage[d] = src[s++];
+                storage[d] = src[s++];
             }
 
         } else {
@@ -396,7 +409,7 @@ public abstract class BaseBuffer implements PyBuffer {
             for (; d != limit; d += skip) {
                 int t = d + itemsize;
                 while (d < t) {
-                    buf.storage[d++] = src[s++];
+                    storage[d++] = src[s++];
                 }
             }
         }
@@ -430,21 +443,21 @@ public abstract class BaseBuffer implements PyBuffer {
         // Strategy depends on whether items are laid end-to-end or there are gaps
         if (stride == itemsize) {
             // Straight copy to contiguous bytes
-            src.copyTo(buf.storage, d);
+            src.copyTo(storage, d);
 
         } else if (itemsize == 1) {
             // Non-contiguous copy: single byte items
             int limit = d + src.getLen() * stride;
             for (; d != limit; d += stride) {
-                buf.storage[d] = src.byteAt(s++);
+                storage[d] = src.byteAt(s++);
             }
 
         } else {
             // Non-contiguous copy: each time, copy itemsize bytes then skip
             int limit = d + src.getShape()[0] * stride;
             for (; d != limit; d += stride) {
-                BufferPointer srcItem = src.getPointer(s++);
-                System.arraycopy(srcItem.storage, srcItem.offset, buf.storage, d, itemsize);
+                Pointer srcItem = src.getPointer(s++);
+                System.arraycopy(srcItem.storage, srcItem.offset, storage, d, itemsize);
             }
         }
 
@@ -521,18 +534,18 @@ public abstract class BaseBuffer implements PyBuffer {
     // @Override public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {}
 
     @Override
-    public BufferPointer getBuf() {
-        return buf;
+    public Pointer getBuf() {
+        return new Pointer(storage, index0);
     }
 
     @Override
-    public BufferPointer getPointer(int index) {
-        return new BufferPointer(buf.storage, calcIndex(index));
+    public Pointer getPointer(int index) throws IndexOutOfBoundsException {
+        return new Pointer(storage, calcIndex(index));
     }
 
     @Override
-    public BufferPointer getPointer(int... indices) {
-        return new BufferPointer(buf.storage, calcIndex(indices));
+    public Pointer getPointer(int... indices) throws IndexOutOfBoundsException {
+        return new Pointer(storage, calcIndex(indices));
     }
 
     @Override
@@ -616,58 +629,6 @@ public abstract class BaseBuffer implements PyBuffer {
             String fmt = "buffer with %d dimension%s accessed as having %d dimension%s";
             String msg = String.format(fmt, ndim, ndim == 1 ? "" : "s", n, n, n == 1 ? "" : "s");
             throw Py.BufferError(msg);
-        }
-    }
-
-    /**
-     * Convenience method for checking arguments to slice formation, that the start and end elements
-     * are within the buffer. An exception is raised if <code>start&lt;0</code> or
-     * <code>start+length&gt;shape[0]</code>. This logic is correct for one-dimensional arrays (of
-     * any item size) and stride. In the context we use this, <code>length</code> is guaranteed by
-     * the acller to be non-negative.
-     *
-     * @param start index to check
-     * @param length number of elements in slice (must be &gt;0)
-     * @throws IndexOutOfBoundsException
-     */
-    protected void checkSlice(int start, int length) throws IndexOutOfBoundsException {
-        // Between the last element of the slice and the end of the buffer there are ...
-        int margin = shape[0] - start - length;
-        if ((start | margin) < 0) {
-            throw new IndexOutOfBoundsException("invalid slice of buffer");
-        }
-    }
-
-    /**
-     * Convenience method for checking arguments to slice formation, that the start and end elements
-     * are within the buffer. An exception is raised if either of <code>start</code> or
-     * <code>end=start+(length-1)*stride+1</code> is <code>&lt;0</code> or <code>&gt;shape[0]</code>
-     * . This logic is correct for one-dimensional arrays (of any item size) and current stride.
-     * Note that the parameter stride is in terms of this biuffer's indexing. In the context we use
-     * this, <code>length</code> is guaranteed by the acller to be non-negative.
-     *
-     * @param start index to check
-     * @param length number of elements in slice (must be &gt;0)
-     * @param stride in buffer elements between items of the slice
-     * @throws IndexOutOfBoundsException
-     */
-    protected void checkSlice(int start, int length, int stride) throws IndexOutOfBoundsException {
-        /*
-         * Simpler to check if we know which is the smaller of the two ends, which depends on the
-         * sign of the stride.
-         */
-        int lo, hi;
-        if (stride > 0) {
-            lo = start;
-            hi = start + (length - 1) * stride + 1;
-        } else {
-            hi = start;
-            lo = start + (length - 1) * stride + 1;
-        }
-        // Between the last element of the slice and the end of the buffer there are ...
-        int margin = shape[0] - hi;
-        if ((lo | margin) < 0) {
-            throw new IndexOutOfBoundsException("invalid slice of buffer");
         }
     }
 

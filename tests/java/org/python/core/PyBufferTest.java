@@ -41,7 +41,7 @@ import org.python.util.PythonInterpreter;
  */
 public class PyBufferTest extends TestCase {
 
-    /** Control amount of output. Instance variable so can be adjusted temporarily per test. */
+    /** Control amount of output. Instance variable so can be adjusted temporarily in test. */
     protected int verbosity = 0;
 
     /**
@@ -514,7 +514,7 @@ public class PyBufferTest extends TestCase {
 
                         // Check changed part of destination
                         assertBytesEqual("copyTo(slice) incorrect", test.material.bytes, srcIndex,
-                                actual, destPos, length);
+                                length, actual, destPos);
                         if (destPos > 0) {
                             assertEquals("data before destination", BLANK, actual[destPos - 1]);
                         }
@@ -538,7 +538,7 @@ public class PyBufferTest extends TestCase {
 
                         // Check changed part of destination
                         assertBytesEqual("copyTo(slice) incorrect", test.material.bytes, srcIndex,
-                                actual, destPos, length);
+                                length, actual, destPos);
                         if (destPos > 0) {
                             assertEquals("data before destination", BLANK, actual[destPos - 1]);
                         }
@@ -860,25 +860,6 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Check that reusable PyBuffer is re-used, and that non-reusable PyBuffer is not re-used.
-     *
-     * @param subject
-     */
-    private void checkReusable(BufferProtocol subject, PyBuffer previous, PyBuffer latest) {
-        assertNotNull("Re-used PyBuffer reference null", latest);
-        if (subject instanceof PyByteArray) {
-            // Re-use prohibited because might have resized while released
-            assertFalse("PyByteArray buffer reused unexpectedly", latest == previous);
-        } else if (subject instanceof TestableExporter && !((TestableExporter)subject).reusable) {
-            // Special test case where re-use prohibited
-            assertFalse("PyBuffer reused unexpectedly", latest == previous);
-        } else {
-            // Other types of TestableExporter and PyString all re-use
-            assertTrue("PyBuffer not re-used as expected", latest == previous);
-        }
-    }
-
-    /**
      * Test method for {@link org.python.core.PyBuffer#getBufferSlice(int, int, int, int)}.
      */
     public void testGetBufferSliceWithStride() {
@@ -968,7 +949,7 @@ public class PyBufferTest extends TestCase {
                 int flags = test.readonly ? PyBUF.SIMPLE : PyBUF.SIMPLE + PyBUF.WRITABLE;
                 PyBuffer view = test.subject.getBuffer(flags);
 
-                BufferPointer bp = view.getBuf();
+                PyBuffer.Pointer bp = view.getBuf();
                 assertBytesEqual("buffer does not match reference", test.material.bytes, bp);
 
             } else {
@@ -977,7 +958,7 @@ public class PyBufferTest extends TestCase {
                 PyBuffer view = test.subject.getBuffer(flags);
 
                 stride = view.getStrides()[0];  // Just possibly != test.strides when length<=1
-                BufferPointer bp = view.getBuf();
+                PyBuffer.Pointer bp = view.getBuf();
                 assertBytesEqual("buffer does not match reference", test.material.bytes, bp, stride);
             }
 
@@ -1004,9 +985,8 @@ public class PyBufferTest extends TestCase {
                 }
 
                 // Get pointer and check contents for correct data
-                BufferPointer bp = view.getPointer(i);
-                int stride = view.getStrides()[0];
-                assertBytesEqual("getPointer value", exp, bp, stride);
+                PyBuffer.Pointer bp = view.getPointer(i);
+                assertBytesEqual("getPointer value", exp, bp);
             }
         }
     }
@@ -1031,11 +1011,10 @@ public class PyBufferTest extends TestCase {
                     exp[j] = bytes[p + j];
                 }
 
-                // Get pointer and check contents for correct data
+                // Get pointer and check contents for data matching exp
                 index[0] = i;
-                BufferPointer bp = view.getPointer(index);
-                assertBytesEqual("getPointer value", exp, bp.storage, bp.offset);
-// assertEquals("getPointer size wrong", itemsize, bp.size);
+                PyBuffer.Pointer bp = view.getPointer(index);
+                assertBytesEqual("getPointer value", exp, bp);
             }
 
             // Check 2D index throws
@@ -1225,12 +1204,6 @@ public class PyBufferTest extends TestCase {
             return false;
         }
 
-        /**
-         * Determine whether this object permits it's buffers to re-animate themselves. If not, a
-         * call to getBuffer on a released buffer should not return the same buffer.
-         */
-        public boolean reusable = true;
-
     }
 
     /**
@@ -1271,15 +1244,12 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * A class to act as an exporter that uses the SimpleBuffer. This permits testing abstracted
-     * from the Jython interpreter.
-     * <p>
-     * The exporter shares a single exported buffer between all consumers and needs to take any
-     * action immediately when that buffer is finally released. You are most likely to use this
-     * approach with an exporting object type that modifies its behaviour while there are active
-     * exports, but where it is worth avoiding the cost of duplicate buffers. This is the case with
-     * PyByteArray, which prohibits operations that would resize it, while there are outstanding
-     * exports.
+     * A class to act as an exporter that uses the SimpleBuffer. The exporter shares a single
+     * exported buffer between all consumers and needs to take any action immediately when that
+     * buffer is finally released. You are most likely to use this approach with an exporting object
+     * type that modifies its behaviour while there are active exports, but where it is worth
+     * avoiding the cost of duplicate buffers. This is the case with PyByteArray, which prohibits
+     * operations that would resize it, while there are outstanding exports.
      */
     static class SimpleWritableExporter extends TestableExporter {
 
@@ -1292,7 +1262,6 @@ public class PyBufferTest extends TestCase {
          */
         public SimpleWritableExporter(byte[] storage) {
             this.storage = storage;
-            reusable = false;
         }
 
         @Override
@@ -1469,7 +1438,7 @@ public class PyBufferTest extends TestCase {
      * @param expected expected byte array
      * @param bp result to test
      */
-    static void assertBytesEqual(String message, byte[] expected, BufferPointer bp) {
+    static void assertBytesEqual(String message, byte[] expected, PyBuffer.Pointer bp) {
         assertBytesEqual(message, expected, bp, 1);
     }
 
@@ -1482,19 +1451,24 @@ public class PyBufferTest extends TestCase {
      * @param bp result to test
      * @param stride in the storage array
      */
-    static void assertBytesEqual(String message, byte[] expected, BufferPointer bp, int stride) {
-        assertBytesEqual(message, expected, 0, bp.storage, bp.offset, expected.length, stride);
+    static void assertBytesEqual(String message, byte[] expected, PyBuffer.Pointer bp, int stride) {
+        assertBytesEqual(message, expected, 0, expected.length, bp.storage, bp.offset, stride);
     }
 
     /**
      * Customised assert method comparing a buffer pointer to a byte array, usually the one from
      * ByteMaterial.
      *
+     * @param message to issue on failure
      * @param expected expected byte array
-     * @param bp result to test
+     * @param expectedStart where to start the comparison in expected
+     * @param n number of bytes to test
+     * @param bb result to test
+     * @param stride in the storage array
      */
-    static void assertBytesEqual(byte[] expected, BufferPointer bp) {
-        assertBytesEqual("", expected, bp);
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
+            PyBuffer.Pointer bp, int stride) {
+        assertBytesEqual(message, expected, expectedStart, n, bp.storage, bp.offset, stride);
     }
 
     /**
@@ -1506,8 +1480,8 @@ public class PyBufferTest extends TestCase {
      * @param actual result to test
      */
     static void assertBytesEqual(String message, byte[] expected, byte[] actual) {
-        assertEquals(message, expected.length, actual.length);
-        assertBytesEqual(message, expected, 0, actual, 0, expected.length, 1);
+        assertEquals(message + " (array size)", expected.length, actual.length);
+        assertBytesEqual(message, expected, 0, expected.length, actual, 0, 1);
     }
 
     /**
@@ -1520,7 +1494,7 @@ public class PyBufferTest extends TestCase {
      * @param actualStart where to start the comparison in actual
      */
     static void assertBytesEqual(String message, byte[] expected, byte[] actual, int actualStart) {
-        assertBytesEqual(message, expected, 0, actual, actualStart, expected.length, 1);
+        assertBytesEqual(message, expected, 0, expected.length, actual, actualStart, 1);
     }
 
     /**
@@ -1530,14 +1504,13 @@ public class PyBufferTest extends TestCase {
      * @param message to issue on failure
      * @param expected expected byte array
      * @param expectedStart where to start the comparison in expected
+     * @param n number of bytes to test
      * @param actual result to test
      * @param actualStart where to start the comparison in actual
-     * @param n number of bytes to test
      */
-    static void assertBytesEqual(String message, byte[] expected, int expectedStart, byte[] actual,
-            int actualStart, int n) {
-
-        assertBytesEqual(message, expected, expectedStart, actual, actualStart, n, 1);
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
+            byte[] actual, int actualStart) {
+        assertBytesEqual(message, expected, expectedStart, n, actual, actualStart, 1);
     }
 
     /**
@@ -1547,13 +1520,13 @@ public class PyBufferTest extends TestCase {
      * @param message to issue on failure
      * @param expected expected byte array
      * @param expectedStart where to start the comparison in expected
+     * @param n number of bytes to test
      * @param actual result to test
      * @param actualStart where to start the comparison in actual
-     * @param n number of bytes to test
      * @param stride spacing of bytes in actual array
      */
-    static void assertBytesEqual(String message, byte[] expected, int expectedStart, byte[] actual,
-            int actualStart, int n, int stride) {
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
+            byte[] actual, int actualStart, int stride) {
 
         if (actualStart < 0) {
             fail(message + " (start<0 in result)");

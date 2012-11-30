@@ -1,6 +1,5 @@
 package org.python.core.buffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -15,8 +14,8 @@ import org.python.core.PyException;
  */
 public class ZeroByteBuffer extends BaseBuffer {
 
-    /** Shared instance of a zero-length buffer. */
-    private static final BufferPointer EMPTY_BUF = new BufferPointer(new byte[0]);
+    /** Shared instance of a zero-length storage. */
+    private static final byte[] EMPTY = new byte[0];
 
     /** Array containing a single zero for the length */
     protected static final int[] SHAPE = {0};
@@ -33,7 +32,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      */
     public ZeroByteBuffer(int flags, boolean readonly) throws PyException {
         super(CONTIGUITY | SIMPLE | (readonly ? 0 : WRITABLE));
-        this.buf = EMPTY_BUF;                       // Wraps empty array
+        this.storage = EMPTY;                       // Empty array
         this.shape = SHAPE;                         // {0}
         this.strides = SimpleBuffer.SIMPLE_STRIDES; // {1}
         checkRequestFlags(flags);
@@ -60,7 +59,7 @@ public class ZeroByteBuffer extends BaseBuffer {
     protected int calcIndex(int... indices) throws IndexOutOfBoundsException {
         // Bootless dimension check takes precedence (for consistency with other buffers)
         checkDimension(indices);
-        // This causes all access to the bytes in to throw (since BaseBuffer calls it).
+        // This causes all access to the bytes to throw (since BaseBuffer calls it).
         throw new IndexOutOfBoundsException();
     }
 
@@ -81,7 +80,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      */
     @Override
     public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
-        throws IndexOutOfBoundsException, PyException {
+            throws IndexOutOfBoundsException, PyException {
         // Nothing to copy
     }
 
@@ -91,7 +90,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      */
     @Override
     public void copyFrom(byte[] src, int srcPos, int destIndex, int length)
-        throws IndexOutOfBoundsException, PyException {
+            throws IndexOutOfBoundsException, PyException {
         if (length > 0) {
             throw new IndexOutOfBoundsException();
         }
@@ -129,6 +128,17 @@ public class ZeroByteBuffer extends BaseBuffer {
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
         // It can't matter what the stride is since length is zero, or there's an error.
         return getBufferSlice(flags, start, length);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The implementation in <code>ZeroByteBuffer</code> efficiently returns an empty buffer.
+     */
+    @Override
+    public Pointer getBuf() {
+        // Has to be new because the client is allowed to manipulate the contents.
+        return new Pointer(EMPTY, 0);
     }
 
     /**
@@ -175,5 +185,5 @@ public class ZeroByteBuffer extends BaseBuffer {
             // We have to release the root too if ours was final.
             root.release();
         }
-  }
+    }
 }

@@ -1,13 +1,12 @@
 package org.python.core.buffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.PyBuffer;
 import org.python.core.util.StringUtil;
 
 /**
  * Buffer API that appears to be a one-dimensional array of one-byte items providing read-only API,
  * but which is actually backed by a Java String. Some of the buffer API absolutely needs access to
- * the data as a byte array (those parts that involve a {@link BufferPointer} result), and therefore
+ * the data as a byte array (those parts that involve a {@link PyBuffer.Pointer} result), and therefore
  * this class must create a byte array from the String for them. However, it defers creation of a
  * byte array until that part of the API is actually used. Where possible, this class overrides
  * those methods in SimpleBuffer that would otherwise access the byte array attribute to use the
@@ -29,7 +28,6 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * @param flags consumer requirements
      */
     public SimpleStringBuffer(int flags, String bufString) {
-        super();
         // Save the backing string
         this.bufString = bufString;
         shape[0] = bufString.length();
@@ -101,6 +99,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * The <code>SimpleStringBuffer</code> implementation creates an actual byte buffer.
      */
+    @Override
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
         if (stride == 1) {
             // Unstrided slice of simple buffer is itself simple
@@ -113,43 +112,51 @@ public class SimpleStringBuffer extends SimpleBuffer {
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * This method creates an actual byte buffer from the String if none yet exists.
+     * This method creates an actual byte array from the underlying String if none yet exists.
      */
-    @Override
-    public BufferPointer getBuf() {
-        if (buf == null) {
-            // We can't avoid creating buf any longer
-            buf = new BufferPointer(StringUtil.toBytes(bufString));
+    private void ensureHaveBytes() {
+        if (storage == null) {
+            // We can't avoid creating the byte array any longer (index0 already correct)
+            storage = StringUtil.toBytes(bufString);
         }
-        return buf;
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * This method creates an actual byte buffer from the String if none yet exists.
+     * This method creates an actual byte array from the underlying String if none yet exists.
      */
     @Override
-    public BufferPointer getPointer(int index) {
-        getBuf(); // Ensure buffer created
+    public Pointer getBuf() {
+        ensureHaveBytes();
+        return super.getBuf();
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This method creates an actual byte array from the underlying String if none yet exists.
+     */
+    @Override
+    public Pointer getPointer(int index) {
+        ensureHaveBytes();
         return super.getPointer(index);
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * This method creates an actual byte buffer from the String if none yet exists.
+     * This method creates an actual byte array from the underlying String if none yet exists.
      */
     @Override
-    public BufferPointer getPointer(int... indices) {
-        getBuf(); // Ensure buffer created
+    public Pointer getPointer(int... indices) {
+        ensureHaveBytes();
         return super.getPointer(indices);
     }
 
     /**
-     * The <code>toString()</code> method of a <code>SimpleStringBuffer</code> simply produces the underlying <code>String</code>.
+     * The <code>toString()</code> method of a <code>SimpleStringBuffer</code> simply produces the
+     * underlying <code>String</code>.
      */
     @Override
     public String toString() {

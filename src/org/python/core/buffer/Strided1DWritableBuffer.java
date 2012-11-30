@@ -1,6 +1,5 @@
 package org.python.core.buffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -30,19 +29,14 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
      * @param index0 index into storage of item[0]
      * @param length number of items in the slice
      * @param stride in between successive elements of the new PyBuffer
+     * @throws NullPointerException if <code>storage</code> is null
+     * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>length</code> and
+     *             <code>stride</code> are inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
     public Strided1DWritableBuffer(int flags, byte[] storage, int index0, int length, int stride)
-            throws PyException {
-        // Arguments programme the object directly
-        // this();
-        this.shape[0] = length;
-        this.buf = new BufferPointer(storage, index0);
-        this.stride = stride;
-        if (stride == 1) {
-            // Really this is a simple buffer
-            addFeatureFlags(CONTIGUITY);
-        }
+            throws ArrayIndexOutOfBoundsException, NullPointerException, PyException {
+        super(storage, index0, length, stride);
         addFeatureFlags(WRITABLE);
         checkRequestFlags(flags);   // Check request is compatible with type
     }
@@ -54,7 +48,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
 
     @Override
     public void storeAt(byte value, int index) throws IndexOutOfBoundsException, PyException {
-        buf.storage[buf.offset + index * stride] = value;
+        storage[index0 + index * stride] = value;
     }
 
     /**
@@ -67,18 +61,18 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
 
         // Data is here in the buffers
         int s = srcPos;
-        int d = buf.offset + destIndex * stride;
+        int d = index0 + destIndex * stride;
 
         // Strategy depends on whether items are laid end-to-end or there are gaps
         if (stride == 1) {
             // Straight copy of contiguous bytes
-            System.arraycopy(src, srcPos, buf.storage, d, length);
+            System.arraycopy(src, srcPos, storage, d, length);
 
         } else {
             // Non-contiguous copy: single byte items
             int limit = d + length * stride;
             for (; d != limit; d += stride) {
-                buf.storage[d] = src[s++];
+                storage[d] = src[s++];
             }
         }
     }
@@ -93,24 +87,11 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
 
         if (length > 0) {
-            int compStride;
-
-            if (stride == 1) {
-                // Check the arguments define a slice within this buffer
-                checkSlice(start, length);
-                // Composite stride is same as original stride
-                compStride = this.stride;
-            } else {
-                // Check the arguments define a slice within this buffer
-                checkSlice(start, length, stride);
-                // Composite stride is product
-                compStride = this.stride * stride;
-            }
-
             // Translate start relative to underlying buffer
-            int compIndex0 = buf.offset + start * this.stride;
+            int compStride= this.stride * stride;
+            int compIndex0 = index0 + start * this.stride;
             // Construct a view, taking a lock on the root object (this or this.root)
-            return new SlicedView(getRoot(), flags, buf.storage, compIndex0, length, compStride);
+            return new SlicedView(getRoot(), flags, storage, compIndex0, length, compStride);
 
         } else {
             // Special case for length==0 where above logic would fail. Efficient too.

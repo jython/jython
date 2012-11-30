@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import org.python.core.BufferPointer;
 import org.python.core.BufferProtocol;
 import org.python.core.Py;
 import org.python.core.PyArray;
@@ -13,7 +12,6 @@ import org.python.core.PyBUF;
 import org.python.core.PyBuffer;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.util.StringUtil;
 
 /**
  * Base class for text I/O.
@@ -98,7 +96,7 @@ public abstract class TextIOBase extends IOBase {
     /**
      * Read into the given PyObject that implements the Jython buffer API (with write access) or is
      * a PyArray.
-     * 
+     *
      * @param buf a PyObject compatible with the buffer API
      * @return the amount of data read as an int
      */

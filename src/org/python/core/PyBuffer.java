@@ -220,7 +220,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * In a simple buffer backed by a contiguous byte array, the result is a strided PyBuffer on the
      * same storage but where the offset is adjusted by <i>s</i> and the stride is as supplied. If
      * the current buffer is already strided and/or has an item size larger than single bytes, the
-     * new offset, size and stride will be translated from the arguments given, through this
+     * new start index, length and stride will be translated from the arguments given, through this
      * buffer's stride and item size. The consumer always expresses <code>start</code> and
      * <code>strides</code> in terms of the abstract view of this buffer.
      *
@@ -234,6 +234,33 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
 
     // Direct access to actual storage
     //
+
+    /**
+     * A class that references a <code>byte[]</code> array and a particular offset within it, as the
+     * return type for methods that give direct access to byte-oriented data exported by a Python
+     * object. In some contexts the consumer will be entitled to make changes to the contents of
+     * this array, and in others not. See {@link PyBuffer#isReadonly()}. It is used by the Jython
+     * buffer API roughly where the CPython buffer API uses a C (char *) pointer.
+     */
+    public static class Pointer {
+
+        /** Reference to the array holding the bytes. */
+        public byte[] storage;
+        /** Starting position within the array for the data being pointed to. */
+        public int offset;
+
+        /**
+         * Construct a reference to the given array and offset.
+         *
+         * @param storage array at reference
+         * @param offset index of the reference byte
+         */
+        public Pointer(byte[] storage, int offset) {
+            this.storage = storage;
+            this.offset = offset;
+        }
+    }
+
     /**
      * Return a structure describing the slice of a byte array that holds the data being exported to
      * the consumer. For a one-dimensional contiguous buffer, assuming the following client code
@@ -242,7 +269,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * <pre>
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
-     * BufferPointer b = a.getBuf();
+     * PyBuffer.Pointer b = a.getBuf();
      * </pre>
      *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
@@ -250,14 +277,14 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * inclusive. And if <code>itemsize==1</code>, the item is simply the byte
      * <code>b.storage[b.offset + k]</code>
      * <p>
-     * If the buffer is multidimensional or non-contiguous, <code>b.storage[b.offset]</code> is
-     * still the (first byte of) the item at index [0] or [0,...,0]. However, it is necessary to
-     * navigate <code>b</code> using the <code>shape</code>, <code>strides</code> and maybe
+     * If the buffer is multidimensional or non-contiguous, <code>storage[offset]</code> is still
+     * the (first byte of) the item at index [0] or [0,...,0]. However, it is necessary to navigate
+     * <code>b.storage</code> using the <code>shape</code>, <code>strides</code> and maybe
      * <code>suboffsets</code> provided by the API.
      *
      * @return structure defining the byte[] slice that is the shared data
      */
-    BufferPointer getBuf();
+    PyBuffer.Pointer getBuf();
 
     /**
      * Return a structure describing the slice of a byte array that points to a single item from the
@@ -268,7 +295,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * int k = ... ;
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
-     * BufferPointer b = a.getPointer(k);
+     * PyBuffer.Pointer b = a.getPointer(k);
      * </pre>
      *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
@@ -282,7 +309,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * @param index in the buffer to position the pointer
      * @return structure defining the byte[] slice that is the shared data
      */
-    BufferPointer getPointer(int index);
+    PyBuffer.Pointer getPointer(int index);
 
     /**
      * Return a structure describing the slice of a byte array that points to a single item from the
@@ -295,7 +322,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * // ... calculation that assigns i, j, k
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
-     * BufferPointer b = a.getPointer(i,j,k);
+     * PyBuffer.Pointer b = a.getPointer(i,j,k);
      * </pre>
      *
      * the item with index <code>[i,j,k]</code> is in the array <code>b.storage</code> at index
@@ -313,7 +340,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * @param indices multidimensional index at which to position the pointer
      * @return structure defining the byte[] slice that is the shared data
      */
-    BufferPointer getPointer(int... indices);
+    PyBuffer.Pointer getPointer(int... indices);
 
     // Inherited from PyBUF and belonging here
     //
@@ -345,4 +372,5 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      */
     @Override
     public String toString();
+
 }
