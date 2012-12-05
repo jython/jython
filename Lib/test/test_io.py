@@ -2723,7 +2723,9 @@ class PyMiscIOTest(MiscIOTest):
     io = pyio
 
 
-@unittest.skipIf(os.name == 'nt', 'POSIX signals required for this test.')
+@unittest.skipIf(os.name == 'nt' or 
+                 (sys.platform[:4] == 'java' and os._name == 'nt'),
+                 'POSIX signals required for this test.')
 class SignalsTest(unittest.TestCase):
 
     def setUp(self):
