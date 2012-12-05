@@ -1,8 +1,8 @@
 # XXX Temporary addition to Jython while we use _jyio.py in place of _io.
 # This module will stand in place of the lib-python io.py. The idea is
-# gradually to switch, in this module, between _jyio and _io as classes
-# are implemented in _io in Java. In the end, we delete this and _jyio.py,
-# and go back to using lib-python's io.py
+# gradually to switch, in _jyio, between Python implementation there and
+# Java implementations imported from _io as classes in Java. In the end,
+# we delete this and _jyio.py, and go back to using lib-python's io.py
 
 """The io module provides the Python interfaces to stream handling. The
 builtin open function is defined in this module.
@@ -63,23 +63,16 @@ __all__ = ["BlockingIOError", "open", "IOBase", "RawIOBase", "FileIO",
            "UnsupportedOperation", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
 
 
-import _jyio
 import abc
 
-# Gradually shorten this list
+# For the time being, import everything via _jyio instead of from _io directly
+import _jyio
 from _jyio import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
                  open,
-                 #FileIO,
+                 FileIO,
                  BytesIO, StringIO, BufferedReader,
                  BufferedWriter, BufferedRWPair, BufferedRandom,
                  IncrementalNewlineDecoder, TextIOWrapper)
-
-# Gradually lengthen this list
-from _io import (FileIO,)
-#from _io import (DEFAULT_BUFFER_SIZE, BlockingIOError, UnsupportedOperation,
-#                 open, FileIO, BytesIO, StringIO, BufferedReader,
-#                 BufferedWriter, BufferedRWPair, BufferedRandom,
-#                 IncrementalNewlineDecoder, TextIOWrapper)
 
 OpenWrapper = _jyio.open # for compatibility with _pyio
 
