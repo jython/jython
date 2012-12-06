@@ -1,4 +1,4 @@
-/* Copyright (c) Jython Developers */
+/* Copyright (c)2012 Jython Developers */
 package org.python.modules._io;
 
 import java.nio.ByteBuffer;
@@ -71,9 +71,10 @@ public class PyFileIO extends PyObject {
         String mode = ap.getString(1, "r");
         boolean closefd = Py.py2boolean(ap.getPyObject(2, Py.True));
         // TODO: make this work with file channels so closefd=False can be used
-        if (!closefd)
-        	throw Py.ValueError("Cannot use closefd=False with file name");
-        
+        if (!closefd) {
+            throw Py.ValueError("Cannot use closefd=False with file name");
+        }
+
         FileIO___init__((PyString)name, mode, closefd);
         closer = new Closer(file, Py.getSystemState());
     }
@@ -83,7 +84,7 @@ public class PyFileIO extends PyObject {
         this.name = name;
         this.mode = mode;
         this.closefd = closefd;
-        this.file = new FileIO((PyString) name, mode.replaceAll("b", ""));
+        this.file = new FileIO(name, mode.replaceAll("b", ""));
     }
 
     private String parseMode(String mode) {
@@ -141,8 +142,9 @@ public class PyFileIO extends PyObject {
 
     @ExposedMethod(doc = "True if file supports random-access.")
     final boolean FileIO_seekable() {
-    	if (seekable == null)
-    		seekable = file.seek(0, 0) >= 0;
+    	if (seekable == null) {
+            seekable = file.seek(0, 0) >= 0;
+        }
     	return seekable;
     }
 
@@ -158,8 +160,9 @@ public class PyFileIO extends PyObject {
 
     @ExposedMethod(defaults = {"null"}, doc = BuiltinDocs.file_truncate_doc)
     final PyObject FileIO_truncate(PyObject position) {
-        if (position == null)
+        if (position == null) {
             return Py.java2py(FileIO_truncate());
+        }
     	return Py.java2py(FileIO_truncate(position.asLong()));
     }
 
@@ -311,6 +314,7 @@ public class PyFileIO extends PyObject {
         }
 
         /** For closing as part of a shutdown process */
+        @Override
         public Void call() {
             file.close();
             sys = null;
