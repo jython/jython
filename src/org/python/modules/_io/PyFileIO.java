@@ -2,7 +2,6 @@
 package org.python.modules._io;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.Callable;
 
 import org.python.core.ArgParser;
 import org.python.core.BaseBytes;
@@ -13,7 +12,6 @@ import org.python.core.PyInteger;
 import org.python.core.PyJavaType;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PySystemState;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.io.FileIO;
@@ -23,8 +21,8 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_io.FileIO")
-public class PyFileIO extends PyObject {
+@ExposedType(name = "_io.FileIO", base = PyRawIOBase.class)
+public class PyFileIO extends PyRawIOBase {
 
     public static final PyType TYPE = PyType.fromClass(PyFileIO.class);
 
@@ -38,9 +36,6 @@ public class PyFileIO extends PyObject {
     /** The mode string */
     @ExposedGet(doc = BuiltinDocs.file_mode_doc)
     public String mode;
-
-    /** The file's closer object; ensures the file is closed at shutdown */
-    private Closer closer;
 
     public PyFileIO() {
         super(TYPE);
@@ -76,7 +71,6 @@ public class PyFileIO extends PyObject {
         }
 
         FileIO___init__((PyString)name, mode, closefd);
-        closer = new Closer(file, Py.getSystemState());
     }
 
     private void FileIO___init__(PyString name, String mode, boolean closefd) {
@@ -107,20 +101,26 @@ public class PyFileIO extends PyObject {
                 + "b" + (updating ? "+" : "");
     }
 
-    @ExposedMethod(doc = BuiltinDocs.file_close_doc)
-    final synchronized void FileIO_close() {
-        if (closer != null) {
-            closer.close();
-            closer = null;
-        } else {
-            file.close();
-        }
-    }
-
+    /**
+     * Close the underlying file only if <code>closefd</code> was specified as (or defaulted to)
+     * <code>True</code>.
+     */
+    @Override
     public void close() {
         FileIO_close();
     }
 
+    @ExposedMethod
+    final synchronized void FileIO_close() {
+        // Close this object to further input (also calls flush)
+        super.close();
+        // Now close downstream (if required to)
+        if (closefd) {
+            file.close();
+        }
+    }
+
+    @Override
     public boolean readable() {
         return FileIO_readable();
     }
@@ -136,6 +136,7 @@ public class PyFileIO extends PyObject {
         return Py.java2py(file.seek(pos, how));
     }
 
+    @Override
     public boolean seekable() {
         return FileIO_seekable();
     }
@@ -154,34 +155,41 @@ public class PyFileIO extends PyObject {
         return file.tell();
     }
 
+    @Override
     public long tell() {
         return FileIO_tell();
     }
 
-    @ExposedMethod(defaults = {"null"}, doc = BuiltinDocs.file_truncate_doc)
-    final PyObject FileIO_truncate(PyObject position) {
-        if (position == null) {
-            return Py.java2py(FileIO_truncate());
+    @Override
+    public long truncate() {
+        return _truncate();
+    }
+
+    @Override
+    public long truncate(long size) {
+        return _truncate(size);
+    }
+
+    @ExposedMethod(defaults = "null", doc = truncate_doc)
+    final long FileIO_truncate(PyObject size) {
+        return (size != null) ? _truncate(size.asLong()) : _truncate();
+    }
+
+    /** Common to FileIO_truncate(null) and truncate(). */
+    private final long _truncate() {
+        synchronized (file) {
+            return file.truncate(file.tell());
         }
-    	return Py.java2py(FileIO_truncate(position.asLong()));
     }
 
-    final synchronized long FileIO_truncate(long position) {
-        return file.truncate(position);
+    /** Common to FileIO_truncate(size) and truncate(size). */
+    private final long _truncate(long size) {
+        synchronized (file) {
+            return file.truncate(size);
+        }
     }
 
-    public long truncate(long position) {
-        return FileIO_truncate(position);
-    }
-
-    final synchronized long FileIO_truncate() {
-        return file.truncate(file.tell());
-    }
-
-    public void truncate() {
-        FileIO_truncate();
-    }
-
+    @Override
     public boolean isatty() {
         return FileIO_isatty();
     }
@@ -191,6 +199,7 @@ public class PyFileIO extends PyObject {
         return file.isatty();
     }
 
+    @Override
     public boolean writable() {
         return FileIO_writable();
     }
@@ -200,6 +209,7 @@ public class PyFileIO extends PyObject {
         return file.writable();
     }
 
+    @Override
     public PyObject fileno() {
         return FileIO_fileno();
     }
@@ -216,6 +226,7 @@ public class PyFileIO extends PyObject {
         return new PyString(StringUtil.fromBytes(buf));
     }
 
+    @Override
     public PyString read(int size) {
         return FileIO_read(size);
     }
@@ -281,45 +292,4 @@ public class PyFileIO extends PyObject {
         return file.closed();
     }
 
-    /**
-     * XXX update docs - A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself
-     * to a list of Closers that will be run by PyFileCloser on JVM shutdown. When a
-     * PyFile's close or finalize methods are called, PyFile calls its Closer.close which
-     * clears Closer out of the shutdown queue.
-     *
-     * We use a regular object here rather than WeakReferences and their ilk as they may
-     * be collected before the shutdown hook runs. There's no guarantee that finalize will
-     * be called during shutdown, so we can't use it. It's vital that this Closer has no
-     * reference to the PyFile it's closing so the PyFile remains garbage collectable.
-     */
-    private static class Closer implements Callable<Void> {
-
-        /**
-         * The underlying file
-         */
-        private final FileIO file;
-        private PySystemState sys;
-
-        public Closer(FileIO file, PySystemState sys) {
-            this.file = file;
-            this.sys = sys;
-            sys.registerCloser(this);
-        }
-
-        /** For closing directly */
-        public void close() {
-            sys.unregisterCloser(this);
-            file.close();
-            sys = null;
-        }
-
-        /** For closing as part of a shutdown process */
-        @Override
-        public Void call() {
-            file.close();
-            sys = null;
-            return null;
-        }
-
-    }
 }
