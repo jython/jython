@@ -8,7 +8,6 @@
 
 BaseException.derived:org.python.core.PyBaseExceptionDerived
 ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
-PyFileIO.derived:org.python.modules._io.PyFileIODerived
 array.derived:org.python.core.PyArrayDerived
 bytearray.derived:org.python.core.PyByteArrayDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
@@ -149,3 +148,4 @@ op_UAdd.derived:org.python.antlr.op.UAddDerived
 op_USub.derived:org.python.antlr.op.USubDerived
 _io._IOBase.derived:org.python.modules._io.PyIOBaseDerived
 _io._RawIOBase.derived:org.python.modules._io.PyRawIOBaseDerived
+_io.FileIO.derived:org.python.modules._io.PyFileIODerived
