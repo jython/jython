@@ -57,274 +57,7 @@ class BlockingIOError(IOError):
         self.characters_written = characters_written
 
 
-from _io import (open, UnsupportedOperation)
-
-
-class _IOBase:
-    __metaclass__ = abc.ABCMeta
-
-    """The abstract base class for all I/O classes, acting on streams of
-    bytes. There is no public constructor.
-
-    This class provides dummy implementations for many methods that
-    derived classes can override selectively; the default implementations
-    represent a file that cannot be read, written or seeked.
-
-    Even though _IOBase does not declare read, readinto, or write because
-    their signatures will vary, implementations and clients should
-    consider those methods part of the interface. Also, implementations
-    may raise a IOError when operations they do not support are called.
-
-    The basic type used for binary data read from or written to a file is
-    bytes. bytearrays are accepted too, and in some cases (such as
-    readinto) needed. Text I/O classes work with str data.
-
-    Note that calling any method (even inquiries) on a closed stream is
-    undefined. Implementations may raise IOError in this case.
-
-    _IOBase (and its subclasses) support the iterator protocol, meaning
-    that an _IOBase object can be iterated over yielding the lines in a
-    stream.
-
-    _IOBase also supports the :keyword:`with` statement. In this example,
-    fp is closed after the suite of the with statement is complete:
-
-    with open('spam.txt', 'r') as fp:
-        fp.write('Spam and eggs!')
-    """
-
-    ### Internal ###
-
-    def _unsupported(self, name):
-        """Internal: raise an exception for unsupported operations."""
-        raise UnsupportedOperation("%s.%s() not supported" %
-                                   (self.__class__.__name__, name))
-
-    ### Positioning ###
-
-    def seek(self, pos, whence=0):
-        """Change stream position.
-
-        Change the stream position to byte offset offset. offset is
-        interpreted relative to the position indicated by whence.  Values
-        for whence are:
-
-        * 0 -- start of stream (the default); offset should be zero or positive
-        * 1 -- current stream position; offset may be negative
-        * 2 -- end of stream; offset is usually negative
-
-        Return the new absolute position.
-        """
-        self._unsupported("seek")
-
-    def tell(self):
-        """Return current stream position."""
-        return self.seek(0, 1)
-
-    def truncate(self, pos=None):
-        """Truncate file to size bytes.
-
-        Size defaults to the current IO position as reported by tell().  Return
-        the new size.
-        """
-        self._unsupported("truncate")
-
-    ### Flush and close ###
-
-    def flush(self):
-        """Flush write buffers, if applicable.
-
-        This is not implemented for read-only and non-blocking streams.
-        """
-        self._checkClosed()
-        # XXX Should this return the number of bytes written???
-
-    __closed = False
-
-    def close(self):
-        """Flush and close the IO object.
-
-        This method has no effect if the file is already closed.
-        """
-        if not self.__closed:
-            self.flush()
-            self.__closed = True
-
-    def __del__(self):
-        """Destructor.  Calls close()."""
-        # The try/except block is in case this is called at program
-        # exit time, when it's possible that globals have already been
-        # deleted, and then the close() call might fail.  Since
-        # there's nothing we can do about such failures and they annoy
-        # the end users, we suppress the traceback.
-        try:
-            self.close()
-        except:
-            pass
-
-    ### Inquiries ###
-
-    def seekable(self):
-        """Return whether object supports random access.
-
-        If False, seek(), tell() and truncate() will raise IOError.
-        This method may need to do a test seek().
-        """
-        return False
-
-    def _checkSeekable(self, msg=None):
-        """Internal: raise an IOError if file is not seekable
-        """
-        if not self.seekable():
-            raise IOError("File or stream is not seekable."
-                          if msg is None else msg)
-
-
-    def readable(self):
-        """Return whether object was opened for reading.
-
-        If False, read() will raise IOError.
-        """
-        return False
-
-    def _checkReadable(self, msg=None):
-        """Internal: raise an IOError if file is not readable
-        """
-        if not self.readable():
-            raise IOError("File or stream is not readable."
-                          if msg is None else msg)
-
-    def writable(self):
-        """Return whether object was opened for writing.
-
-        If False, write() and truncate() will raise IOError.
-        """
-        return False
-
-    def _checkWritable(self, msg=None):
-        """Internal: raise an IOError if file is not writable
-        """
-        if not self.writable():
-            raise IOError("File or stream is not writable."
-                          if msg is None else msg)
-
-    @property
-    def closed(self):
-        """closed: bool.  True iff the file has been closed.
-
-        For backwards compatibility, this is a property, not a predicate.
-        """
-        return self.__closed
-
-    def _checkClosed(self, msg=None):
-        """Internal: raise an ValueError if file is closed
-        """
-        if self.closed:
-            raise ValueError("I/O operation on closed file."
-                             if msg is None else msg)
-
-    ### Context manager ###
-
-    def __enter__(self):
-        """Context management protocol.  Returns self."""
-        self._checkClosed()
-        return self
-
-    def __exit__(self, *args):
-        """Context management protocol.  Calls close()"""
-        self.close()
-
-    ### Lower-level APIs ###
-
-    # XXX Should these be present even if unimplemented?
-
-    def fileno(self):
-        """Returns underlying file descriptor if one exists.
-
-        An IOError is raised if the IO object does not use a file descriptor.
-        """
-        self._unsupported("fileno")
-
-    def isatty(self):
-        """Return whether this is an 'interactive' stream.
-
-        Return False if it can't be determined.
-        """
-        self._checkClosed()
-        return False
-
-    ### Readline[s] and writelines ###
-
-    def readline(self, limit=-1):
-        r"""Read and return a line from the stream.
-
-        If limit is specified, at most limit bytes will be read.
-
-        The line terminator is always b'\n' for binary files; for text
-        files, the newlines argument to open can be used to select the line
-        terminator(s) recognized.
-        """
-        # For backwards compatibility, a (slowish) readline().
-        if hasattr(self, "peek"):
-            def nreadahead():
-                readahead = self.peek(1)
-                if not readahead:
-                    return 1
-                n = (readahead.find(b"\n") + 1) or len(readahead)
-                if limit >= 0:
-                    n = min(n, limit)
-                return n
-        else:
-            def nreadahead():
-                return 1
-        if limit is None:
-            limit = -1
-        elif not isinstance(limit, (int, long)):
-            raise TypeError("limit must be an integer")
-        res = bytearray()
-        while limit < 0 or len(res) < limit:
-            b = self.read(nreadahead())
-            if not b:
-                break
-            res += b
-            if res.endswith(b"\n"):
-                break
-        return bytes(res)
-
-    def __iter__(self):
-        self._checkClosed()
-        return self
-
-    def next(self):
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
-
-    def readlines(self, hint=None):
-        """Return a list of lines from the stream.
-
-        hint can be specified to control the number of lines read: no more
-        lines will be read if the total size (in bytes/characters) of all
-        lines so far exceeds hint.
-        """
-        if hint is not None and not isinstance(hint, (int, long)):
-            raise TypeError("integer or None expected")
-        if hint is None or hint <= 0:
-            return list(self)
-        n = 0
-        lines = []
-        for line in self:
-            lines.append(line)
-            n += len(line)
-            if n >= hint:
-                break
-        return lines
-
-    def writelines(self, lines):
-        self._checkClosed()
-        for line in lines:
-            self.write(line)
+from _io import (open, UnsupportedOperation, _IOBase)
 
 
 class _RawIOBase(_IOBase):
@@ -569,9 +302,9 @@ class _BufferedIOMixin(_BufferedIOBase):
         try:
             name = self.name
         except AttributeError:
-            return "<_pyio.{0}>".format(clsname)
+            return "<_jyio.{0}>".format(clsname)
         else:
-            return "<_pyio.{0} name={1!r}>".format(clsname, name)
+            return "<_jyio.{0} name={1!r}>".format(clsname, name)
 
     ### Lower-level APIs ###
 
@@ -1325,9 +1058,9 @@ class TextIOWrapper(_TextIOBase):
         try:
             name = self.name
         except AttributeError:
-            return "<_pyio.TextIOWrapper encoding='{0}'>".format(self.encoding)
+            return "<_jyio.TextIOWrapper encoding='{0}'>".format(self.encoding)
         else:
-            return "<_pyio.TextIOWrapper name={0!r} encoding='{1}'>".format(
+            return "<_jyio.TextIOWrapper name={0!r} encoding='{1}'>".format(
                 name, self.encoding)
 
     @property
@@ -1361,12 +1094,12 @@ class TextIOWrapper(_TextIOBase):
 
     def close(self):
         if self.buffer is not None and not self.closed:
-            self.flush()
+            # Jython difference: flush and close via super.
+            # Sets __closed for quick _checkClosed().
+            super(TextIOWrapper, self).close()
             self.buffer.close()
 
-    @property
-    def closed(self):
-        return self.buffer.closed
+    # Jython difference: @property closed(self) inherited from _IOBase.__closed
 
     @property
     def name(self):

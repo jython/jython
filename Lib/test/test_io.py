@@ -37,8 +37,9 @@ from collections import deque
 from test import test_support as support
 
 import codecs
-import io  # C implementation of io
-import _pyio as pyio # Python implementation of io
+import io               # subject of test
+import _io              # compiled implementation of io
+import _pyio as pyio    # Python implementation of io
 try:
     import threading
 except ImportError:

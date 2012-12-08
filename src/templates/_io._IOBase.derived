@@ -1,0 +1,210 @@
+base_class: PyIOBase
+want_dict: false
+ctr: 
+no_toString: true
+incl: object
+unary1: __enter__
+unary1: fileno
+
+rest:
+    // Hand-crafted in _io._IOBase.derived
+
+    public long seek(long pos, int whence) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("seek");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(Py.newLong(pos), Py.newInteger(whence))
+                    .asLong();
+        } else {
+            return super.seek(pos, whence);
+        }
+    }
+
+    public long tell() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("tell");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().asLong();
+        } else {
+            return super.tell();
+        }
+    }
+
+    public long truncate(long size) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("truncate");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(Py.newLong(size)).asLong();
+        } else {
+            return super.truncate(size);
+        }
+    }
+
+    public long truncate() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("truncate");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().asLong();
+        } else {
+            return super.truncate();
+        }
+    }
+
+    public void flush() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("flush");
+        if (impl != null) {
+            impl.__get__(this, self_type).__call__();
+        } else {
+            super.flush();
+        }
+    }
+
+    public void close() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("close");
+        if (impl != null) {
+            impl.__get__(this, self_type).__call__();
+        } else {
+            super.close();
+        }
+    }
+
+    public boolean seekable() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("seekable");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().__nonzero__();
+        } else {
+            return super.seekable();
+        }
+    }
+
+    public void _checkSeekable(String msg) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("_checkSeekable");
+        if (impl != null) {
+            PyObject pymsg = msg == null ? Py.None : new PyString(msg);
+            impl.__get__(this, self_type).__call__(pymsg);
+        } else {
+            super._checkSeekable(msg);
+        }
+    }
+
+    public boolean readable() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("readable");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().__nonzero__();
+        } else {
+            return super.readable();
+        }
+    }
+
+    public void _checkReadable(String msg) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("_checkReadable");
+        if (impl != null) {
+            PyObject pymsg = msg == null ? Py.None : new PyString(msg);
+            impl.__get__(this, self_type).__call__(pymsg);
+        } else {
+            super._checkReadable(msg);
+        }
+    }
+
+    public boolean writable() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("writable");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().__nonzero__();
+        } else {
+            return super.writable();
+        }
+    }
+
+    public void _checkWritable(String msg) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("_checkWritable");
+        if (impl != null) {
+            PyObject pymsg = msg == null ? Py.None : new PyString(msg);
+            impl.__get__(this, self_type).__call__(pymsg);
+        } else {
+            super._checkWritable(msg);
+        }
+    }
+
+    // Note that closed is a property not a predicate, so no derived method.
+
+    public void _checkClosed(String msg) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("_checkClosed");
+        if (impl != null) {
+            PyObject pymsg = msg == null ? Py.None : new PyString(msg);
+            impl.__get__(this, self_type).__call__(pymsg);
+        } else {
+            super._checkClosed(msg);
+        }
+    }
+
+    public boolean __exit__(PyObject type, PyObject value, PyObject traceback) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("__exit__");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(type, value, traceback).__nonzero__();
+        } else {
+            return super.__exit__(type, value, traceback);
+        }
+    }
+
+    public boolean isatty() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("isatty");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__().__nonzero__();
+        } else {
+            return super.isatty();
+        }
+    }
+
+    public PyObject readline() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("readline");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(Py.None);
+        } else {
+            return super.readline();
+        }
+    }
+
+    public PyObject readline(int limit) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("readline");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(Py.newInteger(limit));
+        } else {
+            return super.readline(limit);
+        }
+    }
+
+    public PyObject readlines(PyObject hint) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("readlines");
+        if (impl != null) {
+            PyObject res = impl.__get__(this, self_type).__call__(hint);
+            return res;
+        } else {
+            return super.readlines(hint);
+        }
+    }
+
+    public void writelines(PyObject lines) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("writelines");
+        if (impl != null) {
+            impl.__get__(this, self_type).__call__(lines);
+        } else {
+            super.writelines(lines);
+        }
+    }
+
+

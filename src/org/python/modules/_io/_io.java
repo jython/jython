@@ -29,6 +29,8 @@ public class _io implements ClassDictInit {
         dict.__setitem__("__name__", new PyString("_io"));
         dict.__setitem__("__doc__", new PyString(__doc__));
         dict.__setitem__("DEFAULT_BUFFER_SIZE", DEFAULT_BUFFER_SIZE);
+
+        dict.__setitem__("_IOBase", PyIOBase.TYPE);
         dict.__setitem__("FileIO", PyFileIO.TYPE);
 
         // Define UnsupportedOperation exception by constructing the type
