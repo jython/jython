@@ -6,7 +6,6 @@
 # will map str.expose to org.python.core.PyString.  Many classes will have 2
 # lines; one for their expose, and one for their derived class.
 
-_io._IOBase.derived:org.python.modules._io.PyIOBaseDerived
 BaseException.derived:org.python.core.PyBaseExceptionDerived
 ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
 PyFileIO.derived:org.python.modules._io.PyFileIODerived
@@ -148,3 +147,5 @@ op_Store.derived:org.python.antlr.op.StoreDerived
 op_Sub.derived:org.python.antlr.op.SubDerived
 op_UAdd.derived:org.python.antlr.op.UAddDerived
 op_USub.derived:org.python.antlr.op.USubDerived
+_io._IOBase.derived:org.python.modules._io.PyIOBaseDerived
+_io._RawIOBase.derived:org.python.modules._io.PyRawIOBaseDerived

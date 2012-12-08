@@ -57,71 +57,7 @@ class BlockingIOError(IOError):
         self.characters_written = characters_written
 
 
-from _io import (open, UnsupportedOperation, _IOBase)
-
-
-class _RawIOBase(_IOBase):
-
-    """Base class for raw binary I/O."""
-
-    # The read() method is implemented by calling readinto(); derived
-    # classes that want to support read() only need to implement
-    # readinto() as a primitive operation.  In general, readinto() can be
-    # more efficient than read().
-
-    # (It would be tempting to also provide an implementation of
-    # readinto() in terms of read(), in case the latter is a more suitable
-    # primitive operation, but that would lead to nasty recursion in case
-    # a subclass doesn't implement either.)
-
-    def read(self, n=-1):
-        """Read and return up to n bytes.
-
-        Returns an empty bytes object on EOF, or None if the object is
-        set not to block and has no data to read.
-        """
-        if n is None:
-            n = -1
-        if n < 0:
-            return self.readall()
-        b = bytearray(n.__index__())
-        n = self.readinto(b)
-        if n is None:
-            return None
-        del b[n:]
-        return bytes(b)
-
-    def readall(self):
-        """Read until EOF, using multiple read() call."""
-        res = bytearray()
-        while True:
-            data = self.read(DEFAULT_BUFFER_SIZE)
-            if not data:
-                break
-            res += data
-        if res:
-            return bytes(res)
-        else:
-            # b'' or None
-            return data
-
-    def readinto(self, b):
-        """Read up to len(b) bytes into b.
-
-        Returns number of bytes read (0 for EOF), or None if the object
-        is set not to block and has no data to read.
-        """
-        self._unsupported("readinto")
-
-    def write(self, b):
-        """Write the given buffer to the IO stream.
-
-        Returns the number of bytes written, which may be less than len(b).
-        """
-        self._unsupported("write")
-
-
-from _io import FileIO
+from _io import (open, UnsupportedOperation, _IOBase, _RawIOBase, FileIO)
 
 
 class _BufferedIOBase(_IOBase):

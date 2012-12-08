@@ -31,6 +31,7 @@ public class _io implements ClassDictInit {
         dict.__setitem__("DEFAULT_BUFFER_SIZE", DEFAULT_BUFFER_SIZE);
 
         dict.__setitem__("_IOBase", PyIOBase.TYPE);
+        dict.__setitem__("_RawIOBase", PyRawIOBase.TYPE);
         dict.__setitem__("FileIO", PyFileIO.TYPE);
 
         // Define UnsupportedOperation exception by constructing the type

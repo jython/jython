@@ -1,0 +1,39 @@
+base_class: PyRawIOBase
+want_dict: false
+ctr: 
+no_toString: true
+incl: _io._IOBase
+unary1: readall
+
+rest:
+    // Hand-crafted in _io._RawIOBase.derived
+
+    public PyObject read(int n) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("read");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(Py.newInteger(n));
+        } else {
+            return super.read(n);
+        }
+    }
+
+    public PyObject readinto(PyObject b) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("readinto");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(b);
+        } else {
+            return super.readinto(b);
+        }
+    }
+
+    public PyObject write(PyObject b) {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("write");
+        if (impl != null) {
+            return impl.__get__(this, self_type).__call__(b);
+        } else {
+            return super.write(b);
+        }
+    }
