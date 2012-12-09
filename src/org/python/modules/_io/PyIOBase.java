@@ -201,12 +201,21 @@ public class PyIOBase extends PyObject {
     @ExposedMethod(doc = close_doc)
     final void _IOBase_close() {
         if (!__closed) {
-            // Cancel the wake-up call
-            closer.dismiss();
-            // Close should invoke (possibly overridden) flush here.
-            invoke("flush");
-            // Prevent further access from upstream
-            __closed = true;
+            /*
+             * The downstream file (file descriptor) will sometimes have been closed by another
+             * client. This should raise an error for us, (since data potentially in our buffers
+             * will be discarded) but we still must end up closed. the local close comes after the
+             * flush, in case operations within flush() test for "the wrong kind of closed".
+             */
+            try {
+                // Cancel the wake-up call
+                closer.dismiss();
+                // Close should invoke (possibly overridden) flush here.
+                invoke("flush");
+            } finally {
+                // Become closed to further client operations (other than certain enquiries)
+                __closed = true;
+            }
         }
     }
 
@@ -441,7 +450,7 @@ public class PyIOBase extends PyObject {
 
     @ExposedMethod(defaults = "null", doc = readline_doc)
     final PyObject _IOBase_readline(PyObject limit) {
-        if (limit == null || limit==Py.None) {
+        if (limit == null || limit == Py.None) {
             return _readline(-1);
         } else if (limit.isIndex()) {
             return _readline(limit.asInt());
@@ -587,7 +596,7 @@ public class PyIOBase extends PyObject {
     public PyObject __iter__() {
         _checkClosed();
         // Not like this, in spite of what base comment says, because file *is* an iterator
-        //        return new PySequenceIter(this);
+        // return new PySequenceIter(this);
         return this;
     }
 
@@ -614,7 +623,7 @@ public class PyIOBase extends PyObject {
 
         int h = 0;
 
-        if (hint==null || hint == Py.None) {
+        if (hint == null || hint == Py.None) {
             return new PyList(this);
 
         } else if (!hint.isIndex()) {

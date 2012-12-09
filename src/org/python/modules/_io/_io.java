@@ -221,15 +221,6 @@ public class _io implements ClassDictInit {
                     + "Argument names are not part of the specification, and only the arguments\n"
                     + "of open() are intended to be used as keyword arguments.\n";
 
-// + "\n"
-// + "data:\n"
-// + "\n"
-// + "DEFAULT_BUFFER_SIZE\n"
-// + "\n"
-// + "   An int containing the default buffer size used by the module's buffered\n"
-// + "   I/O classes. open() uses the file's blksize (as obtained by os.stat) if\n"
-// + "   possible.\n";
-
     public static final String __doc__open =
             "Open file and return a stream.  Raise IOError upon failure.\n" + "\n"
                     + "file is either a text or byte string giving the name (and the path\n"

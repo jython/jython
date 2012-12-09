@@ -8,8 +8,10 @@ import org.python.core.BaseBytes;
 import org.python.core.BuiltinDocs;
 import org.python.core.Py;
 import org.python.core.PyArray;
+import org.python.core.PyBuffer;
 import org.python.core.PyInteger;
 import org.python.core.PyJavaType;
+import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -102,6 +104,95 @@ public class PyFileIO extends PyRawIOBase {
                 + (updating ? "+" : "");
     }
 
+    /*
+     * ===========================================================================================
+     * Exposed methods in the order they appear in CPython's fileio.c method table
+     * ===========================================================================================
+     */
+
+    // _RawIOBase.read is correct for us
+    // _RawIOBase.readall is correct for us
+
+    @Override
+    public PyObject readinto(PyObject buf) {
+        return FileIO_readinto(buf);
+    }
+
+    @ExposedMethod(doc = readinto_doc)
+    final PyLong FileIO_readinto(PyObject buf) {
+        // Check we can do this
+        _checkClosed();
+        _checkReadable();
+        // Perform the operation through a buffer view on the object
+        PyBuffer pybuf = writablePyBuffer(buf);
+        try {
+            PyBuffer.Pointer bp = pybuf.getBuf();
+            ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+            int count;
+            synchronized (ioDelegate) {
+                count = ioDelegate.readinto(byteBuffer);
+            }
+            return new PyLong(count);
+        } finally {
+            // Must unlock the PyBuffer view from client's object
+            pybuf.release();
+        }
+    }
+
+    @Override
+    public PyObject write(PyObject buf) {
+        return FileIO_write(buf);
+    }
+
+    @ExposedMethod(doc = write_doc)
+    final PyLong FileIO_write(PyObject obj) {
+        _checkWritable();
+        // Get or synthesise a buffer API on the object to be written
+        PyBuffer pybuf = readablePyBuffer(obj);
+        try {
+            // Access the data as a java.nio.ByteBuffer [pos:limit] within possibly larger array
+            PyBuffer.Pointer bp = pybuf.getBuf();
+            ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+            int count;
+            synchronized (ioDelegate) {
+                count = ioDelegate.write(byteBuffer);
+            }
+            return new PyLong(count);
+        } finally {
+            // Even if that went badly, we should release the lock on the client buffer
+            pybuf.release();
+        }
+    }
+
+    @Override
+    public long truncate() {
+        return _truncate();
+    }
+
+    @Override
+    public long truncate(long size) {
+        return _truncate(size);
+    }
+
+    @ExposedMethod(defaults = "null", doc = truncate_doc)
+    final long FileIO_truncate(PyObject size) {
+        return (size != null) ? _truncate(size.asLong()) : _truncate();
+    }
+
+    /** Common to FileIO_truncate(null) and truncate(). */
+    private final long _truncate() {
+        synchronized (ioDelegate) {
+            return ioDelegate.truncate(ioDelegate.tell());
+        }
+    }
+
+    /** Common to FileIO_truncate(size) and truncate(size). */
+    private final long _truncate(long size) {
+        synchronized (ioDelegate) {
+            return ioDelegate.truncate(size);
+        }
+    }
+
     /**
      * Close the underlying ioDelegate only if <code>closefd</code> was specified as (or defaulted
      * to) <code>True</code>.
@@ -133,7 +224,7 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_seek_doc)
     final synchronized PyObject FileIO_seek(long pos, int how) {
-        checkClosed();
+        _checkClosed();
         return Py.java2py(ioDelegate.seek(pos, how));
     }
 
@@ -152,42 +243,13 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
     final synchronized long FileIO_tell() {
-        checkClosed();
+        _checkClosed();
         return ioDelegate.tell();
     }
 
     @Override
     public long tell() {
         return FileIO_tell();
-    }
-
-    @Override
-    public long truncate() {
-        return _truncate();
-    }
-
-    @Override
-    public long truncate(long size) {
-        return _truncate(size);
-    }
-
-    @ExposedMethod(defaults = "null", doc = truncate_doc)
-    final long FileIO_truncate(PyObject size) {
-        return (size != null) ? _truncate(size.asLong()) : _truncate();
-    }
-
-    /** Common to FileIO_truncate(null) and truncate(). */
-    private final long _truncate() {
-        synchronized (ioDelegate) {
-            return ioDelegate.truncate(ioDelegate.tell());
-        }
-    }
-
-    /** Common to FileIO_truncate(size) and truncate(size). */
-    private final long _truncate(long size) {
-        synchronized (ioDelegate) {
-            return ioDelegate.truncate(size);
-        }
     }
 
     @Override
@@ -220,55 +282,20 @@ public class PyFileIO extends PyRawIOBase {
         return PyJavaType.wrapJavaObject(ioDelegate.fileno());
     }
 
-    @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)
-    final synchronized PyString FileIO_read(int size) {
-        checkClosed();
-        ByteBuffer buf = ioDelegate.read(size);
-        return new PyString(StringUtil.fromBytes(buf));
-    }
-
+    // fileio.c has no flush(), but why not, when there is fdflush()?
+    // And it is a no-op for Jython io.FileIO, but why when there is FileChannel.force()?
     @Override
-    public PyString read(int size) {
-        return FileIO_read(size);
+    public void flush() {
+        FileIO_flush();
     }
 
-    @ExposedMethod(doc = BuiltinDocs.file_read_doc)
-    final synchronized PyString FileIO_readall() {
-        return FileIO_read(-1);
-    }
-
-    /**
-     * Return a String for writing to the underlying file from obj.
-     */
-    private String asWritable(PyObject obj, String message) {
-        if (obj instanceof PyUnicode) {
-            return ((PyUnicode)obj).encode();
-        } else if (obj instanceof PyString) {
-            return ((PyString)obj).getString();
-        } else if (obj instanceof PyArray) {
-            return ((PyArray)obj).tostring();
-        } else if (obj instanceof BaseBytes) {
-            return StringUtil.fromBytes((BaseBytes)obj);
+    @ExposedMethod(doc = "Flush write buffers.")
+    final void FileIO_flush() {
+        if (writable()) {
+            // Check for *downstream* close. (Locally, closed means "closed to client actions".)
+            ioDelegate.checkClosed();
+            ioDelegate.flush();
         }
-        if (message == null) {
-            message =
-                    String.format("argument 1 must be string or buffer, not %.200s", obj.getType()
-                            .fastGetName());
-        }
-        throw Py.TypeError(message);
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.file_write_doc)
-    final PyObject FileIO_write(PyObject obj) {
-        String writable = asWritable(obj, null);
-        byte[] bytes = StringUtil.toBytes(writable);
-        int written = write(ByteBuffer.wrap(bytes));
-        return new PyInteger(written);
-    }
-
-    final synchronized int write(ByteBuffer buf) {
-        checkClosed();
-        return ioDelegate.write(buf);
     }
 
     @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.file___str___doc)
@@ -283,15 +310,6 @@ public class PyFileIO extends PyRawIOBase {
     @Override
     public String toString() {
         return FileIO_toString();
-    }
-
-    private void checkClosed() {
-        ioDelegate.checkClosed();
-    }
-
-    @ExposedGet(name = "closed", doc = BuiltinDocs.file_closed_doc)
-    public boolean getClosed() {
-        return ioDelegate.closed();
     }
 
 }
