@@ -241,15 +241,16 @@ public class FileIO extends RawIOBase {
         checkClosed();
         checkReadable();
         try {
-            return fileChannel.read(buf);
+            int n = fileChannel.read(buf);
+            return n > 0 ? n : 0;
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
     }
 
     /**
-     * Read bytes into each of the specified ByteBuffers via scatter
-     * i/o.
+     * Read bytes into each of the specified ByteBuffers via scatter i/o. Returns number of bytes
+     * read (0 for EOF).
      *
      * @param bufs {@inheritDoc}
      * @return {@inheritDoc}
@@ -259,7 +260,8 @@ public class FileIO extends RawIOBase {
         checkClosed();
         checkReadable();
         try {
-            return fileChannel.read(bufs);
+            long n = fileChannel.read(bufs);
+            return n > 0L ? n : 0L;
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
