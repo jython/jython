@@ -2547,9 +2547,8 @@ class MiscIOTest(unittest.TestCase):
 
         f = self.open(support.TESTFN, "w+")
         self.assertEqual(f.mode,            "w+")
-        #If next doesn't matter - does it matter it doesn't work in Jython?
-        #self.assertEqual(f.buffer.mode,     "rb+") # Does it really matter?
-        #self.assertEqual(f.buffer.raw.mode, "rb+")
+        self.assertEqual(f.buffer.mode,     "rb+") # Does it really matter?
+        self.assertEqual(f.buffer.raw.mode, "rb+")
 
         g = self.open(f.fileno(), "wb", closefd=False)
         self.assertEqual(g.mode,     "wb")

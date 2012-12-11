@@ -335,11 +335,10 @@ class OtherFileTests(unittest.TestCase):
 
     def testInvalidFd(self):
         if is_jython:
-            self.assertRaises(TypeError, _FileIO, -10)
-            self.assertRaises(TypeError, _FileIO, make_bad_fd())
+            self.assertRaises(TypeError, _FileIO, -10)  # file descriptor not int in Jython
         else:
             self.assertRaises(ValueError, _FileIO, -10)
-            self.assertRaises(OSError, _FileIO, make_bad_fd())
+        self.assertRaises(OSError, _FileIO, make_bad_fd())
         if sys.platform == 'win32':
             import msvcrt
             self.assertRaises(IOError, msvcrt.get_osfhandle, make_bad_fd())

@@ -2,107 +2,172 @@
 package org.python.modules._io;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
+import java.nio.channels.FileChannel;
 
 import org.python.core.ArgParser;
-import org.python.core.BaseBytes;
 import org.python.core.BuiltinDocs;
 import org.python.core.Py;
-import org.python.core.PyArray;
 import org.python.core.PyBuffer;
-import org.python.core.PyInteger;
 import org.python.core.PyJavaType;
 import org.python.core.PyLong;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.io.FileIO;
-import org.python.core.util.StringUtil;
+import org.python.core.io.RawIOBase;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+
+import com.kenai.constantine.platform.Errno;
 
 @ExposedType(name = "_io.FileIO", base = PyRawIOBase.class)
 public class PyFileIO extends PyRawIOBase {
 
     public static final PyType TYPE = PyType.fromClass(PyFileIO.class);
 
-    private FileIO ioDelegate;  // XXX final?
-    private PyObject name;
+    /** The FileIO to which we delegate operations not complete locally. */
+    private final FileIO ioDelegate;
+
+    /** The name of the file */
+    @ExposedGet(doc = BuiltinDocs.file_name_doc)
+    protected PyObject name;
+
     private Boolean seekable;
 
+    /** Whether to close the underlying stream on closing this object. */
     @ExposedGet
-    public boolean closefd;
+    public final boolean closefd;
 
-    /** The mode string */
-    @ExposedGet(doc = BuiltinDocs.file_mode_doc)
-    public String mode;
+    /** The mode as given to the constructor */
+    private OpenMode openMode;
+    @ExposedGet(doc = BuiltinDocs.file_mode_doc)    // and as a PyString
+    public PyString mode() { return new PyString(openMode.raw()); }
+    private static final PyString defaultMode = new PyString("r");
 
-    public PyFileIO() {
-        super(TYPE);
+    /**
+     * Construct an open <code>_io.FileIO</code> starting with an object that may be a file name or
+     * a file descriptor (actually a {@link RawIOBase}). Only the relevant flags within the parsed
+     * mode object are consulted (so that flags meaningful to this sub-class need not be processed
+     * out).
+     *
+     * @param fd on which this should be constructed
+     * @param mode type of access specified
+     * @param closefd if <code>false</code>, do not close <code>fd</code> on call to
+     *            <code>close()</code>
+     */
+    public PyFileIO(PyObject file, OpenMode mode, boolean closefd) {
+        this(TYPE, file, mode, closefd);
     }
 
-    public PyFileIO(PyType subType) {
-        super(subType);
-    }
-
-    public PyFileIO(String name, String mode, boolean closefd) {
-        this();
-        FileIO___init__(Py.newString(name), mode, closefd);
-    }
-
-    public PyFileIO(String name, String mode) {
-        this(name, mode, true);
-    }
-
-    @ExposedNew
-    @ExposedMethod(doc = BuiltinDocs.file___init___doc)
-    final void FileIO___init__(PyObject[] args, String[] kwds) {
-        ArgParser ap =
-                new ArgParser("file", args, kwds, new String[] {"name", "mode", "closefd"}, 1);
-        PyObject name = ap.getPyObject(0);
-        if (!(name instanceof PyString)) {
-            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().fastGetName()
-                    + "' type found");
-        }
-        String mode = ap.getString(1, "r");
-        boolean closefd = Py.py2boolean(ap.getPyObject(2, Py.True));
-        // TODO: make this work with file channels so closefd=False can be used
-        if (!closefd) {
-            throw Py.ValueError("Cannot use closefd=False with file name");
-        }
-
-        FileIO___init__((PyString)name, mode, closefd);
-    }
-
-    private void FileIO___init__(PyString name, String mode, boolean closefd) {
-        mode = parseMode(mode);
-        this.name = name;
-        this.mode = mode;
+    /**
+     * Construct an open <code>_io.FileIO</code> for a sub-class constructor starting with an object
+     * that may be a file name or a file descriptor (actually a {@link RawIOBase}). Only the
+     * relevant flags within the parsed mode object are consulted (so that flags meaningful to this
+     * sub-class need not be processed out).
+     *
+     * @param subtype for which construction is occurring
+     * @param file on which this should be constructed
+     * @param mode type of access specified
+     * @param closefd if <code>false</code>, do not close <code>file</code> on call to
+     *            <code>close()</code>
+     */
+    public PyFileIO(PyType subtype, PyObject file, OpenMode mode, boolean closefd) {
+        super(subtype);
+        this.ioDelegate = getFileIO(file, mode, closefd);
         this.closefd = closefd;
-        this.ioDelegate = new FileIO(name, mode.replaceAll("b", ""));
+        this.name = file;
+        this.openMode = mode;
     }
 
-    private String parseMode(String mode) {
-        if (mode.length() == 0) {
-            throw Py.ValueError("empty mode string");
+    /**
+     * Helper function that turns the arguments of the most general constructor, or
+     * <code>__new__</code>, into a {@link FileIO}. This places the logic of those several
+     * operations in one place.
+     * <p>
+     * In many cases (such as construction from a file name, the FileIO is a newly-opened file. When
+     * the file object passed in is a file descriptor, the FileIO may be created to wrap that
+     * existing stream.
+     *
+     * @param file name or descriptor
+     * @param mode parsed file open mode
+     * @param closefd must be true if file is in fact a name (checked, not used)
+     * @return
+     */
+    private static FileIO getFileIO(PyObject file, OpenMode mode, boolean closefd) {
+
+        if (file instanceof PyString) {
+            // Open a file by name
+            if (!closefd) {
+                throw Py.ValueError("Cannot use closefd=False with file name");
+            }
+            String name = file.asString();
+            return new FileIO(name, mode.forFileIO());
+
+        } else {
+            /*
+             * Build an _io.FileIO from an existing "file descriptor", which we may or may not want
+             * closed at the end. A CPython file descriptor is an int, but this is not the natural
+             * choice in Jython, and file descriptors should be treated as opaque.
+             */
+            Object fd = file.__tojava__(Object.class);
+            if (fd instanceof RawIOBase) {
+                // It is the "Jython file descriptor" from which we can get a channel.
+                /*
+                 * If the argument were a FileIO, could we return it directly? I think not: there
+                 * would be a problem with close and closefd=False since it is not the PyFileIO that
+                 * keeps state.
+                 */
+                Channel channel = ((RawIOBase)fd).getChannel();
+                if (channel instanceof FileChannel) {
+                    if  (channel.isOpen()){
+                    FileChannel fc = (FileChannel)channel;
+                    return new FileIO(fc, mode.forFileIO());
+                    } else {
+                        // File not open (we have to check as FileIO doesn't)
+                        throw Py.OSError(Errno.EBADF);
+                    }
+                }
+            }
+            // The file was a type we don't know how to use
+            throw Py.TypeError(String.format("invalid file: %s", file.__repr__().asString()));
         }
-
-        String origMode = mode;
-        if ("rwa".indexOf(mode.charAt(0)) == -1) {
-            throw Py.ValueError("mode string must begin with one of 'r', 'w', 'a' or 'U', not '"
-                    + origMode + "'");
-        }
-
-        boolean reading = mode.contains("r");
-        boolean writing = mode.contains("w");
-        boolean appending = mode.contains("a");
-        boolean updating = mode.contains("+");
-
-        return (reading ? "r" : "") + (writing ? "w" : "") + (appending ? "a" : "") + "b"
-                + (updating ? "+" : "");
     }
+
+    private static final String[] openArgs = {"file", "mode", "closefd"};
+
+    /**
+     * Create a {@link PyFileIO} and its <code>FileIO</code> delegate from the arguments.
+     */
+    @ExposedNew
+    static PyObject FileIO___new__(PyNewWrapper new_, boolean init, PyType subtype,
+            PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("FileIO", args, keywords, openArgs, 1);
+        PyObject file = ap.getPyObject(0);
+        PyObject m = ap.getPyObject(1, defaultMode);
+        boolean closefd = Py.py2boolean(ap.getPyObject(2, Py.True));
+
+        // Decode the mode string and check it
+        OpenMode mode = new OpenMode(m.asString()) {
+
+            {
+                invalid |= universal | text;    // These other modes are invalid
+            }
+        };
+        mode.checkValid();
+
+        if (subtype == TYPE) {
+            return new PyFileIO(subtype, file, mode, closefd);
+        } else {
+            return new PyFileIODerived(subtype, file, mode, closefd);
+        }
+
+    }
+
 
     /*
      * ===========================================================================================
@@ -302,9 +367,9 @@ public class PyFileIO extends PyRawIOBase {
     final String FileIO_toString() {
         if (name instanceof PyUnicode) {
             String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
-            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode);
+            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode());
         }
-        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode);
+        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode());
     }
 
     @Override

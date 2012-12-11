@@ -125,8 +125,7 @@ public class _io implements ClassDictInit {
          * Create the Raw file stream. Let the constructor deal with the variants and argument
          * checking.
          */
-        // XXX open() doesn't yet support file descriptors or the "digested" mode
-        PyFileIO raw = new PyFileIO(file.toString(), mode.rawmode(), closefd);
+        PyFileIO raw = new PyFileIO(file, mode, closefd);
 
         // XXX Can this work: boolean isatty = raw.isatty() ? Or maybe:
         // PyObject res = PyObject_CallMethod(raw, "isatty", NULL);
@@ -168,13 +167,10 @@ public class _io implements ClassDictInit {
 
         if (mode.updating) {
             bufferType = io.__getattr__("BufferedRandom");
-        } else if (mode.writing || mode.appending) {
+        } else if (mode.writable) {     // = writing || appending
             bufferType = io.__getattr__("BufferedWriter");
-        } else if (mode.reading) {
+        } else {                        // = reading
             bufferType = io.__getattr__("BufferedReader");
-        } else {
-            // Can it really still go wrong? I don't think so.
-            throw Py.ValueError(String.format("unknown mode: '%s'", mode.originalModeString));
         }
 
         PyInteger pyBuffering = new PyInteger(buffering);
@@ -191,7 +187,7 @@ public class _io implements ClassDictInit {
                 {buffer, ap.getPyObject(3, Py.None), ap.getPyObject(4, Py.None),
                         ap.getPyObject(5, Py.None), Py.newInteger(line_buffering)};
         PyObject wrapper = textType.__call__(textArgs);
-
+        wrapper.__setattr__("mode", new PyString(m));
         return wrapper;
     }
 

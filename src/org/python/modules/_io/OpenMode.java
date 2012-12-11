@@ -40,6 +40,12 @@ public class OpenMode {
     /** Set true when any invalid symbol or combination is discovered */
     public boolean invalid;
 
+    /** Set true when stream must be <code>readable = reading | updating</code> */
+    public boolean readable;
+
+    /** Set true when stream must be <code>writable = writing | updating | appending</code> */
+    public boolean writable;
+
     /**
      * Error message describing the way in which the mode is invalid, or null if no problem has been
      * found. This field may be set by the constructor (in the case of duplicate or unrecognised
@@ -133,6 +139,8 @@ public class OpenMode {
 
         // Implications
         reading |= universal;
+        readable = reading | updating;
+        writable = writing | updating | appending;
 
         // Standard tests
         if (!invalid) {
@@ -175,10 +183,9 @@ public class OpenMode {
     }
 
     /**
-     * Call {@link #validate()} and raise an exception if the mode string is not valid,
-     * as signalled by either {@link #invalid}
-     * or {@link #other} being <code>true</code> after that call. If no more specific message has been assigned in
-     * {@link #message}, report the original mode string.
+     * Call {@link #validate()} and raise an exception if the mode string is not valid, as signalled
+     * by either {@link #invalid} or {@link #other} being <code>true</code> after that call. If no
+     * more specific message has been assigned in {@link #message}, report the original mode string.
      *
      * @throws PyException (ValueError) if the mode string was invalid.
      */
@@ -200,7 +207,29 @@ public class OpenMode {
         }
     }
 
-    public String rawmode() {
+    /**
+     * The mode string that a raw file should claim to have, when initialised with the present mode.
+     * Note that this is not the same as the open mode because it omits the text-based attributes,
+     * even if set, and always asserts it is binary.
+     *
+     * @return "rb", "rb+", or "wb".
+     */
+    public String raw() {
+        if (readable) {
+            return writable ? "rb+" : "rb";
+        } else {
+            return "wb";
+        }
+    }
+
+    /**
+     * The mode string we need when constructing a <code>FileIO</code> initialised with the present
+     * mode. Note that this is not the same as the full open mode because it omits the text-based
+     * attributes, and not the same as {@link #raw()}.
+     *
+     * @return "r", "w", or "a" with optional "+".
+     */
+    public String forFileIO() {
         StringBuilder m = new StringBuilder(2);
         if (appending) {
             m.append('a');
@@ -213,6 +242,17 @@ public class OpenMode {
             m.append('+');
         }
         return m.toString();
+    }
+
+    /**
+     * The mode string that a text file should claim to have, when initialised with the present
+     * mode. Note that this only contains text-based attributes. Since mode 't' has no effect,
+     * except to produce an error if specified with 'b', we don't reproduce it.
+     *
+     * @return "", or "U".
+     */
+    public String text() {
+        return universal ? "U" : "";
     }
 
     @Override
