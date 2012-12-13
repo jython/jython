@@ -427,10 +427,7 @@ class OtherFileTests(unittest.TestCase):
             self.assertEqual(w.warnings, [])
             self.assertRaises(TypeError, _FileIO, [])
             self.assertEqual(w.warnings, [])
-            if is_jython:
-                self.assertRaises(IOError, _FileIO, "/some/invalid/name", "rt")
-            else:
-                self.assertRaises(ValueError, _FileIO, "/some/invalid/name", "rt")
+            self.assertRaises(ValueError, _FileIO, "/some/invalid/name", "rt")
             self.assertEqual(w.warnings, [])
 
 def test_main():

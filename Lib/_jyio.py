@@ -193,8 +193,9 @@ class _BufferedIOMixin(_BufferedIOBase):
     def close(self):
         if self.raw is not None and not self.closed:
             try:
-                # may raise BlockingIOError or BrokenPipeError etc
-                self.flush()
+                # Jython difference: call super.close() which manages "closed to client" state,
+                # and calls flush(), which may raise BlockingIOError or BrokenPipeError etc.
+                super(_BufferedIOBase, self).close()
             finally:
                 self.raw.close()
 

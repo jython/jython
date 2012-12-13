@@ -223,13 +223,14 @@ public class PyIOBase extends PyObject {
      * Is the stream capable of positioning the read/write pointer?
      *
      * @return <code>True</code> if may be positioned
+     * @throws PyException(ValueError) if the object is closed to client operations
      */
-    public boolean seekable() {
+    public boolean seekable() throws PyException {
         return _IOBase_seekable();
     }
 
     @ExposedMethod(doc = seekable_doc)
-    final boolean _IOBase_seekable() {
+    final boolean _IOBase_seekable() throws PyException {
         return false;
     }
 
@@ -238,6 +239,8 @@ public class PyIOBase extends PyObject {
      * positioned.
      *
      * @param msg optional custom message
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> capable of being positioned.
      */
     public void _checkSeekable(String msg) {
         _IOBase__checkSeekable(msg);
@@ -246,6 +249,9 @@ public class PyIOBase extends PyObject {
     /**
      * Raise an error if the pointer of underlying IO stream <b>is not</b> capable of being
      * positioned.
+     *
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> capable of being positioned.
      */
     public final void _checkSeekable() {
         _checkSeekable(null);
@@ -262,13 +268,14 @@ public class PyIOBase extends PyObject {
      * Is the stream readable?
      *
      * @return <code>true</code> if readable
+     * @throws PyException(ValueError) if the object is closed to client operations
      */
-    public boolean readable() {
+    public boolean readable() throws PyException {
         return _IOBase_readable();
     }
 
     @ExposedMethod(doc = readable_doc)
-    final boolean _IOBase_readable() {
+    final boolean _IOBase_readable() throws PyException {
         return false;
     }
 
@@ -276,6 +283,8 @@ public class PyIOBase extends PyObject {
      * Raise an error if the underlying IO stream <b>is not</b> readable.
      *
      * @param msg optional custom message
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> readable.
      */
     public void _checkReadable(String msg) {
         _IOBase__checkReadable(msg);
@@ -283,6 +292,9 @@ public class PyIOBase extends PyObject {
 
     /**
      * Raise an error if the underlying IO stream <b>is not</b> readable.
+     *
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> readable.
      */
     public final void _checkReadable() {
         _checkReadable(null);
@@ -299,13 +311,14 @@ public class PyIOBase extends PyObject {
      * Is the stream writable?
      *
      * @return <code>true</code> if writable
+     * @throws PyException(ValueError) if the object is closed to client operations
      */
-    public boolean writable() {
+    public boolean writable() throws PyException {
         return _IOBase_writable();
     }
 
     @ExposedMethod(doc = writable_doc)
-    final boolean _IOBase_writable() {
+    final boolean _IOBase_writable() throws PyException {
         return false;
     }
 
@@ -313,20 +326,25 @@ public class PyIOBase extends PyObject {
      * Raise an error if the underlying IO stream <b>is not</b> writable.
      *
      * @param msg optional custom message
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> writable.
      */
-    public void _checkWritable(String msg) {
+    public void _checkWritable(String msg) throws PyException {
         _IOBase__checkWritable(msg);
     }
 
     /**
      * Raise an error if the underlying IO stream <b>is not</b> writable.
+     *
+     * @throws PyException(ValueError) if the object is closed to client operations
+     * @throws PyException(IOError) if the stream <b>is not</b> writable.
      */
-    public final void _checkWritable() {
+    public final void _checkWritable() throws PyException {
         _checkWritable(null);
     }
 
     @ExposedMethod(defaults = "null")
-    final void _IOBase__checkWritable(String msg) {
+    final void _IOBase__checkWritable(String msg) throws PyException {
         if (!invoke("writable").__nonzero__()) {
             throw tailoredIOError(msg, "writ");
         }
@@ -346,17 +364,18 @@ public class PyIOBase extends PyObject {
      * {@link #_checkSeekable}, etc..
      *
      * @param msg optional custom message
+     * @throws PyException(ValueError) if the object is closed to client operations
      */
-    public void _checkClosed(String msg) {
+    public void _checkClosed(String msg) throws PyException {
         _IOBase__checkClosed(msg);
     }
 
-    public final void _checkClosed() {
+    public final void _checkClosed() throws PyException {
         _checkClosed(null);
     }
 
     @ExposedMethod(defaults = "null")
-    final void _IOBase__checkClosed(String msg) {
+    final void _IOBase__checkClosed(String msg) throws PyException {
         if (closed()) {
             throw Py.ValueError(msg != null ? msg : "I/O operation on closed file");
         }

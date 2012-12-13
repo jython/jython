@@ -40,12 +40,6 @@ public class OpenMode {
     /** Set true when any invalid symbol or combination is discovered */
     public boolean invalid;
 
-    /** Set true when stream must be <code>readable = reading | updating</code> */
-    public boolean readable;
-
-    /** Set true when stream must be <code>writable = writing | updating | appending</code> */
-    public boolean writable;
-
     /**
      * Error message describing the way in which the mode is invalid, or null if no problem has been
      * found. This field may be set by the constructor (in the case of duplicate or unrecognised
@@ -139,8 +133,6 @@ public class OpenMode {
 
         // Implications
         reading |= universal;
-        readable = reading | updating;
-        writable = writing | updating | appending;
 
         // Standard tests
         if (!invalid) {
@@ -204,21 +196,6 @@ public class OpenMode {
                 message = String.format("invalid mode: '%.20s'", originalModeString);
             }
             throw Py.ValueError(message);
-        }
-    }
-
-    /**
-     * The mode string that a raw file should claim to have, when initialised with the present mode.
-     * Note that this is not the same as the open mode because it omits the text-based attributes,
-     * even if set, and always asserts it is binary.
-     *
-     * @return "rb", "rb+", or "wb".
-     */
-    public String raw() {
-        if (readable) {
-            return writable ? "rb+" : "rb";
-        } else {
-            return "wb";
         }
     }
 

@@ -9,6 +9,7 @@ import org.python.core.ArgParser;
 import org.python.core.BuiltinDocs;
 import org.python.core.Py;
 import org.python.core.PyBuffer;
+import org.python.core.PyException;
 import org.python.core.PyJavaType;
 import org.python.core.PyLong;
 import org.python.core.PyNewWrapper;
@@ -37,7 +38,24 @@ public class PyFileIO extends PyRawIOBase {
     @ExposedGet(doc = BuiltinDocs.file_name_doc)
     protected PyObject name;
 
-    private Boolean seekable;
+    /*
+     * Implementation note: CPython fileio does not use the base-class, possibly overridden,
+     * readable(), writable() and seekable(). Instead it sets local variables for readable and
+     * writable using the open mode, and returns these as readable() and writable(), while using
+     * them internally. The local variable seekable (and seekable()) is worked out from a one-time
+     * trial seek.
+     */
+    /** Set true when stream must be <code>readable = reading | updating</code> */
+    private boolean readable;
+
+    /** Set true when stream must be <code>writable = writing | updating | appending</code> */
+    private boolean writable;
+
+    /** Set true when we have made the seekable test */
+    private boolean seekableKnown;
+
+    /** Set true when stream is seekable */
+    private boolean seekable;
 
     /** Whether to close the underlying stream on closing this object. */
     @ExposedGet
@@ -45,8 +63,11 @@ public class PyFileIO extends PyRawIOBase {
 
     /** The mode as given to the constructor */
     private OpenMode openMode;
-    @ExposedGet(doc = BuiltinDocs.file_mode_doc)    // and as a PyString
-    public PyString mode() { return new PyString(openMode.raw()); }
+
+    /** The mode as a PyString based on readable and writable */
+    @ExposedGet(doc = BuiltinDocs.file_mode_doc)
+    public final PyString mode;
+
     private static final PyString defaultMode = new PyString("r");
 
     /**
@@ -82,6 +103,16 @@ public class PyFileIO extends PyRawIOBase {
         this.closefd = closefd;
         this.name = file;
         this.openMode = mode;
+
+        readable = mode.reading | mode.updating;
+        writable = mode.writing | mode.updating | mode.appending;
+
+        // The mode string of a raw file always asserts it is binary: "rb", "rb+", or "wb".
+        if (readable) {
+            this.mode = new PyString(writable ? "rb+" : "rb");
+        } else {
+            this.mode = new PyString("wb");
+        }
     }
 
     /**
@@ -124,9 +155,9 @@ public class PyFileIO extends PyRawIOBase {
                  */
                 Channel channel = ((RawIOBase)fd).getChannel();
                 if (channel instanceof FileChannel) {
-                    if  (channel.isOpen()){
-                    FileChannel fc = (FileChannel)channel;
-                    return new FileIO(fc, mode.forFileIO());
+                    if (channel.isOpen()) {
+                        FileChannel fc = (FileChannel)channel;
+                        return new FileIO(fc, mode.forFileIO());
                     } else {
                         // File not open (we have to check as FileIO doesn't)
                         throw Py.OSError(Errno.EBADF);
@@ -146,6 +177,7 @@ public class PyFileIO extends PyRawIOBase {
     @ExposedNew
     static PyObject FileIO___new__(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
+
         ArgParser ap = new ArgParser("FileIO", args, keywords, openArgs, 1);
         PyObject file = ap.getPyObject(0);
         PyObject m = ap.getPyObject(1, defaultMode);
@@ -168,7 +200,6 @@ public class PyFileIO extends PyRawIOBase {
 
     }
 
-
     /*
      * ===========================================================================================
      * Exposed methods in the order they appear in CPython's fileio.c method table
@@ -185,9 +216,11 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = readinto_doc)
     final PyLong FileIO_readinto(PyObject buf) {
-        // Check we can do this
-        _checkClosed();
-        _checkReadable();
+
+        if (!readable) {            // ... (or closed)
+            throw tailoredValueError("read");
+        }
+
         // Perform the operation through a buffer view on the object
         PyBuffer pybuf = writablePyBuffer(buf);
         try {
@@ -198,6 +231,7 @@ public class PyFileIO extends PyRawIOBase {
                 count = ioDelegate.readinto(byteBuffer);
             }
             return new PyLong(count);
+
         } finally {
             // Must unlock the PyBuffer view from client's object
             pybuf.release();
@@ -211,7 +245,11 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = write_doc)
     final PyLong FileIO_write(PyObject obj) {
-        _checkWritable();
+
+        if (!writable) {            // ... (or closed)
+            throw tailoredValueError("writ");
+        }
+
         // Get or synthesise a buffer API on the object to be written
         PyBuffer pybuf = readablePyBuffer(obj);
         try {
@@ -223,6 +261,7 @@ public class PyFileIO extends PyRawIOBase {
                 count = ioDelegate.write(byteBuffer);
             }
             return new PyLong(count);
+
         } finally {
             // Even if that went badly, we should release the lock on the client buffer
             pybuf.release();
@@ -246,6 +285,9 @@ public class PyFileIO extends PyRawIOBase {
 
     /** Common to FileIO_truncate(null) and truncate(). */
     private final long _truncate() {
+        if (!writable) {            // ... (or closed)
+            throw tailoredValueError("writ");
+        }
         synchronized (ioDelegate) {
             return ioDelegate.truncate(ioDelegate.tell());
         }
@@ -253,6 +295,9 @@ public class PyFileIO extends PyRawIOBase {
 
     /** Common to FileIO_truncate(size) and truncate(size). */
     private final long _truncate(long size) {
+        if (!writable) {            // ... (or closed)
+            throw tailoredValueError("writ");
+        }
         synchronized (ioDelegate) {
             return ioDelegate.truncate(size);
         }
@@ -275,21 +320,42 @@ public class PyFileIO extends PyRawIOBase {
         if (closefd) {
             ioDelegate.close();
         }
+        // This saves us doing two tests for each action (when the file is open)
+        readable = false;
+        writable = false;
     }
 
     @Override
-    public boolean readable() {
+    public boolean readable() throws PyException {
         return FileIO_readable();
     }
 
-    @ExposedMethod(doc = "True if file was opened in a read mode.")
+    @ExposedMethod(doc = readable_doc)
     final boolean FileIO_readable() {
-        return ioDelegate.readable();
+        if (__closed) {
+            throw closedValueError();
+        }
+        return readable;
+    }
+
+    @Override
+    public boolean writable() throws PyException {
+        return FileIO_writable();
+    }
+
+    @ExposedMethod(doc = writable_doc)
+    final boolean FileIO_writable() {
+        if (__closed) {
+            throw closedValueError();
+        }
+        return writable;
     }
 
     @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_seek_doc)
     final synchronized PyObject FileIO_seek(long pos, int how) {
-        _checkClosed();
+        if (__closed) {
+            throw closedValueError();
+        }
         return Py.java2py(ioDelegate.seek(pos, how));
     }
 
@@ -300,15 +366,21 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = "True if file supports random-access.")
     final boolean FileIO_seekable() {
-        if (seekable == null) {
+        if (__closed) {
+            throw closedValueError();
+        }
+        if (!seekableKnown) {
             seekable = ioDelegate.seek(0, 0) >= 0;
+            seekableKnown = true;
         }
         return seekable;
     }
 
     @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
     final synchronized long FileIO_tell() {
-        _checkClosed();
+        if (__closed) {
+            throw closedValueError();
+        }
         return ioDelegate.tell();
     }
 
@@ -322,19 +394,12 @@ public class PyFileIO extends PyRawIOBase {
         return FileIO_isatty();
     }
 
-    @ExposedMethod(doc = BuiltinDocs.file_isatty_doc)
+    @ExposedMethod(doc = isatty_doc)
     final boolean FileIO_isatty() {
+        if (__closed) {
+            throw closedValueError();
+        }
         return ioDelegate.isatty();
-    }
-
-    @Override
-    public boolean writable() {
-        return FileIO_writable();
-    }
-
-    @ExposedMethod(doc = "True if file was opened in a write mode.")
-    final boolean FileIO_writable() {
-        return ioDelegate.writable();
     }
 
     @Override
@@ -344,6 +409,9 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = BuiltinDocs.file_fileno_doc)
     final PyObject FileIO_fileno() {
+        if (__closed) {
+            throw closedValueError();
+        }
         return PyJavaType.wrapJavaObject(ioDelegate.fileno());
     }
 
@@ -367,14 +435,40 @@ public class PyFileIO extends PyRawIOBase {
     final String FileIO_toString() {
         if (name instanceof PyUnicode) {
             String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
-            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode());
+            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode);
         }
-        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode());
+        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode);
     }
 
     @Override
     public String toString() {
         return FileIO_toString();
+    }
+
+    /**
+     * Convenience method providing the exception when an method requires the file to be open, and
+     * it isn't.
+     *
+     * @return ValueError to throw
+     */
+    private PyException closedValueError() {
+        return Py.ValueError("I/O operation on closed file");
+    }
+
+    /**
+     * Convenience method providing the exception when an method requires the file to be open,
+     * readable or writable, and it isn't. If the file is closed, return the message for that,
+     * otherwise, one about reading or writing.
+     *
+     * @param action type of operation not valid ("read" or "writ" in practice).
+     * @return ValueError to throw
+     */
+    private PyException tailoredValueError(String action) {
+        if (action == null || __closed) {
+            return closedValueError();
+        } else {
+            return Py.ValueError("File not open for " + action + "ing");
+        }
     }
 
 }
