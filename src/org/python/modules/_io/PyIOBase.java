@@ -115,6 +115,13 @@ public class PyIOBase extends PyObject {
         return _IOBase_seek(pos, whence);
     }
 
+    /**
+     * Position the read or write pointer at a given byte offset <code>pos</code> relative to the
+     * start.
+     *
+     * @param pos relative to the start
+     * @return the new current position
+     */
     public final long seek(long pos) {
         return seek(pos, 0);
     }
@@ -713,7 +720,16 @@ public class PyIOBase extends PyObject {
      */
     protected static PyBuffer readablePyBuffer(PyObject obj) throws PyException {
         if (obj instanceof BufferProtocol) {
-            return ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+            try {
+                return ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+            } catch (PyException pye) {
+                if (pye.match(Py.BufferError)) {
+                    // If we can't get a buffer on the object, say it's the wrong type
+                    throw Py.TypeError(String.format("(BufferError) %s", pye.getMessage()));
+                } else {
+                    throw pye;
+                }
+            }
         } else {
             // Something else we can view as a String?
             String s;
@@ -741,7 +757,16 @@ public class PyIOBase extends PyObject {
      */
     protected static PyBuffer writablePyBuffer(PyObject obj) throws PyException {
         if (obj instanceof BufferProtocol) {
-            return ((BufferProtocol)obj).getBuffer(PyBUF.WRITABLE);
+            try {
+                return ((BufferProtocol)obj).getBuffer(PyBUF.WRITABLE);
+            } catch (PyException pye) {
+                if (pye.match(Py.BufferError)) {
+                    // If we can't get a buffer on the object, say it's the wrong type
+                    throw Py.TypeError(String.format("(BufferError) %s", pye.getMessage()));
+                } else {
+                    throw pye;
+                }
+            }
         } else {
             // Can't be a buffer: complain
             String fmt = "object must be read-write buffer, not %.100s";

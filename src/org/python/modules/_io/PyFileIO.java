@@ -61,9 +61,6 @@ public class PyFileIO extends PyRawIOBase {
     @ExposedGet
     public final boolean closefd;
 
-    /** The mode as given to the constructor */
-    private OpenMode openMode;
-
     /** The mode as a PyString based on readable and writable */
     @ExposedGet(doc = BuiltinDocs.file_mode_doc)
     public final PyString mode;
@@ -102,7 +99,6 @@ public class PyFileIO extends PyRawIOBase {
         this.ioDelegate = getFileIO(file, mode, closefd);
         this.closefd = closefd;
         this.name = file;
-        this.openMode = mode;
 
         readable = mode.reading | mode.updating;
         writable = mode.writing | mode.updating | mode.appending;
@@ -269,6 +265,23 @@ public class PyFileIO extends PyRawIOBase {
     }
 
     @Override
+    public long seek(long pos, int whence) {
+        return FileIO_seek(pos, whence);
+    }
+
+    @ExposedMethod(defaults = "0", doc = seek_doc)
+    final long FileIO_seek(long pos, int whence) {
+        if (__closed) {
+            throw closedValueError();
+        }
+        synchronized (ioDelegate) {
+            return ioDelegate.seek(pos, whence);
+        }
+    }
+
+    // _IOBase.tell() is correct for us
+
+    @Override
     public long truncate() {
         return _truncate();
     }
@@ -326,6 +339,23 @@ public class PyFileIO extends PyRawIOBase {
     }
 
     @Override
+    public boolean seekable() {
+        return FileIO_seekable();
+    }
+
+    @ExposedMethod(doc = seekable_doc)
+    final boolean FileIO_seekable() {
+        if (__closed) {
+            throw closedValueError();
+        }
+        if (!seekableKnown) {
+            seekable = ioDelegate.seek(0, 0) >= 0;
+            seekableKnown = true;
+        }
+        return seekable;
+    }
+
+    @Override
     public boolean readable() throws PyException {
         return FileIO_readable();
     }
@@ -351,47 +381,14 @@ public class PyFileIO extends PyRawIOBase {
         return writable;
     }
 
-    @ExposedMethod(defaults = {"0"}, doc = BuiltinDocs.file_seek_doc)
-    final synchronized PyObject FileIO_seek(long pos, int how) {
-        if (__closed) {
-            throw closedValueError();
-        }
-        return Py.java2py(ioDelegate.seek(pos, how));
-    }
-
     @Override
-    public boolean seekable() {
-        return FileIO_seekable();
+    public PyObject fileno() {
+        return FileIO_fileno();
     }
 
-    @ExposedMethod(doc = "True if file supports random-access.")
-    final boolean FileIO_seekable() {
-        if (__closed) {
-            throw closedValueError();
-        }
-        if (!seekableKnown) {
-            seekable = ioDelegate.seek(0, 0) >= 0;
-            seekableKnown = true;
-        }
-        return seekable;
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.file_tell_doc)
-    final synchronized long FileIO_tell() {
-        if (__closed) {
-            throw closedValueError();
-        }
-        return ioDelegate.tell();
-    }
-
-    @Override
-    public long tell() {
-        return FileIO_tell();
-    }
-
-    @Override
-    public boolean isatty() {
-        return FileIO_isatty();
+    @ExposedMethod(doc = fileno_doc)
+    final PyObject FileIO_fileno() {
+        return PyJavaType.wrapJavaObject(ioDelegate.fileno());
     }
 
     @ExposedMethod(doc = isatty_doc)
@@ -400,19 +397,6 @@ public class PyFileIO extends PyRawIOBase {
             throw closedValueError();
         }
         return ioDelegate.isatty();
-    }
-
-    @Override
-    public PyObject fileno() {
-        return FileIO_fileno();
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.file_fileno_doc)
-    final PyObject FileIO_fileno() {
-        if (__closed) {
-            throw closedValueError();
-        }
-        return PyJavaType.wrapJavaObject(ioDelegate.fileno());
     }
 
     // fileio.c has no flush(), but why not, when there is fdflush()?
@@ -431,18 +415,24 @@ public class PyFileIO extends PyRawIOBase {
         }
     }
 
-    @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.file___str___doc)
+    @ExposedMethod(names = {"__str__", "__repr__"}, doc = BuiltinDocs.object___str___doc)
     final String FileIO_toString() {
-        if (name instanceof PyUnicode) {
-            String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
-            return String.format("<_io.FileIO name='%s', mode='%s'>", escapedName, mode);
+        if (closed()) {
+            return "<_io.FileIO [closed]>";
+        } else if (name instanceof PyString) {
+            String xname = name.asString();
+            if (name instanceof PyUnicode) {
+                xname = PyString.encode_UnicodeEscape(xname, false);
+            }
+            return String.format("<_io.FileIO name='%s' mode='%s'>", xname, mode);
+        } else {
+            return String.format("<_io.FileIO fd=%s mode='%s'>", fileno(), mode);
         }
-        return String.format("<_io.FileIO name='%s', mode='%s'>", name, mode);
     }
 
     @Override
     public String toString() {
-        return FileIO_toString();
+        return FileIO_toString().toString();
     }
 
     /**

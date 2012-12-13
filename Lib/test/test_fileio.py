@@ -89,7 +89,6 @@ class AutoFileTests(unittest.TestCase):
         self.assertEqual(self.f.readline(None), b"hi\n")
         self.assertEqual(self.f.readlines(None), [b"bye\n", b"abc"])
 
-    @unittest.skipIf(is_jython, "FIXME: unicode+slightly different in Jython")
     def testRepr(self):
         self.assertEqual(repr(self.f), "<_io.FileIO name=%r mode='%s'>"
                                        % (self.f.name, self.f.mode))
