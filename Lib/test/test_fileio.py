@@ -103,10 +103,10 @@ class AutoFileTests(unittest.TestCase):
         self.assertTrue(not f.isatty())
         self.assertTrue(not f.closed)
         #self.assertEqual(f.name, TESTFN)
-        self.assertRaises(ValueError, f.read, 10) # Open for reading
+        self.assertRaises(ValueError, f.read, 10) # Open for writing
         f.close()
         self.assertTrue(f.closed)
-        f = _FileIO(TESTFN, 'r')
+        f = self.f = _FileIO(TESTFN, 'r')
         self.assertRaises(TypeError, f.readinto, "")
         self.assertTrue(not f.closed)
         f.close()
@@ -255,66 +255,72 @@ class AutoFileTests(unittest.TestCase):
         f.readinto(a)
 
 class OtherFileTests(unittest.TestCase):
+    # file tests for which a test file is not created but cleaned up
+    # This introduced by Jython, to prevent the cascade of errors when
+    # a test exits leaving an open file. Also a CPython problem.
+
+    def setUp(self):
+        self.f = None
+
+    def tearDown(self):
+        if self.f:
+            self.f.close()
+        if os.path.exists(TESTFN):
+            os.remove(TESTFN)
 
     def testAbles(self):
-        try:
-            f = _FileIO(TESTFN, "w")
-            self.assertEqual(f.readable(), False)
-            self.assertEqual(f.writable(), True)
-            self.assertEqual(f.seekable(), True)
-            f.close()
 
-            f = _FileIO(TESTFN, "r")
-            self.assertEqual(f.readable(), True)
-            self.assertEqual(f.writable(), False)
-            self.assertEqual(f.seekable(), True)
-            f.close()
+        f = self.f = _FileIO(TESTFN, "w")
+        self.assertEqual(f.readable(), False)
+        self.assertEqual(f.writable(), True)
+        self.assertEqual(f.seekable(), True)
+        f.close()
 
-            f = _FileIO(TESTFN, "a+")
-            self.assertEqual(f.readable(), True)
-            self.assertEqual(f.writable(), True)
-            self.assertEqual(f.seekable(), True)
-            self.assertEqual(f.isatty(), False)
-            f.close()
+        f = self.f = _FileIO(TESTFN, "r")
+        self.assertEqual(f.readable(), True)
+        self.assertEqual(f.writable(), False)
+        self.assertEqual(f.seekable(), True)
+        f.close()
 
-            if sys.platform != "win32":
-                try:
-                    f = _FileIO("/dev/tty", "a")
-                except EnvironmentError:
-                    # When run in a cron job there just aren't any
-                    # ttys, so skip the test.  This also handles other
-                    # OS'es that don't support /dev/tty.
-                    pass
-                else:
-                    self.assertEqual(f.readable(), False)
-                    self.assertEqual(f.writable(), True)
-                    if sys.platform != "darwin" and \
-                       'bsd' not in sys.platform and \
-                       not sys.platform.startswith('sunos'):
-                        # Somehow /dev/tty appears seekable on some BSDs
-                        self.assertEqual(f.seekable(), False)
-                    self.assertEqual(f.isatty(), True)
-                    f.close()
-        finally:
-            os.unlink(TESTFN)
+        f = self.f = _FileIO(TESTFN, "a+")
+        self.assertEqual(f.readable(), True)
+        self.assertEqual(f.writable(), True)
+        self.assertEqual(f.seekable(), True)
+        self.assertEqual(f.isatty(), False)
+        f.close()
+
+        if sys.platform != "win32":
+            try:
+                f = self.f = _FileIO("/dev/tty", "a")
+            except EnvironmentError:
+                # When run in a cron job there just aren't any
+                # ttys, so skip the test.  This also handles other
+                # OS'es that don't support /dev/tty.
+                pass
+            else:
+                self.assertEqual(f.readable(), False)
+                self.assertEqual(f.writable(), True)
+                if sys.platform != "darwin" and \
+                   'bsd' not in sys.platform and \
+                   not sys.platform.startswith('sunos'):
+                    # Somehow /dev/tty appears seekable on some BSDs
+                    self.assertEqual(f.seekable(), False)
+                self.assertEqual(f.isatty(), True)
 
     @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def testModeStrings(self):
         # check invalid mode strings
         for mode in ("", "aU", "wU+", "rw", "rt"):
             try:
-                f = _FileIO(TESTFN, mode)
+                f = self.f = _FileIO(TESTFN, mode)
             except ValueError:
                 pass
             else:
-                f.close()
                 self.fail('%r is an invalid file mode' % mode)
 
     def testUnicodeOpen(self):
         # verify repr works for unicode too
-        f = _FileIO(str(TESTFN), "w")
-        f.close()
-        os.unlink(TESTFN)
+        f = self.f = _FileIO(str(TESTFN), "w")
 
     def testBytesOpen(self):
         # Opening a bytes filename
@@ -323,14 +329,12 @@ class OtherFileTests(unittest.TestCase):
         except UnicodeEncodeError:
             # Skip test
             return
-        f = _FileIO(fn, "w")
-        try:
-            f.write(b"abc")
-            f.close()
-            with open(TESTFN, "rb") as f:
-                self.assertEqual(f.read(), b"abc")
-        finally:
-            os.unlink(TESTFN)
+        f = self.f = _FileIO(fn, "w")
+        f.write(b"abc")
+        f.close()
+        with open(TESTFN, "rb") as f:
+            self.f = f
+            self.assertEqual(f.read(), b"abc")
 
     def testInvalidFd(self):
         if is_jython:
@@ -346,7 +350,7 @@ class OtherFileTests(unittest.TestCase):
         # verify that we get a sensible error message for bad mode argument
         bad_mode = "qwerty"
         try:
-            f = _FileIO(TESTFN, bad_mode)
+            f = self.f = _FileIO(TESTFN, bad_mode)
         except ValueError as msg:
             if msg.args[0] != 0:
                 s = str(msg)
@@ -359,7 +363,7 @@ class OtherFileTests(unittest.TestCase):
             self.fail("no error for invalid mode: %s" % bad_mode)
 
     def testTruncate(self):
-        f = _FileIO(TESTFN, 'w')
+        f = self.f = _FileIO(TESTFN, 'w')
         f.write(bytes(bytearray(range(10))))
         self.assertEqual(f.tell(), 10)
         f.truncate(5)
@@ -375,11 +379,11 @@ class OtherFileTests(unittest.TestCase):
         def bug801631():
             # SF bug <http://www.python.org/sf/801631>
             # "file.truncate fault on windows"
-            f = _FileIO(TESTFN, 'w')
+            f = self.f = _FileIO(TESTFN, 'w')
             f.write(bytes(range(11)))
             f.close()
 
-            f = _FileIO(TESTFN,'r+')
+            f = self.f = _FileIO(TESTFN,'r+')
             data = f.read(5)
             if data != bytes(range(5)):
                 self.fail("Read on file opened for update failed %r" % data)
@@ -395,28 +399,21 @@ class OtherFileTests(unittest.TestCase):
             if size != 5:
                 self.fail("File size after ftruncate wrong %d" % size)
 
-        try:
-            bug801631()
-        finally:
-            os.unlink(TESTFN)
+        # Test for bug 801631
+        bug801631()
 
     def testAppend(self):
-        try:
-            f = open(TESTFN, 'wb')
-            f.write(b'spam')
-            f.close()
-            f = open(TESTFN, 'ab')
-            f.write(b'eggs')
-            f.close()
-            f = open(TESTFN, 'rb')
-            d = f.read()
-            f.close()
-            self.assertEqual(d, b'spameggs')
-        finally:
-            try:
-                os.unlink(TESTFN)
-            except:
-                pass
+
+        f = self.f = open(TESTFN, 'wb')
+        f.write(b'spam')
+        f.close()
+        f = self.f = open(TESTFN, 'ab')
+        f.write(b'eggs')
+        f.close()
+        f = self.f = open(TESTFN, 'rb')
+        d = f.read()
+        f.close()
+        self.assertEqual(d, b'spameggs')
 
     def testInvalidInit(self):
         self.assertRaises(TypeError, _FileIO, "1", 0, 0)
