@@ -22,6 +22,7 @@ import org.python.core.io.RawIOBase;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 import com.kenai.constantine.platform.Errno;
@@ -60,6 +61,10 @@ public class PyFileIO extends PyRawIOBase {
     /** The mode as a PyString based on readable and writable */
     @ExposedGet(doc = "String giving the file mode: 'rb', 'rb+', or 'wb'")
     public final PyString mode;
+    @ExposedSet(name="mode")
+    public final void mode_readonly(PyString value) {
+        readonlyAttributeError("mode");
+    }
 
     private static final PyString defaultMode = new PyString("r");
 

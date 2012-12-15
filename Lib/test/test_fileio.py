@@ -66,10 +66,9 @@ class AutoFileTests(unittest.TestCase):
         self.assertEqual(f.closed, False)
 
         # verify the attributes are readonly
-        #XXX: not read only in Jython?
-        ###for attr in 'mode', 'closed':
-        ###    self.assertRaises((AttributeError, TypeError),
-        ###                      setattr, f, attr, 'oops')
+        for attr in 'mode', 'closed':
+            self.assertRaises((AttributeError, TypeError),
+                              setattr, f, attr, 'oops')
 
     def testReadinto(self):
         # verify readinto
@@ -112,9 +111,9 @@ class AutoFileTests(unittest.TestCase):
         f.close()
         self.assertTrue(f.closed)
 
-    def testMethods(self):
-        methods = ['fileno', 'isatty', 'read', 'readinto',
-                   'seek', 'tell', 'truncate', 'write', 'seekable',
+        # These methods all accept a call with 0 arguments
+        methods = ['fileno', 'isatty', 'read', 
+                   'tell', 'truncate', 'seekable',
                    'readable', 'writable']
         if sys.platform.startswith('atheos'):
             methods.remove('truncate')
@@ -126,6 +125,13 @@ class AutoFileTests(unittest.TestCase):
             method = getattr(self.f, methodname)
             # should raise on closed file
             self.assertRaises(ValueError, method)
+
+        # These other methods should be tested using a specific call
+        # in case the test for number of arguments comes first.
+        b = bytearray()
+        self.assertRaises(ValueError, self.f.readinto, b )
+        self.assertRaises(ValueError, self.f.seek, 0)
+        self.assertRaises(ValueError, self.f.write, b )
 
     def testOpendir(self):
         # Issue 3703: opening a directory should fill the errno
@@ -188,7 +194,6 @@ class AutoFileTests(unittest.TestCase):
 
         return wrapper
 
-    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     @ClosedFDRaises
     def testErrnoOnClose(self, f):
         f.close()
@@ -307,7 +312,6 @@ class OtherFileTests(unittest.TestCase):
                     self.assertEqual(f.seekable(), False)
                 self.assertEqual(f.isatty(), True)
 
-    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def testModeStrings(self):
         # check invalid mode strings
         for mode in ("", "aU", "wU+", "rw", "rt"):

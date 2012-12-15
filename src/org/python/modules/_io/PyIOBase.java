@@ -20,6 +20,7 @@ import org.python.core.io.FileIO;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 /**
@@ -197,6 +198,10 @@ public class PyIOBase extends PyObject {
      */
     @ExposedGet(name = "closed", doc = closed_doc)
     protected boolean __closed;
+    @ExposedSet(name="closed")
+    public final void closed_readonly(boolean value) {
+        readonlyAttributeError("closed");
+    }
 
     /**
      * Close the stream. If closed already, this is a no-op.
@@ -481,7 +486,7 @@ public class PyIOBase extends PyObject {
         } else if (limit.isIndex()) {
             return _readline(limit.asInt());
         } else {
-            throw Py.TypeError("limit must be an integer");
+            throw tailoredTypeError("integer limit", limit);
         }
     }
 
@@ -653,7 +658,7 @@ public class PyIOBase extends PyObject {
             return new PyList(this);
 
         } else if (!hint.isIndex()) {
-            throw Py.TypeError("integer or None expected");
+            throw tailoredTypeError("integer or None", hint);
 
         } else if ((h = hint.asIndex()) <= 0) {
             return new PyList(this);
@@ -739,8 +744,7 @@ public class PyIOBase extends PyObject {
                 s = ((PyArray)obj).tostring();
             } else {
                 // None of the above: complain
-                String fmt = "object must be string or buffer, not %.100s";
-                throw Py.TypeError(String.format(fmt, obj.getType().fastGetName()));
+                throw tailoredTypeError("read-write buffer", obj);
             }
             return new SimpleStringBuffer(PyBUF.SIMPLE, s);
         }
@@ -769,9 +773,21 @@ public class PyIOBase extends PyObject {
             }
         } else {
             // Can't be a buffer: complain
-            String fmt = "object must be read-write buffer, not %.100s";
-            throw Py.TypeError(String.format(fmt, obj.getType().fastGetName()));
+            throw tailoredTypeError("read-write buffer", obj);
         }
+    }
+
+    /**
+     * Convenience method providing the exception when an argument is not the expected type.
+     * The format is "<b>type</b> argument expected, got <code>type(arg)</code>."
+     *
+     * @param type of thing expected (or could any text)
+     * @param arg argument provided from which actual type will be reported
+     * @return TypeError to throw
+     */
+    protected static PyException tailoredTypeError(String type, PyObject arg){
+        return Py.TypeError(String.format("%s argument expected, got %.100s.",
+                type, arg.getType().fastGetName()));
     }
 
     /*

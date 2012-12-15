@@ -54,7 +54,7 @@ public class PyRawIOBase extends PyIOBase {
      *         is not ready with further data)
      */
     public PyObject read(int n) {
-        return _RawIOBase_read(n);
+        return _read(n);
     }
 
     /*
@@ -62,8 +62,24 @@ public class PyRawIOBase extends PyIOBase {
      * terms of read(), in case the latter is a more suitable primitive operation, but that would
      * lead to nasty recursion in case a subclass doesn't implement either.)
      */
-    @ExposedMethod(defaults = "-1", doc = read_doc)
-    final PyObject _RawIOBase_read(int n) {
+    @ExposedMethod(defaults = "null", doc = read_doc)
+    final PyObject _RawIOBase_read(PyObject n) {
+        if (n == null || n == Py.None) {
+            return _read(-1);
+        } else if (n.isIndex()) {
+            return _read(n.asInt());
+        } else {
+            throw tailoredTypeError("integer", n);
+        }
+    }
+
+    /**
+     * Implementation of the read() method once the argument has been reduced to an int.
+     * @param n number of bytes to read (if possible)
+     * @return a PyString holding the bytes read or <code>Py.None</code> (when a non-blocking source
+     *         is not ready with further data)
+     */
+    private PyObject _read(int n) {
 
         if (n < 0) {
             // This is really a request to read the whole stream

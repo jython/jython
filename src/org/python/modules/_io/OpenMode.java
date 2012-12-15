@@ -140,8 +140,21 @@ public class OpenMode {
                 message = "can't use U and writing mode at once";
             } else if (text && binary) {
                 message = "can't have text and binary mode at once";
-            } else if (reading && writing || appending && (reading || writing)) {
-                message = "must have exactly one of read/write/append mode";
+            } else {
+                // How many of r/U, w and a were given?
+                int rwa = 0;
+                if (reading) {
+                    rwa += 1;
+                }
+                if (writing) {
+                    rwa += 1;
+                }
+                if (appending) {
+                    rwa += 1;
+                }
+                if (rwa != 1) {
+                    message = "must have exactly one of read/write/append mode";
+                }
             }
             invalid |= (message != null);
         }
