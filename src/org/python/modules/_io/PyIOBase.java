@@ -54,14 +54,14 @@ public class PyIOBase extends PyObject {
     }
 
     /**
-     * Provide a dictionary in the object, mainly so that methods can be overridden at instance
-     * level, mainly, in fact, so that the test <code>test_flush_error_on_close</code> passes.
+     * Provide a dictionary in the object, so that methods and attributes may be overridden at instance
+     * level.
      */
     @ExposedGet
-    protected PyObject __dict__ = new PyStringMap();
+    protected PyStringMap __dict__ = new PyStringMap();
 
     @Override
-    public PyObject fastGetDict() {
+    public PyStringMap fastGetDict() {
         return __dict__;
     }
 
