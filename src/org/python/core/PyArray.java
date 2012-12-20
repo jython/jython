@@ -858,100 +858,146 @@ public class PyArray extends PySequence implements Cloneable {
      * @throws EOFException
      */
     private int fromStream(InputStream is, int count) throws IOException, EOFException {
-        DataInputStream dis = new DataInputStream(is);
-        // current number of items present
+
+        // Current number of items present
         int origsize = delegate.getSize();
-        // position to start inserting into
-        int index = origsize;
-        // create capacity for 'count' items
-        delegate.ensureCapacity(index + count);
-        if (type.isPrimitive()) {
-            switch (typecode.charAt(0)) {
-                case 'z':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setBoolean(data, index, dis.readBoolean());
-                        delegate.size++;
-                    }
-                    break;
-                case 'b':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setByte(data, index, dis.readByte());
-                        delegate.size++;
-                    }
-                    break;
-                case 'B':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setShort(data, index, unsignedByte(dis.readByte()));
-                        delegate.size++;
-                    }
-                    break;
-                case 'u':
-                    // use 32-bit integers since we want UCS-4 storage
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setInt(data, index, dis.readInt());
-                        delegate.size++;
-                    }
-                    break;
-                case 'c':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setChar(data, index, (char)(dis.readByte() & 0xff));
-                        delegate.size++;
-                    }
-                    break;
-                case 'h':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setShort(data, index, dis.readShort());
-                        delegate.size++;
-                    }
-                    break;
-                case 'H':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setInt(data, index, unsignedShort(dis.readShort()));
-                        delegate.size++;
-                    }
-                    break;
-                case 'i':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setInt(data, index, dis.readInt());
-                        delegate.size++;
-                    }
-                    break;
-                case 'I':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setLong(data, index, unsignedInt(dis.readInt()));
-                        delegate.size++;
-                    }
-                    break;
-                case 'l':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setLong(data, index, dis.readLong());
-                        delegate.size++;
-                    }
-                    break;
-                case 'L': // faking it
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setLong(data, index, dis.readLong());
-                        delegate.size++;
-                    }
-                    break;
-                case 'f':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setFloat(data, index, dis.readFloat());
-                        delegate.size++;
-                    }
-                    break;
-                case 'd':
-                    for (int i = 0; i < count; i++, index++) {
-                        Array.setDouble(data, index, dis.readDouble());
-                        delegate.size++;
-                    }
-                    break;
-            }
-        }
-        dis.close();
-        return (index - origsize);
+
+        // Reserve capacity for 'count' items
+        delegate.setSize(origsize + count);
+
+        // Read into the array, after the current contents, up to new size (or EOF thrown)
+        int n = fromStream(is, origsize, delegate.getSize(), true);
+        return n - origsize;
     }
 
+    /**
+     * Read primitive values from a stream into the array without resizing. Data is read until the
+     * array is filled or the stream runs out. If the stream does not contain a whole number of
+     * items (possible if the item size is not one byte), the behaviour in respect of the final
+     * partial item and straem position is not defined.
+     *
+     * @param is InputStream to source the data from
+     * @return number of primitives successfully read
+     * @throws IOException reflecting I/O errors during reading
+     */
+    public int fillFromStream(InputStream is) throws IOException {
+        return fromStream(is, 0, delegate.size, false);
+    }
+
+    /**
+     * Helper for reading primitive values from a stream into a slice of the array. Data is read
+     * until the array slice is filled or the stream runs out. The purpose of the method is to
+     * concentrate in one place the manipulation of bytes into the several primitive element types
+     * on behalf of {@link #fillFromStream(InputStream)} etc.. Since different read methods respond
+     * differently to it, the caller must specify whether the exhaustion of the stream (EOF) should
+     * be treated as an error or not. If the stream does not contain a whole number of items
+     * (possible if the item size is not one byte), the behaviour in respect of the final partial
+     * item and stream position is not defined.
+     *
+     * @param dis data stream source for the values
+     * @param index first element index to read
+     * @param limit first element index <b>not</b> to read
+     * @param eofIsError if true, treat EOF as expected way to end
+     * @return index of first element not read (<code>=limit</code>, if not ended by EOF)
+     * @throws IOException reflecting I/O errors during reading
+     * @throws EOFException if stream ends before read is satisfied and eofIsError is true
+     */
+    private int fromStream(InputStream is, int index, int limit, boolean eofIsError)
+            throws IOException, EOFException {
+
+        // We need a wrapper capable of encoding the data
+        DataInputStream dis = new DataInputStream(is);
+
+        try {
+            // We have to deal with each primitive type as a distinct case
+            if (type.isPrimitive()) {
+                switch (typecode.charAt(0)) {
+                    case 'z':
+                        for (; index < limit; index++) {
+                            Array.setBoolean(data, index, dis.readBoolean());
+                        }
+                        break;
+                    case 'b':
+                        for (; index < limit; index++) {
+                            Array.setByte(data, index, dis.readByte());
+                        }
+                        break;
+                    case 'B':
+                        for (; index < limit; index++) {
+                            Array.setShort(data, index, unsignedByte(dis.readByte()));
+                        }
+                        break;
+                    case 'u':
+                        // use 32-bit integers since we want UCS-4 storage
+                        for (; index < limit; index++) {
+                            Array.setInt(data, index, dis.readInt());
+                        }
+                        break;
+                    case 'c':
+                        for (; index < limit; index++) {
+                            Array.setChar(data, index, (char)(dis.readByte() & 0xff));
+                        }
+                        break;
+                    case 'h':
+                        for (; index < limit; index++) {
+                            Array.setShort(data, index, dis.readShort());
+                        }
+                        break;
+                    case 'H':
+                        for (; index < limit; index++) {
+                            Array.setInt(data, index, unsignedShort(dis.readShort()));
+                        }
+                        break;
+                    case 'i':
+                        for (; index < limit; index++) {
+                            Array.setInt(data, index, dis.readInt());
+                        }
+                        break;
+                    case 'I':
+                        for (; index < limit; index++) {
+                            Array.setLong(data, index, unsignedInt(dis.readInt()));
+                        }
+                        break;
+                    case 'l':
+                        for (; index < limit; index++) {
+                            Array.setLong(data, index, dis.readLong());
+                        }
+                        break;
+                    case 'L': // faking it
+                        for (; index < limit; index++) {
+                            Array.setLong(data, index, dis.readLong());
+                        }
+                        break;
+                    case 'f':
+                        for (; index < limit; index++) {
+                            Array.setFloat(data, index, dis.readFloat());
+                        }
+                        break;
+                    case 'd':
+                        for (; index < limit; index++) {
+                            Array.setDouble(data, index, dis.readDouble());
+                        }
+                        break;
+                }
+            }
+
+        } catch (EOFException eof) {
+            if (eofIsError) {
+                throw eof;
+            }
+            // EOF = end of reading: excess odd bytes read inside dis.readXXX() discarded
+        }
+
+        // index points to the first element *not* written
+        return index;
+    }
+
+    /**
+     * Appends items from the string, interpreting the string as an array of machine values (as if
+     * it had been read from a file using the {@link #fromfile(PyObject, int) fromfile()} method).
+     *
+     * @param input string of bytes containing array data
+     */
     public void fromstring(String input) {
         array_fromstring(input);
     }
@@ -1568,12 +1614,10 @@ public class PyArray extends PySequence implements Cloneable {
      * types.
      *
      * @param os OutputStream to sink the array data to
-     *
-     * @return number of primitives successfully written
-     *
+     * @return number of bytes successfully written
      * @throws IOException
      */
-    private int toStream(OutputStream os) throws IOException {
+    public int toStream(OutputStream os) throws IOException {
         DataOutputStream dos = new DataOutputStream(os);
         switch (typecode.charAt(0)) {
             case 'z':
@@ -1643,7 +1687,7 @@ public class PyArray extends PySequence implements Cloneable {
                 }
                 break;
         }
-        return dos.size();
+        return dos.size(); // bytes written
     }
 
     private static byte signedByte(short x) {

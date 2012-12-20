@@ -27,6 +27,7 @@ import abc
 import codecs
 import warnings
 import errno
+import array
 # Import thread instead of threading to reduce startup cost
 try:
     from thread import allocate_lock as Lock
@@ -555,7 +556,10 @@ class BufferedWriter(_BufferedIOMixin):
                 # raise BlockingIOError with characters_written == 0.)
                 self._flush_unlocked()
             before = len(self._write_buf)
-            self._write_buf.extend(b)
+            if isinstance(b, array.array):              # _pyio.py version fails on array.array
+                self._write_buf.extend(b.tostring())    # Jython version works (while needed)
+            else:
+                self._write_buf.extend(b)
             written = len(self._write_buf) - before
             if len(self._write_buf) > self.buffer_size:
                 try:

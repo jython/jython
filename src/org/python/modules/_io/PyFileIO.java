@@ -1,13 +1,20 @@
 /* Copyright (c)2012 Jython Developers */
 package org.python.modules._io;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 import org.python.core.ArgParser;
 import org.python.core.BuiltinDocs;
 import org.python.core.Py;
+import org.python.core.PyArray;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 import org.python.core.PyJavaType;
@@ -61,7 +68,8 @@ public class PyFileIO extends PyRawIOBase {
     /** The mode as a PyString based on readable and writable */
     @ExposedGet(doc = "String giving the file mode: 'rb', 'rb+', or 'wb'")
     public final PyString mode;
-    @ExposedSet(name="mode")
+
+    @ExposedSet(name = "mode")
     public final void mode_readonly(PyString value) {
         readonlyAttributeError("mode");
     }
@@ -218,26 +226,41 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod(doc = readinto_doc)
     final PyLong FileIO_readinto(PyObject buf) {
-
+        int count;
         if (!readable) {            // ... (or closed)
             throw tailoredValueError("read");
         }
 
-        // Perform the operation through a buffer view on the object
-        PyBuffer pybuf = writablePyBuffer(buf);
-        try {
-            PyBuffer.Pointer bp = pybuf.getBuf();
-            ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
-            int count;
-            synchronized (ioDelegate) {
-                count = ioDelegate.readinto(byteBuffer);
-            }
-            return new PyLong(count);
+        if (buf instanceof PyArray) {
+            // Special case: PyArray knows how to read into itself
+            PyArray a = (PyArray)buf;
 
-        } finally {
-            // Must unlock the PyBuffer view from client's object
-            pybuf.release();
+            try {
+                ReadableByteChannel ch = ioDelegate.getChannel();
+                InputStream is = Channels.newInputStream(ch);
+                count = a.fillFromStream(is);
+                count *= a.getItemsize();
+            } catch (IOException ioe) {
+                throw Py.IOError(ioe);
+            }
+
+        } else {
+            // Perform the operation through a buffer view on the object
+            PyBuffer pybuf = writablePyBuffer(buf);
+
+            try {
+                PyBuffer.Pointer bp = pybuf.getBuf();
+                ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+                synchronized (ioDelegate) {
+                    count = ioDelegate.readinto(byteBuffer);
+                }
+            } finally {
+                // Must unlock the PyBuffer view from client's object
+                pybuf.release();
+            }
         }
+
+        return new PyLong(count);
     }
 
     @Override
@@ -246,28 +269,40 @@ public class PyFileIO extends PyRawIOBase {
     }
 
     @ExposedMethod(doc = write_doc)
-    final PyLong FileIO_write(PyObject obj) {
-
+    final PyLong FileIO_write(PyObject buf) {
+        int count;
         if (!writable) {            // ... (or closed)
             throw tailoredValueError("writ");
         }
 
-        // Get or synthesise a buffer API on the object to be written
-        PyBuffer pybuf = readablePyBuffer(obj);
-        try {
-            // Access the data as a java.nio.ByteBuffer [pos:limit] within possibly larger array
-            PyBuffer.Pointer bp = pybuf.getBuf();
-            ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
-            int count;
-            synchronized (ioDelegate) {
-                count = ioDelegate.write(byteBuffer);
+        if (buf instanceof PyArray) {
+            // Special case: PyArray knows how to write itself
+            try {
+                WritableByteChannel ch = ioDelegate.getChannel();
+                OutputStream os = Channels.newOutputStream(ch);
+                count = ((PyArray)buf).toStream(os);
+            } catch (IOException ioe) {
+                throw Py.IOError(ioe);
             }
-            return new PyLong(count);
 
-        } finally {
-            // Even if that went badly, we should release the lock on the client buffer
-            pybuf.release();
+        } else {
+            // Get or synthesise a buffer API on the object to be written
+            PyBuffer pybuf = readablePyBuffer(buf);
+
+            try {
+                // Access the data as a java.nio.ByteBuffer [pos:limit] within possibly larger array
+                PyBuffer.Pointer bp = pybuf.getBuf();
+                ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+                synchronized (ioDelegate) {
+                    count = ioDelegate.write(byteBuffer);
+                }
+            } finally {
+                // Even if that went badly, we should release the lock on the client buffer
+                pybuf.release();
+            }
         }
+
+        return new PyLong(count);
     }
 
     @Override
