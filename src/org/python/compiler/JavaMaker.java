@@ -32,11 +32,8 @@ public class JavaMaker extends ProxyMaker {
                                int access) throws Exception {
         /* Need a fancy constructor for the Java side of things */
         Code code = classfile.addMethod("<init>", sig, access);
-        callSuper(code, "<init>", name, parameters, null, sig);
-        code.visitVarInsn(ALOAD, 0);
-        getArgs(code, parameters);
-        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", makeSig("V", $objArr));
-        code.visitInsn(RETURN);
+        callSuper(code, "<init>", name, parameters, Void.TYPE, false);
+        callInitProxy(parameters, code);
     }
 
     @Override

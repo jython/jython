@@ -5,91 +5,21 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Map;
 import java.util.Set;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.python.core.Py;
-import org.python.core.PyMethod;
-import org.python.core.PyObject;
-import org.python.core.PyProxy;
-import org.python.core.PyReflectedFunction;
 import org.python.util.Generic;
 
-public class ProxyMaker implements ClassConstants, Opcodes
+
+public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opcodes
 {
-    public static final int tBoolean=0;
-    public static final int tByte=1;
-    public static final int tShort=2;
-    public static final int tInteger=3;
-    public static final int tLong=4;
-    public static final int tFloat=5;
-    public static final int tDouble=6;
-    public static final int tCharacter=7;
-    public static final int tVoid=8;
-    public static final int tOther=9;
-    public static final int tNone=10;
-
-    public static Map<Class<?>, Integer> types = fillTypes();
-
-    public static Map<Class<?>, Integer> fillTypes() {
-        Map<Class<?>, Integer> typeMap = Generic.map();
-        typeMap.put(Boolean.TYPE, tBoolean);
-        typeMap.put(Byte.TYPE, tByte);
-        typeMap.put(Short.TYPE, tShort);
-        typeMap.put(Integer.TYPE, tInteger);
-        typeMap.put(Long.TYPE, tLong);
-        typeMap.put(Float.TYPE, tFloat);
-        typeMap.put(Double.TYPE, tDouble);
-        typeMap.put(Character.TYPE, tCharacter);
-        typeMap.put(Void.TYPE, tVoid);
-        return typeMap;
-    }
-
-    public static int getType(Class<?> c) {
-        if (c == null) {
-            return tNone;
-        }
-        Object i = types.get(c);
-        if (i == null) {
-            return tOther;
-        } else {
-            return ((Integer)i);
-        }
-    }
-
-    /**
-     * Retrieves <code>name</code> from the PyObject in <code>proxy</code> if it's defined in
-     * Python.  This is a specialized helper function for internal PyProxy use.
-     */
-    public static PyObject findPython(PyProxy proxy, String name) {
-        PyObject o = proxy._getPyInstance();
-        if (o == null) {
-            proxy.__initProxy__(new Object[0]);
-            o = proxy._getPyInstance();
-        }
-        PyObject ret = o.__findattr__(name);
-        if (ret instanceof PyMethod) {
-            PyMethod meth = ((PyMethod)ret);
-            if (meth.__func__ instanceof PyReflectedFunction) {
-                PyReflectedFunction func = (PyReflectedFunction)meth.__func__;
-                if (func.nargs > 0 && proxy.getClass() == func.argslist[0].declaringClass) {
-                    // This function is the default return for the proxy type if the Python instance
-                    // hasn't returned something of its own from __findattr__, so do the standard
-                    // Java call on this
-                    return null;
-                }
-            }
-        }
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-
-    Class<?> superclass;
-    Class<?>[] interfaces;
+    protected final Class<?> superclass;
+    protected final Class<?>[] interfaces;
     Set<String> names;
     Set<String> supernames = Generic.set();
+    Set<String> namesAndSigs; // name+signature pairs
     public ClassFile classfile;
     /** The name of the class to build. */
     public String myClass;
@@ -137,126 +67,9 @@ public class ProxyMaker implements ClassConstants, Opcodes
         this.interfaces = interfaces;
     }
 
-    public static String mapClass(Class<?> c) {
-        String name = c.getName();
-        int index = name.indexOf(".");
-        if (index == -1) {
-            return name;
-        }
-        StringBuffer buf = new StringBuffer(name.length());
-        int last_index = 0;
-        while (index != -1) {
-            buf.append(name.substring(last_index, index));
-            buf.append("/");
-            last_index = index+1;
-            index = name.indexOf(".", last_index);
-        }
-        buf.append(name.substring(last_index, name.length()));
-        return buf.toString();
-    }
-
-    public static String mapType(Class<?> type) {
-        if (type.isArray())
-            return "["+mapType(type.getComponentType());
-
-        switch (getType(type)) {
-        case tByte: return "B";
-        case tCharacter:  return "C";
-        case tDouble:  return "D";
-        case tFloat:  return "F";
-        case tInteger:  return "I";
-        case tLong:  return "J";
-        case tShort:  return "S";
-        case tBoolean:  return "Z";
-        case tVoid:  return "V";
-        default:
-            return "L"+mapClass(type)+";";
-        }
-    }
-
-    public static String makeSig(Class<?> ret, Class<?>... sig) {
-        String[] mapped = new String[sig.length];
-        for (int i = 0; i < mapped.length; i++) {
-            mapped[i] = mapType(sig[i]);
-        }
-        return makeSig(mapType(ret), mapped);
-    }
-
-    public static String makeSig(String returnType, String... parameterTypes) {
-        StringBuilder buf = new StringBuilder("(");
-        for (String param : parameterTypes) {
-            buf.append(param);
-        }
-        return buf.append(')').append(returnType).toString();
-    }
-
-
     public void doConstants() throws Exception {
         Code code = classfile.addMethod("<clinit>", makeSig("V"), Modifier.STATIC);
         code.return_();
-    }
-
-    public static void doReturn(Code code, Class<?> type) throws Exception {
-        switch (getType(type)) {
-        case tNone:
-            break;
-        case tCharacter:
-        case tBoolean:
-        case tByte:
-        case tShort:
-        case tInteger:
-            code.ireturn();
-            break;
-        case tLong:
-            code.lreturn();
-            break;
-        case tFloat:
-            code.freturn();
-            break;
-        case tDouble:
-            code.dreturn();
-            break;
-        case tVoid:
-            code.return_();
-            break;
-        default:
-            code.areturn();
-            break;
-        }
-    }
-
-    public static void doNullReturn(Code code, Class<?> type) throws Exception {
-        switch (getType(type)) {
-        case tNone:
-            break;
-        case tCharacter:
-        case tBoolean:
-        case tByte:
-        case tShort:
-        case tInteger:
-            code.iconst_0();
-            code.ireturn();
-            break;
-        case tLong:
-            code.lconst_0();
-            code.lreturn();
-            break;
-        case tFloat:
-            code.fconst_0();
-            code.freturn();
-            break;
-        case tDouble:
-            code.dconst_0();
-            code.dreturn();
-            break;
-        case tVoid:
-            code.return_();
-            break;
-        default:
-            code.aconst_null();
-            code.areturn();
-            break;
-        }
     }
 
     public void callSuper(Code code,
@@ -264,7 +77,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
                           String superclass,
                           Class<?>[] parameters,
                           Class<?> ret,
-                          String sig) throws Exception {
+                          boolean doReturn) throws Exception {
 
         code.aload(0);
         int local_index;
@@ -297,9 +110,11 @@ public class ProxyMaker implements ClassConstants, Opcodes
                 break;
             }
         }
-        code.invokespecial(superclass, name, sig);
+        code.invokespecial(superclass, name, makeSig(ret, parameters));
 
-        doReturn(code, ret);
+        if (doReturn) {
+            doReturn(code, ret);
+        }
     }
 
     public void doJavaCall(Code code, String name, String type,
@@ -471,24 +286,73 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
 
     public void addMethod(Method method, int access) throws Exception {
-        boolean isAbstract = false;
+        addMethod(method.getName(), method.getReturnType(), method.getParameterTypes(),
+                method.getExceptionTypes(), access, method.getDeclaringClass());
+    }
+    
+    /**
+     * Adds a method of the given name to the class being implemented. If
+     * <code>declaringClass</code> is null, the generated method will expect to find an object of
+     * the method's name in the Python object and call it. If it isn't null, if an object is found
+     * in the Python object, it'll be called. Otherwise the superclass will be called. No checking
+     * is done to guarantee that the superclass has a method with the same signature.
+     */
+    public void addMethod(String name,
+            Class<?> ret,
+            Class<?>[] parameters,
+            Class<?>[] exceptions,
+            int access,
+            Class<?> declaringClass) throws Exception {
+        addMethod(name, name, ret, parameters, exceptions, access, declaringClass, null, null);
+    }
 
+    
+    /**
+     * Generates and adds a proxy method to the proxy class
+     * 
+     * @param name: name of the java method
+     * @param pyName: name of the python method to which the java method 
+     * proxies (useful for clamped objects)
+     * 
+     * @param ret: return type
+     * @param parameters: parameter types
+     * @param exceptions: throwable exception types
+     * @param access
+     * @param declaringClass
+     * @param methodAnnotations: method annotations
+     * @param parameterAnnotations: parameter annotations
+     * @throws Exception
+     */
+    public void addMethod(String name,
+            String pyName,
+            Class<?> ret,
+            Class<?>[] parameters,
+            Class<?>[] exceptions,
+            int access,
+            Class<?> declaringClass,
+            AnnotationDescr[] methodAnnotations,
+            AnnotationDescr[][]parameterAnnotations) throws Exception {
+        boolean isAbstract = false;
+        
         if (Modifier.isAbstract(access)) {
             access = access & ~Modifier.ABSTRACT;
             isAbstract = true;
         }
 
-        Class<?>[] parameters = method.getParameterTypes();
-        Class<?> ret = method.getReturnType();
         String sig = makeSig(ret, parameters);
+        String[] exceptionTypes = mapExceptions(exceptions);
 
-        String name = method.getName();
         names.add(name);
 
-        Code code = classfile.addMethod(name, sig, access);
+        Code code = null;
+        if (methodAnnotations != null && parameterAnnotations != null) {
+            code = classfile.addMethod(name, sig, access, exceptionTypes, methodAnnotations, parameterAnnotations);
+        } else {
+            code = classfile.addMethod(name, sig, access, exceptionTypes);
+        }
 
         code.aload(0);
-        code.ldc(name);
+        code.ldc(pyName);
 
         if (!isAbstract) {
             int tmp = code.getLocal("org/python/core/PyObject");
@@ -500,12 +364,12 @@ public class ProxyMaker implements ClassConstants, Opcodes
             Label callPython = new Label();
             code.ifnonnull(callPython);
 
-            String superClass = mapClass(method.getDeclaringClass());
+            String superClass = mapClass(declaringClass);
 
-            callSuper(code, name, superClass, parameters, ret, sig);
+            callSuper(code, name, superClass, parameters, ret, true);
             code.label(callPython);
             code.aload(tmp);
-            callMethod(code, name, parameters, ret, method.getExceptionTypes());
+            callMethod(code, name, parameters, ret, exceptions);
 
             addSuperMethod("super__"+name, name, superClass, parameters,
                            ret, sig, access);
@@ -515,13 +379,34 @@ public class ProxyMaker implements ClassConstants, Opcodes
             code.dup();
             Label returnNull = new Label();
             code.ifnull(returnNull);
-            callMethod(code, name, parameters, ret, method.getExceptionTypes());
+            callMethod(code, name, parameters, ret, exceptions);
             code.label(returnNull);
             code.pop();
             doNullReturn(code, ret);
         }
     }
+    
+    /**
+     * A constructor that is also a method (!)
+     */
+    public void addConstructorMethodCode(String pyName,
+            Class<?>[] parameters,
+            Class<?>[] exceptions,
+            int access,
+            Class<?> declaringClass,
+            Code code) throws Exception {
+        code.aload(0);
+        code.ldc(pyName);
+        
+        int tmp = code.getLocal("org/python/core/PyObject");
+        code.invokestatic("org/python/compiler/ProxyMaker", "findPython",
+            makeSig($pyObj, $pyProxy, $str));
+        code.astore(tmp);
+        code.aload(tmp);
 
+        callMethod(code, "<init>", parameters, Void.TYPE, exceptions);
+    }
+    
     private String methodString(Method m) {
         StringBuffer buf = new StringBuffer(m.getName());
         buf.append(":");
@@ -579,7 +464,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
                                String sig,
                                int access) throws Exception {
         Code code = classfile.addMethod("<init>", sig, access);
-        callSuper(code, "<init>", name, parameters, Void.TYPE, sig);
+        callSuper(code, "<init>", name, parameters, Void.TYPE, true);
     }
 
     public void addConstructors(Class<?> c) throws Exception {
@@ -599,6 +484,10 @@ public class ProxyMaker implements ClassConstants, Opcodes
             Class<?>[] parameters = constructor.getParameterTypes();
             addConstructor(name, parameters, Void.TYPE, makeSig(Void.TYPE, parameters), access);
         }
+    }
+    
+    protected void addClassAnnotation(AnnotationDescr annotation) {
+        classfile.addClassAnnotation(annotation);
     }
 
     // Super methods are added for the following three reasons:
@@ -654,7 +543,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
         }
         supernames.add(methodName);
         Code code = classfile.addMethod(methodName, sig, access);
-        callSuper(code, superName, declClass, parameters, ret, sig);
+        callSuper(code, superName, declClass, parameters, ret, true);
     }
 
     public void addProxy() throws Exception {
@@ -720,6 +609,7 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
     public void build() throws Exception {
         names = Generic.set();
+        namesAndSigs = Generic.set();
         int access = superclass.getModifiers();
         if ((access & Modifier.FINAL) != 0) {
             throw new InstantiationException("can't subclass final class");
@@ -728,20 +618,130 @@ public class ProxyMaker implements ClassConstants, Opcodes
 
         classfile = new ClassFile(myClass, mapClass(superclass), access);
         addProxy();
-        addConstructors(superclass);
+        visitConstructors();
         classfile.addInterface("org/python/core/PyProxy");
+        
+        visitClassAnnotations();
+        visitMethods();
+        doConstants();
+        addClassDictInit();
+    }
+    
+    /**
+     * Visits all methods declared on the given class and classes in its inheritance hierarchy.
+     * Methods visible to subclasses are added to <code>seen</code>.
+     */
+    protected void visitMethods(Class<?> klass) throws Exception {
+        for (Method method : klass.getDeclaredMethods()) {
+        	
+            
+            // make sure we have only one name + signature pair available per method
+            if (!namesAndSigs.add(methodString(method))) {
+            	continue;
+            }
 
-        Set<String> seenmethods = Generic.set();
-        addMethods(superclass, seenmethods);
+            int access = method.getModifiers();
+            if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
+            	continue;
+            }
+
+            if (Modifier.isNative(access)) {
+            	access = access & ~Modifier.NATIVE;
+            }
+
+            if (Modifier.isProtected(access)) {
+            	access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
+            	if (Modifier.isFinal(access)) {
+            		addSuperMethod(method, access);
+            		continue;
+            	}
+            } else if (Modifier.isFinal(access)) {
+            	continue;
+            } else if (!Modifier.isPublic(access)) {
+            	continue; // package protected by process of elimination; we can't override
+            }
+            addMethod(method, access);
+        }
+
+        Class<?> superClass = klass.getSuperclass();
+        if (superClass != null) {
+            visitMethods(superClass);
+        }
+
+        for (Class<?> iface : klass.getInterfaces()) {
+            visitMethods(iface);
+        }
+    }
+
+    /**
+     * Called for every method on the proxy's superclass and interfaces that can be overriden by the
+     * proxy class. If the proxy wants to perform Python lookup and calling for the method,
+     * {@link #addMethod(Method)} should be called. For abstract methods, addMethod must be called.
+     */
+    protected void visitMethod(Method method) throws Exception {
+        addMethod(method, method.getModifiers());
+    }
+
+    protected void visitMethods() throws Exception {
+        visitMethods(superclass);
         for (Class<?> iface : interfaces) {
             if (iface.isAssignableFrom(superclass)) {
                 Py.writeWarning("compiler", "discarding redundant interface: " + iface.getName());
                 continue;
             }
             classfile.addInterface(mapClass(iface));
-            addMethods(iface, seenmethods);
+            visitMethods(iface);
         }
-        doConstants();
-        addClassDictInit();
     }
+     
+    /** Adds a constructor that calls through to superclass. */
+    protected void addConstructor(Class<?>[] parameters, int access) throws Exception {
+        String sig = makeSig(Void.TYPE, parameters);
+        Code code = classfile.addMethod("<init>", sig, access);
+        callSuper(code, "<init>", mapClass(superclass), parameters, Void.TYPE, true);
+    }
+    
+    /**
+     * Called for every constructor on the proxy's superclass that can be overridden by
+     * the proxy class.
+     */
+    protected void visitConstructor(Constructor<?> constructor) throws Exception {
+        /* Need a fancy constructor for the Java side of things */
+        callInitProxy(constructor.getParameterTypes(), addOpenConstructor(constructor));
+    }
+
+    /**
+     * Adds a constructor that calls through to the superclass constructor with the same signature
+     * and leaves the returned Code open for more operations. The caller of this method must add a
+     * return to the Code.
+     */
+    protected Code addOpenConstructor(Constructor<?> constructor) throws Exception {
+        String sig = makeSig(Void.TYPE, constructor.getParameterTypes());
+        Code code = classfile.addMethod("<init>", sig, constructor.getModifiers());
+        callSuper(code, "<init>", mapClass(superclass), constructor.getParameterTypes(), Void.TYPE, true);
+        return code;
+    }
+
+    /**
+     * Calls __initProxy__ on this class with the given types of parameters, which must be
+     * available as arguments to the currently called method in the order of the parameters.
+     */
+    protected void callInitProxy(Class<?>[] parameters, Code code) throws Exception {
+        code.visitVarInsn(ALOAD, 0);
+        getArgs(code, parameters);
+        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", makeSig("V", $objArr));
+        code.visitInsn(RETURN);
+    }
+    
+    /**
+     * Visits constructors from this proxy's superclass.
+     */
+    protected void visitConstructors() throws Exception {
+        addConstructors(superclass);
+    }
+    
+    protected void visitClassAnnotations() throws Exception {
+        // ProxyMaker itself does nothing with class annotations for now
+    }
+    
 }
