@@ -718,7 +718,6 @@ class CommonBufferedTests:
             self.assertTrue(s.startswith("Exception IOError: "), s)
             self.assertTrue(s.endswith(" ignored"), s)
 
-    @unittest.skipIf(support.is_jython, "Not working in Jython")
     def test_repr(self):
         raw = self.MockRawIO()
         b = self.tp(raw)
@@ -745,7 +744,6 @@ class CommonBufferedTests:
         b.close()
         self.assertRaises(ValueError, b.flush)
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_readonly_attributes(self):
         raw = self.MockRawIO()
         buf = self.tp(raw)
@@ -811,7 +809,6 @@ class BufferedReaderTest(unittest.TestCase, CommonBufferedTests):
         self.assertEqual(bufio.readinto(b), 0)
         self.assertEqual(b, b"gf")
 
-    @unittest.skipIf(support.is_jython, "FIXME: hangs in Jython")
     def test_readlines(self):
         def bufio():
             rawio = self.MockRawIO((b"abc\n", b"d\n", b"ef"))
@@ -840,7 +837,6 @@ class BufferedReaderTest(unittest.TestCase, CommonBufferedTests):
             # this is mildly implementation-dependent
             self.assertEqual(rawio.read_history, raw_read_sizes)
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_read_non_blocking(self):
         # Inject some None's in there to simulate EWOULDBLOCK
         rawio = self.MockRawIO((b"abc", b"d", None, b"efg", None, None, None))
@@ -1191,7 +1187,6 @@ class BufferedWriterTest(unittest.TestCase, CommonBufferedTests):
         finally:
             support.unlink(support.TESTFN)
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_misbehaved_io(self):
         rawio = self.MisbehavedRawIO()
         bufio = self.tp(rawio, 5)
@@ -1199,7 +1194,6 @@ class BufferedWriterTest(unittest.TestCase, CommonBufferedTests):
         self.assertRaises(IOError, bufio.tell)
         self.assertRaises(IOError, bufio.write, b"abcdef")
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_max_buffer_size_deprecation(self):
         with support.check_warnings(("max_buffer_size is deprecated",
                                      DeprecationWarning)):
@@ -1287,7 +1281,6 @@ class BufferedRWPairTest(unittest.TestCase):
         pair = self.tp(self.BytesIO(b"abc"), self.MockRawIO())
         self.assertEqual(pair.read(None), b"abc")
 
-    @unittest.skipIf(support.is_jython, "FIXME: hangs in Jython")
     def test_readlines(self):
         pair = lambda: self.tp(self.BytesIO(b"abc\ndef\nh"), self.MockRawIO())
         self.assertEqual(pair().readlines(), [b"abc\n", b"def\n", b"h"])
@@ -1799,7 +1792,6 @@ class TextIOWrapperTest(unittest.TestCase):
         self.assertEqual(r.getvalue(), b"howdy")
         self.assertRaises(ValueError, t.detach)
 
-    @unittest.skipIf(support.is_jython, "Not working in Jython")
     def test_repr(self):
         raw = self.BytesIO("hello".encode("utf-8"))
         b = self.BufferedReader(raw)
@@ -2176,7 +2168,6 @@ class TextIOWrapperTest(unittest.TestCase):
             self.assertEqual(f.read(), data * 2)
             self.assertEqual(buf.getvalue(), (data * 2).encode(encoding))
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_unreadable(self):
         class UnReadable(self.BytesIO):
             def readable(self):
@@ -2345,7 +2336,6 @@ class TextIOWrapperTest(unittest.TestCase):
         txt.close()
         self.assertRaises(ValueError, txt.flush)
 
-    @unittest.skipIf(support.is_jython, "FIXME: not working in Jython")
     def test_readonly_attributes(self):
         txt = self.TextIOWrapper(self.BytesIO(self.testdata), encoding="ascii")
         buf = self.BytesIO(self.testdata)
