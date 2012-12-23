@@ -2355,13 +2355,16 @@ class TextIOWrapperTest(unittest.TestCase):
 class CTextIOWrapperTest(TextIOWrapperTest):
 
     def test_initialization(self):
-        r = self.BytesIO(b"\xc3\xa9\n\n")
+        # Use ascii material so decoding does not raise ValueError
+        r = self.BytesIO(b"red\nherring\n")
         b = self.BufferedReader(r, 1000)
         t = self.TextIOWrapper(b)
+        # Jython note: Invalid __init__ calls also leave t unreadable (in C
+        # implementation but not pure python _pyio).
         self.assertRaises(TypeError, t.__init__, b, newline=42)
-        self.assertRaises(ValueError, t.read)
+        self.assertRaises(ValueError, t.read)   # Check t unreadable
         self.assertRaises(ValueError, t.__init__, b, newline='xyzzy')
-        self.assertRaises(ValueError, t.read)
+        self.assertRaises(ValueError, t.read)   # Check t unreadable
 
     @unittest.skipIf(support.is_jython, "GC nondeterministic in Jython")
     def test_garbage_collection(self):

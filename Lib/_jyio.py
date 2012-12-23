@@ -156,6 +156,7 @@ class _BufferedIOMixin(_BufferedIOBase):
     """
 
     def __init__(self, raw):
+        self._ok = False    # Jython: subclass __init__ must set when state valid
         self._raw = raw
 
     ### Positioning ###
@@ -211,21 +212,31 @@ class _BufferedIOMixin(_BufferedIOBase):
     ### Inquiries ###
 
     def seekable(self):
+        self._checkInitialized()     # Jython: to forbid use in an invalid state
         return self.raw.seekable()
 
     def readable(self):
+        self._checkInitialized()     # Jython: to forbid use in an invalid state
         return self.raw.readable()
 
     def writable(self):
+        self._checkInitialized()     # Jython: to forbid use in an invalid state
         return self.raw.writable()
 
     @property
     def raw(self):
         return self._raw
 
-    @property
-    def closed(self):
-        return self.raw.closed
+    # Jython difference: @property closed(self) inherited from _IOBase.__closed
+
+    # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
+    # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
+    def _checkInitialized(self):
+        if not self._ok:
+            if self.raw is None:
+                raise ValueError("raw stream has been detached")
+            else:
+                raise ValueError("I/O operation on uninitialized object")
 
     @property
     def name(self):
@@ -388,6 +399,7 @@ class BufferedReader(_BufferedIOMixin):
         self.buffer_size = buffer_size
         self._reset_read_buf()
         self._read_lock = Lock()
+        self._ok = True     # Jython: to enable use now in a valid state
 
     def _reset_read_buf(self):
         self._read_buf = b""
@@ -401,6 +413,7 @@ class BufferedReader(_BufferedIOMixin):
         mode. If n is negative, read until EOF or until read() would
         block.
         """
+        self._checkReadable()       # Jython: to forbid use in an invalid state
         if n is not None and n < -1:
             raise ValueError("invalid number of bytes to read")
         with self._read_lock:
@@ -494,6 +507,7 @@ class BufferedReader(_BufferedIOMixin):
         """Reads up to n bytes, with at most one read() system call."""
         # Returns up to n bytes.  If at least one byte is buffered, we
         # only return buffered bytes.  Otherwise, we do one raw read.
+        self._checkReadable()       # Jython: to forbid use in an invalid state
         if n < 0:
             raise ValueError("number of bytes to read must be positive")
         if n == 0:
@@ -542,8 +556,10 @@ class BufferedWriter(_BufferedIOMixin):
         self.buffer_size = buffer_size
         self._write_buf = bytearray()
         self._write_lock = Lock()
+        self._ok = True     # Jython: to enable use now in a valid state
 
     def write(self, b):
+        self._checkWritable()       # Jython: to forbid use in an invalid state
         if self.closed:
             raise ValueError("write to closed file")
         if isinstance(b, unicode):
@@ -588,6 +604,7 @@ class BufferedWriter(_BufferedIOMixin):
     def _flush_unlocked(self):
         if self.closed:
             raise ValueError("flush of closed file")
+        self._checkWritable()       # Jython: to forbid use in an invalid state
         while self._write_buf:
             try:
                 n = self.raw.write(self._write_buf)
@@ -939,6 +956,7 @@ class TextIOWrapper(_TextIOBase):
 
     def __init__(self, buffer, encoding=None, errors=None, newline=None,
                  line_buffering=False):
+        self._ok = False    # Jython: to forbid use in an invalid state
         if newline is not None and not isinstance(newline, basestring):
             raise TypeError("illegal newline type: %r" % (type(newline),))
         if newline not in (None, "", "\n", "\r", "\r\n"):
@@ -976,6 +994,8 @@ class TextIOWrapper(_TextIOBase):
         self._decoded_chars_used = 0  # offset into _decoded_chars for read()
         self._snapshot = None  # info for reconstructing decoder state
         self._seekable = self._telling = self.buffer.seekable()
+
+        self._ok = True     # Jython: to enable use now in a valid state
 
         if self._seekable and self.writable():
             position = self.buffer.tell()
@@ -1021,15 +1041,23 @@ class TextIOWrapper(_TextIOBase):
         return self._buffer
 
     def seekable(self):
+        self._checkInitialized()    # Jython: to forbid use in an invalid state
+        self._checkClosed()         # Jython: compatibility with C implementation
         return self._seekable
 
     def readable(self):
+        self._checkInitialized()    # Jython: to forbid use in an invalid state
+        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.readable()
 
     def writable(self):
+        self._checkInitialized()    # Jython: to forbid use in an invalid state
+        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.writable()
 
     def flush(self):
+        self._checkInitialized()       # Jython: to forbid use in an invalid state
+        self._checkClosed()         # Jython: compatibility with C implementation
         self.buffer.flush()
         self._telling = self._seekable
 
@@ -1042,6 +1070,15 @@ class TextIOWrapper(_TextIOBase):
 
     # Jython difference: @property closed(self) inherited from _IOBase.__closed
 
+    # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
+    # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
+    def _checkInitialized(self):
+        if not self._ok:
+            if self.buffer is None:
+                raise ValueError("underlying buffer has been detached")
+            else:
+                raise ValueError("I/O operation on uninitialized object")
+
     @property
     def name(self):
         return self.buffer.name
@@ -1053,6 +1090,7 @@ class TextIOWrapper(_TextIOBase):
         return self.buffer.isatty()
 
     def write(self, s):
+        self._checkWritable()       # Jython: to forbid use in an invalid state
         if self.closed:
             raise ValueError("write to closed file")
         if not isinstance(s, unicode):
@@ -1233,6 +1271,7 @@ class TextIOWrapper(_TextIOBase):
         if self.buffer is None:
             raise ValueError("buffer is already detached")
         self.flush()
+        self._ok = False    # Jython: to forbid use in an invalid state
         buffer = self._buffer
         self._buffer = None
         return buffer
