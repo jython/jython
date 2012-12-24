@@ -958,11 +958,15 @@ class CBufferedReaderTest(BufferedReaderTest):
         self.assertRaises(ValueError, bufio.__init__, rawio, buffer_size=-1)
         self.assertRaises(ValueError, bufio.read)
 
+    @support.cpython_only
     def test_misbehaved_io_read(self):
         rawio = self.MisbehavedRawIO((b"abc", b"d", b"efg"))
         bufio = self.tp(rawio)
         # _pyio.BufferedReader seems to implement reading different, so that
         # checking this is not so easy.
+        # Jython adds: not raised in _jyio.py stand-in. Maybe in eventual Java version.
+        # CPython raises "raw readinto() returned invalid length" here:
+        # http://hg.python.org/cpython/file/8527427914a2/Modules/_io/bufferedio.c#l1298
         self.assertRaises(IOError, bufio.read, 10)
 
     @unittest.skipIf(support.is_jython, "GC nondeterministic in Jython")

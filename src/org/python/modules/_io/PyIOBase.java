@@ -55,8 +55,8 @@ public class PyIOBase extends PyObject {
     }
 
     /**
-     * Provide a dictionary in the object, so that methods and attributes may be overridden at instance
-     * level.
+     * Provide a dictionary in the object, so that methods and attributes may be overridden at
+     * instance level.
      */
     @ExposedGet
     protected PyStringMap __dict__ = new PyStringMap();
@@ -198,7 +198,8 @@ public class PyIOBase extends PyObject {
      */
     @ExposedGet(name = "closed", doc = closed_doc)
     protected boolean __closed;
-    @ExposedSet(name="closed")
+
+    @ExposedSet(name = "closed")
     public final void closed_readonly(boolean value) {
         readonlyAttributeError("closed");
     }
@@ -594,9 +595,8 @@ public class PyIOBase extends PyObject {
             while (remainingLimit > 0) {
 
                 /*
-                 * peek() returns a str of bytes from the buffer (if any), doing at most one read to
-                 * refill, all without advancing the pointer, or it returns None (in vacuous
-                 * non-blocking read).
+                 * read() returns a str of one byte, doing at most one read to refill, or it returns
+                 * None (in vacuous non-blocking read).
                  */
                 PyObject curr = readMethod.__call__(Py.One);
 
@@ -623,11 +623,14 @@ public class PyIOBase extends PyObject {
 
     }
 
+    /**
+     * Return an iterator on which <code>next</code> may be repeatedly called to produce (usually)
+     * lines from this stream or file.
+     */
     @Override
     public PyObject __iter__() {
         _checkClosed();
-        // Not like this, in spite of what base comment says, because file *is* an iterator
-        // return new PySequenceIter(this);
+        // The object *is* an iterator so return itself
         return this;
     }
 
@@ -637,6 +640,28 @@ public class PyIOBase extends PyObject {
     public PyObject __iternext__() {
         PyObject line = invoke("readline");
         return (!line.__nonzero__()) ? null : line;
+    }
+
+    /**
+     * May be called repeatedly to produce (usually) lines from this stream or file.
+     *
+     * @return next line from the stream or file
+     * @throws PyException(StopIteration) when iteration has reached a natural conclusion
+     * @throws PyException(ValueError) if the file or stream is closed
+     * @throws PyException(IOError) reflecting an I/O error in during the read
+     */
+    public PyObject next() throws PyException {
+        return _IOBase_next();
+    }
+
+    @ExposedMethod(doc = "x.__next__() <==> next(x)")
+    final PyObject _IOBase_next() throws PyException {
+        // Implement directly. Calling __iternext__() fails when PyIOBaseDerived is considered.
+        PyObject line = invoke("readline");
+        if (!line.__nonzero__()) {
+            throw Py.StopIteration("");
+        }
+        return line;
     }
 
     /**
@@ -778,16 +803,16 @@ public class PyIOBase extends PyObject {
     }
 
     /**
-     * Convenience method providing the exception when an argument is not the expected type.
-     * The format is "<b>type</b> argument expected, got <code>type(arg)</code>."
+     * Convenience method providing the exception when an argument is not the expected type. The
+     * format is "<b>type</b> argument expected, got <code>type(arg)</code>."
      *
      * @param type of thing expected (or could any text)
      * @param arg argument provided from which actual type will be reported
      * @return TypeError to throw
      */
-    protected static PyException tailoredTypeError(String type, PyObject arg){
-        return Py.TypeError(String.format("%s argument expected, got %.100s.",
-                type, arg.getType().fastGetName()));
+    protected static PyException tailoredTypeError(String type, PyObject arg) {
+        return Py.TypeError(String.format("%s argument expected, got %.100s.", type, arg.getType()
+                .fastGetName()));
     }
 
     /*
