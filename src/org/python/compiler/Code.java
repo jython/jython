@@ -10,7 +10,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-class Code extends MethodVisitor implements Opcodes {
+public class Code extends MethodVisitor implements Opcodes {
     MethodVisitor mv;
     String sig;
     String locals[];
