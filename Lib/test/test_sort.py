@@ -1,7 +1,9 @@
-from test.test_support import verbose
+from test import test_support
 import random
-from UserList import UserList
+import sys
+import unittest
 
+verbose = test_support.verbose
 nerrors = 0
 
 def check(tag, expected, raw, compare=None):
@@ -36,91 +38,89 @@ def check(tag, expected, raw, compare=None):
             nerrors += 1
             return
 
-# Try a variety of sizes at and around powers of 2, and at powers of 10.
-sizes = [0]
-for power in range(1, 10):
-    n = 2 ** power
-    sizes.extend(range(n-1, n+2))
-sizes.extend([10, 100, 1000])
+class TestBase(unittest.TestCase):
+    def testStressfully(self):
+        # Try a variety of sizes at and around powers of 2, and at powers of 10.
+        sizes = [0]
+        for power in range(1, 10):
+            n = 2 ** power
+            sizes.extend(range(n-1, n+2))
+        sizes.extend([10, 100, 1000])
 
-class Complains(object):
-    maybe_complain = True
+        class Complains(object):
+            maybe_complain = True
 
-    def __init__(self, i):
-        self.i = i
+            def __init__(self, i):
+                self.i = i
 
-    def __lt__(self, other):
-        if Complains.maybe_complain and random.random() < 0.001:
+            def __lt__(self, other):
+                if Complains.maybe_complain and random.random() < 0.001:
+                    if verbose:
+                        print "        complaining at", self, other
+                    raise RuntimeError
+                return self.i < other.i
+
+            def __repr__(self):
+                return "Complains(%d)" % self.i
+
+        class Stable(object):
+            def __init__(self, key, i):
+                self.key = key
+                self.index = i
+
+            def __cmp__(self, other):
+                return cmp(self.key, other.key)
+            __hash__ = None # Silence Py3k warning
+
+            def __repr__(self):
+                return "Stable(%d, %d)" % (self.key, self.index)
+
+        for n in sizes:
+            x = range(n)
             if verbose:
-                print "        complaining at", self, other
-            raise RuntimeError
-        return self.i < other.i
+                print "Testing size", n
 
-    def __repr__(self):
-        return "Complains(%d)" % self.i
+            s = x[:]
+            check("identity", x, s)
 
-class Stable(object):
-    def __init__(self, key, i):
-        self.key = key
-        self.index = i
+            s = x[:]
+            s.reverse()
+            check("reversed", x, s)
 
-    def __cmp__(self, other):
-        return cmp(self.key, other.key)
+            s = x[:]
+            random.shuffle(s)
+            check("random permutation", x, s)
 
-    def __repr__(self):
-        return "Stable(%d, %d)" % (self.key, self.index)
+            y = x[:]
+            y.reverse()
+            s = x[:]
+            check("reversed via function", y, s, lambda a, b: cmp(b, a))
 
-for n in sizes:
-    x = range(n)
-    if verbose:
-        print "Testing size", n
+            if verbose:
+                print "    Checking against an insane comparison function."
+                print "        If the implementation isn't careful, this may segfault."
+            s = x[:]
+            s.sort(lambda a, b:  int(random.random() * 3) - 1)
+            check("an insane function left some permutation", x, s)
 
-    s = x[:]
-    check("identity", x, s)
+            x = [Complains(i) for i in x]
+            s = x[:]
+            random.shuffle(s)
+            Complains.maybe_complain = True
+            it_complained = False
+            try:
+                s.sort()
+            except RuntimeError:
+                it_complained = True
+            if it_complained:
+                Complains.maybe_complain = False
+                check("exception during sort left some permutation", x, s)
 
-    s = x[:]
-    s.reverse()
-    check("reversed", x, s)
-
-    s = x[:]
-    random.shuffle(s)
-    check("random permutation", x, s)
-
-    y = x[:]
-    y.reverse()
-    s = x[:]
-    check("reversed via function", y, s, lambda a, b: cmp(b, a))
-
-    if verbose:
-        print "    Checking against an insane comparison function."
-        print "        If the implementation isn't careful, this may segfault."
-    s = x[:]
-    s.sort(lambda a, b:  int(random.random() * 3) - 1)
-    check("an insane function left some permutation", x, s)
-
-    x = [Complains(i) for i in x]
-    s = x[:]
-    random.shuffle(s)
-    Complains.maybe_complain = True
-    it_complained = False
-    try:
-        s.sort()
-    except RuntimeError:
-        it_complained = True
-    if it_complained:
-        Complains.maybe_complain = False
-        check("exception during sort left some permutation", x, s)
-
-    s = [Stable(random.randrange(10), i) for i in xrange(n)]
-    augmented = [(e, e.index) for e in s]
-    augmented.sort()    # forced stable because ties broken by index
-    x = [e for e, i in augmented] # a stable sort of s
-    check("stability", x, s)
-
-
-import unittest
-from test import test_support
-import sys
+            s = [Stable(random.randrange(10), i) for i in xrange(n)]
+            augmented = [(e, e.index) for e in s]
+            augmented.sort()    # forced stable because ties broken by index
+            x = [e for e, i in augmented] # a stable sort of s
+            check("stability", x, s)
 
 #==============================================================================
 
@@ -185,7 +185,7 @@ class TestDecorateSortUndecorate(unittest.TestCase):
     def test_stability(self):
         data = [(random.randrange(100), i) for i in xrange(200)]
         copy = data[:]
-        data.sort(key=lambda (x,y): x)  # sort on the random first field
+        data.sort(key=lambda x: x[0])   # sort on the random first field
         copy.sort()                     # sort using both fields
         self.assertEqual(data, copy)    # should get the same result
 
@@ -207,19 +207,16 @@ class TestDecorateSortUndecorate(unittest.TestCase):
         # Verify that the wrapper has been removed
         data = range(-2,2)
         dup = data[:]
-        self.assertRaises(ZeroDivisionError, data.sort, None, lambda x: 1/x)
+        self.assertRaises(ZeroDivisionError, data.sort, None, lambda x: 1 // x)
         self.assertEqual(data, dup)
 
-    # for jython, we have a different storage mechanism for this in our
-    # implementation of MergeState; given that this is likely to go away,
-    # this doesn't seem so important
-#     def test_key_with_mutation(self):
-#         data = range(10)
-#         def k(x):
-#             del data[:]
-#             data[:] = range(20)
-#             return x
-#         self.assertRaises(ValueError, data.sort, key=k)
+    def test_key_with_mutation(self):
+        data = range(10)
+        def k(x):
+            del data[:]
+            data[:] = range(20)
+            return x
+        self.assertRaises(ValueError, data.sort, key=k)
 
     def test_key_with_mutating_del(self):
         data = range(10)
@@ -272,29 +269,24 @@ class TestDecorateSortUndecorate(unittest.TestCase):
 
 def test_main(verbose=None):
     test_classes = (
+        TestBase,
         TestDecorateSortUndecorate,
         TestBugs,
     )
 
-    # In the following test cases, class obj, which has function that changes
-    # the data upon which sort is invoked, is passed for "key" argument.
-    # It can not be checked if that function changes data as long as it is
-    # invoked(e.g. __del__ in SortKiller). so these are currently commented out.
-    del TestDecorateSortUndecorate.test_key_with_mutating_del
-    del TestDecorateSortUndecorate.test_key_with_mutating_del_and_exception
-    #
+    with test_support.check_py3k_warnings(
+            ("the cmp argument is not supported", DeprecationWarning)):
+        test_support.run_unittest(*test_classes)
 
-    test_support.run_unittest(*test_classes)
-
-    # verify reference counting
-    if verbose and hasattr(sys, "gettotalrefcount"):
-        import gc
-        counts = [None] * 5
-        for i in xrange(len(counts)):
-            test_support.run_unittest(*test_classes)
-            gc.collect()
-            counts[i] = sys.gettotalrefcount()
-        print counts
+        # verify reference counting
+        if verbose and hasattr(sys, "gettotalrefcount"):
+            import gc
+            counts = [None] * 5
+            for i in xrange(len(counts)):
+                test_support.run_unittest(*test_classes)
+                gc.collect()
+                counts[i] = sys.gettotalrefcount()
+            print counts
 
 if __name__ == "__main__":
     test_main(verbose=True)
