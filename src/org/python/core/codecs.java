@@ -1,14 +1,12 @@
 /*
  * Copyright 2000 Finn Bock
  *
- * This program contains material copyrighted by:
- * Copyright (c) Corporation for National Research Initiatives.
- * Originally written by Marc-Andre Lemburg (mal@lemburg.com).
+ * This program contains material copyrighted by: Copyright (c) Corporation for National Research
+ * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
  */
 package org.python.core;
 
 import java.nio.charset.Charset;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -16,6 +14,7 @@ import org.python.core.util.StringUtil;
 
 /**
  * Contains the implementation of the builtin codecs.
+ *
  * @since Jython 2.0
  */
 public class codecs {
@@ -48,8 +47,8 @@ public class codecs {
         }
         PyObject handler = errorHandlers.__finditem__(handlerName.intern());
         if (handler == null) {
-            throw new PyException(Py.LookupError,
-                    "unknown error handler name '" + handlerName + "'");
+            throw new PyException(Py.LookupError, "unknown error handler name '" + handlerName
+                    + "'");
         }
         return handler;
     }
@@ -80,7 +79,7 @@ public class codecs {
 
         if (searchPath.__len__() == 0) {
             throw new PyException(Py.LookupError,
-                "no codec search functions registered: can't find encoding '" + encoding + "'");
+                    "no codec search functions registered: can't find encoding '" + encoding + "'");
         }
 
         for (PyObject func : searchPath.asIterable()) {
@@ -100,6 +99,7 @@ public class codecs {
     private static String normalizestring(String string) {
         return string.toLowerCase().replace(' ', '-');
     }
+
     private static boolean import_encodings_called;
 
     private static void import_encodings() {
@@ -140,11 +140,11 @@ public class codecs {
                 // If we couldn't find an encoding, see if we have a builtin
                 if (encoding.equals("utf-8")) {
                     return wrapDecodeResult(PyUnicode_DecodeUTF8(v.toString(), errors));
-                } else if(encoding.equals("utf-7")) {
+                } else if (encoding.equals("utf-7")) {
                     return wrapDecodeResult(PyUnicode_DecodeUTF7(v.toString(), errors));
-                } else if(encoding.equals("latin-1")) {
+                } else if (encoding.equals("latin-1")) {
                     return wrapDecodeResult(PyUnicode_DecodeLatin1(v.toString(), v.__len__(),
-                        errors));
+                            errors));
                 }
             }
             throw ex;
@@ -166,8 +166,7 @@ public class codecs {
         return new PyUnicode(result, true);
     }
 
-    public static String encode(PyString v, String encoding,
-            String errors) {
+    public static String encode(PyString v, String encoding, String errors) {
         if (encoding == null) {
             encoding = getDefaultEncoding();
         } else {
@@ -178,8 +177,10 @@ public class codecs {
             errors = errors.intern();
         }
 
-        /* Shortcuts for common default encodings.  latin-1 must not use the
-         * lookup registry for the encodings module to work correctly */
+        /*
+         * Shortcuts for common default encodings. latin-1 must not use the lookup registry for the
+         * encodings module to work correctly
+         */
         if (encoding.equals("latin-1")) {
             return PyUnicode_EncodeLatin1(v.toString(), v.__len__(), errors);
         } else if (encoding.equals("ascii")) {
@@ -195,7 +196,7 @@ public class codecs {
                 // If we couldn't find an encoding, see if we have a builtin
                 if (encoding.equals("utf-8")) {
                     return PyUnicode_EncodeUTF8(v.toString(), errors);
-                } else if(encoding.equals("utf-7")) {
+                } else if (encoding.equals("utf-7")) {
                     return codecs.PyUnicode_EncodeUTF7(v.toString(), false, false, errors);
                 }
             }
@@ -244,9 +245,9 @@ public class codecs {
     }
 
     private static boolean isUnicodeError(PyObject exc) {
-        return Py.isInstance(exc, Py.UnicodeDecodeError) ||
-                Py.isInstance(exc, Py.UnicodeEncodeError) ||
-                Py.isInstance(exc, Py.UnicodeTranslateError);
+        return Py.isInstance(exc, Py.UnicodeDecodeError)
+                || Py.isInstance(exc, Py.UnicodeEncodeError)
+                || Py.isInstance(exc, Py.UnicodeTranslateError);
     }
 
     public static PyObject replace_errors(PyObject[] args, String[] kws) {
@@ -257,12 +258,10 @@ public class codecs {
             return new PyTuple(new PyUnicode("?"), Py.newInteger(end));
         } else if (Py.isInstance(exc, Py.UnicodeDecodeError)) {
             int end = exceptions.getEnd(exc, false);
-            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER),
-                               Py.newInteger(end));
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), Py.newInteger(end));
         } else if (Py.isInstance(exc, Py.UnicodeTranslateError)) {
             int end = exceptions.getEnd(exc, true);
-            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER),
-                               Py.newInteger(end));
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), Py.newInteger(end));
         }
         throw wrong_exception_type(exc);
     }
@@ -273,8 +272,8 @@ public class codecs {
         if (!Py.isInstance(exc, Py.UnicodeEncodeError)) {
             throw wrong_exception_type(exc);
         }
-        int start = ((PyInteger) exc.__getattr__("start")).getValue();
-        int end = ((PyInteger) exc.__getattr__("end")).getValue();
+        int start = ((PyInteger)exc.__getattr__("start")).getValue();
+        int end = ((PyInteger)exc.__getattr__("end")).getValue();
         String object = exc.__getattr__("object").toString();
         StringBuilder replacement = new StringBuilder();
         xmlcharrefreplace_internal(start, end, object, replacement);
@@ -287,7 +286,8 @@ public class codecs {
         return replacement;
     }
 
-    private static void xmlcharrefreplace_internal(int start, int end, String object, StringBuilder replacement) {
+    private static void xmlcharrefreplace_internal(int start, int end, String object,
+            StringBuilder replacement) {
         for (int i = start; i < end; i++) {
             replacement.append("&#");
             char cur = object.charAt(i);
@@ -316,7 +316,7 @@ public class codecs {
                 base = 1000000;
             }
             while (digits-- > 0) {
-                replacement.append((char) ('0' + cur / base));
+                replacement.append((char)('0' + cur / base));
                 cur %= base;
                 base /= 10;
             }
@@ -327,12 +327,14 @@ public class codecs {
     private static PyException wrong_exception_type(PyObject exc) {
         PyObject excClass = exc.__getattr__("__class__");
         PyObject className = excClass.__getattr__("__name__");
-        return new PyException(Py.TypeError, "Don't know how to handle " + className + " in error callback");
+        return new PyException(Py.TypeError, "Don't know how to handle " + className
+                + " in error callback");
     }
-    static char hexdigits[] = {
+
+    static char hexdigits[] = {//@formatter:off
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-    };
+    }; //@formatter:on
 
     public static PyObject backslashreplace_errors(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("backslashreplace_errors", args, kws, "exc");
@@ -340,8 +342,8 @@ public class codecs {
         if (!Py.isInstance(exc, Py.UnicodeEncodeError)) {
             throw wrong_exception_type(exc);
         }
-        int start = ((PyInteger) exc.__getattr__("start")).getValue();
-        int end = ((PyInteger) exc.__getattr__("end")).getValue();
+        int start = ((PyInteger)exc.__getattr__("start")).getValue();
+        int end = ((PyInteger)exc.__getattr__("end")).getValue();
         String object = exc.__getattr__("object").toString();
         StringBuilder replacement = new StringBuilder();
         backslashreplace_internal(start, end, object, replacement);
@@ -354,8 +356,10 @@ public class codecs {
         return replacement;
     }
 
-    private static void backslashreplace_internal(int start, int end, String object, StringBuilder replacement) {
-        for (Iterator<Integer> iter = new StringSubsequenceIterator(object, start, end, 1); iter.hasNext();) {
+    private static void backslashreplace_internal(int start, int end, String object,
+            StringBuilder replacement) {
+        for (Iterator<Integer> iter = new StringSubsequenceIterator(object, start, end, 1); iter
+                .hasNext();) {
             int c = iter.next();
             replacement.append('\\');
             if (c >= 0x00010000) {
@@ -386,23 +390,20 @@ public class codecs {
             searchPath = new PyList();
             searchCache = new PyStringMap();
             errorHandlers = new PyStringMap();
-            String[] builtinErrorHandlers = new String[]{"strict",
-                IGNORE,
-                REPLACE,
-                XMLCHARREFREPLACE,
-                BACKSLASHREPLACE
-            };
+            String[] builtinErrorHandlers =
+                    new String[] {"strict", IGNORE, REPLACE, XMLCHARREFREPLACE, BACKSLASHREPLACE};
             for (String builtinErrorHandler : builtinErrorHandlers) {
-                register_error(builtinErrorHandler, Py.newJavaFunc(codecs.class,
-                        builtinErrorHandler + "_errors"));
+                register_error(builtinErrorHandler,
+                        Py.newJavaFunc(codecs.class, builtinErrorHandler + "_errors"));
             }
             import_encodings();
         }
     }
+
     /* --- UTF-7 Codec -------------------------------------------------------- */
 
     /* see RFC2152 for details */
-    public static char utf7_special[] = {
+    public static char utf7_special[] = {//@formatter:off
         /*
          * indicate whether a UTF-7 character is special i.e. cannot be directly
          * encoded: 0 - not special 1 - special 2 - whitespace (optional) 3 -
@@ -416,17 +417,15 @@ public class codecs {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 3, 3, 3,
         3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 1, 1
-    ,
+    }; //@formatter:on
 
-
-           };
-
-    private static boolean SPECIAL(char c, boolean encodeO, boolean encodeWS){
-    return (c>127 || utf7_special[(c)] == 1) ||
-                (encodeWS && (utf7_special[(c)] == 2)) ||
-                (encodeO && (utf7_special[(c)] == 3));
+    private static boolean SPECIAL(char c, boolean encodeO, boolean encodeWS) {
+        return (c > 127 || utf7_special[(c)] == 1) || (encodeWS && (utf7_special[(c)] == 2))
+                || (encodeO && (utf7_special[(c)] == 3));
     }
-    private static final String B64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    private static final String B64_CHARS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     private static char B64(int n) {
         return B64_CHARS.charAt(n & 0x3f);
@@ -437,12 +436,14 @@ public class codecs {
     }
 
     private static int UB64(char c) {
-        return ((c) == '+' ? 62 : (c) == '/' ? 63 : (c) >= 'a' ? (c) - 71 : (c) >= 'A' ? (c) - 65 : (c) + 4);
+        return (c == '+' ? 62 : c == '/' ? 63 : c >= 'a' ? c - 71 : c >= 'A' ? c - 65 : c + 4);
     }
 
-    // note that we follow CPython 2.5 exactly here - it does not support surrogates,
-    // but has to process as-if they are there for replacement purposes
-    // fortunately no one really cares about utf-7
+    /*
+     * note that we follow CPython 2.5 exactly here - it does not support surrogates, but has to
+     * process as-if they are there for replacement purposes fortunately no one really cares about
+     * utf-7.
+     */
     public static String PyUnicode_DecodeUTF7(String str, String errors) {
         int s = 0;
         int e = str.length();
@@ -460,15 +461,10 @@ public class codecs {
                     s++;
                     while (bitsInCharsleft >= 16) {
                         bitsInCharsleft -= 16;
-                        char outCh = (char) ((charsleft >> bitsInCharsleft) & 0xffff);
+                        char outCh = (char)((charsleft >> bitsInCharsleft) & 0xffff);
                         if (surrogate) {
-                            s = codecs.insertReplacementAndGetResume(unicode,
-                                    errors,
-                                    "utf-7",
-                                    str,
-                                    s,
-                                    s + 1,
-                                    "code pairs are not supported");
+                            s = codecs.insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                                    s, s + 1, "code pairs are not supported");
                             surrogate = false;
                         } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
                             surrogate = true;
@@ -478,32 +474,20 @@ public class codecs {
                     }
                     if (bitsInCharsleft >= 6) {
                         /*
-                         * The shift sequence has a partial character in it. If
-                         * bitsleft < 6 then we could just classify it as
-                         * padding but that is not the case here
+                         * The shift sequence has a partial character in it. If bitsleft < 6 then we
+                         * could just classify it as padding but that is not the case here
                          */
-                        s = insertReplacementAndGetResume(unicode,
-                                errors,
-                                "utf-7",
-                                str,
-                                s,
-                                s + 1,
-                                "partial character in shift sequence");
+                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                                s, s + 1, "partial character in shift sequence");
                     }
                     /*
-                     * According to RFC2152 the remaining bits should be zero.
-                     * We choose to signal an error/insert a replacement
-                     * character here so indicate the potential of a misencoded
-                     * character.
+                     * According to RFC2152 the remaining bits should be zero. We choose to signal
+                     * an error/insert a replacement character here so indicate the potential of a
+                     * misencoded character.
                      */
                     if (bitsInCharsleft > 0 && ((charsleft << 5 - bitsInCharsleft) & 0x1f) > 0) {
-                        s = insertReplacementAndGetResume(unicode,
-                                errors,
-                                "utf-7",
-                                str,
-                                s,
-                                s + 1,
-                                "non-zero padding bits in shift sequence");
+                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                                s, s + 1, "non-zero padding bits in shift sequence");
                     }
                     if (ch == '-') {
                         if ((s < e) && (str.charAt(s) == '-')) {
@@ -511,13 +495,8 @@ public class codecs {
                             inShift = true;
                         }
                     } else if (SPECIAL(ch, false, false)) {
-                        s = insertReplacementAndGetResume(unicode,
-                                errors,
-                                "utf-7",
-                                str,
-                                s,
-                                s + 1,
-                                "unexpected special character");
+                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                                s, s + 1, "unexpected special character");
                     } else {
                         unicode.append(ch);
                     }
@@ -527,15 +506,10 @@ public class codecs {
                     s++;
                     while (bitsInCharsleft >= 16) {
                         bitsInCharsleft -= 16;
-                        char outCh = (char) ((charsleft >> bitsInCharsleft) & 0xffff);
+                        char outCh = (char)((charsleft >> bitsInCharsleft) & 0xffff);
                         if (surrogate) {
-                            s = codecs.insertReplacementAndGetResume(unicode,
-                                    errors,
-                                    "utf-7",
-                                    str,
-                                    s,
-                                    s + 1,
-                                    "code pairs are not supported");
+                            s = codecs.insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                                    s, s + 1, "code pairs are not supported");
                         } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
                             surrogate = true;
                         } else {
@@ -553,34 +527,22 @@ public class codecs {
                     bitsInCharsleft = 0;
                 }
             } else if (SPECIAL(ch, false, false)) {
-                s = insertReplacementAndGetResume(unicode,
-                        errors,
-                        "utf-7",
-                        str,
-                        s,
-                        s + 1,
-                        "unexpected special character");
+                s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                        s, s + 1, "unexpected special character");
             } else {
                 unicode.append(ch);
                 s++;
             }
             if (inShift && s == e) {
-                s = insertReplacementAndGetResume(unicode,
-                        errors,
-                        "utf-7",
-                        str,
-                        s,
-                        s,
-                        "unterminated shift sequence");
+                s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
+                        s, s, "unterminated shift sequence");
             }
         }
         return unicode.toString();
     }
 
-    public static String PyUnicode_EncodeUTF7(String str,
-                                              boolean encodeSetO,
-                                              boolean encodeWhiteSpace,
-                                              String errors) {
+    public static String PyUnicode_EncodeUTF7(String str, boolean encodeSetO,
+            boolean encodeWhiteSpace, String errors) {
         int size = str.length();
 
         if (size == 0) {
@@ -616,8 +578,10 @@ public class codecs {
                     v.append(B64(charsleft << (6 - bitsleft)));
                     charsleft = 0;
                     bitsleft = 0;
-                    /* Characters not in the BASE64 set implicitly unshift the sequence
-                    so no '-' is required, except if the character is itself a '-' */
+                    /*
+                     * Characters not in the BASE64 set implicitly unshift the sequence so no '-' is
+                     * required, except if the character is itself a '-'
+                     */
                     if (B64CHAR(ch) || ch == '-') {
                         v.append('-');
                     }
@@ -630,10 +594,12 @@ public class codecs {
                         v.append(B64(charsleft >> (bitsleft - 6)));
                         bitsleft -= 6;
                     }
-                    /* If the next character is special then we dont' need to terminate
-                    the shift sequence. If the next character is not a BASE64 character
-                    or '-' then the shift sequence will be terminated implicitly and we
-                    don't have to insert a '-'. */
+                    /*
+                     * If the next character is special then we dont' need to terminate the shift
+                     * sequence. If the next character is not a BASE64 character or '-' then the
+                     * shift sequence will be terminated implicitly and we don't have to insert a
+                     * '-'.
+                     */
 
                     if (bitsleft == 0) {
                         if (i + 1 < size) {
@@ -662,8 +628,10 @@ public class codecs {
         }
         return v.toString();
     }
+
     /* --- UTF-8 Codec ---------------------------------------------------- */
-    private static byte utf8_code_length[] = {
+
+    private static byte utf8_code_length[] = {//@formatter:off
         /* Map UTF-8 encoded prefix byte to sequence length.  zero means
         illegal prefix.  see RFC 2279 for details */
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -682,8 +650,7 @@ public class codecs {
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
         4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 0, 0
-    };
-
+    }; //@formatter:on
 
     // TODO: need to modify to use a codepoint approach (which is almost the case now,
     // ch is an
@@ -701,12 +668,13 @@ public class codecs {
             int ch = str.charAt(i);
 
             if (ch < 0x80) {
-                unicode.append((char) ch);
+                unicode.append((char)ch);
                 i++;
                 continue;
             }
             if (ch > 0xFF) {
-                i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 1, "ordinal not in range(255)");
+                i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                        i, i + 1, "ordinal not in range(255)");
                 continue;
             }
 
@@ -716,27 +684,31 @@ public class codecs {
                 if (consumed != null) {
                     break;
                 }
-                i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 1, "unexpected end of data");
+                i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                        i, i + 1, "unexpected end of data");
                 continue;
             }
 
-
             switch (n) {
                 case 0:
-                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 1, "unexpected code byte");
+                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                            i, i + 1, "unexpected code byte");
                     continue;
                 case 1:
-                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 1, "internal error");
+                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                            i, i + 1, "internal error");
                     continue;
                 case 2:
                     char ch1 = str.charAt(i + 1);
                     if ((ch1 & 0xc0) != 0x80) {
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 2, "invalid data");
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 2, "invalid data");
                         continue;
                     }
                     ch = ((ch & 0x1f) << 6) + (ch1 & 0x3f);
                     if (ch < 0x80) {
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 2, "illegal encoding");
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 2, "illegal encoding");
                         continue;
                     } else {
                         unicode.appendCodePoint(ch);
@@ -747,12 +719,14 @@ public class codecs {
                     ch1 = str.charAt(i + 1);
                     char ch2 = str.charAt(i + 2);
                     if ((ch1 & 0xc0) != 0x80 || (ch2 & 0xc0) != 0x80) {
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 3, "invalid data");
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 3, "invalid data");
                         continue;
                     }
                     ch = ((ch & 0x0f) << 12) + ((ch1 & 0x3f) << 6) + (ch2 & 0x3f);
                     if (ch < 0x800 || (ch >= 0xd800 && ch < 0xe000)) {
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 3, "illegal encoding");
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 3, "illegal encoding");
                         continue;
                     } else {
                         unicode.appendCodePoint(ch);
@@ -763,20 +737,18 @@ public class codecs {
                     ch1 = str.charAt(i + 1);
                     ch2 = str.charAt(i + 2);
                     char ch3 = str.charAt(i + 3);
-                    if ((ch1 & 0xc0) != 0x80 ||
-                            (ch2 & 0xc0) != 0x80 ||
-                            (ch3 & 0xc0) != 0x80) {
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 4, "invalid data");
+                    if ((ch1 & 0xc0) != 0x80 || (ch2 & 0xc0) != 0x80 || (ch3 & 0xc0) != 0x80) {
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 4, "invalid data");
                         continue;
                     }
-                    ch = ((ch & 0x7) << 18) + ((ch1 & 0x3f) << 12) +
+                    ch = ((ch & 0x7) << 18) + ((ch1 & 0x3f) << 12) + //
                             ((ch2 & 0x3f) << 6) + (ch3 & 0x3f);
-                    /* validate and convert to UTF-16 */
-                    if ((ch < 0x10000) || /* minimum value allowed for 4
-                            byte encoding */
-                            (ch > 0x10ffff)) {  /* maximum value allowed for
-                        UTF-16 */
-                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + 4, "illegal encoding");
+                    // validate and convert to UTF-16
+                    if ((ch < 0x10000) || // minimum value allowed for 4 byte encoding
+                            (ch > 0x10ffff)) { // maximum value allowed for UTF-16
+                        i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                                i, i + 4, "illegal encoding");
                         continue;
                     }
 
@@ -785,8 +757,9 @@ public class codecs {
 
                 default:
                     // TODO: support
-                /* Other sizes are only needed for UCS-4 */
-                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, i, i + n, "unsupported Unicode code range");
+                    /* Other sizes are only needed for UCS-4 */
+                    i = insertReplacementAndGetResume(unicode, errors, "utf-8", str, //
+                            i, i + n, "unsupported Unicode code range");
                     continue;
             }
             i += n;
@@ -811,7 +784,8 @@ public class codecs {
         return PyUnicode_DecodeIntLimited(str, size, errors, "latin-1", 256);
     }
 
-    private static String PyUnicode_DecodeIntLimited(String str, int size, String errors, String encoding, int limit) {
+    private static String PyUnicode_DecodeIntLimited(String str, int size, String errors,
+            String encoding, int limit) {
         StringBuilder v = new StringBuilder(size);
 
         String reason = "ordinal not in range(" + limit + ")";
@@ -820,31 +794,24 @@ public class codecs {
             if (ch < limit) {
                 v.append(ch);
             } else {
-                i = insertReplacementAndGetResume(v, errors,
-                        encoding,
-                        str,
-                        i,
-                        i + 1,
-                        reason) - 1;
+                i = insertReplacementAndGetResume(v, errors, encoding, str, i, i + 1, reason) - 1;
             }
         }
 
         return v.toString();
     }
 
-    public static String PyUnicode_EncodeASCII(String str, int size,
-            String errors) {
+    public static String PyUnicode_EncodeASCII(String str, int size, String errors) {
         return PyUnicode_EncodeIntLimited(str, size, errors, "ascii", 128);
     }
 
-    public static String PyUnicode_EncodeLatin1(String str, int size,
-            String errors) {
+    public static String PyUnicode_EncodeLatin1(String str, int size, String errors) {
 
         return PyUnicode_EncodeIntLimited(str, size, errors, "latin-1", 256);
     }
 
-    private static String PyUnicode_EncodeIntLimited(String str, int size,
-            String errors, String encoding, int limit) {
+    private static String PyUnicode_EncodeIntLimited(String str, int size, String errors,
+            String encoding, int limit) {
         String reason = "ordinal not in range(" + limit + ")";
         StringBuilder v = new StringBuilder(size);
         for (int i = 0; i < size; i++) {
@@ -876,12 +843,7 @@ public class codecs {
                         continue;
                     }
                 }
-                PyObject replacement = encoding_error(errors,
-                        encoding,
-                        str,
-                        i,
-                        nextGood,
-                        reason);
+                PyObject replacement = encoding_error(errors, encoding, str, i, nextGood, reason);
                 String replStr = replacement.__getitem__(0).toString();
                 for (int j = 0; j < replStr.length(); j++) {
                     if (replStr.charAt(j) >= limit) {
@@ -898,7 +860,7 @@ public class codecs {
     }
 
     public static int calcNewPosition(int size, PyObject errorTuple) {
-        int newPosition = ((PyInteger) errorTuple.__getitem__(1)).getValue();
+        int newPosition = ((PyInteger)errorTuple.__getitem__(1)).getValue();
         if (newPosition < 0) {
             newPosition = size + newPosition;
         }
@@ -907,16 +869,16 @@ public class codecs {
         }
         return newPosition;
     }
+
     /* --- RawUnicodeEscape Codec ---------------------------------------- */
     private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
     // The modified flag is used by cPickle.
-    public static String PyUnicode_EncodeRawUnicodeEscape(String str, String errors,
-                                                          boolean modifed) {
+    public static String
+            PyUnicode_EncodeRawUnicodeEscape(String str, String errors, boolean modifed) {
         StringBuilder v = new StringBuilder(str.length());
 
-        for (Iterator<Integer> iter = new PyUnicode(str).newSubsequenceIterator();
-             iter.hasNext();) {
+        for (Iterator<Integer> iter = new PyUnicode(str).newSubsequenceIterator(); iter.hasNext();) {
             int codePoint = iter.next();
             if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
                 // Map 32-bit characters to '\\Uxxxxxxxx'
@@ -992,8 +954,8 @@ public class codecs {
                 codePoint = ((codePoint << 4) & ~0xF) + asDigit;
             }
             if (asDigit == -1) {
-                i = codecs.insertReplacementAndGetResume(v, errors, "rawunicodeescape", str, bs, i,
-                                                         "truncated \\uXXXX");
+                i = codecs.insertReplacementAndGetResume(v, errors, "rawunicodeescape", str, //
+                        bs, i, "truncated \\uXXXX");
             } else {
                 v.appendCodePoint(codePoint);
             }
@@ -1003,6 +965,7 @@ public class codecs {
     }
 
     private static class Punycode {
+
         // specified by punycode, http://www.ietf.org/rfc/rfc3492.txt
         private static final int BASE = 36;
         private static final int TMIN = 1;
@@ -1033,8 +996,7 @@ public class codecs {
         }
     }
 
-    public static String PyUnicode_EncodePunycode(PyUnicode input,
-            String errors) {
+    public static String PyUnicode_EncodePunycode(PyUnicode input, String errors) {
         int n = Punycode.INITIAL_N;
         int delta = 0;
         long guard_delta;
@@ -1066,9 +1028,10 @@ public class codecs {
             }
             guard_delta = delta + ((m - n) * (h + 1));
             if (guard_delta > Integer.MAX_VALUE) {
-                throw Py.UnicodeEncodeError("punycode", input.getString(), codePointIndex, codePointIndex + 1, "overflow");
+                throw Py.UnicodeEncodeError("punycode", input.getString(), codePointIndex,
+                        codePointIndex + 1, "overflow");
             }
-            delta = (int) guard_delta;
+            delta = (int)guard_delta;
 
             n = m;
             i = 0;
@@ -1077,14 +1040,16 @@ public class codecs {
                 if (c < n) {
                     guard_delta = delta + 1;
                     if (guard_delta > Integer.MAX_VALUE) {
-                        throw Py.UnicodeEncodeError("punycode", input.getString(), i, i + 1, "overflow");
+                        throw Py.UnicodeEncodeError("punycode", input.getString(), i, i + 1,
+                                "overflow");
                     }
-                    delta = (int) guard_delta;
+                    delta = (int)guard_delta;
                 }
                 if (c == n) {
                     int q = delta;
                     for (int k = Punycode.BASE;; k += Punycode.BASE) {
-                        int t = k <= bias ? Punycode.TMIN : (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
+                        int t = k <= bias ? Punycode.TMIN : //
+                                (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
                         if (q < t) {
                             break;
                         }
@@ -1134,8 +1099,9 @@ public class codecs {
                 if (guard_i > Integer.MAX_VALUE) {
                     throw Py.UnicodeDecodeError("punycode", input, j, j + 1, "overflow");
                 }
-                i = (int) guard_i;
-                int t = k <= bias ? Punycode.TMIN : (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
+                i = (int)guard_i;
+                int t = k <= bias ? Punycode.TMIN : //
+                        (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
                 if (digit < t) {
                     break;
                 }
@@ -1153,41 +1119,38 @@ public class codecs {
         return new PyUnicode(ucs4);
     }
 
-    public static String PyUnicode_EncodeIDNA(PyUnicode input,
-            String errors) {
+    public static String PyUnicode_EncodeIDNA(PyUnicode input, String errors) {
 
         throw new UnsupportedOperationException();
 
-
-//   1. If the sequence contains any code points outside the ASCII range
-//      (0..7F) then proceed to step 2, otherwise skip to step 3.
-//
-//   2. Perform the steps specified in [NAMEPREP] and fail if there is an
-//      error.  The AllowUnassigned flag is used in [NAMEPREP].
-// this basically enails changing out space, etc.
-//
-//   3. If the UseSTD3ASCIIRules flag is set, then perform these checks:
-//
-//     (a) Verify the absence of non-LDH ASCII code points; that is, the
-//         absence of 0..2C, 2E..2F, 3A..40, 5B..60, and 7B..7F.
-//
-//     (b) Verify the absence of leading and trailing hyphen-minus; that
-//         is, the absence of U+002D at the beginning and end of the
-//         sequence.
-//
-//   4. If the sequence contains any code points outside the ASCII range
-//      (0..7F) then proceed to step 5, otherwise skip to step 8.
-//
-//   5. Verify that the sequence does NOT begin with the ACE prefix.
-//
-//   6. Encode the sequence using the encoding algorithm in [PUNYCODE] and
-//      fail if there is an error.
-//
-//   7. Prepend the ACE prefix.
-//
-//   8. Verify that the number of code points is in the range 1 to 63
-//      inclusive.
-
+        // 1. If the sequence contains any code points outside the ASCII range
+        // (0..7F) then proceed to step 2, otherwise skip to step 3.
+        //
+        // 2. Perform the steps specified in [NAMEPREP] and fail if there is an
+        // error. The AllowUnassigned flag is used in [NAMEPREP].
+        // this basically enails changing out space, etc.
+        //
+        // 3. If the UseSTD3ASCIIRules flag is set, then perform these checks:
+        //
+        // (a) Verify the absence of non-LDH ASCII code points; that is, the
+        // absence of 0..2C, 2E..2F, 3A..40, 5B..60, and 7B..7F.
+        //
+        // (b) Verify the absence of leading and trailing hyphen-minus; that
+        // is, the absence of U+002D at the beginning and end of the
+        // sequence.
+        //
+        // 4. If the sequence contains any code points outside the ASCII range
+        // (0..7F) then proceed to step 5, otherwise skip to step 8.
+        //
+        // 5. Verify that the sequence does NOT begin with the ACE prefix.
+        //
+        // 6. Encode the sequence using the encoding algorithm in [PUNYCODE] and
+        // fail if there is an error.
+        //
+        // 7. Prepend the ACE prefix.
+        //
+        // 8. Verify that the number of code points is in the range 1 to 63
+        // inclusive.
     }
 
     public static PyUnicode PyUnicode_DecodeIDNA(String input, String errors) {
@@ -1195,31 +1158,18 @@ public class codecs {
     }
 
     /* --- Utility methods -------------------------------------------- */
-    public static PyObject encoding_error(String errors,
-            String encoding,
-            String toEncode,
-            int start,
-            int end,
-            String reason) {
+    public static PyObject encoding_error(String errors, String encoding, String toEncode,
+            int start, int end, String reason) {
         PyObject errorHandler = lookup_error(errors);
-        PyException exc = Py.UnicodeEncodeError(encoding,
-                toEncode,
-                start,
-                end,
-                reason);
+        PyException exc = Py.UnicodeEncodeError(encoding, toEncode, start, end, reason);
         exc.normalize();
-        PyObject replacement = errorHandler.__call__(new PyObject[]{exc.value});
+        PyObject replacement = errorHandler.__call__(new PyObject[] {exc.value});
         checkErrorHandlerReturn(errors, replacement);
         return replacement;
     }
 
-    public static int insertReplacementAndGetResume(StringBuilder partialDecode,
-            String errors,
-            String encoding,
-            String toDecode,
-            int start,
-            int end,
-            String reason) {
+    public static int insertReplacementAndGetResume(StringBuilder partialDecode, String errors,
+            String encoding, String toDecode, int start, int end, String reason) {
         if (errors != null) {
             if (errors.equals(IGNORE)) {
                 return end;
@@ -1231,37 +1181,26 @@ public class codecs {
                 return end;
             }
         }
-        PyObject replacement = decoding_error(errors,
-                encoding,
-                toDecode,
-                start,
-                end,
-                reason);
+        PyObject replacement = decoding_error(errors, encoding, toDecode, start, end, reason);
         checkErrorHandlerReturn(errors, replacement);
         partialDecode.append(replacement.__getitem__(0).toString());
         return calcNewPosition(toDecode.length(), replacement);
     }
 
-    public static PyObject decoding_error(String errors,
-            String encoding,
-            String toEncode,
-            int start,
-            int end,
-            String reason) {
+    public static PyObject decoding_error(String errors, String encoding, String toEncode,
+            int start, int end, String reason) {
         PyObject errorHandler = lookup_error(errors);
-        PyException exc = Py.UnicodeDecodeError(encoding,
-                toEncode,
-                start,
-                end,
-                reason);
+        PyException exc = Py.UnicodeDecodeError(encoding, toEncode, start, end, reason);
         exc.normalize();
-        return errorHandler.__call__(new PyObject[]{exc.value});
+        return errorHandler.__call__(new PyObject[] {exc.value});
     }
 
-    private static void checkErrorHandlerReturn(String errors,
-            PyObject replacement) {
-        if (!(replacement instanceof PyTuple) || replacement.__len__() != 2 || !(replacement.__getitem__(0) instanceof PyBaseString) || !(replacement.__getitem__(1) instanceof PyInteger)) {
-            throw new PyException(Py.TypeError, "error_handler " + errors + " must return a tuple of (replacement, new position)");
+    private static void checkErrorHandlerReturn(String errors, PyObject replacement) {
+        if (!(replacement instanceof PyTuple) || replacement.__len__() != 2
+                || !(replacement.__getitem__(0) instanceof PyBaseString)
+                || !(replacement.__getitem__(1) instanceof PyInteger)) {
+            throw new PyException(Py.TypeError, "error_handler " + errors
+                    + " must return a tuple of (replacement, new position)");
         }
     }
 }
@@ -1270,10 +1209,10 @@ public class codecs {
 class StringSubsequenceIterator implements Iterator {
 
     private final String s;
-    private int current,  k,  start,  stop,  step;
+    private int current, k, start, stop, step;
 
     StringSubsequenceIterator(String s, int start, int stop, int step) {
-//        System.out.println("s=" + s.length() + ",start=" + start + ",stop=" + stop);
+        // System.out.println("s=" + s.length() + ",start=" + start + ",stop=" + stop);
         this.s = s;
         k = 0;
         current = start;
@@ -1281,13 +1220,14 @@ class StringSubsequenceIterator implements Iterator {
         this.stop = stop;
         this.step = step;
 
-        // this bounds checking is necessary to convert between use of code units elsewhere, and codepoints here
-        // it would be nice if it were unnecessary!
+        /*
+         * this bounds checking is necessary to convert between use of code units elsewhere, and
+         * codepoints here it would be nice if it were unnecessary!
+         */
         int count = getCodePointCount(s);
         if (start >= count) {
             this.stop = -1;
-        }
-        else if (stop >= count) {
+        } else if (stop >= count) {
             this.stop = count;
         }
 
@@ -1304,10 +1244,12 @@ class StringSubsequenceIterator implements Iterator {
         return s.codePointCount(0, s.length());
     }
 
+    @Override
     public boolean hasNext() {
         return current < stop;
     }
 
+    @Override
     public Object next() {
         int codePoint = nextCodePoint();
         current += 1;
@@ -1320,7 +1262,7 @@ class StringSubsequenceIterator implements Iterator {
 
     private int nextCodePoint() {
         int U;
-//        System.out.println("k=" + k);
+        // System.out.println("k=" + k);
         int W1 = s.charAt(k);
         if (W1 >= 0xD800 && W1 < 0xDC00) {
             int W2 = s.charAt(k + 1);
@@ -1333,6 +1275,7 @@ class StringSubsequenceIterator implements Iterator {
         return U;
     }
 
+    @Override
     public void remove() {
         throw new UnsupportedOperationException("Not supported on String objects (immutable)");
     }
