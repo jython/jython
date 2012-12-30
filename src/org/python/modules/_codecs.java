@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Finn Bock
+ * Copyright (c)2012 Jython Developers Original Java version copyright 2000 Finn Bock
  *
  * This program contains material copyrighted by: Copyright (c) Corporation for National Research
  * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
@@ -22,6 +22,14 @@ import org.python.core.PyUnicode;
 import org.python.core.codecs;
 import org.python.expose.ExposedType;
 
+/**
+ * This class corresponds to the Python _codecs module, which in turn lends its functions to the
+ * codecs module (in Lib/codecs.py). It exposes the implementing functions of several codec families
+ * called out in the Python codecs library Lib/encodings/*.py, where it is usually claimed that they
+ * are bound "as C functions". Obviously, C stands for "compiled" in this context, rather than
+ * dependence on a particular implementation language. Actual transcoding methods often come from
+ * the related {@link codecs} class.
+ */
 public class _codecs {
 
     public static void register(PyObject search_function) {
@@ -49,7 +57,6 @@ public class _codecs {
     }
 
     private static PyTuple decode_tuple_str(String s, int len) {
-        // XXX should this be PyUnicode(s) ?
         return new PyTuple(new PyString(s), Py.newInteger(len));
     }
 
@@ -426,6 +433,7 @@ public class _codecs {
         return codecs.calcNewPosition(size, replacement) - 1;
     }
 
+    /* --- ascii Codec ---------------------------------------------- */
     public static PyTuple ascii_decode(String str) {
         return ascii_decode(str, null);
     }
@@ -688,6 +696,17 @@ public class _codecs {
     }
 
     /* --- UnicodeInternal Codec ------------------------------------------ */
+    // XXX Should deprecate unicode-internal codec and delegate to UTF-32BE (when we have one)
+    /*
+     * This codec is supposed to deal with an encoded form equal to the internal representation of
+     * the unicode object considered as bytes in memory. This was confusing in CPython as it varied
+     * with machine architecture (width and endian-ness). In Jython, the most compatible choice
+     * would be UTF-32BE since unicode objects report their length as if UCS-4 and
+     * sys.byteorder=='big'. The codec is deprecated in v3.3 as irrelevant, or impossible, in view
+     * of the flexible string representation (which Jython emulates in its own way).
+     *
+     * See http://mail.python.org/pipermail/python-dev/2011-November/114415.html
+     */
     public static PyTuple unicode_internal_encode(String str) {
         return unicode_internal_encode(str, null);
     }

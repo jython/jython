@@ -813,6 +813,7 @@ class PunycodeTest(unittest.TestCase):
         for uni, puny in punycode_testcases:
             self.assertEqual(uni, puny.decode("punycode"))
 
+@unittest.skipIf(test_support.is_jython, "FIXME: equates to UTF-32BE in Jython")
 class UnicodeInternalTest(unittest.TestCase):
     def test_bug1251300(self):
         # Decoding with unicode_internal used to not correctly handle "code
@@ -850,7 +851,7 @@ class UnicodeInternalTest(unittest.TestCase):
                 self.assertEqual(4, ex.start)
                 self.assertEqual(8, ex.end)
             else:
-                self.fail()
+                self.fail("UnicodeDecodeError not raised")
 
     def test_decode_callback(self):
         if sys.maxunicode > 0xffff:

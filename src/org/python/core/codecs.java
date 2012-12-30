@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Finn Bock
+ * Copyright (c)2012 Jython Developers Original Java version copyright 2000 Finn Bock
  *
  * This program contains material copyrighted by: Copyright (c) Corporation for National Research
  * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
@@ -13,7 +13,15 @@ import java.util.Iterator;
 import org.python.core.util.StringUtil;
 
 /**
- * Contains the implementation of the builtin codecs.
+ * This class implements the codec registry and utility methods supporting codecs, such as those
+ * providing the standard replacement strategies ("ignore", "backslashreplace", etc.). The _codecs
+ * module relies heavily on apparatus implemented here, and therefore so does the Python
+ * <code>codecs</code> module (in <code>Lib/codecs.py</code>). It corresponds approximately to
+ * CPython's <code>Python/codecs.c</code>.
+ * <p>
+ * The class also contains the inner methods of the standard Unicode codecs, available for
+ * transcoding of text at the Java level. These also are exposed through the <code>_codecs</code>
+ * module. In CPython, the implementation are found in <code>Objects/unicodeobject.c</code>.
  *
  * @since Jython 2.0
  */
