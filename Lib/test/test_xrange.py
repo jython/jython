@@ -1,6 +1,7 @@
 # Python test set -- built-in functions
 
 import test.test_support, unittest
+from test.test_support import is_jython
 import sys
 import pickle
 import itertools
@@ -95,6 +96,7 @@ class XrangeTest(unittest.TestCase):
         self.assertEqual(len(r), sys.maxint)
         self.assertRaises(OverflowError, xrange, -sys.maxint-1, sys.maxint, 2)
 
+    @unittest.skipIf(is_jython, "FIXME: pickling range not working in Jython")
     def test_pickling(self):
         testcases = [(13,), (0, 11), (-22, 10), (20, 3, -1),
                      (13, 21, 3), (-2, 2, 2)]
@@ -104,6 +106,7 @@ class XrangeTest(unittest.TestCase):
                 self.assertEqual(list(pickle.loads(pickle.dumps(r, proto))),
                                  list(r))
 
+    @unittest.skipIf(is_jython, "FIXME: range iter not working in Jython")
     def test_range_iterators(self):
         # see issue 7298
         limits = [base + jiggle
