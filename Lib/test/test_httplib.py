@@ -201,6 +201,7 @@ class BasicTest(TestCase):
         if resp.read() != "":
             self.fail("Did not expect response from HEAD request")
 
+    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
     def test_send_file(self):
         expected = 'GET /foo HTTP/1.1\r\nHost: example.com\r\n' \
                    'Accept-Encoding: identity\r\nContent-Length:'
