@@ -10,7 +10,7 @@ import errno
 import struct
 
 from test import test_support
-from test.test_support import TESTFN, run_unittest, unlink
+from test.test_support import TESTFN, run_unittest, unlink, is_jython
 from StringIO import StringIO
 
 try:
@@ -351,6 +351,7 @@ class DispatcherWithSendTests(unittest.TestCase):
     def tearDown(self):
         asyncore.close_all()
 
+    @unittest.skipIf(is_jython, 'FIXME: Currently not working on jython')
     @unittest.skipUnless(threading, 'Threading required for this test.')
     @test_support.reap_threads
     def test_send(self):
@@ -549,8 +550,7 @@ class BaseTestAPI(unittest.TestCase):
         client = BaseClient(server.address)
         self.loop_waiting_for_flag(server)
 
-    @unittest.skipIf(sys.platform.startswith("java"),
-                     "FIXME: Currently not working on jython")
+    @unittest.skipIf(is_jython, "FIXME: Currently not working on jython")
     def test_handle_read(self):
         # make sure handle_read is called on data received
 
@@ -578,8 +578,7 @@ class BaseTestAPI(unittest.TestCase):
         client = TestClient(server.address)
         self.loop_waiting_for_flag(client)
 
-    @unittest.skipIf(sys.platform.startswith("java"),
-                     "FIXME: Currently not working on jython")
+    @unittest.skipIf(is_jython, "FIXME: Currently not working on jython")
     def test_handle_close(self):
         # make sure handle_close is called when the other end closes
         # the connection
