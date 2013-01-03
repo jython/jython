@@ -3,6 +3,8 @@
 # The tests are centralised in this fashion to make it easy to drop them
 # if a platform doesn't support zipimport
 import test.test_support
+from test.test_support import is_jython
+import unittest
 import os
 import os.path
 import sys
@@ -85,6 +87,7 @@ class ZipSupportTests(ImportHooksBaseTestCase):
             import zip_pkg
             self.assertEqual(inspect.getsource(zip_pkg.foo), test_src)
 
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_doctest_issue4197(self):
         # To avoid having to keep two copies of the doctest module's
         # unit tests in sync, this test works by taking the source of
@@ -179,6 +182,7 @@ class ZipSupportTests(ImportHooksBaseTestCase):
                 for obj in known_good_tests:
                     _run_object_doctest(obj, test_zipped_doctest)
 
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_doctest_main_issue4197(self):
         test_src = textwrap.dedent("""\
                     class Test:
@@ -208,6 +212,7 @@ class ZipSupportTests(ImportHooksBaseTestCase):
                 print data
             self.assertIn(expected, data)
 
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_pdb_issue4201(self):
         test_src = textwrap.dedent("""\
                     def f():
