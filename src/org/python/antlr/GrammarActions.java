@@ -631,8 +631,12 @@ public class GrammarActions {
             errorHandler.error("can't assign to conditional expression", e);
         } else if (e instanceof ListComp) {
             errorHandler.error("can't assign to list comprehension", e);
+        } else if (e instanceof SetComp) {
+            errorHandler.error("can't assign to set comprehension", e);
+        } else if (e instanceof DictComp) {
+            errorHandler.error("can't assign to dict comprehension", e);
         }
-    }
+     }
 
     void checkAugAssign(expr e) {
         checkGenericAssign(e);
