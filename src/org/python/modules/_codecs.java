@@ -1,5 +1,5 @@
 /*
- * Copyright (c)2012 Jython Developers Original Java version copyright 2000 Finn Bock
+ * Copyright (c)2013 Jython Developers. Original Java version copyright 2000 Finn Bock.
  *
  * This program contains material copyrighted by: Copyright (c) Corporation for National Research
  * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
@@ -52,8 +52,30 @@ public class _codecs {
         return EncodingMap.buildEncodingMap(map);
     }
 
-    private static PyTuple decode_tuple(String s, int len) {
-        return new PyTuple(new PyUnicode(s), Py.newInteger(len));
+    /**
+     * Convenience method to construct the return value of decoders, providing the Unicode result as
+     * a String, and the number of bytes consumed.
+     *
+     * @param u the unicode result as a UTF-16 Java String
+     * @param bytesConsumed the number of bytes consumed
+     * @return the tuple (unicode(u), bytesConsumed)
+     */
+    private static PyTuple decode_tuple(String u, int bytesConsumed) {
+        return new PyTuple(new PyUnicode(u), Py.newInteger(bytesConsumed));
+    }
+
+    /**
+     * Convenience method to construct the return value of decoders, providing the Unicode result
+     * as a String, and the number of bytes consumed in decoding as either a single-element array or
+     * an int to be used if the array argument is null.
+     *
+     * @param u the unicode result as a UTF-16 Java String
+     * @param consumed if not null, element [0] is the number of bytes consumed
+     * @param defaultBytesConsumed if consumed==null, use this as the number of bytes consumed
+     * @return the tuple (unicode(u), bytesConsumed)
+     */
+    private static PyTuple decode_tuple(String u, int[] consumed, int defaultBytesConsumed) {
+        return decode_tuple(u, consumed != null ? consumed[0] : defaultBytesConsumed);
     }
 
     private static PyTuple decode_tuple_str(String s, int len) {
@@ -89,13 +111,18 @@ public class _codecs {
     }
 
     /* --- UTF-7 Codec --------------------------------------------------- */
-    public static PyTuple utf_7_decode(String str) {
-        return utf_7_decode(str, null);
+    public static PyTuple utf_7_decode(String bytes) {
+        return utf_7_decode(bytes, null);
     }
 
-    public static PyTuple utf_7_decode(String str, String errors) {
-        int size = str.length();
-        return decode_tuple(codecs.PyUnicode_DecodeUTF7(str, errors), size);
+    public static PyTuple utf_7_decode(String bytes, String errors) {
+        return utf_7_decode(bytes, null, false);
+    }
+
+    public static PyTuple utf_7_decode(String bytes, String errors, boolean finalFlag) {
+        int[] consumed = finalFlag ? null : new int[1];
+        String decoded = codecs.PyUnicode_DecodeUTF7Stateful(bytes, errors, consumed);
+        return decode_tuple(decoded, consumed, bytes.length());
     }
 
     public static PyTuple utf_7_encode(String str) {
@@ -107,6 +134,7 @@ public class _codecs {
         return encode_tuple(codecs.PyUnicode_EncodeUTF7(str, false, false, errors), size);
     }
 
+    /* --- string-escape Codec -------------------------------------------- */
     public static PyTuple escape_decode(String str) {
         return escape_decode(str, null);
     }
@@ -677,7 +705,7 @@ public class _codecs {
         return decode_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str, errors), str.length());
     }
 
-    /* --- UnicodeEscape Codec -------------------------------------------- */
+    /* --- unicode-escape Codec ------------------------------------------- */
     public static PyTuple unicode_escape_encode(String str) {
         return unicode_escape_encode(str, null);
     }

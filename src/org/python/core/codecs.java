@@ -1,5 +1,5 @@
 /*
- * Copyright (c)2012 Jython Developers Original Java version copyright 2000 Finn Bock
+ * Copyright (c)2013 Jython Developers. Original Java version copyright 2000 Finn Bock.
  *
  * This program contains material copyrighted by: Copyright (c) Corporation for National Research
  * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
@@ -410,231 +410,635 @@ public class codecs {
 
     /* --- UTF-7 Codec -------------------------------------------------------- */
 
-    /* see RFC2152 for details */
-    public static char utf7_special[] = {//@formatter:off
-        /*
-         * indicate whether a UTF-7 character is special i.e. cannot be directly
-         * encoded: 0 - not special 1 - special 2 - whitespace (optional) 3 -
-         * RFC2152 Set O (optional)
-         */
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        2, 3, 3, 3, 3, 3, 3, 0, 0, 0, 3, 1, 0, 0, 0, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 3, 3, 3,
-        3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 1, 1
-    }; //@formatter:on
+    /*
+     * This codec was converted to Java from the CPython v2.7.3 final. See RFC2152 for details of
+     * the encoding scheme. We encode conservatively and decode liberally.
+     */
 
-    private static boolean SPECIAL(char c, boolean encodeO, boolean encodeWS) {
-        return (c > 127 || utf7_special[(c)] == 1) || (encodeWS && (utf7_special[(c)] == 2))
-                || (encodeO && (utf7_special[(c)] == 3));
+    /* //@formatter:off
+     * The UTF-7 encoder treats ASCII characters differently according to whether they are Set D,
+     * Set O, Whitespace, or special (i.e. none of the above). See RFC2152. This array identifies
+     * these different sets:
+     * 0 : "Set D"
+     *     alphanumeric and '(),-./:?
+     * 1 : "Set O"
+     *     !"#$%&*;<=>@[]^_`{|}
+     * 2 : "whitespace"
+     *     ht nl cr sp
+     * 3 : special (must be base64 encoded)
+     *     everything else (i.e. +\~ and non-printing codes 0-8 11-12 14-31 127)
+     */
+    private static final byte[] utf7_category = {
+    /* nul soh stx etx eot enq ack bel bs  ht  nl  vt  np  cr  so  si  */
+        3,  3,  3,  3,  3,  3,  3,  3,  3,  2,  2,  3,  3,  2,  3,  3,
+    /* dle dc1 dc2 dc3 dc4 nak syn etb can em  sub esc fs  gs  rs  us  */
+        3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+    /* sp   !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /  */
+        2,  1,  1,  1,  1,  1,  1,  0,  0,  0,  1,  3,  0,  0,  0,  0,
+    /*  0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?  */
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  0,
+    /*  @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O  */
+        1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    /*  P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _  */
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  3,  1,  1,  1,
+    /*  `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o  */
+        1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    /*  p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~  del */
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  3,  3,
+    };//@formatter:on
+
+    /**
+     * Determine whether this character should be encoded as itself. The answer depends on whether
+     * we are encoding set O (optional special characters) as itself, and also on whether we are
+     * encoding whitespace as itself. RFC2152 makes it clear that the answers to these questions
+     * vary between applications, so this code needs to be flexible.
+     *
+     * @param c code point of the character
+     * @param directO true if characters in "set O" may be encoded as themselves
+     * @param directWS true if whitespace characters may be encoded as themselves
+     * @return
+     */
+    private static boolean ENCODE_DIRECT(int c, boolean directO, boolean directWS) {
+
+        if (c >= 128 || c < 0) {
+            return false;   // Character not in table is always special
+        } else {
+            switch (utf7_category[c]) {
+                case 0:     // This is a regular character
+                    return true;
+                case 1:     // This is a whilespace character
+                    return directWS;
+                case 2:     // This is an optional special character
+                    return directO;
+                default:    // This is always a special character (including '+')
+                    return false;
+            }
+        }
     }
 
+    /** Look-up for the Base64 encoded byte [0..0x3f] */
     private static final String B64_CHARS =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    private static char B64(int n) {
+    /** What is the Base64 encoded byte for (the bottom 6 bits of) n? */
+    private static char TO_BASE64(int n) {
         return B64_CHARS.charAt(n & 0x3f);
     }
 
-    private static boolean B64CHAR(char c) {
-        return B64_CHARS.indexOf(c) != -1;
-    }
-
-    private static int UB64(char c) {
-        return (c == '+' ? 62 : c == '/' ? 63 : c >= 'a' ? c - 71 : c >= 'A' ? c - 65 : c + 4);
-    }
-
-    /*
-     * note that we follow CPython 2.5 exactly here - it does not support surrogates, but has to
-     * process as-if they are there for replacement purposes fortunately no one really cares about
-     * utf-7.
+    /**
+     * Is c the code point of a Base64 character? And if so, what is the 6-bit quantity to be
+     * decodec from c? Return the 6-bit equivalent of c in a Base64 segment, -1 if it cannot be used
+     * in a Base64 segment, and -2 for the special case of '-' ending the segment.
      */
-    public static String PyUnicode_DecodeUTF7(String str, String errors) {
-        int s = 0;
-        int e = str.length();
-        boolean inShift = false;
-        int bitsInCharsleft = 0;
-        long charsleft = 0;
-        boolean surrogate = false;
-        StringBuilder unicode = new StringBuilder(e);
-        while (s < e) {
-            // restart:
-            char ch = str.charAt(s);
-            if (inShift) {
-                if ((ch == '-') || !B64CHAR(ch)) {
-                    inShift = false;
-                    s++;
-                    while (bitsInCharsleft >= 16) {
-                        bitsInCharsleft -= 16;
-                        char outCh = (char)((charsleft >> bitsInCharsleft) & 0xffff);
-                        if (surrogate) {
-                            s = codecs.insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                                    s, s + 1, "code pairs are not supported");
-                            surrogate = false;
-                        } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
-                            surrogate = true;
-                        } else {
-                            unicode.append(outCh);
+    private static int FROM_BASE64(int c) {
+        return (c >= 128) ? -1 : BASE64_VALUE[c];
+    }
+
+    /**
+     * Look-up table to convert ASCII byte to 6-bit Base64 value, -1 if not Base64, and -2 if
+     * special terminator '-'.
+     */
+    private static final byte[] BASE64_VALUE = {//@formatter:off
+    // nul soh stx etx eot enq ack bel  bs  ht  nl  vt  np  cr  so  si
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    // dle dc1 dc2 dc3 dc4 nak syn etb can  em sub esc  fs  gs  rs  us
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    //  sp   !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -2, -1, 63,
+    //   0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+    //   @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    //   P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+    //   `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    //   p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~ del
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+    };//@formatter:on
+
+    /**
+     * Enumeration of the error causes during decoding of the Base64 segment of UTF-7
+     */
+    static enum UTF7Error {
+        NONE("No error"),                                               // No error
+        PADDING("non-zero padding bits in shift sequence"),             // Error when at end
+        PARTIAL("partial character in shift sequence"),                 // Error when at end
+        TRUNCATED("second surrogate missing at end of shift sequence"), // Error when at end
+        MISSING("second surrogate missing"),  // Lead surrogate followed by another, or BMP
+        TRAIL("unexpected second surrogate"); // Trail surrogate not preceded by lead
+
+        /** Suitable error message */
+        final String msg;
+
+        private UTF7Error(String msg) {
+            this.msg = msg;
+        }
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-7 encoded form of a
+     * Unicode string and return the (Jython internal representation of) the unicode object, and
+     * amount of input consumed. The only state we preserve is our read position, i.e. how many
+     * characters we have consumed. So if the input ends part way through a Base64 sequence the data
+     * reported as consumed is only that up to and not including the Base64 start marker ('+').
+     * Performance will be poor (quadratic cost) on runs of Base64 data long enough to exceed the
+     * input quantum in incremental decoding. The retruned Java String is a UTF-16 representation of
+     * the Unicode result, in line with Java conventions. Unicode characters above the BMP are
+     * represented as surrogate pairs.
+     *
+     * @param bytes input represented as String (Jython PyString convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param consumed returns number of bytes consumed in element 0, or is null if a "final" call
+     * @return unicode result (as UTF-16 Java String)
+     */
+    public static String PyUnicode_DecodeUTF7Stateful(String bytes, String errors, int[] consumed) {
+        int s;                      // Index in the input bytes
+        boolean inBase64 = false;   // Whether s is currently in a Base64 segment
+        long base64buffer = 0;      // Stored bits buffer during Base64 decoding
+        int base64bits = 0;         // Number of valid bits buffered during Base64 decoding
+        int startInBytes = 0;       // Place in input bytes where most recent Base64 segment begins
+        int syncInBytes = 0;        // Place in input bytes where stored bits buffer last empty
+        int startInUnicode = 0;     // Place in output unicode where most recent Base64 segment begins
+
+        int size = bytes.length();
+        StringBuilder unicode = new StringBuilder(size);
+
+        for (s = 0; s < size; s++) { // In error cases s may skip forwards in bytes
+
+            // Next byte to process
+            int b = bytes.charAt(s);
+
+            if (b >= 128) {
+                // The input was supposed to be 7-bit clean
+                s = insertReplacementAndGetResume(unicode, errors, "utf-7", //
+                        bytes, s, s + 1, "unexpected special character") - 1;
+
+            } else if (inBase64) {
+                // We are currently processing a Base64 section
+
+                if (base64bits == 0) {
+                    // Mark this point as latest easy error recovery point (bits buffer empty)
+                    syncInBytes = s;
+                }
+
+                int sixBits = FROM_BASE64(b);   // returns -ve if not Base64
+                if (sixBits >= 0) {
+                    // And we continue processing a Base64 section
+                    base64buffer = (base64buffer << 6) | sixBits;
+                    base64bits += 6;
+
+                    if (base64bits >= 32) {
+                        // We have enough bits for a code point
+                        base64bits = emitCodePoints(unicode, base64buffer, base64bits);
+
+                        if (base64bits >= 32) {
+                            // We stopped prematurely. Why?
+                            UTF7Error error = emitCodePointsDiagnosis(base64buffer, base64bits);
+                            // Difficult to know exactly what input characters to blame
+                            s = insertReplacementAndGetResume(unicode, errors, "utf-7", //
+                                    bytes, syncInBytes, s + 1, error.msg) - 1;
+                            // Discard one UTF-16 output and hope for the best
+                            base64bits -= 16;
                         }
+
                     }
-                    if (bitsInCharsleft >= 6) {
+
+                } else {
+                    // We are now leaving a Base64 section
+                    inBase64 = false;
+
+                    // We should have a whole number of code points and < 6 bits zero padding
+                    if (base64bits > 0) {
+                        // Try to emit them all
+                        base64bits = emitCodePoints(unicode, base64buffer, base64bits);
+                        // Now check for errors
+                        UTF7Error error = emitCodePointsDiagnosis(base64buffer, base64bits);
+                        if (error != UTF7Error.NONE) {
+                            // Difficult to know exactly what input characters to blame
+                            s = insertReplacementAndGetResume(unicode, errors, "utf-7", //
+                                    bytes, s, s + 1, error.msg) - 1;
+                        }
+                        // We are, in any case, discarding whatever is in the buffer
+                        base64bits = 0;
+                    }
+
+                    if (b == '-') {
                         /*
-                         * The shift sequence has a partial character in it. If bitsleft < 6 then we
-                         * could just classify it as padding but that is not the case here
+                         * '-' signals the end of Base64. The byte is is simply absorbed, but in the
+                         * special case where it is the first byte of the Base64 segment, the
+                         * zero-length segment '+-' actually encodes "+".
                          */
-                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                                s, s + 1, "partial character in shift sequence");
-                    }
-                    /*
-                     * According to RFC2152 the remaining bits should be zero. We choose to signal
-                     * an error/insert a replacement character here so indicate the potential of a
-                     * misencoded character.
-                     */
-                    if (bitsInCharsleft > 0 && ((charsleft << 5 - bitsInCharsleft) & 0x1f) > 0) {
-                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                                s, s + 1, "non-zero padding bits in shift sequence");
-                    }
-                    if (ch == '-') {
-                        if ((s < e) && (str.charAt(s) == '-')) {
-                            unicode.append('-');
-                            inShift = true;
+                        if (s == startInBytes + 1) {
+                            unicode.append('+');
                         }
-                    } else if (SPECIAL(ch, false, false)) {
-                        s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                                s, s + 1, "unexpected special character");
                     } else {
-                        unicode.append(ch);
-                    }
-                } else {
-                    charsleft = (charsleft << 6) | UB64(ch);
-                    bitsInCharsleft += 6;
-                    s++;
-                    while (bitsInCharsleft >= 16) {
-                        bitsInCharsleft -= 16;
-                        char outCh = (char)((charsleft >> bitsInCharsleft) & 0xffff);
-                        if (surrogate) {
-                            s = codecs.insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                                    s, s + 1, "code pairs are not supported");
-                        } else if (0xDC00 <= outCh && outCh <= 0xDFFF) {
-                            surrogate = true;
-                        } else {
-                            unicode.append(outCh);
-                        }
+                        /*
+                         * This b is a US-ASCII byte for some character.
+                         */
+                        unicode.appendCodePoint(b);
                     }
                 }
-            } else if (ch == '+') {
-                s++;
-                if (s < e && str.charAt(s) == '-') {
-                    s++;
-                    unicode.append('+');
-                } else {
-                    inShift = true;
-                    bitsInCharsleft = 0;
-                }
-            } else if (SPECIAL(ch, false, false)) {
-                s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                        s, s + 1, "unexpected special character");
+
+            } else if (b == '+') {
+                /*
+                 * We are not currently processing a Base64 section, but this starts one. Remember
+                 * where it starts, in the input bytes and the output unicode so that, if we hit the
+                 * end of input before it ends, we can leave it unprocessed for next time.
+                 */
+                startInBytes = s;
+                startInUnicode = unicode.length();
+
+                // Initialise the Base64 decoder
+                base64bits = 0;
+                inBase64 = true;
+
             } else {
-                unicode.append(ch);
-                s++;
-            }
-            if (inShift && s == e) {
-                s = insertReplacementAndGetResume(unicode, errors, "utf-7", str, //
-                        s, s, "unterminated shift sequence");
+                /*
+                 * This b is a US-ASCII byte for some character. We are permissive on decoding; the
+                 * only ASCII byte not decoding to itself is the + which begins a base64 string.
+                 */
+                unicode.appendCodePoint(b);
             }
         }
+
+        /*
+         * We hit the end of the input. If we were part way through some Base64 processing, since we
+         * don't store all that state (inBase64, base64bits, base64buffer) the strategy is to back
+         * up the input pointer to the '-' that started the current Base64 segment.
+         */
+        if (inBase64) {
+            // Restore state to beginning of last Base64 sequence
+            s = startInBytes;
+            unicode.setLength(startInUnicode);
+        }
+
+        if (consumed != null) {
+            // Not a final call, so report how much consumed in the consumed argument
+            consumed[0] = s;
+        } else if (s < size) {
+            // This was final but we didn't exhaust the input: that's an error.
+            s = insertReplacementAndGetResume(unicode, errors, "utf-7", //
+                    bytes, startInBytes, size, "unterminated shift sequence");
+        }
+
         return unicode.toString();
     }
 
-    public static String PyUnicode_EncodeUTF7(String str, boolean encodeSetO,
-            boolean encodeWhiteSpace, String errors) {
-        int size = str.length();
+    /**
+     * Decode completely a sequence of bytes representing the UTF-7 encoded form of a Unicode string
+     * and return the (Jython internal representation of) the unicode object. The retruned Java
+     * String is a UTF-16 representation of the Unicode result, in line with Java conventions.
+     * Unicode characters above the BMP are represented as surrogate pairs.
+     *
+     * @param bytes input represented as String (Jython PyString convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return unicode result (as UTF-16 Java String)
+     */
+    public static String PyUnicode_DecodeUTF7(String bytes, String errors) {
+        return PyUnicode_DecodeUTF7Stateful(bytes, errors, null);
+    }
 
-        if (size == 0) {
-            return "";
-        }
-        boolean inShift = false;
-        int bitsleft = 0;
-        int charsleft = 0;
+    /**
+     * Helper for {@link #PyUnicode_DecodeUTF7Stateful(String, String, int[])} to emit characters
+     * that accumulated as UTF-16 code units in the bits of a long integer (from Base64 decoding,
+     * say). The buffer variable may hold any number of bits (up to its 64-bit capacity). The number
+     * of valid bits is given by argument <code>n</code> and they are the <code>n</code> least
+     * significant of the buffer.
+     * <p>
+     * Only complete Unicode characters are emitted, which are obtained by consuming 16 bits (when
+     * those bits identify a BMP character), or 32 bits (when those bits form a surrogate pair).
+     * Consumed bits are not cleared from the buffer (it is passed by value), and there is no need
+     * for the client to clear them, but the method returns the new number of valid bits n1, which
+     * are in the least significant positions (that is, bits <code>n1-1</code> to <code>0</code>).
+     *
+     * If the method returns with 32 or more bits unconsumed, it has encountered an invalid sequence
+     * of bits: the leading bits will then either be an "unaccompanied" trail surrogate, or a lead
+     * surrogate not followed by a trail surrogate.
+     *
+     * @param v output UTF-16 sequence
+     * @param buffer holding the bits
+     * @param n the number of bits held (<=64)
+     * @return the number of bits not emitted (<32 unless error)
+     */
+    private static int emitCodePoints(StringBuilder v, long buffer, int n) {
 
-        StringBuilder v = new StringBuilder();
+        // Emit code points until too few in the buffer to process.
+        while (n >= 16) {
 
-        for (int i = 0; i < size; ++i) {
-            char ch = str.charAt(i);
+            /*
+             * Get the top 16 bits of the buffer to bottom of an int. Note no 0xffff mask as bits to
+             * left of bit-15 are harmless
+             */
+            int unit = (int)(buffer >>> (n - 16));
+            boolean unitIsSurrogate = ((unit & 0xF800) == 0xD800);
 
-            if (!inShift) {
-                if (ch == '+') {
-                    v.append('+');
-                    v.append('-');
-                } else if (SPECIAL(ch, encodeSetO, encodeWhiteSpace)) {
-                    charsleft = ch;
-                    bitsleft = 16;
-                    v.append('+');
-                    while (bitsleft >= 6) {
-                        v.append(B64(charsleft >> (bitsleft - 6)));
-                        bitsleft -= 6;
+            if (!unitIsSurrogate) {
+                // This (or rather its bottom 16 bits) is a BMP codepoint: easy
+                v.append((char)unit);
+                n -= 16;
+
+            } else if (n >= 32) {
+                // This a surrogate unit and we have enough bits for the whole code point.
+                if ((unit & 0x0400) == 0) {
+                    // This is a lead surrogate as expected ... get the trail surrogate.
+                    int unit2 = (int)(buffer >>> (n - 32));
+                    if ((unit2 & 0xFC00) == 0xD800) {
+                        // And this is the trail surrogate we expected
+                        v.appendCodePoint(0x10000 + ((unit & 0x3ff) << 10) + (unit2 & 0x3ff));
+                        n -= 32;
+                    } else {
+                        // But this isn't a trail surrogate: jam at >=32
+                        return n;
                     }
-                    inShift = bitsleft > 0;
                 } else {
-                    v.append(ch);
+                    // This is an unaccompanied trail surrogate: jam at >=32
+                    return n;
                 }
+
             } else {
-                if (!SPECIAL(ch, encodeSetO, encodeWhiteSpace)) {
-                    v.append(B64(charsleft << (6 - bitsleft)));
-                    charsleft = 0;
-                    bitsleft = 0;
-                    /*
-                     * Characters not in the BASE64 set implicitly unshift the sequence so no '-' is
-                     * required, except if the character is itself a '-'
-                     */
-                    if (B64CHAR(ch) || ch == '-') {
-                        v.append('-');
+                // This a non-BMP code point but we don't have enough bits to deal with it yet
+                return n;
+            }
+
+        }
+
+        return n;
+    }
+
+    /**
+     * Helper for {@link #PyUnicode_DecodeUTF7Stateful(String, String, int[])} to diagnose what went
+     * wrong in {@link #emitCodePoints(StringBuilder, long, int)}. When called with fewer than 32
+     * bits in the buffer, it assumes we are in the run-down of processing at the end of the
+     * decoder, where partial output characters are an error. For 32 bits or more, It duplicates
+     * some logic, but is called only during abnormal processing. The return is:
+     * <table>
+     * <tr>
+     * <td>NONE</td>
+     * <td>No error</td>
+     * </tr>
+     * <tr>
+     * <td>PADDING</td>
+     * <td>non-zero padding bits in shift sequence</td>
+     * <td>(error if at end of shift sequence)</td>
+     * </tr>
+     * <tr>
+     * <td>PARTIAL</td>
+     * <td>partial character in shift sequence</td>
+     * <td>(error if at end of shift sequence)</td>
+     * </tr>
+     * <tr>
+     * <td>TRUNCATED</td>
+     * <td>second surrogate missing at end of shift sequence</td>
+     * </tr>
+     * <tr>
+     * <td>MISSING</td>
+     * <td>second surrogate missing</td>
+     * </tr>
+     * <tr>
+     * <td>TRAIL</td>
+     * <td>unexpected second surrogate</td>
+     * </tr>
+     * </table>
+     * <p>
+     * We are compatible with CPython in using the term "second surrogate" in error messages rather
+     * than "trail surrogate" (which is used in the code).
+     * <p>
+     * Note that CPython (see Issue13333) allows this codec to decode lone surrogates into the
+     * internal data of unicode objects. It is difficult to reconcile this with the idea that the
+     * v3.3 statement "Strings contain Unicode characters", but that reconciliation is probably to
+     * be found in PEP383, not implemented in Jython.
+     *
+     * @param buffer holding the bits
+     * @param n the number of bits held (<=64)
+     * @return the diagnosis
+     */
+    private static UTF7Error emitCodePointsDiagnosis(long buffer, int n) {
+
+        if (n >= 16) {
+            /*
+             * Get the top 16 bits of the buffer to bottom of an int. Note no 0xffff mask as bits to
+             * left of bit-15 are harmless
+             */
+            int unit = (int)(buffer >>> (n - 16));
+            boolean unitIsSurrogate = ((unit & 0xF800) == 0xD800);
+
+            if (!unitIsSurrogate) {
+                // No problem. In practice, we should never land here.
+                return UTF7Error.NONE;
+
+            } else if (n >= 32) {
+
+                if ((unit & 0x0400) == 0) {
+                    // This is a lead surrogate, which is valid: check the next 16 bits.
+                    int unit2 = ((int)(buffer >>> (n - 32))) & 0xffff;
+                    if ((unit2 & 0xFC00) == 0xD800) {
+                        // Not trail surrogate: that's the problem
+                        return UTF7Error.MISSING;
+                    } else {
+                        // Hmm ... why was I called?
+                        return UTF7Error.NONE;
                     }
-                    inShift = false;
-                    v.append(ch);
+
                 } else {
-                    bitsleft += 16;
-                    charsleft = (charsleft << 16) | ch;
-                    while (bitsleft >= 6) {
-                        v.append(B64(charsleft >> (bitsleft - 6)));
-                        bitsleft -= 6;
-                    }
+                    // This is an unexpected trail surrogate
+                    return UTF7Error.TRAIL;
+                }
+
+            } else {
+                // Note that 32 > n >= 16, so we are at the end of decoding
+
+                if ((unit & 0x0400) == 0) {
                     /*
-                     * If the next character is special then we dont' need to terminate the shift
-                     * sequence. If the next character is not a BASE64 character or '-' then the
-                     * shift sequence will be terminated implicitly and we don't have to insert a
-                     * '-'.
+                     * This is a lead surrogate, but since decoding stopped we must have reched the
+                     * end of a Base64 segment without the trail surrogate appearing.
                      */
+                    return UTF7Error.TRUNCATED;
 
-                    if (bitsleft == 0) {
-                        if (i + 1 < size) {
-                            char ch2 = str.charAt(i + 1);
-
-                            if (SPECIAL(ch2, encodeSetO, encodeWhiteSpace)) {
-
-                            } else if (B64CHAR(ch2) || ch2 == '-') {
-                                v.append('-');
-                                inShift = false;
-                            } else {
-                                inShift = false;
-                            }
-
-                        } else {
-                            v.append('-');
-                            inShift = false;
-                        }
-                    }
+                } else {
+                    // This is an unexpected trail surrogate
+                    return UTF7Error.TRAIL;
                 }
             }
+
+        } else if (n >= 6) {
+            // Fewer than 16 bits: at end of decoding with Base64 characters left over
+            return UTF7Error.PARTIAL;
+
+        } else {
+            // Fewer than 6 bits, which should all be zero. Make a mask to extract them.
+            int validBits = (1 << n) - 1;
+            int padding = ((int)buffer) & validBits;
+            if (padding != 0) {
+                // At end of decoding with non-zero padding
+                return UTF7Error.PADDING;
+            } else {
+                // Any bits left are zero: that's ok then.
+                return UTF7Error.NONE;
+            }
         }
-        if (bitsleft > 0) {
-            v.append(B64(charsleft << (6 - bitsleft)));
+    }
+
+    /**
+     * Encode a UTF-16 Java String as UTF-7 bytes represented by the low bytes of the characters in
+     * a String. (String representation for byte data is chosen so that it may immediately become a
+     * PyString.)
+     *
+     * This method differs from the CPython equivalent (in <code>Object/unicodeobject.c</code>)
+     * which works with an array of point codes that are, in a wide build, Unicode code points.
+     *
+     * @param unicode
+     * @param base64SetO
+     * @param base64WhiteSpace
+     * @param errors
+     * @return
+     */
+    public static String PyUnicode_EncodeUTF7(String unicode, boolean base64SetO,
+            boolean base64WhiteSpace, String errors) {
+        boolean inBase64 = false;
+        int base64bits = 0;
+        long base64buffer = 0;
+
+        int size = unicode.length();
+
+        // Output bytes here: sized for ASCII + a few non-BMP characters
+        // We use a StringBuilder and return a String, but we are really storing encoded bytes
+        StringBuilder v = new StringBuilder(size + size / 8 + 10);
+
+        for (int i = 0; i < size; i++) {
+
+            // Next UTF-16 code unit to process
+            int ch = unicode.charAt(i);
+
+            /*
+             * Decide what to output and prepare for it. Mainly, decide whether to represent this
+             * UTF-16 code unit in Base64 or US-ASCII, and switch modes, with output, accordingly.
+             */
+            if (inBase64) {
+                // Currently we are in Base64 encoding: should we switch out?
+                if (ENCODE_DIRECT(ch, !base64SetO, !base64WhiteSpace)) {
+                    /*
+                     * The next character is one for which we do not neeed to be in Base64, so pad
+                     * out to 6n the Base64 bits we currently have buffered and emit them. Then
+                     * switch to US-ASCII.
+                     */
+                    emitBase64Padded(v, base64buffer, base64bits);
+                    inBase64 = false;
+
+                    if (FROM_BASE64(ch) != -1) {
+                        // Character is in the Base64 set, or is a '-': must signal end explicitly.
+                        v.append('-');
+                    }
+                }
+
+            } else {
+                // Not currently in Base64 encoding: should we switch in?
+                if (ch == '+') {
+                    // Special case for + since it would otherwise flag a start
+                    v.append('+');
+                    ch = '-'; // Comes out as +-
+                } else if (!ENCODE_DIRECT(ch, !base64SetO, !base64WhiteSpace)) {
+                    /*
+                     * The next character is one for which we neeed to be in Base64, so switch to it
+                     * and emit the Base64 start marker and initialise the coder.
+                     */
+                    v.append('+');
+                    inBase64 = true;
+                    base64bits = 0;
+                }
+            }
+
+            /*
+             * We have decided what to do (US-ASCII or Base64) but we haven't done it yet.
+             */
+            if (!inBase64) {
+                // We decided to encode the current character as US-ASCII and are in that mode
+                v.append((char)ch);
+
+            } else {
+                // We decided to encode the current character as Base64 and are in that mode
+                /*
+                 * In the present implementation the characters are suppplied as a UTF-16 Java
+                 * String. The UTF-7 approach to characters beyond the BMP is to encode the
+                 * surrogate pair as two 16-bit pseudo-characters, which is how Jython represents it
+                 * already, so the first part is already done for us by accessing the internal
+                 * representation.
+                 */
+                // XXX see issue #2002: we should only count surrogate pairs as one character
+                // if ((ch & 0xFC00)==0xC800) { count++; }
+
+                if (base64bits > 48) {
+                    // No room for the next 16 bits: emit all we have
+                    base64bits = emitBase64(v, base64buffer, base64bits);
+                }
+                base64bits += 16;
+                base64buffer = (base64buffer << 16) + ch;
+            }
+        }
+
+        /*
+         * We've run out of input to encode. If we are currently in US-ASCII mode, we can just stop.
+         * If we are in Base64 mode, we have to come to a clean stop, since there is no opportunity
+         * to store this fact as state for next time (and there may be no next time).
+         */
+        if (inBase64) {
+            /*
+             * Currently we are in Base64 encoding and must switch out. Pad out to 6n the bits we
+             * currently have buffered and emit them. We don't know what might come next so emit a
+             * '-' to round out the segment.
+             */
+            emitBase64Padded(v, base64buffer, base64bits);
             v.append('-');
         }
+
         return v.toString();
+    }
+
+    /**
+     * Helper for {@link #PyUnicode_EncodeUTF7(String, boolean, boolean, String)} to emit 6-bit
+     * Base64 code units as bytes to the output. The buffer variable may hold any number of bits (up
+     * to its 64-bit capacity). The number of valid bits is given by argument <code>n</code> and
+     * they are the <code>n</code> least significant of the buffer. Bits will be emitted in groups
+     * of 6, represented by their Base64 character, starting with the 6 most-significant valid bits
+     * of the buffer (that is, bits <code>n-6</code> to <code>n-1</code>). The buffer is not cleared
+     * (it is passed by value), but the method returns the new number of valid bits n1, which are in
+     * the least significant positions (that is, bits <code>n1-1</code> to <code>0</code>).
+     *
+     * @param v output byte array
+     * @param buffer holding the bits
+     * @param n the number of bits held (<=64)
+     * @return the number of bits (<6) not emitted
+     */
+    private static int emitBase64(StringBuilder v, long buffer, int n) {
+        while (n >= 6) {
+            n -= 6;
+            long sixBits = buffer >>> n;
+            char b64byte = TO_BASE64((int)sixBits);
+            v.append(b64byte);
+        }
+        return n;
+    }
+
+    /**
+     * Helper for {@link #PyUnicode_EncodeUTF7(String, boolean, boolean, String)} to emit 6-bit
+     * Base64 code units as bytes to the output. The buffer variable may hold any number of bits (up
+     * to 60 bits). The number of valid bits is given by argument <code>n</code> and they are the
+     * <code>n</code> least significant of the buffer. The buffer will be padded, by shifting in
+     * zeros at the least significant end, until it the number of valid bits is a multiple of 6.
+     * Bits will then be emitted in groups of 6, represented by their Base64 character, starting
+     * with the 6 most-significant valid bits of the buffer (that is, bits <code>n-6</code> to
+     * <code>n-1</code>). The buffer is not cleared (it is passed by value), but can be considered
+     * empty.
+     *
+     * @param v output byte array
+     * @param buffer holding the bits
+     * @param n the number of bits held (<=60)
+     */
+    private static void emitBase64Padded(StringBuilder v, long buffer, int n) {
+        if (n > 0) {
+            int npad = 5 - (n + 5) % 6;                 // smallest such that (n+npad) mod 6 == 0
+            emitBase64(v, buffer << npad, n + npad);    // == 0 as a result of the padding
+        }
     }
 
     /* --- UTF-8 Codec ---------------------------------------------------- */
@@ -865,17 +1269,6 @@ public class codecs {
             }
         }
         return v.toString();
-    }
-
-    public static int calcNewPosition(int size, PyObject errorTuple) {
-        int newPosition = ((PyInteger)errorTuple.__getitem__(1)).getValue();
-        if (newPosition < 0) {
-            newPosition = size + newPosition;
-        }
-        if (newPosition > size || newPosition < 0) {
-            throw Py.IndexError(newPosition + " out of bounds of encoded string");
-        }
-        return newPosition;
     }
 
     /* --- RawUnicodeEscape Codec ---------------------------------------- */
@@ -1176,40 +1569,106 @@ public class codecs {
         return replacement;
     }
 
+    /**
+     * Handler errors encountered during decoding, adjusting the output buffer contents and
+     * returning the correct position to resume decoding (if the handler does not siomply raise an
+     * exception).
+     *
+     * @param partialDecode output buffer of unicode (as UTF-16) that the codec is building
+     * @param errors name of the error policy (or null meaning "strict")
+     * @param encoding name of encoding that encountered the error
+     * @param toDecode bytes being decoded
+     * @param start index of first byte it couldn't decode
+     * @param end index+1 of last byte it couldn't decode (usually becomes the resume point)
+     * @param reason contribution to error message if any
+     * @return the resume position: index of next byte to decode
+     */
     public static int insertReplacementAndGetResume(StringBuilder partialDecode, String errors,
             String encoding, String toDecode, int start, int end, String reason) {
+
+        // Handle the two special cases "ignore" and "replace" locally
         if (errors != null) {
             if (errors.equals(IGNORE)) {
+                // Just skip to the first non-problem byte
                 return end;
             } else if (errors.equals(REPLACE)) {
-                while (start < end) {
-                    partialDecode.appendCodePoint(Py_UNICODE_REPLACEMENT_CHARACTER);
-                    start++;
-                }
+                // Insert *one* Unicode replacement character and skip
+                partialDecode.appendCodePoint(Py_UNICODE_REPLACEMENT_CHARACTER);
                 return end;
             }
         }
-        PyObject replacement = decoding_error(errors, encoding, toDecode, start, end, reason);
-        checkErrorHandlerReturn(errors, replacement);
-        partialDecode.append(replacement.__getitem__(0).toString());
-        return calcNewPosition(toDecode.length(), replacement);
+
+        // If errors not one of those, invoke the generic mechanism
+        PyObject replacementSpec = decoding_error(errors, encoding, toDecode, start, end, reason);
+        checkErrorHandlerReturn(errors, replacementSpec);
+
+        // Deliver the replacement unicode text to the output buffer
+        partialDecode.append(replacementSpec.__getitem__(0).toString());
+
+        // Return the index in toDecode at which we should resume
+        return calcNewPosition(toDecode.length(), replacementSpec);
     }
 
-    public static PyObject decoding_error(String errors, String encoding, String toEncode,
+    /**
+     * Invoke a user-defined error-handling mechanism, for errors encountered during decoding, as
+     * registered through {@link #register_error(String, PyObject)}. The return value is the return
+     * from the error handler indicating the replacement codec output and the the position at which
+     * to resume decoding. invokes the mechanism described in PEP-293.
+     *
+     * @param errors name of the error policy (or null meaning "strict")
+     * @param encoding name of encoding that encountered the error
+     * @param toDecode bytes being decoded
+     * @param start index of first byte it couldn't decode
+     * @param end index+1 of last byte it couldn't decode (usually becomes the resume point)
+     * @param reason contribution to error message if any
+     * @return must be a tuple <code>(replacement_unicode, resume_index)</code>
+     */
+    public static PyObject decoding_error(String errors, String encoding, String toDecode,
             int start, int end, String reason) {
+        // Retrieve handler registered through register_error(). null is equivalent to "strict".
         PyObject errorHandler = lookup_error(errors);
-        PyException exc = Py.UnicodeDecodeError(encoding, toEncode, start, end, reason);
+        // Construct an exception to hand to the error handler
+        PyException exc = Py.UnicodeDecodeError(encoding, toDecode, start, end, reason);
         exc.normalize();
+        // And invoke the handler.
         return errorHandler.__call__(new PyObject[] {exc.value});
     }
 
-    private static void checkErrorHandlerReturn(String errors, PyObject replacement) {
-        if (!(replacement instanceof PyTuple) || replacement.__len__() != 2
-                || !(replacement.__getitem__(0) instanceof PyBaseString)
-                || !(replacement.__getitem__(1) instanceof PyInteger)) {
+    /**
+     * Check thet the error handler returned a tuple
+     * <code>(replacement_unicode, resume_index)</code>.
+     *
+     * @param errors name of the error policy (or null meaning "strict")
+     * @param replacementSpec from error handler
+     */
+    private static void checkErrorHandlerReturn(String errors, PyObject replacementSpec) {
+        if (!(replacementSpec instanceof PyTuple) || replacementSpec.__len__() != 2
+                || !(replacementSpec.__getitem__(0) instanceof PyBaseString)
+                || !(replacementSpec.__getitem__(1) instanceof PyInteger)) {
             throw new PyException(Py.TypeError, "error_handler " + errors
                     + " must return a tuple of (replacement, new position)");
         }
+    }
+
+    /**
+     * Given the return from some codec error handler (invoked while decoding), which specifies a
+     * resume position, and the length of buffer being decoded, check and interpret the resume
+     * position. Negative indexes in the error handler return are interpreted as "from the end". If
+     * the result would be out of bounds in the bytes being decoded, an exception is raised.
+     *
+     * @param size of byte buffer being decoded
+     * @param errorTuple returned from error handler
+     * @return absolute resume position.
+     */
+    public static int calcNewPosition(int size, PyObject errorTuple) {
+        int newPosition = ((PyInteger)errorTuple.__getitem__(1)).getValue();
+        if (newPosition < 0) {
+            newPosition = size + newPosition;
+        }
+        if (newPosition > size || newPosition < 0) {
+            throw Py.IndexError(newPosition + " out of bounds of encoded string");
+        }
+        return newPosition;
     }
 }
 
