@@ -464,7 +464,6 @@ class UnicodeTest(
 
         self.assertRaises(TypeError, unicode, 42, 42, 42)
 
-    @unittest.skip("FIXME: broken")
     def test_codecs_utf7(self):
         utfTests = [
             (u'A\u2262\u0391.', 'A+ImIDkQ.'),             # RFC2152 example
@@ -484,14 +483,17 @@ class UnicodeTest(
         for (x, y) in utfTests:
             self.assertEqual(x.encode('utf-7'), y)
 
-        # surrogates not supported
+        # Lone/misordered surrogates are an error
         self.assertRaises(UnicodeError, unicode, '+3ADYAA-', 'utf-7')
 
-        self.assertEqual(unicode('+3ADYAA-', 'utf-7', 'replace'), u'\ufffd')
+        # Jython (and some CPython versions): two misplaced surrogates => two replacements
+        self.assertEqual(unicode('+3ADYAA-', 'utf-7', 'replace'), u'\ufffd\ufffd')
+        # self.assertEqual(unicode('+3ADYAA-', 'utf-7', 'replace'), u'\ufffd')
 
     def test_codecs_utf8(self):
         self.assertEqual(u''.encode('utf-8'), '')
         self.assertEqual(u'\u20ac'.encode('utf-8'), '\xe2\x82\xac')
+        # Jython will not compile Unicode literals with surrogate units
         #self.assertEqual(u'\ud800\udc02'.encode('utf-8'), '\xf0\x90\x80\x82')
         #self.assertEqual(u'\ud84d\udc56'.encode('utf-8'), '\xf0\xa3\x91\x96')
         #self.assertEqual(u'\ud800'.encode('utf-8'), '\xed\xa0\x80')
@@ -528,6 +530,7 @@ class UnicodeTest(
         # * strict decoding testing for all of the
         #   UTF8_ERROR cases in PyUnicode_DecodeUTF8
 
+    @unittest.skipIf(test_support.is_jython, "IDNA codec missing in Jython (issue 1153)")
     def test_codecs_idna(self):
         # Test whether trailing dot is preserved
         self.assertEqual(u"www.python.org.".encode("idna"), "www.python.org.")
@@ -587,7 +590,6 @@ class UnicodeTest(
         # Error handling (PyUnicode_EncodeDecimal())
         self.assertRaises(UnicodeError, int, u"\u0200")
 
-    @unittest.skip("FIXME: broken")
     def test_codecs(self):
         # Encoding
         self.assertEqual(u'hello'.encode('ascii'), 'hello')
@@ -714,9 +716,6 @@ class UnicodeTest(
         self.assertEqual(x, y)
 
 def test_main():
-    if test_support.is_jython:
-        # http://bugs.jython.org/issue1153
-        del UnicodeTest.test_codecs_idna
     test_support.run_unittest(UnicodeTest)
 
 if __name__ == "__main__":

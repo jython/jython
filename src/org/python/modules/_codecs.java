@@ -1,9 +1,8 @@
 /*
- * Copyright 2000 Finn Bock
+ * Copyright (c)2013 Jython Developers. Original Java version copyright 2000 Finn Bock.
  *
- * This program contains material copyrighted by:
- * Copyright (c) Corporation for National Research Initiatives.
- * Originally written by Marc-Andre Lemburg (mal@lemburg.com).
+ * This program contains material copyrighted by: Copyright (c) Corporation for National Research
+ * Initiatives. Originally written by Marc-Andre Lemburg (mal@lemburg.com).
  */
 package org.python.modules;
 
@@ -23,6 +22,14 @@ import org.python.core.PyUnicode;
 import org.python.core.codecs;
 import org.python.expose.ExposedType;
 
+/**
+ * This class corresponds to the Python _codecs module, which in turn lends its functions to the
+ * codecs module (in Lib/codecs.py). It exposes the implementing functions of several codec families
+ * called out in the Python codecs library Lib/encodings/*.py, where it is usually claimed that they
+ * are bound "as C functions". Obviously, C stands for "compiled" in this context, rather than
+ * dependence on a particular implementation language. Actual transcoding methods often come from
+ * the related {@link codecs} class.
+ */
 public class _codecs {
 
     public static void register(PyObject search_function) {
@@ -45,8 +52,30 @@ public class _codecs {
         return EncodingMap.buildEncodingMap(map);
     }
 
-    private static PyTuple decode_tuple(String s, int len) {
-        return new PyTuple(new PyUnicode(s), Py.newInteger(len));
+    /**
+     * Convenience method to construct the return value of decoders, providing the Unicode result as
+     * a String, and the number of bytes consumed.
+     *
+     * @param u the unicode result as a UTF-16 Java String
+     * @param bytesConsumed the number of bytes consumed
+     * @return the tuple (unicode(u), bytesConsumed)
+     */
+    private static PyTuple decode_tuple(String u, int bytesConsumed) {
+        return new PyTuple(new PyUnicode(u), Py.newInteger(bytesConsumed));
+    }
+
+    /**
+     * Convenience method to construct the return value of decoders, providing the Unicode result
+     * as a String, and the number of bytes consumed in decoding as either a single-element array or
+     * an int to be used if the array argument is null.
+     *
+     * @param u the unicode result as a UTF-16 Java String
+     * @param consumed if not null, element [0] is the number of bytes consumed
+     * @param defaultBytesConsumed if consumed==null, use this as the number of bytes consumed
+     * @return the tuple (unicode(u), bytesConsumed)
+     */
+    private static PyTuple decode_tuple(String u, int[] consumed, int defaultBytesConsumed) {
+        return decode_tuple(u, consumed != null ? consumed[0] : defaultBytesConsumed);
     }
 
     private static PyTuple decode_tuple_str(String s, int len) {
@@ -56,7 +85,6 @@ public class _codecs {
     private static PyTuple encode_tuple(String s, int len) {
         return new PyTuple(new PyString(s), Py.newInteger(len));
     }
-
 
     /* --- UTF-8 Codec --------------------------------------------------- */
     public static PyTuple utf_8_decode(String str) {
@@ -69,8 +97,8 @@ public class _codecs {
 
     public static PyTuple utf_8_decode(String str, String errors, boolean final_) {
         int[] consumed = final_ ? null : new int[1];
-        return decode_tuple(codecs.PyUnicode_DecodeUTF8Stateful(str, errors, consumed),
-                            final_ ? str.length() : consumed[0]);
+        return decode_tuple(codecs.PyUnicode_DecodeUTF8Stateful(str, errors, consumed), final_
+                ? str.length() : consumed[0]);
     }
 
     public static PyTuple utf_8_encode(String str) {
@@ -82,15 +110,19 @@ public class _codecs {
         return encode_tuple(codecs.PyUnicode_EncodeUTF8(str, errors), size);
     }
 
-
     /* --- UTF-7 Codec --------------------------------------------------- */
-    public static PyTuple utf_7_decode(String str) {
-        return utf_7_decode(str, null);
+    public static PyTuple utf_7_decode(String bytes) {
+        return utf_7_decode(bytes, null);
     }
 
-    public static PyTuple utf_7_decode(String str, String errors) {
-        int size = str.length();
-        return decode_tuple(codecs.PyUnicode_DecodeUTF7(str, errors), size);
+    public static PyTuple utf_7_decode(String bytes, String errors) {
+        return utf_7_decode(bytes, null, false);
+    }
+
+    public static PyTuple utf_7_decode(String bytes, String errors, boolean finalFlag) {
+        int[] consumed = finalFlag ? null : new int[1];
+        String decoded = codecs.PyUnicode_DecodeUTF7Stateful(bytes, errors, consumed);
+        return decode_tuple(decoded, consumed, bytes.length());
     }
 
     public static PyTuple utf_7_encode(String str) {
@@ -102,16 +134,14 @@ public class _codecs {
         return encode_tuple(codecs.PyUnicode_EncodeUTF7(str, false, false, errors), size);
     }
 
+    /* --- string-escape Codec -------------------------------------------- */
     public static PyTuple escape_decode(String str) {
         return escape_decode(str, null);
     }
 
     public static PyTuple escape_decode(String str, String errors) {
-        return decode_tuple_str(PyString.decode_UnicodeEscape(str,
-                0,
-                str.length(),
-                errors,
-                true), str.length());
+        return decode_tuple_str(PyString.decode_UnicodeEscape(str, 0, str.length(), errors, true),
+                str.length());
     }
 
     public static PyTuple escape_encode(String str) {
@@ -123,63 +153,118 @@ public class _codecs {
     }
 
     /* --- Character Mapping Codec --------------------------------------- */
-    public static PyTuple charmap_decode(String str,
-            String errors,
-            PyObject mapping) {
-        return charmap_decode(str, errors, mapping, false);
+
+    /**
+     * Equivalent to <code>charmap_decode(bytes, errors, null)</code>. This method is here so the
+     * error and mapping arguments can be optional at the Python level.
+     *
+     * @param bytes sequence of bytes to decode
+     * @return decoded string and number of bytes consumed
+     */
+    public static PyTuple charmap_decode(String bytes) {
+        return charmap_decode(bytes, null, null);
     }
 
-    public static PyTuple charmap_decode(String str,
-            String errors,
-            PyObject mapping, boolean ignoreUnmapped) {
+    /**
+     * Equivalent to <code>charmap_decode(bytes, errors, null)</code>. This method is here so the
+     * error argument can be optional at the Python level.
+     *
+     * @param bytes sequence of bytes to decode
+     * @param errors error policy
+     * @return decoded string and number of bytes consumed
+     */
+    public static PyTuple charmap_decode(String bytes, String errors) {
+        return charmap_decode(bytes, errors, null);
+    }
 
+    /**
+     * Decode a sequence of bytes into Unicode characters via a mapping supplied as a container to
+     * be indexed by the byte values (as unsigned integers). If the mapping is null or None, decode
+     * with latin-1 (essentially treating bytes as character codes directly).
+     *
+     * @param bytes sequence of bytes to decode
+     * @param errors error policy
+     * @param mapping to convert bytes to characters
+     * @return decoded string and number of bytes consumed
+     */
+    public static PyTuple charmap_decode(String str, String errors, PyObject mapping) {
+        if (mapping == null || mapping == Py.None) {
+            // Default to Latin-1
+            return latin_1_decode(str, errors);
+        } else {
+            return charmap_decode(str, errors, mapping, false);
+        }
+    }
 
-        int size = str.length();
+    /**
+     * Decode a sequence of bytes into Unicode characters via a mapping supplied as a container to
+     * be indexed by the byte values (as unsigned integers).
+     *
+     * @param bytes sequence of bytes to decode
+     * @param errors error policy
+     * @param mapping to convert bytes to characters
+     * @param ignoreUnmapped if true, pass unmapped byte values as character codes [0..256)
+     * @return decoded string and number of bytes consumed
+     */
+    public static PyTuple charmap_decode(String bytes, String errors, PyObject mapping,
+            boolean ignoreUnmapped) {
+        // XXX bytes: would prefer to accept any object with buffer API
+        int size = bytes.length();
         StringBuilder v = new StringBuilder(size);
+
         for (int i = 0; i < size; i++) {
-            char ch = str.charAt(i);
-            if (ch > 0xFF) {
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "charmap",
-                        str,
-                        i,
-                        i + 1,
-                        "ordinal not in range(255)") - 1;
+
+            // Process the i.th input byte
+            int b = bytes.charAt(i);
+            if (b > 0xff) {
+                i = codecs.insertReplacementAndGetResume(v, errors, "charmap", bytes, //
+                        i, i + 1, "ordinal not in range(255)") - 1;
                 continue;
             }
-            PyObject w = Py.newInteger(ch);
+
+            // Map the byte to an output character code (or possibly string)
+            PyObject w = Py.newInteger(b);
             PyObject x = mapping.__finditem__(w);
+
+            // Apply to the output
             if (x == null) {
+                // Error case: mapping not found
                 if (ignoreUnmapped) {
-                    v.append(ch);
+                    v.appendCodePoint(b);
                 } else {
-                    i = codecs.insertReplacementAndGetResume(v, errors, "charmap", str, i, i + 1, "no mapping found") - 1;
+                    i = codecs.insertReplacementAndGetResume(v, errors, "charmap", bytes, //
+                            i, i + 1, "no mapping found") - 1;
                 }
-                continue;
-            }
-            /* Apply mapping */
-            if (x instanceof PyInteger) {
-                int value = ((PyInteger) x).getValue();
+
+            } else if (x instanceof PyInteger) {
+                // Mapping was to an int: treat as character code
+                int value = ((PyInteger)x).getValue();
                 if (value < 0 || value > PySystemState.maxunicode) {
-                    throw Py.TypeError("character mapping must return " + "integer greater than 0 and less than sys.maxunicode");
+                    throw Py.TypeError("character mapping must return "
+                            + "integer greater than 0 and less than sys.maxunicode");
                 }
-                v.append((char) value);
+                v.appendCodePoint(value);
+
             } else if (x == Py.None) {
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "charmap",
-                        str,
-                        i,
-                        i + 1,
-                        "character maps to <undefined>") - 1;
+                i = codecs.insertReplacementAndGetResume(v, errors, "charmap", bytes, //
+                        i, i + 1, "character maps to <undefined>") - 1;
+
             } else if (x instanceof PyString) {
-                v.append(x.toString());
+                String s = x.toString();
+                if (s.charAt(0) == 0xfffe) {
+                    // Invalid indicates "undefined" see C-API PyUnicode_DecodeCharmap()
+                    i = codecs.insertReplacementAndGetResume(v, errors, "charmap", bytes, //
+                            i, i + 1, "character maps to <undefined>") - 1;
+                } else {
+                    v.append(s);
+                }
+
             } else {
                 /* wrong return value */
                 throw Py.TypeError("character mapping must return " + "integer, None or str");
             }
         }
+
         return decode_tuple(v.toString(), size);
     }
 
@@ -203,7 +288,7 @@ public class _codecs {
                 int value = result.asInt();
                 if (value < 0 || value > PySystemState.maxunicode) {
                     throw Py.TypeError(String.format("character mapping must be in range(0x%x)",
-                                                     PySystemState.maxunicode + 1));
+                            PySystemState.maxunicode + 1));
                 }
                 buf.appendCodePoint(value);
             } else if (result instanceof PyUnicode) {
@@ -216,102 +301,174 @@ public class _codecs {
         return new PyUnicode(buf.toString());
     }
 
-    public static PyTuple charmap_encode(String str, String errors,
-            PyObject mapping) {
-        //Default to Latin-1
-        if (mapping == null) {
-            return latin_1_encode(str, errors);
-        }
-        return charmap_encode_internal(str, errors, mapping, new StringBuilder(str.length()), true);
+    /**
+     * Equivalent to <code>charmap_encode(str, null, null)</code>. This method is here so the error
+     * and mapping arguments can be optional at the Python level.
+     *
+     * @param str to be encoded
+     * @return (encoded data, size(str)) as a pair
+     */
+    public static PyTuple charmap_encode(String str) {
+        return charmap_encode(str, null, null);
     }
 
-    private static PyTuple charmap_encode_internal(String str,
-            String errors,
-            PyObject mapping,
-            StringBuilder v,
-            boolean letLookupHandleError) {
+    /**
+     * Equivalent to <code>charmap_encode(str, errors, null)</code>. This method is here so the
+     * mapping can be optional at the Python level.
+     *
+     * @param str to be encoded
+     * @param errors error policy name (e.g. "ignore")
+     * @return (encoded data, size(str)) as a pair
+     */
+    public static PyTuple charmap_encode(String str, String errors) {
+        return charmap_encode(str, errors, null);
+    }
+
+    /**
+     * Encoder based on an optional character mapping. This mapping is either an
+     * <code>EncodingMap</code> of 256 entries, or an arbitrary container indexable with integers
+     * using <code>__finditem__</code> and yielding byte strings. If the mapping is null, latin-1
+     * (effectively a mapping of character code to the numerically-equal byte) is used
+     *
+     * @param str to be encoded
+     * @param errors error policy name (e.g. "ignore")
+     * @param mapping from character code to output byte (or string)
+     * @return (encoded data, size(str)) as a pair
+     */
+    public static PyTuple charmap_encode(String str, String errors, PyObject mapping) {
+        if (mapping == null || mapping == Py.None) {
+            // Default to Latin-1
+            return latin_1_encode(str, errors);
+        } else {
+            return charmap_encode_internal(str, errors, mapping, new StringBuilder(str.length()),
+                    true);
+        }
+    }
+
+    /**
+     * Helper to implement the several variants of <code>charmap_encode</code>, given an optional
+     * mapping. This mapping is either an <code>EncodingMap</code> of 256 entries, or an arbitrary
+     * container indexable with integers using <code>__finditem__</code> and yielding byte strings.
+     *
+     * @param str to be encoded
+     * @param errors error policy name (e.g. "ignore")
+     * @param mapping from character code to output byte (or string)
+     * @param v to contain the encoded bytes
+     * @param letLookupHandleError
+     * @return (encoded data, size(str)) as a pair
+     */
+    private static PyTuple charmap_encode_internal(String str, String errors, PyObject mapping,
+            StringBuilder v, boolean letLookupHandleError) {
+
         EncodingMap encodingMap = mapping instanceof EncodingMap ? (EncodingMap)mapping : null;
         int size = str.length();
+
         for (int i = 0; i < size; i++) {
+
+            // Map the i.th character of str to some value
             char ch = str.charAt(i);
             PyObject x;
             if (encodingMap != null) {
+                // The mapping given was an EncodingMap [0,256) => on-negative int
                 int result = encodingMap.lookup(ch);
-                if (result == -1) {
-                    x = null;
-                } else {
-                    x = Py.newInteger(result);
-                }
+                x = (result == -1) ? null : Py.newInteger(result);
             } else {
+                // The mapping was a map or similar: non-negative int -> object
                 x = mapping.__finditem__(Py.newInteger(ch));
             }
+
+            // And map this object to an output character
             if (x == null) {
+                // Error during lookup
                 if (letLookupHandleError) {
+                    // Some kind of substitute can be placed in the output
                     i = handleBadMapping(str, errors, mapping, v, size, i);
                 } else {
-                    throw Py.UnicodeEncodeError("charmap",
-                            str,
-                            i,
-                            i + 1,
+                    // Hard error
+                    throw Py.UnicodeEncodeError("charmap", str, i, i + 1,
                             "character maps to <undefined>");
                 }
+
             } else if (x instanceof PyInteger) {
-                int value = ((PyInteger) x).getValue();
+                // Look-up had integer result: output as byte value
+                int value = ((PyInteger)x).getValue();
                 if (value < 0 || value > 255) {
                     throw Py.TypeError("character mapping must be in range(256)");
                 }
-                v.append((char) value);
+                v.append((char)value);
+
             } else if (x instanceof PyString && !(x instanceof PyUnicode)) {
+                // Look-up had str or unicode result: output as Java String
+                // XXX: (Py3k) Look-up had bytes or str result: output as ... this is a problem
                 v.append(x.toString());
+
             } else if (x instanceof PyNone) {
                 i = handleBadMapping(str, errors, mapping, v, size, i);
+
             } else {
                 /* wrong return value */
                 throw Py.TypeError("character mapping must return " + "integer, None or str");
             }
         }
+
         return encode_tuple(v.toString(), size);
     }
 
-    private static int handleBadMapping(String str,
-            String errors,
-            PyObject mapping,
-            StringBuilder v,
-            int size,
-            int i) {
+    /**
+     * Helper for {@link #charmap_encode_internal(String, String, PyObject, StringBuilder, boolean)}
+     * called when we need some kind of substitute in the output for an invalid input.
+     *
+     * @param str to be encoded
+     * @param errors error policy name (e.g. "ignore")
+     * @param mapping from character code to output byte (or string)
+     * @param v to contain the encoded bytes
+     * @param size of str
+     * @param i index in str of current (and problematic) character
+     * @return index of last character of problematic section
+     */
+    private static int handleBadMapping(String str, String errors, PyObject mapping,
+            StringBuilder v, int size, int i) {
+
+        // If error policy specified, execute it
         if (errors != null) {
+
             if (errors.equals(codecs.IGNORE)) {
                 return i;
+
             } else if (errors.equals(codecs.REPLACE)) {
-                charmap_encode_internal("?", errors, mapping, v, false);
+                String replStr = "?";
+                charmap_encode_internal(replStr, errors, mapping, v, false);
                 return i;
+
             } else if (errors.equals(codecs.XMLCHARREFREPLACE)) {
-                charmap_encode_internal(codecs.xmlcharrefreplace(i, i + 1, str).toString(), errors, mapping, v, false);
+                String replStr = codecs.xmlcharrefreplace(i, i + 1, str).toString();
+                charmap_encode_internal(replStr, errors, mapping, v, false);
                 return i;
+
             } else if (errors.equals(codecs.BACKSLASHREPLACE)) {
-                charmap_encode_internal(codecs.backslashreplace(i, i + 1, str).toString(), errors, mapping, v, false);
+                String replStr = codecs.backslashreplace(i, i + 1, str).toString();
+                charmap_encode_internal(replStr, errors, mapping, v, false);
                 return i;
             }
         }
-        PyObject replacement = codecs.encoding_error(errors,
-                "charmap",
-                str,
-                i,
-                i + 1,
-                "character maps to <undefined>");
+
+        // Default behaviour (error==null or does not match known case)
+        String msg = "character maps to <undefined>";
+        PyObject replacement = codecs.encoding_error(errors, "charmap", str, i, i + 1, msg);
         String replStr = replacement.__getitem__(0).toString();
         charmap_encode_internal(replStr, errors, mapping, v, false);
+
         return codecs.calcNewPosition(size, replacement) - 1;
     }
 
+    /* --- ascii Codec ---------------------------------------------- */
     public static PyTuple ascii_decode(String str) {
         return ascii_decode(str, null);
     }
 
     public static PyTuple ascii_decode(String str, String errors) {
         int size = str.length();
-        return decode_tuple(codecs.PyUnicode_DecodeASCII(str, size, errors),
-                size);
+        return decode_tuple(codecs.PyUnicode_DecodeASCII(str, size, errors), size);
     }
 
     public static PyTuple ascii_encode(String str) {
@@ -320,10 +477,8 @@ public class _codecs {
 
     public static PyTuple ascii_encode(String str, String errors) {
         int size = str.length();
-        return encode_tuple(codecs.PyUnicode_EncodeASCII(str, size, errors),
-                size);
+        return encode_tuple(codecs.PyUnicode_EncodeASCII(str, size, errors), size);
     }
-
 
     /* --- Latin-1 Codec -------------------------------------------- */
     public static PyTuple latin_1_decode(String str) {
@@ -332,8 +487,7 @@ public class _codecs {
 
     public static PyTuple latin_1_decode(String str, String errors) {
         int size = str.length();
-        return decode_tuple(codecs.PyUnicode_DecodeLatin1(str, size, errors),
-                size);
+        return decode_tuple(codecs.PyUnicode_DecodeLatin1(str, size, errors), size);
     }
 
     public static PyTuple latin_1_encode(String str) {
@@ -345,7 +499,6 @@ public class _codecs {
         return encode_tuple(codecs.PyUnicode_EncodeLatin1(str, size, errors), size);
     }
 
-
     /* --- UTF16 Codec -------------------------------------------- */
     public static PyTuple utf_16_encode(String str) {
         return utf_16_encode(str, null);
@@ -355,10 +508,8 @@ public class _codecs {
         return encode_tuple(encode_UTF16(str, errors, 0), str.length());
     }
 
-    public static PyTuple utf_16_encode(String str, String errors,
-            int byteorder) {
-        return encode_tuple(encode_UTF16(str, errors, byteorder),
-                str.length());
+    public static PyTuple utf_16_encode(String str, String errors, int byteorder) {
+        return encode_tuple(encode_UTF16(str, errors, byteorder), str.length());
     }
 
     public static PyTuple utf_16_le_encode(String str) {
@@ -397,7 +548,7 @@ public class _codecs {
         }
         return v.toString();
     }
-    
+
     public static PyTuple utf_16_decode(String str) {
         return utf_16_decode(str, null);
     }
@@ -407,10 +558,10 @@ public class _codecs {
     }
 
     public static PyTuple utf_16_decode(String str, String errors, boolean final_) {
-        int[] bo = new int[] { 0 };
+        int[] bo = new int[] {0};
         int[] consumed = final_ ? null : new int[1];
-        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? str.length() : consumed[0]);
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed), final_ ? str.length()
+                : consumed[0]);
     }
 
     public static PyTuple utf_16_le_decode(String str) {
@@ -420,27 +571,27 @@ public class _codecs {
     public static PyTuple utf_16_le_decode(String str, String errors) {
         return utf_16_le_decode(str, errors, false);
     }
-        
+
     public static PyTuple utf_16_le_decode(String str, String errors, boolean final_) {
-        int[] bo = new int[] { -1 };
+        int[] bo = new int[] {-1};
         int[] consumed = final_ ? null : new int[1];
-        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? str.length() : consumed[0]);
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed), final_ ? str.length()
+                : consumed[0]);
     }
 
     public static PyTuple utf_16_be_decode(String str) {
         return utf_16_be_decode(str, null);
     }
-    
+
     public static PyTuple utf_16_be_decode(String str, String errors) {
         return utf_16_be_decode(str, errors, false);
     }
 
     public static PyTuple utf_16_be_decode(String str, String errors, boolean final_) {
-        int[] bo = new int[] { 1 };
+        int[] bo = new int[] {1};
         int[] consumed = final_ ? null : new int[1];
-        return decode_tuple(decode_UTF16(str, errors, bo, consumed),
-                            final_ ? str.length() : consumed[0]);
+        return decode_tuple(decode_UTF16(str, errors, bo, consumed), final_ ? str.length()
+                : consumed[0]);
     }
 
     public static PyTuple utf_16_ex_decode(String str) {
@@ -454,27 +605,21 @@ public class _codecs {
     public static PyTuple utf_16_ex_decode(String str, String errors, int byteorder) {
         return utf_16_ex_decode(str, errors, byteorder, false);
     }
-    
-    public static PyTuple utf_16_ex_decode(String str, String errors, int byteorder,
-                                           boolean final_) {
-        int[] bo = new int[] { 0 };
+
+    public static PyTuple
+            utf_16_ex_decode(String str, String errors, int byteorder, boolean final_) {
+        int[] bo = new int[] {0};
         int[] consumed = final_ ? null : new int[1];
         String decoded = decode_UTF16(str, errors, bo, consumed);
-        return new PyTuple(Py.newString(decoded),
-                           Py.newInteger(final_ ? str.length() : consumed[0]),
-                           Py.newInteger(bo[0]));
+        return new PyTuple(new PyUnicode(decoded), Py.newInteger(final_ ? str.length()
+                : consumed[0]), Py.newInteger(bo[0]));
     }
 
-    private static String decode_UTF16(String str,
-            String errors,
-            int[] byteorder) {
+    private static String decode_UTF16(String str, String errors, int[] byteorder) {
         return decode_UTF16(str, errors, byteorder, null);
     }
 
-        private static String decode_UTF16(String str,
-            String errors,
-            int[] byteorder,
-            int[] consumed) {
+    private static String decode_UTF16(String str, String errors, int[] byteorder, int[] consumed) {
         int bo = 0;
         if (byteorder != null) {
             bo = byteorder[0];
@@ -488,13 +633,8 @@ public class _codecs {
                 if (consumed != null) {
                     break;
                 }
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "utf-16",
-                        str,
-                        i,
-                        i + 1,
-                        "truncated data");
+                i = codecs.insertReplacementAndGetResume(v, errors, "utf-16", str, //
+                        i, i + 1, "truncated data");
                 continue;
             }
             char ch2 = str.charAt(i + 1);
@@ -530,23 +670,13 @@ public class _codecs {
                     v.appendCodePoint(U);
                     continue;
                 }
-                i = codecs.insertReplacementAndGetResume(v,
-                        errors,
-                        "utf-16",
-                        str,
-                        i,
-                        i + 1,
-                        "illegal UTF-16 surrogate");
+                i = codecs.insertReplacementAndGetResume(v, errors, "utf-16", str, //
+                        i, i + 1, "illegal UTF-16 surrogate");
                 continue;
             }
 
-            i = codecs.insertReplacementAndGetResume(v,
-                    errors,
-                    "utf-16",
-                    str,
-                    i,
-                    i + 1,
-                    "illegal encoding");
+            i = codecs.insertReplacementAndGetResume(v, errors, "utf-16", str, //
+                    i, i + 1, "illegal encoding");
         }
         if (byteorder != null) {
             byteorder[0] = bo;
@@ -562,10 +692,8 @@ public class _codecs {
         return raw_unicode_escape_encode(str, null);
     }
 
-    public static PyTuple raw_unicode_escape_encode(String str,
-            String errors) {
-        return encode_tuple(codecs.PyUnicode_EncodeRawUnicodeEscape(str,
-                errors, false),
+    public static PyTuple raw_unicode_escape_encode(String str, String errors) {
+        return encode_tuple(codecs.PyUnicode_EncodeRawUnicodeEscape(str, errors, false),
                 str.length());
     }
 
@@ -573,21 +701,17 @@ public class _codecs {
         return raw_unicode_escape_decode(str, null);
     }
 
-    public static PyTuple raw_unicode_escape_decode(String str,
-            String errors) {
-        return decode_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str,
-                errors),
-                str.length());
+    public static PyTuple raw_unicode_escape_decode(String str, String errors) {
+        return decode_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str, errors), str.length());
     }
 
-    /* --- UnicodeEscape Codec -------------------------------------------- */
+    /* --- unicode-escape Codec ------------------------------------------- */
     public static PyTuple unicode_escape_encode(String str) {
         return unicode_escape_encode(str, null);
     }
 
     public static PyTuple unicode_escape_encode(String str, String errors) {
-        return encode_tuple(PyString.encode_UnicodeEscape(str, false),
-                str.length());
+        return encode_tuple(PyString.encode_UnicodeEscape(str, false), str.length());
     }
 
     public static PyTuple unicode_escape_decode(String str) {
@@ -596,14 +720,21 @@ public class _codecs {
 
     public static PyTuple unicode_escape_decode(String str, String errors) {
         int n = str.length();
-        return decode_tuple(PyString.decode_UnicodeEscape(str,
-                0,
-                n,
-                errors,
-                true), n);
+        return decode_tuple(PyString.decode_UnicodeEscape(str, 0, n, errors, true), n);
     }
 
     /* --- UnicodeInternal Codec ------------------------------------------ */
+    // XXX Should deprecate unicode-internal codec and delegate to UTF-32BE (when we have one)
+    /*
+     * This codec is supposed to deal with an encoded form equal to the internal representation of
+     * the unicode object considered as bytes in memory. This was confusing in CPython as it varied
+     * with machine architecture (width and endian-ness). In Jython, the most compatible choice
+     * would be UTF-32BE since unicode objects report their length as if UCS-4 and
+     * sys.byteorder=='big'. The codec is deprecated in v3.3 as irrelevant, or impossible, in view
+     * of the flexible string representation (which Jython emulates in its own way).
+     *
+     * See http://mail.python.org/pipermail/python-dev/2011-November/114415.html
+     */
     public static PyTuple unicode_internal_encode(String str) {
         return unicode_internal_encode(str, null);
     }
@@ -623,19 +754,15 @@ public class _codecs {
     /**
      * Optimized charmap encoder mapping.
      *
-     * Uses a trie structure instead of a dictionary; the speedup primarily comes from not
-     * creating integer objects in the process. The trie is created by inverting the
-     * encoding map.
+     * Uses a trie structure instead of a dictionary; the speedup primarily comes from not creating
+     * integer objects in the process. The trie is created by inverting the encoding map.
      */
     @ExposedType(name = "EncodingMap", isBaseType = false)
     public static class EncodingMap extends PyObject {
 
         char[] level1;
-
         char[] level23;
-
         int count2;
-
         int count3;
 
         private EncodingMap(char[] level1, char[] level23, int count2, int count3) {
@@ -770,4 +897,3 @@ public class _codecs {
         }
     }
 }
-
