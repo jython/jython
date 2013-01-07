@@ -733,8 +733,12 @@ public class PyFloat extends PyObject {
             return new PyFloat(0);
         }
 
-        if ((value == 1.0) && Double.isNaN(iw)) {
-            return new PyFloat(1.0);
+        if (Double.isNaN(iw)) {
+            if (value == 1.0) {
+                return new PyFloat(1.0);
+            } else {
+                return new PyFloat(Double.NaN);
+            }
         }
 
         if (value < 0 && iw != Math.floor(iw)) {
@@ -846,6 +850,18 @@ public class PyFloat extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.float_conjugate_doc)
     final PyObject float_conjugate() {
         return this;
+    }
+
+    public boolean is_integer() {
+        return float_is_integer();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float_is_integer_doc)
+    final boolean float_is_integer() {
+        if (Double.isInfinite(value)) {
+            return false; 
+        }
+        return Math.floor(value) == value;
     }
 
     @Override
