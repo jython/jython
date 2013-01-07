@@ -560,6 +560,43 @@ class UTF7Test(ReadTest):
             ]
         )
 
+    # Jython extra (test supplementary characters)
+    @unittest.skipIf(not test_support.is_jython, "Jython supports surrogate pairs")
+    def test_partial_supp(self):
+        # Check the encoding is what we think it is
+        ustr = u"x\U00023456.\u0177\U00023456\u017az"
+        bstr = b'x+2E3cVg.+AXfYTdxWAXo-z'
+        self.assertEqual(ustr.encode(self.encoding), bstr)
+
+        self.check_partial(
+            ustr,
+            [
+                u"x",
+                u"x",   # '+' added: begins Base64
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x\U00023456.",    # '.' added: ends Base64
+                u"x\U00023456.",    # '+' added: begins Base64
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.\u0177\U00023456\u017a",  # '-' added: ends Base64
+                u"x\U00023456.\u0177\U00023456\u017az",
+            ]
+        )
+
 class UTF16ExTest(unittest.TestCase):
 
     def test_errors(self):
