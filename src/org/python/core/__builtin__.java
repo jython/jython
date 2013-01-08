@@ -1578,7 +1578,7 @@ class RoundFunction extends PyBuiltinFunction {
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("round", args, kwds, new String[] {"number", "ndigits"}, 0);
         PyObject number = ap.getPyObject(0);
-        int ndigits = ap.getInt(1, 0);
+        int ndigits = ap.getIndex(1, 0);
         return round(number.asDouble(), ndigits);
     }
 

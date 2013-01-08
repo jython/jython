@@ -1600,8 +1600,12 @@ public class PyString extends PyBaseString implements BufferProtocol
             String lowSval = sval.toLowerCase();
             if (lowSval.equals("nan")) return Double.NaN;
             else if (lowSval.equals("inf")) return Double.POSITIVE_INFINITY;
+            else if (lowSval.equals("+inf")) return Double.POSITIVE_INFINITY;
             else if (lowSval.equals("-inf")) return Double.NEGATIVE_INFINITY;
-            
+            else if (lowSval.equals("infinity")) return Double.POSITIVE_INFINITY;
+            else if (lowSval.equals("+infinity")) return Double.POSITIVE_INFINITY;
+            else if (lowSval.equals("-infinity")) return Double.NEGATIVE_INFINITY;
+             
             if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
                 throw new NumberFormatException("format specifiers not allowed");
             }

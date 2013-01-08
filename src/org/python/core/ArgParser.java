@@ -189,6 +189,29 @@ public class ArgParser {
     }
 
     /**
+     * Return an required argument as an index.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
+     */
+    public int getIndex(int pos) {
+        PyObject value = getRequiredArg(pos);
+        return value.asIndex();
+    }
+
+    /**
+     * Return an optional argument as an index.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
+     */
+    public int getIndex(int pos, int def) {
+        PyObject value = getOptionalArg(pos);
+        if (value == null) {
+            return def;
+        }
+        return value.asIndex();
+    }
+
+    /**
      * Return a required argument as a PyObject.
      * 
      * @param pos The position of the argument. First argument is numbered 0.
