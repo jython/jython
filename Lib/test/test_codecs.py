@@ -248,7 +248,6 @@ class ReadTest(unittest.TestCase):
         self.assertEqual(reader.readline(), s5)
         self.assertEqual(reader.readline(), u"")
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32Test(ReadTest):
     encoding = "utf-32"
 
@@ -330,7 +329,6 @@ class UTF32Test(ReadTest):
         self.assertEqual(u'\U00010000' * 1024,
                          codecs.utf_32_decode(encoded_be)[0])
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32LETest(ReadTest):
     encoding = "utf-32-le"
 
@@ -371,7 +369,6 @@ class UTF32LETest(ReadTest):
         self.assertEqual(u'\U00010000' * 1024,
                          codecs.utf_32_le_decode(encoded)[0])
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32BETest(ReadTest):
     encoding = "utf-32-be"
 
@@ -1593,9 +1590,9 @@ class BomTest(unittest.TestCase):
         tests = ("utf-16",
                  "utf-16-le",
                  "utf-16-be",
-                 # FIXME: Jython does not support:"utf-32",
-                 # FIXME: Jython does not support:"utf-32-le",
-                 # FIXME: Jython does not support:"utf-32-be",
+                 "utf-32",
+                 "utf-32-le",
+                 "utf-32-be",
                  )
         self.addCleanup(test_support.unlink, test_support.TESTFN)
         for encoding in tests:
