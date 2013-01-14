@@ -76,8 +76,10 @@ public final class Py {
     public static PyBoolean False;
     /** The Python boolean True **/
     public static PyBoolean True;
-    /** A zero-length Python string **/
+    /** A zero-length Python byte string **/
     public static PyString EmptyString;
+    /** A zero-length Python Unicode string **/
+    public static PyUnicode EmptyUnicode;
     /** A Python string containing '\n' **/
     public static PyString Newline;
     /** A Python unicode string containing '\n' **/

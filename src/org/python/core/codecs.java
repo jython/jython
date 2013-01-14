@@ -21,7 +21,7 @@ import org.python.core.util.StringUtil;
  * <p>
  * The class also contains the inner methods of the standard Unicode codecs, available for
  * transcoding of text at the Java level. These also are exposed through the <code>_codecs</code>
- * module. In CPython, the implementation are found in <code>Objects/unicodeobject.c</code>.
+ * module. In CPython, the implementations are found in <code>Objects/unicodeobject.c</code>.
  *
  * @since Jython 2.0
  */
@@ -249,7 +249,7 @@ public class codecs {
             throw wrong_exception_type(exc);
         }
         PyObject end = exc.__getattr__("end");
-        return new PyTuple(Py.java2py(""), end);
+        return new PyTuple(Py.EmptyUnicode, end);
     }
 
     private static boolean isUnicodeError(PyObject exc) {

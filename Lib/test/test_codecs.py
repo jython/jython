@@ -720,7 +720,9 @@ class RecodingTest(unittest.TestCase):
     def test_recoding(self):
         f = StringIO.StringIO()
         f2 = codecs.EncodedFile(f, "unicode_internal", "utf-8")
-        f2.write(u"a")
+        # f2.write(u"a")
+        # Must be bytes in Jython (and probably should have been in CPython)
+        f2.write(b"\x00\x00\x00\x61")
         f2.close()
         # Python used to crash on this at exit because of a refcount
         # bug in _codecsmodule.c
@@ -847,7 +849,6 @@ class PunycodeTest(unittest.TestCase):
         for uni, puny in punycode_testcases:
             self.assertEqual(uni, puny.decode("punycode"))
 
-@unittest.skipIf(test_support.is_jython, "FIXME: equates to UTF-32BE in Jython")
 class UnicodeInternalTest(unittest.TestCase):
     def test_bug1251300(self):
         # Decoding with unicode_internal used to not correctly handle "code
@@ -880,7 +881,11 @@ class UnicodeInternalTest(unittest.TestCase):
             try:
                 "\x00\x00\x00\x00\x00\x11\x11\x00".decode("unicode_internal")
             except UnicodeDecodeError, ex:
-                self.assertEqual("unicode_internal", ex.encoding)
+                if test_support.is_jython:
+                    # Jython delegates internally to utf-32be and it shows here
+                    self.assertEqual("utf-32", ex.encoding)
+                else:
+                    self.assertEqual("unicode_internal", ex.encoding)
                 self.assertEqual("\x00\x00\x00\x00\x00\x11\x11\x00", ex.object)
                 self.assertEqual(4, ex.start)
                 self.assertEqual(8, ex.end)

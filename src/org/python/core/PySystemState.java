@@ -945,6 +945,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         Py.True = new PyBoolean(true);
 
         Py.EmptyString = new PyString("");
+        Py.EmptyUnicode = new PyUnicode("");
         Py.Newline = new PyString("\n");
         Py.UnicodeNewline = new PyUnicode("\n");
         Py.Space = new PyString(" ");

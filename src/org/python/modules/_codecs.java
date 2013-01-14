@@ -832,7 +832,7 @@ public class _codecs {
      * @param order byte order to use BE, LE or UNDEFINED (a BOM will be written)
      * @return tuple (encoded_bytes, unicode_consumed)
      */
-    public static PyTuple PyUnicode_EncodeUTF32(String unicode, String errors, ByteOrder order) {
+    private static PyTuple PyUnicode_EncodeUTF32(String unicode, String errors, ByteOrder order) {
 
         // We use a StringBuilder but we are really storing encoded bytes
         StringBuilder v = new StringBuilder(4 * (unicode.length() + 1));
@@ -1347,7 +1347,7 @@ public class _codecs {
          * Main codec loop consumes 4 bytes and emits one code point with each pass, until there are
          * fewer than 4 bytes left.
          */
-        for (; q < limit; q += 4) {
+        while (q < limit) {
             // Read 4 bytes in two 16-bit chunks according to byte order
             int hi, lo;
             hi = (bytes.charAt(q) << 8) | bytes.charAt(q + 1);
@@ -1356,12 +1356,14 @@ public class _codecs {
             if (hi == 0) {
                 // It's a BMP character so we can't go wrong
                 unicode.append((char)lo);
+                q += 4;
             } else {
                 // Code may be invalid: let the appendCodePoint method detect that
                 try {
                     unicode.appendCodePoint((hi << 16) + lo);
+                    q += 4;
                 } catch (IllegalArgumentException e) {
-                    q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32be", //
+                    q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32", //
                             bytes, q, q + 4, "codepoint not in range(0x110000)");
                 }
             }
@@ -1387,7 +1389,7 @@ public class _codecs {
          * Main codec loop consumes 4 bytes and emits one code point with each pass, until there are
          * fewer than 4 bytes left.
          */
-        for (; q < limit; q += 4) {
+        while (q < limit) {
             // Read 4 bytes in two 16-bit chunks according to byte order
             int hi, lo;
             hi = (bytes.charAt(q + 3) << 8) | bytes.charAt(q + 2);
@@ -1396,10 +1398,12 @@ public class _codecs {
             if (hi == 0) {
                 // It's a BMP character so we can't go wrong
                 unicode.append((char)lo);
+                q += 4;
             } else {
                 // Code may be invalid: let the appendCodePoint method detect that
                 try {
                     unicode.appendCodePoint((hi << 16) + lo);
+                    q += 4;
                 } catch (IllegalArgumentException e) {
                     q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32", //
                             bytes, q, q + 4, "codepoint not in range(0x110000)");
@@ -1447,31 +1451,50 @@ public class _codecs {
     }
 
     /* --- UnicodeInternal Codec ------------------------------------------ */
-    // XXX Should deprecate unicode-internal codec and delegate to UTF-32BE (when we have one)
+
     /*
      * This codec is supposed to deal with an encoded form equal to the internal representation of
      * the unicode object considered as bytes in memory. This was confusing in CPython as it varied
-     * with machine architecture (width and endian-ness). In Jython, the most compatible choice
-     * would be UTF-32BE since unicode objects report their length as if UCS-4 and
-     * sys.byteorder=='big'. The codec is deprecated in v3.3 as irrelevant, or impossible, in view
-     * of the flexible string representation (which Jython emulates in its own way).
+     * with machine architecture (width and endian-ness). In Jython, where both are fixed, the most
+     * compatible choice is UTF-32BE. The codec is deprecated in v3.3 as irrelevant, or impossible,
+     * in view of the flexible string representation (which Jython emulates in its own way).
      *
      * See http://mail.python.org/pipermail/python-dev/2011-November/114415.html
      */
-    public static PyTuple unicode_internal_encode(String str) {
-        return unicode_internal_encode(str, null);
+    /**
+     * Legacy method to encode given unicode in CPython wide-build internal format (equivalent
+     * UTF-32BE).
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_encode(String unicode) {
+        return utf_32_be_encode(unicode, null);
     }
 
-    public static PyTuple unicode_internal_encode(String str, String errors) {
-        return encode_tuple(str, str.length());
+    /**
+     * Legacy method to encode given unicode in CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_encode(String unicode, String errors) {
+        return utf_32_be_encode(unicode, errors);
     }
 
-    public static PyTuple unicode_internal_decode(String str) {
-        return unicode_internal_decode(str, null);
+    /**
+     * Legacy method to decode given bytes as if CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_decode(String bytes) {
+        return utf_32_be_decode(bytes, null, true);
     }
 
-    public static PyTuple unicode_internal_decode(String str, String errors) {
-        return decode_tuple(str, str.length());
+    /**
+     * Legacy method to decode given bytes as if CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_decode(String bytes, String errors) {
+        return utf_32_be_decode(bytes, errors, true);
     }
 
     /**
