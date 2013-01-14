@@ -21,7 +21,7 @@ import org.python.core.util.StringUtil;
  * <p>
  * The class also contains the inner methods of the standard Unicode codecs, available for
  * transcoding of text at the Java level. These also are exposed through the <code>_codecs</code>
- * module. In CPython, the implementation are found in <code>Objects/unicodeobject.c</code>.
+ * module. In CPython, the implementations are found in <code>Objects/unicodeobject.c</code>.
  *
  * @since Jython 2.0
  */
@@ -249,7 +249,7 @@ public class codecs {
             throw wrong_exception_type(exc);
         }
         PyObject end = exc.__getattr__("end");
-        return new PyTuple(Py.java2py(""), end);
+        return new PyTuple(Py.EmptyUnicode, end);
     }
 
     private static boolean isUnicodeError(PyObject exc) {
@@ -540,10 +540,10 @@ public class codecs {
      * Decode (perhaps partially) a sequence of bytes representing the UTF-7 encoded form of a
      * Unicode string and return the (Jython internal representation of) the unicode object, and
      * amount of input consumed. The only state we preserve is our read position, i.e. how many
-     * characters we have consumed. So if the input ends part way through a Base64 sequence the data
-     * reported as consumed is only that up to and not including the Base64 start marker ('+').
+     * bytes we have consumed. So if the input ends part way through a Base64 sequence the data
+     * reported as consumed is just that up to and not including the Base64 start marker ('+').
      * Performance will be poor (quadratic cost) on runs of Base64 data long enough to exceed the
-     * input quantum in incremental decoding. The retruned Java String is a UTF-16 representation of
+     * input quantum in incremental decoding. The returned Java String is a UTF-16 representation of
      * the Unicode result, in line with Java conventions. Unicode characters above the BMP are
      * represented as surrogate pairs.
      *
@@ -743,7 +743,7 @@ public class codecs {
                 if ((unit & 0x0400) == 0) {
                     // This is a lead surrogate as expected ... get the trail surrogate.
                     int unit2 = (int)(buffer >>> (n - 32));
-                    if ((unit2 & 0xFC00) == 0xD800) {
+                    if ((unit2 & 0xFC00) == 0xDC00) {
                         // And this is the trail surrogate we expected
                         v.appendCodePoint(0x10000 + ((unit & 0x3ff) << 10) + (unit2 & 0x3ff));
                         n -= 32;
@@ -832,12 +832,12 @@ public class codecs {
                 if ((unit & 0x0400) == 0) {
                     // This is a lead surrogate, which is valid: check the next 16 bits.
                     int unit2 = ((int)(buffer >>> (n - 32))) & 0xffff;
-                    if ((unit2 & 0xFC00) == 0xD800) {
-                        // Not trail surrogate: that's the problem
-                        return UTF7Error.MISSING;
-                    } else {
+                    if ((unit2 & 0xFC00) == 0xDC00) {
                         // Hmm ... why was I called?
                         return UTF7Error.NONE;
+                    } else {
+                        // Not trail surrogate: that's the problem
+                        return UTF7Error.MISSING;
                     }
 
                 } else {
@@ -885,7 +885,7 @@ public class codecs {
      * PyString.)
      *
      * This method differs from the CPython equivalent (in <code>Object/unicodeobject.c</code>)
-     * which works with an array of point codes that are, in a wide build, Unicode code points.
+     * which works with an array of code points that are, in a wide build, Unicode code points.
      *
      * @param unicode
      * @param base64SetO
@@ -965,7 +965,7 @@ public class codecs {
                  * representation.
                  */
                 // XXX see issue #2002: we should only count surrogate pairs as one character
-                // if ((ch & 0xFC00)==0xC800) { count++; }
+                // if ((ch & 0xFC00)==0xD800) { count++; }
 
                 if (base64bits > 48) {
                     // No room for the next 16 bits: emit all we have
@@ -1188,6 +1188,7 @@ public class codecs {
         return StringUtil.fromBytes(Charset.forName("UTF-8").encode(str));
     }
 
+    /* --- ASCII and Latin-1 Codecs --------------------------------------- */
     public static String PyUnicode_DecodeASCII(String str, int size, String errors) {
         return PyUnicode_DecodeIntLimited(str, size, errors, "ascii", 128);
     }
@@ -1559,19 +1560,37 @@ public class codecs {
     }
 
     /* --- Utility methods -------------------------------------------- */
+
+    /**
+     * Invoke a user-defined error-handling mechanism, for errors encountered during encoding, as
+     * registered through {@link #register_error(String, PyObject)}. The return value is the return
+     * from the error handler indicating the replacement codec <b>input</b> and the the position at
+     * which to resume encoding. Invokes the mechanism described in PEP-293.
+     *
+     * @param errors name of the error policy (or null meaning "strict")
+     * @param encoding name of encoding that encountered the error
+     * @param toEncode unicode string being encoded
+     * @param start index of first char it couldn't encode
+     * @param end index+1 of last char it couldn't encode (usually becomes the resume point)
+     * @param reason contribution to error message if any
+     * @return must be a tuple <code>(replacement_unicode, resume_index)</code>
+     */
     public static PyObject encoding_error(String errors, String encoding, String toEncode,
             int start, int end, String reason) {
+        // Retrieve handler registered through register_error(). null is equivalent to "strict".
         PyObject errorHandler = lookup_error(errors);
+        // Construct an exception to hand to the error handler
         PyException exc = Py.UnicodeEncodeError(encoding, toEncode, start, end, reason);
         exc.normalize();
+        // And invoke the handler.
         PyObject replacement = errorHandler.__call__(new PyObject[] {exc.value});
         checkErrorHandlerReturn(errors, replacement);
         return replacement;
     }
 
     /**
-     * Handler errors encountered during decoding, adjusting the output buffer contents and
-     * returning the correct position to resume decoding (if the handler does not siomply raise an
+     * Handler for errors encountered during decoding, adjusting the output buffer contents and
+     * returning the correct position to resume decoding (if the handler does not simply raise an
      * exception).
      *
      * @param partialDecode output buffer of unicode (as UTF-16) that the codec is building
@@ -1600,7 +1619,6 @@ public class codecs {
 
         // If errors not one of those, invoke the generic mechanism
         PyObject replacementSpec = decoding_error(errors, encoding, toDecode, start, end, reason);
-        checkErrorHandlerReturn(errors, replacementSpec);
 
         // Deliver the replacement unicode text to the output buffer
         partialDecode.append(replacementSpec.__getitem__(0).toString());
@@ -1612,8 +1630,8 @@ public class codecs {
     /**
      * Invoke a user-defined error-handling mechanism, for errors encountered during decoding, as
      * registered through {@link #register_error(String, PyObject)}. The return value is the return
-     * from the error handler indicating the replacement codec output and the the position at which
-     * to resume decoding. invokes the mechanism described in PEP-293.
+     * from the error handler indicating the replacement codec <b>output</b> and the the position at
+     * which to resume decoding. Invokes the mechanism described in PEP-293.
      *
      * @param errors name of the error policy (or null meaning "strict")
      * @param encoding name of encoding that encountered the error
@@ -1631,14 +1649,16 @@ public class codecs {
         PyException exc = Py.UnicodeDecodeError(encoding, toDecode, start, end, reason);
         exc.normalize();
         // And invoke the handler.
-        return errorHandler.__call__(new PyObject[] {exc.value});
+        PyObject replacementSpec = errorHandler.__call__(new PyObject[] {exc.value});
+        checkErrorHandlerReturn(errors, replacementSpec);
+        return replacementSpec;
     }
 
     /**
      * Check thet the error handler returned a tuple
      * <code>(replacement_unicode, resume_index)</code>.
      *
-     * @param errors name of the error policy (or null meaning "strict")
+     * @param errors name of the error policy
      * @param replacementSpec from error handler
      */
     private static void checkErrorHandlerReturn(String errors, PyObject replacementSpec) {
@@ -1651,10 +1671,11 @@ public class codecs {
     }
 
     /**
-     * Given the return from some codec error handler (invoked while decoding), which specifies a
-     * resume position, and the length of buffer being decoded, check and interpret the resume
-     * position. Negative indexes in the error handler return are interpreted as "from the end". If
-     * the result would be out of bounds in the bytes being decoded, an exception is raised.
+     * Given the return from some codec error handler (invoked while encoding or decoding), which
+     * specifies a resume position, and the length of the input being encoded or decoded, check and
+     * interpret the resume position. Negative indexes in the error handler return are interpreted
+     * as "from the end". If the result would be out of bounds in the input, an
+     * <code>IndexError</code> exception is raised.
      *
      * @param size of byte buffer being decoded
      * @param errorTuple returned from error handler

@@ -53,6 +53,35 @@ public class _codecs {
     }
 
     /**
+     * Enumeration representing the possible endianness of UTF-32 (possibly UTF-16) encodings.
+     * Python uses integers <code>{-1, 0, 1}</code>, but we can be more expressive. For encoding
+     * UNDEFINED means choose the endianness of the platform and insert a byte order mark (BOM). But
+     * since the platform is Java, that is always big-endian. For decoding it means read the BOM
+     * from the stream, and it is an error not to find one (compare
+     * <code>Lib/encodings/utf_32.py</code>).
+     */
+    enum ByteOrder {
+        LE, UNDEFINED, BE;
+
+        /** Returns the Python equivalent code -1 = LE, 0 = as marked/platform, +1 = BE */
+        int code() {
+            return ordinal() - 1;
+        }
+
+        /** Returns equivalent to the Python code -1 = LE, 0 = as marked/platform, +1 = BE */
+        static ByteOrder fromInt(int byteorder) {
+            switch (byteorder) {
+                case -1:
+                    return LE;
+                case 1:
+                    return BE;
+                default:
+                    return UNDEFINED;
+            }
+        }
+    }
+
+    /**
      * Convenience method to construct the return value of decoders, providing the Unicode result as
      * a String, and the number of bytes consumed.
      *
@@ -65,17 +94,31 @@ public class _codecs {
     }
 
     /**
-     * Convenience method to construct the return value of decoders, providing the Unicode result
-     * as a String, and the number of bytes consumed in decoding as either a single-element array or
-     * an int to be used if the array argument is null.
+     * Convenience method to construct the return value of decoders, providing the Unicode result as
+     * a String, and the number of bytes consumed in decoding as either a single-element array or an
+     * int to be used if the array argument is null.
      *
      * @param u the unicode result as a UTF-16 Java String
      * @param consumed if not null, element [0] is the number of bytes consumed
-     * @param defaultBytesConsumed if consumed==null, use this as the number of bytes consumed
+     * @param defConsumed if consumed==null, use this as the number of bytes consumed
      * @return the tuple (unicode(u), bytesConsumed)
      */
-    private static PyTuple decode_tuple(String u, int[] consumed, int defaultBytesConsumed) {
-        return decode_tuple(u, consumed != null ? consumed[0] : defaultBytesConsumed);
+    private static PyTuple decode_tuple(String u, int[] consumed, int defConsumed) {
+        return decode_tuple(u, consumed != null ? consumed[0] : defConsumed);
+    }
+
+    /**
+     * Convenience method to construct the return value of decoders that infer the byte order from
+     * the byte-order mark.
+     *
+     * @param u the unicode result as a UTF-16 Java String
+     * @param bytesConsumed the number of bytes consumed
+     * @param order the byte order (deduced by codec)
+     * @return the tuple (unicode(u), bytesConsumed, byteOrder)
+     */
+    private static PyTuple decode_tuple(String u, int bytesConsumed, ByteOrder order) {
+        int bo = order.code();
+        return new PyTuple(new PyUnicode(u), Py.newInteger(bytesConsumed), Py.newInteger(bo));
     }
 
     private static PyTuple decode_tuple_str(String s, int len) {
@@ -499,7 +542,7 @@ public class _codecs {
         return encode_tuple(codecs.PyUnicode_EncodeLatin1(str, size, errors), size);
     }
 
-    /* --- UTF16 Codec -------------------------------------------- */
+    /* --- UTF-16 Codec ------------------------------------------- */
     public static PyTuple utf_16_encode(String str) {
         return utf_16_encode(str, null);
     }
@@ -537,6 +580,9 @@ public class _codecs {
         } else {
             utf16 = Charset.forName("UTF-16BE");
         }
+
+        // XXX errors argument ignored: Java's codecs implement "replace"
+
         final ByteBuffer bbuf = utf16.encode(str);
         final StringBuilder v = new StringBuilder(bbuf.limit());
         while (bbuf.remaining() > 0) {
@@ -687,6 +733,687 @@ public class _codecs {
         return v.toString();
     }
 
+    /* --- UTF-32 Codec ------------------------------------------- */
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with byte order mark. (Encoding is in platform byte
+     * order, which is big-endian for Java.)
+     *
+     * @param unicode to be encoded
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_encode(String unicode) {
+        return utf_32_encode(unicode, null);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with byte order mark. (Encoding is in platform byte
+     * order, which is big-endian for Java.)
+     *
+     * @param unicode to be encoded
+     * @param errors error policy name or null meaning "strict"
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_encode(String unicode, String errors) {
+        return PyUnicode_EncodeUTF32(unicode, errors, ByteOrder.UNDEFINED);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 in specified byte order with byte order mark.
+     *
+     * @param unicode to be encoded
+     * @param errors error policy name or null meaning "strict"
+     * @param byteorder decoding "endianness" specified (in the Python -1, 0, +1 convention)
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_encode(String unicode, String errors, int byteorder) {
+        ByteOrder order = ByteOrder.fromInt(byteorder);
+        return PyUnicode_EncodeUTF32(unicode, errors, order);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with little-endian byte order. No byte-order mark is
+     * generated.
+     *
+     * @param unicode to be encoded
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_le_encode(String unicode) {
+        return utf_32_le_encode(unicode, null);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with little-endian byte order. No byte-order mark is
+     * generated.
+     *
+     * @param unicode to be encoded
+     * @param errors error policy name or null meaning "strict"
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_le_encode(String unicode, String errors) {
+        return PyUnicode_EncodeUTF32(unicode, errors, ByteOrder.LE);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with big-endian byte order. No byte-order mark is
+     * generated.
+     *
+     * @param unicode to be encoded
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_be_encode(String unicode) {
+        return utf_32_be_encode(unicode, null);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 with big-endian byte order. No byte-order mark is
+     * generated.
+     *
+     * @param unicode to be encoded
+     * @param errors error policy name or null meaning "strict"
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    public static PyTuple utf_32_be_encode(String unicode, String errors) {
+        return PyUnicode_EncodeUTF32(unicode, errors, ByteOrder.BE);
+    }
+
+    /**
+     * Encode a Unicode Java String as UTF-32 in specified byte order. A byte-order mark is
+     * generated if <code>order = ByteOrder.UNDEFINED</code>, and the byte order in that case will
+     * be the platform default, which is BE since the platform is Java.
+     * <p>
+     * The input String <b>must</b> be valid UTF-16, in particular, if it contains surrogate code
+     * units they must be ordered and paired correctly. The last char in <code>unicode</code> is not
+     * allowed to be an unpaired surrogate. These criteria will be met if the String
+     * <code>unicode</code> is the contents of a valid {@link PyUnicode} or {@link PyString}.
+     *
+     * @param unicode to be encoded
+     * @param errors error policy name or null meaning "strict"
+     * @param order byte order to use BE, LE or UNDEFINED (a BOM will be written)
+     * @return tuple (encoded_bytes, unicode_consumed)
+     */
+    private static PyTuple PyUnicode_EncodeUTF32(String unicode, String errors, ByteOrder order) {
+
+        // We use a StringBuilder but we are really storing encoded bytes
+        StringBuilder v = new StringBuilder(4 * (unicode.length() + 1));
+        int uptr = 0;
+
+        // Write a BOM (if required to)
+        if (order == ByteOrder.UNDEFINED) {
+            v.append("\u0000\u0000\u00fe\u00ff");
+            order = ByteOrder.BE;
+        }
+
+        if (order != ByteOrder.LE) {
+            uptr = PyUnicode_EncodeUTF32BELoop(v, unicode, errors);
+        } else {
+            uptr = PyUnicode_EncodeUTF32LELoop(v, unicode, errors);
+        }
+
+        // XXX Issue #2002: should probably report length consumed in Unicode characters
+        return encode_tuple(v.toString(), uptr);
+    }
+
+    /**
+     * Helper to {@link #PyUnicode_EncodeUTF32(String, String, ByteOrder)} when big-endian encoding
+     * is to be carried out.
+     *
+     * @param v output buffer building String of bytes (Jython PyString convention)
+     * @param unicode character input
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return number of Java characters consumed from unicode
+     */
+    private static int PyUnicode_EncodeUTF32BELoop(StringBuilder v, String unicode, String errors) {
+
+        int len = unicode.length();
+        int uptr = 0;
+        char[] buf = new char[6];   // first 3 elements always zero
+
+        /*
+         * Main codec loop outputs arrays of 4 bytes at a time.
+         */
+        while (uptr < len) {
+
+            int ch = unicode.charAt(uptr++);
+
+            if ((ch & 0xF800) == 0xD800) {
+                /*
+                 * This is a surrogate. In Jython, unicode should always be the internal value of a
+                 * PyUnicode, and since this should never contain invalid data, it should be a lead
+                 * surrogate, uptr < len, and the next char must be the trail surrogate. We ought
+                 * not to have to chech that, however ...
+                 */
+                if ((ch & 0x0400) == 0) {
+                    // Yes, it's a lead surrogate
+                    if (uptr < len) {
+                        // And there is something to follow
+                        int ch2 = unicode.charAt(uptr++);
+                        if ((ch2 & 0xFC00) == 0xDC00) {
+                            // And it is a trail surrogate, so we can get on with the encoding
+                            ch = ((ch & 0x3ff) << 10) + (ch2 & 0x3ff) + 0x10000;
+                            buf[3] = (char)((ch >> 16) & 0xff);
+                            buf[4] = (char)((ch >> 8) & 0xff);
+                            buf[5] = (char)(ch & 0xff);
+                            v.append(buf, 2, 4);
+                        } else {
+                            // The trail surrogate was missing: accuse ch at uptr-2
+                            uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.BE, //
+                                    unicode, uptr - 2, uptr - 1, "second surrogate missing");
+                        }
+                    } else {
+                        // End of input instread of trail surrogate: accuse ch at uptr-1
+                        uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.BE, //
+                                unicode, uptr - 1, len, "truncated data");
+                    }
+                } else {
+                    // The trail encountered in lead position: accuse ch at uptr-2
+                    uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.BE, //
+                            unicode, uptr - 2, uptr - 1, "unexpected second surrogate");
+                }
+
+            } else if (ch > 255) {
+                // This is a BMP character: only two bytes non-zero
+                buf[3] = (char)((ch >> 8) & 0xff);
+                buf[4] = (char)(ch & 0xff);
+                v.append(buf, 1, 4);
+
+            } else {
+                // This is one-byte BMP character: only one byte non-zero
+                buf[3] = (char)(ch & 0xff);
+                v.append(buf, 0, 4);
+            }
+        }
+
+        // XXX Issue #2002: should probably report length consumed in Unicode characters
+        return uptr;
+    }
+
+    /**
+     * Helper to {@link #PyUnicode_EncodeUTF32(String, String, ByteOrder)} when big-endian encoding
+     * is to be carried out.
+     *
+     * @param v output buffer building String of bytes (Jython PyString convention)
+     * @param unicode character input
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return number of Java characters consumed from unicode
+     */
+    private static int PyUnicode_EncodeUTF32LELoop(StringBuilder v, String unicode, String errors) {
+
+        int len = unicode.length();
+        int uptr = 0;
+        char[] buf = new char[6];   // last 3 elements always zero
+
+        /*
+         * Main codec loop outputs arrays of 4 bytes at a time.
+         */
+        while (uptr < len) {
+
+            int ch = unicode.charAt(uptr++);
+
+            if ((ch & 0xF800) == 0xD800) {
+                /*
+                 * This is a surrogate. In Jython, unicode should always be the internal value of a
+                 * PyUnicode, and since this should never contain invalid data, it should be a lead
+                 * surrogate, uptr < len, and the next char must be the trail surrogate. We ought
+                 * not to have to chech that, however ...
+                 */
+                if ((ch & 0x0400) == 0) {
+                    // Yes, it's a lead surrogate
+                    if (uptr < len) {
+                        // And there is something to follow
+                        int ch2 = unicode.charAt(uptr++);
+                        if ((ch2 & 0xFC00) == 0xDC00) {
+                            // And it is a trail surrogate, so we can get on with the encoding
+                            ch = ((ch & 0x3ff) << 10) + (ch2 & 0x3ff) + 0x10000;
+                            buf[0] = (char)(ch & 0xff);
+                            buf[1] = (char)((ch >> 8) & 0xff);
+                            buf[2] = (char)((ch >> 16) & 0xff);
+                            v.append(buf, 0, 4);
+                        } else {
+                            // The trail surrogate was missing: accuse ch at uptr-2
+                            uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.LE, //
+                                    unicode, uptr - 2, uptr - 1, "second surrogate missing");
+                        }
+                    } else {
+                        // End of input instread of trail surrogate: accuse ch at uptr-1
+                        uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.LE, //
+                                unicode, uptr - 1, len, "truncated data");
+                    }
+                } else {
+                    // The trail encountered in lead position: accuse ch at uptr-2
+                    uptr = PyUnicode_EncodeUTF32Error(v, errors, ByteOrder.LE, //
+                            unicode, uptr - 2, uptr - 1, "unexpected second surrogate");
+                }
+
+            } else if (ch > 255) {
+                // This is a BMP character: only two bytes non-zero
+                buf[1] = (char)(ch & 0xff);
+                buf[2] = (char)((ch >> 8) & 0xff);
+                v.append(buf, 1, 4);
+
+            } else {
+                // This is one-byte BMP character: only one byte non-zero
+                buf[2] = (char)(ch & 0xff);
+                v.append(buf, 2, 4);
+            }
+        }
+
+        // XXX Issue #2002: should probably report length consumed in Unicode characters
+        return uptr;
+    }
+
+    /**
+     * Specific UTF-32 encoder error handler. This is a helper called in the inner loop of
+     * {@link #PyUnicode_EncodeUTF32(String, String, ByteOrder)} when the Unicode input is in valid.
+     * In theory, since the input Unicode data should come from a {@link PyUnicode}, there should
+     * never be any errors.
+     *
+     * @param v output buffer building String of bytes (Jython PyString convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param order LE or BE indicator
+     * @param toEncode character input
+     * @param start index of first problematic character
+     * @param end index of character after the last problematic character
+     * @param reason text contribution to the exception raised (if any)
+     * @return position within input at which to restart
+     */
+    private static int PyUnicode_EncodeUTF32Error(StringBuilder v, String errors, ByteOrder order,
+            String toEncode, int start, int end, String reason) {
+
+        // Handle special cases locally
+        if (errors != null) {
+            if (errors.equals(codecs.IGNORE)) {
+                // Just skip to the first non-problem byte
+                return end;
+            } else if (errors.equals(codecs.REPLACE)) {
+                // Insert a replacement UTF-32 character(s) and skip
+                for (int i = start; i < end; i++) {
+                    if (order != ByteOrder.LE) {
+                        v.append("\000\000\000?");
+                    } else {
+                        v.append("?\000\000\000");
+                    }
+                }
+                return end;
+            }
+        }
+
+        // If errors not one of those, invoke the generic mechanism
+        PyObject replacementSpec =
+                codecs.encoding_error(errors, "utf-32", toEncode, start, end, reason);
+
+        // Note the replacement is unicode text that still needs to be encoded
+        String u = replacementSpec.__getitem__(0).toString();
+        PyUnicode_EncodeUTF32BELoop(v, u, errors);
+
+        // Return the index in toEncode at which we should resume
+        return codecs.calcNewPosition(toEncode.length(), replacementSpec);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 encoded form of a
+     * Unicode string and return as a tuple the unicode text, and the amount of input consumed. The
+     * endianness used will have been deduced from a byte-order mark, if present, or will be
+     * big-endian (Java platform default). The unicode text is presented as a Java String (the
+     * UTF-16 representation used by {@link PyUnicode}). It is an error for the input bytes not to
+     * form a whole number of valid UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_decode(String bytes) {
+        return utf_32_decode(bytes, null);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 encoded form of a Unicode string and
+     * return as a tuple the unicode text, and the amount of input consumed. The endianness used
+     * will have been deduced from a byte-order mark, if present, or will be big-endian (Java
+     * platform default). The unicode text is presented as a Java String (the UTF-16 representation
+     * used by {@link PyUnicode}). It is an error for the input bytes not to form a whole number of
+     * valid UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_decode(String bytes, String errors) {
+        return utf_32_decode(bytes, errors, false);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 encoded form of a
+     * Unicode string and return as a tuple the unicode text, and the amount of input consumed. The
+     * endianness used will have been deduced from a byte-order mark, if present, or will be
+     * big-endian (Java platform default). The unicode text is presented as a Java String (the
+     * UTF-16 representation used by {@link PyUnicode}).
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_decode(String bytes, String errors, boolean isFinal) {
+        return PyUnicode_DecodeUTF32Stateful(bytes, errors, ByteOrder.UNDEFINED, isFinal, false);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 little-endian encoded form of a Unicode
+     * string and return as a tuple the unicode text, and the amount of input consumed. A
+     * (correctly-oriented) byte-order mark will pass as a zero-width non-breaking space. The
+     * unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}). It is an error for the input bytes not to form a whole number of valid
+     * UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_le_decode(String bytes) {
+        return utf_32_le_decode(bytes, null);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 little-endian encoded form of a Unicode
+     * string and return as a tuple the unicode text, and the amount of input consumed. A
+     * (correctly-oriented) byte-order mark will pass as a zero-width non-breaking space. The
+     * unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}). It is an error for the input bytes not to form a whole number of valid
+     * UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_le_decode(String bytes, String errors) {
+        return utf_32_le_decode(bytes, errors, false);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 little-endian encoded
+     * form of a Unicode string and return as a tuple the unicode text, and the amount of input
+     * consumed. A (correctly-oriented) byte-order mark will pass as a zero-width non-breaking
+     * space. The unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}).
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_le_decode(String bytes, String errors, boolean isFinal) {
+        return PyUnicode_DecodeUTF32Stateful(bytes, errors, ByteOrder.LE, isFinal, false);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 big-endian encoded form of a Unicode
+     * string and return as a tuple the unicode text, and the amount of input consumed. A
+     * (correctly-oriented) byte-order mark will pass as a zero-width non-breaking space. The
+     * unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}). It is an error for the input bytes not to form a whole number of valid
+     * UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_be_decode(String bytes) {
+        return utf_32_be_decode(bytes, null);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 big-endian encoded form of a Unicode
+     * string and return as a tuple the unicode text, and the amount of input consumed. A
+     * (correctly-oriented) byte-order mark will pass as a zero-width non-breaking space. The
+     * unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}). It is an error for the input bytes not to form a whole number of valid
+     * UTF-32 codes.
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_be_decode(String bytes, String errors) {
+        return utf_32_be_decode(bytes, errors, false);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 big-endian encoded
+     * form of a Unicode string and return as a tuple the unicode text, and the amount of input
+     * consumed. A (correctly-oriented) byte-order mark will pass as a zero-width non-breaking
+     * space. Unicode string and return as a tuple the unicode text, the amount of input consumed.
+     * The unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}).
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @return tuple (unicode_result, bytes_consumed)
+     */
+    public static PyTuple utf_32_be_decode(String bytes, String errors, boolean isFinal) {
+        return PyUnicode_DecodeUTF32Stateful(bytes, errors, ByteOrder.BE, isFinal, false);
+    }
+
+    /**
+     * Decode a sequence of bytes representing the UTF-32 encoded form of a Unicode string and
+     * return as a tuple the unicode text, the amount of input consumed, and the decoding
+     * "endianness" used (in the Python -1, 0, +1 convention). The endianness, if not unspecified
+     * (=0), will be deduced from a byte-order mark and returned. (This codec entrypoint is used in
+     * that way in the <code>utf_32.py</code> codec, but only until the byte order is known.) When
+     * not defined by a BOM, processing assumes big-endian coding (Java platform default), but
+     * returns "unspecified". (The <code>utf_32.py</code> codec treats this as an error, once more
+     * than 4 bytes have been processed.) (Java platform default). The unicode text is presented as
+     * a Java String (the UTF-16 representation used by {@link PyUnicode}).
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param byteorder decoding "endianness" specified (in the Python -1, 0, +1 convention)
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @return tuple (unicode_result, bytes_consumed, endianness)
+     */
+    public static PyTuple utf_32_ex_decode(String bytes, String errors, int byteorder) {
+        return utf_32_ex_decode(bytes, errors, byteorder, false);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 encoded form of a
+     * Unicode string and return as a tuple the unicode text, the amount of input consumed, and the
+     * decoding "endianness" used (in the Python -1, 0, +1 convention). The endianness will be that
+     * specified, will have been deduced from a byte-order mark, if present, or will be big-endian
+     * (Java platform default). Or it may still be undefined if fewer than 4 bytes are presented.
+     * (This codec entrypoint is used in the utf-32 codec only untile the byte order is known.) The
+     * unicode text is presented as a Java String (the UTF-16 representation used by
+     * {@link PyUnicode}).
+     *
+     * @param bytes to be decoded (Jython {@link PyString} convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param byteorder decoding "endianness" specified (in the Python -1, 0, +1 convention)
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @return tuple (unicode_result, bytes_consumed, endianness)
+     */
+    public static PyTuple utf_32_ex_decode(String bytes, String errors, int byteorder,
+            boolean isFinal) {
+        ByteOrder order = ByteOrder.fromInt(byteorder);
+        return PyUnicode_DecodeUTF32Stateful(bytes, errors, order, isFinal, true);
+    }
+
+    /**
+     * Decode (perhaps partially) a sequence of bytes representing the UTF-32 encoded form of a
+     * Unicode string and return as a tuple the (Jython internal representation of) the unicode
+     * text, the amount of input consumed, and if requested, the decoding "endianness" used (in
+     * Python -1, 0, +1 conventions). The state we preserve is our read position, i.e. how many
+     * bytes we have consumed and the byte order (endianness). If the input ends part way through a
+     * UTF-32 sequence (4 bytes) the data reported as consumed is just that up to and not including
+     * the first of these bytes. The Java String in the returned tuple is a UTF-16 representation of
+     * the Unicode result, in line with Java conventions, where Unicode characters above the BMP are
+     * represented as surrogate pairs.
+     *
+     * @param bytes input represented as String (Jython PyString convention)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @param order LE, BE or UNDEFINED (meaning bytes may begin with a byte order mark)
+     * @param isFinal if a "final" call, meaning the input must all be consumed
+     * @param findOrder if the returned tuple should include a report of the byte order
+     * @return tuple containing unicode result (as UTF-16 Java String)
+     * @return tuple (unicode_result, bytes_consumed [, endianness])
+     */
+    private static PyTuple PyUnicode_DecodeUTF32Stateful(String bytes, String errors,
+            ByteOrder order, boolean isFinal, boolean findOrder) {
+
+        int size = bytes.length();  // Number of bytes waiting (not necessarily multiple of 4)
+        int limit = size & ~0x3;    // First index at which fewer than 4 bytes will be available
+
+        // Output Unicode characters will build up here (as UTF-16:
+        StringBuilder unicode = new StringBuilder(1 + limit / 4);
+        int q = 0;                  // Read pointer in bytes
+
+        if (limit > 0) {
+            /*
+             * Check for BOM (U+FEFF) in the input and adjust current byte order setting
+             * accordingly. If we know the byte order (it is LE or BE) then bytes ressembling a byte
+             * order mark are actually a ZERO WIDTH NON-BREAKING SPACE and will be passed through to
+             * the output in the main codec loop as such.
+             */
+            if (order == ByteOrder.UNDEFINED) {
+                /*
+                 * The byte order is not known. If the first 4 bytes is a BOM for LE or BE, that
+                 * will set the byte order and the BOM will not be copied to the output. Otherwise
+                 * these bytes are data and will be left for the main codec loop to consume.
+                 */
+                char a = bytes.charAt(q);
+                if (a == 0xff) {
+                    if (bytes.charAt(q + 1) == 0xfe && bytes.charAt(q + 2) == 0
+                            && bytes.charAt(q + 3) == 0) {
+                        // Somebody set up us the BOM (0xff 0xfe 0x00 0x00) - LE
+                        order = ByteOrder.LE;
+                        q += 4;
+                    }
+
+                } else if (a == 0) {
+                    if (bytes.charAt(q + 1) == 0 && bytes.charAt(q + 2) == 0xfe
+                            && bytes.charAt(q + 3) == 0xff) {
+                        // Other (big-endian) BOM (0x00 0x00 0xfe 0xff) - already set BE
+                        order = ByteOrder.BE;
+                        q += 4;
+                    }
+                }
+                /*
+                 * If no BOM found, order is still undefined. This is an error to utf_32.py, but
+                 * here is treated as big-endian.
+                 */
+            }
+
+            /*
+             * Main codec loop consumes 4 bytes and emits one code point with each pass, until there
+             * are fewer than 4 bytes left. There's a version for each endianness
+             */
+            if (order != ByteOrder.LE) {
+                q = PyUnicode_DecodeUTF32BELoop(unicode, bytes, q, limit, errors);
+            } else {
+                q = PyUnicode_DecodeUTF32LELoop(unicode, bytes, q, limit, errors);
+            }
+
+        }
+
+        /*
+         * We have processed all we can: if we have some bytes left over that we can't store for
+         * next time, that's an error.
+         */
+        if (isFinal && q < size) {
+            q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32", //
+                    bytes, q, size, "truncated data");
+        }
+
+        // Finally, the return depends whether we were asked to work out the byte order
+        if (findOrder) {
+            return decode_tuple(unicode.toString(), q, order);
+        } else {
+            return decode_tuple(unicode.toString(), q);
+        }
+    }
+
+    /**
+     * Helper to {@link #PyUnicode_DecodeUTF32Stateful(String, String, ByteOrder, boolean, boolean)}
+     * when big-endian decoding is to be carried out.
+     *
+     * @param unicode character output
+     * @param bytes input represented as String (Jython PyString convention)
+     * @param q number of elements already consumed from <code>bytes</code> array
+     * @param limit (multiple of 4) first byte not to process
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return number of elements consumed now from <code>bytes</code> array
+     */
+    private static int PyUnicode_DecodeUTF32BELoop(StringBuilder unicode, String bytes, int q,
+            int limit, String errors) {
+
+        /*
+         * Main codec loop consumes 4 bytes and emits one code point with each pass, until there are
+         * fewer than 4 bytes left.
+         */
+        while (q < limit) {
+            // Read 4 bytes in two 16-bit chunks according to byte order
+            int hi, lo;
+            hi = (bytes.charAt(q) << 8) | bytes.charAt(q + 1);
+            lo = (bytes.charAt(q + 2) << 8) | bytes.charAt(q + 3);
+
+            if (hi == 0) {
+                // It's a BMP character so we can't go wrong
+                unicode.append((char)lo);
+                q += 4;
+            } else {
+                // Code may be invalid: let the appendCodePoint method detect that
+                try {
+                    unicode.appendCodePoint((hi << 16) + lo);
+                    q += 4;
+                } catch (IllegalArgumentException e) {
+                    q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32", //
+                            bytes, q, q + 4, "codepoint not in range(0x110000)");
+                }
+            }
+        }
+
+        return q;
+    }
+
+    /**
+     * Helper to {@link #PyUnicode_DecodeUTF32Stateful(String, String, ByteOrder, boolean, boolean)}
+     * when little-endian decoding is to be carried out.
+     *
+     * @param unicode character output
+     * @param bytes input represented as String (Jython PyString convention)
+     * @param q number of elements already consumed from <code>bytes</code> array
+     * @param limit (multiple of 4) first byte not to process
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return number of elements consumed now from <code>bytes</code> array
+     */
+    private static int PyUnicode_DecodeUTF32LELoop(StringBuilder unicode, String bytes, int q,
+            int limit, String errors) {
+        /*
+         * Main codec loop consumes 4 bytes and emits one code point with each pass, until there are
+         * fewer than 4 bytes left.
+         */
+        while (q < limit) {
+            // Read 4 bytes in two 16-bit chunks according to byte order
+            int hi, lo;
+            hi = (bytes.charAt(q + 3) << 8) | bytes.charAt(q + 2);
+            lo = (bytes.charAt(q + 1) << 8) | bytes.charAt(q);
+
+            if (hi == 0) {
+                // It's a BMP character so we can't go wrong
+                unicode.append((char)lo);
+                q += 4;
+            } else {
+                // Code may be invalid: let the appendCodePoint method detect that
+                try {
+                    unicode.appendCodePoint((hi << 16) + lo);
+                    q += 4;
+                } catch (IllegalArgumentException e) {
+                    q = codecs.insertReplacementAndGetResume(unicode, errors, "utf-32", //
+                            bytes, q, q + 4, "codepoint not in range(0x110000)");
+                }
+            }
+        }
+
+        return q;
+    }
+
     /* --- RawUnicodeEscape Codec ----------------------------------------- */
     public static PyTuple raw_unicode_escape_encode(String str) {
         return raw_unicode_escape_encode(str, null);
@@ -724,31 +1451,50 @@ public class _codecs {
     }
 
     /* --- UnicodeInternal Codec ------------------------------------------ */
-    // XXX Should deprecate unicode-internal codec and delegate to UTF-32BE (when we have one)
+
     /*
      * This codec is supposed to deal with an encoded form equal to the internal representation of
      * the unicode object considered as bytes in memory. This was confusing in CPython as it varied
-     * with machine architecture (width and endian-ness). In Jython, the most compatible choice
-     * would be UTF-32BE since unicode objects report their length as if UCS-4 and
-     * sys.byteorder=='big'. The codec is deprecated in v3.3 as irrelevant, or impossible, in view
-     * of the flexible string representation (which Jython emulates in its own way).
+     * with machine architecture (width and endian-ness). In Jython, where both are fixed, the most
+     * compatible choice is UTF-32BE. The codec is deprecated in v3.3 as irrelevant, or impossible,
+     * in view of the flexible string representation (which Jython emulates in its own way).
      *
      * See http://mail.python.org/pipermail/python-dev/2011-November/114415.html
      */
-    public static PyTuple unicode_internal_encode(String str) {
-        return unicode_internal_encode(str, null);
+    /**
+     * Legacy method to encode given unicode in CPython wide-build internal format (equivalent
+     * UTF-32BE).
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_encode(String unicode) {
+        return utf_32_be_encode(unicode, null);
     }
 
-    public static PyTuple unicode_internal_encode(String str, String errors) {
-        return encode_tuple(str, str.length());
+    /**
+     * Legacy method to encode given unicode in CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_encode(String unicode, String errors) {
+        return utf_32_be_encode(unicode, errors);
     }
 
-    public static PyTuple unicode_internal_decode(String str) {
-        return unicode_internal_decode(str, null);
+    /**
+     * Legacy method to decode given bytes as if CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_decode(String bytes) {
+        return utf_32_be_decode(bytes, null, true);
     }
 
-    public static PyTuple unicode_internal_decode(String str, String errors) {
-        return decode_tuple(str, str.length());
+    /**
+     * Legacy method to decode given bytes as if CPython wide-build internal format (equivalent
+     * UTF-32BE). There must be a multiple of 4 bytes.
+     */
+    @Deprecated
+    public static PyTuple unicode_internal_decode(String bytes, String errors) {
+        return utf_32_be_decode(bytes, errors, true);
     }
 
     /**

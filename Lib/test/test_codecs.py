@@ -248,7 +248,6 @@ class ReadTest(unittest.TestCase):
         self.assertEqual(reader.readline(), s5)
         self.assertEqual(reader.readline(), u"")
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32Test(ReadTest):
     encoding = "utf-32"
 
@@ -330,7 +329,6 @@ class UTF32Test(ReadTest):
         self.assertEqual(u'\U00010000' * 1024,
                          codecs.utf_32_decode(encoded_be)[0])
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32LETest(ReadTest):
     encoding = "utf-32-le"
 
@@ -371,7 +369,6 @@ class UTF32LETest(ReadTest):
         self.assertEqual(u'\U00010000' * 1024,
                          codecs.utf_32_le_decode(encoded)[0])
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for UTF-32")
 class UTF32BETest(ReadTest):
     encoding = "utf-32-be"
 
@@ -560,6 +557,43 @@ class UTF7Test(ReadTest):
             ]
         )
 
+    # Jython extra (test supplementary characters)
+    @unittest.skipIf(not test_support.is_jython, "Jython supports surrogate pairs")
+    def test_partial_supp(self):
+        # Check the encoding is what we think it is
+        ustr = u"x\U00023456.\u0177\U00023456\u017az"
+        bstr = b'x+2E3cVg.+AXfYTdxWAXo-z'
+        self.assertEqual(ustr.encode(self.encoding), bstr)
+
+        self.check_partial(
+            ustr,
+            [
+                u"x",
+                u"x",   # '+' added: begins Base64
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x",
+                u"x\U00023456.",    # '.' added: ends Base64
+                u"x\U00023456.",    # '+' added: begins Base64
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.",
+                u"x\U00023456.\u0177\U00023456\u017a",  # '-' added: ends Base64
+                u"x\U00023456.\u0177\U00023456\u017az",
+            ]
+        )
+
 class UTF16ExTest(unittest.TestCase):
 
     def test_errors(self):
@@ -686,7 +720,9 @@ class RecodingTest(unittest.TestCase):
     def test_recoding(self):
         f = StringIO.StringIO()
         f2 = codecs.EncodedFile(f, "unicode_internal", "utf-8")
-        f2.write(u"a")
+        # f2.write(u"a")
+        # Must be bytes in Jython (and probably should have been in CPython)
+        f2.write(b"\x00\x00\x00\x61")
         f2.close()
         # Python used to crash on this at exit because of a refcount
         # bug in _codecsmodule.c
@@ -813,7 +849,6 @@ class PunycodeTest(unittest.TestCase):
         for uni, puny in punycode_testcases:
             self.assertEqual(uni, puny.decode("punycode"))
 
-@unittest.skipIf(test_support.is_jython, "FIXME: equates to UTF-32BE in Jython")
 class UnicodeInternalTest(unittest.TestCase):
     def test_bug1251300(self):
         # Decoding with unicode_internal used to not correctly handle "code
@@ -846,7 +881,11 @@ class UnicodeInternalTest(unittest.TestCase):
             try:
                 "\x00\x00\x00\x00\x00\x11\x11\x00".decode("unicode_internal")
             except UnicodeDecodeError, ex:
-                self.assertEqual("unicode_internal", ex.encoding)
+                if test_support.is_jython:
+                    # Jython delegates internally to utf-32be and it shows here
+                    self.assertEqual("utf-32", ex.encoding)
+                else:
+                    self.assertEqual("unicode_internal", ex.encoding)
                 self.assertEqual("\x00\x00\x00\x00\x00\x11\x11\x00", ex.object)
                 self.assertEqual(4, ex.start)
                 self.assertEqual(8, ex.end)
@@ -1556,9 +1595,9 @@ class BomTest(unittest.TestCase):
         tests = ("utf-16",
                  "utf-16-le",
                  "utf-16-be",
-                 # FIXME: Jython does not support:"utf-32",
-                 # FIXME: Jython does not support:"utf-32-le",
-                 # FIXME: Jython does not support:"utf-32-be",
+                 "utf-32",
+                 "utf-32-le",
+                 "utf-32-be",
                  )
         self.addCleanup(test_support.unlink, test_support.TESTFN)
         for encoding in tests:
