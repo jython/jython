@@ -48,6 +48,90 @@ public class _codecs {
         codecs.register_error(name, errorHandler);
     }
 
+    /**
+     * Decode <code>bytes</code> using the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). Decoding errors raise a <code>ValueError</code>.
+     *
+     * @param bytes to be decoded
+     * @return Unicode string decoded from <code>bytes</code>
+     */
+    public static PyObject decode(PyString bytes) {
+        return decode(bytes, null, null);
+    }
+
+    /**
+     * Decode <code>bytes</code> using the codec registered for the <code>encoding</code>. The
+     * <code>encoding</code> defaults to the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). Decoding errors raise a <code>ValueError</code>.
+     *
+     * @param bytes to be decoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @return Unicode string decoded from <code>bytes</code>
+     */
+    public static PyObject decode(PyString bytes, String encoding) {
+        return decode(bytes, encoding, null);
+    }
+
+    /**
+     * Decode <code>bytes</code> using the codec registered for the <code>encoding</code>. The
+     * <code>encoding</code> defaults to the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). The string <code>errors</code> may name a different
+     * error handling policy (built-in or registered with {@link #register_error(String, PyObject)}
+     * ). The default error policy is 'strict' meaning that decoding errors raise a
+     * <code>ValueError</code>.
+     *
+     * @param bytes to be decoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @param errors error policy name (e.g. "ignore")
+     * @return Unicode string decoded from <code>bytes</code>
+     */
+    public static PyObject decode(PyString bytes, String encoding, String errors) {
+        return codecs.decode(bytes, encoding, errors);
+    }
+
+    /**
+     * Encode <code>unicode</code> using the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). Encoding errors raise a <code>ValueError</code>.
+     *
+     * @param unicode string to be encoded
+     * @return bytes object encoding <code>unicode</code>
+     */
+    public static PyString encode(PyUnicode unicode) {
+        return encode(unicode, null, null);
+    }
+
+    /**
+     * Encode <code>unicode</code> using the codec registered for the <code>encoding</code>. The
+     * <code>encoding</code> defaults to the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). Encoding errors raise a <code>ValueError</code>.
+     *
+     * @param unicode string to be encoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @return bytes object encoding <code>unicode</code>
+     */
+    public static PyString encode(PyUnicode unicode, String encoding) {
+        return encode(unicode, encoding, null);
+    }
+
+    /**
+     * Encode <code>unicode</code> using the codec registered for the <code>encoding</code>. The
+     * <code>encoding</code> defaults to the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). The string <code>errors</code> may name a different
+     * error handling policy (built-in or registered with {@link #register_error(String, PyObject)}
+     * ). The default error policy is 'strict' meaning that encoding errors raise a
+     * <code>ValueError</code>.
+     *
+     * @param unicode string to be encoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @param errors error policy name (e.g. "ignore")
+     * @return bytes object encoding <code>unicode</code>
+     */
+    public static PyString encode(PyUnicode unicode, String encoding, String errors) {
+        return Py.newString(codecs.encode(unicode, encoding, errors));
+    }
+
+    /* --- Some codec support methods -------------------------------------------- */
+
     public static PyObject charmap_build(PyUnicode map) {
         return EncodingMap.buildEncodingMap(map);
     }

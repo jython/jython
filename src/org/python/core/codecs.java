@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.python.core.util.StringUtil;
+import org.python.modules._codecs;
 
 /**
  * This class implements the codec registry and utility methods supporting codecs, such as those
@@ -123,6 +124,22 @@ public class codecs {
         }
     }
 
+    /**
+     * Decode the bytes <code>v</code> using the codec registered for the <code>encoding</code>.
+     * The <code>encoding</code> defaults to the system default encoding
+     * (see {@link codecs#getDefaultEncoding()}).
+     * The string <code>errors</code> may name a different error handling
+     * policy (built-in or registered with {@link #register_error(String, PyObject)}).
+     * The default error policy is 'strict' meaning that encoding errors raise a
+     * <code>ValueError</code>.
+     * This method is exposed through the _codecs module as
+     * {@link _codecs#decode(PyString, String, String)}.
+     *
+     * @param v bytes to be decoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return Unicode string decoded from <code>bytes</code>
+     */
     public static PyObject decode(PyString v, String encoding, String errors) {
         if (encoding == null) {
             encoding = getDefaultEncoding();
@@ -174,6 +191,21 @@ public class codecs {
         return new PyUnicode(result, true);
     }
 
+    /**
+     * Encode <code>v</code> using the codec registered for the <code>encoding</code>.
+     * The <code>encoding</code> defaults to the system default encoding
+     * (see {@link codecs#getDefaultEncoding()}).
+     * The string <code>errors</code> may name a different error handling
+     * policy (built-in or registered with {@link #register_error(String, PyObject)}).
+     * The default error policy is 'strict' meaning that encoding errors raise a
+     * <code>ValueError</code>.
+     *
+     * @param v unicode string to be encoded
+     * @param encoding name of encoding (to look up in codec registry)
+     * @param errors error policy name (e.g. "ignore")
+     * @return bytes object encoding <code>v</code>
+     */
+    // XXX v should probably be declared PyUnicode (or thing delivering unicode code points)
     public static String encode(PyString v, String encoding, String errors) {
         if (encoding == null) {
             encoding = getDefaultEncoding();

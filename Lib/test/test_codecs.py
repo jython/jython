@@ -602,7 +602,7 @@ class UTF16ExTest(unittest.TestCase):
     def test_bad_args(self):
         self.assertRaises(TypeError, codecs.utf_16_ex_decode)
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython has no _codecs.readbuffer_encode method")
+@unittest.skipIf(test_support.is_jython, "Jython has no _codecs.readbuffer_encode method")
 class ReadBufferTest(unittest.TestCase):
 
     def test_array(self):
@@ -619,7 +619,7 @@ class ReadBufferTest(unittest.TestCase):
         self.assertRaises(TypeError, codecs.readbuffer_encode)
         self.assertRaises(TypeError, codecs.readbuffer_encode, 42)
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython has no _codecs.charbuffer_encode method")
+@unittest.skipIf(test_support.is_jython, "Jython has no _codecs.charbuffer_encode method")
 class CharBufferTest(unittest.TestCase):
 
     def test_string(self):
@@ -1164,7 +1164,6 @@ class IDNACodecTest(unittest.TestCase):
 
 class CodecsModuleTest(unittest.TestCase):
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: _codecs.decode not implemented")
     def test_decode(self):
         self.assertEqual(codecs.decode('\xe4\xf6\xfc', 'latin-1'),
                           u'\xe4\xf6\xfc')
@@ -1172,12 +1171,11 @@ class CodecsModuleTest(unittest.TestCase):
         self.assertEqual(codecs.decode('abc'), u'abc')
         self.assertRaises(UnicodeDecodeError, codecs.decode, '\xff', 'ascii')
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: _codecs.encode not implemented")
     def test_encode(self):
         self.assertEqual(codecs.encode(u'\xe4\xf6\xfc', 'latin-1'),
                           '\xe4\xf6\xfc')
         self.assertRaises(TypeError, codecs.encode)
-        self.assertRaises(LookupError, codecs.encode, "foo", "__spam__")
+        self.assertRaises(LookupError, codecs.encode, u"foo", "__spam__")
         self.assertEqual(codecs.encode(u'abc'), 'abc')
         self.assertRaises(UnicodeEncodeError, codecs.encode, u'\xffff', 'ascii')
 
