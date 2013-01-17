@@ -1191,7 +1191,6 @@ _expectations = {
         test_bsddb
         test_bsddb185
         test_bsddb3
-        test_bz2
         test_cprofile
         test_capi
         test_cd
