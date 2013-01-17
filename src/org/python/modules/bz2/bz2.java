@@ -3,7 +3,6 @@ package org.python.modules.bz2;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Formatter;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
@@ -33,7 +32,6 @@ public class bz2 implements ClassDictInit {
     }
 
     public static PyString compress(PyString data, int compresslevel) {
-
         PyString returnData = null;
 
         try {
@@ -45,20 +43,8 @@ public class bz2 implements ClassDictInit {
             bzbuf.finish();
             bzbuf.close();
 
-            StringBuilder encodeBuf = new StringBuilder();
-            Formatter encodeFormatter = new Formatter(encodeBuf);
-
-            byte[] buf = compressedArray.toByteArray();
-            for (byte b : buf) {
-                if (b < 32 || b > 126) {
-                    encodeFormatter.format("\\x%02x", b);
-                } else {
-                    encodeFormatter.format("%c", b);
-                }
-            }
+            returnData = new PyString(compressedArray.toString("iso-8859-1"));
             compressedArray.close();
-
-            returnData = new PyString(encodeBuf.toString());
         } catch (IOException e) {
             throw Py.IOError(e.getMessage());
         }
@@ -67,28 +53,14 @@ public class bz2 implements ClassDictInit {
     }
 
     public static PyString decompress(PyString data) {
-
         PyString returnString = null;
 
         if (data.toString().equals("")) {
-            return new PyString();
+            return Py.EmptyString;
         }
         try {
-            ByteArrayOutputStream decodedStream = new ByteArrayOutputStream();
-            final byte[] buf = data.toBytes();
-            for (int i = 0; i < buf.length; i++) {
-                if (((char) buf[i] == '\\') && ((char) buf[i + 1] == 'x')) {
-                    int decodedByte = ((Character.digit((char) buf[i + 2], 16) << 4) + Character
-                            .digit((char) buf[i + 3], 16));
-                    decodedStream.write(decodedByte);
-                    i += 3;
-                } else {
-                    decodedStream.write(buf[i]);
-                }
-            }
-
             ByteArrayInputStream inputArray = new ByteArrayInputStream(
-                    decodedStream.toByteArray());
+                    data.toBytes());
             BZip2CompressorInputStream bzbuf = new BZip2CompressorInputStream(
                     inputArray);
 
@@ -100,12 +72,11 @@ public class bz2 implements ClassDictInit {
                 outputArray.write(buffer, 0, n);
             }
 
-            returnString = new PyString(new String(outputArray.toByteArray()));
+            returnString = new PyString(outputArray.toString("iso-8859-1"));
 
             outputArray.close();
             bzbuf.close();
             inputArray.close();
-
         } catch (IOException e) {
             throw Py.ValueError(e.getMessage());
         }

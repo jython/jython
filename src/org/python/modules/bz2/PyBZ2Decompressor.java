@@ -20,7 +20,7 @@ import org.python.expose.ExposedType;
 public class PyBZ2Decompressor extends PyObject {
 
     @ExposedGet
-    public PyString unused_data = new PyString();
+    public PyString unused_data = Py.EmptyString;
 
     private boolean eofReached = false;
     private BZip2CompressorInputStream decompressStream = null;
@@ -46,13 +46,12 @@ public class PyBZ2Decompressor extends PyObject {
 
     @ExposedMethod
     final PyString BZ2Decompressor_decompress(PyObject[] args, String[] kwds) {
-
         ArgParser ap = new ArgParser("compress", args, kwds,
                 new String[] { "data" }, 1);
 
         PyString data = (PyString) ap.getPyObject(0);
 
-        PyString returnData = new PyString();
+        PyString returnData = Py.EmptyString;
 
         if (eofReached) {
             throw Py.EOFError("Data stream EOF reached");
@@ -86,7 +85,7 @@ public class PyBZ2Decompressor extends PyObject {
         try {
             decompressStream = new BZip2CompressorInputStream(compressedData);
         } catch (IOException e) {
-            return new PyString();
+            return Py.EmptyString;
         }
 
         ByteArrayOutputStream databuf = new ByteArrayOutputStream();
@@ -105,7 +104,7 @@ public class PyBZ2Decompressor extends PyObject {
             }
             eofReached = true;
         } catch (IOException e) {
-            return new PyString();
+            return Py.EmptyString;
         }
 
         return returnData;

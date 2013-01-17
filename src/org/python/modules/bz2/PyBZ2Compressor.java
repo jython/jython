@@ -3,7 +3,6 @@ package org.python.modules.bz2;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Formatter;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.python.core.ArgParser;
@@ -11,6 +10,7 @@ import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -45,12 +45,10 @@ public class PyBZ2Compressor extends PyObject {
         } catch (IOException e) {
             throw Py.IOError(e.getMessage());
         }
-
     }
 
     @ExposedMethod
     public PyString BZ2Compressor_compress(PyObject[] args, String[] kwds) {
-
         ArgParser ap = new ArgParser("compress", args, kwds,
                 new String[] { "data" }, 1);
 
@@ -69,35 +67,18 @@ public class PyBZ2Compressor extends PyObject {
     }
 
     private PyString readData() {
-
-        PyString returnData;
-        if (captureStream.hasData()) {
-            StringBuilder encodeBuf = new StringBuilder();
-            Formatter encodeFormatter = new Formatter(encodeBuf);
-            byte[] buf = captureStream.readData();
-            for (byte b : buf) {
-                if (b < 32 || b > 126) {
-                    encodeFormatter.format("\\x%02x", b);
-                } else {
-                    encodeFormatter.format("%c", b);
-                }
-            }
-
-            returnData = new PyString(encodeBuf.toString());
-            encodeFormatter.close();
-
-            captureStream.resetByteArray();
-
-        } else {
-            returnData = new PyString();
+        if (!captureStream.hasData()) {
+            return Py.EmptyString;
         }
-        return returnData;
+        
+        byte[] buf = captureStream.readData();
+        captureStream.resetByteArray();
+        return new PyString(StringUtil.fromBytes(buf));
     }
 
     @ExposedMethod
     public PyString BZ2Compressor_flush(PyObject[] args, String[] kwds) {
-
-        PyString finalData = new PyString();
+        PyString finalData = Py.EmptyString;
         try {
             compressStream.finish();
             compressStream.close();

@@ -96,7 +96,6 @@ public class PyBZ2File extends PyObject {
             }
 
             if (mode.contains("w")) {
-
                 File f = new File(fileName);
                 if (!f.exists()) {
                     f.createNewFile();
@@ -104,9 +103,7 @@ public class PyBZ2File extends PyObject {
 
                 writeStream = new BZip2CompressorOutputStream(
                         new FileOutputStream(fileName), compresslevel);
-
             } else {
-
                 FileInputStream fin = new FileInputStream(fileName);
                 BufferedInputStream bin = new BufferedInputStream(fin);
                 BZip2CompressorInputStream bZin = new BZip2CompressorInputStream(
@@ -126,7 +123,6 @@ public class PyBZ2File extends PyObject {
                 bin.close();
                 fin.close();
             }
-
         } catch (IOException e) {
             throw Py.IOError("File " + fileName + " not found,");
         }
@@ -139,7 +135,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public void BZ2File_close() {
-
         fileData = null;
 
         if (writeStream != null) {
@@ -154,7 +149,6 @@ public class PyBZ2File extends PyObject {
     }
 
     private void BZ2File_flush() {
-
         if (writeStream != null) {
             try {
                 writeStream.flush();
@@ -176,7 +170,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyObject BZ2File_read(PyObject[] args, String[] kwds) {
-
         checkInIterMode();
 
         ArgParser ap = new ArgParser("read", args, kwds,
@@ -190,7 +183,6 @@ public class PyBZ2File extends PyObject {
     }
 
     private byte[] _BZ2File_read(int size) {
-
         byte[] buf = null;
         if (size == 0) {
             return new byte[0];
@@ -243,7 +235,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyString BZ2File_readline(PyObject[] args, String[] kwds) {
-
         checkInIterMode();
 
         ArgParser ap = new ArgParser("read", args, kwds,
@@ -288,7 +279,6 @@ public class PyBZ2File extends PyObject {
     }
 
     private void addNewlineMarker(String newline) {
-
         if (newlines == null) {
             newlines = new PyString(newline);
         } else {
@@ -307,7 +297,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyList BZ2File_readlines(PyObject[] args, String[] kwds) {
-
         checkInIterMode();
 
         // make sure file data valid
@@ -318,7 +307,7 @@ public class PyBZ2File extends PyObject {
         PyList lineList = new PyList();
 
         PyString line = null;
-        while (!(line = BZ2File_readline(args, kwds)).equals(new PyString())) {
+        while (!(line = BZ2File_readline(args, kwds)).equals(Py.EmptyString)) {
             lineList.add(line);
         }
 
@@ -382,7 +371,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public void BZ2File_write(PyObject[] args, String[] kwds) {
-
         checkFileWritable();
 
         ArgParser ap = new ArgParser("write", args, kwds,
@@ -406,7 +394,6 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public void BZ2File_writelines(PyObject[] args, String[] kwds) {
-
         checkFileWritable();
 
         ArgParser ap = new ArgParser("writelines", args, kwds,
@@ -442,10 +429,9 @@ public class PyBZ2File extends PyObject {
 
         @Override
         public PyObject __iternext__() {
-
             PyString s = BZ2File_readline(new PyObject[0], new String[0]);
 
-            if (s.equals(new PyString())) {
+            if (s.equals(Py.EmptyString)) {
                 return null;
             } else {
                 return s;
