@@ -21,6 +21,7 @@ Jython 2.7a3
     - bytearray complete
     - a buffer API
     - memoryview
+    - bz2 module
 
 Jython 2.7a2
     - [ 1892 ] site-packages is not in sys.path
