@@ -55,12 +55,14 @@ class Closer<C extends PyIOBase> implements Callable<Void> {
      */
     @Override
     public synchronized Void call() {
-        // This will prevent a call to dismiss() manipulating the caller's list of closers
-        sys = null;
-        // Call close on the client (if it still exists)
-        C toClose = client.get();
-        if (toClose != null) {
-            toClose.invoke("close");
+        if (sys != null) {
+            // This will prevent repeated work and dismiss() manipulating the list of closers
+            sys = null;
+            // Call close on the client (if it still exists)
+            C toClose = client.get();
+            if (toClose != null) {
+                toClose.invoke("close");
+            }
         }
         return null;
     }
