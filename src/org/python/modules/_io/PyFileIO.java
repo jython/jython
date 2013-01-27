@@ -168,15 +168,18 @@ public class PyFileIO extends PyRawIOBase {
                         throw Py.OSError(Errno.EBADF);
                     }
                 }
-
-            } else {
-                // The file was a type we don't know how to use
-                throw Py.TypeError(String.format("invalid file: %s", file.__repr__().asString()));
             }
+        }
+
+        // If we couldn't figure it out, ioDelegate will still be null
+        if (ioDelegate == null) {
+            // The file was a type we don't know how to use
+            throw Py.TypeError(String.format("invalid file: %s", file.__repr__().asString()));
         }
 
         // The name is either the textual name or a file descriptor (see Python docs)
         fastGetDict().__setitem__("name", file);
+
     }
 
     private static final String[] openArgs = {"file", "mode", "closefd"};
@@ -430,6 +433,11 @@ public class PyFileIO extends PyRawIOBase {
     @ExposedMethod(doc = fileno_doc)
     final PyObject FileIO_fileno() {
         return PyJavaType.wrapJavaObject(ioDelegate.fileno());
+    }
+
+    @Override
+    public boolean isatty() {
+        return FileIO_isatty();
     }
 
     @ExposedMethod(doc = isatty_doc)

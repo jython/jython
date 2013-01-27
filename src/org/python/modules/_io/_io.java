@@ -119,76 +119,93 @@ public class _io implements ClassDictInit {
 
         mode.checkValid();
 
-        int line_buffering;
-
         /*
          * Create the Raw file stream. Let the constructor deal with the variants and argument
          * checking.
          */
         PyFileIO raw = new PyFileIO(file, mode, closefd);
 
-        // XXX Can this work: boolean isatty = raw.isatty() ? Or maybe:
-        // PyObject res = PyObject_CallMethod(raw, "isatty", NULL);
-        boolean isatty = false;
-
         /*
-         * Work out a felicitous buffer size
+         * From the Python documentation for io.open() buffering = 0 to switch buffering off (only
+         * allowed in binary mode), 1 to select line buffering (only usable in text mode), and an
+         * integer > 1 to indicate the size of a fixed-size buffer.
+         *
+         * When no buffering argument is given, the default buffering policy works as follows:
+         * Binary files are buffered in fixed-size chunks; "Interactive" text files (files for which
+         * isatty() returns True) use line buffering. Other text files use the policy described
+         * above for binary files.
+         *
+         * In Java, it seems a stream never is *known* to be interactive, but we ask anyway, and
+         * maybe one day we shall know.
          */
-        if (buffering == 1 || (buffering < 0 && isatty)) {
-            buffering = -1;
-            line_buffering = 1;
-        } else {
-            line_buffering = 0;
-        }
+        boolean line_buffering = false;
 
-        if (buffering < 0) {
-            // Try to establish the default buffer size for this file using the OS.
-            buffering = _DEFAULT_BUFFER_SIZE;
-            // PyObject res = PyObject_CallMethod(raw, "fileno", NULL);
-            // if (fstat(fileno, &st) >= 0 && st.st_blksize > 1)
-            // buffering = st.st_blksize;
-        }
-
-        if (buffering < 0) {
-            throw Py.ValueError("invalid buffering size");
-        }
-
-        // If not buffering, return the raw file object
         if (buffering == 0) {
             if (!mode.binary) {
                 throw Py.ValueError("can't have unbuffered text I/O");
             }
             return raw;
+
+        } else if (buffering == 1) {
+            // The stream is to be read line-by-line.
+            line_buffering = true;
+            // Force default size for actual buffer
+            buffering = -1;
+
+        } else if (buffering < 0 && raw.isatty()) {
+            // No buffering argument given but stream is inteeractive.
+            line_buffering = true;
         }
 
-        // We are buffering, so wrap raw into a buffered file
-        PyObject bufferType = null;
-        PyObject io = imp.load("io");
-
-        if (mode.updating) {
-            bufferType = io.__getattr__("BufferedRandom");
-        } else if (mode.writing || mode.appending) {
-            bufferType = io.__getattr__("BufferedWriter");
-        } else {                        // = reading
-            bufferType = io.__getattr__("BufferedReader");
+        if (buffering < 0) {
+            /*
+             * We are still being asked for the default buffer size. CPython establishes the default
+             * buffer size using fstat(fd), but Java appears to give no clue. A useful study of
+             * buffer sizes in NIO is http://www.evanjones.ca/software/java-bytebuffers.html . This
+             * leads us to the fixed choice of _DEFAULT_BUFFER_SIZE (=8KB).
+             */
+            buffering = _DEFAULT_BUFFER_SIZE;
         }
 
-        PyInteger pyBuffering = new PyInteger(buffering);
-        PyObject buffer = bufferType.__call__(raw, pyBuffering);
+        /*
+         * We now know just what particular class of file we are opening, and therefore what stack
+         * (buffering and text encoding) we should build.
+         */
+        if (buffering == 0) {
+            // Not buffering, return the raw file object
+            return raw;
 
-        // If binary, return the buffered file
-        if (mode.binary) {
-            return buffer;
+        } else {
+            // We are buffering, so wrap raw into a buffered file
+            PyObject bufferType = null;
+            PyObject io = imp.load("io");
+
+            if (mode.updating) {
+                bufferType = io.__getattr__("BufferedRandom");
+            } else if (mode.writing || mode.appending) {
+                bufferType = io.__getattr__("BufferedWriter");
+            } else {                        // = reading
+                bufferType = io.__getattr__("BufferedReader");
+            }
+
+            PyInteger pyBuffering = new PyInteger(buffering);
+            PyObject buffer = bufferType.__call__(raw, pyBuffering);
+
+            if (mode.binary) {
+                // If binary, return the just the buffered file
+                return buffer;
+
+            } else {
+                // We are opening in text mode, so wrap buffered file in a TextIOWrapper.
+                PyObject textType = io.__getattr__("TextIOWrapper");
+                PyObject[] textArgs =
+                        {buffer, ap.getPyObject(3, Py.None), ap.getPyObject(4, Py.None),
+                                ap.getPyObject(5, Py.None), Py.newBoolean(line_buffering)};
+                PyObject wrapper = textType.__call__(textArgs);
+                wrapper.__setattr__("mode", new PyString(m));
+                return wrapper;
+            }
         }
-
-        /* We are opening in text mode, so wrap buffer into a TextIOWrapper */
-        PyObject textType = io.__getattr__("TextIOWrapper");
-        PyObject[] textArgs =
-                {buffer, ap.getPyObject(3, Py.None), ap.getPyObject(4, Py.None),
-                        ap.getPyObject(5, Py.None), Py.newInteger(line_buffering)};
-        PyObject wrapper = textType.__call__(textArgs);
-        wrapper.__setattr__("mode", new PyString(m));
-        return wrapper;
     }
 
     private static final String[] openKwds = {"file", "mode", "buffering", "encoding", "errors",

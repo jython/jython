@@ -17,7 +17,9 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -1382,14 +1384,13 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 }
             }
 
-            for (Callable<Void> callable : resourceClosers) {
-                try {
-                    callable.call();
-                } catch (Exception e) {
-                    // just continue, nothing we can do
-                }
-            }
+            // Close the listed resources (and clear the list)
+            runClosers(resourceClosers);
             resourceClosers.clear();
+
+            // XXX Not sure this is ok, but it makes repeat testing possible.
+            // Re-enable the management of resource closers
+            isCleanup = false;
         }
 
         // Python scripts expect that files are closed upon an orderly cleanup of the VM.
@@ -1412,22 +1413,42 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
             @Override
             public synchronized void run() {
-                if (resourceClosers == null) {
-                    // resourceClosers can be null in some strange cases
-                    return;
-                }
-                for (Callable<Void> callable : resourceClosers) {
-                    try {
-                        callable.call(); // side effect of being removed from this set
-                    } catch (Exception e) {
-                        // continue - nothing we can do now!
-                    }
-                }
+                runClosers(resourceClosers);
                 resourceClosers.clear();
             }
         }
 
     }
+
+    /**
+     * Helper abstracting common code from {@link ShutdownCloser#run()} and
+     * {@link PySystemStateCloser#cleanup()} to close resources (such as still-open files). The
+     * closing sequence is from last-created resource to first-created, so that dependencies between
+     * them are respected. (There are some amongst layers in the _io module.)
+     * 
+     * @param resourceClosers to be called in turn
+     */
+    private static void runClosers(Set<Callable<Void>> resourceClosers) {
+        // resourceClosers can be null in some strange cases
+        if (resourceClosers != null) {
+            /*
+             * Although a Set, the container iterates in the order closers were added. Make a Deque
+             * of it and deal from the top.
+             */
+            LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
+            Iterator<Callable<Void>> iter = rc.descendingIterator();
+
+            while (iter.hasNext()) {
+                Callable<Void> callable = iter.next();
+                try {
+                    callable.call();
+                } catch (Exception e) {
+                    // just continue, nothing we can do
+                }
+            }
+        }
+    }
+
 }
 
 
