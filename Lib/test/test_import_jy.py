@@ -51,15 +51,15 @@ class MislabeledImportTestCase(unittest.TestCase):
         self.assertEquals(module_obj.test, 'imported')
 
     def test_dunder_init(self):
-        os.mkdir('foo')
+        os.mkdir('dunder_init_test')
 
-        # typical import: foo.__init__$py.class is actually compiled
-        # with a class name of foo
-        init = os.path.join('foo', '__init__.py')
+        # typical import: dunder_init_test.__init__$py.class is actually
+        # compiled with a class name of dunder_init_test
+        init = os.path.join('dunder_init_test', '__init__.py')
         fp = open(init, 'w')
         fp.write("bar = 'test'")
         fp.close()
-        module_obj = __import__('foo')
+        module_obj = __import__('dunder_init_test')
         self.assertEquals(module_obj.__file__, init)
         self.assertEquals(module_obj.bar, 'test')
 
@@ -67,25 +67,27 @@ class MislabeledImportTestCase(unittest.TestCase):
         self.assert_(os.path.exists(init_compiled))
         bytecode = read(init_compiled)
 
-        # trigger an abnormal import of foo.__init__; ask for it by the
-        # mismatched __init__ name
-        fp = open(os.path.join('foo', 'test.py'), 'w')
+        # trigger an abnormal import of dunder_init_test.__init__; ask for it
+        # by the mismatched __init__ name
+        fp = open(os.path.join('dunder_init_test', 'test.py'), 'w')
         fp.write("import __init__; baz = __init__.bar + 'test'; "
                  "init_file = __init__.__file__")
         fp.close()
-        module_obj = __import__('foo.test')
+        module_obj = __import__('dunder_init_test.test')
         self.assertEquals(module_obj.test.baz, 'testtest')
         self.assertEqual(module_obj.test.init_file,
-                         os.path.join('foo', '__init__' + COMPILED_SUFFIX))
+                         os.path.join('dunder_init_test',
+                                      '__init__' + COMPILED_SUFFIX))
 
         # Ensure a recompile of __init__$py.class wasn't triggered to
         # satisfy the abnormal import
         self.assertEquals(bytecode, read(init_compiled),
                           'bytecode was recompiled')
 
-        # Ensure load_module can still load it as foo (doesn't
+        # Ensure load_module can still load it as dunder_init_test (doesn't
         # recompile)
-        module_obj = imp.load_module('foo', *imp.find_module('foo'))
+        module_obj = imp.load_module('dunder_init_test',
+                                     *imp.find_module('dunder_init_test'))
         self.assertEquals(module_obj.bar, 'test')
 
         # Again ensure we didn't recompile
