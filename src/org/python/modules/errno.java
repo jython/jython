@@ -1,9 +1,9 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules;
 
-import com.kenai.constantine.Constant;
-import com.kenai.constantine.ConstantSet;
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.Constant;
+import jnr.constants.ConstantSet;
+import jnr.constants.platform.Errno;
 import jnr.posix.util.Platform;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -16,7 +16,7 @@ import org.python.core.imp;
  * The Python errno module.
  *
  * Errno constants can be accessed from Java code via
- * {@link com.kenai.constantine.platform.Errno}, e.g. Errno.ENOENT.
+ * {@link jnr.constants.platform.Errno}, e.g. Errno.ENOENT.
  */
 public class errno implements ClassDictInit {
 
@@ -61,7 +61,7 @@ public class errno implements ClassDictInit {
         // WSA errnos (and other Windows LastErrors)
         ConstantSet lastErrors = ConstantSet.getConstantSet("LastError");
 
-        // Fill the gaps by searching through every possible constantine Errno first
+        // Fill the gaps by searching through every possible jnr-constants Errno first
         // checking if it's defined on Windows, then falling back to the WSA prefixed
         // version if it exists
         Constant constant;
@@ -69,20 +69,20 @@ public class errno implements ClassDictInit {
             String errnoName = errno.name();
             if ((constant = winErrnos.getConstant(errnoName)) != null
                 || (constant = lastErrors.getConstant("WSA" + errnoName)) != null) {
-                addCode(dict, errnoName, constant.value(), constant.toString());
+                addCode(dict, errnoName, constant.intValue(), constant.toString());
             }
         }
         // Then provide the WSA names
         for (Constant lastError : lastErrors) {
             if (lastError.name().startsWith("WSA")) {
-                addCode(dict, lastError.name(), lastError.value(), lastError.toString());
+                addCode(dict, lastError.name(), lastError.intValue(), lastError.toString());
             }
         }
     }
 
     private static void initPosix(PyObject dict) {
         for (Constant constant : ConstantSet.getConstantSet("Errno")) {
-            addCode(dict, constant.name(), constant.value(), constant.toString());
+            addCode(dict, constant.name(), constant.intValue(), constant.toString());
         }
     }
 
@@ -94,7 +94,7 @@ public class errno implements ClassDictInit {
     }
 
     /**
-     * @deprecated Use org.python.core.constantine.Errno.valueOf(code).toString() (or
+     * @deprecated Use jnr.constants.platform.Errno.valueOf(code).toString() (or
      *             os.strerror from Python) instead.
      */
     @Deprecated

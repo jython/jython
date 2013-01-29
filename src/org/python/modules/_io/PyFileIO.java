@@ -32,7 +32,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.platform.Errno;
 
 @ExposedType(name = "_io.FileIO", base = PyRawIOBase.class)
 public class PyFileIO extends PyRawIOBase {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2007 Jython Developers */
+/* Copyright (c) 2007-2012 Jython Developers */
 package org.python.core.io;
 
 import java.io.File;
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.platform.Errno;
 import jnr.posix.util.Platform;
 import org.python.core.Py;
 import org.python.core.PyString;

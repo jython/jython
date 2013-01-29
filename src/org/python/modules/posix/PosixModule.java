@@ -1,8 +1,8 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import com.kenai.constantine.Constant;
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.Constant;
+import jnr.constants.platform.Errno;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -688,8 +688,8 @@ public class PosixModule implements ClassDictInit {
         }
         if (errno.name() == errno.toString()) {
             // Fake constant or just lacks a description, fallback to Linux's
-            // XXX: have constantine handle this fallback
-            errno = Enum.valueOf(com.kenai.constantine.platform.linux.Errno.class,
+            // XXX: have jnr-constants handle this fallback
+            errno = Enum.valueOf(jnr.constants.platform.linux.Errno.class,
                                  errno.name());
         }
         return new PyString(errno.toString());

@@ -11,7 +11,6 @@
 
 package org.python.modules;
 
-import com.kenai.constantine.platform.Errno;
 import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyList;

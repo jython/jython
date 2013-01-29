@@ -1,7 +1,7 @@
-/* Copyright (c) 2007 Jython Developers */
+/* Copyright (c) 2007-2012 Jython Developers */
 package org.python.core.io;
 
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.platform.Errno;
 import java.io.InputStream;
 import java.io.OutputStream;
 

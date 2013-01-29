@@ -21,8 +21,8 @@ import java.util.Calendar;
 import java.util.Set;
 
 import org.python.antlr.base.mod;
-import com.kenai.constantine.Constant;
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.Constant;
+import jnr.constants.platform.Errno;
 import java.util.ArrayList;
 import java.util.List;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -117,22 +117,14 @@ public final class Py {
     }
 
     public static PyException OSError(Constant errno) {
-        int value = errno.value();
+        int value = errno.intValue();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.OSError, args);
     }
     
     public static PyException OSError(Constant errno, PyObject filename) {
-        int value = errno.value();
-        // Pass to strerror because constantine currently lacks Errno descriptions on
-        // Windows, and strerror falls back to Linux's
-        PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
-        return new PyException(Py.OSError, args);
-    }
-
-    public static PyException OSError(jnr.constants.Constant errno, PyObject filename) {
         int value = errno.intValue();
-        // Pass to strerror because constantine currently lacks Errno descriptions on
+        // Pass to strerror because jnr-constants currently lacks Errno descriptions on
         // Windows, and strerror falls back to Linux's
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
         return new PyException(Py.OSError, args);
@@ -191,13 +183,13 @@ public final class Py {
     }
 
     public static PyException IOError(Constant errno) {
-        int value = errno.value();
+        int value = errno.intValue();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.IOError, args);
     }
 
     public static PyException IOError(Constant errno, PyObject filename) {
-        int value = errno.value();
+        int value = errno.intValue();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
         return new PyException(Py.IOError, args);
     }
@@ -208,7 +200,7 @@ public final class Py {
             message = ioe.getClass().getName();
         }
         if (ioe instanceof FileNotFoundException) {
-            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.value()),
+            PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.intValue()),
                                        Py.newString("File not found - " + message));
             return new PyException(err, args);
         }

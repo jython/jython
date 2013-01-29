@@ -13,7 +13,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
-import com.kenai.constantine.platform.Errno;
+import jnr.constants.platform.Errno;
 
 import jline.ConsoleReader;
 import jline.Terminal;
