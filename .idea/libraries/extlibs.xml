@@ -29,7 +29,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-SunOS.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-Windows.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-SunOS.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/jline-0.9.95-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jline-1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-ppc-Linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-Linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-FreeBSD.jar!/" />

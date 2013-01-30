@@ -222,7 +222,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 			<pathelement path="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 			<pathelement path="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
             <pathelement path="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
-            <pathelement path="${extlibs.dir}/jline-0.9.95-SNAPSHOT.jar" />
+            <pathelement path="${extlibs.dir}/jline-1.0.jar" />
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -672,7 +672,7 @@ The readme text for the next release will be like:
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
             <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
-            <zipfileset src="extlibs/jline-0.9.95-SNAPSHOT.jar"/>
+            <zipfileset src="extlibs/jline-1.0.jar"/>
             <!--
             <rule pattern="jline.**" result="org.python.jline.@1"/>
             -->
