@@ -6,7 +6,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/stringtemplate-3.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jarjar-0.7.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-Windows.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/livetribe-jsr223-2.0.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/livetribe-jsr223-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-i386-FreeBSD.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/antlr-3.1.3.jar!/" />
