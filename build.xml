@@ -642,7 +642,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-4.0.jar"/>
             <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/guava-11.0.2.jar"/>
+            <zipfileset src="extlibs/guava-13.0.1.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/jaffl.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
@@ -667,7 +667,8 @@ The readme text for the next release will be like:
 			<zipfileset src="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 			<zipfileset src="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
-            <zipfileset src="extlibs/xercesImpl-2.9.1.jar" excludes="META-INF/services/*"/>
+            <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
+            <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
