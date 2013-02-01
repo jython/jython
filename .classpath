@@ -37,7 +37,7 @@
 	<classpathentry kind="lib" path="extlibs/jffi-x86_64-OpenBSD.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-x86_64-SunOS.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-1.2.2-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="extlibs/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-constants-0.8.4.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-posix-2.1-SNAPSHOT.jar"/>

@@ -221,7 +221,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
 			<pathelement path="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 			<pathelement path="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-constants-0.8.4.jar"/>
             <pathelement path="${extlibs.dir}/jline-1.0.jar" />
         </path>
 
@@ -666,7 +666,7 @@ The readme text for the next release will be like:
             <zipfileset src="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
 			<zipfileset src="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
 			<zipfileset src="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-constants-0.8.3-SNAPSHOT.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.8.4.jar"/>
             <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
