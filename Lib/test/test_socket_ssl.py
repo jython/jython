@@ -61,11 +61,20 @@ def test_rude_shutdown():
     time.sleep(1)
     connector()
 
+def test_https_socket():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('www.verisign.com', 443))
+    ssl_sock = socket.ssl(s)
+    ssl_sock.server()
+    ssl_sock.issuer()
+    s.close()    
+
 def test_main():
     if not hasattr(socket, "ssl"):
         raise test_support.TestSkipped("socket module has no ssl support")
     test_rude_shutdown()
     test_basic()
+    test_https_socket()
 
 if __name__ == "__main__":
     test_main()

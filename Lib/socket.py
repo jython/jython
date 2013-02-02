@@ -1850,24 +1850,31 @@ def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT,
 
 class ssl:
 
-    def __init__(self, plain_sock, keyfile=None, certfile=None):
+    def __init__(self, jython_socket_wrapper, keyfile=None, certfile=None):
         try:
-            self.ssl_sock = self._make_ssl_socket(plain_sock)
-            self._in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
-            self._out_buf = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
+            self.jython_socket_wrapper = jython_socket_wrapper
+            jython_socket = self.jython_socket_wrapper._sock
+            self.java_ssl_socket = self._make_ssl_socket(jython_socket)
+            self._in_buf = java.io.BufferedInputStream(self.java_ssl_socket.getInputStream())
+            self._out_buf = java.io.BufferedOutputStream(self.java_ssl_socket.getOutputStream())
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def _make_ssl_socket(self, plain_socket, auto_close=0):
-        java_net_socket = plain_socket._get_jsocket()
+    def _make_ssl_socket(self, jython_socket, auto_close=0):
+        java_net_socket = jython_socket._get_jsocket()
         assert isinstance(java_net_socket, java.net.Socket)
         host = java_net_socket.getInetAddress().getHostAddress()
         port = java_net_socket.getPort()
         factory = javax.net.ssl.SSLSocketFactory.getDefault();
-        ssl_socket = factory.createSocket(java_net_socket, host, port, auto_close)
-        ssl_socket.setEnabledCipherSuites(ssl_socket.getSupportedCipherSuites())
-        ssl_socket.startHandshake()
-        return ssl_socket
+        java_ssl_socket = factory.createSocket(java_net_socket, host, port, auto_close)
+        java_ssl_socket.setEnabledCipherSuites(java_ssl_socket.getSupportedCipherSuites())
+        java_ssl_socket.startHandshake()
+        return java_ssl_socket
+
+    def __getattr__(self, attr_name):
+        if hasattr(self.jython_socket_wrapper, attr_name):
+            return getattr(self.jython_socket_wrapper, attr_name)
+        raise AttributeError(attr_name)
 
     def read(self, n=4096):
         try:
@@ -1891,7 +1898,7 @@ class ssl:
 
     def _get_server_cert(self):
         try:
-            return self.ssl_sock.getSession().getPeerCertificates()[0]
+            return self.java_ssl_socket.getSession().getPeerCertificates()[0]
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -1902,12 +1909,6 @@ class ssl:
     def issuer(self):
         cert = self._get_server_cert()
         return cert.getIssuerDN().toString()
-
-_realssl = ssl
-def ssl(sock, keyfile=None, certfile=None):
-    if hasattr(sock, "_sock"):
-        sock = sock._sock
-    return _realssl(sock, keyfile, certfile)
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
