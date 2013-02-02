@@ -293,6 +293,7 @@ class MockHTTPClass:
             self._tunnel_headers = headers
         else:
             self._tunnel_headers.clear()
+
     def request(self, method, url, body=None, headers=None):
         self.method = method
         self.selector = url
@@ -304,10 +305,12 @@ class MockHTTPClass:
         if self.raise_on_endheaders:
             import socket
             raise socket.error()
+
     def getresponse(self):
         return MockHTTPResponse(MockFile(), {}, 200, "OK")
 
-    def close(self): pass
+    def close(self):
+        pass
 
 class MockHandler:
     # useful for testing handler machinery
@@ -595,21 +598,20 @@ class OpenerDirectorTests(unittest.TestCase):
 def sanepathname2url(path):
     import urllib
     urlpath = urllib.pathname2url(path)
-    if ((os._name if test_support.is_jython else os.name) == 'nt'
-        and urlpath.startswith("///")):
+    if os.name == "nt" and urlpath.startswith("///"):
         urlpath = urlpath[2:]
     # XXX don't ask me about the mac...
     return urlpath
 
 class HandlerTests(unittest.TestCase):
 
-    @unittest.skipIf(test_support.is_jython, "Required SSL support not yet available on jython")
     def test_ftp(self):
         class MockFTPWrapper:
             def __init__(self, data): self.data = data
             def retrfile(self, filename, filetype):
                 self.filename, self.filetype = filename, filetype
                 return StringIO.StringIO(self.data), len(self.data)
+            def close(self): pass
 
         class NullFTPHandler(urllib2.FTPHandler):
             def __init__(self, data): self.data = data
@@ -661,7 +663,6 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(headers.get("Content-type"), mimetype)
             self.assertEqual(int(headers["Content-length"]), len(data))
 
-    @unittest.skip("FIXME: not working")
     def test_file(self):
         import rfc822, socket
         h = urllib2.FileHandler()
@@ -974,6 +975,28 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(count,
                              urllib2.HTTPRedirectHandler.max_redirections)
 
+    def test_invalid_redirect(self):
+        from_url = "http://example.com/a.html"
+        valid_schemes = ['http', 'https', 'ftp']
+        invalid_schemes = ['file', 'imap', 'ldap']
+        schemeless_url = "example.com/b.html"
+        h = urllib2.HTTPRedirectHandler()
+        o = h.parent = MockOpener()
+        req = Request(from_url)
+        req.timeout = socket._GLOBAL_DEFAULT_TIMEOUT
+
+        for scheme in invalid_schemes:
+            invalid_url = scheme + '://' + schemeless_url
+            self.assertRaises(urllib2.HTTPError, h.http_error_302,
+                              req, MockFile(), 302, "Security Loophole",
+                              MockHeaders({"location": invalid_url}))
+
+        for scheme in valid_schemes:
+            valid_url = scheme + '://' + schemeless_url
+            h.http_error_302(req, MockFile(), 302, "That's fine",
+                MockHeaders({"location": valid_url}))
+            self.assertEqual(o.req.get_full_url(), valid_url)
+
     def test_cookie_redirect(self):
         # cookies shouldn't leak into redirected requests
         from cookielib import CookieJar
@@ -989,6 +1012,15 @@ class HandlerTests(unittest.TestCase):
         o = build_test_opener(hh, hdeh, hrh, cp)
         o.open("http://www.example.com/")
         self.assertTrue(not hh.req.has_header("Cookie"))
+
+    def test_redirect_fragment(self):
+        redirected_url = 'http://www.example.com/index.html#OK\r\n\r\n'
+        hh = MockHTTPHandler(302, 'Location: ' + redirected_url)
+        hdeh = urllib2.HTTPDefaultErrorHandler()
+        hrh = urllib2.HTTPRedirectHandler()
+        o = build_test_opener(hh, hdeh, hrh)
+        fp = o.open('http://www.example.com')
+        self.assertEqual(fp.geturl(), redirected_url.strip())
 
     def test_proxy(self):
         o = OpenerDirector()
@@ -1074,11 +1106,29 @@ class HandlerTests(unittest.TestCase):
         self._test_basic_auth(opener, auth_handler, "Authorization",
                               realm, http_handler, password_manager,
                               "http://acme.example.com/protected",
-                              "http://acme.example.com/protected",
-                              )
+                              "http://acme.example.com/protected"
+                             )
 
     def test_basic_auth_with_single_quoted_realm(self):
         self.test_basic_auth(quote_char="'")
+
+    def test_basic_auth_with_unquoted_realm(self):
+        opener = OpenerDirector()
+        password_manager = MockPasswordManager()
+        auth_handler = urllib2.HTTPBasicAuthHandler(password_manager)
+        realm = "ACME Widget Store"
+        http_handler = MockHTTPHandler(
+            401, 'WWW-Authenticate: Basic realm=%s\r\n\r\n' % realm)
+        opener.add_handler(auth_handler)
+        opener.add_handler(http_handler)
+        msg = "Basic Auth Realm was unquoted"
+        with test_support.check_warnings((msg, UserWarning)):
+            self._test_basic_auth(opener, auth_handler, "Authorization",
+                                  realm, http_handler, password_manager,
+                                  "http://acme.example.com/protected",
+                                  "http://acme.example.com/protected"
+                                 )
+
 
     def test_proxy_basic_auth(self):
         opener = OpenerDirector()
@@ -1098,7 +1148,7 @@ class HandlerTests(unittest.TestCase):
                               )
 
     def test_basic_and_digest_auth_handlers(self):
-        # HTTPDigestAuthHandler threw an exception if it couldn't handle a 40*
+        # HTTPDigestAuthHandler raised an exception if it couldn't handle a 40*
         # response (http://python.org/sf/1479302), where it should instead
         # return None to allow another handler (especially
         # HTTPBasicAuthHandler) to handle the response.
@@ -1275,12 +1325,43 @@ class RequestTests(unittest.TestCase):
         req = Request("<URL:http://www.python.org>")
         self.assertEqual("www.python.org", req.get_host())
 
-    def test_urlwith_fragment(self):
+    def test_url_fragment(self):
         req = Request("http://www.python.org/?qs=query#fragment=true")
         self.assertEqual("/?qs=query", req.get_selector())
         req = Request("http://www.python.org/#fun=true")
         self.assertEqual("/", req.get_selector())
 
+        # Issue 11703: geturl() omits fragment in the original URL.
+        url = 'http://docs.python.org/library/urllib2.html#OK'
+        req = Request(url)
+        self.assertEqual(req.get_full_url(), url)
+
+    def test_HTTPError_interface(self):
+        """
+        Issue 13211 reveals that HTTPError didn't implement the URLError
+        interface even though HTTPError is a subclass of URLError.
+
+        >>> err = urllib2.HTTPError(msg='something bad happened', url=None, code=None, hdrs=None, fp=None)
+        >>> assert hasattr(err, 'reason')
+        >>> err.reason
+        'something bad happened'
+        """
+
+    def test_HTTPError_interface_call(self):
+        """
+        Issue 15701= - HTTPError interface has info method available from URLError.
+        """
+        err = urllib2.HTTPError(msg='something bad happened', url=None,
+                                code=None, hdrs='Content-Length:42', fp=None)
+        self.assertTrue(hasattr(err, 'reason'))
+        assert hasattr(err, 'reason')
+        assert hasattr(err, 'info')
+        assert callable(err.info)
+        try:
+            err.info()
+        except AttributeError:
+            self.fail("err.info() failed")
+        self.assertEqual(err.info(), "Content-Length:42")
 
 def test_main(verbose=None):
     from test import test_urllib2
