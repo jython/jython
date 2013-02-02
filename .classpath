@@ -38,9 +38,9 @@
 	<classpathentry kind="lib" path="extlibs/jffi-x86_64-SunOS.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-1.2.6.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-constants-0.8.4.jar"/>
-	<classpathentry kind="lib" path="extlibs/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="extlibs/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="extlibs/jnr-posix-2.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-ffi-0.7.10.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-netdb-1.1.1.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-posix-2.4.0.jar"/>
 	<classpathentry kind="lib" path="extlibs/guava-13.0.1.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-x86_64-Windows.jar"/>
 	<classpathentry kind="lib" path="extlibs/commons-compress-1.4.1.jar"/>

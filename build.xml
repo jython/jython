@@ -200,6 +200,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
             <pathelement path="${extlibs.dir}/guava-13.0.1.jar" />
             <pathelement path="${extlibs.dir}/jaffl.jar"/>
+            <pathelement path="${extlibs.dir}/jffi-arm-Linux.jar"/>
             <pathelement path="${extlibs.dir}/jffi-Darwin.jar"/>
             <pathelement path="${extlibs.dir}/jffi-i386-FreeBSD.jar"/>
             <pathelement path="${extlibs.dir}/jffi-i386-Linux.jar"/>
@@ -218,9 +219,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${extlibs.dir}/jffi-x86_64-SunOS.jar"/>
             <pathelement path="${extlibs.dir}/jffi-x86_64-Windows.jar"/>
             <pathelement path="${extlibs.dir}/jffi-1.2.6.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
-			<pathelement path="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
-			<pathelement path="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-ffi-0.7.10.jar"/>
+			<pathelement path="${extlibs.dir}/jnr-netdb-1.1.1.jar"/>
+			<pathelement path="${extlibs.dir}/jnr-posix-2.4.0.jar"/>
             <pathelement path="${extlibs.dir}/jnr-constants-0.8.4.jar"/>
             <pathelement path="${extlibs.dir}/jline-1.0.jar" />
         </path>
@@ -645,6 +646,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/guava-13.0.1.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/jaffl.jar"/>
+            <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
             <zipfileset src="extlibs/jffi-i386-FreeBSD.jar"/>
             <zipfileset src="extlibs/jffi-i386-Linux.jar"/>
@@ -663,9 +665,9 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <zipfileset src="extlibs/jffi-1.2.6.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-ffi-0.7.4-SNAPSHOT.jar"/>
-			<zipfileset src="${extlibs.dir}/jnr-netdb-1.0.6-SNAPSHOT.jar"/>
-			<zipfileset src="${extlibs.dir}/jnr-posix-2.1-SNAPSHOT.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-0.7.10.jar"/>
+			<zipfileset src="${extlibs.dir}/jnr-netdb-1.1.1.jar"/>
+			<zipfileset src="${extlibs.dir}/jnr-posix-2.4.0.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-constants-0.8.4.jar"/>
             <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
