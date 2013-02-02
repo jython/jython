@@ -307,6 +307,8 @@ class MockHTTPClass:
     def getresponse(self):
         return MockHTTPResponse(MockFile(), {}, 200, "OK")
 
+    def close(self): pass
+
 class MockHandler:
     # useful for testing handler machinery
     # see add_ordered_mock_handlers() docstring
@@ -601,7 +603,7 @@ def sanepathname2url(path):
 
 class HandlerTests(unittest.TestCase):
 
-    @unittest.skip("FIXME: broken")
+    @unittest.skipIf(test_support.is_jython, "Required SSL support not yet available on jython")
     def test_ftp(self):
         class MockFTPWrapper:
             def __init__(self, data): self.data = data
@@ -753,7 +755,6 @@ class HandlerTests(unittest.TestCase):
                 self.assertEqual(req.type, "ftp")
             self.assertEqual(req.type == "ftp", ftp)
 
-    @unittest.skip("FIXME: broken")
     def test_http(self):
 
         h = urllib2.AbstractHTTPHandler()
@@ -842,7 +843,6 @@ class HandlerTests(unittest.TestCase):
             p_ds_req = h.do_request_(ds_req)
             self.assertEqual(p_ds_req.unredirected_hdrs["Host"],"example.com")
 
-    @unittest.skip("FIXME: broken")
     def test_fixpath_in_weirdurls(self):
         # Issue4493: urllib2 to supply '/' when to urls where path does not
         # start with'/'

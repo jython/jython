@@ -1072,7 +1072,13 @@ def splithost(url):
         _hostprog = re.compile('^//([^/?]*)(.*)$')
 
     match = _hostprog.match(url)
-    if match: return match.group(1, 2)
+    # http://bugs.python.org/issue4493
+    if match:
+        host_port = match.group(1)
+        path = match.group(2)
+        if path and not path.startswith('/'):
+            path = '/' + path
+        return host_port, path
     return None, url
 
 _userprog = None

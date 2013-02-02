@@ -700,6 +700,14 @@ def gethostbyname(name):
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
 
+#
+# Skeleton implementation of gethostbyname_ex
+# Needed because urllib2 refers to it
+#
+
+def gethostbyname_ex(name):
+    return (name, [], gethostbyname(name))
+
 def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
     return (names[0], names, addrs)
