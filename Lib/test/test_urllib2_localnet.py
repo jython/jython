@@ -8,6 +8,11 @@ import hashlib
 
 from test import test_support
 
+if test_support.is_jython:
+    import socket
+    # Working around an IPV6 problem on Windows
+    socket._use_ipv4_addresses_only(True)
+
 mimetools = test_support.import_module('mimetools', deprecated=True)
 threading = test_support.import_module('threading')
 
@@ -21,7 +26,12 @@ class LoopbackHttpServer(BaseHTTPServer.HTTPServer):
     def __init__(self, server_address, RequestHandlerClass):
         BaseHTTPServer.HTTPServer.__init__(self,
                                            server_address,
-                                           RequestHandlerClass)
+                                           RequestHandlerClass,
+                                           True)
+
+        host, port = self.socket.getsockname()[:2]
+        self.server_name = socket.getfqdn(host)
+        self.server_port = port
 
         # Set the timeout of our listening socket really low so
         # that we can stop the server easily.
