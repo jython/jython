@@ -593,7 +593,8 @@ class FTP:
 
 try:
     import ssl
-except ImportError:
+    ssl.PROTOCOL_TLSv1
+except (ImportError, AttributeError):
     pass
 else:
     class FTP_TLS(FTP):

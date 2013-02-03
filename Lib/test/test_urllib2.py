@@ -605,7 +605,6 @@ def sanepathname2url(path):
 
 class HandlerTests(unittest.TestCase):
 
-    @unittest.skipIf(test_support.is_jython, "Required SSL support not yet available on jython")
     def test_ftp(self):
         class MockFTPWrapper:
             def __init__(self, data): self.data = data

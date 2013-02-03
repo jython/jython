@@ -240,7 +240,6 @@ Content-Type: text/html; charset=iso-8859-1
         self.assertFalse(os.path.exists(tmp_file))
         self.assertRaises(IOError, urllib.urlopen, tmp_fileurl)
 
-    @unittest.skipIf(test_support.is_jython, "Required SSL support not yet available on jython")
     def test_ftp_nonexisting(self):
         self.assertRaises(IOError, urllib.urlopen,
                 'ftp://localhost/not/existing/file.py')
