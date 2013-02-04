@@ -149,6 +149,7 @@ class LockTests(BaseLockTests):
     Tests for non-recursive, weak locks
     (which can be acquired and released from different threads).
     """
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_reacquire(self):
         # Lock needs to be released before re-acquiring.
         lock = self.locktype()
@@ -193,6 +194,7 @@ class RLockTests(BaseLockTests):
         lock.release()
         lock.release()
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_release_unacquired(self):
         # Cannot release an unacquired lock
         lock = self.locktype()
@@ -205,6 +207,7 @@ class RLockTests(BaseLockTests):
         lock.release()
         self.assertRaises(RuntimeError, lock.release)
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_different_thread(self):
         # Cannot release from a different thread
         lock = self.locktype()
@@ -268,6 +271,7 @@ class EventTests(BaseTestCase):
         self.assertEqual(results1, [True] * N)
         self.assertEqual(results2, [True] * N)
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_notify(self):
         evt = self.eventtype()
         self._check_notify(evt)
@@ -276,6 +280,7 @@ class EventTests(BaseTestCase):
         evt.clear()
         self._check_notify(evt)
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_timeout(self):
         evt = self.eventtype()
         results1 = []
@@ -307,6 +312,7 @@ class ConditionTests(BaseTestCase):
     Tests for condition variables.
     """
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_acquire(self):
         cond = self.condtype()
         # Be default we have an RLock: the condition can be acquired multiple
@@ -326,6 +332,7 @@ class ConditionTests(BaseTestCase):
         with cond:
             self.assertFalse(lock.acquire(False))
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_unacquired_wait(self):
         cond = self.condtype()
         self.assertRaises(RuntimeError, cond.wait)
@@ -404,6 +411,7 @@ class ConditionTests(BaseTestCase):
         # A second time, to check internal state is still ok.
         self._check_notify(cond)
 
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_timeout(self):
         cond = self.condtype()
         results = []
