@@ -109,6 +109,11 @@ public class Condition extends PyObject implements ContextManager {
         _condition.signalAll();
     }
 
+    @ExposedMethod
+    final void Condition_notify_all() {
+        _condition.signalAll();
+    }
+
     public boolean _is_owned() {
         return Condition__is_owned();
     }
