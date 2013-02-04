@@ -25,30 +25,7 @@ public class ThreadState {
 
     public TraceFunction profilefunc;
 
-    private LinkedList<PyObject> initializingProxies;
-
     private PyDictionary compareStateDict;
-
-    public PyObject getInitializingProxy() {
-        if (initializingProxies == null) {
-            return null;
-        }
-        return initializingProxies.peek();
-    }
-
-    public void pushInitializingProxy(PyObject proxy) {
-        if (initializingProxies == null) {
-            initializingProxies = new LinkedList<PyObject>();
-        }
-        initializingProxies.addFirst(proxy);
-    }
-
-    public void popInitializingProxy() {
-        if (initializingProxies == null || initializingProxies.isEmpty()) {
-            throw Py.RuntimeError("invalid initializing proxies state");
-        }
-        initializingProxies.removeFirst();
-    }
 
     public ThreadState(Thread t, PySystemState systemState) {
         this.systemState = systemState;

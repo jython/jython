@@ -146,9 +146,9 @@ public class PyObject implements Serializable {
             throw Py.SystemError("Automatic proxy initialization should only occur on proxy classes");
         }
         PyProxy proxy;
-        ThreadState ts = Py.getThreadState();
+        PyObject previous = ThreadContext.initializingProxy.get();
+        ThreadContext.initializingProxy.set(this);
         try {
-            ts.pushInitializingProxy(this);
             try {
                 proxy = (PyProxy)c.newInstance();
             } catch (java.lang.InstantiationException e) {
@@ -164,7 +164,7 @@ public class PyObject implements Serializable {
                 throw Py.JavaError(exc);
             }
         } finally {
-            ts.popInitializingProxy();
+            ThreadContext.initializingProxy.set(previous);
         }
         if (javaProxy != null && javaProxy != proxy) {
             throw Py.TypeError("Proxy instance already initialized");

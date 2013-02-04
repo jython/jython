@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1327 ] ThreadState needs API cleanup work
     - [ 1309 ] Server sockets do not support client options and propagate them to 'accept'ed client sockets.
     - [ 1951 ] Bytecode Interpreter stack optimization for larger arguments
     - [ 1894 ] bytearray does not support '+' or .join()

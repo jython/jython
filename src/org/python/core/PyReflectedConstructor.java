@@ -203,9 +203,9 @@ public class PyReflectedConstructor extends PyReflectedFunction {
     protected void constructProxy(PyObject obj, Constructor<?> ctor, Object[] args, Class<?> proxy) {
         // Do the actual constructor call
         Object jself = null;
-        ThreadState ts = Py.getThreadState();
+        PyObject previous = ThreadContext.initializingProxy.get();
+        ThreadContext.initializingProxy.set(obj);
         try {
-            ts.pushInitializingProxy(obj);
             try {
                 jself = ctor.newInstance(args);
             } catch (InvocationTargetException e) {
@@ -222,7 +222,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                 throw Py.JavaError(t);
             }
         } finally {
-            ts.popInitializingProxy();
+            ThreadContext.initializingProxy.set(previous);
         }
         obj.javaProxy = jself;
     }

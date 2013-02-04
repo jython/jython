@@ -934,8 +934,8 @@ public final class Py {
     {
         if (proxy._getPyInstance() != null)
             return;
-        ThreadState ts = getThreadState();
-        PyObject instance = ts.getInitializingProxy();
+        PyObject instance = ThreadContext.initializingProxy.get();
+        ThreadState ts = Py.getThreadState();
         if (instance != null) {
             if (instance.javaProxy != null) {
                 throw Py.TypeError("Proxy instance reused");
