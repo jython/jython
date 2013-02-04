@@ -21,7 +21,6 @@
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/jar/jdom.jar"/>
 	<classpathentry kind="lib" path="extlibs/mockrunner-0.4.1/lib/jdk1.5/j2ee1.3/mockrunner-servlet.jar"/>
 	<classpathentry kind="lib" path="extlibs/livetribe-jsr223-2.0.6.jar"/>
-	<classpathentry kind="lib" path="extlibs/jaffl.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-Darwin.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-i386-FreeBSD.jar"/>
 	<classpathentry kind="lib" path="extlibs/jffi-i386-Linux.jar"/>
