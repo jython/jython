@@ -1064,6 +1064,7 @@ def htonl(x): return x
 def ntohs(x): return x
 def ntohl(x): return x
 
+@raises_java_exception
 def inet_pton(family, ip_string):
     if family == AF_INET:
         if not is_ipv4_address(ip_string):
@@ -1082,6 +1083,7 @@ def inet_pton(family, ip_string):
             bytes.append(byte)
     return "".join([chr(byte) for byte in bytes])
 
+@raises_java_exception
 def inet_ntop(family, packed_ip):
     jByteArray = jarray.array(packed_ip, 'b')
     if family == AF_INET:
