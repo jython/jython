@@ -7,4 +7,4 @@ http://wiki.python.org/jython/SSLModule
 
 import socket
 
-wrap = socket.ssl
+wrap_socket = socket.ssl
