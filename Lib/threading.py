@@ -394,6 +394,8 @@ class _Event(_Verbose):
     def isSet(self):
         return self.__flag
 
+    is_set = isSet
+
     def set(self):
         self.__cond.acquire()
         try:

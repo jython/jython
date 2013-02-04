@@ -1,7 +1,7 @@
 # Very rudimentary test of threading module
 
 import test.test_support
-from test.test_support import verbose
+from test.test_support import verbose, is_jython
 import random
 import re
 import sys
@@ -142,6 +142,7 @@ class ThreadTests(BaseTestCase):
         self.test_various_ops()
         threading.stack_size(0)
 
+    @unittest.skipIf(is_jython, "Does not apply to Jython")
     def test_foreign_thread(self):
         # Check that a "foreign" thread can use the threading module.
         def f(mutex):
@@ -161,6 +162,7 @@ class ThreadTests(BaseTestCase):
 
     # PyThreadState_SetAsyncExc() is a CPython-only gimmick, not (currently)
     # exposed at the Python level.  This test relies on ctypes to get at it.
+    @unittest.skipIf(is_jython, "Does not apply to Jython")
     def test_PyThreadState_SetAsyncExc(self):
         try:
             import ctypes
@@ -364,6 +366,7 @@ class ThreadTests(BaseTestCase):
         stderr = re.sub(r"^\[\d+ refs\]", "", stderr, re.MULTILINE).strip()
         self.assertEqual(stderr, "")
 
+    @unittest.skipIf(is_jython, "Does not apply to Jython")
     def test_enumerate_after_join(self):
         # Try hard to trigger #1703448: a thread is still returned in
         # threading.enumerate() after it has been join()ed.
@@ -424,6 +427,7 @@ class ThreadJoinOnShutdown(BaseTestCase):
     platforms_to_skip = ('freebsd4', 'freebsd5', 'freebsd6', 'netbsd5',
                          'os2emx')
 
+    @unittest.skipIf(is_jython, "Does not apply to Jython")
     def _run_and_join(self, script):
         script = """if 1:
             import sys, os, time, threading
@@ -442,6 +446,7 @@ class ThreadJoinOnShutdown(BaseTestCase):
         self.assertFalse(rc == 2, "interpreter was blocked")
         self.assertTrue(rc == 0, "Unexpected error")
 
+    @unittest.skipIf(is_jython, "Does not apply to Jython")
     def test_1_join_on_shutdown(self):
         # The usual case: on exit, wait for a non-daemon thread
         script = """if 1:
@@ -668,6 +673,7 @@ class ThreadingExceptionTests(BaseTestCase):
         thread.start()
         self.assertRaises(RuntimeError, thread.start)
 
+    @unittest.skipIf(is_jython, "FIXME: investigate on Jython")
     def test_joining_current_thread(self):
         current_thread = threading.current_thread()
         self.assertRaises(RuntimeError, current_thread.join);
