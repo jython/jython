@@ -330,7 +330,7 @@ class ConditionTests(BaseTestCase):
         cond = self.condtype()
         self.assertRaises(RuntimeError, cond.wait)
 
-    @unittest.skipIf(is_jython, "FIXME: not working properly on Jython")
+    @unittest.skipIf(support.is_jython, "FIXME: not working properly on Jython")
     def test_unacquired_notify(self):
         cond = self.condtype()
         self.assertRaises(RuntimeError, cond.notify)
