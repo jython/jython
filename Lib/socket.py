@@ -725,9 +725,11 @@ def gethostbyname(name):
 # Needed because urllib2 refers to it
 #
 
+@raises_java_exception
 def gethostbyname_ex(name):
     return (name, [], gethostbyname(name))
 
+@raises_java_exception
 def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
     return (names[0], names, addrs)
@@ -1029,6 +1031,7 @@ def _getnameinfo_get_port(port, flags):
         proto = "udp"
     return getservbyport(port, proto)
 
+@raises_java_exception
 def getnameinfo(sock_addr, flags):
     if not isinstance(sock_addr, tuple) or len(sock_addr) < 2:
         raise TypeError("getnameinfo() argument 1 must be a tuple")
@@ -1237,6 +1240,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         return _nonblocking_api_mixin.getsockopt(self, level, optname)
 
     @raises_error
+    @raises_java_exception
     def bind(self, addr):
         assert not self.sock_impl
         assert not self.local_addr
@@ -1270,8 +1274,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         cliconn._setup()
         return cliconn, new_sock.getpeername()
 
-    @raises_error
-    @raises_java_exception
     def _do_connect(self, addr):
         assert not self.sock_impl
         self.sock_impl = _client_socket_impl()
@@ -1281,11 +1283,15 @@ class _tcpsocket(_nonblocking_api_mixin):
         self._config() # Configure timeouts, etc, now that the socket exists
         self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
 
+    @raises_error
+    @raises_java_exception
     def connect(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
         self._setup()
 
+    @raises_error
+    @raises_java_exception
     def connect_ex(self, addr):
         "This signifies a client socket"
         if not self.sock_impl:
@@ -1320,6 +1326,8 @@ class _tcpsocket(_nonblocking_api_mixin):
             data = data[:m]
         return data.tostring()
 
+    @raises_error
+    @raises_java_exception
     def recvfrom(self, n):
         return self.recv(n), None
 
@@ -1369,8 +1377,6 @@ class _udpsocket(_nonblocking_api_mixin):
                                                 self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
         self._config()
 
-    @raises_error
-    @raises_java_exception
     def _do_connect(self, addr):
         assert not self.connected, "Datagram Socket is already connected"
         if not self.sock_impl:
@@ -1379,9 +1385,13 @@ class _udpsocket(_nonblocking_api_mixin):
         self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
         self.connected = True
 
+    @raises_error
+    @raises_java_exception
     def connect(self, addr):
         self._do_connect(addr)
 
+    @raises_error
+    @raises_java_exception
     def connect_ex(self, addr):
         if not self.sock_impl:
             self._do_connect(addr)
@@ -1401,6 +1411,7 @@ class _udpsocket(_nonblocking_api_mixin):
         result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, self.family, self.type, self.proto, 0), flags)
         return result
 
+    @raises_java_exception
     def send(self, data, flags=None):
         if not self.connected: raise error(errno.ENOTCONN, "Socket is not connected")
         byte_array = java.lang.String(data).getBytes('iso-8859-1')
