@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7a3
   Bugs Fixed
+    - [ 1968 ] Fixes for test_csv.py.
     - [ 1989 ] condition.notify_all() is missing.
     - [ 1994 ] threading.Event doesn't have is_set method fixed.
     - [ 1327 ] ThreadState needs API cleanup work
