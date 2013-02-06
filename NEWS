@@ -1,7 +1,8 @@
 Jython NEWS
 
-Jython 2.7a3
+Jython 2.7b1
   Bugs Fixed
+    - [ 1716 ] xrange slicing raises NPE.
     - [ 1968 ] Fixes for test_csv.py.
     - [ 1989 ] condition.notify_all() is missing.
     - [ 1994 ] threading.Event doesn't have is_set method fixed.
