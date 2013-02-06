@@ -31,10 +31,10 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
 
-    private final ConcurrentMap<PyObject, PyObject> map;
+    private final ConcurrentMap<PyObject, PyObject> internalMap;
 
     public ConcurrentMap<PyObject, PyObject> getMap() {
-        return map;
+        return internalMap;
     }
 
     /**
@@ -49,8 +49,8 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     public PyDictionary(PyType type, int capacity) {
         super(type);
-        map = new ConcurrentHashMap<PyObject, PyObject>(capacity, Generic.CHM_LOAD_FACTOR,
-                                                          Generic.CHM_CONCURRENCY_LEVEL);
+        internalMap = new ConcurrentHashMap<PyObject,PyObject>(capacity, Generic.CHM_LOAD_FACTOR,
+                                                               Generic.CHM_CONCURRENCY_LEVEL);
     }
 
     /**
@@ -58,7 +58,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     public PyDictionary(PyType type) {
         super(type);
-        map = Generic.concurrentMap();
+        internalMap = Generic.concurrentMap();
     }
 
     /**
@@ -74,7 +74,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     public PyDictionary(PyType type, Map<PyObject, PyObject> map) {
         this(type, Math.max((int) (map.size() / Generic.CHM_LOAD_FACTOR) + 1,
                             Generic.CHM_INITIAL_CAPACITY));
-        this.map.putAll(map);
+        getMap().putAll(map);
     }
 
     /**
@@ -85,9 +85,9 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     protected PyDictionary(PyType type, boolean initializeBacking) {
         super(type);
         if (initializeBacking) {
-            map = Generic.concurrentMap();
+            internalMap = Generic.concurrentMap();
         } else {
-            map = null; // for later initialization
+            internalMap = null; // for later initialization
         }
     }
 
@@ -100,6 +100,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     public PyDictionary(PyObject elements[]) {
         this();
+        ConcurrentMap<PyObject, PyObject> map = getMap();
         for (int i = 0; i < elements.length; i += 2) {
             map.put(elements[i], elements[i + 1]);
         }
@@ -599,7 +600,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.dict_pop_doc)
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
-        if (!map.containsKey(key)) {
+        if (!getMap().containsKey(key)) {
             if (defaultValue == null) {
                 throw Py.KeyError("popitem(): dictionary is empty");
             }
@@ -713,7 +714,9 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
             return false;
         }
         final PyDictionary other = (PyDictionary) obj;
-        if (this.map != other.map && (this.map == null || !this.map.equals(other.map))) {
+        ConcurrentMap<PyObject, PyObject> map = getMap();
+        ConcurrentMap<PyObject, PyObject> otherMap = other.getMap();
+        if (map != otherMap && (map == null || !map.equals(otherMap))) {
             return false;
         }
         return true;
