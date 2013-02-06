@@ -35,7 +35,12 @@ Jython 2.7a1
   Bugs Fixed
     - [ 1880 ] Sha 224 library not present in Jython
 
+Jython 2.5.4rc1
+  Bugs Fixed
+    - [ 1716 ] xrange slicing raises NPE.
+
 Jython 2.5.3rc1
+  Bugs Fixed
     - [ 1952 ] __import__(): Handling of non-dict globals argument incompatible with CPython
     - [ 1900 ] Python imports from Java cause some Python imports to fail
 
