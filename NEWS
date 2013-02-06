@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.4rc1
   Bugs Fixed
+    - [ 1481 ] jython throws java.lang.IllegalArgumentException instead of ValueError.
     - [ 1716 ] xrange slicing raises NPE.
 
 Jython 2.5.3rc1

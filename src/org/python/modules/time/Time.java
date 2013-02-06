@@ -780,6 +780,11 @@ public class Time implements ClassDictInit
                     builder.append("'");
                     inQuote = needsQuote;
                 }
+                if (charAt == '\'') {
+                    // a single quote always needs to be escaped, regardless
+                    // whether already in a quote or not
+                    builder.append("'");
+                }
                 builder.append(charAt);
                 continue;
             } else if (inQuote) {
