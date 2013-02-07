@@ -276,63 +276,7 @@ public class StreamIO extends RawIOBase {
     }
 
     private static ReadableByteChannel newChannel(InputStream in) {
-        return new InternalReadableByteChannel(in);
-    }
-
-
-    /*
-     * AbstractInterruptibleChannel is used for its end() and begin() implementations
-     * but this Channel is not really interruptible.
-     */
-    private static class InternalReadableByteChannel
-        extends AbstractInterruptibleChannel
-        implements ReadableByteChannel {
-
-        private InputStream in;
-        private boolean open = true;
-
-        InternalReadableByteChannel(InputStream in) {
-            this.in = in;
-        }
-
-        public int read(ByteBuffer dst) throws IOException {
-            final int CHUNK = 8192;
-
-            int len = dst.remaining();
-            int totalRead = 0;
-            int bytesRead = 0;
-
-            byte buf[] = new byte[0];
-            while (totalRead < len) {
-                int bytesToRead = Math.min((len - totalRead), CHUNK);
-                if (buf.length < bytesToRead) {
-                    buf = new byte[bytesToRead];
-                }
-                try {
-                    begin();
-                    bytesRead = in.read(buf, 0, bytesToRead);
-                } finally {
-                    end(bytesRead > 0);
-                }
-                if (bytesRead < 0) {
-                    break;
-                } else {
-                    totalRead += bytesRead;
-                }
-                dst.put(buf, 0, bytesRead);
-            }
-            if ((bytesRead < 0) && (totalRead == 0)) {
-                return -1;
-            }
-            return totalRead;
-        }
-
-        protected void implCloseChannel() throws IOException {
-            if (open) {
-                in.close();
-                open = false;
-            }
-        }
+        return Channels.newChannel(in);
     }
 
 }
