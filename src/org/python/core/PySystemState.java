@@ -54,6 +54,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
     private static final String VFSZIP_PREFIX = "vfszip:";
+    private static final String VFS_PREFIX = "vfs:";
 
     public static final PyString version = new PyString(Version.getVersion());
     public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
@@ -1144,6 +1145,19 @@ public class PySystemState extends PyObject implements ClassDictInit {
                         int start = VFSZIP_PREFIX.length();
                         if (Platform.IS_WINDOWS) {
                             // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
+                            start++;
+                        }
+                        jarFileName = urlString.substring(start, jarIndex);
+                    }
+                } else if (urlString.startsWith(VFS_PREFIX)) {
+                    // vfs:/some/path/jython.jar/org/python/core/PySystemState.class
+                    final String path = PySystemState.class.getName().replace('.', '/');
+                    int jarIndex = urlString.indexOf(".jar/".concat(path));
+                    if (jarIndex > 0) {
+                        jarIndex += 4;
+                        int start = VFS_PREFIX.length();
+                        if (Platform.IS_WINDOWS) {
+                            // vfs:/C:/some/path/jython.jar/org/python/core/PySystemState.class
                             start++;
                         }
                         jarFileName = urlString.substring(start, jarIndex);
