@@ -5,6 +5,8 @@ Jython 2.7a1
 
 Jython 2.5.4rc1
   Bugs Fixed
+    - [ 1972 ] jython 2.5.3 sys.stdin.readline() hangs when jython launched as subprocess on Mac OS X.
+    - [ 1962 ] Interactive console in Jython 2.5.3 needs CRTL-D to execute command.
     - [ 1676 ] NPE in defaultdict 
     - [ 1481 ] jython throws java.lang.IllegalArgumentException instead of ValueError.
     - [ 1716 ] xrange slicing raises NPE.
