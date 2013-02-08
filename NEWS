@@ -3,6 +3,10 @@ Jython NEWS
 Jython 2.7a1
   Bugs Fixed
 
+Jython 2.5.4rc2
+  Bugs Fixed
+    - [ 1988 ] API for threading.condition fails to accept *args for acquire
+
 Jython 2.5.4rc1
   Bugs Fixed
     - [ 1936 ] JBoss 7, vfs protocol in use for jarFileName in PySystemState.
