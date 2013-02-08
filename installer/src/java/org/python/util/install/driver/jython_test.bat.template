@@ -1,0 +1,73 @@
+@echo off
+
+rem 3 variables to be set from the caller, UNquoted:
+set _INSTALL_DIR={0}
+set _SCRIPT={1}
+set _JAVA_HOME={2}
+
+rem save old home env vars and classpath:
+set _OLD_JAVA_HOME=%JAVA_HOME%
+set _OLD_JYTHON_HOME=%JYTHON_HOME%
+set _OLD_CLASSPATH=%CLASSPATH%
+
+cd /d "%_INSTALL_DIR%\bin"
+
+echo {3}: only JAVA_HOME, quoted:
+set JAVA_HOME="%_JAVA_HOME%"
+set JYTHON_HOME=
+call jython.bat "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+echo {3}: only JAVA_HOME, UNquoted:
+set JAVA_HOME=%_JAVA_HOME%
+set JYTHON_HOME=
+call jython.bat "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+echo {3}: both homes quoted:
+set JAVA_HOME="%_JAVA_HOME%"
+set JYTHON_HOME="%_INSTALL_DIR%"
+call jython.bat "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+echo {3}: both homes UNquoted:
+set JAVA_HOME=%_JAVA_HOME%
+set JYTHON_HOME=%_INSTALL_DIR%
+call jython.bat "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+cd ..
+
+echo {3}: no home, calling in home dir:
+set JAVA_HOME=
+set JYTHON_HOME=
+call jython.bat "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+cd ..
+
+echo {3}: no home, calling /jython.bat from another working dir:"
+set JAVA_HOME=
+set JYTHON_HOME=
+call "%_INSTALL_DIR%\jython.bat" "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+echo {3}: no home, calling bin/jython.bat from another working dir:"
+set JAVA_HOME=
+set JYTHON_HOME=
+call "%_INSTALL_DIR%\bin\jython.bat" "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+echo {3}: no home, setting CLASSPATH, calling /jython.bat from another working dir:"
+set JAVA_HOME=
+set JYTHON_HOME=
+set CLASSPATH=.;C:\Program Files (x86)\Java\jre6\lib\ext\QTJava.zip
+call "%_INSTALL_DIR%\jython.bat" "%_SCRIPT%"
+set E=%ERRORLEVEL%
+
+rem cleanup:
+set JAVA_HOME=%_OLD_JAVA_HOME%
+set JYTHON_HOME=%_OLD_JYTHON_HOME%
+set CLASSPATH=%_OLD_CLASSPATH%
+cd /d "%~dp0%"
+exit /b %E%
