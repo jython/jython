@@ -359,8 +359,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
       <condition property="hg-run">
         <and>
           <isset property="hg.present"/>
-          <!-- XXX: Might this work on Windows? -->
-          <isset property="os.family.unix"/>
+          <or>
+              <isset property="os.family.unix"/>
+              <isset property="os.family.windows"/>
+          </or>
         </and>
       </condition>
     </target>
