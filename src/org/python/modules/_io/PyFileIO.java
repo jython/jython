@@ -1,15 +1,10 @@
-/* Copyright (c)2012 Jython Developers */
+/* Copyright (c)2013 Jython Developers */
 package org.python.modules._io;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 
 import org.python.core.ArgParser;
 import org.python.core.BuiltinDocs;
@@ -26,6 +21,7 @@ import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.io.FileIO;
 import org.python.core.io.RawIOBase;
+import org.python.core.io.StreamIO;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -39,8 +35,8 @@ public class PyFileIO extends PyRawIOBase {
 
     public static final PyType TYPE = PyType.fromClass(PyFileIO.class);
 
-    /** The FileIO to which we delegate operations not complete locally. */
-    private FileIO ioDelegate;
+    /** The {@link FileIO} or {@link StreamIO} to which we delegate operations not complete locally. */
+    private RawIOBase ioDelegate;
 
     /*
      * Implementation note: CPython fileio does not use the base-class, possibly overridden,
@@ -105,11 +101,14 @@ public class PyFileIO extends PyRawIOBase {
      */
     public PyFileIO(PyType subtype, PyObject file, OpenMode mode, boolean closefd) {
         super(subtype);
-        setDelegate(file, mode, closefd);
-        this.closefd = closefd;
 
+        // Establish the direction(s) of flow
         readable = mode.reading | mode.updating;
         writable = mode.writing | mode.updating | mode.appending;
+
+        // Assign a delegate according to the file argument
+        this.closefd = closefd;
+        setDelegate(file, mode);
 
         // The mode string of a raw file always asserts it is binary: "rb", "rb+", or "wb".
         if (readable) {
@@ -132,9 +131,8 @@ public class PyFileIO extends PyRawIOBase {
      *
      * @param file name or descriptor
      * @param mode parsed file open mode
-     * @param closefd must be true if file is in fact a name (checked, not used)
      */
-    private void setDelegate(PyObject file, OpenMode mode, boolean closefd) {
+    private void setDelegate(PyObject file, OpenMode mode) {
 
         if (file instanceof PyString) {
             // Open a file by name
@@ -151,23 +149,13 @@ public class PyFileIO extends PyRawIOBase {
              */
             Object fd = file.__tojava__(Object.class);
 
-            if (fd instanceof RawIOBase) {
-                // It is the "Jython file descriptor" from which we can get a channel.
+            if (fd instanceof FileIO || fd instanceof StreamIO) {
                 /*
-                 * If the argument were a FileIO, could we assign it directly to ioDelegate? I think
-                 * not: there would be a problem with close and closefd=False since it is not the
-                 * PyFileIO that keeps state.
+                 * It is the "Jython file descriptor", of a type suitable to be the ioDelegate. The
+                 * allowed types are able to give us a non-null InputStream or OutputStream,
+                 * according to direction.
                  */
-                Channel channel = ((RawIOBase)fd).getChannel();
-                if (channel instanceof FileChannel) {
-                    if (channel.isOpen()) {
-                        FileChannel fc = (FileChannel)channel;
-                        ioDelegate = new FileIO(fc, mode.forFileIO());
-                    } else {
-                        // File not open (we have to check as FileIO doesn't)
-                        throw Py.OSError(Errno.EBADF);
-                    }
-                }
+                ioDelegate = (RawIOBase)fd;
             }
         }
 
@@ -175,11 +163,22 @@ public class PyFileIO extends PyRawIOBase {
         if (ioDelegate == null) {
             // The file was a type we don't know how to use
             throw Py.TypeError(String.format("invalid file: %s", file.__repr__().asString()));
+
+        } else {
+
+            if (ioDelegate.closed()) {
+                // A closed file descriptor is a "bad descriptor"
+                throw Py.OSError(Errno.EBADF);
+            }
+
+            if ((readable && !ioDelegate.readable()) || (writable && !ioDelegate.writable())) {
+                // Requested mode in conflict with underlying file or stream
+                throw tailoredValueError(readable ? "read" : "writ");
+            }
+
+            // The name is either the textual name or a file descriptor (see Python docs)
+            fastGetDict().__setitem__("name", file);
         }
-
-        // The name is either the textual name or a file descriptor (see Python docs)
-        fastGetDict().__setitem__("name", file);
-
     }
 
     private static final String[] openArgs = {"file", "mode", "closefd"};
@@ -239,8 +238,8 @@ public class PyFileIO extends PyRawIOBase {
             PyArray a = (PyArray)buf;
 
             try {
-                ReadableByteChannel ch = ioDelegate.getChannel();
-                InputStream is = Channels.newInputStream(ch);
+                // The ioDelegate, if readable, can always provide an InputStream (see setDelegate)
+                InputStream is = ioDelegate.asInputStream();
                 count = a.fillFromStream(is);
                 count *= a.getItemsize();
             } catch (IOException ioe) {
@@ -281,8 +280,8 @@ public class PyFileIO extends PyRawIOBase {
         if (buf instanceof PyArray) {
             // Special case: PyArray knows how to write itself
             try {
-                WritableByteChannel ch = ioDelegate.getChannel();
-                OutputStream os = Channels.newOutputStream(ch);
+                // The ioDelegate, if writable, can always provide an OutputStream (see setDelegate)
+                OutputStream os = ioDelegate.asOutputStream();
                 count = ((PyArray)buf).toStream(os);
             } catch (IOException ioe) {
                 throw Py.IOError(ioe);
