@@ -2552,8 +2552,8 @@ class MiscIOTest(unittest.TestCase):
         self.assertEqual(g.raw.mode, "wb")
         self.assertEqual(g.name,     f.fileno())
         self.assertEqual(g.raw.name, f.fileno())
-        f.close()
-        g.close()
+        g.close()   # Jython difference: close g first (which may flush) ...
+        f.close()   # Jython difference: then close f, which closes the fd
 
     def test_io_after_close(self):
         for kwargs in [
