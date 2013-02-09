@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.4rc2
   Bugs Fixed
+    - [ 1971 ] platform.py - 'NoneType' object has no attribute 'groups'
     - [ 1988 ] API for threading.condition fails to accept *args for acquire
 
 Jython 2.5.4rc1
