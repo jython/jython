@@ -65,7 +65,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
     <target name="developer-build" depends="prepare-output, pycompile" description="a local build for developers" />
 
-    <target name="full-build" depends="full-check, install" description="a full build with hg checkout" />
+    <target name="full-build" depends="full-check, installer" description="a full build with hg checkout" />
 
     <target name="needed-check" unless="full-build">
         <uptodate property="antlr.notneeded" targetfile="${gensrc.dir}/org/python/antlr/PythonParser.java">
@@ -690,7 +690,7 @@ The readme text for the next release will be like:
         </javadoc>
     </target>
 
-    <target name="all-jars" depends="jar-standalone, javadoc">
+    <target name="all-jars" depends="prepare, jar-standalone, javadoc, installer">
         <jar destfile="dist/${jython.javadoc.jar}">
             <fileset dir="${apidoc.dir}" includes="**"/>
         </jar>
@@ -811,17 +811,17 @@ The readme text for the next release will be like:
         </copy>
     </target>
 
-    <!-- if install called by itself, make sure all the dependent targets run;
+    <!-- if installer called by itself, make sure all the dependent targets run;
          otherwise, redundant with full-check -->
-    <target name="install-init">
+    <target name="installer-init">
         <property name="full-build" value="true" />
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="brand-readme-version, install-init, jar-standalone, javadoc, copy-full">
-        <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
-        <echo>compiling installer from ${install.src.dir}</echo>
-        <javac srcdir="${install.src.dir}"
+    <target name="installer" depends="brand-readme-version, installer-init, jar-standalone, javadoc, copy-full">
+        <property name="installer.src.dir" value="${jython.base.dir}/installer/src/java" />
+        <echo>compiling installer from ${installer.src.dir}</echo>
+        <javac srcdir="${installer.src.dir}"
                includes="org/**"
                destdir="${compile.dir}"
                target="${jdk.target.version}"
@@ -837,10 +837,10 @@ The readme text for the next release will be like:
             	<include name="org/apache/commons/cli/*.class" />
             </fileset>
         </copy>
-        <copy file="${install.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
+        <copy file="${installer.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${install.src.dir}">
+            <fileset dir="${installer.src.dir}">
                 <include name="**/*.png" />
                 <include name="**/*.template" />
                 <!-- check no /bin directory -->
@@ -848,7 +848,7 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_installer-${jython.version.noplus}.jar" update="true">
+        <jar destfile="${dist.dir}/jython-installer.jar" update="true">
             <fileset dir="${dist.dir}">
                 <exclude name="${jython.dev.jar}"/>
                 <exclude name="${jython.standalone.jar}"/>
@@ -867,7 +867,7 @@ The readme text for the next release will be like:
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
-                <!-- section for the install program -->
+                <!-- section for the installer program -->
                 <section name="Jython">
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="exclude-dirs" value="org;META-INF" />

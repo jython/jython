@@ -1,5 +1,5 @@
-Welcome to Jython 2.5.3!
-========================
+Welcome to Jython 2.5.4rc1!
+===========================
 
 This is the first release candidate of Jython 2.5.4.
 

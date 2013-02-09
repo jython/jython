@@ -32,7 +32,7 @@
   <property file="${user.home}/ant.properties" />
   <property file="${basedir}/default.properties"/>
 
-  <property name="project.version" value="2.5.3-SNAPSHOT"/>
+  <property name="project.version" value="2.5.4-SNAPSHOT"/>
 
   <property name="m2.repo" value="${user.home}/.m2/repository"/>
   <property name="m2.groupDir" value="org/python"/>
