@@ -61,16 +61,21 @@ def compress(string, level=6):
     if level < Z_BEST_SPEED or level > Z_BEST_COMPRESSION:
         raise error, "Bad compression level"
     deflater = Deflater(level, 0)
-    string = _to_input(string)
-    deflater.setInput(string, 0, len(string))
-    deflater.finish()
-    return _get_deflate_data(deflater)
+    try:
+        string = _to_input(string)
+        deflater.setInput(string, 0, len(string))
+        deflater.finish()
+        return _get_deflate_data(deflater)
+    finally:
+        deflater.end()
 
 def decompress(string, wbits=0, bufsize=16384):
     inflater = Inflater(wbits < 0)
-    inflater.setInput(_to_input(string))
-
-    return _get_inflate_data(inflater)
+    try:
+        inflater.setInput(_to_input(string))
+        return _get_inflate_data(inflater)
+    finally:
+        inflater.end()
 
 class compressobj:
     # all jython uses wbits for is deciding whether to skip the header if it's negative
