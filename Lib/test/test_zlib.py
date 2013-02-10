@@ -155,7 +155,8 @@ class CompressTestCase(BaseCompressTestCase, unittest.TestCase):
         x = zlib.compress(data)
         self.assertEqual(zlib.decompress(x), data)
 
-    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
+    @unittest.skipIf(is_jython, "jython uses java.util.zip.Inflater, \
+                which accepts incomplete streams without error")
     def test_incomplete_stream(self):
         # An useful error message is given
         x = zlib.compress(HAMLET_SCENE)
@@ -398,13 +399,22 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         dco = zlib.decompressobj()
         self.assertEqual(dco.flush(), "") # Returns nothing
 
-    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_decompress_incomplete_stream(self):
         # This is 'foo', deflated
         x = 'x\x9cK\xcb\xcf\x07\x00\x02\x82\x01E'
         # For the record
         self.assertEqual(zlib.decompress(x), 'foo')
-        self.assertRaises(zlib.error, zlib.decompress, x[:-5])
+        if not is_jython:
+            # There is inconsistency between cpython zlib.decompress (which does not accept 
+            # incomplete streams) and zlib.decompressobj().decompress (which does accept
+            # incomplete streams, the whole point of this test)
+            # On jython, both zlib.decompress and zlib.decompressobject().decompress behave
+            # the same way: they both accept incomplete streams.
+            # Therefore, imposing this precondition is cpython specific
+            # and not appropriate on jython, which has consistent behaviour.
+            # http://bugs.python.org/issue8672
+            # http://bugs.jython.org/issue1859
+            self.assertRaises(zlib.error, zlib.decompress, x[:-5])
         # Omitting the stream end works with decompressor objects
         # (see issue #8672).
         dco = zlib.decompressobj()
