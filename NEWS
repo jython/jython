@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.7b2
+  Bugs Fixed
+    - [ 1753 ] zlib doesn't call end() on compress and decompress
+
 Jython 2.7b1
   Bugs Fixed
     - [ 1716 ] xrange slicing raises NPE.

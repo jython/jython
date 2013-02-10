@@ -24,15 +24,21 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.crc32("", 1), 1)
         self.assertEqual(zlib.crc32("", 432), 432)
 
-    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
-    def test_adler32start(self):
+    def test_adler32(self):
         self.assertEqual(zlib.adler32(""), zlib.adler32("", 1))
+
+    @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
+                which does not support a start value")
+    def test_adler32start(self):
         self.assertTrue(zlib.adler32("abc", 0xffffffff))
 
-    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_adler32empty(self):
-        self.assertEqual(zlib.adler32("", 0), 0)
         self.assertEqual(zlib.adler32("", 1), 1)
+
+    @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
+                which does not support a start value")
+    def test_adler32empty_start(self):
+        self.assertEqual(zlib.adler32("", 0), 0)
         self.assertEqual(zlib.adler32("", 432), 432)
 
     def assertEqual32(self, seen, expected):
@@ -40,15 +46,18 @@ class ChecksumTestCase(unittest.TestCase):
         # This is important if bit 31 (0x08000000L) is set.
         self.assertEqual(seen & 0x0FFFFFFFFL, expected & 0x0FFFFFFFFL)
 
-    @unittest.skipIf(is_jython, "FIXME #1859: not working on Jython")
     def test_penguins(self):
         self.assertEqual32(zlib.crc32("penguin", 0), 0x0e5c1a120L)
         self.assertEqual32(zlib.crc32("penguin", 1), 0x43b6aa94)
-        self.assertEqual32(zlib.adler32("penguin", 0), 0x0bcf02f6)
         self.assertEqual32(zlib.adler32("penguin", 1), 0x0bd602f7)
 
         self.assertEqual(zlib.crc32("penguin"), zlib.crc32("penguin", 0))
         self.assertEqual(zlib.adler32("penguin"),zlib.adler32("penguin",1))
+
+    @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
+                which does not support a start value")
+    def test_penguins_start(self):
+        self.assertEqual32(zlib.adler32("penguin", 0), 0x0bcf02f6)
 
     def test_abcdefghijklmnop(self):
         """test issue1202 compliance: signed crc32, adler32 in 2.x"""
