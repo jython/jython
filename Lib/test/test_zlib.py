@@ -28,7 +28,7 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.adler32(""), zlib.adler32("", 1))
 
     @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
-                which does not support a start value")
+                which does not support a start value other than 1")
     def test_adler32start(self):
         self.assertTrue(zlib.adler32("abc", 0xffffffff))
 
@@ -36,7 +36,7 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.adler32("", 1), 1)
 
     @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
-                which does not support a start value")
+                which does not support a start value other than 1")
     def test_adler32empty_start(self):
         self.assertEqual(zlib.adler32("", 0), 0)
         self.assertEqual(zlib.adler32("", 432), 432)
@@ -55,7 +55,7 @@ class ChecksumTestCase(unittest.TestCase):
         self.assertEqual(zlib.adler32("penguin"),zlib.adler32("penguin",1))
 
     @unittest.skipIf(is_jython, "jython uses java.util.zip.Adler32, \
-                which does not support a start value")
+                which does not support a start value other than 1")
     def test_penguins_start(self):
         self.assertEqual32(zlib.adler32("penguin", 0), 0x0bcf02f6)
 
@@ -126,7 +126,16 @@ class BaseCompressTestCase(object):
             # Release memory
             data = None
 
-    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython")
+    #
+    # This test is working on jython 2.7 on windows, i.e. it does not hang
+    # Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
+    # [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
+    # Which poses the question: on which platforms does it hang
+    # Leaving skip in place for now.
+    # See note below about the size parameter and real_max_memuse below
+    #
+
+    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython on some platforms but not windows")    
     def check_big_decompress_buffer(self, size, decompress_func):
         data = 'x' * size
         try:
@@ -173,6 +182,16 @@ class CompressTestCase(BaseCompressTestCase, unittest.TestCase):
 
     @precisionbigmemtest(size=_1G + 1024 * 1024, memuse=2)
     def test_big_decompress_buffer(self, size):
+        """
+        This is NOT testing for a 'size=_1G + 1024 * 1024', because of the definition of 
+        the precisionbigmemtest decorator, which resets the value to 5147, based on 
+        the definition of test_support.real_max_memuse == 0
+        This is the case on my windows installation of python 2.7.3.
+        Python 2.7.3 (default, Apr 10 2012, 23:31:26) [MSC v.1500 32 bit (Intel)] on win32
+        And on my build of jython 2.7
+        Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
+        [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
+        """
         self.check_big_decompress_buffer(size, zlib.decompress)
 
 
@@ -492,6 +511,16 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
 
     @precisionbigmemtest(size=_1G + 1024 * 1024, memuse=2)
     def test_big_decompress_buffer(self, size):
+        """
+        This is NOT testing for a 'size=_1G + 1024 * 1024', because of the definition of 
+        the precisionbigmemtest decorator, which resets the value to 5147, based on 
+        the definition of test_support.real_max_memuse == 0
+        This is the case on my windows installation of python 2.7.3.
+        Python 2.7.3 (default, Apr 10 2012, 23:31:26) [MSC v.1500 32 bit (Intel)] on win32
+        And on my build of jython 2.7
+        Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
+        [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
+        """
         d = zlib.decompressobj()
         decompress = lambda s: d.decompress(s) + d.flush()
         self.check_big_decompress_buffer(size, decompress)
