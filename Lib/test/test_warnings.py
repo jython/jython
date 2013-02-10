@@ -189,6 +189,7 @@ class FilterTests(object):
             self.assertEqual(str(w[-1].message), text)
             self.assertTrue(w[-1].category is UserWarning)
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CFilterTests(BaseTest, FilterTests):
     module = c_warnings
 
@@ -351,6 +352,7 @@ class WarnTests(unittest.TestCase):
             self.module.warn(BadStrWarning())
 
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CWarnTests(BaseTest, WarnTests):
     module = c_warnings
 
@@ -403,6 +405,7 @@ class WCmdLineTests(unittest.TestCase):
         self.assertFalse(out.strip())
         self.assertNotIn(b'RuntimeWarning', err)
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CWCmdLineTests(BaseTest, WCmdLineTests):
     module = c_warnings
 
@@ -410,6 +413,7 @@ class PyWCmdLineTests(BaseTest, WCmdLineTests):
     module = py_warnings
 
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class _WarningsTests(BaseTest):
 
     """Tests specific to the _warnings module."""
@@ -593,6 +597,7 @@ class WarningsDisplayTests(unittest.TestCase):
                                 file_object, expected_file_line)
         self.assertEqual(expect, file_object.getvalue())
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CWarningsDisplayTests(BaseTest, WarningsDisplayTests):
     module = c_warnings
 
@@ -703,6 +708,7 @@ class CatchWarningTests(BaseTest):
                 wmod.warn("foo")
 
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CCatchWarningTests(CatchWarningTests):
     module = c_warnings
 
@@ -742,6 +748,7 @@ class EnvironmentVariableTests(BaseTest):
                 "['ignore::UnicodeWarning', 'ignore::DeprecationWarning']")
         self.assertEqual(p.wait(), 0)
 
+@unittest.skipIf(test_support.is_jython, "No _warnings impl yet")
 class CEnvironmentVariableTests(EnvironmentVariableTests):
     module = c_warnings
 
@@ -751,7 +758,9 @@ class PyEnvironmentVariableTests(EnvironmentVariableTests):
 
 def test_main():
     py_warnings.onceregistry.clear()
-    c_warnings.onceregistry.clear()
+    # No _warnings in _jython yet.
+    if not test_support.is_jython:
+        c_warnings.onceregistry.clear()
     test_support.run_unittest(
         CFilterTests,
         PyFilterTests,
