@@ -110,6 +110,17 @@ class ExceptionTestCase(unittest.TestCase):
 
 
 class BaseCompressTestCase(object):
+
+    # This test is working on jython 2.7 on windows, i.e. it does not hang
+    # Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
+    # [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
+    # Which poses the question: on which platforms does it hang
+    # Leaving skip in place for now.
+    # See note below about the size parameter and real_max_memuse below
+    #
+    # This test appears to hang on Ubuntu on an Apple Intel powerbook,
+    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
+    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
     @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython")
     def check_big_compress_buffer(self, size, compress_func):
         _1M = 1024 * 1024
@@ -126,16 +137,6 @@ class BaseCompressTestCase(object):
             # Release memory
             data = None
 
-    #
-    # This test is working on jython 2.7 on windows, i.e. it does not hang
-    # Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
-    # [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
-    # Which poses the question: on which platforms does it hang
-    # Leaving skip in place for now.
-    # See note below about the size parameter and real_max_memuse below
-    #
-
-    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython on some platforms but not windows")    
     def check_big_decompress_buffer(self, size, decompress_func):
         data = 'x' * size
         try:
