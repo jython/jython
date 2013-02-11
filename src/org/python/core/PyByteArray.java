@@ -12,26 +12,24 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * Partial implementation of Python bytearray. At the present stage of development, the class
- * provides:
- * <ul>
- * <li>constructors (both __init__ and the Java API constructors),</li>
- * <li>the slice operations (get, set and delete)</li>
- * <li>a <code>List&lt;PyInteger&gt;</code> implementation for the Java API</li>
- * </ul>
- * and this is founded on a particular approach to storage management internally. However, the
- * implementation does not support the <code>memoryview</code> interface either for access or a a
- * source for its constructors although the signatures are present. The rich set of string-like
- * operations due a <code>bytearray</code> is not implemented.
- *
+ * Implementation of Python <code>bytearray</code> with a Java API that includes equivalents to most
+ * of the Python API. These Python equivalents accept a {@link PyObject} as argument, where you
+ * might have expected a <code>byte[]</code> or <code>PyByteArray</code>, in order to accommodate
+ * the full range of types accepted by the Python equivalent: usually, any <code>PyObject</code>
+ * that implements {@link BufferProtocol}, providing a one-dimensional array of bytes, is an
+ * acceptable argument. In the documentation, the reader will often see the terms "byte array" or
+ * "object viewable as bytes" instead of <code>bytearray</code> when this broader scope is intended.
+ * This may relate to parameters, or to the target object itself (in text that applies equally to
+ * base or sibling classes).
  */
 @ExposedType(name = "bytearray", base = PyObject.class, doc = BuiltinDocs.bytearray_doc)
 public class PyByteArray extends BaseBytes implements BufferProtocol {
 
+    /** The {@link PyType} of <code>bytearray</code>. */
     public static final PyType TYPE = PyType.fromClass(PyByteArray.class);
 
     /**
-     * Create a zero-length Python bytearray of explicitly-specified sub-type
+     * Constructs a zero-length Python <code>bytearray</code> of explicitly-specified sub-type
      *
      * @param type explicit Jython type
      */
@@ -40,16 +38,16 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a zero-length Python bytearray.
+     * Constructs a zero-length Python <code>bytearray</code>.
      */
     public PyByteArray() {
         super(TYPE);
     }
 
     /**
-     * Create zero-filled Python bytearray of specified size.
+     * Constructs zero-filled Python <code>bytearray</code> of specified size.
      *
-     * @param size of bytearray
+     * @param size of <code>bytearray</code>
      */
     public PyByteArray(int size) {
         super(TYPE);
@@ -57,7 +55,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Construct bytearray by copying values from int[].
+     * Constructs a <code>bytearray</code> by copying values from int[].
      *
      * @param value source of the bytes (and size)
      */
@@ -66,8 +64,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source, which is a
-     * bytearray (or bytes).
+     * Constructs a new array filled exactly by a copy of the contents of the source, which is a
+     * <code>bytearray</code> (or <code>bytes</code>).
      *
      * @param value source of the bytes (and size)
      */
@@ -77,7 +75,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source, which is a
+     * Constructs a new array filled exactly by a copy of the contents of the source, which is a
      * byte-oriented {@link PyBuffer}.
      *
      * @param value source of the bytes (and size)
@@ -88,7 +86,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array filled exactly by a copy of the contents of the source, which is an
+     * Constructs a new array filled exactly by a copy of the contents of the source, which is an
      * object supporting the Jython version of the PEP 3118 buffer API.
      *
      * @param value source of the bytes (and size)
@@ -99,7 +97,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array filled from an iterable of PyObject. The iterable must yield objects
+     * Constructs a new array filled from an iterable of PyObject. The iterable must yield objects
      * convertible to Python bytes (non-negative integers less than 256 or strings of length 1).
      *
      * @param value source of the bytes (and size)
@@ -110,8 +108,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
-     * PyUnicode, the encoding must be explicitly specified.
+     * Constructs a new array by encoding a PyString argument to bytes. If the PyString is actually
+     * a PyUnicode, the encoding must be explicitly specified.
      *
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding (must be a string type)
@@ -123,12 +121,12 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
-     * PyUnicode, the encoding must be explicitly specified.
+     * Constructs a new array by encoding a PyString argument to bytes. If the PyString is actually
+     * a PyUnicode, the encoding must be explicitly specified.
      *
      * @param arg primary argument from which value is taken
-     * @param encoding name of optional encoding (may be null to select the default for this
-     *            installation)
+     * @param encoding name of optional encoding (may be <code>null</code> to select the default for
+     *            this installation)
      * @param errors name of optional errors policy
      */
     public PyByteArray(PyString arg, String encoding, String errors) {
@@ -137,8 +135,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new array by encoding a PyString argument to bytes. If the PyString is actually a
-     * PyUnicode, an exception is thrown saying that the encoding must be explicitly specified.
+     * Constructs a new array by encoding a PyString argument to bytes. If the PyString is actually
+     * a PyUnicode, an exception is thrown saying that the encoding must be explicitly specified.
      *
      * @param arg primary argument from which value is taken
      */
@@ -148,7 +146,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Construct bytearray by re-using an array of byte as storage initialised by the client.
+     * Constructs a <code>bytearray</code> by re-using an array of byte as storage initialised by
+     * the client.
      *
      * @param storage pre-initialised with desired value: the caller should not keep a reference
      */
@@ -158,12 +157,13 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Construct bytearray by re-using an array of byte as storage initialised by the client.
+     * Constructs a <code>bytearray</code> by re-using an array of byte as storage initialised by
+     * the client.
      *
      * @param storage pre-initialised with desired value: the caller should not keep a reference
      * @param size number of bytes actually used
-     * @throws IllegalArgumentException if the range [0:size] is not within the array bounds of
-     *             the storage.
+     * @throws IllegalArgumentException if the range [0:size] is not within the array bounds of the
+     *             storage.
      */
     PyByteArray(byte[] storage, int size) {
         super(TYPE);
@@ -171,28 +171,26 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Create a new bytearray object from an arbitrary Python object according to the same rules as
-     * apply in Python to the bytearray() constructor:
+     * Constructs a new <code>bytearray</code> object from an arbitrary Python object according to
+     * the same rules as apply in Python to the <code>bytearray()</code> constructor:
      * <ul>
-     * <li>bytearray() Construct a zero-length bytearray (arg is null).</li>
-     * <li>bytearray(int) Construct a zero-initialized bytearray of the given length.</li>
-     * <li>bytearray(iterable_of_ints) Construct from iterable yielding integers in [0..255]</li>
-     * <li>bytearray(string [, encoding [, errors] ]) Construct from a text string, optionally using
-     * the specified encoding.</li>
-     * <li>bytearray(unicode, encoding [, errors]) Construct from a unicode string using the
-     * specified encoding.</li>
-     * <li>bytearray(bytes_or_bytearray) Construct as a mutable copy of bytes or existing bytearray
-     * object.</li>
+     * <li><code>bytearray()</code> Construct a zero-length <code>bytearray</code>.</li>
+     * <li><code>bytearray(int)</code> Construct a zero-initialized <code>bytearray</code> of the
+     * given length.</li>
+     * <li><code>bytearray(iterable_of_ints)</code> Construct from iterable yielding integers in
+     * [0..255]</li>
+     * <li><code>bytearray(buffer)</code> Construct by reading from any object implementing
+     * {@link BufferProtocol}, including <code>str/bytes</code> or another <code>bytearray</code>.</li>
      * </ul>
      * When it is necessary to specify an encoding, as in the Python signature
-     * <code>bytearray(string, encoding[, errors])</code>, use the constructor
-     * {@link #PyByteArray(PyString, String, String)}. If the PyString is actually a PyUnicode, an
-     * encoding must be specified, and using this constructor will throw an exception about that.
+     * <code>bytearray(string, encoding [, errors])</code>, use the constructor
+     * {@link #PyByteArray(PyString, String, String)}. If the <code>PyString</code> is actually a
+     * <code>PyUnicode</code>, an encoding must be specified, and using this constructor will throw
+     * an exception about that.
      *
-     * @param arg primary argument from which value is taken (may be null)
-     * @throws PyException in the same circumstances as bytearray(arg), TypeError for non-iterable,
-     *             non-integer argument type, and ValueError if iterables do not yield byte [0..255]
-     *             values.
+     * @param arg primary argument from which value is taken (may be <code>null</code>)
+     * @throws PyException (TypeError) for non-iterable,
+     * @throws PyException (ValueError) if iterables do not yield byte [0..255] values.
      */
     public PyByteArray(PyObject arg) throws PyException {
         super(TYPE);
@@ -284,18 +282,19 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         }
     }
 
-    /* ============================================================================================
+    /*
+     * ============================================================================================
      * API for org.python.core.PySequence
      * ============================================================================================
      */
 
     /**
-     * Returns a slice of elements from this sequence as a PyByteArray.
+     * Returns a slice of elements from this sequence as a <code>PyByteArray</code>.
      *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
-     * @return a PyByteArray corresponding the the given range of elements.
+     * @return a <code>PyByteArray</code> corresponding the the given range of elements.
      */
     @Override
     protected synchronized PyByteArray getslice(int start, int stop, int step) {
@@ -333,8 +332,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Returns a PyByteArray that repeats this sequence the given number of times, as in the
-     * implementation of <tt>__mul__</tt> for strings.
+     * Returns a <code>PyByteArray</code> that repeats this sequence the given number of times, as
+     * in the implementation of <tt>__mul__</tt> for strings.
      *
      * @param count the number of times to repeat this.
      * @return this byte array repeated count times.
@@ -347,8 +346,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Replace the contents of this PyByteArray with the given number of repeats of the original
-     * contents, as in the implementation of <tt>__mul__</tt> for strings.
+     * Replace the contents of this <code>PyByteArray</code> with the given number of repeats of the
+     * original contents, as in the implementation of <tt>__mul__</tt> for strings.
      *
      * @param count the number of times to repeat this.
      */
@@ -357,35 +356,36 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Sets the indexed element of the bytearray to the given value. This is an extension point
-     * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
-     * PySequence that the index is within the bounds of the array. Any other clients calling
-     * <tt>pyset(int)</tt> must make the same guarantee.
+     * Sets the indexed element of the <code>bytearray</code> to the given value. This is an
+     * extension point called by PySequence in its implementation of {@link #__setitem__} It is
+     * guaranteed by PySequence that the index is within the bounds of the array. Any other clients
+     * calling <code>pyset(int)</code> must make the same guarantee.
      *
      * @param index index of the element to set.
      * @param value the value to set this element to.
-     * @throws PyException(AttributeError) if value cannot be converted to an integer
-     * @throws PyException(ValueError) if value<0 or value>255
+     * @throws PyException (AttributeError) if value cannot be converted to an integer
+     * @throws PyException (ValueError) if value<0 or value>255
      */
+    @Override
     public synchronized void pyset(int index, PyObject value) throws PyException {
         storage[index + offset] = byteCheck(value);
     }
 
     /**
-     * Insert the element (interpreted as a Python byte value) at the given index.
-     * Python int, long and string types of length 1 are allowed.
+     * Insert the element (interpreted as a Python byte value) at the given index. Python
+     * <code>int</code>, <code>long</code> and <code>str</code> types of length 1 are allowed.
      *
      * @param index to insert at
      * @param element to insert (by value)
-     * @throws PyException(IndexError) if the index is outside the array bounds
-     * @throws PyException(ValueError) if element<0 or element>255
-     * @throws PyException(TypeError) if the subclass is immutable
+     * @throws PyException (IndexError) if the index is outside the array bounds
+     * @throws PyException (ValueError) if element<0 or element>255
+     * @throws PyException (TypeError) if the subclass is immutable
      */
     @Override
     public synchronized void pyinsert(int index, PyObject element) {
         // Open a space at the right location.
         storageReplace(index, 0, 1);
-        storage[offset+index] = byteCheck(element);
+        storage[offset + index] = byteCheck(element);
     }
 
     /**
@@ -398,9 +398,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * of exactly that many elements (or convertible to such a sequence).
      * <p>
      * When assigning from a sequence type or iterator, the sequence may contain arbitrary
-     * <code>PyObject</code>s, but acceptable ones are PyInteger, PyLong or PyString of length 1. If
-     * any one of them proves unsuitable for assignment to a Python bytarray element, an exception
-     * is thrown and this bytearray is unchanged.
+     * {@link PyObject}s, but acceptable ones are {@link PyInteger}, {@link PyLong} or
+     * {@link PyString} of length 1. If any one of them proves unsuitable for assignment to a Python
+     * <code>bytearray</code> element, an exception is thrown and this <code>bytearray</code> is
+     * unchanged.
      *
      * <pre>
      * a = bytearray(b'abcdefghijklmnopqrst')
@@ -472,14 +473,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
-     * zero-filled bytearray of the given length.
+     * zero-filled <code>bytearray</code> of the given length.
      *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param len number of zeros to insert consistent with the slice assignment
-     * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
+     * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, int len) throws PyException {
         if (step == 1) {
@@ -501,14 +502,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
-     * PyString.
+     * {@link PyString}.
      *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param value a PyString object consistent with the slice assignment
-     * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
+     * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, PyString value) throws PyException {
         String v = value.asString();
@@ -536,7 +537,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param value an object supporting the buffer API consistent with the slice assignment
-     * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
+     * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
 
@@ -547,7 +548,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         if (step == 1) {
             // Delete this[start:stop] and open a space of the right size
             storageReplace(start, stop - start, len);
-            view.copyTo(storage, start+offset);
+            view.copyTo(storage, start + offset);
 
         } else {
             // This is an extended slice which means we are replacing elements
@@ -564,14 +565,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
-     * bytearray (or bytes).
+     * <code>bytearray</code> (or bytes).
      *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
-     * @param value a bytearray (or bytes) object consistent with the slice assignment
-     * @throws PyException(SliceSizeError) if the value size is inconsistent with an extended slice
+     * @param value a <code>bytearray</code> (or bytes) object consistent with the slice assignment
+     * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private void setslice(int start, int stop, int step, BaseBytes value) throws PyException {
 
@@ -603,14 +604,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
-     * bytearray (or bytes).
+     * <code>bytearray</code> (or bytes).
      *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param iter iterable source of values to enter in the array
-     * @throws PyException(SliceSizeError) if the iterable size is inconsistent with an extended
+     * @throws PyException (SliceSizeError) if the iterable size is inconsistent with an extended
      *             slice
      */
     private void setslice(int start, int stop, int step, Iterable<? extends PyObject> iter) {
@@ -640,21 +641,12 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         }
     }
 
-// Idiom:
-// if (step == 1) {
-// // Do something efficient with block start...stop-1
-// } else {
-// int n = sliceLength(start, stop, step);
-// for (int i = start, j = 0; j < n; i += step, j++) {
-// // Perform jth operation with element i
-// }
-// }
-
     /*
      * Deletes an element from the sequence (and closes up the gap).
      *
      * @param index index of the element to delete.
      */
+    @Override
     protected synchronized void del(int index) {
         // XXX Change SequenceIndexDelegate to avoid repeated calls to del(int) for extended slice
         storageDelete(index, 1);
@@ -667,6 +659,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      *
      * @param stop one more than the position of the last element.
      */
+    @Override
     protected synchronized void delRange(int start, int stop) {
         storageDelete(start, stop - start);
     }
@@ -714,29 +707,29 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Initialise a mutable bytearray object from various arguments. This single initialisation must
-     * support:
+     * Initialise a mutable <code>bytearray</code> object from various arguments. This single
+     * initialisation must support:
      * <ul>
-     * <li>bytearray() Construct a zero-length bytearray.</li>
-     * <li>bytearray(int) Construct a zero-initialized bytearray of the given length.</li>
-     * <li>bytearray(iterable_of_ints) Construct from iterable yielding integers in [0..255]</li>
-     * <li>bytearray(string [, encoding [, errors] ]) Construct from a text string, optionally using
+     * <li><code>bytearray()</code> Construct a zero-length <code>bytearray</code>.</li>
+     * <li><code>bytearray(int)</code> Construct a zero-initialized <code>bytearray</code> of the
+     * given length.</li>
+     * <li><code>bytearray(iterable_of_ints)</code> Construct from iterable yielding integers in
+     * [0..255]</li>
+     * <li><code>bytearray(buffer)</code> Construct by reading from any object implementing
+     * {@link BufferProtocol}, including <code>str/bytes</code> or another <code>bytearray</code>.</li>
+     * <li><code>bytearray(string, encoding [, errors])</code> Construct from a
+     * <code>str/bytes</code>, decoded using the system default encoding, and encoded to bytes using
      * the specified encoding.</li>
-     * <li>bytearray(unicode, encoding [, errors]) Construct from a unicode string using the
-     * specified encoding.</li>
-     * <li>bytearray(bytes_or_bytearray) Construct as a mutable copy of bytes or existing bytearray
-     * object.</li>
+     * <li><code>bytearray(unicode, encoding [, errors])</code> Construct from a
+     * <code>unicode</code> string, encoded to bytes using the specified encoding.</li>
      * </ul>
-     * Unlike CPython we are not able to support the initialisation: <li>bytearray(memory_view)
-     * Construct as copy of any object implementing the buffer API.</li> </ul> Although effectively
-     * a constructor, it is possible to call __init__ on a 'used' object so the method does not
-     * assume any particular prior state.
+     * Although effectively a constructor, it is possible to call <code>__init__</code> on a 'used'
+     * object so the method does not assume any particular prior state.
      *
      * @param args argument array according to Jython conventions
      * @param kwds Keywords according to Jython conventions
-     * @throws PyException in the same circumstances as bytearray(arg), TypeError for non-iterable,
-     *             non-integer argument type, and ValueError if iterables do not yield byte [0..255]
-     *             values.
+     * @throws PyException (TypeError) for non-iterable,
+     * @throws PyException (ValueError) if iterables do not yield byte [0..255] values.
      */
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.bytearray___init___doc)
@@ -795,7 +788,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         };
     }
 
-    /* ============================================================================================
+    /*
+     * ============================================================================================
      * Python API rich comparison operations
      * ============================================================================================
      */
@@ -830,8 +824,6 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         return basebytes___gt__(other);
     }
 
-
-
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___eq___doc)
     final synchronized PyObject bytearray___eq__(PyObject other) {
         return basebytes___eq__(other);
@@ -862,7 +854,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         return basebytes___gt__(other);
     }
 
-/* ============================================================================================
+/*
+ * ============================================================================================
  * Python API for bytearray
  * ============================================================================================
  */
@@ -876,9 +869,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     final synchronized PyObject bytearray___add__(PyObject o) {
         PyByteArray sum = null;
 
-
         // XXX re-write using buffer API
-
 
         if (o instanceof BaseBytes) {
             BaseBytes ob = (BaseBytes)o;
@@ -985,7 +976,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * length 1.
      *
      * @param element the item to append.
-     * @throws PyException(ValueError) if element<0 or element>255
+     * @throws PyException (ValueError) if element<0 or element>255
      */
     public void append(PyObject element) {
         bytearray_append(element);
@@ -1002,9 +993,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implement to the standard Python __contains__ method, which in turn implements the
      * <code>in</code> operator.
      *
-     * @param o the element to search for in this bytearray.
+     * @param o the element to search for in this <code>bytearray</code>.
      * @return the result of the search.
      **/
+    @Override
     public boolean __contains__(PyObject o) {
         return basebytes___contains__(o);
     }
@@ -1038,7 +1030,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * <code>width</code> is less than <code>this.size()</code>.
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return new byte array containing the result
      */
     public PyByteArray center(int width, String fillchar) {
@@ -1097,11 +1089,11 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>endswith(suffix)</code>.
      *
      * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
-     * <code>suffix</code> can also be a tuple of suffixes to look for.
+     * <code>true</code> if and only if this <code>bytearray</code> ends with the
+     * <code>suffix</code>. <code>suffix</code> can also be a tuple of suffixes to look for.
      *
      * @param suffix byte array to match, or object viewable as such, or a tuple of them
-     * @return true if and only if this bytearray ends with the suffix (or one of them)
+     * @return true if and only if this <code>bytearray</code> ends with the suffix (or one of them)
      */
     public boolean endswith(PyObject suffix) {
         return basebytes_starts_or_endswith(suffix, null, null, true);
@@ -1111,13 +1103,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>endswith( suffix [, start ] )</code>.
      *
      * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
-     * <code>suffix</code> can also be a tuple of suffixes to look for. With optional
-     * <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define the
-     * effective bytearray to be the slice <code>[start:]</code> of this bytearray.
+     * <code>true</code> if and only if this <code>bytearray</code> ends with the
+     * <code>suffix</code>. <code>suffix</code> can also be a tuple of suffixes to look for. With
+     * optional <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define
+     * the effective <code>bytearray</code> to be the slice <code>[start:]</code> of this
+     * <code>bytearray</code>.
      *
      * @param suffix byte array to match, or object viewable as such, or a tuple of them
-     * @param start of slice in this bytearray to match
+     * @param start of slice in this <code>bytearray</code> to match
      * @return true if and only if this[start:] ends with the suffix (or one of them)
      */
     public boolean endswith(PyObject suffix, PyObject start) {
@@ -1128,15 +1121,15 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>endswith( suffix [, start [, end ]] )</code>.
      *
      * When <code>suffix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray ends with the <code>suffix</code>.
-     * <code>suffix</code> can also be a tuple of suffixes to look for. With optional
-     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
-     * <code>Py.None</code>), define the effective bytearray to be the slice
-     * <code>[start:end]</code> of this bytearray.
+     * <code>true</code> if and only if this <code>bytearray</code> ends with the
+     * <code>suffix</code>. <code>suffix</code> can also be a tuple of suffixes to look for. With
+     * optional <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code>), define the effective <code>bytearray</code> to be the slice
+     * <code>[start:end]</code> of this <code>bytearray</code>.
      *
      * @param suffix byte array to match, or object viewable as such, or a tuple of them
-     * @param start of slice in this bytearray to match
-     * @param end of slice in this bytearray to match
+     * @param start of slice in this <code>bytearray</code> to match
+     * @param end of slice in this <code>bytearray</code> to match
      * @return true if and only if this[start:end] ends with the suffix (or one of them)
      */
     public boolean endswith(PyObject suffix, PyObject start, PyObject end) {
@@ -1180,7 +1173,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Append the elements in the argument sequence to the end of the array, equivalent to:
-     * <code>s[len(s):len(s)] = o</code>. The argument must be a subclass of BaseBytes or an
+     * <code>s[len(s):len(s)] = o</code>. The argument must be a subclass of {@link BaseBytes} or an
      * iterable type returning elements compatible with byte assignment.
      *
      * @param o the sequence of items to append to the list.
@@ -1192,7 +1185,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     @ExposedMethod(doc = BuiltinDocs.bytearray_extend_doc)
     final synchronized void bytearray_extend(PyObject o) {
         // Use the general method, assigning to the crack at the end of the array.
-        // Note this deals with all legitimate PyObject types and the case o==this.
+        // Note this deals with all legitimate PyObject types including the case o==this.
         setslice(size, size, 1, o);
     }
 
@@ -1253,7 +1246,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * </pre>
      *
      * @param hex specification of the bytes
-     * @throws PyException(ValueError) if non-hex characters, or isolated ones, are encountered
+     * @throws PyException (ValueError) if non-hex characters, or isolated ones, are encountered
      */
     static PyByteArray fromhex(String hex) throws PyException {
         return bytearray_fromhex(TYPE, hex);
@@ -1322,9 +1315,11 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * This type is not hashable.
+     *
+     * @throws PyException (TypeError) as this type is not hashable.
      */
     @Override
-    public int hashCode() {
+    public int hashCode() throws PyException {
         return bytearray___hash__();
     }
 
@@ -1443,10 +1438,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         return (PyByteArray)basebytes_upper();
     }
 
-   /**
-     * Implementation of Python <code>join(iterable)</code>. Return a bytearray which is the
-     * concatenation of the byte arrays in the iterable <code>iterable</code>. The separator between
-     * elements is the byte array providing this method.
+    /**
+     * Implementation of Python <code>join(iterable)</code>. Return a <code>bytearray</code> which
+     * is the concatenation of the byte arrays in the iterable <code>iterable</code>. The separator
+     * between elements is the byte array providing this method.
      *
      * @param iterable of byte array objects, or objects viewable as such.
      * @return byte array produced by concatenation.
@@ -1484,7 +1479,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * <code>width</code> is less than <code>this.size()</code>.
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return new byte array containing the result
      */
     public PyByteArray ljust(int width, String fillchar) {
@@ -1498,8 +1493,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Implementation of Python <code>lstrip()</code>. Return a copy of the byte array with the leading
-     * whitespace characters removed.
+     * Implementation of Python <code>lstrip()</code>. Return a copy of the byte array with the
+     * leading whitespace characters removed.
      *
      * @return a byte array containing this value stripped of those bytes
      */
@@ -1510,10 +1505,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     /**
      * Implementation of Python <code>lstrip(bytes)</code>
      *
-     * Return a copy of the byte array with the leading characters removed. The bytes
-     * argument is an object specifying the set of characters to be removed. If null or None, the
-     * bytes argument defaults to removing whitespace. The bytes argument is not a prefix;
-     * rather, all combinations of its values are stripped.
+     * Return a copy of the byte array with the leading characters removed. The bytes argument is an
+     * object specifying the set of characters to be removed. If <code>null</code> or
+     * <code>None</code>, the bytes argument defaults to removing whitespace. The bytes argument is
+     * not a prefix; rather, all combinations of its values are stripped.
      *
      * @param bytes treated as a set of bytes defining what values to strip
      * @return a byte array containing this value stripped of those bytes (at the left)
@@ -1542,7 +1537,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Removes and return the last element in the byte array.
+     * Remove and return the last element in the byte array.
+     *
      * @return PyInteger representing the value
      */
     public PyInteger pop() {
@@ -1584,7 +1580,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * argument must be a PyInteger, PyLong or string of length 1.
      *
      * @param o the value to remove from the list.
-     * @throws PyException ValueError if o not found in bytearray
+     * @throws PyException ValueError if o not found in <code>bytearray</code>
      */
     public void remove(PyObject o) throws PyException {
         bytearray_remove(o);
@@ -1746,7 +1742,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * <code>width</code> is less than <code>this.size()</code>.
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return new byte array containing the result
      */
     public PyByteArray rjust(int width, String fillchar) {
@@ -1793,7 +1789,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Implementation of Python <code>rstrip()</code>. Return a copy of the byte array with the trailing whitespace characters removed.
+     * Implementation of Python <code>rstrip()</code>. Return a copy of the byte array with the
+     * trailing whitespace characters removed.
      *
      * @return a byte array containing this value stripped of those bytes (at right)
      */
@@ -1804,10 +1801,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     /**
      * Implementation of Python <code>rstrip(bytes)</code>
      *
-     * Return a copy of the byte array with the trailing characters removed. The bytes
-     * argument is an object specifying the set of characters to be removed. If null or None, the
-     * bytes argument defaults to removing whitespace. The bytes argument is not a suffix;
-     * rather, all combinations of its values are stripped.
+     * Return a copy of the byte array with the trailing characters removed. The bytes argument is
+     * an object specifying the set of characters to be removed. If <code>null</code> or
+     * <code>None</code>, the bytes argument defaults to removing whitespace. The bytes argument is
+     * not a suffix; rather, all combinations of its values are stripped.
      *
      * @param bytes treated as a set of bytes defining what values to strip
      * @return a byte array containing this value stripped of those bytes (at right)
@@ -1844,11 +1841,12 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>startswith(prefix)</code>.
      *
      * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
-     * <code>prefix</code> can also be a tuple of prefixes to look for.
+     * <code>true</code> if and only if this <code>bytearray</code> starts with the
+     * <code>prefix</code>. <code>prefix</code> can also be a tuple of prefixes to look for.
      *
      * @param prefix byte array to match, or object viewable as such, or a tuple of them
-     * @return true if and only if this bytearray starts with the prefix (or one of them)
+     * @return true if and only if this <code>bytearray</code> starts with the prefix (or one of
+     *         them)
      */
     public boolean startswith(PyObject prefix) {
         return basebytes_starts_or_endswith(prefix, null, null, false);
@@ -1858,13 +1856,14 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>startswith( prefix [, start ] )</code>.
      *
      * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
-     * <code>prefix</code> can also be a tuple of prefixes to look for. With optional
-     * <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define the
-     * effective bytearray to be the slice <code>[start:]</code> of this bytearray.
+     * <code>true</code> if and only if this <code>bytearray</code> starts with the
+     * <code>prefix</code>. <code>prefix</code> can also be a tuple of prefixes to look for. With
+     * optional <code>start</code> (which may be <code>null</code> or <code>Py.None</code>), define
+     * the effective <code>bytearray</code> to be the slice <code>[start:]</code> of this
+     * <code>bytearray</code>.
      *
      * @param prefix byte array to match, or object viewable as such, or a tuple of them
-     * @param start of slice in this bytearray to match
+     * @param start of slice in this <code>bytearray</code> to match
      * @return true if and only if this[start:] starts with the prefix (or one of them)
      */
     public boolean startswith(PyObject prefix, PyObject start) {
@@ -1875,15 +1874,15 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>startswith( prefix [, start [, end ]] )</code>.
      *
      * When <code>prefix</code> is of a type that may be treated as an array of bytes, return
-     * <code>true</code> if and only if this bytearray starts with the <code>prefix</code>.
-     * <code>prefix</code> can also be a tuple of prefixes to look for. With optional
-     * <code>start</code> and <code>end</code> (which may be <code>null</code> or
-     * <code>Py.None</code>), define the effective bytearray to be the slice
-     * <code>[start:end]</code> of this bytearray.
+     * <code>true</code> if and only if this <code>bytearray</code> starts with the
+     * <code>prefix</code>. <code>prefix</code> can also be a tuple of prefixes to look for. With
+     * optional <code>start</code> and <code>end</code> (which may be <code>null</code> or
+     * <code>Py.None</code>), define the effective <code>bytearray</code> to be the slice
+     * <code>[start:end]</code> of this <code>bytearray</code>.
      *
      * @param prefix byte array to match, or object viewable as such, or a tuple of them
-     * @param start of slice in this bytearray to match
-     * @param end of slice in this bytearray to match
+     * @param start of slice in this <code>bytearray</code> to match
+     * @param end of slice in this <code>bytearray</code> to match
      * @return true if and only if this[start:end] starts with the prefix (or one of them)
      */
     public boolean startswith(PyObject prefix, PyObject start, PyObject end) {
@@ -1896,8 +1895,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     }
 
     /**
-     * Implementation of Python <code>strip()</code>. Return a copy of the byte array with the leading
-     * and trailing whitespace characters removed.
+     * Implementation of Python <code>strip()</code>. Return a copy of the byte array with the
+     * leading and trailing whitespace characters removed.
      *
      * @return a byte array containing this value stripped of those bytes (left and right)
      */
@@ -1909,9 +1908,10 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>strip(bytes)</code>
      *
      * Return a copy of the byte array with the leading and trailing characters removed. The bytes
-     * argument is anbyte arrayt specifying the set of characters to be removed. If null or None, the
-     * bytes argument defaults to removing whitespace. The bytes argument is not a prefix or suffix;
-     * rather, all combinations of its values are stripped.
+     * argument is anbyte arrayt specifying the set of characters to be removed. If
+     * <code>null</code> or <code>None</code>, the bytes argument defaults to removing whitespace.
+     * The bytes argument is not a prefix or suffix; rather, all combinations of its values are
+     * stripped.
      *
      * @param bytes treated as a set of bytes defining what values to strip
      * @return a byte array containing this value stripped of those bytes (left and right)
@@ -1980,13 +1980,13 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>translate(table).</code>
      *
      * Return a copy of the byte array where all bytes occurring in the optional argument
-     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the given
-     * translation table, which must be of length 256.
+     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the
+     * given translation table, which must be of length 256.
      *
      * @param table length 256 translation table (of a type that may be regarded as a byte array)
      * @return translated byte array
      */
-     public PyByteArray translate(PyObject table) {
+    public PyByteArray translate(PyObject table) {
         return bytearray_translate(table, null);
     }
 
@@ -1994,12 +1994,12 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Implementation of Python <code>translate(table[, deletechars]).</code>
      *
      * Return a copy of the byte array where all bytes occurring in the optional argument
-     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the given
-     * translation table, which must be of length 256.
+     * <code>deletechars</code> are removed, and the remaining bytes have been mapped through the
+     * given translation table, which must be of length 256.
      *
-     * You can use the maketrans() helper function in the string module to create a translation
-     * table. For string objects, set the table argument to None for translations that only delete
-     * characters:
+     * You can use the Python <code>maketrans()</code> helper function in the <code>string</code>
+     * module to create a translation table. For string objects, set the table argument to
+     * <code>None</code> for translations that only delete characters:
      *
      * @param table length 256 translation table (of a type that may be regarded as a byte array)
      * @param deletechars object that may be regarded as a byte array, defining bytes to delete
@@ -2131,6 +2131,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      *
      * @param needed becomes the new value of this.size
      */
+    @Override
     protected void newStorage(int needed) {
         if (needed > 0) {
             final int L = recLength(needed);
@@ -2168,7 +2169,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * been preserved, although probably moved, and the gap between them has been adjusted to the
      * requested size.
      * <p>
-     * The effect on this PyByteArray is that:
+     * The effect on this <code>PyByteArray</code> is that:
      *
      * <pre>
      * this.offset = f'
@@ -2277,7 +2278,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
      * and the gap between them adjusted to specification. The new offset f' is chosen heuristically
      * by the method to optimise the efficiency of repeated adjustment near either end of the array,
-     * e.g. repeated prepend or append operations. The effect on this PyByteArray is that:
+     * e.g. repeated prepend or append operations. The effect on this <code>PyByteArray</code> is
+     * that:
      *
      * <pre>
      * this.offset = f'
@@ -2357,7 +2359,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
      * and the gap between them adjusted to specification. The new offset f' is chosen heuristically
      * by the method to optimise the efficiency of repeated adjustment near either end of the array,
-     * e.g. repeated prepend or append operations. The effect on this PyByteArray is that:
+     * e.g. repeated prepend or append operations. The effect on this <code>PyByteArray</code> is
+     * that:
      *
      * <pre>
      * this.offset = f'
@@ -2439,7 +2442,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      *
      * where the contents of region <code>a</code> have been preserved, although possbly moved, and
      * the gap at the end has the requested size. this method never shrinks the total storage. The
-     * effect on this PyByteArray is that:
+     * effect on this <code>PyByteArray</code> is that:
      *
      * <pre>
      * this.offset = f or 0
@@ -2518,7 +2521,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * </pre>
      *
      * where the regions of length <code>a</code> and <code>b=size-(a+d)</code> have been preserved
-     * and the gap between them eliminated. The effect on this PyByteArray is that:
+     * and the gap between them eliminated. The effect on this <code>PyByteArray</code> is that:
      *
      * <pre>
      * this.offset = f'
@@ -2526,8 +2529,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * </pre>
      *
      * The method does not implement the Python repertoire of slice indices but avoids indexing
-     * outside the bytearray by silently adjusting a to be within it. Negative d is treated as 0 and
-     * if d is too large, it is truncated to the array end.
+     * outside the <code>bytearray</code> by silently adjusting a to be within it. Negative d is
+     * treated as 0 and if d is too large, it is truncated to the array end.
      *
      * @param a index of hole in byte array
      * @param d number to discard (will discard x[a,a+d-1])
@@ -2536,8 +2539,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     private void storageDelete(int a, int d) {
         // storageReplace specialised for delete (e=0)
 
-        if (d == 0)
-         {
+        if (d == 0) {
             return; // Everything stays where it is.
         }
 
@@ -2626,7 +2628,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * where the regions of length <code>a</code> and <code>b=size-(a+e)</code> have been preserved
      * and the <code>e</code> intervening elements reduced to <code>e-d</code> elements, by removing
      * exactly the elements with indices (relative to the start of valid data) <code>a+k*c</code>
-     * for <code>k=0...d-1</code>. The effect on this PyByteArray is that:
+     * for <code>k=0...d-1</code>. The effect on this <code>PyByteArray</code> is that:
      *
      * <pre>
      * this.offset = f'
@@ -2634,8 +2636,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * </pre>
      *
      * The method does not implement the Python repertoire of slice indices but avoids indexing
-     * outside the bytearray by silently adjusting a to be within it. Negative d is treated as 0 and
-     * if d is too large, it is truncated to the array end.
+     * outside the <code>bytearray</code> by silently adjusting a to be within it. Negative d is
+     * treated as 0 and if d is too large, it is truncated to the array end.
      *
      * @param a index of hole in byte array
      * @param c (>0) step size between the locations of elements to delete
@@ -2647,4 +2649,3 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         // XXX Change SequenceIndexDelegate to use (and PyList to implement) delslice()
     }
 }
-
