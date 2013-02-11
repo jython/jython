@@ -111,26 +111,34 @@ class ExceptionTestCase(unittest.TestCase):
 
 class BaseCompressTestCase(object):
 
-    # This test is working on jython 2.7 on windows, i.e. it does not hang
-    # Jython 2.7b1+ (default:d5a22e9b622a, Feb 9 2013, 20:36:27)
-    # [Java HotSpot(TM) Client VM (Sun Microsystems Inc.)] on java1.6.0_29
-    # Which poses the question: on which platforms does it hang
-    # Leaving skip in place for now.
-    # See note below about the size parameter and real_max_memuse below
-    #
-    # This test appears to hang on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(is_jython, "FIXME #1859: appears to hang on Jython")
     def check_big_compress_buffer(self, size, compress_func):
         _1M = 1024 * 1024
-        fmt = "%%0%dx" % (2 * _1M)
-        # Generate 10MB worth of random, and expand it by repeating it.
-        # The assumption is that zlib's memory is not big enough to exploit
-        # such spread out redundancy.
-        data = ''.join([binascii.a2b_hex(fmt % random.getrandbits(8 * _1M))
-                        for i in range(10)])
-        data = data * (size // len(data) + 1)
+        if not is_jython:
+            # Generate 10MB worth of random, and expand it by repeating it.
+            # The assumption is that zlib's memory is not big enough to exploit
+            # such spread out redundancy.
+            fmt = "%%0%dx" % (2 * _1M)
+            data = ''.join([binascii.a2b_hex(fmt % random.getrandbits(8 * _1M))
+                            for i in range(10)])
+            data = data * (size // len(data) + 1)
+        else:
+            #
+            # The original version of this test passes fine on cpython,
+            # but appears to hang on jython, because of the time taken to
+            # format a very large integer as a hexadecimal string.
+            # See this issue for details
+            # http://bugs.jython.org/issue2013
+            # Since testing string formatting is not the purpose of the test
+            # it is necessary to generate the random test data in a different
+            # way on jython. (There may be a better way than what I have 
+            # implemented here)
+            #
+            from java.math import BigInteger
+            from java.util import Random
+            num_bits = 8 * _1M # causes "java.lang.OutOfMemoryError: Java heap space"
+            num_bits = _1M
+            data = ''.join([str(BigInteger((num_bits), Random()).toByteArray())
+                            for i in range(10)])
         try:
             compress_func(data)
         finally:
