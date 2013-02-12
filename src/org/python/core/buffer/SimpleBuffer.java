@@ -48,6 +48,7 @@ public class SimpleBuffer extends BaseBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
      *             inconsistent with <code>storage.length</code>
      */
+    // XXX: "for sub-class use" = should be protected?
     public SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
             ArrayIndexOutOfBoundsException {
         this();
@@ -90,6 +91,7 @@ public class SimpleBuffer extends BaseBuffer {
      * @param storage the array of bytes storing the implementation of the exporting object
      * @throws NullPointerException if <code>storage</code> is null
      */
+    // XXX: "for sub-class use" = should be protected?
     public SimpleBuffer(byte[] storage) throws NullPointerException {
         this();
         this.storage = storage;         // Exported data (index0=0 from initialisation)

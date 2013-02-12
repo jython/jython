@@ -1,6 +1,6 @@
 package org.python.modules;
 
-/**
+/*
  *  Copyright 2011 Gaurav Raje
  *  Licensed to PSF under a Contributor Agreement.
  */
@@ -8,13 +8,14 @@ import java.security.MessageDigest;
 
 /**
  * SHA-224 as described in RFC 3874. This introduces the SHA224 Digest which has
- * been ommitted from the JDK {@link java.security}.
- * 
+ * been omitted from the JDK <code>java.security</code>.
  * 
  * This implementation has been borrowed from the Bouncy Castle implementation
- * of SHA2 algorithms. Since they are MIT Licensed, they are compatible with
- * this project. Their mandatory copyright notice follows.
+ * of SHA2 algorithms.
  * 
+ * Since they are MIT Licensed, they are compatible with
+ * this project. Their mandatory copyright notice follows.
+ * <pre>
  * Copyright (c) 2000 - 2011 The Legion Of The Bouncy Castle
  * (http://www.bouncycastle.org)
  * 
@@ -35,6 +36,7 @@ import java.security.MessageDigest;
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ * </pre>
  */
 public class SHA224Digest
         extends MessageDigest
