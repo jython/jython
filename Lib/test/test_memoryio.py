@@ -60,11 +60,6 @@ class MemorySeekTestMixin:
 
 class MemoryTestMixin:
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_detach(self):
         buf = self.ioclass()
         self.assertRaises(self.UnsupportedOperation, buf.detach)
@@ -179,11 +174,6 @@ class MemoryTestMixin:
         memio.close()
         self.assertRaises(ValueError, memio.read)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_readline(self):
         buf = self.buftype("1234567890\n")
         memio = self.ioclass(buf * 2)
@@ -413,6 +403,13 @@ class PyBytesIOTest(MemoryTestMixin, MemorySeekTestMixin, unittest.TestCase):
 
     UnsupportedOperation = pyio.UnsupportedOperation
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_detach(self):
+        pass
+
     @staticmethod
     def buftype(s):
         return s.encode("ascii")
@@ -631,6 +628,9 @@ class CBytesIOTest(PyBytesIOTest):
         "array.array() does not have the new buffer API"
     )(PyBytesIOTest.test_bytes_array)
 
+    # Re-instate test_detach skipped by Jython in PyBytesIOTest
+    if support.is_jython: # FIXME: Jython issue 1996
+        test_detach = MemoryTestMixin.test_detach
 
     # This test isn't working on Ubuntu on an Apple Intel powerbook,
     # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 

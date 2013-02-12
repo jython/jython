@@ -591,7 +591,7 @@ public class PyIOBase extends PyObject {
              */
             PyByteArray res = new PyByteArray();
 
-            while (remainingLimit > 0) {
+            while (--remainingLimit >= 0) {
 
                 /*
                  * read() returns a str of one byte, doing at most one read to refill, or it returns
