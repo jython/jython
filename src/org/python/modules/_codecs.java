@@ -314,12 +314,12 @@ public class _codecs {
      * @param mapping to convert bytes to characters
      * @return decoded string and number of bytes consumed
      */
-    public static PyTuple charmap_decode(String str, String errors, PyObject mapping) {
+    public static PyTuple charmap_decode(String bytes, String errors, PyObject mapping) {
         if (mapping == null || mapping == Py.None) {
             // Default to Latin-1
-            return latin_1_decode(str, errors);
+            return latin_1_decode(bytes, errors);
         } else {
-            return charmap_decode(str, errors, mapping, false);
+            return charmap_decode(bytes, errors, mapping, false);
         }
     }
 
@@ -1290,7 +1290,6 @@ public class _codecs {
      * @param bytes to be decoded (Jython {@link PyString} convention)
      * @param errors error policy name (e.g. "ignore", "replace")
      * @param byteorder decoding "endianness" specified (in the Python -1, 0, +1 convention)
-     * @param isFinal if a "final" call, meaning the input must all be consumed
      * @return tuple (unicode_result, bytes_consumed, endianness)
      */
     public static PyTuple utf_32_ex_decode(String bytes, String errors, int byteorder) {
@@ -1335,7 +1334,6 @@ public class _codecs {
      * @param order LE, BE or UNDEFINED (meaning bytes may begin with a byte order mark)
      * @param isFinal if a "final" call, meaning the input must all be consumed
      * @param findOrder if the returned tuple should include a report of the byte order
-     * @return tuple containing unicode result (as UTF-16 Java String)
      * @return tuple (unicode_result, bytes_consumed [, endianness])
      */
     private static PyTuple PyUnicode_DecodeUTF32Stateful(String bytes, String errors,

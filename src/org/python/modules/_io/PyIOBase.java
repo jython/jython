@@ -160,7 +160,6 @@ public class PyIOBase extends PyObject {
      * Truncate file to <code>size</code> bytes to the current position (as reported by
      * <code>tell()</code>).
      *
-     * @param size requested for stream (or null for default)
      * @return the new size
      */
     public long truncate() {

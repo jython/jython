@@ -919,11 +919,11 @@ public class codecs {
      * This method differs from the CPython equivalent (in <code>Object/unicodeobject.c</code>)
      * which works with an array of code points that are, in a wide build, Unicode code points.
      *
-     * @param unicode
-     * @param base64SetO
-     * @param base64WhiteSpace
-     * @param errors
-     * @return
+     * @param unicode to be encoded
+     * @param base64SetO true if characters in "set O" should be translated to base64
+     * @param base64WhiteSpace true if white-space characters should be translated to base64
+     * @param errors error policy name (e.g. "ignore", "replace")
+     * @return bytes representing the encoded unicode string
      */
     public static String PyUnicode_EncodeUTF7(String unicode, boolean base64SetO,
             boolean base64WhiteSpace, String errors) {
