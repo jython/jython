@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * Base class for Jython bytearray (and bytes in due course) that provides most of the Java API,
- * including Java List behaviour. Attempts to modify the contents through this API will throw a
- * TypeError if the actual type of the object is not mutable.
- * <p>
- * It is possible for a Java client to treat this class as a <tt>List&lt;PyInteger></tt>, obtaining
- * equivalent functionality to the Python interface in a Java paradigm.
+ * Base class for Jython <code>bytearray</code> (and <code>bytes</code> in due course) that provides
+ * most of the Java API, including Java {@link List} behaviour. Attempts to modify the contents
+ * through this API will throw a <code>TypeError</code> if the actual type of the object is not
+ * mutable. It is possible for a Java client to treat this class as a
+ * <code>List&lt;PyInteger></code>, obtaining equivalent functionality to the Python interface in a
+ * Java paradigm.
  * <p>
  * Subclasses must define (from {@link PySequence}):
  * <ul>
@@ -29,11 +29,29 @@ import java.util.ListIterator;
  * <li>{@link #delRange(int, int)}</li>
  * </ul>
  * since the default implementations will otherwise throw an exception.
+ * <p>
+ * Many of the methods implemented here are inherited or thinly wrapped by {@link PyByteArray},
+ * which offers them as Java API, or exposes them as Python methods. These prototype Python methods
+ * mostly accept a {@link PyObject} as argument, where you might have expected a <code>byte[]</code>
+ * or <code>BaseBytes</code>, in order to accommodate the full range of types accepted by the Python
+ * equivalent: usually, any <code>PyObject</code> that implements {@link BufferProtocol}, providing
+ * a one-dimensional array of bytes, is an acceptable argument. In the documentation, the reader
+ * will often see the terms "byte array" or "object viewable as bytes" instead of
+ * <code>BaseBytes</code> when this broader scope is intended.
+ * <p>
+ * Where the methods return a <code>BaseBytes</code>, this is will normally be an instance of the
+ * class of the object on which the method was actually called. For example {@link #capitalize()},
+ * defined in <code>BaseBytes</code> to return a BaseBytes, actually returns a {@link PyByteArray}
+ * when applied to a <code>bytearray</code>. Or it may be that the method returns a
+ * <code>PyList</code> of instances of the target type, for example {@link #rpartition(PyObject)}.
+ * This is achieved by the sub-class defining {@link #getslice(int, int, int)} and
+ * {@link #getBuilder(int)} to return instances of its own type. See the documentation of particular
+ * methods for more information.
  */
 public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
-     * Simple constructor of empty zero-length array of defined type.
+     * Constructs a zero-length <code>BaseBytes</code> of explicitly-specified sub-type.
      *
      * @param type explicit Jython type
      */
@@ -44,7 +62,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Simple constructor of zero-filled array of defined size and type.
+     * Constructs a zero-filled array of defined size and type.
      *
      * @param size required
      * @param type explicit Jython type
@@ -56,7 +74,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Construct byte array of defined type by copying values from int[].
+     * Constructs a byte array of defined type by copying values from int[].
      *
      * @param type explicit Jython type
      * @param value source of values (and size)
@@ -72,8 +90,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Construct byte array of defined type by copying character values from a String. These values
-     * have to be in the Python byte range 0 to 255.
+     * Constructs a byte array of defined type by copying character values from a String. These
+     * values have to be in the Python byte range 0 to 255.
      *
      * @param type explicit Jython type
      * @param value source of characters
@@ -250,7 +268,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param encoding name of optional encoding
      * @param errors name of optional errors policy
      * @return encoded string
-     * @throws PyException(TypeError) if the PyString is actually a PyUnicode and encoding is null
+     * @throws PyException (TypeError) if the <code>PyString</code> is actually a {@link PyUnicode}
+     *             and encoding is <code>null</code>
      */
     protected static String encode(PyString arg, String encoding, String errors) throws PyException {
         // Jython encode emits a String (not byte[])
@@ -278,7 +297,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param start index in this byte array at which the first character code lands
      * @param value source of characters
-     * @throws PyException(ValueError) if any value[i] > 255
+     * @throws PyException (ValueError) if any value[i] > 255
      */
     protected void setBytes(int start, String value) throws PyException {
         int n = value.length();
@@ -294,7 +313,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param start index in this byte array at which the first character code lands
      * @param value source of characters
-     * @throws PyException(ValueError) if any value[i] > 255
+     * @throws PyException (ValueError) if any value[i] > 255
      */
     protected void setBytes(int start, int step, String value) throws PyException {
         int n = value.length();
@@ -307,7 +326,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from
-     * int in subclasses. Construct zero-filled bytearray of specified size.
+     * int in subclasses. Construct zero-filled byte array of specified size.
      *
      * @param n size of zero-filled array
      */
@@ -332,24 +351,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         view.copyTo(storage, offset);
     }
 
-// /**
-// * Helper for the Java API constructor from a {@link #PyBuffer}. View is (perhaps) a stop-gap
-// until
-// * the Jython implementation of PEP 3118 (buffer API) is embedded.
-// *
-// * @param value a byte-oriented view
-// */
-// void init(PyBuffer value) {
-// int n = value.getLen();
-// newStorage(n);
-// value.copyTo(storage, offset);
-// }
-//
     /**
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from
-     * bytearray or bytes in subclasses.
+     * <code>bytearray</code> or <code>bytes</code> in subclasses.
      *
-     * @param source bytearray (or bytes) to copy
+     * @param source <code>bytearray</code> (or <code>bytes</code>) to copy
      */
     protected void init(BaseBytes source) {
         newStorage(source.size);
@@ -429,8 +435,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * Load bytes into the container from the given iterable
          *
          * @param iter iterable source of values to enter into the container
-         * @throws PyException(TypeError) if any value not acceptable type
-         * @throws PyException(ValueError) if any value<0 or value>255 or string length!=1
+         * @throws PyException (TypeError) if any value not acceptable type
+         * @throws PyException (ValueError) if any value<0 or value>255 or string length!=1
          */
         void loadFrom(Iterable<? extends PyObject> iter) throws PyException {
 
@@ -535,7 +541,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Check that an index is within the range of the array, that is <tt>0&lt;=index&lt;size</tt>.
      *
      * @param index to check
-     * @throws PyException(IndexError) if the index is outside the array bounds
+     * @throws PyException (IndexError) if the index is outside the array bounds
      */
     protected final void indexCheck(int index) throws PyException {
         if (index < 0 || index >= size) {
@@ -569,7 +575,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * 0..255.)
      *
      * @param value to convert.
-     * @throws PyException(ValueError) if value<0 or value>255
+     * @throws PyException (ValueError) if value<0 or value>255
      */
     protected static final byte byteCheck(int value) throws PyException {
         if (value < 0 || value > 255) {
@@ -584,7 +590,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Python bytes run 0..255.)
      *
      * @param value to convert.
-     * @throws PyException(ValueError) if value<0 or value>255
+     * @throws PyException (ValueError) if value<0 or value>255
      */
     protected static final byte byteCheck(PyInteger value) throws PyException {
         return byteCheck(value.asInt());
@@ -602,8 +608,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * </ul>
      *
      * @param value to convert.
-     * @throws PyException(TypeError) if not acceptable type
-     * @throws PyException(ValueError) if value<0 or value>255 or string length!=1
+     * @throws PyException (TypeError) if not acceptable type
+     * @throws PyException (ValueError) if value<0 or value>255 or string length!=1
      */
     protected static final byte byteCheck(PyObject value) throws PyException {
         if (value.isIndex()) {
@@ -627,7 +633,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * if the return value is not <code>null</code>.
      *
      * @param b object to wrap
-     * @return byte-oriented view or null
+     * @return byte-oriented view or <code>null</code>
      */
     protected static PyBuffer getView(PyObject b) {
 
@@ -673,6 +679,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * API for org.python.core.PySequence
      * ============================================================================================
      */
+    @Override
     protected PyInteger pyget(int index) {
         return new PyInteger(intAt(index));
     }
@@ -681,8 +688,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * We're not implementing these here, but we can give a stronger guarantee about the return type
      * and save some casting and type anxiety.
      */
+    @Override
     protected abstract BaseBytes getslice(int start, int stop, int step);
 
+    @Override
     protected abstract BaseBytes repeat(int count);
 
     /*
@@ -696,9 +705,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param index to insert at
      * @param element to insert (by value)
-     * @throws PyException(IndexError) if the index is outside the array bounds
-     * @throws PyException(ValueError) if element<0 or element>255
-     * @throws PyException(TypeError) if the subclass is immutable
+     * @throws PyException (IndexError) if the index is outside the array bounds
+     * @throws PyException (ValueError) if element<0 or element>255
+     * @throws PyException (TypeError) if the subclass is immutable
      */
     public void pyinsert(int index, PyObject element) {
         // This won't succeed: it just produces the right error.
@@ -720,8 +729,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Class defining the behaviour of bytearray with respect to slice assignment, etc., which
-     * differs from the default (list) behaviour in small ways.
+     * Class defining the behaviour of <code>bytearray</code> with respect to slice assignment,
+     * etc., which differs from the default (list) behaviour in small ways.
      */
     private class IndexDelegate extends PySequence.DefaultIndexDelegate {
 
@@ -886,11 +895,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Implementation of __eq__ (equality) operator, capable of comparison with another byte array
-     * or bytes. Comparison with an invalid type returns null.
+     * Implementation of __eq__ (equality) operator, capable of comparison with another byte array.
+     * Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___eq__(PyObject other) {
         int cmp = basebytes_cmpeq(other);
@@ -904,11 +913,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Implementation of __ne__ (not equals) operator, capable of comparison with another byte array
-     * or bytes. Comparison with an invalid type returns null.
+     * Implementation of __ne__ (not equals) operator, capable of comparison with another byte
+     * array. Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___ne__(PyObject other) {
         int cmp = basebytes_cmpeq(other);
@@ -922,11 +931,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Implementation of __lt__ (less than) operator, capable of comparison with another byte array
-     * or bytes. Comparison with an invalid type returns null.
+     * Implementation of __lt__ (less than) operator, capable of comparison with another byte array.
+     * Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___lt__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -941,10 +950,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of __le__ (less than or equal to) operator, capable of comparison with another
-     * byte array or bytes. Comparison with an invalid type returns null.
+     * byte array. Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___le__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -959,10 +968,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of __ge__ (greater than or equal to) operator, capable of comparison with
-     * another byte array or bytes. Comparison with an invalid type returns null.
+     * another byte array. Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___ge__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -977,10 +986,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of __gt__ (greater than) operator, capable of comparison with another byte
-     * array or bytes. Comparison with an invalid type returns null.
+     * array. Comparison with an invalid type returns <code>null</code>.
      *
      * @param other Python object to compare with
-     * @return Python boolean result or null if not implemented for the other type.
+     * @return Python boolean result or <code>null</code> if not implemented for the other type.
      */
     final PyObject basebytes___gt__(PyObject other) {
         int cmp = basebytes_cmp(other);
@@ -1031,7 +1040,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @param ostart of slice to search.
      * @param oend of slice to search.
      * @param endswith true if we are doing endswith, false if startswith.
-     * @return true if and only if this bytearray ends with (one of) <code>target</code>.
+     * @return true if and only if this byte array ends with (one of) <code>target</code>.
      */
     protected final synchronized boolean basebytes_starts_or_endswith(PyObject target,
             PyObject ostart, PyObject oend, boolean endswith) {
@@ -1151,7 +1160,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * error policy. The returned PyObject will usually be a <code>PyUnicode</code>, but in practice
      * it is whatever the <code>decode</code> method of the codec decides.
      *
-     * @param encoding the name of the codec (uses default codec if null)
+     * @param encoding the name of the codec (uses default codec if <code>null</code>)
      * @return object containing the decoded characters
      */
     public PyObject decode(String encoding) {
@@ -1163,8 +1172,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * policy. The returned PyObject will usually be a <code>PyUnicode</code>, but in practice it is
      * whatever the <code>decode</code> method of the codec decides.
      *
-     * @param encoding the name of the codec (uses default codec if null)
-     * @param errors the name of the error policy (uses 'strict' if null)
+     * @param encoding the name of the codec (uses default codec if <code>null</code>)
+     * @param errors the name of the error policy (uses 'strict' if <code>null</code>)
      * @return object containing the decoded characters
      */
     public PyObject decode(String encoding, String errors) {
@@ -1210,6 +1219,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @return PyTuple that is first stage in pickling byte array
      */
+    @Override
     public PyObject __reduce__() {
         return basebytes___reduce__();
     }
@@ -1555,6 +1565,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * the table is only 32 elements long, rather than (as it might be) 256 bytes, the number of
          * distinct byte values.
          */
+        @Override
         protected int[] calculateSkipTable() {
             int[] skipTable = new int[MASK + 1];
             int m = pattern.getLen();
@@ -1572,6 +1583,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          *
          * @return the new effective end of the text
          */
+        @Override
         public int currIndex() {
             return right + pattern.getLen() - 1;
         }
@@ -1583,6 +1595,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          *
          * @return matching index or -1 if no (further) occurrences found
          */
+        @Override
         public int nextIndex() {
 
             int m = pattern.getLen();
@@ -1855,7 +1868,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param result to receive the decoded values
      * @param hex specification of the bytes
-     * @throws PyException(ValueError) if non-hex characters, or isolated ones, are encountered
+     * @throws PyException (ValueError) if non-hex characters, or isolated ones, are encountered
      */
     static void basebytes_fromhex(BaseBytes result, String hex) throws PyException {
 
@@ -1937,7 +1950,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                     // Unsuitable object to be in this join
                     String fmt = "can only join an iterable of bytes (item %d has type '%.80s')";
                     throw Py.TypeError(String.format(fmt, iterList.size(), o.getType()
-                                                                            .fastGetName()));
+                            .fastGetName()));
                 }
                 iterList.add(v);
                 totalSize += v.getLen();
@@ -1990,6 +2003,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * the part before the separator, the separator itself, and the part after the separator. If the
      * separator is not found, return a 3-tuple containing the string itself, followed by two empty
      * byte arrays.
+     * <p>
+     * The elements of the <code>PyTuple</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param sep the separator on which to partition this byte array
      * @return a tuple of (head, separator, tail)
@@ -2000,6 +2016,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Ready-to-expose implementation of Python <code>partition(sep)</code>.
+     * <p>
+     * The elements of the <code>PyTuple</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param sep the separator on which to partition this byte array
      * @return a tuple of (head, separator, tail)
@@ -2032,6 +2051,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Construct return value for implementation of Python <code>partition(sep)</code> or
      * <code>rpartition(sep)</code>, returns [0:p], [p:q], [q:]
+     * <p>
+     * The elements of the <code>PyTuple</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param p start of separator
      * @param q start of tail
@@ -2430,6 +2452,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * containing the part before the separator, the separator itself, and the part after the
      * separator. If the separator is not found, return a 3-tuple containing two empty byte arrays,
      * followed by the byte array itself.
+     * <p>
+     * The elements of the <code>PyTuple</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param sep the separator on which to partition this byte array
      * @return a tuple of (head, separator, tail)
@@ -2440,6 +2465,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Ready-to-expose implementation of Python <code>rpartition(sep)</code>.
+     * <p>
+     * The elements of the <code>PyTuple</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param sep the separator on which to partition this byte array
      * @return a tuple of (head, separator, tail)
@@ -2471,6 +2499,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Implementation of Python <code>rsplit()</code>, that returns a list of the words in the byte
      * array, using whitespace as the delimiter. See {@link #rsplit(PyObject, int)}.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @return PyList of byte arrays that result from the split
      */
@@ -2480,10 +2511,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>rsplit(sep)</code>, that returns a list of the words in the
-     * byte array, using sep as the delimiter. See {@link #rsplit(PyObject, int)} for the semantics
-     * of the separator.
+     * byte array, using <code>sep</code> as the delimiter. See {@link #rsplit(PyObject, int)} for
+     * the semantics of the separator.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @return PyList of byte arrays that result from the split
      */
     public PyList rsplit(PyObject sep) {
@@ -2492,22 +2526,26 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a list of the words
-     * in the byte array, using sep as the delimiter. If maxsplit is given, at most maxsplit splits
-     * are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
-     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * in the byte array, using <code>sep</code> as the delimiter. If <code>maxsplit</code> is
+     * given, at most <code>maxsplit</code> splits are done (thus, the list will have at most
+     * <code>maxsplit+1</code> elements). If <code>maxsplit</code> is not specified, then there is
+     * no limit on the number of splits (all possible splits are made).
      * <p>
-     * The semantics of sep and maxcount are identical to those of <code>split(sep, maxsplit)</code>
-     * , except that splits are generated from the right (and pushed onto the front of the result
-     * list). The result is only different from that of <code>split</code> if <code>maxcount</code>
-     * limits the number of splits. For example,
+     * The semantics of <code>sep</code> and maxcount are identical to those of
+     * <code>split(sep, maxsplit)</code> , except that splits are generated from the right (and
+     * pushed onto the front of the result list). The result is only different from that of
+     * <code>split</code> if <code>maxcount</code> limits the number of splits. For example,
      * <ul>
      * <li><code>bytearray(b' 1  2   3  ').rsplit()</code> returns
      * <code>[bytearray(b'1'), bytearray(b'2'), bytearray(b'3')]</code>, and</li>
      * <li><code>bytearray(b'  1  2   3  ').rsplit(None, 1)</code> returns
      * <code>[bytearray(b'  1 2'), bytearray(b'3')]</code></li>.
      * </ul>
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2517,10 +2555,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Ready-to-expose implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a
-     * list of the words in the byte array, using sep as the delimiter. Use the defines whitespace
-     * semantics if sep is null.
+     * list of the words in the byte array, using <code>sep</code> as the delimiter. Use the defines
+     * whitespace semantics if <code>sep</code> is <code>null</code>.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2534,11 +2575,15 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>rsplit(sep, maxsplit)</code>, that returns a list of the words
-     * in the byte array, using sep (which is not null) as the delimiter. If maxsplit>=0, at most
-     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If
-     * maxsplit&lt;0, then there is no limit on the number of splits (all possible splits are made).
+     * in the byte array, using <code>sep</code> (which is not <code>null</code>) as the delimiter.
+     * If <code>maxsplit>=0</code>, at most <code>maxsplit</code> splits are done (thus, the list
+     * will have at most <code>maxsplit+1</code> elements). If <code>maxsplit&lt;0</code>, then
+     * there is no limit on the number of splits (all possible splits are made).
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2589,15 +2634,18 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>rsplit(None, maxsplit)</code>, that returns a list of the
-     * words in the byte array, using whitespace as the delimiter. If maxsplit is given, at most
-     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit
-     * is not specified, then there is no limit on the number of splits (all possible splits are
-     * made).
+     * words in the byte array, using whitespace as the delimiter. If <code>maxsplit</code> is
+     * given, at most <code>maxsplit</code> splits are done (thus, the list will have at most
+     * <code>maxsplit+1</code> elements). If maxsplit is not specified, then there is no limit on
+     * the number of splits (all possible splits are made).
      * <p>
      * Runs of consecutive whitespace are regarded as a single separator, and the result will
      * contain no empty strings at the start or end if the string has leading or trailing
      * whitespace. Consequently, splitting an empty string or a string consisting of just whitespace
-     * with a None separator returns [].
+     * with a <code>None</code> separator returns [].
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this/self</code>.
      *
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
@@ -2648,6 +2696,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Implementation of Python <code>split()</code>, that returns a list of the words in the byte
      * array, using whitespace as the delimiter. See {@link #split(PyObject, int)}.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @return PyList of byte arrays that result from the split
      */
@@ -2657,10 +2708,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>split(sep)</code>, that returns a list of the words in the
-     * byte array, using sep as the delimiter. See {@link #split(PyObject, int)} for the semantics
-     * of the separator.
+     * byte array, using <code>sep</code> as the delimiter. See {@link #split(PyObject, int)} for
+     * the semantics of the separator.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @return PyList of byte arrays that result from the split
      */
     public PyList split(PyObject sep) {
@@ -2669,29 +2723,33 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>split(sep, maxsplit)</code>, that returns a list of the words
-     * in the byte array, using sep as the delimiter. If maxsplit is given, at most maxsplit splits
-     * are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
-     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * in the byte array, using <code>sep</code> as the delimiter. If <code>maxsplit</code> is
+     * given, at most <code>maxsplit</code> splits are done. (Thus, the list will have at most
+     * <code>maxsplit+1</code> elements). If <code>maxsplit</code> is not specified, then there is
+     * no limit on the number of splits (all possible splits are made).
      * <p>
-     * If sep is given, consecutive delimiters are not grouped together and are deemed to delimit
-     * empty strings (for example, '1,,2'.split(',') returns ['1', '', '2']). The sep argument may
-     * consist of multiple characters (for example, '1&lt;>2&lt;>3'.split('&lt;>') returns ['1',
-     * '2', '3']). Splitting an empty string with a specified separator returns [''].
+     * If <code>sep</code> is given, consecutive delimiters are not grouped together and are deemed
+     * to delimit empty strings (for example, <code>'1,,2'.split(',')</code> returns
+     * <code>['1', '', '2']</code>). The <code>sep</code> argument may consist of multiple
+     * characters (for example, <code>'1&lt;>2&lt;>3'.split('&lt;>')</code> returns <code>['1',
+     * '2', '3']</code>). Splitting an empty string with a specified separator <code> ['']</code>.
      * <p>
-     * If sep is not specified or is None, a different splitting algorithm is applied: runs of
-     * consecutive whitespace are regarded as a single separator, and the result will contain no
-     * empty strings at the start or end if the string has leading or trailing whitespace.
-     * Consequently, splitting an empty string or a string consisting of just whitespace with a None
-     * separator returns []. For example,
-     *
+     * If <code>sep</code> is not specified or is <code>None</code>, a different splitting algorithm
+     * is applied: runs of consecutive whitespace are regarded as a single separator, and the result
+     * will contain no empty strings at the start or end if the string has leading or trailing
+     * whitespace. Consequently, splitting an empty string or a string consisting of just whitespace
+     * with a <code>None</code> separator returns <code>[]</code>. For example,
      * <ul>
      * <li><code>bytearray(b' 1  2   3  ').split()</code> returns
      * <code>[bytearray(b'1'), bytearray(b'2'), bytearray(b'3')]</code>, and</li>
      * <li><code>bytearray(b'  1  2   3  ').split(None, 1)</code> returns
      * <code>[bytearray(b'1'), bytearray(b'2   3  ')]</code>.</li>
      * </ul>
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2701,10 +2759,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Ready-to-expose implementation of Python <code>split(sep, maxsplit)</code>, that returns a
-     * list of the words in the byte array, using sep as the delimiter. Use the defines whitespace
-     * semantics if sep is null.
+     * list of the words in the byte array, using <code>sep</code> as the delimiter. Use the defines
+     * whitespace semantics if <code>sep</code> is <code>null</code>.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2718,11 +2779,15 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>split(sep, maxsplit)</code>, that returns a list of the words
-     * in the byte array, using sep (which is not null) as the delimiter. If maxsplit>=0, at most
-     * maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If
-     * maxsplit&lt;0, then there is no limit on the number of splits (all possible splits are made).
+     * in the byte array, using <code>sep</code> (which is not <code>null</code>) as the delimiter.
+     * If <code>maxsplit>=0</code>, at most <code>maxsplit</code> splits are done (thus, the list
+     * will have at most <code>maxsplit+1</code> elements). If <code>maxsplit&lt;0</code>, then
+     * there is no limit on the number of splits (all possible splits are made).
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
-     * @param sep bytes, or object viewable as bytes, defining the separator
+     * @param sep <code>bytes</code>, or object viewable as bytes, defining the separator
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
      */
@@ -2763,14 +2828,18 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Implementation of Python <code>split(None, maxsplit)</code>, that returns a list of the words
-     * in the byte array, using whitespace as the delimiter. If maxsplit is given, at most maxsplit
-     * splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not
-     * specified, then there is no limit on the number of splits (all possible splits are made).
+     * in the byte array, using whitespace as the delimiter. If <code>maxsplit</code> is given, at
+     * most maxsplit splits are done (thus, the list will have at most <code>maxsplit+1</code>
+     * elements). If <code>maxsplit</code> is not specified, then there is no limit on the number of
+     * splits (all possible splits are made).
      * <p>
      * Runs of consecutive whitespace are regarded as a single separator, and the result will
      * contain no empty strings at the start or end if the string has leading or trailing
      * whitespace. Consequently, splitting an empty string or a string consisting of just whitespace
-     * with a None separator returns [].
+     * with a <code>None</code> separator returns [].
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param maxsplit maximum number of splits
      * @return PyList of byte arrays that result from the split
@@ -2815,6 +2884,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Implementation of Python <code>splitlines()</code>, returning a list of the lines in the byte
      * array, breaking at line boundaries. Line breaks are not included in the resulting segments.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @return List of segments
      */
@@ -2826,6 +2898,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Implementation of Python <code>splitlines(keepends)</code>, returning a list of the lines in
      * the string, breaking at line boundaries. Line breaks are not included in the resulting list
      * unless <code>keepends</code> is true.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param keepends if true, include the end of line bytes(s)
      * @return PyList of segments
@@ -2838,6 +2913,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Ready-to-expose implementation of Python <code>splitlines(keepends)</code>, returning a list
      * of the lines in the array, breaking at line boundaries. Line breaks are not included in the
      * resulting list unless keepends is given and true.
+     * <p>
+     * The elements of the <code>PyList</code> returned by this method are instances of the same
+     * actual type as <code>this</code>.
      *
      * @param keepends if true, include the end of line bytes(s)
      * @return List of segments
@@ -2888,7 +2966,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * byte.
      *
      * @param function name
-     * @param fillchar or null
+     * @param fillchar or <code>null</code>
      * @return
      */
     protected static byte fillByteCheck(String function, String fillchar) {
@@ -2937,7 +3015,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * exactly the original object.)
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return (possibly new) byte array containing the result
      */
     final BaseBytes basebytes_center(int width, String fillchar) {
@@ -2958,7 +3036,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * exactly the original object.)
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return (possibly new) byte array containing the result
      */
     final BaseBytes basebytes_ljust(int width, String fillchar) {
@@ -2977,7 +3055,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * exactly the original object.)
      *
      * @param width desired
-     * @param fillchar one-byte String to fill with, or null implying space
+     * @param fillchar one-byte String to fill with, or <code>null</code> implying space
      * @return (possibly new) byte array containing the result
      */
     final BaseBytes basebytes_rjust(int width, String fillchar) {
@@ -3323,7 +3401,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Java API equivalent of Python <code>capitalize()</code>. This method treats the bytes as
      * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
-     * {@link Character#toLowerCase(char)}.
+     * {@link Character#toLowerCase(char)}. The <code>BaseBytes</code> returned by this method has
+     * the same actual type as <code>this/self</code>.
      *
      * @return a copy of the array with its first character capitalized and the rest lowercased.
      */
@@ -3332,7 +3411,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>capitalize()</code>.
+     * Ready-to-expose implementation of Python <code>capitalize()</code>. The
+     * <code>BaseBytes</code> returned by this method has the same actual type as
+     * <code>this/self</code>.
      *
      * @return a copy of the array with its first character capitalized and the rest lowercased.
      */
@@ -3365,7 +3446,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Java API equivalent of Python <code>lower()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#toLowerCase(char)}.
+     * pont codes and is consistent with Java's {@link Character#toLowerCase(char)}. The
+     * <code>BaseBytes</code> returned by this method has the same actual type as
+     * <code>this/self</code>.
      *
      * @return a copy of the array with all the cased characters converted to lowercase.
      */
@@ -3374,7 +3457,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>lower()</code>.
+     * Ready-to-expose implementation of Python <code>lower()</code>. The <code>BaseBytes</code>
+     * returned by this method has the same actual type as <code>this/self</code>.
      *
      * @return a copy of the array with all the cased characters converted to lowercase.
      */
@@ -3397,7 +3481,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Java API equivalent of Python <code>swapcase()</code>. This method treats the bytes as
      * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
-     * {@link Character#toLowerCase(char)}.
+     * {@link Character#toLowerCase(char)}. The <code>BaseBytes</code> returned by this method has
+     * the same actual type as <code>this/self</code>.
      *
      * @return a copy of the array with uppercase characters converted to lowercase and vice versa.
      */
@@ -3406,7 +3491,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>swapcase()</code>.
+     * Ready-to-expose implementation of Python <code>swapcase()</code>. The <code>BaseBytes</code>
+     * returned by this method has the same actual type as <code>this/self</code>.
      *
      * @return a copy of the array with uppercase characters converted to lowercase and vice versa.
      */
@@ -3432,7 +3518,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Java API equivalent of Python <code>title()</code>. The algorithm uses a simple
      * language-independent definition of a word as groups of consecutive letters. The definition
      * works in many contexts but it means that apostrophes in contractions and possessives form
-     * word boundaries, which may not be the desired result.
+     * word boundaries, which may not be the desired result. The <code>BaseBytes</code> returned by
+     * this method has the same actual type as <code>this/self</code>.
      *
      * @return a titlecased version of the array where words start with an uppercase character and
      *         the remaining characters are lowercase.
@@ -3442,7 +3529,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>title()</code>.
+     * Ready-to-expose implementation of Python <code>title()</code>. The <code>BaseBytes</code>
+     * returned by this method has the same actual type as <code>this/self</code>.
      *
      * @return a titlecased version of the array where words start with an uppercase character and
      *         the remaining characters are lowercase.
@@ -3481,7 +3569,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Java API equivalent of Python <code>upper()</code>. Note that
      * <code>x.upper().isupper()</code> might be <code>false</code> if the array contains uncased
-     * characters.
+     * characters. The <code>BaseBytes</code> returned by this method has the same actual type as
+     * <code>this/self</code>.
      *
      * @return a copy of the array with all the cased characters converted to uppercase.
      */
@@ -3490,7 +3579,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Ready-to-expose implementation of Python <code>upper()</code>.
+     * Ready-to-expose implementation of Python <code>upper()</code>. The <code>BaseBytes</code>
+     * returned by this method has the same actual type as <code>this/self</code>.
      *
      * @return a copy of the array with all the cased characters converted to uppercase.
      */
@@ -3533,7 +3623,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param index of value in byte array
      * @return the integer value at the index
-     * @throws PyException(IndexError) if the index is outside the array bounds
+     * @throws PyException (IndexError) if the index is outside the array bounds
      */
     public synchronized int intAt(int index) throws PyException {
         indexCheck(index);
@@ -3599,7 +3689,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     private static final void appendHexEscape(StringBuilder buf, int c) {
         buf.append("\\x").append(Character.forDigit((c & 0xf0) >> 4, 16))
-           .append(Character.forDigit(c & 0xf, 16));
+                .append(Character.forDigit(c & 0xf, 16));
     }
 
     /**
@@ -3666,8 +3756,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
 
     /**
-     * Access to the bytearray (or bytes) as a {@link java.util.List}. The List interface supplied
-     * by BaseBytes delegates to this object.
+     * Access to the byte array as a {@link java.util.List}. The List interface supplied by
+     * BaseBytes delegates to this object.
      */
     protected final List<PyInteger> listDelegate = new AbstractList<PyInteger>() {
 
@@ -3689,9 +3779,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * Replaces the element at the specified position in this list with the specified element.
          *
          * @see java.util.AbstractList#set(int, java.lang.Object)
-         * @throws PyException(TypeError) if actual class is immutable
-         * @throws PyException(IndexError) if the index is outside the array bounds
-         * @throws PyException(ValueError) if element<0 or element>255
+         * @throws PyException (TypeError) if actual class is immutable
+         * @throws PyException (IndexError) if the index is outside the array bounds
+         * @throws PyException (ValueError) if element<0 or element>255
          */
         @Override
         public PyInteger set(int index, PyInteger element) throws PyException {
@@ -3707,9 +3797,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * currently at that position and any subsequent elements to the right.
          *
          * @see java.util.AbstractList#add(int, java.lang.Object)
-         * @throws PyException(IndexError) if the index is outside the array bounds
-         * @throws PyException(ValueError) if element<0 or element>255
-         * @throws PyException(TypeError) if the owning concrete subclass is immutable
+         * @throws PyException (IndexError) if the index is outside the array bounds
+         * @throws PyException (ValueError) if element<0 or element>255
+         * @throws PyException (TypeError) if the owning concrete subclass is immutable
          */
         @Override
         public void add(int index, PyInteger element) throws PyException {
@@ -3724,7 +3814,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * removed from the list.
          *
          * @see java.util.AbstractList#remove(int)
-         * @throws PyException(IndexError) if the index is outside the array bounds
+         * @throws PyException (IndexError) if the index is outside the array bounds
          */
         @Override
         public PyInteger remove(int index) {
@@ -3737,11 +3827,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     };
 
     /**
-     * Number of bytes in bytearray (or bytes) object.
+     * Number of bytes in <code>bytearray</code> (or <code>bytes</code>) object.
      *
      * @see java.util.List#size()
      * @return Number of bytes in byte array.
      * */
+    @Override
     public int size() {
         return size;
     }
@@ -3749,6 +3840,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#isEmpty()
      */
+    @Override
     public boolean isEmpty() {
         return size == 0;
     }
@@ -3757,6 +3849,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Returns true if this list contains the specified value. More formally, returns true if and
      * only if this list contains at least one integer e such that o.equals(PyInteger(e)).
      */
+    @Override
     public boolean contains(Object o) {
         return listDelegate.contains(o);
     }
@@ -3764,6 +3857,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#iterator()
      */
+    @Override
     public Iterator<PyInteger> iterator() {
         return listDelegate.iterator();
     }
@@ -3771,6 +3865,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#toArray()
      */
+    @Override
     public Object[] toArray() {
         return listDelegate.toArray();
     }
@@ -3778,6 +3873,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#toArray(T[])
      */
+    @Override
     public <T> T[] toArray(T[] a) {
         return listDelegate.toArray(a);
     }
@@ -3785,6 +3881,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#add(java.lang.Object)
      */
+    @Override
     public boolean add(PyInteger o) {
         return listDelegate.add(o);
     }
@@ -3792,6 +3889,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#remove(java.lang.Object)
      */
+    @Override
     public boolean remove(Object o) {
         return listDelegate.remove(o);
     }
@@ -3799,6 +3897,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#containsAll(java.util.Collection)
      */
+    @Override
     public boolean containsAll(Collection<?> c) {
         return listDelegate.containsAll(c);
     }
@@ -3806,6 +3905,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#addAll(java.util.Collection)
      */
+    @Override
     public boolean addAll(Collection<? extends PyInteger> c) {
         return listDelegate.addAll(c);
     }
@@ -3813,6 +3913,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#addAll(int, java.util.Collection)
      */
+    @Override
     public boolean addAll(int index, Collection<? extends PyInteger> c) {
         return listDelegate.addAll(index, c);
     }
@@ -3820,6 +3921,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#removeAll(java.util.Collection)
      */
+    @Override
     public boolean removeAll(Collection<?> c) {
         return listDelegate.removeAll(c);
     }
@@ -3827,6 +3929,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#retainAll(java.util.Collection)
      */
+    @Override
     public boolean retainAll(Collection<?> c) {
         return listDelegate.retainAll(c);
     }
@@ -3834,6 +3937,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#clear()
      */
+    @Override
     public void clear() {
         listDelegate.clear();
     }
@@ -3865,6 +3969,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#hashCode()
      */
+    @Override
     public int hashCode() {
         return listDelegate.hashCode();
     }
@@ -3872,6 +3977,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#get(int)
      */
+    @Override
     public PyInteger get(int index) {
         return listDelegate.get(index);
     }
@@ -3879,6 +3985,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#set(int, java.lang.Object)
      */
+    @Override
     public PyInteger set(int index, PyInteger element) {
         return listDelegate.set(index, element);
     }
@@ -3886,6 +3993,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#add(int, java.lang.Object)
      */
+    @Override
     public void add(int index, PyInteger element) {
         listDelegate.add(index, element);
     }
@@ -3893,6 +4001,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#remove(int)
      */
+    @Override
     public PyInteger remove(int index) {
         return listDelegate.remove(index);
     }
@@ -3900,6 +4009,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#indexOf(java.lang.Object)
      */
+    @Override
     public int indexOf(Object o) {
         return listDelegate.indexOf(o);
     }
@@ -3907,6 +4017,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#lastIndexOf(java.lang.Object)
      */
+    @Override
     public int lastIndexOf(Object o) {
         return listDelegate.lastIndexOf(o);
     }
@@ -3914,6 +4025,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#listIterator()
      */
+    @Override
     public ListIterator<PyInteger> listIterator() {
         return listDelegate.listIterator();
     }
@@ -3921,6 +4033,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#listIterator(int)
      */
+    @Override
     public ListIterator<PyInteger> listIterator(int index) {
         return listDelegate.listIterator(index);
     }
@@ -3928,6 +4041,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /*
      * @see java.util.List#subList(int, int)
      */
+    @Override
     public List<PyInteger> subList(int fromIndex, int toIndex) {
         return listDelegate.subList(fromIndex, toIndex);
     }
@@ -3986,8 +4100,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
          * It is intended the client call this method only once to get the result of a series of
          * append operations. A second call to {@link #getCount()}, before any further appending,
          * returns a zero-length array. This is to ensure that the same array is not given out
-         * twice. However, {@link #getCount()} continues to return the number bytes accumuated until
-         * an append next occurs.
+         * twice. However, {@link #getCount()} continues to return the number bytes accumulated
+         * until an append next occurs.
          *
          * @return an array containing the accumulated result
          */
@@ -4131,7 +4245,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Every sub-class of BaseBytes overrides this method to return a <code>Builder&lt;B></code>
      * where <code>B</code> is (normally) that class's particular type, and it extends
      * <code>Builder&lt;B></code> so that {@link Builder#getResult()} produces an instance of
-     * <code>B</code> from the contents..
+     * <code>B</code> from the contents.
      *
      * @param capacity of the <code>Builder&lt;B></code> returned
      * @return a <code>Builder&lt;B></code> for the correct sub-class

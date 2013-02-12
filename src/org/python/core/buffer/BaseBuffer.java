@@ -22,7 +22,7 @@ import org.python.core.PyException;
  * passed to the constructor. Otherwise, all methods for write access raise a
  * <code>BufferError</code> read-only exception and {@link #isReadonly()} returns <code>true</code>.
  * Sub-classes can follow the same pattern, setting {@link PyBUF#WRITABLE} in the constructor and,
- * if they have to override the operations that write (<code>storeAt</code> and
+ * if they have to, overriding the operations that write (<code>storeAt</code> and
  * <code>copyFrom</code>). The recommended pattern is:
  *
  * <pre>
@@ -31,9 +31,10 @@ import org.python.core.PyException;
  * }
  * // ... implementation of the write operation
  * </pre>
- *
- * The implementors of simple buffers will find it efficient to override the generic access methods
- * to which performance might be sensitive, with a calculation specific to their actual type.
+ * Another approach, used in the standard library, is to have distinct classes for the writable and
+ * read-only variants. The implementors of simple buffers will find it efficient to override the
+ * generic access methods to which performance might be sensitive, with a calculation specific to
+ * their actual type.
  * <p>
  * At the time of writing, only one-dimensional buffers of item size one are used in the Jython
  * core.

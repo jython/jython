@@ -3,20 +3,20 @@ package org.python.core;
 /**
  * This interface provides a base for the key interface of the buffer API, {@link PyBuffer},
  * including symbolic constants used by the consumer of a <code>PyBuffer</code> to specify its
- * requirements and assumptions. The Jython buffer API emulates the CPython buffer API.
+ * requirements and assumptions. The Jython buffer API emulates the CPython buffer API. There are
+ * two reasons for separating parts of <code>PyBuffer</code> into this interface:
  * <ul>
- * <li>There are two reasons for separating parts of <code>PyBuffer</code> into this interface: The
- * constants defined in CPython have the names <code>PyBUF_SIMPLE</code>,
+ * <li>The constants defined in CPython have the names <code>PyBUF_SIMPLE</code>,
  * <code>PyBUF_WRITABLE</code>, etc., and the trick of defining ours here means we can write
- * {@link PyBUF#SIMPLE}, {@link PyBUF#WRITABLE}, etc. so source code looks similar.</li>
+ * <code>PyBUF.SIMPLE</code>, <code>PyBUF.WRITABLE</code>, etc. so source code looks similar.</li>
  * <li>It is not so easy in Java as it is in C to treat a <code>byte</code> array as storing
  * anything other than <code>byte</code>, and we prepare for the possibility of buffers with a
  * series of different primitive types by defining here those methods that would be in common
- * between <code>(Byte)Buffer</code> and an assumed future <code>FloatBuffer</code> or
+ * between (Byte)<code>Buffer</code> and an assumed future <code>FloatBuffer</code> or
  * <code>TypedBuffer&lt;T&gt;</code>. (Compare <code>java.nio.Buffer</code>.)</li>
  * </ul>
- * Except for other interfaces, it is unlikely any classes would implement <code>PyBUF</code>
- * directly. Users of the Jython buffer API can mostly overlook the distinction and just use
+ * It is unlikely any classes would implement <code>PyBUF</code>, except indirectly through other
+ * interfaces. Users of the Jython buffer API can mostly overlook the distinction and just use
  * <code>PyBuffer</code>.
  */
 public interface PyBUF {
@@ -39,12 +39,12 @@ public interface PyBUF {
 
     /**
      * An array reporting the size of the buffer, considered as a multidimensional array, in each
-     * dimension and (by its length) number of dimensions. The size is the size in "items". An item
-     * is the amount of buffer content addressed by one index or set of indices. In the simplest
-     * case an item is a single unit (byte), and there is one dimension. In complex cases, the array
-     * is multi-dimensional, and the item at each location is multi-unit (multi-byte). The consumer
-     * must not modify this array. A valid <code>shape</code> array is always returned (difference
-     * from CPython).
+     * dimension and (by its length) giving the number of dimensions. The size of the buffer is its
+     * size in "items". An item is the amount of buffer content addressed by one index or set of
+     * indices. In the simplest case an item is a single unit (byte), and there is one dimension. In
+     * complex cases, the array is multi-dimensional, and the item at each location is multi-unit
+     * (multi-byte). The consumer must not modify this array. A valid <code>shape</code> array is
+     * always returned (difference from CPython).
      *
      * @return the dimensions of the buffer as an array
      */
@@ -59,7 +59,7 @@ public interface PyBUF {
 
     /**
      * The total number of units (bytes) stored, which will be the product of the elements of the
-     * <code>shape</code> array, and the item size.
+     * <code>shape</code> array, and the item size in units.
      *
      * @return the total number of units stored.
      */
@@ -81,13 +81,13 @@ public interface PyBUF {
     /**
      * The <code>suboffsets</code> array is a further part of the support for interpreting the
      * buffer as an n-dimensional array of items, where the array potentially uses indirect
-     * addressing (like a real Java array of arrays, in fact). This is only applicable when there
-     * are more than 1 dimension and works in conjunction with the <code>strides</code> array. (More
+     * addressing (like a real Java array of arrays, in fact). This is only applicable when there is
+     * more than 1 dimension, and it works in conjunction with the <code>strides</code> array. (More
      * on this in the CPython documentation.) When used, <code>suboffsets[k]</code> is an integer
-     * index, bit a byte offset as in CPython. The consumer must not modify this array. When not
+     * index, not a byte offset as in CPython. The consumer must not modify this array. When not
      * needed for navigation <code>null</code> is returned (as in CPython).
      *
-     * @return suboffsets array or null in not necessary for navigation
+     * @return suboffsets array or <code>null</code> if not necessary for navigation
      */
     int[] getSuboffsets();
 
@@ -108,15 +108,15 @@ public interface PyBUF {
     static final int MAX_NDIM = 64;
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
-     * specify that it expects to write to the buffer contents. getBuffer will raise an exception if
-     * the exporter's buffer cannot meet this requirement.
+     * specify that it expects to write to the buffer contents. <code>getBuffer</code> will raise an
+     * exception if the exporter's buffer cannot meet this requirement.
      */
     static final int WRITABLE = 0x0001;
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
      * specify that it assumes a simple one-dimensional organisation of the exported storage with
-     * item size of one. getBuffer will raise an exception if the consumer sets this flag and the
-     * exporter's buffer cannot be navigated that simply.
+     * item size of one. <code>getBuffer</code> will raise an exception if the consumer sets this
+     * flag and the exporter's buffer cannot be navigated that simply.
      */
     static final int SIMPLE = 0;
     /**
@@ -162,7 +162,7 @@ public interface PyBUF {
      * specify that it will assume a contiguous organisation of the units, but will enquire which
      * organisation it actually is.
      *
-     * getBuffer will raise an exception if the exporter's buffer is not contiguous.
+     * <code>getBuffer</code> will raise an exception if the exporter's buffer is not contiguous.
      * <code>ANY_CONTIGUOUS</code> implies <code>STRIDES</code>.
      */
     // Further CPython strangeness since it uses the strides array to answer the enquiry.
@@ -216,7 +216,7 @@ public interface PyBUF {
     /* Constants for readability, not standard for CPython */
 
     /**
-     * Field mask, use as in <code>if ((flags&NAVIGATION) == STRIDES) ...</code>. The importance of
+     * Field mask, used as in <code>if ((flags&NAVIGATION) == STRIDES) ...</code>. The importance of
      * the subset of flags defined by this mask is not so much in their "navigational" character as
      * in the way they are treated in a buffer request.
      * <p>
@@ -243,7 +243,7 @@ public interface PyBUF {
      */
     static final int IS_F_CONTIGUOUS = F_CONTIGUOUS & ~STRIDES;
     /**
-     * Field mask, use as in <code>if ((flags&CONTIGUITY)== ... ) ...</code>.
+     * Field mask, used as in <code>if ((flags&CONTIGUITY)== ... ) ...</code>.
      */
     static final int CONTIGUITY = (C_CONTIGUOUS | F_CONTIGUOUS | ANY_CONTIGUOUS) & ~STRIDES;
 }

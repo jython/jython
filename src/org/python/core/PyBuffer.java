@@ -163,9 +163,9 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * When a <code>PyBuffer</code> is the target, the same checks are carried out on the consumer
      * flags, and a return will normally be a reference to that buffer. A Jython
      * <code>PyBuffer</code> keeps count of these re-exports in order to match them with the number
-     * of calls to {@link #release()}. When the last matching release() arrives it is considered
-     * "final", and release actions may then take place on the exporting object. After the final
-     * release of a buffer, a call to <code>getBuffer</code> should raise an exception.
+     * of calls to {@link #release()}. When the last matching <code>release()</code> arrives it is
+     * considered "final", and release actions may then take place on the exporting object. After
+     * the final release of a buffer, a call to <code>getBuffer</code> should raise an exception.
      */
     @Override
     PyBuffer getBuffer(int flags) throws PyException;
@@ -213,16 +213,17 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * <code>this.getPointer(i)</code>. A request for a slice where <code>start</code> <i>= s</i>,
      * <code>length</code> <i>= N</i> and <code>stride</code> <i>= m</i>, results in a buffer
      * <i>y</i> such that <i>y(k) = x(s+km)</i> where <i>k=0..(N-1)</i>. In Python terms, this is
-     * the slice <i>x[s : s+(N-1)m+1 : m]</i> (if m&gt;0) or the slice <i>x[s : s+(N-1)m-1 : m]</i>
-     * (if m&lt;0). Implementations should check that this range is entirely within the current
-     * buffer.
+     * the slice <i>x[s : s+(N-1)m+1 : m]</i> (if <i>m&gt;0</i>) or the slice <i>x[s : s+(N-1)m-1 :
+     * m]</i> (if <i>m&lt;0</i>). Implementations should check that this range is entirely within
+     * the current buffer.
      * <p>
      * In a simple buffer backed by a contiguous byte array, the result is a strided PyBuffer on the
      * same storage but where the offset is adjusted by <i>s</i> and the stride is as supplied. If
      * the current buffer is already strided and/or has an item size larger than single bytes, the
-     * new start index, length and stride will be translated from the arguments given, through this
-     * buffer's stride and item size. The consumer always expresses <code>start</code> and
-     * <code>strides</code> in terms of the abstract view of this buffer.
+     * new <code>start</code> index, <code>length</code> and <code>stride</code> will be translated
+     * from the arguments given, through this buffer's stride and item size. The caller always
+     * expresses <code>start</code> and <code>strides</code> in terms of the abstract view of this
+     * buffer.
      *
      * @param flags specifying features demanded and the navigational capabilities of the consumer
      * @param start index in the current buffer
@@ -265,13 +266,11 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * Return a structure describing the slice of a byte array that holds the data being exported to
      * the consumer. For a one-dimensional contiguous buffer, assuming the following client code
      * where <code>obj</code> has type <code>BufferProtocol</code>:
-     *
      * <pre>
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getBuf();
      * </pre>
-     *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset + k*itemsize]</code> to <code>[b.offset + (k+1)*itemsize - 1]</code>
      * inclusive. And if <code>itemsize==1</code>, the item is simply the byte
@@ -287,17 +286,15 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     PyBuffer.Pointer getBuf();
 
     /**
-     * Return a structure describing the slice of a byte array that points to a single item from the
-     * data being exported to the consumer. For a one-dimensional contiguous buffer, assuming the
+     * Return a structure describing the position in a byte array of a single item from the data
+     * being exported to the consumer. For a one-dimensional contiguous buffer, assuming the
      * following client code where <code>obj</code> has type <code>BufferProtocol</code>:
-     *
      * <pre>
      * int k = ... ;
      * PyBuffer a = obj.getBuffer();
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getPointer(k);
      * </pre>
-     *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>
@@ -312,11 +309,10 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
     PyBuffer.Pointer getPointer(int index);
 
     /**
-     * Return a structure describing the slice of a byte array that points to a single item from the
-     * data being exported to the consumer, in the case that array may be multi-dimensional. For a
+     * Return a structure describing the position in a byte array of a single item from the data
+     * being exported to the consumer, in the case that array may be multi-dimensional. For a
      * 3-dimensional contiguous buffer, assuming the following client code where <code>obj</code>
      * has type <code>BufferProtocol</code>:
-     *
      * <pre>
      * int i, j, k;
      * // ... calculation that assigns i, j, k
@@ -324,18 +320,17 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getPointer(i,j,k);
      * </pre>
-     *
      * the item with index <code>[i,j,k]</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>
      * <p>
      * Essentially this is a method for computing the offset of a particular index. The client is
      * free to navigate the underlying buffer <code>b.storage</code> without respecting these
-     * boundaries.
-     * <p>
-     * If the buffer is also non-contiguous, <code>b.storage[b.offset]</code> is still the (first
-     * byte of) the item at index [0,...,0]. However, it is necessary to navigate <code>b</code>
-     * using the shape, strides and sub-offsets provided by the API.
+     * boundaries. If the buffer is non-contiguous, the above description is still valid (since a
+     * multi-byte item must itself be contiguously stored), but in any additional navigation of
+     * <code>b.storage[]</code> to other units, the client must use the shape, strides and
+     * sub-offsets provided by the API. Normally one starts <code>b = a.getBuf()</code> in order to
+     * establish the offset of index [0,...,0].
      *
      * @param indices multidimensional index at which to position the pointer
      * @return structure defining the byte[] slice that is the shared data

@@ -43,8 +43,7 @@ public class OpenMode {
     /**
      * Error message describing the way in which the mode is invalid, or null if no problem has been
      * found. This field may be set by the constructor (in the case of duplicate or unrecognised
-     * mode letters), by the {@link #isValid()} method, or by client code. A non-null value will
-     * cause {@link #isValid()} to return false.
+     * mode letters), by the {@link #validate()} method, or by client code.
      */
     public String message;
 
@@ -52,7 +51,7 @@ public class OpenMode {
      * Decode the given string to an OpenMode object, checking for duplicate or unrecognised mode
      * letters. Valid letters are those in "rwa+btU". Errors in the mode string do not raise an
      * exception, they simply generate an appropriate error message in {@link #message}. After
-     * construction, a client should always call {@link #isValid()} to complete validity checks.
+     * construction, a client should always call {@link #validate()} to complete validity checks.
      *
      * @param mode
      */
@@ -196,7 +195,7 @@ public class OpenMode {
      */
     public void checkValid() throws PyException {
 
-        // Actually peform the check
+        // Actually perform the check
         validate();
 
         // The 'other' flag reports alien symbols in the original mode string
@@ -215,7 +214,7 @@ public class OpenMode {
     /**
      * The mode string we need when constructing a <code>FileIO</code> initialised with the present
      * mode. Note that this is not the same as the full open mode because it omits the text-based
-     * attributes, and not the same as {@link #raw()}.
+     * attributes.
      *
      * @return "r", "w", or "a" with optional "+".
      */

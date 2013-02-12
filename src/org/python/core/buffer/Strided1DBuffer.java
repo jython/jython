@@ -9,21 +9,24 @@ import org.python.core.PyException;
  * properties in the usual way, designating a slice (or all) of a byte array, but also a
  * <code>stride</code> property (equal to <code>getStrides()[0]</code>).
  * <p>
- * Let this underlying buffer be the byte array <i>u(i)</i> for <i>i=0..N-1</i>, let <i>x</i> be the
+ * Let the underlying buffer be the byte array <i>u(i)</i> for <i>i=0..N-1</i>, let <i>x</i> be the
  * <code>Strided1DBuffer</code>, and let the stride be <i>p</i>. The storage works as follows.
  * Designate by <i>x(j)</i>, for <i>j=0..L-1</i>, the byte at index <i>j</i>, that is, the byte
- * retrieved by <code>x.byteAt(j)</code>. Then, we store <i>x(j)</i> at <i>u(a+pj)</i>, that is,
- * <i>x(0)</i> is at <i>u(a)</i>. When we construct such a buffer, we have to supply <i>a</i> =
+ * retrieved by <code>x.byteAt(j)</code>. Thus, we store <i>x(j)</i> at <i>u(a+pj)</i>, that is,
+ * <i>x(0) = u(a)</i>. When we construct such a buffer, we have to supply <i>a</i> =
  * <code>index0</code>, <i>L</i> = <code>length</code>, and <i>p</i> = <code>stride</code> as the
  * constructor arguments. The last item in the slice <i>x(L-1)</i> is stored at <i>u(a+p(L-1))</i>.
- * If <i>p&lt;0</i> and <i>L&gt;1</i>, this will be to the left of <i>u(a)</i>, so the constructor
- * argument index0 is not then the low index of the range occupied by the data. Clearly both these
- * indexes must be in the range 0 to <i>N-1</i> inclusive, a rule enforced by the constructors
+ * For the simple case of positive stride, constructor argument <code>index0</code> is the low index
+ * of the range occupied by the data. When the stride is negative, that is to say <i>p&lt;0</i>, and
+ * <i>L&gt;1</i>, this will be to the left of <i>u(a)</i>, and the constructor argument
+ * <code>index0</code> is not then the low index of the range occupied by the data. Clearly both
+ * these indexes must be in the range 0 to <i>N-1</i> inclusive, a rule enforced by the constructors
  * (unless <i>L=0</i>, when it is assumed no array access will take place).
  * <p>
  * The class may be used by exporters to create a strided slice (e.g. to export the diagonal of a
  * matrix) and in particular by other buffers to create strided slices of themselves, such as to
- * create the memoryview that is returned as an extended slice of a memoryview.
+ * create the <code>memoryview</code> that is returned as an extended slice of a
+ * <code>memoryview</code>.
  */
 public class Strided1DBuffer extends BaseBuffer {
 
@@ -60,9 +63,14 @@ public class Strided1DBuffer extends BaseBuffer {
 
     /**
      * Provide an instance of <code>Strided1DBuffer</code> with navigation variables initialised,
-     * for sub-class use. The buffer ( {@link #storage}, {@link #index0}), and the navigation (
+     * for sub-class use. The buffer ({@link #storage}, {@link #index0}), and the navigation (
      * {@link #shape} array and {@link #stride}) will be initialised from the arguments (which are
      * checked for range).
+     * <p>
+     * The sub-class constructor should check that the intended access is compatible with this
+     * object by calling {@link #checkRequestFlags(int)}. (See the source of
+     * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, byte[], int, int, int)}
+     * for an example of this use.)
      *
      * @param storage raw byte array containing exported data
      * @param index0 index into storage of item[0]
@@ -72,6 +80,7 @@ public class Strided1DBuffer extends BaseBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>length</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      */
+    // XXX: "for sub-class use" = should be protected?
     public Strided1DBuffer(byte[] storage, int index0, int length, int stride)
             throws ArrayIndexOutOfBoundsException, NullPointerException {
         this();

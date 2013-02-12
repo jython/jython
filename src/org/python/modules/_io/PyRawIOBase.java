@@ -187,7 +187,7 @@ public class PyRawIOBase extends PyIOBase {
      * of bytes written.
      *
      * @param b buffer of bytes to be written
-     * @return
+     * @return the number of bytes written
      */
     public PyObject write(PyObject b) {
         return _RawIOBase_write(b);
