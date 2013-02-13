@@ -605,6 +605,13 @@ class PyStringIOTest(MemoryTestMixin, MemorySeekTestMixin,
     UnsupportedOperation = pyio.UnsupportedOperation
     EOF = ""
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_detach(self):
+        pass
+
 
 class PyStringIOPickleTest(TextIOTestMixin, unittest.TestCase):
     """Test if pickle restores properly the internal state of StringIO.
@@ -675,6 +682,10 @@ class CStringIOTest(PyStringIOTest):
 
     # XXX: For the Python version of io.StringIO, this is highly
     # dependent on the encoding used for the underlying buffer.
+
+    # Re-instate test_detach skipped by Jython in PyBytesIOTest
+    if support.is_jython: # FIXME: Jython issue 1996
+        test_detach = MemoryTestMixin.test_detach
 
     # This test isn't working on Ubuntu on an Apple Intel powerbook,
     # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
