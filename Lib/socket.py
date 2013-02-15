@@ -337,7 +337,7 @@ __all__ = [
     'htonl', 'ntohs', 'ntohl', 'inet_pton', 'inet_ntop', 'inet_aton',
     'inet_ntoa', 'create_connection', 'socket', 'ssl',
     # exceptions
-    'error', 'herror', 'gaierror', 'timeout', 'sslerror,
+    'error', 'herror', 'gaierror', 'timeout', 'sslerror',
     # classes
     'SocketType', 
     # Misc flags     
