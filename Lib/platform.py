@@ -1003,7 +1003,8 @@ def _syscmd_uname(option,default=''):
 
     """ Interface to the system's uname command.
     """
-    if sys.platform in ('dos','win32','win16','os2'):
+    if sys.platform in ('dos','win32','win16','os2') or \
+       (sys.platform.startswith('java') and os._name == 'nt'):
         # XXX Others too ?
         return default
     try:

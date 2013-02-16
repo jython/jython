@@ -224,6 +224,8 @@ class PlatformTest(unittest.TestCase):
         res = platform.dist()
 
     def test_libc_ver(self):
+        if sys.executable is None:
+            return
         import os
         if os.path.isdir(sys.executable) and \
            os.path.exists(sys.executable+'.exe'):
