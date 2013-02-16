@@ -1042,22 +1042,18 @@ class TextIOWrapper(_TextIOBase):
 
     def seekable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
         return self._seekable
 
     def readable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.readable()
 
     def writable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.writable()
 
     def flush(self):
-        self._checkInitialized()       # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
+        self._checkInitialized()    # Jython: to forbid use in an invalid state
         self.buffer.flush()
         self._telling = self._seekable
 

@@ -181,7 +181,10 @@ public class PyIOBase extends PyObject {
     }
 
     @ExposedMethod(doc = flush_doc)
-    final void _IOBase_flush() {}
+    final void _IOBase_flush() {
+        // Even types for which this remains a no-op must complain if closed (e.g. BytesIO)
+        _checkClosed();
+    }
 
     /**
      * True if the object is closed to further <b>client</b> operations. It is the state accessed by

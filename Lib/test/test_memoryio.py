@@ -319,11 +319,6 @@ class MemoryTestMixin:
 
         self.assertEqual(memio.flush(), None)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_flags(self):
         memio = self.ioclass()
 
