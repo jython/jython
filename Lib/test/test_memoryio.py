@@ -677,11 +677,10 @@ class CStringIOTest(PyStringIOTest):
     if support.is_jython: # FIXME: Jython issue 1996
         test_detach = MemoryTestMixin.test_detach
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
+    # This test checks that tell() results are consistent with the length of
+    # text written, but this is not documented in the API: only that seek()
+    # accept what tell() returns.
+    @unittest.skipIf(support.is_jython, "Exact value of tell() is CPython specific")
     def test_widechar(self):
         buf = self.buftype("\U0002030a\U00020347")
         memio = self.ioclass(buf)
@@ -692,6 +691,33 @@ class CStringIOTest(PyStringIOTest):
         self.assertEqual(memio.getvalue(), buf)
         self.assertEqual(memio.write(buf), len(buf))
         self.assertEqual(memio.tell(), len(buf) * 2)
+        self.assertEqual(memio.getvalue(), buf + buf)
+
+    # This test checks that seek() accepts what tell() returns, without requiring
+    # that tell() return a particular absolute value. Conceived for Jython, but
+    # probably universal.
+    def test_widechar_seek(self):
+        buf = self.buftype("\U0002030aX\u00ca\U00020347\u05d1Y\u0628Z")
+        memio = self.ioclass(buf)
+        self.assertEqual(memio.getvalue(), buf)
+
+        # For each character in buf, read it back from memio and its tell value
+        chars = list(buf)
+        tells = list()
+        for ch in chars :
+            tells.append(memio.tell())
+            self.assertEqual(memio.read(1), ch)
+
+        # For each character in buf, seek to it and check it's there
+        chpos = zip(chars, tells)
+        chpos.reverse()
+        for ch, pos in chpos:
+            memio.seek(pos)
+            self.assertEqual(memio.read(1), ch)
+
+        # Check write after seek to end
+        memio.seek(0, 2)
+        self.assertEqual(memio.write(buf), len(buf))
         self.assertEqual(memio.getvalue(), buf + buf)
 
     # This test isn't working on Ubuntu on an Apple Intel powerbook,
