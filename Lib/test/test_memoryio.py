@@ -60,11 +60,6 @@ class MemorySeekTestMixin:
 
 class MemoryTestMixin:
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_detach(self):
         buf = self.ioclass()
         self.assertRaises(self.UnsupportedOperation, buf.detach)
@@ -179,11 +174,6 @@ class MemoryTestMixin:
         memio.close()
         self.assertRaises(ValueError, memio.read)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_readline(self):
         buf = self.buftype("1234567890\n")
         memio = self.ioclass(buf * 2)
@@ -329,11 +319,6 @@ class MemoryTestMixin:
 
         self.assertEqual(memio.flush(), None)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_flags(self):
         memio = self.ioclass()
 
@@ -413,6 +398,13 @@ class PyBytesIOTest(MemoryTestMixin, MemorySeekTestMixin, unittest.TestCase):
 
     UnsupportedOperation = pyio.UnsupportedOperation
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_detach(self):
+        pass
+
     @staticmethod
     def buftype(s):
         return s.encode("ascii")
@@ -475,11 +467,6 @@ class PyBytesIOTest(MemoryTestMixin, MemorySeekTestMixin, unittest.TestCase):
         memio.seek(1, 1)
         self.assertEqual(memio.read(), buf[1:])
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_unicode(self):
         memio = self.ioclass()
 
@@ -608,6 +595,13 @@ class PyStringIOTest(MemoryTestMixin, MemorySeekTestMixin,
     UnsupportedOperation = pyio.UnsupportedOperation
     EOF = ""
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_detach(self):
+        pass
+
 
 class PyStringIOPickleTest(TextIOTestMixin, unittest.TestCase):
     """Test if pickle restores properly the internal state of StringIO.
@@ -631,6 +625,9 @@ class CBytesIOTest(PyBytesIOTest):
         "array.array() does not have the new buffer API"
     )(PyBytesIOTest.test_bytes_array)
 
+    # Re-instate test_detach skipped by Jython in PyBytesIOTest
+    if support.is_jython: # FIXME: Jython issue 1996
+        test_detach = MemoryTestMixin.test_detach
 
     # This test isn't working on Ubuntu on an Apple Intel powerbook,
     # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
@@ -676,11 +673,14 @@ class CStringIOTest(PyStringIOTest):
     # XXX: For the Python version of io.StringIO, this is highly
     # dependent on the encoding used for the underlying buffer.
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
+    # Re-instate test_detach skipped by Jython in PyBytesIOTest
+    if support.is_jython: # FIXME: Jython issue 1996
+        test_detach = MemoryTestMixin.test_detach
+
+    # This test checks that tell() results are consistent with the length of
+    # text written, but this is not documented in the API: only that seek()
+    # accept what tell() returns.
+    @unittest.skipIf(support.is_jython, "Exact value of tell() is CPython specific")
     def test_widechar(self):
         buf = self.buftype("\U0002030a\U00020347")
         memio = self.ioclass(buf)
@@ -691,6 +691,33 @@ class CStringIOTest(PyStringIOTest):
         self.assertEqual(memio.getvalue(), buf)
         self.assertEqual(memio.write(buf), len(buf))
         self.assertEqual(memio.tell(), len(buf) * 2)
+        self.assertEqual(memio.getvalue(), buf + buf)
+
+    # This test checks that seek() accepts what tell() returns, without requiring
+    # that tell() return a particular absolute value. Conceived for Jython, but
+    # probably universal.
+    def test_widechar_seek(self):
+        buf = self.buftype("\U0002030aX\u00ca\U00020347\u05d1Y\u0628Z")
+        memio = self.ioclass(buf)
+        self.assertEqual(memio.getvalue(), buf)
+
+        # For each character in buf, read it back from memio and its tell value
+        chars = list(buf)
+        tells = list()
+        for ch in chars :
+            tells.append(memio.tell())
+            self.assertEqual(memio.read(1), ch)
+
+        # For each character in buf, seek to it and check it's there
+        chpos = zip(chars, tells)
+        chpos.reverse()
+        for ch, pos in chpos:
+            memio.seek(pos)
+            self.assertEqual(memio.read(1), ch)
+
+        # Check write after seek to end
+        memio.seek(0, 2)
+        self.assertEqual(memio.write(buf), len(buf))
         self.assertEqual(memio.getvalue(), buf + buf)
 
     # This test isn't working on Ubuntu on an Apple Intel powerbook,

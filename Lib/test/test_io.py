@@ -2758,9 +2758,8 @@ class PyMiscIOTest(MiscIOTest):
         pass
 
 
-@unittest.skipIf(os.name == 'nt' or 
-                 (sys.platform[:4] == 'java' and os._name == 'nt'),
-                 'POSIX signals required for this test.')
+@unittest.skipIf(support.is_jython, "Jython does not support os.pipe()")
+@unittest.skipIf(os.name == 'nt', 'POSIX signals required for this test.')
 class SignalsTest(unittest.TestCase):
 
     def setUp(self):

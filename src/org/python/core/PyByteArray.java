@@ -502,7 +502,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a
-     * {@link PyString}.
+     * {@link PyString} that is not a {@link PyUnicode}.
      *
      * @see #setslice(int, int, int, PyObject)
      * @param start the position of the first element.
@@ -510,21 +510,28 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @param step the step size.
      * @param value a PyString object consistent with the slice assignment
      * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
+     * @throws PyException (ValueError) if the value is a <code>PyUnicode</code>
      */
     private void setslice(int start, int stop, int step, PyString value) throws PyException {
-        String v = value.asString();
-        int len = v.length();
-        if (step == 1) {
-            // Delete this[start:stop] and open a space of the right size
-            storageReplace(start, stop - start, len);
-            setBytes(start, v);
+        if (value instanceof PyUnicode) {
+            // Has to be 8-bit PyString
+            throw Py.TypeError("can't set bytearray slice from unicode");
         } else {
-            // This is an extended slice which means we are replacing elements
-            int n = sliceLength(start, stop, step);
-            if (n != len) {
-                throw SliceSizeError("bytes", len, n);
+            // Assignment is from 8-bit data
+            String v = value.asString();
+            int len = v.length();
+            if (step == 1) {
+                // Delete this[start:stop] and open a space of the right size
+                storageReplace(start, stop - start, len);
+                setBytes(start, v);
+            } else {
+                // This is an extended slice which means we are replacing elements
+                int n = sliceLength(start, stop, step);
+                if (n != len) {
+                    throw SliceSizeError("bytes", len, n);
+                }
+                setBytes(start, step, v);
             }
-            setBytes(start, step, v);
         }
     }
 
