@@ -1836,11 +1836,6 @@ class ssl:
         java_ssl_socket.startHandshake()
         return java_ssl_socket
 
-    def __getattr__(self, attr_name):
-        if hasattr(self.jython_socket_wrapper, attr_name):
-            return getattr(self.jython_socket_wrapper, attr_name)
-        raise AttributeError(attr_name)
-
     @raises_java_exception
     def read(self, n=4096):
         data = jarray.zeros(n, 'b')
@@ -1851,11 +1846,15 @@ class ssl:
             data = data[:m]
         return data.tostring()
 
+    recv = read
+
     @raises_java_exception
     def write(self, s):
         self._out_buf.write(s)
         self._out_buf.flush()
         return len(s)
+
+    send = sendall = write
 
     def _get_server_cert(self):
         return self.java_ssl_socket.getSession().getPeerCertificates()[0]
