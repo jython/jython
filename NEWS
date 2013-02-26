@@ -5,6 +5,7 @@ Jython 2.7a1
 
 Jython 2.5.4rc2
   Bugs Fixed
+    - [ 2017 ] jython.bat script pollutes environment! (variables)
     - [ 1899 ] Fix to platform.py to correctly avoid a warning message on Windows.
     - [ 1988 ] API for threading.condition fails to accept *args for acquire
     - [ 1753 ] zlib doesn't call end() on compress and decompress
