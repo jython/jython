@@ -2196,7 +2196,9 @@ public class BuiltinDocs {
         "Return a copy of the string S, where all characters occurring\n" + 
         "in the optional argument deletechars are removed, and the\n" + 
         "remaining characters have been mapped through the given\n" + 
-        "translation table, which must be a string of length 256.";
+        "translation table, which must be a string of length 256.\n" +
+        "If the table argument is None, no translation is applied and\n" +
+        "the operation simply removes the characters in deletechars.";
 
     public final static String str_upper_doc = 
         "S.upper() -> string\n" + 

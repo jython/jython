@@ -2192,10 +2192,7 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
     final String str_translate(String table, String deletechars) {
-        if (table == null) {
-            return getString();
-        }
-        if (table.length() != 256)
+        if (table != null && table.length() != 256)
             throw Py.ValueError(
                 "translation table must be 256 characters long");
 
@@ -2204,12 +2201,16 @@ public class PyString extends PyBaseString implements BufferProtocol
             char c = getString().charAt(i);
             if (deletechars != null && deletechars.indexOf(c) >= 0)
                 continue;
-            try {
-                buf.append(table.charAt(c));
-            }
-            catch (IndexOutOfBoundsException e) {
-                throw Py.TypeError(
-                    "translate() only works for 8-bit character strings");
+            if(table == null) {
+                buf.append(c);
+            } else {
+                try {
+                    buf.append(table.charAt(c));
+                }
+                catch (IndexOutOfBoundsException e) {
+                    throw Py.TypeError(
+                        "translate() only works for 8-bit character strings");
+                }
             }
         }
         return buf.toString();
