@@ -1274,11 +1274,9 @@ class MixinStrStringUserStringTest:
         self.checkequal('Abc', 'abc', 'translate', table)
         self.checkequal('xyz', 'xyz', 'translate', table)
         self.checkequal('yz', 'xyz', 'translate', table, 'x')
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal('yx', 'zyzzx', 'translate', None, 'z')
-            self.checkequal('zyzzx', 'zyzzx', 'translate', None, '')
-            self.checkequal('zyzzx', 'zyzzx', 'translate', None)
+        self.checkequal('yx', 'zyzzx', 'translate', None, 'z')
+        self.checkequal('zyzzx', 'zyzzx', 'translate', None, '')
+        self.checkequal('zyzzx', 'zyzzx', 'translate', None)
         self.checkraises(ValueError, 'xyz', 'translate', 'too short', 'strip')
         self.checkraises(ValueError, 'xyz', 'translate', 'too short')
 
