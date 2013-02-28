@@ -1856,6 +1856,9 @@ class ssl:
 
     send = sendall = write
 
+    def makefile(self, mode='r', bufsize=-1):
+        return _fileobject(self, mode, bufsize)
+
     def _get_server_cert(self):
         return self.java_ssl_socket.getSession().getPeerCertificates()[0]
 
@@ -1868,6 +1871,9 @@ class ssl:
     def issuer(self):
         cert = self._get_server_cert()
         return cert.getIssuerDN().toString()
+
+    def close(self):
+        self.jython_socket_wrapper.close()
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
