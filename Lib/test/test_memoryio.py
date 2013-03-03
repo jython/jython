@@ -629,11 +629,6 @@ class CBytesIOTest(PyBytesIOTest):
     if support.is_jython: # FIXME: Jython issue 1996
         test_detach = MemoryTestMixin.test_detach
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_getstate(self):
         memio = self.ioclass()
         state = memio.__getstate__()
@@ -644,11 +639,6 @@ class CBytesIOTest(PyBytesIOTest):
         memio.close()
         self.assertRaises(ValueError, memio.__getstate__)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_setstate(self):
         # This checks whether __setstate__ does proper input validation.
         memio = self.ioclass()
@@ -720,11 +710,6 @@ class CStringIOTest(PyStringIOTest):
         self.assertEqual(memio.write(buf), len(buf))
         self.assertEqual(memio.getvalue(), buf + buf)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_getstate(self):
         memio = self.ioclass()
         state = memio.__getstate__()
@@ -736,11 +721,6 @@ class CStringIOTest(PyStringIOTest):
         memio.close()
         self.assertRaises(ValueError, memio.__getstate__)
 
-    # This test isn't working on Ubuntu on an Apple Intel powerbook,
-    # Jython 2.7b1+ (default:6b4a1088566e, Feb 10 2013, 14:36:47) 
-    # [OpenJDK 64-Bit Server VM (Oracle Corporation)] on java1.7.0_09
-    @unittest.skipIf(support.is_jython,
-                     "FIXME: Currently not working on jython")
     def test_setstate(self):
         # This checks whether __setstate__ does proper input validation.
         memio = self.ioclass()
