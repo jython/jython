@@ -69,11 +69,15 @@ public class PyReader extends PyIterator {
             lineobj = input_iter.__iternext__();
             if (lineobj == null) {
                 // End of input OR exception
-                if (field.length() != 0) {
-                    throw _csv.Error("newline inside string");
-                } else {
-                    return null;
+                if (field.length() != 0 || state == ParserState.IN_QUOTED_FIELD) {
+                    if (dialect.strict) {
+                        throw _csv.Error("unexpected end of data");
+                    } else {
+                        parse_save_field();
+                        break;
+                    }
                 }
+                return null;
             }
 
             line_num++;
