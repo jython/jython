@@ -1,10 +1,12 @@
 from test.test_support import verbose, run_unittest, import_module
+from test.test_support import precisionbigmemtest, _2G, cpython_only
 import re
 from re import Scanner
 import sys
 import string
 import traceback
 from weakref import proxy
+
 
 # Misc tests from Tim Peters' re.doc
 
@@ -174,11 +176,31 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.sub('x*', '-', 'abxd'), '-a-b-d-')
         self.assertEqual(re.sub('x+', '-', 'abxd'), 'ab-d')
 
+    def test_symbolic_groups(self):
+        re.compile('(?P<a>x)(?P=a)(?(a)y)')
+        re.compile('(?P<a1>x)(?P=a1)(?(a1)y)')
+        self.assertRaises(re.error, re.compile, '(?P<a>)(?P<a>)')
+        self.assertRaises(re.error, re.compile, '(?Px)')
+        self.assertRaises(re.error, re.compile, '(?P=)')
+        self.assertRaises(re.error, re.compile, '(?P=1)')
+        self.assertRaises(re.error, re.compile, '(?P=a)')
+        self.assertRaises(re.error, re.compile, '(?P=a1)')
+        self.assertRaises(re.error, re.compile, '(?P=a.)')
+        self.assertRaises(re.error, re.compile, '(?P<)')
+        self.assertRaises(re.error, re.compile, '(?P<>)')
+        self.assertRaises(re.error, re.compile, '(?P<1>)')
+        self.assertRaises(re.error, re.compile, '(?P<a.>)')
+        self.assertRaises(re.error, re.compile, '(?())')
+        self.assertRaises(re.error, re.compile, '(?(a))')
+        self.assertRaises(re.error, re.compile, '(?(1a))')
+        self.assertRaises(re.error, re.compile, '(?(a.))')
+
     def test_symbolic_refs(self):
         self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<a', 'xx')
         self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<', 'xx')
         self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g', 'xx')
         self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<a a>', 'xx')
+        self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<>', 'xx')
         self.assertRaises(re.error, re.sub, '(?P<a>x)', '\g<1a1>', 'xx')
         self.assertRaises(IndexError, re.sub, '(?P<a>x)', '\g<ab>', 'xx')
         self.assertRaises(re.error, re.sub, '(?P<a>x)|(?P<b>y)', '\g<b>', 'xx')
@@ -405,6 +427,12 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.match(u"([\u2222\u2223])",
                                   u"\u2222", re.UNICODE).group(1), u"\u2222")
 
+    def test_big_codesize(self):
+        # Issue #1160
+        r = re.compile('|'.join(('%d'%x for x in range(10000))))
+        self.assertIsNotNone(r.match('1000'))
+        self.assertIsNotNone(r.match('9999'))
+
     def test_anyall(self):
         self.assertEqual(re.match("a.b", "a\nb", re.DOTALL).group(0),
                          "a\nb")
@@ -600,6 +628,15 @@ class ReTests(unittest.TestCase):
         self.assertEqual(re.match('(x)*y', 50000*'x'+'y').group(1), 'x')
         self.assertEqual(re.match('(x)*?y', 50000*'x'+'y').group(1), 'x')
 
+    def test_unlimited_zero_width_repeat(self):
+        # Issue #9669
+        self.assertIsNone(re.match(r'(?:a?)*y', 'z'))
+        self.assertIsNone(re.match(r'(?:a?)+y', 'z'))
+        self.assertIsNone(re.match(r'(?:a?){2,}y', 'z'))
+        self.assertIsNone(re.match(r'(?:a?)*?y', 'z'))
+        self.assertIsNone(re.match(r'(?:a?)+?y', 'z'))
+        self.assertIsNone(re.match(r'(?:a?){2,}?y', 'z'))
+
     def test_scanner(self):
         def s_ident(scanner, token): return token
         def s_operator(scanner, token): return "op%s" % token
@@ -792,6 +829,63 @@ class ReTests(unittest.TestCase):
         self.assertIs(same_pattern, pattern)
         # Test behaviour when not given a string or pattern as parameter
         self.assertRaises(TypeError, re.compile, 0)
+
+    def test_bug_13899(self):
+        # Issue #13899: re pattern r"[\A]" should work like "A" but matches
+        # nothing. Ditto B and Z.
+        self.assertEqual(re.findall(r'[\A\B\b\C\Z]', 'AB\bCZ'),
+                         ['A', 'B', '\b', 'C', 'Z'])
+
+    @precisionbigmemtest(size=_2G, memuse=1)
+    def test_large_search(self, size):
+        # Issue #10182: indices were 32-bit-truncated.
+        s = 'a' * size
+        m = re.search('$', s)
+        self.assertIsNotNone(m)
+        self.assertEqual(m.start(), size)
+        self.assertEqual(m.end(), size)
+
+    # The huge memuse is because of re.sub() using a list and a join()
+    # to create the replacement result.
+    @precisionbigmemtest(size=_2G, memuse=16 + 2)
+    def test_large_subn(self, size):
+        # Issue #10182: indices were 32-bit-truncated.
+        s = 'a' * size
+        r, n = re.subn('', '', s)
+        self.assertEqual(r, s)
+        self.assertEqual(n, size + 1)
+
+
+    def test_repeat_minmax_overflow(self):
+        # Issue #13169
+        string = "x" * 100000
+        self.assertEqual(re.match(r".{65535}", string).span(), (0, 65535))
+        self.assertEqual(re.match(r".{,65535}", string).span(), (0, 65535))
+        self.assertEqual(re.match(r".{65535,}?", string).span(), (0, 65535))
+        self.assertEqual(re.match(r".{65536}", string).span(), (0, 65536))
+        self.assertEqual(re.match(r".{,65536}", string).span(), (0, 65536))
+        self.assertEqual(re.match(r".{65536,}?", string).span(), (0, 65536))
+        # 2**128 should be big enough to overflow both SRE_CODE and Py_ssize_t.
+        self.assertRaises(OverflowError, re.compile, r".{%d}" % 2**128)
+        self.assertRaises(OverflowError, re.compile, r".{,%d}" % 2**128)
+        self.assertRaises(OverflowError, re.compile, r".{%d,}?" % 2**128)
+        self.assertRaises(OverflowError, re.compile, r".{%d,%d}" % (2**129, 2**128))
+
+    @cpython_only
+    def test_repeat_minmax_overflow_maxrepeat(self):
+        try:
+            from _sre import MAXREPEAT
+        except ImportError:
+            self.skipTest('requires _sre.MAXREPEAT constant')
+        string = "x" * 100000
+        self.assertIsNone(re.match(r".{%d}" % (MAXREPEAT - 1), string))
+        self.assertEqual(re.match(r".{,%d}" % (MAXREPEAT - 1), string).span(),
+                         (0, 100000))
+        self.assertIsNone(re.match(r".{%d,}?" % (MAXREPEAT - 1), string))
+        self.assertRaises(OverflowError, re.compile, r".{%d}" % MAXREPEAT)
+        self.assertRaises(OverflowError, re.compile, r".{,%d}" % MAXREPEAT)
+        self.assertRaises(OverflowError, re.compile, r".{%d,}?" % MAXREPEAT)
+
 
 def run_re_tests():
     from test.re_tests import tests, SUCCEED, FAIL, SYNTAX_ERROR

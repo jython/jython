@@ -1419,6 +1419,22 @@ order (MRO) for bases """
         self.assertEqual(x, spam.spamlist)
         self.assertEqual(a, a1)
         self.assertEqual(d, d1)
+        spam_cm = spam.spamlist.__dict__['classmeth']
+        x2, a2, d2 = spam_cm(spam.spamlist, *a, **d)
+        self.assertEqual(x2, spam.spamlist)
+        self.assertEqual(a2, a1)
+        self.assertEqual(d2, d1)
+        class SubSpam(spam.spamlist): pass
+        x2, a2, d2 = spam_cm(SubSpam, *a, **d)
+        self.assertEqual(x2, SubSpam)
+        self.assertEqual(a2, a1)
+        self.assertEqual(d2, d1)
+        with self.assertRaises(TypeError):
+            spam_cm()
+        with self.assertRaises(TypeError):
+            spam_cm(spam.spamlist())
+        with self.assertRaises(TypeError):
+            spam_cm(list)
 
     def test_staticmethods(self):
         # Testing static methods...
@@ -4591,7 +4607,15 @@ order (MRO) for bases """
             pass
         Foo.__repr__ = Foo.__str__
         foo = Foo()
-        str(foo)
+        self.assertRaises(RuntimeError, str, foo)
+        self.assertRaises(RuntimeError, repr, foo)
+
+    def test_mixing_slot_wrappers(self):
+        class X(dict):
+            __setattr__ = dict.__setitem__
+        x = X()
+        x.y = 42
+        self.assertEqual(x["y"], 42)
 
     def test_cycle_through_dict(self):
         # See bug #1469629
