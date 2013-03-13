@@ -1117,7 +1117,6 @@ class HandlerTests(unittest.TestCase):
     def test_basic_auth_with_single_quoted_realm(self):
         self.test_basic_auth(quote_char="'")
 
-    @unittest.skipIf(test_support.is_jython, "Currently not working on jython")
     def test_basic_auth_with_unquoted_realm(self):
         opener = OpenerDirector()
         password_manager = MockPasswordManager()
