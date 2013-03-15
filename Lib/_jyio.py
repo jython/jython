@@ -405,12 +405,15 @@ class BytesIO(_BufferedIOBase):
         return pos
 
     def readable(self):
+        self._checkClosed()
         return True
 
     def writable(self):
+        self._checkClosed()
         return True
 
     def seekable(self):
+        self._checkClosed()
         return True
 
 
@@ -1080,6 +1083,7 @@ class TextIOWrapper(_TextIOBase):
 
     def seekable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
+        self._checkClosed()
         return self._seekable
 
     def readable(self):
@@ -1097,10 +1101,12 @@ class TextIOWrapper(_TextIOBase):
 
     def close(self):
         if self.buffer is not None and not self.closed:
-            # Jython difference: flush and close via super.
-            # Sets __closed for quick _checkClosed().
-            super(TextIOWrapper, self).close()
-            self.buffer.close()
+            try:
+                # Jython difference: flush and close via super.
+                # Sets __closed for quick _checkClosed().
+                super(TextIOWrapper, self).close()
+            finally:
+                self.buffer.close()
 
     # Jython difference: @property closed(self) inherited from _IOBase.__closed
 
