@@ -770,7 +770,6 @@ class CommonBufferedTests:
         self.assertRaises(IOError, b.close) # exception not swallowed
         self.assertTrue(b.closed)
 
-    @unittest.skipIf(support.is_jython, "FIXME: by redefinition of closed")
     def test_close_error_on_close(self):
         raw = self.MockRawIO()
         def bad_flush():

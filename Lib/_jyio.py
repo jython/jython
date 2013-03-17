@@ -227,7 +227,9 @@ class _BufferedIOMixin(_BufferedIOBase):
     def raw(self):
         return self._raw
 
-    # Jython difference: @property closed(self) inherited from _IOBase.__closed
+    @property
+    def closed(self):
+        return self.raw.closed
 
     # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
     # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
@@ -1108,7 +1110,9 @@ class TextIOWrapper(_TextIOBase):
             finally:
                 self.buffer.close()
 
-    # Jython difference: @property closed(self) inherited from _IOBase.__closed
+    @property
+    def closed(self):
+        return self.buffer.closed
 
     # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
     # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
