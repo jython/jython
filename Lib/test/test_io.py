@@ -1206,7 +1206,6 @@ class BufferedWriterTest(unittest.TestCase, CommonBufferedTests):
         bufio.flush()
         self.assertEqual(b''.join(writer._write_stack), b'abcdef')
 
-    @unittest.skipIf(support.is_jython, "FIXME: better type checking")
     def test_writelines_error(self):
         writer = self.MockRawIO()
         bufio = self.tp(writer, 8)
@@ -2348,7 +2347,6 @@ class TextIOWrapperTest(unittest.TestCase):
         txt.flush()
         self.assertEqual(buf.getvalue(), b'abcdef')
 
-    @unittest.skipIf(support.is_jython, "FIXME: better type checking")
     def test_writelines_error(self):
         txt = self.TextIOWrapper(self.BytesIO())
         self.assertRaises(TypeError, txt.writelines, [1, 2, 3])
