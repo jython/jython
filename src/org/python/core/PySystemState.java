@@ -80,6 +80,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     //     for tests that would need to pass but today would not.
     public final static int maxsize = Integer.MAX_VALUE;
 
+    public final static PyString float_repr_style = Py.newString("short");
+
     public static boolean py3kwarning = false;
 
     public final static Class flags = Options.class;
@@ -1448,7 +1450,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
             }
         }
     }
-
 }
 
 

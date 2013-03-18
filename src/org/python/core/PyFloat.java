@@ -157,9 +157,52 @@ public class PyFloat extends PyObject {
         }
     }
 
-    @ExposedClassMethod(doc = BuiltinDocs.float_hex_doc)
-    public static PyObject float_hex(PyType type, double value) {
-        return new PyString(Double.toHexString(value));
+    // @ExposedClassMethod(doc = BuiltinDocs.float_hex_doc)
+    // public static PyObject float_hex(PyType type, double value) {
+    //     return new PyString(Double.toHexString(value));
+    // }
+
+    private String pyHexString(Double f) {
+        // Simply rewrite Java hex repr to expected Python values; not
+        // the most efficient, but we don't expect this to be a hot
+        // spot in our code either
+        String java_hex = Double.toHexString(getValue());
+        if (java_hex.equals("Infinity")) return "inf";
+        if (java_hex.equals("-Infinity")) return "-inf";
+        if (java_hex.equals("NaN")) return "nan";
+        if (java_hex.equals("0x0.0p0")) return "0x0.0p+0";
+        if (java_hex.equals("-0x0.0p0")) return "-0x0.0p+0";
+
+	// replace hex rep of MpE to conform with Python such that
+        //   1. M is padded to 16 digits (ignoring a leading -)
+        //   2. Mp+E if E>=0
+        // example: result of 42.0.hex() is translated from
+        //   0x1.5p5 to 0x1.5000000000000p+5
+        int len = java_hex.length();
+        boolean start_exponent = false;
+        StringBuilder py_hex = new StringBuilder(len + 1);
+        int padding = f > 0 ? 17 : 18;
+        for (int i=0; i < len; i++) {
+            char c = java_hex.charAt(i);
+            if (c == 'p') {
+                for (int pad=i; pad < padding; pad++) {
+                    py_hex.append('0');
+                }
+                start_exponent = true;
+            } else if (start_exponent) {
+                if (c != '-') {
+                    py_hex.append('+');
+                }
+                start_exponent = false;
+	    }
+            py_hex.append(c);
+	}
+        return py_hex.toString();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.float_hex_doc)
+    public PyObject float_hex() {
+        return new PyString(pyHexString(getValue()));
     }
 
     /**
