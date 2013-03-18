@@ -518,9 +518,7 @@ class TestCollectionABCs(ABCTestCase):
         s &= WithSet('cdef')            # This used to fail
         self.assertEqual(set(s), set('cd'))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: doesn't work in Jython")
     def test_issue_4920(self):
-        # MutableSet.pop() method did not work
         class MySet(collections.MutableSet):
             __slots__=['__s']
             def __init__(self,items=None):
@@ -543,8 +541,9 @@ class TestCollectionABCs(ABCTestCase):
                 return result
             def __repr__(self):
                 return "MySet(%s)" % repr(list(self))
-        s = MySet([5,43,2,1])
-        self.assertEqual(s.pop(), 1)
+        values = [5,43,2,1]
+        s = MySet(values)
+        self.assertIn(s.pop(), values)
 
     def test_issue8750(self):
         empty = WithSet()

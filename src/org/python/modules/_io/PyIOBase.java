@@ -160,7 +160,6 @@ public class PyIOBase extends PyObject {
      * Truncate file to <code>size</code> bytes to the current position (as reported by
      * <code>tell()</code>).
      *
-     * @param size requested for stream (or null for default)
      * @return the new size
      */
     public long truncate() {
@@ -182,7 +181,10 @@ public class PyIOBase extends PyObject {
     }
 
     @ExposedMethod(doc = flush_doc)
-    final void _IOBase_flush() {}
+    final void _IOBase_flush() {
+        // Even types for which this remains a no-op must complain if closed (e.g. BytesIO)
+        _checkClosed();
+    }
 
     /**
      * True if the object is closed to further <b>client</b> operations. It is the state accessed by
@@ -592,7 +594,7 @@ public class PyIOBase extends PyObject {
              */
             PyByteArray res = new PyByteArray();
 
-            while (remainingLimit > 0) {
+            while (--remainingLimit >= 0) {
 
                 /*
                  * read() returns a str of one byte, doing at most one read to refill, or it returns

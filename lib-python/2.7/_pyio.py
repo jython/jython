@@ -340,8 +340,10 @@ class IOBase:
         This method has no effect if the file is already closed.
         """
         if not self.__closed:
-            self.flush()
-            self.__closed = True
+            try:
+                self.flush()
+            finally:
+                self.__closed = True
 
     def __del__(self):
         """Destructor.  Calls close()."""
@@ -883,12 +885,18 @@ class BytesIO(BufferedIOBase):
         return pos
 
     def readable(self):
+        if self.closed:
+            raise ValueError("I/O operation on closed file.")
         return True
 
     def writable(self):
+        if self.closed:
+            raise ValueError("I/O operation on closed file.")
         return True
 
     def seekable(self):
+        if self.closed:
+            raise ValueError("I/O operation on closed file.")
         return True
 
 
@@ -1546,6 +1554,8 @@ class TextIOWrapper(TextIOBase):
         return self._buffer
 
     def seekable(self):
+        if self.closed:
+            raise ValueError("I/O operation on closed file.")
         return self._seekable
 
     def readable(self):
@@ -1560,8 +1570,10 @@ class TextIOWrapper(TextIOBase):
 
     def close(self):
         if self.buffer is not None and not self.closed:
-            self.flush()
-            self.buffer.close()
+            try:
+                self.flush()
+            finally:
+                self.buffer.close()
 
     @property
     def closed(self):

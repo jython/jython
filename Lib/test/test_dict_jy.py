@@ -1,6 +1,7 @@
 from test import test_support
 import java
 import unittest
+from collections import defaultdict
 
 class DictInitTest(unittest.TestCase):
     def testInternalSetitemInInit(self):
@@ -93,6 +94,12 @@ class DerivedDictTest(unittest.TestCase):
             def __getitem__(self, key):
                 raise CustomKeyError("custom message")
         self.assertRaises(CustomKeyError, lambda: DerivedDict()['foo'])
+    
+    def test_issue1676(self):
+        #See http://bugs.jython.org/issue1676
+        x=defaultdict()
+        #This formerly caused an NPE.
+        self.assertEqual(None, x.pop(None,None))
 
 class JavaIntegrationTest(unittest.TestCase):
     "Tests for instantiating dicts from Java maps and hashtables"

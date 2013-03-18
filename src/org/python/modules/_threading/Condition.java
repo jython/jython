@@ -38,12 +38,16 @@ public class Condition extends PyObject implements ContextManager {
     }
 
     public boolean acquire() {
-        return Condition_acquire();
+        return Condition_acquire(true);
     }
 
-    @ExposedMethod
-    final boolean Condition_acquire() {
-        return _lock.acquire();
+    public boolean acquire(boolean blocking) {
+        return Condition_acquire(blocking);
+    }
+
+    @ExposedMethod(defaults = "true")
+    final boolean Condition_acquire(boolean blocking) {
+        return _lock.acquire(blocking);
     }
 
     public PyObject __enter__(ThreadState ts) {
@@ -53,7 +57,7 @@ public class Condition extends PyObject implements ContextManager {
 
     @ExposedMethod
     final PyObject Condition___enter__() {
-        Condition_acquire();
+        Condition_acquire(true);
         return this;
     }
 

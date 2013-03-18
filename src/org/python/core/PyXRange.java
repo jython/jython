@@ -127,8 +127,7 @@ public class PyXRange extends PySequence {
 
     @Override
     protected PyObject getslice(int start, int stop, int step) {
-        // not supported
-        return null;
+        throw Py.TypeError("xrange index must be integer, not 'slice'");
     }
 
     @Override

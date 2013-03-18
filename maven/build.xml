@@ -67,9 +67,13 @@
     <m2-bundle artifactId="jython-standalone"/>
   </target>
 
+  <target name="bundle-installer" depends="prep">
+    <m2-bundle artifactId="jython-installer"/>
+  </target>
+
   <target name="install-all" depends="install, install-standalone"/>
 
-  <target name="bundle-all" depends="bundle, bundle-standalone"/>
+  <target name="bundle-all" depends="bundle, bundle-standalone, bundle-installer"/>
 
   <target name="clean">
     <delete dir="${build.dir}"/>

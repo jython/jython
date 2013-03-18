@@ -88,7 +88,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
 
         if (length > 0) {
             // Translate start relative to underlying buffer
-            int compStride= this.stride * stride;
+            int compStride = this.stride * stride;
             int compIndex0 = index0 + start * this.stride;
             // Construct a view, taking a lock on the root object (this or this.root)
             return new SlicedView(getRoot(), flags, storage, compIndex0, length, compStride);

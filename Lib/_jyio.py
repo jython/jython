@@ -275,10 +275,48 @@ class BytesIO(_BufferedIOBase):
         self._buffer = buf
         self._pos = 0
 
+    # Jython: modelled after bytesio.c::bytesio_getstate
     def __getstate__(self):
-        if self.closed:
-            raise ValueError("__getstate__ on closed file")
-        return self.__dict__.copy()
+        d = getattr(self, '__dict__', None)
+        if d is not None :
+            d = d.copy()
+        return (self.getvalue(), self._pos, d)
+
+    # Jython: modelled after bytesio.c::bytesio_setstate
+    def __setstate__(self, state):
+
+        if not isinstance(state, tuple) or len(state) < 3 :
+            fmt = "%s.__setstate__ argument should be 3-tuple got %s"
+            raise TypeError( fmt % (type(self), type(state)) )
+
+        # Reset the object to its default state. This is only needed to handle
+        # the case of repeated calls to __setstate__. */
+        self._buffer = bytearray()
+        self._pos = 0
+
+        # Set the value of the internal buffer. If state[0] does not support the
+        # buffer protocol, bytesio_write will raise the appropriate TypeError. */
+        self.write(state[0]);
+
+        # Carefully set the position value. Alternatively, we could use the seek
+        # method instead of modifying self._pos directly to better protect the
+        # object internal state against erroneous (or malicious) inputs. */
+        p = state[1]
+        if not isinstance(p, (int, long)) :
+            fmt = "second item of state must be an integer, got %s"
+            raise TypeError( fmt % type(p) )
+        elif p < 0 :
+            raise ValueError("position value cannot be negative")
+        self._pos = p
+
+        # Set the dictionary of the instance variables. */
+        d = state[2]
+        if not d is None :
+            if isinstance(d, dict) :
+                self.__dict__ = d
+            else :
+                fmt = "third item of state should be a dict, got %s"
+                raise TypeError( fmt % type(d) )
 
     def getvalue(self):
         """Return the bytes value (contents) of the buffer
@@ -367,12 +405,15 @@ class BytesIO(_BufferedIOBase):
         return pos
 
     def readable(self):
+        self._checkClosed()
         return True
 
     def writable(self):
+        self._checkClosed()
         return True
 
     def seekable(self):
+        self._checkClosed()
         return True
 
 
@@ -1042,31 +1083,30 @@ class TextIOWrapper(_TextIOBase):
 
     def seekable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
+        self._checkClosed()
         return self._seekable
 
     def readable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.readable()
 
     def writable(self):
         self._checkInitialized()    # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
         return self.buffer.writable()
 
     def flush(self):
-        self._checkInitialized()       # Jython: to forbid use in an invalid state
-        self._checkClosed()         # Jython: compatibility with C implementation
+        self._checkInitialized()    # Jython: to forbid use in an invalid state
         self.buffer.flush()
         self._telling = self._seekable
 
     def close(self):
         if self.buffer is not None and not self.closed:
-            # Jython difference: flush and close via super.
-            # Sets __closed for quick _checkClosed().
-            super(TextIOWrapper, self).close()
-            self.buffer.close()
+            try:
+                # Jython difference: flush and close via super.
+                # Sets __closed for quick _checkClosed().
+                super(TextIOWrapper, self).close()
+            finally:
+                self.buffer.close()
 
     # Jython difference: @property closed(self) inherited from _IOBase.__closed
 
@@ -1483,6 +1523,11 @@ class StringIO(TextIOWrapper):
     """
 
     def __init__(self, initial_value="", newline="\n"):
+
+        # Newline mark needs to be in bytes: convert if not already so
+        if isinstance(newline, unicode) :
+            newline = newline.encode("utf-8")
+
         super(StringIO, self).__init__(BytesIO(),
                                        encoding="utf-8",
                                        errors="strict",
@@ -1491,11 +1536,64 @@ class StringIO(TextIOWrapper):
         # C version, even under Windows.
         if newline is None:
             self._writetranslate = False
-        if initial_value:
-            if not isinstance(initial_value, unicode):
-                initial_value = unicode(initial_value)
-            self.write(initial_value)
-            self.seek(0)
+        # An initial value may have been supplied (and must be unicode)
+        if initial_value is not None:
+            if not isinstance(initial_value, unicode) :
+                fmt = "initial value should be unicode or None, got %s"
+                raise TypeError( fmt % type(initial_value) )
+            if initial_value:
+                self.write(initial_value)
+                self.seek(0)
+
+    # Jython: modelled after stringio.c::stringio_getstate
+    def __getstate__(self):
+        d = getattr(self, '__dict__', None)
+        if d is not None :
+            d = d.copy()
+        return (self.getvalue(), self._readnl, self.tell(), d)
+
+    # Jython: modelled after stringio.c:stringio_setstate
+    def __setstate__(self, state):
+        self._checkClosed()
+
+        if not isinstance(state, tuple) or len(state) < 4 :
+            fmt = "%s.__setstate__ argument should be 4-tuple got %s"
+            raise TypeError( fmt % (type(self), type(state)) )
+
+        # Initialize the object's state, but empty
+        self.__init__(None, state[1])
+
+        # Write the buffer, bypassing end-of-line translation.
+        value = state[0]
+        if value is not None:
+            if not isinstance(value, unicode) :
+                fmt = "ivalue should be unicode or None, got %s"
+                raise TypeError( fmt % type(value) )
+            encoder = self._encoder or self._get_encoder()
+            b = encoder.encode(state[0])
+            self.buffer.write(b)
+
+        # Reset the object to its default state. This is only needed to handle
+        # the case of repeated calls to __setstate__.
+        self.seek(0)
+
+        # Set the position value using seek. A long is tolerated (e.g from pickle).
+        p = state[2]
+        if not isinstance(p, (int, long)) :
+            fmt = "third item of state must be an integer, got %s"
+            raise TypeError( fmt % type(p) )
+        elif p < 0 :
+            raise ValueError("position value cannot be negative")
+        self.seek(p)
+
+        # Set the dictionary of the instance variables. */
+        d = state[3]
+        if not d is None :
+            if isinstance(d, dict) :
+                self.__dict__ = d
+            else :
+                fmt = "fourth item of state should be a dict, got %s"
+                raise TypeError( fmt % type(d) )
 
     def getvalue(self):
         self.flush()

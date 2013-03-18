@@ -43,6 +43,15 @@ class ThreadingTestCase(unittest.TestCase):
     def _sleep(self, n):
         time.sleep(random.random())
 
+    def test_issue1988(self):
+        cond = threading.Condition(threading.Lock())
+        locked = False
+        try:
+            locked = cond.acquire(False)
+        finally:
+            if locked:
+                cond.release()
+
 
 class TwistedTestCase(unittest.TestCase):
     

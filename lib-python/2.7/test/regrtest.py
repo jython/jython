@@ -32,7 +32,7 @@ Verbosity
 
 Selecting tests
 
--r/--random     -- randomize test execution order (see below)
+-r/--randomize  -- randomize test execution order (see below)
    --randseed   -- pass a random seed to reproduce a previous random run
 -f/--fromfile   -- read names of tests to run from a file (see below)
 -x/--exclude    -- arguments are tests to *exclude*
@@ -158,6 +158,7 @@ import json
 import os
 import random
 import re
+import shutil
 import sys
 import time
 import traceback
@@ -258,7 +259,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hvqxsSrf:lu:t:TD:NLR:FwWM:j:',
             ['help', 'verbose', 'verbose2', 'verbose3', 'quiet',
-             'exclude', 'single', 'slow', 'random', 'fromfile', 'findleaks',
+             'exclude', 'single', 'slow', 'randomize', 'fromfile=', 'findleaks',
              'use=', 'threshold=', 'trace', 'coverdir=', 'nocoverdir',
              'runleaks', 'huntrleaks=', 'memlimit=', 'randseed=',
              'multiprocess=', 'slaveargs=', 'forever', 'header'])
@@ -540,6 +541,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
                     print stdout
                 if stderr:
                     print >>sys.stderr, stderr
+                sys.stdout.flush()
+                sys.stderr.flush()
                 if result[0] == INTERRUPTED:
                     assert result[1] == 'KeyboardInterrupt'
                     raise KeyboardInterrupt   # What else?
@@ -941,7 +944,6 @@ def runtest_inner(test, verbose, quiet, huntrleaks=False):
         return FAILED, test_time
 
 def cleanup_test_droppings(testname, verbose):
-    import shutil
     import stat
     import gc
 

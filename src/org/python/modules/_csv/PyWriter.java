@@ -3,6 +3,7 @@ package org.python.modules._csv;
 
 import org.python.core.Py;
 import org.python.core.PyException;
+import org.python.core.PyFloat;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -130,7 +131,16 @@ public class PyWriter extends PyObject {
             } else if (field == Py.None) {
                 append_ok = join_append("", len == 1);
             } else {
-                PyObject str = field.__str__();
+            	
+                PyObject str;
+                //XXX: in 3.x this check can go away and we can just always use
+                //     __str__
+                if (field.getClass() == PyFloat.class) {
+                	str = field.__repr__();
+                } else {
+                	str = field.__str__();
+                }
+
                 if (str == null) {
                     return false;
                 }

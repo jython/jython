@@ -634,6 +634,23 @@ class PyIOTest(IOTest):
         "len(array.array) returns number of elements rather than bytelength"
     )(IOTest.test_array_writes)
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_invalid_operations(self):
+        pass
+
+    # Jython does not use integer file descriptors but an object instead.
+    # Unfortunately, _pyio.open checks that it is an int.
+    # Override the affected test versions just so we can skip them visibly.
+    @unittest.skipIf(support.is_jython, "Jython does not use integer file descriptors")
+    def test_closefd_attr(self):
+        pass
+    @unittest.skipIf(support.is_jython, "Jython does not use integer file descriptors")
+    def test_read_closed(self):
+        pass
+
 
 class CommonBufferedTests:
     # Tests common to BufferedReader, BufferedWriter and BufferedRandom
@@ -1370,6 +1387,13 @@ class CBufferedRWPairTest(BufferedRWPairTest):
 
 class PyBufferedRWPairTest(BufferedRWPairTest):
     tp = pyio.BufferedRWPair
+
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_detach(self):
+        pass
 
 
 class BufferedRandomTest(BufferedReaderTest, BufferedWriterTest):
@@ -2552,8 +2576,8 @@ class MiscIOTest(unittest.TestCase):
         self.assertEqual(g.raw.mode, "wb")
         self.assertEqual(g.name,     f.fileno())
         self.assertEqual(g.raw.name, f.fileno())
-        f.close()
-        g.close()
+        g.close()   # Jython difference: close g first (which may flush) ...
+        f.close()   # Jython difference: then close f, which closes the fd
 
     def test_io_after_close(self):
         for kwargs in [
@@ -2719,10 +2743,23 @@ class CMiscIOTest(MiscIOTest):
 class PyMiscIOTest(MiscIOTest):
     io = pyio
 
+    # When Jython tries to use UnsupportedOperation as _pyio defines it, it runs
+    # into a problem with multiple inheritance and the slots array: issue 1996.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "FIXME: Jython issue 1996")
+    def test_io_after_close(self):
+        pass
 
-@unittest.skipIf(os.name == 'nt' or 
-                 (sys.platform[:4] == 'java' and os._name == 'nt'),
-                 'POSIX signals required for this test.')
+    # Jython does not use integer file descriptors but an object instead.
+    # Unfortunately, _pyio.open checks that it is an int.
+    # Override the affected test version just so we can skip it visibly.
+    @unittest.skipIf(support.is_jython, "Jython does not use integer file descriptors")
+    def test_attributes(self):
+        pass
+
+
+@unittest.skipIf(support.is_jython, "Jython does not support os.pipe()")
+@unittest.skipIf(os.name == 'nt', 'POSIX signals required for this test.')
 class SignalsTest(unittest.TestCase):
 
     def setUp(self):

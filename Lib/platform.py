@@ -34,6 +34,7 @@
 #
 #    <see CVS and SVN checkin messages for history>
 #
+#    1.0.7 - added DEV_NULL
 #    1.0.6 - added linux_distribution()
 #    1.0.5 - fixed Java support to allow running the module on Jython
 #    1.0.4 - added IronPython support
@@ -110,13 +111,27 @@ __copyright__ = """
 
 """
 
-__version__ = '1.0.6'
+__version__ = '1.0.7'
 
 import sys,string,os,re
 
+### Globals & Constants
 if sys.platform.startswith("java"):
     from java.lang import System
     from org.python.core.Py import newString
+
+# Determine the platform's /dev/null device
+try:
+    DEV_NULL = os.devnull
+except AttributeError:
+    # os.devnull was added in Python 2.4, so emulate it for earlier
+    # Python versions
+    if sys.platform in ('dos','win32','win16','os2'):
+        # Use the old CP/M NUL as device name
+        DEV_NULL = 'NUL'
+    else:
+        # Standard Unix uses /dev/null
+        DEV_NULL = '/dev/null'
 
 ### Platform specific APIs
 
@@ -171,7 +186,7 @@ def libc_ver(executable=sys.executable,lib='',version='',
         elif so:
             if lib != 'glibc':
                 lib = 'libc'
-                if soversion > version:
+                if soversion and soversion > version:
                     version = soversion
                 if threads and version[-len(threads):] != threads:
                     version = version + threads
@@ -275,24 +290,6 @@ def _parse_release_file(firstline):
         if len(l) > 1:
             id = l[1]
     return '', version, id
-
-def _test_parse_release_file():
-
-    for input, output in (
-        # Examples of release file contents:
-        ('SuSE Linux 9.3 (x86-64)', ('SuSE Linux ', '9.3', 'x86-64'))
-        ('SUSE LINUX 10.1 (X86-64)', ('SUSE LINUX ', '10.1', 'X86-64'))
-        ('SUSE LINUX 10.1 (i586)', ('SUSE LINUX ', '10.1', 'i586'))
-        ('Fedora Core release 5 (Bordeaux)', ('Fedora Core', '5', 'Bordeaux'))
-        ('Red Hat Linux release 8.0 (Psyche)', ('Red Hat Linux', '8.0', 'Psyche'))
-        ('Red Hat Linux release 9 (Shrike)', ('Red Hat Linux', '9', 'Shrike'))
-        ('Red Hat Enterprise Linux release 4 (Nahant)', ('Red Hat Enterprise Linux', '4', 'Nahant'))
-        ('CentOS release 4', ('CentOS', '4', None))
-        ('Rocks release 4.2.1 (Cydonia)', ('Rocks', '4.2.1', 'Cydonia'))
-        ):
-        parsed = _parse_release_file(input)
-        if parsed != output:
-            print (input, parsed)
 
 def linux_distribution(distname='', version='', id='',
 
@@ -474,7 +471,16 @@ def _norm_version(version, build=''):
 
 _ver_output = re.compile(r'(?:([\w ]+) ([\w.]+) '
                          '.*'
-                         'Version ([\d.]+))')
+                         '\[.* ([\d.]+)\])')
+
+# Examples of VER command output:
+#
+#   Windows 2000:  Microsoft Windows 2000 [Version 5.00.2195]
+#   Windows XP:    Microsoft Windows XP [Version 5.1.2600]
+#   Windows Vista: Microsoft Windows [Version 6.0.6002]
+#
+# Note that the "Version" string gets localized on different
+# Windows versions.
 
 def _syscmd_ver(system='', release='', version='',
 
@@ -500,7 +506,7 @@ def _syscmd_ver(system='', release='', version='',
             info = pipe.read()
             if pipe.close():
                 raise os.error,'command failed'
-            # XXX How can I supress shell errors from being written
+            # XXX How can I suppress shell errors from being written
             #     to stderr ?
         except os.error,why:
             #print 'Command %s failed: %s' % (cmd,why)
@@ -551,7 +557,7 @@ def win32_ver(release='',version='',csd='',ptype=''):
 
     """ Get additional version information from the Windows Registry
         and return a tuple (version,csd,ptype) referring to version
-        number, CSD level and OS type (multi/single
+        number, CSD level (service pack), and OS type (multi/single
         processor).
 
         As a hint: ptype returns 'Uniprocessor Free' on single
@@ -613,6 +619,7 @@ def win32_ver(release='',version='',csd='',ptype=''):
     else:
         if csd[:13] == 'Service Pack ':
             csd = 'SP' + csd[13:]
+
     if plat == VER_PLATFORM_WIN32_WINDOWS:
         regkey = 'SOFTWARE\\Microsoft\\Windows\\CurrentVersion'
         # Try to guess the release name
@@ -627,6 +634,7 @@ def win32_ver(release='',version='',csd='',ptype=''):
                 release = 'postMe'
         elif maj == 5:
             release = '2000'
+
     elif plat == VER_PLATFORM_WIN32_NT:
         regkey = 'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'
         if maj <= 4:
@@ -668,8 +676,14 @@ def win32_ver(release='',version='',csd='',ptype=''):
                     release = '7'
                 else:
                     release = '2008ServerR2'
+            elif min == 2:
+                if product_type == VER_NT_WORKSTATION:
+                    release = '8'
+                else:
+                    release = '2012Server'
             else:
-                release = 'post2008Server'
+                release = 'post2012Server'
+
     else:
         if not release:
             # E.g. Win3.1 with win32s
@@ -759,6 +773,7 @@ def _mac_ver_gestalt():
                    0x2: 'PowerPC',
                    0xa: 'i386'}.get(sysa,'')
 
+    versioninfo=('', '', '')
     return release,versioninfo,machine
 
 def _mac_ver_xml():
@@ -988,11 +1003,12 @@ def _syscmd_uname(option,default=''):
 
     """ Interface to the system's uname command.
     """
-    if sys.platform in ('dos','win32','win16','os2'):
+    if sys.platform in ('dos','win32','win16','os2') or \
+       (sys.platform.startswith('java') and os._name == 'nt'):
         # XXX Others too ?
         return default
     try:
-        f = os.popen('uname %s 2> /dev/null' % option)
+        f = os.popen('uname %s 2> %s' % (option, DEV_NULL))
     except (AttributeError,os.error):
         return default
     output = string.strip(f.read())
@@ -1012,16 +1028,38 @@ def _syscmd_file(target,default=''):
         case the command should fail.
 
     """
+
+    # We do the import here to avoid a bootstrap issue.
+    # See c73b90b6dadd changeset.
+    #
+    # [..]
+    # ranlib libpython2.7.a
+    # gcc   -o python \
+    #        Modules/python.o \
+    #        libpython2.7.a -lsocket -lnsl -ldl    -lm
+    # Traceback (most recent call last):
+    #  File "./setup.py", line 8, in <module>
+    #    from platform import machine as platform_machine
+    #  File "[..]/build/Lib/platform.py", line 116, in <module>
+    #    import sys,string,os,re,subprocess
+    #  File "[..]/build/Lib/subprocess.py", line 429, in <module>
+    #    import select
+    # ImportError: No module named select
+
+    import subprocess
+
     if sys.platform in ('dos','win32','win16','os2'):
         # XXX Others too ?
         return default
-    target = _follow_symlinks(target).replace('"', '\\"')
+    target = _follow_symlinks(target)
     try:
-        f = os.popen('file "%s" 2> /dev/null' % target)
+        proc = subprocess.Popen(['file', target],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
     except (AttributeError,os.error):
         return default
-    output = string.strip(f.read())
-    rc = f.close()
+    output = proc.communicate()[0]
+    rc = proc.wait()
     if not output or rc:
         return default
     else:
@@ -1164,7 +1202,7 @@ def uname():
             node = _node()
             machine = ''
 
-        use_syscmd_ver = 01
+        use_syscmd_ver = 1
 
         # Try win32_ver() on win32 platforms
         if system == 'win32':
@@ -1176,7 +1214,11 @@ def uname():
             # http://support.microsoft.com/kb/888731 and
             # http://www.geocities.com/rick_lively/MANUALS/ENV/MSWIN/PROCESSI.HTM
             if not machine:
-                machine = os.environ.get('PROCESSOR_ARCHITECTURE', '')
+                # WOW64 processes mask the native architecture
+                if "PROCESSOR_ARCHITEW6432" in os.environ:
+                    machine = os.environ.get("PROCESSOR_ARCHITEW6432", '')
+                else:
+                    machine = os.environ.get('PROCESSOR_ARCHITECTURE', '')
             if not processor:
                 processor = os.environ.get('PROCESSOR_IDENTIFIER', machine)
 
@@ -1215,10 +1257,6 @@ def uname():
             version = string.join(vminfo,', ')
             if not version:
                 version = vendor
-
-        elif os.name == 'mac':
-            release,(version,stage,nonrel),machine = mac_ver()
-            system = 'MacOS'
 
     # System specific extensions
     if system == 'OpenVMS':
@@ -1339,6 +1377,11 @@ _ironpython_sys_version_parser = re.compile(
     '(?: \(([\d\.]+)\))?'
     ' on (.NET [\d\.]+)')
 
+_pypy_sys_version_parser = re.compile(
+    r'([\w.+]+)\s*'
+    '\(#?([^,]+),\s*([\w ]+),\s*([\w :]+)\)\s*'
+    '\[PyPy [^\]]+\]?')
+
 _sys_version_cache = {}
 
 def _sys_version(sys_version=None):
@@ -1400,6 +1443,16 @@ def _sys_version(sys_version=None):
         buildno = ''
         builddate = ''
 
+    elif "PyPy" in sys_version:
+        # PyPy
+        name = "PyPy"
+        match = _pypy_sys_version_parser.match(sys_version)
+        if match is None:
+            raise ValueError("failed to parse PyPy sys.version: %s" %
+                             repr(sys_version))
+        version, buildno, builddate, buildtime = match.groups()
+        compiler = ""
+
     else:
         # CPython
         match = _sys_version_parser.match(sys_version)
@@ -1409,14 +1462,15 @@ def _sys_version(sys_version=None):
                 repr(sys_version))
         version, buildno, builddate, buildtime, compiler = \
               match.groups()
-        if hasattr(sys, 'subversion'):
-            # sys.subversion was added in Python 2.5
-            name, branch, revision = sys.subversion
-        else:
-            name = 'CPython'
-            branch = ''
-            revision = ''
+        name = 'CPython'
         builddate = builddate + ' ' + buildtime
+
+    if hasattr(sys, 'subversion'):
+        # sys.subversion was added in Python 2.5
+        _, branch, revision = sys.subversion
+    else:
+        branch = ''
+        revision = ''
 
     # Add the patchlevel version if missing
     l = string.split(version, '.')
@@ -1429,29 +1483,15 @@ def _sys_version(sys_version=None):
     _sys_version_cache[sys_version] = result
     return result
 
-def _test_sys_version():
-
-    _sys_version_cache.clear()
-    for input, output in (
-        ('2.4.3 (#1, Jun 21 2006, 13:54:21) \n[GCC 3.3.4 (pre 3.3.5 20040809)]',
-         ('CPython', '2.4.3', '', '', '1', 'Jun 21 2006 13:54:21', 'GCC 3.3.4 (pre 3.3.5 20040809)')),
-        ('IronPython 1.0.60816 on .NET 2.0.50727.42',
-         ('IronPython', '1.0.60816', '', '', '', '', '.NET 2.0.50727.42')),
-        ('IronPython 1.0 (1.0.61005.1977) on .NET 2.0.50727.42',
-         ('IronPython', '1.0.0', '', '', '', '', '.NET 2.0.50727.42')),
-        ):
-        parsed = _sys_version(input)
-        if parsed != output:
-            print (input, parsed)
-
 def python_implementation():
 
     """ Returns a string identifying the Python implementation.
 
         Currently, the following implementations are identified:
-        'CPython' (C implementation of Python),
-        'IronPython' (.NET implementation of Python),
-        'Jython' (Java implementation of Python).
+          'CPython' (C implementation of Python),
+          'IronPython' (.NET implementation of Python),
+          'Jython' (Java implementation of Python),
+          'PyPy' (Python implementation of Python).
 
     """
     return _sys_version()[0]

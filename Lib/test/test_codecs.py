@@ -1084,7 +1084,7 @@ class NameprepTest(unittest.TestCase):
                 except Exception,e:
                     raise test_support.TestFailed("Test 3.%d: %s" % (pos+1, str(e)))
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 2000 missing support for IDNA")
+@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 1153 missing support for IDNA")
 class IDNACodecTest(unittest.TestCase):
     def test_builtin_decode(self):
         self.assertEqual(unicode("python.org", "idna"), u"python.org")

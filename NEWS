@@ -1,7 +1,15 @@
 Jython NEWS
 
-Jython 2.7a3
+Jython 2.7b2
   Bugs Fixed
+    - [ 1926 ] Adjust MutableSet.pop test so we do not need to skip it
+    - [ 2020 ] str.translate should delete characters in the second arg when table is None
+    - [ 1753 ] zlib doesn't call end() on compress and decompress
+
+Jython 2.7b1
+  Bugs Fixed
+    - [ 1716 ] xrange slicing raises NPE.
+    - [ 1968 ] Fixes for test_csv.py.
     - [ 1989 ] condition.notify_all() is missing.
     - [ 1994 ] threading.Event doesn't have is_set method fixed.
     - [ 1327 ] ThreadState needs API cleanup work
@@ -33,7 +41,26 @@ Jython 2.7a1
   Bugs Fixed
     - [ 1880 ] Sha 224 library not present in Jython
 
+Jython 2.5.4rc2
+  Bugs Fixed
+    - [ 2017 ] jython.bat script pollutes environment! (variables)
+    - [ 1899 ] Fix to platform.py to correctly avoid a warning message on Windows.
+    - [ 1988 ] API for threading.condition fails to accept *args for acquire
+    - [ 1753 ] zlib doesn't call end() on compress and decompress
+    - [ 1971 ] platform.py - 'NoneType' object has no attribute 'groups'
+    - [ 1988 ] API for threading.condition fails to accept *args for acquire
+
+Jython 2.5.4rc1
+  Bugs Fixed
+    - [ 1936 ] JBoss 7, vfs protocol in use for jarFileName in PySystemState.
+    - [ 1972 ] jython 2.5.3 sys.stdin.readline() hangs when jython launched as subprocess on Mac OS X.
+    - [ 1962 ] Interactive console in Jython 2.5.3 needs CRTL-D to execute command.
+    - [ 1676 ] NPE in defaultdict 
+    - [ 1481 ] jython throws java.lang.IllegalArgumentException instead of ValueError.
+    - [ 1716 ] xrange slicing raises NPE.
+
 Jython 2.5.3rc1
+  Bugs Fixed
     - [ 1952 ] __import__(): Handling of non-dict globals argument incompatible with CPython
     - [ 1900 ] Python imports from Java cause some Python imports to fail
 

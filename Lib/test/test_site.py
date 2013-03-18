@@ -196,7 +196,6 @@ class HelperFunctionsTests(unittest.TestCase):
             env=env)
         self.assertEqual(rc, 1)
 
-    @unittest.skipIf(is_jython, "FIXME: not on Jython yet.")
     def test_getuserbase(self):
         site.USER_BASE = None
         user_base = site.getuserbase()

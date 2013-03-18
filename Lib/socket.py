@@ -162,26 +162,24 @@ def _map_exception(java_exception, circumstance=ALL):
 from functools import wraps
 
 # Used to map java exceptions to the equivalent python exception
+# And to set the _last_error attribute on socket objects, to support SO_ERROR
 def raises_java_exception(method_or_function):
     @wraps(method_or_function)
-    def map_exception(*args, **kwargs):
+    def handle_exception(*args, **kwargs):
+        is_socket = (len(args) > 0 and isinstance(args[0], _nonblocking_api_mixin))
         try:
-            return method_or_function(*args, **kwargs)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-    return map_exception
-
-# Used for SO_ERROR support.
-def raises_error(method):
-    @wraps(method)
-    def set_last_error(obj, *args, **kwargs):
-        try:
-            setattr(obj, '_last_error', 0)
-            return method(obj, *args, **kwargs)
+            try:
+                return method_or_function(*args, **kwargs)
+            except java.lang.Exception, jlx:
+                raise _map_exception(jlx)
         except error, e:
-            setattr(obj, '_last_error', e[0])
+            if is_socket:
+                setattr(args[0], '_last_error', e[0])
             raise
-    return set_last_error
+        else:
+            if is_socket:
+                setattr(args[0], '_last_error', 0)
+    return handle_exception
 
 _feature_support_map = {
     'ipv6': True,
@@ -337,7 +335,7 @@ __all__ = [
     'htonl', 'ntohs', 'ntohl', 'inet_pton', 'inet_ntop', 'inet_aton',
     'inet_ntoa', 'create_connection', 'socket', 'ssl',
     # exceptions
-    'error', 'herror', 'gaierror', 'timeout', 'sslerror,
+    'error', 'herror', 'gaierror', 'timeout', 'sslerror',
     # classes
     'SocketType', 
     # Misc flags     
@@ -695,6 +693,7 @@ def _gethostbyaddr(name):
         addrs.append(asPyString(addr.getHostAddress()))
     return (names, addrs)
 
+@raises_java_exception
 def getfqdn(name=None):
     """
     Return a fully qualified domain name for name. If name is omitted or empty
@@ -1145,7 +1144,6 @@ class _nonblocking_api_mixin:
     def getblocking(self):
         return self.mode == MODE_BLOCKING
 
-    @raises_error
     @raises_java_exception
     def setsockopt(self, level, optname, value):
         if self.sock_impl:
@@ -1168,7 +1166,6 @@ class _nonblocking_api_mixin:
         else:
             return self.pending_options.get( (level, optname), None)
 
-    @raises_error
     @raises_java_exception
     def shutdown(self, how):
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
@@ -1176,13 +1173,11 @@ class _nonblocking_api_mixin:
             raise error(errno.ENOTCONN, "Transport endpoint is not connected")
         self.sock_impl.shutdown(how)
 
-    @raises_error
     @raises_java_exception
     def close(self):
         if self.sock_impl:
             self.sock_impl.close()
 
-    @raises_error
     @raises_java_exception
     def getsockname(self):
         if self.sock_impl is None:
@@ -1194,7 +1189,6 @@ class _nonblocking_api_mixin:
             raise error(errno.EINVAL, "Invalid argument")
         return self.sock_impl.getsockname()
 
-    @raises_error
     @raises_java_exception
     def getpeername(self):
         if self.sock_impl is None:
@@ -1239,7 +1233,6 @@ class _tcpsocket(_nonblocking_api_mixin):
             return self.server
         return _nonblocking_api_mixin.getsockopt(self, level, optname)
 
-    @raises_error
     @raises_java_exception
     def bind(self, addr):
         assert not self.sock_impl
@@ -1248,7 +1241,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         _get_jsockaddr(addr, self.family, self.type, self.proto, AI_PASSIVE)
         self.local_addr = addr
 
-    @raises_error
     @raises_java_exception
     def listen(self, backlog):
         "This signifies a server socket"
@@ -1258,7 +1250,6 @@ class _tcpsocket(_nonblocking_api_mixin):
                               backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
         self._config()
 
-    @raises_error
     @raises_java_exception
     def accept(self):
         "This signifies a server socket"
@@ -1283,14 +1274,12 @@ class _tcpsocket(_nonblocking_api_mixin):
         self._config() # Configure timeouts, etc, now that the socket exists
         self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
 
-    @raises_error
     @raises_java_exception
     def connect(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
         self._setup()
 
-    @raises_error
     @raises_java_exception
     def connect_ex(self, addr):
         "This signifies a client socket"
@@ -1308,7 +1297,6 @@ class _tcpsocket(_nonblocking_api_mixin):
             self.istream = self.sock_impl.jsocket.getInputStream()
             self.ostream = self.sock_impl.jsocket.getOutputStream()
 
-    @raises_error
     @raises_java_exception
     def recv(self, n):
         if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
@@ -1326,12 +1314,10 @@ class _tcpsocket(_nonblocking_api_mixin):
             data = data[:m]
         return data.tostring()
 
-    @raises_error
     @raises_java_exception
     def recvfrom(self, n):
-        return self.recv(n), None
+        return self.recv(n), self.getpeername()
 
-    @raises_error
     @raises_java_exception
     def send(self, s):
         if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
@@ -1344,7 +1330,6 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     sendall = send
 
-    @raises_error
     @raises_java_exception
     def close(self):
         if self.istream:
@@ -1365,7 +1350,6 @@ class _udpsocket(_nonblocking_api_mixin):
     def __init__(self):
         _nonblocking_api_mixin.__init__(self)
 
-    @raises_error
     @raises_java_exception
     def bind(self, addr):
         assert not self.sock_impl
@@ -1385,19 +1369,16 @@ class _udpsocket(_nonblocking_api_mixin):
         self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
         self.connected = True
 
-    @raises_error
     @raises_java_exception
     def connect(self, addr):
         self._do_connect(addr)
 
-    @raises_error
     @raises_java_exception
     def connect_ex(self, addr):
         if not self.sock_impl:
             self._do_connect(addr)
         return 0
 
-    @raises_error
     @raises_java_exception
     def sendto(self, data, p1, p2=None):
         if not p2:
@@ -1417,7 +1398,6 @@ class _udpsocket(_nonblocking_api_mixin):
         byte_array = java.lang.String(data).getBytes('iso-8859-1')
         return self.sock_impl.send(byte_array, flags)
 
-    @raises_error
     @raises_java_exception
     def recvfrom(self, num_bytes, flags=None):
         """
@@ -1437,7 +1417,6 @@ class _udpsocket(_nonblocking_api_mixin):
             self._config()
         return self.sock_impl.recvfrom(num_bytes, flags)
 
-    @raises_error
     @raises_java_exception
     def recv(self, num_bytes, flags=None):
         if not self.sock_impl:
@@ -1857,11 +1836,6 @@ class ssl:
         java_ssl_socket.startHandshake()
         return java_ssl_socket
 
-    def __getattr__(self, attr_name):
-        if hasattr(self.jython_socket_wrapper, attr_name):
-            return getattr(self.jython_socket_wrapper, attr_name)
-        raise AttributeError(attr_name)
-
     @raises_java_exception
     def read(self, n=4096):
         data = jarray.zeros(n, 'b')
@@ -1872,23 +1846,34 @@ class ssl:
             data = data[:m]
         return data.tostring()
 
+    recv = read
+
     @raises_java_exception
     def write(self, s):
         self._out_buf.write(s)
         self._out_buf.flush()
         return len(s)
 
-    @raises_java_exception
+    send = sendall = write
+
+    def makefile(self, mode='r', bufsize=-1):
+        return _fileobject(self, mode, bufsize)
+
     def _get_server_cert(self):
         return self.java_ssl_socket.getSession().getPeerCertificates()[0]
 
+    @raises_java_exception
     def server(self):
         cert = self._get_server_cert()
         return cert.getSubjectDN().toString()
 
+    @raises_java_exception
     def issuer(self):
         cert = self._get_server_cert()
         return cert.getIssuerDN().toString()
+
+    def close(self):
+        self.jython_socket_wrapper.close()
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
