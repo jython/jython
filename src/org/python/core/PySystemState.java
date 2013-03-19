@@ -93,7 +93,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
      */
 
     public static final PyObject copyright = Py.newString(
-        "Copyright (c) 2000-2009 Jython Developers.\n" +
+        "Copyright (c) 2000-2013 Jython Developers.\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +
