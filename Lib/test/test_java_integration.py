@@ -109,7 +109,6 @@ class SysIntegrationTest(unittest.TestCase):
     def tearDown(self):
         sys.stdout = self.orig_stdout
 
-    @unittest.skip("FIXME: check after ASM 4.0 update is complete.")
     def test_stdout_outputstream(self):
         out = FileOutputStream(test_support.TESTFN)
         sys.stdout = out
@@ -121,11 +120,9 @@ class SysIntegrationTest(unittest.TestCase):
 
 class IOTest(unittest.TestCase):
 
-    @unittest.skip("FIXME: check after ASM 4.0 update is complete.")
     def test_io_errors(self):
         "Check that IOException isn't mangled into an IOError"
         self.assertRaises(UnsupportedEncodingException, OutputStreamWriter, System.out, "garbage")
-        self.assertRaises(IOError, OutputStreamWriter, System.out, "garbage")
 
     def test_fileio_error(self):
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
@@ -428,7 +425,7 @@ class JavaDelegationTest(unittest.TestCase):
 
 class SecurityManagerTest(unittest.TestCase):
 
-    @unittest.skip("FIXME: check after ASM 4.0 update is complete.")
+    @unittest.skip("XXX: not working")
     def test_nonexistent_import_with_security(self):
         if os._name == 'nt':
             # http://bugs.jython.org/issue1371
