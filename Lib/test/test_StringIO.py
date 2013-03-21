@@ -154,7 +154,8 @@ class TestcStringIO(TestGenericStringIO):
         self.assertEqual(s, 'abcde')
         self.assertEqual(type(s), str)
 
-        if not test_support.is_jython: #FIXME #1862: not working in Jython
+        # This cStringIO/StringIO difference seems CPython specific to me...
+        if not test_support.is_jython:
             self.assertRaises(UnicodeEncodeError, self.MODULE.StringIO, u'\xf4')
 
 
