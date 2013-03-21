@@ -1043,7 +1043,8 @@ class CBufferedReaderTest(BufferedReaderTest, SizeofTest):
         support.gc_collect()
         self.assertTrue(wr() is None, wr)
 
-    @unittest.skipIf(support.is_jython, "FIXME: Jython does not mention type")
+    @unittest.skipIf(support.is_jython, "FIXME: in the Java version with ArgParser")
+    # When implemented in Python, the error message is about __init__, even on CPython
     def test_args_error(self):
         # Issue #17275
         with self.assertRaisesRegexp(TypeError, "BufferedReader"):
@@ -1344,7 +1345,8 @@ class CBufferedWriterTest(BufferedWriterTest, SizeofTest):
         with self.open(support.TESTFN, "rb") as f:
             self.assertEqual(f.read(), b"123xxx")
 
-    @unittest.skipIf(support.is_jython, "FIXME: Jython does not mention type")
+    @unittest.skipIf(support.is_jython, "FIXME: in the Java version with ArgParser")
+    # When implemented in Python, the error message is about __init__, even on CPython
     def test_args_error(self):
         # Issue #17275
         with self.assertRaisesRegexp(TypeError, "BufferedWriter"):
@@ -1726,7 +1728,8 @@ class CBufferedRandomTest(CBufferedReaderTest, CBufferedWriterTest,
         CBufferedReaderTest.test_garbage_collection(self)
         CBufferedWriterTest.test_garbage_collection(self)
 
-    @unittest.skipIf(support.is_jython, "FIXME: Jython does not mention type")
+    @unittest.skipIf(support.is_jython, "FIXME: in the Java version with ArgParser")
+    # When implemented in Python, the error message is about __init__, even on CPython
     def test_args_error(self):
         # Issue #17275
         with self.assertRaisesRegexp(TypeError, "BufferedRandom"):
