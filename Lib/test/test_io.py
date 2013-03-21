@@ -2491,7 +2491,6 @@ class TextIOWrapperTest(unittest.TestCase):
         with self.assertRaises((AttributeError, TypeError)):
             txt.buffer = buf
 
-    @unittest.skipIf(support.is_jython, "FIXME: missing check?")
     def test_read_nonbytes(self):
         # Issue #17106
         # Crash when underlying read() returns non-bytes
@@ -2506,9 +2505,10 @@ class TextIOWrapperTest(unittest.TestCase):
         with self.maybeRaises(TypeError):
             t.readline()
         t = self.TextIOWrapper(NonbytesStream('a'))
-        self.assertEqual(t.read(), u'a')
+        with self.maybeRaises(TypeError):
+            # Jython difference: also detect the error in
+            t.read()
 
-    @unittest.skipIf(support.is_jython, "FIXME: missing check?")
     def test_illegal_decoder(self):
         # Issue #17106
         # Crash when decoder returns non-string
