@@ -1096,14 +1096,28 @@ public class PyInteger extends PyObject {
             }
 
             if (spec.alternate) {
-                if (radix == 2) {
-                    strValue = "0b" + strValue;
-                } else if (radix == 8) {
-                    strValue = "0o" + strValue;
-                } else if (radix == 16) {
-                    strValue = "0x" + strValue;
+                String strPrefix = "";
+                switch (radix) {
+                    case 2:
+                        strPrefix = "0b";
+                        break;
+                    case 8:
+                        strPrefix = "0o";
+                        break;
+                    case 16:
+                        strPrefix = "0x";
+                        break;
+                }
+
+                if (strValue.startsWith("-")) {
+                    //assert (sign < 0);
+                    if (!strPrefix.equals(""))
+                        strValue = "-" + strPrefix + strValue.substring(1, strValue.length());
+                } else {
+                    strValue = strPrefix + strValue;
                 }
             }
+
             if (spec.type == 'X') {
                 strValue = strValue.toUpperCase();
             }

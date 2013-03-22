@@ -1538,7 +1538,6 @@ class BuiltinTest(unittest.TestCase):
         class DerivedFromStr(str): pass
         self.assertEqual(format(0, DerivedFromStr('10')), '         0')
 
-    @unittest.skipIf(is_jython, "FIXME #1861: bin not implemented yet.")
     def test_bin(self):
         self.assertEqual(bin(0), '0b0')
         self.assertEqual(bin(1), '0b1')
@@ -1548,8 +1547,6 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(bin(-(2**65)), '-0b1' + '0' * 65)
         self.assertEqual(bin(-(2**65-1)), '-0b' + '1' * 65)
 
-    @unittest.skipIf(is_jython,
-                     "FIXME #1861: bytearray not implemented in Jython yet")
     def test_bytearray_translate(self):
         x = bytearray("abc")
         self.assertRaises(ValueError, x.translate, "1", 1)
