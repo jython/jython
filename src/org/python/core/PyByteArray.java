@@ -1191,6 +1191,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.bytearray_extend_doc)
     final synchronized void bytearray_extend(PyObject o) {
+        // Raise TypeError if the argument is not iterable
+        o.__iter__();
         // Use the general method, assigning to the crack at the end of the array.
         // Note this deals with all legitimate PyObject types including the case o==this.
         setslice(size, size, 1, o);

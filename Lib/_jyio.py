@@ -227,7 +227,9 @@ class _BufferedIOMixin(_BufferedIOBase):
     def raw(self):
         return self._raw
 
-    # Jython difference: @property closed(self) inherited from _IOBase.__closed
+    @property
+    def closed(self):
+        return self.raw.closed
 
     # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
     # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
@@ -969,6 +971,20 @@ class IncrementalNewlineDecoder(codecs.IncrementalDecoder):
                )[self.seennl]
 
 
+def _check_decoded_chars(chars):
+    """Check decoder output is unicode"""
+    if not isinstance(chars, unicode):
+        raise TypeError("decoder should return a string result, not '%s'" %
+                        type(chars))
+
+def _check_buffered_bytes(b, context="read"):
+    """Check buffer has returned bytes"""
+    if not isinstance(b, str):
+        raise TypeError("underlying %s() should have returned a bytes object, not '%s'" %
+                        (context, type(b)))
+
+
+
 class TextIOWrapper(_TextIOBase):
 
     r"""Character and line based layer over a _BufferedIOBase object, buffer.
@@ -1108,7 +1124,9 @@ class TextIOWrapper(_TextIOBase):
             finally:
                 self.buffer.close()
 
-    # Jython difference: @property closed(self) inherited from _IOBase.__closed
+    @property
+    def closed(self):
+        return self.buffer.closed
 
     # Jython difference: emulate C implementation CHECK_INITIALIZED. This is for
     # compatibility, to pass test.test_io.CTextIOWrapperTest.test_initialization.
@@ -1212,8 +1230,12 @@ class TextIOWrapper(_TextIOBase):
 
         # Read a chunk, decode it, and put the result in self._decoded_chars.
         input_chunk = self.buffer.read1(self._CHUNK_SIZE)
+        _check_buffered_bytes(input_chunk, "read1")
+
         eof = not input_chunk
-        self._set_decoded_chars(self._decoder.decode(input_chunk, eof))
+        decoded_chunk = self._decoder.decode(input_chunk, eof)
+        _check_decoded_chars(decoded_chunk)
+        self._set_decoded_chars(decoded_chunk)
 
         if self._telling:
             # At the snapshot point, len(dec_buffer) bytes before the read,
@@ -1366,8 +1388,11 @@ class TextIOWrapper(_TextIOBase):
         if chars_to_skip:
             # Just like _read_chunk, feed the decoder and save a snapshot.
             input_chunk = self.buffer.read(bytes_to_feed)
-            self._set_decoded_chars(
-                self._decoder.decode(input_chunk, need_eof))
+            _check_buffered_bytes(input_chunk)
+            decoded_chunk = self._decoder.decode(input_chunk, need_eof)
+            _check_decoded_chars(decoded_chunk)
+            self._set_decoded_chars(decoded_chunk)
+
             self._snapshot = (dec_flags, input_chunk)
 
             # Skip chars_to_skip of the decoded characters.
@@ -1399,8 +1424,12 @@ class TextIOWrapper(_TextIOBase):
             raise TypeError("an integer is required")
         if n < 0:
             # Read everything.
-            result = (self._get_decoded_chars() +
-                      decoder.decode(self.buffer.read(), final=True))
+            input_chunk = self.buffer.read()
+            # Jython difference: CPython textio.c omits:
+            _check_buffered_bytes(input_chunk)
+            decoded_chunk = decoder.decode(input_chunk, final=True)
+            _check_decoded_chars(decoded_chunk)
+            result = self._get_decoded_chars() + decoded_chunk
             self._set_decoded_chars('')
             self._snapshot = None
             return result
