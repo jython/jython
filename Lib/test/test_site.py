@@ -134,7 +134,8 @@ class HelperFunctionsTests(unittest.TestCase):
         self.assertRegexpMatches(err_out.getvalue(), 'Traceback')
         self.assertRegexpMatches(err_out.getvalue(), 'ImportError')
 
-    @unittest.skipIf(is_jython, "FIXME: not on Jython yet.")
+    @unittest.skipIf(is_jython, "Jython does not raise an error for file "
+                      "paths containing null characters")
     @unittest.skipIf(sys.platform == "win32", "Windows does not raise an "
                       "error for file paths containing null characters")
     def test_addpackage_import_bad_pth_file(self):
@@ -162,7 +163,6 @@ class HelperFunctionsTests(unittest.TestCase):
         finally:
             pth_file.cleanup()
 
-    @unittest.skipIf(is_jython, "FIXME: not on Jython yet.")
     @unittest.skipUnless(site.ENABLE_USER_SITE, "requires access to PEP 370 "
                           "user-site (site.ENABLE_USER_SITE)")
     def test_s_option(self):
@@ -182,19 +182,22 @@ class HelperFunctionsTests(unittest.TestCase):
             env=env)
         self.assertEqual(rc, 0)
 
-        env = os.environ.copy()
-        env["PYTHONNOUSERSITE"] = "1"
-        rc = subprocess.call([sys.executable, '-c',
-            'import sys; sys.exit(%r in sys.path)' % usersite],
-            env=env)
-        self.assertEqual(rc, 0)
+        # XXX: These names are not supported. We may decide to support them as
+        # JYTHONNOUSERSITE and JYTHONUSERBASE in the future.
+        if not is_jython:
+            env = os.environ.copy()
+            env["PYTHONNOUSERSITE"] = "1"
+            rc = subprocess.call([sys.executable, '-c',
+                'import sys; sys.exit(%r in sys.path)' % usersite],
+                env=env)
+            self.assertEqual(rc, 0)
 
-        env = os.environ.copy()
-        env["PYTHONUSERBASE"] = "/tmp"
-        rc = subprocess.call([sys.executable, '-c',
-            'import sys, site; sys.exit(site.USER_BASE.startswith("/tmp"))'],
-            env=env)
-        self.assertEqual(rc, 1)
+            env = os.environ.copy()
+            env["PYTHONUSERBASE"] = "/tmp"
+            rc = subprocess.call([sys.executable, '-c',
+                'import sys, site; sys.exit(site.USER_BASE.startswith("/tmp"))'],
+                env=env)
+            self.assertEqual(rc, 1)
 
     def test_getuserbase(self):
         site.USER_BASE = None
