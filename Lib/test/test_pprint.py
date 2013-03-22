@@ -204,7 +204,8 @@ class QueryTestCase(unittest.TestCase):
  others.should.not.be: like.this}"""
         self.assertEqual(DottedPrettyPrinter().pformat(o), exp)
 
-    @unittest.skip("FIXME: broken")
+    @unittest.skipIf(test.test_support.is_jython,
+                     "XXX: depends on set repr order")
     def test_set_reprs(self):
         self.assertEqual(pprint.pformat(set()), 'set()')
         self.assertEqual(pprint.pformat(set(range(3))), 'set([0, 1, 2])')
