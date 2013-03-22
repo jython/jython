@@ -416,5 +416,8 @@ class _Event(_Verbose):
         try:
             if not self.__flag:
                 self.__cond.wait(timeout)
+            # Issue 2005: Since CPython 2.7, threading.Event.wait(timeout) returns boolean.
+            # The function should return False if timeout is reached before the event is set.
+            return self.__flag
         finally:
             self.__cond.release()

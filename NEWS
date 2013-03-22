@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7b2
   Bugs Fixed
+    - [ 2005 ] threading.Event object's wait([timeout]) function returns null instead of True/False.
     - [ 1926 ] Adjust MutableSet.pop test so we do not need to skip it
     - [ 2020 ] str.translate should delete characters in the second arg when table is None
     - [ 1753 ] zlib doesn't call end() on compress and decompress
