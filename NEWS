@@ -2,6 +2,7 @@ Jython NEWS
 
 Jython 2.7b2
   Bugs Fixed
+    - [ 1862 ] cStringIO does not support arrays as arguments
     - [ 2027 ] Discrepancy in bin(-num) output
     - [ 2005 ] threading.Event object's wait([timeout]) function returns null instead of True/False.
     - [ 1926 ] Adjust MutableSet.pop test so we do not need to skip it

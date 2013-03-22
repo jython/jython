@@ -12,6 +12,7 @@
 package org.python.modules;
 
 import org.python.core.Py;
+import org.python.core.PyArray;
 import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;
@@ -51,6 +52,15 @@ public class cStringIO {
         return new StringIO(buffer);
     }
 
+    /**
+     * Create a StringIO object, initialized by an array's byte stream.
+     * @param array       The initial value, from an array.
+     * @return          a new StringIO object.
+     */
+    public static StringIO StringIO(PyArray array) {
+        return new StringIO(array);
+    }
+
 
     /**
      * The StringIO object
@@ -71,6 +81,10 @@ public class cStringIO {
 
         public StringIO(String buffer) {
             buf = new StringBuilder(buffer);
+        }
+
+        public StringIO(PyArray array) {
+            buf = new StringBuilder(array.tostring());
         }
 
         private void _complain_ifclosed() {
