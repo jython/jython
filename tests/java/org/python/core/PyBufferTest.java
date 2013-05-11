@@ -850,7 +850,7 @@ public class PyBufferTest extends TestCase {
             // Size-changing access should succeed
             try {
                 PyByteArray sub = ((PyByteArray)subject);
-                sub.bytearray_extend(Py.One);
+                sub.bytearray_append(Py.Zero);
                 sub.del(sub.__len__() - 1);
             } catch (Exception e) {
                 fail("bytearray unexpectedly locked");
