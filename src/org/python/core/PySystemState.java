@@ -21,26 +21,27 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import jnr.posix.util.Platform;
+
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.packagecache.PackageManager;
 import org.python.core.packagecache.SysPackageManager;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedType;
 import org.python.modules.Setup;
 import org.python.modules.zipimport.zipimporter;
 import org.python.util.Generic;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedType;
 
 /**
  * The "sys" module.
@@ -48,6 +49,7 @@ import org.python.expose.ExposedType;
 // xxx Many have lamented, this should really be a module!
 // but it will require some refactoring to see this wish come true.
 public class PySystemState extends PyObject implements ClassDictInit {
+
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
@@ -63,22 +65,19 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     public static final PyString version = new PyString(Version.getVersion());
 
-    public static final PyTuple subversion = new PyTuple(new PyString("Jython"),
-                                                         Py.newString(""),
-                                                         Py.newString(""));
+    public static final PyTuple subversion = new PyTuple(new PyString("Jython"), Py.newString(""),
+            Py.newString(""));
 
-    public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24) |
-                                    (Version.PY_MINOR_VERSION << 16) |
-                                    (Version.PY_MICRO_VERSION <<  8) |
-                                    (Version.PY_RELEASE_LEVEL <<  4) |
-                                    (Version.PY_RELEASE_SERIAL << 0));
+    public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24)
+            | (Version.PY_MINOR_VERSION << 16) | (Version.PY_MICRO_VERSION << 8)
+            | (Version.PY_RELEASE_LEVEL << 4) | (Version.PY_RELEASE_SERIAL << 0));
 
     public static PyTuple version_info;
 
     public final static int maxunicode = 1114111;
 
-    //XXX: we should someday make this Long.MAX_VALUE, but see test_index.py
-    //     for tests that would need to pass but today would not.
+    // XXX: we should someday make this Long.MAX_VALUE, but see test_index.py
+    // for tests that would need to pass but today would not.
     public final static int maxsize = Integer.MAX_VALUE;
 
     public final static PyString float_repr_style = Py.newString("short");
@@ -86,31 +85,26 @@ public class PySystemState extends PyObject implements ClassDictInit {
     public static boolean py3kwarning = false;
 
     public final static Class flags = Options.class;
-    
+
     public static PyTuple _mercurial;
     /**
      * The copyright notice for this release.
      */
 
-    public static final PyObject copyright = Py.newString(
-        "Copyright (c) 2000-2013 Jython Developers.\n" +
-        "All rights reserved.\n\n" +
+    public static final PyObject copyright = Py
+            .newString("Copyright (c) 2000-2013 Jython Developers.\n" + "All rights reserved.\n\n" +
 
-        "Copyright (c) 2000 BeOpen.com.\n" +
-        "All Rights Reserved.\n\n"+
+            "Copyright (c) 2000 BeOpen.com.\n" + "All Rights Reserved.\n\n" +
 
-        "Copyright (c) 2000 The Apache Software Foundation.\n" +
-        "All rights reserved.\n\n" +
+            "Copyright (c) 2000 The Apache Software Foundation.\n" + "All rights reserved.\n\n" +
 
-        "Copyright (c) 1995-2000 Corporation for National Research "+
-        "Initiatives.\n" +
-        "All Rights Reserved.\n\n" +
+            "Copyright (c) 1995-2000 Corporation for National Research " + "Initiatives.\n"
+                    + "All Rights Reserved.\n\n" +
 
-        "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " +
-        "Amsterdam.\n" +
-        "All Rights Reserved.");
+                    "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " + "Amsterdam.\n"
+                    + "All Rights Reserved.");
 
-    private static Map<String,String> builtinNames;
+    private static Map<String, String> builtinNames;
     public static PyTuple builtin_module_names = null;
 
     public static PackageManager packageManager;
@@ -182,8 +176,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private final PySystemStateCloser closer;
     private static final ReferenceQueue<PySystemState> systemStateQueue =
             new ReferenceQueue<PySystemState>();
-    private static final ConcurrentMap<WeakReference<PySystemState>,
-                                       PySystemStateCloser> sysClosers = Generic.concurrentMap();
+    private static final ConcurrentMap<WeakReference<PySystemState>, PySystemStateCloser> sysClosers =
+            Generic.concurrentMap();
 
     // float_info
     public static PyObject float_info;
@@ -246,24 +240,16 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     private static void checkReadOnly(String name) {
-        if (name == "__dict__" ||
-            name == "__class__" ||
-            name == "registry" ||
-            name == "exec_prefix" ||
-            name == "packageManager") {
+        if (name == "__dict__" || name == "__class__" || name == "registry"
+                || name == "exec_prefix" || name == "packageManager") {
             throw Py.TypeError("readonly attribute");
         }
     }
 
     private static void checkMustExist(String name) {
-        if (name == "__dict__" ||
-            name == "__class__" ||
-            name == "registry" ||
-            name == "exec_prefix" ||
-            name == "platform" ||
-            name == "packageManager" ||
-            name == "builtins" ||
-            name == "warnoptions") {
+        if (name == "__dict__" || name == "__class__" || name == "registry"
+                || name == "exec_prefix" || name == "platform" || name == "packageManager"
+                || name == "builtins" || name == "warnoptions") {
             throw Py.TypeError("readonly attribute");
         }
     }
@@ -275,7 +261,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
 
         for (PyFile stdStream : new PyFile[] {(PyFile)this.stdin, (PyFile)this.stdout,
-                                              (PyFile)this.stderr}) {
+                (PyFile)this.stderr}) {
             if (stdStream.isatty()) {
                 stdStream.encoding = encoding;
             }
@@ -285,6 +271,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     // might be nice to have something general here, but for now these
     // seem to be the only values that need to be explicitly shadowed
     private Shadow shadowing;
+
     public synchronized void shadow() {
         if (shadowing == null) {
             shadowing = new Shadow();
@@ -292,6 +279,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     private static class DefaultBuiltinsHolder {
+
         static final PyObject builtins = fillin();
 
         static PyObject fillin() {
@@ -355,6 +343,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     // xxx fix this accessors
+    @Override
     public PyObject __findattr_ex__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
@@ -398,6 +387,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
         checkReadOnly(name);
         if (name == "builtins") {
@@ -418,6 +408,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
     }
 
+    @Override
     public void __delattr__(String name) {
         checkMustExist(name);
         PyObject ret = getType().lookup(name); // xxx fix fix fix
@@ -434,10 +425,12 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     // xxx
+    @Override
     public void __rawdir__(PyDictionary accum) {
         accum.update(__dict__);
     }
 
+    @Override
     public String toString() {
         return "<module '" + __name__ + "' (built-in)>";
     }
@@ -447,7 +440,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     public void setrecursionlimit(int recursionlimit) {
-        if(recursionlimit <= 0) {
+        if (recursionlimit <= 0) {
             throw Py.ValueError("Recursion limit must be positive");
         }
         this.recursionlimit = recursionlimit;
@@ -486,8 +479,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     /**
      * Change the current working directory to the specified path.
      *
-     * path is assumed to be absolute and canonical (via
-     * os.path.realpath).
+     * path is assumed to be absolute and canonical (via os.path.realpath).
      *
      * @param path a path String
      */
@@ -505,8 +497,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Resolve a path. Returns the full path taking the current
-     * working directory into account.
+     * Resolve a path. Returns the full path taking the current working directory into account.
      *
      * @param path a path String
      * @return a resolved path String
@@ -516,12 +507,10 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Resolve a path. Returns the full path taking the current
-     * working directory into account.
+     * Resolve a path. Returns the full path taking the current working directory into account.
      *
-     * Like getPath but called statically. The current PySystemState
-     * is only consulted for the current working directory when it's
-     * necessary (when the path is relative).
+     * Like getPath but called statically. The current PySystemState is only consulted for the
+     * current working directory when it's necessary (when the path is relative).
      *
      * @param path a path String
      * @return a resolved path String
@@ -539,8 +528,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
         File file = new File(path);
         // Python considers r'\Jython25' and '/Jython25' abspaths on Windows, unlike
         // java.io.File
-        if (!file.isAbsolute() && (!Platform.IS_WINDOWS
-                                   || !(path.startsWith("\\") || path.startsWith("/")))) {
+        if (!file.isAbsolute()
+                && (!Platform.IS_WINDOWS || !(path.startsWith("\\") || path.startsWith("/")))) {
             if (sys == null) {
                 sys = Py.getSystemState();
             }
@@ -557,8 +546,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 exitfunc.__call__();
             } catch (PyException exc) {
                 if (!exc.match(Py.SystemExit)) {
-                    Py.println(stderr,
-                               Py.newString("Error in sys.exitfunc:"));
+                    Py.println(stderr, Py.newString("Error in sys.exitfunc:"));
                 }
                 Py.printException(exc);
             }
@@ -574,18 +562,19 @@ public class PySystemState extends PyObject implements ClassDictInit {
         this.classLoader = classLoader;
     }
 
-    private static String findRoot(Properties preProperties,
-                                     Properties postProperties,
-                                     String jarFileName)
-    {
+    private static String findRoot(Properties preProperties, Properties postProperties,
+            String jarFileName) {
         String root = null;
         try {
-            if (postProperties != null)
+            if (postProperties != null) {
                 root = postProperties.getProperty("python.home");
-            if (root == null)
+            }
+            if (root == null) {
                 root = preProperties.getProperty("python.home");
-            if (root == null)
+            }
+            if (root == null) {
                 root = preProperties.getProperty("install.root");
+            }
 
             determinePlatform(preProperties);
         } catch (Exception exc) {
@@ -640,8 +629,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     private static void initRegistry(Properties preProperties, Properties postProperties,
-                                       boolean standalone, String jarFileName)
-    {
+            boolean standalone, String jarFileName) {
         if (registry != null) {
             Py.writeError("systemState", "trying to reinitialize registry");
             return;
@@ -662,6 +650,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 addRegistryFile(homeFile);
                 addRegistryFile(new File(prefix, "registry"));
             } catch (Exception exc) {
+                // Continue
             }
         }
         if (prefix != null) {
@@ -676,6 +665,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 registry.setProperty("python.path", jythonpath);
             }
         } catch (SecurityException e) {
+            // Continue
         }
         registry.putAll(postProperties);
         if (standalone) {
@@ -693,7 +683,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         // Set up options from registry
         Options.setFromRegistry();
     }
-    
+
     /**
      * @return the encoding of the underlying platform; can be <code>null</code>
      */
@@ -724,7 +714,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
         return encoding;
     }
-    
+
     private static void addRegistryFile(File file) {
         if (file.exists()) {
             if (!file.isDirectory()) {
@@ -769,24 +759,18 @@ public class PySystemState extends PyObject implements ClassDictInit {
         initialize(preProperties, postProperties, new String[] {""});
     }
 
-    public static synchronized void initialize(Properties preProperties,
-                                               Properties postProperties,
-                                               String[] argv) {
+    public static synchronized void initialize(Properties preProperties, Properties postProperties,
+            String[] argv) {
         initialize(preProperties, postProperties, argv, null);
     }
 
-    public static synchronized void initialize(Properties preProperties,
-                                               Properties postProperties,
-                                               String[] argv,
-                                               ClassLoader classLoader) {
+    public static synchronized void initialize(Properties preProperties, Properties postProperties,
+            String[] argv, ClassLoader classLoader) {
         initialize(preProperties, postProperties, argv, classLoader, new ClassicPyObjectAdapter());
     }
 
-    public static synchronized void initialize(Properties preProperties,
-                                               Properties postProperties,
-                                               String[] argv,
-                                               ClassLoader classLoader,
-                                               ExtensiblePyObjectAdapter adapter) {
+    public static synchronized void initialize(Properties preProperties, Properties postProperties,
+            String[] argv, ClassLoader classLoader, ExtensiblePyObjectAdapter adapter) {
         if (initialized) {
             return;
         }
@@ -807,51 +791,45 @@ public class PySystemState extends PyObject implements ClassDictInit {
             }
             ClassLoader sysStateLoader = PySystemState.class.getClassLoader();
             if (sysStateLoader != null) {
-                if (initialize(preProperties,
-                               postProperties,
-                               argv,
-                               classLoader,
-                               adapter,
-                               sysStateLoader)) {
+                if (initialize(preProperties, postProperties, argv, classLoader, adapter,
+                        sysStateLoader)) {
                     return;
                 }
             } else {
                 Py.writeDebug("initializer", "PySystemState.class class loader null, skipping");
             }
         } catch (UnsupportedCharsetException e) {
-            Py.writeWarning("initializer", "Unable to load the UTF-8 charset to read an initializer definition");
+            Py.writeWarning("initializer",
+                    "Unable to load the UTF-8 charset to read an initializer definition");
             e.printStackTrace(System.err);
         } catch (SecurityException e) {
             // Must be running in a security environment that doesn't allow access to the class
             // loader
         } catch (Exception e) {
             Py.writeWarning("initializer",
-                            "Unexpected exception thrown while trying to use initializer service");
+                    "Unexpected exception thrown while trying to use initializer service");
             e.printStackTrace(System.err);
         }
         doInitialize(preProperties, postProperties, argv, classLoader, adapter);
     }
 
     private static final String INITIALIZER_SERVICE =
-        "META-INF/services/org.python.core.JythonInitializer";
+            "META-INF/services/org.python.core.JythonInitializer";
 
     /**
-     * Attempts to read a SystemStateInitializer service from the given classloader, instantiate it,
-     * and initialize with it.
+     * Attempts to read a SystemStateInitializer service from the given class loader, instantiate
+     * it, and initialize with it.
      *
-     * @throws UnsupportedCharsetException
-     *             if unable to load UTF-8 to read a service definition
+     * @throws UnsupportedCharsetException if unable to load UTF-8 to read a service definition
      * @return true if a service is found and successfully initializes.
      */
-    private static boolean initialize(Properties pre,
-                                      Properties post,
-                                      String[] argv,
-                                      ClassLoader sysClassLoader,
-                                      ExtensiblePyObjectAdapter adapter,
-                                      ClassLoader initializerClassLoader) {
+    private static boolean initialize(Properties pre, Properties post, String[] argv,
+            ClassLoader sysClassLoader, ExtensiblePyObjectAdapter adapter,
+            ClassLoader initializerClassLoader) {
         InputStream in = initializerClassLoader.getResourceAsStream(INITIALIZER_SERVICE);
         if (in == null) {
-            Py.writeDebug("initializer", "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
+            Py.writeDebug("initializer", "'" + INITIALIZER_SERVICE + "' not found on "
+                    + initializerClassLoader);
             return false;
         }
         BufferedReader r = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
@@ -873,11 +851,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
             return false;
         }
         try {
-            ((JythonInitializer)initializer.newInstance()).initialize(pre,
-                                                                      post,
-                                                                      argv,
-                                                                      sysClassLoader,
-                                                                      adapter);
+            ((JythonInitializer)initializer.newInstance()).initialize(pre, post, argv,
+                    sysClassLoader, adapter);
         } catch (Exception e) {
             Py.writeWarning("initializer", "Failed initializing with class '" + className
                     + "', continuing");
@@ -891,12 +866,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
         return initialized;
     }
 
-
     public static synchronized PySystemState doInitialize(Properties preProperties,
-                                                 Properties postProperties,
-                                                 String[] argv,
-                                                 ClassLoader classLoader,
-                                                 ExtensiblePyObjectAdapter adapter) {
+            Properties postProperties, String[] argv, ClassLoader classLoader,
+            ExtensiblePyObjectAdapter adapter) {
         if (initialized) {
             return Py.defaultSystemState;
         }
@@ -961,31 +933,32 @@ public class PySystemState extends PyObject implements ClassDictInit {
         Py.stdout = new StdoutWrapper();
 
         String s;
-        if(Version.PY_RELEASE_LEVEL == 0x0A)
+        if (Version.PY_RELEASE_LEVEL == 0x0A) {
             s = "alpha";
-        else if(Version.PY_RELEASE_LEVEL == 0x0B)
+        } else if (Version.PY_RELEASE_LEVEL == 0x0B) {
             s = "beta";
-        else if(Version.PY_RELEASE_LEVEL == 0x0C)
+        } else if (Version.PY_RELEASE_LEVEL == 0x0C) {
             s = "candidate";
-        else if(Version.PY_RELEASE_LEVEL == 0x0F)
+        } else if (Version.PY_RELEASE_LEVEL == 0x0F) {
             s = "final";
-        else if(Version.PY_RELEASE_LEVEL == 0xAA)
+        } else if (Version.PY_RELEASE_LEVEL == 0xAA) {
             s = "snapshot";
-        else
-            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: " +
-                                       Version.PY_RELEASE_LEVEL);
-        version_info = new PyTuple(Py.newInteger(Version.PY_MAJOR_VERSION),
-                                   Py.newInteger(Version.PY_MINOR_VERSION),
-                                   Py.newInteger(Version.PY_MICRO_VERSION),
-                                   Py.newString(s),
-                                   Py.newInteger(Version.PY_RELEASE_SERIAL));
-        _mercurial = new PyTuple(Py.newString("Jython"), Py.newString(Version.getHGIdentifier()),
-                                 Py.newString(Version.getHGVersion()));
+        } else {
+            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: "
+                    + Version.PY_RELEASE_LEVEL);
+        }
+        version_info =
+                new PyTuple(Py.newInteger(Version.PY_MAJOR_VERSION),
+                        Py.newInteger(Version.PY_MINOR_VERSION),
+                        Py.newInteger(Version.PY_MICRO_VERSION), Py.newString(s),
+                        Py.newInteger(Version.PY_RELEASE_SERIAL));
+        _mercurial =
+                new PyTuple(Py.newString("Jython"), Py.newString(Version.getHGIdentifier()),
+                        Py.newString(Version.getHGVersion()));
 
         float_info = FloatInfo.getInfo();
         long_info = LongInfo.getInfo();
     }
-
 
     public static boolean isPackageCacheEnabled() {
         return cachedir != null;
@@ -1025,8 +998,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Determine the default sys.executable value from the
-     * registry. Returns Py.None is no executable can be found.
+     * Determine the default sys.executable value from the registry. Returns Py.None is no
+     * executable can be found.
      *
      * @param props a Properties registry
      * @return a PyObject path string or Py.None
@@ -1057,19 +1030,20 @@ public class PySystemState extends PyObject implements ClassDictInit {
         if (colon != -1) {
             // name:fqclassname
             modname = name.substring(0, colon).trim();
-            classname = name.substring(colon+1, name.length()).trim();
-            if (classname.equals("null"))
+            classname = name.substring(colon + 1, name.length()).trim();
+            if (classname.equals("null")) {
                 // name:null, i.e. remove it
                 classname = null;
-        }
-        else {
+            }
+        } else {
             modname = name.trim();
             classname = "org.python.modules." + modname;
         }
-        if (classname != null)
+        if (classname != null) {
             builtinNames.put(modname, classname);
-        else
+        } else {
             builtinNames.remove(modname);
+        }
     }
 
     private static void initBuiltins(Properties props) {
@@ -1080,17 +1054,19 @@ public class PySystemState extends PyObject implements ClassDictInit {
         builtinNames.put("sys", "");
 
         // add builtins specified in the Setup.java file
-        for (String builtinModule : Setup.builtinModules)
+        for (String builtinModule : Setup.builtinModules) {
             addBuiltin(builtinModule);
+        }
 
         // add builtins specified in the registry file
         String builtinprop = props.getProperty("python.modules.builtin", "");
         StringTokenizer tok = new StringTokenizer(builtinprop, ",");
-        while (tok.hasMoreTokens())
+        while (tok.hasMoreTokens()) {
             addBuiltin(tok.nextToken());
+        }
 
         int n = builtinNames.size();
-        PyObject [] built_mod = new PyObject[n];
+        PyObject[] built_mod = new PyObject[n];
         int i = 0;
         for (String key : builtinNames.keySet()) {
             built_mod[i++] = Py.newString(key);
@@ -1133,11 +1109,13 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 JarEntry jarEntry = jarFile.getJarEntry("Lib/os.py");
                 standalone = jarEntry != null;
             } catch (IOException ioe) {
+                // Continue
             } finally {
                 if (jarFile != null) {
                     try {
                         jarFile.close();
                     } catch (IOException e) {
+                        // Continue
                     }
                 }
             }
@@ -1146,7 +1124,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * @return the full name of the jar file containing this class, <code>null</code> if not available.
+     * @return the full name of the jar file containing this class, <code>null</code> if not
+     *         available.
      */
     private static String getJarFileName() {
         Class<PySystemState> thisClass = PySystemState.class;
@@ -1204,10 +1183,10 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     private static void addPaths(PyList path, String pypath) {
-        StringTokenizer tok = new StringTokenizer(pypath,
-                                                  java.io.File.pathSeparator);
-        while  (tok.hasMoreTokens())
+        StringTokenizer tok = new StringTokenizer(pypath, java.io.File.pathSeparator);
+        while (tok.hasMoreTokens()) {
             path.append(new PyString(tok.nextToken().trim()));
+        }
     }
 
     public static PyJavaPackage add_package(String n) {
@@ -1219,31 +1198,25 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Add a classpath directory to the list of places that are searched
-     * for java packages.
+     * Add a classpath directory to the list of places that are searched for java packages.
      * <p>
-     * <b>Note</b>. Classes found in directory and subdirectory are not
-     * made available to jython by this call. It only makes the java
-     * package found in the directory available. This call is mostly
-     * usefull if jython is embedded in an application that deals with
-     * its own classloaders. A servlet container is a very good example.
-     * Calling add_classdir("<context>/WEB-INF/classes") makes the java
-     * packages in WEB-INF classes available to jython import. However the
-     * actual classloading is completely handled by the servlet container's
-     * context classloader.
+     * <b>Note</b>. Classes found in directory and sub-directory are not made available to jython by
+     * this call. It only makes the java package found in the directory available. This call is
+     * mostly useful if jython is embedded in an application that deals with its own class loaders.
+     * A servlet container is a very good example. Calling add_classdir("<context>/WEB-INF/classes")
+     * makes the java packages in WEB-INF classes available to jython import. However the actual
+     * classloading is completely handled by the servlet container's context classloader.
      */
     public static void add_classdir(String directoryPath) {
         packageManager.addDirectory(new File(directoryPath));
     }
 
     /**
-     * Add a .jar & .zip directory to the list of places that are searched
-     * for java .jar and .zip files. The .jar and .zip files found will not
-     * be cached.
+     * Add a .jar & .zip directory to the list of places that are searched for java .jar and .zip
+     * files. The .jar and .zip files found will not be cached.
      * <p>
-     * <b>Note</b>. Classes in .jar and .zip files found in the directory
-     * are not made available to jython by this call. See the note for
-     * add_classdir(dir) for more details.
+     * <b>Note</b>. Classes in .jar and .zip files found in the directory are not made available to
+     * jython by this call. See the note for add_classdir(dir) for more details.
      *
      * @param directoryPath The name of a directory.
      *
@@ -1254,16 +1227,14 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     /**
-     * Add a .jar & .zip directory to the list of places that are searched
-     * for java .jar and .zip files.
+     * Add a .jar & .zip directory to the list of places that are searched for java .jar and .zip
+     * files.
      * <p>
-     * <b>Note</b>. Classes in .jar and .zip files found in the directory
-     * are not made available to jython by this call. See the note for
-     * add_classdir(dir) for more details.
+     * <b>Note</b>. Classes in .jar and .zip files found in the directory are not made available to
+     * jython by this call. See the note for add_classdir(dir) for more details.
      *
      * @param directoryPath The name of a directory.
-     * @param cache         Controls if the packages in the zip and jar
-     *                      file should be cached.
+     * @param cache Controls if the packages in the zip and jar file should be cached.
      *
      * @see #add_classdir
      */
@@ -1278,8 +1249,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
         /* Print value except if None */
         /* After printing, also assign to '_' */
         /* Before, set '_' to None to avoid recursion */
-        if (o == Py.None)
-             return;
+        if (o == Py.None) {
+            return;
+        }
 
         PyObject currentBuiltins = Py.getSystemState().getBuiltins();
         currentBuiltins.__setitem__("_", Py.None);
@@ -1295,8 +1267,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
      * Exit a Python program with the given status.
      *
      * @param status the value to exit with
-     * @exception Py.SystemExit always throws this exception.
-     * When caught at top level the program will exit.
+     * @exception Py.SystemExit always throws this exception. When caught at top level the program
+     *                will exit.
      */
     public static void exit(PyObject status) {
         throw new PyException(Py.SystemExit, status);
@@ -1311,13 +1283,12 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
     public static PyTuple exc_info() {
         PyException exc = Py.getThreadState().exception;
-        if(exc == null)
+        if (exc == null) {
             return new PyTuple(Py.None, Py.None, Py.None);
+        }
         PyObject tb = exc.traceback;
         PyObject value = exc.value;
-        return new PyTuple(exc.type,
-                value == null ? Py.None : value,
-                tb == null ? Py.None : tb);
+        return new PyTuple(exc.type, value == null ? Py.None : value, tb == null ? Py.None : tb);
     }
 
     public static void exc_clear() {
@@ -1335,8 +1306,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
             f = f.f_back;
             --depth;
         }
-        if (f == null)
-             throw Py.ValueError("call stack is not deep enough");
+        if (f == null) {
+            throw Py.ValueError("call stack is not deep enough");
+        }
         return f;
     }
 
@@ -1441,7 +1413,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
      * {@link PySystemStateCloser#cleanup()} to close resources (such as still-open files). The
      * closing sequence is from last-created resource to first-created, so that dependencies between
      * them are respected. (There are some amongst layers in the _io module.)
-     * 
+     *
      * @param resourceClosers to be called in turn
      */
     private static void runClosers(Set<Callable<Void>> resourceClosers) {
@@ -1467,52 +1439,65 @@ public class PySystemState extends PyObject implements ClassDictInit {
 }
 
 
-class PySystemStateFunctions extends PyBuiltinFunctionSet
-{
+class PySystemStateFunctions extends PyBuiltinFunctionSet {
+
     PySystemStateFunctions(String name, int index, int minargs, int maxargs) {
         super(name, index, minargs, maxargs);
     }
 
+    @Override
     public PyObject __call__(PyObject arg) {
         switch (index) {
-        case 10:
-            PySystemState.displayhook(arg);
-            return Py.None;
-        default:
-            throw info.unexpectedCall(1, false);
+            case 10:
+                PySystemState.displayhook(arg);
+                return Py.None;
+            default:
+                throw info.unexpectedCall(1, false);
         }
     }
+
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (index) {
-        case 30:
-            PySystemState.excepthook(arg1, arg2, arg3);
-            return Py.None;
-        default:
-            throw info.unexpectedCall(3, false);
+            case 30:
+                PySystemState.excepthook(arg1, arg2, arg3);
+                return Py.None;
+            default:
+                throw info.unexpectedCall(3, false);
         }
     }
 }
 
+
 /**
- * Value of a class or instance variable when the corresponding
- * attribute is deleted.  Used only in PySystemState for now.
+ * Value of a class or instance variable when the corresponding attribute is deleted. Used only in
+ * PySystemState for now.
  */
 class PyAttributeDeleted extends PyObject {
+
     final static PyAttributeDeleted INSTANCE = new PyAttributeDeleted();
+
     private PyAttributeDeleted() {}
-    public String toString() { return ""; }
+
+    public String toString() {
+        return "";
+    }
+
     public Object __tojava__(Class c) {
-        if (c == PyObject.class)
+        if (c == PyObject.class) {
             return this;
+        }
         // we can't quite "delete" non-PyObject attributes; settle for
         // null or nothing
-        if (c.isPrimitive())
+        if (c.isPrimitive()) {
             return Py.NoConversion;
+        }
         return null;
     }
 }
 
+
 class Shadow {
+
     PyObject builtins;
     PyList warnoptions;
     PyObject platform;
@@ -1527,13 +1512,14 @@ class Shadow {
 
 @ExposedType(name = "sys.float_info", isBaseType = false)
 class FloatInfo extends PyTuple {
+
     @ExposedGet
-    public PyObject max, max_exp, max_10_exp, min, min_exp, min_10_exp, dig,
-                    mant_dig, epsilon, radix, rounds;
+    public PyObject max, max_exp, max_10_exp, min, min_exp, min_10_exp, dig, mant_dig, epsilon,
+            radix, rounds;
 
     public static final PyType TYPE = PyType.fromClass(FloatInfo.class);
-    
-    private FloatInfo(PyObject ...vals) {
+
+    private FloatInfo(PyObject... vals) {
         super(TYPE, vals);
 
         max = vals[0];
@@ -1552,42 +1538,41 @@ class FloatInfo extends PyTuple {
     static public FloatInfo getInfo() {
         // max_10_exp, dig and epsilon taken from ssj library Num class
         // min_10_exp, mant_dig, radix and rounds by ɲeuroburɳ (bit.ly/Iwo2LT)
-        return new FloatInfo(
-            Py.newFloat(Double.MAX_VALUE),       // DBL_MAX
-            Py.newLong(Double.MAX_EXPONENT),     // DBL_MAX_EXP
-            Py.newLong(308),                     // DBL_MIN_10_EXP
-            Py.newFloat(Double.MIN_VALUE),       // DBL_MIN
-            Py.newLong(Double.MIN_EXPONENT),     // DBL_MIN_EXP
-            Py.newLong(-307),                    // DBL_MIN_10_EXP
-            Py.newLong(10),                      // DBL_DIG
-            Py.newLong(53),                      // DBL_MANT_DIG
-            Py.newFloat(2.2204460492503131e-16), // DBL_EPSILON
-            Py.newLong(2),                       // FLT_RADIX
-            Py.newLong(1)                        // FLT_ROUNDS
+        return new FloatInfo( //
+                Py.newFloat(Double.MAX_VALUE),       // DBL_MAX
+                Py.newLong(Double.MAX_EXPONENT),     // DBL_MAX_EXP
+                Py.newLong(308),                     // DBL_MIN_10_EXP
+                Py.newFloat(Double.MIN_VALUE),       // DBL_MIN
+                Py.newLong(Double.MIN_EXPONENT),     // DBL_MIN_EXP
+                Py.newLong(-307),                    // DBL_MIN_10_EXP
+                Py.newLong(10),                      // DBL_DIG
+                Py.newLong(53),                      // DBL_MANT_DIG
+                Py.newFloat(2.2204460492503131e-16), // DBL_EPSILON
+                Py.newLong(2),                       // FLT_RADIX
+                Py.newLong(1)                        // FLT_ROUNDS
         );
     }
 }
 
+
 @ExposedType(name = "sys.long_info", isBaseType = false)
 class LongInfo extends PyTuple {
+
     @ExposedGet
     public PyObject bits_per_digit, sizeof_digit;
 
     public static final PyType TYPE = PyType.fromClass(LongInfo.class);
-    
-    private LongInfo(PyObject ...vals) {
+
+    private LongInfo(PyObject... vals) {
         super(TYPE, vals);
 
         bits_per_digit = vals[0];
         sizeof_digit = vals[1];
     }
 
-    //XXX: I've cheated and just used the values that CPython gives me for my
-    //     local Ubuntu system. I'm not sure that they are correct.
+    // XXX: I've cheated and just used the values that CPython gives me for my
+    // local Ubuntu system. I'm not sure that they are correct.
     static public LongInfo getInfo() {
-        return new LongInfo(
-            Py.newLong(30),
-            Py.newLong(4)
-        );
+        return new LongInfo(Py.newLong(30), Py.newLong(4));
     }
 }

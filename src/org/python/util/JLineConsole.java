@@ -13,19 +13,17 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
-import jnr.constants.platform.Errno;
-
 import jline.ConsoleReader;
 import jline.Terminal;
 import jline.WindowsTerminal;
+import jnr.constants.platform.Errno;
 
 import org.python.core.Py;
 import org.python.core.PyObject;
 
 /**
- * This class uses <a href="http://jline.sourceforge.net/">JLine</a> to provide
- * readline like functionality to its console without requiring native readline
- * support.
+ * This class uses <a href="http://jline.sourceforge.net/">JLine</a> to provide readline like
+ * functionality to its console without requiring native readline support.
  */
 public class JLineConsole extends InteractiveConsole {
 
@@ -44,11 +42,11 @@ public class JLineConsole extends InteractiveConsole {
     protected static final String CTRL_Z = "\u001a";
 
     /**
-     * Errno strerrors possibly caused by a SIGSTP (ctrl-z). They may propagate up to
-     * IOException messages.
+     * Errno strerrors possibly caused by a SIGSTP (ctrl-z). They may propagate up to IOException
+     * messages.
      */
-    private static final List<String> SUSPENDED_STRERRORS =
-            Arrays.asList(Errno.EINTR.description(), Errno.EIO.description());
+    private static final List<String> SUSPENDED_STRERRORS = Arrays.asList(
+            Errno.EINTR.description(), Errno.EIO.description());
 
     public JLineConsole() {
         this(null);
@@ -75,8 +73,8 @@ public class JLineConsole extends InteractiveConsole {
         try {
             InputStream input = new FileInputStream(FileDescriptor.in);
             // Raw bytes in, so raw bytes out
-            Writer output = new OutputStreamWriter(new FileOutputStream(FileDescriptor.out),
-                                                   "ISO-8859-1");
+            Writer output =
+                    new OutputStreamWriter(new FileOutputStream(FileDescriptor.out), "ISO-8859-1");
             reader = new ConsoleReader(input, output, getBindings());
             reader.setBellEnabled(false);
         } catch (IOException e) {
@@ -89,15 +87,15 @@ public class JLineConsole extends InteractiveConsole {
     /**
      * Return the JLine bindings file.
      *
-     * This handles loading the user's custom keybindings (normally JLine does) so it can
-     * fallback to Jython's (which disable tab completition) when the user's are not
-     * available.
+     * This handles loading the user's custom key bindings (normally JLine does) so it can fall back
+     * to Jython's (which disable tab completion) when the user's are not available.
      *
      * @return an InputStream of the JLine bindings file.
      */
     protected InputStream getBindings() {
-        String userBindings = new File(System.getProperty("user.home"),
-                                       ".jlinebindings.properties").getAbsolutePath();
+        String userBindings =
+                new File(System.getProperty("user.home"), ".jlinebindings.properties")
+                        .getAbsolutePath();
         File bindingsFile = new File(System.getProperty("jline.keybindings", userBindings));
 
         try {
@@ -156,8 +154,8 @@ public class JLineConsole extends InteractiveConsole {
     }
 
     /**
-     * Determine if the IOException was likely caused by a SIGSTP (ctrl-z). Seems only
-     * applicable to BSD platforms.
+     * Determine if the IOException was likely caused by a SIGSTP (ctrl-z). Seems only applicable to
+     * BSD platforms.
      */
     private boolean fromSuspend(IOException ioe) {
         return !windows && SUSPENDED_STRERRORS.contains(ioe.getMessage());
@@ -176,7 +174,6 @@ public class JLineConsole extends InteractiveConsole {
     public ConsoleReader getReader() {
         return reader;
     }
-
 
     /**
      * @return the startup hook (called prior to each readline)
