@@ -1,9 +1,13 @@
 import copy
+import glob
 import operator
 import os
+import os.path
 import unittest
+import shutil
 import subprocess
 import sys
+import tempfile
 import re
 
 from collections import deque
@@ -25,6 +29,9 @@ from org.python.core.util import FileUtil
 from org.python.tests import (BeanImplementation, Child, Child2,
                               CustomizableMapHolder, Listenable, ToUnicode)
 from org.python.tests.mro import (ConfusedOnGetitemAdd, FirstPredefinedGetitem, GetitemAdder)
+from org.python.util import PythonInterpreter
+import org.python.core.Options
+
 from javatests import Issue1833
 from javatests.ProxyTests import NullToString, Person
 
@@ -483,6 +490,25 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertEqual(str(nts), '')
         self.assertEqual(unicode(nts), '')
 
+    def test_diamond_inheritance_of_iterable_and_map(self):
+        """Test deeply nested diamond inheritance of Iterable and Map, as see in some Clojure classes"""
+        # http://bugs.jython.org/issue1878
+        from javatests import DiamondIterableMapMRO  # this will raise a TypeError re MRO conflict without the fix
+        # Verify the correct MRO is generated - order is of course *important*;
+        # the following used types are implemented as empty interfaces/abstract classes, but match the inheritance graph
+        # and naming of Clojure/Storm.
+        #
+        # Also instead of directly importing, which would cause annoying bloat in javatests by making lots of little files,
+        # just match using str - this will still be stable/robust.
+        self.assertEqual(
+            str(DiamondIterableMapMRO.__mro__),
+            "(<type 'javatests.DiamondIterableMapMRO'>, <type 'javatests.ILookup'>, <type 'javatests.IPersistentMap'>, <type 'java.lang.Iterable'>, <type 'javatests.Associative'>, <type 'javatests.IPersistentCollection'>, <type 'javatests.Seqable'>, <type 'javatests.Counted'>, <type 'java.util.Map'>, <type 'javatests.AFn'>, <type 'javatests.IFn'>, <type 'java.util.concurrent.Callable'>, <type 'java.lang.Runnable'>, <type 'java.lang.Object'>, <type 'object'>)")
+        # And usable with __iter__ and map functionality
+        m = DiamondIterableMapMRO()
+        m["abc"] = 42
+        m["xyz"] = 47
+        self.assertEqual(set(m), set(["abc", "xyz"]))
+        self.assertEqual(m["abc"], 42)
 
 def roundtrip_serialization(obj):
     """Returns a deep copy of an object, via serializing it
@@ -521,6 +547,20 @@ class CloneInput(ObjectInputStream):
         return self.output.classQueue.popleft()
 
 
+def find_jython_jars():
+    # Uses the same classpath resolution as bin/jython
+    jython_jar_path = os.path.normpath(os.path.join(sys.executable, "../../jython.jar"))
+    jython_jar_dev_path = os.path.normpath(os.path.join(sys.executable, "../../jython-dev.jar"))
+    if os.path.exists(jython_jar_dev_path):
+        jars = [jython_jar_dev_path]
+        jars.extend(glob.glob(os.path.normpath(os.path.join(jython_jar_dev_path, "../javalib/*.jar"))))
+    elif os.path.exists(jython_jar_path):
+        jars = [jython_jar_path]
+    else:
+        raise Exception("Cannot find jython jar")
+    return jars
+
+
 class SerializationTest(unittest.TestCase):
 
     def test_java_serialization(self):
@@ -540,6 +580,43 @@ class SerializationTest(unittest.TestCase):
         names = [x for x in dir(__builtin__)]
         self.assertEqual(names, roundtrip_serialization(names))
 
+    def test_proxy_serialization(self):
+        """Proxies can be deserializable in a fresh JVM, including being able to "findPython" to get a PySystemState"""
+        tempdir = tempfile.mkdtemp()
+        old_proxy_debug_dir = org.python.core.Options.proxyDebugDirectory
+        try:
+            # Generate a proxy for Cat class;
+            org.python.core.Options.proxyDebugDirectory = tempdir
+            from pounce import Cat
+            cat = Cat()
+            self.assertEqual(cat.whoami(), "Socks")
+
+            # Create a jar file containing the Cat proxy; could use Java to do this; do it the easy way for now
+            proxies_jar_path = os.path.join(tempdir, "proxies.jar")
+            subprocess.check_call(["jar", "cf", proxies_jar_path, "-C", tempdir, "org/"])
+
+            # Serialize our cat
+            output = ByteArrayOutputStream()
+            serializer = CloneOutput(output)
+            serializer.writeObject(cat)
+            serializer.close()
+            cat_path = os.path.join(tempdir, "serialized-cat")
+            with open(cat_path, "wb") as f:
+                f.write(output.toByteArray())
+
+            # Then in a completely different JVM running
+            # ProxyDeserialization, verify we get "meow" printed to
+            # stdout, which in turn ensures that PySystemState (and
+            # Jython runtime) is initialized for the proxy
+            jars = find_jython_jars()
+            jars.append(proxies_jar_path)
+            classpath = ":".join(jars)
+            cmd = [os.path.join(System.getProperty("java.home"), "bin/java"),
+                   "-classpath", classpath, "ProxyDeserialization", cat_path]
+            self.assertEqual(subprocess.check_output(cmd), "meow\n")
+        finally:
+            org.python.core.Options.proxyDebugDirectory = old_proxy_debug_dir
+            shutil.rmtree(tempdir)
 
 
 class CopyTest(unittest.TestCase):

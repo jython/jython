@@ -172,15 +172,25 @@ public class PyJavaType extends PyType {
                 continue;
             }
             for (String method : type.modified) {
-                if (!allModified.add(method)) { // Another type in conflict has this method, fail
+                if (!allModified.add(method)) { // Another type in conflict has this method, possibly fail
                     PyList types = new PyList();
+                    Set<Class> proxySet = Generic.set();
                     for (PyJavaType othertype : conflictedAttributes) {
                         if (othertype.modified != null && othertype.modified.contains(method)) {
                             types.add(othertype);
+                            proxySet.add(othertype.getProxyType());
                         }
                     }
+                    // Need to special case collections that implement both Iterable and Map. Ignore the conflict
+                    // in having duplicate __iter__ added (see getCollectionProxies), while still allowing each
+                    // path on the inheritance hierarchy to get an __iter__. Annoying but necessary logic.
+                    // See http://bugs.jython.org/issue1878
+                    if (method.equals("__iter__") && proxySet.equals(Generic.set(Iterable.class, Map.class))) {
+                        continue;
+                    }
                     throw Py.TypeError(String.format("Supertypes that share a modified attribute "
-                            + " have an MRO conflict[attribute=%s, types=%s]", method, types));
+                            + "have an MRO conflict[attribute=%s, supertypes=%s, type=%s]",
+                            method, types, this.getName()));
                 }
             }
         }
@@ -996,6 +1006,7 @@ public class PyJavaType extends PyType {
                 }
             };
             collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapLenProxy,
+                    // map IterProxy can conflict with Iterable.class; fix after the fact in handleMroError
                                                                     mapIterProxy,
                                                                     mapContainsProxy,
                                                                     mapGetProxy,
