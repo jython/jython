@@ -94,7 +94,7 @@ def clear_history():
     _reader.history.clear()
 
 def add_history(line):
-    _reader.addToHistory(line)
+    _reader.history.addToHistory(line)
 
 def get_history_length():
     return _reader.history.maxSize
@@ -106,13 +106,23 @@ def get_current_history_length():
     return len(_reader.history.historyList)
 
 def get_history_item(index):
-    return _reader.history.historyList[index]
+    # JLine indexes from 0 while readline indexes from 1 (at least in test_readline)
+    if index>0:
+        return _reader.history.historyList[index-1]
+    else:
+        return None
 
 def remove_history_item(pos):
     if _history_list:
         _history_list.remove(pos)
     else:
         warn("Cannot remove history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
+
+def replace_history_item(pos, line):
+    if _history_list:
+        _history_list.set(pos, line)
+    else:
+        warn("Cannot replace history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
 
 def redisplay():
     _reader.redrawLine()
