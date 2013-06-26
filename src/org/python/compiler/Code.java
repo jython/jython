@@ -572,7 +572,7 @@ public class Code extends MethodVisitor implements Opcodes {
         mv.visitVarInsn(RET, index);
     }
 
-    void return_() {
+    public void return_() {
         mv.visitInsn(RETURN);
     }
 
