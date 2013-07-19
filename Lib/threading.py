@@ -99,7 +99,7 @@ class JavaThread(object):
         _thread = self._thread
         status = ThreadStates[_thread.getState()]
         if _thread.isDaemon(): status + " daemon"
-        return "<%s(%s, %s)>" % (self.__class__.__name__, self.getName(), status)
+        return "<%s(%s, %s %s)>" % (self.__class__.__name__, self.getName(), status, self.ident)
 
     def __eq__(self, other):
         if isinstance(other, JavaThread):
@@ -124,6 +124,11 @@ class JavaThread(object):
             self._thread.join(millis_int, nanos)
         else:
             self._thread.join()
+
+    def ident(self):
+        return self._thread.getId()
+
+    ident = property(ident)
 
     def getName(self):
         return self._thread.getName()

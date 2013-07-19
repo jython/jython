@@ -90,9 +90,8 @@ public class thread implements ClassDictInit {
     }
 
     public static long get_ident() {
-        return Py.java_obj_id(Thread.currentThread());
+        return Thread.currentThread().getId();
     }
-    
     
     public static long stack_size(PyObject[] args) {
         switch (args.length) {

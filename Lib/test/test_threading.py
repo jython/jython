@@ -71,7 +71,6 @@ class ThreadTests(BaseTestCase):
 
     # Create a bunch of threads, let each do some work, wait until all are
     # done.
-    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_various_ops(self):
         # This takes about n/3 seconds to run (about n/3 clumps of tasks,
         # times about 1 second per clump).
@@ -87,8 +86,8 @@ class ThreadTests(BaseTestCase):
         for i in range(NUMTASKS):
             t = TestThread("<thread %d>"%i, self, sema, mutex, numrunning)
             threads.append(t)
-            self.assertEqual(t.ident, None)
-            self.assertTrue(re.match('<TestThread\(.*, initial\)>', repr(t)))
+            self.assertIsNotNone(t.ident)  # NOTE Java immediately assigns idents, unlike CPython
+            self.assertTrue(re.match('<TestThread\(.*, initial \d+\)>', repr(t)))
             t.start()
 
         if verbose:
