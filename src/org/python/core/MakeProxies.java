@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.python.compiler.APIVersion;
 import org.python.compiler.AdapterMaker;
+import org.python.compiler.CustomMaker;
 import org.python.compiler.JavaMaker;
 
 class MakeProxies {
@@ -65,16 +66,21 @@ class MakeProxies {
         
         // Grab the proxy maker from the class if it exists, and if it does, use the proxy class
         // name from the maker
-        PyObject customProxyMaker = dict.__finditem__("__proxymaker__");
-        if (customProxyMaker != null) {
+        PyObject userDefinedProxyMaker = dict.__finditem__("__proxymaker__");
+        if (userDefinedProxyMaker != null) {
             if (module == null) {
                 throw Py.TypeError("Classes using __proxymaker__ must define __module__");
             }
             PyObject[] args = Py.javas2pys(superclass, interfaces, className, pythonModuleName, fullProxyName, dict);
-            javaMaker = Py.tojava(customProxyMaker.__call__(args), JavaMaker.class);
-            // TODO Full proxy name
+            javaMaker = Py.tojava(userDefinedProxyMaker.__call__(args), JavaMaker.class);
+            if (javaMaker instanceof CustomMaker) {
+                // This hook hack is necessary because of the divergent behavior of how classes
+                // are made - we want to allow CustomMaker complete freedom in constructing the
+                // class, including saving any bytes.
+                CustomMaker customMaker = (CustomMaker) javaMaker;
+                return customMaker.makeClass();
+            }
         }
-        
         if (javaMaker == null) {
             javaMaker = new JavaMaker(superclass,
                         interfaces,
