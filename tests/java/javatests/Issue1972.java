@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Test;
@@ -26,9 +27,7 @@ import org.junit.Test;
  * debugging of the subprocess.
  * <p>
  * This test passes in Jython 2.5.2 and 2.5.4rc1. The test {@link #jythonReadline()} fails with
- * Jython 2.5.3. The test will fail the first time it is run on a clean build, or after switching
- * Jython versions (JAR files). This is because it monitors stderr from the subprocess and does not
- * expect the messages the cache manager produces on a first run.
+ * Jython 2.5.3.
  * <p>
  * The bulk of this program is designed to be run as JUnit tests, but it also has a
  * {@link #main(String[])} method that echoes <code>System.in</code> onto <code>System.out</code>
@@ -46,7 +45,13 @@ public class Issue1972 {
     static int DEBUG_PORT = 0; // 8000 or 0
 
     /** Control the amount of output to the console: 0, 1 or 2. */
-    static int VERBOSE = 2;
+    static int VERBOSE = 0;
+
+    /** Lines in stdout (as regular expressions) to ignore when checking subprocess output. */
+    static String[] STDOUT_IGNORE = {"^Listening for transport dt_socket"};
+
+    /** Lines in stderr (as regular expressions) to ignore when checking subprocess output. */
+    static String[] STDERR_IGNORE = {"^Jython 2", "^\\*sys-package-mgr"};
 
     /**
      * Extra JVM options used when debugging is enabled. <code>DEBUG_PORT</code> will be substituted
@@ -81,7 +86,7 @@ public class Issue1972 {
 
     /**
      * Check that on this system we know how to launch and read the error output from a subprocess.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -103,7 +108,7 @@ public class Issue1972 {
 
     /**
      * Check that on this system we know how to launch and read standard output from a subprocess.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -122,7 +127,7 @@ public class Issue1972 {
 
     /**
      * Check that on this system we know how to launch, write to and read from a subprocess.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -152,7 +157,7 @@ public class Issue1972 {
      * <code>System.in</code> in the subprocess, which of course writes hex to
      * <code>System.out</code> but that data is not received back in the parent process until
      * <code>System.out.println()</code> is called in the subprocess.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -176,7 +181,7 @@ public class Issue1972 {
 
     /**
      * Test reading back from Jython subprocess with program on command-line.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -195,43 +200,42 @@ public class Issue1972 {
 
     /**
      * Discover what is handling the "console" when the program is on the command line only.
-     * 
+     *
      * @throws Exception
      */
     @Test
-    public void jythonNonInteractiveConsole() throws Exception {
+    public void jythonNonInteractive() throws Exception {
         announceTest(VERBOSE, "jythonNonInteractiveConsole");
 
         // Run Jython enquiry about console as -c program
         setProcJava("org.python.util.jython", "-c",
-                "import sys; print type(sys._jy_interpreter).__name__; print sys.stdin.isatty()");
+                "import sys; print type(sys._jy_console).__name__; print sys.stdin.isatty()");
         proc.waitFor();
 
         outputAsStrings(VERBOSE, inFromProc, errFromProc);
 
         checkErrFromProc();
-        checkInFromProc("InteractiveConsole", "False");
+        checkInFromProc("PlainConsole", "False");
     }
 
     /**
      * Discover what is handling the "console" when the program is entered interactively at the
      * Jython prompt.
-     * 
+     *
      * @throws Exception
      */
     @Test
-    public void jythonInteractiveConsole() throws Exception {
+    public void jythonInteractive() throws Exception {
         announceTest(VERBOSE, "jythonInteractiveConsole");
 
         // Run Jython with simple actions at the command prompt
         setProcJava(    //
-                "-Dpython.console=org.python.util.InteractiveConsole", //
                 "-Dpython.home=" + pythonHome, //
                 "org.python.util.jython");
 
         writeToProc("12+3\n");
         writeToProc("import sys\n");
-        writeToProc("print type(sys._jy_interpreter).__name__\n");
+        writeToProc("print type(sys._jy_console).__name__\n");
         writeToProc("print sys.stdin.isatty()\n");
         toProc.close();
         proc.waitFor();
@@ -239,13 +243,13 @@ public class Issue1972 {
         outputAsStrings(VERBOSE, inFromProc, errFromProc);
 
         checkErrFromProc("");   // stderr produces one empty line. Why?
-        checkInFromProc("15", "InteractiveConsole", "False");
+        checkInFromProc("15", "PlainConsole", "False");
     }
 
     /**
      * Discover what is handling the "console" when the program is entered interactively at the
      * Jython prompt, and we try to force use of JLine (which fails).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -260,7 +264,7 @@ public class Issue1972 {
 
         writeToProc("12+3\n");
         writeToProc("import sys\n");
-        writeToProc("print type(sys._jy_interpreter).__name__\n");
+        writeToProc("print type(sys._jy_console).__name__\n");
         writeToProc("print sys.stdin.isatty()\n");
         toProc.close();
         proc.waitFor();
@@ -269,13 +273,13 @@ public class Issue1972 {
 
         checkErrFromProc("");   // stderr produces one empty line. Why?
 
-        // Although we asked for it, a subprocess doesn't get JLine, and isatty() is false
-        checkInFromProc("15", "InteractiveConsole", "False");
+        // We can specify JLineConsole, but isatty() is not fooled.
+        checkInFromProc("15", "PlainConsole", "False");
     }
 
     /**
      * Test writing to and reading back from Jython subprocess with echo program on command-line.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -284,6 +288,9 @@ public class Issue1972 {
 
         // Run Jython simple readline programme
         setProcJava( //
+                "-Dpython.console=org.python.util.JLineConsole", //
+                // "-Dpython.console.interactive=True", //
+                "-Dpython.home=" + pythonHome, //
                 "org.python.util.jython", //
                 "-c", //
                 "import sys; sys.stdout.write(sys.stdin.readline()); sys.stdout.flush();" //
@@ -338,7 +345,7 @@ public class Issue1972 {
      * <td>echo the characters as hexadecimal</td>
      * </tr>
      * </table>
-     * 
+     *
      * @param args
      * @throws IOException
      */
@@ -373,7 +380,7 @@ public class Issue1972 {
     /**
      * Invoke the java command with the given arguments. The class path will be the same as this
      * programme's class path (as in the property <code>java.class.path</code>).
-     * 
+     *
      * @param args further arguments to the program run
      * @return the running process
      * @throws IOException
@@ -413,7 +420,7 @@ public class Issue1972 {
      * programme's class path (as in the property <code>java.class.path</code>). After the call,
      * {@link #proc} references the running process and {@link #inFromProc} and {@link #errFromProc}
      * are handling the <code>stdout</code> and <code>stderr</code> of the subprocess.
-     * 
+     *
      * @param args further arguments to the program run
      * @throws IOException
      */
@@ -427,7 +434,7 @@ public class Issue1972 {
     /**
      * Write this string into the <code>stdin</code> of the subprocess. The platform default
      * encoding will be used.
-     * 
+     *
      * @param s to write
      * @throws IOException
      */
@@ -441,14 +448,15 @@ public class Issue1972 {
      * {@link #escape(byte[])} transormation has been applied, are expected to be equal to the
      * strings supplied, optionally after {@link #escapedSeparator} has been added to the expected
      * strings.
-     * 
+     *
      * @param message identifies the queue in error message
      * @param addSeparator if true, system-defined line separator expected
      * @param queue to be compared
+     * @param toIgnore patterns defining lines to ignore while processing
      * @param expected lines of text (given without line separators)
      */
     private void checkFromProc(String message, boolean addSeparator, LineQueue queue,
-            String... expected) {
+            List<Pattern> toIgnore, String... expected) {
 
         if (addSeparator) {
             // Each expected string must be treated as if the lineSeparator were appended
@@ -470,29 +478,73 @@ public class Issue1972 {
         // Count through the results, stopping when either results or expected strings run out
         int count = 0;
         for (String r : results) {
-            if (count < expected.length) {
-                assertEquals(message, expected[count++], r);
-            } else {
+            if (count >= expected.length) {
                 break;
+            } else if (!matchesAnyOf(r, toIgnore)) {
+                assertEquals(message, expected[count++], r);
             }
         }
         assertEquals(message, expected.length, results.size());
     }
 
+    /** Compiled regular expressions for the lines to ignore (on stdout). */
+    private static List<Pattern> stdoutIgnore;
+
+    /** Compiled regular expressions for the lines to ignore (on stderr). */
+    private static List<Pattern> stderrIgnore;
+
+    /** If not already done, compile the regular expressions we need. */
+    private static void compileToIgnore() {
+        if (stdoutIgnore == null || stderrIgnore == null) {
+            // Compile the lines to ignore to Pattern objects
+            stdoutIgnore = compileAll(STDOUT_IGNORE);
+            stderrIgnore = compileAll(STDERR_IGNORE);
+        }
+    }
+
+    /** If not already done, compile one set of regular expressions to patterns. */
+    private static List<Pattern> compileAll(String[] regex) {
+        List<Pattern> result = new LinkedList<Pattern>();
+        if (regex != null) {
+            for (String s : regex) {
+                Pattern p = Pattern.compile(s);
+                result.add(p);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Compute whether a string matches any of a set of strings.
+     *
+     * @param s the string in question
+     * @param patterns to check against
+     * @return
+     */
+    private static boolean matchesAnyOf(String s, List<Pattern> patterns) {
+        for (Pattern p : patterns) {
+            if (p.matcher(s).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Check lines of {@link #inFromProc} against expected text.
-     * 
+     *
      * @param addSeparator if true, system-defined line separator expected
      * @param expected lines of text (given without line separators)
      */
     private void checkInFromProc(boolean addSeparator, String... expected) {
-        checkFromProc("subprocess stdout", addSeparator, inFromProc, expected);
+        compileToIgnore();        // Make sure we have the matcher patterns
+        checkFromProc("subprocess stdout", addSeparator, inFromProc, stdoutIgnore, expected);
     }
 
     /**
      * Check lines of {@link #inFromProc} against expected text. Lines from the subprocess are
      * expected to be equal to those supplied after {@link #escapedSeparator} has been added.
-     * 
+     *
      * @param expected lines of text (given without line separators)
      */
     private void checkInFromProc(String... expected) {
@@ -501,18 +553,19 @@ public class Issue1972 {
 
     /**
      * Check lines of {@link #errFromProc} against expected text.
-     * 
+     *
      * @param addSeparator if true, system-defined line separator expected
      * @param expected lines of text (given without line separators)
      */
     private void checkErrFromProc(boolean addSeparator, String... expected) {
-        checkFromProc("subprocess stderr", addSeparator, errFromProc, expected);
+        compileToIgnore();        // Make sure we have the matcher patterns
+        checkFromProc("subprocess stderr", addSeparator, errFromProc, stderrIgnore, expected);
     }
 
     /**
      * Check lines of {@link #errFromProc} against expected text. Lines from the subprocess are
      * expected to be equal to those supplied after {@link #escapedSeparator} has been added.
-     * 
+     *
      * @param expected lines of text (given without line separators)
      */
     private void checkErrFromProc(String... expected) {
@@ -521,7 +574,7 @@ public class Issue1972 {
 
     /**
      * Brevity for announcing tests on the console when that is used to dump values.
-     * 
+     *
      * @param verbose if <1 suppress output
      * @param name of test
      */
@@ -533,7 +586,7 @@ public class Issue1972 {
 
     /**
      * Output is System.out the formatted strings representing lines from a subprocess stdout.
-     * 
+     *
      * @param verbose if <2 suppress output
      * @param inFromProc lines received from the stdout of a subprocess
      */
@@ -546,7 +599,7 @@ public class Issue1972 {
     /**
      * Output is System.out the formatted strings representing lines from a subprocess stdout, and
      * if there are any, from stderr.
-     * 
+     *
      * @param verbose if <2 suppress output
      * @param inFromProc lines received from the stdout of a subprocess
      * @param errFromProc lines received from the stderr of a subprocess
@@ -559,7 +612,7 @@ public class Issue1972 {
 
     /**
      * Output is System.out a hex dump of lines from a subprocess stdout.
-     * 
+     *
      * @param verbose if <2 suppress output
      * @param inFromProc lines received from the stdout of a subprocess
      */
@@ -572,7 +625,7 @@ public class Issue1972 {
     /**
      * Output is System.out a hex dump of lines from a subprocess stdout, and if there are any, from
      * stderr.
-     * 
+     *
      * @param verbose if <2 suppress output
      * @param inFromProc lines received from the stdout of a subprocess
      * @param errFromProc lines received from the stderr of a subprocess
@@ -586,7 +639,7 @@ public class Issue1972 {
     /**
      * Output is System.out the formatted strings representing lines from a subprocess stdout, and
      * if there are any, from stderr.
-     * 
+     *
      * @param stdout to output labelled "Output stream:"
      * @param stderr to output labelled "Error stream:" unless an empty list or null
      */
@@ -612,7 +665,7 @@ public class Issue1972 {
 
     /**
      * Helper to format one line of string output hex-escaping non-ASCII characters.
-     * 
+     *
      * @param sb to overwrite with the line of dump output
      * @param bb from which to take the bytes
      */
@@ -646,7 +699,7 @@ public class Issue1972 {
 
     /**
      * Convert bytes (interpreted as ASCII) to String where the non-ascii characters are escaped.
-     * 
+     *
      * @param b
      * @return
      */
@@ -676,7 +729,7 @@ public class Issue1972 {
 
         /**
          * Wrap a stream in the reader and immediately begin reading it.
-         * 
+         *
          * @param in
          */
         LineQueue(InputStream in) {
@@ -701,7 +754,7 @@ public class Issue1972 {
         /**
          * Scan every byte read from the input and squirrel them away in buffers, one per line,
          * where lines are delimited by \r, \n or \r\n..
-         * 
+         *
          * @throws IOException
          */
         private void runScribe() throws IOException {
@@ -754,7 +807,7 @@ public class Issue1972 {
         /**
          * Return the contents of the queue as a list of escaped strings, interpreting the bytes as
          * ASCII.
-         * 
+         *
          * @return contents as strings
          */
         public List<String> asStrings() {
@@ -774,7 +827,7 @@ public class Issue1972 {
 
         /**
          * Return a hex dump the contents of the object as a list of strings
-         * 
+         *
          * @return dump as strings
          */
         public List<String> asHexDump() {
@@ -799,7 +852,7 @@ public class Issue1972 {
 
         /**
          * Helper to format one line of hex dump output up to a maximum number of bytes.
-         * 
+         *
          * @param sb to overwrite with the line of dump output
          * @param bb from which to take the bytes
          * @param n number of bytes to take (up to <code>len</code>)

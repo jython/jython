@@ -2,7 +2,6 @@
 package org.python.core;
 
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,6 +10,8 @@ import java.io.InputStreamReader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -40,7 +41,6 @@ import org.python.core.packagecache.SysPackageManager;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 import org.python.modules.Setup;
-import org.python.modules.zipimport.zipimporter;
 import org.python.util.Generic;
 
 /**
@@ -199,7 +199,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         meta_path = new PyList();
         path_hooks = new PyList();
         path_hooks.append(new JavaImporter());
-        path_hooks.append(zipimporter.TYPE);
+        path_hooks.append(org.python.modules.zipimport.zipimporter.TYPE);
         path_hooks.append(ClasspathPyImporter.TYPE);
         path_importer_cache = new PyDictionary();
 
@@ -879,17 +879,25 @@ public class PySystemState extends PyObject implements ClassDictInit {
         if (jarFileName != null) {
             standalone = isStandalone(jarFileName);
         }
+
         // initialize the Jython registry
         initRegistry(preProperties, postProperties, standalone, jarFileName);
+
         // other initializations
         initBuiltins(registry);
         initStaticFields();
+
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
         defaultExecutable = initExecutable(registry);
+
         // Set up the known Java packages
         initPackages(registry);
+
+        // Condition the console
+        initConsole(registry);
+
         // Finish up standard Python initialization...
         Py.defaultSystemState = new PySystemState();
         Py.setSystemState(Py.defaultSystemState);
@@ -897,10 +905,16 @@ public class PySystemState extends PyObject implements ClassDictInit {
             Py.defaultSystemState.setClassLoader(classLoader);
         }
         Py.initClassExceptions(getDefaultBuiltins());
+
         // defaultSystemState can't init its own encoding, see its constructor
         Py.defaultSystemState.initEncoding();
+
         // Make sure that Exception classes have been loaded
         new PySyntaxError("", 1, 1, "", "");
+
+        // Cause sys to export the console handler that was installed
+        Py.defaultSystemState.__setattr__("_jy_console", Py.java2py(Py.getConsole()));
+
         return Py.defaultSystemState;
     }
 
@@ -1020,6 +1034,86 @@ public class PySystemState extends PyObject implements ClassDictInit {
             return Py.None;
         }
         return new PyString(executableFile.getPath());
+    }
+
+    /**
+     * Wrap standard input with a customised console handler specified in the property
+     * <code>python.console</code> in the supplied property set, which in practice is the
+     * fully-initialised Jython {@link #registry}. The value of <code>python.console</code> is the
+     * name of a class that implements {@link org.python.core.Console}. An instance is constructed
+     * with the value of <code>python.console.encoding</code>, and the console
+     * <code>System.in</code> returns characters in that encoding. After the call, the console
+     * object may be accessed via {@link Py#getConsole()}.
+     *
+     * @param props containing (or not) <code>python.console</code>
+     */
+    private static void initConsole(Properties props) {
+        // At this stage python.console.encoding is always defined (but null=default)
+        String encoding = props.getProperty(PYTHON_CONSOLE_ENCODING);
+        // The console type is chosen by this registry entry:
+        String consoleName = props.getProperty("python.console", "").trim();
+        // And must be of type ...
+        final Class<Console> consoleType = Console.class;
+
+        if (consoleName.length() > 0 && Py.isInteractive()) {
+            try {
+                // Load the class specified as the console
+                Class<?> consoleClass = Class.forName(consoleName);
+
+                // Ensure it can be cast to the interface type of all consoles
+                if (! consoleType.isAssignableFrom(consoleClass)) {
+                    throw new ClassCastException();
+                }
+
+                // Construct an instance
+                Constructor<?> consoleConstructor = consoleClass.getConstructor(String.class);
+                Object consoleObject = consoleConstructor.newInstance(encoding);
+                Console console = consoleType.cast(consoleObject);
+
+                // Replace System.in with stream this console manufactures
+                Py.installConsole(console);
+                return;
+
+            } catch (NoClassDefFoundError e) {
+                writeConsoleWarning(consoleName, "not found");
+            } catch (ClassCastException e) {
+                writeConsoleWarning(consoleName, "does not implement " + consoleType);
+            } catch (NoSuchMethodException e) {
+                writeConsoleWarning(consoleName, "has no constructor from String");
+            } catch (InvocationTargetException e) {
+                writeConsoleWarning(consoleName, e.getCause().toString());
+            } catch (Exception e) {
+                writeConsoleWarning(consoleName, e.toString());
+            }
+        }
+
+        // No special console required, or requested installation failed somehow
+        try {
+            // Default is a plain console
+            Py.installConsole(new PlainConsole(encoding));
+            return;
+        } catch (Exception e) {
+            /*
+             * May end up here if prior console won't uninstall: but then at least we have a
+             * console. Or it may be an unsupported encoding, in which case Py.getConsole() will try
+             * "ascii"
+             */
+            writeConsoleWarning(consoleName, e.toString());
+        }
+    }
+
+    /**
+     * Convenience method wrapping {@link Py#writeWarning(String, String)} to issue a warning
+     * message something like:
+     * "console: Failed to load 'org.python.util.ReadlineConsole': <b>msg</b>.". It's only a warning
+     * because the interpreter will fall back to a plain console, but it is useful to know exactly
+     * why it didn't work.
+     *
+     * @param consoleName console class name we're trying to initialise
+     * @param msg specific cause of the failure
+     */
+    private static void writeConsoleWarning(String consoleName, String msg) {
+        Py.writeWarning("console", "Failed to install '" + consoleName + "': " + msg + ".");
     }
 
     private static void addBuiltin(String name) {
@@ -1456,6 +1550,7 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet {
         }
     }
 
+    @Override
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (index) {
             case 30:
@@ -1478,10 +1573,12 @@ class PyAttributeDeleted extends PyObject {
 
     private PyAttributeDeleted() {}
 
+    @Override
     public String toString() {
         return "";
     }
 
+    @Override
     public Object __tojava__(Class c) {
         if (c == PyObject.class) {
             return this;

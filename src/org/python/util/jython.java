@@ -2,6 +2,7 @@
 package org.python.util;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,6 +14,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import jnr.posix.POSIX;
+import jnr.posix.POSIXFactory;
 
 import org.python.Version;
 import org.python.core.CodeFlag;
@@ -87,7 +91,7 @@ public class jython {
      * root of the JAR archive. Note that the __name__ is set to the base name of the JAR file and
      * not to "__main__" (for historic reasons). This method do NOT handle exceptions. the caller
      * SHOULD handle any (Py)Exceptions thrown by the code.
-     *
+     * 
      * @param filename The path to the filename to run.
      */
     public static void runJar(String filename) {
@@ -201,8 +205,17 @@ public class jython {
             System.exit(exitcode);
         }
 
+        // Get system properties (or empty set if we're prevented from accessing them)
+        Properties preProperties = PySystemState.getBaseProperties();
+
+        // Decide if System.in is interactive
+        if (!opts.fixInteractive || opts.interactive) {
+            // The options suggest System.in is interactive: but only if isatty() agrees
+            opts.interactive = Py.isInteractive();
+        }
+
         // Setup the basic python system state from these options
-        PySystemState.initialize(PySystemState.getBaseProperties(), opts.properties, opts.argv);
+        PySystemState.initialize(preProperties, opts.properties, opts.argv);
         PySystemState systemState = Py.getSystemState();
 
         PyList warnoptions = new PyList();
@@ -216,17 +229,12 @@ public class jython {
             imp.load("warnings");
         }
 
-        // Decide if stdin is interactive
-        if (!opts.fixInteractive || opts.interactive) {
-            opts.interactive = ((PyFile)Py.defaultSystemState.stdin).isatty();
-            if (!opts.interactive) {
-                systemState.ps1 = systemState.ps2 = Py.EmptyString;
-            }
-        }
-
         // Now create an interpreter
-        InteractiveConsole interp = newInterpreter(opts.interactive);
-        systemState.__setattr__("_jy_interpreter", Py.java2py(interp));
+        if (!opts.interactive) {
+            // Not (really) interactive, so do not use console prompts
+            systemState.ps1 = systemState.ps2 = Py.EmptyString;
+        }
+        InteractiveConsole interp = new InteractiveConsole();
 
         // Print banner and copyright information (or not)
         if (opts.interactive && opts.notice && !opts.runModule) {
@@ -379,30 +387,6 @@ public class jython {
             }
         }
         interp.cleanup();
-    }
-
-    /**
-     * Returns a new python interpreter using the InteractiveConsole subclass from the
-     * <tt>python.console</tt> registry key.
-     * <p>
-     * When stdin is interactive the default is {@link JLineConsole}. Otherwise the featureless
-     * {@link InteractiveConsole} is always used as alternative consoles cause unexpected behavior
-     * with the std file streams.
-     */
-    private static InteractiveConsole newInterpreter(boolean interactiveStdin) {
-        if (!interactiveStdin) {
-            return new InteractiveConsole();
-        }
-
-        String interpClass = PySystemState.registry.getProperty("python.console", "");
-        if (interpClass.length() > 0) {
-            try {
-                return (InteractiveConsole)Class.forName(interpClass).newInstance();
-            } catch (Throwable t) {
-                // fall through
-            }
-        }
-        return new JLineConsole();
     }
 
     /**

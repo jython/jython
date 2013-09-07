@@ -4,18 +4,19 @@
  */
 package org.python.core;
 
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.python.antlr.base.mod;
 import org.python.core.util.RelativeFile;
-
+import org.python.core.util.StringUtil;
 import org.python.modules._functools._functools;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -1010,6 +1011,14 @@ public class __builtin__ {
         }
     }
 
+    /**
+     * Companion to <code>raw_input</code> built-in function used when the interactive interpreter
+     * is directed to a file.
+     *
+     * @param prompt to issue at console before read
+     * @param file a file-like object to read from
+     * @return line of text from the file (encoded as bytes values compatible with PyString)
+     */
     public static String raw_input(PyObject prompt, PyObject file) {
         PyObject stdout = Py.getSystemState().stdout;
         if (stdout instanceof PyAttributeDeleted) {
@@ -1027,16 +1036,32 @@ public class __builtin__ {
         return data;
     }
 
+    /**
+     * Implementation of <code>raw_input(prompt)</code> built-in function using the console
+     * directly.
+     *
+     * @param prompt to issue at console before read
+     * @return line of text from console (encoded as bytes values compatible with PyString)
+     */
     public static String raw_input(PyObject prompt) {
-        PyObject stdin = Py.getSystemState().stdin;
-        if (stdin instanceof PyAttributeDeleted) {
-            throw Py.RuntimeError("[raw_]input: lost sys.stdin");
+        try {
+            Console console = Py.getConsole();
+            ByteBuffer buf = console.raw_input(prompt.toString());
+            return StringUtil.fromBytes(buf);
+        } catch (EOFException eof) {
+            throw Py.EOFError("raw_input()");
+        } catch (IOException ioe) {
+            throw Py.IOError(ioe);
         }
-        return raw_input(prompt, stdin);
     }
 
+    /**
+     * Implementation of <code>raw_input()</code> built-in function using the console directly.
+     *
+     * @return line of text from console (encoded as bytes values compatible with PyString)
+     */
     public static String raw_input() {
-        return raw_input(new PyString(""));
+        return raw_input(Py.EmptyString);
     }
 
     public static PyObject reduce(PyObject f, PyObject l, PyObject z) {
