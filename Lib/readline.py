@@ -14,10 +14,11 @@ __all__ = ['add_history', 'clear_history', 'get_begidx', 'get_completer',
            'set_history_length', 'set_pre_input_hook', 'set_startup_hook',
            'write_history_file']
 
-try:    
-    _reader = sys._jy_interpreter.reader
+try:
+    _console = sys._jy_console
+    _reader = _console.reader
 except AttributeError:
-    raise ImportError("Cannot access JLineConsole")
+    raise ImportError("Cannot access JLineConsole reader")
 
 _history_list = None
 
@@ -38,7 +39,7 @@ def _setup_history():
     # modify the history (ipython uses the function
     # remove_history_item to mutate the history relatively frequently)
     global _history_list
-    
+
     history = _reader.history
     try:
         history_list_field = history.class.getDeclaredField("history")
@@ -68,7 +69,7 @@ def get_line_buffer():
 
 def insert_text(string):
     _reader.putString(string)
-    
+
 def read_init_file(filename=None):
     warn("read_init_file: %s" % (filename,), NotImplementedWarning, "module", 2)
 
@@ -94,7 +95,7 @@ def clear_history():
     _reader.history.clear()
 
 def add_history(line):
-    _reader.addToHistory(line)
+    _reader.history.addToHistory(line)
 
 def get_history_length():
     return _reader.history.maxSize
@@ -106,7 +107,11 @@ def get_current_history_length():
     return len(_reader.history.historyList)
 
 def get_history_item(index):
-    return _reader.history.historyList[index]
+    # JLine indexes from 0 while readline indexes from 1 (at least in test_readline)
+    if index>0:
+        return _reader.history.historyList[index-1]
+    else:
+        return None
 
 def remove_history_item(pos):
     if _history_list:
@@ -114,12 +119,18 @@ def remove_history_item(pos):
     else:
         warn("Cannot remove history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
 
+def replace_history_item(pos, line):
+    if _history_list:
+        _history_list.set(pos, line)
+    else:
+        warn("Cannot replace history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
+
 def redisplay():
     _reader.redrawLine()
 
 def set_startup_hook(function=None):
-    sys._jy_interpreter.startupHook = function
-    
+    _console.startupHook = function
+
 def set_pre_input_hook(function=None):
     warn("set_pre_input_hook %s" % (function,), NotImplementedWarning, stacklevel=2)
 
@@ -151,7 +162,7 @@ def set_completer(function=None):
         return start
 
     _reader.addCompletor(complete_handler)
-    
+
 
 def get_completer():
     return _completer_function

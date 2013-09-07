@@ -936,6 +936,7 @@ The readme text for the next release will be like:
                 <fileset dir="${test.source.dir}" includes="**/*Test*.java">
                     <exclude name="javatests/**/*" />
                     <exclude name="**/InterpTestCase.java" />
+                    <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
                     <exclude name="org/python/antlr/**" />
                     <exclude name=".classpath" />
                     <exclude name=".project" />

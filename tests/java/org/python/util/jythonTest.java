@@ -1,88 +1,44 @@
 package org.python.util;
 
-import java.lang.reflect.Method;
-import java.util.Properties;
+import static org.junit.Assert.*;
 
-import org.python.core.PySystemState;
-
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.python.core.Console;
+import org.python.core.PlainConsole;
+import org.python.core.Py;
 
 /**
- * Tests for creating the right interactive console.
+ * Tests of creating and getting the right interactive console.
+ * <p>
+ * System initialisation is a one-time thing normally, and the embedding of a console handler
+ * similarly, so it is difficult to test more than one console choice in a single executable. For
+ * this reason, there are two programs like this one: one that follows the native preference for a
+ * {@link PlainConsole} and this one that induces selection of a {@link JLineConsole}. Other
+ * features of the JLine console (such as access history) could be tested here. But the test
+ * Lib/test/test_readline.py does this fairly well, although it has to be run manually.
+ * <p>
+ * Automated testing of the console seems impossible since, in a scripted context (e.g. as a
+ * subprocess or under Ant) Jython is no longer interactive. To run it at the prompt, suggested
+ * idiom is (all one line):
+ *
+ * <pre>
+ * java -cp build/exposed;build/classes;extlibs/* -Dpython.home=dist
+ *              org.junit.runner.JUnitCore org.python.util.jythonTest
+ * </pre>
  */
-public class jythonTest extends TestCase {
+public class jythonTest {
 
-    private static final String PYTHON_CONSOLE = "python.console";
-
-    private Properties _originalRegistry;
-
-    @Override
-    protected void setUp() throws Exception {
-        _originalRegistry = PySystemState.registry;
-        Properties registry;
-        if (_originalRegistry != null) {
-            registry = new Properties(_originalRegistry);
-        } else {
-            registry = new Properties();
-        }
-        PySystemState.registry = registry;
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        PySystemState.registry = _originalRegistry;
-    }
+    private static String[] commands = {"-c", "import sys; print type(sys._jy_console)"};
 
     /**
-     * test the default behavior
-     * 
-     * @throws Exception
+     * Test that the default behaviour is to provide a JLineConsole. If CALL_RUN is true, it fails
+     * under Ant (or Eclipse) as the console is not then recognised to be interactive.
      */
-    public void testNewInterpreter() throws Exception {
-        assertEquals(JLineConsole.class, invokeNewInterpreter(true).getClass());
-    }
-
-    /**
-     * test registry override
-     * 
-     * @throws Exception
-     */
-    public void testNewInterpreter_registry() throws Exception {
-        PySystemState.registry.setProperty(PYTHON_CONSOLE, "org.python.util.InteractiveConsole");
-        assertEquals(InteractiveConsole.class, invokeNewInterpreter(true).getClass());
-    }
-
-    /**
-     * test fallback in case of an invalid registry value
-     * 
-     * @throws Exception
-     */
-    public void testNewInterpreter_unknown() throws Exception {
-        PySystemState.registry.setProperty(PYTHON_CONSOLE, "foo.bar.NoConsole");
-        assertEquals(JLineConsole.class, invokeNewInterpreter(true).getClass());
-    }
-
-    /**
-     * test non-interactive fallback to legacy console
-     * 
-     * @throws Exception
-     */
-    public void testNewInterpreter_NonInteractive() throws Exception {
-        assertEquals(InteractiveConsole.class, invokeNewInterpreter(false).getClass());
-    }
-
-    /**
-     * Invoke the private static method 'newInterpreter(boolean)' on jython.class
-     * 
-     * @throws Exception
-     */
-    private InteractiveConsole invokeNewInterpreter(boolean interactiveStdin) throws Exception {
-        Method method = jython.class.getDeclaredMethod("newInterpreter", Boolean.TYPE);
-        assertNotNull(method);
-        method.setAccessible(true);
-        Object result = method.invoke(null, interactiveStdin);
-        assertNotNull(result);
-        assertTrue(result instanceof InteractiveConsole);
-        return (InteractiveConsole)result;
+    @Test
+    public void testDefaultConsole() {
+        // This path only if you changed it to run manually
+        jython.run(commands);
+        Console console = Py.getConsole();
+        assertEquals(JLineConsole.class, console.getClass());
     }
 }

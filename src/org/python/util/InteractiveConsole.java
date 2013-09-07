@@ -28,20 +28,21 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     /**
-     * @param replaceRawInput -
-     *            if true, we hook this Class's raw_input into the builtins
-     *            table so that clients like cmd.Cmd use it.
+     * @param replaceRawInput if true, we hook this Class's raw_input into the built-ins table so
+     *            that clients like cmd.Cmd use it.
      */
     public InteractiveConsole(PyObject locals, String filename, boolean replaceRawInput) {
         super(locals);
         this.filename = filename;
-        if(replaceRawInput) {
+        if (replaceRawInput) {
             PyObject newRawInput = new PyBuiltinFunctionSet("raw_input", 0, 0, 1) {
 
+                @Override
                 public PyObject __call__() {
                     return __call__(Py.EmptyString);
                 }
 
+                @Override
                 public PyObject __call__(PyObject prompt) {
                     return Py.newString(raw_input(prompt));
                 }
@@ -52,9 +53,9 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     /**
      * Closely emulate the interactive Python console.
-     * 
-     * The optional banner argument specifies the banner to print before the
-     * first interaction; by default it prints "Jython <version> on <platform>".
+     *
+     * The optional banner argument specifies the banner to print before the first interaction; by
+     * default it prints "Jython <version> on <platform>".
      */
     public void interact() {
         interact(getDefaultBanner(), null);
@@ -65,7 +66,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     public void interact(String banner, PyObject file) {
-        if(banner != null) {
+        if (banner != null) {
             write(banner);
             write("\n");
         }
@@ -73,17 +74,19 @@ public class InteractiveConsole extends InteractiveInterpreter {
         exec("2");
         // System.err.println("interp2");
         boolean more = false;
-        while(true) {
+        while (true) {
             PyObject prompt = more ? systemState.ps2 : systemState.ps1;
             String line;
             try {
-        	if (file == null)
-        	    line = raw_input(prompt);
-        	else
-        	    line = raw_input(prompt, file);
-            } catch(PyException exc) {
-                if(!exc.match(Py.EOFError))
+                if (file == null) {
+                    line = raw_input(prompt);
+                } else {
+                    line = raw_input(prompt, file);
+                }
+            } catch (PyException exc) {
+                if (!exc.match(Py.EOFError)) {
                     throw exc;
+                }
                 write("\n");
                 break;
             }
@@ -93,43 +96,40 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     /**
      * Push a line to the interpreter.
-     * 
-     * The line should not have a trailing newline; it may have internal
-     * newlines. The line is appended to a buffer and the interpreter's
-     * runsource() method is called with the concatenated contents of the buffer
-     * as source. If this indicates that the command was executed or invalid,
-     * the buffer is reset; otherwise, the command is incomplete, and the buffer
-     * is left as it was after the line was appended. The return value is 1 if
-     * more input is required, 0 if the line was dealt with in some way (this is
-     * the same as runsource()).
+     *
+     * The line should not have a trailing newline; it may have internal newlines. The line is
+     * appended to a buffer and the interpreter's runsource() method is called with the concatenated
+     * contents of the buffer as source. If this indicates that the command was executed or invalid,
+     * the buffer is reset; otherwise, the command is incomplete, and the buffer is left as it was
+     * after the line was appended. The return value is 1 if more input is required, 0 if the line
+     * was dealt with in some way (this is the same as runsource()).
      */
     public boolean push(String line) {
-        if(buffer.length() > 0)
+        if (buffer.length() > 0) {
             buffer.append("\n");
+        }
         buffer.append(line);
         boolean more = runsource(buffer.toString(), filename);
-        if(!more)
+        if (!more) {
             resetbuffer();
+        }
         return more;
     }
 
     /**
-     * Write a prompt and read a line from standard input.
-     * 
-     * The returned line does not include the trailing newline. When the user
-     * enters the EOF key sequence, EOFError is raised.
-     * 
-     * The base implementation uses the built-in function raw_input(); a
-     * subclass may replace this with a different implementation.
+     * Write a prompt and read a line from standard input. The returned line does not include the
+     * trailing newline. When the user enters the EOF key sequence, EOFError is raised. The base
+     * implementation uses the built-in function raw_input(); a subclass may replace this with a
+     * different implementation.
      */
     public String raw_input(PyObject prompt) {
         return __builtin__.raw_input(prompt);
     }
-    
+
     /**
      * Write a prompt and read a line from a file.
      */
     public String raw_input(PyObject prompt, PyObject file) {
-	return __builtin__.raw_input(prompt, file);
+        return __builtin__.raw_input(prompt, file);
     }
 }

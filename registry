@@ -31,15 +31,16 @@ python.packages.directories = java.ext.dirs
 #python.verbose = message
 
 # Jython ships with a JLine console (http://jline.sourceforge.net/)
-# out of the box. Setting this to the name of a different console class,
-# new console features can be enabled. Readline support is such an
-# example:
+# out of the box.
+python.console=org.python.util.JLineConsole
+# To activate explicitly the featureless Jython console, choose:
+#python.console=org.python.core.PlainConsole
+# By setting this to the name of a different console class,
+# new console features can be enabled. For example:
 #python.console=org.python.util.ReadlineConsole
-#python.console.readlinelib=JavaReadline
-# To activate the legacy Jython console:
-#python.console=org.python.util.InteractiveConsole
+#python.console.readlinelib=GnuReadline
 
-# Setting this to a valid codec name will cause the console to use a
+# Setting this to a valid (Java) codec name will cause the console to use a
 # different encoding when reading commands from the console.
 #python.console.encoding = cp850
 

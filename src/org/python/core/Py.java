@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,14 +18,17 @@ import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Set;
 
-import org.python.antlr.base.mod;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
-import java.util.ArrayList;
-import java.util.List;
+import jnr.posix.POSIX;
+import jnr.posix.POSIXFactory;
+
+import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.posix.PosixModule;
@@ -1384,6 +1388,73 @@ public final class Py {
 
     public static void setFrame(PyFrame f) {
         getThreadState().frame = f;
+    }
+
+    /**
+     * The handler for interactive consoles, set by {@link #installConsole(Console)} and accessed by
+     * {@link #getConsole()}.
+     */
+    private static Console console;
+
+    /**
+     * Get the Jython Console (used for <code>input()</code>, <code>raw_input()</code>, etc.) as
+     * constructed and set by {@link PySystemState} initialization.
+     *
+     * @return the Jython Console
+     */
+    public static Console getConsole() {
+        if (console == null) {
+            // We really shouldn't ask for a console before PySystemState initialization but ...
+            try {
+                // ... something foolproof that we can supersede.
+                installConsole(new PlainConsole("ascii"));
+            } catch (Exception e) {
+                // This really, really shouldn't happen
+                throw Py.RuntimeError("Could not create fall-back PlainConsole: " + e);
+            }
+        }
+        return console;
+    }
+
+    /**
+     * Install the provided Console, first uninstalling any current one. The Jython Console is used
+     * for <code>raw_input()</code> etc., and may provide line-editing and history recall at the
+     * prompt. A Console may replace <code>System.in</code> with its line-editing input method.
+     *
+     * @param console The new Console object
+     * @throws UnsupportedOperationException if some prior Console refuses to uninstall
+     * @throws IOException if {@link Console#install()} raises it
+     */
+    public static void installConsole(Console console) throws UnsupportedOperationException,
+            IOException {
+        if (Py.console != null) {
+            // Some Console class already installed: may be able to uninstall
+            Py.console.uninstall();
+            Py.console = null;
+        }
+
+        // Install the specified Console
+        console.install();
+        Py.console = console;
+
+        // Cause sys (if it exists) to export the console handler that was installed
+        if (Py.defaultSystemState != null) {
+            Py.defaultSystemState.__setattr__("_jy_console", Py.java2py(console));
+        }
+    }
+
+    /**
+     * Check (using the {@link POSIX} library) whether we are in an interactive environment. Amongst
+     * other things, this affects the type of console that may be legitimately installed during
+     * system initialisation.
+     *
+     * @return
+     */
+    public static boolean isInteractive() {
+        // Decide if System.in is interactive
+        POSIX posix = POSIXFactory.getPOSIX();
+        FileDescriptor in = FileDescriptor.in;
+        return posix.isatty(in);
     }
 
     /* A collection of functions for implementing the print statement */
