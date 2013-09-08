@@ -153,7 +153,7 @@ class JavaReservedNamesTest(unittest.TestCase):
 
     def test_system_in(self):
         s = System.in
-        self.assert_("java.io.BufferedInputStream" in str(s))
+        self.assert_("method" in str(s.read))
 
     def test_runtime_exec(self):
         e = Runtime.getRuntime().exec
