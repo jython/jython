@@ -20,7 +20,7 @@ import org.junit.After;
 import org.junit.Test;
 
 /**
- * Tests investigating issues with readline() first raised in Jython Issue #1972. these involve
+ * Tests investigating issues with readline() first raised in Jython Issue #1972. These involve
  * sub-process input and output through the console streams. Although the console streams are used,
  * the JLine console handler is not engaged, as the test {@link #jythonJLineConsole()} verifies. You
  * could run this as a straight JUnit test, or in various debugging configurations, including remote
@@ -48,10 +48,10 @@ public class Issue1972 {
     static int VERBOSE = 0;
 
     /** Lines in stdout (as regular expressions) to ignore when checking subprocess output. */
-    static String[] STDOUT_IGNORE = {"^Listening for transport dt_socket"};
+    static String[] STDOUT_IGNORE = {"Listening for transport dt_socket"};
 
     /** Lines in stderr (as regular expressions) to ignore when checking subprocess output. */
-    static String[] STDERR_IGNORE = {"^Jython 2", "^\\*sys-package-mgr"};
+    static String[] STDERR_IGNORE = {"Jython 2", "\\*sys-package-mgr"};
 
     /**
      * Extra JVM options used when debugging is enabled. <code>DEBUG_PORT</code> will be substituted
@@ -475,16 +475,21 @@ public class Issue1972 {
         // Get the escaped form of the byte buffers in the queue
         List<String> results = queue.asStrings();
 
-        // Count through the results, stopping when either results or expected strings run out
+        // Count through the results, comparing what we can't ignore to what was expected
         int count = 0;
         for (String r : results) {
-            if (count >= expected.length) {
-                break;
-            } else if (!matchesAnyOf(r, toIgnore)) {
-                assertEquals(message, expected[count++], r);
+            if (!beginsWithAnyOf(r, toIgnore)) {
+                if (count < expected.length) {
+                    // Check the line against the expected text
+                    assertEquals(message, expected[count++], r);
+                } else {
+                    // Extra line will be a failure but continue to count
+                    count++;
+                }
             }
         }
-        assertEquals(message, expected.length, results.size());
+        // Check number of lines we can't ignore against the number expected
+        assertEquals(message, expected.length, count);
     }
 
     /** Compiled regular expressions for the lines to ignore (on stdout). */
@@ -515,15 +520,15 @@ public class Issue1972 {
     }
 
     /**
-     * Compute whether a string matches any of a set of strings.
+     * Compute whether a string begins with any of a set of strings.
      *
      * @param s the string in question
      * @param patterns to check against
      * @return
      */
-    private static boolean matchesAnyOf(String s, List<Pattern> patterns) {
+    private static boolean beginsWithAnyOf(String s, List<Pattern> patterns) {
         for (Pattern p : patterns) {
-            if (p.matcher(s).matches()) {
+            if (p.matcher(s).lookingAt()) {
                 return true;
             }
         }

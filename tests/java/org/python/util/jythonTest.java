@@ -31,12 +31,10 @@ public class jythonTest {
     private static String[] commands = {"-c", "import sys; print type(sys._jy_console)"};
 
     /**
-     * Test that the default behaviour is to provide a JLineConsole. If CALL_RUN is true, it fails
-     * under Ant (or Eclipse) as the console is not then recognised to be interactive.
+     * Test that the default behaviour is to provide a JLineConsole.
      */
     @Test
     public void testDefaultConsole() {
-        // This path only if you changed it to run manually
         jython.run(commands);
         Console console = Py.getConsole();
         assertEquals(JLineConsole.class, console.getClass());
