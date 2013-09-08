@@ -652,12 +652,13 @@ class SerializationTest(unittest.TestCase):
             # Jython runtime) is initialized for the proxy
             jars = find_jython_jars()
             jars.append(proxies_jar_path)
-            classpath = ":".join(jars)
+            classpath = os.pathsep.join(jars)
             env = dict(os.environ)
             env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
             cmd = [os.path.join(System.getProperty("java.home"), "bin/java"),
                    "-classpath", classpath, "ProxyDeserialization", cat_path]
-            self.assertEqual(subprocess.check_output(cmd, env=env), "meow\n")
+            self.assertEqual(subprocess.check_output(cmd, env=env, universal_newlines=True),
+                             "meow\n")
         finally:
             org.python.core.Options.proxyDebugDirectory = old_proxy_debug_dir
             shutil.rmtree(tempdir)
@@ -695,7 +696,7 @@ public class BarkTheDog {
 """
             jars = find_jython_jars()
             jars.append(proxies_jar_path)
-            classpath = ":".join(jars)
+            classpath = os.pathsep.join(jars)
             compile_java_source(
                 ["-classpath", classpath, "-d", tempdir],
                 "BarkTheDog", source)           
@@ -705,15 +706,15 @@ public class BarkTheDog {
             # message printed to stdout, which in turn ensures that
             # PySystemState (and Jython runtime) is initialized for
             # the proxy
-            classpath += ":" + tempdir
+            classpath += os.pathsep + tempdir
             cmd = [os.path.join(System.getProperty("java.home"), "bin/java"),
                    "-classpath", classpath, "BarkTheDog"]
             env = dict(os.environ)
             env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
             self.assertEqual(
-                subprocess.check_output(cmd, env=env),
-                "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
-                "Rover barks 42 times\n")
+                subprocess.check_output(cmd, env=env, universal_newlines=True),
+                    "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
+                    "Rover barks 42 times\n")
         finally:
             pass
             # print "Will not remove", tempdir
