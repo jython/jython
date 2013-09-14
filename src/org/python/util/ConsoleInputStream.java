@@ -4,7 +4,7 @@ package org.python.util;
 import java.io.EOFException;
 import java.io.FilterInputStream;
 import java.io.IOException;
-import java.nio.BufferOverflowException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -22,7 +22,7 @@ import java.nio.charset.Charset;
  * io stack, whether we are using the <code>io</code> module or <code>file</code> built-in, that
  * should deal with encoding.
  */
-public abstract class ConsoleStream extends FilterInputStream {
+public abstract class ConsoleInputStream extends FilterInputStream {
 
     /**
      * Enumeration used to specify whether an end-of-line should be added or replaced at the end of
@@ -38,7 +38,7 @@ public abstract class ConsoleStream extends FilterInputStream {
     protected final EOLPolicy eolPolicy;
     /** The end-of-line String specified in the constructor. */
     protected final String eol;
-    /** The end-of-line String specified in the constructor. */
+    /** The character encoding specified in the constructor. */
     protected final Charset encoding;
     /** Bytes decoded from the last line read. */
     private ByteBuffer buf;
@@ -56,14 +56,15 @@ public abstract class ConsoleStream extends FilterInputStream {
      * <code>REPLACE</code> (remove a trailing '\n', '\r', or '\r\n' provided by the library, then
      * add <code>eol</code>).
      *
+     * @param in stream to wrap, normally <code>System.in</code>
      * @param encoding to use to encode the buffered characters
      * @param eolPolicy choice of how to treat an end-of-line marker
      * @param eol the end-of-line to use when <code>eolPolicy</code> is not <code>LEAVE</code>
      */
-    ConsoleStream(Charset encoding, EOLPolicy eolPolicy, String eol) {
+    ConsoleInputStream(InputStream in, Charset encoding, EOLPolicy eolPolicy, String eol) {
 
-        // Wrap original System.in so <code>StreamIO.isatty()</code> will find it reflectively
-        super(System.in);
+        // Wrap original in so <code>StreamIO.isatty()</code> will find it reflectively
+        super(in);
 
         // But our real input comes from (re-)encoding the console line
         this.encoding = encoding;
@@ -74,7 +75,7 @@ public abstract class ConsoleStream extends FilterInputStream {
         buf = EMPTY_BUF;
     }
 
-    /**
+   /**
      * Get one line of input from the console. Override this method with the actions specific to the
      * library in use.
      *
@@ -137,16 +138,14 @@ public abstract class ConsoleStream extends FilterInputStream {
     }
 
     /**
-     * Reads the next byte of data from the buffered input line.
-     *
+     * Read the next byte of data from the buffered input line.
      * The byte is returned as an int in the range 0 to 255. If no byte is available because the end
      * of the stream has been recognised, the value -1 is returned. This method blocks until input
-     * data is available, the end of the stream is detected, or an exception is thrown. Normally, an
+     * data are available, the end of the stream is detected, or an exception is thrown. Normally, an
      * empty line results in an encoded end-of-line being returned.
      */
     @Override
     public int read() throws IOException {
-
         try {
             // Do we need to refill?
             while (!buf.hasRemaining()) {
@@ -162,8 +161,8 @@ public abstract class ConsoleStream extends FilterInputStream {
     /**
      * Reads up to len bytes of data from this input stream into an array of bytes. If len is not
      * zero, the method blocks until some input is available; otherwise, no bytes are read and 0 is
-     * returned. This implementation calls {@link #fillBuffer()} at most once to get a line of
-     * characters from the console using {@link #getLine()}, and encodes them as bytes to be read
+     * returned. This implementation calls {@link #getLine()} at most once to get a line of
+     * characters from the console, and encodes them as bytes to be read
      * back from the stream.
      */
     @Override
@@ -213,16 +212,6 @@ public abstract class ConsoleStream extends FilterInputStream {
     @Override
     public int available() throws IOException {
         return buf.remaining();
-    }
-
-    /**
-     * If possible, restore the standard <code>System.in</code>. Override this if necessary to
-     * perform close down actions on the console library, then call <code>super.close()</code>.
-     */
-    @Override
-    public void close() throws IOException {
-        // Restore original System.in
-        System.setIn(in);
     }
 
     /** Mark is not supported. */

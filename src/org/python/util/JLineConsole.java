@@ -10,6 +10,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Arrays;
@@ -31,18 +32,18 @@ public class JLineConsole extends PlainConsole {
 
     /** Main interface to JLine. */
     public ConsoleReader reader;
-
     /** Callable object set by <code>readline.set_startup_hook</code>. */
     protected PyObject startup_hook;
-
     /** <b>Not</b> currently set by <code>readline.set_pre_input_hook</code>. Why not? */
     protected PyObject pre_input_hook;
-
     /** Whether reader is a WindowsTerminal. */
     private boolean windows;
-
     /** The ctrl-z character String. */
     protected static final String CTRL_Z = "\u001a";
+    /** The longest we expect a console prompt to be (in encoded bytes) */
+    public static final int MAX_PROMPT = 512;
+    /** Stream wrapping System.out in order to capture the last prompt. */
+    private ConsoleOutputStream outWrapper;
 
     /**
      * Errno strerrors possibly caused by a SIGSTP (ctrl-z). They may propagate up to IOException
@@ -58,7 +59,7 @@ public class JLineConsole extends PlainConsole {
      * Most of the initialisation is deferred to the {@link #install()} method so that any prior
      * console can uninstall itself before we change system console settings and
      * <code>System.in</code>.
-     * 
+     *
      * @param encoding name of a supported encoding or <code>null</code> for
      *            <code>Charset.defaultCharset()</code>
      */
@@ -81,7 +82,8 @@ public class JLineConsole extends PlainConsole {
      * {@inheritDoc}
      * <p>
      * This implementation overrides that by setting <code>System.in</code> to a
-     * <code>FilterInputStream</code> object that wraps JLine.
+     * <code>FilterInputStream</code> object that wraps JLine, and <code>System.out</code>
+     * with a layer that buffers incomplete lines for use as the console prompt.
      */
     @Override
     public void install() {
@@ -96,6 +98,14 @@ public class JLineConsole extends PlainConsole {
              * line through this Writer.
              */
             Writer out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
+
+            /*
+             * Everybody else, using sys.stdout or java.lang.System.out gets to write on a special
+             * PrintStream that keeps the last incomplete line in case it turns out to be a console
+             * prompt.
+             */
+            outWrapper = new ConsoleOutputStream(System.out, MAX_PROMPT);
+            System.setOut(new PrintStream(outWrapper, true, encoding));
 
             // Get the key bindings (built in ones treat TAB Pythonically).
             InputStream bindings = getBindings(userHomeSpec, getClass().getClassLoader());
@@ -127,41 +137,23 @@ public class JLineConsole extends PlainConsole {
         System.setIn(wrapper);
     }
 
-    // Inherited raw_input() is adequate: calls input()
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This console implements <code>input</code> using JLine to handle the prompt and data entry,
-     * so that the cursor may be correctly handled in relation to the prompt string.
-     */
-    @Override
-    public CharSequence input(CharSequence prompt) throws IOException, EOFException {
-        // Get the line from the console via the library
-        String line = readerReadLine(prompt.toString());
-        if (line == null) {
-            throw new EOFException();
-        } else {
-            return line;
-        }
-    }
-
     /**
      * Class to wrap the line-oriented interface to JLine with an InputStream that can replace
      * System.in.
      */
-    private class Stream extends ConsoleStream {
+    private class Stream extends ConsoleInputStream {
 
         /** Create a System.in replacement with JLine that adds system-specific line endings */
         Stream() {
-            super(encodingCharset, EOLPolicy.ADD, LINE_SEPARATOR);
+            super(System.in, encodingCharset, EOLPolicy.ADD, LINE_SEPARATOR);
         }
 
         @Override
         protected CharSequence getLine() throws IOException, EOFException {
 
-            // Get a line and hope to be done. Suppress any remembered prompt.
-            String line = readerReadLine("");
+            // Get a line and hope to be done. The prompt is the current partial output line.
+            String prompt = outWrapper.getPrompt(encodingCharset).toString();
+            String line = readerReadLine(prompt);
 
             if (!isEOF(line)) {
                 return line;
@@ -170,13 +162,14 @@ public class JLineConsole extends PlainConsole {
                 throw new EOFException();
             }
         }
+
     }
 
     /**
      * Wrapper on reader.readLine(prompt) that deals with retries (on Unix) when the user enters
-     * cvtrl-Z to background Jython, the brings it back to the foreground. The inherited
+     * ctrl-Z to background Jython, then brings it back to the foreground. The inherited
      * implementation says this is necessary and effective on BSD Unix.
-     * 
+     *
      * @param prompt to display
      * @return line of text read in
      * @throws IOException if an error occurs (other than an end of suspension)
@@ -221,10 +214,10 @@ public class JLineConsole extends PlainConsole {
 
     /**
      * Return the JLine bindings file.
-     * 
+     *
      * This handles loading the user's custom key bindings (normally JLine does) so it can fall back
      * to Jython's (which disable tab completion) when the user's are not available.
-     * 
+     *
      * @return an InputStream of the JLine bindings file.
      */
     protected static InputStream getBindings(String userHomeSpec, ClassLoader loader) {

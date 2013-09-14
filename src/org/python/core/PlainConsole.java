@@ -20,8 +20,9 @@ import java.nio.charset.UnsupportedCharsetException;
  * also be installed by the Jython command-line application when in non-interactive mode.
  * <p>
  * Unlike some consoles, <code>PlainConsole</code> does not install a replacement for
- * <code>System.in</code> or use a native library. It prompts on <code>System.out</code> and reads
- * from <code>System.in</code> (wrapped with the console encoding).
+ * <code>System.in</code> or <code>System.out</code>, or use a native library. It prompts on
+ * <code>System.out</code> and reads from <code>System.in</code> (wrapped with the console
+ * encoding).
  */
 public class PlainConsole implements Console {
 
@@ -31,14 +32,12 @@ public class PlainConsole implements Console {
     /** Encoding to use for line input as a <code>Charset</code>. */
     public final Charset encodingCharset;
 
-    /** BufferedReader used by {@link #input(CharSequence)} */
-    private BufferedReader reader;
-
     /**
      * Construct an instance of the console class specifying the character encoding. This encoding
-     * must be one supported by the JVM. The PlainConsole does not replace <code>System.in</code>,
-     * and does not add any line-editing capability to what is standard for your OS console.
-     *
+     * must be one supported by the JVM. The PlainConsole does not replace <code>System.in</code> or
+     * <code>System.out</code>, and does not add any line-editing capability to what is standard for
+     * your OS console.
+     * 
      * @param encoding name of a supported encoding or <code>null</code> for
      *            <code>Charset.defaultCharset()</code>
      */
@@ -53,15 +52,14 @@ public class PlainConsole implements Console {
 
     @Override
     public void install() {
-        // Create a Reader with the right character encoding
-        reader = new BufferedReader(new InputStreamReader(System.in, encodingCharset));
+        // Nothing to do!
     }
 
     /**
      * A <code>PlainConsole</code> may be uninstalled. This method assumes any sub-class may not be
      * uninstalled. Sub-classes that permit themselves to be uninstalled <b>must</b> override (and
      * not call) this method.
-     *
+     * 
      * @throws UnsupportedOperationException unless this class is exactly <code>PlainConsole</code>
      */
     @Override
@@ -69,37 +67,7 @@ public class PlainConsole implements Console {
         Class<? extends Console> myClass = this.getClass();
         if (myClass != PlainConsole.class) {
             throw new UnsupportedOperationException(myClass.getSimpleName()
-                        + " console may not be uninstalled.");
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * The base implementation calls {@link #input(CharSequence)} and applies the console encoding
-     * to obtain the bytes. This may be a surprise. Line-editing consoles necessarily operate in
-     * terms of characters rather than bytes, and therefore support a direct implementation of
-     * <code>input</code>.
-     */
-    @Override
-    public ByteBuffer raw_input(CharSequence prompt) throws IOException, EOFException {
-        CharSequence line = input(prompt);
-        return encodingCharset.encode(CharBuffer.wrap(line));
-    }
-
-    // The base implementation simply uses <code>System.out</code> and <code>System.in</code>.
-    @Override
-    public CharSequence input(CharSequence prompt) throws IOException, EOFException {
-
-        // Issue the prompt with no newline
-        System.out.print(prompt);
-
-        // Get the line from the console via java.io
-        String line = reader.readLine();
-        if (line == null) {
-            throw new EOFException();
-        } else {
-            return line;
+                    + " console may not be uninstalled.");
         }
     }
 

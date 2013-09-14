@@ -4,6 +4,7 @@ package org.python.util;
 import java.io.EOFException;
 import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -17,6 +18,11 @@ import org.python.core.PlainConsole;
  * functionality to its console through native readline support (either GNU Readline or Editline).
  */
 public class ReadlineConsole extends PlainConsole {
+
+    /** The longest we expect a console prompt to be (in encoded bytes) */
+    public static final int MAX_PROMPT = 512;
+    /** Stream wrapping System.out in order to capture the last prompt. */
+    private ConsoleOutputStream outWrapper;
 
     /**
      * Construct an instance of the console class specifying the character encoding. This encoding
@@ -58,7 +64,8 @@ public class ReadlineConsole extends PlainConsole {
      * {@inheritDoc}
      * <p>
      * This implementation overrides that by setting <code>System.in</code> to a
-     * <code>FilterInputStream</code> object that wraps the configured console library.
+     * <code>FilterInputStream</code> object that wraps the configured console library, and wraps
+     * <code>System.out</code> in a stream that captures the prompt.
      */
     @Override
     public void install() {
@@ -73,60 +80,44 @@ public class ReadlineConsole extends PlainConsole {
             // parseAndBind not supported by this readline
         }
 
+        /*
+         * Wrap System.out in a special PrintStream that keeps the last incomplete line in case it
+         * turns out to be a console prompt.
+         */
+        try {
+            outWrapper = new ConsoleOutputStream(System.out, MAX_PROMPT);
+            System.setOut(new PrintStream(outWrapper, true, encoding));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         // Replace System.in
         FilterInputStream wrapper = new Stream();
         System.setIn(wrapper);
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * This console implements <code>input</code> using the configured library to handle the prompt
-     * and data entry, so that the cursor may be correctly handled in relation to the prompt string.
-     */
-    @Override
-    public ByteBuffer raw_input(CharSequence prompt) throws IOException {
-        // If Readline.readline really returned the line as typed, we could simply use:
-        // return line==null ? "" : line;
-        // Compensate for Readline.readline prompt handling
-        prompt = preEncode(prompt);
-        // Get the line from the console via the library
-        String line = Readline.readline(prompt.toString());
-        return postDecodeToBuffer(line);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This console implements <code>input</code> using the configured library to handle the prompt
-     * and data entry, so that the cursor may be correctly handled in relation to the prompt string.
-     */
-    @Override
-    public CharSequence input(CharSequence prompt) throws IOException, EOFException {
-        // Compensate for Readline.readline prompt handling
-        prompt = preEncode(prompt);
-        // Get the line from the console via the library
-        String line = Readline.readline(prompt.toString());
-        // If Readline.readline really returned the line as typed, next would have been:
-        // return line==null ? "" : line;
-        return postDecode(line);
-    }
-
-    /**
      * Class to wrap the line-oriented interface to Readline with an InputStream that can replace
-     * System.in.
+     * <code>System.in</code>.
      */
-    protected class Stream extends ConsoleStream {
+    protected class Stream extends ConsoleInputStream {
 
         /** Create a System.in replacement with Readline that adds Unix-like line endings */
         Stream() {
-            super(encodingCharset, EOLPolicy.ADD, LINE_SEPARATOR);
+            super(System.in, encodingCharset, EOLPolicy.ADD, LINE_SEPARATOR);
         }
 
         @Override
         protected CharSequence getLine() throws IOException, EOFException {
-            // The Py3k input method does exactly what we want
-            return input("");
+            // The prompt is the current partial output line.
+            CharSequence prompt = outWrapper.getPrompt(encodingCharset).toString();
+            // Compensate for Readline.readline prompt handling
+            prompt = preEncode(prompt);
+            // Get the line from the console via the library
+            String line = Readline.readline(prompt.toString());
+            // If Readline.readline really returned the line as typed, next would have been:
+            // return line==null ? "" : line;
+            return postDecode(line);
         }
     }
 
@@ -176,30 +167,6 @@ public class ReadlineConsole extends PlainConsole {
             CharBuffer cb = CharBuffer.wrap(line);
             ByteBuffer bb = latin1.encode(cb);
             return encodingCharset.decode(bb).toString();
-        }
-    }
-
-    /**
-     * Decode the line (a return from code>Readline.readline</code>) to bytes in the console
-     * encoding. The actual GNU readline function returns a C char array in the console encoding,
-     * but the wrapper <code>Readline.readline</code> acts as if this encoding is always Latin-1,
-     * and on this basis it gives us a Java String whose point codes are the encoded bytes. This
-     * method gets the bytes back.
-     *
-     * @param bytes encoded line (or <code>null</code> for an empty line)
-     * @return bytes recovered from the argument
-     */
-    private ByteBuffer postDecodeToBuffer(String line) {
-        if (line == null) {
-            // Library returns null for an empty line
-            return ConsoleStream.EMPTY_BUF;
-        } else if (latin1 == null) {
-            // Readline's assumed Latin-1 encoding will have produced the correct result
-            return encodingCharset.encode(line);
-        } else {
-            // We have to transcode the line
-            CharBuffer cb = CharBuffer.wrap(line);
-            return latin1.encode(cb);
         }
     }
 

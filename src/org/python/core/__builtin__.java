@@ -1038,21 +1038,17 @@ public class __builtin__ {
 
     /**
      * Implementation of <code>raw_input(prompt)</code> built-in function using the console
-     * directly.
+     * indirectly via <code>sys.stdin</code> and <code>sys.stdin</code>.
      *
      * @param prompt to issue at console before read
      * @return line of text from console (encoded as bytes values compatible with PyString)
      */
     public static String raw_input(PyObject prompt) {
-        try {
-            Console console = Py.getConsole();
-            ByteBuffer buf = console.raw_input(prompt.toString());
-            return StringUtil.fromBytes(buf);
-        } catch (EOFException eof) {
-            throw Py.EOFError("raw_input()");
-        } catch (IOException ioe) {
-            throw Py.IOError(ioe);
+        PyObject stdin = Py.getSystemState().stdin;
+        if (stdin instanceof PyAttributeDeleted) {
+            throw Py.RuntimeError("[raw_]input: lost sys.stdin");
         }
+        return raw_input(prompt, stdin);
     }
 
     /**
