@@ -30,10 +30,14 @@ python.packages.directories = java.ext.dirs
 # this option is set from the command line.
 #python.verbose = message
 
-# Jython ships with a JLine console (http://jline.sourceforge.net/)
-# out of the box.
-python.console=org.python.util.JLineConsole
-# To activate explicitly the featureless Jython console, choose:
+# Jython ships with a JLine console (http://jline.sourceforge.net/) out of the
+# box. This is selected by default in the Jython command-line application
+# (org.python.util,jython) if you do not define python.console to be another
+# class on the command line. Alternatively, you could set python.console here,
+# but be aware that this will also affect the console in applications that
+# embed a PythonInterpreter, or use Jython as a JSR-223 script engine.
+#python.console=org.python.util.JLineConsole
+# To activate  the featureless Jython console explicitly, choose:
 #python.console=org.python.core.PlainConsole
 # By setting this to the name of a different console class,
 # new console features can be enabled. For example:

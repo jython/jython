@@ -4,6 +4,8 @@ import java.util.concurrent.CountDownLatch;
 
 import junit.framework.TestCase;
 
+import org.python.core.Console;
+import org.python.core.PlainConsole;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyInteger;
@@ -63,4 +65,17 @@ public class InterpreterTest extends TestCase {
             assertEquals(++base, blahInstance.invoke("incval").__tojava__(Integer.class));
         }
     }
+
+    /**
+     * Show that a PythonInterpreter comes by default with a PlainConsole (not JLine say).
+     */
+    public void testConsoleIsPlain() throws Exception {
+        PythonInterpreter interp = new PythonInterpreter();
+        interp.exec("import sys");
+        Console console = Py.tojava(interp.eval("sys._jy_console"), Console.class);
+        assertEquals(PlainConsole.class, console.getClass());
+        Console console2 = Py.getConsole();
+        assertEquals(PlainConsole.class, console2.getClass());
+    }
+
 }

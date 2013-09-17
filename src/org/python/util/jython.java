@@ -38,6 +38,9 @@ import org.python.modules.thread.thread;
 
 public class jython {
 
+    // An instance of this class will provide the console (python.console) by default.
+    private static final String PYTHON_CONSOLE_CLASS = "org.python.util.JLineConsole";
+
     private static final String COPYRIGHT =
             "Type \"help\", \"copyright\", \"credits\" or \"license\" for more information.";
 
@@ -212,6 +215,13 @@ public class jython {
         if (!opts.fixInteractive || opts.interactive) {
             // The options suggest System.in is interactive: but only if isatty() agrees
             opts.interactive = Py.isInteractive();
+            if (opts.interactive) {
+                // Set the default console type if nothing else has
+                String consoleClassName = preProperties.getProperty("python.console");
+                if (consoleClassName==null) {
+                    preProperties.setProperty("python.console", PYTHON_CONSOLE_CLASS);
+                }
+            }
         }
 
         // Setup the basic python system state from these options
