@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import org.python.core.util.FileUtil;
+import org.python.core.util.StringUtil;
 import org.python.core.util.importer;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -38,6 +40,17 @@ public class ClasspathPyImporter extends importer<String> {
             path += "/";
         }
         this.path = path;
+    }
+
+    public String get_data(String path) {
+        InputStream is = entries.get(makeEntry(path.replace("__pyclasspath__/", "")));
+        byte[] data;
+        try {
+            data = FileUtil.readBytes(is);
+        } catch (IOException ioe) {
+            throw Py.IOError(ioe);
+        }
+        return StringUtil.fromBytes(data);
     }
 
     /**

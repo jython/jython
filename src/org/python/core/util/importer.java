@@ -39,6 +39,8 @@ public abstract class importer<T> extends PyObject {
         searchOrder = makeSearchOrder();
     }
 
+    public abstract String get_data(String path);
+
     /**
      * Returns the separator between directories and files used by this type of importer.
      */
