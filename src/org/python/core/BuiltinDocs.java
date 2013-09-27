@@ -2196,9 +2196,7 @@ public class BuiltinDocs {
         "Return a copy of the string S, where all characters occurring\n" + 
         "in the optional argument deletechars are removed, and the\n" + 
         "remaining characters have been mapped through the given\n" + 
-        "translation table, which must be a string of length 256.\n" +
-        "If the table argument is None, no translation is applied and\n" +
-        "the operation simply removes the characters in deletechars.";
+        "translation table, which must be a string of length 256.";
 
     public final static String str_upper_doc = 
         "S.upper() -> string\n" + 
@@ -4048,6 +4046,104 @@ public class BuiltinDocs {
         "\n" + 
         "Pad a numeric string B with zeros on the left, to fill a field\n" + 
         "of the specified width.  B is never truncated.";
+
+    // Docs for <type 'buffer'>
+    public final static String buffer___add___doc = 
+        "x.__add__(y) <==> x+y";
+
+    public final static String buffer___class___doc = 
+        "type(object) -> the object's type\n" + 
+        "type(name, bases, dict) -> a new type";
+
+    public final static String buffer___cmp___doc = 
+        "x.__cmp__(y) <==> cmp(x,y)";
+
+    public final static String buffer___delattr___doc = 
+        "x.__delattr__('name') <==> del x.name";
+
+    public final static String buffer___delitem___doc = 
+        "x.__delitem__(y) <==> del x[y]";
+
+    public final static String buffer___delslice___doc = 
+        "x.__delslice__(i, j) <==> del x[i:j]\n" + 
+        "           \n" + 
+        "           Use of negative indices is not supported.";
+
+    public final static String buffer_doc = 
+        "buffer(object [, offset[, size]])\n" + 
+        "\n" + 
+        "Create a new buffer object which references the given object.\n" + 
+        "The buffer will reference a slice of the target object from the\n" + 
+        "start of the object (or at the specified offset). The slice will\n" + 
+        "extend to the end of the target object (or with the specified size).";
+
+    public final static String buffer___format___doc = 
+        "default object formatter";
+
+    public final static String buffer___getattribute___doc = 
+        "x.__getattribute__('name') <==> x.name";
+
+    public final static String buffer___getitem___doc = 
+        "x.__getitem__(y) <==> x[y]";
+
+    public final static String buffer___getslice___doc = 
+        "x.__getslice__(i, j) <==> x[i:j]\n" + 
+        "           \n" + 
+        "           Use of negative indices is not supported.";
+
+    public final static String buffer___hash___doc = 
+        "x.__hash__() <==> hash(x)";
+
+    public final static String buffer___init___doc = 
+        "x.__init__(...) initializes x; see help(type(x)) for signature";
+
+    public final static String buffer___len___doc = 
+        "x.__len__() <==> len(x)";
+
+    public final static String buffer___mul___doc = 
+        "x.__mul__(n) <==> x*n";
+
+    public final static String buffer___new___doc = 
+        "T.__new__(S, ...) -> a new object with type S, a subtype of T";
+
+    public final static String buffer___reduce___doc = 
+        "helper for pickle";
+
+    public final static String buffer___reduce_ex___doc = 
+        "helper for pickle";
+
+    public final static String buffer___repr___doc = 
+        "x.__repr__() <==> repr(x)";
+
+    public final static String buffer___rmul___doc = 
+        "x.__rmul__(n) <==> n*x";
+
+    public final static String buffer___setattr___doc = 
+        "x.__setattr__('name', value) <==> x.name = value";
+
+    public final static String buffer___setitem___doc = 
+        "x.__setitem__(i, y) <==> x[i]=y";
+
+    public final static String buffer___setslice___doc = 
+        "x.__setslice__(i, j, y) <==> x[i:j]=y\n" + 
+        "           \n" + 
+        "           Use  of negative indices is not supported.";
+
+    public final static String buffer___sizeof___doc = 
+        "__sizeof__() -> int\n" + 
+        "size of object in memory, in bytes";
+
+    public final static String buffer___str___doc = 
+        "x.__str__() <==> str(x)";
+
+    public final static String buffer___subclasshook___doc = 
+        "Abstract classes can override this to customize issubclass().\n" + 
+        "\n" + 
+        "This is invoked early on by abc.ABCMeta.__subclasscheck__().\n" + 
+        "It should return True, False or NotImplemented.  If it returns\n" + 
+        "NotImplemented, the normal algorithm is used.  Otherwise, it\n" + 
+        "overrides the normal algorithm (and the outcome is cached).\n" + 
+        "";
 
     // Docs for <type 'memoryview'>
     public final static String memoryview___class___doc = 

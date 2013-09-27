@@ -452,15 +452,10 @@ class UnicodeTest(
             u'strings are decoded to unicode'
         )
 
-        if not sys.platform.startswith('java'):
-            self.assertEqual(
-                unicode(
-                    buffer('character buffers are decoded to unicode'),
-                    'utf-8',
-                    'strict'
-                ),
-                u'character buffers are decoded to unicode'
-            )
+        self.assertEqual(
+            unicode('strings are decoded to unicode', 'utf-8', 'strict'),
+            u'strings are decoded to unicode'
+        )
 
         self.assertRaises(TypeError, unicode, 42, 42, 42)
 

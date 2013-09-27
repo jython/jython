@@ -90,8 +90,14 @@ public class SimpleStringBuffer extends SimpleBuffer {
      */
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int length) {
-        // The new string content is just a sub-string. (Non-copy operation in Java.)
-        return new SimpleStringView(getRoot(), flags, bufString.substring(start, start + length));
+        if (length > 0) {
+            // The new string content is just a sub-string. (Non-copy operation in Java.)
+            return new SimpleStringView(getRoot(), flags,
+                    bufString.substring(start, start + length));
+        } else {
+            // Special case for length==0 where start out of bounds sometimes raises exception.
+            return new ZeroByteBuffer.View(getRoot(), flags);
+        }
     }
 
     /**

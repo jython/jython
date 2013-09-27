@@ -294,6 +294,7 @@ public class __builtin__ {
         dict.__setitem__("False", Py.False);
         dict.__setitem__("bytes", PyString.TYPE);
         dict.__setitem__("bytearray", PyByteArray.TYPE);
+        dict.__setitem__("buffer", Py2kBuffer.TYPE);
         dict.__setitem__("memoryview", PyMemoryView.TYPE);
 
         // Work in debug mode by default

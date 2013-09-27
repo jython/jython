@@ -428,20 +428,33 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
+    /**
+     * Helper used many times to "coerce" a method argument into a <code>PyUnicode</code> (which it
+     * may already be). A <code>null</code> argument or a <code>PyNone</code> causes
+     * <code>null</code> to be returned.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
+     */
     private PyUnicode coerceToUnicode(PyObject o) {
         if (o == null) {
             return null;
         } else if (o instanceof PyUnicode) {
-            return (PyUnicode) o;
-        } else if (o instanceof PyString) {
-            return new PyUnicode(o.toString());
+            return (PyUnicode)o;
         } else if (o == Py.None) {
             return null;
+        } else if (o instanceof BufferProtocol) {
+            // PyString or PyByteArray, PyMemoryView, Py2kBuffer ...
+            PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO);
+            try {
+                return new PyUnicode(buf.toString());
+            } finally {
+                buf.release();
+            }
         } else {
-            throw Py.TypeError("coercing to Unicode: need string or buffer, " +
-                    o.getType().fastGetName() + "found");
+            throw Py.TypeError("coercing to Unicode: need string or buffer, "
+                    + o.getType().fastGetName() + " found");
         }
-
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode___contains___doc)

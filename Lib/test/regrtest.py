@@ -1187,7 +1187,6 @@ _expectations = {
         test_applesingle
         test_ascii_formatd
         test_audioop
-        test_buffer
         test_bsddb
         test_bsddb185
         test_bsddb3
