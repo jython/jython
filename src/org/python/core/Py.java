@@ -950,6 +950,12 @@ public final class Py {
             return;
         }
 
+        if (Options.importSite) {
+            // Ensure site-packages are available before attempting to import module.
+            // This step enables supporting modern Python apps when using proxies
+            // directly from Java (eg through clamp).
+            imp.load("site");
+        }
         PyObject mod = imp.importName(module.intern(), false);
         PyType pyc = (PyType)mod.__getattr__(pyclass.intern());
 
