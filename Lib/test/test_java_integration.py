@@ -668,7 +668,7 @@ class SerializationTest(unittest.TestCase):
         tempdir = tempfile.mkdtemp()
         try:
             SerializableProxies.serialized_path = tempdir
-            import bark #importlib.import_module("bark")
+            import bark
             dog = bark.Dog()
             self.assertEqual(dog.whoami(), "Rover")
             self.assertEqual(dog.serialVersionUID, 1)
@@ -686,7 +686,10 @@ public class BarkTheDog {
     public static void main(String[] args) {
         Dog dog = new Dog();
         try {
-            dog.call();
+            Boolean b = (Boolean)(dog.call());
+            if (!b) {
+                throw new RuntimeException("Expected site module to be imported");
+            }
         }
         catch(Exception e) {
             System.err.println(e);
@@ -711,10 +714,12 @@ public class BarkTheDog {
                    "-classpath", classpath, "BarkTheDog"]
             env = dict(os.environ)
             env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
-            self.assertEqual(
-                subprocess.check_output(cmd, env=env, universal_newlines=True),
-                    "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
-                    "Rover barks 42 times\n")
+            self.assertRegexpMatches(
+                subprocess.check_output(cmd, env=env, universal_newlines=True,
+                                        stderr=subprocess.STDOUT),
+                r"^\*sys-package-mgr\*: processing new jar, '.+?/proxies.jar'\n"
+                 "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
+                 "Rover barks 42 times\n$".format(tempdir))
         finally:
             pass
             # print "Will not remove", tempdir
