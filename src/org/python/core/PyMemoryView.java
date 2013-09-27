@@ -1,3 +1,4 @@
+// Copyright (c) 2013 Jython Developers
 package org.python.core;
 
 import org.python.core.buffer.BaseBuffer;
@@ -9,9 +10,8 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * Class implementing the Python <code>memoryview</code> type, at present highly incomplete. It
- * provides a wrapper around the Jython buffer API, but slice operations and most others are
- * missing.
+ * Class implementing the Python <code>memoryview</code> type. It provides a wrapper around the
+ * Jython buffer API.
  */
 @ExposedType(name = "memoryview", doc = BuiltinDocs.memoryview_doc, base = PyObject.class,
         isBaseType = false)
@@ -660,6 +660,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * @throws PyException(AttributeError) if value cannot be converted to an integer
      * @throws PyException(ValueError) if value<0 or value>255
      */
+    @Override
     public synchronized void pyset(int index, PyObject value) throws PyException {
         // Our chance to check the memoryview is still alive
         checkNotReleased();

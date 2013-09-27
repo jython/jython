@@ -28,7 +28,7 @@ Command line options:
 -L: runleaks   -- run the leaks(1) command just before exit
 -R: huntrleaks -- search for reference leaks (needs debug build, v. slow)
 -M: memlimit   -- run very large memory-consuming tests
--e: expected  -- run only tests that are expected to run and pass
+-e: expected   -- run only tests that are expected to run and pass
 
 If non-option arguments are present, they are names for tests to run,
 unless -x is given, in which case they are names for tests not to run.
@@ -1222,7 +1222,6 @@ _expectations = {
         test_longexp
         test_macfs
         test_macostools
-        test_memoryview
         test_mhlib
         test_mmap
         test_modulefinder
