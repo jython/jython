@@ -686,7 +686,6 @@ class BaseTest(unittest.TestCase):
         self.assertRaises(TypeError, a.__setitem__, slice(0, 0), b)
         self.assertRaises(TypeError, a.__setitem__, slice(0, 1), b)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME #1860: Not working on Jython")
     def test_extended_set_del_slice(self):
         indices = (0, None, 1, 3, 19, 100, -1, -2, -31, -100)
         for start in indices:

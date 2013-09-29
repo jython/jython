@@ -1760,8 +1760,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                     if (array == this) {
                         array = (PyArray)array.clone();
                     }
+                    
                     int len = array.__len__();
-                    for (int i = 0, j = delegate.getSize() - 1; i < len; i++, j += step) {
+                    for (int i = 0, j = start; i < len; i++, j+=step) {
                         Array.set(data, j, Array.get(array.data, i));
                     }
                 }
