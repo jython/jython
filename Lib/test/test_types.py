@@ -244,7 +244,6 @@ class TypesTests(unittest.TestCase):
         self.assertRaises(TypeError, type, 1, 2)
         self.assertRaises(TypeError, type, 1, 2, 3, 4)
 
-    @unittest.skipIf(is_jython, "No buffer on Jython")
     def test_buffers(self):
         self.assertRaises(ValueError, buffer, 'asdf', -1)
         cmp(buffer("abc"), buffer("def")) # used to raise a warning: tp_compare didn't return -1, 0, or 1

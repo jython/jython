@@ -320,10 +320,6 @@ class ClassWithFailingRepr:
 
 
 def test_main():
-    from test import test_support
-    if test_support.is_jython:
-        # XXX: Jython lacks the buffer type
-        del ReprTests.test_buffer
     run_unittest(ReprTests)
     run_unittest(LongReprTest)
 

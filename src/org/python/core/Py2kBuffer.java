@@ -10,12 +10,16 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * Class implementing the Python <code>buffer</code> type. <code>buffer</code> is being superseded
- * in Python 2.7 by <code>memoryview</code>, and is provided here to support legacy Python code. Use
- * <code>memoryview</code> if you can. <code>buffer</code> and <code>memoryview</code> both wrap the
- * same Jython buffer API, the one designed for <code>memoryview</code>, whereas in CPython the C
- * APIs supporting each are different. Because of this, they may be applied to exactly the same
- * underlying object types. Their behaviour differs in detail.
+ * Implementation of the Python <code>buffer</code> type. <code>buffer</code> is being superseded in
+ * Python 2.7 by <code>memoryview</code>, and is provided here to support legacy Python code. Use
+ * <code>memoryview</code> if you can.
+ * <p>
+ * <code>buffer</code> and <code>memoryview</code> both wrap the <em>same</em> Jython buffer API:
+ * that designed for <code>memoryview</code>. In CPython, a new C API (which Jython's resembles) was
+ * introduced with <code>memoryview</code>. Because of this, <code>buffer</code> and
+ * <code>memoryview</code> may be supplied as arguments in the same places, and will accept as
+ * arguments the same (one-dimensional byte-array) types. Their behaviour differs as detailed in the
+ * documentation.
  */
 @ExposedType(name = "buffer", doc = BuiltinDocs.buffer_doc, base = PyObject.class,
         isBaseType = false)
@@ -25,7 +29,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
 
     /** The underlying object on which the buffer was created. */
     private final BufferProtocol object;
-    /** The offset (in bytes) into the offered object at which the buffer starts */
+    /** The offset (in bytes) into the offered object at which the buffer starts. */
     private final int offset;
     /** Number of bytes to include in the buffer (or -1 for all available). */
     private final int size;
@@ -37,9 +41,9 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * <code>memoryview</code>.) Note that when <code>size=-1</code> is given, the buffer reflects
      * the changing size of the underlying object.
      * 
-     * @param object the object on which this is to be a buffer
-     * @param offset into the array exposed by the object (0 for start)
-     * @param size of the slice or -1 for all of the object
+     * @param object the object on which this is to be a buffer.
+     * @param offset into the array exposed by the object (0 for start).
+     * @param size of the slice or -1 for all of the object.
      */
     public Py2kBuffer(BufferProtocol object, int offset, int size) {
         super(TYPE);
@@ -68,16 +72,16 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * Every action on the <code>buffer</code> must obtain a new {@link PyBuffer} reflecting (this
      * buffer's slice of) the contents of the backing object.
      * 
-     * @return a <code>PyBuffer</code> onto the specified slice
+     * @return a <code>PyBuffer</code> onto the specified slice.
      */
     private PyBuffer getBuffer() {
         /*
-         * Ask for the full set of facilities (strides, indirect, etc.) from the object in case they
-         * are necessary for navigation, but only ask for read access. If the object is writable,
-         * the PyBuffer will be writable.
+         * Ask for a simple one-dimensional byte view (not requiring strides, indirect, etc.) from
+         * the object, as we cannot deal with other navigation. Ask for read access. If the object
+         * is writable, the PyBuffer will be writable, but we won't write to it.
          */
-        final int flags = PyBUF.FULL_RO;
-        PyBuffer buf = object.getBuffer(PyBUF.FULL_RO);
+        final int flags = PyBUF.SIMPLE;
+        PyBuffer buf = object.getBuffer(flags);
 
         // This may already be what we need, or this buffer may be a sub-range of the object
         if (offset > 0 || size >= 0) {
@@ -108,6 +112,39 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
         return buf;
     }
 
+    /**
+     * Return a {@link PyObject} bearing the interface {@link BufferProtocol} and equivalent to the
+     * argument, or return <code>null</code>. This is a helper function to those methods that accept
+     * a range of types supporting the buffer API. Normally the return is exactly the argument,
+     * except in the case of a {@link PyUnicode}, which will be converted to a {@link PyString}
+     * according to Py2k semantics, equivalent to a UTF16BE encoding to bytes (for Py2k
+     * compatibility).
+     * 
+     * @param obj the object to access.
+     * @return <code>PyObject</code> supporting {@link BufferProtocol}, if not <code>null</code>.
+     */
+    private static BufferProtocol asBufferableOrNull(PyObject obj) {
+
+        if (obj instanceof PyUnicode) {
+            /*
+             * Jython unicode does not support the buffer protocol (so that you can't take a
+             * memoryview of one). But to be compatible with CPython we allow buffer(unicode) to
+             * export two-byte UTF-16. Fortunately, a buffer is read-only, so we can use a copy.
+             */
+            String bytes = codecs.encode((PyString)obj, "UTF-16BE", "replace");
+            return new PyString(bytes);
+
+        } else if (obj instanceof BufferProtocol) {
+            // That will do directly
+            return (BufferProtocol)obj;
+
+        } else {
+            // We don't know how to give this value the buffer API.
+            return null;
+        }
+    }
+
+    /** Names of arguments in the constructor (for ArgParser). */
     private static String[] paramNames = {"object", "offset", "size"};
 
     @ExposedNew
@@ -121,25 +158,11 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
         int size = ap.getInt(2, -1);
 
         // Get the object as a BufferProtocol if possible
-        BufferProtocol object = null;
-        if (obj instanceof PyUnicode) {
-            /*
-             * Jython unicode does not support the buffer protocol (so that you can't take a
-             * memoryview of one). But to be compatible with CPython we allow buffer(unicode) to
-             * export two-byte UTF-16. Fortunately, a buffer is read-only, so we can use a copy.
-             */
-            String bytes = codecs.encode((PyString)obj, "UTF-16BE", "replace");
-            object = new PyString(bytes);
-
-        } else if (obj instanceof BufferProtocol) {
-                // That will do directly
-                object = (BufferProtocol)obj;
-
-        }
+        BufferProtocol object = asBufferableOrNull(obj);
 
         // Checks
         if (object == null) {
-            throw Py.TypeError("object must support the buffer protocol (or be unicode)");
+            throw Py.TypeError("buffer object expected (or unicode)");
         } else if (offset < 0) {
             throw Py.ValueError("offset must be zero or positive");
         } else if (size < -1) {
@@ -185,8 +208,8 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     }
 
     /**
-     * Equivalent to the standard Python <code>__add__</code> method, that for a <code>buffer</code>
-     * treats it as a <code>str</code> ({@link PyString}) containing the same bytes.
+     * {@inheritDoc} A <code>buffer</code> implements this as concatenation and returns a
+     * <code>str</code> ({@link PyString}) result.
      */
     @Override
     public PyObject __add__(PyObject other) {
@@ -195,12 +218,36 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.buffer___add___doc)
     final PyObject buffer___add__(PyObject other) {
-        return __str__().__add__(other);
+
+        // The other operand must offer us the buffer interface
+        BufferProtocol bp = asBufferableOrNull(other);
+
+        if (bp == null) {
+            // Allow PyObject._basic_add to pick up the pieces or raise informative error
+            return null;
+        } else {
+            // PyBuffer on the underlying object of this buffer
+            PyBuffer buf = getBuffer();
+            try {
+                // And on the other operand (ask for simple 1D-bytes).
+                PyBuffer otherBuf = bp.getBuffer(PyBUF.SIMPLE);
+                try {
+                    // Concatenate the buffers as strings
+                    return new PyString(buf.toString().concat(otherBuf.toString()));
+                } finally {
+                    // Must always let go of the buffer
+                    otherBuf.release();
+                }
+            } finally {
+                // Must always let go of the buffer
+                buf.release();
+            }
+        }
     }
 
     /**
-     * Equivalent to the standard Python <code>__mul__</code> method, that for a <code>buffer</code>
-     * returns a <code>str</code> containing the same thing <code>n</code> times.
+     * {@inheritDoc} On a <code>buffer</code> it returns a <code>str</code> containing the buffer
+     * contents <code>n</code> times.
      */
     @Override
     public PyObject __mul__(PyObject o) {
@@ -216,9 +263,8 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     }
 
     /**
-     * Equivalent to the standard Python <code>__rmul__</code> method, that for a
-     * <code>buffer</code> returns a <code>str</code> containing the same thing <code>n</code>
-     * times.
+     * {@inheritDoc} On a <code>buffer</code> it returns a <code>str</code> containing the buffer
+     * contents <code>n</code> times.
      */
     @Override
     public PyObject __rmul__(PyObject o) {
@@ -481,7 +527,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     }
 
     /**
-     * <code>buffer*int</code> represent repetition in Python, and returns a <code>str</code> (
+     * <code>buffer*int</code> represents repetition in Python, and returns a <code>str</code> (
      * <code>bytes</code>) object.
      * 
      * @param count the number of times to repeat this.

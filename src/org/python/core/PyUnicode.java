@@ -610,45 +610,66 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
     final PyObject unicode_strip(PyObject sepObj) {
+
         PyUnicode sep = coerceStripSepToUnicode(sepObj);
-        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+
+        if (isBasicPlane()) {
+            // this contains only basic plane characters
             if (sep == null) {
-                return new PyUnicode(str_strip(null));
-            } else {
-                return new PyUnicode(str_strip(sep.getString()));
+                // And we're stripping whitespace, so use the PyString implementation
+                return new PyUnicode(_strip());
+            } else if (sep.isBasicPlane()) {
+                // And the strip characters are basic plane too, so use the PyString implementation
+                return new PyUnicode(_strip(sep.getString()));
             }
         }
-        return new PyUnicode(new ReversedIterator(new StripIterator(sep,
-                new ReversedIterator(new StripIterator(sep, newSubsequenceIterator())))));
+
+        // Not basic plane: have to do real Unicode
+        return new PyUnicode(new ReversedIterator(new StripIterator(sep, new ReversedIterator(
+                new StripIterator(sep, newSubsequenceIterator())))));
     }
 
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
     final PyObject unicode_lstrip(PyObject sepObj) {
+
         PyUnicode sep = coerceStripSepToUnicode(sepObj);
-        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+
+        if (isBasicPlane()) {
+            // this contains only basic plane characters
             if (sep == null) {
-                return new PyUnicode(str_lstrip(null));
-            } else {
-                return new PyUnicode(str_lstrip(sep.getString()));
+                // And we're stripping whitespace, so use the PyString implementation
+                return new PyUnicode(_lstrip());
+            } else if (sep.isBasicPlane()) {
+                // And the strip characters are basic plane too, so use the PyString implementation
+                return new PyUnicode(_lstrip(sep.getString()));
             }
         }
+
+        // Not basic plane: have to do real Unicode
         return new PyUnicode(new StripIterator(sep, newSubsequenceIterator()));
     }
 
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
     final PyObject unicode_rstrip(PyObject sepObj) {
+
         PyUnicode sep = coerceStripSepToUnicode(sepObj);
-        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+
+        if (isBasicPlane()) {
+            // this contains only basic plane characters
             if (sep == null) {
-                return new PyUnicode(str_rstrip(null));
-            } else {
-                return new PyUnicode(str_rstrip(sep.getString()));
+                // And we're stripping whitespace, so use the PyString implementation
+                return new PyUnicode(_rstrip());
+            } else if (sep.isBasicPlane()) {
+                // And the strip characters are basic plane too, so use the PyString implementation
+                return new PyUnicode(_rstrip(sep.getString()));
             }
         }
-        return new PyUnicode(new ReversedIterator(new StripIterator(sep,
-                new ReversedIterator(newSubsequenceIterator()))));
+
+        // Not basic plane: have to do real Unicode
+        return new PyUnicode(new ReversedIterator(new StripIterator(sep, new ReversedIterator(
+                newSubsequenceIterator()))));
     }
 
     @Override

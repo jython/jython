@@ -546,7 +546,8 @@ class CommonTest(unittest.TestCase):
                  'lstrip', unicode('xyz', 'ascii'))
             self.checkequal(unicode('xyzzyhello', 'ascii'), 'xyzzyhelloxyzzy',
                  'rstrip', unicode('xyz', 'ascii'))
-            # XXX
+            # Not a Jython skip: str passes but bytearray fails this check
+            # in both Jython 2.7 and CPython 2.7.5
             #self.checkequal(unicode('hello', 'ascii'), 'hello',
             #     'strip', unicode('xyz', 'ascii'))
 

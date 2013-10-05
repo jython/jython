@@ -1,4 +1,4 @@
-/// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
 import java.lang.ref.Reference;
@@ -105,7 +105,7 @@ public class PyString extends PyBaseString implements BufferProtocol
      * unsigned bytes. The caller specifies its requirements and navigational capabilities in the
      * <code>flags</code> argument (see the constants in interface {@link PyBUF} for an
      * explanation). The method may return the same PyBuffer object to more than one consumer.
-     * 
+     *
      * @param flags consumer requirements
      * @return the requested buffer
      */
@@ -711,7 +711,75 @@ public class PyString extends PyBaseString implements BufferProtocol
         // ignore isBasic, doesn't apply to PyString, just PyUnicode
         return new PyString(str);
     } 
-    
+
+    /**
+     * Return a String equivalent to the argument. This is a helper function to those methods that
+     * accept any byte array type (any object that supports a one-dimensional byte buffer).
+     *
+     * @param obj to coerce to a String
+     * @return coerced value or <code>null</code> if it can't be
+     */
+    private static String asStringOrNull(PyObject obj) {
+        if (obj instanceof PyString) {
+            // str or unicode object: go directly to the String
+            return ((PyString)obj).getString();
+        } else if (obj instanceof BufferProtocol) {
+            // Other object with buffer API: briefly access the buffer
+            PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+            try {
+                return buf.toString();
+            } finally {
+                buf.release();
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Return a String equivalent to the argument. This is a helper function to those methods that
+     * accept any byte array type (any object that supports a one-dimensional byte buffer).
+     *
+     * @param obj to coerce to a String
+     * @return coerced value
+     * @throws PyException if the coercion fails
+     */
+    private static String asStringOrError(PyObject obj) throws PyException {
+        String ret = asStringOrNull(obj);
+        if (ret != null) {
+            return ret;
+        } else {
+            throw Py.TypeError("expected str, bytearray or buffer compatible object");
+        }
+    }
+
+    /**
+     * Return a String equivalent to the argument according to the calling conventions of the
+     * <code>strip</code> and <code>sep</code> methods of <code>str</code>. Those methods accept
+     * anything bearing the buffer interface as a byte string, but also PyNone (or the argument may
+     * be omitted, showing up here as null) to indicate that the criterion is whitespace. They also
+     * accept a unicode argument, not dealt with here.
+     *
+     * @param obj to coerce to a String or nullk
+     * @param name of method
+     * @return coerced value or null
+     * @throws PyException if the coercion fails
+     */
+    private static String asStripSepOrError(PyObject obj, String name) throws PyException {
+
+        if (obj == null || obj == Py.None) {
+            return null;
+        } else {
+            String ret = asStringOrNull(obj);
+            if (ret != null) {
+                return ret;
+            } else {
+                throw Py.TypeError(name
+                        + " arg must be None, str, unicode, buffer compatible object");
+            }
+        }
+    }
+
     @Override
     public boolean __contains__(PyObject o) {
         return str___contains__(o);
@@ -719,10 +787,8 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str___contains___doc)
     final boolean str___contains__(PyObject o) {
-        if (!(o instanceof PyString))
-            throw Py.TypeError("'in <string>' requires string as left operand");
-        PyString other = (PyString) o;
-        return getString().indexOf(other.getString()) >= 0;
+        String other = asStringOrError(o);
+        return getString().indexOf(other) >= 0;
     }
 
     protected PyObject repeat(int count) {
@@ -770,6 +836,11 @@ public class PyString extends PyBaseString implements BufferProtocol
         return repeat(o.asIndex(Py.OverflowError));
     }
 
+    /**
+     * {@inheritDoc} For a <code>str</code> addition means concatenation and returns a
+     * <code>str</code> ({@link PyString}) result, except when a {@link PyUnicode} argument is
+     * given, when a <code>PyUnicode</code> results.
+     */
     @Override
     public PyObject __add__(PyObject other) {
         return str___add__(other);
@@ -777,18 +848,22 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___add___doc)
     final PyObject str___add__(PyObject other) {
+
         if (other instanceof PyUnicode) {
+            // Convert self to PyUnicode and escalate the problem
             return decode().__add__(other);
 
-        } else if (other instanceof PyString) {
-            PyString otherStr = (PyString)other;
-            return new PyString(getString().concat(otherStr.getString()));
-
-        } else if (other instanceof PyByteArray) {
-            return new PyString(getString().concat(other.asString()));
-
+        } else {
+            // Some kind of object with the buffer API
+            String otherStr = asStringOrNull(other);
+            if (otherStr == null) {
+                // Allow PyObject._basic_add to pick up the pieces or raise informative error
+                return null;
+            } else {
+                // Concatenate as strings
+                return new PyString(getString().concat(otherStr));
+            }
         }
-        return null;
     }
 
     @ExposedMethod(doc = BuiltinDocs.str___getnewargs___doc)
@@ -1046,84 +1121,316 @@ public class PyString extends PyBaseString implements BufferProtocol
         return new String(chars);
     }
 
+    /**
+     * Equivalent of Python str.strip() with no argument, meaning strip whitespace. Any whitespace
+     * byte/character will be discarded from either end of this <code>str</code>.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
     public String strip() {
-        return str_strip(null);
+        return _strip();
     }
 
-    public String strip(String sep) {
-        return str_strip(sep);
+    /**
+     * Equivalent of Python str.strip(). Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from either end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped.
+     *
+     * @param stripChars characters to strip from either end of this str/bytes, or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
+    public String strip(String stripChars) {
+        return _strip(stripChars);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_strip_doc)
-    final String str_strip(String sep) {
-        char[] chars = getString().toCharArray();
-        int n=chars.length;
-        int start=0;
-        if (sep == null)
-            while (start < n && Character.isWhitespace(chars[start]))
-                start++;
-        else
-            while (start < n && sep.indexOf(chars[start]) >= 0)
-                start++;
-
-        int end=n-1;
-        if (sep == null)
-            while (end >= 0 && Character.isWhitespace(chars[end]))
-                end--;
-        else
-            while (end >= 0 && sep.indexOf(chars[end]) >= 0)
-                end--;
-
-        if (end >= start) {
-            return (end < n-1 || start > 0)
-                ? getString().substring(start, end+1) : getString();
+    final PyObject str_strip(PyObject chars) {
+        if (chars instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_strip(chars);
         } else {
-            return "";
+            // It ought to be None, null, some kind of bytes the with buffer API.
+            String stripChars = asStripSepOrError(chars, "strip");
+            // Strip specified characters or whitespace if stripChars == null
+            return new PyString(_strip(stripChars));
         }
     }
 
-    public String lstrip() {
-        return str_lstrip(null);
+    /**
+     * Implementation of Python str.strip() common to exposed and Java API, when stripping
+     * whitespace. Any whitespace byte/character will be discarded from either end of this
+     * <code>str</code>.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_strip(PyObject)} when this is a basic-plane string.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
+    protected final String _strip() {
+        String s = getString();
+        // Rightmost non-whitespace
+        int right = _stripRight(s);
+        if (right < 0) {
+            // They're all whitespace
+            return "";
+        } else {
+            // Leftmost non-whitespace character: right known not to be a whitespace
+            int left = _stripLeft(s, right);
+            return s.substring(left, right + 1);
+        }
     }
-    
+
+    /**
+     * Implementation of Python str.strip() common to exposed and Java API. Any byte/character
+     * matching one of those in <code>stripChars</code> will be discarded from either end of this
+     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane strings.
+     *
+     * @param stripChars characters to strip or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
+    protected final String _strip(String stripChars) {
+        if (stripChars == null) {
+            // Devert to the whitespace version
+            return _strip();
+        } else {
+            String s = getString();
+            // Rightmost non-matching character
+            int right = _stripRight(s, stripChars);
+            if (right < 0) {
+                // They all match
+                return "";
+            } else {
+                // Leftmost non-matching character: right is known not to match
+                int left = _stripLeft(s, stripChars, right);
+                return s.substring(left, right + 1);
+            }
+        }
+    }
+
+    /**
+     * Helper for strip, lstrip implementation, when stripping whitespace.
+     *
+     * @param s string to search (only <code>s[0:right]</code> is searched).
+     * @param right rightmost extent of string search
+     * @return index of lefttmost non-whitespace character or <code>right</code> if they all are.
+     */
+    private static final int _stripLeft(String s, int right) {
+        for (int left = 0; left < right; left++) {
+            if (!Character.isWhitespace(s.charAt(left))) {
+                return left;
+            }
+        }
+        return right;
+    }
+
+    /**
+     * Helper for strip, lstrip implementation, when stripping specified characters.
+     *
+     * @param s string to search (only <code>s[0:right]</code> is searched).
+     * @param stripChars specifies set of characters to strip
+     * @param right rightmost extent of string search
+     * @return index of leftmost character not in <code>stripChars</code> or <code>right</code> if
+     *         they all are.
+     */
+    private static final int _stripLeft(String s, String stripChars, int right) {
+        for (int left = 0; left < right; left++) {
+            if (stripChars.indexOf(s.charAt(left)) < 0) {
+                return left;
+            }
+        }
+        return right;
+    }
+
+    /**
+     * Helper for strip, rstrip implementation, when stripping whitespace.
+     *
+     * @param s string to search.
+     * @return index of rightmost non-whitespace character or -1 if they all are.
+     */
+    private static final int _stripRight(String s) {
+        for (int right = s.length(); --right >= 0;) {
+            if (!Character.isWhitespace(s.charAt(right))) {
+                return right;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Helper for strip, rstrip implementation, when stripping specified characters.
+     *
+     * @param s string to search.
+     * @param stripChars specifies set of characters to strip
+     * @return index of rightmost character not in <code>stripChars</code> or -1 if they all are.
+     */
+    private static final int _stripRight(String s, String stripChars) {
+        for (int right = s.length(); --right >= 0;) {
+            if (stripChars.indexOf(s.charAt(right)) < 0) {
+                return right;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Equivalent of Python str.lstrip() with no argument, meaning strip whitespace. Any whitespace
+     * byte/character will be discarded from the left of this <code>str</code>.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
+    public String lstrip() {
+        return _lstrip();
+    }
+
+    /**
+     * Equivalent of Python str.lstrip(). Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from the left end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped.
+     *
+     * @param stripChars characters to strip from either end of this str/bytes, or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
     public String lstrip(String sep) {
-        return str_lstrip(sep);
+        return _lstrip(sep);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_lstrip_doc)
-    final String str_lstrip(String sep) {
-        char[] chars = getString().toCharArray();
-        int n=chars.length;
-        int start=0;
-        if (sep == null)
-            while (start < n && Character.isWhitespace(chars[start]))
-                start++;
-        else
-            while (start < n && sep.indexOf(chars[start]) >= 0)
-                start++;
-
-        return (start > 0) ? getString().substring(start, n) : getString();
+    final PyObject str_lstrip(PyObject chars) {
+        if (chars instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_lstrip(chars);
+        } else {
+            // It ought to be None, null, some kind of bytes the with buffer API.
+            String stripChars = asStripSepOrError(chars, "lstrip");
+            // Strip specified characters or whitespace if stripChars == null
+            return new PyString(_lstrip(stripChars));
+        }
     }
 
+    /**
+     * Implementation of Python str.lstrip() common to exposed and Java API, when stripping
+     * whitespace. Any whitespace byte/character will be discarded from the left end of this
+     * <code>str</code>.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_lstrip(PyObject)} when this is a basic-plane string.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
+    protected final String _lstrip() {
+        String s = getString();
+        // Leftmost non-whitespace character: cannot exceed length
+        int left = _stripLeft(s, s.length());
+        return s.substring(left);
+    }
+
+    /**
+     * Implementation of Python str.lstrip() common to exposed and Java API. Any byte/character
+     * matching one of those in <code>stripChars</code> will be discarded from the left end of this
+     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_lstrip(PyObject)} when both arguments are basic-plane strings.
+     *
+     * @param stripChars characters to strip or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
+    protected final String _lstrip(String stripChars) {
+        if (stripChars == null) {
+            // Divert to the whitespace version
+            return _lstrip();
+        } else {
+            String s = getString();
+            // Leftmost matching character: cannot exceed length
+            int left = _stripLeft(s, stripChars, s.length());
+            return s.substring(left);
+        }
+    }
+
+    /**
+     * Equivalent of Python str.rstrip() with no argument, meaning strip whitespace. Any whitespace
+     * byte/character will be discarded from the right end of this <code>str</code>.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
+    public String rstrip() {
+        return _rstrip();
+    }
+
+    /**
+     * Equivalent of Python str.rstrip(). Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from thr right end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped.
+     *
+     * @param stripChars characters to strip from either end of this str/bytes, or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
     public String rstrip(String sep) {
-        return str_rstrip(sep);
+        return _rstrip(sep);
     }
-    
+
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_rstrip_doc)
-    final String str_rstrip(String sep) {
-        char[] chars = getString().toCharArray();
-        int n=chars.length;
-        int end=n-1;
-        if (sep == null)
-            while (end >= 0 && Character.isWhitespace(chars[end]))
-                end--;
-        else
-            while (end >= 0 && sep.indexOf(chars[end]) >= 0)
-                end--;
-
-        return (end < n-1) ? getString().substring(0, end+1) : getString();
+    final PyObject str_rstrip(PyObject chars) {
+        if (chars instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_rstrip(chars);
+        } else {
+            // It ought to be None, null, some kind of bytes the with buffer API.
+            String stripChars = asStripSepOrError(chars, "rstrip");
+            // Strip specified characters or whitespace if stripChars == null
+            return new PyString(_rstrip(stripChars));
+        }
     }
 
+    /**
+     * Implementation of Python str.rstrip() common to exposed and Java API, when stripping
+     * whitespace. Any whitespace byte/character will be discarded from the right end of this
+     * <code>str</code>.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_rstrip(PyObject)} when this is a basic-plane string.
+     *
+     * @return a new String, stripped of the whitespace characters/bytes
+     */
+    protected final String _rstrip() {
+        String s = getString();
+        // Rightmost non-whitespace
+        int right = _stripRight(s);
+        if (right < 0) {
+            // They're all whitespace
+            return "";
+        } else {
+            // Substring up to and including this rightmost non-whitespace
+            return s.substring(0, right + 1);
+        }
+    }
+
+    /**
+     * Implementation of Python str.rstrip() common to exposed and Java API. Any byte/character
+     * matching one of those in <code>stripChars</code> will be discarded from the right end of this
+     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane strings.
+     *
+     * @param stripChars characters to strip or null
+     * @return a new String, stripped of the specified characters/bytes
+     */
+    protected final String _rstrip(String stripChars) {
+        if (stripChars == null) {
+            // Devert to the whitespace version
+            return _rstrip();
+        } else {
+            String s = getString();
+            // Rightmost non-matching character
+            int right = _stripRight(s, stripChars);
+            // Substring up to and including this rightmost non-matching character (or "")
+            return s.substring(0, right + 1);
+        }
+    }
 
     public PyList split() {
         return str_split(null, -1);
@@ -1139,6 +1446,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_split_doc)
     final PyList str_split(String sep, int maxsplit) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         if (sep != null) {
             if (sep.length() == 0) {
                 throw Py.ValueError("empty separator");
@@ -1190,6 +1500,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_rsplit_doc)
     final PyList str_rsplit(String sep, int maxsplit) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         if (sep != null) {
             if (sep.length() == 0) {
                 throw Py.ValueError("empty separator");
@@ -1252,6 +1565,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str_partition_doc)
     final PyTuple str_partition(PyObject sepObj) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         String sep;
 
         if (sepObj instanceof PyUnicode) {
@@ -1303,6 +1619,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str_rpartition_doc)
     final PyTuple str_rpartition(PyObject sepObj) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         String sep;
 
         if (sepObj instanceof PyUnicode) {
@@ -1470,6 +1789,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_index_doc)
     final int str_index(String sub, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int index = str_find(sub, start, end);
         if (index == -1)
             throw Py.ValueError("substring not found in string.index");
@@ -1490,6 +1812,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rindex_doc)
     final int str_rindex(String sub, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int index = str_rfind(sub, start, end);
         if(index == -1)
             throw Py.ValueError("substring not found in string.rindex");
@@ -1510,6 +1835,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_count_doc)
     final int str_count(String sub, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         if (sub == null) {
             throw Py.TypeError("count() takes at least 1 argument (0 given)");
         }
@@ -1547,6 +1875,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_find_doc)
     final int str_find(String sub, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int[] indices = translateIndices(start, end);
         int index = getString().indexOf(sub, indices[0]);
         if (index < indices[2] || index > indices[1]) {
@@ -1569,6 +1900,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rfind_doc)
     final int str_rfind(String sub, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int[] indices = translateIndices(start, end);
         int index = getString().lastIndexOf(sub, indices[1] - sub.length());
         if (index < indices[2]) {
@@ -1895,6 +2229,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
     
     protected PyString replace(PyString oldPiece, PyString newPiece, int maxsplit) {
+        
+        // XXX Accept PyObjects that may be BufferProtocol or PyUnicode
+        
         int len = getString().length();
         int old_len = oldPiece.getString().length();
         if (len == 0) {
@@ -2068,6 +2405,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_startswith_doc)
     final boolean str_startswith(PyObject prefix, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int[] indices = translateIndices(start, end);
         
         if (prefix instanceof PyString) {
@@ -2110,6 +2450,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_endswith_doc)
     final boolean str_endswith(PyObject suffix, PyObject start, PyObject end) {
+        
+        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        
         int[] indices = translateIndices(start, end);
 
         String substr = getString().substring(indices[0], indices[1]);
@@ -2134,7 +2477,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     /**
      * Turns the possibly negative Python slice start and end into valid indices
      * into this string.
-     * 
+     *
      * @return a 3 element array of indices into this string describing a
      *         substring from [0] to [1]. [0] <= [1], [0] >= 0 and [1] <=
      *         string.length(). The third element contains the unadjusted 
@@ -2192,6 +2535,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
     final String str_translate(String table, String deletechars) {
+        
+        // XXX Accept PyObjects that may be BufferProtocol
+        
         if (table != null && table.length() != 256)
             throw Py.ValueError(
                 "translation table must be 256 characters long");
