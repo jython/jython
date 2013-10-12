@@ -420,6 +420,10 @@ class CommonTest(unittest.TestCase):
         self.checkequal(['a']*18 + ['aBLAHa'], ('aBLAH'*20)[:-4],
                         'split', 'BLAH', 18)
 
+        # by buffer (Jython addition)
+        self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'split', buffer('//'))
+        self.checkequal(['a', 'b', 'c//d'], 'a//b//c//d', 'split', buffer('//'), 2)
+
         # mixed use of str and unicode
         self.checkequal([u'a', u'b', u'c d'], 'a b c d', 'split', u' ', 2)
 
@@ -509,6 +513,10 @@ class CommonTest(unittest.TestCase):
         self.checkequal(['a']*20, ('aBLAH'*20)[:-4], 'rsplit', 'BLAH', 19)
         self.checkequal(['aBLAHa'] + ['a']*18, ('aBLAH'*20)[:-4],
                         'rsplit', 'BLAH', 18)
+
+        # by buffer (Jython addition)
+        self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'rsplit', buffer('//'))
+        self.checkequal(['a//b', 'c', 'd'], 'a//b//c//d', 'rsplit', buffer('//'), 2)
 
         # mixed use of str and unicode
         self.checkequal([u'a b', u'c', u'd'], 'a b c d', 'rsplit', u' ', 2)

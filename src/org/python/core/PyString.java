@@ -723,7 +723,8 @@ public class PyString extends PyBaseString implements BufferProtocol
         if (obj instanceof PyString) {
             // str or unicode object: go directly to the String
             return ((PyString)obj).getString();
-        } else if (obj instanceof BufferProtocol) {
+        } else 
+            if (obj instanceof BufferProtocol) {
             // Other object with buffer API: briefly access the buffer
             PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
             try {
@@ -755,7 +756,7 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     /**
      * Return a String equivalent to the argument according to the calling conventions of the
-     * <code>strip</code> and <code>sep</code> methods of <code>str</code>. Those methods accept
+     * <code>strip</code> and <code>split</code> methods of <code>str</code>. Those methods accept
      * anything bearing the buffer interface as a byte string, but also PyNone (or the argument may
      * be omitted, showing up here as null) to indicate that the criterion is whitespace. They also
      * accept a unicode argument, not dealt with here.
@@ -1193,7 +1194,7 @@ public class PyString extends PyBaseString implements BufferProtocol
      */
     protected final String _strip(String stripChars) {
         if (stripChars == null) {
-            // Devert to the whitespace version
+            // Divert to the whitespace version
             return _strip();
         } else {
             String s = getString();
@@ -1421,7 +1422,7 @@ public class PyString extends PyBaseString implements BufferProtocol
      */
     protected final String _rstrip(String stripChars) {
         if (stripChars == null) {
-            // Devert to the whitespace version
+            // Divert to the whitespace version
             return _rstrip();
         } else {
             String s = getString();
@@ -1432,129 +1433,482 @@ public class PyString extends PyBaseString implements BufferProtocol
         }
     }
 
+    /**
+     * Equivalent to Python <code>str.split()</code>, splitting on runs of whitespace.
+     *
+     * @return list(str) result
+     */
     public PyList split() {
-        return str_split(null, -1);
+        return _split(null, -1);
     }
 
+    /**
+     * Equivalent to Python <code>str.split()</code>, splitting on a specified string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @return list(str) result
+     */
     public PyList split(String sep) {
+        return _split(sep, -1);
+    }
+
+    /**
+     * Equivalent to Python <code>str.split()</code>, splitting on a specified string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    public PyList split(String sep, int maxsplit) {
+        return _split(sep, maxsplit);
+    }
+
+    /**
+     * Equivalent to Python <code>str.split()</code> returning a {@link PyList} of
+     * <code>PyString</code>s (or <code>PyUnicode</code>s). The <code>str</code> will be split at
+     * each occurrence of <code>sep</code>. If <code>sep == null</code>, whitespace will be used as
+     * the criterion. If <code>sep</code> has zero length, a Python <code>ValueError</code> is
+     * raised.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @return list(str) result
+     */
+    public PyList split(PyObject sep) {
         return str_split(sep, -1);
     }
 
-    public PyList split(String sep, int maxsplit) {
+    /**
+     * As {@link #split(PyObject)} but if <code>maxsplit</code> &gt;=0 and there are more feasible
+     * splits than <code>maxsplit</code>, the last element of the list contains the rest of the
+     * string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    public PyList split(PyObject sep, int maxsplit) {
         return str_split(sep, maxsplit);
     }
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_split_doc)
-    final PyList str_split(String sep, int maxsplit) {
-        
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
-        if (sep != null) {
-            if (sep.length() == 0) {
-                throw Py.ValueError("empty separator");
-            }
+    final PyList str_split(PyObject sepObj, int maxsplit) {
+        if (sepObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_split(sepObj, maxsplit);
+        } else {
+            // It ought to be None, null, some kind of bytes the with buffer API.
+            String sep = asStripSepOrError(sepObj, "split");
+            // Split on specified string or whitespace if sep == null
+            return _split(sep, maxsplit);
+        }
+    }
+
+    /**
+     * Implementation of Python str.split() common to exposed and Java API returning a
+     * {@link PyList} of <code>PyString</code>s. The <code>str</code> will be split at each
+     * occurrence of <code>sep</code>. If <code>sep == null</code>, whitespace will be used as the
+     * criterion. If <code>sep</code> has zero length, a Python <code>ValueError</code> is raised.
+     * If <code>maxsplit</code> &gt;=0 and there are more feasible splits than <code>maxsplit</code>
+     * the last element of the list contains the what is left over after the last split.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_split(PyObject)}.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    protected final PyList _split(String sep, int maxsplit) {
+        if (sep == null) {
+            // Split on runs of whitespace
+            return splitfields(maxsplit);
+        } else if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        } else {
+            // Split on specified (non-empty) string
             return splitfields(sep, maxsplit);
         }
+    }
 
+    /**
+     * Helper function for <code>.split</code>, in <code>str</code> and <code>unicode</code>,
+     * splitting on white space and returning a list of the separated parts. If there are more than
+     * <code>maxsplit</code> feasible the last element of the list is the remainder of the original
+     * (this) string. The split sections will be {@link PyUnicode} if this object is a
+     * <code>PyUnicode</code>.
+     *
+     * @param maxsplit limit on the number of splits (if &gt;=0)
+     * @return <code>PyList</code> of split sections
+     */
+    private PyList splitfields(int maxsplit) {
+        /*
+         * Result built here is a list of split parts, exactly as required for s.split(None,
+         * maxsplit). If there are to be n splits, there will be n+1 elements in L.
+         */
         PyList list = new PyList();
 
-        char[] chars = getString().toCharArray();
-        int n=chars.length;
+        String s = getString();
+        int length = s.length(), start = 0, splits = 0, index;
 
-        if (maxsplit < 0)
-            maxsplit = n;
+        if (maxsplit < 0) {
+            // Make all possible splits: there can't be more than:
+            maxsplit = length;
+        }
 
-        int splits=0;
-        int index=0;
-        while (index < n && splits < maxsplit) {
-            while (index < n && Character.isWhitespace(chars[index]))
-                index++;
-            if (index == n)
+        // start is always the first character not consumed into a piece on the list
+        while (start < length) {
+
+            // Find the next occurrence of non-whitespace
+            while (start < length) {
+                if (!Character.isWhitespace(s.charAt(start)))
+                    // Break leaving start pointing at non-whitespace
+                    break;
+                start++;
+            }
+
+            if (start >= length) {
+                // Only found whitespace so there is no next segment
                 break;
-            int start = index;
 
-            while (index < n && !Character.isWhitespace(chars[index]))
-                index++;
+            } else if (splits >= maxsplit) {
+                // The next segment is the last and contains all characters up to the end
+                index = length;
+
+            } else {
+                // The next segment runs up to the next next whitespace or end
+                for (index = start; index < length; index++) {
+                    if (Character.isWhitespace(s.charAt(index)))
+                        // Break leaving index pointing at whitespace
+                        break;
+                }
+            }
+
+            // Make a piece from start up to index
             list.append(fromSubstring(start, index));
             splits++;
+
+            // Start next segment search at that point
+            start = index;
         }
-        while (index < n && Character.isWhitespace(chars[index]))
-            index++;
-        if (index < n) {
-            list.append(fromSubstring(index, n));
-        }
+
         return list;
     }
 
-    public PyList rsplit() {
-        return str_rsplit(null, -1);
+    /**
+     * Helper function for <code>.split</code> and <code>.replace</code>, in <code>str</code> and
+     * <code>unicode</code>, returning a list of the separated parts. If there are more than
+     * <code>maxsplit</code> occurrences of <code>sep</code> the last element of the list is the
+     * remainder of the original (this) string. If <code>sep</code> is the zero-length string, the
+     * split is between each character (as needed by <code>.replace</code>). The split sections will
+     * be {@link PyUnicode} if this object is a <code>PyUnicode</code>.
+     *
+     * @param sep at occurrences of which this string should be split
+     * @param maxsplit limit on the number of splits (if &gt;=0)
+     * @return <code>PyList</code> of split sections
+     */
+    private PyList splitfields(String sep, int maxsplit) {
+        /*
+         * Result built here is a list of split parts, exactly as required for s.split(sep), or to
+         * produce the result of s.replace(sep, r) by a subsequent call r.join(L). If there are to
+         * be n splits, there will be n+1 elements in L.
+         */
+        PyList list = new PyList();
+
+        String s = getString();
+        int length = s.length();
+        int sepLength = sep.length();
+
+        if (maxsplit < 0) {
+            // Make all possible splits: there can't be more than:
+            maxsplit = length + 1;
+        }
+
+        if (maxsplit == 0) {
+            // Degenerate case
+            list.append(this);
+
+        } else if (sepLength == 0) {
+            /*
+             * The separator is "". This cannot happen with s.split(""), as that's an error, but it
+             * is used by s.replace("", A) and means that the result should be A interleaved between
+             * the characters of s, before the first, and after the last, the number always limited
+             * by maxsplit.
+             */
+
+            // There will be m+1 parts, where m = maxsplit or length+1 whichever is smaller.
+            int m = (maxsplit > length) ? length + 1 : maxsplit;
+
+            // Put an empty string first to make one split before the first character
+            list.append(createInstance("")); // PyString or PyUnicode as this class
+            int index;
+
+            // Add m-1 pieces one character long
+            for (index = 0; index < m - 1; index++) {
+                list.append(fromSubstring(index, index + 1));
+            }
+
+            // And add the last piece, so there are m+1 splits (m+1 pieces)
+            list.append(fromSubstring(index, length));
+
+        } else {
+            // Index of first character not yet in a piece on the list
+            int start = 0;
+
+            // Add at most maxsplit pieces
+            for (int splits = 0; splits < maxsplit; splits++) {
+
+                // Find the next occurrence of sep
+                int index = s.indexOf(sep, start);
+
+                if (index < 0) {
+                    // No more occurrences of sep: we're done
+                    break;
+
+                } else {
+                    // Make a piece from start up to where we found sep
+                    list.append(fromSubstring(start, index));
+                    // New start (of next piece) is just after sep
+                    start = index + sepLength;
+                }
+            }
+
+            // Last piece is the rest of the string (even if start==length)
+            list.append(fromSubstring(start, length));
+        }
+
+        return list;
     }
 
+    /**
+     * Equivalent to Python <code>str.rsplit()</code>, splitting on runs of whitespace.
+     *
+     * @return list(str) result
+     */
+    public PyList rsplit() {
+        return _rsplit(null, -1);
+    }
+
+    /**
+     * Equivalent to Python <code>str.rsplit()</code>, splitting on a specified string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @return list(str) result
+     */
     public PyList rsplit(String sep) {
+        return _rsplit(sep, -1);
+    }
+
+    /**
+     * Equivalent to Python <code>str.rsplit()</code>, splitting on a specified string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    public PyList rsplit(String sep, int maxsplit) {
+        return _rsplit(sep, maxsplit);
+    }
+
+    /**
+     * Equivalent to Python <code>str.rsplit()</code> returning a {@link PyList} of
+     * <code>PyString</code>s (or <code>PyUnicode</code>s). The <code>str</code> will be split at
+     * each occurrence of <code>sep</code>, working from the right. If <code>sep == null</code>,
+     * whitespace will be used as the criterion. If <code>sep</code> has zero length, a Python
+     * <code>ValueError</code> is raised.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @return list(str) result
+     */
+    public PyList rsplit(PyObject sep) {
         return str_rsplit(sep, -1);
     }
 
-    public PyList rsplit(String sep, int maxsplit) {
+    /**
+     * As {@link #rsplit(PyObject)} but if <code>maxsplit</code> &gt;=0 and there are more feasible
+     * splits than <code>maxsplit</code> the last element of the list contains the rest of the
+     * string.
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    public PyList rsplit(PyObject sep, int maxsplit) {
         return str_rsplit(sep, maxsplit);
     }
 
-    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_rsplit_doc)
-    final PyList str_rsplit(String sep, int maxsplit) {
-        
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
-        if (sep != null) {
-            if (sep.length() == 0) {
-                throw Py.ValueError("empty separator");
-            }
-            PyList list = rsplitfields(sep, maxsplit);
-            list.reverse();
-            return list;
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.str_split_doc)
+    final PyList str_rsplit(PyObject sepObj, int maxsplit) {
+        if (sepObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_rsplit(sepObj, maxsplit);
+        } else {
+            // It ought to be None, null, some kind of bytes the with buffer API.
+            String sep = asStripSepOrError(sepObj, "rsplit");
+            // Split on specified string or whitespace if sep == null
+            return _rsplit(sep, maxsplit);
         }
+    }
 
+    /**
+     * Implementation of Python str.rsplit() common to exposed and Java API returning a
+     * {@link PyList} of <code>PyString</code>s. The <code>str</code> will be split at each
+     * occurrence of <code>sep</code>, working from the right. If <code>sep == null</code>,
+     * whitespace will be used as the criterion. If <code>sep</code> has zero length, a Python
+     * <code>ValueError</code> is raised. If <code>maxsplit</code> &gt;=0 and there are more
+     * feasible splits than <code>maxsplit</code> the first element of the list contains the what is
+     * left over after the last split.
+     * <p>
+     * Implementation note: although a str contains only bytes, this method is also called by
+     * {@link PyUnicode#unicode_rsplit(PyObject)} .
+     *
+     * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
+     * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
+     *            parts).
+     * @return list(str) result
+     */
+    protected final PyList _rsplit(String sep, int maxsplit) {
+        if (sep == null) {
+            // Split on runs of whitespace
+            return rsplitfields(maxsplit);
+        } else if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        } else {
+            // Split on specified (non-empty) string
+            return rsplitfields(sep, maxsplit);
+        }
+    }
+
+    /**
+     * Helper function for <code>.rsplit</code>, in <code>str</code> and <code>unicode</code>,
+     * splitting on white space and returning a list of the separated parts. If there are more than
+     * <code>maxsplit</code> feasible the first element of the list is the remainder of the original
+     * (this) string. The split sections will be {@link PyUnicode} if this object is a
+     * <code>PyUnicode</code>.
+     *
+     * @param maxsplit limit on the number of splits (if &gt;=0)
+     * @return <code>PyList</code> of split sections
+     */
+    private PyList rsplitfields(int maxsplit) {
+        /*
+         * Result built here (in reverse) is a list of split parts, exactly as required for
+         * s.rsplit(None, maxsplit). If there are to be n splits, there will be n+1 elements.
+         */
         PyList list = new PyList();
-        char[] chars = getString().toCharArray();
+
+        String s = getString();
+        int length = s.length(), end = length - 1, splits = 0, index;
 
         if (maxsplit < 0) {
-            maxsplit = chars.length;
+            // Make all possible splits: there can't be more than:
+            maxsplit = length;
         }
 
-        int splits = 0;
-        int i = chars.length - 1;
+        // end is always the rightmost character not consumed into a piece on the list
+        while (end >= 0) {
 
-        while (i > -1 && Character.isWhitespace(chars[i])) {
-            i--;
-        }
-        if (i == -1) {
-            return list;
-        }
-
-        while (splits < maxsplit) {
-            while (i > -1 && Character.isWhitespace(chars[i])) {
-                i--;
+            // Find the next occurrence of non-whitespace (working leftwards)
+            while (end >= 0) {
+                if (!Character.isWhitespace(s.charAt(end)))
+                    // Break leaving end pointing at non-whitespace
+                    break;
+                --end;
             }
-            if (i == -1) {
+
+            if (end < 0) {
+                // Only found whitespace so there is no next segment
                 break;
+
+            } else if (splits >= maxsplit) {
+                // The next segment is the last and contains all characters back to the beginning
+                index = -1;
+
+            } else {
+                // The next segment runs back to the next next whitespace or beginning
+                for (index = end; index >= 0; --index) {
+                    if (Character.isWhitespace(s.charAt(index)))
+                        // Break leaving index pointing at whitespace
+                        break;
+                }
             }
 
-            int nextWsChar = i;
-            while (nextWsChar > -1 && !Character.isWhitespace(chars[nextWsChar])) {
-                nextWsChar--;
-            }
-            if (nextWsChar == -1) {
-                break;
-            }
-
+            // Make a piece from index+1 start up to end+1
+            list.append(fromSubstring(index + 1, end + 1));
             splits++;
-            list.add(fromSubstring(nextWsChar + 1, i + 1));
-            i = nextWsChar;
+
+            // Start next segment search at that point
+            end = index;
         }
-        while (i > -1 && Character.isWhitespace(chars[i])) {
-            i--;
+
+        list.reverse();
+        return list;
+    }
+
+    /**
+     * Helper function for <code>.rsplit</code>, in <code>str</code> and <code>unicode</code>,
+     * returning a list of the separated parts, <em>in the reverse order</em> of their occurrence in
+     * this string. If there are more than <code>maxsplit</code> occurrences of <code>sep</code> the
+     * first element of the list is the left end of the original (this) string. The split sections
+     * will be {@link PyUnicode} if this object is a <code>PyUnicode</code>.
+     *
+     * @param sep at occurrences of which this string should be split
+     * @param maxsplit limit on the number of splits (if &gt;=0)
+     * @return <code>PyList</code> of split sections
+     */
+    private PyList rsplitfields(String sep, int maxsplit) {
+        /*
+         * Result built here (in reverse) is a list of split parts, exactly as required for
+         * s.rsplit(sep, maxsplit). If there are to be n splits, there will be n+1 elements.
+         */
+        PyList list = new PyList();
+
+        String s = getString();
+        int length = s.length();
+        int sepLength = sep.length();
+
+        if (maxsplit < 0) {
+            // Make all possible splits: there can't be more than:
+            maxsplit = length + 1;
         }
-        if (i > -1) {
-            list.add(fromSubstring(0,i+1));
+
+        if (maxsplit == 0) {
+            // Degenerate case
+            list.append(this);
+
+        } else if (sepLength == 0) {
+            // Empty separator is not allowed
+            throw Py.ValueError("empty separator");
+
+        } else {
+            // Index of first character of the last piece already on the list
+            int end = length;
+
+            // Add at most maxsplit pieces
+            for (int splits = 0; splits < maxsplit; splits++) {
+
+                // Find the next occurrence of sep (working leftwards)
+                int index = s.lastIndexOf(sep, end - sepLength);
+
+                if (index < 0) {
+                    // No more occurrences of sep: we're done
+                    break;
+
+                } else {
+                    // Make a piece from where we found sep up to end
+                    list.append(fromSubstring(index + sepLength, end));
+                    // New end (of next piece) is where we found sep
+                    end = index;
+                }
+            }
+
+            // Last piece is the rest of the string (even if end==0)
+            list.append(fromSubstring(0, end));
         }
+
         list.reverse();
         return list;
     }
@@ -1665,69 +2019,6 @@ public class PyString extends PyBaseString implements BufferProtocol
             PyUnicode emptyUnicode = Py.newUnicode("");
             return new PyTuple(emptyUnicode, emptyUnicode, this);
         }
-    }
-
-    private PyList splitfields(String sep, int maxsplit) {
-        PyList list = new PyList();
-
-        int length = getString().length();
-        if (maxsplit < 0)
-            maxsplit = length + 1;
-
-        int lastbreak = 0;
-        int splits = 0;
-        int sepLength = sep.length();
-        int index;
-        if((sep.length() == 0) && (maxsplit != 0)) {
-            index = getString().indexOf(sep, lastbreak);
-            list.append(fromSubstring(lastbreak, index));
-            splits++;
-        }
-        while (splits < maxsplit) {
-            index = getString().indexOf(sep, lastbreak);
-            if (index == -1)
-                break;
-            if(sep.length() == 0)
-                index++;
-            splits += 1;
-            list.append(fromSubstring(lastbreak, index));
-            lastbreak = index + sepLength;
-        }
-        if (lastbreak <= length) {
-            list.append(fromSubstring(lastbreak, length));
-        }
-        return list;
-    }
-
-    private PyList rsplitfields(String sep, int maxsplit) {
-        PyList list = new PyList();
-
-        int length = getString().length();
-        if (maxsplit < 0) {
-            maxsplit = length + 1;
-        }
-
-        int lastbreak = length;
-        int splits = 0;
-        int index = length;
-        int sepLength = sep.length();
-
-        while (index > 0 && splits < maxsplit) {
-            int i = getString().lastIndexOf(sep, index - sepLength);
-            if (i == index) {
-                i -= sepLength;
-            }
-            if (i < 0) {
-                break;
-            }
-            splits++;
-            list.append(fromSubstring(i + sepLength, lastbreak));
-            lastbreak = i;
-            index = i;
-
-        }
-        list.append(fromSubstring(0, lastbreak));
-        return list;
     }
 
     public PyList splitlines() {

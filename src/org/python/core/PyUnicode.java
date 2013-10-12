@@ -923,23 +923,23 @@ public class PyUnicode extends PyString implements Iterable {
         return unicodeRpartition(sep);
     }
 
-    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_split_doc)
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
         PyUnicode sep = coerceToUnicode(sepObj);
         if (sep != null) {
-            return str_split(sep.getString(), maxsplit);
+            return _split(sep.getString(), maxsplit);
         } else {
-            return str_split(null, maxsplit);
+            return _split(null, maxsplit);
         }
     }
 
-    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_rsplit_doc)
     final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
         PyUnicode sep = coerceToUnicode(sepObj);
         if (sep != null) {
-            return str_rsplit(sep.getString(), maxsplit);
+            return _rsplit(sep.getString(), maxsplit);
         } else {
-            return str_rsplit(null, maxsplit);
+            return _rsplit(null, maxsplit);
         }
     }
 
