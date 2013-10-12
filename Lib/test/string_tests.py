@@ -424,6 +424,13 @@ class CommonTest(unittest.TestCase):
         self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'split', buffer('//'))
         self.checkequal(['a', 'b', 'c//d'], 'a//b//c//d', 'split', buffer('//'), 2)
 
+        # by memoryview (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('//') as target:
+                self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'split', target)
+                self.checkequal(['a', 'b', 'c//d'], 'a//b//c//d', 'split', target, 2)
+
         # mixed use of str and unicode
         self.checkequal([u'a', u'b', u'c d'], 'a b c d', 'split', u' ', 2)
 
@@ -517,6 +524,13 @@ class CommonTest(unittest.TestCase):
         # by buffer (Jython addition)
         self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'rsplit', buffer('//'))
         self.checkequal(['a//b', 'c', 'd'], 'a//b//c//d', 'rsplit', buffer('//'), 2)
+
+        # by memoryview (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('//') as target:
+                self.checkequal(['a', 'b', 'c', 'd'], 'a//b//c//d', 'rsplit', target)
+                self.checkequal(['a//b', 'c', 'd'], 'a//b//c//d', 'rsplit', target, 2)
 
         # mixed use of str and unicode
         self.checkequal([u'a b', u'c', u'd'], 'a b c d', 'rsplit', u' ', 2)

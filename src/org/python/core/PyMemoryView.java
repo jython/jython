@@ -196,6 +196,21 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
         return backing.getLen();
     }
 
+    @Override
+    public int hashCode() {
+        return memoryview___hash__();
+    }
+
+    @ExposedMethod
+    final int memoryview___hash__() {
+        checkNotReleased();
+        if (backing.isReadonly()) {
+            return backing.toString().hashCode();
+        } else {
+            throw Py.ValueError("cannot hash writable memoryview object");
+        }
+    }
+
     /*
      * ============================================================================================
      * Python API comparison operations
@@ -279,6 +294,13 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     /**
      * Comparison function between this memoryview and any other object. The inequality comparison
      * operators are based on this.
+     * <p>
+     * In Python 2.7, <code>memoryview</code> objects are ordered by their equivalent byte sequence
+     * values, and there is no concept of a released <code>memoryview</code>. In Python 3,
+     * <code>memoryview</code> objects are not ordered but may be tested for equality: a
+     * <code>memoryview</code> is always equal to itself, and distinct <code>memoryview</code>
+     * objects are equal if they are not released, and view equal bytes. This method supports
+     * the Python 2.7 model, and should probably not survive into Jython 3.
      *
      * @param b
      * @return 1, 0 or -1 as this>b, this==b, or this&lt;b respectively, or -2 if the comparison is
@@ -286,7 +308,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      */
     private int memoryview_cmp(PyObject b) {
 
-        // Check the memeoryview is still alive: works here for all the inequalities
+        // Check the memeryview is still alive: works here for all the inequalities
         checkNotReleased();
 
         // Try to get a byte-oriented view
@@ -319,42 +341,60 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * Fail-fast comparison function between byte array types and any other object, for when the
      * test is only for equality. The inequality comparison operators <code>__eq__</code> and
      * <code>__ne__</code> are based on this.
+     * <p>
+     * In Python 2.7, <code>memoryview</code> objects are ordered by their equivalent byte sequence
+     * values, and there is no concept of a released <code>memoryview</code>. In Python 3,
+     * <code>memoryview</code> objects are not ordered but may be tested for equality: a
+     * <code>memoryview</code> is always equal to itself, and distinct <code>memoryview</code>
+     * objects are equal if they are not released, and view equal bytes. This method supports
+     * a compromise between of the two and should be rationalised in Jython 3.
      *
      * @param b
      * @return 0 if this==b, or +1 or -1 if this!=b, or -2 if the comparison is not implemented
      */
     private int memoryview_cmpeq(PyObject b) {
 
-        // Check the memeoryview is still alive: works here for all the equalities
-        checkNotReleased();
+        if (this == b) {
+            // Same object: quick success (even if released)
+            return 0;
 
-        // Try to get a byte-oriented view
-        PyBuffer bv = BaseBytes.getView(b);
+        } else if (released) {
+            // Released memoryview is not equal to anything (but not an error to have asked)
+            return -1;
 
-        if (bv == null) {
-            // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
-            return -2;
+        } else if ((b instanceof PyMemoryView) && ((PyMemoryView)b).released) {
+            // Released memoryview is not equal to anything (but not an error to have asked)
+            return 1;
 
         } else {
 
-            try {
-                if (bv == backing) {
-                    // Same buffer: quick result
-                    return 0;
-                } else if (bv.getLen() != backing.getLen()) {
-                    // Different size: can't be equal, and we don't care which is bigger
-                    return 1;
-                } else {
-                    // Actually compare the contents
-                    return compare(backing, bv);
-                }
+            // Try to get a byte-oriented view
+            PyBuffer bv = BaseBytes.getView(b);
 
-            } finally {
-                // Must always let go of the buffer
-                bv.release();
+            if (bv == null) {
+                // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
+                return -2;
+
+            } else {
+
+                try {
+                    if (bv == backing) {
+                        // Same buffer: quick result
+                        return 0;
+                    } else if (bv.getLen() != backing.getLen()) {
+                        // Different size: can't be equal, and we don't care which is bigger
+                        return 1;
+                    } else {
+                        // Actually compare the contents
+                        return compare(backing, bv);
+                    }
+
+                } finally {
+                    // Must always let go of the buffer
+                    bv.release();
+                }
             }
         }
-
     }
 
     /**
@@ -468,6 +508,37 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
         }
     }
 
+    /**
+     * Called at the start of a context-managed suite (supporting the <code>with</code> clause).
+     *
+     * @return this object
+     */
+    public PyObject __enter__() {
+        return memoryview___enter__();
+    }
+
+    @ExposedMethod(names = "__enter__")
+    final PyObject memoryview___enter__() {
+        checkNotReleased();
+        return this;
+    }
+
+    /**
+     * Called at the end of a context-managed suite (supporting the <code>with</code> clause), and
+     * will release the <code>memoryview</code>.
+     *
+     * @return false
+     */
+    public boolean __exit__(PyObject type, PyObject value, PyObject traceback) {
+        return memoryview___exit__(type, value, traceback);
+    }
+
+    @ExposedMethod
+    final boolean memoryview___exit__(PyObject type, PyObject value, PyObject traceback) {
+        memoryview_release();
+        return false;
+    }
+
     /*
      * These strings are adapted from the patch in CPython issue 15855 and the on-line documentation
      * most attributes do not come with any docstrings in CPython 2.7, so the make_pydocs trick
@@ -542,6 +613,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      */
     @Override
     public synchronized PyBuffer getBuffer(int flags) {
+        checkNotReleased(); // Only for compatibility with CPython
         /*
          * The PyBuffer itself does all the export counting, and since the behaviour of memoryview
          * need not change, it really is a simple as:
@@ -560,11 +632,17 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * <code>ValueError</code> (except <code>release()</code> itself which can be called multiple
      * times with the same effect as just one call).
      * <p>
-     * This becomes an exposed method from Python 3.2. The Jython implementation of
-     * <code>memoryview</code> follows the Python 3.3 design internally, which is the version that
-     * resolved some long-standing design issues.
+     * This becomes an exposed method in CPython from 3.2. The Jython implementation of
+     * <code>memoryview</code> follows the Python 3.3 design internally and therefore safely
+     * anticipates Python 3 in exposing <code>memoryview.release</code> along with the related
+     * context-management behaviour.
      */
     public synchronized void release() {
+        memoryview_release();
+    }
+
+    @ExposedMethod(doc = release_doc)
+    public synchronized final void memoryview_release() {
         /*
          * It is not an error to call this release method while this <code>memoryview</code> has
          * buffer exports (e.g. another <code>memoryview</code> was created on it), but it will not

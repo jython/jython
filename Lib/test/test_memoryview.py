@@ -239,6 +239,52 @@ class AbstractMemoryTests:
             gc.collect()
             self.assertTrue(wr() is None, wr())
 
+    def _check_released(self, m, tp):   # Jython borrowed from CPython 3.3
+        check = self.assertRaises(ValueError)
+        # with check: bytes(m)     # Jython follows v2.7 behaviour
+        with check: m.tobytes()
+        with check: m.tolist()
+        with check: m[0]
+        with check: m[0] = b'x'
+        with check: len(m)
+        with check: m.format
+        with check: m.itemsize
+        with check: m.ndim
+        with check: m.readonly
+        with check: m.shape
+        with check: m.strides
+        with check:
+            with m:
+                pass
+        # str() and repr() still function
+        self.assertIn("memoryview", str(m))
+        self.assertIn("memoryview", repr(m))
+        self.assertEqual(m, m)
+        self.assertNotEqual(m, memoryview(tp(self._source)))
+        self.assertNotEqual(m, tp(self._source))
+
+    def test_contextmanager(self):      # Jython borrowed from CPython 3.3
+        for tp in self._types:
+            b = tp(self._source)
+            m = self._view(b)
+            with m as cm:
+                self.assertIs(cm, m)
+            self._check_released(m, tp)
+            m = self._view(b)
+            # Can release explicitly inside the context manager
+            with m:
+                m.release()
+
+    def test_release(self):             # Jython borrowed from CPython 3.3
+        for tp in self._types:
+            b = tp(self._source)
+            m = self._view(b)
+            m.release()
+            self._check_released(m, tp)
+            # Can be called a second time (it's a no-op)
+            m.release()
+            self._check_released(m, tp)
+
     def test_writable_readonly(self):
         # Issue #10451: memoryview incorrectly exposes a readonly
         # buffer as writable causing a segfault if using mmap
@@ -249,6 +295,54 @@ class AbstractMemoryTests:
         m = self._view(b)
         i = io.BytesIO(b'ZZZZ')
         self.assertRaises(TypeError, i.readinto, m)
+
+    def test_getbuf_fail(self):         # Jython borrowed from CPython 3.3
+        self.assertRaises(TypeError, self._view, {})
+
+    def test_hash(self):                # Jython borrowed from CPython 3.3
+        # Memoryviews of readonly (hashable) types are hashable, and they
+        # hash as hash(obj.tobytes()).
+        tp = self.ro_type
+        if tp is None:
+            self.skipTest("no read-only type to test")
+        b = tp(self._source)
+        m = self._view(b)
+        self.assertEqual(hash(m), hash(b"abcdef"))
+        # Releasing the memoryview keeps the stored hash value (as with weakrefs)
+        m.release()
+        # XXX Hashing a released view always an error in Jython: should it be?
+        # self.assertEqual(hash(m), hash(b"abcdef"))
+
+        # Hashing a memoryview for the first time after it is released
+        # results in an error (as with weakrefs).
+        m = self._view(b)
+        m.release()
+        self.assertRaises(ValueError, hash, m)
+
+    def test_hash_writable(self):       # Jython borrowed from CPython 3.3
+        # Memoryviews of writable types are unhashable
+        tp = self.rw_type
+        if tp is None:
+            self.skipTest("no writable type to test")
+        b = tp(self._source)
+        m = self._view(b)
+        self.assertRaises(ValueError, hash, m)
+
+    @unittest.skipIf(test_support.is_jython, "GC nondeterministic in Jython")
+    def test_weakref(self):             # Jython borrowed from CPython 3.3
+        # Check memoryviews are weakrefable
+        for tp in self._types:
+            b = tp(self._source)
+            m = self._view(b)
+            L = []
+            def callback(wr, b=b):
+                L.append(b)
+            wr = weakref.ref(m, callback)
+            self.assertIs(wr(), m)
+            del m
+            test_support.gc_collect()
+            self.assertIs(wr(), None)
+            self.assertIs(L[0], b)
 
 # Variations on source objects for the buffer: bytes-like objects, then arrays
 # with itemsize > 1.
