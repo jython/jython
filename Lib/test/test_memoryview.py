@@ -310,8 +310,7 @@ class AbstractMemoryTests:
         self.assertEqual(hash(m), hash(b"abcdef"))
         # Releasing the memoryview keeps the stored hash value (as with weakrefs)
         m.release()
-        # XXX Hashing a released view always an error in Jython: should it be?
-        # self.assertEqual(hash(m), hash(b"abcdef"))
+        self.assertEqual(hash(m), hash(b"abcdef"))
 
         # Hashing a memoryview for the first time after it is released
         # results in an error (as with weakrefs).

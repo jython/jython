@@ -33,6 +33,9 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     private PyObject strides;
     /** Cache the result of getting suboffsets here. */
     private PyObject suboffsets;
+    /** Hash value cached (so we still know it after {@link #release()} is called. */
+    private int hashCache;
+    private boolean hashCacheValid = false;
 
     /**
      * Construct a PyMemoryView from a PyBuffer interface. The buffer so obtained will be writable
@@ -203,12 +206,18 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
 
     @ExposedMethod
     final int memoryview___hash__() {
-        checkNotReleased();
-        if (backing.isReadonly()) {
-            return backing.toString().hashCode();
-        } else {
-            throw Py.ValueError("cannot hash writable memoryview object");
+        if (!hashCacheValid) {
+            // We'll have to calculate it: only possible if not released
+            checkNotReleased();
+            // And if not mutable
+            if (backing.isReadonly()) {
+                hashCache = backing.toString().hashCode();
+                hashCacheValid = true;
+            } else {
+                throw Py.ValueError("cannot hash writable memoryview object");
+            }
         }
+        return hashCache;
     }
 
     /*
@@ -299,8 +308,8 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * values, and there is no concept of a released <code>memoryview</code>. In Python 3,
      * <code>memoryview</code> objects are not ordered but may be tested for equality: a
      * <code>memoryview</code> is always equal to itself, and distinct <code>memoryview</code>
-     * objects are equal if they are not released, and view equal bytes. This method supports
-     * the Python 2.7 model, and should probably not survive into Jython 3.
+     * objects are equal if they are not released, and view equal bytes. This method supports the
+     * Python 2.7 model, and should probably not survive into Jython 3.
      *
      * @param b
      * @return 1, 0 or -1 as this>b, this==b, or this&lt;b respectively, or -2 if the comparison is
@@ -346,8 +355,8 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
      * values, and there is no concept of a released <code>memoryview</code>. In Python 3,
      * <code>memoryview</code> objects are not ordered but may be tested for equality: a
      * <code>memoryview</code> is always equal to itself, and distinct <code>memoryview</code>
-     * objects are equal if they are not released, and view equal bytes. This method supports
-     * a compromise between of the two and should be rationalised in Jython 3.
+     * objects are equal if they are not released, and view equal bytes. This method supports a
+     * compromise between of the two and should be rationalised in Jython 3.
      *
      * @param b
      * @return 0 if this==b, or +1 or -1 if this!=b, or -2 if the comparison is not implemented
