@@ -573,6 +573,21 @@ class CommonTest(unittest.TestCase):
             #self.checkequal(unicode('hello', 'ascii'), 'hello',
             #     'strip', unicode('xyz', 'ascii'))
 
+        # strip/lstrip/rstrip with buffer or memoryview arg (Jython addition)
+        if test_support.is_jython and self.__class__.type2test in (str, bytearray):
+            b = buffer('xyz')
+            self.checkequal('hello', 'xyzzyhelloxyzzy', 'strip', b)
+            self.checkequal('helloxyzzy', 'xyzzyhelloxyzzy', 'lstrip', b)
+            self.checkequal('xyzzyhello', 'xyzzyhelloxyzzy', 'rstrip', b)
+            self.checkequal('hello', 'hello', 'strip', b)
+
+            # CPython does not support until v3.2
+            with memoryview('xyz') as m:
+                self.checkequal('hello', 'xyzzyhelloxyzzy', 'strip', m)
+                self.checkequal('helloxyzzy', 'xyzzyhelloxyzzy', 'lstrip', m)
+                self.checkequal('xyzzyhello', 'xyzzyhelloxyzzy', 'rstrip', m)
+                self.checkequal('hello', 'hello', 'strip', m)
+
         self.checkraises(TypeError, 'hello', 'strip', 42, 42)
         self.checkraises(TypeError, 'hello', 'lstrip', 42, 42)
         self.checkraises(TypeError, 'hello', 'rstrip', 42, 42)

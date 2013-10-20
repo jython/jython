@@ -596,6 +596,15 @@ public class PyUnicode extends PyString implements Iterable {
 
     // compliance requires that we need to support a bit of inconsistency
     // compared to other coercion used
+    /**
+     * Helper used in <code>.strip()</code> to "coerce" a method argument into a <code>PyUnicode</code> (which it
+     * may already be). A <code>null</code> argument or a <code>PyNone</code> causes
+     * <code>null</code> to be returned. A buffer type is not acceptable to (Unicode) <code>.strip()</code>. This is the
+     * difference from {@link #coerceToUnicode(PyObject)}.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
+     */
     private PyUnicode coerceStripSepToUnicode(PyObject o) {
         if (o == null) {
             return null;

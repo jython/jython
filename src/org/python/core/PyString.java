@@ -1123,8 +1123,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.strip() with no argument, meaning strip whitespace. Any whitespace
-     * byte/character will be discarded from either end of this <code>str</code>.
+     * Equivalent of Python <code>str.strip()</code> with no argument, meaning strip whitespace. Any
+     * whitespace byte/character will be discarded from either end of this <code>str</code>.
      *
      * @return a new String, stripped of the whitespace characters/bytes
      */
@@ -1133,15 +1133,27 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.strip(). Any byte/character matching one of those in
-     * <code>stripChars</code> will be discarded from either end of this <code>str</code>. If
-     * <code>stripChars == null</code>, whitespace will be stripped.
+     * Equivalent of Python <code>str.strip()</code>.
      *
      * @param stripChars characters to strip from either end of this str/bytes, or null
      * @return a new String, stripped of the specified characters/bytes
      */
     public String strip(String stripChars) {
         return _strip(stripChars);
+    }
+
+    /**
+     * Equivalent of Python <code>str.strip()</code>. Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from either end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped. If <code>stripChars</code> is a
+     * <code>PyUnicode</code>, the result will also be a <code>PyUnicode</code>.
+     *
+     * @param stripChars characters to strip from either end of this str/bytes, or null
+     * @return a new <code>PyString</code> (or {@link PyUnicode}), stripped of the specified
+     *         characters/bytes
+     */
+    public PyObject strip(PyObject stripChars) {
+        return str_strip(stripChars);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_strip_doc)
@@ -1158,12 +1170,12 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.strip() common to exposed and Java API, when stripping
-     * whitespace. Any whitespace byte/character will be discarded from either end of this
+     * Implementation of Python <code>str.strip()</code> common to exposed and Java API, when
+     * stripping whitespace. Any whitespace byte/character will be discarded from either end of this
      * <code>str</code>.
      * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_strip(PyObject)} when this is a basic-plane string.
+     * Implementation note: although a <code>str</code> contains only bytes, this method is also
+     * called by {@link PyUnicode#unicode_strip(PyObject)} when this is a basic-plane string.
      *
      * @return a new String, stripped of the whitespace characters/bytes
      */
@@ -1182,12 +1194,14 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.strip() common to exposed and Java API. Any byte/character
-     * matching one of those in <code>stripChars</code> will be discarded from either end of this
-     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * Implementation of Python <code>str.strip()</code> common to exposed and Java API. Any
+     * byte/character matching one of those in <code>stripChars</code> will be discarded from either
+     * end of this <code>str</code>. If <code>stripChars == null</code>, whitespace will be
+     * stripped.
      * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane strings.
+     * Implementation note: although a <code>str</code> contains only bytes, this method is also
+     * called by {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane
+     * strings.
      *
      * @param stripChars characters to strip or null
      * @return a new String, stripped of the specified characters/bytes
@@ -1212,7 +1226,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Helper for strip, lstrip implementation, when stripping whitespace.
+     * Helper for <code>strip</code>, <code>lstrip</code> implementation, when stripping whitespace.
      *
      * @param s string to search (only <code>s[0:right]</code> is searched).
      * @param right rightmost extent of string search
@@ -1228,7 +1242,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Helper for strip, lstrip implementation, when stripping specified characters.
+     * Helper for <code>strip</code>, <code>lstrip</code> implementation, when stripping specified
+     * characters.
      *
      * @param s string to search (only <code>s[0:right]</code> is searched).
      * @param stripChars specifies set of characters to strip
@@ -1246,7 +1261,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Helper for strip, rstrip implementation, when stripping whitespace.
+     * Helper for <code>strip</code>, <code>rstrip</code> implementation, when stripping whitespace.
      *
      * @param s string to search.
      * @return index of rightmost non-whitespace character or -1 if they all are.
@@ -1261,7 +1276,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Helper for strip, rstrip implementation, when stripping specified characters.
+     * Helper for <code>strip</code>, <code>rstrip</code> implementation, when stripping specified
+     * characters.
      *
      * @param s string to search.
      * @param stripChars specifies set of characters to strip
@@ -1277,8 +1293,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.lstrip() with no argument, meaning strip whitespace. Any whitespace
-     * byte/character will be discarded from the left of this <code>str</code>.
+     * Equivalent of Python <code>str.lstrip()</code> with no argument, meaning strip whitespace.
+     * Any whitespace byte/character will be discarded from the left of this <code>str</code>.
      *
      * @return a new String, stripped of the whitespace characters/bytes
      */
@@ -1287,15 +1303,27 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.lstrip(). Any byte/character matching one of those in
-     * <code>stripChars</code> will be discarded from the left end of this <code>str</code>. If
-     * <code>stripChars == null</code>, whitespace will be stripped.
+     * Equivalent of Python <code>str.lstrip()</code>.
      *
-     * @param stripChars characters to strip from either end of this str/bytes, or null
+     * @param stripChars characters to strip from the left end of this str/bytes, or null
      * @return a new String, stripped of the specified characters/bytes
      */
     public String lstrip(String sep) {
         return _lstrip(sep);
+    }
+
+    /**
+     * Equivalent of Python <code>str.lstrip()</code>. Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from the left end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped. If <code>stripChars</code> is a
+     * <code>PyUnicode</code>, the result will also be a <code>PyUnicode</code>.
+     *
+     * @param stripChars characters to strip from the left end of this str/bytes, or null
+     * @return a new <code>PyString</code> (or {@link PyUnicode}), stripped of the specified
+     *         characters/bytes
+     */
+    public PyObject lstrip(PyObject sep) {
+        return str_lstrip(sep);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_lstrip_doc)
@@ -1312,9 +1340,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.lstrip() common to exposed and Java API, when stripping
-     * whitespace. Any whitespace byte/character will be discarded from the left end of this
-     * <code>str</code>.
+     * Implementation of Python <code>str.lstrip()</code> common to exposed and Java API, when
+     * stripping whitespace. Any whitespace byte/character will be discarded from the left end of
+     * this <code>str</code>.
      * <p>
      * Implementation note: although a str contains only bytes, this method is also called by
      * {@link PyUnicode#unicode_lstrip(PyObject)} when this is a basic-plane string.
@@ -1329,12 +1357,14 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.lstrip() common to exposed and Java API. Any byte/character
-     * matching one of those in <code>stripChars</code> will be discarded from the left end of this
-     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * Implementation of Python <code>str.lstrip()</code> common to exposed and Java API. Any
+     * byte/character matching one of those in <code>stripChars</code> will be discarded from the
+     * left end of this <code>str</code>. If <code>stripChars == null</code>, whitespace will be
+     * stripped.
      * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_lstrip(PyObject)} when both arguments are basic-plane strings.
+     * Implementation note: although a <code>str</code> contains only bytes, this method is also
+     * called by {@link PyUnicode#unicode_lstrip(PyObject)} when both arguments are basic-plane
+     * strings.
      *
      * @param stripChars characters to strip or null
      * @return a new String, stripped of the specified characters/bytes
@@ -1352,8 +1382,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.rstrip() with no argument, meaning strip whitespace. Any whitespace
-     * byte/character will be discarded from the right end of this <code>str</code>.
+     * Equivalent of Python <code>str.rstrip()</code> with no argument, meaning strip whitespace.
+     * Any whitespace byte/character will be discarded from the right end of this <code>str</code>.
      *
      * @return a new String, stripped of the whitespace characters/bytes
      */
@@ -1362,15 +1392,27 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Equivalent of Python str.rstrip(). Any byte/character matching one of those in
-     * <code>stripChars</code> will be discarded from thr right end of this <code>str</code>. If
-     * <code>stripChars == null</code>, whitespace will be stripped.
+     * Equivalent of Python <code>str.rstrip()</code>.
      *
      * @param stripChars characters to strip from either end of this str/bytes, or null
      * @return a new String, stripped of the specified characters/bytes
      */
     public String rstrip(String sep) {
         return _rstrip(sep);
+    }
+
+    /**
+     * Equivalent of Python <code>str.rstrip()</code>. Any byte/character matching one of those in
+     * <code>stripChars</code> will be discarded from the right end of this <code>str</code>. If
+     * <code>stripChars == null</code>, whitespace will be stripped. If <code>stripChars</code> is a
+     * <code>PyUnicode</code>, the result will also be a <code>PyUnicode</code>.
+     *
+     * @param stripChars characters to strip from the right end of this str/bytes, or null
+     * @return a new <code>PyString</code> (or {@link PyUnicode}), stripped of the specified
+     *         characters/bytes
+     */
+    public PyObject rstrip(PyObject sep) {
+        return str_rstrip(sep);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_rstrip_doc)
@@ -1387,12 +1429,12 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.rstrip() common to exposed and Java API, when stripping
-     * whitespace. Any whitespace byte/character will be discarded from the right end of this
-     * <code>str</code>.
+     * Implementation of Python <code>str.rstrip()</code> common to exposed and Java API, when
+     * stripping whitespace. Any whitespace byte/character will be discarded from the right end of
+     * this <code>str</code>.
      * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_rstrip(PyObject)} when this is a basic-plane string.
+     * Implementation note: although a <code>str</code> contains only bytes, this method is also
+     * called by {@link PyUnicode#unicode_rstrip(PyObject)} when this is a basic-plane string.
      *
      * @return a new String, stripped of the whitespace characters/bytes
      */
@@ -1410,12 +1452,14 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.rstrip() common to exposed and Java API. Any byte/character
-     * matching one of those in <code>stripChars</code> will be discarded from the right end of this
-     * <code>str</code>. If <code>stripChars == null</code>, whitespace will be stripped.
+     * Implementation of Python <code>str.rstrip()</code> common to exposed and Java API. Any
+     * byte/character matching one of those in <code>stripChars</code> will be discarded from the
+     * right end of this <code>str</code>. If <code>stripChars == null</code>, whitespace will be
+     * stripped.
      * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane strings.
+     * Implementation note: although a <code>str</code> contains only bytes, this method is also
+     * called by {@link PyUnicode#unicode_strip(PyObject)} when both arguments are basic-plane
+     * strings.
      *
      * @param stripChars characters to strip or null
      * @return a new String, stripped of the specified characters/bytes
@@ -1755,7 +1799,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * Implementation of Python str.rsplit() common to exposed and Java API returning a
+     * Implementation of Python <code>str.rsplit()</code> common to exposed and Java API returning a
      * {@link PyList} of <code>PyString</code>s. The <code>str</code> will be split at each
      * occurrence of <code>sep</code>, working from the right. If <code>sep == null</code>,
      * whitespace will be used as the criterion. If <code>sep</code> has zero length, a Python
