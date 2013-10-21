@@ -25,11 +25,11 @@ import org.python.expose.MethodType;
  * A builtin python string.
  */
 @ExposedType(name = "str", doc = BuiltinDocs.str_doc)
-public class PyString extends PyBaseString implements BufferProtocol
-{
+public class PyString extends PyBaseString implements BufferProtocol {
+
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string; // cannot make final because of Python intern support
-    protected transient boolean interned=false;
+    protected transient boolean interned = false;
     /** Supports the buffer API, see {@link #getBuffer(int)}. */
     private Reference<BaseBuffer> export;
 
@@ -45,8 +45,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     public PyString(PyType subType, String string) {
         super(subType);
         if (string == null) {
-            throw new IllegalArgumentException(
-                            "Cannot create PyString from null!");
+            throw new IllegalArgumentException("Cannot create PyString from null!");
         }
         this.string = string;
     }
@@ -56,16 +55,16 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     public PyString(char c) {
-        this(TYPE,String.valueOf(c));
+        this(TYPE, String.valueOf(c));
     }
 
     PyString(StringBuilder buffer) {
         this(TYPE, new String(buffer));
     }
-    
+
     /**
-     * Creates a PyString from an already interned String. Just means it won't
-     * be reinterned if used in a place that requires interned Strings.
+     * Creates a PyString from an already interned String. Just means it won't be reinterned if used
+     * in a place that requires interned Strings.
      */
     public static PyString fromInterned(String interned) {
         PyString str = new PyString(TYPE, interned);
@@ -74,12 +73,12 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     @ExposedNew
-    static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("str", args, keywords, new String[] { "object" }, 0);
+    static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args,
+            String[] keywords) {
+        ArgParser ap = new ArgParser("str", args, keywords, new String[] {"object"}, 0);
         PyObject S = ap.getPyObject(0, null);
-        if(new_.for_type == subtype) {
-            if(S == null) {
+        if (new_.for_type == subtype) {
+            if (S == null) {
                 return new PyString("");
             }
             return new PyString(S.__str__().toString());
@@ -109,6 +108,7 @@ public class PyString extends PyBaseString implements BufferProtocol
      * @param flags consumer requirements
      * @return the requested buffer
      */
+    @Override
     public synchronized PyBuffer getBuffer(int flags) {
         // If we have already exported a buffer it may still be available for re-use
         BaseBuffer pybuf = getExistingBuffer(flags);
@@ -147,15 +147,13 @@ public class PyString extends PyBaseString implements BufferProtocol
     public String substring(int start, int end) {
         return getString().substring(start, end);
     }
-    
+
     @Override
     public PyString __str__() {
         return str___str__();
     }
 
-    public
-
-    @ExposedMethod(doc = BuiltinDocs.str___str___doc) 
+    public @ExposedMethod(doc = BuiltinDocs.str___str___doc)
     final PyString str___str__() {
         if (getClass() == PyString.class) {
             return this;
@@ -184,9 +182,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     public String internedString() {
-        if (interned)
+        if (interned) {
             return getString();
-        else {
+        } else {
             string = getString().intern();
             interned = true;
             return getString();
@@ -205,33 +203,30 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
-    public static String encode_UnicodeEscape(String str,
-                                              boolean use_quotes)
-    {
+    public static String encode_UnicodeEscape(String str, boolean use_quotes) {
         int size = str.length();
         StringBuilder v = new StringBuilder(str.length());
 
         char quote = 0;
 
         if (use_quotes) {
-            quote = str.indexOf('\'') >= 0 &&
-                             str.indexOf('"') == -1 ? '"' : '\'';
+            quote = str.indexOf('\'') >= 0 && str.indexOf('"') == -1 ? '"' : '\'';
             v.append(quote);
         }
 
-        for (int i = 0; size-- > 0; ) {
+        for (int i = 0; size-- > 0;) {
             int ch = str.charAt(i++);
             /* Escape quotes */
             if ((use_quotes && ch == quote) || ch == '\\') {
                 v.append('\\');
-                v.append((char) ch);
+                v.append((char)ch);
                 continue;
             }
-                /* Map UTF-16 surrogate pairs to Unicode \UXXXXXXXX escapes */
-                else if (ch >= 0xD800 && ch < 0xDC00) {
-                    char ch2 = str.charAt(i++);
-                    size--;
-                    if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
+            /* Map UTF-16 surrogate pairs to Unicode \UXXXXXXXX escapes */
+            else if (ch >= 0xD800 && ch < 0xDC00) {
+                char ch2 = str.charAt(i++);
+                size--;
+                if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {
                     int ucs = (((ch & 0x03FF) << 10) | (ch2 & 0x03FF)) + 0x00010000;
                     v.append('\\');
                     v.append('U');
@@ -244,13 +239,13 @@ public class PyString extends PyBaseString implements BufferProtocol
                     v.append(hexdigit[(ucs >> 4) & 0xf]);
                     v.append(hexdigit[ucs & 0xf]);
                     continue;
-                    }
-                    /* Fall through: isolated surrogates are copied as-is */
-                    i--;
-                    size++;
                 }
+                /* Fall through: isolated surrogates are copied as-is */
+                i--;
+                size++;
+            }
             /* Map 16-bit characters to '\\uxxxx' */
-             if (ch >= 256) {
+            if (ch >= 256) {
                 v.append('\\');
                 v.append('u');
                 v.append(hexdigit[(ch >> 12) & 0xf]);
@@ -258,39 +253,38 @@ public class PyString extends PyBaseString implements BufferProtocol
                 v.append(hexdigit[(ch >> 4) & 0xf]);
                 v.append(hexdigit[ch & 15]);
             }
-             /* Map special whitespace to '\t', \n', '\r' */
-            else if (ch == '\t') v.append("\\t");
-            else if (ch == '\n') v.append("\\n");
-            else if (ch == '\r') v.append("\\r");
-            /* Map non-printable US ASCII to '\ooo' */
-            else if (ch < ' ' || ch >= 127) {
+            /* Map special whitespace to '\t', \n', '\r' */
+            else if (ch == '\t') {
+                v.append("\\t");
+            } else if (ch == '\n') {
+                v.append("\\n");
+            } else if (ch == '\r') {
+                v.append("\\r");
+            } else if (ch < ' ' || ch >= 127) {
+                /* Map non-printable US ASCII to '\xNN' */
                 v.append('\\');
                 v.append('x');
                 v.append(hexdigit[(ch >> 4) & 0xf]);
                 v.append(hexdigit[ch & 0xf]);
+            } else {/* Copy everything else as-is */
+                v.append((char)ch);
             }
-            /* Copy everything else as-is */
-            else
-                v.append((char) ch);
         }
-        if (use_quotes)
+        if (use_quotes) {
             v.append(quote);
+        }
         return v.toString();
     }
 
     private static ucnhashAPI pucnHash = null;
 
-    
-    public static String decode_UnicodeEscape(String str,
-                                              int start,
-                                              int end,
-                                              String errors,
-                                              boolean unicode) {
+    public static String decode_UnicodeEscape(String str, int start, int end, String errors,
+            boolean unicode) {
         StringBuilder v = new StringBuilder(end - start);
-        for(int s = start; s < end;) {
+        for (int s = start; s < end;) {
             char ch = str.charAt(s);
             /* Non-escape characters are interpreted as Unicode ordinals */
-            if(ch != '\\') {
+            if (ch != '\\') {
                 v.append(ch);
                 s++;
                 continue;
@@ -298,19 +292,14 @@ public class PyString extends PyBaseString implements BufferProtocol
             int loopStart = s;
             /* \ - Escapes */
             s++;
-            if(s == end) {
-                s = codecs.insertReplacementAndGetResume(v,
-                                                         errors,
-                                                         "unicodeescape",
-                                                         str,
-                                                         loopStart,
-                                                         s + 1,
-                                                         "\\ at end of string");
+            if (s == end) {
+                s = codecs.insertReplacementAndGetResume(v, errors, "unicodeescape", //
+                        str, loopStart, s + 1, "\\ at end of string");
                 continue;
             }
             ch = str.charAt(s++);
-            switch(ch){
-                /* \x escapes */
+            switch (ch) {
+            /* \x escapes */
                 case '\n':
                     break;
                 case '\\':
@@ -353,10 +342,11 @@ public class PyString extends PyBaseString implements BufferProtocol
                 case '6':
                 case '7':
                     int x = Character.digit(ch, 8);
-                    for(int j = 0; j < 2 && s < end; j++, s++) {
+                    for (int j = 0; j < 2 && s < end; j++, s++) {
                         ch = str.charAt(s);
-                        if(ch < '0' || ch > '7')
+                        if (ch < '0' || ch > '7') {
                             break;
+                        }
                         x = (x << 3) + Character.digit(ch, 8);
                     }
                     v.append((char)x);
@@ -365,95 +355,68 @@ public class PyString extends PyBaseString implements BufferProtocol
                     s = hexescape(v, errors, 2, s, str, end, "truncated \\xXX");
                     break;
                 case 'u':
-                    if(!unicode) {
+                    if (!unicode) {
                         v.append('\\');
                         v.append('u');
                         break;
                     }
-                    s = hexescape(v,
-                                  errors,
-                                  4,
-                                  s,
-                                  str,
-                                  end,
-                                  "truncated \\uXXXX");
+                    s = hexescape(v, errors, 4, s, str, end, "truncated \\uXXXX");
                     break;
                 case 'U':
-                    if(!unicode) {
+                    if (!unicode) {
                         v.append('\\');
                         v.append('U');
                         break;
                     }
-                    s = hexescape(v,
-                                  errors,
-                                  8,
-                                  s,
-                                  str,
-                                  end,
-                                  "truncated \\UXXXXXXXX");
+                    s = hexescape(v, errors, 8, s, str, end, "truncated \\UXXXXXXXX");
                     break;
                 case 'N':
-                    if(!unicode) {
+                    if (!unicode) {
                         v.append('\\');
                         v.append('N');
                         break;
                     }
                     /*
-                     * Ok, we need to deal with Unicode Character Names now,
-                     * make sure we've imported the hash table data...
+                     * Ok, we need to deal with Unicode Character Names now, make sure we've
+                     * imported the hash table data...
                      */
-                    if(pucnHash == null) {
+                    if (pucnHash == null) {
                         PyObject mod = imp.importName("ucnhash", true);
                         mod = mod.__call__();
                         pucnHash = (ucnhashAPI)mod.__tojava__(Object.class);
-                        if(pucnHash.getCchMax() < 0)
+                        if (pucnHash.getCchMax() < 0) {
                             throw Py.UnicodeError("Unicode names not loaded");
+                        }
                     }
-                    if(str.charAt(s) == '{') {
+                    if (str.charAt(s) == '{') {
                         int startName = s + 1;
                         int endBrace = startName;
                         /*
-                         * look for either the closing brace, or we exceed the
-                         * maximum length of the unicode character names
+                         * look for either the closing brace, or we exceed the maximum length of the
+                         * unicode character names
                          */
                         int maxLen = pucnHash.getCchMax();
-                        while(endBrace < end && str.charAt(endBrace) != '}'
+                        while (endBrace < end && str.charAt(endBrace) != '}'
                                 && (endBrace - startName) <= maxLen) {
                             endBrace++;
                         }
-                        if(endBrace != end && str.charAt(endBrace) == '}') {
-                            int value = pucnHash.getValue(str,
-                                                          startName,
-                                                          endBrace);
-                            if(storeUnicodeCharacter(value, v)) {
+                        if (endBrace != end && str.charAt(endBrace) == '}') {
+                            int value = pucnHash.getValue(str, startName, endBrace);
+                            if (storeUnicodeCharacter(value, v)) {
                                 s = endBrace + 1;
                             } else {
-                                s = codecs.insertReplacementAndGetResume(v,
-                                                                         errors,
-                                                                         "unicodeescape",
-                                                                         str,
-                                                                         loopStart,
-                                                                         endBrace + 1,
-                                                                         "illegal Unicode character");
+                                s = codecs.insertReplacementAndGetResume( //
+                                        v, errors, "unicodeescape", //
+                                        str, loopStart, endBrace + 1, "illegal Unicode character");
                             }
                         } else {
-                            s = codecs.insertReplacementAndGetResume(v,
-                                                                     errors,
-                                                                     "unicodeescape",
-                                                                     str,
-                                                                     loopStart,
-                                                                     endBrace,
-                                                                     "malformed \\N character escape");
+                            s = codecs.insertReplacementAndGetResume(v, errors, "unicodeescape", //
+                                    str, loopStart, endBrace, "malformed \\N character escape");
                         }
                         break;
                     } else {
-                        s = codecs.insertReplacementAndGetResume(v,
-                                                                 errors,
-                                                                 "unicodeescape",
-                                                                 str,
-                                                                 loopStart,
-                                                                 s + 1,
-                                                                 "malformed \\N character escape");
+                        s = codecs.insertReplacementAndGetResume(v, errors, "unicodeescape", //
+                                str, loopStart, s + 1, "malformed \\N character escape");
                     }
                     break;
                 default:
@@ -465,60 +428,40 @@ public class PyString extends PyBaseString implements BufferProtocol
         return v.toString();
     }
 
-    private static int hexescape(StringBuilder partialDecode,
-                                 String errors,
-                                 int digits,
-                                 int hexDigitStart,
-                                 String str,
-                                 int size,
-                                 String errorMessage) {
-        if(hexDigitStart + digits > size) {
-            return codecs.insertReplacementAndGetResume(partialDecode,
-                                                        errors,
-                                                        "unicodeescape",
-                                                        str,
-                                                        hexDigitStart - 2,
-                                                        size,
-                                                        errorMessage);
+    private static int hexescape(StringBuilder partialDecode, String errors, int digits,
+            int hexDigitStart, String str, int size, String errorMessage) {
+        if (hexDigitStart + digits > size) {
+            return codecs.insertReplacementAndGetResume(partialDecode, errors, "unicodeescape",
+                    str, hexDigitStart - 2, size, errorMessage);
         }
         int i = 0;
         int x = 0;
-        for(; i < digits; ++i) {
+        for (; i < digits; ++i) {
             char c = str.charAt(hexDigitStart + i);
             int d = Character.digit(c, 16);
-            if(d == -1) {
-                return codecs.insertReplacementAndGetResume(partialDecode,
-                                                            errors,
-                                                            "unicodeescape",
-                                                            str,
-                                                            hexDigitStart - 2,
-                                                            hexDigitStart + i + 1,
-                                                            errorMessage);
+            if (d == -1) {
+                return codecs.insertReplacementAndGetResume(partialDecode, errors, "unicodeescape",
+                        str, hexDigitStart - 2, hexDigitStart + i + 1, errorMessage);
             }
             x = (x << 4) & ~0xF;
-            if(c >= '0' && c <= '9')
+            if (c >= '0' && c <= '9') {
                 x += c - '0';
-            else if(c >= 'a' && c <= 'f')
+            } else if (c >= 'a' && c <= 'f') {
                 x += 10 + c - 'a';
-            else
+            } else {
                 x += 10 + c - 'A';
+            }
         }
-        if(storeUnicodeCharacter(x, partialDecode)) {
+        if (storeUnicodeCharacter(x, partialDecode)) {
             return hexDigitStart + i;
         } else {
-            return codecs.insertReplacementAndGetResume(partialDecode,
-                                                        errors,
-                                                        "unicodeescape",
-                                                        str,
-                                                        hexDigitStart - 2,
-                                                        hexDigitStart + i + 1,
-                                                        "illegal Unicode character");
+            return codecs.insertReplacementAndGetResume(partialDecode, errors, "unicodeescape",
+                    str, hexDigitStart - 2, hexDigitStart + i + 1, "illegal Unicode character");
         }
     }
 
-    /*pass in an int since this can be a UCS-4 character */
-    private static boolean storeUnicodeCharacter(int value,
-            StringBuilder partialDecode) {
+    /* pass in an int since this can be a UCS-4 character */
+    private static boolean storeUnicodeCharacter(int value, StringBuilder partialDecode) {
         if (value < 0 || (value >= 0xD800 && value <= 0xDFFF)) {
             return false;
         } else if (value <= PySystemState.maxunicode) {
@@ -536,8 +479,8 @@ public class PyString extends PyBaseString implements BufferProtocol
         }
         return ret;
     }
-    
-    //XXX: need doc
+
+    // XXX: need doc
     @ExposedMethod(defaults = "null")
     final PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
@@ -550,10 +493,11 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(type = MethodType.CMP)
     final int str___cmp__(PyObject other) {
-        if (!(other instanceof PyString))
+        if (!(other instanceof PyString)) {
             return -2;
+        }
 
-        int c = getString().compareTo(((PyString) other).getString());
+        int c = getString().compareTo(((PyString)other).getString());
         return c < 0 ? -1 : c > 0 ? 1 : 0;
     }
 
@@ -565,8 +509,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___eq___doc)
     final PyObject str___eq__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().equals(s) ? Py.True : Py.False;
     }
 
@@ -578,21 +523,23 @@ public class PyString extends PyBaseString implements BufferProtocol
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___ne___doc)
     final PyObject str___ne__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().equals(s) ? Py.False : Py.True;
     }
-    
+
     @Override
     public PyObject __lt__(PyObject other) {
         return str___lt__(other);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___lt___doc)
-    final PyObject str___lt__(PyObject other){
+    final PyObject str___lt__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().compareTo(s) < 0 ? Py.True : Py.False;
     }
 
@@ -602,10 +549,11 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___le___doc)
-    final PyObject str___le__(PyObject other){
+    final PyObject str___le__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().compareTo(s) <= 0 ? Py.True : Py.False;
     }
 
@@ -615,10 +563,11 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___gt___doc)
-    final PyObject str___gt__(PyObject other){
+    final PyObject str___gt__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().compareTo(s) > 0 ? Py.True : Py.False;
     }
 
@@ -628,16 +577,18 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___ge___doc)
-    final PyObject str___ge__(PyObject other){
+    final PyObject str___ge__(PyObject other) {
         String s = coerce(other);
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         return getString().compareTo(s) >= 0 ? Py.True : Py.False;
     }
 
     private static String coerce(PyObject o) {
-        if (o instanceof PyString)
+        if (o instanceof PyString) {
             return o.toString();
+        }
         return null;
     }
 
@@ -652,9 +603,8 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 
     /**
-     * @return a byte array with one byte for each char in this object's
-     *         underlying String. Each byte contains the low-order bits of its
-     *         corresponding char.
+     * @return a byte array with one byte for each char in this object's underlying String. Each
+     *         byte contains the low-order bits of its corresponding char.
      */
     public byte[] toBytes() {
         return StringUtil.toBytes(getString());
@@ -666,38 +616,47 @@ public class PyString extends PyBaseString implements BufferProtocol
             return getString();
         }
 
-        if (c == Character.TYPE || c == Character.class)
-            if (getString().length() == 1)
+        if (c == Character.TYPE || c == Character.class) {
+            if (getString().length() == 1) {
                 return new Character(getString().charAt(0));
-
-        if (c.isArray()) {
-            if (c.getComponentType() == Byte.TYPE)
-                return toBytes();
-            if (c.getComponentType() == Character.TYPE)
-                return getString().toCharArray();
+            }
         }
 
-        if (c.isInstance(this))
+        if (c.isArray()) {
+            if (c.getComponentType() == Byte.TYPE) {
+                return toBytes();
+            }
+            if (c.getComponentType() == Character.TYPE) {
+                return getString().toCharArray();
+            }
+        }
+
+        if (c.isInstance(this)) {
             return this;
+        }
 
         return Py.NoConversion;
     }
 
+    @Override
     protected PyObject pyget(int i) {
         return Py.newString(getString().charAt(i));
     }
 
+    @Override
     protected PyObject getslice(int start, int stop, int step) {
-        if (step > 0 && stop < start)
+        if (step > 0 && stop < start) {
             stop = start;
-        if (step == 1)
+        }
+        if (step == 1) {
             return fromSubstring(start, stop);
-        else {
+        } else {
             int n = sliceLength(start, stop, step);
             char new_chars[] = new char[n];
             int j = 0;
-            for (int i=start; j<n; i+=step)
+            for (int i = start; j < n; i += step) {
                 new_chars[j++] = getString().charAt(i);
+            }
 
             return createInstance(new String(new_chars), true);
         }
@@ -710,7 +669,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     protected PyString createInstance(String str, boolean isBasic) {
         // ignore isBasic, doesn't apply to PyString, just PyUnicode
         return new PyString(str);
-    } 
+    }
 
     /**
      * Return a String equivalent to the argument. This is a helper function to those methods that
@@ -723,8 +682,7 @@ public class PyString extends PyBaseString implements BufferProtocol
         if (obj instanceof PyString) {
             // str or unicode object: go directly to the String
             return ((PyString)obj).getString();
-        } else 
-            if (obj instanceof BufferProtocol) {
+        } else if (obj instanceof BufferProtocol) {
             // Other object with buffer API: briefly access the buffer
             PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
             try {
@@ -792,12 +750,13 @@ public class PyString extends PyBaseString implements BufferProtocol
         return getString().indexOf(other) >= 0;
     }
 
+    @Override
     protected PyObject repeat(int count) {
-        if(count < 0) {
+        if (count < 0) {
             count = 0;
         }
         int s = getString().length();
-        if((long)s * count > Integer.MAX_VALUE) {
+        if ((long)s * count > Integer.MAX_VALUE) {
             // Since Strings store their data in an array, we can't make one
             // longer than Integer.MAX_VALUE. Without this check we get
             // NegativeArraySize exceptions when we create the array on the
@@ -805,7 +764,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             throw Py.OverflowError("max str len is " + Integer.MAX_VALUE);
         }
         char new_chars[] = new char[s * count];
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             getString().getChars(0, s, new_chars, i * s);
         }
         return createInstance(new String(new_chars));
@@ -823,7 +782,7 @@ public class PyString extends PyBaseString implements BufferProtocol
         }
         return repeat(o.asIndex(Py.OverflowError));
     }
-    
+
     @Override
     public PyObject __rmul__(PyObject o) {
         return str___rmul__(o);
@@ -881,17 +840,16 @@ public class PyString extends PyBaseString implements BufferProtocol
     public PyObject __mod__(PyObject other) {
         return str___mod__(other);
     }
-    
+
     @ExposedMethod(doc = BuiltinDocs.str___mod___doc)
-    public PyObject str___mod__(PyObject other){
+    public PyObject str___mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(getString(), false);
         return fmt.format(other);
     }
 
     @Override
     public PyObject __int__() {
-        try
-        {
+        try {
             return Py.newInteger(atoi(10));
         } catch (PyException e) {
             if (e.match(Py.OverflowError)) {
@@ -913,17 +871,17 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @Override
     public PyObject __pos__() {
-      throw Py.TypeError("bad operand type for unary +");
+        throw Py.TypeError("bad operand type for unary +");
     }
 
     @Override
     public PyObject __neg__() {
-      throw Py.TypeError("bad operand type for unary -");
+        throw Py.TypeError("bad operand type for unary -");
     }
 
     @Override
     public PyObject __invert__() {
-      throw Py.TypeError("bad operand type for unary ~");
+        throw Py.TypeError("bad operand type for unary ~");
     }
 
     @SuppressWarnings("fallthrough")
@@ -936,8 +894,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
         int s = 0;
         int n = getString().length();
-        while (s < n && Character.isSpaceChar(getString().charAt(s)))
+        while (s < n && Character.isSpaceChar(getString().charAt(s))) {
             s++;
+        }
 
         if (s == n) {
             throw Py.ValueError("empty string for complex()");
@@ -951,107 +910,113 @@ public class PyString extends PyBaseString implements BufferProtocol
         do {
             char c = getString().charAt(s);
             switch (c) {
-            case '-':
-                sign = -1;
-                /* Fallthrough */
-            case '+':
-                if (done || s+1 == n) {
-                    sw_error = true;
-                    break;
-                }
-                //  a character is guaranteed, but it better be a digit
-                //  or J or j
-                c = getString().charAt(++s);  //  eat the sign character
-                                         //  and check the next
-                if  (!Character.isDigit(c) && c!='J' && c!='j')
-                    sw_error = true;
-                break;
-
-            case 'J':
-            case 'j':
-                if (got_im || done) {
-                    sw_error = true;
-                    break;
-                }
-                if  (z < 0.0) {
-                    y = sign;
-                } else {
-                    y = sign * z;
-                }
-                got_im = true;
-                done = got_re;
-                sign = 1;
-                s++; // eat the J or j
-                break;
-
-            case ' ':
-                while (s < n && Character.isSpaceChar(getString().charAt(s)))
-                    s++;
-                if (s != n)
-                    sw_error = true;
-                break;
-
-            default:
-                boolean digit_or_dot = (c == '.' || Character.isDigit(c));
-                if (!digit_or_dot) {
-                    sw_error = true;
-                    break;
-                }
-                int end = endDouble(getString(),s);
-                z = Double.valueOf(getString().substring(s, end)).doubleValue();
-                if (z == Double.POSITIVE_INFINITY) {
-                    throw Py.ValueError(String.format("float() out of range: %.150s", getString()));
-                }
-
-                s=end;
-                if (s < n) {
-                    c = getString().charAt(s);
-                    if  (c == 'J' || c == 'j') {
+                case '-':
+                    sign = -1;
+                    /* Fallthrough */
+                case '+':
+                    if (done || s + 1 == n) {
+                        sw_error = true;
                         break;
                     }
-                }
-                if  (got_re) {
-                   sw_error = true;
-                   break;
-                }
+                    // a character is guaranteed, but it better be a digit
+                    // or J or j
+                    c = getString().charAt(++s);  // eat the sign character
+                    // and check the next
+                    if (!Character.isDigit(c) && c != 'J' && c != 'j') {
+                        sw_error = true;
+                    }
+                    break;
 
-                /* accept a real part */
-                x = sign * z;
-                got_re = true;
-                done = got_im;
-                z = -1.0;
-                sign = 1;
-                break;
+                case 'J':
+                case 'j':
+                    if (got_im || done) {
+                        sw_error = true;
+                        break;
+                    }
+                    if (z < 0.0) {
+                        y = sign;
+                    } else {
+                        y = sign * z;
+                    }
+                    got_im = true;
+                    done = got_re;
+                    sign = 1;
+                    s++; // eat the J or j
+                    break;
 
-             }  /* end of switch  */
+                case ' ':
+                    while (s < n && Character.isSpaceChar(getString().charAt(s))) {
+                        s++;
+                    }
+                    if (s != n) {
+                        sw_error = true;
+                    }
+                    break;
+
+                default:
+                    boolean digit_or_dot = (c == '.' || Character.isDigit(c));
+                    if (!digit_or_dot) {
+                        sw_error = true;
+                        break;
+                    }
+                    int end = endDouble(getString(), s);
+                    z = Double.valueOf(getString().substring(s, end)).doubleValue();
+                    if (z == Double.POSITIVE_INFINITY) {
+                        throw Py.ValueError(String.format("float() out of range: %.150s",
+                                getString()));
+                    }
+
+                    s = end;
+                    if (s < n) {
+                        c = getString().charAt(s);
+                        if (c == 'J' || c == 'j') {
+                            break;
+                        }
+                    }
+                    if (got_re) {
+                        sw_error = true;
+                        break;
+                    }
+
+                    /* accept a real part */
+                    x = sign * z;
+                    got_re = true;
+                    done = got_im;
+                    z = -1.0;
+                    sign = 1;
+                    break;
+
+            } /* end of switch */
 
         } while (s < n && !sw_error);
 
         if (sw_error) {
-            throw Py.ValueError("malformed string for complex() " +
-                                getString().substring(s));
+            throw Py.ValueError("malformed string for complex() " + getString().substring(s));
         }
 
-        return new PyComplex(x,y);
+        return new PyComplex(x, y);
     }
 
     private int endDouble(String string, int s) {
         int n = string.length();
         while (s < n) {
             char c = string.charAt(s++);
-            if (Character.isDigit(c))
+            if (Character.isDigit(c)) {
                 continue;
-            if (c == '.')
+            }
+            if (c == '.') {
                 continue;
+            }
             if (c == 'e' || c == 'E') {
                 if (s < n) {
                     c = string.charAt(s);
-                    if (c == '+' || c == '-')
+                    if (c == '+' || c == '-') {
                         s++;
+                    }
                     continue;
                 }
             }
-            return s-1;
+            return s - 1;
         }
         return s;
     }
@@ -1060,7 +1025,7 @@ public class PyString extends PyBaseString implements BufferProtocol
     public String lower() {
         return str_lower();
     }
-    
+
     @ExposedMethod(doc = BuiltinDocs.str_lower_doc)
     final String str_lower() {
         return getString().toLowerCase();
@@ -1087,17 +1052,17 @@ public class PyString extends PyBaseString implements BufferProtocol
         boolean previous_is_cased = false;
         for (int i = 0; i < n; i++) {
             char ch = chars[i];
-            if (previous_is_cased)
+            if (previous_is_cased) {
                 chars[i] = Character.toLowerCase(ch);
-            else
+            } else {
                 chars[i] = Character.toTitleCase(ch);
+            }
 
-            if (Character.isLowerCase(ch) ||
-                   Character.isUpperCase(ch) ||
-                   Character.isTitleCase(ch))
+            if (Character.isLowerCase(ch) || Character.isUpperCase(ch) || Character.isTitleCase(ch)) {
                 previous_is_cased = true;
-            else
+            } else {
                 previous_is_cased = false;
+            }
         }
         return new String(chars);
     }
@@ -1109,13 +1074,12 @@ public class PyString extends PyBaseString implements BufferProtocol
     @ExposedMethod(doc = BuiltinDocs.str_swapcase_doc)
     final String str_swapcase() {
         char[] chars = getString().toCharArray();
-        int n=chars.length;
-        for (int i=0; i<n; i++) {
+        int n = chars.length;
+        for (int i = 0; i < n; i++) {
             char c = chars[i];
             if (Character.isUpperCase(c)) {
                 chars[i] = Character.toLowerCase(c);
-            }
-            else if (Character.isLowerCase(c)) {
+            } else if (Character.isLowerCase(c)) {
                 chars[i] = Character.toUpperCase(c);
             }
         }
@@ -1607,9 +1571,10 @@ public class PyString extends PyBaseString implements BufferProtocol
 
             // Find the next occurrence of non-whitespace
             while (start < length) {
-                if (!Character.isWhitespace(s.charAt(start)))
+                if (!Character.isWhitespace(s.charAt(start))) {
                     // Break leaving start pointing at non-whitespace
                     break;
+                }
                 start++;
             }
 
@@ -1624,9 +1589,10 @@ public class PyString extends PyBaseString implements BufferProtocol
             } else {
                 // The next segment runs up to the next next whitespace or end
                 for (index = start; index < length; index++) {
-                    if (Character.isWhitespace(s.charAt(index)))
+                    if (Character.isWhitespace(s.charAt(index))) {
                         // Break leaving index pointing at whitespace
                         break;
+                    }
                 }
             }
 
@@ -1857,9 +1823,10 @@ public class PyString extends PyBaseString implements BufferProtocol
 
             // Find the next occurrence of non-whitespace (working leftwards)
             while (end >= 0) {
-                if (!Character.isWhitespace(s.charAt(end)))
+                if (!Character.isWhitespace(s.charAt(end))) {
                     // Break leaving end pointing at non-whitespace
                     break;
+                }
                 --end;
             }
 
@@ -1874,9 +1841,10 @@ public class PyString extends PyBaseString implements BufferProtocol
             } else {
                 // The next segment runs back to the next next whitespace or beginning
                 for (index = end; index >= 0; --index) {
-                    if (Character.isWhitespace(s.charAt(index)))
+                    if (Character.isWhitespace(s.charAt(index))) {
                         // Break leaving index pointing at whitespace
                         break;
+                    }
                 }
             }
 
@@ -1963,15 +1931,15 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str_partition_doc)
     final PyTuple str_partition(PyObject sepObj) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         String sep;
 
         if (sepObj instanceof PyUnicode) {
             return unicodePartition(sepObj);
         } else if (sepObj instanceof PyString) {
-            sep = ((PyString) sepObj).getString();
+            sep = ((PyString)sepObj).getString();
         } else {
             throw Py.TypeError("expected a character buffer object");
         }
@@ -1982,8 +1950,8 @@ public class PyString extends PyBaseString implements BufferProtocol
 
         int index = getString().indexOf(sep);
         if (index != -1) {
-            return new PyTuple(fromSubstring(0, index), sepObj,
-                               fromSubstring(index + sep.length(), getString().length()));
+            return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(index + sep.length(),
+                    getString().length()));
         } else {
             return new PyTuple(this, Py.EmptyString, Py.EmptyString);
         }
@@ -2003,8 +1971,8 @@ public class PyString extends PyBaseString implements BufferProtocol
 
         int index = str.indexOf(sep);
         if (index != -1) {
-            return new PyTuple(strObj.fromSubstring(0, index), sepObj,
-                               strObj.fromSubstring(index + sep.length(), str.length()));
+            return new PyTuple(strObj.fromSubstring(0, index), sepObj, strObj.fromSubstring(index
+                    + sep.length(), str.length()));
         } else {
             PyUnicode emptyUnicode = Py.newUnicode("");
             return new PyTuple(this, emptyUnicode, emptyUnicode);
@@ -2017,15 +1985,15 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str_rpartition_doc)
     final PyTuple str_rpartition(PyObject sepObj) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         String sep;
 
         if (sepObj instanceof PyUnicode) {
             return unicodeRpartition(sepObj);
         } else if (sepObj instanceof PyString) {
-            sep = ((PyString) sepObj).getString();
+            sep = ((PyString)sepObj).getString();
         } else {
             throw Py.TypeError("expected a character buffer object");
         }
@@ -2036,8 +2004,8 @@ public class PyString extends PyBaseString implements BufferProtocol
 
         int index = getString().lastIndexOf(sep);
         if (index != -1) {
-            return new PyTuple(fromSubstring(0, index), sepObj,
-                               fromSubstring(index + sep.length(), getString().length()));
+            return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(index + sep.length(),
+                    getString().length()));
         } else {
             return new PyTuple(Py.EmptyString, Py.EmptyString, this);
         }
@@ -2057,8 +2025,8 @@ public class PyString extends PyBaseString implements BufferProtocol
 
         int index = str.lastIndexOf(sep);
         if (index != -1) {
-            return new PyTuple(strObj.fromSubstring(0, index), sepObj,
-                               strObj.fromSubstring(index + sep.length(), str.length()));
+            return new PyTuple(strObj.fromSubstring(0, index), sepObj, strObj.fromSubstring(index
+                    + sep.length(), str.length()));
         } else {
             PyUnicode emptyUnicode = Py.newUnicode("");
             return new PyTuple(emptyUnicode, emptyUnicode, this);
@@ -2078,24 +2046,27 @@ public class PyString extends PyBaseString implements BufferProtocol
         PyList list = new PyList();
 
         char[] chars = getString().toCharArray();
-        int n=chars.length;
+        int n = chars.length;
 
         int j = 0;
-        for (int i = 0; i < n; ) {
+        for (int i = 0; i < n;) {
             /* Find a line and append it */
-            while (i < n && chars[i] != '\n' && chars[i] != '\r' &&
-                    Character.getType(chars[i]) != Character.LINE_SEPARATOR)
+            while (i < n && chars[i] != '\n' && chars[i] != '\r'
+                    && Character.getType(chars[i]) != Character.LINE_SEPARATOR) {
                 i++;
+            }
 
             /* Skip the line break reading CRLF as one line break */
             int eol = i;
             if (i < n) {
-                if (chars[i] == '\r' && i + 1 < n && chars[i+1] == '\n')
+                if (chars[i] == '\r' && i + 1 < n && chars[i + 1] == '\n') {
                     i += 2;
-                else
+                } else {
                     i++;
-                if (keepends)
+                }
+                if (keepends) {
                     eol = i;
+                }
             }
             list.append(fromSubstring(j, eol));
             j = i;
@@ -2124,12 +2095,13 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_index_doc)
     final int str_index(String sub, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int index = str_find(sub, start, end);
-        if (index == -1)
+        if (index == -1) {
             throw Py.ValueError("substring not found in string.index");
+        }
         return index;
     }
 
@@ -2147,12 +2119,13 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rindex_doc)
     final int str_rindex(String sub, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int index = str_rfind(sub, start, end);
-        if(index == -1)
+        if (index == -1) {
             throw Py.ValueError("substring not found in string.rindex");
+        }
         return index;
     }
 
@@ -2167,28 +2140,28 @@ public class PyString extends PyBaseString implements BufferProtocol
     public int count(String sub, PyObject start, PyObject end) {
         return str_count(sub, start, end);
     }
-    
+
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_count_doc)
     final int str_count(String sub, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         if (sub == null) {
             throw Py.TypeError("count() takes at least 1 argument (0 given)");
         }
         int[] indices = translateIndices(start, end);
         int n = sub.length();
-        if(n == 0) {
+        if (n == 0) {
             if (indices[2] > getString().length()) {
                 return 0;
             }
             return indices[1] - indices[0] + 1;
         }
         int count = 0;
-        while(true){
+        while (true) {
             int index = getString().indexOf(sub, indices[0]);
             indices[0] = index + n;
-            if(indices[0] > indices[1] || index == -1) {
+            if (indices[0] > indices[1] || index == -1) {
                 break;
             }
             count++;
@@ -2210,9 +2183,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_find_doc)
     final int str_find(String sub, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int[] indices = translateIndices(start, end);
         int index = getString().indexOf(sub, indices[0]);
         if (index < indices[2] || index > indices[1]) {
@@ -2235,9 +2208,9 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rfind_doc)
     final int str_rfind(String sub, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int[] indices = translateIndices(start, end);
         int index = getString().lastIndexOf(sub, indices[1] - sub.length());
         if (index < indices[2]) {
@@ -2255,74 +2228,88 @@ public class PyString extends PyBaseString implements BufferProtocol
                 throw Py.ValueError("null byte in argument for float()");
             }
             if (Character.isDigit(ch)) {
-                if (s == null)
+                if (s == null) {
                     s = new StringBuilder(getString());
+                }
                 int val = Character.digit(ch, 10);
                 s.setCharAt(i, Character.forDigit(val, 10));
             }
         }
         String sval = getString();
-        if (s != null)
+        if (s != null) {
             sval = s.toString();
+        }
         try {
             // Double.valueOf allows format specifier ("d" or "f") at the end
             String lowSval = sval.toLowerCase();
-            if (lowSval.equals("nan")) return Double.NaN;
-            else if (lowSval.equals("+nan")) return Double.NaN;
-            else if (lowSval.equals("-nan")) return Double.NaN;
-            else if (lowSval.equals("inf")) return Double.POSITIVE_INFINITY;
-            else if (lowSval.equals("+inf")) return Double.POSITIVE_INFINITY;
-            else if (lowSval.equals("-inf")) return Double.NEGATIVE_INFINITY;
-            else if (lowSval.equals("infinity")) return Double.POSITIVE_INFINITY;
-            else if (lowSval.equals("+infinity")) return Double.POSITIVE_INFINITY;
-            else if (lowSval.equals("-infinity")) return Double.NEGATIVE_INFINITY;
-             
+            if (lowSval.equals("nan")) {
+                return Double.NaN;
+            } else if (lowSval.equals("+nan")) {
+                return Double.NaN;
+            } else if (lowSval.equals("-nan")) {
+                return Double.NaN;
+            } else if (lowSval.equals("inf")) {
+                return Double.POSITIVE_INFINITY;
+            } else if (lowSval.equals("+inf")) {
+                return Double.POSITIVE_INFINITY;
+            } else if (lowSval.equals("-inf")) {
+                return Double.NEGATIVE_INFINITY;
+            } else if (lowSval.equals("infinity")) {
+                return Double.POSITIVE_INFINITY;
+            } else if (lowSval.equals("+infinity")) {
+                return Double.POSITIVE_INFINITY;
+            } else if (lowSval.equals("-infinity")) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
             if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
                 throw new NumberFormatException("format specifiers not allowed");
             }
             return Double.valueOf(sval).doubleValue();
-        }
-        catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __float__: "+getString());
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("invalid literal for __float__: " + getString());
         }
     }
 
     private BigInteger asciiToBigInteger(int base, boolean isLong) {
         String str = getString();
-        
+
         int b = 0;
         int e = str.length();
 
-        while (b < e && Character.isWhitespace(str.charAt(b)))
+        while (b < e && Character.isWhitespace(str.charAt(b))) {
             b++;
+        }
 
-        while (e > b && Character.isWhitespace(str.charAt(e-1)))
+        while (e > b && Character.isWhitespace(str.charAt(e - 1))) {
             e--;
+        }
 
         char sign = 0;
         if (b < e) {
             sign = str.charAt(b);
             if (sign == '-' || sign == '+') {
                 b++;
-                while (b < e && Character.isWhitespace(str.charAt(b))) b++;
+                while (b < e && Character.isWhitespace(str.charAt(b))) {
+                    b++;
+                }
             }
 
             if (base == 16) {
                 if (str.charAt(b) == '0') {
-                    if (b < e-1 &&
-                           Character.toUpperCase(str.charAt(b+1)) == 'X') {
+                    if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'X') {
                         b += 2;
                     }
                 }
             } else if (base == 0) {
                 if (str.charAt(b) == '0') {
-                    if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'X') {
+                    if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'X') {
                         base = 16;
                         b += 2;
-                    } else if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'O') {
+                    } else if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'O') {
                         base = 8;
                         b += 2;
-                    } else if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'B') {
+                    } else if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'B') {
                         base = 2;
                         b += 2;
                     } else {
@@ -2330,12 +2317,11 @@ public class PyString extends PyBaseString implements BufferProtocol
                     }
                 }
             } else if (base == 8) {
-                if (b < e-1 && Character.toUpperCase(str.charAt(b+1)) == 'O') {
+                if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'O') {
                     b += 2;
                 }
             } else if (base == 2) {
-                if (b < e-1 &&
-                       Character.toUpperCase(str.charAt(b+1)) == 'B') {
+                if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'B') {
                     b += 2;
                 }
             }
@@ -2346,10 +2332,10 @@ public class PyString extends PyBaseString implements BufferProtocol
         }
 
         // if the base >= 22, then an 'l' or 'L' is a digit!
-        if (isLong && base < 22 && e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l')) {
+        if (isLong && base < 22 && e > b && (str.charAt(e - 1) == 'L' || str.charAt(e - 1) == 'l')) {
             e--;
         }
-        
+
         String s = str;
         if (b > 0 || e < str.length()) {
             s = str.substring(b, e);
@@ -2380,9 +2366,11 @@ public class PyString extends PyBaseString implements BufferProtocol
             }
             return bi.intValue();
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()+"'");
+            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()
+                    + "'");
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()+"'");
+            throw Py.ValueError("invalid literal for int() with base " + base + ": '" + getString()
+                    + "'");
         }
     }
 
@@ -2395,7 +2383,6 @@ public class PyString extends PyBaseString implements BufferProtocol
             throw Py.ValueError("invalid base for long literal:" + base);
         }
 
-       
         try {
             BigInteger bi = asciiToBigInteger(base, true);
             return new PyLong(bi);
@@ -2405,31 +2392,36 @@ public class PyString extends PyBaseString implements BufferProtocol
                 // above, or add an equivalent to CPython's PyUnicode_EncodeDecimal;
                 // we should note that the current error string does not quite match
                 // CPython regardless of the codec, that's going to require some more work
-                throw Py.UnicodeEncodeError("decimal", "codec can't encode character",
-                        0,0, "invalid decimal Unicode string");
+                throw Py.UnicodeEncodeError("decimal", "codec can't encode character", 0, 0,
+                        "invalid decimal Unicode string");
             } else {
-                throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
+                throw Py.ValueError("invalid literal for long() with base " + base + ": '"
+                        + getString() + "'");
             }
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for long() with base " + base + ": '" + getString()+"'");
+            throw Py.ValueError("invalid literal for long() with base " + base + ": '"
+                    + getString() + "'");
         }
     }
 
     private static String padding(int n, char pad) {
         char[] chars = new char[n];
-        for (int i=0; i<n; i++)
+        for (int i = 0; i < n; i++) {
             chars[i] = pad;
+        }
         return new String(chars);
     }
 
     private static char parse_fillchar(String function, String fillchar) {
-        if (fillchar == null) { return ' '; }
+        if (fillchar == null) {
+            return ' ';
+        }
         if (fillchar.length() != 1) {
             throw Py.TypeError(function + "() argument 2 must be char, not str");
         }
         return fillchar.charAt(0);
     }
-    
+
     public String ljust(int width) {
         return str_ljust(width, null);
     }
@@ -2437,44 +2429,48 @@ public class PyString extends PyBaseString implements BufferProtocol
     public String ljust(int width, String padding) {
         return str_ljust(width, padding);
     }
-    
-    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_ljust_doc)
+
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_ljust_doc)
     final String str_ljust(int width, String fillchar) {
         char pad = parse_fillchar("ljust", fillchar);
-        int n = width-getString().length();
-        if (n <= 0)
+        int n = width - getString().length();
+        if (n <= 0) {
             return getString();
-        return getString()+padding(n, pad);
+        }
+        return getString() + padding(n, pad);
     }
 
     public String rjust(int width) {
         return str_rjust(width, null);
     }
 
-    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_rjust_doc)
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_rjust_doc)
     final String str_rjust(int width, String fillchar) {
         char pad = parse_fillchar("rjust", fillchar);
-        int n = width-getString().length();
-        if (n <= 0)
+        int n = width - getString().length();
+        if (n <= 0) {
             return getString();
-        return padding(n, pad)+getString();
+        }
+        return padding(n, pad) + getString();
     }
 
     public String center(int width) {
         return str_center(width, null);
     }
 
-    @ExposedMethod(defaults="null", doc = BuiltinDocs.str_center_doc)
+    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_center_doc)
     final String str_center(int width, String fillchar) {
         char pad = parse_fillchar("center", fillchar);
-        int n = width-getString().length();
-        if (n <= 0)
+        int n = width - getString().length();
+        if (n <= 0) {
             return getString();
-        int half = n/2;
-        if (n%2 > 0 &&  width%2 > 0)
+        }
+        int half = n / 2;
+        if (n % 2 > 0 && width % 2 > 0) {
             half += 1;
-        
-        return padding(half, pad)+getString()+padding(n-half, pad);
+        }
+
+        return padding(half, pad) + getString() + padding(n - half, pad);
     }
 
     public String zfill(int width) {
@@ -2485,22 +2481,23 @@ public class PyString extends PyBaseString implements BufferProtocol
     final String str_zfill(int width) {
         String s = getString();
         int n = s.length();
-        if (n >= width)
+        if (n >= width) {
             return s;
+        }
         char[] chars = new char[width];
-        int nzeros = width-n;
-        int i=0;
-        int sStart=0;
+        int nzeros = width - n;
+        int i = 0;
+        int sStart = 0;
         if (n > 0) {
             char start = s.charAt(0);
             if (start == '+' || start == '-') {
                 chars[0] = start;
                 i += 1;
                 nzeros++;
-                sStart=1;
+                sStart = 1;
             }
         }
-        for(;i<nzeros; i++) {
+        for (; i < nzeros; i++) {
             chars[i] = '0';
         }
         s.getChars(sStart, s.length(), chars, i);
@@ -2518,15 +2515,15 @@ public class PyString extends PyBaseString implements BufferProtocol
     @ExposedMethod(defaults = "8", doc = BuiltinDocs.str_expandtabs_doc)
     final String str_expandtabs(int tabsize) {
         String s = getString();
-        StringBuilder buf = new StringBuilder((int)(s.length()*1.5));
+        StringBuilder buf = new StringBuilder((int)(s.length() * 1.5));
         char[] chars = s.toCharArray();
         int n = chars.length;
         int position = 0;
 
-        for(int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             char c = chars[i];
             if (c == '\t') {
-                int spaces = tabsize-position%tabsize;
+                int spaces = tabsize - position % tabsize;
                 position += spaces;
                 while (spaces-- > 0) {
                     buf.append(' ');
@@ -2548,25 +2545,27 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(doc = BuiltinDocs.str_capitalize_doc)
     final String str_capitalize() {
-        if (getString().length() == 0)
+        if (getString().length() == 0) {
             return getString();
-        String first = getString().substring(0,1).toUpperCase();
+        }
+        String first = getString().substring(0, 1).toUpperCase();
         return first.concat(getString().substring(1).toLowerCase());
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_replace_doc)
     final PyString str_replace(PyObject oldPiece, PyObject newPiece, PyObject maxsplit) {
-        if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
+
+        // XXX Accept PyObjects that may be BufferProtocol or PyUnicode
+
+        if (!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
             throw Py.TypeError("str or unicode required for replace");
         }
 
-        return replace((PyString)oldPiece, (PyString)newPiece, maxsplit == null ? -1 : maxsplit.asInt());
+        return replace((PyString)oldPiece, (PyString)newPiece,
+                maxsplit == null ? -1 : maxsplit.asInt());
     }
-    
+
     protected PyString replace(PyString oldPiece, PyString newPiece, int maxsplit) {
-        
-        // XXX Accept PyObjects that may be BufferProtocol or PyUnicode
-        
         int len = getString().length();
         int old_len = oldPiece.getString().length();
         if (len == 0) {
@@ -2575,28 +2574,31 @@ public class PyString extends PyBaseString implements BufferProtocol
             }
             return createInstance(getString(), true);
         }
-        
-        if (old_len == 0 && newPiece.getString().length() != 0 && maxsplit !=0) {
-            // old="" and new != "", interleave new piece with each char in original, taking in effect maxsplit
+
+        if (old_len == 0 && newPiece.getString().length() != 0 && maxsplit != 0) {
+            /*
+             * old="" and new != "", interleave new piece with each char in original, taking in
+             * effect maxsplit
+             */
             StringBuilder buffer = new StringBuilder();
             int i = 0;
             buffer.append(newPiece.getString());
-            for (; i < len && (i < maxsplit-1 || maxsplit == -1); i++) {
+            for (; i < len && (i < maxsplit - 1 || maxsplit == -1); i++) {
                 buffer.append(getString().charAt(i));
                 buffer.append(newPiece.getString());
             }
             buffer.append(getString().substring(i));
             return createInstance(buffer.toString(), true);
         }
-       
-        if(maxsplit == -1) {
-            if(old_len == 0) {
+
+        if (maxsplit == -1) {
+            if (old_len == 0) {
                 maxsplit = len + 1;
             } else {
                 maxsplit = len;
             }
         }
-        
+
         return newPiece.join(splitfields(oldPiece.getString(), maxsplit));
     }
 
@@ -2631,7 +2633,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             item = seq.pyget(i);
             if (!(item instanceof PyString)) {
                 throw Py.TypeError(String.format("sequence item %d: expected string, %.80s found",
-                                                 i, item.getType().fastGetName()));
+                        i, item.getType().fastGetName()));
             }
             if (item instanceof PyUnicode) {
                 // Defer to Unicode join. CAUTION: There's no gurantee that the original
@@ -2642,7 +2644,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             if (i != 0) {
                 size += sepLen;
             }
-            size += ((PyString) item).getString().length();
+            size += ((PyString)item).getString().length();
             if (size > Integer.MAX_VALUE) {
                 throw Py.OverflowError("join() result is too long for a Python string");
             }
@@ -2655,7 +2657,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             if (i != 0) {
                 buf.append(getString());
             }
-            buf.append(((PyString) item).getString());
+            buf.append(((PyString)item).getString());
         }
         return new PyString(buf.toString());
     }
@@ -2687,7 +2689,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             if (this instanceof PyUnicode) {
                 sep = getString();
             } else {
-                sep = ((PyUnicode) decode()).getString();
+                sep = ((PyUnicode)decode()).getString();
                 // In case decode()'s codec mutated seq
                 seqLen = seq.__len__();
             }
@@ -2703,15 +2705,14 @@ public class PyString extends PyBaseString implements BufferProtocol
             // Convert item to Unicode
             if (!(item instanceof PyString)) {
                 throw Py.TypeError(String.format("sequence item %d: expected string or Unicode,"
-                                                 + " %.80s found",
-                                                 i, item.getType().fastGetName()));
+                        + " %.80s found", i, item.getType().fastGetName()));
             }
             if (!(item instanceof PyUnicode)) {
                 item = ((PyString)item).decode();
                 // In case decode()'s codec mutated seq
                 seqLen = seq.__len__();
             }
-            itemString = ((PyUnicode) item).getString();
+            itemString = ((PyUnicode)item).getString();
 
             if (i != 0) {
                 size += sepLen;
@@ -2740,30 +2741,34 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_startswith_doc)
     final boolean str_startswith(PyObject prefix, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int[] indices = translateIndices(start, end);
-        
+
         if (prefix instanceof PyString) {
-            String strPrefix = ((PyString) prefix).getString();
-            if (indices[1] - indices[0] < strPrefix.length())
+            String strPrefix = ((PyString)prefix).getString();
+            if (indices[1] - indices[0] < strPrefix.length()) {
                 return false;
-            
+            }
+
             return getString().startsWith(strPrefix, indices[0]);
         } else if (prefix instanceof PyTuple) {
             PyObject[] prefixes = ((PyTuple)prefix).getArray();
-            
-            for (int i = 0 ; i < prefixes.length ; i++) {
-                if (!(prefixes[i] instanceof PyString))
-                    throw Py.TypeError("expected a character buffer object");
 
-                String strPrefix = ((PyString) prefixes[i]).getString();
-                if (indices[1] - indices[0] < strPrefix.length())
+            for (int i = 0; i < prefixes.length; i++) {
+                if (!(prefixes[i] instanceof PyString)) {
+                    throw Py.TypeError("expected a character buffer object");
+                }
+
+                String strPrefix = ((PyString)prefixes[i]).getString();
+                if (indices[1] - indices[0] < strPrefix.length()) {
                     continue;
-                
-                if (getString().startsWith(strPrefix, indices[0]))
+                }
+
+                if (getString().startsWith(strPrefix, indices[0])) {
                     return true;
+                }
             }
             return false;
         } else {
@@ -2785,72 +2790,72 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_endswith_doc)
     final boolean str_endswith(PyObject suffix, PyObject start, PyObject end) {
-        
+
         // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-        
+
         int[] indices = translateIndices(start, end);
 
         String substr = getString().substring(indices[0], indices[1]);
         if (suffix instanceof PyString) {
-            return substr.endsWith(((PyString) suffix).getString());
+            return substr.endsWith(((PyString)suffix).getString());
         } else if (suffix instanceof PyTuple) {
             PyObject[] suffixes = ((PyTuple)suffix).getArray();
-            
-            for (int i = 0 ; i < suffixes.length ; i++) {
-                if (!(suffixes[i] instanceof PyString))
-                    throw Py.TypeError("expected a character buffer object");
 
-                if (substr.endsWith(((PyString) suffixes[i]).getString()))
+            for (int i = 0; i < suffixes.length; i++) {
+                if (!(suffixes[i] instanceof PyString)) {
+                    throw Py.TypeError("expected a character buffer object");
+                }
+
+                if (substr.endsWith(((PyString)suffixes[i]).getString())) {
                     return true;
+                }
             }
             return false;
         } else {
             throw Py.TypeError("expected a character buffer object or tuple");
         }
-    } 
+    }
 
     /**
-     * Turns the possibly negative Python slice start and end into valid indices
-     * into this string.
+     * Turns the possibly negative Python slice start and end into valid indices into this string.
      *
-     * @return a 3 element array of indices into this string describing a
-     *         substring from [0] to [1]. [0] <= [1], [0] >= 0 and [1] <=
-     *         string.length(). The third element contains the unadjusted 
-     *         start value.
+     * @return a 3 element array of indices into this string describing a substring from [0] to [1].
+     *         [0] <= [1], [0] >= 0 and [1] <= string.length(). The third element contains the
+     *         unadjusted start value.
      */
     protected int[] translateIndices(PyObject start, PyObject end) {
         int iStart;
         int iStartAdjusted;
         int iEnd;
 
-        if(end == null || end == Py.None) {
+        if (end == null || end == Py.None) {
             iEnd = getString().length();
         } else {
             iEnd = end.asInt();
         }
         int n = getString().length();
-        if(iEnd < 0) {
+        if (iEnd < 0) {
             iEnd = n + iEnd;
-            if(iEnd < 0) {
+            if (iEnd < 0) {
                 iEnd = 0;
             }
-        } else if(iEnd > n) {
+        } else if (iEnd > n) {
             iEnd = n;
         }
-        if(start == null || start == Py.None) {
+        if (start == null || start == Py.None) {
             iStart = 0;
         } else {
             iStart = start.asInt();
         }
 
         iStartAdjusted = iStart;
-        if(iStartAdjusted < 0) {
+        if (iStartAdjusted < 0) {
             iStartAdjusted = n + iStartAdjusted;
-            if(iStartAdjusted < 0) {
+            if (iStartAdjusted < 0) {
                 iStartAdjusted = 0;
             }
         }
-        if(iStartAdjusted > iEnd) {
+        if (iStartAdjusted > iEnd) {
             iStartAdjusted = iEnd;
         }
         return new int[] {iStartAdjusted, iEnd, iStart};
@@ -2870,37 +2875,36 @@ public class PyString extends PyBaseString implements BufferProtocol
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
     final String str_translate(String table, String deletechars) {
-        
+
         // XXX Accept PyObjects that may be BufferProtocol
-        
-        if (table != null && table.length() != 256)
-            throw Py.ValueError(
-                "translation table must be 256 characters long");
+
+        if (table != null && table.length() != 256) {
+            throw Py.ValueError("translation table must be 256 characters long");
+        }
 
         StringBuilder buf = new StringBuilder(getString().length());
-        for (int i=0; i < getString().length(); i++) {
+        for (int i = 0; i < getString().length(); i++) {
             char c = getString().charAt(i);
-            if (deletechars != null && deletechars.indexOf(c) >= 0)
+            if (deletechars != null && deletechars.indexOf(c) >= 0) {
                 continue;
-            if(table == null) {
+            }
+            if (table == null) {
                 buf.append(c);
             } else {
                 try {
                     buf.append(table.charAt(c));
-                }
-                catch (IndexOutOfBoundsException e) {
-                    throw Py.TypeError(
-                        "translate() only works for 8-bit character strings");
+                } catch (IndexOutOfBoundsException e) {
+                    throw Py.TypeError("translate() only works for 8-bit character strings");
                 }
             }
         }
         return buf.toString();
     }
 
-    //XXX: is this needed?
+    // XXX: is this needed?
     public String translate(PyObject table) {
         StringBuilder v = new StringBuilder(getString().length());
-        for (int i=0; i < getString().length(); i++) {
+        for (int i = 0; i < getString().length(); i++) {
             char ch = getString().charAt(i);
 
             PyObject w = Py.newInteger(ch);
@@ -2913,23 +2917,20 @@ public class PyString extends PyBaseString implements BufferProtocol
 
             /* Apply mapping */
             if (x instanceof PyInteger) {
-                int value = ((PyInteger) x).getValue();
-                v.append((char) value);
+                int value = ((PyInteger)x).getValue();
+                v.append((char)value);
             } else if (x == Py.None) {
-                ;
+                // Do nothing
             } else if (x instanceof PyString) {
                 if (x.__len__() != 1) {
                     /* 1-n mapping */
                     throw new PyException(Py.NotImplementedError,
-                          "1-n mappings are currently not implemented");
+                            "1-n mappings are currently not implemented");
                 }
                 v.append(x.toString());
-            }
-            else {
+            } else {
                 /* wrong return value */
-                throw Py.TypeError(
-                     "character mapping must return integer, " +
-                     "None or unicode");
+                throw Py.TypeError("character mapping must return integer, None or unicode");
             }
         }
         return v.toString();
@@ -2944,17 +2945,19 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return Character.isLowerCase(getString().charAt(0));
+        }
 
         boolean cased = false;
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (Character.isUpperCase(ch) || Character.isTitleCase(ch))
+            if (Character.isUpperCase(ch) || Character.isTitleCase(ch)) {
                 return false;
-            else if (!cased && Character.isLowerCase(ch))
+            } else if (!cased && Character.isLowerCase(ch)) {
                 cased = true;
+            }
         }
         return cased;
     }
@@ -2968,17 +2971,19 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return Character.isUpperCase(getString().charAt(0));
+        }
 
         boolean cased = false;
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (Character.isLowerCase(ch) || Character.isTitleCase(ch))
+            if (Character.isLowerCase(ch) || Character.isTitleCase(ch)) {
                 return false;
-            else if (!cased && Character.isUpperCase(ch))
+            } else if (!cased && Character.isUpperCase(ch)) {
                 cased = true;
+            }
         }
         return cased;
     }
@@ -2992,17 +2997,20 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return Character.isLetter(getString().charAt(0));
+        }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (!Character.isLetter(ch))
+            if (!Character.isLetter(ch)) {
                 return false;
+            }
         }
         return true;
     }
@@ -3016,17 +3024,20 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return _isalnum(getString().charAt(0));
+        }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (!_isalnum(ch))
+            if (!_isalnum(ch)) {
                 return false;
+            }
         }
         return true;
     }
@@ -3036,8 +3047,7 @@ public class PyString extends PyBaseString implements BufferProtocol
         // The type is not used, the numeric property is determined from
         // the presense of digit, decimal or numeric fields. These fields
         // are not available in exactly the same way in java.
-        return Character.isLetterOrDigit(ch) ||
-               Character.getType(ch) == Character.LETTER_NUMBER;
+        return Character.isLetterOrDigit(ch) || Character.getType(ch) == Character.LETTER_NUMBER;
     }
 
     public boolean isdecimal() {
@@ -3054,14 +3064,16 @@ public class PyString extends PyBaseString implements BufferProtocol
             return _isdecimal(ch);
         }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (!_isdecimal(ch))
+            if (!_isdecimal(ch)) {
                 return false;
+            }
         }
         return true;
     }
@@ -3080,17 +3092,20 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return Character.isDigit(getString().charAt(0));
+        }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (!Character.isDigit(ch))
+            if (!Character.isDigit(ch)) {
                 return false;
+            }
         }
         return true;
     }
@@ -3104,25 +3119,27 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return _isnumeric(getString().charAt(0));
+        }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
-            if (!_isnumeric(ch))
+            if (!_isnumeric(ch)) {
                 return false;
+            }
         }
         return true;
     }
 
     private boolean _isnumeric(char ch) {
         int type = Character.getType(ch);
-        return type == Character.DECIMAL_DIGIT_NUMBER ||
-               type == Character.LETTER_NUMBER ||
-               type == Character.OTHER_NUMBER;
+        return type == Character.DECIMAL_DIGIT_NUMBER || type == Character.LETTER_NUMBER
+                || type == Character.OTHER_NUMBER;
     }
 
     public boolean istitle() {
@@ -3134,9 +3151,10 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
-            return Character.isTitleCase(getString().charAt(0)) ||
-                   Character.isUpperCase(getString().charAt(0));
+        if (n == 1) {
+            return Character.isTitleCase(getString().charAt(0))
+                    || Character.isUpperCase(getString().charAt(0));
+        }
 
         boolean cased = false;
         boolean previous_is_cased = false;
@@ -3144,19 +3162,20 @@ public class PyString extends PyBaseString implements BufferProtocol
             char ch = getString().charAt(i);
 
             if (Character.isUpperCase(ch) || Character.isTitleCase(ch)) {
-                if (previous_is_cased)
+                if (previous_is_cased) {
                     return false;
+                }
                 previous_is_cased = true;
                 cased = true;
-            }
-            else if (Character.isLowerCase(ch)) {
-                if (!previous_is_cased)
+            } else if (Character.isLowerCase(ch)) {
+                if (!previous_is_cased) {
                     return false;
+                }
                 previous_is_cased = true;
                 cased = true;
-            }
-            else
+            } else {
                 previous_is_cased = false;
+            }
         }
         return cased;
     }
@@ -3170,17 +3189,20 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
+        if (n == 1) {
             return Character.isWhitespace(getString().charAt(0));
+        }
 
-        if (n == 0)
+        if (n == 0) {
             return false;
+        }
 
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
 
-            if (!Character.isWhitespace(ch))
+            if (!Character.isWhitespace(ch)) {
                 return false;
+            }
         }
         return true;
     }
@@ -3195,8 +3217,9 @@ public class PyString extends PyBaseString implements BufferProtocol
         int n = getString().length();
         for (int i = 0; i < n; i++) {
             char ch = getString().charAt(i);
-            if (ch > 255)
+            if (ch > 255) {
                 return true;
+            }
         }
         return false;
     }
@@ -3220,7 +3243,7 @@ public class PyString extends PyBaseString implements BufferProtocol
         String errors = ap.getString(1, null);
         return encode(encoding, errors);
     }
-    
+
     public PyObject decode() {
         return decode(null, null);
     }
@@ -3250,9 +3273,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     final PyObject str__formatter_field_name_split() {
         FieldNameIterator iterator = new FieldNameIterator(getString());
         Object headObj = iterator.head();
-        PyObject head = headObj instanceof Integer
-                ? new PyInteger((Integer) headObj)
-                : new PyString((String) headObj);
+        PyObject head =
+                headObj instanceof Integer ? new PyInteger((Integer)headObj) : new PyString(
+                        (String)headObj);
         return new PyTuple(head, iterator);
     }
 
@@ -3265,7 +3288,8 @@ public class PyString extends PyBaseString implements BufferProtocol
         }
     }
 
-    protected String buildFormattedString(String value, PyObject[] args, String[] keywords, MarkupIterator enclosingIterator) {
+    protected String buildFormattedString(String value, PyObject[] args, String[] keywords,
+            MarkupIterator enclosingIterator) {
         StringBuilder result = new StringBuilder();
         MarkupIterator it = new MarkupIterator(value, enclosingIterator);
         while (true) {
@@ -3288,8 +3312,10 @@ public class PyString extends PyBaseString implements BufferProtocol
                 }
                 String formatSpec = chunk.formatSpec;
                 if (chunk.formatSpecNeedsExpanding) {
-                    if (enclosingIterator != null) // PEP 3101 says only 2 levels
+                    if (enclosingIterator != null) {
+                        // PEP 3101 says only 2 levels
                         throw Py.ValueError("Max string recursion exceeded");
+                    }
                     formatSpec = buildFormattedString(formatSpec, args, keywords, it);
                 }
                 renderField(fieldObj, formatSpec, result);
@@ -3305,7 +3331,7 @@ public class PyString extends PyBaseString implements BufferProtocol
         int positionalCount = args.length - keywords.length;
 
         if (head instanceof Integer) {
-            int index = (Integer) head;
+            int index = (Integer)head;
             if (index >= positionalCount) {
                 throw Py.IndexError("tuple index out of range");
             }
@@ -3318,7 +3344,7 @@ public class PyString extends PyBaseString implements BufferProtocol
                 }
             }
             if (obj == null) {
-                throw Py.KeyError((String) head);
+                throw Py.KeyError((String)head);
             }
         }
         if (obj != null) {
@@ -3328,11 +3354,11 @@ public class PyString extends PyBaseString implements BufferProtocol
                     break;
                 }
                 if (chunk.is_attr) {
-                    obj = obj.__getattr__((String) chunk.value);
+                    obj = obj.__getattr__((String)chunk.value);
                 } else {
-                    PyObject key = chunk.value instanceof String
-                            ? new PyString((String) chunk.value)
-                            : new PyInteger((Integer) chunk.value);
+                    PyObject key =
+                            chunk.value instanceof String ? new PyString((String)chunk.value)
+                                    : new PyInteger((Integer)chunk.value);
                     obj = obj.__getitem__(key);
                 }
                 if (obj == null) {
@@ -3359,7 +3385,7 @@ public class PyString extends PyBaseString implements BufferProtocol
             throw Py.TypeError("__format__ requires str or unicode");
         }
 
-        PyString formatSpecStr = (PyString) formatSpec;
+        PyString formatSpecStr = (PyString)formatSpec;
         String result;
         try {
             String specString = formatSpecStr.getString();
@@ -3379,12 +3405,17 @@ public class PyString extends PyBaseString implements BufferProtocol
      * @return the result of the formatting
      */
     public static String formatString(String text, InternalFormatSpec spec) {
-        if (spec.sign != '\0')
+        if (spec.sign != '\0') {
             throw new IllegalArgumentException("Sign not allowed in string format specifier");
-        if (spec.alternate)
-            throw new IllegalArgumentException("Alternate form (#) not allowed in string format specifier");
-        if (spec.align == '=')
-            throw new IllegalArgumentException("'=' alignment not allowed in string format specifier");
+        }
+        if (spec.alternate) {
+            throw new IllegalArgumentException(
+                    "Alternate form (#) not allowed in string format specifier");
+        }
+        if (spec.align == '=') {
+            throw new IllegalArgumentException(
+                    "'=' alignment not allowed in string format specifier");
+        }
         if (spec.precision >= 0 && text.length() > spec.precision) {
             text = text.substring(0, spec.precision);
         }
@@ -3444,8 +3475,9 @@ public class PyString extends PyBaseString implements BufferProtocol
     }
 }
 
-final class StringFormatter
-{
+
+final class StringFormatter {
+
     int index;
     String format;
     StringBuilder buffer;
@@ -3479,30 +3511,31 @@ final class StringFormatter
         index = 0;
         this.format = format;
         this.unicodeCoercion = unicodeCoercion;
-        buffer = new StringBuilder(format.length()+100);
+        buffer = new StringBuilder(format.length() + 100);
     }
 
     PyObject getarg() {
         PyObject ret = null;
-        switch(argIndex) {
-            // special index indicating a mapping
-        case -3:
-            return args;
-            // special index indicating a single item that has already been
-            // used
-        case -2:
-            break;
+        switch (argIndex) {
+        // special index indicating a mapping
+            case -3:
+                return args;
+                // special index indicating a single item that has already been
+                // used
+            case -2:
+                break;
             // special index indicating a single item that has not yet been
             // used
-        case -1:
-            argIndex=-2;
-            return args;
-        default:
-            ret = args.__finditem__(argIndex++);
-            break;
+            case -1:
+                argIndex = -2;
+                return args;
+            default:
+                ret = args.__finditem__(argIndex++);
+                break;
         }
-        if (ret == null)
+        if (ret == null) {
             throw Py.TypeError("not enough arguments for format string");
+        }
         return ret;
     }
 
@@ -3510,17 +3543,16 @@ final class StringFormatter
         char c = pop();
         if (c == '*') {
             PyObject o = getarg();
-            if (o instanceof PyInteger)
+            if (o instanceof PyInteger) {
                 return ((PyInteger)o).getValue();
+            }
             throw Py.TypeError("* wants int");
         } else {
             if (Character.isDigit(c)) {
-                int numStart = index-1;
-                while (Character.isDigit(c = pop()))
-                    ;
+                int numStart = index - 1;
+                while (Character.isDigit(c = pop())) {}
                 index -= 1;
-                Integer i = Integer.valueOf(
-                                    format.substring(numStart, index));
+                Integer i = Integer.valueOf(format.substring(numStart, index));
                 return i.intValue();
             }
             index -= 1;
@@ -3529,11 +3561,11 @@ final class StringFormatter
     }
 
     private void checkPrecision(String type) {
-        if(precision > 250) {
+        if (precision > 250) {
             // A magic number. Larger than in CPython.
             throw Py.OverflowError("formatted " + type + " is too long (precision too long?)");
         }
-        
+
     }
 
     private String formatLong(PyObject arg, char type, boolean altFlag) {
@@ -3556,11 +3588,13 @@ final class StringFormatter
         int ptr = 0;
 
         int numnondigits = 0;
-        if (type == 'x' || type == 'X')
+        if (type == 'x' || type == 'X') {
             numnondigits = 2;
+        }
 
-        if (s.endsWith("L"))
+        if (s.endsWith("L")) {
             end--;
+        }
 
         negative = s.charAt(0) == '-';
         if (negative) {
@@ -3570,35 +3604,39 @@ final class StringFormatter
         int numdigits = end - numnondigits - ptr;
         if (!altFlag) {
             switch (type) {
-            case 'o' :
-                if (numdigits > 1) {
-                     ++ptr;
-                     --numdigits;
-                }
-                break;
-            case 'x' :
-            case 'X' :
-                ptr += 2;
-                numnondigits -= 2;
-                break;
+                case 'o':
+                    if (numdigits > 1) {
+                        ++ptr;
+                        --numdigits;
+                    }
+                    break;
+                case 'x':
+                case 'X':
+                    ptr += 2;
+                    numnondigits -= 2;
+                    break;
             }
         }
         if (precision > numdigits) {
             StringBuilder buf = new StringBuilder();
-            for (int i = 0; i < numnondigits; ++i)
+            for (int i = 0; i < numnondigits; ++i) {
                 buf.append(s.charAt(ptr++));
-            for (int i = 0; i < precision - numdigits; i++)
+            }
+            for (int i = 0; i < precision - numdigits; i++) {
                 buf.append('0');
-            for (int i = 0; i < numdigits; i++)
+            }
+            for (int i = 0; i < numdigits; i++) {
                 buf.append(s.charAt(ptr++));
+            }
             s = buf.toString();
-        } else if (end < s.length() || ptr > 0)
+        } else if (end < s.length() || ptr > 0) {
             s = s.substring(ptr, end);
+        }
 
         switch (type) {
-        case 'X' :
-            s = s.toUpperCase();
-            break;
+            case 'X':
+                s = s.toUpperCase();
+                break;
         }
         return s;
     }
@@ -3606,10 +3644,11 @@ final class StringFormatter
     /**
      * Formats arg as an integer, with the specified radix
      *
-     * type and altFlag are needed to be passed to {@link #formatLong(PyObject, char, boolean)}
-     * in case the result of <code>arg.__int__()</code> is a PyLong.
+     * type and altFlag are needed to be passed to {@link #formatLong(PyObject, char, boolean)} in
+     * case the result of <code>arg.__int__()</code> is a PyLong.
      */
-    private String formatInteger(PyObject arg, int radix, boolean unsigned, char type, boolean altFlag) {
+    private String formatInteger(PyObject arg, int radix, boolean unsigned, char type,
+            boolean altFlag) {
         PyObject argAsInt;
         if (arg instanceof PyInteger || arg instanceof PyLong) {
             argAsInt = arg;
@@ -3625,17 +3664,17 @@ final class StringFormatter
                 // __int__ attribute). So, we would support strings as arguments
                 // for %d format, which is forbidden by CPython tests (on
                 // test_format.py).
-        try {
+                try {
                     argAsInt = arg.__getattr__("__int__").__call__();
                 } catch (PyException e) {
                     // XXX: Swallow customs AttributeError throws from __float__ methods
                     // No better alternative for the moment
                     if (e.match(Py.AttributeError)) {
-            throw Py.TypeError("int argument required");
-        }
+                        throw Py.TypeError("int argument required");
+                    }
                     throw e;
-        }
-    }
+                }
+            }
         }
         if (argAsInt instanceof PyInteger) {
             return formatInteger(((PyInteger)argAsInt).getValue(), radix, unsigned);
@@ -3647,8 +3686,9 @@ final class StringFormatter
     private String formatInteger(long v, int radix, boolean unsigned) {
         checkPrecision("integer");
         if (unsigned) {
-            if (v < 0)
+            if (v < 0) {
                 v = 0x100000000l + v;
+            }
         } else {
             if (v < 0) {
                 negative = true;
@@ -3657,7 +3697,7 @@ final class StringFormatter
         }
         String s = Long.toString(v, radix);
         while (s.length() < precision) {
-            s = "0"+s;
+            s = "0" + s;
         }
         return s;
     }
@@ -3671,9 +3711,11 @@ final class StringFormatter
     }
 
     static class DecimalFormatTemplate {
+
         static DecimalFormat template;
         static {
-            template = new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(java.util.Locale.US));
+            template =
+                    new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(java.util.Locale.US));
             DecimalFormatSymbols symbols = template.getDecimalFormatSymbols();
             symbols.setNaN("nan");
             symbols.setInfinity("inf");
@@ -3681,6 +3723,7 @@ final class StringFormatter
             template.setGroupingUsed(false);
         }
     }
+
     private static final DecimalFormat getDecimalFormat() {
         return (DecimalFormat)DecimalFormatTemplate.template.clone();
     }
@@ -3688,8 +3731,9 @@ final class StringFormatter
     private String formatFloatDecimal(double v, boolean truncate) {
         checkPrecision("decimal");
         int prec = precision;
-        if (prec == -1)
+        if (prec == -1) {
             prec = 6;
+        }
         if (v < 0) {
             v = -v;
             negative = true;
@@ -3703,9 +3747,7 @@ final class StringFormatter
         return ret;
     }
 
-    private String formatFloatExponential(PyObject arg, char e,
-                                         boolean truncate)
-    {
+    private String formatFloatExponential(PyObject arg, char e, boolean truncate) {
         StringBuilder buf = new StringBuilder();
         double v = asDouble(arg);
         boolean isNegative = false;
@@ -3714,24 +3756,24 @@ final class StringFormatter
             isNegative = true;
         }
         double power = 0.0;
-        if (v > 0)
+        if (v > 0) {
             power = ExtraMath.closeFloor(Math.log10(v));
-        //System.err.println("formatExp: "+v+", "+power);
+        }
+        // System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
         precision = 2;
 
         String exp = formatInteger((long)power, 10, false);
         if (negative) {
             negative = false;
-            exp = '-'+exp;
-        }
-        else {
+            exp = '-' + exp;
+        } else {
             exp = '+' + exp;
         }
 
         precision = savePrecision;
 
-        double base = v/Math.pow(10, power);
+        double base = v / Math.pow(10, power);
         buf.append(formatFloatDecimal(base, truncate));
         buf.append(e);
 
@@ -3751,22 +3793,19 @@ final class StringFormatter
         } else {
             // special index indicating a single item rather than a tuple
             argIndex = -1;
-            if (args instanceof PyDictionary ||
-                args instanceof PyStringMap ||
-                (!(args instanceof PySequence) &&
-                 args.__findattr__("__getitem__") != null))
-            {
+            if (args instanceof PyDictionary || args instanceof PyStringMap
+                    || (!(args instanceof PySequence) && args.__findattr__("__getitem__") != null)) {
                 dict = args;
                 argIndex = -3;
             }
         }
 
         while (index < format.length()) {
-            boolean ljustFlag=false;
-            boolean signFlag=false;
-            boolean blankFlag=false;
-            boolean altFlag=false;
-            boolean zeroFlag=false;
+            boolean ljustFlag = false;
+            boolean signFlag = false;
+            boolean blankFlag = false;
+            boolean altFlag = false;
+            boolean zeroFlag = false;
 
             int width = -1;
             precision = -1;
@@ -3778,29 +3817,41 @@ final class StringFormatter
             }
             c = pop();
             if (c == '(') {
-                if (dict == null)
+                if (dict == null) {
                     throw Py.TypeError("format requires a mapping");
+                }
                 int parens = 1;
                 int keyStart = index;
                 while (parens > 0) {
                     c = pop();
-                    if (c == ')')
+                    if (c == ')') {
                         parens--;
-                    else if (c == '(')
+                    } else if (c == '(') {
                         parens++;
+                    }
                 }
-                String tmp = format.substring(keyStart, index-1);
+                String tmp = format.substring(keyStart, index - 1);
                 this.args = dict.__getitem__(needUnicode ? new PyUnicode(tmp) : new PyString(tmp));
             } else {
                 push();
             }
             while (true) {
                 switch (c = pop()) {
-                case '-': ljustFlag=true; continue;
-                case '+': signFlag=true; continue;
-                case ' ': blankFlag=true; continue;
-                case '#': altFlag=true; continue;
-                case '0': zeroFlag=true; continue;
+                    case '-':
+                        ljustFlag = true;
+                        continue;
+                    case '+':
+                        signFlag = true;
+                        continue;
+                    case ' ':
+                        blankFlag = true;
+                        continue;
+                    case '#':
+                        altFlag = true;
+                        continue;
+                    case '0':
+                        zeroFlag = true;
+                        continue;
                 }
                 break;
             }
@@ -3813,8 +3864,9 @@ final class StringFormatter
             c = pop();
             if (c == '.') {
                 precision = getNumber();
-                if (precision < -1)
+                if (precision < -1) {
                     precision = 0;
+                }
 
                 c = pop();
             }
@@ -3827,174 +3879,181 @@ final class StringFormatter
             }
             PyObject arg = getarg();
             char fill = ' ';
-            String string=null;
+            String string = null;
             negative = false;
-            if (zeroFlag)
+            if (zeroFlag) {
                 fill = '0';
-            else
+            } else {
                 fill = ' ';
-            switch(c) {
-            case 's':
-                if (arg instanceof PyUnicode) {
-                    needUnicode = true;
-                }
-            case 'r':
-                fill = ' ';
-                if (c == 's')
-                    if (needUnicode)
-                        string = arg.__unicode__().toString();
-                    else
-                        string = arg.__str__().toString();
-                else
-                    string = arg.__repr__().toString();
-                if (precision >= 0 && string.length() > precision) {
-                    string = string.substring(0, precision);
-                }
-
-                break;
-            case 'i':
-            case 'd':
-                if (arg instanceof PyLong)
-                    string = formatLong(arg, c, altFlag);
-                else
-                    string = formatInteger(arg, 10, false, c, altFlag);
-                break;
-            case 'u':
-                if (arg instanceof PyLong)
-                    string = formatLong(arg, c, altFlag);
-                else if (arg instanceof PyInteger || arg instanceof PyFloat)
-                    string = formatInteger(arg, 10, false, c, altFlag);
-                else throw Py.TypeError("int argument required");
-                break;
-            case 'o':
-                if (arg instanceof PyLong)
-                    string = formatLong(arg, c, altFlag);
-                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 8, false, c, altFlag);
-                    if (altFlag && string.charAt(0) != '0') {
-                        string = "0" + string;
-                    }
-                }
-                else throw Py.TypeError("int argument required");
-                break;
-            case 'x':
-                if (arg instanceof PyLong)
-                    string = formatLong(arg, c, altFlag);
-                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 16, false, c, altFlag);
-                    string = string.toLowerCase();
-                    if (altFlag) {
-                        string = "0x" + string;
-                    }
-                }
-                else throw Py.TypeError("int argument required");
-                break;
-            case 'X':
-                if (arg instanceof PyLong)
-                    string = formatLong(arg, c, altFlag);
-                else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                    string = formatInteger(arg, 16, false, c, altFlag);
-                    string = string.toUpperCase();
-                    if (altFlag) {
-                        string = "0X" + string;
-                   }
-                }
-                else throw Py.TypeError("int argument required");
-                break;
-            case 'e':
-            case 'E':
-                string = formatFloatExponential(arg, c, false);
-                if (c == 'E') {
-                    string = string.toUpperCase();
-                }
-                break;
-            case 'f':
-            case 'F':
-                string = formatFloatDecimal(asDouble(arg), false);
-                if (c == 'F') {
-                    string = string.toUpperCase();
-                }
-                break;
-            case 'g':
-            case 'G':
-                int origPrecision = precision;
-                if (precision == -1) {
-                    precision = 6;
-                }
-
-                double v = asDouble(arg);
-                int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
-                if (v == Double.POSITIVE_INFINITY) {
-                    string = "inf";
-                } else if (v == Double.NEGATIVE_INFINITY) {
-                    string = "-inf";
-                } else if (exponent >= -4 && exponent < precision) {
-                    precision -= exponent + 1;
-                    string = formatFloatDecimal(v, !altFlag);
-
-                    // XXX: this block may be unnecessary now
-                    if (altFlag && string.indexOf('.') == -1) {
-                        int zpad = origPrecision - string.length();
-                        string += '.';
-                        if (zpad > 0) {
-                            char zeros[] = new char[zpad];
-                            for (int ci=0; ci<zpad; zeros[ci++] = '0')
-                                ;
-                            string += new String(zeros);
-                        }
-                    }
-                } else {
-                    // Exponential precision is the number of digits after the decimal
-                    // point, whereas 'g' precision is the number of significant digits --
-                    // and exponential always provides one significant digit before the
-                    // decimal point
-                    precision--;
-                    string = formatFloatExponential(arg, (char)(c-2), !altFlag);
-                }
-                if (c == 'G') {
-                    string = string.toUpperCase();
-                }
-                break;
-            case 'c':
-                fill = ' ';
-                if (arg instanceof PyString) {
-                    string = ((PyString)arg).toString();
-                    if (string.length() != 1) {
-                        throw Py.TypeError("%c requires int or char");
-                    }
+            }
+            switch (c) {
+                case 's':
                     if (arg instanceof PyUnicode) {
                         needUnicode = true;
                     }
-                    break;
-                }
-                int val;
-                try {
-                    // Explicitly __int__ so we can look for an AttributeError (which is
-                    // less invasive to mask than a TypeError)
-                    val = arg.__int__().asInt();
-                } catch (PyException e){
-                    if (e.match(Py.AttributeError)) {
-                        throw Py.TypeError("%c requires int or char");
+                case 'r':
+                    fill = ' ';
+                    if (c == 's') {
+                        if (needUnicode) {
+                            string = arg.__unicode__().toString();
+                        } else {
+                            string = arg.__str__().toString();
+                        }
+                    } else {
+                        string = arg.__repr__().toString();
                     }
-                    throw e;
-                }
-                if (!needUnicode) {
-                    if (val < 0) {
-                        throw Py.OverflowError("unsigned byte integer is less than minimum");
-                    } else if (val > 255) {
-                        throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                    if (precision >= 0 && string.length() > precision) {
+                        string = string.substring(0, precision);
                     }
-                } else if (val < 0 || val > PySystemState.maxunicode) {
-                    throw Py.OverflowError("%c arg not in range(0x110000) (wide Python build)");
-                }
-                string = new String(new int[] {val}, 0, 1);
-                break;
 
-            default:
-                throw Py.ValueError("unsupported format character '" +
-                         codecs.encode(Py.newString(c), null, "replace") +
-                         "' (0x" + Integer.toHexString(c) + ") at index " +
-                         (index-1));
+                    break;
+                case 'i':
+                case 'd':
+                    if (arg instanceof PyLong) {
+                        string = formatLong(arg, c, altFlag);
+                    } else {
+                        string = formatInteger(arg, 10, false, c, altFlag);
+                    }
+                    break;
+                case 'u':
+                    if (arg instanceof PyLong) {
+                        string = formatLong(arg, c, altFlag);
+                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        string = formatInteger(arg, 10, false, c, altFlag);
+                    } else {
+                        throw Py.TypeError("int argument required");
+                    }
+                    break;
+                case 'o':
+                    if (arg instanceof PyLong) {
+                        string = formatLong(arg, c, altFlag);
+                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        string = formatInteger(arg, 8, false, c, altFlag);
+                        if (altFlag && string.charAt(0) != '0') {
+                            string = "0" + string;
+                        }
+                    } else {
+                        throw Py.TypeError("int argument required");
+                    }
+                    break;
+                case 'x':
+                    if (arg instanceof PyLong) {
+                        string = formatLong(arg, c, altFlag);
+                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        string = formatInteger(arg, 16, false, c, altFlag);
+                        string = string.toLowerCase();
+                        if (altFlag) {
+                            string = "0x" + string;
+                        }
+                    } else {
+                        throw Py.TypeError("int argument required");
+                    }
+                    break;
+                case 'X':
+                    if (arg instanceof PyLong) {
+                        string = formatLong(arg, c, altFlag);
+                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        string = formatInteger(arg, 16, false, c, altFlag);
+                        string = string.toUpperCase();
+                        if (altFlag) {
+                            string = "0X" + string;
+                        }
+                    } else {
+                        throw Py.TypeError("int argument required");
+                    }
+                    break;
+                case 'e':
+                case 'E':
+                    string = formatFloatExponential(arg, c, false);
+                    if (c == 'E') {
+                        string = string.toUpperCase();
+                    }
+                    break;
+                case 'f':
+                case 'F':
+                    string = formatFloatDecimal(asDouble(arg), false);
+                    if (c == 'F') {
+                        string = string.toUpperCase();
+                    }
+                    break;
+                case 'g':
+                case 'G':
+                    int origPrecision = precision;
+                    if (precision == -1) {
+                        precision = 6;
+                    }
+
+                    double v = asDouble(arg);
+                    int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
+                    if (v == Double.POSITIVE_INFINITY) {
+                        string = "inf";
+                    } else if (v == Double.NEGATIVE_INFINITY) {
+                        string = "-inf";
+                    } else if (exponent >= -4 && exponent < precision) {
+                        precision -= exponent + 1;
+                        string = formatFloatDecimal(v, !altFlag);
+
+                        // XXX: this block may be unnecessary now
+                        if (altFlag && string.indexOf('.') == -1) {
+                            int zpad = origPrecision - string.length();
+                            string += '.';
+                            if (zpad > 0) {
+                                char zeros[] = new char[zpad];
+                                for (int ci = 0; ci < zpad; zeros[ci++] = '0') {}
+                                string += new String(zeros);
+                            }
+                        }
+                    } else {
+                        // Exponential precision is the number of digits after the decimal
+                        // point, whereas 'g' precision is the number of significant digits --
+                        // and exponential always provides one significant digit before the
+                        // decimal point
+                        precision--;
+                        string = formatFloatExponential(arg, (char)(c - 2), !altFlag);
+                    }
+                    if (c == 'G') {
+                        string = string.toUpperCase();
+                    }
+                    break;
+                case 'c':
+                    fill = ' ';
+                    if (arg instanceof PyString) {
+                        string = ((PyString)arg).toString();
+                        if (string.length() != 1) {
+                            throw Py.TypeError("%c requires int or char");
+                        }
+                        if (arg instanceof PyUnicode) {
+                            needUnicode = true;
+                        }
+                        break;
+                    }
+                    int val;
+                    try {
+                        // Explicitly __int__ so we can look for an AttributeError (which is
+                        // less invasive to mask than a TypeError)
+                        val = arg.__int__().asInt();
+                    } catch (PyException e) {
+                        if (e.match(Py.AttributeError)) {
+                            throw Py.TypeError("%c requires int or char");
+                        }
+                        throw e;
+                    }
+                    if (!needUnicode) {
+                        if (val < 0) {
+                            throw Py.OverflowError("unsigned byte integer is less than minimum");
+                        } else if (val > 255) {
+                            throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                        }
+                    } else if (val < 0 || val > PySystemState.maxunicode) {
+                        throw Py.OverflowError("%c arg not in range(0x110000) (wide Python build)");
+                    }
+                    string = new String(new int[] {val}, 0, 1);
+                    break;
+
+                default:
+                    throw Py.ValueError("unsupported format character '"
+                            + codecs.encode(Py.newString(c), null, "replace") + "' (0x"
+                            + Integer.toHexString(c) + ") at index " + (index - 1));
             }
             int length = string.length();
             int skip = 0;
@@ -4009,13 +4068,16 @@ final class StringFormatter
                 }
             }
 
-            if (width < length)
+            if (width < length) {
                 width = length;
+            }
             if (signString != null) {
-                if (fill != ' ')
+                if (fill != ' ') {
                     buffer.append(signString);
-                if (width > length)
+                }
+                if (width > length) {
                     width--;
+                }
             }
             if (altFlag && (c == 'x' || c == 'X')) {
                 if (fill != ' ') {
@@ -4024,8 +4086,9 @@ final class StringFormatter
                     skip += 2;
                 }
                 width -= 2;
-                if (width < 0)
+                if (width < 0) {
                     width = 0;
+                }
                 length -= 2;
             }
             if (width > length && !ljustFlag) {
@@ -4034,26 +4097,26 @@ final class StringFormatter
                 } while (--width > length);
             }
             if (fill == ' ') {
-                if (signString != null)
+                if (signString != null) {
                     buffer.append(signString);
+                }
                 if (altFlag && (c == 'x' || c == 'X')) {
                     buffer.append('0');
                     buffer.append(c);
                     skip += 2;
                 }
             }
-            if (skip > 0)
+            if (skip > 0) {
                 buffer.append(string.substring(skip));
-            else
+            } else {
                 buffer.append(string);
+            }
 
             while (--width >= length) {
                 buffer.append(' ');
             }
         }
-        if (argIndex == -1 ||
-            (argIndex >= 0 && args.__finditem__(argIndex) != null))
-        {
+        if (argIndex == -1 || (argIndex >= 0 && args.__finditem__(argIndex) != null)) {
             throw Py.TypeError("not all arguments converted during string formatting");
         }
         if (needUnicode) {
