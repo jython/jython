@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.python.antlr.ast.Num;
 import org.python.core.CodeBootstrap;
 import org.python.core.CodeFlag;
 import org.python.core.CodeLoader;
@@ -46,14 +47,11 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyInteger.class));
+        c.iconst(value);  // it would be nice if we knew we didn't have to box next
+        c.invokestatic(p(Py.class), "newInteger", sig(PyInteger.class, Integer.TYPE));
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyInteger.class), access);
-        c.iconst(value);
-        c.invokestatic(p(Py.class), "newInteger", sig(PyInteger.class, Integer.TYPE));
-        c.putstatic(module.classfile.name, name, ci(PyInteger.class));
     }
 
     @Override
@@ -73,7 +71,7 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
 
 class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
     private static final double ZERO = 0.0;
-    
+
     final double value;
 
     PyFloatConstant(double value) {
@@ -81,14 +79,11 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyFloat.class));
+        c.ldc(new Double(value));
+        c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyFloat.class), access);
-        c.ldc(new Double(value));
-        c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
-        c.putstatic(module.classfile.name, name, ci(PyFloat.class));
     }
 
     @Override
@@ -119,14 +114,11 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyComplex.class));
+        c.ldc(new Double(value));
+        c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyComplex.class), access);
-        c.ldc(new Double(value));
-        c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
-        c.putstatic(module.classfile.name, name, ci(PyComplex.class));
     }
 
     @Override
@@ -153,14 +145,11 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyString.class));
+        c.ldc(value);
+        c.invokestatic(p(PyString.class), "fromInterned", sig(PyString.class, String.class));
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyString.class), access);
-        c.ldc(value);
-        c.invokestatic(p(PyString.class), "fromInterned", sig(PyString.class, String.class));
-        c.putstatic(module.classfile.name, name, ci(PyString.class));
     }
 
     @Override
@@ -187,14 +176,11 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyUnicode.class));
+        c.ldc(value);
+        c.invokestatic(p(PyUnicode.class), "fromInterned", sig(PyUnicode.class, String.class));
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyUnicode.class), access);
-        c.ldc(value);
-        c.invokestatic(p(PyUnicode.class), "fromInterned", sig(PyUnicode.class, String.class));
-        c.putstatic(module.classfile.name, name, ci(PyUnicode.class));
     }
 
     @Override
@@ -221,14 +207,12 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes {
     }
 
     void get(Code c) throws IOException {
-        c.getstatic(module.classfile.name, name, ci(PyLong.class));
+        c.ldc(value);
+        c.invokestatic(p(Py.class), "newLong", sig(PyLong.class, String.class));
+
     }
 
     void put(Code c) throws IOException {
-        module.classfile.addField(name, ci(PyLong.class), access);
-        c.ldc(value);
-        c.invokestatic(p(Py.class), "newLong", sig(PyLong.class, String.class));
-        c.putstatic(module.classfile.name, name, ci(PyLong.class));
     }
 
     @Override
@@ -423,6 +407,9 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     Hashtable<PythonTree, ScopeInfo> scopes;
     List<PyCodeConstant> codes;
     long mtime;
+    private int setter_count = 0;
+    private final static int USE_SETTERS_LIMIT = 100;
+    private final static int MAX_SETTINGS_PER_SETTER = 4096;
 
     /** The pool of Python Constants */
     Hashtable<Constant, Constant> constants;
@@ -673,4 +660,72 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         module.mainCode = main;
         module.write(ostream);
     }
+
+    public void emitNum(Num node, Code code) throws Exception {
+        if (node.getInternalN() instanceof PyInteger) {
+            integerConstant(((PyInteger) node.getInternalN()).getValue()).get(code);
+        } else if (node.getInternalN() instanceof PyLong) {
+            longConstant(((PyObject) node.getInternalN()).__str__().toString()).get(code);
+        } else if (node.getInternalN() instanceof PyFloat) {
+            floatConstant(((PyFloat) node.getInternalN()).getValue()).get(code);
+        } else if (node.getInternalN() instanceof PyComplex) {
+            complexConstant(((PyComplex) node.getInternalN()).imag).get(code);
+        }
+    }
+
+    public void emitStr(Str node, Code code) throws Exception {
+        PyString s = (PyString) node.getInternalS();
+        if (s instanceof PyUnicode) {
+            unicodeConstant(s.asString()).get(code);
+        } else {
+            stringConstant(s.asString()).get(code);
+        }
+    }
+
+    public boolean emitPrimitiveArraySetters(java.util.List<? extends PythonTree> nodes, Code code) throws Exception {
+        final int n = nodes.size();
+        if (n < USE_SETTERS_LIMIT) {
+            return false;  // Too small to matter, so bail
+        }
+
+        // Only attempt if all nodes are either Num or Str, otherwise bail
+        boolean primitive_literals = true;
+        for (int i = 0; i < n; i++) {
+            PythonTree node = nodes.get(i);
+            if (!(node instanceof Num || node instanceof Str)) {
+                primitive_literals = false;
+            }
+        }
+        if (!primitive_literals) {
+            return false;
+        }
+
+        final int num_setters = (n / MAX_SETTINGS_PER_SETTER) + 1;
+        code.iconst(n);
+        code.anewarray(p(PyObject.class));
+        for (int i = 0; i < num_setters; i++) {
+            Code setter = this.classfile.addMethod(
+                    "set$$" + setter_count, sig(Void.TYPE, PyObject[].class), ACC_STATIC | ACC_PRIVATE);
+
+            for (int j = 0; (j < MAX_SETTINGS_PER_SETTER) && ((i * MAX_SETTINGS_PER_SETTER + j) < n); j++) {
+                setter.aload(0);
+                setter.iconst(i * MAX_SETTINGS_PER_SETTER + j);
+                PythonTree node = nodes.get(i * MAX_SETTINGS_PER_SETTER + j);
+                if (node instanceof Num) {
+                    emitNum((Num)node, setter);
+                }
+                else if (node instanceof Str) {
+                    emitStr((Str)node, setter);
+                }
+                setter.aastore();
+            }
+            setter.return_();
+            code.dup();
+            code.invokestatic(
+                    this.classfile.name, "set$$" + setter_count, sig(Void.TYPE, PyObject[].class));
+            setter_count++;
+        }
+        return true;
+    }
+
 }

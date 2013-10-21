@@ -51,6 +51,13 @@ class ListTestCase(unittest.TestCase):
 
     def test_tuple_equality(self):
         self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
+ 
+    def test_big_list(self):
+        """Verify that fairly large collection literals of primitives can be constructed."""
+        # use \n to separate to avoid parser problems
+        lst = eval("[" + ",\n".join((str(x) for x in xrange(64000))) +"]")
+        self.assertEqual(len(lst), 64000)
+        self.assertEqual(sum(lst), 2047968000)
 
 class ThreadSafetyTestCase(unittest.TestCase):
 

@@ -35,6 +35,14 @@ class SetTestCase(unittest.TestCase):
             for t in threads: t.join()
             self.assertEqual(len(s), 0)
 
+    def test_big_set(self):
+        """Verify that fairly large collection literals of primitives can be constructed."""
+        # use \n to separate to avoid parser problems
+        s = eval("{" + ",\n".join((str(x) for x in xrange(64000))) +"}")
+        self.assertEqual(len(s), 64000)
+        self.assertEqual(sum(s), 2047968000)
+
+
 class SetInJavaTestCase(unittest.TestCase):
 
     """Tests for derived dict behaviour"""

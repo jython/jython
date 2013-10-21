@@ -377,10 +377,33 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return visitReturn(new Return(node, node.getInternalBody()), true);
     }
 
+    public void loadArray(Code code, java.util.List<? extends PythonTree> nodes) throws Exception {
+        final int n;
+
+        if (nodes == null) {
+            n = 0;
+        } else {
+            n = nodes.size();
+        }
+
+        if (n == 0) {
+            code.getstatic(p(Py.class), "EmptyObjects", ci(PyObject[].class));
+            return;
+        } else if (module.emitPrimitiveArraySetters(nodes, code)) {
+            return;
+        }
+        code.iconst(n);
+        code.anewarray(p(PyObject.class));
+        for (int i = 0; i < n; i++) {
+            code.dup();
+            code.iconst(i);
+            visit(nodes.get(i));
+            code.aastore();
+        }
+    }
+
     public int makeArray(java.util.List<? extends PythonTree> nodes) throws Exception {
-        // XXX: This should produce an array on the stack (if possible) instead of a local
-        // the caller is responsible for freeing.
-        int n;
+        final int n;
 
         if (nodes == null) {
             n = 0;
@@ -2093,14 +2116,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             return seqDel(node.getInternalElts());
         }
 
-        int content = makeArray(node.getInternalElts());
-
-        code.new_(p(PyTuple.class));
-
-        code.dup();
-        code.aload(content);
-        code.invokespecial(p(PyTuple.class), "<init>", sig(Void.TYPE, PyObject[].class));
-        freeArray(content);
+        if (my_scope.generator) {
+            int content = makeArray(node.getInternalElts());
+            code.new_(p(PyTuple.class));
+            code.dup();
+            code.aload(content);
+            code.invokespecial(p(PyTuple.class), "<init>", sig(Void.TYPE, PyObject[].class));
+            freeArray(content);
+        } else {
+            code.new_(p(PyTuple.class));
+            code.dup();
+            loadArray(code, node.getInternalElts());
+            code.invokespecial(p(PyTuple.class), "<init>", sig(Void.TYPE, PyObject[].class));
+        }
         return null;
     }
 
@@ -2113,13 +2141,19 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             return seqDel(node.getInternalElts());
         }
 
-        int content = makeArray(node.getInternalElts());
-
-        code.new_(p(PyList.class));
-        code.dup();
-        code.aload(content);
-        code.invokespecial(p(PyList.class), "<init>", sig(Void.TYPE, PyObject[].class));
-        freeArray(content);
+        if (my_scope.generator) {
+            int content = makeArray(node.getInternalElts());
+            code.new_(p(PyList.class));
+            code.dup();
+            code.aload(content);
+            code.invokespecial(p(PyList.class), "<init>", sig(Void.TYPE, PyObject[].class));
+            freeArray(content);
+        } else {
+            code.new_(p(PyList.class));
+            code.dup();
+            loadArray(code, node.getInternalElts());
+            code.invokespecial(p(PyList.class), "<init>", sig(Void.TYPE, PyObject[].class));
+        }
         return null;
     }
 
@@ -2225,25 +2259,38 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             elts.add(node.getInternalKeys().get(i));
             elts.add(node.getInternalValues().get(i));
         }
-        int content = makeArray(elts);
 
-        code.new_(p(PyDictionary.class));
-        code.dup();
-        code.aload(content);
-        code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE, PyObject[].class));
-        freeArray(content);
+        if (my_scope.generator) {
+            int content = makeArray(elts);
+            code.new_(p(PyDictionary.class));
+            code.dup();
+            code.aload(content);
+            code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE, PyObject[].class));
+            freeArray(content);
+        } else {
+            code.new_(p(PyDictionary.class));
+            code.dup();
+            loadArray(code, elts);
+            code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE, PyObject[].class));
+        }
         return null;
     }
 
     @Override
     public Object visitSet(Set node) throws Exception {
-        int content = makeArray(node.getInternalElts());
-
-        code.new_(p(PySet.class));
-        code.dup();
-        code.aload(content);
-        code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE, PyObject[].class));
-        freeArray(content);
+        if (my_scope.generator) {
+            int content = makeArray(node.getInternalElts());
+            code.new_(p(PySet.class));
+            code.dup();
+            code.aload(content);
+            code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE, PyObject[].class));
+            freeArray(content);
+        } else {
+            code.new_(p(PySet.class));
+            code.dup();
+            loadArray(code, node.getInternalElts());
+            code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE, PyObject[].class));
+        }
         return null;
     }
 

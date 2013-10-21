@@ -101,6 +101,15 @@ class DerivedDictTest(unittest.TestCase):
         #This formerly caused an NPE.
         self.assertEqual(None, x.pop(None,None))
 
+    def test_big_dict(self):
+        """Verify that fairly large collection literals of primitives can be constructed."""
+        # use \n to separate to avoid parser problems
+
+        d = eval("{" + ",\n".join(("'key{}': {}".format(x, x) for x in xrange(16000))) +"}")
+        self.assertEqual(len(d), 16000)
+        self.assertEqual(sum(d.itervalues()), 127992000)
+
+
 class JavaIntegrationTest(unittest.TestCase):
     "Tests for instantiating dicts from Java maps and hashtables"
     def test_hashmap(self):
