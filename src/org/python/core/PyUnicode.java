@@ -432,19 +432,15 @@ public class PyUnicode extends PyString implements Iterable {
 
     /**
      * Helper used many times to "coerce" a method argument into a <code>PyUnicode</code> (which it
-     * may already be). A <code>null</code> argument or a <code>PyNone</code> causes
-     * <code>null</code> to be returned.
+     * may already be). A <code>null</code> or incoercible argument will raise a
+     * <code>TypeError</code>.
      *
      * @param o the object to coerce
-     * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
+     * @return an equivalent <code>PyUnicode</code> (or o itself)
      */
     private PyUnicode coerceToUnicode(PyObject o) {
-        if (o == null) {
-            return null;
-        } else if (o instanceof PyUnicode) {
+        if (o instanceof PyUnicode) {
             return (PyUnicode)o;
-        } else if (o == Py.None) {
-            return null;
         } else if (o instanceof BufferProtocol) {
             // PyString or PyByteArray, PyMemoryView, Py2kBuffer ...
             PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO);
@@ -454,8 +450,29 @@ public class PyUnicode extends PyString implements Iterable {
                 buf.release();
             }
         } else {
+            // o is some type not allowed:
+            if (o == null) {
+                // Do something safe and approximately right
+                o = Py.None;
+            }
             throw Py.TypeError("coercing to Unicode: need string or buffer, "
                     + o.getType().fastGetName() + " found");
+        }
+    }
+
+    /**
+     * Helper used many times to "coerce" a method argument into a <code>PyUnicode</code> (which it
+     * may already be). A <code>null</code> argument or a <code>PyNone</code> causes
+     * <code>null</code> to be returned.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
+     */
+    private PyUnicode coerceToUnicodeOrNull(PyObject o) {
+        if (o == null || o == Py.None) {
+            return null;
+        } else {
+            return coerceToUnicode(o);
         }
     }
 
@@ -605,7 +622,7 @@ public class PyUnicode extends PyString implements Iterable {
      * <code>PyUnicode</code> (which it may already be). A <code>null</code> argument or a
      * <code>PyNone</code> causes <code>null</code> to be returned. A buffer type is not acceptable
      * to (Unicode) <code>.strip()</code>. This is the difference from
-     * {@link #coerceToUnicode(PyObject)}.
+     * {@link #coerceToUnicodeOrNull(PyObject)}.
      *
      * @param o the object to coerce
      * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
@@ -693,7 +710,7 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_partition_doc)
     final PyTuple unicode_partition(PyObject sep) {
-        return unicodePartition(sep);
+        return unicodePartition(coerceToUnicode(sep));
     }
 
     private abstract class SplitIterator implements Iterator {
@@ -947,12 +964,12 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_rpartition_doc)
     final PyTuple unicode_rpartition(PyObject sep) {
-        return unicodeRpartition(sep);
+        return unicodeRpartition(coerceToUnicode(sep));
     }
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_split_doc)
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
-        PyUnicode sep = coerceToUnicode(sepObj);
+        PyUnicode sep = coerceToUnicodeOrNull(sepObj);
         if (sep != null) {
             return _split(sep.getString(), maxsplit);
         } else {
@@ -962,7 +979,7 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_rsplit_doc)
     final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
-        PyUnicode sep = coerceToUnicode(sepObj);
+        PyUnicode sep = coerceToUnicodeOrNull(sepObj);
         if (sep != null) {
             return _rsplit(sep.getString(), maxsplit);
         } else {

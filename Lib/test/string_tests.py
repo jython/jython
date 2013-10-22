@@ -1218,6 +1218,26 @@ class MixinStrUnicodeUserStringTest:
         # mixed use of str and unicode
         self.assertEqual('a/b/c'.partition(u'/'), ('a', '/', 'b/c'))
 
+        # with buffer arg (Jython addition)
+        b = buffer('ti')
+        if self.__class__.type2test is unicode:
+            self.checkequal(('this is the par', u'ti', 'tion method'),
+                'this is the partition method', 'partition', b)
+        else:
+            self.checkequal(('this is the par', b, 'tion method'),
+                'this is the partition method', 'partition', b)
+
+        # with memoryview arg (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('ti') as m:
+                if self.__class__.type2test is unicode:
+                    self.checkequal(('this is the par', u'ti', 'tion method'),
+                        'this is the partition method', 'partition', m)
+                else:
+                    self.checkequal(('this is the par', m, 'tion method'),
+                        'this is the partition method', 'partition', m)
+
     def test_rpartition(self):
 
         self.checkequal(('this is the rparti', 'ti', 'on method'),
@@ -1235,6 +1255,26 @@ class MixinStrUnicodeUserStringTest:
 
         # mixed use of str and unicode
         self.assertEqual('a/b/c'.rpartition(u'/'), ('a/b', '/', 'c'))
+
+        # with buffer arg (Jython addition)
+        b = buffer('ti')
+        if self.__class__.type2test is unicode:
+            self.checkequal(('this is the parti', u'ti', 'on method'),
+                'this is the partition method', 'rpartition', b)
+        else:
+            self.checkequal(('this is the parti', b, 'on method'),
+                'this is the partition method', 'rpartition', b)
+
+        # with memoryview arg (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('ti') as m:
+                if self.__class__.type2test is unicode:
+                    self.checkequal(('this is the parti', u'ti', 'on method'),
+                        'this is the partition method', 'rpartition', m)
+                else:
+                    self.checkequal(('this is the parti', m, 'on method'),
+                        'this is the partition method', 'rpartition', m)
 
     def test_none_arguments(self):
         # issue 11828

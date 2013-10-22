@@ -1126,7 +1126,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_strip(chars);
         } else {
-            // It ought to be None, null, some kind of bytes the with buffer API.
+            // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStripSepOrError(chars, "strip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_strip(stripChars));
@@ -1296,7 +1296,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_lstrip(chars);
         } else {
-            // It ought to be None, null, some kind of bytes the with buffer API.
+            // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStripSepOrError(chars, "lstrip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_lstrip(stripChars));
@@ -1385,7 +1385,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_rstrip(chars);
         } else {
-            // It ought to be None, null, some kind of bytes the with buffer API.
+            // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStripSepOrError(chars, "rstrip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_rstrip(stripChars));
@@ -1506,7 +1506,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_split(sepObj, maxsplit);
         } else {
-            // It ought to be None, null, some kind of bytes the with buffer API.
+            // It ought to be None, null, some kind of bytes with the buffer API.
             String sep = asStripSepOrError(sepObj, "split");
             // Split on specified string or whitespace if sep == null
             return _split(sep, maxsplit);
@@ -1757,7 +1757,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_rsplit(sepObj, maxsplit);
         } else {
-            // It ought to be None, null, some kind of bytes the with buffer API.
+            // It ought to be None, null, some kind of bytes with the buffer API.
             String sep = asStripSepOrError(sepObj, "rsplit");
             // Split on specified string or whitespace if sep == null
             return _rsplit(sep, maxsplit);
@@ -1925,6 +1925,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return list;
     }
 
+    /**
+     * Equivalent to Python <code>str.partition()</code>, splits the <code>PyString</code> at the
+     * first occurrence of <code>sepObj</code> returning a {@link PyTuple} containing the part
+     * before the separator, the separator itself, and the part after the separator.
+     *
+     * @param sepObj str, unicode or object implementing {@link BufferProtocol}
+     * @return tuple of parts
+     */
     public PyTuple partition(PyObject sepObj) {
         return str_partition(sepObj);
     }
@@ -1932,28 +1940,25 @@ public class PyString extends PyBaseString implements BufferProtocol {
     @ExposedMethod(doc = BuiltinDocs.str_partition_doc)
     final PyTuple str_partition(PyObject sepObj) {
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        String sep;
-
         if (sepObj instanceof PyUnicode) {
+            // Deal with Unicode separately
             return unicodePartition(sepObj);
-        } else if (sepObj instanceof PyString) {
-            sep = ((PyString)sepObj).getString();
-        } else {
-            throw Py.TypeError("expected a character buffer object");
-        }
 
-        if (sep.length() == 0) {
-            throw Py.ValueError("empty separator");
-        }
-
-        int index = getString().indexOf(sep);
-        if (index != -1) {
-            return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(index + sep.length(),
-                    getString().length()));
         } else {
-            return new PyTuple(this, Py.EmptyString, Py.EmptyString);
+            // It ought to be some kind of bytes with the buffer API.
+            String sep = asStringOrError(sepObj);
+
+            if (sep.length() == 0) {
+                throw Py.ValueError("empty separator");
+            }
+
+            int index = getString().indexOf(sep);
+            if (index != -1) {
+                return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(
+                        index + sep.length(), getString().length()));
+            } else {
+                return new PyTuple(this, Py.EmptyString, Py.EmptyString);
+            }
         }
     }
 
@@ -1979,6 +1984,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
         }
     }
 
+    /**
+     * Equivalent to Python <code>str.rpartition()</code>, splits the <code>PyString</code> at the
+     * last occurrence of <code>sepObj</code> returning a {@link PyTuple} containing the part
+     * before the separator, the separator itself, and the part after the separator.
+     *
+     * @param sepObj str, unicode or object implementing {@link BufferProtocol}
+     * @return tuple of parts
+     */
     public PyTuple rpartition(PyObject sepObj) {
         return str_rpartition(sepObj);
     }
@@ -1986,28 +1999,25 @@ public class PyString extends PyBaseString implements BufferProtocol {
     @ExposedMethod(doc = BuiltinDocs.str_rpartition_doc)
     final PyTuple str_rpartition(PyObject sepObj) {
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        String sep;
-
         if (sepObj instanceof PyUnicode) {
+            // Deal with Unicode separately
             return unicodeRpartition(sepObj);
-        } else if (sepObj instanceof PyString) {
-            sep = ((PyString)sepObj).getString();
-        } else {
-            throw Py.TypeError("expected a character buffer object");
-        }
 
-        if (sep.length() == 0) {
-            throw Py.ValueError("empty separator");
-        }
-
-        int index = getString().lastIndexOf(sep);
-        if (index != -1) {
-            return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(index + sep.length(),
-                    getString().length()));
         } else {
-            return new PyTuple(Py.EmptyString, Py.EmptyString, this);
+            // It ought to be some kind of bytes with the buffer API.
+            String sep = asStringOrError(sepObj);
+
+            if (sep.length() == 0) {
+                throw Py.ValueError("empty separator");
+            }
+
+            int index = getString().lastIndexOf(sep);
+            if (index != -1) {
+                return new PyTuple(fromSubstring(0, index), sepObj, fromSubstring(
+                        index + sep.length(), getString().length()));
+            } else {
+                return new PyTuple(Py.EmptyString, Py.EmptyString, this);
+            }
         }
     }
 
