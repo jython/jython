@@ -1318,7 +1318,6 @@ _failures = {
         test_threadsignals
         test_transformer
         test_ucn
-        test_unicodedata
         test_zipimport
         """,
 }

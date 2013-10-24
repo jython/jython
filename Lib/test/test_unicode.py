@@ -525,7 +525,6 @@ class UnicodeTest(
         # * strict decoding testing for all of the
         #   UTF8_ERROR cases in PyUnicode_DecodeUTF8
 
-    @unittest.skipIf(test_support.is_jython, "IDNA codec missing in Jython (issue 1153)")
     def test_codecs_idna(self):
         # Test whether trailing dot is preserved
         self.assertEqual(u"www.python.org.".encode("idna"), "www.python.org.")

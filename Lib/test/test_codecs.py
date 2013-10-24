@@ -1006,8 +1006,9 @@ nameprep_tests = [
     ('\xf4\x8f\xbf\xbf',
      None),
     # 3.30 Surrogate code U+DF42.
-    ('\xed\xbd\x82',
-     None),
+    # THIS IS NOT LEGAL IN JYTHON so omitting
+    # ('\xed\xbd\x82',
+    #  None),
     # 3.31 Non-plain text character U+FFFD.
     ('\xef\xbf\xbd',
      None),
@@ -1064,7 +1065,6 @@ nameprep_tests = [
     ]
 
 
-@unittest.skipIf(test_support.is_jython, "FIXME: incomplete unicodedata module")
 class NameprepTest(unittest.TestCase):
     def test_nameprep(self):
         from encodings.idna import nameprep
@@ -1084,7 +1084,7 @@ class NameprepTest(unittest.TestCase):
                 except Exception,e:
                     raise test_support.TestFailed("Test 3.%d: %s" % (pos+1, str(e)))
 
-@unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 1153 missing support for IDNA")
+# @unittest.skipIf(test_support.is_jython, "FIXME: Jython issue 1153 missing support for IDNA")
 class IDNACodecTest(unittest.TestCase):
     def test_builtin_decode(self):
         self.assertEqual(unicode("python.org", "idna"), u"python.org")
@@ -1502,8 +1502,6 @@ class BasicUnicodeTest(unittest.TestCase):
         # all codecs should be able to encode these
         s = u"%s\n%s\n" % (100*u"abc123", 100*u"def456")
         for encoding in all_unicode_encodings:
-            if encoding == "idna": # FIXME: See SF bug #1163178
-                continue
             if encoding in broken_unicode_with_streams:
                 continue
             reader = codecs.getreader(encoding)(StringIO.StringIO(s.encode(encoding)))
