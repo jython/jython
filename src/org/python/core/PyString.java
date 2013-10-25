@@ -1986,8 +1986,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Equivalent to Python <code>str.rpartition()</code>, splits the <code>PyString</code> at the
-     * last occurrence of <code>sepObj</code> returning a {@link PyTuple} containing the part
-     * before the separator, the separator itself, and the part after the separator.
+     * last occurrence of <code>sepObj</code> returning a {@link PyTuple} containing the part before
+     * the separator, the separator itself, and the part after the separator.
      *
      * @param sepObj str, unicode or object implementing {@link BufferProtocol}
      * @return tuple of parts
@@ -2087,115 +2087,392 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return list;
     }
 
+    /**
+     * Return a new object <em>of the same type as this one</em> equal to the slice
+     * <code>[begin:end]</code>. (Python end-relative indexes etc. are not supported.) Subclasses (
+     * {@link PyUnicode#fromSubstring(int, int)}) override this to return their own type.)
+     *
+     * @param begin first included character.
+     * @param end first excluded character.
+     * @return new object.
+     */
     protected PyString fromSubstring(int begin, int end) {
         return createInstance(getString().substring(begin, end), true);
     }
 
-    public int index(String sub) {
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found. Raises
+     * <code>ValueError</code> if the substring is not found.
+     *
+     * @param sub substring to find.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int index(PyObject sub) {
         return str_index(sub, null, null);
     }
 
-    public int index(String sub, PyObject start) {
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:]</code>. Raises
+     * <code>ValueError</code> if the substring is not found.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int index(PyObject sub, PyObject start) throws PyException {
         return str_index(sub, start, null);
     }
 
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> are interpreted as in slice notation, with null or
+     * {@link Py#None} representing "missing". Raises <code>ValueError</code> if the substring is
+     * not found.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int index(PyObject sub, PyObject start, PyObject end) throws PyException {
+        return checkIndex(str_index(sub, start, end));
+    }
+
+    /** Equivalent to {@link #index(PyObject)} specialized to <code>String</code>. */
+    public int index(String sub) {
+        return index(sub, null, null);
+    }
+
+    /** Equivalent to {@link #index(PyObject, PyObject)} specialized to <code>String</code>. */
+    public int index(String sub, PyObject start) {
+        return index(sub, start, null);
+    }
+
+    /**
+     * Equivalent to {@link #index(PyObject, PyObject, PyObject)} specialized to <code>String</code>
+     * .
+     */
     public int index(String sub, PyObject start, PyObject end) {
-        return str_index(sub, start, end);
+        return checkIndex(_find(sub, start, end));
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_index_doc)
-    final int str_index(String sub, PyObject start, PyObject end) {
-
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        int index = str_find(sub, start, end);
-        if (index == -1) {
-            throw Py.ValueError("substring not found in string.index");
-        }
-        return index;
+    final int str_index(PyObject subObj, PyObject start, PyObject end) {
+        return checkIndex(str_find(subObj, start, end));
     }
 
-    public int rindex(String sub) {
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found. Raises
+     * <code>ValueError</code> if the substring is not found.
+     *
+     * @param sub substring to find.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int rindex(PyObject sub) {
         return str_rindex(sub, null, null);
     }
 
-    public int rindex(String sub, PyObject start) {
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:]</code>. Raises
+     * <code>ValueError</code> if the substring is not found.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int rindex(PyObject sub, PyObject start) throws PyException {
         return str_rindex(sub, start, null);
     }
 
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> are interpreted as in slice notation, with null or
+     * {@link Py#None} representing "missing". Raises <code>ValueError</code> if the substring is
+     * not found.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object.
+     * @throws PyException(ValueError) if not found.
+     */
+    public int rindex(PyObject sub, PyObject start, PyObject end) throws PyException {
+        return checkIndex(str_rindex(sub, start, end));
+    }
+
+    /** Equivalent to {@link #rindex(PyObject)} specialized to <code>String</code>. */
+    public int rindex(String sub) {
+        return rindex(sub, null, null);
+    }
+
+    /** Equivalent to {@link #rindex(PyObject, PyObject)} specialized to <code>String</code>. */
+    public int rindex(String sub, PyObject start) {
+        return rindex(sub, start, null);
+    }
+
+    /**
+     * Equivalent to {@link #rindex(PyObject, PyObject, PyObject)} specialized to
+     * <code>String</code>.
+     */
     public int rindex(String sub, PyObject start, PyObject end) {
-        return str_rindex(sub, start, end);
+        return checkIndex(_rfind(sub, start, end));
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rindex_doc)
-    final int str_rindex(String sub, PyObject start, PyObject end) {
+    final int str_rindex(PyObject subObj, PyObject start, PyObject end) {
+        return checkIndex(str_rfind(subObj, start, end));
+    }
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        int index = str_rfind(sub, start, end);
-        if (index == -1) {
-            throw Py.ValueError("substring not found in string.rindex");
+    /**
+     * A little helper for converting str.find to str.index that will raise
+     * <code>ValueError("substring not found")</code> if the argument is negative, otherwise passes
+     * the argument through.
+     *
+     * @param index to check
+     * @return <code>index</code> if non-negative
+     * @throws PyException(ValueError) if not found
+     */
+    protected final int checkIndex(int index) throws PyException {
+        if (index >= 0) {
+            return index;
+        } else {
+            throw Py.ValueError("substring not found");
         }
-        return index;
     }
 
-    public int count(String sub) {
-        return str_count(sub, null, null);
+    /**
+     * Return the number of non-overlapping occurrences of substring <code>sub</code>.
+     *
+     * @param sub substring to find.
+     * @return count of occurrences.
+     */
+    public int count(PyObject sub) {
+        return count(sub, null, null);
     }
 
-    public int count(String sub, PyObject start) {
-        return str_count(sub, start, null);
+    /**
+     * Return the number of non-overlapping occurrences of substring <code>sub</code> in the range
+     * <code>[start:]</code>.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @return count of occurrences.
+     */
+    public int count(PyObject sub, PyObject start) {
+        return count(sub, start, null);
     }
 
-    public int count(String sub, PyObject start, PyObject end) {
+    /**
+     * Return the number of non-overlapping occurrences of substring <code>sub</code> in the range
+     * <code>[start:end]</code>. Optional arguments <code>start</code> and <code>end</code> are
+     * interpreted as in slice notation.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return count of occurrences.
+     */
+    public int count(PyObject sub, PyObject start, PyObject end) {
         return str_count(sub, start, end);
     }
 
+    /** Equivalent to {@link #count(PyObject)} specialized to <code>String</code>. */
+    public int count(String sub) {
+        return count(sub, null, null);
+    }
+
+    /** Equivalent to {@link #count(PyObject, PyObject)} specialized to <code>String</code>. */
+    public int count(String sub, PyObject start) {
+        return count(sub, start, null);
+    }
+
+    /**
+     * Equivalent to {@link #count(PyObject, PyObject, PyObject)} specialized to <code>String</code>
+     * .
+     */
+    public int count(String sub, PyObject start, PyObject end) {
+        return _count(sub, start, end);
+    }
+
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_count_doc)
-    final int str_count(String sub, PyObject start, PyObject end) {
-
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        if (sub == null) {
-            throw Py.TypeError("count() takes at least 1 argument (0 given)");
+    final int str_count(PyObject subObj, PyObject start, PyObject end) {
+        if (subObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_count(subObj, start, end);
+        } else {
+            // It ought to be None, null, some kind of bytes with the buffer API.
+            String sub = asStringOrError(subObj);
+            return _count(sub, start, end);
         }
-        int[] indices = translateIndices(start, end);
-        int n = sub.length();
-        if (n == 0) {
+    }
+
+    /**
+     * Helper common to the Python and Java API returning the number of occurrences of a substring.
+     * It accepts slice-like arguments, which may be <code>None</code> or end-relative (negative).
+     * This method also supports {@link PyUnicode#unicode_count(PyObject, PyObject, PyObject)}.
+     *
+     * @param sub substring to find.
+     * @param startObj start of slice.
+     * @param endObj end of slice.
+     * @return count of occurrences
+     */
+    protected final int _count_old(String sub, PyObject startObj, PyObject endObj) {
+// xxx
+        // Interpret the slice indices as concrete values
+        int[] indices = translateIndices(startObj, endObj);
+        int subLen = sub.length();
+
+        if (subLen == 0) {
+            // Special case counting the occurrences of an empty string
             if (indices[2] > getString().length()) {
                 return 0;
+            } else {
+                return indices[1] - indices[0] + 1;
             }
-            return indices[1] - indices[0] + 1;
-        }
-        int count = 0;
-        while (true) {
-            int index = getString().indexOf(sub, indices[0]);
-            indices[0] = index + n;
-            if (indices[0] > indices[1] || index == -1) {
-                break;
+
+        } else {
+            // Skip down this string finding occurrences of sub
+            int start = indices[0], end = indices[1], count = 0;
+            while (true) {
+                int index = getString().indexOf(sub, start);
+                if (index < 0) {
+                    break; // not found
+                } else {
+                    // Found at index. Next search begins at end of this instance, at:
+                    start = index + subLen;
+                    if (start <= end) {
+                        count += 1; // ... and the instance found fits within this string.
+                    } else {
+                        break; // ... but the instance found overlaps the end, so is not valid.
+                    }
+                }
             }
-            count++;
+            return count;
         }
-        return count;
     }
 
-    public int find(String sub) {
-        return str_find(sub, null, null);
+    protected final int _count(String sub, PyObject startObj, PyObject endObj) {
+
+        // Interpret the slice indices as concrete values
+        int[] indices = translateIndices(startObj, endObj);
+        int subLen = sub.length();
+
+        if (subLen == 0) {
+            // Special case counting the occurrences of an empty string
+            if (indices[2] > getString().length()) {
+                return 0;
+            } else {
+                return indices[1] - indices[0] + 1;
+            }
+
+        } else {
+
+            // Skip down this string finding occurrences of sub
+            int start = indices[0], limit = indices[1] - subLen, count = 0;
+
+            while (start <= limit) {
+                int index = getString().indexOf(sub, start);
+                if (index >= 0 && index <= limit) {
+                    // Found at index.
+                    count += 1;
+                    // Next search begins after this instance, at:
+                    start = index + subLen;
+                } else {
+                    // not found, or found too far right (index>limit)
+                    break;
+                }
+            }
+            return count;
+        }
     }
 
-    public int find(String sub, PyObject start) {
-        return str_find(sub, start, null);
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found.
+     *
+     * @param sub substring to find.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int find(PyObject sub) {
+        return find(sub, null, null);
     }
 
-    public int find(String sub, PyObject start, PyObject end) {
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:]</code>.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int find(PyObject sub, PyObject start) {
+        return find(sub, start, null);
+    }
+
+    /**
+     * Return the lowest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> are interpreted as in slice notation, with null or
+     * {@link Py#None} representing "missing".
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int find(PyObject sub, PyObject start, PyObject end) {
         return str_find(sub, start, end);
     }
 
+    /** Equivalent to {@link #find(PyObject)} specialized to <code>String</code>. */
+    public int find(String sub) {
+        return find(sub, null, null);
+    }
+
+    /** Equivalent to {@link #find(PyObject, PyObject)} specialized to <code>String</code>. */
+    public int find(String sub, PyObject start) {
+        return find(sub, start, null);
+    }
+
+    /**
+     * Equivalent to {@link #find(PyObject, PyObject, PyObject)} specialized to <code>String</code>.
+     */
+    public int find(String sub, PyObject start, PyObject end) {
+        return _find(sub, start, end);
+    }
+
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_find_doc)
-    final int str_find(String sub, PyObject start, PyObject end) {
+    final int str_find(PyObject subObj, PyObject start, PyObject end) {
+        if (subObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_find(subObj, start, end);
+        } else {
+            // It ought to be None, null, some kind of bytes with the buffer API.
+            String sub = asStringOrError(subObj);
+            return _find(sub, start, end);
+        }
+    }
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
+    /**
+     * Helper common to the Python and Java API returning the index of the substring or -1 for not
+     * found. It accepts slice-like arguments, which may be <code>None</code> or end-relative
+     * (negative). This method also supports
+     * {@link PyUnicode#unicode_find(PyObject, PyObject, PyObject)}.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    protected final int _find(String sub, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = getString().indexOf(sub, indices[0]);
         if (index < indices[2] || index > indices[1]) {
@@ -2204,23 +2481,84 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return index;
     }
 
-    public int rfind(String sub) {
-        return str_rfind(sub, null, null);
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found.
+     *
+     * @param sub substring to find.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int rfind(PyObject sub) {
+        return rfind(sub, null, null);
     }
 
-    public int rfind(String sub, PyObject start) {
-        return str_rfind(sub, start, null);
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:]</code>.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int rfind(PyObject sub, PyObject start) {
+        return rfind(sub, start, null);
     }
 
-    public int rfind(String sub, PyObject start, PyObject end) {
+    /**
+     * Return the highest index in the string where substring <code>sub</code> is found, such that
+     * <code>sub</code> is contained in the slice <code>s[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> are interpreted as in slice notation, with null or
+     * {@link Py#None} representing "missing".
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    public int rfind(PyObject sub, PyObject start, PyObject end) {
         return str_rfind(sub, start, end);
     }
 
+    /** Equivalent to {@link #find(PyObject)} specialized to <code>String</code>. */
+    public int rfind(String sub) {
+        return rfind(sub, null, null);
+    }
+
+    /** Equivalent to {@link #find(PyObject, PyObject)} specialized to <code>String</code>. */
+    public int rfind(String sub, PyObject start) {
+        return rfind(sub, start, null);
+    }
+
+    /**
+     * Equivalent to {@link #find(PyObject, PyObject, PyObject)} specialized to <code>String</code>.
+     */
+    public int rfind(String sub, PyObject start, PyObject end) {
+        return _rfind(sub, start, end);
+    }
+
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_rfind_doc)
-    final int str_rfind(String sub, PyObject start, PyObject end) {
+    final int str_rfind(PyObject subObj, PyObject start, PyObject end) {
+        if (subObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_rfind(subObj, start, end);
+        } else {
+            // It ought to be None, null, some kind of bytes with the buffer API.
+            String sub = asStringOrError(subObj);
+            return _rfind(sub, start, end);
+        }
+    }
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
+    /**
+     * Helper common to the Python and Java API returning the last index of the substring or -1 for
+     * not found. It accepts slice-like arguments, which may be <code>None</code> or end-relative
+     * (negative). This method also supports
+     * {@link PyUnicode#unicode_rfind(PyObject, PyObject, PyObject)}.
+     *
+     * @param sub substring to find.
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return index of <code>sub</code> in this object or -1 if not found.
+     */
+    protected final int _rfind(String sub, PyObject start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = getString().lastIndexOf(sub, indices[1] - sub.length());
         if (index < indices[2]) {
@@ -2831,44 +3169,47 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @return a 3 element array of indices into this string describing a substring from [0] to [1].
      *         [0] <= [1], [0] >= 0 and [1] <= string.length(). The third element contains the
-     *         unadjusted start value.
+     *         unadjusted start value (or nearest int).
      */
     protected int[] translateIndices(PyObject start, PyObject end) {
-        int iStart;
-        int iStartAdjusted;
-        int iEnd;
-
-        if (end == null || end == Py.None) {
-            iEnd = getString().length();
-        } else {
-            iEnd = end.asInt();
-        }
+        int iStart, iStartUnadjusted, iEnd;
         int n = getString().length();
-        if (iEnd < 0) {
-            iEnd = n + iEnd;
-            if (iEnd < 0) {
-                iEnd = 0;
-            }
-        } else if (iEnd > n) {
+
+        // Make sure the slice end decodes to something in range
+        if (end == null || end == Py.None) {
             iEnd = n;
-        }
-        if (start == null || start == Py.None) {
-            iStart = 0;
         } else {
-            iStart = start.asInt();
+            // Convert to int but limit to Integer.MIN_VALUE <= iEnd <= Integer.MAX_VALUE
+            iEnd = end.asIndex(null);
+            if (iEnd > n) {
+                iEnd = n;
+            } else if (iEnd < 0) {
+                iEnd = n + iEnd;
+                if (iEnd < 0) {
+                    iEnd = 0;
+                }
+            }
         }
 
-        iStartAdjusted = iStart;
-        if (iStartAdjusted < 0) {
-            iStartAdjusted = n + iStartAdjusted;
-            if (iStartAdjusted < 0) {
-                iStartAdjusted = 0;
+        // Make sure the slice start decodes to something in range
+        if (start == null || start == Py.None) {
+            iStartUnadjusted = iStart = 0;
+        } else {
+            // Convert to int but limit to Integer.MIN_VALUE <= iStart <= Integer.MAX_VALUE
+            iStartUnadjusted = iStart = start.asIndex(null);
+            if (iStart > iEnd) {
+                iStart = iEnd;
+            } else if (iStart < 0) {
+                iStart = n + iStart;
+                if (iStart > iEnd) {
+                    iStart = iEnd;
+                } else if (iStart < 0) {
+                    iStart = 0;
+                }
             }
         }
-        if (iStartAdjusted > iEnd) {
-            iStartAdjusted = iEnd;
-        }
-        return new int[] {iStartAdjusted, iEnd, iStart};
+
+        return new int[] {iStart, iEnd, iStartUnadjusted};
     }
 
     public String translate() {

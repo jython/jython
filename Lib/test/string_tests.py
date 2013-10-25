@@ -158,6 +158,32 @@ class CommonTest(unittest.TestCase):
                     self.assertEqual(rem, 0, '%s != 0 for %s' % (rem, i))
                     self.assertEqual(r1, r2, '%s != %s for %s' % (r1, r2, i))
 
+        # Repeat some tests with buffer argument (Jython addition)
+        ba = buffer('a')
+        self.checkequal(3, 'aaa', 'count', ba)
+        self.checkequal(0, 'aaa', 'count', buffer('b'))
+        self.checkequal(2, 'aaa', 'count', ba, 1)
+        self.checkequal(0, 'aaa', 'count', ba, 10)
+        self.checkequal(1, 'aaa', 'count', ba, 0, 1)
+        self.checkequal(3, 'aaa', 'count', ba, 0, 10)
+        b = buffer('')
+        self.checkequal(3, 'aaa', 'count', b, 1)
+        self.checkequal(4, 'aaa', 'count', b, -10)
+
+        # Repeat some tests with memoryview argument (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('a') as ma:
+                self.checkequal(3, 'aaa', 'count', ma)
+                self.checkequal(0, 'aaa', 'count', memoryview('b'))
+                self.checkequal(2, 'aaa', 'count', ma, 1)
+                self.checkequal(0, 'aaa', 'count', ma, 10)
+                self.checkequal(1, 'aaa', 'count', ma, 0, 1)
+                self.checkequal(3, 'aaa', 'count', ma, 0, 10)
+            with memoryview('') as m:
+                self.checkequal(3, 'aaa', 'count', m, 1)
+                self.checkequal(4, 'aaa', 'count', m, -10)
+
     def test_find(self):
         self.checkequal(0, 'abcdefghiabc', 'find', 'abc')
         self.checkequal(9, 'abcdefghiabc', 'find', 'abc', 1)
@@ -171,11 +197,8 @@ class CommonTest(unittest.TestCase):
         self.checkequal( 2, 'rrarrrrrrrrra', 'find', 'a')
         self.checkequal(12, 'rrarrrrrrrrra', 'find', 'a', 4)
         self.checkequal(-1, 'rrarrrrrrrrra', 'find', 'a', 4, 6)
-        
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal(12, 'rrarrrrrrrrra', 'find', 'a', 4, None)
-            self.checkequal( 2, 'rrarrrrrrrrra', 'find', 'a', None, 6)
+        self.checkequal(12, 'rrarrrrrrrrra', 'find', 'a', 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'find', 'a', None, 6)
 
         self.checkraises(TypeError, 'hello', 'find')
         self.checkraises(TypeError, 'hello', 'find', 42)
@@ -187,11 +210,6 @@ class CommonTest(unittest.TestCase):
         self.checkequal(-1, '', 'find', 'xx')
         self.checkequal(-1, '', 'find', 'xx', 1, 1)
         self.checkequal(-1, '', 'find', 'xx', sys.maxint, 0)
-
-        # issue 7458
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal(-1, 'ab', 'find', 'xxx', sys.maxsize + 1, 0)
 
         # For a variety of combinations,
         #    verify that str.find() matches __contains__
@@ -217,6 +235,28 @@ class CommonTest(unittest.TestCase):
                 if loc != -1:
                     self.assertEqual(i[loc:loc+len(j)], j)
 
+        # issue 7458
+        self.checkequal(-1, 'ab', 'find', 'xxx', sys.maxsize + 1, 0)
+
+        # Repeat some tests with buffer argument (Jython addition)
+        self.checkequal(0, 'abcdefghiabc', 'find', buffer('abc'))
+        self.checkequal(9, 'abcdefghiabc', 'find', buffer('abc'), 1)
+        self.checkequal(-1, 'abcdefghiabc', 'find', buffer('def'), 4)
+        self.checkequal(12, 'rrarrrrrrrrra', 'find', buffer('a'), 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'find', buffer('a'), None, 6)
+
+        # Repeat some tests with memoryview argument (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            with memoryview('abc') as m:
+                self.checkequal(0, 'abcdefghiabc', 'find', m)
+                self.checkequal(9, 'abcdefghiabc', 'find', m, 1)
+            with memoryview('def') as m:
+                self.checkequal(-1, 'abcdefghiabc', 'find', m, 4)
+            with memoryview('a') as m:
+                self.checkequal(12, 'rrarrrrrrrrra', 'find', m, 4, None)
+                self.checkequal( 2, 'rrarrrrrrrrra', 'find', m, None, 6)
+
     def test_rfind(self):
         self.checkequal(9,  'abcdefghiabc', 'rfind', 'abc')
         self.checkequal(12, 'abcdefghiabc', 'rfind', '')
@@ -231,10 +271,8 @@ class CommonTest(unittest.TestCase):
         self.checkequal(12, 'rrarrrrrrrrra', 'rfind', 'a')
         self.checkequal(12, 'rrarrrrrrrrra', 'rfind', 'a', 4)
         self.checkequal(-1, 'rrarrrrrrrrra', 'rfind', 'a', 4, 6)
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal(12, 'rrarrrrrrrrra', 'rfind', 'a', 4, None)
-            self.checkequal( 2, 'rrarrrrrrrrra', 'rfind', 'a', None, 6)
+        self.checkequal(12, 'rrarrrrrrrrra', 'rfind', 'a', 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'rfind', 'a', None, 6)
 
         self.checkraises(TypeError, 'hello', 'rfind')
         self.checkraises(TypeError, 'hello', 'rfind', 42)
@@ -264,9 +302,26 @@ class CommonTest(unittest.TestCase):
                     self.assertEqual(i[loc:loc+len(j)], self.fixtype(j))
 
         # issue 7458
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal(-1, 'ab', 'rfind', 'xxx', sys.maxsize + 1, 0)
+        self.checkequal(-1, 'ab', 'rfind', 'xxx', sys.maxsize + 1, 0)
+
+        # Repeat some tests with buffer argument (Jython addition)
+        self.checkequal(9,  'abcdefghiabc', 'rfind', buffer('abc'))
+        self.checkequal(12, 'abcdefghiabc', 'rfind', buffer(''))
+        self.checkequal(0, 'abcdefghiabc', 'rfind', buffer('abcd'))
+        self.checkequal(-1, 'abcdefghiabc', 'rfind', buffer('abcz'))
+        self.checkequal(12, 'rrarrrrrrrrra', 'rfind', buffer('a'), 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'rfind', buffer('a'), None, 6)
+
+        # Repeat some tests with memoryview argument (Jython addition)
+        if test_support.is_jython:
+            # CPython does not support until v3.2
+            self.checkequal(9,  'abcdefghiabc', 'rfind', memoryview('abc'))
+            self.checkequal(12, 'abcdefghiabc', 'rfind', memoryview(''))
+            self.checkequal(0, 'abcdefghiabc', 'rfind', memoryview('abcd'))
+            self.checkequal(-1, 'abcdefghiabc', 'rfind', memoryview('abcz'))
+            with memoryview('a') as m:
+                self.checkequal(12, 'rrarrrrrrrrra', 'rfind', m, 4, None)
+                self.checkequal( 2, 'rrarrrrrrrrra', 'rfind', m, None, 6)
 
     def test_index(self):
         self.checkequal(0, 'abcdefghiabc', 'index', '')
@@ -283,11 +338,8 @@ class CommonTest(unittest.TestCase):
         self.checkequal( 2, 'rrarrrrrrrrra', 'index', 'a')
         self.checkequal(12, 'rrarrrrrrrrra', 'index', 'a', 4)
         self.checkraises(ValueError, 'rrarrrrrrrrra', 'index', 'a', 4, 6)
-        
-        #FIXME
-        if not test_support.is_jython:
-            self.checkequal(12, 'rrarrrrrrrrra', 'index', 'a', 4, None)
-            self.checkequal( 2, 'rrarrrrrrrrra', 'index', 'a', None, 6)
+        self.checkequal(12, 'rrarrrrrrrrra', 'index', 'a', 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'index', 'a', None, 6)
 
         self.checkraises(TypeError, 'hello', 'index')
         self.checkraises(TypeError, 'hello', 'index', 42)
@@ -308,11 +360,8 @@ class CommonTest(unittest.TestCase):
         self.checkequal(12, 'rrarrrrrrrrra', 'rindex', 'a')
         self.checkequal(12, 'rrarrrrrrrrra', 'rindex', 'a', 4)
         self.checkraises(ValueError, 'rrarrrrrrrrra', 'rindex', 'a', 4, 6)
-
-        #FIXME:
-        if not test_support.is_jython:
-            self.checkequal(12, 'rrarrrrrrrrra', 'rindex', 'a', 4, None)
-            self.checkequal( 2, 'rrarrrrrrrrra', 'rindex', 'a', None, 6)
+        self.checkequal(12, 'rrarrrrrrrrra', 'rindex', 'a', 4, None)
+        self.checkequal( 2, 'rrarrrrrrrrra', 'rindex', 'a', None, 6)
 
         self.checkraises(TypeError, 'hello', 'rindex')
         self.checkraises(TypeError, 'hello', 'rindex', 42)

@@ -1002,21 +1002,25 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(getString().substring(begin, end));
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_index(String sub, PyObject start, PyObject end) {
-        return str_index(sub, start, end);
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
+    final int unicode_index(PyObject subObj, PyObject start, PyObject end) {
+        final PyUnicode sub = coerceToUnicode(subObj);
+        // Now use the mechanics of the PyString on the UTF-16 of the PyUnicode.
+        return checkIndex(_find(sub.getString(), start, end));
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_rindex(String sub, PyObject start, PyObject end) {
-        return str_rindex(sub, start, end);
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
+    final int unicode_rindex(PyObject subObj, PyObject start, PyObject end) {
+        final PyUnicode sub = coerceToUnicode(subObj);
+        // Now use the mechanics of the PyString on the UTF-16 of the PyUnicode.
+        return checkIndex(_rfind(sub.getString(), start, end));
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_count_doc)
     final int unicode_count(PyObject subObj, PyObject start, PyObject end) {
         final PyUnicode sub = coerceToUnicode(subObj);
         if (isBasicPlane()) {
-            return str_count(sub.getString(), start, end);
+            return _count(sub.getString(), start, end);
         }
         int[] indices = translateIndices(start, end);
         int count = 0;
@@ -1038,14 +1042,14 @@ public class PyUnicode extends PyString implements Iterable {
         return count;
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_find(String sub, PyObject start, PyObject end) {
-        return str_find(sub, start, end);
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
+    final int unicode_find(PyObject subObj, PyObject start, PyObject end) {
+        return _find(coerceToUnicode(subObj).getString(), start, end);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
-    final int unicode_rfind(String sub, PyObject start, PyObject end) {
-        return str_rfind(sub, start, end);
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_rfind_doc)
+    final int unicode_rfind(PyObject subObj, PyObject start, PyObject end) {
+        return _rfind(coerceToUnicode(subObj).getString(), start, end);
     }
 
     private static String padding(int n, int pad) {
