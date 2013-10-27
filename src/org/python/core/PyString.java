@@ -708,23 +708,23 @@ public class PyString extends PyBaseString implements BufferProtocol {
         if (ret != null) {
             return ret;
         } else {
-            throw Py.TypeError("expected str, bytearray or buffer compatible object");
+            throw Py.TypeError("expected str, bytearray or other buffer compatible object");
         }
     }
 
     /**
-     * Return a String equivalent to the argument according to the calling conventions of the
-     * <code>strip</code> and <code>split</code> methods of <code>str</code>. Those methods accept
-     * anything bearing the buffer interface as a byte string, but also PyNone (or the argument may
-     * be omitted, showing up here as null) to indicate that the criterion is whitespace. They also
-     * accept a unicode argument, not dealt with here.
+     * Return a String equivalent to the argument according to the calling conventions of methods
+     * that accept anything bearing the buffer interface as a byte string, but also
+     * <code>PyNone</code>. (Or the argument may be omitted, showing up here as null.) These include
+     * the <code>strip</code> and <code>split</code> methods of <code>str</code>, where a null
+     * indicates that the criterion is whitespace, and <code>str.translate</code>.
      *
      * @param obj to coerce to a String or null
      * @param name of method
      * @return coerced value or null
      * @throws PyException if the coercion fails
      */
-    private static String asStripSepOrError(PyObject obj, String name) throws PyException {
+    private static String asStringNullOrError(PyObject obj, String name) throws PyException {
 
         if (obj == null || obj == Py.None) {
             return null;
@@ -732,9 +732,12 @@ public class PyString extends PyBaseString implements BufferProtocol {
             String ret = asStringOrNull(obj);
             if (ret != null) {
                 return ret;
+            } else if (name == null) {
+                // A nameless method is the client
+                throw Py.TypeError("expected None, str or buffer compatible object");
             } else {
-                throw Py.TypeError(name
-                        + " arg must be None, str, unicode, buffer compatible object");
+                // Tuned for .strip and its relations, which supply their name
+                throw Py.TypeError(name + " arg must be None, str or buffer compatible object");
             }
         }
     }
@@ -1148,7 +1151,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             return ((PyUnicode)decode()).unicode_strip(chars);
         } else {
             // It ought to be None, null, some kind of bytes with the buffer API.
-            String stripChars = asStripSepOrError(chars, "strip");
+            String stripChars = asStringNullOrError(chars, "strip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_strip(stripChars));
         }
@@ -1318,7 +1321,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             return ((PyUnicode)decode()).unicode_lstrip(chars);
         } else {
             // It ought to be None, null, some kind of bytes with the buffer API.
-            String stripChars = asStripSepOrError(chars, "lstrip");
+            String stripChars = asStringNullOrError(chars, "lstrip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_lstrip(stripChars));
         }
@@ -1407,7 +1410,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             return ((PyUnicode)decode()).unicode_rstrip(chars);
         } else {
             // It ought to be None, null, some kind of bytes with the buffer API.
-            String stripChars = asStripSepOrError(chars, "rstrip");
+            String stripChars = asStringNullOrError(chars, "rstrip");
             // Strip specified characters or whitespace if stripChars == null
             return new PyString(_rstrip(stripChars));
         }
@@ -1528,7 +1531,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             return ((PyUnicode)decode()).unicode_split(sepObj, maxsplit);
         } else {
             // It ought to be None, null, some kind of bytes with the buffer API.
-            String sep = asStripSepOrError(sepObj, "split");
+            String sep = asStringNullOrError(sepObj, "split");
             // Split on specified string or whitespace if sep == null
             return _split(sep, maxsplit);
         }
@@ -1779,7 +1782,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             return ((PyUnicode)decode()).unicode_rsplit(sepObj, maxsplit);
         } else {
             // It ought to be None, null, some kind of bytes with the buffer API.
-            String sep = asStripSepOrError(sepObj, "rsplit");
+            String sep = asStringNullOrError(sepObj, "rsplit");
             // Split on specified string or whitespace if sep == null
             return _rsplit(sep, maxsplit);
         }
@@ -2921,54 +2924,93 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return first.concat(getString().substring(1).toLowerCase());
     }
 
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_replace_doc)
-    final PyString str_replace(PyObject oldPiece, PyObject newPiece, PyObject maxsplit) {
-
-        // XXX Accept PyObjects that may be BufferProtocol or PyUnicode
-
-        if (!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
-            throw Py.TypeError("str or unicode required for replace");
-        }
-
-        return replace((PyString)oldPiece, (PyString)newPiece,
-                maxsplit == null ? -1 : maxsplit.asInt());
+    /**
+     * Equivalent to Python str.replace(old, new), returning a copy of the string with all
+     * occurrences of substring old replaced by new. If either argument is a {@link PyUnicode} (or
+     * this object is), the result will be a <code>PyUnicode</code>.
+     *
+     * @param oldPiece to replace where found.
+     * @param newPiece replacement text.
+     * @param count maximum number of replacements to make, or -1 meaning all of them.
+     * @return PyString (or PyUnicode if any string is one), this string after replacements.
+     */
+    public PyString replace(PyObject oldPieceObj, PyObject newPieceObj) {
+        return str_replace(oldPieceObj, newPieceObj, -1);
     }
 
-    protected PyString replace(PyString oldPiece, PyString newPiece, int maxsplit) {
-        int len = getString().length();
-        int old_len = oldPiece.getString().length();
-        if (len == 0) {
-            if (maxsplit == -1 && old_len == 0) {
-                return createInstance(newPiece.getString(), true);
-            }
-            return createInstance(getString(), true);
-        }
+    /**
+     * Equivalent to Python str.replace(old, new[, count]), returning a copy of the string with all
+     * occurrences of substring old replaced by new. If argument <code>count</code> is nonnegative,
+     * only the first <code>count</code> occurrences are replaced. If either argument is a
+     * {@link PyUnicode} (or this object is), the result will be a <code>PyUnicode</code>.
+     *
+     * @param oldPiece to replace where found.
+     * @param newPiece replacement text.
+     * @param count maximum number of replacements to make, or -1 meaning all of them.
+     * @return PyString (or PyUnicode if any string is one), this string after replacements.
+     */
+    public PyString replace(PyObject oldPieceObj, PyObject newPieceObj, int count) {
+        return str_replace(oldPieceObj, newPieceObj, count);
+    }
 
-        if (old_len == 0 && newPiece.getString().length() != 0 && maxsplit != 0) {
+    @ExposedMethod(defaults = "-1", doc = BuiltinDocs.str_replace_doc)
+    final PyString str_replace(PyObject oldPieceObj, PyObject newPieceObj, int count) {
+        if (oldPieceObj instanceof PyUnicode || newPieceObj instanceof PyUnicode) {
+            // Promote the problem to a Unicode one
+            return ((PyUnicode)decode()).unicode_replace(oldPieceObj, newPieceObj, count);
+        } else {
+            // Neither is a PyUnicode: both ought to be some kind of bytes with the buffer API.
+            String oldPiece = asStringOrError(oldPieceObj);
+            String newPiece = asStringOrError(newPieceObj);
+            return _replace(oldPiece, newPiece, count);
+        }
+    }
+
+    /**
+     * Helper common to the Python and Java API for <code>str.replace</code>, returning a new string
+     * equal to this string with ocurrences of <code>oldPiece</code> replaced by
+     * <code>newPiece</code>, up to a maximum of <code>count</code> occurrences, or all of them.
+     * This method also supports {@link PyUnicode#unicode_replace(PyObject, PyObject, int)}, in
+     * which context it returns a <code>PyUnicode</code>
+     *
+     * @param oldPiece to replace where found.
+     * @param newPiece replacement text.
+     * @param count maximum number of replacements to make, or -1 meaning all of them.
+     * @return PyString (or PyUnicode if this string is one), this string after replacements.
+     */
+    protected final PyString _replace(String oldPiece, String newPiece, int count) {
+
+        String s = getString();
+        int len = s.length();
+        int oldLen = oldPiece.length();
+        int newLen = newPiece.length();
+
+        if (len == 0) {
+            if (count < 0 && oldLen == 0) {
+                return createInstance(newPiece, true);
+            }
+            return createInstance(s, true);
+
+        } else if (oldLen == 0 && newLen != 0 && count != 0) {
             /*
-             * old="" and new != "", interleave new piece with each char in original, taking in
-             * effect maxsplit
+             * old="" and new != "", interleave new piece with each char in original, taking into
+             * account count
              */
             StringBuilder buffer = new StringBuilder();
             int i = 0;
-            buffer.append(newPiece.getString());
-            for (; i < len && (i < maxsplit - 1 || maxsplit == -1); i++) {
-                buffer.append(getString().charAt(i));
-                buffer.append(newPiece.getString());
+            buffer.append(newPiece);
+            for (; i < len && (count < 0 || i < count - 1); i++) {
+                buffer.append(s.charAt(i)).append(newPiece);
             }
-            buffer.append(getString().substring(i));
+            buffer.append(s.substring(i));
             return createInstance(buffer.toString(), true);
-        }
 
-        if (maxsplit == -1) {
-            if (old_len == 0) {
-                maxsplit = len + 1;
-            } else {
-                maxsplit = len;
+        } else {
+            if (count < 0) {
+                count = (oldLen == 0) ? len + 1 : len;
             }
+            return createInstance(newPiece).join(splitfields(oldPiece, count));
         }
-
-        return newPiece.join(splitfields(oldPiece.getString(), maxsplit));
     }
 
     public PyString join(PyObject seq) {
@@ -3286,28 +3328,74 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return new int[] {iStart, iEnd, iStartUnadjusted};
     }
 
-    public String translate() {
-        return str_translate(null, null);
+    /**
+     * Equivalent to Python <code>str.translate</code> returning a copy of this string where the
+     * characters have been mapped through the translation <code>table</code>. <code>table</code>
+     * must be equivalent to a string of length 256 (if it is not <code>null</code>).
+     *
+     * @param table of character (byte) translations (or <code>null</code>)
+     * @return transformed byte string
+     */
+    public String translate(PyObject table) {
+        return translate(table, null);
     }
 
-    public String translate(String table) {
-        return str_translate(table, null);
-    }
-
-    public String translate(String table, String deletechars) {
+    /**
+     * Equivalent to Python <code>str.translate</code> returning a copy of this string where all
+     * characters (bytes) occurring in the argument <code>deletechars</code> are removed (if it is
+     * not <code>null</code>), and the remaining characters have been mapped through the translation
+     * <code>table</code>. <code>table</code> must be equivalent to a string of length 256 (if it is
+     * not <code>null</code>).
+     *
+     * @param table of character (byte) translations (or <code>null</code>)
+     * @param deletechars set of characters to remove (or <code>null</code>)
+     * @return transformed byte string
+     */
+    public String translate(PyObject table, PyObject deletechars) {
         return str_translate(table, deletechars);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
-    final String str_translate(String table, String deletechars) {
+    /**
+     * Equivalent to {@link #translate(PyObject)} specialized to <code>String</code>.
+     */
+    public String translate(String table) {
+        return _translate(table, null);
+    }
 
-        // XXX Accept PyObjects that may be BufferProtocol
+    /**
+     * Equivalent to {@link #translate(PyObject, PyObject)} specialized to <code>String</code>.
+     */
+    public String translate(String table, String deletechars) {
+        return _translate(table, deletechars);
+    }
+
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
+    final String str_translate(PyObject tableObj, PyObject deletecharsObj) {
+        // Accept anythiong withthe buffer API or null
+        String table = asStringNullOrError(tableObj, null);
+        String deletechars = asStringNullOrError(deletecharsObj, null);
+        return _translate(table, deletechars);
+    }
+
+    /**
+     * Helper common to the Python and Java API implementing <code>str.translate</code> returning a
+     * copy of this string where all characters (bytes) occurring in the argument
+     * <code>deletechars</code> are removed (if it is not <code>null</code>), and the remaining
+     * characters have been mapped through the translation <code>table</code>, which must be
+     * equivalent to a string of length 256 (if it is not <code>null</code>).
+     *
+     * @param table of character (byte) translations (or <code>null</code>)
+     * @param deletechars set of characters to remove (or <code>null</code>)
+     * @return transformed byte string
+     */
+    private final String _translate(String table, String deletechars) {
 
         if (table != null && table.length() != 256) {
             throw Py.ValueError("translation table must be 256 characters long");
         }
 
         StringBuilder buf = new StringBuilder(getString().length());
+
         for (int i = 0; i < getString().length(); i++) {
             char c = getString().charAt(i);
             if (deletechars != null && deletechars.indexOf(c) >= 0) {
@@ -3324,41 +3412,6 @@ public class PyString extends PyBaseString implements BufferProtocol {
             }
         }
         return buf.toString();
-    }
-
-    // XXX: is this needed?
-    public String translate(PyObject table) {
-        StringBuilder v = new StringBuilder(getString().length());
-        for (int i = 0; i < getString().length(); i++) {
-            char ch = getString().charAt(i);
-
-            PyObject w = Py.newInteger(ch);
-            PyObject x = table.__finditem__(w);
-            if (x == null) {
-                /* No mapping found: default to 1-1 mapping */
-                v.append(ch);
-                continue;
-            }
-
-            /* Apply mapping */
-            if (x instanceof PyInteger) {
-                int value = ((PyInteger)x).getValue();
-                v.append((char)value);
-            } else if (x == Py.None) {
-                // Do nothing
-            } else if (x instanceof PyString) {
-                if (x.__len__() != 1) {
-                    /* 1-n mapping */
-                    throw new PyException(Py.NotImplementedError,
-                            "1-n mappings are currently not implemented");
-                }
-                v.append(x.toString());
-            } else {
-                /* wrong return value */
-                throw Py.TypeError("character mapping must return integer, None or unicode");
-            }
-        }
-        return v.toString();
     }
 
     public boolean islower() {

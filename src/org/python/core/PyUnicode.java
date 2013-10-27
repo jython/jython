@@ -1169,43 +1169,50 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(buffer);
     }
 
-    @ExposedMethod(defaults = "-1", doc = BuiltinDocs.unicode___getslice___doc)
-    final PyObject unicode_replace(PyObject oldPieceObj, PyObject newPieceObj, int maxsplit) {
+    @ExposedMethod(defaults = "-1", doc = BuiltinDocs.unicode_replace_doc)
+    final PyString unicode_replace(PyObject oldPieceObj, PyObject newPieceObj, int count) {
+
+        // Convert other argument types to PyUnicode (or error)
         PyUnicode newPiece = coerceToUnicode(newPieceObj);
         PyUnicode oldPiece = coerceToUnicode(oldPieceObj);
+
         if (isBasicPlane() && newPiece.isBasicPlane() && oldPiece.isBasicPlane()) {
-            return replace(oldPiece, newPiece, maxsplit);
-        }
+            // Use the mechanics of PyString, since all is basic plane
+            return _replace(oldPiece.getString(), newPiece.getString(), count);
 
-        StringBuilder buffer = new StringBuilder();
-
-        if (oldPiece.getCodePointCount() == 0) {
-            Iterator<Integer> iter = newSubsequenceIterator();
-            for (int i = 1; (maxsplit == -1 || i < maxsplit) && iter.hasNext(); i++) {
-                if (i == 1) {
-                    buffer.append(newPiece.getString());
-                }
-                buffer.appendCodePoint(iter.next());
-                buffer.append(newPiece.getString());
-            }
-            while (iter.hasNext()) {
-                buffer.appendCodePoint(iter.next());
-            }
-            return new PyUnicode(buffer);
         } else {
-            SplitIterator iter = newSplitIterator(oldPiece, maxsplit);
-            int numSplits = 0;
-            while (iter.hasNext()) {
-                buffer.append(((PyUnicode)iter.next()).getString());
-                if (iter.hasNext()) {
+            // A Unicode-specific implementation is needed working in code points
+            StringBuilder buffer = new StringBuilder();
+
+            if (oldPiece.getCodePointCount() == 0) {
+                Iterator<Integer> iter = newSubsequenceIterator();
+                for (int i = 1; (count == -1 || i < count) && iter.hasNext(); i++) {
+                    if (i == 1) {
+                        buffer.append(newPiece.getString());
+                    }
+                    buffer.appendCodePoint(iter.next());
                     buffer.append(newPiece.getString());
                 }
-                numSplits++;
+                while (iter.hasNext()) {
+                    buffer.appendCodePoint(iter.next());
+                }
+                return new PyUnicode(buffer);
+
+            } else {
+                SplitIterator iter = newSplitIterator(oldPiece, count);
+                int numSplits = 0;
+                while (iter.hasNext()) {
+                    buffer.append(((PyUnicode)iter.next()).getString());
+                    if (iter.hasNext()) {
+                        buffer.append(newPiece.getString());
+                    }
+                    numSplits++;
+                }
+                if (iter.getEndsWithSeparator() && (count == -1 || numSplits <= count)) {
+                    buffer.append(newPiece.getString());
+                }
+                return new PyUnicode(buffer);
             }
-            if (iter.getEndsWithSeparator() && (maxsplit == -1 || numSplits <= maxsplit)) {
-                buffer.append(newPiece.getString());
-            }
-            return new PyUnicode(buffer);
         }
     }
 

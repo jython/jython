@@ -817,13 +817,11 @@ class CommonTest(unittest.TestCase):
         EQ("bobobXbobob", "bobobobXbobobob", "replace", "bobob", "bob")
         EQ("BOBOBOB", "BOBOBOB", "replace", "bob", "bobby")
 
-        # buffer not supported in Jython.
-        if not test_support.is_jython:
-            with test_support.check_py3k_warnings():
-                ba = buffer('a')
-                bb = buffer('b')
-            EQ("bbc", "abc", "replace", ba, bb)
-            EQ("aac", "abc", "replace", bb, ba)
+        with test_support.check_py3k_warnings():
+            ba = buffer('a')
+            bb = buffer('b')
+        EQ("bbc", "abc", "replace", ba, bb)
+        EQ("aac", "abc", "replace", bb, ba)
 
         #
         self.checkequal('one@two!three!', 'one!two!three!', 'replace', '!', '@', 1)
@@ -852,6 +850,40 @@ class CommonTest(unittest.TestCase):
         self.checkraises(TypeError, 'hello', 'replace', 42)
         self.checkraises(TypeError, 'hello', 'replace', 42, 'h')
         self.checkraises(TypeError, 'hello', 'replace', 'h', 42)
+
+        # Repeat some tests including buffer API objects (Jython addition)
+        if test_support.is_jython:
+            for buftype in (buffer, memoryview, bytearray):
+                # Buffer type as sought argument
+                EQ("", "", "replace", buftype(""), "")
+                EQ("", "", "replace", buftype("A"), "A")
+                EQ("*-A*-A*-", "AA", "replace", buftype(""), "*-")
+                EQ("", "AAA", "replace", buftype("A"), "")
+                EQ("BCD", "ABCADAA", "replace", buftype("A"), "")
+                EQ("ater", "theater", "replace", buftype("the"), "")
+                EQ("", "thethethethe", "replace", buftype("the"), "")
+                EQ("aaaa", "theatheatheathea", "replace", buftype("the"), "")
+                EQ("WhO gOes there?", "Who goes there?", "replace", buftype("o"), "O")
+                EQ("Th** ** a t**sue", "This is a tissue", "replace", buftype("is"), "**")
+                EQ("cobobXcobocob", "bobobXbobobob", "replace", buftype("bob"), "cob")
+                EQ("ReyKKjaviKK", "Reykjavik", "replace", buftype("k"), "KK")
+                EQ("ham, ham, eggs and ham", "spam, spam, eggs and spam",
+                   "replace", buftype("spam"), "ham")
+                # Buffer type as replacement argument
+                EQ("", "", "replace", "", buftype(""))
+                EQ("", "", "replace", "A", buftype("A"))
+                EQ("*-A*-A*-", "AA", "replace", "", buftype("*-"))
+                EQ("", "AAA", "replace", "A", buftype(""))
+                EQ("BCD", "ABCADAA", "replace", "A", buftype(""))
+                EQ("ater", "theater", "replace", "the", buftype(""))
+                EQ("", "thethethethe", "replace", "the", buftype(""))
+                EQ("aaaa", "theatheatheathea", "replace", "the", buftype(""))
+                EQ("WhO gOes there?", "Who goes there?", "replace", "o", buftype("O"))
+                EQ("Th** ** a t**sue", "This is a tissue", "replace", "is", buftype("**"))
+                EQ("cobobXcobocob", "bobobXbobobob", "replace", "bob", buftype("cob"))
+                EQ("ReyKKjaviKK", "Reykjavik", "replace", "k", buftype("KK"))
+                EQ("ham, ham, eggs and ham", "spam, spam, eggs and spam",
+                   "replace", "spam", buftype("ham"))
 
     def test_replace_overflow(self):
         # Check for overflow checking on 32 bit machines
@@ -1427,6 +1459,12 @@ class MixinStrStringUserStringTest:
     def test_translate(self):
         table = string.maketrans('abc', 'xyz')
         self.checkequal('xyzxyz', 'xyzabcdef', 'translate', table, 'def')
+
+        # Repeat using buffer API objects (Jython addition)
+        if test_support.is_jython:
+            for buftype in (buffer, memoryview, bytearray):
+                self.checkequal('xyzxyz', 'xyzabcdef', 'translate', buftype(table), 'def')
+                self.checkequal('xyzxyz', 'xyzabcdef', 'translate', table, buftype('def'))
 
         table = string.maketrans('a', 'A')
         self.checkequal('Abc', 'abc', 'translate', table)
