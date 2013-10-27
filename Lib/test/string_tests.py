@@ -1026,6 +1026,23 @@ class MixinStrUnicodeUserStringTest:
 
         self.checkraises(TypeError, 'hello', 'startswith', (42,))
 
+        # Repeat some tests including buffer API objects (Jython addition)
+        if test_support.is_jython:
+            for buftype in (buffer, memoryview, bytearray):
+                self.checkequal(True, 'hello', 'startswith', buftype('he'))
+                self.checkequal(True, 'hello', 'startswith', buftype(''))
+                self.checkequal(False, 'hello', 'startswith', buftype('ello'))
+                self.checkequal(True, 'hello', 'startswith', buftype('ello'), 1)
+                self.checkequal(True, 'helloworld', 'startswith', buftype('lowo'), 3, 7)
+                self.checkequal(True, 'hello', 'startswith', buftype('he'), 0, -1)
+                self.checkequal(True, 'hello', 'startswith', buftype('ello'), -4)
+                self.checkequal(True, 'hello', 'startswith', buftype('o'), -1)
+                self.checkequal(True, 'hello', 'startswith', (buftype('he'), 'ha'))
+                self.checkequal(True, 'helloworld', 'startswith', (buftype('hellowo'),
+                                                            'rld', buftype('lowo')), 3)
+                self.checkequal(True, 'hello', 'startswith', ('lo', buftype('he')), 0, -1)
+                self.checkequal(True, 'hello', 'startswith', (buftype('he'), 'hel'), 0, 2)
+
     def test_endswith(self):
         self.checkequal(True, 'hello', 'endswith', 'lo')
         self.checkequal(False, 'hello', 'endswith', 'he')
@@ -1074,6 +1091,20 @@ class MixinStrUnicodeUserStringTest:
         self.checkequal(True, 'hello', 'endswith', ('he', 'hell'), 0, 4)
 
         self.checkraises(TypeError, 'hello', 'endswith', (42,))
+
+        # Repeat some tests including buffer API objects (Jython addition)
+        if test_support.is_jython:
+            for buftype in (buffer, memoryview, bytearray):
+                self.checkequal(True, 'hello', 'endswith', buftype('lo'))
+                self.checkequal(False, 'hello', 'endswith', buftype('he'))
+                self.checkequal(True, 'hello', 'endswith', buftype(''))
+                self.checkequal(True, 'helloworld', 'endswith', buftype('worl'), 3, 9)
+                self.checkequal(True, 'helloworld', 'endswith', buftype('worl'), -5, -1)
+                self.checkequal(True, 'hello', 'endswith', (buftype('lo'), buftype('llo')))
+                self.checkequal(True, 'helloworld', 'endswith', ('hellowo',
+                                                            buftype('rld'), buftype('lowo')), 3)
+                self.checkequal(True, 'hello', 'endswith', ('hell', buftype('ell')), 0, -1)
+                self.checkequal(True, 'hello', 'endswith', ('he', buftype('hell')), 0, 4)
 
     def test___contains__(self):
         self.checkequal(True, '', '__contains__', '')

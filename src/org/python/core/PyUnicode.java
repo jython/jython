@@ -1220,13 +1220,15 @@ public class PyUnicode extends PyString implements Iterable {
         return unicodeJoin(seq);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_startswith_doc)
     final boolean unicode_startswith(PyObject prefix, PyObject start, PyObject end) {
+        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_startswith(prefix, start, end);
     }
 
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_endswith_doc)
     final boolean unicode_endswith(PyObject suffix, PyObject start, PyObject end) {
+        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_endswith(suffix, start, end);
     }
 

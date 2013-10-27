@@ -719,7 +719,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * be omitted, showing up here as null) to indicate that the criterion is whitespace. They also
      * accept a unicode argument, not dealt with here.
      *
-     * @param obj to coerce to a String or nullk
+     * @param obj to coerce to a String or null
      * @param name of method
      * @return coerced value or null
      * @throws PyException if the coercion fails
@@ -736,6 +736,27 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 throw Py.TypeError(name
                         + " arg must be None, str, unicode, buffer compatible object");
             }
+        }
+    }
+
+    /**
+     * Return a String equivalent to the argument according to the calling conventions of the
+     * certain methods of <code>str</code>. Those methods accept anything bearing the buffer
+     * interface as a byte string, or accept a unicode argument for which they accept responsibility
+     * to interpret from its UTF16 encoded form (the internal representation returned by
+     * {@link PyUnicode#getString()}).
+     *
+     * @param obj to coerce to a String
+     * @return coerced value
+     * @throws PyException if the coercion fails
+     */
+    private static String asBMPStringOrError(PyObject obj) {
+        // PyUnicode accepted here. Care required in the client if obj is not basic plane.
+        String ret = asStringOrNull(obj);
+        if (ret != null) {
+            return ret;
+        } else {
+            throw Py.TypeError("expected str, bytearray, unicode or buffer compatible object");
         }
     }
 
@@ -2309,7 +2330,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_count(subObj, start, end);
         } else {
-            // It ought to be None, null, some kind of bytes with the buffer API.
+            // It ought to be some kind of bytes with the buffer API.
             String sub = asStringOrError(subObj);
             return _count(sub, start, end);
         }
@@ -2455,7 +2476,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_find(subObj, start, end);
         } else {
-            // It ought to be None, null, some kind of bytes with the buffer API.
+            // It ought to be some kind of bytes with the buffer API.
             String sub = asStringOrError(subObj);
             return _find(sub, start, end);
         }
@@ -2541,7 +2562,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Promote the problem to a Unicode one
             return ((PyUnicode)decode()).unicode_rfind(subObj, start, end);
         } else {
-            // It ought to be None, null, some kind of bytes with the buffer API.
+            // It ought to be some kind of bytes with the buffer API.
             String sub = asStringOrError(subObj);
             return _rfind(sub, start, end);
         }
@@ -3075,92 +3096,145 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return new PyUnicode(buf.toString());
     }
 
+    /**
+     * Equivalent to the Python <code>str.startswith</code> method testing whether a string starts
+     * with a specified prefix. <code>prefix</code> can also be a tuple of prefixes to look for.
+     *
+     * @param prefix string to check for (or a <code>PyTuple</code> of them).
+     * @return <code>true</code> if this string slice starts with a specified prefix, otherwise
+     *         <code>false</code>.
+     */
     public boolean startswith(PyObject prefix) {
         return str_startswith(prefix, null, null);
     }
 
+    /**
+     * Equivalent to the Python <code>str.startswith</code> method, testing whether a string starts
+     * with a specified prefix, where a sub-range is specified by <code>[start:]</code>.
+     * <code>start</code> is interpreted as in slice notation, with null or {@link Py#None}
+     * representing "missing". <code>prefix</code> can also be a tuple of prefixes to look for.
+     *
+     * @param prefix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @return <code>true</code> if this string slice starts with a specified prefix, otherwise
+     *         <code>false</code>.
+     */
     public boolean startswith(PyObject prefix, PyObject offset) {
         return str_startswith(prefix, offset, null);
     }
 
+    /**
+     * Equivalent to the Python <code>str.startswith</code> method, testing whether a string starts
+     * with a specified prefix, where a sub-range is specified by <code>[start:end]</code>.
+     * Arguments <code>start</code> and <code>end</code> are interpreted as in slice notation, with
+     * null or {@link Py#None} representing "missing". <code>prefix</code> can also be a tuple of
+     * prefixes to look for.
+     *
+     * @param prefix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return <code>true</code> if this string slice starts with a specified prefix, otherwise
+     *         <code>false</code>.
+     */
     public boolean startswith(PyObject prefix, PyObject start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_startswith_doc)
-    final boolean str_startswith(PyObject prefix, PyObject start, PyObject end) {
+    final boolean str_startswith(PyObject prefix, PyObject startObj, PyObject endObj) {
+        int[] indices = translateIndices(startObj, endObj);
+        int start = indices[0];
+        int sliceLen = indices[1] - start;
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
+        if (!(prefix instanceof PyTuple)) {
+            // It ought to be PyUnicode or some kind of bytes with the buffer API.
+            String s = asBMPStringOrError(prefix);
+            // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
+            return sliceLen >= s.length() && getString().startsWith(s, start);
 
-        int[] indices = translateIndices(start, end);
-
-        if (prefix instanceof PyString) {
-            String strPrefix = ((PyString)prefix).getString();
-            if (indices[1] - indices[0] < strPrefix.length()) {
-                return false;
-            }
-
-            return getString().startsWith(strPrefix, indices[0]);
-        } else if (prefix instanceof PyTuple) {
-            PyObject[] prefixes = ((PyTuple)prefix).getArray();
-
-            for (int i = 0; i < prefixes.length; i++) {
-                if (!(prefixes[i] instanceof PyString)) {
-                    throw Py.TypeError("expected a character buffer object");
-                }
-
-                String strPrefix = ((PyString)prefixes[i]).getString();
-                if (indices[1] - indices[0] < strPrefix.length()) {
-                    continue;
-                }
-
-                if (getString().startsWith(strPrefix, indices[0])) {
+        } else {
+            // Loop will return true if this slice starts with any prefix in the tuple
+            for (PyObject prefixObj : ((PyTuple)prefix).getArray()) {
+                // It ought to be PyUnicode or some kind of bytes with the buffer API.
+                String s = asBMPStringOrError(prefixObj);
+                // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
+                if (sliceLen >= s.length() && getString().startsWith(s, start)) {
                     return true;
                 }
             }
+            // None matched
             return false;
-        } else {
-            throw Py.TypeError("expected a character buffer object or tuple");
         }
     }
 
+    /**
+     * Equivalent to the Python <code>str.endswith</code> method, testing whether a string ends with
+     * a specified suffix. <code>suffix</code> can also be a tuple of suffixes to look for.
+     *
+     * @param suffix string to check for (or a <code>PyTuple</code> of them).
+     * @return <code>true</code> if this string slice ends with a specified suffix, otherwise
+     *         <code>false</code>.
+     */
     public boolean endswith(PyObject suffix) {
         return str_endswith(suffix, null, null);
     }
 
+    /**
+     * Equivalent to the Python <code>str.endswith</code> method, testing whether a string ends with
+     * a specified suffix, where a sub-range is specified by <code>[start:]</code>.
+     * <code>start</code> is interpreted as in slice notation, with null or {@link Py#None}
+     * representing "missing". <code>suffix</code> can also be a tuple of suffixes to look for.
+     *
+     * @param suffix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @return <code>true</code> if this string slice ends with a specified suffix, otherwise
+     *         <code>false</code>.
+     */
     public boolean endswith(PyObject suffix, PyObject start) {
         return str_endswith(suffix, start, null);
     }
 
+    /**
+     * Equivalent to the Python <code>str.endswith</code> method, testing whether a string ends with
+     * a specified suffix, where a sub-range is specified by <code>[start:end]</code>. Arguments
+     * <code>start</code> and <code>end</code> are interpreted as in slice notation, with null or
+     * {@link Py#None} representing "missing". <code>suffix</code> can also be a tuple of suffixes
+     * to look for.
+     *
+     * @param suffix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return <code>true</code> if this string slice ends with a specified suffix, otherwise
+     *         <code>false</code>.
+     */
     public boolean endswith(PyObject suffix, PyObject start, PyObject end) {
         return str_endswith(suffix, start, end);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_endswith_doc)
-    final boolean str_endswith(PyObject suffix, PyObject start, PyObject end) {
+    final boolean str_endswith(PyObject suffix, PyObject startObj, PyObject endObj) {
 
-        // XXX Accept PyObject that may be BufferProtocol or PyUnicode
-
-        int[] indices = translateIndices(start, end);
-
+        int[] indices = translateIndices(startObj, endObj);
         String substr = getString().substring(indices[0], indices[1]);
-        if (suffix instanceof PyString) {
-            return substr.endsWith(((PyString)suffix).getString());
-        } else if (suffix instanceof PyTuple) {
-            PyObject[] suffixes = ((PyTuple)suffix).getArray();
 
-            for (int i = 0; i < suffixes.length; i++) {
-                if (!(suffixes[i] instanceof PyString)) {
-                    throw Py.TypeError("expected a character buffer object");
-                }
+        if (!(suffix instanceof PyTuple)) {
+            // It ought to be PyUnicode or some kind of bytes with the buffer API.
+            String s = asBMPStringOrError(suffix);
+            // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
+            return substr.endsWith(s);
 
-                if (substr.endsWith(((PyString)suffixes[i]).getString())) {
+        } else {
+            // Loop will return true if this slice ends with any suffix in the tuple
+            for (PyObject suffixObj : ((PyTuple)suffix).getArray()) {
+                // It ought to be PyUnicode or some kind of bytes with the buffer API.
+                String s = asBMPStringOrError(suffixObj);
+                // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
+                if (substr.endsWith(s)) {
                     return true;
                 }
             }
+            // None matched
             return false;
-        } else {
-            throw Py.TypeError("expected a character buffer object or tuple");
         }
     }
 
