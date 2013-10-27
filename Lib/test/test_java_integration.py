@@ -717,9 +717,11 @@ public class BarkTheDog {
             self.assertRegexpMatches(
                 subprocess.check_output(cmd, env=env, universal_newlines=True,
                                         stderr=subprocess.STDOUT),
-                r"^\*sys-package-mgr\*: processing new jar, '.+?/proxies.jar'\n"
-                 "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
-                 "Rover barks 42 times\n$".format(tempdir))
+                os.path.join(
+                    r"^\*sys-package-mgr\*: processing new jar, '.+?",
+                    r"proxies.jar'\n"
+                    "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
+                    "Rover barks 42 times\n$".format(tempdir)))
         finally:
             pass
             # print "Will not remove", tempdir

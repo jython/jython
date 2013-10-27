@@ -1450,11 +1450,13 @@ public final class Py {
     }
 
     /**
-     * Check (using the {@link POSIX} library) whether we are in an interactive environment. Amongst
-     * other things, this affects the type of console that may be legitimately installed during
-     * system initialisation.
+     * Check (using the {@link POSIX} library and <code>jnr-posix</code> library) whether we are in
+     * an interactive environment. Amongst other things, this affects the type of console that may
+     * be legitimately installed during system initialisation. Note that the result may vary
+     * according to whether a <code>jnr-posix</code> native library is found along
+     * <code>java.library.path</code>, or the pure Java fall-back is used.
      *
-     * @return
+     * @return true if (we think) we are in an interactive environment
      */
     public static boolean isInteractive() {
         // Decide if System.in is interactive
