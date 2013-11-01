@@ -886,6 +886,11 @@ class ByteArrayTest(BaseBytesTest):
         self.assertRaises(BufferError, delslice)
         self.assertEqual(b, orig)
 
+        if test.test_support.is_jython:
+            # Show that releasing v releases the bytearray for size change
+            v.release()
+            b.pop()
+
     def test_empty_bytearray(self):
         # Issue #7561: operations on empty bytearrays could crash in many
         # situations, due to a fragile implementation of the

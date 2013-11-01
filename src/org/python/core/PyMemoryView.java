@@ -38,14 +38,19 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
     private boolean hashCacheValid = false;
 
     /**
-     * Construct a PyMemoryView from a PyBuffer interface. The buffer so obtained will be writable
-     * if the underlying object permits it. The <code>memoryview</code> takes a new lease on the
-     * <code>PyBuffer</code>.
+     * Construct a <code>PyMemoryView</code> from an object bearing the {@link BufferProtocol}
+     * interface. If this object is already an exported buffer, the <code>memoryview</code> takes a
+     * new lease on it. The buffer so obtained will be writable if the underlying object permits it.
      *
      * @param pybuf buffer exported by some underlying object
      */
-    public PyMemoryView(PyBuffer pybuf) {
+    public PyMemoryView(BufferProtocol pybuf) {
         super(TYPE);
+        /*
+         * Ask for the full set of facilities (strides, indirect, etc.) from the object in case they
+         * are necessary for navigation, but only ask for read access. If the object is writable,
+         * the PyBuffer will be writable.
+         */
         backing = pybuf.getBuffer(PyBUF.FULL_RO);
     }
 
@@ -63,12 +68,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
         PyObject obj = ap.getPyObject(0);
 
         if (obj instanceof BufferProtocol) {
-            /*
-             * Ask for the full set of facilities (strides, indirect, etc.) from the object in case
-             * they are necessary for navigation, but only ask for read access. If the object is
-             * writable, the PyBuffer will be writable.
-             */
-            return new PyMemoryView(((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO));
+            return new PyMemoryView((BufferProtocol)obj);
         } else {
             throw Py.TypeError("cannot make memory view because object does not have "
                     + "the buffer interface");
