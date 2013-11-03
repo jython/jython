@@ -101,14 +101,25 @@ public abstract class TextIOBase extends IOBase {
      * @return the amount of data read as an int
      */
     public int readinto(PyObject buf) {
+
         // This is an inefficient version of readinto: but readinto is
         // not recommended for use in Python 2.x anyway
-        if (buf instanceof BufferProtocol) {
+
+        if (buf instanceof PyArray) {
+            // PyArray has the buffer interface but it only works for bytes at present
+            PyArray array = (PyArray)buf;
+            String read = read(array.__len__());
+            for (int i = 0; i < read.length(); i++) {
+                array.set(i, new PyString(read.charAt(i)));
+            }
+            return read.length();
+
+        } else if (buf instanceof BufferProtocol) {
             PyBuffer view = ((BufferProtocol)buf).getBuffer(PyBUF.SIMPLE);
             if (view.isReadonly()) {
                 // More helpful than falling through to CPython message
-                throw Py.TypeError("cannot read into read-only "
-                        + buf.getType().fastGetName());
+                throw Py.TypeError("cannot read into read-only " + buf.getType().fastGetName());
+
             } else {
                 try {
                     // Inefficiently, we have to go via a String
@@ -122,15 +133,8 @@ public abstract class TextIOBase extends IOBase {
                     // We should release the buffer explicitly
                     view.release();
                 }
-            }
 
-        } else if (buf instanceof PyArray) {
-            PyArray array = (PyArray)buf;
-            String read = read(array.__len__());
-            for (int i = 0; i < read.length(); i++) {
-                array.set(i, new PyString(read.charAt(i)));
             }
-            return read.length();
         }
 
         // No valid alternative worked

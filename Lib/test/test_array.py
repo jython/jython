@@ -799,10 +799,11 @@ class BaseTest(unittest.TestCase):
         gc.collect()
 
     def test_buffer(self):
-        a = array.array(self.typecode, self.example)
-        with test_support.check_py3k_warnings():
-            b = buffer(a)
-        self.assertEqual(b[0], a.tostring()[0])
+        if self.typecode == 'b':    # FIXME: Jython supports only the byte buffer
+            a = array.array(self.typecode, self.example)
+            with test_support.check_py3k_warnings():
+                b = buffer(a)
+            self.assertEqual(b[0], a.tostring()[0])
 
     def test_weakref(self):
         s = array.array(self.typecode, self.example)
@@ -826,6 +827,67 @@ class BaseTest(unittest.TestCase):
     def test_subclass_with_kwargs(self):
         # SF bug #1486663 -- this used to erroneously raise a TypeError
         ArraySubclassWithKwargs('b', newarg=1)
+
+    @unittest.skipIf(not test_support.is_jython, "array supports buffer interface in Jython")
+    def test_resize_forbidden(self):
+        # Test that array resizing is forbidden with buffer exports (Jython addition).
+        # Test adapted from corresponding one in test_bytes.
+        # We can't resize an array when there are buffer exports, even
+        # if it wouldn't reallocate the underlying array.
+        # Furthermore, no destructive changes to the buffer may be applied
+        # before raising the error.
+        if self.typecode == 'b':    # Jython supports only the byte buffer
+            a = array.array(self.typecode, self.example)
+            def resize(n):
+                "n = -1 -> Smaller, 0 -> the same, or 1 -> larger."
+                a[1:-1] = array.array(self.typecode, self.example[1-n:-1])
+
+            v = memoryview(a)
+            orig = a[:]
+
+            self.assertRaises(BufferError, resize, -1)
+            self.assertEqual(a, orig)
+            #self.assertRaises(BufferError, resize, 0)
+            #self.assertEqual(a, orig)
+            self.assertRaises(BufferError, resize, 1)
+            self.assertEqual(a, orig)
+
+            # Other operations implying resize
+            self.assertRaises(BufferError, a.pop, 0)
+            self.assertEqual(a, orig)
+            self.assertRaises(BufferError, a.remove, a[1])
+            self.assertEqual(a, orig)
+            self.assertRaises(BufferError, a.append, self.outside)
+            self.assertEqual(a, orig)
+            self.assertRaises(BufferError, a.insert, 1, self.outside)
+            self.assertEqual(a, orig)
+            self.assertRaises(BufferError, a.extend, self.example)
+            self.assertEqual(a, orig)
+
+            def iadd(x):
+                x += array.array(self.typecode, self.biggerexample)
+            self.assertRaises(BufferError, iadd, a)
+            self.assertEqual(a, orig)
+
+            def imul(x):
+                x *= 3
+            self.assertRaises(BufferError, imul, a)
+            self.assertEqual(a, orig)
+
+            def delitem():
+                del a[1]
+            self.assertRaises(BufferError, delitem)
+            self.assertEqual(a, orig)
+
+            # deleting a non-contiguous slice
+            def delslice():
+                del a[1:-1:2]
+            self.assertRaises(BufferError, delslice)
+            self.assertEqual(a, orig)
+
+            # Show that releasing v releases the array for size change
+            v.release()
+            a.pop()
 
 
 class StringTest(BaseTest):
@@ -1133,9 +1195,6 @@ def test_main(verbose=None):
     if test_support.is_jython:
         # CPython specific; returns a memory address
         del BaseTest.test_buffer_info
-
-        # No buffers in Jython
-        del BaseTest.test_buffer
 
     test_support.run_unittest(*tests)
 
