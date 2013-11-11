@@ -246,6 +246,39 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(a, b)
         if a.itemsize>1 and self.typecode not in ('b', 'B'):
             self.assertRaises(ValueError, b.fromstring, "x")
+        # Test from byte string available via buffer API (Jython addition)
+        if test_support.is_jython:
+            for buftype in (buffer, memoryview, bytearray):
+                b = array.array(self.typecode)
+                b.fromstring(buftype(a.tostring()))
+                self.assertEqual(a, b)
+
+    @unittest.skipUnless(test_support.is_jython, "Jython supports memoryview slices")
+    def test_tofromstring_sliced(self):
+        a = array.array(self.typecode, self.example)
+        r = bytearray(a.tostring())
+        R = len(r)
+        D = 3*R
+
+        def checkSlice(x, y, z=None):
+            # Scatter the bytes of a.tostring() into d
+            d = bytearray(D)
+            d[x:y:z] = r
+            # Now gather through a memoryview slice
+            with memoryview(d) as m:
+                # Requires proper use of strides when z not None and not 1
+                b = array.array(self.typecode)
+                b.fromstring(m[x:y:z])
+                self.assertEqual(a, b)
+
+        # The slices all have R elements and the whole range D = 3*R
+        checkSlice(None, R)
+        checkSlice(2, 2+R)
+        checkSlice(D-R, None)
+        checkSlice(None, None, 3)
+        checkSlice(None, None, -3)
+        checkSlice(None, D-R-1, -1)
+        checkSlice(R-1, None, -1)
 
     def test_filewrite(self):
         a = array.array(self.typecode, 2*self.example)
@@ -828,7 +861,7 @@ class BaseTest(unittest.TestCase):
         # SF bug #1486663 -- this used to erroneously raise a TypeError
         ArraySubclassWithKwargs('b', newarg=1)
 
-    @unittest.skipIf(not test_support.is_jython, "array supports buffer interface in Jython")
+    @unittest.skipUnless(test_support.is_jython, "array supports buffer interface in Jython")
     def test_resize_forbidden(self):
         # Test that array resizing is forbidden with buffer exports (Jython addition).
         # Test adapted from corresponding one in test_bytes.

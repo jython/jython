@@ -77,19 +77,26 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
     @ExposedNew
     static final PyObject array_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
+
         if (new_.for_type != subtype && keywords.length > 0) {
+            /*
+             * We're constructing as a base for a derived type (via PyDerived) and there are
+             * keywords. The effective args locally should not include the keywords.
+             */
             int argc = args.length - keywords.length;
             PyObject[] justArgs = new PyObject[argc];
             System.arraycopy(args, 0, justArgs, 0, argc);
             args = justArgs;
         }
+
+        // Build the argument parser for this call
         ArgParser ap =
                 new ArgParser("array", args, Py.NoKeywords,
                         new String[] {"typecode", "initializer"}, 1);
         ap.noKeywords();
-        PyObject obj = ap.getPyObject(0);
-        PyObject initial = ap.getPyObject(1, null);
 
+        // Retrieve the mandatory type code that determines the element type
+        PyObject obj = ap.getPyObject(0);
         Class<?> type;
         String typecode;
         if (obj instanceof PyString && !(obj instanceof PyUnicode)) {
@@ -106,32 +113,48 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                     + obj.getType().fastGetName());
         }
 
+        /*
+         * Create a 'blank canvas' of the appropriate concrete class.
+         */
         PyArray self;
         if (new_.for_type == subtype) {
             self = new PyArray(subtype);
         } else {
             self = new PyArrayDerived(subtype);
         }
+
         // Initialize the typecode (and validate type) before creating the backing Array
         class2char(type);
         self.setup(type, Array.newInstance(type, 0));
         self.typecode = typecode;
+
+        /*
+         * The initialiser may be omitted, or may validly be one of several types in the broad
+         * categories of a byte string (which is treated as a machine representation of the data) or
+         * an iterable yielding values assignable to the elements. There is special treatment for
+         * type 'u' Unicode.
+         */
+        PyObject initial = ap.getPyObject(1, null);
         if (initial == null) {
-            return self;
-        }
-        if (initial instanceof PyList) {
+            // Fall through
+
+        } else if (initial instanceof PyList) {
             self.fromlist(initial);
+
         } else if (initial instanceof PyString && !(initial instanceof PyUnicode)) {
             self.fromstring(initial.toString());
+
         } else if ("u".equals(typecode)) {
             if (initial instanceof PyUnicode) {
                 self.extendArray(((PyUnicode)initial).toCodePoints());
             } else {
                 self.extendUnicodeIter(initial);
             }
+
         } else {
             self.extendInternal(initial);
         }
+
         return self;
     }
 
@@ -707,7 +730,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
      * Append items from <code>iterable</code> to the end of the array. If iterable is another
      * array, it must have exactly the same type code; if not, TypeError will be raised. If iterable
      * is not an array, it must be iterable and its elements must be the right type to be appended
-     * to the array. Changed in version 2.4: Formerly, the argument could only be another array.
+     * to the array.
      *
      * @param iterable iterable object used to extend the array
      */
@@ -733,8 +756,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                 throw Py.TypeError("an integer is required");
             }
 
-        } else if (iterable instanceof PyString) {
-            fromstring(((PyString)iterable).toString());
+// } else if (iterable instanceof PyString) {
+// // XXX CPython treats a str/bytes as an iterable, not as previously here:
+// fromstring(((PyString)iterable).toString());
 
         } else if (iterable instanceof PyArray) {
             PyArray source = (PyArray)iterable;
@@ -1067,12 +1091,14 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
     }
 
     /**
-     * Appends items from the string, interpreting the string as an array of machine values (as if
-     * it had been read from a file using the {@link #fromfile(PyObject, int) fromfile()} method).
+     * Appends items from the object, which is a byte string of some kind (PyString or object with
+     * the buffer interface providing bytes) The string of bytes is interpreted as an array of
+     * machine values (as if it had been read from a file using the {@link #fromfile(PyObject, int)
+     * fromfile()} method).
      *
      * @param input string of bytes containing array data
      */
-    public void fromstring(String input) {
+    public void fromstring(PyObject input) {
         array_fromstring(input);
     }
 
@@ -1082,27 +1108,108 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
      *
      * @param input string of bytes containing array data
      */
+    public void fromstring(String input) {
+        frombytesInternal(StringUtil.toBytes(input));
+    }
+
+    /**
+     * Appends items from the string, interpreting the string as an array of machine values (as if
+     * it had been read from a file using the {@link #fromfile(PyObject, int) fromfile()} method).
+     *
+     * @param input string of bytes containing array data
+     */
     @ExposedMethod
-    final void array_fromstring(String input) {
+    final void array_fromstring(PyObject input) {
+
+        if (input instanceof BufferProtocol) {
+
+            if (input instanceof PyUnicode) {
+                // Unicode is treated as specifying a byte string via the default encoding.
+                String s = ((PyUnicode)input).encode();
+                frombytesInternal(StringUtil.toBytes(s));
+
+            } else {
+                // Access the bytes
+                PyBuffer pybuf = ((BufferProtocol)input).getBuffer(PyBUF.STRIDED_RO);
+                try {
+                    // Provide argument as stream of bytes for fromstream method
+                    if (pybuf.getNdim() == 1) {
+                        if (pybuf.getStrides()[0] == 1) {
+                            // Data are contiguous in a byte[]
+                            PyBuffer.Pointer b = pybuf.getBuf();
+                            frombytesInternal(b.storage, b.offset, pybuf.getLen());
+                        } else {
+                            // As frombytesInternal only knows contiguous bytes, make a copy.
+                            byte[] copy = new byte[pybuf.getLen()];
+                            pybuf.copyTo(copy, 0);
+                            frombytesInternal(copy);
+                        }
+                    } else {
+                        // Currently don't support n-dimensional sources
+                        throw Py.ValueError("multi-dimensional buffer not supported");
+                    }
+                } finally {
+                    pybuf.release();
+                }
+            }
+
+        } else {
+            String fmt = "must be string or read-only buffer, not %s";
+            throw Py.TypeError(String.format(fmt, input.getType().fastGetName()));
+        }
+    }
+
+    /**
+     * Common code supporting Java and Python versions of <code>.fromstring()</code>
+     *
+     * @param input string of bytes encoding the array data
+     */
+    private final void fromstringInternal(String input) {
+        frombytesInternal(StringUtil.toBytes(input));
+    }
+
+    /**
+     * Common code supporting Java and Python versions of <code>.fromstring()</code> or
+     * <code>.frombytes()</code> (Python 3.2+ name).
+     *
+     * @param bytes array containing the new array data in machine encoding
+     */
+    private final void frombytesInternal(byte[] bytes) {
+        frombytesInternal(bytes, 0, bytes.length);
+    }
+
+    /**
+     * Common code supporting Java and Python versions of <code>.fromstring()</code> or
+     * <code>.frombytes()</code> (Python 3.2+ name).
+     *
+     * @param bytes array containing the new array data in machine encoding
+     * @param offset of the first byte to read
+     * @param count of bytes to read
+     */
+    private final void frombytesInternal(byte[] bytes, int offset, int count) {
+
+        // Access the bytes
+        int origsize = delegate.getSize();
 
         // Check validity wrt array itemsize
         int itemsize = getStorageSize();
-        int strlen = input.length();
-        if ((strlen % itemsize) != 0) {
+        if ((count % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
         }
 
-        // Prohibited operation if exporting a buffer
+        // Prohibited operation if we are exporting a buffer
         resizeCheck();
 
-        // Provide argument as stream of bytes for fromstream method
-        ByteArrayInputStream bis = new ByteArrayInputStream(StringUtil.toBytes(input));
-        int origsize = delegate.getSize();
         try {
+
+            // Provide argument as stream of bytes for fromstream method
+            ByteArrayInputStream bis = new ByteArrayInputStream(bytes, offset, count);
             fromStream(bis);
+
         } catch (EOFException e) {
             // stubbed catch for fromStream throws
             throw Py.EOFError("not enough items in string");
+
         } catch (IOException e) {
             // discard anything successfully loaded
             delegate.setSize(origsize);
