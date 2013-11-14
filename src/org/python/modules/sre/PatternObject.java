@@ -372,28 +372,18 @@ public class PatternObject extends PyObject {
             return (PyString)obj;
 
         } else if (obj instanceof BufferProtocol) {
-            // Try to get a simple byte-oriented buffer
-            PyBuffer buf = null;
+            // Try to get a byte-oriented buffer
+            PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO);
             try {
-                buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
                 // ... and treat those bytes as a PyString
-                String s = StringUtil.fromBytes(buf);
-                return new PyString(s);
-            } catch (Exception e) {
-                // Wrong kind of buffer: generic error message will do
+                return new PyString(buf.toString());
             } finally {
-                // If we got a buffer, we should release it
-                if (buf != null) {
-                    buf.release();
-                }
+                // We should release the buffer
+                buf.release();
             }
-
-        } else if (obj instanceof PyArray) {
-            // PyArray can do something similar
-            return new PyString(obj.toString());
         }
 
-        // None of those things worked
+        // Neither of those things worked
         throw Py.TypeError("expected string or buffer, but got " + obj.getType());
     }
 }

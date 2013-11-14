@@ -377,38 +377,42 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * Return a String for writing to the underlying file from obj.
+     * Return a String for writing to the underlying file from obj. This is a helper for {@link file_write}
+     * and {@link file_writelines}.
+     *
+     * @param obj to write
+     * @param message for TypeError if raised (or null for default message)
+     * @return bytes representing tha value (as a String in the Jython convention)
      */
     private String asWritable(PyObject obj, String message) {
 
         if (obj instanceof PyUnicode) {
+            // By convention, use platform default encoding to bytes
             return ((PyUnicode)obj).encode();
 
         } else if (obj instanceof PyString) {
-            return ((PyString) obj).getString();
+            // Take a short cut
+            return ((PyString)obj).getString();
+
+        } else if (obj instanceof PyArray && !binary) {
+            // Fall through to TypeError. (If binary, BufferProtocol takes care of PyArray.)
 
         } else if (obj instanceof BufferProtocol) {
-            // Try to get a simple byte-oriented buffer
-            PyBuffer buf = null;
+            // Try to get a byte-oriented buffer
+            PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO);
             try {
-                buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
-                return StringUtil.fromBytes(buf);
-            } catch (Exception e) {
-                // Wrong kind of buffer: generic error message will do
+                // ... and treat those bytes as a String
+                return buf.toString();
             } finally {
-                // If we got a buffer, we should release it
-                if (buf != null) {
-                    buf.release();
-                }
+                // We should release the buffer
+                buf.release();
             }
-
-        } else if (binary && obj instanceof PyArray) {
-            return ((PyArray)obj).tostring();
         }
+
         if (message == null) {
-            message = String.format("argument 1 must be string or %sbuffer, not %.200s",
-                                    binary ? "" : "read-only character ",
-                                    obj.getType().fastGetName());
+            // Messages differ for text or binary streams (CPython) but we always add the type
+            String.format("%s buffer, not %.200s", (binary ? "must be string or"
+                    : "expected a character"), obj.getType().fastGetName());
         }
         throw Py.TypeError(message);
     }
@@ -581,7 +585,7 @@ public class PyFile extends PyObject {
         }
     }
 
-  
+
     /**
      * XXX update docs - A mechanism to make sure PyFiles are closed on exit. On creation Closer adds itself
      * to a list of Closers that will be run by PyFileCloser on JVM shutdown. When a
@@ -615,6 +619,7 @@ public class PyFile extends PyObject {
         }
 
         /** For closing as part of a shutdown process */
+        @Override
         public Void call() {
             file.close();
             sys = null;
