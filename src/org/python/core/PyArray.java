@@ -13,6 +13,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 
 import org.python.core.buffer.BaseBuffer;
+import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.buffer.SimpleWritableBuffer;
 import org.python.core.util.ByteSwapper;
 import org.python.core.util.StringUtil;
@@ -2058,13 +2059,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                 byte[] storage = (byte[])data;
                 int size = delegate.getSize();
                 pybuf = new SimpleWritableBuffer(flags, storage, 0, size);
-                // Hold a reference for possible re-use
-                export = new WeakReference<BaseBuffer>(pybuf);
-
+            } else if ((flags & PyBUF.WRITABLE) == 0) {
+                // As the client only intends to read, fake the answer with a String
+                pybuf = new SimpleStringBuffer(flags, tostring());
             } else {
                 // For the time being ...
-                throw Py.NotImplementedError("only array('b') can export a buffer");
+                throw Py.NotImplementedError("only array('b') can export a writable buffer");
             }
+            // Hold a reference for possible re-use
+            export = new WeakReference<BaseBuffer>(pybuf);
         }
 
         return pybuf;

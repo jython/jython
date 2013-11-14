@@ -394,27 +394,18 @@ public class PyFile extends PyObject {
             // Take a short cut
             return ((PyString)obj).getString();
 
-        } else if (obj instanceof PyArray) {
-            if (binary) {
-                // PyArray has the buffer interface but it only works for bytes at present
-                return ((PyArray)obj).tostring();
-            } else {
-                // Fall through to TypeError
-            }
+        } else if (obj instanceof PyArray && !binary) {
+            // Fall through to TypeError. (If binary, BufferProtocol takes care of PyArray.)
 
         } else if (obj instanceof BufferProtocol) {
-            // Try to get a simple byte-oriented buffer
-            PyBuffer buf = null;
+            // Try to get a byte-oriented buffer
+            PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO);
             try {
-                buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
-                return StringUtil.fromBytes(buf);
-            } catch (Exception e) {
-                // Wrong kind of buffer: generic/supplied error message will do
+                // ... and treat those bytes as a String
+                return buf.toString();
             } finally {
-                // If we got a buffer, we should release it
-                if (buf != null) {
-                    buf.release();
-                }
+                // We should release the buffer
+                buf.release();
             }
         }
 
