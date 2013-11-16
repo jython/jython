@@ -8,6 +8,10 @@ Jython 2.7b2
     - [ 1926 ] Adjust MutableSet.pop test so we do not need to skip it
     - [ 2020 ] str.translate should delete characters in the second arg when table is None
     - [ 1753 ] zlib doesn't call end() on compress and decompress
+    - [ 1860 ] test failures in test_array.py
+    - [ 2046 ] sys.stdin.readline() hangs when used interactively (JLine, Windows)
+    - [ 2060 ] Thread ident missing
+    - [ 2082 ] Unexpected (Pdb) prompt during regression tests
 
 Jython 2.7b1
   Bugs Fixed

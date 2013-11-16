@@ -1,5 +1,5 @@
 ACKNOWLEDGMENTS
-Copyright � Corporation for National Research Initiatives
+Copyright (c) Corporation for National Research Initiatives
 
     Jim Hugunin invented JPython and was the primary developer while
     he was at CNRI.  In February 1999, Jim left CNRI for sunny
@@ -75,7 +75,7 @@ Copyright � Corporation for National Research Initiatives
     Geoffrey French
     Tobias Ivarsson
     Lino Mastrodomenico
-    S�bastien Boisg�rault
+    Sébastien Boisgérault
     Jim Baker
     Charlie Groves
     Otmar Humbel
@@ -104,6 +104,7 @@ Copyright � Corporation for National Research Initiatives
     Jezreel Ng
     Santoso Wijaya
     Brandon Pedersen
+    Chris Simpson
 
 Local Variables:
 mode: indented-text
