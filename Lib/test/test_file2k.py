@@ -1,7 +1,7 @@
 import sys
 import os
+import errno
 import unittest
-import itertools
 import time
 from array import array
 from weakref import proxy
@@ -190,14 +190,29 @@ class AutoFileTests(unittest.TestCase):
 
 class OtherFileTests(unittest.TestCase):
 
+    def setUp(self):
+        # (Jython addition) track open file so we can clean up
+        self.f = None
+        self.filename = TESTFN
+
+    def tearDown(self):
+        # (Jython addition) clean up to prevent errors cascading
+        if self.f:
+            self.f.close()
+        try:
+            os.remove(self.filename)
+        except EnvironmentError as ee:
+            if ee.errno != errno.ENOENT:
+                raise ee
+
     def testOpenDir(self):
         this_dir = os.path.dirname(__file__) or os.curdir
         for mode in (None, "w"):
             try:
                 if mode:
-                    f = open(this_dir, mode)
+                    self.f = open(this_dir, mode)
                 else:
-                    f = open(this_dir)
+                    self.f = open(this_dir)
             except IOError as e:
                 self.assertEqual(e.filename, this_dir)
             else:
@@ -207,7 +222,7 @@ class OtherFileTests(unittest.TestCase):
         # check invalid mode strings
         for mode in ("", "aU", "wU+"):
             try:
-                f = open(TESTFN, mode)
+                self.f = f = open(TESTFN, mode)
             except ValueError:
                 pass
             else:
@@ -218,7 +233,7 @@ class OtherFileTests(unittest.TestCase):
         # Issue3965: avoid a crash on Windows when filename is unicode
         for name in (TESTFN, unicode(TESTFN), unicode(TESTFN + '\t')):
             try:
-                f = open(name, "rr")
+                self.f = f = open(name, "rr")
             except (IOError, ValueError):
                 pass
             else:
@@ -236,7 +251,7 @@ class OtherFileTests(unittest.TestCase):
 
     def testUnicodeOpen(self):
         # verify repr works for unicode too
-        f = open(unicode(TESTFN), "w")
+        self.f = f = open(unicode(TESTFN), "w")
         self.assertTrue(repr(f).startswith("<open file u'" + TESTFN))
         f.close()
         os.unlink(TESTFN)
@@ -245,7 +260,7 @@ class OtherFileTests(unittest.TestCase):
         # verify that we get a sensible error message for bad mode argument
         bad_mode = "qwerty"
         try:
-            f = open(TESTFN, bad_mode)
+            self.f = f = open(TESTFN, bad_mode)
         except ValueError, msg:
             if msg.args[0] != 0:
                 s = str(msg)
@@ -262,11 +277,11 @@ class OtherFileTests(unittest.TestCase):
         # misbehaviour especially with repeated close() calls
         for s in (-1, 0, 1, 512):
             try:
-                f = open(TESTFN, 'w', s)
+                self.f = f = open(TESTFN, 'w', s)
                 f.write(str(s))
                 f.close()
                 f.close()
-                f = open(TESTFN, 'r', s)
+                self.f = f = open(TESTFN, 'r', s)
                 d = int(f.read())
                 f.close()
                 f.close()
@@ -275,16 +290,15 @@ class OtherFileTests(unittest.TestCase):
             self.assertEqual(d, s)
 
     def testTruncateOnWindows(self):
-        os.unlink(TESTFN)
 
         def bug801631():
             # SF bug <http://www.python.org/sf/801631>
             # "file.truncate fault on windows"
-            f = open(TESTFN, 'wb')
+            self.f = f = open(TESTFN, 'wb')
             f.write('12345678901')   # 11 bytes
             f.close()
 
-            f = open(TESTFN,'rb+')
+            self.f = f = open(TESTFN,'rb+')
             data = f.read(5)
             if data != '12345':
                 self.fail("Read on file opened for update failed %r" % data)
@@ -339,7 +353,7 @@ class OtherFileTests(unittest.TestCase):
             bag.close()
             # Test for appropriate errors mixing read* and iteration
             for methodname, args in methods:
-                f = open(TESTFN)
+                self.f = f = open(TESTFN)
                 if f.next() != filler:
                     self.fail, "Broken testfile"
                 meth = getattr(f, methodname)
@@ -359,7 +373,7 @@ class OtherFileTests(unittest.TestCase):
             # ("h", "a", "m", "\n"), so 4096 lines of that should get us
             # exactly on the buffer boundary for any power-of-2 buffersize
             # between 4 and 16384 (inclusive).
-            f = open(TESTFN)
+            self.f = f = open(TESTFN)
             for i in range(nchunks):
                 f.next()
             testline = testlines.pop(0)
@@ -401,7 +415,7 @@ class OtherFileTests(unittest.TestCase):
                 self.fail("readlines() after next() with empty buffer "
                           "failed. Got %r, expected %r" % (line, testline))
             # Reading after iteration hit EOF shouldn't hurt either
-            f = open(TESTFN)
+            self.f = f = open(TESTFN)
             try:
                 for line in f:
                     pass
@@ -441,10 +455,14 @@ class FileThreadingTests(unittest.TestCase):
     # (including close()) concurrently without crashing the Python interpreter.
     # See #815646, #595601
 
+    # Modified for Jython so that each worker thread holds *and closes* its own
+    # file object, since we cannot rely on immediate garbage collection closing
+    # files. (Open file objects prevent deletion of TESTFN on Windows at least.)
+
     def setUp(self):
         self._threads = test_support.threading_setup()
-        self.f = None
         self.filename = TESTFN
+        self.exc_info = None
         with open(self.filename, "w") as f:
             f.write("\n".join("0123456789"))
         self._count_lock = threading.Lock()
@@ -453,35 +471,32 @@ class FileThreadingTests(unittest.TestCase):
         self.use_buffering = False
 
     def tearDown(self):
-        if self.f:
-            try:
-                self.f.close()
-            except (EnvironmentError, ValueError):
-                pass
         try:
             os.remove(self.filename)
-        except EnvironmentError:
-            pass
+        except EnvironmentError as ee:
+            # (Jython addition) detect failure common on Windows, on missing
+            # close, that creates spurious errors in subsequent tests.
+            if ee.errno != errno.ENOENT:
+                raise ee
         test_support.threading_cleanup(*self._threads)
 
     def _create_file(self):
         if self.use_buffering:
-            self.f = open(self.filename, "w+", buffering=1024*16)
+            return open(self.filename, "w+", buffering=1024*16)
         else:
-            self.f = open(self.filename, "w+")
+            return open(self.filename, "w+")
 
-    def _close_file(self):
+    def _close_file(self, f):
         with self._count_lock:
             self.close_count += 1
-        self.f.close()
+        f.close()
         with self._count_lock:
             self.close_success_count += 1
 
-    def _close_and_reopen_file(self):
-        self._close_file()
-        # if close raises an exception thats fine, self.f remains valid so
-        # we don't need to reopen.
-        self._create_file()
+    # Close one file object and return a new one
+    def _close_and_reopen_file(self, f):
+        self._close_file(f)
+        return self._create_file()
 
     def _run_workers(self, func, nb_workers, duration=0.2):
         with self._count_lock:
@@ -508,104 +523,116 @@ class FileThreadingTests(unittest.TestCase):
                 t.join()
 
     def _test_close_open_io(self, io_func, nb_workers=5):
+
         def worker():
-            self._create_file()
-            funcs = itertools.cycle((
-                lambda: io_func(),
-                lambda: self._close_and_reopen_file(),
-            ))
-            for f in funcs:
-                if not self.do_continue:
-                    break
-                try:
-                    f()
-                except (IOError, ValueError):
-                    pass
+            # Each worker has its own currently open file object
+            myfile = None
+            try:
+                myfile = self._create_file()
+                while self.do_continue:
+                    io_func(myfile)
+                    myfile = self._close_and_reopen_file(myfile)
+            except Exception as e:
+                # Stop the test (other threads) and remember why
+                self.do_continue = False
+                self.exc_info = sys.exc_info()
+            # Finally close the last file object
+            if myfile:
+                self._close_file(myfile)
+
         self._run_workers(worker, nb_workers)
+        if self.exc_info:
+            # Some worker saved an exception: re-raise it now
+            raise self.exc_info[0], self.exc_info[1], self.exc_info[2]
+
         if test_support.verbose:
             # Useful verbose statistics when tuning this test to take
             # less time to run but still ensuring that its still useful.
             #
             # the percent of close calls that raised an error
-            percent = 100. - 100.*self.close_success_count/self.close_count
+            percent = 100.
+            if self.close_count > 0:
+                percent -= 100.*self.close_success_count/self.close_count
             print self.close_count, ('%.4f ' % percent),
 
+    # Each test function defines an operation on the worker's file object
+
     def test_close_open(self):
-        def io_func():
+        def io_func(f):
             pass
         self._test_close_open_io(io_func)
 
     def test_close_open_flush(self):
-        def io_func():
-            self.f.flush()
+        def io_func(f):
+            f.flush()
         self._test_close_open_io(io_func)
 
     def test_close_open_iter(self):
-        def io_func():
-            list(iter(self.f))
+        def io_func(f):
+            list(iter(f))
         self._test_close_open_io(io_func)
 
     def test_close_open_isatty(self):
-        def io_func():
-            self.f.isatty()
+        def io_func(f):
+            f.isatty()
         self._test_close_open_io(io_func)
 
     def test_close_open_print(self):
-        def io_func():
-            print >> self.f, ''
+        def io_func(f):
+            print >> f, ''
         self._test_close_open_io(io_func)
 
     @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def test_close_open_print_buffered(self):
         self.use_buffering = True
-        def io_func():
-            print >> self.f, ''
+        def io_func(f):
+            print >> f, ''
         self._test_close_open_io(io_func)
 
     def test_close_open_read(self):
-        def io_func():
-            self.f.read(0)
+        def io_func(f):
+            f.read(0)
         self._test_close_open_io(io_func)
 
     def test_close_open_readinto(self):
-        def io_func():
+        def io_func(f):
             a = array('c', 'xxxxx')
-            self.f.readinto(a)
+            f.readinto(a)
         self._test_close_open_io(io_func)
 
     def test_close_open_readline(self):
-        def io_func():
-            self.f.readline()
+        def io_func(f):
+            f.readline()
         self._test_close_open_io(io_func)
 
     def test_close_open_readlines(self):
-        def io_func():
-            self.f.readlines()
+        def io_func(f):
+            f.readlines()
         self._test_close_open_io(io_func)
 
     def test_close_open_seek(self):
-        def io_func():
-            self.f.seek(0, 0)
+        def io_func(f):
+            f.seek(0, 0)
         self._test_close_open_io(io_func)
 
     def test_close_open_tell(self):
-        def io_func():
-            self.f.tell()
+        def io_func(f):
+            f.tell()
         self._test_close_open_io(io_func)
 
     def test_close_open_truncate(self):
-        def io_func():
-            self.f.truncate()
+        def io_func(f):
+            f.truncate()
         self._test_close_open_io(io_func)
 
     def test_close_open_write(self):
-        def io_func():
-            self.f.write('')
+        def io_func(f):
+            f.write('')
         self._test_close_open_io(io_func)
 
     def test_close_open_writelines(self):
-        def io_func():
-            self.f.writelines('')
+        def io_func(f):
+            f.writelines('')
         self._test_close_open_io(io_func)
 
 
@@ -683,14 +710,13 @@ class StdoutTests(unittest.TestCase):
 
 
 def test_main():
-    # Historically, these tests have been sloppy about removing TESTFN.
-    # So get rid of it no matter what.
-    try:
-        run_unittest(AutoFileTests, OtherFileTests, FileSubclassTests,
-            FileThreadingTests, StdoutTests)
-    finally:
-        if os.path.exists(TESTFN):
-            os.unlink(TESTFN)
+    run_unittest(
+             AutoFileTests, 
+             OtherFileTests, 
+             FileSubclassTests,
+             FileThreadingTests, 
+             StdoutTests
+         )
 
 if __name__ == '__main__':
     test_main()
