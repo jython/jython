@@ -521,11 +521,15 @@ public class PyFile extends PyObject {
     final String file_toString() {
         String state = file.closed() ? "closed" : "open";
         String id = Py.idstr(this);
+        String escapedName;
         if (name instanceof PyUnicode) {
-            String escapedName = PyString.encode_UnicodeEscape(name.toString(), false);
-            return String.format("<%s file u'%s', mode '%s' at %s>", state, escapedName, mode, id);
+            // unicode: always uses the format u'%s', and the escaped value thus:
+            escapedName = "u'"+PyString.encode_UnicodeEscape(name.toString(), false)+"'";
+        } else {
+            // anything else: uses repr(), which for str (common case) is smartly quoted
+            escapedName = name.__repr__().getString();
         }
-        return String.format("<%s file '%s', mode '%s' at %s>", state, name, mode, id);
+        return String.format("<%s file %s, mode '%s' at %s>", state, escapedName, mode, id);
     }
 
     @Override

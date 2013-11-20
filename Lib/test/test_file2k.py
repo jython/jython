@@ -87,13 +87,15 @@ class AutoFileTests(unittest.TestCase):
         self.assertRaises(TypeError, self.f.writelines,
                           [NonString(), NonString()])
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def testRepr(self):
         # verify repr works
         self.assertTrue(repr(self.f).startswith("<open file '" + TESTFN))
         # see issue #14161
-        # Windows doesn't like \r\n\t" in the file name, but ' is ok
-        fname = 'xx\rxx\nxx\'xx"xx' if sys.platform != "win32" else "xx'xx"
+        if sys.platform == "win32" or (test_support.is_jython and os._name == "nt"):
+            # Windows doesn't like \r\n\t" in the file name, but ' is ok
+            fname = "xx'xx"
+        else:
+            fname = 'xx\rxx\nxx\'xx"xx'
         with open(fname, 'w') as f:
             self.addCleanup(os.remove, fname)
             self.assertTrue(repr(f).startswith(
