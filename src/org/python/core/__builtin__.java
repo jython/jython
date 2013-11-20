@@ -1720,7 +1720,7 @@ class OpenFunction extends PyBuiltinFunction {
 
     @Override
     public PyObject __call__(PyObject args[], String kwds[]) {
-        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "buffering"},
                                      1);
         PyObject obj = ap.getPyObject(0);
         if (obj.getJavaProxy() != null) {

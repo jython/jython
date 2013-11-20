@@ -738,7 +738,7 @@ public class PosixModule implements ClassDictInit {
             if (!file.canWrite()) {
                 throw Py.OSError(Errno.EPERM, path);
             }
-            throw Py.OSError("unlink(): an unknown error occurred" + absolutePath);
+            throw Py.OSError("unlink(): an unknown error occurred: " + absolutePath);
         }
     }
 

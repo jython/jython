@@ -139,7 +139,7 @@ public class PyFile extends PyObject {
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.file___init___doc)
     final void file___init__(PyObject[] args, String[] kwds) {
-        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "buffering"},
                                      1);
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {

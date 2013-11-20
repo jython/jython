@@ -582,7 +582,6 @@ class FileThreadingTests(unittest.TestCase):
             print >> f, ''
         self._test_close_open_io(io_func)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def test_close_open_print_buffered(self):
         self.use_buffering = True
         def io_func(f):
