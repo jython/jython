@@ -22,7 +22,6 @@ import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
 import org.python.core.io.TextIOWrapper;
 import org.python.core.io.UniversalIOWrapper;
-import org.python.core.util.StringUtil;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -199,41 +198,100 @@ public class PyFile extends PyObject {
     }
 
     /**
-     * Parse and validate the python file mode, returning a cleaned
-     * file mode suitable for FileIO.
+     * Parse and validate the python file mode, returning a cleaned file mode suitable for FileIO.
      *
      * @param mode a python file mode String
      * @return a RandomAccessFile mode String
      */
     private String parseMode(String mode) {
-        if (mode.length() == 0) {
-            throw Py.ValueError("empty mode string");
-        }
 
-        String origMode = mode;
-        if (mode.contains("U")) {
-            universal = true;
-            mode = mode.replace("U", "");
-            if (mode.length() == 0) {
-                mode = "r";
-            } else if ("wa+".indexOf(mode.charAt(0)) > -1) {
-                throw Py.ValueError("universal newline mode can only be used with modes starting "
-                                    + "with 'r'");
+        String message = null;
+        boolean duplicate = false, invalid = false;
+        int n = mode.length();
+
+        // Convert the letters to booleans, noticing duplicates
+        for (int i = 0; i < n; i++) {
+            char c = mode.charAt(i);
+
+            switch (c) {
+                case 'r':
+                    duplicate = reading;
+                    reading = true;
+                    break;
+                case 'w':
+                    duplicate = writing;
+                    writing = true;
+                    break;
+                case 'a':
+                    duplicate = appending;
+                    appending = true;
+                    break;
+                case '+':
+                    duplicate = updating;
+                    updating = true;
+                    break;
+                case 'b':
+                    duplicate = binary;
+                    binary = true;
+                    break;
+                case 'U':
+                    duplicate = universal;
+                    universal = true;
+                    break;
+                default:
+                    invalid = true;
+            }
+
+            // duplicate is set iff c was encountered previously */
+            if (duplicate) {
+                invalid = true;
+                break;
             }
         }
-        if ("rwa".indexOf(mode.charAt(0)) == -1) {
-            throw Py.ValueError("mode string must begin with one of 'r', 'w', 'a' or 'U', not '"
-                                + origMode + "'");
+
+        // Implications
+        reading |= universal;
+        binary |= universal;
+
+        // Standard tests and the mode for FileIO
+        StringBuilder fileioMode = new StringBuilder();
+        if (!invalid) {
+            if (universal && (writing || appending)) {
+                // Not quite true, consider 'Ub', but it's what CPython says:
+                message = "universal newline mode can only be used with modes starting with 'r'";
+            } else {
+                // Build the FileIO mode string
+                if (reading) {
+                    fileioMode.append('r');
+                }
+                if (writing) {
+                    fileioMode.append('w');
+                }
+                if (appending) {
+                    fileioMode.append('a');
+                }
+                if (fileioMode.length() != 1) {
+                    // We should only have added one of the above
+                    message = "mode string must begin with one of 'r', 'w', 'a' or 'U', not '" //
+                            + mode + "'";
+                }
+                if (updating) {
+                    fileioMode.append('+');
+                }
+            }
+            invalid |= (message != null);
         }
 
-        binary = mode.contains("b");
-        reading = mode.contains("r");
-        writing = mode.contains("w");
-        appending = mode.contains("a");
-        updating = mode.contains("+");
+        // Finally, if invalid, report this as an error
+        if (invalid) {
+            if (message == null) {
+                // Duplicates discovered or invalid symbols
+                message = String.format("invalid mode: '%.20s'", mode);
+            }
+            throw Py.ValueError(message);
+        }
 
-        return (reading ? "r" : "") + (writing ? "w" : "") + (appending ? "a" : "")
-                + (updating ? "+" : "");
+        return fileioMode.toString();
     }
 
     @ExposedMethod(defaults = {"-1"}, doc = BuiltinDocs.file_read_doc)

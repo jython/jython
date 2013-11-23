@@ -155,8 +155,10 @@ class AutoFileTests(unittest.TestCase):
                 yield str(i)
         self.assertRaises(ValueError, self.f.writelines, nasty())
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def testIssue5677(self):
+        # We don't use the already-open file.
+        self.f.close()
+
         # Remark: Do not perform more than one test per open file,
         # since that does NOT catch the readline error on Windows.
         data = 'xxx'
