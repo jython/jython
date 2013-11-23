@@ -25,7 +25,6 @@ class AutoFileTests(unittest.TestCase):
             self.f.close()
         os.remove(TESTFN)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def testWeakRefs(self):
         # verify weak references
         p = proxy(self.f)
@@ -33,6 +32,9 @@ class AutoFileTests(unittest.TestCase):
         self.assertEqual(self.f.tell(), p.tell())
         self.f.close()
         self.f = None
+        if test_support.is_jython: # GC is not immediate: borrow a trick
+            from test_weakref import extra_collect
+            extra_collect()
         self.assertRaises(ReferenceError, getattr, p, 'tell')
 
     def testAttributes(self):
