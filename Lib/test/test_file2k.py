@@ -659,7 +659,6 @@ class StdoutTests(unittest.TestCase):
         finally:
             sys.stdout = save_stdout
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def test_del_stdout_before_print(self):
         # Issue 4597: 'print' with no argument wasn't reporting when
         # sys.stdout was deleted.

@@ -25,10 +25,12 @@ public class StdoutWrapper extends OutputStream {
         PyObject out = getObject(ss);
         if (out == null) {
             throw Py.AttributeError("missing sys." + this.name);
-        }
-        if (out.getJavaProxy() != null) {
-            PyFile f = null;
 
+        } else if (out instanceof PyAttributeDeleted) {
+            throw Py.RuntimeError("lost sys." + this.name);
+
+        } else if (out.getJavaProxy() != null) {
+            PyFile f = null;
             Object tojava = out.__tojava__(OutputStream.class);
             if (tojava != null && tojava != Py.NoConversion) {
                 f = new PyFile((OutputStream)tojava);
@@ -192,6 +194,7 @@ public class StdoutWrapper extends OutputStream {
                 file.softspace = false;
             }
             file.flush();
+
         } else if (out instanceof PyFileWriter) {
             PyFileWriter file = (PyFileWriter)out;
             if (file.softspace) {
@@ -215,6 +218,7 @@ public class StdoutWrapper extends OutputStream {
                 file.softspace = false;
             }
             file.flush();
+
         } else {
             PyObject ss = out.__findattr__("softspace");
             if (ss != null && ss.__nonzero__()) {
