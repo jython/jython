@@ -425,6 +425,7 @@ public class PyFile extends PyObject {
         checkClosed();
         PyObject iter = Py.iter(lines, "writelines() requires an iterable argument");
         for (PyObject item = null; (item = iter.__iternext__()) != null;) {
+            checkClosed(); // ... in case a nasty iterable closed this file
             softspace = false;
             file.write(asWritable(item, "writelines() argument must be a sequence of strings"));
         }

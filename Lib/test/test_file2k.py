@@ -148,7 +148,6 @@ class AutoFileTests(unittest.TestCase):
     def testReadWhenWriting(self):
         self.assertRaises(IOError, self.f.read)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def testNastyWritelinesGenerator(self):
         def nasty():
             for i in range(5):
