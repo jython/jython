@@ -324,7 +324,7 @@ class OtherFileTests(unittest.TestCase):
         finally:
             os.unlink(TESTFN)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "Specific to CPython")
     def testIteration(self):
         # Test the complex interaction when mixing file-iteration and the
         # various read* methods. Ostensibly, the mixture could just be tested
@@ -435,6 +435,46 @@ class OtherFileTests(unittest.TestCase):
                 f.close()
         finally:
             os.unlink(TESTFN)
+
+    @unittest.skipUnless(test_support.is_jython, "Applicable to Jython")
+    def testIterationMixes(self):
+        # And now for something completely different. An implementation where
+        # various read* methods mix happily with iteration over the lines of
+        # a file using next().
+
+        sheep = [
+            "It's my belief that these sheep\n",
+            "are labouring under the\n",
+            "mis-apprehension that they're birds.\n",
+            "Now witness their attempts\n",
+            "to fly from tree to tree.\n",
+            "Notice that they do not so much fly\n",
+            "as plummet.\n"
+        ]
+
+        # Prepare the testfile
+        self.f = f = open(TESTFN, "w")
+        f.writelines(sheep)
+        f.close()
+
+        # Test for appropriate results mixing read* and iteration
+        self.f = f = open(TESTFN)
+        self.assertEqual(f.next(), sheep[0])
+        self.assertEqual(f.readline(), sheep[1])
+        self.assertEqual(f.next(), sheep[2])
+        self.assertEqual(f.read(5), sheep[3][:5])
+
+        r = array('c', "1234567")
+        f.readinto(r)
+        self.assertEqual(r, array('c', sheep[3][5:12]))
+
+        self.assertEqual(f.next(), sheep[3][12:])
+        r = f.readlines()
+        self.assertEqual(r, sheep[4:])
+        self.assertRaises(StopIteration, f.next)
+
+        f.close()
+
 
 class FileSubclassTests(unittest.TestCase):
 
