@@ -560,6 +560,18 @@ public class PyFileDerived extends PyFile implements Slotted {
         return super.__ne__(other);
     }
 
+    public PyObject __format__(PyObject other) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__format__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
+        return super.__format__(other);
+    }
+
     public PyObject __iadd__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iadd__");
@@ -1107,6 +1119,18 @@ public class PyFileDerived extends PyFile implements Slotted {
             return((PyTuple)res).getArray();
         }
         return super.__coerce_ex__(o);
+    }
+
+    // Hand-crafted in file.derived
+
+    public void close() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("close");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__();
+        } else {
+            super.close();
+        }
     }
 
     public String toString() {

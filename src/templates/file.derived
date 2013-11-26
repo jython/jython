@@ -2,3 +2,16 @@ base_class: PyFile
 want_dict: true
 ctr:
 incl: object
+
+rest:
+    // Hand-crafted in file.derived
+
+    public void close() {
+        PyType self_type = getType();
+        PyObject impl = self_type.lookup("close");
+        if (impl != null) {
+            impl.__get__(this, self_type).__call__();
+        } else {
+            super.close();
+        }
+    }

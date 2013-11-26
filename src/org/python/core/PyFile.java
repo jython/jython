@@ -526,7 +526,7 @@ public class PyFile extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.file___exit___doc)
     final void file___exit__(PyObject type, PyObject value, PyObject traceback) {
-        file_close();
+        close();
     }
 
     public void __exit__(PyObject type, PyObject value, PyObject traceback) {

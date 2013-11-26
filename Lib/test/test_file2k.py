@@ -478,7 +478,6 @@ class OtherFileTests(unittest.TestCase):
 
 class FileSubclassTests(unittest.TestCase):
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def testExit(self):
         # test that exiting with context calls subclass' close
         class C(file):
@@ -754,10 +753,10 @@ class StdoutTests(unittest.TestCase):
 
 def test_main():
     run_unittest(
-             AutoFileTests, 
-             OtherFileTests, 
+             AutoFileTests,
+             OtherFileTests,
              FileSubclassTests,
-             FileThreadingTests, 
+             FileThreadingTests,
              StdoutTests
          )
 
