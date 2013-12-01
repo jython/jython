@@ -3353,7 +3353,6 @@ def test_main():
     if test_support.is_jython:
         del TestDate.test_format
         del TestDateTime.test_format
-        del TestDateTime.test_more_strftime
         del TestDateTime.test_strptime
         del TestTime.test_format
 

@@ -182,7 +182,7 @@ def _format_time(hh, mm, ss, us):
     return result
 
 # Correctly substitute for %z and %Z escapes in strftime formats.
-def _wrap_strftime(object, format, timetuple):
+def _wrap_strftime(object, format, timetuple, microsecond=0):
     year = timetuple[0]
     if year < 1900:
         raise ValueError("year=%d is before 1900; the datetime strftime() "
@@ -225,6 +225,9 @@ def _wrap_strftime(object, format, timetuple):
                                 # strftime is going to have at this: escape %
                                 Zreplace = s.replace('%', '%%')
                     newformat.append(Zreplace)
+                elif ch == 'f':
+                    us_string = '%.06d' % microsecond
+                    newformat.append(us_string)
                 else:
                     push('%')
                     push(ch)
@@ -1269,7 +1272,7 @@ class time(object):
         timetuple = (1900, 1, 1,
                      self.__hour, self.__minute, self.__second,
                      0, 1, -1)
-        return _wrap_strftime(self, fmt, timetuple)
+        return _wrap_strftime(self, fmt, timetuple, self.microsecond)
 
     # Timezone functions
 
@@ -1633,6 +1636,10 @@ class datetime(date):
     def __str__(self):
         "Convert to string, for str()."
         return self.isoformat(sep=' ')
+
+    def strftime(self, fmt):
+        "Format using strftime()."
+        return _wrap_strftime(self, fmt, self.timetuple(), self.microsecond)
 
     def utcoffset(self):
         """Return the timezone offset in minutes east of UTC (negative west of
