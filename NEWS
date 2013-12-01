@@ -9,6 +9,7 @@ Jython 2.7b2
     - [ 2020 ] str.translate should delete characters in the second arg when table is None
     - [ 1753 ] zlib doesn't call end() on compress and decompress
     - [ 1860 ] test failures in test_array.py
+    - [ 2033 ] test_strptime fails: test_mar1_comes_after_feb29_even_when_omitting_the_year
     - [ 2046 ] sys.stdin.readline() hangs when used interactively (JLine, Windows)
     - [ 2060 ] Thread ident missing
     - [ 2082 ] Unexpected (Pdb) prompt during regression tests

@@ -750,14 +750,18 @@ public class Time implements ClassDictInit
 
 
     /**
-     * @return the {@link SimpleDateFormat} format string equivalent to the
-     * strptime format string supplied as parameter, or <b>null</b> if there is
-     * no equivalent for SimpleDateFormat.
+     * Returns a {@link SimpleDateFormat} format string equivalent to the <code>strptime</code>
+     * format string supplied as parameter. If there is no reliable equivalent, it returns
+     * <code>null</code>, and the caller will use the Python implementation.
+     *
+     * @return format equivalent or <code>null</code>
      */
     private static String py2java_format(String format) {
         StringBuilder builder = new StringBuilder();
         boolean directive = false;
         boolean inQuote = false;
+        boolean containsYear = false;
+        boolean containsMonth = false;
 
         if (format.length() == 0) {
             return null;
@@ -796,8 +800,29 @@ public class Time implements ClassDictInit
             if (translated == null && notSupported.contains(charAt)) {
                 return null;
             }
+
+            switch (charAt) {
+                case 'c':
+                case 'x':
+                    containsMonth = containsYear = true;
+                    break;
+                case 'y':
+                case 'Y':
+                    containsYear = true;
+                    break;
+                case 'b':
+                case 'B':
+                case 'm':
+                    containsMonth = true;
+                    break;
+            }
+
             builder.append(translated != null ? translated : charAt);
             directive = false;
+        }
+        if (containsMonth && !containsYear) {
+            // Java differs from Python concerning 29 Feb with no year: safe choice is fall-back.
+            return null;
         }
         if (inQuote) {
             builder.append("'");
