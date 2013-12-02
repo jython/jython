@@ -704,7 +704,12 @@ public class Time implements ClassDictInit
             // Format not translatable to java, fallback to _strptime
             return pystrptime(data_string, format);
         }
-        SimpleDateFormat d = new SimpleDateFormat(jformat);
+        SimpleDateFormat d = null;
+        try {
+            d = new SimpleDateFormat(jformat);
+        } catch (IllegalArgumentException e) {
+            throwValueError(e.getLocalizedMessage());
+        }
         Calendar cal = Calendar.getInstance();
         try {
             cal.setTime(d.parse(data_string));
@@ -746,6 +751,7 @@ public class Time implements ClassDictInit
     // strptime formats not supported by SimpleDateFormat:
     private static final List<Character> notSupported = new ArrayList<Character>() {{
         add('w');
+        add('f');
     }};
 
 
