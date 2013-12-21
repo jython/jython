@@ -206,7 +206,7 @@ public class PyFile extends PyObject {
     private String parseMode(String mode) {
 
         String message = null;
-        boolean duplicate = false, invalid = false;
+        boolean duplicate = false, invalid = false, text_intent = false;
         int n = mode.length();
 
         // Convert the letters to booleans, noticing duplicates
@@ -233,6 +233,11 @@ public class PyFile extends PyObject {
                 case 'b':
                     duplicate = binary;
                     binary = true;
+                    break;
+                case 't':
+                    duplicate = text_intent;
+                    text_intent = true;
+                    binary = false;
                     break;
                 case 'U':
                     duplicate = universal;
