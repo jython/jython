@@ -15,6 +15,7 @@ Jython 2.7b2
     - [ 2060 ] Thread ident missing
     - [ 2071 ] datetime strftime %f does not work
     - [ 2082 ] Unexpected (Pdb) prompt during regression tests
+    - [ 2083 ] os.unlink() can delete directories
 
 Jython 2.7b1
   Bugs Fixed

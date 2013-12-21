@@ -722,19 +722,18 @@ public class PosixModule implements ClassDictInit {
         return posix.umask(mask);
     }
 
-    public static PyString __doc__unlink = new PyString(
-        "unlink(path)\n\n" +
-        "Remove a file (same as remove(path)).");
+    public static PyString __doc__unlink = new PyString("unlink(path)\n\n"
+            + "Remove a file (same as remove(path)).");
+
     public static void unlink(PyObject path) {
         String absolutePath = absolutePath(path);
         File file = new File(absolutePath);
-        if (!file.delete()) {
+        if (file.isDirectory()) {
+            throw Py.OSError(Errno.EISDIR, path);
+        } else if (!file.delete()) {
             // Something went wrong, does stat raise an error?
             posix.stat(absolutePath);
-            // It exists, is it a directory, or do we not have permissions?
-            if (file.isDirectory()) {
-                throw Py.OSError(Errno.EISDIR, path);
-            }
+            // It exists, do we not have permissions?
             if (!file.canWrite()) {
                 throw Py.OSError(Errno.EPERM, path);
             }

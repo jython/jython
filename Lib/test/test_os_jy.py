@@ -6,7 +6,7 @@ import os
 import unittest
 from test import test_support
 
-class OSTestCase(unittest.TestCase):
+class OSFileTestCase(unittest.TestCase):
 
     def setUp(self):
         open(test_support.TESTFN, 'w').close()
@@ -50,9 +50,37 @@ class OSTestCase(unittest.TestCase):
                 self.assertTrue(False)
 
 
-def test_main():
-    test_support.run_unittest(OSTestCase)
+class OSDirTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.base = test_support.TESTFN
+        self.path = os.path.join(self.base, 'dir1', 'dir2', 'dir3')
+        os.makedirs(self.path)
+
+    def test_rmdir(self):
+        # Remove end directory
+        os.rmdir(self.path)
+        # Fail to remove a chain of directories
+        self.assertRaises(OSError, os.rmdir, self.base)
+
+    def test_issue2083(self):
+        # Should fail to remove/unlink directory
+        self.assertRaises(OSError, os.remove, self.path)
+        self.assertRaises(OSError, os.unlink, self.path)
+
+    def tearDown(self):
+        # Some dirs may have been deleted. Find the longest that exists.
+        p = self.path
+        while not os.path.exists(p) and p != self.base:
+            p = os.path.dirname(p)
+        os.removedirs(p)
+
+
+def test_main():
+    test_support.run_unittest(
+        OSFileTestCase, 
+        OSDirTestCase,
+    )
 
 if __name__ == '__main__':
     test_main()
