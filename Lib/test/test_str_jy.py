@@ -53,6 +53,11 @@ class FormatTest(unittest.TestCase):
         self.assertEquals("%+f" % -5, "-5.000000")
         self.assertEquals("%+f" % 5, "+5.000000")
 
+    def test_format_issue2075(self):
+        self.assertEquals("%#018x" % 14, "0x000000000000000e")
+        self.assertEquals("{:#018x}".format(14), "0x000000000000000e")
+        self.assertEquals("{:+#018X}".format(14), "+0X00000000000000E")
+        self.assertEquals("{:#018X}".format(-14), "-0X00000000000000E")
 
     def test_argument_count_exception(self):
         "exception thrown when too many or too few arguments for format string"
