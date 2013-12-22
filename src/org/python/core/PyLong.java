@@ -977,7 +977,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___oct___doc)
     final PyString long___oct__() {
-        String s = getValue().toString(8);
+        String s = PyInteger.toOctString(getValue());
         if (s.startsWith("-")) {
             return new PyString("-0" + s.substring(1, s.length()) + "L");
         } else if (s.startsWith("0")) {
@@ -994,7 +994,7 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___hex___doc)
     final PyString long___hex__() {
-        String s = getValue().toString(16);
+        String s = PyInteger.toHexString(getValue());
         if (s.startsWith("-")) {
             return new PyString("-0x" + s.substring(1, s.length()) + "L");
         } else {

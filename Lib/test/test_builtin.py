@@ -1141,7 +1141,6 @@ class BuiltinTest(unittest.TestCase):
             self.assertRaises(TypeError, range, 1e100, 1e100, 1)
             self.assertRaises(TypeError, range, 1e100, 1e100, 1e100)
 
-    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_input_and_raw_input(self):
         self.write_testfile()
         fp = open(TESTFN, 'r')

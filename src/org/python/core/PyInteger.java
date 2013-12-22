@@ -38,6 +38,8 @@ public class PyInteger extends PyObject {
     @Deprecated
     public static final BigInteger maxInt = MAX_INT;
 
+    private static final String LOOKUP = "0123456789abcdef";
+
     private final int value;
 
     public PyInteger(PyType subType, int v) {
@@ -1047,6 +1049,7 @@ public class PyInteger extends PyObject {
         if (spec.precision != -1) {
             throw new IllegalArgumentException("Precision not allowed in integer format specifier");
         }
+
         int sign;
         if (value instanceof Integer) {
             int intValue = (Integer) value;
@@ -1054,7 +1057,11 @@ public class PyInteger extends PyObject {
         } else {
             sign = ((BigInteger) value).signum();
         }
+
         String strValue;
+        String strPrefix = "";
+        String strSign = "";
+
         if (spec.type == 'c') {
             if (spec.sign != '\0') {
                 throw new IllegalArgumentException("Sign not allowed with integer format "
@@ -1090,13 +1097,26 @@ public class PyInteger extends PyObject {
                 format.setGroupingUsed(true);
                 strValue = format.format(value);
             } else if (value instanceof BigInteger) {
-                strValue = ((BigInteger) value).toString(radix);
+                switch (radix) {
+                    case 2:
+                        strValue = toBinString((BigInteger) value);
+                        break;
+                    case 8:
+                        strValue = toOctString((BigInteger) value);
+                        break;
+                    case 16:
+                        strValue = toHexString((BigInteger) value);
+                        break;
+                    default:
+                        // General case (v.slow in known implementations up to Java 7).
+                        strValue = ((BigInteger) value).toString(radix);
+                        break;
+                }
             } else {
                 strValue = Integer.toString((Integer) value, radix);
             }
 
             if (spec.alternate) {
-                String strPrefix = "";
                 switch (radix) {
                     case 2:
                         strPrefix = "0b";
@@ -1109,32 +1129,145 @@ public class PyInteger extends PyObject {
                         break;
                 }
 
-                if (strValue.startsWith("-")) {
-                    //assert (sign < 0);
-                    if (!strPrefix.equals(""))
-                        strValue = "-" + strPrefix + strValue.substring(1, strValue.length());
-                } else {
-                    strValue = strPrefix + strValue;
+                if (sign < 0) {
+                    assert (strValue.startsWith("-"));
+                    strSign = "-";
+                    strValue = strValue.substring(1);
                 }
             }
 
             if (spec.type == 'X') {
+                strPrefix = strPrefix.toUpperCase();
                 strValue = strValue.toUpperCase();
             }
 
             if (sign >= 0) {
-                if (spec.sign == '+') {
-                    strValue = "+" + strValue;
-                } else if (spec.sign == ' ') {
-                    strValue = " " + strValue;
+                switch (spec.sign) {
+                    case '+':
+                    case ' ':
+                        strSign = Character.toString(spec.sign);
+                        break;
                 }
             }
         }
-        if (spec.align == '=' && (sign < 0 || spec.sign == '+' || spec.sign == ' ')) {
-            char signChar = strValue.charAt(0);
-            return signChar + spec.pad(strValue.substring(1), '>', 1);
+
+        if (spec.align == '=' && (spec.sign == '-' || spec.sign == '+' || spec.sign == ' ')) {
+            assert (strSign.length() == 1);
+            return strSign + strPrefix + spec.pad(strValue, '>', 1 + strPrefix.length());
         }
-        return spec.pad(strValue, '>', 0);
+
+        if (spec.fill_char == 0) {
+            return spec.pad(strSign + strPrefix + strValue, '>', 0);
+        }
+
+        return strSign + strPrefix + spec.pad(strValue, '>', strSign.length() + strPrefix.length());
+    }
+
+    /**
+     * A more efficient algorithm for generating a hexadecimal representation of a byte array.
+     * {@link BigInteger#toString(int)} is too slow because it generalizes to any radix and,
+     * consequently, is implemented using expensive mathematical operations.
+     *
+     * @param value the value to generate a hexadecimal string from
+     * @return the hexadecimal representation of value, with "-" sign prepended if necessary
+     */
+    static final String toHexString(BigInteger value) {
+        int signum = value.signum();
+
+        // obvious shortcut
+        if (signum == 0) {
+            return "0";
+        }
+
+        // we want to work in absolute numeric value (negative sign is added afterward)
+        byte[] input = value.abs().toByteArray();
+        StringBuilder sb = new StringBuilder(input.length * 2);
+
+        int b;
+        for (int i = 0; i < input.length; i++) {
+            b = input[i] & 0xFF;
+            sb.append(LOOKUP.charAt(b >> 4));
+            sb.append(LOOKUP.charAt(b & 0x0F));
+        }
+
+        // before returning the char array as string, remove leading zeroes, but not the last one
+        String result = sb.toString().replaceFirst("^0+(?!$)", "");
+        return signum < 0 ? "-" + result : result;
+    }
+
+    /**
+     * A more efficient algorithm for generating an octal representation of a byte array.
+     * {@link BigInteger#toString(int)} is too slow because it generalizes to any radix and,
+     * consequently, is implemented using expensive mathematical operations.
+     *
+     * @param value the value to generate an octal string from
+     * @return the octal representation of value, with "-" sign prepended if necessary
+     */
+    static final String toOctString(BigInteger value) {
+        int signum = value.signum();
+
+        // obvious shortcut
+        if (signum == 0) {
+            return "0";
+        }
+
+        byte[] input = value.abs().toByteArray();
+        if (input.length < 3) {
+            return value.toString(8);
+        }
+
+        StringBuilder sb = new StringBuilder(input.length * 3);
+
+        // working backwards, three bytes at a time
+        int threebytes;
+        int trip1, trip2, trip3;    // most, middle, and least significant bytes in the triplet
+        for (int i = input.length - 1; i >= 0; i -= 3) {
+            trip3 = input[i] & 0xFF;
+            trip2 = ((i - 1) >= 0) ? (input[i - 1] & 0xFF) : 0x00;
+            trip1 = ((i - 2) >= 0) ? (input[i - 2] & 0xFF) : 0x00;
+            threebytes = trip3 | (trip2 << 8) | (trip1 << 16);
+
+            // convert the three-byte value into an eight-character octal string
+            for (int j = 0; j < 8; j++) {
+                sb.append(LOOKUP.charAt((threebytes >> (j * 3)) & 0x000007));
+            }
+        }
+
+        String result = sb.reverse().toString().replaceFirst("^0+(?!%)", "");
+        return signum < 0 ? "-" + result : result;
+    }
+
+    /**
+     * A more efficient algorithm for generating a binary representation of a byte array.
+     * {@link BigInteger#toString(int)} is too slow because it generalizes to any radix and,
+     * consequently, is implemented using expensive mathematical operations.
+     *
+     * @param value the value to generate a binary string from
+     * @return the binary representation of value, with "-" sign prepended if necessary
+     */
+    static final String toBinString(BigInteger value) {
+        int signum = value.signum();
+
+        // obvious shortcut
+        if (signum == 0) {
+            return "0";
+        }
+
+        // we want to work in absolute numeric value (negative sign is added afterward)
+        byte[] input = value.abs().toByteArray();
+        StringBuilder sb = new StringBuilder(value.bitCount());
+
+        int b;
+        for (int i = 0; i < input.length; i++) {
+            b = input[i] & 0xFF;
+            for (int bit = 7; bit >= 0; bit--) {
+                sb.append(((b >> bit) & 0x1) > 0 ? "1" : "0");
+            }
+        }
+
+        // before returning the char array as string, remove leading zeroes, but not the last one
+        String result = sb.toString().replaceFirst("^0+(?!$)", "");
+        return signum < 0 ? "-" + result : result;
     }
 
     @Override
