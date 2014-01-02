@@ -433,8 +433,8 @@ class JavaVisitor(EmitVisitor):
         # The accept() method
         self.emit("public <R> R accept(VisitorIF<R> visitor) throws Exception {", depth)
         if is_product:
-            self.emit('traverse(visitor);' % clsname, depth+1)
-            self.emit('return null;' % clsname, depth+1)
+            self.emit('traverse(visitor);', depth+1)
+            self.emit('return null;', depth+1)
         else:
             self.emit('return visitor.visit%s(this);' % clsname, depth+1)
         self.emit("}", depth)
@@ -564,7 +564,7 @@ class JavaVisitor(EmitVisitor):
                 self.emit("return (PyObject)%s;" % field.name, depth+1)
             elif str(field.type) == 'bool':
                 self.emit("if (%s) return Py.True;" % field.name, depth+1)
-                self.emit("return Py.False;" % field.name, depth+1)
+                self.emit("return Py.False;", depth+1)
             elif str(field.type) == 'int':
                 self.emit("return Py.newInteger(%s);" % field.name, depth+1)
             elif field.typedef.simple:
