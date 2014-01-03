@@ -311,6 +311,9 @@ class JavaVisitor(EmitVisitor):
         self.javaMethods(product, name, name, True, product.fields,
                          depth+1)
 
+        if str(name) in indexer_support:
+            self.indexerSupport(str(name), depth)
+
         self.emit("}", depth)
         self.close()
 
@@ -375,6 +378,8 @@ class JavaVisitor(EmitVisitor):
             self.emit("}", depth + 1)
             self.emit("", 0)
 
+        if str(cons.name) in indexer_support:
+            self.indexerSupport(str(cons.name), depth)
 
         self.emit("}", depth)
         self.close()
@@ -609,6 +614,11 @@ class JavaVisitor(EmitVisitor):
         if check_seq and field.seq:
             return "java.util.List<%s>" % jtype
         return jtype
+    
+    def indexerSupport(self, name, depth):
+        print "emitting indexer support for", name
+	self.emit("// Support for indexer below", depth + 1)
+        self.file.write(indexer_support[name])
 
 class VisitorVisitor(EmitVisitor):
     def __init__(self, dir):
@@ -672,6 +682,195 @@ def main(outdir, grammar="Python.asdl"):
                         JavaVisitor(outdir),
                         VisitorVisitor(outdir))
     c.visit(mod)
+
+indexer_support = {"Attribute": """
+    private Name attrName;
+    public Name getInternalAttrName() {
+        return attrName;
+    }
+    public Attribute(Token token, expr value, Name attr, expr_contextType ctx) {
+        super(token);
+        this.value = value;
+        addChild(value);
+        this.attr = attr.getText();
+        this.attrName = attr;
+        this.ctx = ctx;
+    }
+
+    public Attribute(Integer ttype, Token token, expr value, Name attr, expr_contextType ctx) {
+        super(ttype, token);
+        this.value = value;
+        addChild(value);
+        this.attr = attr.getText();
+        this.attrName = attr;
+        this.ctx = ctx;
+    }
+""",
+
+"ClassDef": """
+    private Name nameNode;
+    public Name getInternalNameNode() {
+        return nameNode;
+    }
+    public ClassDef(Token token, Name name, java.util.List<expr> bases, java.util.List<stmt>
+    body, java.util.List<expr> decorator_list) {
+        super(token);
+        this.name = name.getText();
+        this.nameNode = name;
+        this.bases = bases;
+        if (bases == null) {
+            this.bases = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.bases) {
+            addChild(t);
+        }
+        this.body = body;
+        if (body == null) {
+            this.body = new ArrayList<stmt>();
+        }
+        for(PythonTree t : this.body) {
+            addChild(t);
+        }
+        this.decorator_list = decorator_list;
+        if (decorator_list == null) {
+            this.decorator_list = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.decorator_list) {
+            addChild(t);
+        }
+    }
+""",
+
+"FunctionDef": """
+    private Name nameNode;
+    public Name getInternalNameNode() {
+        return nameNode;
+    }
+    public FunctionDef(Token token, Name name, arguments args, java.util.List<stmt> body,
+            java.util.List<expr> decorator_list) {
+        super(token);
+        this.name = name.getText();
+        this.nameNode = name;
+        this.args = args;
+        this.body = body;
+        if (body == null) {
+            this.body = new ArrayList<stmt>();
+        }
+        for(PythonTree t : this.body) {
+            addChild(t);
+        }
+        this.decorator_list = decorator_list;
+        if (decorator_list == null) {
+            this.decorator_list = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.decorator_list) {
+            addChild(t);
+        }
+    }
+""",
+
+"Global": """
+    private java.util.List<Name> nameNodes;
+    public java.util.List<Name> getInternalNameNodes() {
+        return nameNodes;
+    }
+    public Global(Token token, java.util.List<String> names, java.util.List<Name> nameNodes) {
+        super(token);
+        this.names = names;
+        this.nameNodes = nameNodes;
+    }
+""",
+
+"ImportFrom": """
+    private java.util.List<Name> moduleNames;
+    public java.util.List<Name> getInternalModuleNames() {
+        return moduleNames;
+    }
+    public ImportFrom(Token token,
+                      String module, java.util.List<Name> moduleNames,
+                      java.util.List<alias> names, Integer level) {
+        super(token);
+        this.module = module;
+        this.names = names;
+        if (names == null) {
+            this.names = new ArrayList<alias>();
+        }
+        for(PythonTree t : this.names) {
+            addChild(t);
+        }
+        this.moduleNames = moduleNames;
+        if (moduleNames == null) {
+            this.moduleNames = new ArrayList<Name>();
+        }
+        for(PythonTree t : this.moduleNames) {
+            addChild(t);
+        }
+        this.level = level;
+    }
+""",
+
+"alias": """
+    private java.util.List<Name> nameNodes;
+    public java.util.List<Name> getInternalNameNodes() {
+        return nameNodes;
+    }
+    private Name asnameNode;
+    public Name getInternalAsnameNode() {
+        return asnameNode;
+    }
+    // [import] name [as asname]
+    public alias(Name name, Name asname) {
+        this(java.util.Arrays.asList(new Name[]{name}), asname);
+    }
+
+    // [import] ...foo.bar.baz [as asname]
+    public alias(java.util.List<Name> nameNodes, Name asname) {
+        this.nameNodes = nameNodes;
+        this.name = dottedNameListToString(nameNodes);
+        if (asname != null) {
+            this.asnameNode = asname;
+            this.asname = asname.getInternalId();
+        }
+    }
+""",
+
+"arguments": """
+    private Name varargName;
+    public Name getInternalVarargName() {
+        return varargName;
+    }
+    private Name kwargName;
+    public Name getInternalKwargName() {
+        return kwargName;
+    }
+    // XXX: vararg and kwarg are deliberately moved to the end of the
+    // method signature to avoid clashes with the (Token, List<expr>,
+    // String, String, List<expr>) version of the constructor.
+    public arguments(Token token, java.util.List<expr> args,
+            java.util.List<expr> defaults, Name vararg, Name kwarg) {
+        super(token);
+        this.args = args;
+        if (args == null) {
+            this.args = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.args) {
+            addChild(t);
+        }
+        this.vararg = vararg == null ? null : vararg.getText();
+        this.varargName = vararg;
+        this.kwarg = kwarg == null ? null : kwarg.getText();
+        this.kwargName = kwarg;
+        this.defaults = defaults;
+        if (defaults == null) {
+            this.defaults = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.defaults) {
+            addChild(t);
+        }
+    }
+""",
+
+}
 
 if __name__ == "__main__":
     import sys
