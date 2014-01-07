@@ -7,8 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -26,6 +26,7 @@ import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.core.io.BinaryIOWrapper;
 import org.python.core.io.BufferedReader;
+import org.python.core.io.BufferedWriter;
 import org.python.core.io.IOBase;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
@@ -52,13 +53,12 @@ public class PyBZ2File extends PyObject {
 
     private TextIOBase buffer;
     private String fileName = null;
-    private String fileMode = "";
     private boolean inIterMode = false;
     private boolean inUniversalNewlineMode = false;
     private boolean needReadBufferInit = false;
     private boolean inReadMode = false;
+    private boolean inWriteMode = false;
 
-    private BZip2CompressorOutputStream writeStream = null;
 
     public PyBZ2File() {
         super(TYPE);
@@ -96,7 +96,6 @@ public class PyBZ2File extends PyObject {
             int buffering, int compresslevel) {
         try {
             fileName = inFileName.asString();
-            fileMode = mode;
             this.buffering = buffering;
 
             // check universal newline mode
@@ -105,13 +104,18 @@ public class PyBZ2File extends PyObject {
             }
 
             if (mode.contains("w")) {
+                inWriteMode = true;
                 File f = new File(fileName);
                 if (!f.exists()) {
                     f.createNewFile();
                 }
 
-                writeStream = new BZip2CompressorOutputStream(
+                BZip2CompressorOutputStream writeStream = new BZip2CompressorOutputStream(
                         new FileOutputStream(fileName), compresslevel);
+                buffer = new BinaryIOWrapper(
+                            new BufferedWriter(
+                                new SkippableStreamIO(writeStream, true),
+                                buffering));
             } else {
                 File f = new File(fileName);
                 if (!f.exists()) {
@@ -154,29 +158,16 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public void BZ2File_close() {
-        if (writeStream != null) {
-            BZ2File_flush();
-            try {
-                writeStream.close();
-                writeStream = null;
-            } catch (IOException e) {
-                throw Py.IOError(e.getMessage());
-            }
-        }
-
         needReadBufferInit = false;
+        BZ2File_flush();
         if (buffer != null) {
             buffer.close();
         }
     }
 
     private void BZ2File_flush() {
-        if (writeStream != null) {
-            try {
-                writeStream.flush();
-            } catch (IOException e) {
-                throw Py.IOError(e.getMessage());
-            }
+        if (buffer != null) {
+            buffer.flush();
         }
     }
 
@@ -339,16 +330,8 @@ public class PyBZ2File extends PyObject {
         if (data.getType() == PyNone.TYPE) {
             throw Py.TypeError("Expecting str argument");
         }
-        byte[] buf = ap.getString(0).getBytes();
 
-        try {
-            synchronized (this) {
-                writeStream.write(buf);
-            }
-        } catch (IOException e) {
-
-            throw Py.IOError(e.getMessage());
-        }
+        buffer.write(ap.getString(0));
     }
 
     @ExposedMethod
@@ -373,7 +356,8 @@ public class PyBZ2File extends PyObject {
         if (inReadMode) {
             throw Py.IOError("File in read-only mode");
         }
-        if (writeStream == null) {
+
+        if (buffer == null || buffer.closed()) {
             throw Py.ValueError("Stream closed");
         }
     }
@@ -401,8 +385,8 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyObject BZ2File___enter__() {
-        if (fileMode.contains("w")) {
-            if (writeStream == null) {
+        if (inWriteMode) {
+            if (buffer == null) {
                 throw Py.ValueError("Stream closed");
             }
         } else if (inReadMode && !needReadBufferInit) {
@@ -426,6 +410,10 @@ public class PyBZ2File extends PyObject {
 
         public SkippableStreamIO(InputStream inputStream, boolean closefd) {
             super(inputStream, closefd);
+        }
+
+        public SkippableStreamIO(OutputStream outputStream, boolean closefd) {
+            super(outputStream, closefd);
         }
 
         @Override
