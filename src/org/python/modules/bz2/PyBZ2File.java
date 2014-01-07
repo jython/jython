@@ -55,6 +55,8 @@ public class PyBZ2File extends PyObject {
     private String fileMode = "";
     private boolean inIterMode = false;
     private boolean inUniversalNewlineMode = false;
+    private boolean needReadBufferInit = false;
+    private boolean inReadMode = false;
 
     private BZip2CompressorOutputStream writeStream = null;
 
@@ -111,7 +113,13 @@ public class PyBZ2File extends PyObject {
                 writeStream = new BZip2CompressorOutputStream(
                         new FileOutputStream(fileName), compresslevel);
             } else {
-                makeReadBuffer();
+                File f = new File(fileName);
+                if (!f.exists()) {
+                    throw new FileNotFoundException();
+                }
+
+                inReadMode = true;
+                needReadBufferInit = true;
             }
         } catch (IOException e) {
             throw Py.IOError("File " + fileName + " not found,");
@@ -134,8 +142,8 @@ public class PyBZ2File extends PyObject {
             }
         } catch (FileNotFoundException fileNotFoundException) {
             throw Py.IOError(fileNotFoundException);
-        } catch (IOException io) {
-            throw Py.IOError(io);
+        } catch (IOException ioe) {
+            throw Py.EOFError(ioe.getMessage());
         }
     }
 
@@ -155,6 +163,8 @@ public class PyBZ2File extends PyObject {
                 throw Py.IOError(e.getMessage());
             }
         }
+
+        needReadBufferInit = false;
         if (buffer != null) {
             buffer.close();
         }
@@ -173,6 +183,7 @@ public class PyBZ2File extends PyObject {
     @ExposedMethod
     public PyObject BZ2File_read(PyObject[] args, String[] kwds) {
         checkInIterMode();
+        checkReadBufferInit();
 
         ArgParser ap = new ArgParser("read", args, kwds,
                 new String[] { "size" }, 0);
@@ -185,6 +196,8 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyObject BZ2File_next(PyObject[] args, String[] kwds) {
+        checkReadBufferInit();
+
         if (buffer == null || buffer.closed()) {
             throw Py.ValueError("Cannot call next() on closed file");
         }
@@ -196,6 +209,7 @@ public class PyBZ2File extends PyObject {
     @ExposedMethod
     public PyString BZ2File_readline(PyObject[] args, String[] kwds) {
         checkInIterMode();
+        checkReadBufferInit();
 
         ArgParser ap = new ArgParser("read", args, kwds,
                 new String[] { "size" }, 0);
@@ -208,6 +222,7 @@ public class PyBZ2File extends PyObject {
     @ExposedMethod
     public PyList BZ2File_readlines(PyObject[] args, String[] kwds) {
         checkInIterMode();
+        checkReadBufferInit();
 
         // make sure file data valid
         if (buffer == null || buffer.closed()) {
@@ -224,10 +239,15 @@ public class PyBZ2File extends PyObject {
     }
 
     private void checkInIterMode() {
-        if (fileMode.contains("r")) {
-            if (inIterMode) {
-                throw Py.ValueError("Cannot mix iteration and reads");
-            }
+        if (inReadMode && inIterMode) {
+            throw Py.ValueError("Cannot mix iteration and reads");
+        }
+    }
+
+    private void checkReadBufferInit() {
+        if (inReadMode && needReadBufferInit) {
+            makeReadBuffer();
+            needReadBufferInit = false;
         }
     }
 
@@ -238,15 +258,17 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public void BZ2File_seek(PyObject[] args, String[] kwds) {
+        if (!inReadMode) {
+            Py.IOError("seek works only while reading");
+        }
+
         ArgParser ap = new ArgParser("seek", args, kwds, new String[] {
                 "offset", "whence" }, 1);
 
+        checkReadBufferInit();
+
         int newOffset = ap.getInt(0);
         int whence = ap.getInt(1, 0);
-
-        if (fileMode.contains("w")) {
-            Py.IOError("seek works only while reading");
-        }
 
         // normalise offset
         long currentPos = buffer.tell();
@@ -298,6 +320,7 @@ public class PyBZ2File extends PyObject {
 
     @ExposedMethod
     public PyLong BZ2File_tell() {
+        checkReadBufferInit();
         if (buffer == null) {
             return Py.newLong(0);
         } else {
@@ -347,7 +370,7 @@ public class PyBZ2File extends PyObject {
     }
 
     private void checkFileWritable() {
-        if (fileMode.contains("r")) {
+        if (inReadMode) {
             throw Py.IOError("File in read-only mode");
         }
         if (writeStream == null) {
@@ -382,7 +405,7 @@ public class PyBZ2File extends PyObject {
             if (writeStream == null) {
                 throw Py.ValueError("Stream closed");
             }
-        } else if (fileMode.contains("r")) {
+        } else if (inReadMode && !needReadBufferInit) {
             if (buffer == null || buffer.closed()) {
                 throw Py.ValueError("Stream closed");
             }
