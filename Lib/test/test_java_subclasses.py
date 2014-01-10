@@ -8,6 +8,7 @@ from test import test_support
 from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, Runnable, String,
         Thread, ThreadGroup)
 from java.util import Date, Hashtable, Vector
+from java.util.concurrent import Callable, Executors
 
 from java.awt import Color, Component, Dimension, Rectangle
 from javax.swing import ComboBoxModel, ListModel
@@ -331,13 +332,56 @@ class ContextClassloaderTest(unittest.TestCase):
         self.assertEquals(len(called), 1)
 
 
+class MetaClass(type):
+    def __new__(meta, name, bases, d):
+
+        # Insert the method to be called from Java
+        def call(self):
+            return self.x
+
+        d["call"] = call
+        d["foo"] = 99
+        return super(MetaClass, meta).__new__(meta, name, bases, d)
+
+
+class MetaBase(object):
+    __metaclass__ = MetaClass
+
+
+class MetaClassTest(unittest.TestCase):
+
+    def test_java_with_metaclass_base(self):
+        """Java classes can be mixed with Python bases using metaclasses"""
+        
+        # Permute mixin order
+        class Bar(MetaBase, Callable):
+            def __init__(self, x):
+                self.x = x
+
+        class Baz(Callable, MetaBase):
+            def __init__(self, x):
+                self.x = x
+
+        # Go through {bar|baz}.call indirectly through a Java path,
+        # just to ensure this mixin provided by the metaclass is available
+        pool = Executors.newSingleThreadExecutor()
+        bar = Bar(42)
+        self.assertEqual(bar.foo, 99)
+        self.assertEqual(42, pool.submit(bar).get())
+        baz = Baz(47)
+        self.assertEqual(baz.foo, 99)
+        self.assertEqual(47, pool.submit(baz).get())
+        pool.shutdown()
+
+
 def test_main():
     test_support.run_unittest(InterfaceTest,
             TableModelTest,
             AutoSuperTest,
             PythonSubclassesTest,
             AbstractOnSyspathTest,
-            ContextClassloaderTest)
+            ContextClassloaderTest,
+            MetaClassTest)
 
 
 if __name__ == '__main__':

@@ -1119,6 +1119,10 @@ public class PyType extends PyObject implements Serializable {
         return best;
     }
 
+    private static boolean isJavaRootClass(PyType type) {
+        return type instanceof PyJavaType && type.fastGetName().equals("java.lang.Class");
+    }
+
     /**
      * Finds the most derived subtype of initialMetatype in the types
      * of bases, or initialMetatype if it is already the most derived.
@@ -1130,11 +1134,19 @@ public class PyType extends PyObject implements Serializable {
      */
     private static PyType findMostDerivedMetatype(PyObject[] bases_list, PyType initialMetatype) {
         PyType winner = initialMetatype;
+        if (isJavaRootClass(winner)) {  // consider this root class to be equivalent to type
+            winner = PyType.TYPE;
+        }
+
         for (PyObject base : bases_list) {
             if (base instanceof PyClass) {
                 continue;
             }
             PyType curtype = base.getType();
+            if (isJavaRootClass(curtype)) {
+                curtype = PyType.TYPE;
+            }
+
             if (winner.isSubType(curtype)) {
                 continue;
             }
