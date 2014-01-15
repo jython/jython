@@ -461,13 +461,13 @@ class CGIHTTPServerTestCase(BaseTestCase):
                                  msg='path = %r\nGot:    %r\nWanted: %r' %
                                  (path, actual, expected))
 
-    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_headers_and_content(self):
         res = self.request('/cgi-bin/file1.py')
         self.assertEqual(('Hello World\n', 'text/html', 200),
             (res.read(), res.getheader('Content-type'), res.status))
 
-    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_post(self):
         params = urllib.urlencode({'spam' : 1, 'eggs' : 'python', 'bacon' : 123456})
         headers = {'Content-type' : 'application/x-www-form-urlencoded'}
@@ -480,7 +480,7 @@ class CGIHTTPServerTestCase(BaseTestCase):
         res.read()
         self.assertEqual(res.status, 404)
 
-    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_authorization(self):
         headers = {'Authorization' : 'Basic %s' %
                    base64.b64encode('username:pass')}
@@ -488,14 +488,14 @@ class CGIHTTPServerTestCase(BaseTestCase):
         self.assertEqual(('Hello World\n', 'text/html', 200),
                 (res.read(), res.getheader('Content-type'), res.status))
 
-    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_no_leading_slash(self):
         # http://bugs.python.org/issue2254
         res = self.request('cgi-bin/file1.py')
         self.assertEqual(('Hello World\n', 'text/html', 200),
              (res.read(), res.getheader('Content-type'), res.status))
 
-    @unittest.skipIf(test_support.is_jython, "FIME: not working on Jython")
+    @unittest.skipIf(test_support.is_jython, "FIXME: not working on Jython")
     def test_os_environ_is_not_altered(self):
         signature = "Test CGI Server"
         os.environ['SERVER_SOFTWARE'] = signature
