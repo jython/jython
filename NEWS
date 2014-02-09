@@ -5,6 +5,7 @@ Jython 2.7b2
     - [ 1753 ] zlib doesn't call end() on compress and decompress
     - [ 1860 ] test failures in test_array.py
     - [ 1862 ] cStringIO does not support arrays as arguments
+    - [ 1876 ] PYTHONIOENCODING unsupported, used (among others) by PyDev
     - [ 1926 ] Adjust MutableSet.pop test so we do not need to skip it
     - [ 1964 ] time.strptime() does not support %f in format
     - [ 2005 ] threading.Event object's wait([timeout]) function returns null instead of True/False.
@@ -18,6 +19,9 @@ Jython 2.7b2
     - [ 2075 ] Incorrect padding for hex format strings
     - [ 2082 ] Unexpected (Pdb) prompt during regression tests
     - [ 2083 ] os.unlink() can delete directories
+  New Features
+  	- Command line option -E (ignore environment variables)
+  	- Environment variable PYTHONIOENCODING, and corresponding registry items
 
 Jython 2.7b1
   Bugs Fixed

@@ -55,8 +55,7 @@ public class jython {
             + "-c cmd   : program passed in as string (terminates option list)\n"
             // + "-d       : debug output from parser (also PYTHONDEBUG=x)\n"
             + "-Dprop=v : Set the property `prop' to value `v'\n"
-            // + "-E       : ignore environment variables (such as PYTHONPATH)\n"
-            + "-C codec : Use a different codec when reading from the console.\n"
+            + "-E       : ignore environment variables (such as JYTHONPATH)\n"
             + "-h       : print this help message and exit (also --help)\n"
             + "-i       : inspect interactively after running script\n"
             // + ", (also PYTHONINSPECT=x)\n"
@@ -83,9 +82,11 @@ public class jython {
             + "file     : program read from script file\n"
             + "-        : program read from stdin (default; interactive mode if a tty)\n"
             + "arg ...  : arguments passed to program in sys.argv[1:]\n" + "\n"
-            + "Other environment variables:\n" + "JYTHONPATH: '" + File.pathSeparator
+            + "Other environment variables:\n" //
+            + "JYTHONPATH: '" + File.pathSeparator
             + "'-separated list of directories prefixed to the default module\n"
-            + "            search path.  The result is sys.path.";
+            + "            search path.  The result is sys.path.\n"
+            + "PYTHONIOENCODING: Encoding[:errors] used for stdin/stdout/stderr.";
 
     public static boolean shouldRestart;
 
@@ -94,7 +95,7 @@ public class jython {
      * root of the JAR archive. Note that the __name__ is set to the base name of the JAR file and
      * not to "__main__" (for historic reasons). This method do NOT handle exceptions. the caller
      * SHOULD handle any (Py)Exceptions thrown by the code.
-     * 
+     *
      * @param filename The path to the filename to run.
      */
     public static void runJar(String filename) {
@@ -211,16 +212,22 @@ public class jython {
         // Get system properties (or empty set if we're prevented from accessing them)
         Properties preProperties = PySystemState.getBaseProperties();
 
+        // Read environment variable PYTHONIOENCODING into properties (registry)
+        String pythonIoEncoding = getenv("PYTHONIOENCODING");
+        if (pythonIoEncoding != null) {
+            String[] spec = splitString(pythonIoEncoding, ':', 2);
+            // Note that if encoding or errors is blank (=null), the registry value wins.
+            addDefault(preProperties, PySystemState.PYTHON_IO_ENCODING, spec[0]);
+            addDefault(preProperties, PySystemState.PYTHON_IO_ERRORS, spec[1]);
+        }
+
         // Decide if System.in is interactive
         if (!opts.fixInteractive || opts.interactive) {
             // The options suggest System.in is interactive: but only if isatty() agrees
             opts.interactive = Py.isInteractive();
             if (opts.interactive) {
                 // Set the default console type if nothing else has
-                String consoleClassName = preProperties.getProperty("python.console");
-                if (consoleClassName==null) {
-                    preProperties.setProperty("python.console", PYTHON_CONSOLE_CLASS);
-                }
+                addDefault(preProperties, "python.console", PYTHON_CONSOLE_CLASS);
             }
         }
 
@@ -230,7 +237,9 @@ public class jython {
 
         PyList warnoptions = new PyList();
         addWarnings(opts.warnoptions, warnoptions);
-        addWarnings(warnOptionsFromEnv(), warnoptions);
+        if (!Options.ignore_environment) {
+            addWarnings(warnOptionsFromEnv(), warnoptions);
+        }
         systemState.setWarnoptions(warnoptions);
 
         // Make sure warnings module is loaded if there are warning options
@@ -378,24 +387,18 @@ public class jython {
         }
 
         if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
-            if (opts.encoding == null) {
-                opts.encoding = PySystemState.registry.getProperty("python.console.encoding");
-            }
-            if (opts.encoding != null) {
-                if (!Charset.isSupported(opts.encoding)) {
-                    System.err.println(opts.encoding
-                            + " is not a supported encoding on this JVM, so it can't "
-                            + "be used in python.console.encoding.");
-                    System.exit(1);
-                }
-                interp.cflags.encoding = opts.encoding;
-            }
+            // Go interactive with the console: the parser needs to know the encoding.
+            String encoding = Py.getConsole().getEncodingCharset().name();
+
+            // Run the interpreter interactively
             try {
+                interp.cflags.encoding = encoding;
                 interp.interact(null, null);
             } catch (Throwable t) {
                 Py.printException(t);
             }
         }
+
         interp.cleanup();
     }
 
@@ -414,8 +417,78 @@ public class jython {
             // continue
         }
     }
-}
 
+    /**
+     * Return an array of trimmed strings by splitting the argument at each occurrence of a
+     * separator character. (Helper for configuration variable processing.) Segments of zero length
+     * after trimming emerge as <code>null</code>. If there are more than the specified number of
+     * segments the last element of the array contains all of the source string after the
+     * <code>(n-1)</code>th occurrence of <code>sep</code>.
+     *
+     * @param spec to split
+     * @param sep character on which to split
+     * @param n number of parts to split into
+     * @return <code>n</code>-element array of strings (or <code>null</code>s)
+     */
+    private static String[] splitString(String spec, char sep, int n) {
+        String[] list = new String[n];
+        int p = 0, i = 0, L = spec.length();
+        while (p < L) {
+            int c = spec.indexOf(sep, p);
+            if (c < 0 || i >= n - 1) {
+                // No more seps, or no more space: i.th piece is the rest of spec.
+                c = L;
+            }
+            String s = spec.substring(p, c).trim();
+            list[i++] = (s.length() > 0) ? s : null;
+            p = c + 1;
+        }
+        return list;
+    }
+
+    /**
+     * If the key is not currently present and the passed value is not <code>null</code>, sets the
+     * <code>key</code> to the <code>value</code> in the given <code>Properties</code> object. Thus,
+     * it provides a default value for a subsequent <code>getProperty()</code>.
+     *
+     * @param registry to be (possibly) updated
+     * @param key at which to set value
+     * @param value to set (or <code>null</code> for no setting)
+     * @return true iff a value was set
+     */
+    private static boolean addDefault(Properties registry, String key, String value) {
+        // Set value at key if nothing else has set it
+        if (value == null || registry.containsKey(key)) {
+            return false;
+        } else {
+            registry.setProperty(key, value);
+            return true;
+        }
+    }
+
+    /**
+     * Get the value of an environment variable, if we are allowed to and it exists; otherwise
+     * return <code>null</code>. We are allowed to access the environment variable if the -E flag
+     * was not given and the application has permission to read environment variables. The -E flag
+     * is reflected in {@link Options#ignore_environment}, and will be set automatically if it turns
+     * out we do not have permission.
+     *
+     * @param varname name to access in the environment
+     * @return the value or <code>null</code>.
+     */
+    private static String getenv(String varname) {
+        if (!Options.ignore_environment) {
+            try {
+                return System.getenv(varname);
+            } catch (SecurityException e) {
+                // We're not allowed to access them after all
+                Options.ignore_environment = true;
+            }
+        }
+        return null;
+    }
+
+}
 
 class CommandLineOptions {
 
@@ -515,12 +588,8 @@ class CommandLineOptions {
                 } else {
                     return argumentExpected(arg);
                 }
-            } else if (arg.equals("-C")) {
-                encoding = args[++index];
-                setProperty("python.console.encoding", encoding);
             } else if (arg.equals("-E")) {
-                // XXX: accept -E (ignore environment variables) to be compatible with
-                // CPython. do nothing for now (we could ignore the registry)
+                // -E (ignore environment variables)
                 Options.ignore_environment = true;
             } else if (arg.startsWith("-D")) {
                 String key = null;

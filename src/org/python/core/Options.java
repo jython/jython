@@ -83,7 +83,6 @@ public class Options {
     public static boolean dont_write_bytecode = false;
 
     /** Whether -E (ignore environment) was enabled via the command line. */
-    //XXX: place holder, not implemented yet.
     public static boolean ignore_environment = false;
 
     //XXX: place holder, not implemented yet.

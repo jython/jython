@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * A class named in configuration as the value of <code>python.console</code> must implement this
@@ -28,5 +29,12 @@ public interface Console {
      * @throws UnsupportedOperationException if the Console cannot be uninstalled
      */
     public void uninstall() throws UnsupportedOperationException;
+
+    /**
+     * Accessor for encoding to use for line input as a <code>Charset</code>.
+     *
+     * @return Charset of the encoding in use.
+     */
+    public Charset getEncodingCharset();
 
 }

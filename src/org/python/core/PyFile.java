@@ -48,6 +48,9 @@ public class PyFile extends PyObject {
     @ExposedGet(doc = BuiltinDocs.file_encoding_doc)
     public String encoding;
 
+    @ExposedGet(doc = BuiltinDocs.file_errors_doc)
+    public String errors;
+
     /** Indicator dictating whether a space should be written to this
      * file on the next print statement (not currently implemented in
      * print ) */
@@ -167,6 +170,18 @@ public class PyFile extends PyObject {
         } else {
             this.file = new BinaryIOWrapper(buffer);
         }
+    }
+
+    /**
+     * Set the strings defining the encoding and error handling policy. Setting these strings
+     * affects behaviour of the {@link #writelines(PyObject)} when passed a {@link PyUnicode} value.
+     *
+     * @param encoding the <code>encoding</code> property of <code>file</code>.
+     * @param errors the <code>errors</code> property of <code>file</code> (or <code>null</code>).
+     */
+    void setEncoding(String encoding, String errors) {
+        this.encoding = encoding;
+        this.errors = errors;
     }
 
     /**
@@ -446,13 +461,13 @@ public class PyFile extends PyObject {
      *
      * @param obj to write
      * @param message for TypeError if raised (or null for default message)
-     * @return bytes representing tha value (as a String in the Jython convention)
+     * @return bytes representing the value (as a String in the Jython convention)
      */
     private String asWritable(PyObject obj, String message) {
 
         if (obj instanceof PyUnicode) {
-            // By convention, use platform default encoding to bytes
-            return ((PyUnicode)obj).encode();
+            // Unicode must be encoded into bytes (null arguments here invoke the default values)
+            return ((PyUnicode)obj).encode(encoding, errors);
 
         } else if (obj instanceof PyString) {
             // Take a short cut

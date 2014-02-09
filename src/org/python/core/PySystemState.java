@@ -53,6 +53,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
+    public static final String PYTHON_IO_ENCODING = "python.io.encoding";
+    public static final String PYTHON_IO_ERRORS = "python.io.errors";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
     public static final String JYTHON_JAR = "jython.jar";
@@ -256,18 +258,25 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
     }
 
+    /**
+     * Initialise the encoding of <code>sys.stdin</code>, <code>sys.stdout</code>, and
+     * <code>sys.stderr</code>, and their error handling policy, from registry variables.
+     * Under the console app util.jython, values reflect PYTHONIOENCODING if not overridden.
+     * Note that the encoding must name a Python codec, as in <code>codecs.encode()</code>.
+     */
     private void initEncoding() {
-        String encoding = registry.getProperty(PYTHON_CONSOLE_ENCODING);
-        if (encoding == null) {
-            return;
+        // Two registry variables, counterparts to PYTHONIOENCODING = [encoding][:errors]
+        String encoding = registry.getProperty(PYTHON_IO_ENCODING);
+        String errors = registry.getProperty(PYTHON_IO_ERRORS);
+
+        if (encoding==null) {
+            // We still don't have an explicit selection for this: match the console.
+            encoding = Py.getConsole().getEncodingCharset().name();
         }
 
-        for (PyFile stdStream : new PyFile[] {(PyFile)this.stdin, (PyFile)this.stdout,
-                (PyFile)this.stderr}) {
-            if (stdStream.isatty()) {
-                stdStream.encoding = encoding;
-            }
-        }
+        ((PyFile)stdin).setEncoding(encoding, errors);
+        ((PyFile)stdout).setEncoding(encoding, errors);
+        ((PyFile)stderr).setEncoding(encoding, "backslashreplace");
     }
 
     // might be nice to have something general here, but for now these
@@ -683,6 +692,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
         } catch (SecurityException e) {
             // Continue
         }
+
+        // Now the post properties (possibly set by custom JythonInitializer).
         registry.putAll(postProperties);
         if (standalone) {
             // set default standalone property (if not yet set)
@@ -690,24 +701,34 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 registry.put(PYTHON_CACHEDIR_SKIP, "true");
             }
         }
+
+        /*
+         *  The console encoding is the one used by line-editing consoles to decode on the OS side and
+         *  encode on the Python side. It must be a Java codec name, so any relationship to
+         *  python.io.encoding is dubious.
+         */
         if (!registry.containsKey(PYTHON_CONSOLE_ENCODING)) {
             String encoding = getPlatformEncoding();
             if (encoding != null) {
                 registry.put(PYTHON_CONSOLE_ENCODING, encoding);
             }
         }
+
         // Set up options from registry
         Options.setFromRegistry();
     }
 
     /**
-     * @return the encoding of the underlying platform; can be <code>null</code>
+     * Return the encoding of the underlying platform, if we can work it out by any means at all.
+     *
+     * @return the encoding of the underlying platform
      */
     private static String getPlatformEncoding() {
         // first try to grab the Console encoding
         String encoding = getConsoleEncoding();
         if (encoding == null) {
             try {
+                // Not quite the console encoding (differs on Windows)
                 encoding = System.getProperty("file.encoding");
             } catch (SecurityException se) {
                 // ignore, can't do anything about it
@@ -722,7 +743,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
     private static String getConsoleEncoding() {
         String encoding = null;
         try {
-            Method encodingMethod = Console.class.getDeclaredMethod("encoding");
+            Method encodingMethod = java.io.Console.class.getDeclaredMethod("encoding");
             encodingMethod.setAccessible(true); // private static method
             encoding = (String)encodingMethod.invoke(Console.class);
         } catch (Exception e) {
@@ -731,6 +752,12 @@ public class PySystemState extends PyObject implements ClassDictInit {
         return encoding;
     }
 
+    /**
+     * Merge the contents of a property file into the registry without overriding any values already
+     * set there.
+     *
+     * @param file
+     */
     private static void addRegistryFile(File file) {
         if (file.exists()) {
             if (!file.isDirectory()) {
@@ -922,9 +949,6 @@ public class PySystemState extends PyObject implements ClassDictInit {
         }
         Py.initClassExceptions(getDefaultBuiltins());
 
-        // defaultSystemState can't init its own encoding, see its constructor
-        Py.defaultSystemState.initEncoding();
-
         // Make sure that Exception classes have been loaded
         new PySyntaxError("", 1, 1, "", "");
 
@@ -1077,7 +1101,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
                 Class<?> consoleClass = Class.forName(consoleName);
 
                 // Ensure it can be cast to the interface type of all consoles
-                if (! consoleType.isAssignableFrom(consoleClass)) {
+                if (!consoleType.isAssignableFrom(consoleClass)) {
                     throw new ClassCastException();
                 }
 

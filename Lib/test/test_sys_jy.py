@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-1 -*-
 from __future__ import with_statement
 import os
 import re
@@ -185,13 +186,69 @@ class SyspathUnicodeTest(unittest.TestCase):
         finally:
             os.rmdir(moduleDir)
         self.assertFalse(os.path.exists(moduleDir))        
-        
+
+class SysEncodingTest(unittest.TestCase):
+
+    # Adapted from CPython 2.7 test_sys to exercise setting Jython registry
+    # values related to encoding and error policy.
+
+    def test_ioencoding(self):  # adapted from CPython v2.7 test_sys
+        import subprocess, os
+        env = dict(os.environ)
+
+        def check(code, encoding=None, errors=None):
+            # Execute with encoding and errors optionally set via Java properties
+            command = [sys.executable]
+            if (encoding):
+                command.append('-Dpython.io.encoding={}'.format(encoding))
+            if (errors):
+                command.append('-Dpython.io.errors={}'.format(errors))
+            command.append('-c')
+            command.append('print unichr({:#x})'.format(code))
+            #print "\n   ", " ".join(command), " ... ",
+            p = subprocess.Popen(command, stdout = subprocess.PIPE, env=env)
+            return p.stdout.read().strip()
+
+        env.pop("PYTHONIOENCODING", None)
+        self.assertEqual(check(ord(u'A')), b"A")
+
+        # Test character: U+00a2 cent sign (¢) is:
+        # not representable in ASCII.
+        # xml: &#162
+        # cp1252: a2
+        # cp850: bd
+        # cp424: 4a
+        # utf-8: c2 a2
+
+        self.assertEqual(check(0xa2, "iso-8859-1"), "¢") # same as this file
+
+        # self.assertEqual(check(0xa2, "ascii"), "") # and an error message
+        self.assertEqual(check(0xa2, "ascii", "ignore"),"")
+        self.assertEqual(check(0xa2, "ascii", "replace"), "?")
+        self.assertEqual(check(0xa2, "ascii", "backslashreplace"), r"\xa2")
+        self.assertEqual(check(0xa2, "ascii", "xmlcharrefreplace"), "&#162;")
+
+        self.assertEqual(check(0xa2, "Cp1252"), "\xa2")
+        self.assertEqual(check(0xa2, "Cp424"), "\x4a")
+        self.assertEqual(check(0xa2, "utf-8"), "\xc2\xa2")
+
+        self.assertEqual(check(0xa2, "iso8859-5", "backslashreplace"), r"\xa2")
+
+        # Now check that PYTHONIOENCODING can be superseded piecemeal
+        env["PYTHONIOENCODING"] = "ascii:xmlcharrefreplace"
+        self.assertEqual(check(0xa2, "iso8859-5"), "&#162;")
+        self.assertEqual(check(0xa2, None, "backslashreplace"), r"\xa2")
+        self.assertEqual(check(0xa2, "cp850"), "\xbd")
+
 
 def test_main():
-    test_support.run_unittest(SysTest,
+    test_support.run_unittest(
+                              SysTest,
                               ShadowingTest,
                               SyspathResourceTest,
-                              SyspathUnicodeTest)
+                              SyspathUnicodeTest,
+                              SysEncodingTest,
+                             )
 
 if __name__ == "__main__":
     test_main()

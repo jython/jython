@@ -37,7 +37,7 @@ public class PlainConsole implements Console {
      * must be one supported by the JVM. The PlainConsole does not replace <code>System.in</code> or
      * <code>System.out</code>, and does not add any line-editing capability to what is standard for
      * your OS console.
-     * 
+     *
      * @param encoding name of a supported encoding or <code>null</code> for
      *            <code>Charset.defaultCharset()</code>
      */
@@ -59,7 +59,7 @@ public class PlainConsole implements Console {
      * A <code>PlainConsole</code> may be uninstalled. This method assumes any sub-class may not be
      * uninstalled. Sub-classes that permit themselves to be uninstalled <b>must</b> override (and
      * not call) this method.
-     * 
+     *
      * @throws UnsupportedOperationException unless this class is exactly <code>PlainConsole</code>
      */
     @Override
@@ -69,6 +69,11 @@ public class PlainConsole implements Console {
             throw new UnsupportedOperationException(myClass.getSimpleName()
                     + " console may not be uninstalled.");
         }
+    }
+
+    @Override
+    public Charset getEncodingCharset() {
+        return encodingCharset;
     }
 
 }

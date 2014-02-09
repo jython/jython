@@ -251,6 +251,26 @@ class SysModuleTest(unittest.TestCase):
         self.assert_(vi[3] in ("alpha", "beta", "candidate", "final"))
         self.assert_(isinstance(vi[4], int))
 
+    def test_ioencoding(self):  # from v2.7 test
+        import subprocess,os
+        env = dict(os.environ)
+
+        # Test character: cent sign, encoded as 0x4A (ASCII J) in CP424,
+        # not representable in ASCII.
+
+        env["PYTHONIOENCODING"] = "cp424"
+        p = subprocess.Popen([sys.executable, "-c", 'print unichr(0xa2)'],
+                             stdout = subprocess.PIPE, env=env)
+        out = p.stdout.read().strip()
+        self.assertEqual(out, unichr(0xa2).encode("cp424"))
+
+        env["PYTHONIOENCODING"] = "ascii:replace"
+        p = subprocess.Popen([sys.executable, "-c", 'print unichr(0xa2)'],
+                             stdout = subprocess.PIPE, env=env)
+        out = p.stdout.read().strip()
+        self.assertEqual(out, '?')
+
+
 def test_main():
     if test.test_support.is_jython:
         del SysModuleTest.test_lost_displayhook
