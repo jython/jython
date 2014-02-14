@@ -711,12 +711,11 @@ class StdoutTests(unittest.TestCase):
         finally:
             sys.stdout = save_stdout
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not working on Jython")
     def test_unicode(self):
         import subprocess
 
         def get_message(encoding, *code):
-            code = '\n'.join(code)
+            code = ';'.join(code)   # jython.bat cannot cope with '\n' in arguments
             env = os.environ.copy()
             env['PYTHONIOENCODING'] = encoding
             process = subprocess.Popen([sys.executable, "-c", code],
