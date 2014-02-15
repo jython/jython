@@ -22,6 +22,7 @@ class OSFileTestCase(unittest.TestCase):
         os.remove(test_support.TESTFN)
         self.assertRaises(OSError, os.utime, test_support.TESTFN, None)
 
+    @unittest.skipUnless(hasattr(os, 'link'), "os.link not available")
     def test_issue1824(self):
         os.remove(test_support.TESTFN)
         self.assertRaises(OSError, os.link,
