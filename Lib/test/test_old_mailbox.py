@@ -144,12 +144,12 @@ Subject: message 4
 body4
 """)
         f.close()
-        box = mailbox.UnixMailbox(open(self._path, 'r'))
+        box = mailbox.UnixMailbox(open(self._path, 'rb'))
         messages = list(iter(box))
         self.assert_(len(messages) == 4)
         for message in messages:
             message.fp.close()
-
+        box.fp.close() # Jython addition: explicit close needed
 
     # XXX We still need more tests!
 
