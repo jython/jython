@@ -34,6 +34,24 @@ verbose = test.test_support.verbose
 from test import test_doctest, sample_doctest
 from test.test_importhooks import ImportHooksBaseTestCase
 
+if is_jython and os._name=="nt":
+    # Jython holds open zip/jar files placed on its sys.path. (Assume there
+    # is a good reason for this.) Windows will not then allow the script
+    # directory to be cleaned up on context exit, resulting in test failures
+    # unrelated to the purpose of the test.
+
+    # Replace test.script_helper.temp_dir with this copy.
+    import contextlib, tempfile, shutil, warnings
+    @contextlib.contextmanager
+    def temp_dir():
+        dirname = os.path.realpath(tempfile.mkdtemp())
+        try:
+            yield dirname
+        finally:
+            try:
+                shutil.rmtree(dirname)
+            except OSError:
+                warnings.warn("Failed to remove "+dirname)
 
 def _run_object_doctest(obj, module):
     # Direct doctest output (normally just errors) to real stdout; doctest
@@ -88,6 +106,7 @@ class ZipSupportTests(ImportHooksBaseTestCase):
             self.assertEqual(inspect.getsource(zip_pkg.foo), test_src)
 
     @unittest.skipIf(is_jython, "FIXME: not working on Jython")
+    # Failure possibly due to sys.path not passing to sub-process in test_doctest.
     def test_doctest_issue4197(self):
         # To avoid having to keep two copies of the doctest module's
         # unit tests in sync, this test works by taking the source of
