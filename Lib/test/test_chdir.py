@@ -715,6 +715,8 @@ def test_main():
              SymlinkTestCase]
     if WINDOWS:
         tests.append(WindowsChdirTestCase)
+        tests.remove(SymlinkTestCase)       #  os.symlink ... Availability: Unix.
+
     if test_support.is_jython:
         tests.extend((ImportJavaClassTestCase,
                       ImportJarTestCase))
