@@ -5,6 +5,15 @@ import popen2
 import subprocess
 
 class CmdLineTest(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        if test.test_support.is_jython:
+            # GC is not immediate, so if Popen.__del__ may be delayed.
+            # Try to force any Popen.__del__ errors within scope of test.
+            from test_weakref import extra_collect
+            extra_collect()
+
     def start_python(self, cmd_line):
         outfp, infp = popen2.popen4('"%s" %s' % (sys.executable, cmd_line))
         infp.close()

@@ -12,7 +12,7 @@ import sys
 import unittest
 import popen2
 
-from test.test_support import run_unittest, reap_children
+from test.test_support import run_unittest, reap_children, is_jython
 
 if sys.platform[:4] == 'beos' or sys.platform[:6] == 'atheos':
     #  Locks get messed up or something.  Generally we're supposed
@@ -58,6 +58,14 @@ class Popen2Test(unittest.TestCase):
         subprocess._cleanup()
         self.assertFalse(subprocess._active, "subprocess._active not empty")
         reap_children()
+
+    @classmethod
+    def tearDownClass(cls):
+        if is_jython:
+            # GC is not immediate, so if Popen.__del__ may be delayed.
+            # Try to force Popen.__del__ within scope of test.
+            from test_weakref import extra_collect
+            extra_collect()
 
     def validate_output(self, teststr, expected_out, r, w, e=None):
         w.write(teststr)
