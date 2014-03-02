@@ -1353,6 +1353,19 @@ class Popen(object):
                     pass
             return self.returncode
 
+        def _internal_poll(self, _deadstate=None):
+            """Check if child process has terminated.  Returns returncode
+            attribute. Called by __del__."""
+            if self.returncode is None:
+                try:
+                    self.returncode = self._process.exitValue()
+                except java.lang.IllegalThreadStateException:
+                    # The child process is not ready to return status, so None os still right.
+                    pass
+                except java.io.IOException:
+                    # Child has exited but returncode lost?
+                    self.returncode = _deadstate
+            return self.returncode
 
         def wait(self):
             """Wait for child process to terminate.  Returns returncode
