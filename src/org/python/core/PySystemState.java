@@ -546,22 +546,148 @@ public class PySystemState extends PyObject implements ClassDictInit {
     }
 
     private static String getPath(PySystemState sys, String path) {
-        if (path == null) {
-            return path;
+        if (path != null) {
+            path = getFile(sys, path).getAbsolutePath();
         }
+        return path;
+    }
 
+    /**
+     * Resolve a path, returning a {@link File}, taking the current working directory into account.
+     *
+     * @param path a path <code>String</code>
+     * @return a resolved <code>File</code>
+     */
+    public File getFile(String path) {
+        return getFile(this, path);
+    }
+
+    /**
+     * Resolve a path, returning a {@link File}, taking the current working directory of the
+     * specified <code>PySystemState</code> into account. Use of a <code>static</code> here is a
+     * trick to avoid getting the current state if the path is absolute. (Noted that this may be
+     * needless optimisation.)
+     *
+     * @param sys a <code>PySystemState</code> or null meaning the current one
+     * @param path a path <code>String</code>
+     * @return a resolved <code>File</code>
+     */
+    private static File getFile(PySystemState sys, String path) {
         File file = new File(path);
-        // Python considers r'\Jython25' and '/Jython25' abspaths on Windows, unlike
-        // java.io.File
-        if (!file.isAbsolute()
-                && (!Platform.IS_WINDOWS || !(path.startsWith("\\") || path.startsWith("/")))) {
+        if (!file.isAbsolute()) {
+            // path meaning depends on the current working directory
             if (sys == null) {
                 sys = Py.getSystemState();
             }
-            file = new File(sys.getCurrentWorkingDir(), path);
+            String cwd = sys.getCurrentWorkingDir();
+            if (Platform.IS_WINDOWS) {
+                // Form absolute reference (with mysterious Windows semantics)
+                file = getWindowsFile(cwd, path);
+            } else {
+                // Form absolute reference (with single slash)
+                file = new File(cwd, path);
+            }
         }
-        // This needs to be performed always to trim trailing backslashes on Windows
-        return file.getPath();
+        return file;
+    }
+
+    /**
+     * Resolve a relative path against the supplied current working directory or Windows environment
+     * working directory for any drive specified in the path. and return a file object. Essentially
+     * equivalent to os.path.join, but the work is done by {@link File}. The intention is that
+     * calling {@link File#getAbsolutePath()} should return the corresponding absolute path.
+     * <p>
+     * Note: in the context where we use this method, <code>path</code> is already known not to be
+     * absolute, and <code>cwd</code> is assumed to be absolute.
+     *
+     * @param cwd current working directory (of some {@link PySystemState})
+     * @param path to resolve
+     * @return specifier of the intended file
+     */
+    private static File getWindowsFile(String cwd, String path) {
+        // Assumptions: cwd is absolute and path is not absolute
+
+        // Start by getting the slashes the right (wrong) way round.
+        if (path.indexOf('/') >= 0) {
+            path = path.replace('/', '\\');
+        }
+
+        // Does path start with a drive letter?
+        char d = driveLetter(path);
+        if (d != 0) {
+            if (d == driveLetter(cwd)) {
+                /*
+                 * path specifies the same drive letter as in the cwd of this PySystemState. Let
+                 * File interpret the rest of the path relative to cwd as parent.
+                 */
+                return new File(cwd, path.substring(2));
+            } else {
+                // Let File resolve the specified drive against the process environment.
+                return new File(path);
+            }
+
+        } else if (path.startsWith("\\")) {
+            // path replaces the file part of the cwd. (Method assumes path is not UNC.)
+            if (driveLetter(cwd) != 0) {
+                // cwd has a drive letter
+                return new File(cwd.substring(0, 2), path);
+            } else {
+                // cwd has no drive letter, so should be a UNC path \\host\share\directory\etc
+                return new File(uncShare(cwd), path);
+            }
+
+        } else {
+            // path is relative to the cwd of this PySystemState.
+            return new File(cwd, path);
+        }
+    }
+
+    /**
+     * Return the Windows drive letter from the start of the path, upper case, or 0 if
+     * the path does not start X: where X is a letter.
+     *
+     * @param path to examine
+     * @return drive letter or char 0 if no drive letter
+     */
+    private static char driveLetter(String path) {
+        if (path.length() >= 2 && path.charAt(1) == ':') {
+            // Looks like both strings start with a drive letter
+            char pathDrive = path.charAt(0);
+            if (Character.isLetter(pathDrive)) {
+                return Character.toUpperCase(pathDrive);
+            }
+        }
+        return (char)0;
+    }
+
+    /**
+     * Return the Windows UNC share name from the start of the path, or <code>null</code> if the
+     * path is not of Windows UNC type. The path has to be formed with Windows-backslashes:
+     * slashes '/' are not accepted as a substitute here.
+     *
+     * @param path to examine
+     * @return share name or null
+     */
+    private static String uncShare(String path) {
+        int n = path.length();
+        // Has to accommodate at least \\A (3 chars)
+        if (n >= 5 && path.startsWith("\\\\")) {
+            // Look for the separator backslash A\B
+            int p = path.indexOf('\\', 2);
+            // Has to be at least index 3 (path begins \\A) and 2 more characters left \B
+            if (p >= 3 && n > p + 2) {
+                // Look for directory backslash that ends the share name
+                int dir = path.indexOf('\\', p + 1);
+                if (dir < 0) {
+                    // path has the form \\A\B (is just the share name)
+                    return path;
+                } else if (dir > p + 1) {
+                    // path has the form \\A\B\C
+                    return path.substring(0, dir);
+                }
+            }
+        }
+        return null;
     }
 
     public void callExitFunc() throws PyIgnoreMethodTag {

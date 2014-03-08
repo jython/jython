@@ -452,23 +452,25 @@ try:
     from nt import _getfullpathname
 
 except ImportError: # not running on Windows - mock up something sensible
-    import java.io.File
-    from org.python.core.Py import newString
 
     def abspath(path):
         """Return the absolute version of a path."""
-        if not isabs(path):
+        try:
             if isinstance(path, unicode):
-                cwd = os.getcwdu()
+                if path:
+                    path = sys.getPath(path)
+                else:
+                    # Empty path must return current working directory
+                    path = os.getcwdu()
             else:
-                cwd = os.getcwd()
-            path = join(cwd, path)
-        if not splitunc(path)[0] and not splitdrive(path)[0]:
-            # cwd lacks a UNC mount point, so it should have a drive
-            # letter (but lacks one): determine it
-            canon_path = newString(java.io.File(path).getCanonicalPath())
-            drive = splitdrive(canon_path)[0]
-            path = join(drive, path)
+                if path:
+                    path = sys.getPath(path).encode('latin-1')
+                else:
+                    # Empty path must return current working directory
+                    path = os.getcwd()
+        except EnvironmentError:
+             pass # Bad path - return unchanged.
+
         return normpath(path)
 
 else:  # use native Windows method on Windows

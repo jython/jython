@@ -194,10 +194,38 @@ class WindowsChdirTestCase(BaseChdirTestCase):
         self.assertEqual(os.getcwd(), os.path.realpath(dos_name))
 
     def test_windows_getcwd_ensures_drive_letter(self):
-        drive = os.path.splitdrive(self.subdir)[0]
-        os.chdir('\\')
+        # subdir is in the TEMP directory, usually on C:, while the
+        # current working directory could be (for the sake of comments)
+        # D:\HOME . TEMP and HOME stand for arbitrarily long relative paths.
+
+        # Check chdir to \ occurs without change of drive letter.
+        drive0, sub0 = os.path.splitdrive(os.getcwd()) # d:, HOME
+        os.chdir('\\') # d:\
+        self.assertEqual(os.path.normcase(os.getcwd()),
+                         os.path.normcase(os.path.join(drive0, '\\')))
+
+        # Check chdir to HOME occurs without change of drive letter.
+        os.chdir(sub0) # d:\HOME
+        self.assertEqual(os.path.normcase(os.getcwd()),
+                         os.path.normcase(os.path.join(drive0, sub0)))
+
+        # Check chdir to path with drive letter, changes drive in cwd.
+        drive, sub = os.path.splitdrive(self.subdir) # c:, TEMP\Program Files
+        os.chdir(self.subdir) # c:\TEMP\Program Files
+        self.assertEqual(os.path.normcase(os.getcwd()),
+                         os.path.normcase(os.path.join(drive, sub)))
+
+        # Check chdir to \ occurs without change of drive letter (again).
+        os.chdir('\\') # c:\
         self.assertEqual(os.path.normcase(os.getcwd()),
                          os.path.normcase(os.path.join(drive, '\\')))
+
+        if drive.upper() != drive0.upper():
+            # Check chdir to (different) original drive takes us to previous directory too.
+            # You only get this test if the temp directory and cwd are on different drives.
+            os.chdir(drive0) # d:\HOME
+            self.assertEqual(os.path.normcase(os.getcwd()),
+                             os.path.normcase(os.path.join(drive0, sub0)))
 
     def test_windows_chdir_slash_isabs(self):
         drive = os.path.splitdrive(os.getcwd())[0]
@@ -702,17 +730,19 @@ def write(filename, data):
 
 
 def test_main():
-    tests = [ChdirTestCase,
-             ImportTestCase,
-             ImportPackageTestCase,
-             ZipimportTestCase,
-             PyCompileTestCase,
-             ExecfileTestCase,
-             ExecfileTracebackTestCase,
-             ListdirTestCase,
-             DirsTestCase,
-             FilesTestCase,
-             SymlinkTestCase]
+    tests = [
+                ChdirTestCase,
+                ImportTestCase,
+                ImportPackageTestCase,
+                ZipimportTestCase,
+                PyCompileTestCase,
+                ExecfileTestCase,
+                ExecfileTracebackTestCase,
+                ListdirTestCase,
+                DirsTestCase,
+                FilesTestCase,
+                SymlinkTestCase
+            ]
     if WINDOWS:
         tests.append(WindowsChdirTestCase)
         tests.remove(SymlinkTestCase)       #  os.symlink ... Availability: Unix.
@@ -720,8 +750,10 @@ def test_main():
     if test_support.is_jython:
         tests.extend((ImportJavaClassTestCase,
                       ImportJarTestCase))
+ 
     if test_support.is_resource_enabled('subprocess'):
         tests.append(SubprocessTestCase)
+
     test_support.run_unittest(*tests)
 
 
