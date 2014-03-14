@@ -4,33 +4,57 @@
  */
 package org.python.indexer;
 
-import junit.framework.TestCase;
-
-import org.python.indexer.Def;
-import org.python.indexer.Ref;
-import org.python.indexer.ast.NNode;
-import org.python.indexer.types.NType;
-import org.python.indexer.types.NUnknownType;
-
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import junit.framework.TestCase;
+
+import org.python.indexer.types.NType;
+import org.python.indexer.types.NUnknownType;
 
 /**
  * Test utilities for {@link IndexerTest}.
  */
 public class TestBase extends TestCase {
 
-    static protected final String TEST_SOURCE_DIR;
+    // Set this to control logging to the console from the Indexer (mostly at FINER level).
+    static protected final Level LOGGING_LEVEL = Level.OFF;
+
     static protected final String TEST_DATA_DIR;
     static protected final String TEST_LIB_DIR;
 
     static {
-        TEST_SOURCE_DIR =
-            System.getProperties().getProperty("python.test.source.dir")
-            + "/org/python/indexer/";
-        TEST_DATA_DIR = TEST_SOURCE_DIR + "data/";
-        TEST_LIB_DIR = System.getProperties().getProperty("python.home") + "/Lib/";
+        /*
+         * Locate cardinal directories in a way that insulates us from the vagueries of the
+         * environment, Ant, IDE and OS.
+         */
+        String home = System.getProperty("python.home", "dist");
+        String test = System.getProperty("python.test.source.dir", "tests/java");
+        File source = new File(test, "org/python/indexer"); // corrects to \ where needed.
+
+        // Program actually uses strings, with a trailing slash
+        TEST_DATA_DIR = (new File(source, "data")).getAbsolutePath() + File.separator;
+        TEST_LIB_DIR = (new File(home, "Lib")).getAbsolutePath() + File.separator;
+
+        // Give the logger used by Indexer an outlet
+        setUpLogging();
+    }
+
+    // Define a handler for the logger to use
+    static private void setUpLogging() {
+        // Enable tracing of the operation of the Indexer onto the console
+        Logger indexerLogger = Logger.getLogger(Indexer.class.getCanonicalName());
+        Handler logHandler = new ConsoleHandler();
+        logHandler.setFormatter(new SimpleFormatter());
+        logHandler.setLevel(Level.FINEST);
+        indexerLogger.addHandler(logHandler);
     }
 
     protected Indexer idx;
@@ -41,6 +65,7 @@ public class TestBase extends TestCase {
     @Override
     protected void setUp() throws Exception {
         idx = new Indexer();
+        idx.getLogger().setLevel(LOGGING_LEVEL);
         idx.enableAggressiveAssertions(true);
         idx.setProjectDir(TEST_DATA_DIR);
         AstCache.get().clearDiskCache();
@@ -108,13 +133,15 @@ public class TestBase extends TestCase {
      * @throws IllegalArgumentException if the {@code n}th occurrence does not exist
      */
     protected int nthIndexOf(String s, String find, int n) {
-        if (n <= 0)
+        if (n <= 0) {
             throw new IllegalArgumentException();
+        }
         int index = -1;
         for (int i = 0; i < n; i++) {
             index = s.indexOf(find, index == -1 ? 0 : index + 1);
-            if (index == -1)
+            if (index == -1) {
                 throw new IllegalArgumentException();
+            }
         }
         return index;
     }

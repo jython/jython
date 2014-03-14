@@ -132,7 +132,7 @@ public class Indexer {
         if (logger == null) {
             throw new IllegalArgumentException("null logger param");
         }
-        logger = logger;
+        this.logger = logger;
     }
 
     public Logger getLogger() {
@@ -179,10 +179,12 @@ public class Indexer {
             }
             throw new IndexingException(cause);
         }
-        if (msg == null)
+        if (msg == null) {
             msg = "<null msg>";
-        if (cause == null)
+        }
+        if (cause == null) {
             cause = new Exception();
+        }
         logger.log(Level.WARNING, msg, cause);
     }
 
@@ -243,7 +245,7 @@ public class Indexer {
     }
 
     public boolean isLibFile(String file) {
-        if (file.startsWith("/")) {
+        if (file.startsWith(File.separator)) {
             return true;
         }
         if (path != null) {
@@ -682,7 +684,7 @@ public class Indexer {
         if (modname.endsWith(".py")) {
             modname = modname.substring(0, modname.length() - 3);
         }
-        String modpath = modname.replace('.', '/');
+        String modpath = modname.replace('.', File.separatorChar);
 
         // A nasty hack to avoid e.g. python2.5 becoming python2/5.
         // Should generalize this for directory components containing '.'.
@@ -909,7 +911,7 @@ public class Indexer {
     public List<String> getLoadedFiles() {
         List<String> files = new ArrayList<String>();
         for (String file : moduleTable.keySet()) {
-            if (file.startsWith("/")) {
+            if (file.startsWith(File.separator)) {
                 files.add(file);
             }
         }

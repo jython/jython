@@ -4,14 +4,6 @@
  */
 package org.python.indexer;
 
-import org.antlr.runtime.ANTLRFileStream;
-import org.antlr.runtime.ANTLRStringStream;
-import org.antlr.runtime.CharStream;
-import org.antlr.runtime.RecognitionException;
-import org.python.antlr.AnalyzingParser;
-import org.python.antlr.base.mod;
-import org.python.indexer.ast.NModule;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -24,13 +16,22 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.antlr.runtime.ANTLRFileStream;
+import org.antlr.runtime.ANTLRStringStream;
+import org.antlr.runtime.CharStream;
+import org.antlr.runtime.RecognitionException;
+import org.python.antlr.AnalyzingParser;
+import org.python.antlr.base.mod;
+import org.python.indexer.ast.NModule;
+
 /**
  * Provides a factory for python source ASTs.  Maintains configurable on-disk and
  * in-memory caches to avoid re-parsing files during analysis.
  */
 public class AstCache {
 
-    public static final String CACHE_DIR = Util.getSystemTempDir() + "jython/ast_cache/";
+    public static final String CACHE_DIR = (new File(Util.getSystemTempDir(), "jython/ast_cache"))
+            .getAbsolutePath() + File.separator;
 
     private static final Logger LOG = Logger.getLogger(AstCache.class.getCanonicalName());
 
@@ -86,7 +87,9 @@ public class AstCache {
      * @throws Exception if anything unexpected occurs
      */
     public NModule getAST(String path) throws Exception {
-        if (path == null) throw new IllegalArgumentException("null path");
+        if (path == null) {
+            throw new IllegalArgumentException("null path");
+        }
         return fetch(path);
     }
 
@@ -98,8 +101,12 @@ public class AstCache {
      * @param contents the source to parse
      */
     public NModule getAST(String path, String contents) throws Exception {
-        if (path == null) throw new IllegalArgumentException("null path");
-        if (contents == null) throw new IllegalArgumentException("null contents");
+        if (path == null) {
+            throw new IllegalArgumentException("null path");
+        }
+        if (contents == null) {
+            throw new IllegalArgumentException("null contents");
+        }
 
         // Cache stores null value if the parse failed.
         if (cache.containsKey(path)) {

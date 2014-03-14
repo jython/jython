@@ -19,7 +19,10 @@ import java.util.TreeSet;
 public class Util {
 
     private static final String UTF_8 = "UTF-8";
-
+    private static final char SEPCHAR = File.separatorChar;
+    private static final String SEP = File.separator;
+    private static final String INIT_PY = "__init__.py";
+    private static final String SEP_INIT_PY = SEP + INIT_PY;
     private static int gensymCount = -1;
 
     public static String gensym(String base) {
@@ -29,11 +32,10 @@ public class Util {
 
     public static String getSystemTempDir() {
         String tmp = System.getProperty("java.io.tmpdir");
-        String sep = System.getProperty("file.separator");
-        if (tmp.endsWith(sep)) {
+        if (tmp.endsWith(SEP)) {
             return tmp;
         }
-        return tmp + sep;
+        return tmp + SEP;
     }
 
     /**
@@ -62,15 +64,15 @@ public class Util {
      * @return null if {@code file} is not somewhere under the load path
      */
     public static String moduleQname(String file) {
-        boolean initpy = file.endsWith("/__init__.py");
+        boolean initpy = file.endsWith(SEP_INIT_PY);
         if (initpy) {
-            file = file.substring(0, file.length() - "/__init__.py".length());
+            file = file.substring(0, file.length() - SEP_INIT_PY.length());
         } else if (file.endsWith(".py")) {
             file = file.substring(0, file.length() - ".py".length());
         }
         for (String root : Indexer.idx.getLoadPath()) {
             if (file.startsWith(root)) {
-                return file.substring(root.length()).replace('/', '.');
+                return file.substring(root.length()).replace(SEPCHAR, '.');
             }
         }
         return null;
@@ -102,7 +104,7 @@ public class Util {
             throw new IllegalStateException("failed assertion: " + path);
         }
         String fname = f.getName();
-        if (fname.equals("__init__.py")) {
+        if (fname.equals(INIT_PY)) {
             return f.getParentFile().getName();
         }
         return fname.substring(0, fname.lastIndexOf('.'));
@@ -113,10 +115,10 @@ public class Util {
     }
 
     public static File joinPath(String dir, String file) {
-        if (dir.endsWith("/")) {
+        if (dir.endsWith(SEP)) {
             return new File(dir + file);
         }
-        return new File(dir + "/" + file);
+        return new File(dir + SEP + file);
     }
 
     public static void writeFile(String path, String contents) throws Exception {
@@ -189,15 +191,15 @@ public class Util {
 
     /**
      * Return absolute path for {@code path}.
-     * Make sure path ends with "/" if it's a directory.
+     * Make sure path ends with SEP if it's a directory.
      * Does _not_ resolve symlinks, since the caller may need to play
      * symlink tricks to produce the desired paths for loaded modules.
      */
     public static String canonicalize(String path) {
         File f = new File(path);
         path = f.getAbsolutePath();
-        if (f.isDirectory() && !path.endsWith("/")) {
-            return path + "/";
+        if (f.isDirectory() && !path.endsWith(SEP)) {
+            return path + SEP;
         }
         return path;
     }

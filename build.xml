@@ -269,6 +269,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>deprecation        = '${deprecation}'</echo>
         <echo>debug              = '${debug}'</echo>
         <echo>nowarn             = '${nowarn}'</echo>
+        <echo>test               = '${test}'</echo>
+        <echo>test.source.dir    = '${test.source.dir}'</echo>
         <echo>--- properties (used for full-build only) ---</echo>
         <echo>checkout.dir   = '${checkout.dir}'</echo>
         <echo>javahl.dir         = '${javahl.dir}'</echo>
