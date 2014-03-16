@@ -23,6 +23,8 @@ public class ReadlineConsole extends PlainConsole {
     public static final int MAX_PROMPT = 512;
     /** Stream wrapping System.out in order to capture the last prompt. */
     private ConsoleOutputStream outWrapper;
+    /** Original System.out as sometimes we have to sneak one out. */
+    private PrintStream originalSystemOut;
 
     /**
      * Construct an instance of the console class specifying the character encoding. This encoding
@@ -65,7 +67,7 @@ public class ReadlineConsole extends PlainConsole {
      * <p>
      * This implementation overrides that by setting <code>System.in</code> to a
      * <code>FilterInputStream</code> object that wraps the configured console library, and wraps
-     * <code>System.out</code> in a stream that captures the prompt.
+     * <code>System.out</code> in a stream that captures the prompt so the <code>Readline</code> library may re-use it.
      */
     @Override
     public void install() {
@@ -81,11 +83,12 @@ public class ReadlineConsole extends PlainConsole {
         }
 
         /*
-         * Wrap System.out in a special PrintStream that keeps the last incomplete line in case it
+         * Wrap System.out in a special PrintStream that keeps a copy of the last incomplete line in case it
          * turns out to be a console prompt.
          */
         try {
-            outWrapper = new ConsoleOutputStream(System.out, MAX_PROMPT);
+            originalSystemOut = System.out;
+            outWrapper = new ConsoleOutputStream(originalSystemOut, MAX_PROMPT);
             System.setOut(new PrintStream(outWrapper, true, encoding));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -109,6 +112,8 @@ public class ReadlineConsole extends PlainConsole {
 
         @Override
         protected CharSequence getLine() throws IOException, EOFException {
+            // Send cursor to start of line.
+            originalSystemOut.print('\r');
             // The prompt is the current partial output line.
             CharSequence prompt = outWrapper.getPrompt(encodingCharset).toString();
             // Compensate for Readline.readline prompt handling

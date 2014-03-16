@@ -40,8 +40,6 @@ public class JLineConsole extends PlainConsole {
     private boolean windows;
     /** The ctrl-z character String. */
     protected static final String CTRL_Z = "\u001a";
-    /** The longest we expect a console prompt to be (in encoded bytes) */
-    public static final int MAX_PROMPT = 512;
     /** Stream wrapping System.out in order to capture the last prompt. */
     private ConsoleOutputStream outWrapper;
 
@@ -99,14 +97,6 @@ public class JLineConsole extends PlainConsole {
              */
             Writer out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
 
-            /*
-             * Everybody else, using sys.stdout or java.lang.System.out gets to write on a special
-             * PrintStream that keeps the last incomplete line in case it turns out to be a console
-             * prompt.
-             */
-            outWrapper = new ConsoleOutputStream(System.out, MAX_PROMPT);
-            System.setOut(new PrintStream(outWrapper, true, encoding));
-
             // Get the key bindings (built in ones treat TAB Pythonically).
             InputStream bindings = getBindings(userHomeSpec, getClass().getClassLoader());
 
@@ -116,6 +106,14 @@ public class JLineConsole extends PlainConsole {
 
             // We find the bell too noisy
             reader.setBellEnabled(false);
+
+            /*
+             * Everybody else, using sys.stdout or java.lang.System.out gets to write on a special
+             * PrintStream that keeps the last incomplete line in case it turns out to be a console
+             * prompt.
+             */
+            outWrapper = new ConsoleOutputStream(System.out, reader.getTermwidth());
+            System.setOut(new PrintStream(outWrapper, true, encoding));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -186,7 +184,12 @@ public class JLineConsole extends PlainConsole {
                 if (startup_hook != null) {
                     startup_hook.__call__();
                 }
-                // Get a line and hope to be done.
+
+                // Send the cursor to the start of the line (no prompt, empty buffer).
+                reader.setDefaultPrompt(null);
+                reader.redrawLine();
+
+                // The prompt is whatever was already on the line.
                 String line = reader.readLine(prompt);
                 return line;
 
