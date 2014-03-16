@@ -84,8 +84,8 @@ public class StdoutWrapper extends OutputStream {
             PyFile file = (PyFile) out;
             if (file.softspace) {
                 file.write("\n");
-                file.flush();
             }
+            file.flush();
             file.softspace = false;
         } else {
             PyObject ss = out.__findattr__("softspace");

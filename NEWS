@@ -19,9 +19,10 @@ Jython 2.7b2
     - [ 2075 ] Incorrect padding for hex format strings
     - [ 2082 ] Unexpected (Pdb) prompt during regression tests
     - [ 2083 ] os.unlink() can delete directories
+    - [ 2089 ] sys.stdout not flushed after sys.exit
   New Features
-  	- Command line option -E (ignore environment variables)
-  	- Environment variable PYTHONIOENCODING, and corresponding registry items
+    - Command line option -E (ignore environment variables)
+    - Environment variable PYTHONIOENCODING, and corresponding registry items
 
 Jython 2.7b1
   Bugs Fixed
