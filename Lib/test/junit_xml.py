@@ -168,6 +168,14 @@ class Tee(StringIO):
         StringIO.flush(self)
         self.stream.flush()
 
+    # Equalities to ensure that Tee(stream) == stream
+
+    def __eq__(self, other):
+        return self is other or self.stream == other
+
+    def __ne__(self, other):
+        return self is not other and self.stream != other
+
 
 def write_testsuite_xml(stream, tests, errors, failures, skipped, name, took):
     """Write the XML header (<testsuite/>)"""
