@@ -19,6 +19,7 @@ import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 
 import java.math.BigInteger;
+import org.python.core.ClassDictInit;
 import org.python.core.PyArray;
 
 /**
@@ -252,7 +253,7 @@ import org.python.core.PyArray;
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
  * @version struct.java,v 1.6 1999/04/17 12:04:34 fb Exp
  */
-public class struct {
+public class struct implements ClassDictInit {
 
     /**
      * Exception raised on various occasions; argument is a
@@ -1148,8 +1149,9 @@ public class struct {
         return dict;
     }
     
-    public static PyStruct Struct(PyObject[] args, String[] keywords) {
-        return new PyStruct(args, keywords);
+    public static void classDictInit(PyObject dict) {
+        dict.__setitem__("Struct", PyStruct.TYPE);
     }
+
 }
 
