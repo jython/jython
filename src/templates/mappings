@@ -11,6 +11,7 @@ ClasspathPyImporter.derived:org.python.core.ClasspathPyImporterDerived
 PyBZ2File.derived:org.python.modules.bz2.PyBZ2FileDerived
 PyBZ2Compressor.derived:org.python.modules.bz2.PyBZ2CompressorDerived
 PyBZ2Decompressor.derived:org.python.modules.bz2.PyBZ2DecompressorDerived
+PyStruct.derived:org.python.modules.PyStructDerived
 array.derived:org.python.core.PyArrayDerived
 bytearray.derived:org.python.core.PyByteArrayDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
