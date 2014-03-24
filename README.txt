@@ -17,6 +17,6 @@ production release.
 
 Please see the NEWS file for detailed release notes.
 
-The release was compiled on OSXX with JDK 7 and requires JDK 7 to run.
+The release was compiled on OSX with JDK 7 and requires JDK 7 to run.
 
 Please try this out and report any bugs at http://bugs.jython.org.
