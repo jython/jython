@@ -52,9 +52,9 @@ An example ant.properties file:
 oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
 #informix.jar=${basedir}/../externals/external-jars/ifxjdbc.jar
 
-# - option for javac (build.compiler=modern is a global option to use standard jdk 1.5/1.6/1.7)
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.7/1.8)
 #build.compiler=modern
-#jdk.target.version=1.6
+#jdk.target.version=1.7
 #debug=false
 #deprecation=off
 
@@ -84,15 +84,15 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="PY_RELEASE_LEVEL_SNAPSHOT" value="170"/> <!-- 0xAA -->
 
         <!-- The current version info -->
-        <property name="jython.version" value="2.7b1+"/>
-        <property name="jython.version.noplus" value="2.7b1"/>
+        <property name="jython.version" value="2.7b2+"/>
+        <property name="jython.version.noplus" value="2.7b2"/>
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="0"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
         <!-- Usually zero, only used for alpha, beta and candidate versions
              where it must be greater than zero. -->
-        <property name="jython.release_serial" value="1"/>
+        <property name="jython.release_serial" value="2"/>
         <property name="jython.java.version" value="1.7"/>
 
         <condition property="do.snapshot.build">
