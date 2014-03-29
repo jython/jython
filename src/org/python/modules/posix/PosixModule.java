@@ -944,7 +944,15 @@ public class PosixModule implements ClassDictInit {
 
         @Override
         public PyObject __call__(PyObject path) {
-            return PyStatResult.fromFileStat(posix.lstat(absolutePath(path)));
+            String absolutePath = absolutePath(path);
+
+            // round tripping from a string to a file to a string loses
+            // trailing slashes so add them back back in to get correct posix.lstat
+            // behaviour if path is not a directory.
+            if (asPath(path).endsWith(File.separator)) {
+                absolutePath = absolutePath + File.separator;
+            }
+            return PyStatResult.fromFileStat(posix.lstat(absolutePath));
         }
     }
 
