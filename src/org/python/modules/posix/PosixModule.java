@@ -13,6 +13,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
@@ -727,17 +730,23 @@ public class PosixModule implements ClassDictInit {
 
     public static void unlink(PyObject path) {
         String absolutePath = absolutePath(path);
-        File file = new File(absolutePath);
-        if (file.isDirectory()) {
-            throw Py.OSError(Errno.EISDIR, path);
-        } else if (!file.delete()) {
-            // Something went wrong, does stat raise an error?
-            posix.stat(absolutePath);
-            // It exists, do we not have permissions?
-            if (!file.canWrite()) {
-                throw Py.OSError(Errno.EPERM, path);
+        try {
+            Path nioPath = new File(absolutePath).toPath();
+            if (Files.isDirectory(nioPath, LinkOption.NOFOLLOW_LINKS)) {
+                throw Py.OSError(Errno.EISDIR, path);
+            } else if (!Files.deleteIfExists(nioPath)) {
+                // Something went wrong, does stat raise an error?
+                posix.stat(absolutePath);
+                // It exists, do we not have permissions?
+                if (!Files.isWritable(nioPath)) {
+                    throw Py.OSError(Errno.EPERM, path);
+                }
+                throw Py.OSError("unlink(): an unknown error occurred: " + absolutePath);
             }
-            throw Py.OSError("unlink(): an unknown error occurred: " + absolutePath);
+        } catch (IOException ex) {
+            PyException pyError = Py.OSError("unlink(): an unknown error occurred: " + absolutePath);
+            pyError.initCause(ex);
+            throw pyError;
         }
     }
 
