@@ -1,19 +1,26 @@
 package org.python.core.stringlib;
 
 /**
- * Parser for PEP-3101 field format specifications.
+ * Parser for PEP-3101 field format specifications. This class provides a {@link #parse()} method
+ * that translates the format specification into an <code>InternalFormatSpec</code> object.
  */
 public class InternalFormatSpecParser {
+
     private String spec;
     private int index;
 
+    /**
+     * Constructor simply holds the specification streang ahead of the {@link #parse()} operation.
+     *
+     * @param spec format specifier to parse (e.g. "&lt;+12.3f")
+     */
     public InternalFormatSpecParser(String spec) {
         this.spec = spec;
         this.index = 0;
     }
 
     private static boolean isAlign(char c) {
-        switch(c) {
+        switch (c) {
             case '<':
             case '>':
             case '=':
@@ -24,6 +31,24 @@ public class InternalFormatSpecParser {
         }
     }
 
+    /**
+     * Parse the specification with which this object was initialised into an
+     * {@link InternalFormatSpec}, which is an object encapsulating the format for use by formatting
+     * methods. This parser deals only with the format specifiers themselves, as accepted by the
+     * <code>__format__</code> method of a type, or the <code>format()</code> built-in, not format
+     * strings in general as accepted by <code>str.format()</code>. A typical idiom is:
+     *
+     * <pre>
+     * InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
+     * </pre>
+     *
+     * @return the <code>InternalFormatSpec</code> equivalent to the constructor argument
+     */
+    /*
+     * This method is the equivalent of CPython's parse_internal_render_format_spec() in
+     * ~/Objects/stringlib/formatter.h.
+     */
+    // XXX Better encapsulated as a constructor of InternalFormatSpec?
     public InternalFormatSpec parse() {
         InternalFormatSpec result = new InternalFormatSpec();
         if (spec.length() >= 1 && isAlign(spec.charAt(0))) {
