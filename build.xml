@@ -445,7 +445,7 @@ The readme text for the next release will be like:
 
     <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="true" fork="true" dir="${jython.base.dir}">
-            <jvmarg value="-Xmx128m"/>
+            <jvmarg value="-Xmx512m"/>
             <arg value="-Xconversiontimeout"/>
             <arg value="2000"/>
             <arg value="-fo"/>
@@ -576,6 +576,8 @@ The readme text for the next release will be like:
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/guava-13.0.1.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
+            <zipfileset src="extlibs/icu4j-52_1.jar"/>
+            <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
             <zipfileset src="extlibs/jffi-i386-FreeBSD.jar"/>
@@ -596,8 +598,8 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <zipfileset src="extlibs/jffi-1.2.6.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-0.7.10.jar"/>
-			<zipfileset src="${extlibs.dir}/jnr-netdb-1.1.1.jar"/>
-			<zipfileset src="${extlibs.dir}/jnr-posix-2.4.0.jar"/>
+	    <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.1.jar"/>
+	    <zipfileset src="${extlibs.dir}/jnr-posix-2.4.0.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-constants-0.8.4.jar"/>
             <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>

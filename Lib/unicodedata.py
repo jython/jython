@@ -1,9 +1,18 @@
 import java.lang.Character
-from com.ibm.icu.text import Normalizer
-from com.ibm.icu.lang import UCharacter, UProperty
-from com.ibm.icu.util import VersionInfo
-from com.ibm.icu.lang.UCharacter import EastAsianWidth, DecompositionType
-from com.ibm.icu.lang.UCharacterEnums import ECharacterCategory, ECharacterDirection
+try:
+    # import from jarjar-ed version
+    from org.python.icu.text import Normalizer
+    from org.python.icu.lang import UCharacter, UProperty
+    from org.python.icu.util import VersionInfo
+    from org.python.icu.lang.UCharacter import EastAsianWidth, DecompositionType
+    from org.python.icu.lang.UCharacterEnums import ECharacterCategory, ECharacterDirection
+except ImportError:
+    # development version of Jython, so use extlibs
+    from com.ibm.icu.text import Normalizer
+    from com.ibm.icu.lang import UCharacter, UProperty
+    from com.ibm.icu.util import VersionInfo
+    from com.ibm.icu.lang.UCharacter import EastAsianWidth, DecompositionType
+    from com.ibm.icu.lang.UCharacterEnums import ECharacterCategory, ECharacterDirection
 
 
 __all__ = (
