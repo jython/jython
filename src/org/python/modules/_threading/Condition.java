@@ -87,11 +87,15 @@ public class Condition extends PyObject implements ContextManager {
 
     @ExposedMethod(defaults = "Py.None")
     final void Condition_wait(PyObject timeout) throws InterruptedException {
-        if (timeout == Py.None) {
-            _condition.await();
-        } else {
-            long nanos = (long) (timeout.asDouble() * 1e9);
-            _condition.awaitNanos(nanos);
+        try {
+            if (timeout == Py.None) {
+                _condition.await();
+            } else {
+                long nanos = (long) (timeout.asDouble() * 1e9);
+                _condition.awaitNanos(nanos);
+            }
+        } catch (IllegalMonitorStateException ex) {
+            throw Py.RuntimeError("cannot wait on un-acquired lock");
         }
     }
 
@@ -101,7 +105,11 @@ public class Condition extends PyObject implements ContextManager {
 
     @ExposedMethod
     final void Condition_notify() {
-        _condition.signal();
+        try {
+            _condition.signal();
+        } catch (IllegalMonitorStateException ex) {
+            throw Py.RuntimeError("cannot notify on un-acquired lock");
+        }
     }
 
     public void notifyAll$() {
@@ -110,7 +118,11 @@ public class Condition extends PyObject implements ContextManager {
 
     @ExposedMethod
     final void Condition_notifyAll() {
-        _condition.signalAll();
+        try {
+            _condition.signalAll();
+        } catch (IllegalMonitorStateException ex) {
+            throw Py.RuntimeError("cannot notify on un-acquired lock");
+        }
     }
 
     @ExposedMethod

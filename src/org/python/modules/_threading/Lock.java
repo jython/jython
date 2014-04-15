@@ -61,8 +61,8 @@ public class Lock extends PyObject implements ContextManager {
 
     @ExposedMethod
     final void Lock_release() {
-        if (!_lock.isHeldByCurrentThread()) {
-            throw Py.AssertionError("release() of un-acquire()d lock");
+        if (!_lock.isHeldByCurrentThread() || _lock.getHoldCount() <= 0) {
+            throw Py.RuntimeError("cannot release un-acquired lock");
         }
         _lock.unlock();
     }
