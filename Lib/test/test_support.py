@@ -631,28 +631,46 @@ def check_syntax_error(testcase, statement):
     else:
         testcase.fail('Missing SyntaxError: "%s"' % statement)
 
-def open_urlresource(url):
+def open_urlresource(url, check=None):
     import urlparse, urllib2
 
-    requires('urlfetch')
     filename = urlparse.urlparse(url)[2].split('/')[-1] # '/': it's URL!
 
-    for path in [os.path.curdir, os.path.pardir]:
-        fn = os.path.join(path, filename)
-        if os.path.exists(fn):
-            return open(fn)
+    fn = os.path.join(os.path.dirname(__file__), "data", filename)
+
+    def check_valid_file(fn):
+        f = open(fn)
+        if check is None:
+            return f
+        elif check(f):
+            f.seek(0)
+            return f
+        f.close()
+
+    if os.path.exists(fn):
+        f = check_valid_file(fn)
+        if f is not None:
+            return f
+        unlink(fn)
+
+    # Verify the requirement before downloading the file
+    requires('urlfetch')
 
     print >> get_original_stdout(), '\tfetching %s ...' % url
     f = urllib2.urlopen(url, timeout=15)
     try:
-        with open(filename, "wb") as out:
+        with open(fn, "wb") as out:
             s = f.read()
             while s:
                 out.write(s)
                 s = f.read()
     finally:
         f.close()
-    return open(filename)
+
+    f = check_valid_file(fn)
+    if f is not None:
+        return f
+    raise TestFailed('invalid resource "%s"' % fn)
 
 
 class WarningsRecorder(object):

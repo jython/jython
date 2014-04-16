@@ -974,9 +974,6 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         if (aliases == null || aliases.size() == 0) {
             throw new ParseException("Internel parser error", node);
         } else if (aliases.size() == 1 && aliases.get(0).getInternalName().equals("*")) {
-            if (node.getInternalLevel() > 0) {
-                throw new ParseException("'import *' not allowed with 'from .'", node);
-            }
             if (my_scope.func_level > 0) {
                 module.error("import * only allowed at module level", false, node);
 

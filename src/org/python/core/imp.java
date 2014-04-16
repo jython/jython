@@ -822,8 +822,18 @@ public class imp {
      */
     private static PyObject import_module_level(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
-        if (name.length() == 0 && level <= 0) {
-            throw Py.ValueError("Empty module name");
+        if (name.length() == 0) {
+            if (level == 0 || modDict == null) {
+                throw Py.ValueError("Empty module name");
+            } else {
+                PyObject moduleName = modDict.__findattr__("__name__");
+                if (moduleName != null && moduleName.toString().equals("__name__")) {
+                    throw Py.ValueError("Attempted relative import in non-package");
+                }
+            }
+        }
+        if (name.indexOf(File.separatorChar) != -1) {
+            throw Py.ImportError("Import by filename is not supported.");
         }
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;

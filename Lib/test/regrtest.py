@@ -1180,6 +1180,7 @@ _expectations = {
         """,
     'java':
         """
+        # Not supportable on Java, or at least requires additional emulation in Jython
         test__locale
         test__rawffi
         test_aepack
@@ -1194,20 +1195,12 @@ _expectations = {
         test_capi
         test_cd
         test_cl
-        test_commands
-        test_compileall
-        test_crypt
         test_ctypes
-        test_curses
-        test_dbm
         test_dl
-        test_email_codecs
-        test_epoll
         test_fcntl
         test_fork1
         test_gdb
         test_gdbm
-        test_grp
         test_getargs2
         test_gl
         test_hotshot
@@ -1217,39 +1210,28 @@ _expectations = {
         test_kqueue
         test_largefile
         test_linuxaudiodev
-        test_locale
-        test_longexp
         test_macfs
         test_macostools
-        test_mhlib
         test_mmap
         test_modulefinder
         test_msilib
         test_multiprocessing
         test_nis
-        test_normalization
         test_openpty
         test_ossaudiodev
         test_parser
         test_plistlib
-        test_poll
-        test_profile
         test_pty
         test_resource
         test_rgbimg
         test_scriptpackages
-        test_socket_ssl
-        test_socketserver
         test_sqlite
-        test_ssl
-        test_startfile
         test_strop
         test_structmembers
         test_sunaudiodev
         test_sundry
         test_symtable
         test_tcl
-        test_timeout
         test_tk
         test_tools
         test_ttk_guionly
@@ -1262,25 +1244,36 @@ _expectations = {
         test_winsound
         test_zipfile64
 
-        test_gzip
-        test_ftplib
-        test_poplib
-        test_pydoc
-        test_queue
-        test_smtplib
-        test_telnetlib
+        # Could rewrite these tests
+        test_epoll
+        test_poll
+        test_profile
 
-        test_binascii
+        # Causing issues
         test_distutils
-        test_dumbdbm
-        test_pbcvm
-        test_readline
-        test_shutil
-        test_sys_setprofile
-        test_sys_settrace
-        test_urllib2_localnet
+        test_email_codecs
+        test_io
+
+        # Should fix these tests so they are not hardcoded for CPython pyc files
+        # test_compileall
+        # test_pydoc
+
+        # Requires Python bytecode compilation support
+        test_longexp
+
+        # Tests that should work with socket-reboot, but currently hang
+        test_ftplib
+        test_httplib
+        test_poplib
+        test_smtplib
+        test_socket_ssl
+        test_socketserver
+        test_telnetlib
+        test_timeout
+
+        test_sys_setprofile  # revisit for GC
+        test_sys_settrace    # revisit for line jumping
         """
-        #Last group above should be re-evaluated before releasing 2.7.
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
 _expectations['freebsd6'] = _expectations['freebsd4']
@@ -1305,9 +1298,8 @@ _failures = {
         test_dis
         test_dummy_threading
         test_eof
-        test_frozen
+        test_frozen  # not meaningful for Jython, although it is similar to Clamp singlejar
         test_gc
-        test_import
         test_iterlen
         test_multibytecodec
         test_multibytecodec_support
