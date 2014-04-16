@@ -80,3 +80,20 @@ python.options.caseok = false
 # functionality by having an entry such as os:com.foo.jni.os
 #python.modules.builtin = whatever
 
+# This registry entry controls the behaviour of the SRE_STATE code point cache.
+# For the complete set of values that can be set here see:
+#   http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/cache/CacheBuilderSpec.html
+# Typically you will want to set weakKeys so as to perform object identity
+# comparisons rather than using equals(). Using weakKeys also enables entries
+# to be removed when the underlying key is garbage collected.
+#
+# Values that could be useful to tweak are:
+# - concurrencyLevel: this is a hint to the cache as to the level of partitioning to
+#   use for the intenal map and affects the number of concurrent *write* operations
+# - expireAfterAccess: constrains the size of the cache and the order
+#   in which cache entries are evicted. The current value is chosen somewhat
+#   arbitrarily so tweak as required.
+# - maximumWeight: weighting is based on the length of the int[] returned from
+#   PyString.toCodePoints(). As such this setting contrains the amount of memory
+#   that the cache will consume. The current value is 10MB.
+#python.sre.cachespec = weakKeys,concurrencyLevel=4,maximumWeight=2621440,expireAfterAccess=30s

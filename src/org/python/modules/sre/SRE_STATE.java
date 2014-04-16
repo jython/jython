@@ -16,6 +16,12 @@
 // Last updated to _sre.c: 2.52
 
 package org.python.modules.sre;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.Weigher;
+import org.python.core.Options;
+import org.python.core.Py;
 import org.python.core.PyString;
 
 public class SRE_STATE {
@@ -1245,8 +1251,49 @@ for line in sys.stdin:
     /* duplicated from the PatternObject */
     int flags;
 
+    private enum CACHE {
+        INSTANCE(Options.sreCacheSpec);
+        private LoadingCache<PyString, int[]> cache;
+
+        private CACHE(String spec) {
+            CacheLoader<PyString, int[]> loader = new CacheLoader<PyString, int[]>() {
+                @Override
+                public int[] load(PyString key) {
+                    return key.toCodePoints();
+                }
+            };
+
+            CacheBuilder<Object, Object> builder;
+            try {
+                builder = CacheBuilder.from(spec);
+            } catch (IllegalArgumentException iae) {
+                Py.writeWarning("re",
+                        String.format("Incompatible options in python.sre.cachespec '%s' due to: %s",
+                                new Object[] {spec, iae.getMessage()}));
+                Py.writeMessage("re", String.format("Defaulting python.sre.cachespec to '%s'",
+                        Options.sreCacheSpecDefault));
+                builder = CacheBuilder.from(Options.sreCacheSpecDefault);
+            }
+
+            if (spec.contains("maximumWeight")) {
+                cache = builder.weigher(new Weigher<PyString, int[]>() {
+                    @Override
+                    public int weigh(PyString k, int[] v) {
+                        return v.length;
+                    }
+                }).build(loader);
+            } else {
+                cache = builder.build(loader);
+            }
+        }
+
+        private int[] get(PyString str) {
+            return cache.getUnchecked(str);
+        }
+    }
+
     public SRE_STATE(PyString str, int start, int end, int flags) {
-        this.str = str.toCodePoints();
+        this.str = CACHE.INSTANCE.get(str);
         int size = str.__len__();
 
         this.charsize = 1;
