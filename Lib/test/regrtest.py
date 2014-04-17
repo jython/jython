@@ -1249,10 +1249,11 @@ _expectations = {
         test_poll
         test_profile
 
-        # Causing issues
+        # The following tests cause issues for tests that are subsequently run
         test_distutils
         test_email_codecs
         test_io
+        test_locale
 
         # Should fix these tests so they are not hardcoded for CPython pyc files
         # test_compileall
