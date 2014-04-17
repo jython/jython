@@ -1,13 +1,10 @@
-/*
- * Copyright (c) Corporation for National Research Initiatives
- * Copyright (c) Jython Developers
- */
+// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Jython Developers
 package org.python.core;
 
 import org.python.core.stringlib.Formatter;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
-
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -46,7 +43,7 @@ public class PyComplex extends PyObject {
 
     @ExposedNew
     public static PyObject complex_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                       PyObject[] args, String[] keywords) {
+            PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("complex", args, keywords, "real", "imag");
         PyObject real = ap.getPyObject(0, Py.Zero);
         PyObject imag = ap.getPyObject(1, null);
@@ -54,14 +51,12 @@ public class PyComplex extends PyObject {
         // Special-case for single argument that is already complex
         if (real.getType() == TYPE && new_.for_type == subtype && imag == null) {
             return real;
-        }
-        if (real instanceof PyString) {
+        } else if (real instanceof PyString) {
             if (imag != null) {
                 throw Py.TypeError("complex() can't take second arg if first is a string");
             }
             return real.__complex__();
-        }
-        if (imag != null && imag instanceof PyString) {
+        } else if (imag != null && imag instanceof PyString) {
             throw Py.TypeError("complex() second arg can't be a string");
         }
 
@@ -79,7 +74,7 @@ public class PyComplex extends PyObject {
         PyComplex complexImag;
         PyFloat toFloat = null;
         if (real instanceof PyComplex) {
-            complexReal = (PyComplex) real;
+            complexReal = (PyComplex)real;
         } else {
             try {
                 toFloat = real.__float__();
@@ -96,7 +91,7 @@ public class PyComplex extends PyObject {
         if (imag == null) {
             complexImag = new PyComplex(0.0);
         } else if (imag instanceof PyComplex) {
-            complexImag = (PyComplex) imag;
+            complexImag = (PyComplex)imag;
         } else {
             toFloat = null;
             try {
@@ -129,7 +124,7 @@ public class PyComplex extends PyObject {
 
     public static String toString(double value) {
         if (value == Math.floor(value) && value <= Long.MAX_VALUE && value >= Long.MIN_VALUE) {
-            return Long.toString((long) value);
+            return Long.toString((long)value);
         } else {
             return Double.toString(value);
         }
@@ -164,7 +159,7 @@ public class PyComplex extends PyObject {
             return new PyFloat(real).hashCode();
         } else {
             long v = Double.doubleToLongBits(real) ^ Double.doubleToLongBits(imag);
-            return (int) v ^ (int) (v >> 32);
+            return (int)v ^ (int)(v >> 32);
         }
     }
 
@@ -282,21 +277,18 @@ public class PyComplex extends PyObject {
     }
 
     /**
-     * Coercion logic for complex. Implemented as a final method to avoid
-     * invocation of virtual methods from the exposed coerce.
+     * Coercion logic for complex. Implemented as a final method to avoid invocation of virtual
+     * methods from the exposed coerce.
      */
     final PyObject complex___coerce_ex__(PyObject other) {
         if (other instanceof PyComplex) {
             return other;
-        }
-        if (other instanceof PyFloat) {
-            return new PyComplex(((PyFloat) other).getValue(), 0);
-        }
-        if (other instanceof PyInteger) {
-            return new PyComplex(((PyInteger) other).getValue(), 0);
-        }
-        if (other instanceof PyLong) {
-            return new PyComplex(((PyLong) other).doubleValue(), 0);
+        } else if (other instanceof PyFloat) {
+            return new PyComplex(((PyFloat)other).getValue(), 0);
+        } else if (other instanceof PyInteger) {
+            return new PyComplex(((PyInteger)other).getValue(), 0);
+        } else if (other instanceof PyLong) {
+            return new PyComplex(((PyLong)other).doubleValue(), 0);
         }
         return Py.None;
     }
@@ -308,16 +300,13 @@ public class PyComplex extends PyObject {
 
     private final PyComplex coerce(PyObject other) {
         if (other instanceof PyComplex) {
-            return (PyComplex) other;
-        }
-        if (other instanceof PyFloat) {
-            return new PyComplex(((PyFloat) other).getValue(), 0);
-        }
-        if (other instanceof PyInteger) {
-            return new PyComplex(((PyInteger) other).getValue(), 0);
-        }
-        if (other instanceof PyLong) {
-            return new PyComplex(((PyLong) other).doubleValue(), 0);
+            return (PyComplex)other;
+        } else if (other instanceof PyFloat) {
+            return new PyComplex(((PyFloat)other).getValue(), 0);
+        } else if (other instanceof PyInteger) {
+            return new PyComplex(((PyInteger)other).getValue(), 0);
+        } else if (other instanceof PyLong) {
+            return new PyComplex(((PyLong)other).doubleValue(), 0);
         }
         throw Py.TypeError("xxx");
     }
@@ -377,8 +366,8 @@ public class PyComplex extends PyObject {
     }
 
     private final static PyObject _mul(PyComplex o1, PyComplex o2) {
-        return new PyComplex(o1.real * o2.real - o1.imag * o2.imag,
-                             o1.real * o2.imag + o1.imag * o2.real);
+        return new PyComplex(o1.real * o2.real - o1.imag * o2.imag, //
+                o1.real * o2.imag + o1.imag * o2.real);
     }
 
     @Override
@@ -417,14 +406,14 @@ public class PyComplex extends PyObject {
             }
             double ratio = b.imag / b.real;
             double denom = b.real + b.imag * ratio;
-            return new PyComplex((a.real + a.imag * ratio) / denom,
-                                 (a.imag - a.real * ratio) / denom);
+            return new PyComplex((a.real + a.imag * ratio) / denom, //
+                    (a.imag - a.real * ratio) / denom);
         } else {
             /* divide tops and bottom by b.imag */
             double ratio = b.real / b.imag;
             double denom = b.real * ratio + b.imag;
-            return new PyComplex((a.real * ratio + a.imag) / denom,
-                                 (a.imag * ratio - a.real) / denom);
+            return new PyComplex((a.real * ratio + a.imag) / denom, //
+                    (a.imag * ratio - a.real) / denom);
         }
     }
 
@@ -437,8 +426,7 @@ public class PyComplex extends PyObject {
     final PyObject complex___div__(PyObject right) {
         if (!canCoerce(right)) {
             return null;
-        }
-        if (Options.division_warning >= 2) {
+        } else if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic complex division");
         }
         return _div(this, coerce(right));
@@ -453,8 +441,7 @@ public class PyComplex extends PyObject {
     final PyObject complex___rdiv__(PyObject left) {
         if (!canCoerce(left)) {
             return null;
-        }
-        if (Options.division_warning >= 2) {
+        } else if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic complex division");
         }
         return _div(coerce(left), this);
@@ -550,7 +537,7 @@ public class PyComplex extends PyObject {
 
     private static PyObject _mod(PyComplex value, PyComplex right) {
         Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
-        PyComplex z = (PyComplex) _div(value, right);
+        PyComplex z = (PyComplex)_div(value, right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;
@@ -586,7 +573,7 @@ public class PyComplex extends PyObject {
 
     private static PyObject _divmod(PyComplex value, PyComplex right) {
         Py.warning(Py.DeprecationWarning, "complex divmod(), // and % are deprecated");
-        PyComplex z = (PyComplex) _div(value, right);
+        PyComplex z = (PyComplex)_div(value, right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;
@@ -636,12 +623,12 @@ public class PyComplex extends PyObject {
         return complex___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = "null", doc = BuiltinDocs.complex___pow___doc)
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null",
+            doc = BuiltinDocs.complex___pow___doc)
     final PyObject complex___pow__(PyObject right, PyObject modulo) {
         if (modulo != null) {
             throw Py.ValueError("complex modulo");
-        }
-        if (!canCoerce(right)) {
+        } else if (!canCoerce(right)) {
             return null;
         }
         return _pow(this, coerce(right));
@@ -677,7 +664,7 @@ public class PyComplex extends PyObject {
         }
 
         // Check for integral powers
-        int iexp = (int) yr;
+        int iexp = (int)yr;
         if (yi == 0 && yr == iexp && iexp >= -128 && iexp <= 128) {
             return ipow(value, iexp);
         }
@@ -764,6 +751,7 @@ public class PyComplex extends PyObject {
         return new PyComplex(real, imag);
     }
 
+    @Override
     public PyComplex conjugate() {
         return complex_conjugate();
     }
@@ -798,13 +786,13 @@ public class PyComplex extends PyObject {
             throw Py.TypeError("__format__ requires str or unicode");
         }
 
-        PyString formatSpecStr = (PyString) formatSpec;
+        PyString formatSpecStr = (PyString)formatSpec;
         String result;
         try {
             String specString = formatSpecStr.getString();
             InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
             switch (spec.type) {
-                case '\0': /* No format code: like 'g', but with at least one decimal. */
+                case '\0': // No format code: like 'g', but with at least one decimal.
                 case 'e':
                 case 'E':
                 case 'f':
@@ -817,15 +805,14 @@ public class PyComplex extends PyObject {
                     break;
                 default:
                     /* unknown */
-                    throw Py.ValueError(String.format("Unknown format code '%c' for object of type 'complex'",
-                                            spec.type));
+                    throw Py.ValueError(String.format(
+                            "Unknown format code '%c' for object of type 'complex'", spec.type));
             }
         } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }
         return formatSpecStr.createInstance(result);
     }
-
 
     @Override
     public boolean isNumberType() {
