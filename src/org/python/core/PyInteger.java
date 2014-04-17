@@ -1,7 +1,5 @@
-/*
- * Copyright (c) Corporation for National Research Initiatives
- * Copyright (c) Jython Developers
- */
+// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Jython Developers
 package org.python.core;
 
 import java.io.Serializable;
@@ -112,9 +110,9 @@ public class PyInteger extends PyObject {
      * Convert all sorts of object types to either <code>PyInteger</code> or <code>PyLong</code>,
      * using their {@link PyObject#__int__()} method, whether exposed or not, or if that raises an
      * exception (as the base <code>PyObject</code> one does), using any <code>__trunc__()</code>
-     * the type may have exposed. If all this fails, this method raises an exception. Equivalent to CPython
-     * <code>PyNumber_Int()</code>.
-     * 
+     * the type may have exposed. If all this fails, this method raises an exception. Equivalent to
+     * CPython <code>PyNumber_Int()</code>.
+     *
      * @param x to convert to an int
      * @return int or long result.
      * @throws PyException (TypeError) if no method of conversion can be found
@@ -151,7 +149,7 @@ public class PyInteger extends PyObject {
     /**
      * Helper called on whatever exposed method <code>__trunc__</code> returned: it may be
      * <code>int</code>, <code>long</code> or something with an exposed <code>__int__</code>.
-     * 
+     *
      * @return convert to an int.
      * @throws TypeError and AttributeError.
      */
@@ -160,7 +158,7 @@ public class PyInteger extends PyObject {
             PyObject i = integral.invoke("__int__");
             if (!(i instanceof PyInteger) && !(i instanceof PyLong)) {
                 throw Py.TypeError(String.format("__trunc__ returned non-Integral (type %.200s)",
-                                                 integral.getType().fastGetName()));
+                        integral.getType().fastGetName()));
             }
             return i;
         }
@@ -225,7 +223,7 @@ public class PyInteger extends PyObject {
     @Override
     public Object __tojava__(Class<?> c) {
         if (c == Integer.TYPE || c == Number.class || c == Object.class || c == Integer.class
-            || c == Serializable.class) {
+                || c == Serializable.class) {
             return new Integer(getValue());
         }
 
@@ -233,10 +231,10 @@ public class PyInteger extends PyObject {
             return new Boolean(getValue() != 0);
         }
         if (c == Byte.TYPE || c == Byte.class) {
-            return new Byte((byte) getValue());
+            return new Byte((byte)getValue());
         }
         if (c == Short.TYPE || c == Short.class) {
-            return new Short((short) getValue());
+            return new Short((short)getValue());
         }
 
         if (c == Long.TYPE || c == Long.class) {
@@ -276,8 +274,8 @@ public class PyInteger extends PyObject {
     }
 
     /**
-     * Coercion logic for int. Implemented as a final method to avoid
-     * invocation of virtual methods from the exposed coerced.
+     * Coercion logic for int. Implemented as a final method to avoid invocation of virtual methods
+     * from the exposed coerced.
      */
     final Object int___coerce_ex__(PyObject other) {
         return other instanceof PyInteger ? other : Py.None;
@@ -289,7 +287,7 @@ public class PyInteger extends PyObject {
 
     private static final int coerce(PyObject other) {
         if (other instanceof PyInteger) {
-            return ((PyInteger) other).getValue();
+            return ((PyInteger)other).getValue();
         }
         throw Py.TypeError("xxx");
     }
@@ -311,7 +309,7 @@ public class PyInteger extends PyObject {
         if ((x ^ a) >= 0 || (x ^ b) >= 0) {
             return Py.newInteger(x);
         }
-        return new PyLong((long) a + (long) b);
+        return new PyLong((long)a + (long)b);
     }
 
     @Override
@@ -329,7 +327,7 @@ public class PyInteger extends PyObject {
         if ((x ^ a) >= 0 || (x ^ ~b) >= 0) {
             return Py.newInteger(x);
         }
-        return new PyLong((long) a - (long) b);
+        return new PyLong((long)a - (long)b);
     }
 
     @Override
@@ -374,7 +372,7 @@ public class PyInteger extends PyObject {
         x *= rightv;
 
         if (x <= Integer.MAX_VALUE && x >= Integer.MIN_VALUE) {
-            return Py.newInteger((int) x);
+            return Py.newInteger((int)x);
         }
         return __long__().__mul__(right);
     }
@@ -400,12 +398,12 @@ public class PyInteger extends PyObject {
 
         // If the signs of x and y differ, and the remainder is non-0, C89 doesn't define
         // whether xdivy is now the floor or the ceiling of the infinitely precise
-        // quotient.  We want the floor, and we have it iff the remainder's sign matches
+        // quotient. We want the floor, and we have it iff the remainder's sign matches
         // y's.
         if (xmody != 0 && ((y < 0 && xmody > 0) || (y > 0 && xmody < 0))) {
             xmody += y;
             --xdivy;
-            //assert(xmody && ((y ^ xmody) >= 0));
+            // assert(xmody && ((y ^ xmody) >= 0));
         }
         return xdivy;
     }
@@ -568,8 +566,8 @@ public class PyInteger extends PyObject {
         return int___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"},
-                   doc = BuiltinDocs.int___pow___doc)
+    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"}, //
+            doc = BuiltinDocs.int___pow___doc)
     final PyObject int___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right)) {
             return null;
@@ -599,8 +597,8 @@ public class PyInteger extends PyObject {
         return __rpow__(left, null);
     }
 
-    private static PyObject _pow(int value, int pow, PyObject modulo, PyObject left,
-                                 PyObject right) {
+    private static PyObject _pow(int value, int pow, PyObject modulo,//
+            PyObject left, PyObject right) {
         int mod = 0;
         long tmp = value;
         boolean neg = false;
@@ -663,7 +661,6 @@ public class PyInteger extends PyObject {
         return Py.newInteger(result);
     }
 
-
     @Override
     public PyObject __lshift__(PyObject right) {
         return int___lshift__(right);
@@ -673,7 +670,7 @@ public class PyInteger extends PyObject {
     final PyObject int___lshift__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger) {
-            rightv = ((PyInteger) right).getValue();
+            rightv = ((PyInteger)right).getValue();
         } else if (right instanceof PyLong) {
             return int___long__().__lshift__(right);
         } else {
@@ -696,7 +693,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rlshift__(PyObject left) {
         int leftv;
         if (left instanceof PyInteger) {
-            leftv = ((PyInteger) left).getValue();
+            leftv = ((PyInteger)left).getValue();
         } else if (left instanceof PyLong) {
             return left.__rlshift__(int___long__());
         } else {
@@ -724,7 +721,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rshift__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger) {
-            rightv = ((PyInteger) right).getValue();
+            rightv = ((PyInteger)right).getValue();
         } else if (right instanceof PyLong) {
             return int___long__().__rshift__(right);
         } else {
@@ -746,7 +743,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rrshift__(PyObject left) {
         int leftv;
         if (left instanceof PyInteger) {
-            leftv = ((PyInteger) left).getValue();
+            leftv = ((PyInteger)left).getValue();
         } else if (left instanceof PyLong) {
             return left.__rshift__(int___long__());
         } else {
@@ -773,7 +770,7 @@ public class PyInteger extends PyObject {
     final PyObject int___and__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger) {
-            rightv = ((PyInteger) right).getValue();
+            rightv = ((PyInteger)right).getValue();
         } else if (right instanceof PyLong) {
             return int___long__().__and__(right);
         } else {
@@ -797,7 +794,7 @@ public class PyInteger extends PyObject {
     final PyObject int___xor__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger) {
-            rightv = ((PyInteger) right).getValue();
+            rightv = ((PyInteger)right).getValue();
         } else if (right instanceof PyLong) {
             return int___long__().__xor__(right);
         } else {
@@ -811,7 +808,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rxor__(PyObject left) {
         int leftv;
         if (left instanceof PyInteger) {
-            leftv = ((PyInteger) left).getValue();
+            leftv = ((PyInteger)left).getValue();
         } else if (left instanceof PyLong) {
             return left.__rxor__(int___long__());
         } else {
@@ -830,7 +827,7 @@ public class PyInteger extends PyObject {
     final PyObject int___or__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger) {
-            rightv = ((PyInteger) right).getValue();
+            rightv = ((PyInteger)right).getValue();
         } else if (right instanceof PyLong) {
             return int___long__().__or__(right);
         } else {
@@ -921,7 +918,7 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___float___doc)
     final PyFloat int___float__() {
-        return new PyFloat((double) getValue());
+        return new PyFloat((double)getValue());
     }
 
     @Override
@@ -979,7 +976,7 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___getnewargs___doc)
     final PyTuple int___getnewargs__() {
-        return new PyTuple(new PyObject[]{new PyInteger(this.getValue())});
+        return new PyTuple(new PyObject[] {new PyInteger(this.getValue())});
     }
 
     @Override
@@ -1026,7 +1023,7 @@ public class PyInteger extends PyObject {
             throw Py.TypeError("__format__ requires str or unicode");
         }
 
-        PyString formatSpecStr = (PyString) formatSpec;
+        PyString formatSpecStr = (PyString)formatSpec;
         String result;
         try {
             String specString = formatSpecStr.getString();
@@ -1052,10 +1049,10 @@ public class PyInteger extends PyObject {
 
         int sign;
         if (value instanceof Integer) {
-            int intValue = (Integer) value;
+            int intValue = (Integer)value;
             sign = intValue < 0 ? -1 : intValue == 0 ? 0 : 1;
         } else {
-            sign = ((BigInteger) value).signum();
+            sign = ((BigInteger)value).signum();
         }
 
         String strValue;
@@ -1065,20 +1062,20 @@ public class PyInteger extends PyObject {
         if (spec.type == 'c') {
             if (spec.sign != '\0') {
                 throw new IllegalArgumentException("Sign not allowed with integer format "
-                                                   + "specifier 'c'");
+                        + "specifier 'c'");
             }
             if (value instanceof Integer) {
-                int intValue = (Integer) value;
+                int intValue = (Integer)value;
                 if (intValue > 0xffff) {
                     throw new IllegalArgumentException("%c arg not in range(0x10000)");
                 }
-                strValue = Character.toString((char) intValue);
+                strValue = Character.toString((char)intValue);
             } else {
-                BigInteger bigInt = (BigInteger) value;
+                BigInteger bigInt = (BigInteger)value;
                 if (bigInt.intValue() > 0xffff || bigInt.bitCount() > 16) {
                     throw new IllegalArgumentException("%c arg not in range(0x10000)");
                 }
-                strValue = Character.toString((char) bigInt.intValue());
+                strValue = Character.toString((char)bigInt.intValue());
             }
         } else {
             int radix = 10;
@@ -1099,21 +1096,21 @@ public class PyInteger extends PyObject {
             } else if (value instanceof BigInteger) {
                 switch (radix) {
                     case 2:
-                        strValue = toBinString((BigInteger) value);
+                        strValue = toBinString((BigInteger)value);
                         break;
                     case 8:
-                        strValue = toOctString((BigInteger) value);
+                        strValue = toOctString((BigInteger)value);
                         break;
                     case 16:
-                        strValue = toHexString((BigInteger) value);
+                        strValue = toHexString((BigInteger)value);
                         break;
                     default:
                         // General case (v.slow in known implementations up to Java 7).
-                        strValue = ((BigInteger) value).toString(radix);
+                        strValue = ((BigInteger)value).toString(radix);
                         break;
                 }
             } else {
-                strValue = Integer.toString((Integer) value, radix);
+                strValue = Integer.toString((Integer)value, radix);
             }
 
             if (spec.alternate) {
