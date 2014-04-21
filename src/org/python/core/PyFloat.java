@@ -5,9 +5,9 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-import org.python.core.stringlib.Formatter;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
+import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -24,9 +24,10 @@ public class PyFloat extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFloat.class);
 
-    /** Precisions used by repr() and str(), respectively. */
-    private static final int PREC_REPR = 17;
-    private static final int PREC_STR = 12;
+    /** Format specification used by repr(). */
+    static final Spec SPEC_REPR = InternalFormat.fromText(" >r");
+    /** Format specification used by str(). */
+    static final Spec SPEC_STR = Spec.NUMERIC;
 
     private final double value;
 
@@ -224,7 +225,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___str___doc)
     final PyString float___str__() {
-        return Py.newString(formatDouble(PREC_STR));
+        return Py.newString(formatDouble(SPEC_STR));
     }
 
     @Override
@@ -234,34 +235,19 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___repr___doc)
     final PyString float___repr__() {
-        return Py.newString(formatDouble(PREC_REPR));
+        return Py.newString(formatDouble(SPEC_REPR));
     }
 
-    private String formatDouble(int precision) {
-        if (Double.isNaN(value)) {
-            return "nan";
-        } else if (value == Double.NEGATIVE_INFINITY) {
-            return "-inf";
-        } else if (value == Double.POSITIVE_INFINITY) {
-            return "inf";
-        }
-
-        String result = String.format("%%.%dg", precision);
-        result = Py.newString(result).__mod__(this).toString();
-
-        int i = 0;
-        if (result.startsWith("-")) {
-            i++;
-        }
-        for (; i < result.length(); i++) {
-            if (!Character.isDigit(result.charAt(i))) {
-                break;
-            }
-        }
-        if (i == result.length()) {
-            result += ".0";
-        }
-        return result;
+    /**
+     * Format this float according to the specification passed in. Supports <code>__str__</code> and
+     * <code>__repr__</code>.
+     *
+     * @param spec parsed format specification string
+     * @return formatted value
+     */
+    private String formatDouble(Spec spec) {
+        FloatFormatter f = new FloatFormatter(spec);
+        return f.format(value).getResult();
     }
 
     @Override
@@ -919,10 +905,6 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___format___doc)
     final PyObject float___format__(PyObject formatSpec) {
-        return formatImpl(getValue(), formatSpec);
-    }
-
-    static PyObject formatImpl(double d, PyObject formatSpec) {
         if (!(formatSpec instanceof PyString)) {
             throw Py.TypeError("__format__ requires str or unicode");
         }
@@ -931,29 +913,22 @@ public class PyFloat extends PyObject {
         String result;
         try {
             String specString = formatSpecStr.getString();
-            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-            if (spec.type == '\0') {
-                return (Py.newFloat(d)).__str__();
-            }
-            switch (spec.type) {
-                case '\0': // No format code: like 'g', but with at least one decimal.
-                case 'e':
-                case 'E':
-                case 'f':
-                case 'F':
-                case 'g':
-                case 'G':
-                case 'n':
-                case '%':
-                    result = Formatter.formatFloat(d, spec);
-                    break;
-                default:
-                    /* unknown */
-                    throw Py.ValueError(String.format(
-                            "Unknown format code '%c' for object of type 'float'", spec.type));
+            Spec spec = InternalFormat.fromText(specString);
+            if (spec.type!=Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
+                throw FloatFormatter.unknownFormat(spec.type, "float");
+            } else if (spec.alternate) {
+                throw FloatFormatter.alternateFormNotAllowed("float");
+            } else {
+                // spec may be incomplete. The defaults are those commonly used for numeric formats.
+                spec = spec.withDefaults(Spec.NUMERIC);
+                // Get a formatter for the spec.
+                FloatFormatter f = new FloatFormatter(spec);
+                // Convert as per specification.
+                f.format(value).pad();
+                result = f.getResult();
             }
         } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
+            throw Py.ValueError(e.getMessage());    // XXX Can this be reached?
         }
         return formatSpecStr.createInstance(result);
     }

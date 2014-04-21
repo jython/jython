@@ -2,9 +2,9 @@
 // Copyright (c) Jython Developers
 package org.python.core;
 
-import org.python.core.stringlib.Formatter;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
+import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -18,6 +18,11 @@ import org.python.expose.MethodType;
 public class PyComplex extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyComplex.class);
+
+    /** Format specification used by repr(). */
+    static final Spec SPEC_REPR = InternalFormat.fromText(" >r"); // but also minFracDigits=0
+    /** Format specification used by str() and none-format. (As CPython, but is that right?) */
+    static final Spec SPEC_STR = InternalFormat.fromText(" >.12g");
 
     static PyComplex J = new PyComplex(0, 1.);
 
@@ -132,20 +137,51 @@ public class PyComplex extends PyObject {
 
     @Override
     public String toString() {
-        return complex_toString();
+        return __str__().toString();
     }
 
-    @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.complex___str___doc)
-    final String complex_toString() {
-        if (real == 0.) {
-            return toString(imag) + "j";
+    @Override
+    public PyString __str__() {
+        return complex___str__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.complex___str___doc)
+    final PyString complex___str__() {
+        return Py.newString(formatComplex(SPEC_STR));
+    }
+
+    @Override
+    public PyString __repr__() {
+        return complex___repr__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.complex___repr___doc)
+    final PyString complex___repr__() {
+        return Py.newString(formatComplex(SPEC_REPR));
+    }
+
+    /**
+     * Format this complex according to the specification passed in. Supports <code>__str__</code>
+     * and <code>__repr__</code>, and none-format.
+     * <p>
+     * In general, the output is surrounded in parentheses, like <code>"(12.34+24.68j)"</code>.
+     * However, if the real part is zero, only the imaginary part is printed, and without
+     * parentheses like <code>"24.68j"</code>. The number format specification passed in is used
+     * without padding to width, for the real and imaginary parts individually.
+     *
+     * @param spec parsed format specification string
+     * @return formatted value
+     */
+    private String formatComplex(Spec spec) {
+        FloatFormatter f = new FloatFormatter(spec, 2, 3); // Two elements + "(j)".length
+        // Even in r-format, complex strips *all* the trailing zeros.
+        f.setMinFracDigits(0);
+        if (real == 0.0) {
+            f.format(imag).append('j');
         } else {
-            if (imag >= 0) {
-                return String.format("(%s+%sj)", toString(real), toString(imag));
-            } else {
-                return String.format("(%s-%sj)", toString(real), toString(-imag));
-            }
+            f.append('(').format(real).format(imag, "+").append("j)").pad();
         }
+        return f.getResult();
     }
 
     @Override
@@ -763,7 +799,7 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___getnewargs___doc)
     final PyTuple complex___getnewargs__() {
-        return new PyTuple(new PyComplex(real, imag));
+        return new PyTuple(new PyFloat(real), new PyFloat(imag));
     }
 
     @Override
@@ -778,10 +814,6 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___format___doc)
     final PyObject complex___format__(PyObject formatSpec) {
-        return formatImpl(real, imag, formatSpec);
-    }
-
-    static PyObject formatImpl(double r, double i, PyObject formatSpec) {
         if (!(formatSpec instanceof PyString)) {
             throw Py.TypeError("__format__ requires str or unicode");
         }
@@ -790,26 +822,32 @@ public class PyComplex extends PyObject {
         String result;
         try {
             String specString = formatSpecStr.getString();
-            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-            switch (spec.type) {
-                case '\0': // No format code: like 'g', but with at least one decimal.
-                case 'e':
-                case 'E':
-                case 'f':
-                case 'F':
-                case 'g':
-                case 'G':
-                case 'n':
-                case '%':
-                    result = Formatter.formatComplex(r, i, spec);
-                    break;
-                default:
-                    /* unknown */
-                    throw Py.ValueError(String.format(
-                            "Unknown format code '%c' for object of type 'complex'", spec.type));
+            Spec spec = InternalFormat.fromText(specString);
+            if (spec.type!=Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
+                throw FloatFormatter.unknownFormat(spec.type, "complex");
+            } else if (spec.alternate) {
+                throw FloatFormatter.alternateFormNotAllowed("complex");
+            } else if (spec.fill == '0') {
+                throw FloatFormatter.zeroPaddingNotAllowed("complex");
+            } else if (spec.align == '=') {
+                throw FloatFormatter.alignmentNotAllowed('=', "complex");
+            } else {
+                if (spec.type == Spec.NONE) {
+                    // In none-format, we take the default type and precision from __str__.
+                    spec = spec.withDefaults(SPEC_STR);
+                    // And then we use the __str__ mechanism to get parentheses or real 0 elision.
+                    result = formatComplex(spec);
+                } else {
+                    // In any other format, the defaults those commonly used for numeric formats.
+                    spec = spec.withDefaults(Spec.NUMERIC);
+                    FloatFormatter f = new FloatFormatter(spec, 2, 1);// 2 floats + "j"
+                    // Convert as both parts per specification
+                    f.format(real).format(imag, "+").append('j').pad();
+                    result = f.getResult();
+                }
             }
         } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
+            throw Py.ValueError(e.getMessage());    // XXX Can this be reached?
         }
         return formatSpecStr.createInstance(result);
     }
