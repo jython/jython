@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.python.antlr.base.mod;
+import org.python.core.util.ExtraMath;
 import org.python.core.util.RelativeFile;
 import org.python.core.util.StringUtil;
 import org.python.modules._functools._functools;
@@ -1601,20 +1602,14 @@ class RoundFunction extends PyBuiltinFunction {
         ArgParser ap = new ArgParser("round", args, kwds, new String[] {"number", "ndigits"}, 0);
         PyObject number = ap.getPyObject(0);
         int ndigits = ap.getIndex(1, 0);
-        return round(number.asDouble(), ndigits);
-    }
-
-    private static PyFloat round(double f, int digits) {
-        boolean neg = f < 0;
-        double multiple = Math.pow(10., digits);
-        if (neg) {
-            f = -f;
+        double x = number.asDouble();
+        double r = ExtraMath.round(x, ndigits);
+        if (Double.isInfinite(r) && !Double.isInfinite(x)) {
+            // Rounding caused magnitude to increase beyond representable range
+            throw Py.OverflowError("rounded value too large to represent");
+        } else {
+            return new PyFloat(r);
         }
-        double tmp = Math.floor(f * multiple + 0.5);
-        if (neg) {
-            tmp = -tmp;
-        }
-        return new PyFloat(tmp / multiple);
     }
 }
 

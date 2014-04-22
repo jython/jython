@@ -811,12 +811,18 @@ public class PyFloat extends PyObject {
         return float___int__();
     }
 
+    /** Smallest value that cannot be represented as an int */
+    private static double INT_LONG_BOUNDARY = -(double)Integer.MIN_VALUE; // 2^31
+
     @ExposedMethod(doc = BuiltinDocs.float___int___doc)
     final PyObject float___int__() {
-        if (getValue() <= Integer.MAX_VALUE && getValue() >= Integer.MIN_VALUE) {
-            return new PyInteger((int)getValue());
+        double v = getValue();
+        if (v < INT_LONG_BOUNDARY && v > -(INT_LONG_BOUNDARY + 1.0)) {
+            // v will fit into an int (when rounded towards zero).
+            return new PyInteger((int)v);
+        } else {
+            return __long__();
         }
-        return __long__();
     }
 
     @Override

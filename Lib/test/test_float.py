@@ -76,8 +76,6 @@ class GeneralFloatCases(unittest.TestCase):
         # Double check.
         self.assertEqual(type(int(n)), type(n))
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: int boundries not right on Jython")
     def test_conversion_to_int(self):
         # Check that floats within the range of an int convert to type
         # int, not long.  (issue #11144.)
@@ -732,11 +730,9 @@ class RoundTestCase(unittest.TestCase):
 
         self.assertRaises(TypeError, round, INF, 0.0)
         self.assertRaises(TypeError, round, -INF, 1.0)
-        self.assertRaises(TypeError, round, NAN, "ceci n'est pas un integer")
+        self.assertRaises(TypeError, round, NAN, "ceci n'est pas un entier")
         self.assertRaises(TypeError, round, -0.0, 1j)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_large_n(self):
         for n in [324, 325, 400, 2**31-1, 2**31, 2**32, 2**100]:
             self.assertEqual(round(123.456, n), 123.456)
@@ -749,8 +745,6 @@ class RoundTestCase(unittest.TestCase):
         self.assertEqual(round(1e150, 309), 1e150)
         self.assertEqual(round(1.4e-315, 315), 1e-315)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_small_n(self):
         for n in [-308, -309, -400, 1-2**31, -2**31, -2**31-1, -2**100]:
             self.assertEqual(round(123.456, n), 0.0)
@@ -758,14 +752,10 @@ class RoundTestCase(unittest.TestCase):
             self.assertEqual(round(1e300, n), 0.0)
             self.assertEqual(round(1e-320, n), 0.0)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_overflow(self):
         self.assertRaises(OverflowError, round, 1.6e308, -308)
         self.assertRaises(OverflowError, round, -1.7e308, -308)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: rounding incorrect in Jython")
     @unittest.skipUnless(getattr(sys, 'float_repr_style', '') == 'short',
                          "test applies only when using short float repr style")
     def test_previous_round_bugs(self):
@@ -775,8 +765,6 @@ class RoundTestCase(unittest.TestCase):
         self.assertEqual(round(56294995342131.5, 3),
                          56294995342131.5)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: rounding incorrect in Jython")
     @unittest.skipUnless(getattr(sys, 'float_repr_style', '') == 'short',
                          "test applies only when using short float repr style")
     def test_halfway_cases(self):
