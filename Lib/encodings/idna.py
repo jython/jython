@@ -1,7 +1,12 @@
 import codecs
 import re
-from com.ibm.icu.text import StringPrep, StringPrepParseException
 from java.net import IDN
+try:
+    # import from jarjar-ed version if available
+    from org.python.icu.text import StringPrep, StringPrepParseException
+except ImportError:
+    # dev version of Jython, so use extlibs
+    from com.ibm.icu.text import StringPrep, StringPrepParseException
 
 
 # IDNA section 3.1
