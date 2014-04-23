@@ -1,23 +1,20 @@
-/*
- * Copyright (c) Corporation for National Research Initiatives
- * Copyright (c) Jython Developers
- */
+// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Jython Developers
 package org.python.core;
 
-import org.python.core.stringlib.Formatter;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
-import org.python.modules.math;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
+import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+import org.python.modules.math;
 
 /**
  * A builtin python float.
@@ -27,9 +24,10 @@ public class PyFloat extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyFloat.class);
 
-    /** Precisions used by repr() and str(), respectively. */
-    private static final int PREC_REPR = 17;
-    private static final int PREC_STR = 12;
+    /** Format specification used by repr(). */
+    static final Spec SPEC_REPR = InternalFormat.fromText(" >r");
+    /** Format specification used by str(). */
+    static final Spec SPEC_STR = Spec.NUMERIC;
 
     private final double value;
 
@@ -47,12 +45,12 @@ public class PyFloat extends PyObject {
     }
 
     public PyFloat(float v) {
-        this((double) v);
+        this((double)v);
     }
 
     @ExposedNew
     public static PyObject float_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                     PyObject[] args, String[] keywords) {
+            PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("float", args, keywords, new String[] {"x"}, 0);
         PyObject x = ap.getPyObject(0, null);
         if (x == null) {
@@ -69,9 +67,9 @@ public class PyFloat extends PyObject {
                 if (e.match(Py.AttributeError)) {
                     // Translate AttributeError to TypeError
                     // XXX: We are using the same message as CPython, even if
-                    //      it is not strictly correct (instances of types
-                    //      that implement the __float__ method are also
-                    //      valid arguments)
+                    // it is not strictly correct (instances of types
+                    // that implement the __float__ method are also
+                    // valid arguments)
                     throw Py.TypeError("float() argument must be a string or a number");
                 }
                 throw e;
@@ -96,9 +94,9 @@ public class PyFloat extends PyObject {
 
     @ExposedClassMethod(doc = BuiltinDocs.float_fromhex_doc)
     public static PyObject float_fromhex(PyType type, PyObject o) {
-        //XXX: I'm sure this could be shortened/simplified, but Double.parseDouble() takes
-        //     non-hex strings and requires the form 0xNUMBERpNUMBER for hex input which
-        //     causes extra complexity here.
+        // XXX: I'm sure this could be shortened/simplified, but Double.parseDouble() takes
+        // non-hex strings and requires the form 0xNUMBERpNUMBER for hex input which
+        // causes extra complexity here.
 
         String message = "invalid hexadecimal floating-point string";
         boolean negative = false;
@@ -108,19 +106,16 @@ public class PyFloat extends PyObject {
 
         if (value.length() == 0) {
             throw Py.ValueError(message);
-        }
-        if (value.equals("nan") || value.equals("-nan") || value.equals("+nan")) {
+        } else if (value.equals("nan") || value.equals("-nan") || value.equals("+nan")) {
             return new PyFloat(Double.NaN);
-        }
-        if (value.equals("inf") ||value.equals("infinity") ||
-                value.equals("+inf") ||value.equals("+infinity")) {
+        } else if (value.equals("inf") || value.equals("infinity") || value.equals("+inf")
+                || value.equals("+infinity")) {
             return new PyFloat(Double.POSITIVE_INFINITY);
-        }
-        if (value.equals("-inf") || value.equals("-infinity")) {
+        } else if (value.equals("-inf") || value.equals("-infinity")) {
             return new PyFloat(Double.NEGATIVE_INFINITY);
         }
 
-        //Strip and record + or -
+        // Strip and record + or -
         if (value.charAt(0) == '-') {
             value = value.substring(1);
             negative = true;
@@ -131,17 +126,17 @@ public class PyFloat extends PyObject {
             throw Py.ValueError(message);
         }
 
-        //Append 0x if not present.
+        // Append 0x if not present.
         if (!value.startsWith("0x") && !value.startsWith("0X")) {
             value = "0x" + value;
         }
 
-        //reattach - if needed.
+        // reattach - if needed.
         if (negative) {
             value = "-" + value;
         }
 
-        //Append p if not present.
+        // Append p if not present.
         if (value.indexOf('p') == -1) {
             value = value + "p0";
         }
@@ -159,7 +154,7 @@ public class PyFloat extends PyObject {
 
     // @ExposedClassMethod(doc = BuiltinDocs.float_hex_doc)
     // public static PyObject float_hex(PyType type, double value) {
-    //     return new PyString(Double.toHexString(value));
+    // return new PyString(Double.toHexString(value));
     // }
 
     private String pyHexString(Double f) {
@@ -167,25 +162,31 @@ public class PyFloat extends PyObject {
         // the most efficient, but we don't expect this to be a hot
         // spot in our code either
         String java_hex = Double.toHexString(getValue());
-        if (java_hex.equals("Infinity")) return "inf";
-        if (java_hex.equals("-Infinity")) return "-inf";
-        if (java_hex.equals("NaN")) return "nan";
-        if (java_hex.equals("0x0.0p0")) return "0x0.0p+0";
-        if (java_hex.equals("-0x0.0p0")) return "-0x0.0p+0";
+        if (java_hex.equals("Infinity")) {
+            return "inf";
+        } else if (java_hex.equals("-Infinity")) {
+            return "-inf";
+        } else if (java_hex.equals("NaN")) {
+            return "nan";
+        } else if (java_hex.equals("0x0.0p0")) {
+            return "0x0.0p+0";
+        } else if (java_hex.equals("-0x0.0p0")) {
+            return "-0x0.0p+0";
+        }
 
-	// replace hex rep of MpE to conform with Python such that
-        //   1. M is padded to 16 digits (ignoring a leading -)
-        //   2. Mp+E if E>=0
+        // replace hex rep of MpE to conform with Python such that
+        // 1. M is padded to 16 digits (ignoring a leading -)
+        // 2. Mp+E if E>=0
         // example: result of 42.0.hex() is translated from
-        //   0x1.5p5 to 0x1.5000000000000p+5
+        // 0x1.5p5 to 0x1.5000000000000p+5
         int len = java_hex.length();
         boolean start_exponent = false;
         StringBuilder py_hex = new StringBuilder(len + 1);
         int padding = f > 0 ? 17 : 18;
-        for (int i=0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             char c = java_hex.charAt(i);
             if (c == 'p') {
-                for (int pad=i; pad < padding; pad++) {
+                for (int pad = i; pad < padding; pad++) {
                     py_hex.append('0');
                 }
                 start_exponent = true;
@@ -194,9 +195,9 @@ public class PyFloat extends PyObject {
                     py_hex.append('+');
                 }
                 start_exponent = false;
-	    }
+            }
             py_hex.append(c);
-	}
+        }
         return py_hex.toString();
     }
 
@@ -224,7 +225,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___str___doc)
     final PyString float___str__() {
-        return Py.newString(formatDouble(PREC_STR));
+        return Py.newString(formatDouble(SPEC_STR));
     }
 
     @Override
@@ -234,34 +235,19 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___repr___doc)
     final PyString float___repr__() {
-        return Py.newString(formatDouble(PREC_REPR));
+        return Py.newString(formatDouble(SPEC_REPR));
     }
 
-    private String formatDouble(int precision) {
-        if (Double.isNaN(value)) {
-            return "nan";
-        } else if (value == Double.NEGATIVE_INFINITY) {
-            return "-inf";
-        } else if (value == Double.POSITIVE_INFINITY) {
-            return "inf";
-        }
-
-        String result = String.format("%%.%dg", precision);
-        result = Py.newString(result).__mod__(this).toString();
-
-        int i = 0;
-        if (result.startsWith("-")) {
-            i++;
-        }
-        for (; i < result.length(); i++) {
-            if (!Character.isDigit(result.charAt(i))) {
-                break;
-            }
-        }
-        if (i == result.length()) {
-            result += ".0";
-        }
-        return result;
+    /**
+     * Format this float according to the specification passed in. Supports <code>__str__</code> and
+     * <code>__repr__</code>.
+     *
+     * @param spec parsed format specification string
+     * @return formatted value
+     */
+    private String formatDouble(Spec spec) {
+        FloatFormatter f = new FloatFormatter(spec);
+        return f.format(value).getResult();
     }
 
     @Override
@@ -274,23 +260,22 @@ public class PyFloat extends PyObject {
         double value = getValue();
         if (Double.isInfinite(value)) {
             return value < 0 ? -271828 : 314159;
-        }
-        if (Double.isNaN(value)) {
+        } else if (Double.isNaN(value)) {
             return 0;
         }
-        
+
         double intPart = Math.floor(value);
         double fractPart = value - intPart;
 
         if (fractPart == 0) {
             if (intPart <= Integer.MAX_VALUE && intPart >= Integer.MIN_VALUE) {
-                return (int) value;
+                return (int)value;
             } else {
                 return __long__().hashCode();
             }
         } else {
             long v = Double.doubleToLongBits(getValue());
-            return (int) v ^ (int) (v >> 32);
+            return (int)v ^ (int)(v >> 32);
         }
     }
 
@@ -307,10 +292,9 @@ public class PyFloat extends PyObject {
     @Override
     public Object __tojava__(Class<?> c) {
         if (c == Double.TYPE || c == Number.class || c == Double.class || c == Object.class
-            || c == Serializable.class) {
+                || c == Serializable.class) {
             return new Double(getValue());
-        }
-        if (c == Float.TYPE || c == Float.class) {
+        } else if (c == Float.TYPE || c == Float.class) {
             return new Float(getValue());
         }
         return super.__tojava__(c);
@@ -345,7 +329,7 @@ public class PyFloat extends PyObject {
 
     @Override
     public PyObject __ge__(PyObject other) {
-        //NaN >= anything is always false.
+        // NaN >= anything is always false.
         if (Double.isNaN(getValue())) {
             return Py.False;
         }
@@ -354,7 +338,7 @@ public class PyFloat extends PyObject {
 
     @Override
     public PyObject __lt__(PyObject other) {
-        //NaN < anything is always false.
+        // NaN < anything is always false.
         if (Double.isNaN(getValue())) {
             return Py.False;
         }
@@ -363,7 +347,7 @@ public class PyFloat extends PyObject {
 
     @Override
     public PyObject __le__(PyObject other) {
-        //NaN >= anything is always false.
+        // NaN >= anything is always false.
         if (Double.isNaN(getValue())) {
             return Py.False;
         }
@@ -382,7 +366,7 @@ public class PyFloat extends PyObject {
         double j;
 
         if (other instanceof PyFloat) {
-            j = ((PyFloat) other).getValue();
+            j = ((PyFloat)other).getValue();
         } else if (!isFinite()) {
             // we're infinity: our magnitude exceeds any finite
             // integer, so it doesn't matter which int we compare i
@@ -393,10 +377,10 @@ public class PyFloat extends PyObject {
                 return -2;
             }
         } else if (other instanceof PyInteger) {
-            j = ((PyInteger) other).getValue();
+            j = ((PyInteger)other).getValue();
         } else if (other instanceof PyLong) {
             BigDecimal v = new BigDecimal(getValue());
-            BigDecimal w = new BigDecimal(((PyLong) other).getValue());
+            BigDecimal w = new BigDecimal(((PyLong)other).getValue());
             return v.compareTo(w);
         } else {
             return -2;
@@ -425,21 +409,18 @@ public class PyFloat extends PyObject {
     }
 
     /**
-     * Coercion logic for float. Implemented as a final method to avoid
-     * invocation of virtual methods from the exposed coerce.
+     * Coercion logic for float. Implemented as a final method to avoid invocation of virtual
+     * methods from the exposed coerce.
      */
     final Object float___coerce_ex__(PyObject other) {
         if (other instanceof PyFloat) {
             return other;
+        } else if (other instanceof PyInteger) {
+            return new PyFloat((double)((PyInteger)other).getValue());
+        } else if (other instanceof PyLong) {
+            return new PyFloat(((PyLong)other).doubleValue());
         } else {
-            if (other instanceof PyInteger) {
-                return new PyFloat((double) ((PyInteger) other).getValue());
-            }
-            if (other instanceof PyLong) {
-                return new PyFloat(((PyLong) other).doubleValue());
-            } else {
-                return Py.None;
-            }
+            return Py.None;
         }
     }
 
@@ -449,11 +430,11 @@ public class PyFloat extends PyObject {
 
     private static double coerce(PyObject other) {
         if (other instanceof PyFloat) {
-            return ((PyFloat) other).getValue();
+            return ((PyFloat)other).getValue();
         } else if (other instanceof PyInteger) {
-            return ((PyInteger) other).getValue();
+            return ((PyInteger)other).getValue();
         } else if (other instanceof PyLong) {
-            return ((PyLong) other).doubleValue();
+            return ((PyLong)other).doubleValue();
         } else {
             throw Py.TypeError("xxx");
         }
@@ -544,8 +525,7 @@ public class PyFloat extends PyObject {
     final PyObject float___div__(PyObject right) {
         if (!canCoerce(right)) {
             return null;
-        }
-        if (Options.division_warning >= 2) {
+        } else if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic float division");
         }
 
@@ -565,8 +545,7 @@ public class PyFloat extends PyObject {
     final PyObject float___rdiv__(PyObject left) {
         if (!canCoerce(left)) {
             return null;
-        }
-        if (Options.division_warning >= 2) {
+        } else if (Options.division_warning >= 2) {
             Py.warning(Py.DeprecationWarning, "classic float division");
         }
 
@@ -667,7 +646,7 @@ public class PyFloat extends PyObject {
             return null;
         }
         double rightv = coerce(right);
-        return new PyFloat(modulo(getValue(),rightv));
+        return new PyFloat(modulo(getValue(), rightv));
     }
 
     @Override
@@ -729,18 +708,16 @@ public class PyFloat extends PyObject {
         return float___pow__(right, modulo);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, defaults = "null",
-                   doc = BuiltinDocs.float___pow___doc)
+    @ExposedMethod(type = MethodType.BINARY, defaults = "null", //
+            doc = BuiltinDocs.float___pow___doc)
     final PyObject float___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right)) {
             return null;
-        }
-
-        if (modulo != null) {
+        } else if (modulo != null) {
             throw Py.TypeError("pow() 3rd argument not allowed unless all arguments are integers");
         }
 
-        return _pow( getValue(), coerce(right), modulo);
+        return _pow(getValue(), coerce(right), modulo);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rpow___doc)
@@ -769,8 +746,7 @@ public class PyFloat extends PyObject {
         if (value == 0.0) {
             if (iw < 0.0) {
                 throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
-            }
-            if (Double.isNaN(iw)) {
+            } else if (Double.isNaN(iw)) {
                 return new PyFloat(Double.NaN);
             }
             return new PyFloat(0);
@@ -835,12 +811,18 @@ public class PyFloat extends PyObject {
         return float___int__();
     }
 
+    /** Smallest value that cannot be represented as an int */
+    private static double INT_LONG_BOUNDARY = -(double)Integer.MIN_VALUE; // 2^31
+
     @ExposedMethod(doc = BuiltinDocs.float___int___doc)
     final PyObject float___int__() {
-        if (getValue() <= Integer.MAX_VALUE && getValue() >= Integer.MIN_VALUE) {
-            return new PyInteger((int) getValue());
+        double v = getValue();
+        if (v < INT_LONG_BOUNDARY && v > -(INT_LONG_BOUNDARY + 1.0)) {
+            // v will fit into an int (when rounded towards zero).
+            return new PyInteger((int)v);
+        } else {
+            return __long__();
         }
-        return __long__();
     }
 
     @Override
@@ -902,7 +884,7 @@ public class PyFloat extends PyObject {
     @ExposedMethod(doc = BuiltinDocs.float_is_integer_doc)
     final boolean float_is_integer() {
         if (Double.isInfinite(value)) {
-            return false; 
+            return false;
         }
         return Math.floor(value) == value;
     }
@@ -929,41 +911,30 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___format___doc)
     final PyObject float___format__(PyObject formatSpec) {
-        return formatImpl(getValue(), formatSpec);
-    }
-
-    static PyObject formatImpl(double d, PyObject formatSpec) {
         if (!(formatSpec instanceof PyString)) {
             throw Py.TypeError("__format__ requires str or unicode");
         }
 
-        PyString formatSpecStr = (PyString) formatSpec;
+        PyString formatSpecStr = (PyString)formatSpec;
         String result;
         try {
             String specString = formatSpecStr.getString();
-            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-            if (spec.type == '\0'){
-                return (Py.newFloat(d)).__str__();
-            }
-            switch (spec.type) {
-                case '\0': /* No format code: like 'g', but with at least one decimal. */
-                case 'e':
-                case 'E':
-                case 'f':
-                case 'F':
-                case 'g':
-                case 'G':
-                case 'n':
-                case '%':
-                    result = Formatter.formatFloat(d, spec);
-                    break;
-                default:
-                    /* unknown */
-                    throw Py.ValueError(String.format("Unknown format code '%c' for object of type 'float'",
-                                            spec.type));
+            Spec spec = InternalFormat.fromText(specString);
+            if (spec.type!=Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
+                throw FloatFormatter.unknownFormat(spec.type, "float");
+            } else if (spec.alternate) {
+                throw FloatFormatter.alternateFormNotAllowed("float");
+            } else {
+                // spec may be incomplete. The defaults are those commonly used for numeric formats.
+                spec = spec.withDefaults(Spec.NUMERIC);
+                // Get a formatter for the spec.
+                FloatFormatter f = new FloatFormatter(spec);
+                // Convert as per specification.
+                f.format(value).pad();
+                result = f.getResult();
             }
         } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
+            throw Py.ValueError(e.getMessage());    // XXX Can this be reached?
         }
         return formatSpecStr.createInstance(result);
     }
@@ -979,14 +950,15 @@ public class PyFloat extends PyObject {
         PyTuple frexp = math.frexp(value);
         double float_part = ((Double)frexp.get(0)).doubleValue();
         int exponent = ((Integer)frexp.get(1)).intValue();
-        for (int i=0; i<300 && float_part != Math.floor(float_part); i++) {
+        for (int i = 0; i < 300 && float_part != Math.floor(float_part); i++) {
             float_part *= 2.0;
             exponent--;
         }
-        /* self == float_part * 2**exponent exactly and float_part is integral.
-           If FLT_RADIX != 2, the 300 steps may leave a tiny fractional part
-           to be truncated by PyLong_FromDouble(). */
-        
+        /*
+         * self == float_part * 2**exponent exactly and float_part is integral. If FLT_RADIX != 2,
+         * the 300 steps may leave a tiny fractional part to be truncated by PyLong_FromDouble().
+         */
+
         PyLong numerator = new PyLong(float_part);
         PyLong denominator = new PyLong(1);
         PyLong py_exponent = new PyLong(Math.abs(exponent));
@@ -1013,9 +985,7 @@ public class PyFloat extends PyObject {
     // but this is what Python demands
     public enum Format {
 
-        UNKNOWN("unknown"),
-        BE("IEEE, big-endian"),
-        LE("IEEE, little-endian");
+        UNKNOWN("unknown"), BE("IEEE, big-endian"), LE("IEEE, little-endian");
 
         private final String format;
 
@@ -1027,6 +997,7 @@ public class PyFloat extends PyObject {
             return format;
         }
     }
+
     // subset of IEEE-754, the JVM is big-endian
     public static volatile Format double_format = Format.BE;
     public static volatile Format float_format = Format.BE;
@@ -1050,14 +1021,14 @@ public class PyFloat extends PyObject {
         }
         if (Format.LE.format().equals(format)) {
             throw Py.ValueError(String.format("can only set %s format to 'unknown' or the "
-                                              + "detected platform value", typestr));
+                    + "detected platform value", typestr));
         } else if (Format.BE.format().equals(format)) {
             new_format = Format.BE;
         } else if (Format.UNKNOWN.format().equals(format)) {
             new_format = Format.UNKNOWN;
         } else {
-            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', " +
-                                "'IEEE, little-endian' or 'IEEE, big-endian'");
+            throw Py.ValueError("__setformat__() argument 2 must be 'unknown', "
+                    + "'IEEE, little-endian' or 'IEEE, big-endian'");
         }
         if (new_format != null) {
             if ("double".equals(typestr)) {

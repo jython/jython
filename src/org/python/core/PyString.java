@@ -3766,6 +3766,16 @@ public class PyString extends PyBaseString implements BufferProtocol {
         }
     }
 
+    /**
+     * Implements PEP-3101 {}-formatting methods <code>str.format()</code> and
+     * <code>unicode.format()</code>.
+     *
+     * @param value the format string
+     * @param args to be interpolated into the string
+     * @param keywords for the trailing args
+     * @param enclosingIterator when used nested
+     * @return the formatted string based on the arguments
+     */
     protected String buildFormattedString(String value, PyObject[] args, String[] keywords,
             MarkupIterator enclosingIterator) {
         StringBuilder result = new StringBuilder();
@@ -3775,12 +3785,20 @@ public class PyString extends PyBaseString implements BufferProtocol {
             if (chunk == null) {
                 break;
             }
+            // A Chunk encapsulates a literal part ...
             result.append(chunk.literalText);
+            // ... and the parsed form of the replacement field that followed it (if any)
             if (chunk.fieldName.length() > 0) {
+                // The grammar of the replacement field is:
+                // "{" [field_name] ["!" conversion] [":" format_spec] "}"
+
+                // Get the object referred to by the field name (which may be omitted).
                 PyObject fieldObj = getFieldObject(chunk.fieldName, args, keywords);
                 if (fieldObj == null) {
                     continue;
                 }
+
+                // The conversion specifier is s = __str__ or r = __repr__.
                 if ("r".equals(chunk.conversion)) {
                     fieldObj = fieldObj.__repr__();
                 } else if ("s".equals(chunk.conversion)) {
@@ -3788,12 +3806,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 } else if (chunk.conversion != null) {
                     throw Py.ValueError("Unknown conversion specifier " + chunk.conversion);
                 }
+
+                // The format_spec may be simple, or contained nested replacement fields.
                 String formatSpec = chunk.formatSpec;
                 if (chunk.formatSpecNeedsExpanding) {
                     if (enclosingIterator != null) {
                         // PEP 3101 says only 2 levels
                         throw Py.ValueError("Max string recursion exceeded");
                     }
+                    // Recursively interpolate further args into chunk.formatSpec
                     formatSpec = buildFormattedString(formatSpec, args, keywords, it);
                 }
                 renderField(fieldObj, formatSpec, result);
@@ -3802,6 +3823,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return result.toString();
     }
 
+    /**
+     * Return the object referenced by a given field name, interpreted in the context of the given
+     * argument list, containing positional and keyword arguments.
+     *
+     * @param fieldName to interpret.
+     * @param args argument list (positional then keyword arguments).
+     * @param keywords naming the keyword arguments.
+     * @return the object designated or <code>null</code>.
+     */
     private PyObject getFieldObject(String fieldName, PyObject[] args, String[] keywords) {
         FieldNameIterator iterator = new FieldNameIterator(fieldName);
         Object head = iterator.head();
@@ -3814,6 +3844,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 throw Py.IndexError("tuple index out of range");
             }
             obj = args[index];
+
         } else {
             for (int i = 0; i < keywords.length; i++) {
                 if (keywords[i].equals(head)) {
@@ -3825,6 +3856,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 throw Py.KeyError((String)head);
             }
         }
+
         if (obj != null) {
             while (true) {
                 FieldNameIterator.Chunk chunk = iterator.nextChunk();
@@ -3844,9 +3876,18 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 }
             }
         }
+
         return obj;
     }
 
+    /**
+     * Append to a formatting result, the presentation of one object, according to a given format
+     * specification and the object's <code>__format__</code> method.
+     *
+     * @param fieldObj to format.
+     * @param formatSpec specification to apply.
+     * @param result to which the result will be appended.
+     */
     private void renderField(PyObject fieldObj, String formatSpec, StringBuilder result) {
         PyString formatSpecStr = formatSpec == null ? Py.EmptyString : new PyString(formatSpec);
         result.append(fieldObj.__format__(formatSpecStr).asString());
@@ -3876,10 +3917,12 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     /**
-     * Internal implementation of str.__format__()
+     * Format the given text according to a parsed PEP 3101 formatting specification, as during
+     * <code>text.__format__(format_spec)</code> or <code>"{:s}".format(text)</code> where
+     * <code>text</code> is a Python string.
      *
-     * @param text the text to format
-     * @param spec the PEP 3101 formatting specification
+     * @param text to format
+     * @param spec the parsed PEP 3101 formatting specification
      * @return the result of the formatting
      */
     public static String formatString(String text, InternalFormatSpec spec) {
@@ -3954,6 +3997,9 @@ public class PyString extends PyBaseString implements BufferProtocol {
 }
 
 
+/**
+ * Interpreter for %-format strings. (Note visible across the core package.)
+ */
 final class StringFormatter {
 
     int index;
@@ -3985,6 +4031,12 @@ final class StringFormatter {
         this(format, false);
     }
 
+    /**
+     * Initialise the interpreter with the given format string, ready for {@link #format(PyObject)}.
+     *
+     * @param format string to interpret
+     * @param unicodeCoercion to indicate a <code>PyUnicode</code> result is expected
+     */
     public StringFormatter(String format, boolean unicodeCoercion) {
         index = 0;
         this.format = format;
@@ -3995,16 +4047,11 @@ final class StringFormatter {
     PyObject getarg() {
         PyObject ret = null;
         switch (argIndex) {
-        // special index indicating a mapping
-            case -3:
+            case -3: // special index indicating a mapping
                 return args;
-                // special index indicating a single item that has already been
-                // used
-            case -2:
+            case -2: // special index indicating a single item that has already been used
                 break;
-            // special index indicating a single item that has not yet been
-            // used
-            case -1:
+            case -1: // special index indicating a single item that has not yet been used
                 argIndex = -2;
                 return args;
             default:

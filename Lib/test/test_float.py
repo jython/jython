@@ -76,8 +76,6 @@ class GeneralFloatCases(unittest.TestCase):
         # Double check.
         self.assertEqual(type(int(n)), type(n))
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: int boundries not right on Jython")
     def test_conversion_to_int(self):
         # Check that floats within the range of an int convert to type
         # int, not long.  (issue #11144.)
@@ -638,16 +636,12 @@ class IEEEFormatTestCase(unittest.TestCase):
                 if not math.isnan(arg) and copysign(1.0, arg) > 0.0:
                     self.assertEqual(fmt % -arg, '-' + rhs)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working on Jython")
     def test_issue5864(self):
         self.assertEqual(format(123.456, '.4'), '123.5')
         self.assertEqual(format(1234.56, '.4'), '1.235e+03')
         self.assertEqual(format(12345.6, '.4'), '1.235e+04')
 
 class ReprTestCase(unittest.TestCase):
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working on Jython")
     def test_repr(self):
         floats_file = open(os.path.join(os.path.split(__file__)[0],
                            'floating_points.txt'))
@@ -736,11 +730,9 @@ class RoundTestCase(unittest.TestCase):
 
         self.assertRaises(TypeError, round, INF, 0.0)
         self.assertRaises(TypeError, round, -INF, 1.0)
-        self.assertRaises(TypeError, round, NAN, "ceci n'est pas un integer")
+        self.assertRaises(TypeError, round, NAN, "ceci n'est pas un entier")
         self.assertRaises(TypeError, round, -0.0, 1j)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_large_n(self):
         for n in [324, 325, 400, 2**31-1, 2**31, 2**32, 2**100]:
             self.assertEqual(round(123.456, n), 123.456)
@@ -753,8 +745,6 @@ class RoundTestCase(unittest.TestCase):
         self.assertEqual(round(1e150, 309), 1e150)
         self.assertEqual(round(1.4e-315, 315), 1e-315)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_small_n(self):
         for n in [-308, -309, -400, 1-2**31, -2**31, -2**31-1, -2**100]:
             self.assertEqual(round(123.456, n), 0.0)
@@ -762,8 +752,6 @@ class RoundTestCase(unittest.TestCase):
             self.assertEqual(round(1e300, n), 0.0)
             self.assertEqual(round(1e-320, n), 0.0)
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working in Jython")
     def test_overflow(self):
         self.assertRaises(OverflowError, round, 1.6e308, -308)
         self.assertRaises(OverflowError, round, -1.7e308, -308)
@@ -855,7 +843,7 @@ class RoundTestCase(unittest.TestCase):
 
 
     @unittest.skipIf(test_support.is_jython,
-                     "FIXME: formatting specials imperfect in Jython")
+                     "FIXME: %-formatting specials imperfect in Jython")
     @requires_IEEE_754
     def test_format_specials(self):
         # Test formatting of nans and infs.
@@ -863,6 +851,42 @@ class RoundTestCase(unittest.TestCase):
         def test(fmt, value, expected):
             # Test with both % and format().
             self.assertEqual(fmt % value, expected, fmt)
+            if not '#' in fmt:
+                # Until issue 7094 is implemented, format() for floats doesn't
+                #  support '#' formatting
+                fmt = fmt[1:] # strip off the %
+                self.assertEqual(format(value, fmt), expected, fmt)
+
+        for fmt in ['%e', '%f', '%g', '%.0e', '%.6f', '%.20g',
+                    '%#e', '%#f', '%#g', '%#.20e', '%#.15f', '%#.3g']:
+            pfmt = '%+' + fmt[1:]
+            sfmt = '% ' + fmt[1:]
+            test(fmt, INF, 'inf')
+            test(fmt, -INF, '-inf')
+            test(fmt, NAN, 'nan')
+            test(fmt, -NAN, 'nan')
+            # When asking for a sign, it's always provided. nans are
+            #  always positive.
+            test(pfmt, INF, '+inf')
+            test(pfmt, -INF, '-inf')
+            test(pfmt, NAN, '+nan')
+            test(pfmt, -NAN, '+nan')
+            # When using ' ' for a sign code, only infs can be negative.
+            #  Others have a space.
+            test(sfmt, INF, ' inf')
+            test(sfmt, -INF, '-inf')
+            test(sfmt, NAN, ' nan')
+            test(sfmt, -NAN, ' nan')
+
+    @requires_IEEE_754
+    def test_format_specials_jy(self):
+        # Test formatting of nans and infs (suppressing %-formatting).
+        # This is just a crudely restricted copy of test_format_specials.
+        # Delete this test when we no longer have to skip test_format_specials.
+
+        def test(fmt, value, expected):
+            # Test with only format().
+            #self.assertEqual(fmt % value, expected, fmt)
             if not '#' in fmt:
                 # Until issue 7094 is implemented, format() for floats doesn't
                 #  support '#' formatting
