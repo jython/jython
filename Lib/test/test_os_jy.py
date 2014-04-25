@@ -76,10 +76,25 @@ class OSDirTestCase(unittest.TestCase):
         os.removedirs(p)
 
 
+class OSStatTestCase(unittest.TestCase):
+
+    def setUp(self):
+        open(test_support.TESTFN, 'w').close()
+
+    def tearDown(self):
+        if os.path.exists(test_support.TESTFN):
+            os.remove(test_support.TESTFN)
+
+    def test_stat_with_trailing_slash(self):
+        self.assertRaises(OSError, os.stat, test_support.TESTFN + os.path.sep)
+        self.assertRaises(OSError, os.lstat, test_support.TESTFN + os.path.sep)
+
+
 def test_main():
     test_support.run_unittest(
         OSFileTestCase, 
         OSDirTestCase,
+        OSStatTestCase,
     )
 
 if __name__ == '__main__':
