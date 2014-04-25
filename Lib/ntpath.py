@@ -451,27 +451,53 @@ def normpath(path):
 try:
     from nt import _getfullpathname
 
-except ImportError: # not running on Windows - mock up something sensible
+except ImportError: # no built-in nt module - maybe it's Jython ;)
 
-    def abspath(path):
-        """Return the absolute version of a path."""
-        try:
-            if isinstance(path, unicode):
-                if path:
-                    path = sys.getPath(path)
+    if os._name == 'nt' :
+        # on Windows so Java version of sys deals in NT paths
+        def abspath(path):
+            """Return the absolute version of a path."""
+            try:
+                if isinstance(path, unicode):
+                    # Result must be unicode
+                    if path:
+                        path = sys.getPath(path)
+                    else:
+                        # Empty path must return current working directory
+                        path = os.getcwdu()
                 else:
-                    # Empty path must return current working directory
-                    path = os.getcwdu()
-            else:
-                if path:
-                    path = sys.getPath(path).encode('latin-1')
-                else:
-                    # Empty path must return current working directory
-                    path = os.getcwd()
-        except EnvironmentError:
-             pass # Bad path - return unchanged.
+                    # Result must be bytes
+                    if path:
+                        path = sys.getPath(path).encode('latin-1')
+                    else:
+                        # Empty path must return current working directory
+                        path = os.getcwd()
+            except EnvironmentError:
+                 pass # Bad path - return unchanged.
+            return normpath(path)
 
-        return normpath(path)
+    else:
+        # not running on Windows - mock up something sensible
+        def abspath(path):
+            """Return the absolute version of a path."""
+            try:
+                if isinstance(path, unicode):
+                    # Result must be unicode
+                    if path:
+                        path = join(os.getcwdu(), path)
+                    else:
+                        # Empty path must return current working directory
+                        path = os.getcwdu()
+                else:
+                    # Result must be bytes
+                    if path:
+                        path = join(os.getcwd(), path)
+                    else:
+                        # Empty path must return current working directory
+                        path = os.getcwd()
+            except EnvironmentError:
+                 pass # Bad path - return unchanged.
+            return normpath(path)
 
 else:  # use native Windows method on Windows
     def abspath(path):
