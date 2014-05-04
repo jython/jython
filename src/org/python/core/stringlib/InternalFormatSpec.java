@@ -7,8 +7,8 @@ package org.python.core.stringlib;
  * to a string assumed to be the result of formatting to the given precision.
  * <p>
  * This structure is returned by {@link InternalFormatSpecParser#parse()} and having public members
- * is freely used by {@link InternalFormatSpecParser}, {@link Formatter} and the __format__ methods
- * of client object types.
+ * is freely used by {@link InternalFormatSpecParser}, and the __format__ methods of client object
+ * types.
  * <p>
  * The fields correspond to the elements of a format specification. The grammar of a format
  * specification is:
@@ -45,7 +45,7 @@ public final class InternalFormatSpec {
      * @param defaultAlign to use if <code>this.align</code>=0 (one of <code>'&lt;'</code>,
      *            <code>'^'</code>, <code>'>'</code>, or <code>'='</code>).
      * @param leaveWidth to reduce effective <code>this.width</code> by
-     * @return
+     * @return padded value
      */
     public String pad(String value, char defaultAlign, int leaveWidth) {
 

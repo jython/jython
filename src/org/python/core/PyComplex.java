@@ -165,9 +165,10 @@ public class PyComplex extends PyObject {
      * and <code>__repr__</code>, and none-format.
      * <p>
      * In general, the output is surrounded in parentheses, like <code>"(12.34+24.68j)"</code>.
-     * However, if the real part is zero, only the imaginary part is printed, and without
-     * parentheses like <code>"24.68j"</code>. The number format specification passed in is used
-     * without padding to width, for the real and imaginary parts individually.
+     * However, if the real part is zero (but not negative zero), only the imaginary part is
+     * printed, and without parentheses like <code>"24.68j"</code>. The number format specification
+     * passed in is used for the real and imaginary parts individually, with padding to width
+     * afterwards (if the specification requires it).
      *
      * @param spec parsed format specification string
      * @return formatted value
@@ -176,12 +177,13 @@ public class PyComplex extends PyObject {
         FloatFormatter f = new FloatFormatter(spec, 2, 3); // Two elements + "(j)".length
         // Even in r-format, complex strips *all* the trailing zeros.
         f.setMinFracDigits(0);
-        if (real == 0.0) {
+        if (Double.doubleToLongBits(real) == 0L) {
+            // Real part is truly zero: show no real part.
             f.format(imag).append('j');
         } else {
-            f.append('(').format(real).format(imag, "+").append("j)").pad();
+            f.append('(').format(real).format(imag, "+").append("j)");
         }
-        return f.getResult();
+        return f.pad().getResult();
     }
 
     @Override
@@ -823,7 +825,7 @@ public class PyComplex extends PyObject {
         try {
             String specString = formatSpecStr.getString();
             Spec spec = InternalFormat.fromText(specString);
-            if (spec.type!=Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
+            if (spec.type != Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
                 throw FloatFormatter.unknownFormat(spec.type, "complex");
             } else if (spec.alternate) {
                 throw FloatFormatter.alternateFormNotAllowed("complex");
@@ -838,12 +840,12 @@ public class PyComplex extends PyObject {
                     // And then we use the __str__ mechanism to get parentheses or real 0 elision.
                     result = formatComplex(spec);
                 } else {
-                    // In any other format, the defaults those commonly used for numeric formats.
+                    // In any other format, defaults are those commonly used for numeric formats.
                     spec = spec.withDefaults(Spec.NUMERIC);
                     FloatFormatter f = new FloatFormatter(spec, 2, 1);// 2 floats + "j"
-                    // Convert as both parts per specification
-                    f.format(real).format(imag, "+").append('j').pad();
-                    result = f.getResult();
+                    // Convert both parts as per specification
+                    f.format(real).format(imag, "+").append('j');
+                    result = f.pad().getResult();
                 }
             }
         } catch (IllegalArgumentException e) {

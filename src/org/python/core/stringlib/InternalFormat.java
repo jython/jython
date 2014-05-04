@@ -108,7 +108,7 @@ public class InternalFormat {
          * method shows a '|' character between each section when it prints out the buffer. Override
          * this when you define more lengths in the subclass.
          *
-         * @return
+         * @return the lengths of the successive sections
          */
         protected int[] sectionLengths() {
             return new int[] {lenSign, lenWhole};
@@ -265,7 +265,6 @@ public class InternalFormat {
          * result you probably don't want. It is up to the client to disallow this (which
          * <code>complex</code> does).
          *
-         * @param value to pad
          * @return this object
          */
         public Formatter pad() {
@@ -468,8 +467,8 @@ public class InternalFormat {
      * during the construction of a new <code>Spec</code>, for attributes that are unspecified in a
      * primary source.
      * <p>
-     * This structure is returned by factory method {@link #fromText(CharSequence)}, and having
-     * public final members is freely accessed by formatters such as {@link FloatBuilder}, and the
+     * This structure is returned by factory method {@link #fromText(String)}, and having public
+     * final members is freely accessed by formatters such as {@link FloatFormatter}, and the
      * __format__ methods of client object types.
      * <p>
      * The fields correspond to the elements of a format specification. The grammar of a format
@@ -482,28 +481,28 @@ public class InternalFormat {
      * A typical idiom is:
      *
      * <pre>
-     *     private static final InternalFormatSpec FLOAT_DEFAULT = InternalFormatSpec.from(">");
+     *     private static final InternalFormatSpec FLOAT_DEFAULTS = InternalFormatSpec.from(">");
      *     ...
-     *         InternalFormatSpec spec = InternalFormatSpec.from(specString, FLOAT_DEFAULT);
+     *         InternalFormat.Spec spec = InternalFormat.fromText(specString);
+     *         spec = spec.withDefaults(FLOAT_DEFAULTS);
      *         ... // Validation of spec.type, and other attributes, for this type.
-     *         FloatBuilder buf = new FloatBuilder(spec);
-     *         buf.format(value);
-     *         String result = buf.getResult();
+     *         FloatFormatter f = new FloatFormatter(spec);
+     *         String result = f.format(value).getResult();
      *
      * </pre>
      */
     public static class Spec {
 
-        /** The fill character specified, or '\uffff' if unspecified. */
+        /** The fill character specified, or U+FFFF if unspecified. */
         public final char fill;
         /**
-         * Alignment indicator is one of {<code>'&lt;', '^', '>', '='</code>, or '\uffff' if
+         * Alignment indicator is one of {<code>'&lt;', '^', '>', '='</code>, or U+FFFF if
          * unspecified.
          */
         public final char align;
         /**
          * Sign-handling flag, one of <code>'+'</code>, <code>'-'</code>, or <code>' '</code>, or
-         * '\uffff' if unspecified.
+         * U+FFFF if unspecified.
          */
         public final char sign;
         /** The alternative format flag '#' was given. */
@@ -514,7 +513,7 @@ public class InternalFormat {
         public final boolean grouping;
         /** Precision decoded from the format, or -1 if unspecified. */
         public final int precision;
-        /** Type key from the format, or '\uffff' if unspecified. */
+        /** Type key from the format, or U+FFFF if unspecified. */
         public final char type;
 
         /** Non-character code point used to represent "no value" in <code>char</code> attributes. */
@@ -604,17 +603,17 @@ public class InternalFormat {
         }
 
         /**
-         * Return a merged <code>Spec</code> object, in which any attribute of this object, that is
-         * specified (or <code>true</code>) has the same value in the result, and any attribute of
-         * this object that is unspecified (or <code>false</code>) has the value that attribute
-         * takes in the other object. This the second object supplies default values. (These
+         * Return a merged <code>Spec</code> object, in which any attribute of this object that is
+         * specified (or <code>true</code>), has the same value in the result, and any attribute of
+         * this object that is unspecified (or <code>false</code>), has the value that attribute
+         * takes in the other object. Thus the second object supplies default values. (These
          * defaults may also be unspecified.) The use of this method is to allow a <code>Spec</code>
          * constructed from text to record exactly, and only, what was in the textual specification,
          * while the __format__ method of a client object supplies its type-specific defaults. Thus
          * "20" means "<20s" to a <code>str</code>, ">20.12" to a <code>float</code> and ">20.12g"
          * to a <code>complex</code>.
          *
-         * @param defaults to merge where this object does not specify the attribute.
+         * @param other defaults to merge where this object does not specify the attribute.
          * @return a new Spec object.
          */
         public Spec withDefaults(Spec other) {
@@ -646,7 +645,7 @@ public class InternalFormat {
          * @param precision (e.g. decimal places)
          * @param type indicator character
          */
-        public Spec(int width, int precision, char type) {
+        public Spec(int precision, char type) {
             this(' ', '>', Spec.NONE, false, UNSPECIFIED, false, precision, type);
         }
 
