@@ -4,17 +4,15 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 
-import org.python.core.StringFormatter.DecimalFormatTemplate;
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.stringlib.FieldNameIterator;
+import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.core.stringlib.MarkupIterator;
-import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -4246,7 +4244,6 @@ final class StringFormatter {
                 // safe to call __int__:
                 argAsInt = arg.__int__();
             } else {
-                // Same case noted on formatFloatDecimal:
                 // We can't simply call arg.__int__() because PyString implements
                 // it without exposing it to python (i.e, str instances has no
                 // __int__ attribute). So, we would support strings as arguments
@@ -4255,7 +4252,7 @@ final class StringFormatter {
                 try {
                     argAsInt = arg.__getattr__("__int__").__call__();
                 } catch (PyException e) {
-                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // XXX: Swallow custom AttributeError throws from __int__ methods
                     // No better alternative for the moment
                     if (e.match(Py.AttributeError)) {
                         throw Py.TypeError("int argument required");
@@ -4315,79 +4312,6 @@ final class StringFormatter {
         } catch (PyException pye) {
             throw !pye.match(Py.TypeError) ? pye : Py.TypeError("float argument required");
         }
-    }
-
-    static class DecimalFormatTemplate {
-
-        static DecimalFormat template;
-        static {
-            template =
-                    new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(java.util.Locale.US));
-            DecimalFormatSymbols symbols = template.getDecimalFormatSymbols();
-            symbols.setNaN("nan");
-            symbols.setInfinity("inf");
-            template.setDecimalFormatSymbols(symbols);
-            template.setGroupingUsed(false);
-        }
-    }
-
-    private static final DecimalFormat getDecimalFormat() {
-        return (DecimalFormat)DecimalFormatTemplate.template.clone();
-    }
-
-    private String formatFloatDecimal(double v, boolean truncate) {
-        checkPrecision("decimal");
-        int prec = precision;
-        if (prec == -1) {
-            prec = 6;
-        }
-        if (v < 0) {
-            v = -v;
-            negative = true;
-        }
-
-        DecimalFormat decimalFormat = getDecimalFormat();
-        decimalFormat.setMaximumFractionDigits(prec);
-        decimalFormat.setMinimumFractionDigits(truncate ? 0 : prec);
-
-        String ret = decimalFormat.format(v);
-        return ret;
-    }
-
-    private String formatFloatExponential(PyObject arg, char e, boolean truncate) {
-        StringBuilder buf = new StringBuilder();
-        double v = asDouble(arg);
-        boolean isNegative = false;
-        if (v < 0) {
-            v = -v;
-            isNegative = true;
-        }
-        double power = 0.0;
-        if (v > 0) {
-            power = ExtraMath.closeFloor(Math.log10(v));
-        }
-        // System.err.println("formatExp: "+v+", "+power);
-        int savePrecision = precision;
-        precision = 2;
-
-        String exp = formatInteger((long)power, 10, false);
-        if (negative) {
-            negative = false;
-            exp = '-' + exp;
-        } else {
-            exp = '+' + exp;
-        }
-
-        precision = savePrecision;
-
-        double base = v / Math.pow(10, power);
-        buf.append(formatFloatDecimal(base, truncate));
-        buf.append(e);
-
-        buf.append(exp);
-        negative = isNegative;
-
-        return buf.toString();
     }
 
     /**
@@ -4655,61 +4579,26 @@ final class StringFormatter {
 
                 case 'e':
                 case 'E':
-                    // Floating point exponential format (+case).
-                    string = formatFloatExponential(arg, c, false);
-                    if (c == 'E') {
-                        string = string.toUpperCase();
-                    }
-                    break;
-
                 case 'f':
                 case 'F':
-                    // Floating point decimal format (+case). Note ints accepted.
-                    string = formatFloatDecimal(asDouble(arg), false);
-                    if (c == 'F') {
-                        string = string.toUpperCase();
-                    }
-                    break;
-
                 case 'g':
                 case 'G':
-                    // Value-adaptive floating point format (+case). Note ints accepted.
-                    int origPrecision = precision;
-                    if (precision == -1) {
-                        precision = 6;
-                    }
+                    // All floating point formats (+case).
 
+                    // Convert the flags (local variables) to the form needed in the Spec object.
+                    char align = ljustFlag ? '<' : '>';
+                    char sign = signFlag ? '+' : (blankFlag ? ' ' : Spec.NONE);
+                    int w = Spec.UNSPECIFIED;
+                    Spec spec = new Spec(fill, align, sign, altFlag, w, false, precision, c);
+
+                    // Format using this Spec the double form of the argument.
+                    FloatFormatter f = new FloatFormatter(spec);
                     double v = asDouble(arg);
-                    int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
-                    if (v == Double.POSITIVE_INFINITY) {
-                        string = "inf";
-                    } else if (v == Double.NEGATIVE_INFINITY) {
-                        string = "-inf";
-                    } else if (exponent >= -4 && exponent < precision) {
-                        precision -= exponent + 1;
-                        string = formatFloatDecimal(v, !altFlag);
+                    f.format(v);
+                    string = f.getResult();
 
-                        // XXX: this block may be unnecessary now
-                        if (altFlag && string.indexOf('.') == -1) {
-                            int zpad = origPrecision - string.length();
-                            string += '.';
-                            if (zpad > 0) {
-                                char zeros[] = new char[zpad];
-                                for (int ci = 0; ci < zpad; zeros[ci++] = '0') {}
-                                string += new String(zeros);
-                            }
-                        }
-                    } else {
-                        // Exponential precision is the number of digits after the decimal
-                        // point, whereas 'g' precision is the number of significant digits --
-                        // and exponential always provides one significant digit before the
-                        // decimal point
-                        precision--;
-                        string = formatFloatExponential(arg, (char)(c - 2), !altFlag);
-                    }
-                    if (c == 'G') {
-                        string = string.toUpperCase();
-                    }
+                    // Suppress subsequent attempts to insert a correct sign, done already.
+                    signFlag = blankFlag = negative = false;
                     break;
 
                 case 'c':

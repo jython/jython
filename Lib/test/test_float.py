@@ -617,8 +617,6 @@ class IEEEFormatTestCase(unittest.TestCase):
         self.assertEqual('{0:f}'.format(NAN), 'nan')
         self.assertEqual('{0:F}'.format(NAN), 'NAN')
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: not working on Jython")
     @requires_IEEE_754
     def test_format_testfile(self):
         with open(format_testfile) as testfile:
@@ -842,8 +840,6 @@ class RoundTestCase(unittest.TestCase):
         self.assertAlmostEqual(round(1.5e22, -22), 2e22)
 
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: %-formatting specials imperfect in Jython")
     @requires_IEEE_754
     def test_format_specials(self):
         # Test formatting of nans and infs.
@@ -851,42 +847,6 @@ class RoundTestCase(unittest.TestCase):
         def test(fmt, value, expected):
             # Test with both % and format().
             self.assertEqual(fmt % value, expected, fmt)
-            if not '#' in fmt:
-                # Until issue 7094 is implemented, format() for floats doesn't
-                #  support '#' formatting
-                fmt = fmt[1:] # strip off the %
-                self.assertEqual(format(value, fmt), expected, fmt)
-
-        for fmt in ['%e', '%f', '%g', '%.0e', '%.6f', '%.20g',
-                    '%#e', '%#f', '%#g', '%#.20e', '%#.15f', '%#.3g']:
-            pfmt = '%+' + fmt[1:]
-            sfmt = '% ' + fmt[1:]
-            test(fmt, INF, 'inf')
-            test(fmt, -INF, '-inf')
-            test(fmt, NAN, 'nan')
-            test(fmt, -NAN, 'nan')
-            # When asking for a sign, it's always provided. nans are
-            #  always positive.
-            test(pfmt, INF, '+inf')
-            test(pfmt, -INF, '-inf')
-            test(pfmt, NAN, '+nan')
-            test(pfmt, -NAN, '+nan')
-            # When using ' ' for a sign code, only infs can be negative.
-            #  Others have a space.
-            test(sfmt, INF, ' inf')
-            test(sfmt, -INF, '-inf')
-            test(sfmt, NAN, ' nan')
-            test(sfmt, -NAN, ' nan')
-
-    @requires_IEEE_754
-    def test_format_specials_jy(self):
-        # Test formatting of nans and infs (suppressing %-formatting).
-        # This is just a crudely restricted copy of test_format_specials.
-        # Delete this test when we no longer have to skip test_format_specials.
-
-        def test(fmt, value, expected):
-            # Test with only format().
-            #self.assertEqual(fmt % value, expected, fmt)
             if not '#' in fmt:
                 # Until issue 7094 is implemented, format() for floats doesn't
                 #  support '#' formatting

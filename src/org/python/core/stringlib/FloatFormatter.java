@@ -16,7 +16,7 @@ import org.python.core.stringlib.InternalFormat.Spec;
 public class FloatFormatter extends InternalFormat.Formatter {
 
     /** The rounding mode dominant in the formatter. */
-    static final RoundingMode ROUND_PY = RoundingMode.HALF_UP; // Believed to be HALF_EVEN in Py3k
+    static final RoundingMode ROUND_PY = RoundingMode.HALF_EVEN;
 
     /** If it contains no decimal point, this length is zero, and 1 otherwise. */
     private int lenPoint;
@@ -325,10 +325,9 @@ public class FloatFormatter extends InternalFormat.Formatter {
             exp = lenFraction - vv.scale();
         }
 
-        // Finally add zeros, as necessary, and stick on the exponent.
-
+        // If the result is not already complete, add point and zeros as necessary, and exponent.
         if (lenMarker == 0) {
-            appendTrailingZeros(precision);
+            ensurePointAndTrailingZeros(precision);
             appendExponent(exp);
         }
     }
@@ -345,14 +344,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
      */
     private void format_f(double value, String positivePrefix, int precision) {
 
-        if (signAndSpecialNumber(value, positivePrefix)) {
-
-            if (lenMarker == 0) {
-                // May be 0 or -0 so we still need to ...
-                appendTrailingZeros(precision);
-            }
-
-        } else {
+        if (!signAndSpecialNumber(value, positivePrefix)) {
             // Convert value to decimal exactly. (This can be very long.)
             BigDecimal vLong = new BigDecimal(Math.abs(value));
 
@@ -366,9 +358,53 @@ public class FloatFormatter extends InternalFormat.Formatter {
                 // There is a decimal point and some digits following
                 lenWhole = result.length() - (start + lenSign + (lenPoint = 1) + lenFraction);
             } else {
+                // There are no fractional digits and so no decimal point
                 lenWhole = result.length() - (start + lenSign);
             }
+        }
 
+        // Finally, ensure we have all the fractional digits we should.
+        if (lenMarker == 0) {
+            ensurePointAndTrailingZeros(precision);
+        }
+    }
+
+    /**
+     * Append a decimal point and trailing fractional zeros if necessary for 'e' and 'f' format.
+     * This should not be called if the result is not numeric ("inf" for example). This method deals
+     * with the following complexities: on return there will be at least the number of fractional
+     * digits specified in the argument <code>n</code>, and at least {@link #minFracDigits};
+     * further, if <code>minFracDigits&lt;0</code>, signifying the "alternate mode" of certain
+     * formats, the method will ensure there is a decimal point, even if there are no fractional
+     * digits to follow.
+     *
+     * @param n smallest number of fractional digits on return
+     */
+    private void ensurePointAndTrailingZeros(int n) {
+
+        // Set n to the number of fractional digits we should have.
+        if (n < minFracDigits) {
+            n = minFracDigits;
+        }
+
+        // Do we have a decimal point already?
+        if (lenPoint == 0) {
+            // No decimal point: add one if there will be any fractional digits or
+            if (n > 0 || minFracDigits < 0) {
+                // First need to add a decimal point.
+                result.append('.');
+                lenPoint = 1;
+            }
+        }
+
+        // Do we have enough fractional digits already?
+        int f = lenFraction;
+        if (n > f) {
+            // Make up the required number of zeros.
+            for (; f < n; f++) {
+                result.append('0');
+            }
+            lenFraction = f;
         }
     }
 
@@ -635,7 +671,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
 
         // In no-truncate mode, the fraction is full precision. Otherwise trim it.
         if (minFracDigits >= 0) {
-            // Note minFracDigits only applies to fixed formats.
+            // Note positive minFracDigits only applies to fixed formats.
             removeTrailingZeros(0);
         }
 
@@ -757,16 +793,16 @@ public class FloatFormatter extends InternalFormat.Formatter {
 
     /**
      * Append the trailing fractional zeros, as required by certain formats, so that the total
-     * number of fractional digits is no less than specified. If <code>minFracDigits&lt;=0</code>,
-     * the method leaves the {@link #result} buffer unchanged.
+     * number of fractional digits is no less than specified. If <code>n&lt;=0</code>, the method
+     * leaves the {@link #result} buffer unchanged.
      *
-     * @param minFracDigits smallest number of fractional digits on return
+     * @param n smallest number of fractional digits on return
      */
-    private void appendTrailingZeros(int minFracDigits) {
+    private void appendTrailingZeros(int n) {
 
         int f = lenFraction;
 
-        if (minFracDigits > f) {
+        if (n > f) {
             if (lenPoint == 0) {
                 // First need to add a decimal point. (Implies lenFraction=0.)
                 result.append('.');
@@ -774,7 +810,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
             }
 
             // Now make up the required number of zeros.
-            for (; f < minFracDigits; f++) {
+            for (; f < n; f++) {
                 result.append('0');
             }
             lenFraction = f;
@@ -787,9 +823,9 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * originally (and therefore no fractional part), the method will add a decimal point, even if
      * it adds no zeros.
      *
-     * @param minFracDigits smallest number of fractional digits on return
+     * @param n smallest number of fractional digits on return
      */
-    private void appendPointAndTrailingZeros(int minFracDigits) {
+    private void appendPointAndTrailingZeros(int n) {
 
         if (lenPoint == 0) {
             // First need to add a decimal point. (Implies lenFraction=0.)
@@ -799,7 +835,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
 
         // Now make up the required number of zeros.
         int f;
-        for (f = lenFraction; f < minFracDigits; f++) {
+        for (f = lenFraction; f < n; f++) {
             result.append('0');
         }
         lenFraction = f;
@@ -810,18 +846,17 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * least the number of fractional digits specified. If the resultant number of fractional digits
      * is zero, this method will also remove the trailing decimal point (if there is one).
      *
-     * @param minFracDigits smallest number of fractional digits on return
+     * @param n smallest number of fractional digits on return
      */
-    private void removeTrailingZeros(int minFracDigits) {
-
-        int f = lenFraction;
+    private void removeTrailingZeros(int n) {
 
         if (lenPoint > 0) {
             // There's a decimal point at least, and there may be some fractional digits.
-            if (minFracDigits == 0 || f > minFracDigits) {
+            int f = lenFraction;
+            if (n == 0 || f > n) {
 
                 int fracStart = result.length() - f;
-                for (; f > minFracDigits; --f) {
+                for (; f > n; --f) {
                     if (result.charAt(fracStart - 1 + f) != '0') {
                         // Keeping this one as it isn't a zero
                         break;
