@@ -82,7 +82,7 @@ On the other hand, if you are building e.g. an HTTP server, where all
 data is stored externally (e.g. in the file system), a synchronous
 class will essentially render the service "deaf" while one request is
 being handled -- which may be for a very long time if a client is slow
-to reqd all the data it has requested.  Here a threading or forking
+to read all the data it has requested.  Here a threading or forking
 server is appropriate.
 
 In some cases, it may be appropriate to process part of a request
@@ -133,14 +133,11 @@ import socket
 import select
 import sys
 import os
+import errno
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
-
-select_fn = select.select
-if sys.platform.startswith('java'):
-    select_fn = select.cpython_compatible_select
 
 __all__ = ["TCPServer","UDPServer","ForkingUDPServer","ForkingTCPServer",
            "ThreadingUDPServer","ThreadingTCPServer","BaseRequestHandler",
@@ -150,6 +147,15 @@ if hasattr(socket, "AF_UNIX"):
     __all__.extend(["UnixStreamServer","UnixDatagramServer",
                     "ThreadingUnixStreamServer",
                     "ThreadingUnixDatagramServer"])
+
+def _eintr_retry(func, *args):
+    """restart a system call interrupted by EINTR"""
+    while True:
+        try:
+            return func(*args)
+        except (OSError, select.error) as e:
+            if e.args[0] != errno.EINTR:
+                raise
 
 class BaseServer:
 
@@ -226,7 +232,8 @@ class BaseServer:
                 # connecting to the socket to wake this up instead of
                 # polling. Polling reduces our responsiveness to a
                 # shutdown request and wastes cpu at all other times.
-                r, w, e = select_fn([self], [], [], poll_interval)
+                r, w, e = _eintr_retry(select.select, [self], [], [],
+                                       poll_interval)
                 if self in r:
                     self._handle_request_noblock()
         finally:
@@ -266,7 +273,7 @@ class BaseServer:
             timeout = self.timeout
         elif self.timeout is not None:
             timeout = min(timeout, self.timeout)
-        fd_sets = select_fn([self], [], [], timeout)
+        fd_sets = _eintr_retry(select.select, [self], [], [], timeout)
         if not fd_sets[0]:
             self.handle_timeout()
             return
@@ -275,7 +282,7 @@ class BaseServer:
     def _handle_request_noblock(self):
         """Handle one request, without blocking.
 
-        I assume that select_fn has returned that the socket is
+        I assume that select.select has returned that the socket is
         readable before this function was called, so there should be
         no risk of blocking in get_request().
         """
@@ -421,7 +428,12 @@ class TCPServer(BaseServer):
         if self.allow_reuse_address:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(self.server_address)
-        self.server_address = self.socket.getsockname()
+        try:
+            self.server_address = self.socket.getsockname()
+        except socket.error:
+            # Jython may raise ENOTCONN here;
+            # we will pick up again in server_activate
+            pass
 
     def server_activate(self):
         """Called by constructor to activate the server.
@@ -433,7 +445,7 @@ class TCPServer(BaseServer):
         # Adding a second call to getsockname() because of this issue
         # http://wiki.python.org/jython/NewSocketModule#Deferredsocketcreationonjython
         self.server_address = self.socket.getsockname()
-
+        
     def server_close(self):
         """Called to clean-up the server.
 
@@ -596,8 +608,7 @@ class ThreadingMixIn:
         """Start a new thread to process the request."""
         t = threading.Thread(target = self.process_request_thread,
                              args = (request, client_address))
-        if self.daemon_threads:
-            t.setDaemon (1)
+        t.daemon = self.daemon_threads
         t.start()
 
 
@@ -698,7 +709,12 @@ class StreamRequestHandler(BaseRequestHandler):
 
     def finish(self):
         if not self.wfile.closed:
-            self.wfile.flush()
+            try:
+                self.wfile.flush()
+            except socket.error:
+                # An final socket error may have occurred here, such as
+                # the local error ECONNABORTED.
+                pass
         self.wfile.close()
         self.rfile.close()
 

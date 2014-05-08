@@ -573,12 +573,26 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-4.0.jar"/>
             <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
+	    <zipfileset src="extlibs/bcpkix-jdk15on-150.jar" excludes="META-INF/*.SF"/>
+	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
+	    <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/*.SF"/>
+	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
 	    <zipfileset src="extlibs/commons-compress-1.4.1.jar"/>
 	    <rule pattern="org.apache.**" result="org.python.apache.@1"/>
             <zipfileset src="extlibs/guava-13.0.1.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-52_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
+            <zipfileset src="extlibs/netty-buffer-4.0.18.Final.jar"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-codec-4.0.18.Final.jar"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-common-4.0.18.Final.jar"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-handler-4.0.18.Final.jar"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-transport-4.0.18.Final.jar"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
             <zipfileset src="extlibs/jffi-i386-FreeBSD.jar"/>

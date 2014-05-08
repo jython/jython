@@ -7,10 +7,10 @@
 ###      mhlib.  It should.
 
 import unittest
-from test.test_support import is_jython, run_unittest, TESTFN, TestSkipped
+from test.test_support import is_jython, run_unittest, TESTFN, import_module
 import os, StringIO
 import sys
-import mhlib
+mhlib = import_module('mhlib', deprecated=True)
 
 if (sys.platform.startswith("win") or sys.platform=="riscos" or
       sys.platform.startswith("atheos") or (is_jython and os._name != 'posix')):
@@ -21,8 +21,8 @@ if (sys.platform.startswith("win") or sys.platform=="riscos" or
     # link counts, and that causes test_listfolders() here to get back
     # an empty list from its call of listallfolders().
     # The other tests here pass on Windows.
-    raise TestSkipped("skipped on %s -- " % sys.platform +
-                      "too many Unix assumptions")
+    raise unittest.SkipTest("skipped on %s -- " % sys.platform +
+                            "too many Unix assumptions")
 
 _mhroot = TESTFN+"_MH"
 _mhpath = os.path.join(_mhroot, "MH")
@@ -148,7 +148,7 @@ class MhlibTests(unittest.TestCase):
         writeCurMessage('inbox', 2)
         mh = getMH()
 
-        eq = self.assertEquals
+        eq = self.assertEqual
         eq(mh.getprofile('Editor'), 'emacs')
         eq(mh.getprofile('not-set'), None)
         eq(mh.getpath(), os.path.abspath(_mhpath))
@@ -171,37 +171,34 @@ class MhlibTests(unittest.TestCase):
 
     def test_listfolders(self):
         mh = getMH()
-        eq = self.assertEquals
+        eq = self.assertEqual
 
         folders = mh.listfolders()
         folders.sort()
         eq(folders, ['deep', 'inbox', 'wide'])
 
-        #link counts from os.stat always return 0 in jython, which causes
-        #lisallfolders and listsubfolders to return empty lists.
-        if not sys.platform.startswith("java"):
-            folders = mh.listallfolders()
-            folders.sort()
-            tfolders = map(normF, ['deep', 'deep/f1', 'deep/f2', 'deep/f2/f3',
+        folders = mh.listallfolders()
+        folders.sort()
+        tfolders = map(normF, ['deep', 'deep/f1', 'deep/f2', 'deep/f2/f3',
                                 'inbox', 'wide'])
-            tfolders.sort()
-            eq(folders, tfolders)
+        tfolders.sort()
+        eq(folders, tfolders)
 
-            folders = mh.listsubfolders('deep')
-            folders.sort()
-            eq(folders, map(normF, ['deep/f1', 'deep/f2']))
+        folders = mh.listsubfolders('deep')
+        folders.sort()
+        eq(folders, map(normF, ['deep/f1', 'deep/f2']))
 
-            folders = mh.listallsubfolders('deep')
-            folders.sort()
-            eq(folders, map(normF, ['deep/f1', 'deep/f2', 'deep/f2/f3']))
-            eq(mh.listsubfolders(normF('deep/f2')), [normF('deep/f2/f3')])
+        folders = mh.listallsubfolders('deep')
+        folders.sort()
+        eq(folders, map(normF, ['deep/f1', 'deep/f2', 'deep/f2/f3']))
+        eq(mh.listsubfolders(normF('deep/f2')), [normF('deep/f2/f3')])
 
-            eq(mh.listsubfolders('inbox'), [])
-            eq(mh.listallsubfolders('inbox'), [])
+        eq(mh.listsubfolders('inbox'), [])
+        eq(mh.listallsubfolders('inbox'), [])
 
     def test_sequence(self):
         mh = getMH()
-        eq = self.assertEquals
+        eq = self.assertEqual
         writeCurMessage('wide', 55)
 
         f = mh.openfolder('wide')
@@ -256,12 +253,12 @@ class MhlibTests(unittest.TestCase):
 
     def test_modify(self):
         mh = getMH()
-        eq = self.assertEquals
+        eq = self.assertEqual
 
         mh.makefolder("dummy1")
-        self.assert_("dummy1" in mh.listfolders())
+        self.assertIn("dummy1", mh.listfolders())
         path = os.path.join(_mhpath, "dummy1")
-        self.assert_(os.path.exists(path))
+        self.assertTrue(os.path.exists(path))
 
         f = mh.openfolder('dummy1')
         def create(n):
@@ -313,12 +310,12 @@ class MhlibTests(unittest.TestCase):
 
         mh.deletefolder('dummy1')
         mh.deletefolder('dummy2')
-        self.assert_('dummy1' not in mh.listfolders())
-        self.assert_(not os.path.exists(path))
+        self.assertNotIn('dummy1', mh.listfolders())
+        self.assertTrue(not os.path.exists(path))
 
     def test_read(self):
         mh = getMH()
-        eq = self.assertEquals
+        eq = self.assertEqual
 
         f = mh.openfolder('inbox')
         msg = f.openmessage(1)

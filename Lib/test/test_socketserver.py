@@ -33,8 +33,7 @@ def signal_alarm(n):
         signal.alarm(n)
 
 select_fn = select.select
-if test.test_support.is_jython:
-    select_fn = select.cpython_compatible_select
+
 
 def receive(sock, n, timeout=20):
     r, w, x = select_fn([sock], [], [], timeout)

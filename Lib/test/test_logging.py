@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2001-2010 by Vinay Sajip. All Rights Reserved.
+# Copyright 2001-2012 by Vinay Sajip. All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and its
 # documentation for any purpose and without fee is hereby granted,
@@ -18,7 +18,7 @@
 
 """Test harness for the logging module. Run all tests.
 
-Copyright (C) 2001-2010 Vinay Sajip. All Rights Reserved.
+Copyright (C) 2001-2012 Vinay Sajip. All Rights Reserved.
 """
 
 import logging
@@ -31,6 +31,7 @@ import cStringIO
 import gc
 import json
 import os
+import random
 import re
 import select
 import socket
@@ -40,6 +41,7 @@ import sys
 import tempfile
 from test.test_support import captured_stdout, run_with_locale, run_unittest
 import textwrap
+import time
 import unittest
 import warnings
 import weakref
@@ -272,6 +274,8 @@ class BuiltinLevelsTest(BaseTest):
             ('INF.BADPARENT', 'INFO', '4'),
         ])
 
+    def test_invalid_name(self):
+        self.assertRaises(TypeError, logging.getLogger, any)
 
 class BasicFilterTest(BaseTest):
 
@@ -562,6 +566,38 @@ class ConfigFileTest(BaseTest):
     datefmt=
     """
 
+    # config1a moves the handler to the root.
+    config1a = """
+    [loggers]
+    keys=root,parser
+
+    [handlers]
+    keys=hand1
+
+    [formatters]
+    keys=form1
+
+    [logger_root]
+    level=WARNING
+    handlers=hand1
+
+    [logger_parser]
+    level=DEBUG
+    handlers=
+    propagate=1
+    qualname=compiler.parser
+
+    [handler_hand1]
+    class=StreamHandler
+    level=NOTSET
+    formatter=form1
+    args=(sys.stdout,)
+
+    [formatter_form1]
+    format=%(levelname)s ++ %(message)s
+    datefmt=
+    """
+
     # config2 has a subtle configuration error that should be reported
     config2 = config1.replace("sys.stdout", "sys.stbout")
 
@@ -640,6 +676,44 @@ class ConfigFileTest(BaseTest):
     datefmt=
     """
 
+    # config7 adds a compiler logger.
+    config7 = """
+    [loggers]
+    keys=root,parser,compiler
+
+    [handlers]
+    keys=hand1
+
+    [formatters]
+    keys=form1
+
+    [logger_root]
+    level=WARNING
+    handlers=hand1
+
+    [logger_compiler]
+    level=DEBUG
+    handlers=
+    propagate=1
+    qualname=compiler
+
+    [logger_parser]
+    level=DEBUG
+    handlers=
+    propagate=1
+    qualname=compiler.parser
+
+    [handler_hand1]
+    class=StreamHandler
+    level=NOTSET
+    formatter=form1
+    args=(sys.stdout,)
+
+    [formatter_form1]
+    format=%(levelname)s ++ %(message)s
+    datefmt=
+    """
+
     def apply_config(self, conf):
         file = cStringIO.StringIO(textwrap.dedent(conf))
         logging.config.fileConfig(file)
@@ -703,6 +777,49 @@ class ConfigFileTest(BaseTest):
     def test_config6_ok(self):
         self.test_config1_ok(config=self.config6)
 
+    def test_config7_ok(self):
+        with captured_stdout() as output:
+            self.apply_config(self.config1a)
+            logger = logging.getLogger("compiler.parser")
+            # See issue #11424. compiler-hyphenated sorts
+            # between compiler and compiler.xyz and this
+            # was preventing compiler.xyz from being included
+            # in the child loggers of compiler because of an
+            # overzealous loop termination condition.
+            hyphenated = logging.getLogger('compiler-hyphenated')
+            # All will output a message
+            logger.info(self.next_message())
+            logger.error(self.next_message())
+            hyphenated.critical(self.next_message())
+            self.assert_log_lines([
+                ('INFO', '1'),
+                ('ERROR', '2'),
+                ('CRITICAL', '3'),
+            ], stream=output)
+            # Original logger output is empty.
+            self.assert_log_lines([])
+        with captured_stdout() as output:
+            self.apply_config(self.config7)
+            logger = logging.getLogger("compiler.parser")
+            self.assertFalse(logger.disabled)
+            # Both will output a message
+            logger.info(self.next_message())
+            logger.error(self.next_message())
+            logger = logging.getLogger("compiler.lexer")
+            # Both will output a message
+            logger.info(self.next_message())
+            logger.error(self.next_message())
+            # Will not appear
+            hyphenated.critical(self.next_message())
+            self.assert_log_lines([
+                ('INFO', '4'),
+                ('ERROR', '5'),
+                ('INFO', '6'),
+                ('ERROR', '7'),
+            ], stream=output)
+            # Original logger output is empty.
+            self.assert_log_lines([])
+
 class LogRecordStreamHandler(StreamRequestHandler):
 
     """Handler for a streaming logging request. It saves the log message in the
@@ -755,14 +872,6 @@ class LogRecordSocketReceiver(ThreadingTCPServer):
         self.finished = threading.Event()
 
     def serve_until_stopped(self):
-        if sys.platform.startswith('java'):
-            # XXX: There's a problem using cpython_compatibile_select
-            # here: it seems to be due to the fact that
-            # cpython_compatible_select switches blocking mode on while
-            # a separate thread is reading from the same socket, causing
-            # a read of 0 in LogRecordStreamHandler.handle (which
-            # deadlocks this test)
-            self.socket.setblocking(0)
         while not self.abort:
             rd, wr, ex = select.select([self.socket.fileno()], [], [],
                                        self.timeout)
@@ -1766,6 +1875,47 @@ class ChildLoggerTest(BaseTest):
         self.assertTrue(c2 is c3)
 
 
+class HandlerTest(BaseTest):
+
+    @unittest.skipIf(os.name in ('java', 'nt'), 'WatchedFileHandler not appropriate for Jython or Windows.')
+    @unittest.skipUnless(threading, 'Threading required for this test.')
+    def test_race(self):
+        # Issue #14632 refers.
+        def remove_loop(fname, tries):
+            for _ in range(tries):
+                try:
+                    os.unlink(fname)
+                except OSError:
+                    pass
+                time.sleep(0.004 * random.randint(0, 4))
+
+        del_count = 500
+        log_count = 500
+
+        for delay in (False, True):
+            fd, fn = tempfile.mkstemp('.log', 'test_logging-3-')
+            os.close(fd)
+            remover = threading.Thread(target=remove_loop, args=(fn, del_count))
+            remover.daemon = True
+            remover.start()
+            h = logging.handlers.WatchedFileHandler(fn, delay=delay)
+            f = logging.Formatter('%(asctime)s: %(levelname)s: %(message)s')
+            h.setFormatter(f)
+            try:
+                for _ in range(log_count):
+                    time.sleep(0.005)
+                    r = logging.makeLogRecord({'msg': 'testing' })
+                    h.handle(r)
+            finally:
+                remover.join()
+                try:
+                    h.close()
+                except ValueError:
+                    pass
+                if os.path.exists(fn):
+                    os.unlink(fn)
+
+
 # Set the locale to the platform-dependent default.  I have no idea
 # why the test does this, but in any case we save the current locale
 # first and restore it at the end.
@@ -1775,7 +1925,7 @@ def test_main():
                  CustomLevelsAndFiltersTest, MemoryHandlerTest,
                  ConfigFileTest, SocketHandlerTest, MemoryTest,
                  EncodingTest, WarningsTest, ConfigDictTest, ManagerTest,
-                 ChildLoggerTest)
+                 ChildLoggerTest, HandlerTest)
 
 if __name__ == "__main__":
     test_main()

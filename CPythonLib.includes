@@ -27,6 +27,7 @@ argparse.py
 ast.py
 atexit.py
 asynchat.py
+asyncore.py
 BaseHTTPServer.py
 base64.py
 bdb.py
@@ -101,6 +102,7 @@ MimeWriter.py
 mimify.py
 multifile.py
 mutex.py
+netrc.py
 nntplib.py
 numbers.py
 nturl2path.py
@@ -149,6 +151,7 @@ StringIO.py
 symbol.py
 sysconfig.py
 tabnanny.py
+telnetlib.py
 this.py
 textwrap.py
 tempfile.py
@@ -164,6 +167,7 @@ user.py
 UserDict.py
 UserList.py
 UserString.py
+uu.py
 uuid.py
 warnings.py
 whichdb.py

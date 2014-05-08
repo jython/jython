@@ -16,11 +16,11 @@ objects support decompress() and flush().
 import array
 import binascii
 import jarray
-
-from java.util.zip import Adler32, Deflater, Inflater, DataFormatException
-from java.lang import Long, String
-
 from cStringIO import StringIO
+
+from java.lang import Long, String, System
+from java.util.zip import Adler32, Deflater, Inflater, DataFormatException
+
 
 class error(Exception):
     pass
@@ -56,7 +56,6 @@ def adler32(s, value=1):
 def crc32(string, value=0):
     return binascii.crc32(string, value)
 
-
 def compress(string, level=6):
     if level < Z_BEST_SPEED or level > Z_BEST_COMPRESSION:
         raise error, "Bad compression level"
@@ -77,7 +76,8 @@ def decompress(string, wbits=0, bufsize=16384):
     finally:
         inflater.end()
 
-class compressobj:
+
+class compressobj(object):
     # all jython uses wbits for is deciding whether to skip the header if it's negative
     def __init__(self, level=6, method=DEFLATED, wbits=MAX_WBITS,
                        memLevel=0, strategy=0):
@@ -108,14 +108,26 @@ class compressobj:
             self._ended = True
         return last
 
-class decompressobj:
-    # all jython uses wbits for is deciding whether to skip the header if it's negative
+
+class decompressobj(object):
+
     def __init__(self, wbits=MAX_WBITS):
-        if abs(wbits) > MAX_WBITS or abs(wbits) < 8:
+
+        # Jython only uses wbits to determine to skip the header if it's negative;
+        # but apparently there are some tests around this that we do some bogus
+        # param checking
+
+        if abs(wbits) < 8:
             raise ValueError, "Invalid initialization option"
+        if abs(wbits) > 16:  # NOTE apparently this also implies being negative in CPython/zlib
+            wbits = -1
+
         self.inflater = Inflater(wbits < 0)
-        self.unused_data = ""
         self._ended = False
+        self.unused_data = ""
+        self.unconsumed_tail = ""
+        self.gzip = wbits < 0
+        self.gzip_header_skipped = False
 
     def decompress(self, string, max_length=0):
         if self._ended:
@@ -132,7 +144,13 @@ class decompressobj:
         if max_length < 0:
             raise ValueError("max_length must be a positive integer")
 
+        # Suppress gzip header if present and wbits < 0
+        if self.gzip and not self.gzip_header_skipped:
+            string = _skip_gzip_header(string)
+            self.gzip_header_skipped = True
+
         string = _to_input(string)
+
         self.inflater.setInput(string)
         inflated = _get_inflate_data(self.inflater, max_length)
 
@@ -146,6 +164,7 @@ class decompressobj:
         return inflated
 
     def flush(self, length=None):
+        # FIXME close input streams if gzip
         if self._ended:
             raise error("decompressobj may not be used after flush()")
         if length is None:
@@ -193,3 +212,52 @@ def _get_inflate_data(inflater, max_length=0):
             break
     s.seek(0)
     return s.read()
+
+
+
+FTEXT = 1
+FHCRC = 2
+FEXTRA = 4
+FNAME = 8
+FCOMMENT = 16
+
+def _skip_gzip_header(string):
+    # per format specified in http://tools.ietf.org/html/rfc1952
+    
+    # could we use bytearray instead?
+    s = array.array("B", string)
+
+    id1 = s[0]
+    id2 = s[1]
+
+    # Check gzip magic
+    if id1 != 31 or id2 != 139:
+        return string
+
+    cm = s[2]
+    flg = s[3]
+    mtime = s[4:8]
+    xfl = s[8]
+    os = s[9]
+
+    # skip fixed header, then figure out variable parts
+    s = s[10:]
+
+    if flg & FEXTRA:
+        # skip extra field
+        xlen = s[0] + s[1] * 256  # MSB ordering
+        s = s[2 + xlen:]
+    if flg & FNAME:
+        # skip filename
+        s = s[s.find("\x00")+1:]
+    if flg & FCOMMENT:
+        # skip comment
+        s = s[s.find("\x00")+1:]
+    if flg & FHCRC:
+        # skip CRC16 for the header - might be nice to check of course
+        s = s[2:]
+    
+    return s.tostring()
+
+
+
