@@ -1,5 +1,6 @@
 package org.python.modules;
 
+import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyArray;
 import org.python.core.PyNewWrapper;
@@ -12,7 +13,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "Struct", base = PyObject.class)
+@ExposedType(name = "struct.Struct", base = PyObject.class)
 public class PyStruct extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyStruct.class);
     
@@ -30,27 +31,29 @@ public class PyStruct extends PyObject {
         return TYPE;
     }
 
-    public PyStruct(PyObject[] args, String[] keywords) {
-        final int nargs = args.length;
-        if (keywords.length > 0 ) {
-            for (String keyword : keywords) {
-                if (!keyword.equals("format")) {
-                    throw Py.TypeError("'" + keyword + "' is an invalid keyword argument for this function");
-                }
-            }
-        }
-        else if (nargs < 1 || nargs > 1) {
-            throw Py.TypeError("Struct() takes exactly 1 argument (" + nargs + " given)");
-        }
-        format = args[0].toString();
-        format_def = struct.whichtable(format);
-        size = struct.calcsize(format, format_def);
+    public PyStruct(PyString format) {
+        this(TYPE, format);
     }
-    
+
+    public PyStruct(PyType type, PyString format) {
+        super(type);
+        this.format = format.toString();
+        this.format_def = struct.whichtable(this.format);
+        this.size = struct.calcsize(this.format, this.format_def);
+    }
+
     @ExposedNew
     final static PyObject Struct___new__ (PyNewWrapper new_, boolean init,
             PyType subtype, PyObject[] args, String[] keywords) {
-         return new PyStruct(args, keywords);
+        ArgParser ap = new ArgParser("Struct", args, keywords, new String[] {"format"}, 1);
+
+        PyObject format = ap.getPyObject(0);
+        if (!(format instanceof PyString)) {
+            throw Py.TypeError("coercing to Unicode: need string, '"
+                    + format.getType().fastGetName() + "' type found");
+        }
+
+        return new PyStruct(TYPE, (PyString) format);
     }
 
     @ExposedMethod
