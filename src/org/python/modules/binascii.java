@@ -1081,6 +1081,11 @@ static long[] crc_32_tab = new long[] {
                     sb.append(lineEnd);
                     if (lineEnd.length() > 1) i++;
                 }
+                else if ((c == '.') && (count == 0) && endOfLine(s, lineEnd, i + 1)) {
+                    // RFC 1521 requires that a solitary "." alone on a line is encoded.
+                    count += 3;
+                    qpEscape(sb, c);
+                }
                 else if ((c == '\t' || c == ' ' ) && endOfLine(s, lineEnd, i + 1)) {
                     count += 3;
                     qpEscape(sb, c);
