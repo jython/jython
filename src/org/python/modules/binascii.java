@@ -1053,91 +1053,95 @@ static long[] crc_32_tab = new long[] {
         }
 
         PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
+        int datalen = bin_data.getLen();
+        StringBuilder sb = new StringBuilder(datalen);
+        try {
 
-        // TODO make this operate on the raw buffer rather converting it to java String.
-        String s = bin_data.toString();
-        bin_data.release();
+            String lineEnd = "\n";
+            // Work out if line endings should be crlf.
+            for (int i = 0, m = bin_data.getLen(); i < m; i++) {
+                if ('\n' == bin_data.intAt(i)) {
+                    if (i > 0 && '\r' == bin_data.intAt(i-1)) {
+                        lineEnd = "\r\n";
+                    }
+                    break;
+                }
+            }
 
-        String lineEnd;
-        int pos = s.indexOf('\n');
-        if (pos > 0 && s.charAt(pos-1) == '\r') {
-        	lineEnd = "\r\n";
-        	s = N_TO_RN.matcher(s).replaceAll("\r\n");
-        } else {
-        	lineEnd = "\n";
-        	s = RN_TO_N.matcher(s).replaceAll("\n");
+            int count = 0;
+            int MAXLINESIZE = 76;
+
+            int in = 0;
+            while (in < datalen) {
+                char ch = (char) bin_data.intAt(in);
+                if ((ch > 126) ||
+                        (ch == '=') ||
+                        (header && ch == '_') ||
+                        ((ch == '.') && (count == 0) &&
+                         ((in+1 == datalen) || (char) bin_data.intAt(in+1) == '\n' || (char) bin_data.intAt(in+1) == '\r')) ||
+                        (!istext && ((ch == '\r') || (ch == '\n'))) ||
+                        ((ch == '\t' || ch == ' ') && (in + 1 == datalen)) ||
+                        ((ch < 33) &&
+                         (ch != '\r') && (ch != '\n') &&
+                         (quotetabs ||
+                          (!quotetabs && ((ch != '\t') && (ch != ' '))))))
+                {
+                    if ((count + 3 )>= MAXLINESIZE) {
+                        sb.append('=');
+                        sb.append(lineEnd);
+                        count = 0;
+                    }
+                    qpEscape(sb, ch);
+                    in++;
+                    count += 3;
+                }
+                else {
+                    if (istext &&
+                            ((ch == '\n') ||
+                             ((in+1 < datalen) && (ch == '\r') &&
+                              (bin_data.intAt(in+1) == '\n'))))
+                    {
+                        count = 0;
+                        /* Protect against whitespace on end of line */
+                        int out = sb.length();
+                            if (out > 0 && ((sb.charAt(out-1) == ' ') || (sb.charAt(out-1) == '\t'))) {
+                                ch = sb.charAt(out-1);
+                                sb.setLength(out-1);
+                                qpEscape(sb, ch);
+                            }
+
+                            sb.append(lineEnd);
+                            if (ch == '\r') {
+                                in+=2;
+                            } else {
+                                in++;
+                            }
+                    }
+                    else {
+                        if ((in + 1 != datalen) &&
+                            ((char) bin_data.intAt(in+1) != '\n') &&
+                            (count + 1) >= MAXLINESIZE) {
+                            sb.append('=');
+                            sb.append(lineEnd);
+                            count = 0;
+                            }
+                        count++;
+                        if (header && ch == ' ') {
+                            sb.append('_');
+                            in++;
+                        }
+                        else {
+                            sb.append(ch);
+                            in++;
+                        }
+                    }
+                }
+            }
+        } finally {
+            bin_data.release();
         }
 
-        StringBuilder sb = new StringBuilder();
-        int count = 0;
-
-        for (int i=0, m=s.length(); i<m; i++) {
-        	char c = s.charAt(i);
-
-                // RFC 1521 requires that the line ending in a space or tab must have
-                // that trailing character encoded.
-                if (lineEnding(s, lineEnd, i)) {
-                    count = 0;
-                    sb.append(lineEnd);
-                    if (lineEnd.length() > 1) i++;
-                }
-                else if ((c == '.') && (count == 0) && endOfLine(s, lineEnd, i + 1)) {
-                    // RFC 1521 requires that a solitary "." alone on a line is encoded.
-                    count += 3;
-                    qpEscape(sb, c);
-                }
-                else if ((c == '\t' || c == ' ' ) && endOfLine(s, lineEnd, i + 1)) {
-                    count += 3;
-                    qpEscape(sb, c);
-                }
-                else if (('!' <= c && c <= '<')
-        		|| ('>' <= c && c <= '^')
-        		|| ('`' <= c && c <= '~')
-        		|| (c == '_' && !header)
-        		|| (c == '\n' || c == '\r' && istext)) {
-//        		if (count == 75 && i < s.length() - 1) {
-                        if (count == 75 && !endOfLine(s, lineEnd, i + 1)) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		sb.append(c);
-        		count++;
-        	}
-        	else if (!quotetabs && (c == '\t' || c == ' ')) {
-        		if (count >= 72) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		
-        		if (count >= 71) {
-        			count += 3;
-        			qpEscape(sb, c);
-        		} else {
-        			if (c == ' ' && header)
-        				sb.append('_');
-        			else
-        				sb.append(c);
-        			count += 1;
-        		}
-        	} else {
-        		if (count >= 72) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		count += 3;
-        		qpEscape(sb, c);
-        	}
-        }
         return new PyString(sb.toString());
-    }
-    
-    private static boolean endOfLine(String s, String lineEnd, int i) {
-        return (s.length() == i || lineEnding(s, lineEnd, i));
-    }
-    
-    private static boolean lineEnding(String s, String lineEnd, int i) {
-        return 
-            (s.length() > i && s.substring(i).startsWith(lineEnd));
     }
     
 /*
