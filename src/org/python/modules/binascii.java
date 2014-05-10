@@ -621,7 +621,7 @@ public class binascii {
                 if (ch == RUNCHAR) {
                     // RUNCHAR. Escape it.
                     out_data.append(RUNCHAR);
-                    out_data.append(0);
+                    out_data.append((char) 0);
                 } else {
                     // Check how many following are the same
                     int inend;
