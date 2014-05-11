@@ -560,6 +560,18 @@ public class PyFloatDerived extends PyFloat implements Slotted {
         return super.__ne__(other);
     }
 
+    public PyObject __format__(PyObject other) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__format__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__(other);
+            if (res==Py.NotImplemented)
+                return null;
+            return res;
+        }
+        return super.__format__(other);
+    }
+
     public PyObject __iadd__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__iadd__");
