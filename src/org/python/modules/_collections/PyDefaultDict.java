@@ -4,6 +4,9 @@ package org.python.modules._collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyObject;
@@ -40,10 +43,10 @@ public class PyDefaultDict extends PyDictionary {
      * argument to the constructor, if present, or to None, if absent.
      */
     private PyObject defaultFactory = Py.None;
-    private final ConcurrentMap<PyObject, PyObject> backingMap;
+    private final LoadingCache<PyObject, PyObject> backingMap;
 
     public ConcurrentMap<PyObject, PyObject> getMap() {
-        return backingMap;
+        return backingMap.asMap();
     }
 
     public PyDefaultDict() {
@@ -52,17 +55,16 @@ public class PyDefaultDict extends PyDictionary {
 
     public PyDefaultDict(PyType subtype) {
         super(subtype, false);
-        backingMap =
-                new MapMaker().makeComputingMap(
-                new Function<PyObject, PyObject>() {
-
-                    public PyObject apply(PyObject key) {
+        backingMap = CacheBuilder.newBuilder().build(
+                new CacheLoader<PyObject, PyObject>() {
+                    public PyObject load(PyObject key) {
                         if (defaultFactory == Py.None) {
                             throw Py.KeyError(key);
                         }
                         return defaultFactory.__call__();
                     }
-                });
+                }
+        );
     }
 
     public PyDefaultDict(PyType subtype, Map<PyObject, PyObject> map) {
@@ -165,11 +167,18 @@ public class PyDefaultDict extends PyDictionary {
     @ExposedMethod(doc = BuiltinDocs.dict___getitem___doc)
     protected final PyObject defaultdict___getitem__(PyObject key) {
         try {
-            return getMap().get(key);
-//        } catch (ComputationException ex) {
-//            throw Py.RuntimeError(ex.getCause());
+            return backingMap.get(key);
         } catch (Exception ex) {
             throw Py.KeyError(key);
+        }
+    }
+
+    public PyObject get(PyObject key, PyObject defaultObj) {
+        PyObject value = getMap().get(key);
+        if (value != null) {
+            return value;
+        } else {
+            return defaultObj;
         }
     }
 }

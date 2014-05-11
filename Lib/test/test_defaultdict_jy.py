@@ -74,9 +74,28 @@ class ThreadSafetyTestCase(unittest.TestCase):
         for i in xrange(size):
             self.assertEqual(counters[i].get(), 0, counters)
 
+class GetVariantsTestCase(unittest.TestCase):
+
+    #http://bugs.jython.org/issue2133
+
+    def test_get_does_not_vivify(self):
+        d = defaultdict(list)
+        self.assertEquals(d.get("foo"), None)
+        self.assertEquals(d.items(), [])
+
+    def test_get_default_does_not_vivify(self):
+        d = defaultdict(list)
+        self.assertEquals(d.get("foo", 42), 42)
+        self.assertEquals(d.items(), [])
+
+    def test_getitem_does_vivify(self):
+        d = defaultdict(list)
+        self.assertEquals(d["vivify"], [])
+        self.assertEquals(d.items(), [("vivify", [])]) 
+
 
 def test_main():
-    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase)
+    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase, GetVariantsTestCase)
 
 
 if __name__ == '__main__':
