@@ -28,6 +28,15 @@ class MathTestCase(unittest.TestCase):
         self.assertEqual(inf, math.hypot(ninf, 4))
         self.assertEqual(inf, math.hypot(4, ninf))
 
+    def test_math_domain_error(self):
+        self.assertRaises(ValueError, math.sqrt, -1)
+        self.assertRaises(ValueError, math.sqrt, -1.5)
+        self.assertRaises(ValueError, math.sqrt, -0.5)
+        self.assertRaises(ValueError, math.log, 0)
+        self.assertRaises(ValueError, math.log, -1)
+        self.assertRaises(ValueError, math.log, -1.5)
+        self.assertRaises(ValueError, math.log, -0.5)
+
 
 def test_main():
     test_support.run_unittest(MathTestCase)

@@ -318,7 +318,7 @@ public class math implements ClassDictInit {
         if (ispinf(v)) {
             return v;
         }
-        if (isninf(v) || v == MINUS_ONE) {
+        if (isninf(v) || v < MINUS_ZERO) {
             throwMathDomainValueError();
         }
         return Math.sqrt(v);
@@ -545,7 +545,7 @@ public class math implements ClassDictInit {
     }
 
     private static double log(double v) {
-        if (isninf(v)) {
+        if (isninf(v) || v <= ZERO) {
             throwMathDomainValueError();
         }
         if (isinf(v) || isnan(v)) {
