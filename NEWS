@@ -1,5 +1,11 @@
 Jython NEWS
 
+Jython 2.7b3
+  Bugs Fixed
+
+  New Features
+    - [ 1896215 ] findResource(s) for SyspathJavaLoader
+
 Jython 2.7b2
   Bugs Fixed
     - [ 1753 ] zlib doesn't call end() on compress and decompress

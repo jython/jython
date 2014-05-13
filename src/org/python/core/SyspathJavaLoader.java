@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 
@@ -172,7 +176,55 @@ public class SyspathJavaLoader extends ClassLoader {
         return null;
     }
 
+    @Override
+    protected Enumeration<URL> findResources(String res)
+        throws IOException
+    {
+        List<URL> resources = new ArrayList<URL>();
+        
+        PySystemState sys = Py.getSystemState();
+        
+        if (res.charAt(0) == SLASH_CHAR) {
+            res = res.substring(1);
+        }
+        String entryRes = res;
+        if (File.separatorChar != SLASH_CHAR) {
+            res = res.replace(SLASH_CHAR, File.separatorChar);
+            entryRes = entryRes.replace(File.separatorChar, SLASH_CHAR);
+        }
 
+        PyList path = sys.path;
+        for (int i = 0; i < path.__len__(); i++) {
+            PyObject entry = replacePathItem(sys, i, path);
+            if (entry instanceof SyspathArchive) {
+                SyspathArchive archive = (SyspathArchive) entry;
+                ZipEntry ze = archive.getEntry(entryRes);
+                if (ze != null) {
+                    try {
+                        resources.add(new URL("jar:file:" + archive.asUriCompatibleString() + "!/" + entryRes));
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                continue;
+            }
+            if (!(entry instanceof PyUnicode)) {
+                entry = entry.__str__();
+            }
+            String dir = sys.getPath(entry.toString());
+            try {
+                File resource = new File(dir, res);
+                if (!resource.exists()) {
+                    continue;
+                }
+                resources.add(resource.toURI().toURL());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return Collections.enumeration(resources);
+    }
+    
     static PyObject replacePathItem(PySystemState sys, int idx, PyList paths) {
         PyObject path = paths.__getitem__(idx);
         if (path instanceof SyspathArchive) {
