@@ -23,14 +23,14 @@ public class PyEnumerate extends PyIterator {
         super(subType);
     }
 
-    public PyEnumerate(PyType subType, PyObject seq) {
+    public PyEnumerate(PyType subType, PyObject seq, long start) {
         super(subType);
-        index = 0;
+        index = start;
         sit = seq.__iter__();
     }
 
-    public PyEnumerate(PyObject seq) {
-        this(TYPE, seq);
+    public PyEnumerate(PyObject seq, long start) {
+        this(TYPE, seq, start);
     }
 
     public PyObject next() {
@@ -50,14 +50,19 @@ public class PyEnumerate extends PyIterator {
     @ExposedNew
     public final static PyObject enumerate_new(PyNewWrapper new_, boolean init, PyType subtype,
                                                PyObject[] args, String[] keywords) {
-        if (args.length != 1) {
+        if (args.length > 2 || args.length <= 0) {
             throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length, false, "enumerate", 0,
                                                                1);
         }
+
+        ArgParser ap = new ArgParser("enumerate", args, keywords, new String[] {"sequence", "start"});
+        PyObject seq = ap.getPyObject(0);
+        long start = (long) ap.getInt(1, 0);
+
         if (new_.for_type == subtype) {
-            return new PyEnumerate(args[0]);
+            return new PyEnumerate(seq, start);
         } else {
-            return new PyEnumerateDerived(subtype, args[0]);
+            return new PyEnumerateDerived(subtype, seq, start);
         }
     }
 
