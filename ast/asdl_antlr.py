@@ -616,7 +616,6 @@ class JavaVisitor(EmitVisitor):
         return jtype
     
     def indexerSupport(self, name, depth):
-        print "emitting indexer support for", name
 	self.emit("// Support for indexer below", depth + 1)
         self.file.write(indexer_support[name])
 
