@@ -29,14 +29,6 @@ def test_main(verbose=None):
     testclasses = (EnumerateJyTestCase,)
     test_support.run_unittest(*testclasses)
 
-    # verify reference counting
-    import sys
-    if verbose and hasattr(sys, "gettotalrefcount"):
-        counts = [None] * 5
-        for i in xrange(len(counts)):
-            test_support.run_unittest(*testclasses)
-            counts[i] = sys.gettotalrefcount()
-        print counts
 
 if __name__ == "__main__":
     test_main(verbose=True)
