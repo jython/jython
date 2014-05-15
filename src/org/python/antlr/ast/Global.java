@@ -40,10 +40,7 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     public void setNames(PyObject names) {
         this.names = AstAdapters.py2identifierList(names);
     }
-    private java.util.List<Name> nameNodes;
-    public java.util.List<Name> getInternalNameNodes() {
-        return nameNodes;
-    }
+
 
     private final static PyString[] fields =
     new PyString[] {new PyString("names")};
@@ -86,12 +83,6 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
     public Global(Token token, java.util.List<String> names) {
         super(token);
         this.names = names;
-    }
-
-    public Global(Token token, java.util.List<String> names, java.util.List<Name> nameNodes) {
-        super(token);
-        this.names = names;
-        this.nameNodes = nameNodes;
     }
 
     public Global(Integer ttype, Token token, java.util.List<String> names) {
@@ -153,4 +144,15 @@ public static final PyType TYPE = PyType.fromClass(Global.class);
         col_offset = num;
     }
 
+    // Support for indexer below
+
+    private java.util.List<Name> nameNodes;
+    public java.util.List<Name> getInternalNameNodes() {
+        return nameNodes;
+    }
+    public Global(Token token, java.util.List<String> names, java.util.List<Name> nameNodes) {
+        super(token);
+        this.names = names;
+        this.nameNodes = nameNodes;
+    }
 }

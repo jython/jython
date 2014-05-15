@@ -511,7 +511,7 @@ parameters
         }
       |
         {
-            $args = new arguments($parameters.start, new ArrayList<expr>(), null, null, new ArrayList<expr>());
+            $args = new arguments($parameters.start, new ArrayList<expr>(), (Name)null, null, new ArrayList<expr>());
         }
       )
       RPAREN
@@ -1851,7 +1851,7 @@ lambdef
       {
           arguments a = $varargslist.args;
           if (a == null) {
-              a = new arguments($LAMBDA, new ArrayList<expr>(), null, null, new ArrayList<expr>());
+              a = new arguments($LAMBDA, new ArrayList<expr>(), (Name)null, null, new ArrayList<expr>());
           }
           etype = new Lambda($LAMBDA, a, actions.castExpr($test.tree));
       }

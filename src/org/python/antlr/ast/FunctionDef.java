@@ -32,10 +32,6 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     public String getInternalName() {
         return name;
     }
-    private Name nameNode;
-    public Name getInternalNameNode() {
-        return nameNode;
-    }
     @ExposedGet(name = "name")
     public PyObject getName() {
         if (name == null) return Py.None;
@@ -135,28 +131,6 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     java.util.List<expr> decorator_list) {
         super(token);
         this.name = name;
-        this.args = args;
-        this.body = body;
-        if (body == null) {
-            this.body = new ArrayList<stmt>();
-        }
-        for(PythonTree t : this.body) {
-            addChild(t);
-        }
-        this.decorator_list = decorator_list;
-        if (decorator_list == null) {
-            this.decorator_list = new ArrayList<expr>();
-        }
-        for(PythonTree t : this.decorator_list) {
-            addChild(t);
-        }
-    }
-
-    public FunctionDef(Token token, Name name, arguments args, java.util.List<stmt> body,
-            java.util.List<expr> decorator_list) {
-        super(token);
-        this.name = name.getText();
-        this.nameNode = name;
         this.args = args;
         this.body = body;
         if (body == null) {
@@ -288,4 +262,31 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
         col_offset = num;
     }
 
+    // Support for indexer below
+
+    private Name nameNode;
+    public Name getInternalNameNode() {
+        return nameNode;
+    }
+    public FunctionDef(Token token, Name name, arguments args, java.util.List<stmt> body,
+            java.util.List<expr> decorator_list) {
+        super(token);
+        this.name = name.getText();
+        this.nameNode = name;
+        this.args = args;
+        this.body = body;
+        if (body == null) {
+            this.body = new ArrayList<stmt>();
+        }
+        for(PythonTree t : this.body) {
+            addChild(t);
+        }
+        this.decorator_list = decorator_list;
+        if (decorator_list == null) {
+            this.decorator_list = new ArrayList<expr>();
+        }
+        for(PythonTree t : this.decorator_list) {
+            addChild(t);
+        }
+    }
 }

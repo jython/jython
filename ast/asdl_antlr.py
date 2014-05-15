@@ -846,8 +846,8 @@ indexer_support = {"Attribute": """
     // XXX: vararg and kwarg are deliberately moved to the end of the
     // method signature to avoid clashes with the (Token, List<expr>,
     // String, String, List<expr>) version of the constructor.
-    public arguments(Token token, java.util.List<expr> args,
-            java.util.List<expr> defaults, Name vararg, Name kwarg) {
+    public arguments(Token token, java.util.List<expr> args, Name vararg, Name kwarg,
+            java.util.List<expr> defaults) {
         super(token);
         this.args = args;
         if (args == null) {
