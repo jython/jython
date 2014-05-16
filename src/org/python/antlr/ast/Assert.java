@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Assert", base = AST.class)
+@ExposedType(name = "_ast.Assert", base = stmt.class)
 public class Assert extends stmt {
 public static final PyType TYPE = PyType.fromClass(Assert.class);
     private expr test;

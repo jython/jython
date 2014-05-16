@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Set", base = AST.class)
+@ExposedType(name = "_ast.Set", base = expr.class)
 public class Set extends expr {
 public static final PyType TYPE = PyType.fromClass(Set.class);
     private java.util.List<expr> elts;

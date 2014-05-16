@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Call", base = AST.class)
+@ExposedType(name = "_ast.Call", base = expr.class)
 public class Call extends expr {
 public static final PyType TYPE = PyType.fromClass(Call.class);
     private expr func;

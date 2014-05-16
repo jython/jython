@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Ellipsis", base = AST.class)
+@ExposedType(name = "_ast.Ellipsis", base = slice.class)
 public class Ellipsis extends slice {
 public static final PyType TYPE = PyType.fromClass(Ellipsis.class);
 

@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ExtSlice", base = AST.class)
+@ExposedType(name = "_ast.ExtSlice", base = slice.class)
 public class ExtSlice extends slice {
 public static final PyType TYPE = PyType.fromClass(ExtSlice.class);
     private java.util.List<slice> dims;

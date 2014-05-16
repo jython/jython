@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.TryFinally", base = AST.class)
+@ExposedType(name = "_ast.TryFinally", base = stmt.class)
 public class TryFinally extends stmt {
 public static final PyType TYPE = PyType.fromClass(TryFinally.class);
     private java.util.List<stmt> body;

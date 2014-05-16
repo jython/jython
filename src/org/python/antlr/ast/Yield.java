@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Yield", base = AST.class)
+@ExposedType(name = "_ast.Yield", base = expr.class)
 public class Yield extends expr {
 public static final PyType TYPE = PyType.fromClass(Yield.class);
     private expr value;

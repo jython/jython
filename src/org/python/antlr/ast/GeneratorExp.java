@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.GeneratorExp", base = AST.class)
+@ExposedType(name = "_ast.GeneratorExp", base = expr.class)
 public class GeneratorExp extends expr {
 public static final PyType TYPE = PyType.fromClass(GeneratorExp.class);
     private expr elt;

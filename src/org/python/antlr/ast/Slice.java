@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Slice", base = AST.class)
+@ExposedType(name = "_ast.Slice", base = slice.class)
 public class Slice extends slice {
 public static final PyType TYPE = PyType.fromClass(Slice.class);
     private expr lower;

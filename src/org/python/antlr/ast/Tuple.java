@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Tuple", base = AST.class)
+@ExposedType(name = "_ast.Tuple", base = expr.class)
 public class Tuple extends expr implements Context {
 public static final PyType TYPE = PyType.fromClass(Tuple.class);
     private java.util.List<expr> elts;

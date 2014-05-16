@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.SetComp", base = AST.class)
+@ExposedType(name = "_ast.SetComp", base = expr.class)
 public class SetComp extends expr {
 public static final PyType TYPE = PyType.fromClass(SetComp.class);
     private expr elt;

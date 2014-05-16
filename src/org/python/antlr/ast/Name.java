@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Name", base = AST.class)
+@ExposedType(name = "_ast.Name", base = expr.class)
 public class Name extends expr implements Context {
 public static final PyType TYPE = PyType.fromClass(Name.class);
     private String id;

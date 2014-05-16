@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Exec", base = AST.class)
+@ExposedType(name = "_ast.Exec", base = stmt.class)
 public class Exec extends stmt {
 public static final PyType TYPE = PyType.fromClass(Exec.class);
     private expr body;

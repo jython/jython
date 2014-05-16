@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Interactive", base = AST.class)
+@ExposedType(name = "_ast.Interactive", base = mod.class)
 public class Interactive extends mod {
 public static final PyType TYPE = PyType.fromClass(Interactive.class);
     private java.util.List<stmt> body;

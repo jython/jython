@@ -2,6 +2,7 @@
 package org.python.antlr.op;
 
 import org.python.antlr.AST;
+import org.python.antlr.ast.cmpopType;
 import org.python.antlr.PythonTree;
 import org.python.core.Py;
 import org.python.core.PyObject;

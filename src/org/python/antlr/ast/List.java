@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.List", base = AST.class)
+@ExposedType(name = "_ast.List", base = expr.class)
 public class List extends expr implements Context {
 public static final PyType TYPE = PyType.fromClass(List.class);
     private java.util.List<expr> elts;

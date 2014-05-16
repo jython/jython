@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.BoolOp", base = AST.class)
+@ExposedType(name = "_ast.BoolOp", base = expr.class)
 public class BoolOp extends expr {
 public static final PyType TYPE = PyType.fromClass(BoolOp.class);
     private boolopType op;

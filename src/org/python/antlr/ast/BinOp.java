@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.BinOp", base = AST.class)
+@ExposedType(name = "_ast.BinOp", base = expr.class)
 public class BinOp extends expr {
 public static final PyType TYPE = PyType.fromClass(BinOp.class);
     private expr left;

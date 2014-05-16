@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.While", base = AST.class)
+@ExposedType(name = "_ast.While", base = stmt.class)
 public class While extends stmt {
 public static final PyType TYPE = PyType.fromClass(While.class);
     private expr test;

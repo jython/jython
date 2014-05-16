@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.FunctionDef", base = AST.class)
+@ExposedType(name = "_ast.FunctionDef", base = stmt.class)
 public class FunctionDef extends stmt {
 public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
     private String name;

@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.For", base = AST.class)
+@ExposedType(name = "_ast.For", base = stmt.class)
 public class For extends stmt {
 public static final PyType TYPE = PyType.fromClass(For.class);
     private expr target;

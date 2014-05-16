@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.AugAssign", base = AST.class)
+@ExposedType(name = "_ast.AugAssign", base = stmt.class)
 public class AugAssign extends stmt {
 public static final PyType TYPE = PyType.fromClass(AugAssign.class);
     private expr target;

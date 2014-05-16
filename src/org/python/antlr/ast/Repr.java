@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Repr", base = AST.class)
+@ExposedType(name = "_ast.Repr", base = expr.class)
 public class Repr extends expr {
 public static final PyType TYPE = PyType.fromClass(Repr.class);
     private expr value;

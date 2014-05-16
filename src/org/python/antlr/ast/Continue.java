@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Continue", base = AST.class)
+@ExposedType(name = "_ast.Continue", base = stmt.class)
 public class Continue extends stmt {
 public static final PyType TYPE = PyType.fromClass(Continue.class);
 

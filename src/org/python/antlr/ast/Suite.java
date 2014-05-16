@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Suite", base = AST.class)
+@ExposedType(name = "_ast.Suite", base = mod.class)
 public class Suite extends mod {
 public static final PyType TYPE = PyType.fromClass(Suite.class);
     private java.util.List<stmt> body;

@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Dict", base = AST.class)
+@ExposedType(name = "_ast.Dict", base = expr.class)
 public class Dict extends expr {
 public static final PyType TYPE = PyType.fromClass(Dict.class);
     private java.util.List<expr> keys;

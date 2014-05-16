@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ExceptHandler", base = AST.class)
+@ExposedType(name = "_ast.ExceptHandler", base = excepthandler.class)
 public class ExceptHandler extends excepthandler {
 public static final PyType TYPE = PyType.fromClass(ExceptHandler.class);
     private expr type;

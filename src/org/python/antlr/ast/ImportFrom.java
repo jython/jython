@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.ImportFrom", base = AST.class)
+@ExposedType(name = "_ast.ImportFrom", base = stmt.class)
 public class ImportFrom extends stmt {
 public static final PyType TYPE = PyType.fromClass(ImportFrom.class);
     private String module;

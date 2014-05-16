@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.UnaryOp", base = AST.class)
+@ExposedType(name = "_ast.UnaryOp", base = expr.class)
 public class UnaryOp extends expr {
 public static final PyType TYPE = PyType.fromClass(UnaryOp.class);
     private unaryopType op;

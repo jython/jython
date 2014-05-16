@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Global", base = AST.class)
+@ExposedType(name = "_ast.Global", base = stmt.class)
 public class Global extends stmt {
 public static final PyType TYPE = PyType.fromClass(Global.class);
     private java.util.List<String> names;

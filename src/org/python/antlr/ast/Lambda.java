@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Lambda", base = AST.class)
+@ExposedType(name = "_ast.Lambda", base = expr.class)
 public class Lambda extends expr {
 public static final PyType TYPE = PyType.fromClass(Lambda.class);
     private arguments args;

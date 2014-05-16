@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.TryExcept", base = AST.class)
+@ExposedType(name = "_ast.TryExcept", base = stmt.class)
 public class TryExcept extends stmt {
 public static final PyType TYPE = PyType.fromClass(TryExcept.class);
     private java.util.List<stmt> body;

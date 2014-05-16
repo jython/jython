@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Delete", base = AST.class)
+@ExposedType(name = "_ast.Delete", base = stmt.class)
 public class Delete extends stmt {
 public static final PyType TYPE = PyType.fromClass(Delete.class);
     private java.util.List<expr> targets;

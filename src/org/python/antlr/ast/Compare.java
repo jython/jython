@@ -26,7 +26,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@ExposedType(name = "_ast.Compare", base = AST.class)
+@ExposedType(name = "_ast.Compare", base = expr.class)
 public class Compare extends expr {
 public static final PyType TYPE = PyType.fromClass(Compare.class);
     private expr left;
