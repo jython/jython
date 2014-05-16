@@ -15,6 +15,7 @@ import org.python.core.AstList;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -231,6 +232,25 @@ public static final PyType TYPE = PyType.fromClass(FunctionDef.class);
                 if (t != null)
                     t.accept(visitor);
             }
+        }
+    }
+
+    public PyObject __dict__;
+
+    @Override
+    public PyObject fastGetDict() {
+        ensureDict();
+        return __dict__;
+    }
+
+    @ExposedGet(name = "__dict__")
+    public PyObject getDict() {
+        return fastGetDict();
+    }
+
+    private void ensureDict() {
+        if (__dict__ == null) {
+            __dict__ = new PyStringMap();
         }
     }
 

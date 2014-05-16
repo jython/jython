@@ -73,6 +73,7 @@ class EmitVisitor(asdl.VisitorBase):
             print >> self.file, 'import org.python.core.Py;'
             print >> self.file, 'import org.python.core.PyObject;'
             print >> self.file, 'import org.python.core.PyString;'
+            print >> self.file, 'import org.python.core.PyStringMap;'
             print >> self.file, 'import org.python.core.PyType;'
             print >> self.file, 'import org.python.expose.ExposedGet;'
             print >> self.file, 'import org.python.expose.ExposedMethod;'
@@ -465,6 +466,29 @@ class JavaVisitor(EmitVisitor):
                 self.emit('%s.accept(visitor);' % f.name, depth+2)
         self.emit('}', depth)
         self.emit("", 0)
+
+        self.emit('public PyObject __dict__;', depth)
+        self.emit("", 0)
+        self.emit('@Override', depth)
+        self.emit('public PyObject fastGetDict() {', depth)
+        self.emit('ensureDict();', depth+1)
+        self.emit('return __dict__;', depth+1)
+        self.emit('}', depth)
+        self.emit("", 0)
+
+        self.emit('@ExposedGet(name = "__dict__")', depth)
+        self.emit('public PyObject getDict() {', depth)
+        self.emit('return fastGetDict();', depth+1)
+        self.emit('}', depth)
+        self.emit("", 0)
+
+        self.emit('private void ensureDict() {', depth)
+        self.emit('if (__dict__ == null) {', depth+1)
+        self.emit('__dict__ = new PyStringMap();', depth+2)
+        self.emit('}', depth+1)
+        self.emit('}', depth)
+        self.emit("", 0)
+
 
     def javaConstructors(self, type, name, clsname, is_product, fields, depth):
         self.emit("public %s(PyType subType) {" % (clsname), depth)

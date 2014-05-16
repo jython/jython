@@ -2,7 +2,7 @@ Jython NEWS
 
 Jython 2.7b3
   Bugs Fixed
-
+    - [ 2108 ] Cannot set attribute to instances of AST/PythonTree (blocks pyflakes)
   New Features
     - [ 1896215 ] findResource(s) for SyspathJavaLoader
 
