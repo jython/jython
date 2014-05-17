@@ -1,10 +1,6 @@
 package org.python.antlr.ast;
 
-import org.python.antlr.base.excepthandler;
-import org.python.antlr.base.expr;
-import org.python.antlr.base.mod;
-import org.python.antlr.base.slice;
-import org.python.antlr.base.stmt;
+import org.python.antlr.base.*;
 import org.python.antlr.op.*;
 import org.python.core.AstList;
 import org.python.core.ClassDictInit;
@@ -99,7 +95,7 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("slice", slice.TYPE);
         dict.__setitem__("stmt", stmt.TYPE);
         
-        dict.__setitem__("operator", imp.importName("org.python.antlr.ast.operatorType", false));
+        dict.__setitem__("operator", operator.TYPE);
         dict.__setitem__("Add", Add.TYPE);
         dict.__setitem__("Sub", Sub.TYPE);
         dict.__setitem__("Mult", Mult.TYPE);
@@ -113,11 +109,11 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("BitXor", BitXor.TYPE);
         dict.__setitem__("Pow", Pow.TYPE);
        
-        dict.__setitem__("boolop", imp.importName("org.python.antlr.ast.boolopType", false));
+        dict.__setitem__("boolop", boolop.TYPE);
         dict.__setitem__("And", And.TYPE);
         dict.__setitem__("Or", Or.TYPE);
       
-        dict.__setitem__("cmpop", imp.importName("org.python.antlr.ast.cmpopType", false));
+        dict.__setitem__("cmpop", cmpop.TYPE);
         dict.__setitem__("Eq", Eq.TYPE);
         dict.__setitem__("Gt", Gt.TYPE);
         dict.__setitem__("GtE", GtE.TYPE);
@@ -129,7 +125,7 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("NotEq", NotEq.TYPE);
         dict.__setitem__("NotIn", NotIn.TYPE);
        
-        dict.__setitem__("expr_context", imp.importName("org.python.antlr.ast.expr_contextType", false));
+        dict.__setitem__("expr_context", expr_context.TYPE);
         dict.__setitem__("Load", Load.TYPE);
         dict.__setitem__("Store", Store.TYPE);
         dict.__setitem__("Del", Del.TYPE);
@@ -137,7 +133,7 @@ public class AstModule implements ClassDictInit {
         dict.__setitem__("AugStore", AugStore.TYPE);
         dict.__setitem__("Param", Param.TYPE);
        
-        dict.__setitem__("unaryop", imp.importName("org.python.antlr.ast.unaryopType", false));
+        dict.__setitem__("unaryop", unaryop.TYPE);
         dict.__setitem__("Invert", Invert.TYPE);
         dict.__setitem__("Not", Not.TYPE);
         dict.__setitem__("UAdd", UAdd.TYPE);

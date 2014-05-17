@@ -180,7 +180,7 @@ class JavaVisitor(EmitVisitor):
             type = sum.types[i]
             self.open("op", type.name, refersToPythonTree=0)
             self.emit('import org.python.antlr.AST;', depth)
-            self.emit('import org.python.antlr.ast.%sType;' % name, depth)
+            self.emit('import org.python.antlr.base.%s;' % name, depth)
             self.emit('import org.python.antlr.PythonTree;', depth)
             self.emit('import org.python.core.Py;', depth)
             self.emit('import org.python.core.PyObject;', depth)
@@ -193,7 +193,7 @@ class JavaVisitor(EmitVisitor):
             self.emit('import org.python.expose.ExposedType;', depth)
             self.emit('', 0)
 
-            self.emit('@ExposedType(name = "_ast.%s", base = AST.class)' % type.name, depth)
+            self.emit('@ExposedType(name = "_ast.%s", base = %s.class)' % (type.name, name), depth)
             self.emit("public class %s extends PythonTree {" % type.name, depth)
             self.emit('public static final PyType TYPE = PyType.fromClass(%s.class);' % type.name, depth + 1)
             self.emit('', 0)

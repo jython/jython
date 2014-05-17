@@ -172,11 +172,16 @@ org/python/antlr/ast/UnaryOp.class
 org/python/antlr/ast/While.class
 org/python/antlr/ast/With.class
 org/python/antlr/ast/Yield.class
+org/python/antlr/base/boolop.class
+org/python/antlr/base/cmpop.class
 org/python/antlr/base/excepthandler.class
 org/python/antlr/base/expr.class
+org/python/antlr/base/expr_context.class
 org/python/antlr/base/mod.class
+org/python/antlr/base/operator.class
 org/python/antlr/base/slice.class
 org/python/antlr/base/stmt.class
+org/python/antlr/base/unaryop.class
 org/python/antlr/op/Add.class
 org/python/antlr/op/And.class
 org/python/antlr/op/AugLoad.class

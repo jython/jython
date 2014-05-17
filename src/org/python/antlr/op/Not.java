@@ -2,7 +2,7 @@
 package org.python.antlr.op;
 
 import org.python.antlr.AST;
-import org.python.antlr.ast.unaryopType;
+import org.python.antlr.base.unaryop;
 import org.python.antlr.PythonTree;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -14,7 +14,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.Not", base = AST.class)
+@ExposedType(name = "_ast.Not", base = unaryop.class)
 public class Not extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(Not.class);
 

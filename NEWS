@@ -3,6 +3,9 @@ Jython NEWS
 Jython 2.7b3
   Bugs Fixed
     - [ 2108 ] Cannot set attribute to instances of AST/PythonTree (blocks pyflakes)
+    - [ 1497 ] ast classes do not have appropiate base classes
+    - [ 1980 ] ast.Eq, ast.Gt, ast.GtE, ast.In, ast.Is, ast.IsNot, ast.Lt, ast.LtE, ast.NotEq and ast.NotIn should be subclasses of ast.cmpop
+    - [ 1981 ] ast.And and ast.Or should be subclasses of ast.boolop
   New Features
     - [ 1896215 ] findResource(s) for SyspathJavaLoader
 

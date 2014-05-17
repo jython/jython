@@ -2,7 +2,7 @@
 package org.python.antlr.op;
 
 import org.python.antlr.AST;
-import org.python.antlr.ast.expr_contextType;
+import org.python.antlr.base.expr_context;
 import org.python.antlr.PythonTree;
 import org.python.core.Py;
 import org.python.core.PyObject;
@@ -14,7 +14,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "_ast.AugStore", base = AST.class)
+@ExposedType(name = "_ast.AugStore", base = expr_context.class)
 public class AugStore extends PythonTree {
     public static final PyType TYPE = PyType.fromClass(AugStore.class);
 
