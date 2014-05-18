@@ -20,7 +20,13 @@ import org.python.core.PyObject;
  */
 public class PythonPOSIXHandler implements POSIXHandler {
 
-	public void error(Errno error, String extraData) {
+    public void error(Errno error, String extraData) {
+        // XXX: extraData (filename) could have been unicode!
+        // http://bugs.jython.org/issue1825
+        throw Py.OSError(error, Py.newString(extraData));
+    }
+
+    public void error(Errno error, String methodName, String extraData) {
         // XXX: extraData (filename) could have been unicode!
         // http://bugs.jython.org/issue1825
         throw Py.OSError(error, Py.newString(extraData));
