@@ -40,11 +40,8 @@ class FloatTestCase(unittest.TestCase):
 
     def test_float_str_formatting(self):
         self.assertEqual('%.13g' % 12345678.00005, '12345678.00005')
-        self.assertEqual('%.12g' % 12345678.00005,
-                         jython and '12345678' or '12345678.0001')
+        self.assertEqual('%.12g' % 12345678.00005, '12345678.0001')
         self.assertEqual('%.11g' % 12345678.00005, '12345678')
-        # XXX: The exponential formatter isn't totally correct, e.g. our
-        # output here is really .13g
         self.assertEqual('%.12g' % math.pi**-100, '1.92758141606e-50')
         self.assertEqual('%.5g' % 123.005, '123')
         self.assertEqual('%#.5g' % 123.005, '123.00')

@@ -4,17 +4,15 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 
-import org.python.core.StringFormatter.DecimalFormatTemplate;
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.stringlib.FieldNameIterator;
+import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.core.stringlib.MarkupIterator;
-import org.python.core.util.ExtraMath;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -1296,8 +1294,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param stripChars characters to strip from the left end of this str/bytes, or null
      * @return a new String, stripped of the specified characters/bytes
      */
-    public String lstrip(String sep) {
-        return _lstrip(sep);
+    public String lstrip(String stripChars) {
+        return _lstrip(stripChars);
     }
 
     /**
@@ -1310,8 +1308,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return a new <code>PyString</code> (or {@link PyUnicode}), stripped of the specified
      *         characters/bytes
      */
-    public PyObject lstrip(PyObject sep) {
-        return str_lstrip(sep);
+    public PyObject lstrip(PyObject stripChars) {
+        return str_lstrip(stripChars);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_lstrip_doc)
@@ -1385,8 +1383,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param stripChars characters to strip from either end of this str/bytes, or null
      * @return a new String, stripped of the specified characters/bytes
      */
-    public String rstrip(String sep) {
-        return _rstrip(sep);
+    public String rstrip(String stripChars) {
+        return _rstrip(stripChars);
     }
 
     /**
@@ -1399,8 +1397,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return a new <code>PyString</code> (or {@link PyUnicode}), stripped of the specified
      *         characters/bytes
      */
-    public PyObject rstrip(PyObject sep) {
-        return str_rstrip(sep);
+    public PyObject rstrip(PyObject stripChars) {
+        return str_rstrip(stripChars);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.str_rstrip_doc)
@@ -1546,7 +1544,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * the last element of the list contains the what is left over after the last split.
      * <p>
      * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_split(PyObject)}.
+     * {@link PyUnicode#unicode_split(PyObject, int)}.
      *
      * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
      * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
@@ -1798,7 +1796,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * left over after the last split.
      * <p>
      * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#unicode_rsplit(PyObject)} .
+     * {@link PyUnicode#unicode_rsplit(PyObject, int)} .
      *
      * @param sep string to use as separator (or <code>null</code> if to split on whitespace)
      * @param maxsplit maximum number of splits to make (there may be <code>maxsplit+1</code>
@@ -2931,11 +2929,10 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param oldPiece to replace where found.
      * @param newPiece replacement text.
-     * @param count maximum number of replacements to make, or -1 meaning all of them.
      * @return PyString (or PyUnicode if any string is one), this string after replacements.
      */
-    public PyString replace(PyObject oldPieceObj, PyObject newPieceObj) {
-        return str_replace(oldPieceObj, newPieceObj, -1);
+    public PyString replace(PyObject oldPiece, PyObject newPiece) {
+        return str_replace(oldPiece, newPiece, -1);
     }
 
     /**
@@ -2949,8 +2946,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param count maximum number of replacements to make, or -1 meaning all of them.
      * @return PyString (or PyUnicode if any string is one), this string after replacements.
      */
-    public PyString replace(PyObject oldPieceObj, PyObject newPieceObj, int count) {
-        return str_replace(oldPieceObj, newPieceObj, count);
+    public PyString replace(PyObject oldPiece, PyObject newPiece, int count) {
+        return str_replace(oldPiece, newPiece, count);
     }
 
     @ExposedMethod(defaults = "-1", doc = BuiltinDocs.str_replace_doc)
@@ -3161,8 +3158,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return <code>true</code> if this string slice starts with a specified prefix, otherwise
      *         <code>false</code>.
      */
-    public boolean startswith(PyObject prefix, PyObject offset) {
-        return str_startswith(prefix, offset, null);
+    public boolean startswith(PyObject prefix, PyObject start) {
+        return str_startswith(prefix, start, null);
     }
 
     /**
@@ -4002,13 +3999,24 @@ public class PyString extends PyBaseString implements BufferProtocol {
  */
 final class StringFormatter {
 
+    /** Index into {@link #format} being interpreted. */
     int index;
+    /** Format being interpreted. */
     String format;
+    /** Where the output is built. */
     StringBuilder buffer;
+    /** Remembers that the value currently converted is negative */
     boolean negative;
+    /** Precision from format specification. */
     int precision;
+    /**
+     * Index into args of argument currently being worked, or special values indicating -1: a single
+     * item that has not yet been used, -2: a single item that has already been used, -3: a mapping.
+     */
     int argIndex;
+    /** Arguments supplied to {@link #format(PyObject)} method. */
     PyObject args;
+    /** Indicate a <code>PyUnicode</code> result is expected. */
     boolean unicodeCoercion;
 
     final char pop() {
@@ -4027,6 +4035,11 @@ final class StringFormatter {
         index--;
     }
 
+    /**
+     * Initialise the interpreter with the given format string, ready for {@link #format(PyObject)}.
+     *
+     * @param format string to interpret
+     */
     public StringFormatter(String format) {
         this(format, false);
     }
@@ -4044,6 +4057,10 @@ final class StringFormatter {
         buffer = new StringBuilder(format.length() + 100);
     }
 
+    /**
+     * Read the next object from the argument list, taking special values of <code>argIndex</code>
+     * into account.
+     */
     PyObject getarg() {
         PyObject ret = null;
         switch (argIndex) {
@@ -4064,6 +4081,10 @@ final class StringFormatter {
         return ret;
     }
 
+    /**
+     * Parse a number from the format, except if the next thing is "*", read it from the argument
+     * list.
+     */
     int getNumber() {
         char c = pop();
         if (c == '*') {
@@ -4093,7 +4114,24 @@ final class StringFormatter {
 
     }
 
+    /**
+     * Format the argument interpreted as a long, using the argument's <code>__str__</code>,
+     * <code>__oct__</code>, or <code>__hex__</code> method according to <code>type</code>. If v is
+     * being treated as signed, the sign of v is transferred to {@link #negative} and the absolute
+     * value is converted. The <code>altFlag</code> argument controls the appearance of a "0x" or
+     * "0X" prefix in the hex case, or a "0" prefix in the octal case. The hexadecimal case, the
+     * case of characters and digits will match the type ('x' meaning lowercase, 'X' meaning
+     * uppercase).
+     *
+     * @param arg to convert
+     * @param type one of 'o' for octal, 'x' or 'X' for hex, anything else calls
+     *            <code>arg.__str__</code>.
+     * @param altFlag if true there will be a prefix
+     * @return converted value as <code>String</code>
+     */
     private String formatLong(PyObject arg, char type, boolean altFlag) {
+        // Convert using the appropriate type
+        // XXX Results in behaviour divergent from CPython when any of the methods is overridden.
         PyString argAsString;
         switch (type) {
             case 'o':
@@ -4107,29 +4145,37 @@ final class StringFormatter {
                 argAsString = arg.__str__();
                 break;
         }
+
         checkPrecision("long");
         String s = argAsString.toString();
         int end = s.length();
         int ptr = 0;
 
+        // In the hex case, the __hex__ return starts 0x
+        // XXX (we assume, perhaps falsely)
         int numnondigits = 0;
         if (type == 'x' || type == 'X') {
             numnondigits = 2;
         }
 
+        // Strip a "long" indicator
         if (s.endsWith("L")) {
             end--;
         }
 
+        // Strip a possible sign to member negative
         negative = s.charAt(0) == '-';
         if (negative) {
             ptr++;
         }
 
+        // The formatted number is s[ptr:end] and starts with numnondigits non-digits.
         int numdigits = end - numnondigits - ptr;
         if (!altFlag) {
+            // We should have no "base tag" '0' or "0x" on the front.
             switch (type) {
                 case 'o':
+                    // Strip the '0'
                     if (numdigits > 1) {
                         ++ptr;
                         --numdigits;
@@ -4137,27 +4183,36 @@ final class StringFormatter {
                     break;
                 case 'x':
                 case 'X':
+                    // Strip the "0x"
                     ptr += 2;
                     numnondigits -= 2;
                     break;
             }
         }
+
+        // If necessary, add leading zeros to the numerical digits part.
         if (precision > numdigits) {
+            // Recompose the formatted number in this buffer
             StringBuilder buf = new StringBuilder();
+            // The base indicator prefix
             for (int i = 0; i < numnondigits; ++i) {
                 buf.append(s.charAt(ptr++));
             }
+            // The extra zeros
             for (int i = 0; i < precision - numdigits; i++) {
                 buf.append('0');
             }
+            // The previously known digits
             for (int i = 0; i < numdigits; i++) {
                 buf.append(s.charAt(ptr++));
             }
             s = buf.toString();
         } else if (end < s.length() || ptr > 0) {
+            // It's only necessary to extract the formatted number from s
             s = s.substring(ptr, end);
         }
 
+        // And finally, deal with the case, so it matches x or X.
         switch (type) {
             case 'X':
                 s = s.toUpperCase();
@@ -4167,10 +4222,16 @@ final class StringFormatter {
     }
 
     /**
-     * Formats arg as an integer, with the specified radix
+     * Formats arg as an integer, with the specified radix. The integer value is obtained from the
+     * result of <code>arg.__int__()</code>. <code>type</code> and <code>altFlag</code> are passed
+     * to {@link #formatLong(PyObject, char, boolean)} in case the result is a PyLong.
      *
-     * type and altFlag are needed to be passed to {@link #formatLong(PyObject, char, boolean)} in
-     * case the result of <code>arg.__int__()</code> is a PyLong.
+     * @param arg to convert
+     * @param radix in which to express <code>arg</code>
+     * @param unsigned true if required to interpret a 32-bit integer as unsigned ('u' legacy?).
+     * @param type of conversion ('d', 'o', 'x', or 'X')
+     * @param altFlag '#' present in format (causes "0x" prefix in hex, and '0' prefix in octal)
+     * @return string form of the value
      */
     private String formatInteger(PyObject arg, int radix, boolean unsigned, char type,
             boolean altFlag) {
@@ -4183,7 +4244,6 @@ final class StringFormatter {
                 // safe to call __int__:
                 argAsInt = arg.__int__();
             } else {
-                // Same case noted on formatFloatDecimal:
                 // We can't simply call arg.__int__() because PyString implements
                 // it without exposing it to python (i.e, str instances has no
                 // __int__ attribute). So, we would support strings as arguments
@@ -4192,7 +4252,7 @@ final class StringFormatter {
                 try {
                     argAsInt = arg.__getattr__("__int__").__call__();
                 } catch (PyException e) {
-                    // XXX: Swallow customs AttributeError throws from __float__ methods
+                    // XXX: Swallow custom AttributeError throws from __int__ methods
                     // No better alternative for the moment
                     if (e.match(Py.AttributeError)) {
                         throw Py.TypeError("int argument required");
@@ -4202,25 +4262,44 @@ final class StringFormatter {
             }
         }
         if (argAsInt instanceof PyInteger) {
+            // This call does not provide the prefix and will be lowercase.
             return formatInteger(((PyInteger)argAsInt).getValue(), radix, unsigned);
         } else { // must be a PyLong (as per __int__ contract)
+            // This call provides the base prefix and case-matches with 'x' or 'X'.
             return formatLong(argAsInt, type, altFlag);
         }
     }
 
+    /**
+     * Convert a 32-bit integer (as from a {@link PyInteger}) to characters, signed or unsigned. The
+     * values is presented in a <code>long</code>. The string result is left-padded with zeros to
+     * the stated {@link #precision}. If v is being treated as signed, the sign of v is transferred
+     * to {@link #negative} and the absolute value is converted. Otherwise (unsigned case)
+     * <code>0x100000000L + v</code> is converted. This method does not provide the '0' or "0x"
+     * prefix, just the padded digit string.
+     *
+     * @param v value to convert
+     * @param radix of conversion
+     * @param unsigned if should be treated as unsigned
+     * @return string form
+     */
     private String formatInteger(long v, int radix, boolean unsigned) {
         checkPrecision("integer");
         if (unsigned) {
+            // If the high bit was set, this will have been sign-extended: correct that.
             if (v < 0) {
                 v = 0x100000000l + v;
             }
         } else {
+            // If the high bit was set, the sign extension was correct, but we need sign + abs(v).
             if (v < 0) {
                 negative = true;
                 v = -v;
             }
         }
+        // Use the method in java.lang.Long (lowercase, no prefix)
         String s = Long.toString(v, radix);
+        // But zero pad to the requested precision
         while (s.length() < precision) {
             s = "0" + s;
         }
@@ -4235,88 +4314,23 @@ final class StringFormatter {
         }
     }
 
-    static class DecimalFormatTemplate {
-
-        static DecimalFormat template;
-        static {
-            template =
-                    new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(java.util.Locale.US));
-            DecimalFormatSymbols symbols = template.getDecimalFormatSymbols();
-            symbols.setNaN("nan");
-            symbols.setInfinity("inf");
-            template.setDecimalFormatSymbols(symbols);
-            template.setGroupingUsed(false);
-        }
-    }
-
-    private static final DecimalFormat getDecimalFormat() {
-        return (DecimalFormat)DecimalFormatTemplate.template.clone();
-    }
-
-    private String formatFloatDecimal(double v, boolean truncate) {
-        checkPrecision("decimal");
-        int prec = precision;
-        if (prec == -1) {
-            prec = 6;
-        }
-        if (v < 0) {
-            v = -v;
-            negative = true;
-        }
-
-        DecimalFormat decimalFormat = getDecimalFormat();
-        decimalFormat.setMaximumFractionDigits(prec);
-        decimalFormat.setMinimumFractionDigits(truncate ? 0 : prec);
-
-        String ret = decimalFormat.format(v);
-        return ret;
-    }
-
-    private String formatFloatExponential(PyObject arg, char e, boolean truncate) {
-        StringBuilder buf = new StringBuilder();
-        double v = asDouble(arg);
-        boolean isNegative = false;
-        if (v < 0) {
-            v = -v;
-            isNegative = true;
-        }
-        double power = 0.0;
-        if (v > 0) {
-            power = ExtraMath.closeFloor(Math.log10(v));
-        }
-        // System.err.println("formatExp: "+v+", "+power);
-        int savePrecision = precision;
-        precision = 2;
-
-        String exp = formatInteger((long)power, 10, false);
-        if (negative) {
-            negative = false;
-            exp = '-' + exp;
-        } else {
-            exp = '+' + exp;
-        }
-
-        precision = savePrecision;
-
-        double base = v / Math.pow(10, power);
-        buf.append(formatFloatDecimal(base, truncate));
-        buf.append(e);
-
-        buf.append(exp);
-        negative = isNegative;
-
-        return buf.toString();
-    }
-
+    /**
+     * Main service of this class: format one or more arguments with the format string supplied at
+     * construction.
+     *
+     * @param args tuple or map containing objects, or a single object, to convert
+     * @return result of formatting
+     */
     @SuppressWarnings("fallthrough")
     public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;
         boolean needUnicode = unicodeCoercion;
         if (args instanceof PyTuple) {
+            // We will simply work through the tuple elements
             argIndex = 0;
         } else {
-            // special index indicating a single item rather than a tuple
+            // Not a tuple, but possibly still some kind of container: use special argIndex values.
             argIndex = -1;
             if (args instanceof PyDictionary || args instanceof PyStringMap
                     || (!(args instanceof PySequence) && args.__findattr__("__getitem__") != null)) {
@@ -4326,6 +4340,8 @@ final class StringFormatter {
         }
 
         while (index < format.length()) {
+
+            // Attributes to be parsed from the next format specifier
             boolean ljustFlag = false;
             boolean signFlag = false;
             boolean blankFlag = false;
@@ -4335,16 +4351,31 @@ final class StringFormatter {
             int width = -1;
             precision = -1;
 
+            // Read one character from the format string
             char c = pop();
             if (c != '%') {
                 buffer.append(c);
                 continue;
             }
+
+            // It's a %, so the beginning of a conversion specifier. Parse it.
+
+            // A conversion specifier contains the following components, in this order:
+            // + The '%' character, which marks the start of the specifier.
+            // + Mapping key (optional), consisting of a parenthesised sequence of characters.
+            // + Conversion flags (optional), which affect the result of some conversion types.
+            // + Minimum field width (optional), or an '*' (asterisk).
+            // + Precision (optional), given as a '.' (dot) followed by the precision or '*'.
+            // + Length modifier (optional).
+            // + Conversion type.
+
             c = pop();
             if (c == '(') {
+                // Mapping key, consisting of a parenthesised sequence of characters.
                 if (dict == null) {
                     throw Py.TypeError("format requires a mapping");
                 }
+                // Scan along until a matching close parenthesis is found
                 int parens = 1;
                 int keyStart = index;
                 while (parens > 0) {
@@ -4355,11 +4386,16 @@ final class StringFormatter {
                         parens++;
                     }
                 }
+                // Last c=pop() is the closing ')' while indexKey is just after the opening '('
                 String tmp = format.substring(keyStart, index - 1);
+                // Look it up using this extent as the (right type of) key.
                 this.args = dict.__getitem__(needUnicode ? new PyUnicode(tmp) : new PyString(tmp));
             } else {
+                // Not a mapping key: next clause will re-read c.
                 push();
             }
+
+            // Conversion flags (optional) that affect the result of some conversion types.
             while (true) {
                 switch (c = pop()) {
                     case '-':
@@ -4380,43 +4416,77 @@ final class StringFormatter {
                 }
                 break;
             }
+            // Push back c as next clause will re-read c.
             push();
+
+            /*
+             * Minimum field width (optional). If specified as an '*' (asterisk), the actual width
+             * is read from the next element of the tuple in values, and the object to convert comes
+             * after the minimum field width and optional precision. A custom getNumber() takes care
+             * of the '*' case.
+             */
             width = getNumber();
             if (width < 0) {
                 width = -width;
                 ljustFlag = true;
             }
+
+            /*
+             * Precision (optional), given as a '.' (dot) followed by the precision. If specified as
+             * '*' (an asterisk), the actual precision is read from the next element of the tuple in
+             * values, and the value to convert comes after the precision. A custom getNumber()
+             * takes care of the '*' case.
+             */
             c = pop();
             if (c == '.') {
                 precision = getNumber();
                 if (precision < -1) {
                     precision = 0;
                 }
-
                 c = pop();
             }
+
+            // Length modifier (optional). (Compatibility feature?) It has no effect.
             if (c == 'h' || c == 'l' || c == 'L') {
                 c = pop();
             }
+
+            // c is now the conversion type.
             if (c == '%') {
+                // It was just a percent sign after all
                 buffer.append(c);
                 continue;
             }
+
+            /*
+             * Process argument according to format specification decoded from the string. It is
+             * important we don't read the argumnent from the list until this point because of the
+             * possibility that width and precision were specified via the argument list.
+             */
             PyObject arg = getarg();
-            char fill = ' ';
             String string = null;
             negative = false;
+
+            // Independent of type, decide the padding character based on decoded flags.
+            char fill = ' ';
             if (zeroFlag) {
                 fill = '0';
             } else {
                 fill = ' ';
             }
+
+            // Perform the type-specific formatting
             switch (c) {
+
                 case 's':
+                    // String (converts any Python object using str()).
                     if (arg instanceof PyUnicode) {
                         needUnicode = true;
                     }
+                    // fall through ...
+
                 case 'r':
+                    // String (converts any Python object using repr()).
                     fill = ' ';
                     if (c == 's') {
                         if (needUnicode) {
@@ -4432,15 +4502,19 @@ final class StringFormatter {
                     }
 
                     break;
+
                 case 'i':
                 case 'd':
+                    // Signed integer decimal. Note floats accepted.
                     if (arg instanceof PyLong) {
                         string = formatLong(arg, c, altFlag);
                     } else {
                         string = formatInteger(arg, 10, false, c, altFlag);
                     }
                     break;
+
                 case 'u':
+                    // Obsolete type – it is identical to 'd'. (Why not identical here?)
                     if (arg instanceof PyLong) {
                         string = formatLong(arg, c, altFlag);
                     } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
@@ -4449,10 +4523,15 @@ final class StringFormatter {
                         throw Py.TypeError("int argument required");
                     }
                     break;
+
                 case 'o':
+                    // Signed octal value. Note floats accepted.
                     if (arg instanceof PyLong) {
+                        // This call provides the base prefix '0' if altFlag.
                         string = formatLong(arg, c, altFlag);
                     } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        // This call does not provide the '0' prefix and will be lowercase ...
+                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
                         string = formatInteger(arg, 8, false, c, altFlag);
                         if (altFlag && string.charAt(0) != '0') {
                             string = "0" + string;
@@ -4461,10 +4540,15 @@ final class StringFormatter {
                         throw Py.TypeError("int argument required");
                     }
                     break;
+
                 case 'x':
+                    // Signed hexadecimal (lowercase). Note floats accepted.
                     if (arg instanceof PyLong) {
+                        // This call provides the base prefix "0x" if altFlag and case-matches c.
                         string = formatLong(arg, c, altFlag);
                     } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        // This call does not provide the "0x" prefix and will be lowercase.
+                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
                         string = formatInteger(arg, 16, false, c, altFlag);
                         string = string.toLowerCase();
                         if (altFlag) {
@@ -4474,10 +4558,15 @@ final class StringFormatter {
                         throw Py.TypeError("int argument required");
                     }
                     break;
+
                 case 'X':
+                    // Signed hexadecimal (uppercase). Note floats accepted.
                     if (arg instanceof PyLong) {
+                        // This call provides the base prefix "0x" if altFlag and case-matches c.
                         string = formatLong(arg, c, altFlag);
                     } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
+                        // This call does not provide the "0x" prefix and will be lowercase.
+                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
                         string = formatInteger(arg, 16, false, c, altFlag);
                         string = string.toUpperCase();
                         if (altFlag) {
@@ -4487,60 +4576,33 @@ final class StringFormatter {
                         throw Py.TypeError("int argument required");
                     }
                     break;
+
                 case 'e':
                 case 'E':
-                    string = formatFloatExponential(arg, c, false);
-                    if (c == 'E') {
-                        string = string.toUpperCase();
-                    }
-                    break;
                 case 'f':
                 case 'F':
-                    string = formatFloatDecimal(asDouble(arg), false);
-                    if (c == 'F') {
-                        string = string.toUpperCase();
-                    }
-                    break;
                 case 'g':
                 case 'G':
-                    int origPrecision = precision;
-                    if (precision == -1) {
-                        precision = 6;
-                    }
+                    // All floating point formats (+case).
 
+                    // Convert the flags (local variables) to the form needed in the Spec object.
+                    char align = ljustFlag ? '<' : '>';
+                    char sign = signFlag ? '+' : (blankFlag ? ' ' : Spec.NONE);
+                    int w = Spec.UNSPECIFIED;
+                    Spec spec = new Spec(fill, align, sign, altFlag, w, false, precision, c);
+
+                    // Format using this Spec the double form of the argument.
+                    FloatFormatter f = new FloatFormatter(spec);
                     double v = asDouble(arg);
-                    int exponent = (int)ExtraMath.closeFloor(Math.log10(Math.abs(v == 0 ? 1 : v)));
-                    if (v == Double.POSITIVE_INFINITY) {
-                        string = "inf";
-                    } else if (v == Double.NEGATIVE_INFINITY) {
-                        string = "-inf";
-                    } else if (exponent >= -4 && exponent < precision) {
-                        precision -= exponent + 1;
-                        string = formatFloatDecimal(v, !altFlag);
+                    f.format(v);
+                    string = f.getResult();
 
-                        // XXX: this block may be unnecessary now
-                        if (altFlag && string.indexOf('.') == -1) {
-                            int zpad = origPrecision - string.length();
-                            string += '.';
-                            if (zpad > 0) {
-                                char zeros[] = new char[zpad];
-                                for (int ci = 0; ci < zpad; zeros[ci++] = '0') {}
-                                string += new String(zeros);
-                            }
-                        }
-                    } else {
-                        // Exponential precision is the number of digits after the decimal
-                        // point, whereas 'g' precision is the number of significant digits --
-                        // and exponential always provides one significant digit before the
-                        // decimal point
-                        precision--;
-                        string = formatFloatExponential(arg, (char)(c - 2), !altFlag);
-                    }
-                    if (c == 'G') {
-                        string = string.toUpperCase();
-                    }
+                    // Suppress subsequent attempts to insert a correct sign, done already.
+                    signFlag = blankFlag = negative = false;
                     break;
+
                 case 'c':
+                    // Single character (accepts integer or single character string).
                     fill = ' ';
                     if (arg instanceof PyString) {
                         string = ((PyString)arg).toString();
@@ -4552,6 +4614,8 @@ final class StringFormatter {
                         }
                         break;
                     }
+
+                    // arg is not a str (or unicode)
                     int val;
                     try {
                         // Explicitly __int__ so we can look for an AttributeError (which is
@@ -4563,6 +4627,7 @@ final class StringFormatter {
                         }
                         throw e;
                     }
+                    // Range check, according to ultimate type of result as presentl;y known.
                     if (!needUnicode) {
                         if (val < 0) {
                             throw Py.OverflowError("unsigned byte integer is less than minimum");
@@ -4580,8 +4645,15 @@ final class StringFormatter {
                             + codecs.encode(Py.newString(c), null, "replace") + "' (0x"
                             + Integer.toHexString(c) + ") at index " + (index - 1));
             }
+
+            /*
+             * We have now dealt with the translation of the (absolute value of the) argument, in
+             * variable string[]. In the next sections we deal with sign, padding and base prefix.
+             */
             int length = string.length();
             int skip = 0;
+
+            // Decide how to represent the sign according to format and actual sign of argument.
             String signString = null;
             if (negative) {
                 signString = "-";
@@ -4593,34 +4665,47 @@ final class StringFormatter {
                 }
             }
 
+            // The width (from here on) will be the remaining width on the line.
             if (width < length) {
                 width = length;
             }
+
+            // Insert the sign in the buffer and adjust the width.
             if (signString != null) {
                 if (fill != ' ') {
+                    // When the fill is not space, the sign comes before the fill.
                     buffer.append(signString);
                 }
+                // Adjust width for sign.
                 if (width > length) {
                     width--;
                 }
             }
+
+            // Insert base prefix used with alternate mode for hexadecimal.
             if (altFlag && (c == 'x' || c == 'X')) {
                 if (fill != ' ') {
+                    // When the fill is not space, this base prefix comes before the fill.
                     buffer.append('0');
                     buffer.append(c);
                     skip += 2;
                 }
+                // Adjust width for base prefix.
                 width -= 2;
                 if (width < 0) {
                     width = 0;
                 }
                 length -= 2;
             }
+
+            // Fill on the left of the item.
             if (width > length && !ljustFlag) {
                 do {
                     buffer.append(fill);
                 } while (--width > length);
             }
+
+            // If the fill is spaces, we will have deferred the sign and hex base prefix
             if (fill == ' ') {
                 if (signString != null) {
                     buffer.append(signString);
@@ -4631,19 +4716,33 @@ final class StringFormatter {
                     skip += 2;
                 }
             }
+
+            // Now append the converted argument.
             if (skip > 0) {
+                // The string contains a hex-prefix, but we have already inserted one.
                 buffer.append(string.substring(skip));
             } else {
                 buffer.append(string);
             }
 
+            // If this hasn't filled the space required, add right-padding.
             while (--width >= length) {
                 buffer.append(' ');
             }
         }
+
+        /*
+         * All fields in the format string have been used to convert arguments (or used the argument
+         * as a width, etc.). This had better not leave any arguments unused. Note argIndex is an
+         * index into args or has a special value. If args is a 'proper' index, It should now be out
+         * of range; if a special value, it would be wrong if it were -1, indicating a single item
+         * that has not yet been used.
+         */
         if (argIndex == -1 || (argIndex >= 0 && args.__finditem__(argIndex) != null)) {
             throw Py.TypeError("not all arguments converted during string formatting");
         }
+
+        // Return the final buffer contents as a str or unicode as appropriate.
         if (needUnicode) {
             return new PyUnicode(buffer);
         }
