@@ -167,6 +167,14 @@ public class PyDefaultDict extends PyDictionary {
     @ExposedMethod(doc = BuiltinDocs.dict___getitem___doc)
     protected final PyObject defaultdict___getitem__(PyObject key) {
         try {
+            PyType type = getType();
+            if (!getMap().containsKey(key) && type != TYPE) {
+                // is a subclass. if it exists call the subclasses __missing__
+                PyObject missing = type.lookup("__missing__");
+                if (missing != null) {
+                    return missing.__get__(this, type).__call__(key);
+                }
+            }
             return backingMap.get(key);
         } catch (Exception ex) {
             throw Py.KeyError(key);

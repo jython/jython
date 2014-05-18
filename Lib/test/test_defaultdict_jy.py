@@ -94,8 +94,38 @@ class GetVariantsTestCase(unittest.TestCase):
         self.assertEquals(d.items(), [("vivify", [])]) 
 
 
+class KeyDefaultDict(defaultdict):
+    """defaultdict to pass the requested key to factory function."""
+    def __missing__(self, key):
+        if self.default_factory is None:
+            raise KeyError("Invalid key '{0}' and no default factory was set")
+        else:
+            val = self.default_factory(key)
+
+        self[key] = val
+        return val
+
+    @classmethod
+    def double(cls, k):
+        return k + k
+
+class OverrideMissingTestCase(unittest.TestCase):
+    def test_dont_call_derived_missing(self):
+        kdd = KeyDefaultDict(KeyDefaultDict.double)
+        kdd[3] = 5
+        self.assertEquals(kdd[3], 5)
+
+    #http://bugs.jython.org/issue2088
+    def test_override_missing(self):
+
+        kdd = KeyDefaultDict(KeyDefaultDict.double)
+        # line below causes KeyError in Jython, ignoring overridden __missing__ method
+        self.assertEquals(kdd[3], 6)
+        self.assertEquals(kdd['ab'], 'abab')
+
+
 def test_main():
-    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase, GetVariantsTestCase)
+    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase, GetVariantsTestCase, OverrideMissingTestCase)
 
 
 if __name__ == '__main__':
