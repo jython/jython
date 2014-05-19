@@ -923,6 +923,8 @@ class SocketHandlerTest(BaseTest):
         self.tcpserver.finished.wait(2.0)
         return self.tcpserver.log_output
 
+    @unittest.skipIf(os.name=='java' and os._name=='nt', 
+        'Blocks test completion on Jython Windows.')
     def test_output(self):
         # The log message sent to the SocketHandler is properly received.
         logger = logging.getLogger("tcp")
