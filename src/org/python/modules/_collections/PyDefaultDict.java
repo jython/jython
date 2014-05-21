@@ -58,6 +58,15 @@ public class PyDefaultDict extends PyDictionary {
         backingMap = CacheBuilder.newBuilder().build(
                 new CacheLoader<PyObject, PyObject>() {
                     public PyObject load(PyObject key) {
+                        PyType self_type = getType();
+                        if (self_type != TYPE) {
+                            // Is a subclass. If it exists call the subclasses __missing__.
+                            // Otherwise PyDefaultDic.defaultdict___missing__() will
+                            // be invoked.
+                            return PyDefaultDict.this.invoke("__missing__", key);
+                        }
+
+                        // in-lined __missing__
                         if (defaultFactory == Py.None) {
                             throw Py.KeyError(key);
                         }
@@ -167,14 +176,6 @@ public class PyDefaultDict extends PyDictionary {
     @ExposedMethod(doc = BuiltinDocs.dict___getitem___doc)
     protected final PyObject defaultdict___getitem__(PyObject key) {
         try {
-            PyType type = getType();
-            if (!getMap().containsKey(key) && type != TYPE) {
-                // is a subclass. if it exists call the subclasses __missing__
-                PyObject missing = type.lookup("__missing__");
-                if (missing != null) {
-                    return missing.__get__(this, type).__call__(key);
-                }
-            }
             return backingMap.get(key);
         } catch (Exception ex) {
             throw Py.KeyError(key);
