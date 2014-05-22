@@ -88,9 +88,9 @@ public class PyDefaultDict extends PyDictionary {
     }
 
     /**
-     * This method is does NOT call __setitem__ instead it relies on the fact
-     * that it is called within the context of `CacheLoader#load` to actually
-     * insert the value into the dict.
+     * This method does NOT call __setitem__ instead it relies on the fact that it is
+     * called within the context of `CacheLoader#load` to actually insert the value
+     * into the dict.
      */
     @ExposedMethod
     final PyObject defaultdict___missing__(PyObject key) {
