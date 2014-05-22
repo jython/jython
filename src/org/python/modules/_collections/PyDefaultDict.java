@@ -58,22 +58,9 @@ public class PyDefaultDict extends PyDictionary {
         backingMap = CacheBuilder.newBuilder().build(
                 new CacheLoader<PyObject, PyObject>() {
                     public PyObject load(PyObject key) {
-                        PyType self_type = getType();
-                        if (self_type != TYPE) {
-                            // Is a subclass. If it exists call the subclasses __missing__.
-                            // Otherwise PyDefaultDic.defaultdict___missing__() will
-                            // be invoked.
-                            return PyDefaultDict.this.invoke("__missing__", key);
-                        }
-
-                        // in-lined __missing__
-                        if (defaultFactory == Py.None) {
-                            throw Py.KeyError(key);
-                        }
-                        return defaultFactory.__call__();
+                        return __missing__(key);
                     }
-                }
-        );
+                });
     }
 
     public PyDefaultDict(PyType subtype, Map<PyObject, PyObject> map) {
@@ -87,7 +74,7 @@ public class PyDefaultDict extends PyDictionary {
         int nargs = args.length - kwds.length;
         if (nargs != 0) {
             defaultFactory = args[0];
-            if (!defaultFactory.isCallable()) {
+            if (!(defaultFactory == Py.None || defaultFactory.isCallable())) {
                 throw Py.TypeError("first argument must be callable");
             }
             PyObject newargs[] = new PyObject[args.length - 1];
@@ -96,22 +83,21 @@ public class PyDefaultDict extends PyDictionary {
         }
     }
 
+    public PyObject __missing__(PyObject key) {
+        return defaultdict___missing__(key);
+    }
+
     /**
-     * This method is NOT called by the __getitem__ method of the dict class when the
-     * requested key is not found. It is simply here as an alternative to the atomic
-     * construction of that factory. (We actually inline it in.)
+     * This method is does NOT call __setitem__ instead it relies on the fact
+     * that it is called within the context of `CacheLoader#load` to actually
+     * insert the value into the dict.
      */
     @ExposedMethod
     final PyObject defaultdict___missing__(PyObject key) {
         if (defaultFactory == Py.None) {
             throw Py.KeyError(key);
         }
-        PyObject value = defaultFactory.__call__();
-        if (value == null) {
-            return value;
-        }
-        __setitem__(key, value);
-        return value;
+        return defaultFactory.__call__();
     }
 
     @Override

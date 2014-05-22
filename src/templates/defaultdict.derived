@@ -1,4 +1,13 @@
 base_class: PyDefaultDict
 want_dict: true
 ctr:
-incl: object
+incl: dict
+rest:
+    public PyObject __missing__(PyObject key) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__missing__");
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(key);
+        }
+        return super.__missing__(key);
+    }

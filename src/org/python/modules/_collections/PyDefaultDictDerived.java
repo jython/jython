@@ -1122,6 +1122,15 @@ public class PyDefaultDictDerived extends PyDefaultDict implements Slotted {
         return super.__coerce_ex__(o);
     }
 
+    public PyObject __missing__(PyObject key) {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__missing__");
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(key);
+        }
+        return super.__missing__(key);
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
