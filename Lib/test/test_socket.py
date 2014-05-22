@@ -577,6 +577,22 @@ class GeneralModuleTests(unittest.TestCase):
         name = sock.getsockname()
         self.assertEqual(name, ("0.0.0.0", PORT+1))
 
+    def testSockNameEphemeralV4(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('', 0))
+        sock.listen(1)
+        name = sock.getsockname()
+        self.assertEqual(len(name), 2)
+        self.assertNotEqual(name[1], 0)
+
+    def testSockNameEphemeralV6(self):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        sock.bind(('', 0, 0, 0))
+        sock.listen(1)
+        name = sock.getsockname()
+        self.assertEqual(len(name), 4)
+        self.assertNotEqual(name[1], 0)
+
     def testSockAttributes(self):
         # Testing required attributes
         for family in [socket.AF_INET, socket.AF_INET6]:
