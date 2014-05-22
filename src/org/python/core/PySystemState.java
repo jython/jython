@@ -1644,7 +1644,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
         // Python scripts expect that files are closed upon an orderly cleanup of the VM.
         private Thread initShutdownCloser() {
             try {
-                Thread shutdownHook = new ShutdownCloser();
+                Thread shutdownHook = new Thread(new ShutdownCloser(), "Jython Shutdown Closer");
                 Runtime.getRuntime().addShutdownHook(shutdownHook);
                 return shutdownHook;
             } catch (SecurityException se) {
@@ -1653,13 +1653,9 @@ public class PySystemState extends PyObject implements ClassDictInit {
             }
         }
 
-        private class ShutdownCloser extends Thread {
+        private class ShutdownCloser implements Runnable {
 
-            private ShutdownCloser() {
-                super("Jython Shutdown Closer");
-            }
-
-            @Override
+        	@Override
             public synchronized void run() {
                 runClosers(resourceClosers);
                 resourceClosers.clear();
