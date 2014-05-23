@@ -1466,7 +1466,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.bytearray___len___doc)
     final int bytearray___len__() {
-        return __len__();
+        return super.__len__();
     }
 
     /**
