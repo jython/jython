@@ -4,6 +4,8 @@ Made for Jython.
 """
 from test import test_support
 import unittest
+from javatests import StackOverflowErrorTest
+
 
 class C:
     def __str__(self):
@@ -40,6 +42,19 @@ class ExceptionsTestCase(unittest.TestCase):
             assert e.args[0] == "E"
             return
         unittest.fail("if __str__ raises an exception, re-raise")
+
+    def test_wrap_StackOverflowError(self):
+        with self.assertRaises(RuntimeError) as cm:
+            StackOverflowErrorTest.throwStackOverflowError()
+        self.assertEqual(
+            cm.exception.message,
+            "maximum recursion depth exceeded (Java StackOverflowError)")
+
+        with self.assertRaises(RuntimeError) as cm:
+            StackOverflowErrorTest.causeStackOverflowError()
+        self.assertEqual(
+            cm.exception.message,
+            "maximum recursion depth exceeded (Java StackOverflowError)")
 
 
 def test_main():
