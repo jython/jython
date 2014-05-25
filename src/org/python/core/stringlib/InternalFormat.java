@@ -32,7 +32,7 @@ public class InternalFormat {
 
         /** The number we are working on floats at the end of the result, and starts here. */
         protected int start;
-        /** If it contains no sign, this length is zero, and 1 otherwise. */
+        /** If it contains no sign, this length is zero, and &gt;0 otherwise. */
         protected int lenSign;
         /** The length of the whole part (to left of the decimal point or exponent) */
         protected int lenWhole;
@@ -98,7 +98,7 @@ public class InternalFormat {
          * receive a new one.
          */
         protected void reset() {
-            // Clear the variable describing the latest object in result.
+            // Clear the variables describing the latest object in result.
             lenSign = lenWhole = 0;
         }
 
@@ -221,13 +221,13 @@ public class InternalFormat {
          * greater than the current length.
          * <p>
          * When the padding method has decided that that it needs to add n padding characters, it
-         * will affect {@link #start} or {@link #lenSign} as follows.
+         * will affect {@link #start} or {@link #lenWhole} as follows.
          * <table border style>
          * <tr>
          * <th>align</th>
          * <th>meaning</th>
          * <th>start</th>
-         * <th>lenSign</th>
+         * <th>lenWhole</th>
          * <th>result.length()</th>
          * </tr>
          * <tr>
@@ -259,11 +259,10 @@ public class InternalFormat {
          * <td>+n</td>
          * </tr>
          * </table>
-         * Note that we may have converted more than one value into the result buffer (for example
-         * when formatting a complex number). The pointer <code>start</code> is at the start of the
-         * last number converted. Padding with zeros, and the "pad after sign" mode, will produce a
-         * result you probably don't want. It is up to the client to disallow this (which
-         * <code>complex</code> does).
+         * Note that in the "pad after sign" mode, only the last number into the buffer receives the
+         * padding. This padding gets incorporated into the whole part of the number. (In other
+         * modes, the padding is around the whole buffer.) When this would not be appropriate, it is
+         * up to the client to disallow this (which <code>complex</code> does).
          *
          * @return this object
          */
@@ -345,7 +344,7 @@ public class InternalFormat {
          * </pre>
          *
          * The padding has increased the overall length of the result to the target width. About one
-         * in three call to this method adds one to the width, because the whole part cannot start
+         * in three calls to this method adds one to the width, because the whole part cannot start
          * with a comma.
          *
          * <pre>
@@ -354,9 +353,6 @@ public class InternalFormat {
          * &gt;&gt;&gt; format(-12e8, "0=30,.4f")
          * '-<b>0</b>,000,000,001,200,000,000.0000'
          * </pre>
-         *
-         * Insert grouping characters (conventionally commas) into the whole part of the number.
-         * {@link #lenWhole} will increase correspondingly.
          *
          * @param groupSize normally 3.
          * @param comma or some other character to use as a separator.
@@ -386,10 +382,9 @@ public class InternalFormat {
                  * Suppose the format call was format(-12e8, "0=30,.4f"). At the beginning, we had
                  * something like this in result: . [-|000000000001,200,000,000|.|0000||]
                  *
-                 * And now, result looks like this: [-|0000,000,001,200,000,000|.|0000||] in which
-                 * the first zero is wrong as it stands, nor can it just be over-written with a
-                 * comma. We have to insert another zero, even though this makes the result longer
-                 * than we were given.
+                 * And now, result looks like this: [-|,000,000,001,200,000,000|.|0000||] in which
+                 * the first comma is wrong, but so would be a zero. We have to insert another zero,
+                 * even though this makes the result longer than we were asked for.
                  */
                 result.insert(firstZero, '0');
                 lenWhole += 1;
@@ -455,6 +450,19 @@ public class InternalFormat {
         protected static PyException notAllowed(String particularOutrage, String forType) {
             String msg = particularOutrage + " is not allowed in " + forType + " format specifier";
             return Py.ValueError(msg);
+        }
+
+        /**
+         * Convenience method returning a {@link Py#OverflowError} reporting:
+         * <p>
+         * <code>"formatted "+type+" is too long (precision too large?)"</code>
+         *
+         * @param type of formatting ("integer", "float")
+         * @return exception to throw
+         */
+        public static PyException precisionTooLarge(String type) {
+            String msg = "formatted " + type + " is too long (precision too large?)";
+            return Py.OverflowError(msg);
         }
 
     }

@@ -7,6 +7,8 @@ import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.expose.ExposedGet;
@@ -953,11 +955,8 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___oct___doc)
     final PyString int___oct__() {
-        if (getValue() < 0) {
-            return new PyString("-0" + Integer.toString(getValue() * -1, 8));
-        } else {
-            return new PyString("0" + Integer.toString(getValue(), 8));
-        }
+        // Use the prepared format specifier for octal.
+        return formatImpl(IntegerFormatter.OCT);
     }
 
     @Override
@@ -967,11 +966,21 @@ public class PyInteger extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.int___hex___doc)
     final PyString int___hex__() {
-        if (getValue() < 0) {
-            return new PyString("-0x" + Integer.toString(getValue() * -1, 16));
-        } else {
-            return new PyString("0x" + Integer.toString(getValue(), 16));
-        }
+        // Use the prepared format specifier for hexadecimal.
+        return formatImpl(IntegerFormatter.HEX);
+    }
+
+    /**
+     * Common code used by the number-base conversion method __oct__ and __hex__.
+     *
+     * @param spec prepared format-specifier.
+     * @return converted value of this object
+     */
+    private PyString formatImpl(Spec spec) {
+        // Traditional formatter (%-format) because #o means "-0123" not "-0o123".
+        IntegerFormatter f = new IntegerFormatter.Traditional(spec);
+        f.format(value);
+        return new PyString(f.getResult());
     }
 
     @ExposedMethod(doc = BuiltinDocs.int___getnewargs___doc)

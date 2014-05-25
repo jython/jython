@@ -4,20 +4,20 @@
  */
 package org.python.core;
 
-import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.python.antlr.base.mod;
+import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.util.ExtraMath;
 import org.python.core.util.RelativeFile;
-import org.python.core.util.StringUtil;
 import org.python.modules._functools._functools;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -768,7 +768,7 @@ public class __builtin__ {
     /**
      * Built-in Python function ord() applicable to the string-like types <code>str</code>,
      * <code>bytearray</code>, <code>unicode</code>.
-     * 
+     *
      * @param c string-like object of length 1
      * @return ordinal value of character or byte value in
      * @throws PyException (TypeError) if not a string-like type
@@ -1245,10 +1245,10 @@ public class __builtin__ {
         PyObject[] args;
         if (level < 0) {
         	// for backward compatibility provide only 4 arguments
-        	args = new PyObject[] {Py.newString(name), globals, locals, 
+        	args = new PyObject[] {Py.newString(name), globals, locals,
         			fromlist};
         } else {
-        	args = new PyObject[] {Py.newString(name), globals, locals, 
+        	args = new PyObject[] {Py.newString(name), globals, locals,
         			fromlist, Py.newInteger(level)};
         }
         PyObject module = __import__.__call__(args);
@@ -1469,7 +1469,7 @@ class PrintFunction extends PyBuiltinFunction {
                 endObject = useUnicode ? Py.newUnicode(end) : Py.newString(end);
             }
 
-            out.print(values, sepObject, endObject); 
+            out.print(values, sepObject, endObject);
         }
         return Py.None;
     }
@@ -1774,10 +1774,6 @@ class BinFunction extends PyBuiltinFunction {
     public PyObject __call__(PyObject args[], String kwds[]) {
         ArgParser ap = new ArgParser("bin", args, kwds, new String[] {"number"}, 1);
         ap.noKeywords();
-        PyObject number = ap.getPyObject(0);
-
-        //XXX: this could be made more efficient by using a binary only formatter
-        //     instead of using generic formatting.
-        return number.__format__(new PyString("#b"));
+        return IntegerFormatter.bin(ap.getPyObject(0));
     }
 }

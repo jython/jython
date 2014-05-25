@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -977,14 +980,8 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___oct___doc)
     final PyString long___oct__() {
-        String s = PyInteger.toOctString(getValue());
-        if (s.startsWith("-")) {
-            return new PyString("-0" + s.substring(1, s.length()) + "L");
-        } else if (s.startsWith("0")) {
-            return new PyString(s + "L");
-        } else {
-            return new PyString("0" + s + "L");
-        }
+        // Use the prepared format specifier for octal.
+        return formatImpl(IntegerFormatter.OCT);
     }
 
     @Override
@@ -994,12 +991,21 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___hex___doc)
     final PyString long___hex__() {
-        String s = PyInteger.toHexString(getValue());
-        if (s.startsWith("-")) {
-            return new PyString("-0x" + s.substring(1, s.length()) + "L");
-        } else {
-            return new PyString("0x" + s + "L");
-        }
+        // Use the prepared format specifier for hexadecimal.
+        return formatImpl(IntegerFormatter.HEX);
+    }
+
+    /**
+     * Common code used by the number-base conversion method __oct__ and __hex__.
+     *
+     * @param spec prepared format-specifier.
+     * @return converted value of this object
+     */
+    private PyString formatImpl(Spec spec) {
+        // Traditional formatter (%-format) because #o means "-0123" not "-0o123".
+        IntegerFormatter f = new IntegerFormatter.Traditional(spec);
+        f.format(value).append('L');
+        return new PyString(f.getResult());
     }
 
     @ExposedMethod(doc = BuiltinDocs.long___str___doc)

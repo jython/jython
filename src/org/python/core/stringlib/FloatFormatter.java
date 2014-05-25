@@ -18,6 +18,10 @@ public class FloatFormatter extends InternalFormat.Formatter {
     /** The rounding mode dominant in the formatter. */
     static final RoundingMode ROUND_PY = RoundingMode.HALF_EVEN;
 
+    /** Limit the size of results. */
+    // No-one needs more than log(Double.MAX_VALUE) - log2(Double.MIN_VALUE) = 1383 digits.
+    static final int MAX_PRECISION = 1400;
+
     /** If it contains no decimal point, this length is zero, and 1 otherwise. */
     private int lenPoint;
     /** The length of the fractional part, right of the decimal point. */
@@ -159,6 +163,12 @@ public class FloatFormatter extends InternalFormat.Formatter {
 
         // Precision defaults to 6 (or 12 for none-format)
         int precision = spec.getPrecision(Spec.specified(spec.type) ? 6 : 12);
+
+        // Guard against excessive result precision
+        // XXX Possibly better raised before result is allocated/sized.
+        if (precision > MAX_PRECISION) {
+            throw precisionTooLarge("float");
+        }
 
         /*
          * By default, the prefix of a positive number is "", but the format specifier may override
@@ -905,8 +915,8 @@ public class FloatFormatter extends InternalFormat.Formatter {
     }
 
     /**
-     * Return the index in {@link #result} of the first letter. helper for {@link #uppercase()} and
-     * {@link #getExponent()}
+     * Return the index in {@link #result} of the first letter. This is a helper for
+     * {@link #uppercase()} and {@link #getExponent()}
      */
     private int indexOfMarker() {
         return start + lenSign + lenWhole + lenPoint + lenFraction;
