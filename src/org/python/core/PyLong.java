@@ -1062,7 +1062,12 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___format___doc)
     final PyObject long___format__(PyObject formatSpec) {
-        return PyInteger.formatImpl(getValue(), formatSpec);
+        // Get a formatter for the specification
+        IntegerFormatter f = PyInteger.prepareFormatter(formatSpec);
+        // Convert as per specification (note this supports BigDecimal).
+        f.format(value);
+        // Return a result that has the same type (str or unicode) as the formatSpec argument.
+        return f.pad().getPyResult();
     }
 
     @Override

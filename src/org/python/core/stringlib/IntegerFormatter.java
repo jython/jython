@@ -3,10 +3,12 @@ package org.python.core.stringlib;
 
 import java.math.BigInteger;
 
+import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
@@ -105,6 +107,11 @@ public class IntegerFormatter extends InternalFormat.Formatter {
                 case 'b':
                     // Binary.
                     format_b(value);
+                    break;
+
+                case 'c':
+                    // Binary.
+                    format_c(value);
                     break;
 
                 case 'n':
@@ -222,6 +229,26 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     }
 
     /**
+     * Format the value as a character (into {@link #result}).
+     *
+     * @param value to convert
+     */
+    void format_c(BigInteger value) {
+        // Limit is 256 if we're formatting for byte output, unicode range otherwise.
+        BigInteger limit = bytes ? LIMIT_BYTE : LIMIT_UNICODE;
+        if (value.signum() < 0 || value.compareTo(limit) >= 0) {
+            throw Py.OverflowError("%c arg not in range(0x" + toHexString(limit) + ")");
+        } else {
+            result.appendCodePoint(value.intValue());
+        }
+    }
+
+    // Limits used in format_c(BigInteger)
+    private static final BigInteger LIMIT_UNICODE = BigInteger
+            .valueOf(PySystemState.maxunicode + 1);
+    private static final BigInteger LIMIT_BYTE = BigInteger.valueOf(256);
+
+    /**
      * Format an integer according to the specification represented by this
      * <code>IntegerFormatter</code>. The conversion type, and flags for grouping or base prefix are
      * dealt with here. At the point this is used, we know the {@link #spec} is one of the integer
@@ -266,6 +293,11 @@ public class IntegerFormatter extends InternalFormat.Formatter {
                     format_b(value);
                     break;
 
+                case 'c':
+                    // Binary.
+                    format_c(value);
+                    break;
+
                 case 'n':
                     // Locale-sensitive version of d-format should be here.
                     format_d(value);
@@ -286,6 +318,26 @@ public class IntegerFormatter extends InternalFormat.Formatter {
             // Most probably due to excessive precision.
             throw precisionTooLarge("integer");
         }
+    }
+
+    /**
+     * Format the value as decimal (into {@link #result}). The option for mandatory sign is dealt
+     * with by reference to the format specification.
+     *
+     * @param value to convert
+     */
+    void format_d(int value) {
+        String number;
+        if (value < 0) {
+            // Negative value: deal with sign and base, and convert magnitude.
+            negativeSign(null);
+            number = Integer.toString(-value);
+        } else {
+            // Positive value: deal with sign, base and magnitude.
+            positiveSign(null);
+            number = Integer.toString(value);
+        }
+        appendNumber(number);
     }
 
     /**
@@ -311,26 +363,6 @@ public class IntegerFormatter extends InternalFormat.Formatter {
         // Append to result, case-shifted if necessary.
         if (upper) {
             number = number.toUpperCase();
-        }
-        appendNumber(number);
-    }
-
-    /**
-     * Format the value as decimal (into {@link #result}). The option for mandatory sign is dealt
-     * with by reference to the format specification.
-     *
-     * @param value to convert
-     */
-    void format_d(int value) {
-        String number;
-        if (value < 0) {
-            // Negative value: deal with sign and base, and convert magnitude.
-            negativeSign(null);
-            number = Integer.toString(-value);
-        } else {
-            // Positive value: deal with sign, base and magnitude.
-            positiveSign(null);
-            number = Integer.toString(value);
         }
         appendNumber(number);
     }
@@ -380,6 +412,21 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     }
 
     /**
+     * Format the value as a character (into {@link #result}).
+     *
+     * @param value to convert
+     */
+    void format_c(int value) {
+        // Limit is 256 if we're formatting for byte output, unicode range otherwise.
+        int limit = bytes ? 256 : PySystemState.maxunicode + 1;
+        if (value < 0 || value >= limit) {
+            throw Py.OverflowError("%c arg not in range(0x" + Integer.toHexString(limit) + ")");
+        } else {
+            result.appendCodePoint(value);
+        }
+    }
+
+    /**
      * Append to {@link #result} buffer a sign (if one is specified for positive numbers) and, in
      * alternate mode, the base marker provided. The sign and base marker are together considered to
      * be the "sign" of the converted number, spanned by {@link #lenSign}. This is relevant when we
@@ -391,7 +438,7 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     final void positiveSign(String base) {
         // Does the format specify a sign for positive values?
         char sign = spec.sign;
-        if (Spec.specified(sign)) {
+        if (Spec.specified(sign) && sign != '-') {
             append(sign);
             lenSign = 1;
         }
@@ -583,7 +630,8 @@ public class IntegerFormatter extends InternalFormat.Formatter {
 
     /**
      * A minor variation on {@link IntegerFormatter} to handle "traditional" %-formatting. The
-     * difference is in the formatting octal in "alternate" mode (0 and 0123, not 0o0 and 0o123).
+     * difference is in support for <code>spec.precision</code>, the formatting octal in "alternate"
+     * mode (0 and 0123, not 0o0 and 0o123), and in c-format (in the error logic).
      */
     public static class Traditional extends IntegerFormatter {
 
@@ -634,6 +682,26 @@ public class IntegerFormatter extends InternalFormat.Formatter {
         }
 
         /**
+         * Format the value as a character (into {@link #result}).
+         *
+         * @param value to convert
+         */
+        @Override
+        void format_c(BigInteger value) {
+            if (value.signum() < 0) {
+                throw Py.OverflowError("unsigned byte integer is less than minimum");
+            } else {
+                // Limit is 256 if we're formatting for byte output, unicode range otherwise.
+                BigInteger limit = bytes ? LIMIT_BYTE : LIMIT_UNICODE;
+                if (value.compareTo(limit) >= 0) {
+                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                } else {
+                    result.appendCodePoint(value.intValue());
+                }
+            }
+        }
+
+        /**
          * Format the value as octal (into {@link #result}). The options for mandatory sign and for
          * the presence of a base-prefix "0" are dealt with by reference to the format
          * specification.
@@ -654,6 +722,26 @@ public class IntegerFormatter extends InternalFormat.Formatter {
             }
             // Append to result.
             appendOctalNumber(number);
+        }
+
+        /**
+         * Format the value as a character (into {@link #result}).
+         *
+         * @param value to convert
+         */
+        @Override
+        void format_c(int value) {
+            if (value < 0) {
+                throw Py.OverflowError("unsigned byte integer is less than minimum");
+            } else {
+                // Limit is 256 if we're formatting for byte output, unicode range otherwise.
+                int limit = bytes ? 256 : PySystemState.maxunicode + 1;
+                if (value >= limit) {
+                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                } else {
+                    result.appendCodePoint(value);
+                }
+            }
         }
 
         /**

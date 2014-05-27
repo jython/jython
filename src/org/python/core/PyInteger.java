@@ -4,13 +4,10 @@ package org.python.core;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.text.NumberFormat;
-import java.util.Locale;
 
 import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.InternalFormat.Spec;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -1022,151 +1019,68 @@ public class PyInteger extends PyObject {
         return int___format__(formatSpec);
     }
 
+    @SuppressWarnings("fallthrough")
     @ExposedMethod(doc = BuiltinDocs.int___format___doc)
     final PyObject int___format__(PyObject formatSpec) {
-        return formatImpl(getValue(), formatSpec);
-    }
-
-    static PyObject formatImpl(Object value, PyObject formatSpec) {
-        if (!(formatSpec instanceof PyString)) {
-            throw Py.TypeError("__format__ requires str or unicode");
-        }
-
-        PyString formatSpecStr = (PyString)formatSpec;
-        String result;
-        try {
-            String specString = formatSpecStr.getString();
-            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-            result = formatIntOrLong(value, spec);
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
-        }
-        return formatSpecStr.createInstance(result);
+        // Get a formatter for the specification
+        IntegerFormatter f = prepareFormatter(formatSpec);
+        // Convert as per specification.
+        f.format(value);
+        // Return a result that has the same type (str or unicode) as the formatSpec argument.
+        return f.pad().getPyResult();
     }
 
     /**
-     * Formats an integer or long number according to a PEP-3101 format specification.
+     * Common code for PyInteger and PyLong to prepare an IntegerFormatter. This object has an
+     * overloaded format method {@link IntegerFormatter#format(int)} and
+     * {@link IntegerFormatter#format(BigInteger)} to support the two types.
      *
-     * @param value Integer or BigInteger object specifying the value to format.
-     * @param spec parsed PEP-3101 format specification.
-     * @return result of the formatting.
+     * @param formatSpec PEP-3101 format specification.
+     * @return a formatter ready to use.
+     * @throws PyException(ValueError) if the specification is faulty.
      */
-    public static String formatIntOrLong(Object value, InternalFormatSpec spec) {
-        if (spec.precision != -1) {
-            throw new IllegalArgumentException("Precision not allowed in integer format specifier");
+    static IntegerFormatter prepareFormatter(PyObject formatSpec) throws PyException {
+
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+        IntegerFormatter f;
+
+        // Check for disallowed parts of the specification
+        if (Spec.specified(spec.precision)) {
+            throw IntegerFormatter.precisionNotAllowed("integer");
         }
 
-        int sign;
-        if (value instanceof Integer) {
-            int intValue = (Integer)value;
-            sign = intValue < 0 ? -1 : intValue == 0 ? 0 : 1;
-        } else {
-            sign = ((BigInteger)value).signum();
+        // Slight differences between format types
+        switch (spec.type) {
+            case 'c':
+                // Character data
+                if (Spec.specified(spec.sign)) {
+                    throw IntegerFormatter.notAllowed("Sign", "integer", spec.type);
+                } else if (spec.alternate) {
+                    throw IntegerFormatter.alternateFormNotAllowed("integer", spec.type);
+                }
+                // Fall through
+
+            case Spec.NONE:
+            case 'd':
+            case 'x':
+            case 'X':
+            case 'o':
+            case 'b':
+            case 'n':
+                // spec may be incomplete. The defaults are those commonly used for numeric formats.
+                spec = spec.withDefaults(Spec.NUMERIC);
+                // Get a formatter for the spec.
+                f = new IntegerFormatter(spec, 1);
+                // Bytes mode if formatSpec argument is not unicode.
+                f.setBytes(!(formatSpec instanceof PyUnicode));
+                break;
+
+            default:
+                throw IntegerFormatter.unknownFormat(spec.type, "integer");
         }
 
-        String strValue;
-        String strPrefix = "";
-        String strSign = "";
-
-        if (spec.type == 'c') {
-            if (spec.sign != '\0') {
-                throw new IllegalArgumentException("Sign not allowed with integer format "
-                        + "specifier 'c'");
-            }
-            if (value instanceof Integer) {
-                int intValue = (Integer)value;
-                if (intValue > 0xffff) {
-                    throw new IllegalArgumentException("%c arg not in range(0x10000)");
-                }
-                strValue = Character.toString((char)intValue);
-            } else {
-                BigInteger bigInt = (BigInteger)value;
-                if (bigInt.intValue() > 0xffff || bigInt.bitCount() > 16) {
-                    throw new IllegalArgumentException("%c arg not in range(0x10000)");
-                }
-                strValue = Character.toString((char)bigInt.intValue());
-            }
-        } else {
-            int radix = 10;
-            if (spec.type == 'o') {
-                radix = 8;
-            } else if (spec.type == 'x' || spec.type == 'X') {
-                radix = 16;
-            } else if (spec.type == 'b') {
-                radix = 2;
-            }
-
-            if (spec.type == 'n') {
-                strValue = NumberFormat.getNumberInstance().format(value);
-            } else if (spec.thousands_separators) {
-                NumberFormat format = NumberFormat.getNumberInstance(Locale.US);
-                format.setGroupingUsed(true);
-                strValue = format.format(value);
-            } else if (value instanceof BigInteger) {
-                switch (radix) {
-                    case 2:
-                        strValue = toBinString((BigInteger)value);
-                        break;
-                    case 8:
-                        strValue = toOctString((BigInteger)value);
-                        break;
-                    case 16:
-                        strValue = toHexString((BigInteger)value);
-                        break;
-                    default:
-                        // General case (v.slow in known implementations up to Java 7).
-                        strValue = ((BigInteger)value).toString(radix);
-                        break;
-                }
-            } else {
-                strValue = Integer.toString((Integer)value, radix);
-            }
-
-            if (spec.alternate) {
-                switch (radix) {
-                    case 2:
-                        strPrefix = "0b";
-                        break;
-                    case 8:
-                        strPrefix = "0o";
-                        break;
-                    case 16:
-                        strPrefix = "0x";
-                        break;
-                }
-
-                if (sign < 0) {
-                    assert (strValue.startsWith("-"));
-                    strSign = "-";
-                    strValue = strValue.substring(1);
-                }
-            }
-
-            if (spec.type == 'X') {
-                strPrefix = strPrefix.toUpperCase();
-                strValue = strValue.toUpperCase();
-            }
-
-            if (sign >= 0) {
-                switch (spec.sign) {
-                    case '+':
-                    case ' ':
-                        strSign = Character.toString(spec.sign);
-                        break;
-                }
-            }
-        }
-
-        if (spec.align == '=' && (spec.sign == '-' || spec.sign == '+' || spec.sign == ' ')) {
-            assert (strSign.length() == 1);
-            return strSign + strPrefix + spec.pad(strValue, '>', 1 + strPrefix.length());
-        }
-
-        if (spec.fill_char == 0) {
-            return spec.pad(strSign + strPrefix + strValue, '>', 0);
-        }
-
-        return strSign + strPrefix + spec.pad(strValue, '>', strSign.length() + strPrefix.length());
+        return f;
     }
 
     /**

@@ -3,6 +3,9 @@ package org.python.core.stringlib;
 
 import org.python.core.Py;
 import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
 
 public class InternalFormat {
 
@@ -14,7 +17,25 @@ public class InternalFormat {
      */
     public static Spec fromText(String text) {
         Parser parser = new Parser(text);
-        return parser.parse();
+        try {
+            return parser.parse();
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+    }
+
+    /**
+     * Create a {@link Spec} object by parsing a format specification, supplied as an object.
+     *
+     * @param text to parse
+     * @return parsed equivalent to text
+     */
+    public static Spec fromText(PyObject text, String method) {
+        if (text instanceof PyString) {
+            return fromText(((PyString)text).getString());
+        } else {
+            throw Py.TypeError(method + " requires str or unicode");
+        }
     }
 
     /**
@@ -29,6 +50,12 @@ public class InternalFormat {
         protected final Spec spec;
         /** The (partial) result. */
         protected StringBuilder result;
+
+        /**
+         * Signals the client's intention to make a PyString (or other byte-like) interpretation of
+         * {@link #result}, rather than a PyUnicode one.
+         */
+        protected boolean bytes;
 
         /** The number we are working on floats at the end of the result, and starts here. */
         protected int start;
@@ -50,12 +77,55 @@ public class InternalFormat {
         }
 
         /**
+         * Signals the client's intention to make a PyString (or other byte-like) interpretation of
+         * {@link #result}, rather than a PyUnicode one. Only formatters that could produce
+         * characters &gt;255 are affected by this (e.g. c-format). Idiom:
+         *
+         * <pre>
+         * MyFormatter f = new MyFormatter( InternalFormatter.fromText(formatSpec) );
+         * f.setBytes(!(formatSpec instanceof PyUnicode));
+         * // ... formatting work
+         * return f.getPyResult();
+         * </pre>
+         *
+         * @param bytes true to signal the intention to make a byte-like interpretation
+         */
+        public void setBytes(boolean bytes) {
+            this.bytes = bytes;
+        }
+
+        /**
+         * Whether initialised for a byte-like interpretation.
+         *
+         * @return bytes attribute
+         */
+        public boolean isBytes() {
+            return bytes;
+        }
+
+        /**
          * Current (possibly final) result of the formatting, as a <code>String</code>.
          *
          * @return formatted result
          */
         public String getResult() {
             return result.toString();
+        }
+
+        /**
+         * Convenience method to return the current result of the formatting, as a
+         * <code>PyObject</code>, either {@link PyString} or {@link PyUnicode} according to
+         * {@link #bytes}.
+         *
+         * @return formatted result
+         */
+        public PyString getPyResult() {
+            String r = getResult();
+            if (bytes) {
+                return new PyString(r);
+            } else {
+                return new PyUnicode(r);
+            }
         }
 
         /*
@@ -86,7 +156,7 @@ public class InternalFormat {
          * Clear the instance variables describing the latest object in {@link #result}, ready to
          * receive a new number
          */
-        public void setStart() {
+        void setStart() {
             // Mark the end of the buffer as the start of the current object and reset all.
             start = result.length();
             // Clear the variable describing the latest number in result.
@@ -413,7 +483,19 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException alternateFormNotAllowed(String forType) {
-            return notAllowed("Alternate form (#)", forType);
+            return alternateFormNotAllowed(forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that alternate form is not
+         * allowed in a format specifier for the named type and specified typoe code.
+         *
+         * @param forType the type it was found applied to
+         * @param code the formatting code (or '\0' not to mention one)
+         * @return exception to throw
+         */
+        public static PyException alternateFormNotAllowed(String forType, char code) {
+            return notAllowed("Alternate form (#)", forType, code);
         }
 
         /**
@@ -425,7 +507,18 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException alignmentNotAllowed(char align, String forType) {
-            return notAllowed("'" + align + "' alignment flag", forType);
+            return notAllowed("'" + align + "' alignment flag", forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that specifying a
+         * precision is not allowed in a format specifier for the named type.
+         *
+         * @param forType the type it was found applied to
+         * @return exception to throw
+         */
+        public static PyException precisionNotAllowed(String forType) {
+            return notAllowed("Precision", forType, '\0');
         }
 
         /**
@@ -436,19 +529,35 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException zeroPaddingNotAllowed(String forType) {
-            return notAllowed("Zero padding", forType);
+            return notAllowed("Zero padding", forType, '\0');
         }
 
         /**
          * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
-         * feature is not allowed for the named type.
+         * feature is not allowed for the named format code and data type. Produces a message like:
+         * <p>
+         * <code>outrage+" not allowed with "+forType+" format specifier '"+code+"'"</code>
+         * <p>
+         * <code>outrage+" not allowed in "+forType+" format specifier"</code>
          *
-         * @param particularOutrage committed in the present case
-         * @param forType the type it where it is an outrage
+         * @param outrage committed in the present case
+         * @param forType the data type (e.g. "integer") it where it is an outrage
+         * @param code the formatting code for which it is an outrage (or '\0' not to mention one)
          * @return exception to throw
          */
-        protected static PyException notAllowed(String particularOutrage, String forType) {
-            String msg = particularOutrage + " is not allowed in " + forType + " format specifier";
+        public static PyException notAllowed(String outrage, String forType, char code) {
+            // Try really hard to be like CPython
+            String codeAsString, withOrIn;
+            if (code == 0) {
+                withOrIn = "in ";
+                codeAsString = "";
+            } else {
+                withOrIn = "with ";
+                codeAsString = " '" + code + "'";
+            }
+            String msg =
+                    outrage + " not allowed " + withOrIn + forType + " format specifier"
+                            + codeAsString;
             return Py.ValueError(msg);
         }
 

@@ -174,8 +174,9 @@ public class FloatFormatter extends InternalFormat.Formatter {
          * By default, the prefix of a positive number is "", but the format specifier may override
          * it, and the built-in type complex needs to override the format.
          */
-        if (positivePrefix == null && Spec.specified(spec.sign) && spec.sign != '-') {
-            positivePrefix = Character.toString(spec.sign);
+        char sign = spec.sign;
+        if (positivePrefix == null && Spec.specified(sign) && sign != '-') {
+            positivePrefix = Character.toString(sign);
         }
 
         // Different process for each format type, ignoring case for now.
