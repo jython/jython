@@ -1,7 +1,9 @@
 # Python test set -- part 6, built-in types
 
 from test.test_support import run_unittest, have_unicode, run_with_locale, \
-                              check_py3k_warnings, is_jython
+                              check_py3k_warnings
+from test.test_support import is_jython
+
 import unittest
 import sys
 import locale
@@ -90,7 +92,6 @@ class TypesTests(unittest.TestCase):
         if float(1) == 1.0 and float(-1) == -1.0 and float(0) == 0.0: pass
         else: self.fail('float() does not work properly')
 
-    @unittest.skipIf(is_jython, "FIXME: not working")
     def test_float_to_string(self):
         def test(f, result):
             self.assertEqual(f.__format__('e'), result)
@@ -407,7 +408,7 @@ class TypesTests(unittest.TestCase):
         test(-123456, "#012X", '-0X00001E240')
 
         # issue 5782, commas with no specifier type
-        #FIXME: not working.
+        #FIXME: not working. Spurious: ValueError: Cannot specify ',' with '?' from parser.
         #test(1234, '010,', '00,001,234')
 
         # make sure these are errors
@@ -424,13 +425,12 @@ class TypesTests(unittest.TestCase):
         self.assertRaises(ValueError, 3 .__format__, ",c")
 
         # ensure that only int and float type specifiers work
-        #FIXME: not working.
-        #for format_spec in ([chr(x) for x in range(ord('a'), ord('z')+1)] +
-        #                    [chr(x) for x in range(ord('A'), ord('Z')+1)]):
-        #    if not format_spec in 'bcdoxXeEfFgGn%':
-        #        self.assertRaises(ValueError, 0 .__format__, format_spec)
-        #        self.assertRaises(ValueError, 1 .__format__, format_spec)
-        #        self.assertRaises(ValueError, (-1) .__format__, format_spec)
+        for format_spec in ([chr(x) for x in range(ord('a'), ord('z')+1)] +
+                            [chr(x) for x in range(ord('A'), ord('Z')+1)]):
+            if not format_spec in 'bcdoxXeEfFgGn%':
+                self.assertRaises(ValueError, 0 .__format__, format_spec)
+                self.assertRaises(ValueError, 1 .__format__, format_spec)
+                self.assertRaises(ValueError, (-1) .__format__, format_spec)
 
         # ensure that float type specifiers work; format converts
         #  the int to a float
@@ -534,14 +534,13 @@ class TypesTests(unittest.TestCase):
         self.assertRaises(ValueError, 1L .__format__, "#+5x")
         self.assertRaises(ValueError, 1L .__format__, "+5#x")
 
-        #FIXME: this section broken in Jython.
         # ensure that only int and float type specifiers work
-        #for format_spec in ([chr(x) for x in range(ord('a'), ord('z')+1)] +
-        #                    [chr(x) for x in range(ord('A'), ord('Z')+1)]):
-        #    if not format_spec in 'bcdoxXeEfFgGn%':
-        #        self.assertRaises(ValueError, 0L .__format__, format_spec)
-        #        self.assertRaises(ValueError, 1L .__format__, format_spec)
-        #        self.assertRaises(ValueError, (-1L) .__format__, format_spec)
+        for format_spec in ([chr(x) for x in range(ord('a'), ord('z')+1)] +
+                            [chr(x) for x in range(ord('A'), ord('Z')+1)]):
+            if not format_spec in 'bcdoxXeEfFgGn%':
+                self.assertRaises(ValueError, 0L .__format__, format_spec)
+                self.assertRaises(ValueError, 1L .__format__, format_spec)
+                self.assertRaises(ValueError, (-1L) .__format__, format_spec)
 
         # ensure that float type specifiers work; format converts
         #  the long to a float
@@ -562,7 +561,6 @@ class TypesTests(unittest.TestCase):
         test(123456L, "1=20", '11111111111111123456')
         test(123456L, "*=20", '**************123456')
 
-    @unittest.skipIf(is_jython, "FIXME: not working")
     @run_with_locale('LC_NUMERIC', 'en_US.UTF8')
     def test_float__format__locale(self):
         # test locale support for __format__ code 'n'
@@ -576,13 +574,12 @@ class TypesTests(unittest.TestCase):
     def test_int__format__locale(self):
         # test locale support for __format__ code 'n' for integers
 
-        #FIXME: not working in Jython.
-        #x = 123456789012345678901234567890
-        #for i in range(0, 30):
-        #    self.assertEqual(locale.format('%d', x, grouping=True), format(x, 'n'))
+        x = 123456789012345678901234567890
+        for i in range(0, 30):
+            self.assertEqual(locale.format('%d', x, grouping=True), format(x, 'n'))
 
-        #    # move to the next integer to test
-        #    x = x // 10
+            # move to the next integer to test
+            x = x // 10
 
         rfmt = ">20n"
         lfmt = "<20n"
@@ -661,29 +658,25 @@ class TypesTests(unittest.TestCase):
         # a totaly empty format specifier means something else.
         # So, just use a sign flag
         test(1e200, '+g', '+1e+200')
-        #FIXME: not working.
-        #test(1e200, '+', '+1e+200')
+        test(1e200, '+', '+1e+200')
         test(1.1e200, '+g', '+1.1e+200')
-        #FIXME: not working.
-        ##test(1.1e200, '+', '+1.1e+200')
+        test(1.1e200, '+', '+1.1e+200')
 
         test(1.1e200, '+g', '+1.1e+200')
-        #FIXME: not working.
-        #test(1.1e200, '+', '+1.1e+200')
+        test(1.1e200, '+', '+1.1e+200')
 
         # 0 padding
         test(1234., '010f', '1234.000000')
         test(1234., '011f', '1234.000000')
         test(1234., '012f', '01234.000000')
         test(-1234., '011f', '-1234.000000')
-        #FIXME: not working.
-        #test(-1234., '012f', '-1234.000000')
-        #test(-1234., '013f', '-01234.000000')
-        #test(-1234.12341234, '013f', '-01234.123412')
-        #test(-123456.12341234, '011.2f', '-0123456.12')
+        test(-1234., '012f', '-1234.000000')
+        test(-1234., '013f', '-01234.000000')
+        test(-1234.12341234, '013f', '-01234.123412')
+        test(-123456.12341234, '011.2f', '-0123456.12')
 
         # issue 5782, commas with no specifier type
-        #FIXME: not working.
+        #FIXME: not working. Spurious: ValueError: Cannot specify ',' with '?' from parser.
         #test(1.2, '010,.2', '0,000,001.2')
 
         # 0 padding with commas
@@ -692,13 +685,12 @@ class TypesTests(unittest.TestCase):
         test(1234., '013,f', '01,234.000000')
         test(-1234., '012,f', '-1,234.000000')
         test(-1234., '013,f', '-1,234.000000')
-        #FIXME: not working.
-        #test(-1234., '014,f', '-01,234.000000')
-        #test(-12345., '015,f', '-012,345.000000')
-        #test(-123456., '016,f', '-0,123,456.000000')
-        #test(-123456., '017,f', '-0,123,456.000000')
-        #test(-123456.12341234, '017,f', '-0,123,456.123412')
-        #test(-123456.12341234, '013,.2f', '-0,123,456.12')
+        test(-1234., '014,f', '-01,234.000000')
+        test(-12345., '015,f', '-012,345.000000')
+        test(-123456., '016,f', '-0,123,456.000000')
+        test(-123456., '017,f', '-0,123,456.000000')
+        test(-123456.12341234, '017,f', '-0,123,456.123412')
+        test(-123456.12341234, '013,.2f', '-0,123,456.12')
 
          # % formatting
         test(-1.0, '%', '-100.000000%')
@@ -721,23 +713,20 @@ class TypesTests(unittest.TestCase):
                 self.assertRaises(ValueError, format, -1e-100, format_spec)
 
         # Alternate formatting is not supported
-        #FIXME: not working.
-        ##self.assertRaises(ValueError, format, 0.0, '#')
+        self.assertRaises(ValueError, format, 0.0, '#')
         self.assertRaises(ValueError, format, 0.0, '#20f')
 
         # Issue 6902
-        #FIXME: not working.
-        #test(12345.6, "0<20", '12345.60000000000000')
-        #test(12345.6, "1<20", '12345.61111111111111')
-        #test(12345.6, "*<20", '12345.6*************')
-        #test(12345.6, "0>20", '000000000000012345.6')
-        #test(12345.6, "1>20", '111111111111112345.6')
-        #test(12345.6, "*>20", '*************12345.6')
-        #test(12345.6, "0=20", '000000000000012345.6')
-        #test(12345.6, "1=20", '111111111111112345.6')
-        #test(12345.6, "*=20", '*************12345.6')
+        test(12345.6, "0<20", '12345.60000000000000')
+        test(12345.6, "1<20", '12345.61111111111111')
+        test(12345.6, "*<20", '12345.6*************')
+        test(12345.6, "0>20", '000000000000012345.6')
+        test(12345.6, "1>20", '111111111111112345.6')
+        test(12345.6, "*>20", '*************12345.6')
+        test(12345.6, "0=20", '000000000000012345.6')
+        test(12345.6, "1=20", '111111111111112345.6')
+        test(12345.6, "*=20", '*************12345.6')
 
-    @unittest.skipIf(is_jython, "FIXME: not working")
     def test_format_spec_errors(self):
         # int, float, and string all share the same format spec
         # mini-language parser.
