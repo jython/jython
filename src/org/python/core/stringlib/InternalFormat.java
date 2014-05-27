@@ -892,11 +892,6 @@ public class InternalFormat {
                 throw new IllegalArgumentException("Invalid conversion specification");
             }
 
-            // Restrict grouping to known formats. (Mirrors CPython, but misplaced?)
-            if (grouping && "defgEG%F\0".indexOf(type) == -1) {
-                throw new IllegalArgumentException("Cannot specify ',' with '" + type + "'.");
-            }
-
             // Create a specification
             return new Spec(fill, align, sign, alternate, width, grouping, precision, type);
         }

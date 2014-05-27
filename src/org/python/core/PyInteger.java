@@ -5,8 +5,10 @@ package org.python.core;
 import java.io.Serializable;
 import java.math.BigInteger;
 
+import org.python.core.stringlib.FloatFormatter;
 import org.python.core.stringlib.IntegerFormatter;
 import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -1019,13 +1021,38 @@ public class PyInteger extends PyObject {
         return int___format__(formatSpec);
     }
 
-    @SuppressWarnings("fallthrough")
     @ExposedMethod(doc = BuiltinDocs.int___format___doc)
     final PyObject int___format__(PyObject formatSpec) {
-        // Get a formatter for the specification
-        IntegerFormatter f = prepareFormatter(formatSpec);
-        // Convert as per specification.
-        f.format(value);
+
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+        InternalFormat.Formatter f;
+
+        // Try to make an integer formatter from the specification
+        IntegerFormatter fi = PyInteger.prepareFormatter(spec);
+        if (fi != null) {
+            // Bytes mode if formatSpec argument is not unicode.
+            fi.setBytes(!(formatSpec instanceof PyUnicode));
+            // Convert as per specification.
+            fi.format(value);
+            f = fi;
+
+        } else {
+            // Try to make a float formatter from the specification
+            FloatFormatter ff = PyFloat.prepareFormatter(spec);
+            if (ff != null) {
+                // Bytes mode if formatSpec argument is not unicode.
+                ff.setBytes(!(formatSpec instanceof PyUnicode));
+                // Convert as per specification.
+                ff.format(value);
+                f = ff;
+
+            } else {
+                // The type code was not recognised in either prepareFormatter
+                throw Formatter.unknownFormat(spec.type, "integer");
+            }
+        }
+
         // Return a result that has the same type (str or unicode) as the formatSpec argument.
         return f.pad().getPyResult();
     }
@@ -1035,25 +1062,17 @@ public class PyInteger extends PyObject {
      * overloaded format method {@link IntegerFormatter#format(int)} and
      * {@link IntegerFormatter#format(BigInteger)} to support the two types.
      *
-     * @param formatSpec PEP-3101 format specification.
-     * @return a formatter ready to use.
+     * @param spec a parsed PEP-3101 format specification.
+     * @return a formatter ready to use, or null if the type is not an integer format type.
      * @throws PyException(ValueError) if the specification is faulty.
      */
-    static IntegerFormatter prepareFormatter(PyObject formatSpec) throws PyException {
-
-        // Parse the specification
-        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
-        IntegerFormatter f;
-
-        // Check for disallowed parts of the specification
-        if (Spec.specified(spec.precision)) {
-            throw IntegerFormatter.precisionNotAllowed("integer");
-        }
+    @SuppressWarnings("fallthrough")
+    static IntegerFormatter prepareFormatter(Spec spec) throws PyException {
 
         // Slight differences between format types
         switch (spec.type) {
             case 'c':
-                // Character data
+                // Character data: specific prohibitions.
                 if (Spec.specified(spec.sign)) {
                     throw IntegerFormatter.notAllowed("Sign", "integer", spec.type);
                 } else if (spec.alternate) {
@@ -1061,26 +1080,30 @@ public class PyInteger extends PyObject {
                 }
                 // Fall through
 
-            case Spec.NONE:
-            case 'd':
             case 'x':
             case 'X':
             case 'o':
             case 'b':
             case 'n':
+                if (spec.grouping) {
+                    throw IntegerFormatter.notAllowed("Grouping", "integer", spec.type);
+                }
+                // Fall through
+
+            case Spec.NONE:
+            case 'd':
+                // Check for disallowed parts of the specification
+                if (Spec.specified(spec.precision)) {
+                    throw IntegerFormatter.precisionNotAllowed("integer");
+                }
                 // spec may be incomplete. The defaults are those commonly used for numeric formats.
                 spec = spec.withDefaults(Spec.NUMERIC);
                 // Get a formatter for the spec.
-                f = new IntegerFormatter(spec, 1);
-                // Bytes mode if formatSpec argument is not unicode.
-                f.setBytes(!(formatSpec instanceof PyUnicode));
-                break;
+                return new IntegerFormatter(spec, 1);
 
             default:
-                throw IntegerFormatter.unknownFormat(spec.type, "integer");
+                return null;
         }
-
-        return f;
     }
 
     /**

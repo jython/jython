@@ -7,7 +7,10 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.python.core.stringlib.FloatFormatter;
 import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -1062,10 +1065,36 @@ public class PyLong extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___format___doc)
     final PyObject long___format__(PyObject formatSpec) {
-        // Get a formatter for the specification
-        IntegerFormatter f = PyInteger.prepareFormatter(formatSpec);
-        // Convert as per specification (note this supports BigDecimal).
-        f.format(value);
+
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+        InternalFormat.Formatter f;
+
+        // Try to make an integer formatter from the specification
+        IntegerFormatter fi = PyInteger.prepareFormatter(spec);
+        if (fi != null) {
+            // Bytes mode if formatSpec argument is not unicode.
+            fi.setBytes(!(formatSpec instanceof PyUnicode));
+            // Convert as per specification.
+            fi.format(value);
+            f = fi;
+
+        } else {
+            // Try to make a float formatter from the specification
+            FloatFormatter ff = PyFloat.prepareFormatter(spec);
+            if (ff != null) {
+                // Bytes mode if formatSpec argument is not unicode.
+                ff.setBytes(!(formatSpec instanceof PyUnicode));
+                // Convert as per specification.
+                ff.format(value.doubleValue());
+                f = ff;
+
+            } else {
+                // The type code was not recognised in either prepareFormatter
+                throw Formatter.unknownFormat(spec.type, "integer");
+            }
+        }
+
         // Return a result that has the same type (str or unicode) as the formatSpec argument.
         return f.pad().getPyResult();
     }

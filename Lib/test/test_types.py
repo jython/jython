@@ -408,8 +408,7 @@ class TypesTests(unittest.TestCase):
         test(-123456, "#012X", '-0X00001E240')
 
         # issue 5782, commas with no specifier type
-        #FIXME: not working. Spurious: ValueError: Cannot specify ',' with '?' from parser.
-        #test(1234, '010,', '00,001,234')
+        test(1234, '010,', '00,001,234')
 
         # make sure these are errors
 
@@ -434,11 +433,10 @@ class TypesTests(unittest.TestCase):
 
         # ensure that float type specifiers work; format converts
         #  the int to a float
-        #FIXME: not working.
-        #for format_spec in 'eEfFgG%':
-        #    for value in [0, 1, -1, 100, -100, 1234567890, -1234567890]:
-        #        self.assertEqual(value.__format__(format_spec),
-        #                         float(value).__format__(format_spec))
+        for format_spec in 'eEfFgG%':
+            for value in [0, 1, -1, 100, -100, 1234567890, -1234567890]:
+                self.assertEqual(value.__format__(format_spec),
+                                 float(value).__format__(format_spec))
 
         # Issue 6902
         test(123456, "0<20", '12345600000000000000')
@@ -544,12 +542,10 @@ class TypesTests(unittest.TestCase):
 
         # ensure that float type specifiers work; format converts
         #  the long to a float
-
-        #FIXME: this section broken in Jython.
-        #for format_spec in 'eEfFgG%':
-        #    for value in [0L, 1L, -1L, 100L, -100L, 1234567890L, -1234567890L]:
-        #        self.assertEqual(value.__format__(format_spec),
-        #                         float(value).__format__(format_spec))
+        for format_spec in 'eEfFgG%':
+            for value in [0L, 1L, -1L, 100L, -100L, 1234567890L, -1234567890L]:
+                self.assertEqual(value.__format__(format_spec),
+                                 float(value).__format__(format_spec))
         # Issue 6902
         test(123456L, "0<20", '12345600000000000000')
         test(123456L, "1<20", '12345611111111111111')
@@ -676,8 +672,7 @@ class TypesTests(unittest.TestCase):
         test(-123456.12341234, '011.2f', '-0123456.12')
 
         # issue 5782, commas with no specifier type
-        #FIXME: not working. Spurious: ValueError: Cannot specify ',' with '?' from parser.
-        #test(1.2, '010,.2', '0,000,001.2')
+        test(1.2, '010,.2', '0,000,001.2')
 
         # 0 padding with commas
         test(1234., '011,f', '1,234.000000')
