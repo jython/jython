@@ -10,6 +10,7 @@ import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.InternalFormatSpec;
 import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.core.stringlib.MarkupIterator;
+import org.python.core.stringlib.TextFormatter;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -219,15 +220,17 @@ public class StringFormatTest extends TestCase {
     }
 
     public void testFormatString() {
-        InternalFormatSpec spec = new InternalFormatSpec();
-        assertEquals("abc", PyString.formatString("abc", spec));
+        String v = "abc";
+        TextFormatter f;
+        f = PyString.prepareFormatter(InternalFormat.fromText(""));
+        assertEquals("abc", f.format(v).pad().getResult());
 
-        spec.precision = 3;
-        assertEquals("abc", PyString.formatString("abcdef", spec));
+        String v2 = "abcdef";
+        f = PyString.prepareFormatter(InternalFormat.fromText(".3"));
+        assertEquals("abc", f.format(v2).pad().getResult());
 
-        spec.precision = -1;
-        spec.width = 6;
-        assertEquals("abc   ", PyString.formatString("abc", spec));
+        f = PyString.prepareFormatter(InternalFormat.fromText("6"));
+        assertEquals("abc   ", f.format(v).pad().getResult());
     }
 
     public void testMarkupIterator() {

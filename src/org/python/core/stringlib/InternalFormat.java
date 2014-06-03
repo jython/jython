@@ -334,63 +334,75 @@ public class InternalFormat {
          * modes, the padding is around the whole buffer.) When this would not be appropriate, it is
          * up to the client to disallow this (which <code>complex</code> does).
          *
-         * @return this object
+         * @return this Formatter object
          */
         public Formatter pad() {
-
             // We'll need this many pad characters (if>0). Note Spec.UNDEFINED<0.
             int n = spec.width - result.length();
             if (n > 0) {
+                // Note: use of leftIndex anticipates client-owned result buffer.
+                pad(0, n);
+            }
+            return this;
+        }
 
-                char align = spec.getAlign('>'); // Right for numbers (wrong for strings)
-                char fill = spec.getFill(' ');
+        /**
+         * Pad the last result (defined as the contents of {@link #result} from argument
+         * <code>leftIndex</code> to the end) using the alignment, by <code>n</code> repetitions of
+         * the fill character defined in {@link #spec}, and distributed according to
+         * <code>spec.align</code>. The value of <code>leftIndex</code> is only used if the
+         * alignment is '&gt;' (left) or '^' (both). The value of the critical lengths (lenWhole,
+         * lenSign, etc.) are not affected, because we assume that <code>leftIndex &lt;= </code>
+         * {@link #start}.
+         *
+         * @param leftIndex the index in result at which to insert left-fill characters.
+         * @param n number of fill characters to insert.
+         */
+        protected void pad(int leftIndex, int n) {
+            char align = spec.getAlign('>'); // Right for numbers (strings will supply '<' align)
+            char fill = spec.getFill(' ');
 
-                // Start by assuming padding is all leading ('>' case or '=')
-                int leading = n;
+            // Start by assuming padding is all leading ('>' case or '=')
+            int leading = n;
 
-                // Split the total padding according to the alignment
-                if (align == '^') {
-                    // Half the padding before
-                    leading = n / 2;
-                } else if (align == '<') {
-                    // All the padding after
-                    leading = 0;
+            // Split the total padding according to the alignment
+            if (align == '^') {
+                // Half the padding before
+                leading = n / 2;
+            } else if (align == '<') {
+                // All the padding after
+                leading = 0;
+            }
+
+            // All padding that is not leading is trailing
+            int trailing = n - leading;
+
+            // Insert the leading space
+            if (leading > 0) {
+                if (align == '=') {
+                    // Incorporate into the (latest) whole part
+                    leftIndex = start + lenSign;
+                    lenWhole += leading;
+                } else {
+                    // Default is to insert at the stated leftIndex <= start.
+                    start += leading;
                 }
-
-                // All padding that is not leading is trailing
-                int trailing = n - leading;
-
-                // Insert the leading space
-                if (leading > 0) {
-                    int pos;
-                    if (align == '=') {
-                        // Incorporate into the (latest) whole part
-                        pos = start + lenSign;
-                        lenWhole += leading;
-                    } else {
-                        // Insert at the very beginning (not start) by default.
-                        pos = 0;
-                        start += leading;
-                    }
-                    makeSpaceAt(pos, leading);
-                    for (int i = 0; i < leading; i++) {
-                        result.setCharAt(pos + i, fill);
-                    }
-                }
-
-                // Append the trailing space
-                for (int i = 0; i < trailing; i++) {
-                    result.append(fill);
-                }
-
-                // Check for special case
-                if (align == '=' && fill == '0' && spec.grouping) {
-                    // We must extend the grouping separator into the padding
-                    zeroPadAfterSignWithGroupingFixup(3, ',');
+                makeSpaceAt(leftIndex, leading);
+                for (int i = 0; i < leading; i++) {
+                    result.setCharAt(leftIndex + i, fill);
                 }
             }
 
-            return this;
+            // Append the trailing space
+            for (int i = 0; i < trailing; i++) {
+                result.append(fill);
+            }
+
+            // Check for special case
+            if (align == '=' && fill == '0' && spec.grouping) {
+                // We must extend the grouping separator into the padding
+                zeroPadAfterSignWithGroupingFixup(3, ',');
+            }
         }
 
         /**
@@ -512,6 +524,18 @@ public class InternalFormat {
 
         /**
          * Convenience method returning a {@link Py#ValueError} reporting that specifying a
+         * sign is not allowed in a format specifier for the named type.
+         *
+         * @param forType the type it was found applied to
+         * @param code the formatting code (or '\0' not to mention one)
+         * @return exception to throw
+         */
+        public static PyException signNotAllowed(String forType, char code) {
+            return notAllowed("Sign", forType, code);
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that specifying a
          * precision is not allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
@@ -530,6 +554,18 @@ public class InternalFormat {
          */
         public static PyException zeroPaddingNotAllowed(String forType) {
             return notAllowed("Zero padding", forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
+         * feature is not allowed for the named data type.
+         *
+         * @param outrage committed in the present case
+         * @param forType the data type (e.g. "integer") it where it is an outrage
+         * @return exception to throw
+         */
+        public static PyException notAllowed(String outrage, String forType) {
+            return notAllowed(outrage, forType, '\0');
         }
 
         /**
@@ -750,6 +786,12 @@ public class InternalFormat {
          * Defaults applicable to most numeric types. Equivalent to " >"
          */
         public static final Spec NUMERIC = new Spec(' ', '>', Spec.NONE, false, Spec.UNSPECIFIED,
+                false, Spec.UNSPECIFIED, Spec.NONE);
+
+        /**
+         * Defaults applicable to string types. Equivalent to " &lt;"
+         */
+        public static final Spec STRING = new Spec(' ', '<', Spec.NONE, false, Spec.UNSPECIFIED,
                 false, Spec.UNSPECIFIED, Spec.NONE);
 
         /**

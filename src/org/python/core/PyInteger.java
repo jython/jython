@@ -1074,7 +1074,7 @@ public class PyInteger extends PyObject {
             case 'c':
                 // Character data: specific prohibitions.
                 if (Spec.specified(spec.sign)) {
-                    throw IntegerFormatter.notAllowed("Sign", "integer", spec.type);
+                    throw IntegerFormatter.signNotAllowed("integer", spec.type);
                 } else if (spec.alternate) {
                     throw IntegerFormatter.alternateFormNotAllowed("integer", spec.type);
                 }

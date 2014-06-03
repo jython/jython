@@ -294,6 +294,7 @@ public class IntegerFormatter extends InternalFormat.Formatter {
                     break;
 
                 case 'c':
+                case '%':
                     // Binary.
                     format_c(value);
                     break;

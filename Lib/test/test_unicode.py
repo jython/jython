@@ -357,13 +357,12 @@ class UnicodeTest(
         self.assertEqual(u"%s, %s, %i, %f, %5.2f" % (u"abc", "abc", -1, -2, 3.5), u'abc, abc, -1, -2.000000,  3.50')
         self.assertEqual(u"%s, %s, %i, %f, %5.2f" % (u"abc", "abc", -1, -2, 3.57), u'abc, abc, -1, -2.000000,  3.57')
         self.assertEqual(u"%s, %s, %i, %f, %5.2f" % (u"abc", "abc", -1, -2, 1003.57), u'abc, abc, -1, -2.000000, 1003.57')
-        if not sys.platform.startswith('java'):
-            self.assertEqual(u"%r, %r" % (u"abc", "abc"), u"u'abc', 'abc'")
+        self.assertEqual(u"%r, %r" % (u"abc", "abc"), u"u'abc', 'abc'")
         self.assertEqual(u"%(x)s, %(y)s" % {'x':u"abc", 'y':"def"}, u'abc, def')
         self.assertEqual(u"%(x)s, %(\xfc)s" % {'x':u"abc", u'\xfc':"def"}, u'abc, def')
 
-        # self.assertEqual(u'%c' % 0x1234, u'\u1234')
-        # self.assertRaises(OverflowError, u"%c".__mod__, (sys.maxunicode+1,))
+        self.assertEqual(u'%c' % 0x1234, u'\u1234')
+        self.assertRaises(OverflowError, u"%c".__mod__, (sys.maxunicode+1,))
 
         # formatting jobs delegated from the string implementation:
         self.assertEqual('...%(foo)s...' % {'foo':u"abc"}, u'...abc...')
