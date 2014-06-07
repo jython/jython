@@ -4,10 +4,8 @@ package org.python.core;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.python.core.stringlib.FloatFormatter;
-import org.python.core.stringlib.IntegerFormatter;
 import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
@@ -951,7 +949,7 @@ public class PyFloat extends PyObject {
 
             case 'n':
                 if (spec.grouping) {
-                    throw IntegerFormatter.notAllowed("Grouping", "float", spec.type);
+                    throw Formatter.notAllowed("Grouping", "float", spec.type);
                 }
                 // Fall through
 
@@ -969,7 +967,7 @@ public class PyFloat extends PyObject {
                 }
                 // spec may be incomplete. The defaults are those commonly used for numeric formats.
                 spec = spec.withDefaults(Spec.NUMERIC);
-                return new FloatFormatter(spec, 1);
+                return new FloatFormatter(spec);
 
             default:
                 return null;

@@ -1,6 +1,7 @@
 // Copyright (c) Jython Developers
 package org.python.core.stringlib;
 
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
@@ -12,14 +13,23 @@ import org.python.core.stringlib.InternalFormat.Spec;
 public class TextFormatter extends InternalFormat.Formatter {
 
     /**
-     * Construct the formatter from a specification and guess the initial buffer capacity. A
-     * reference is held to this specification.
+     * Construct the formatter from a client-supplied buffer, to which the result will be appended,
+     * and a specification. Sets {@link #mark} to the end of the buffer.
+     *
+     * @param result destination buffer
+     * @param spec parsed conversion specification
+     */
+    public TextFormatter(StringBuilder result, Spec spec) {
+        super(result, spec);
+    }
+
+    /**
+     * Construct the formatter from a specification, allocating a buffer internally for the result.
      *
      * @param spec parsed conversion specification
      */
     public TextFormatter(Spec spec) {
-        // No right answer here for the buffer size, especially as non-BMP Unicode possible.
-        super(spec, Math.max(spec.width, spec.getPrecision(10)) + 6);
+        this(new StringBuilder(), spec);
     }
 
     /*
@@ -57,10 +67,16 @@ public class TextFormatter extends InternalFormat.Formatter {
      * @return this <code>TextFormatter</code> object
      */
     public TextFormatter format(String value) {
-        this.reset();
+
+        // Scratch all instance variables and start = result.length().
+        setStart();
+
         int p = spec.precision, n = value.length();
 
         if (Spec.specified(p) && p < n) {
+            // Estimate the space for the converted result (preempt multiple re-allocation)
+            int space = Math.max(spec.width, p);
+            result.ensureCapacity(result.length() + space + (bytes ? 0 : space / 4));
             /*
              * A precision p was specified less than the length: we may have to truncate. Note we
              * compared p with the UTF-16 length, even though it is the code point length that
@@ -89,15 +105,13 @@ public class TextFormatter extends InternalFormat.Formatter {
         return this;
     }
 
-    /**
-     * Pad the result according to the specification, dealing correctly with Unicode.
-     */
+    // Variant to deal with supplementary characters: other formatters don't produce them.
     @Override
     public TextFormatter pad() {
         // We'll need this many pad characters (if>0). Note Spec.UNDEFINED<0.
-        int n = spec.width - result.codePointCount(0, result.length());
+        int n = spec.width - result.codePointCount(mark, result.length());
         if (n > 0) {
-            pad(0, n);
+            pad(mark, n);
         }
         return this;
     }

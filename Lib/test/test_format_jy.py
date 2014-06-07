@@ -55,6 +55,18 @@ class FormatUnicodeModern(FormatUnicodeBase):
 class FormatMisc(unittest.TestCase):
     # Odd tests Jython used to fail
 
+    def test_mixtures(self) :
+        # Check formatting to a common buffer in PyString
+        result = 'The cube of 0.5 -0.866j is -1 to 0.01%.'
+        self.assertEqual(result, 'The %s of %.3g -%.3fj is -%d to %.2f%%.' %
+                          ('cube', 0.5, 0.866, 1, 0.01))
+        self.assertEqual(result, 'The %s of %.3g %.3fj is %d to %.2f%%.' %
+                          ('cube', 0.5, -0.866, -1, 0.01))
+        self.assertEqual(result, 'The%5s of%4.3g%7.3fj is%3d to%5.2f%%.' %
+                          ('cube', 0.5, -0.866, -1, 0.01))
+        self.assertEqual(result, 'The %-5.4sof %-4.3g%.3fj is %-3dto %.4g%%.' %
+                          ('cubensis', 0.5, -0.866, -1, 0.01))
+
     def test_percent_padded(self) :
         self.assertEqual('%hello', '%%%s' % 'hello')
         self.assertEqual(u'     %hello', '%6%%s' % u'hello')

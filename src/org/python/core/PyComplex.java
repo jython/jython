@@ -4,6 +4,7 @@ package org.python.core;
 
 import org.python.core.stringlib.FloatFormatter;
 import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -174,7 +175,9 @@ public class PyComplex extends PyObject {
      * @return formatted value
      */
     private String formatComplex(Spec spec) {
-        FloatFormatter f = new FloatFormatter(spec, 2, 3); // Two elements + "(j)".length
+        int size = 2 * FloatFormatter.size(spec) + 3;  // 2 floats + "(j)"
+        FloatFormatter f = new FloatFormatter(new StringBuilder(size), spec);
+        f.setBytes(true);
         // Even in r-format, complex strips *all* the trailing zeros.
         f.setMinFracDigits(0);
         if (Double.doubleToLongBits(real) == 0L) {
@@ -816,42 +819,87 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___format___doc)
     final PyObject complex___format__(PyObject formatSpec) {
-        if (!(formatSpec instanceof PyString)) {
-            throw Py.TypeError("__format__ requires str or unicode");
-        }
 
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+
+        // fromText will have thrown if formatSpecStr is not a PyString (including PyUnicode)
         PyString formatSpecStr = (PyString)formatSpec;
         String result;
-        try {
-            String specString = formatSpecStr.getString();
-            Spec spec = InternalFormat.fromText(specString);
-            if (spec.type != Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
-                throw FloatFormatter.unknownFormat(spec.type, "complex");
-            } else if (spec.alternate) {
-                throw FloatFormatter.alternateFormNotAllowed("complex");
-            } else if (spec.fill == '0') {
-                throw FloatFormatter.zeroPaddingNotAllowed("complex");
-            } else if (spec.align == '=') {
-                throw FloatFormatter.alignmentNotAllowed('=', "complex");
-            } else {
-                if (spec.type == Spec.NONE) {
-                    // In none-format, we take the default type and precision from __str__.
-                    spec = spec.withDefaults(SPEC_STR);
-                    // And then we use the __str__ mechanism to get parentheses or real 0 elision.
-                    result = formatComplex(spec);
-                } else {
-                    // In any other format, defaults are those commonly used for numeric formats.
-                    spec = spec.withDefaults(Spec.NUMERIC);
-                    FloatFormatter f = new FloatFormatter(spec, 2, 1);// 2 floats + "j"
-                    // Convert both parts as per specification
-                    f.format(real).format(imag, "+").append('j');
-                    result = f.pad().getResult();
-                }
-            }
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());    // XXX Can this be reached?
+
+        // Validate the specification and detect the special case for none-format
+        switch (checkSpecification(spec)) {
+
+            case 0: // None-format
+                // In none-format, we take the default type and precision from __str__.
+                spec = spec.withDefaults(SPEC_STR);
+                // And then we use the __str__ mechanism to get parentheses or real 0 elision.
+                result = formatComplex(spec);
+                break;
+
+            case 1: // Floating-point formats
+                // In any other format, defaults are those commonly used for numeric formats.
+                spec = spec.withDefaults(Spec.NUMERIC);
+                int size = 2 * FloatFormatter.size(spec) + 1; // 2 floats + "j"
+                FloatFormatter f = new FloatFormatter(new StringBuilder(size), spec);
+                f.setBytes(!(formatSpecStr instanceof PyUnicode));
+                // Convert both parts as per specification
+                f.format(real).format(imag, "+").append('j');
+                result = f.pad().getResult();
+                break;
+
+            default: // The type code was not recognised
+                throw Formatter.unknownFormat(spec.type, "complex");
         }
+
+        // Wrap the result in the same type as the format string
         return formatSpecStr.createInstance(result);
+    }
+
+    /**
+     * Validate a parsed specification, for <code>PyComplex</code>, returning 0 if it is a valid
+     * none-format specification, 1 if it is a valid float specification, and some other value if it
+     * not a valid type. If it has any other faults (e.g. alternate form was specified) the method
+     * raises a descriptive exception.
+     *
+     * @param spec a parsed PEP-3101 format specification.
+     * @return 0, 1, or other value for none-format, a float format, or incorrect type.
+     * @throws PyException(ValueError) if the specification is faulty.
+     */
+    @SuppressWarnings("fallthrough")
+    private static int checkSpecification(Spec spec) {
+
+        // Slight differences between format types
+        switch (spec.type) {
+
+            case 'n':
+                if (spec.grouping) {
+                    throw Formatter.notAllowed("Grouping", "complex", spec.type);
+                }
+                // Fall through
+
+            case Spec.NONE:
+            case 'e':
+            case 'f':
+            case 'g':
+            case 'E':
+            case 'F':
+            case 'G':
+                // Check for disallowed parts of the specification
+                if (spec.alternate) {
+                    throw FloatFormatter.alternateFormNotAllowed("complex");
+                } else if (spec.fill == '0') {
+                    throw FloatFormatter.zeroPaddingNotAllowed("complex");
+                } else if (spec.align == '=') {
+                    throw FloatFormatter.alignmentNotAllowed('=', "complex");
+                } else {
+                    return (spec.type == Spec.NONE) ? 0 : 1;
+                }
+
+            default:
+                // spec.type is invalid for complex
+                return 2;
+        }
     }
 
     @Override

@@ -1099,7 +1099,7 @@ public class PyInteger extends PyObject {
                 // spec may be incomplete. The defaults are those commonly used for numeric formats.
                 spec = spec.withDefaults(Spec.NUMERIC);
                 // Get a formatter for the spec.
-                return new IntegerFormatter(spec, 1);
+                return new IntegerFormatter(spec);
 
             default:
                 return null;

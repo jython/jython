@@ -57,7 +57,9 @@ public class InternalFormat {
          */
         protected boolean bytes;
 
-        /** The number we are working on floats at the end of the result, and starts here. */
+        /** The start of the formatted data for padding purposes, &lt;={@link #start} */
+        protected int mark;
+        /** The latest number we are working on floats at the end of the result, and starts here. */
         protected int start;
         /** If it contains no sign, this length is zero, and &gt;0 otherwise. */
         protected int lenSign;
@@ -65,15 +67,29 @@ public class InternalFormat {
         protected int lenWhole;
 
         /**
-         * Construct the formatter from a specification and initial buffer capacity. A reference is
-         * held to this specification, but it will not be modified by the actions of this class.
+         * Construct the formatter from a client-supplied buffer and a specification. Sets
+         * {@link #mark} and {@link #start} to the end of the buffer. The new formatted object will
+         * therefore be appended there and, when the time comes, padding will be applied to (just)
+         * the new text.
+         *
+         * @param result destination buffer
+         * @param spec parsed conversion specification
+         */
+        public Formatter(StringBuilder result, Spec spec) {
+            this.spec = spec;
+            this.result = result;
+            this.start = this.mark = result.length();
+        }
+
+        /**
+         * Construct the formatter from a specification and initial buffer capacity. Sets
+         * {@link #mark} to the end of the buffer.
          *
          * @param spec parsed conversion specification
          * @param width of buffer initially
          */
         public Formatter(Spec spec, int width) {
-            this.spec = spec;
-            result = new StringBuilder(width);
+            this(new StringBuilder(width), spec);
         }
 
         /**
@@ -154,18 +170,25 @@ public class InternalFormat {
 
         /**
          * Clear the instance variables describing the latest object in {@link #result}, ready to
-         * receive a new number
+         * receive a new one: sets {@link #start} and calls {@link #reset()}. This is necessary when
+         * a <code>Formatter</code> is to be re-used. Note that this leaves {@link #mark} where it
+         * is. In the core, we need this to support <code>complex</code>: two floats in the same
+         * format, but padded as a unit.
          */
-        void setStart() {
-            // Mark the end of the buffer as the start of the current object and reset all.
+        public void setStart() {
+            // The new value will float at the current end of the result buffer.
             start = result.length();
-            // Clear the variable describing the latest number in result.
-            reset();
+            // If anything has been added since construction, reset all state.
+            if (start > mark) {
+                // Clear the variable describing the latest number in result.
+                reset();
+            }
         }
 
         /**
          * Clear the instance variables describing the latest object in {@link #result}, ready to
-         * receive a new one.
+         * receive a new one. This is called from {@link #setStart()}. Subclasses override this
+         * method and call {@link #setStart()} at the start of their format method.
          */
         protected void reset() {
             // Clear the variables describing the latest object in result.
@@ -285,10 +308,10 @@ public class InternalFormat {
         }
 
         /**
-         * Pad the result so far (defined as the entire contents of {@link #result}) using the
-         * alignment, target width and fill character defined in {@link #spec}. The action of
-         * padding will increase the overall length of the result to the target width, if that is
-         * greater than the current length.
+         * Pad the result so far (defined as the contents of {@link #result} from {@link #mark} to
+         * the end) using the alignment, target width and fill character defined in {@link #spec}.
+         * The action of padding will increase the length of this segment to the target width, if
+         * that is greater than the current length.
          * <p>
          * When the padding method has decided that that it needs to add n padding characters, it
          * will affect {@link #start} or {@link #lenWhole} as follows.
@@ -331,17 +354,16 @@ public class InternalFormat {
          * </table>
          * Note that in the "pad after sign" mode, only the last number into the buffer receives the
          * padding. This padding gets incorporated into the whole part of the number. (In other
-         * modes, the padding is around the whole buffer.) When this would not be appropriate, it is
-         * up to the client to disallow this (which <code>complex</code> does).
+         * modes, the padding is around <code>result[mark:]</code>.) When this would not be
+         * appropriate, it is up to the client to disallow this (which <code>complex</code> does).
          *
          * @return this Formatter object
          */
         public Formatter pad() {
             // We'll need this many pad characters (if>0). Note Spec.UNDEFINED<0.
-            int n = spec.width - result.length();
+            int n = spec.width - (result.length() - mark);
             if (n > 0) {
-                // Note: use of leftIndex anticipates client-owned result buffer.
-                pad(0, n);
+                pad(mark, n);
             }
             return this;
         }
@@ -523,8 +545,8 @@ public class InternalFormat {
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that specifying a
-         * sign is not allowed in a format specifier for the named type.
+         * Convenience method returning a {@link Py#ValueError} reporting that specifying a sign is
+         * not allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @param code the formatting code (or '\0' not to mention one)

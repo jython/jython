@@ -20,26 +20,24 @@ import org.python.core.stringlib.InternalFormat.Spec;
 public class IntegerFormatter extends InternalFormat.Formatter {
 
     /**
-     * Construct the formatter from a specification. A reference is held to this specification, but
-     * it will not be modified by the actions of this class.
+     * Construct the formatter from a client-supplied buffer, to which the result will be appended,
+     * and a specification. Sets {@link #mark} to the end of the buffer.
+     *
+     * @param result destination buffer
+     * @param spec parsed conversion specification
+     */
+    public IntegerFormatter(StringBuilder result, Spec spec) {
+        super(result, spec);
+    }
+
+    /**
+     * Construct the formatter from a specification, allocating a buffer internally for the result.
      *
      * @param spec parsed conversion specification
      */
     public IntegerFormatter(Spec spec) {
-        // Space for result is based on padded width, or precision, whole part & furniture.
-        this(spec, 12);
-    }
-
-    /**
-     * Construct the formatter from a specification and an explicit initial buffer capacity. A
-     * reference is held to this specification, but it will not be modified by the actions of this
-     * class.
-     *
-     * @param spec parsed conversion specification
-     * @param width expected for the formatted result
-     */
-    public IntegerFormatter(Spec spec, int width) {
-        super(spec, width);
+        // Rule of thumb: big enough for 32-bit binary with base indicator 0b
+        this(new StringBuilder(34), spec);
     }
 
     /*
@@ -76,9 +74,6 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     @SuppressWarnings("fallthrough")
     public IntegerFormatter format(BigInteger value) {
         try {
-            // Scratch all instance variables and start = result.length().
-            setStart();
-
             // Different process for each format type.
             switch (spec.type) {
                 case 'd':
@@ -637,25 +632,24 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     public static class Traditional extends IntegerFormatter {
 
         /**
-         * Construct the formatter from a specification. A reference is held to this specification,
-         * but it will not be modified by the actions of this class.
+         * Construct the formatter from a client-supplied buffer, to which the result will be
+         * appended, and a specification. Sets {@link #mark} to the end of the buffer.
+         *
+         * @param result destination buffer
+         * @param spec parsed conversion specification
+         */
+        public Traditional(StringBuilder result, Spec spec) {
+            super(result, spec);
+        }
+
+        /**
+         * Construct the formatter from a specification, allocating a buffer internally for the
+         * result.
          *
          * @param spec parsed conversion specification
          */
         public Traditional(Spec spec) {
-            super(spec);
-        }
-
-        /**
-         * Construct the formatter from a specification and an explicit initial buffer capacity. A
-         * reference is held to this specification, but it will not be modified by the actions of
-         * this class.
-         *
-         * @param spec parsed conversion specification
-         * @param width expected for the formatted result
-         */
-        public Traditional(Spec spec, int width) {
-            super(spec, width);
+            this(new StringBuilder(), spec);
         }
 
         /**

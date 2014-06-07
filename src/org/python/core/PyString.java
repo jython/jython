@@ -4436,7 +4436,7 @@ final class StringFormatter {
                     // Get hold of the actual object to display (may set needUnicode)
                     PyString argAsString = asText(spec.type == 's' ? arg : arg.__repr__());
                     // Format the str/unicode form of the argument using this Spec.
-                    f = ft = new TextFormatter(spec);
+                    f = ft = new TextFormatter(buffer, spec);
                     ft.setBytes(!needUnicode);
                     ft.format(argAsString.getString());
                     break;
@@ -4450,7 +4450,7 @@ final class StringFormatter {
                 case 'i': // Compatibility with scanf().
 
                     // Format the argument using this Spec.
-                    f = fi = new IntegerFormatter.Traditional(spec);
+                    f = fi = new IntegerFormatter.Traditional(buffer, spec);
                     // If not producing PyUnicode, disallow codes >255.
                     fi.setBytes(!needUnicode);
 
@@ -4495,7 +4495,7 @@ final class StringFormatter {
                 case 'G':
 
                     // Format using this Spec the double form of the argument.
-                    f = ff = new FloatFormatter(spec);
+                    f = ff = new FloatFormatter(buffer, spec);
                     ff.setBytes(!needUnicode);
 
                     // Note various types accepted here as long as they have a __float__ method.
@@ -4516,7 +4516,7 @@ final class StringFormatter {
                 case '%': // Percent symbol, but surprisingly, padded.
 
                     // We use an integer formatter.
-                    f = fi = new IntegerFormatter.Traditional(spec);
+                    f = fi = new IntegerFormatter.Traditional(buffer, spec);
                     fi.setBytes(!needUnicode);
                     fi.format('%');
                     break;
@@ -4527,8 +4527,8 @@ final class StringFormatter {
                             + Integer.toHexString(spec.type) + ") at index " + (index - 1));
             }
 
-            // Pad the result as required in the format and append to the overall result.
-            buffer.append(f.pad().getResult());
+            // Pad the result as specified (in-place, in the buffer).
+            f.pad();
         }
 
         /*
@@ -4543,10 +4543,7 @@ final class StringFormatter {
         }
 
         // Return the final buffer contents as a str or unicode as appropriate.
-        if (needUnicode) {
-            return new PyUnicode(buffer);
-        }
-        return new PyString(buffer);
+        return needUnicode ? new PyUnicode(buffer) : new PyString(buffer);
     }
 
 }
