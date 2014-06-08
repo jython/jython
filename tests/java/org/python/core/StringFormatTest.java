@@ -7,10 +7,9 @@ import junit.framework.TestCase;
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.IntegerFormatter;
 import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.core.stringlib.MarkupIterator;
 import org.python.core.stringlib.TextFormatter;
+import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -22,33 +21,38 @@ public class StringFormatTest extends TestCase {
     PythonInterpreter interp = new PythonInterpreter();
 
     public void testInternalFormatSpec() {
-        InternalFormatSpec spec = new InternalFormatSpecParser("x").parse();
+        InternalFormat.Spec spec;
+        spec = InternalFormat.fromText("x");
+        assertFalse(Spec.specified(spec.align));
+        assertFalse(Spec.specified(spec.fill));
+        assertFalse(Spec.specified(spec.width));
+        assertFalse(Spec.specified(spec.precision));
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("<x").parse();
+        spec = InternalFormat.fromText("<x");
         assertEquals('<', spec.align);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("~<x").parse();
-        assertEquals('~', spec.fill_char);
+        spec = InternalFormat.fromText("~<x");
+        assertEquals('~', spec.fill);
         assertEquals('<', spec.align);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("+x").parse();
+        spec = InternalFormat.fromText("+x");
         assertEquals('+', spec.sign);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("#x").parse();
+        spec = InternalFormat.fromText("#x");
         assertEquals(true, spec.alternate);
 
-        spec = new InternalFormatSpecParser("0x").parse();
+        spec = InternalFormat.fromText("0x");
         assertEquals('=', spec.align);
-        assertEquals('0', spec.fill_char);
+        assertEquals('0', spec.fill);
 
-        spec = new InternalFormatSpecParser("123x").parse();
+        spec = InternalFormat.fromText("123x");
         assertEquals(123, spec.width);
 
-        spec = new InternalFormatSpecParser("123.456x").parse();
+        spec = InternalFormat.fromText("123.456x");
         assertEquals(123, spec.width);
         assertEquals(456, spec.precision);
 
@@ -56,16 +60,17 @@ public class StringFormatTest extends TestCase {
 
         assertParseError("123xx", "Invalid conversion specification");
 
-        spec = new InternalFormatSpecParser("").parse();
-        assertEquals(0, spec.type);
+        spec = InternalFormat.fromText("");
+        assertEquals(Spec.NONE, spec.type);
     }
 
     private void assertParseError(String spec, String expected) {
         String error = null;
         try {
-            new InternalFormatSpecParser(spec).parse();
-        } catch (IllegalArgumentException e) {
-            error = e.getMessage();
+            InternalFormat.fromText(spec);
+        } catch (PyException e) {
+            assertEquals(Py.ValueError, e.type);
+            error = e.value.toString();
         }
         assertEquals(expected, error);
     }
