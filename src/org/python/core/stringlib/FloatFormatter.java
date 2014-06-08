@@ -18,6 +18,10 @@ public class FloatFormatter extends InternalFormat.Formatter {
     /** The rounding mode dominant in the formatter. */
     static final RoundingMode ROUND_PY = RoundingMode.HALF_EVEN;
 
+    /** Limit the size of results. */
+    // No-one needs more than log(Double.MAX_VALUE) - log2(Double.MIN_VALUE) = 1383 digits.
+    static final int MAX_PRECISION = 1400;
+
     /** If it contains no decimal point, this length is zero, and 1 otherwise. */
     private int lenPoint;
     /** The length of the fractional part, right of the decimal point. */
@@ -30,26 +34,14 @@ public class FloatFormatter extends InternalFormat.Formatter {
     private int minFracDigits;
 
     /**
-     * Construct the formatter from a specification. A reference is held to this specification, but
-     * it will not be modified by the actions of this class.
+     * Construct the formatter from a client-supplied buffer, to which the result will be appended,
+     * and a specification. Sets {@link #mark} to the end of the buffer.
      *
+     * @param result destination buffer
      * @param spec parsed conversion specification
      */
-    public FloatFormatter(Spec spec) {
-        // Space for result is based on padded width, or precision, whole part & furniture.
-        this(spec, 1, 0);
-    }
-
-    /**
-     * Construct the formatter from a specification and an explicit initial buffer capacity. A
-     * reference is held to this specification, but it will not be modified by the actions of this
-     * class.
-     *
-     * @param spec parsed conversion specification
-     * @param width expected for the formatted result
-     */
-    public FloatFormatter(Spec spec, int width) {
-        super(spec, width);
+    public FloatFormatter(StringBuilder result, Spec spec) {
+        super(result, spec);
         if (spec.alternate) {
             // Alternate form means do not trim the zero fractional digits.
             minFracDigits = -1;
@@ -66,20 +58,26 @@ public class FloatFormatter extends InternalFormat.Formatter {
     }
 
     /**
-     * Construct the formatter from a specification and two extra hints about the initial buffer
-     * capacity. A reference is held to this specification, but it will not be modified by the
-     * actions of this class.
+     * Construct the formatter from a specification, allocating a buffer internally for the result.
      *
      * @param spec parsed conversion specification
-     * @param count of elements likely to be formatted
-     * @param margin for elements formatted only once
      */
-    public FloatFormatter(Spec spec, int count, int margin) {
-        /*
-         * Rule of thumb used here: in e format w = (p-1) + len("+1.e+300") = p+7; in f format w = p
-         * + len("1,000,000.") = p+10. If we're wrong, the result will have to grow. No big deal.
-         */
-        this(spec, Math.max(spec.width + 1, count * (spec.precision + 10) + margin));
+    public FloatFormatter(Spec spec) {
+        this(new StringBuilder(size(spec)), spec);
+    }
+
+    /**
+     * Recommend a buffer size for a given specification, assuming one float is converted. This will
+     * be a "right" answer for e and g-format, and for f-format with values up to 9,999,999.
+     *
+     * @param spec parsed conversion specification
+     */
+    public static int size(Spec spec) {
+        // Rule of thumb used here (no right answer):
+        // in e format each float occupies: (p-1) + len("+1.e+300") = p+7;
+        // in f format each float occupies: p + len("1,000,000.%") = p+11;
+        // or an explicit (minimum) width may be given, with one overshoot possible.
+        return Math.max(spec.width + 1, spec.getPrecision(6) + 11);
     }
 
     /**
@@ -160,12 +158,19 @@ public class FloatFormatter extends InternalFormat.Formatter {
         // Precision defaults to 6 (or 12 for none-format)
         int precision = spec.getPrecision(Spec.specified(spec.type) ? 6 : 12);
 
+        // Guard against excessive result precision
+        // XXX Possibly better raised before result is allocated/sized.
+        if (precision > MAX_PRECISION) {
+            throw precisionTooLarge("float");
+        }
+
         /*
          * By default, the prefix of a positive number is "", but the format specifier may override
          * it, and the built-in type complex needs to override the format.
          */
-        if (positivePrefix == null && Spec.specified(spec.sign) && spec.sign != '-') {
-            positivePrefix = Character.toString(spec.sign);
+        char sign = spec.sign;
+        if (positivePrefix == null && Spec.specified(sign) && sign != '-') {
+            positivePrefix = Character.toString(sign);
         }
 
         // Different process for each format type, ignoring case for now.
@@ -905,8 +910,8 @@ public class FloatFormatter extends InternalFormat.Formatter {
     }
 
     /**
-     * Return the index in {@link #result} of the first letter. helper for {@link #uppercase()} and
-     * {@link #getExponent()}
+     * Return the index in {@link #result} of the first letter. This is a helper for
+     * {@link #uppercase()} and {@link #getExponent()}
      */
     private int indexOfMarker() {
         return start + lenSign + lenWhole + lenPoint + lenFraction;

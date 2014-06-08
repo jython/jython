@@ -361,8 +361,7 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(eval('a', g, m), 12)
         self.assertRaises(NameError, eval, 'b', g, m)
         self.assertEqual(eval('dir()', g, m), list('xyz'))
-        if not is_jython: #FIXME #1861
-            self.assertEqual(eval('globals()', g, m), g)
+        self.assertEqual(eval('globals()', g, m), g)
         self.assertEqual(eval('locals()', g, m), m)
 
         # Jython allows arbitrary mappings for globals
@@ -386,8 +385,7 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(eval('a', g, d), 12)
         self.assertRaises(NameError, eval, 'b', g, d)
         self.assertEqual(eval('dir()', g, d), list('xyz'))
-        if not is_jython: #FIXME #1861
-            self.assertEqual(eval('globals()', g, d), g)
+        self.assertEqual(eval('globals()', g, d), g)
         self.assertEqual(eval('locals()', g, d), d)
 
         # Verify locals stores (used by list comps)
@@ -1320,7 +1318,6 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(TypeError, round, t)
         self.assertRaises(TypeError, round, t, 0)
 
-    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_round_large(self):
         # Issue #1869: integral floats should remain unchanged
         self.assertEqual(round(5e15-1), 5e15-1)
@@ -1387,7 +1384,6 @@ class BuiltinTest(unittest.TestCase):
         b = 2
         return vars()
 
-    @unittest.skipIf(is_jython, "FIXME #1861: not working in Jython")
     def test_vars(self):
         self.assertEqual(set(vars()), set(dir()))
         import sys
@@ -1491,9 +1487,8 @@ class BuiltinTest(unittest.TestCase):
             self.assertEqual(format(DerivedFromSimple2(10), 'abcdef'),
                              '10abcdef')
 
-        if not is_jython: #FIXME #1861 check again when __format__ works better.
-            class_test(*classes_new())
-            class_test(*classes_classic())
+        class_test(*classes_new())
+        class_test(*classes_classic())
 
         def empty_format_spec(value):
             # test that:

@@ -9,10 +9,12 @@ import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.FloatFormatter;
+import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
 import org.python.core.stringlib.MarkupIterator;
+import org.python.core.stringlib.TextFormatter;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -3897,50 +3899,68 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str___format___doc)
     final PyObject str___format__(PyObject formatSpec) {
-        if (!(formatSpec instanceof PyString)) {
-            throw Py.TypeError("__format__ requires str or unicode");
+
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+
+        // Get a formatter for the specification
+        TextFormatter f = prepareFormatter(spec);
+        if (f == null) {
+            // The type code was not recognised
+            throw Formatter.unknownFormat(spec.type, "string");
         }
 
-        PyString formatSpecStr = (PyString)formatSpec;
-        String result;
-        try {
-            String specString = formatSpecStr.getString();
-            InternalFormatSpec spec = new InternalFormatSpecParser(specString).parse();
-            result = formatString(getString(), spec);
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
-        }
-        return formatSpecStr.createInstance(result);
+        // Bytes mode if neither this nor formatSpec argument is Unicode.
+        boolean unicode = this instanceof PyUnicode || formatSpec instanceof PyUnicode;
+        f.setBytes(!unicode);
+
+        // Convert as per specification.
+        f.format(getString());
+
+        // Return a result that has the same type (str or unicode) as the formatSpec argument.
+        return f.pad().getPyResult();
     }
 
     /**
-     * Format the given text according to a parsed PEP 3101 formatting specification, as during
-     * <code>text.__format__(format_spec)</code> or <code>"{:s}".format(text)</code> where
-     * <code>text</code> is a Python string.
+     * Common code for {@link PyString} and {@link PyUnicode} to prepare a {@link TextFormatter}
+     * from a parsed specification. The object returned has format method
+     * {@link TextFormatter#format(String)} that treats its argument as UTF-16 encoded unicode (not
+     * just <code>char</code>s). That method will format its argument ( <code>str</code> or
+     * <code>unicode</code>) according to the PEP 3101 formatting specification supplied here. This
+     * would be used during <code>text.__format__(".5s")</code> or
+     * <code>"{:.5s}".format(text)</code> where <code>text</code> is this Python string.
      *
-     * @param text to format
-     * @param spec the parsed PEP 3101 formatting specification
-     * @return the result of the formatting
+     * @param spec a parsed PEP-3101 format specification.
+     * @return a formatter ready to use, or null if the type is not a string format type.
+     * @throws PyException(ValueError) if the specification is faulty.
      */
-    public static String formatString(String text, InternalFormatSpec spec) {
-        if (spec.sign != '\0') {
-            throw new IllegalArgumentException("Sign not allowed in string format specifier");
-        }
-        if (spec.alternate) {
-            throw new IllegalArgumentException(
-                    "Alternate form (#) not allowed in string format specifier");
-        }
-        if (spec.align == '=') {
-            throw new IllegalArgumentException(
-                    "'=' alignment not allowed in string format specifier");
-        }
-        if (spec.precision >= 0 && text.length() > spec.precision) {
-            text = text.substring(0, spec.precision);
-        }
-        return spec.pad(text, '<', 0);
-    }
+    @SuppressWarnings("fallthrough")
+    static TextFormatter prepareFormatter(Spec spec) throws PyException {
+        // Slight differences between format types
+        switch (spec.type) {
 
-    /* arguments' conversion helper */
+            case Spec.NONE:
+            case 's':
+                // Check for disallowed parts of the specification
+                if (spec.grouping) {
+                    throw Formatter.notAllowed("Grouping", "string", spec.type);
+                } else if (Spec.specified(spec.sign)) {
+                    throw Formatter.signNotAllowed("string", '\0');
+                } else if (spec.alternate) {
+                    throw Formatter.alternateFormNotAllowed("string");
+                } else if (spec.align == '=') {
+                    throw Formatter.alignmentNotAllowed('=', "string");
+                }
+                // spec may be incomplete. The defaults are those commonly used for string formats.
+                spec = spec.withDefaults(Spec.STRING);
+                // Get a formatter for the specification
+                return new TextFormatter(spec);
+
+            default:
+                // The type code was not recognised
+                return null;
+        }
+    }
 
     @Override
     public String asString(int index) throws PyObject.ConversionException {
@@ -4005,10 +4025,6 @@ final class StringFormatter {
     String format;
     /** Where the output is built. */
     StringBuilder buffer;
-    /** Remembers that the value currently converted is negative */
-    boolean negative;
-    /** Precision from format specification. */
-    int precision;
     /**
      * Index into args of argument currently being worked, or special values indicating -1: a single
      * item that has not yet been used, -2: a single item that has already been used, -3: a mapping.
@@ -4017,7 +4033,7 @@ final class StringFormatter {
     /** Arguments supplied to {@link #format(PyObject)} method. */
     PyObject args;
     /** Indicate a <code>PyUnicode</code> result is expected. */
-    boolean unicodeCoercion;
+    boolean needUnicode;
 
     final char pop() {
         try {
@@ -4053,7 +4069,7 @@ final class StringFormatter {
     public StringFormatter(String format, boolean unicodeCoercion) {
         index = 0;
         this.format = format;
-        this.unicodeCoercion = unicodeCoercion;
+        this.needUnicode = unicodeCoercion;
         buffer = new StringBuilder(format.length() + 100);
     }
 
@@ -4106,211 +4122,129 @@ final class StringFormatter {
         }
     }
 
-    private void checkPrecision(String type) {
-        if (precision > 250) {
-            // A magic number. Larger than in CPython.
-            throw Py.OverflowError("formatted " + type + " is too long (precision too long?)");
-        }
-
-    }
-
     /**
-     * Format the argument interpreted as a long, using the argument's <code>__str__</code>,
-     * <code>__oct__</code>, or <code>__hex__</code> method according to <code>type</code>. If v is
-     * being treated as signed, the sign of v is transferred to {@link #negative} and the absolute
-     * value is converted. The <code>altFlag</code> argument controls the appearance of a "0x" or
-     * "0X" prefix in the hex case, or a "0" prefix in the octal case. The hexadecimal case, the
-     * case of characters and digits will match the type ('x' meaning lowercase, 'X' meaning
-     * uppercase).
+     * Return the argument as either a {@link PyInteger} or a {@link PyLong} according to its
+     * <code>__int__</code> method, or its <code>__long__</code> method. If the argument has neither
+     * method, or both raise an exception, we return the argument itself. The caller must check the
+     * return type.
      *
      * @param arg to convert
-     * @param type one of 'o' for octal, 'x' or 'X' for hex, anything else calls
-     *            <code>arg.__str__</code>.
-     * @param altFlag if true there will be a prefix
-     * @return converted value as <code>String</code>
+     * @return PyInteger or PyLong if possible
      */
-    private String formatLong(PyObject arg, char type, boolean altFlag) {
-        // Convert using the appropriate type
-        // XXX Results in behaviour divergent from CPython when any of the methods is overridden.
-        PyString argAsString;
-        switch (type) {
-            case 'o':
-                argAsString = arg.__oct__();
-                break;
-            case 'x':
-            case 'X':
-                argAsString = arg.__hex__();
-                break;
-            default:
-                argAsString = arg.__str__();
-                break;
-        }
-
-        checkPrecision("long");
-        String s = argAsString.toString();
-        int end = s.length();
-        int ptr = 0;
-
-        // In the hex case, the __hex__ return starts 0x
-        // XXX (we assume, perhaps falsely)
-        int numnondigits = 0;
-        if (type == 'x' || type == 'X') {
-            numnondigits = 2;
-        }
-
-        // Strip a "long" indicator
-        if (s.endsWith("L")) {
-            end--;
-        }
-
-        // Strip a possible sign to member negative
-        negative = s.charAt(0) == '-';
-        if (negative) {
-            ptr++;
-        }
-
-        // The formatted number is s[ptr:end] and starts with numnondigits non-digits.
-        int numdigits = end - numnondigits - ptr;
-        if (!altFlag) {
-            // We should have no "base tag" '0' or "0x" on the front.
-            switch (type) {
-                case 'o':
-                    // Strip the '0'
-                    if (numdigits > 1) {
-                        ++ptr;
-                        --numdigits;
-                    }
-                    break;
-                case 'x':
-                case 'X':
-                    // Strip the "0x"
-                    ptr += 2;
-                    numnondigits -= 2;
-                    break;
-            }
-        }
-
-        // If necessary, add leading zeros to the numerical digits part.
-        if (precision > numdigits) {
-            // Recompose the formatted number in this buffer
-            StringBuilder buf = new StringBuilder();
-            // The base indicator prefix
-            for (int i = 0; i < numnondigits; ++i) {
-                buf.append(s.charAt(ptr++));
-            }
-            // The extra zeros
-            for (int i = 0; i < precision - numdigits; i++) {
-                buf.append('0');
-            }
-            // The previously known digits
-            for (int i = 0; i < numdigits; i++) {
-                buf.append(s.charAt(ptr++));
-            }
-            s = buf.toString();
-        } else if (end < s.length() || ptr > 0) {
-            // It's only necessary to extract the formatted number from s
-            s = s.substring(ptr, end);
-        }
-
-        // And finally, deal with the case, so it matches x or X.
-        switch (type) {
-            case 'X':
-                s = s.toUpperCase();
-                break;
-        }
-        return s;
-    }
-
-    /**
-     * Formats arg as an integer, with the specified radix. The integer value is obtained from the
-     * result of <code>arg.__int__()</code>. <code>type</code> and <code>altFlag</code> are passed
-     * to {@link #formatLong(PyObject, char, boolean)} in case the result is a PyLong.
-     *
-     * @param arg to convert
-     * @param radix in which to express <code>arg</code>
-     * @param unsigned true if required to interpret a 32-bit integer as unsigned ('u' legacy?).
-     * @param type of conversion ('d', 'o', 'x', or 'X')
-     * @param altFlag '#' present in format (causes "0x" prefix in hex, and '0' prefix in octal)
-     * @return string form of the value
-     */
-    private String formatInteger(PyObject arg, int radix, boolean unsigned, char type,
-            boolean altFlag) {
-        PyObject argAsInt;
+    private PyObject asNumber(PyObject arg) {
         if (arg instanceof PyInteger || arg instanceof PyLong) {
-            argAsInt = arg;
+            // arg is already acceptable
+            return arg;
+
         } else {
-            // use __int__ to get an int (or long)
-            if (arg instanceof PyFloat) {
-                // safe to call __int__:
-                argAsInt = arg.__int__();
+            // use __int__ or __long__to get an int (or long)
+            if (arg.getClass() == PyFloat.class) {
+                // A common case where it is safe to return arg.__int__()
+                return arg.__int__();
+
             } else {
-                // We can't simply call arg.__int__() because PyString implements
-                // it without exposing it to python (i.e, str instances has no
-                // __int__ attribute). So, we would support strings as arguments
-                // for %d format, which is forbidden by CPython tests (on
-                // test_format.py).
+                /*
+                 * In general, we can't simply call arg.__int__() because PyString implements it
+                 * without exposing it to python (str has no __int__). This would make str
+                 * acceptacle to integer format specifiers, which is forbidden by CPython tests
+                 * (test_format.py). PyString implements __int__ perhaps only to help the int
+                 * constructor. Maybe that was a bad idea?
+                 */
                 try {
-                    argAsInt = arg.__getattr__("__int__").__call__();
+                    // Result is the result of arg.__int__() if that works
+                    return arg.__getattr__("__int__").__call__();
                 } catch (PyException e) {
-                    // XXX: Swallow custom AttributeError throws from __int__ methods
-                    // No better alternative for the moment
-                    if (e.match(Py.AttributeError)) {
-                        throw Py.TypeError("int argument required");
-                    }
-                    throw e;
+                    // Swallow the exception
+                }
+
+                // Try again with arg.__long__()
+                try {
+                    // Result is the result of arg.__long__() if that works
+                    return arg.__getattr__("__long__").__call__();
+                } catch (PyException e) {
+                    // No __long__ defined (at Python level)
+                    return arg;
                 }
             }
         }
-        if (argAsInt instanceof PyInteger) {
-            // This call does not provide the prefix and will be lowercase.
-            return formatInteger(((PyInteger)argAsInt).getValue(), radix, unsigned);
-        } else { // must be a PyLong (as per __int__ contract)
-            // This call provides the base prefix and case-matches with 'x' or 'X'.
-            return formatLong(argAsInt, type, altFlag);
+    }
+
+    /**
+     * Return the argument as a {@link PyFloat} according to its <code>__float__</code> method. If
+     * the argument has no such method, or it raises an exception, we return the argument itself.
+     * The caller must check the return type.
+     *
+     * @param arg to convert
+     * @return PyFloat if possible
+     */
+    private PyObject asFloat(PyObject arg) {
+
+        if (arg instanceof PyFloat) {
+            // arg is already acceptable
+            return arg;
+
+        } else {
+            // use __float__ to get a float.
+            if (arg.getClass() == PyFloat.class) {
+                // A common case where it is safe to return arg.__float__()
+                return arg.__float__();
+
+            } else {
+                /*
+                 * In general, we can't simply call arg.__float__() because PyString implements it
+                 * without exposing it to python (str has no __float__). This would make str
+                 * acceptacle to float format specifiers, which is forbidden by CPython tests
+                 * (test_format.py). PyString implements __float__ perhaps only to help the float
+                 * constructor. Maybe that was a bad idea?
+                 */
+                try {
+                    // Result is the result of arg.__float__() if that works
+                    return arg.__getattr__("__float__").__call__();
+                } catch (PyException e) {
+                    // No __float__ defined (at Python level)
+                    return arg;
+                }
+            }
         }
     }
 
     /**
-     * Convert a 32-bit integer (as from a {@link PyInteger}) to characters, signed or unsigned. The
-     * values is presented in a <code>long</code>. The string result is left-padded with zeros to
-     * the stated {@link #precision}. If v is being treated as signed, the sign of v is transferred
-     * to {@link #negative} and the absolute value is converted. Otherwise (unsigned case)
-     * <code>0x100000000L + v</code> is converted. This method does not provide the '0' or "0x"
-     * prefix, just the padded digit string.
+     * Return the argument as either a {@link PyString} or a {@link PyUnicode}, and set the
+     * {@link #needUnicode} member accordingly. If we already know we are building a Unicode string
+     * (<code>needUnicode==true</code>), then any argument that is not already a
+     * <code>PyUnicode</code> will be converted by calling its <code>__unicode__</code> method.
+     * Conversely, if we are not yet building a Unicode string (<code>needUnicode==false</code> ),
+     * then a PyString will pass unchanged, a <code>PyUnicode</code> will switch us to Unicode mode
+     * (<code>needUnicode=true</code>), and any other type will be converted by calling its
+     * <code>__str__</code> method, which will return a <code>PyString</code>, or possibly a
+     * <code>PyUnicode</code>, which will switch us to Unicode mode.
      *
-     * @param v value to convert
-     * @param radix of conversion
-     * @param unsigned if should be treated as unsigned
-     * @return string form
+     * @param arg to convert
+     * @return PyString or PyUnicode equivalent
      */
-    private String formatInteger(long v, int radix, boolean unsigned) {
-        checkPrecision("integer");
-        if (unsigned) {
-            // If the high bit was set, this will have been sign-extended: correct that.
-            if (v < 0) {
-                v = 0x100000000l + v;
-            }
-        } else {
-            // If the high bit was set, the sign extension was correct, but we need sign + abs(v).
-            if (v < 0) {
-                negative = true;
-                v = -v;
-            }
-        }
-        // Use the method in java.lang.Long (lowercase, no prefix)
-        String s = Long.toString(v, radix);
-        // But zero pad to the requested precision
-        while (s.length() < precision) {
-            s = "0" + s;
-        }
-        return s;
-    }
+    private PyString asText(PyObject arg) {
 
-    private double asDouble(PyObject obj) {
-        try {
-            return obj.asDouble();
-        } catch (PyException pye) {
-            throw !pye.match(Py.TypeError) ? pye : Py.TypeError("float argument required");
+        if (arg instanceof PyUnicode) {
+            // arg is already acceptable.
+            needUnicode = true;
+            return (PyUnicode)arg;
+
+        } else if (needUnicode) {
+            // The string being built is unicode, so we need that version of the arg.
+            return arg.__unicode__();
+
+        } else if (arg instanceof PyString) {
+            // The string being built is not unicode, so arg is already acceptable.
+            return (PyString)arg;
+
+        } else {
+            // The string being built is not unicode, so use __str__ to get a PyString.
+            PyString s = arg.__str__();
+            // But __str__ might return PyUnicode, and we have to notice that.
+            if (s instanceof PyUnicode) {
+                needUnicode = true;
+            }
+            return s;
         }
     }
 
@@ -4325,7 +4259,7 @@ final class StringFormatter {
     public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;
-        boolean needUnicode = unicodeCoercion;
+
         if (args instanceof PyTuple) {
             // We will simply work through the tuple elements
             argIndex = 0;
@@ -4341,16 +4275,6 @@ final class StringFormatter {
 
         while (index < format.length()) {
 
-            // Attributes to be parsed from the next format specifier
-            boolean ljustFlag = false;
-            boolean signFlag = false;
-            boolean blankFlag = false;
-            boolean altFlag = false;
-            boolean zeroFlag = false;
-
-            int width = -1;
-            precision = -1;
-
             // Read one character from the format string
             char c = pop();
             if (c != '%') {
@@ -4359,6 +4283,14 @@ final class StringFormatter {
             }
 
             // It's a %, so the beginning of a conversion specifier. Parse it.
+
+            // Attributes to be parsed from the next format specifier
+            boolean altFlag = false;
+            char sign = Spec.NONE;
+            char fill = ' ';
+            char align = '>';
+            int width = Spec.UNSPECIFIED;
+            int precision = Spec.UNSPECIFIED;
 
             // A conversion specifier contains the following components, in this order:
             // + The '%' character, which marks the start of the specifier.
@@ -4399,19 +4331,22 @@ final class StringFormatter {
             while (true) {
                 switch (c = pop()) {
                     case '-':
-                        ljustFlag = true;
+                        align = '<';
                         continue;
                     case '+':
-                        signFlag = true;
+                        sign = '+';
                         continue;
                     case ' ':
-                        blankFlag = true;
+                        if (!Spec.specified(sign)) {
+                            // Blank sign only wins if '+' not specified.
+                            sign = ' ';
+                        }
                         continue;
                     case '#':
                         altFlag = true;
                         continue;
                     case '0':
-                        zeroFlag = true;
+                        fill = '0';
                         continue;
                 }
                 break;
@@ -4428,7 +4363,7 @@ final class StringFormatter {
             width = getNumber();
             if (width < 0) {
                 width = -width;
-                ljustFlag = true;
+                align = '<';
             }
 
             /*
@@ -4451,284 +4386,149 @@ final class StringFormatter {
                 c = pop();
             }
 
-            // c is now the conversion type.
-            if (c == '%') {
-                // It was just a percent sign after all
-                buffer.append(c);
-                continue;
+            /*
+             * As a function of the conversion type (currently in c) override some of the formatting
+             * flags we read from the format specification.
+             */
+            switch (c) {
+                case 's':
+                case 'r':
+                case 'c':
+                case '%':
+                    // These have string-like results: fill, if needed, is always blank.
+                    fill = ' ';
+                    break;
+
+                default:
+                    if (fill == '0' && align == '>') {
+                        // Zero-fill comes after the sign in right-justification.
+                        align = '=';
+                    } else {
+                        // If left-justifying, the fill is always blank.
+                        fill = ' ';
+                    }
             }
 
             /*
+             * Encode as an InternalFormat.Spec. The values in the constructor always have specified
+             * values, except for sign, width and precision.
+             */
+            Spec spec = new Spec(fill, align, sign, altFlag, width, false, precision, c);
+
+            /*
              * Process argument according to format specification decoded from the string. It is
-             * important we don't read the argumnent from the list until this point because of the
+             * important we don't read the argument from the list until this point because of the
              * possibility that width and precision were specified via the argument list.
              */
-            PyObject arg = getarg();
-            String string = null;
-            negative = false;
 
-            // Independent of type, decide the padding character based on decoded flags.
-            char fill = ' ';
-            if (zeroFlag) {
-                fill = '0';
-            } else {
-                fill = ' ';
-            }
+            // Depending on the type of conversion, we use one of these formatters:
+            FloatFormatter ff;
+            IntegerFormatter fi;
+            TextFormatter ft;
+            Formatter f; // = ff, fi or ft, whichever we actually use.
 
-            // Perform the type-specific formatting
-            switch (c) {
+            switch (spec.type) {
 
-                case 's':
-                    // String (converts any Python object using str()).
-                    if (arg instanceof PyUnicode) {
-                        needUnicode = true;
-                    }
-                    // fall through ...
+                case 's': // String: converts any object using __str__(), __unicode__() ...
+                case 'r': // ... or repr().
+                    PyObject arg = getarg();
 
-                case 'r':
-                    // String (converts any Python object using repr()).
-                    fill = ' ';
-                    if (c == 's') {
-                        if (needUnicode) {
-                            string = arg.__unicode__().toString();
-                        } else {
-                            string = arg.__str__().toString();
-                        }
-                    } else {
-                        string = arg.__repr__().toString();
-                    }
-                    if (precision >= 0 && string.length() > precision) {
-                        string = string.substring(0, precision);
-                    }
-
+                    // Get hold of the actual object to display (may set needUnicode)
+                    PyString argAsString = asText(spec.type == 's' ? arg : arg.__repr__());
+                    // Format the str/unicode form of the argument using this Spec.
+                    f = ft = new TextFormatter(buffer, spec);
+                    ft.setBytes(!needUnicode);
+                    ft.format(argAsString.getString());
                     break;
 
-                case 'i':
-                case 'd':
-                    // Signed integer decimal. Note floats accepted.
-                    if (arg instanceof PyLong) {
-                        string = formatLong(arg, c, altFlag);
-                    } else {
-                        string = formatInteger(arg, 10, false, c, altFlag);
-                    }
-                    break;
-
-                case 'u':
-                    // Obsolete type – it is identical to 'd'. (Why not identical here?)
-                    if (arg instanceof PyLong) {
-                        string = formatLong(arg, c, altFlag);
-                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                        string = formatInteger(arg, 10, false, c, altFlag);
-                    } else {
-                        throw Py.TypeError("int argument required");
-                    }
-                    break;
-
+                case 'd': // All integer formats (+case for X).
                 case 'o':
-                    // Signed octal value. Note floats accepted.
-                    if (arg instanceof PyLong) {
-                        // This call provides the base prefix '0' if altFlag.
-                        string = formatLong(arg, c, altFlag);
-                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                        // This call does not provide the '0' prefix and will be lowercase ...
-                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
-                        string = formatInteger(arg, 8, false, c, altFlag);
-                        if (altFlag && string.charAt(0) != '0') {
-                            string = "0" + string;
-                        }
-                    } else {
-                        throw Py.TypeError("int argument required");
-                    }
-                    break;
-
                 case 'x':
-                    // Signed hexadecimal (lowercase). Note floats accepted.
-                    if (arg instanceof PyLong) {
-                        // This call provides the base prefix "0x" if altFlag and case-matches c.
-                        string = formatLong(arg, c, altFlag);
-                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                        // This call does not provide the "0x" prefix and will be lowercase.
-                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
-                        string = formatInteger(arg, 16, false, c, altFlag);
-                        string = string.toLowerCase();
-                        if (altFlag) {
-                            string = "0x" + string;
-                        }
-                    } else {
-                        throw Py.TypeError("int argument required");
-                    }
-                    break;
-
                 case 'X':
-                    // Signed hexadecimal (uppercase). Note floats accepted.
-                    if (arg instanceof PyLong) {
-                        // This call provides the base prefix "0x" if altFlag and case-matches c.
-                        string = formatLong(arg, c, altFlag);
-                    } else if (arg instanceof PyInteger || arg instanceof PyFloat) {
-                        // This call does not provide the "0x" prefix and will be lowercase.
-                        // ... except where arg.__int__ returns PyLong, then it's like formatLong.
-                        string = formatInteger(arg, 16, false, c, altFlag);
-                        string = string.toUpperCase();
-                        if (altFlag) {
-                            string = "0X" + string;
+                case 'c': // Single character (accepts integer or single character string).
+                case 'u': // Obsolete type identical to 'd'.
+                case 'i': // Compatibility with scanf().
+
+                    // Format the argument using this Spec.
+                    f = fi = new IntegerFormatter.Traditional(buffer, spec);
+                    // If not producing PyUnicode, disallow codes >255.
+                    fi.setBytes(!needUnicode);
+
+                    arg = getarg();
+
+                    if (arg instanceof PyString && spec.type == 'c') {
+                        if (arg.__len__() != 1) {
+                            throw Py.TypeError("%c requires int or char");
+                        } else {
+                            if (!needUnicode && arg instanceof PyUnicode) {
+                                // Change of mind forced by encountering unicode object.
+                                needUnicode = true;
+                                fi.setBytes(false);
+                            }
+                            fi.format(((PyString)arg).getString().codePointAt(0));
                         }
+
                     } else {
-                        throw Py.TypeError("int argument required");
+                        // Note various types accepted here as long as they have an __int__ method.
+                        PyObject argAsNumber = asNumber(arg);
+
+                        // We have to check what we got back.
+                        if (argAsNumber instanceof PyInteger) {
+                            fi.format(((PyInteger)argAsNumber).getValue());
+                        } else if (argAsNumber instanceof PyLong) {
+                            fi.format(((PyLong)argAsNumber).getValue());
+                        } else {
+                            // It couldn't be converted, raise the error here
+                            throw Py.TypeError("%" + spec.type
+                                    + " format: a number is required, not "
+                                    + arg.getType().fastGetName());
+                        }
                     }
+
                     break;
 
-                case 'e':
+                case 'e': // All floating point formats (+case).
                 case 'E':
                 case 'f':
                 case 'F':
                 case 'g':
                 case 'G':
-                    // All floating point formats (+case).
-
-                    // Convert the flags (local variables) to the form needed in the Spec object.
-                    char align = ljustFlag ? '<' : '>';
-                    char sign = signFlag ? '+' : (blankFlag ? ' ' : Spec.NONE);
-                    int w = Spec.UNSPECIFIED;
-                    Spec spec = new Spec(fill, align, sign, altFlag, w, false, precision, c);
 
                     // Format using this Spec the double form of the argument.
-                    FloatFormatter f = new FloatFormatter(spec);
-                    double v = asDouble(arg);
-                    f.format(v);
-                    string = f.getResult();
+                    f = ff = new FloatFormatter(buffer, spec);
+                    ff.setBytes(!needUnicode);
 
-                    // Suppress subsequent attempts to insert a correct sign, done already.
-                    signFlag = blankFlag = negative = false;
+                    // Note various types accepted here as long as they have a __float__ method.
+                    arg = getarg();
+                    PyObject argAsFloat = asFloat(arg);
+
+                    // We have to check what we got back..
+                    if (argAsFloat instanceof PyFloat) {
+                        ff.format(((PyFloat)argAsFloat).getValue());
+                    } else {
+                        // It couldn't be converted, raise the error here
+                        throw Py.TypeError("float argument required, not "
+                                + arg.getType().fastGetName());
+                    }
+
                     break;
 
-                case 'c':
-                    // Single character (accepts integer or single character string).
-                    fill = ' ';
-                    if (arg instanceof PyString) {
-                        string = ((PyString)arg).toString();
-                        if (string.length() != 1) {
-                            throw Py.TypeError("%c requires int or char");
-                        }
-                        if (arg instanceof PyUnicode) {
-                            needUnicode = true;
-                        }
-                        break;
-                    }
+                case '%': // Percent symbol, but surprisingly, padded.
 
-                    // arg is not a str (or unicode)
-                    int val;
-                    try {
-                        // Explicitly __int__ so we can look for an AttributeError (which is
-                        // less invasive to mask than a TypeError)
-                        val = arg.__int__().asInt();
-                    } catch (PyException e) {
-                        if (e.match(Py.AttributeError)) {
-                            throw Py.TypeError("%c requires int or char");
-                        }
-                        throw e;
-                    }
-                    // Range check, according to ultimate type of result as presentl;y known.
-                    if (!needUnicode) {
-                        if (val < 0) {
-                            throw Py.OverflowError("unsigned byte integer is less than minimum");
-                        } else if (val > 255) {
-                            throw Py.OverflowError("unsigned byte integer is greater than maximum");
-                        }
-                    } else if (val < 0 || val > PySystemState.maxunicode) {
-                        throw Py.OverflowError("%c arg not in range(0x110000) (wide Python build)");
-                    }
-                    string = new String(new int[] {val}, 0, 1);
+                    // We use an integer formatter.
+                    f = fi = new IntegerFormatter.Traditional(buffer, spec);
+                    fi.setBytes(!needUnicode);
+                    fi.format('%');
                     break;
 
                 default:
                     throw Py.ValueError("unsupported format character '"
-                            + codecs.encode(Py.newString(c), null, "replace") + "' (0x"
-                            + Integer.toHexString(c) + ") at index " + (index - 1));
+                            + codecs.encode(Py.newString(spec.type), null, "replace") + "' (0x"
+                            + Integer.toHexString(spec.type) + ") at index " + (index - 1));
             }
 
-            /*
-             * We have now dealt with the translation of the (absolute value of the) argument, in
-             * variable string[]. In the next sections we deal with sign, padding and base prefix.
-             */
-            int length = string.length();
-            int skip = 0;
-
-            // Decide how to represent the sign according to format and actual sign of argument.
-            String signString = null;
-            if (negative) {
-                signString = "-";
-            } else {
-                if (signFlag) {
-                    signString = "+";
-                } else if (blankFlag) {
-                    signString = " ";
-                }
-            }
-
-            // The width (from here on) will be the remaining width on the line.
-            if (width < length) {
-                width = length;
-            }
-
-            // Insert the sign in the buffer and adjust the width.
-            if (signString != null) {
-                if (fill != ' ') {
-                    // When the fill is not space, the sign comes before the fill.
-                    buffer.append(signString);
-                }
-                // Adjust width for sign.
-                if (width > length) {
-                    width--;
-                }
-            }
-
-            // Insert base prefix used with alternate mode for hexadecimal.
-            if (altFlag && (c == 'x' || c == 'X')) {
-                if (fill != ' ') {
-                    // When the fill is not space, this base prefix comes before the fill.
-                    buffer.append('0');
-                    buffer.append(c);
-                    skip += 2;
-                }
-                // Adjust width for base prefix.
-                width -= 2;
-                if (width < 0) {
-                    width = 0;
-                }
-                length -= 2;
-            }
-
-            // Fill on the left of the item.
-            if (width > length && !ljustFlag) {
-                do {
-                    buffer.append(fill);
-                } while (--width > length);
-            }
-
-            // If the fill is spaces, we will have deferred the sign and hex base prefix
-            if (fill == ' ') {
-                if (signString != null) {
-                    buffer.append(signString);
-                }
-                if (altFlag && (c == 'x' || c == 'X')) {
-                    buffer.append('0');
-                    buffer.append(c);
-                    skip += 2;
-                }
-            }
-
-            // Now append the converted argument.
-            if (skip > 0) {
-                // The string contains a hex-prefix, but we have already inserted one.
-                buffer.append(string.substring(skip));
-            } else {
-                buffer.append(string);
-            }
-
-            // If this hasn't filled the space required, add right-padding.
-            while (--width >= length) {
-                buffer.append(' ');
-            }
+            // Pad the result as specified (in-place, in the buffer).
+            f.pad();
         }
 
         /*
@@ -4743,10 +4543,7 @@ final class StringFormatter {
         }
 
         // Return the final buffer contents as a str or unicode as appropriate.
-        if (needUnicode) {
-            return new PyUnicode(buffer);
-        }
-        return new PyString(buffer);
+        return needUnicode ? new PyUnicode(buffer) : new PyString(buffer);
     }
 
 }

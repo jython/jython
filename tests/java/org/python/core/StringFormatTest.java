@@ -1,43 +1,58 @@
 package org.python.core;
 
+import java.math.BigInteger;
+
 import junit.framework.TestCase;
+
 import org.python.core.stringlib.FieldNameIterator;
-import org.python.core.stringlib.InternalFormatSpec;
-import org.python.core.stringlib.InternalFormatSpecParser;
+import org.python.core.stringlib.IntegerFormatter;
+import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.MarkupIterator;
+import org.python.core.stringlib.TextFormatter;
+import org.python.core.stringlib.InternalFormat.Spec;
+import org.python.util.PythonInterpreter;
 
 /**
  * Tests for internal bits and pieces of string.format implementation.
  */
 public class StringFormatTest extends TestCase {
+
+    /** Exception-raising seems to need the interpreter to be initialised **/
+    PythonInterpreter interp = new PythonInterpreter();
+
     public void testInternalFormatSpec() {
-        InternalFormatSpec spec = new InternalFormatSpecParser("x").parse();
+        InternalFormat.Spec spec;
+        spec = InternalFormat.fromText("x");
+        assertFalse(Spec.specified(spec.align));
+        assertFalse(Spec.specified(spec.fill));
+        assertFalse(Spec.specified(spec.width));
+        assertFalse(Spec.specified(spec.precision));
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("<x").parse();
+        spec = InternalFormat.fromText("<x");
         assertEquals('<', spec.align);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("~<x").parse();
-        assertEquals('~', spec.fill_char);
+        spec = InternalFormat.fromText("~<x");
+        assertEquals('~', spec.fill);
         assertEquals('<', spec.align);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("+x").parse();
+        spec = InternalFormat.fromText("+x");
         assertEquals('+', spec.sign);
         assertEquals('x', spec.type);
 
-        spec = new InternalFormatSpecParser("#x").parse();
+        spec = InternalFormat.fromText("#x");
         assertEquals(true, spec.alternate);
 
-        spec = new InternalFormatSpecParser("0x").parse();
+        spec = InternalFormat.fromText("0x");
         assertEquals('=', spec.align);
-        assertEquals('0', spec.fill_char);
+        assertEquals('0', spec.fill);
 
-        spec = new InternalFormatSpecParser("123x").parse();
+        spec = InternalFormat.fromText("123x");
         assertEquals(123, spec.width);
 
-        spec = new InternalFormatSpecParser("123.456x").parse();
+        spec = InternalFormat.fromText("123.456x");
         assertEquals(123, spec.width);
         assertEquals(456, spec.precision);
 
@@ -45,105 +60,182 @@ public class StringFormatTest extends TestCase {
 
         assertParseError("123xx", "Invalid conversion specification");
 
-        spec = new InternalFormatSpecParser("").parse();
-        assertEquals(0, spec.type);
+        spec = InternalFormat.fromText("");
+        assertEquals(Spec.NONE, spec.type);
     }
 
     private void assertParseError(String spec, String expected) {
         String error = null;
         try {
-            new InternalFormatSpecParser(spec).parse();
-        } catch (IllegalArgumentException e) {
-            error = e.getMessage();
+            InternalFormat.fromText(spec);
+        } catch (PyException e) {
+            assertEquals(Py.ValueError, e.type);
+            error = e.value.toString();
         }
         assertEquals(expected, error);
     }
 
-    public void testFormatIntOrLong() {
-        InternalFormatSpec spec = new InternalFormatSpec();
-        spec.type = 'd';
-        assertEquals("123", PyInteger.formatIntOrLong(123, spec));
-        spec.type = 'o';
-        assertEquals("173", PyInteger.formatIntOrLong(123, spec));
-        spec.type = 'x';
-        assertEquals("7b", PyInteger.formatIntOrLong(123, spec));
-        spec.type = 'X';
-        assertEquals("7B", PyInteger.formatIntOrLong(123, spec));
-        spec.type = 'b';
-        assertEquals("1111011", PyInteger.formatIntOrLong(123, spec));
+    /**
+     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the original
+     * <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>.
+     */
+    public void testPrepareFormatter() {
+        int v = 123;
+        IntegerFormatter f;
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("d"));
+        assertEquals("123", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("o"));
+        assertEquals("173", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("x"));
+        assertEquals("7b", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("X"));
+        assertEquals("7B", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("b"));
+        assertEquals("1111011", f.format(v).pad().getResult());
 
-        spec.thousands_separators = true;
-        spec.type = 'd';
-        assertEquals("1,234", PyInteger.formatIntOrLong(1234, spec));
-        spec.thousands_separators = false;
+        int v2 = 1234567890;
+        f = PyInteger.prepareFormatter(InternalFormat.fromText(",d"));
+        assertEquals("1,234,567,890", f.format(v2).pad().getResult());
 
-        spec.alternate = true;
-        spec.type = 'o';
-        assertEquals("0o173", PyInteger.formatIntOrLong(123, spec));
-        spec.type = 'X';
-        assertEquals("0X7B", PyInteger.formatIntOrLong(123, spec));
-        spec.alternate = false;
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("#o"));
+        assertEquals("0o173", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("#X"));
+        assertEquals("0X7B", f.format(v).pad().getResult());
 
-        spec.type = 'c';
-        assertEquals("{", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        assertEquals("{", f.format(v).pad().getResult());
 
-        spec.type = 'd';
-        spec.sign = '+';
-        assertEquals("+123", PyInteger.formatIntOrLong(123, spec));
-        spec.sign = ' ';
-        assertEquals(" 123", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("+d"));
+        assertEquals("+123", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText(" d"));
+        assertEquals(" 123", f.format(v).pad().getResult());
 
-        spec.sign = 0;
-        spec.width = 5;
-        assertEquals("  123", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("5"));
+        assertEquals("  123", f.format(v).pad().getResult());
 
-        spec.align = '^';
-        spec.width = 6;
-        assertEquals(" 123  ", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("^6"));
+        assertEquals(" 123  ", f.format(v).pad().getResult());
 
-        spec.align = '<';
-        spec.width = 5;
-        spec.fill_char = '~';
-        assertEquals("123~~", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("~<5"));
+        assertEquals("123~~", f.format(v).pad().getResult());
 
-        spec.align = '=';
-        spec.width = 6;
-        spec.fill_char = '0';
-        spec.sign = '+';
-        assertEquals("+00123", PyInteger.formatIntOrLong(123, spec));
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("0=+6"));
+        assertEquals("+00123", f.format(v).pad().getResult());
 
-        spec.precision = 1;
-        assertFormatError(123, spec, "Precision not allowed in integer format specifier");
+        assertValueError("0=+6.1", "Precision not allowed in integer format specifier");
+        assertValueError("+c", "Sign not allowed with integer format specifier 'c'");
 
-        spec.precision = -1;
-        spec.sign = '+';
-        spec.type = 'c';
-        assertFormatError(123, spec, "Sign not allowed with integer format specifier 'c'");
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        f.setBytes(true);
+        assertOverflowError(256, f, "%c arg not in range(0x100)");
+        assertOverflowError(-1, f, "%c arg not in range(0x100)");
+        assertOverflowError(0x110000, f, "%c arg not in range(0x100)");
 
-        spec.sign = 0;
-        assertFormatError(0x11111, spec, "%c arg not in range(0x10000)");
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        assertOverflowError(0x110000, f, "%c arg not in range(0x110000)");
+        assertOverflowError(-1, f, "%c arg not in range(0x110000)");
+    }
+
+    /**
+     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the original
+     * <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>.
+     */
+    public void testPrepareFormatterLong() {
+        BigInteger v = BigInteger.valueOf(123);
+        IntegerFormatter f;
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("d"));
+        assertEquals("123", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("o"));
+        assertEquals("173", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("x"));
+        assertEquals("7b", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("X"));
+        assertEquals("7B", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("b"));
+        assertEquals("1111011", f.format(v).pad().getResult());
+
+        BigInteger v2 = BigInteger.valueOf(1234567890);
+        f = PyInteger.prepareFormatter(InternalFormat.fromText(",d"));
+        assertEquals("1,234,567,890", f.format(v2).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("#o"));
+        assertEquals("0o173", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("#X"));
+        assertEquals("0X7B", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        assertEquals("{", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("+d"));
+        assertEquals("+123", f.format(v).pad().getResult());
+        f = PyInteger.prepareFormatter(InternalFormat.fromText(" d"));
+        assertEquals(" 123", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("5"));
+        assertEquals("  123", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("^6"));
+        assertEquals(" 123  ", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("~<5"));
+        assertEquals("123~~", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("0=+6"));
+        assertEquals("+00123", f.format(v).pad().getResult());
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        f.setBytes(true);
+        assertOverflowError(BigInteger.valueOf(256), f, "%c arg not in range(0x100)");
+        assertOverflowError(BigInteger.valueOf(-1), f, "%c arg not in range(0x100)");
+        assertOverflowError(BigInteger.valueOf(0x110000), f, "%c arg not in range(0x100)");
+
+        f = PyInteger.prepareFormatter(InternalFormat.fromText("c"));
+        assertOverflowError(BigInteger.valueOf(0x110000), f, "%c arg not in range(0x110000)");
+        assertOverflowError(BigInteger.valueOf(-1), f, "%c arg not in range(0x110000)");
+    }
+
+    private void assertValueError(String formatSpec, String expected) {
+        try {
+            IntegerFormatter f = PyInteger.prepareFormatter(InternalFormat.fromText(formatSpec));
+            // f.format(123).pad().getResult();
+            fail("ValueError not thrown, expected: " + expected);
+        } catch (PyException pye) {
+            assertEquals(expected, pye.value.toString());
+        }
+    }
+
+    private void assertOverflowError(int v, IntegerFormatter f, String expected) {
+        // Test with Java int for PyInteger
+        try {
+            f.format(v).pad().getResult();
+            fail("OverflowError not thrown, expected: " + expected);
+        } catch (PyException pye) {
+            assertEquals(expected, pye.value.toString());
+        }
+    }
+
+    private void assertOverflowError(BigInteger v, IntegerFormatter f, String expected) {
+        // Test with BigInteger for PyLong
+        try {
+            f.format(v).pad().getResult();
+            fail("OverflowError not thrown, expected: " + expected);
+        } catch (PyException pye) {
+            assertEquals(expected, pye.value.toString());
+        }
     }
 
     public void testFormatString() {
-        InternalFormatSpec spec = new InternalFormatSpec();
-        assertEquals("abc", PyString.formatString("abc", spec));
+        String v = "abc";
+        TextFormatter f;
+        f = PyString.prepareFormatter(InternalFormat.fromText(""));
+        assertEquals("abc", f.format(v).pad().getResult());
 
-        spec.precision = 3;
-        assertEquals("abc", PyString.formatString("abcdef", spec));
+        String v2 = "abcdef";
+        f = PyString.prepareFormatter(InternalFormat.fromText(".3"));
+        assertEquals("abc", f.format(v2).pad().getResult());
 
-        spec.precision = -1;
-        spec.width = 6;
-        assertEquals("abc   ", PyString.formatString("abc", spec));
-    }
-
-    private void assertFormatError(int value, InternalFormatSpec spec, String expected) {
-        String error = null;
-        try {
-            PyInteger.formatIntOrLong(value, spec);
-        } catch (IllegalArgumentException e) {
-            error = e.getMessage();
-        }
-        assertEquals(expected, error);
+        f = PyString.prepareFormatter(InternalFormat.fromText("6"));
+        assertEquals("abc   ", f.format(v).pad().getResult());
     }
 
     public void testMarkupIterator() {

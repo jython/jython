@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 import org.python.core.stringlib.FloatFormatter;
 import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
@@ -911,32 +912,66 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___format___doc)
     final PyObject float___format__(PyObject formatSpec) {
-        if (!(formatSpec instanceof PyString)) {
-            throw Py.TypeError("__format__ requires str or unicode");
-        }
 
-        PyString formatSpecStr = (PyString)formatSpec;
-        String result;
-        try {
-            String specString = formatSpecStr.getString();
-            Spec spec = InternalFormat.fromText(specString);
-            if (spec.type!=Spec.NONE && "efgEFGn%".indexOf(spec.type) < 0) {
-                throw FloatFormatter.unknownFormat(spec.type, "float");
-            } else if (spec.alternate) {
-                throw FloatFormatter.alternateFormNotAllowed("float");
-            } else {
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+
+        // Get a formatter for the specification
+        FloatFormatter f = prepareFormatter(spec);
+
+        if (f != null) {
+            // Bytes mode if formatSpec argument is not unicode.
+            f.setBytes(!(formatSpec instanceof PyUnicode));
+            // Convert as per specification.
+            f.format(value);
+            // Return a result that has the same type (str or unicode) as the formatSpec argument.
+            return f.pad().getPyResult();
+
+        } else {
+            // The type code was not recognised in prepareFormatter
+            throw Formatter.unknownFormat(spec.type, "float");
+        }
+    }
+
+    /**
+     * Common code for PyFloat, {@link PyInteger} and {@link PyLong} to prepare a {@link FloatFormatter} from a parsed specification.
+     * The object returned has format method {@link FloatFormatter#format(double)}.
+     *
+     * @param spec a parsed PEP-3101 format specification.
+     * @return a formatter ready to use, or null if the type is not a floating point format type.
+     * @throws PyException(ValueError) if the specification is faulty.
+     */
+    @SuppressWarnings("fallthrough")
+    static FloatFormatter prepareFormatter(Spec spec) {
+
+        // Slight differences between format types
+        switch (spec.type) {
+
+            case 'n':
+                if (spec.grouping) {
+                    throw Formatter.notAllowed("Grouping", "float", spec.type);
+                }
+                // Fall through
+
+            case Spec.NONE:
+            case 'e':
+            case 'f':
+            case 'g':
+            case 'E':
+            case 'F':
+            case 'G':
+            case '%':
+                // Check for disallowed parts of the specification
+                if (spec.alternate) {
+                    throw FloatFormatter.alternateFormNotAllowed("float");
+                }
                 // spec may be incomplete. The defaults are those commonly used for numeric formats.
                 spec = spec.withDefaults(Spec.NUMERIC);
-                // Get a formatter for the spec.
-                FloatFormatter f = new FloatFormatter(spec);
-                // Convert as per specification.
-                f.format(value).pad();
-                result = f.getResult();
-            }
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());    // XXX Can this be reached?
+                return new FloatFormatter(spec);
+
+            default:
+                return null;
         }
-        return formatSpecStr.createInstance(result);
     }
 
     @ExposedMethod(doc = BuiltinDocs.float_as_integer_ratio_doc)

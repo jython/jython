@@ -3,6 +3,9 @@ package org.python.core.stringlib;
 
 import org.python.core.Py;
 import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
 
 public class InternalFormat {
 
@@ -14,7 +17,25 @@ public class InternalFormat {
      */
     public static Spec fromText(String text) {
         Parser parser = new Parser(text);
-        return parser.parse();
+        try {
+            return parser.parse();
+        } catch (IllegalArgumentException e) {
+            throw Py.ValueError(e.getMessage());
+        }
+    }
+
+    /**
+     * Create a {@link Spec} object by parsing a format specification, supplied as an object.
+     *
+     * @param text to parse
+     * @return parsed equivalent to text
+     */
+    public static Spec fromText(PyObject text, String method) {
+        if (text instanceof PyString) {
+            return fromText(((PyString)text).getString());
+        } else {
+            throw Py.TypeError(method + " requires str or unicode");
+        }
     }
 
     /**
@@ -30,23 +51,72 @@ public class InternalFormat {
         /** The (partial) result. */
         protected StringBuilder result;
 
-        /** The number we are working on floats at the end of the result, and starts here. */
+        /**
+         * Signals the client's intention to make a PyString (or other byte-like) interpretation of
+         * {@link #result}, rather than a PyUnicode one.
+         */
+        protected boolean bytes;
+
+        /** The start of the formatted data for padding purposes, &lt;={@link #start} */
+        protected int mark;
+        /** The latest number we are working on floats at the end of the result, and starts here. */
         protected int start;
-        /** If it contains no sign, this length is zero, and 1 otherwise. */
+        /** If it contains no sign, this length is zero, and &gt;0 otherwise. */
         protected int lenSign;
         /** The length of the whole part (to left of the decimal point or exponent) */
         protected int lenWhole;
 
         /**
-         * Construct the formatter from a specification and initial buffer capacity. A reference is
-         * held to this specification, but it will not be modified by the actions of this class.
+         * Construct the formatter from a client-supplied buffer and a specification. Sets
+         * {@link #mark} and {@link #start} to the end of the buffer. The new formatted object will
+         * therefore be appended there and, when the time comes, padding will be applied to (just)
+         * the new text.
+         *
+         * @param result destination buffer
+         * @param spec parsed conversion specification
+         */
+        public Formatter(StringBuilder result, Spec spec) {
+            this.spec = spec;
+            this.result = result;
+            this.start = this.mark = result.length();
+        }
+
+        /**
+         * Construct the formatter from a specification and initial buffer capacity. Sets
+         * {@link #mark} to the end of the buffer.
          *
          * @param spec parsed conversion specification
          * @param width of buffer initially
          */
         public Formatter(Spec spec, int width) {
-            this.spec = spec;
-            result = new StringBuilder(width);
+            this(new StringBuilder(width), spec);
+        }
+
+        /**
+         * Signals the client's intention to make a PyString (or other byte-like) interpretation of
+         * {@link #result}, rather than a PyUnicode one. Only formatters that could produce
+         * characters &gt;255 are affected by this (e.g. c-format). Idiom:
+         *
+         * <pre>
+         * MyFormatter f = new MyFormatter( InternalFormatter.fromText(formatSpec) );
+         * f.setBytes(!(formatSpec instanceof PyUnicode));
+         * // ... formatting work
+         * return f.getPyResult();
+         * </pre>
+         *
+         * @param bytes true to signal the intention to make a byte-like interpretation
+         */
+        public void setBytes(boolean bytes) {
+            this.bytes = bytes;
+        }
+
+        /**
+         * Whether initialised for a byte-like interpretation.
+         *
+         * @return bytes attribute
+         */
+        public boolean isBytes() {
+            return bytes;
         }
 
         /**
@@ -56,6 +126,22 @@ public class InternalFormat {
          */
         public String getResult() {
             return result.toString();
+        }
+
+        /**
+         * Convenience method to return the current result of the formatting, as a
+         * <code>PyObject</code>, either {@link PyString} or {@link PyUnicode} according to
+         * {@link #bytes}.
+         *
+         * @return formatted result
+         */
+        public PyString getPyResult() {
+            String r = getResult();
+            if (bytes) {
+                return new PyString(r);
+            } else {
+                return new PyUnicode(r);
+            }
         }
 
         /*
@@ -84,21 +170,28 @@ public class InternalFormat {
 
         /**
          * Clear the instance variables describing the latest object in {@link #result}, ready to
-         * receive a new number
+         * receive a new one: sets {@link #start} and calls {@link #reset()}. This is necessary when
+         * a <code>Formatter</code> is to be re-used. Note that this leaves {@link #mark} where it
+         * is. In the core, we need this to support <code>complex</code>: two floats in the same
+         * format, but padded as a unit.
          */
         public void setStart() {
-            // Mark the end of the buffer as the start of the current object and reset all.
+            // The new value will float at the current end of the result buffer.
             start = result.length();
-            // Clear the variable describing the latest number in result.
-            reset();
+            // If anything has been added since construction, reset all state.
+            if (start > mark) {
+                // Clear the variable describing the latest number in result.
+                reset();
+            }
         }
 
         /**
          * Clear the instance variables describing the latest object in {@link #result}, ready to
-         * receive a new one.
+         * receive a new one. This is called from {@link #setStart()}. Subclasses override this
+         * method and call {@link #setStart()} at the start of their format method.
          */
         protected void reset() {
-            // Clear the variable describing the latest object in result.
+            // Clear the variables describing the latest object in result.
             lenSign = lenWhole = 0;
         }
 
@@ -215,19 +308,19 @@ public class InternalFormat {
         }
 
         /**
-         * Pad the result so far (defined as the entire contents of {@link #result}) using the
-         * alignment, target width and fill character defined in {@link #spec}. The action of
-         * padding will increase the overall length of the result to the target width, if that is
-         * greater than the current length.
+         * Pad the result so far (defined as the contents of {@link #result} from {@link #mark} to
+         * the end) using the alignment, target width and fill character defined in {@link #spec}.
+         * The action of padding will increase the length of this segment to the target width, if
+         * that is greater than the current length.
          * <p>
          * When the padding method has decided that that it needs to add n padding characters, it
-         * will affect {@link #start} or {@link #lenSign} as follows.
+         * will affect {@link #start} or {@link #lenWhole} as follows.
          * <table border style>
          * <tr>
          * <th>align</th>
          * <th>meaning</th>
          * <th>start</th>
-         * <th>lenSign</th>
+         * <th>lenWhole</th>
          * <th>result.length()</th>
          * </tr>
          * <tr>
@@ -259,69 +352,79 @@ public class InternalFormat {
          * <td>+n</td>
          * </tr>
          * </table>
-         * Note that we may have converted more than one value into the result buffer (for example
-         * when formatting a complex number). The pointer <code>start</code> is at the start of the
-         * last number converted. Padding with zeros, and the "pad after sign" mode, will produce a
-         * result you probably don't want. It is up to the client to disallow this (which
-         * <code>complex</code> does).
+         * Note that in the "pad after sign" mode, only the last number into the buffer receives the
+         * padding. This padding gets incorporated into the whole part of the number. (In other
+         * modes, the padding is around <code>result[mark:]</code>.) When this would not be
+         * appropriate, it is up to the client to disallow this (which <code>complex</code> does).
          *
-         * @return this object
+         * @return this Formatter object
          */
         public Formatter pad() {
-
             // We'll need this many pad characters (if>0). Note Spec.UNDEFINED<0.
-            int n = spec.width - result.length();
+            int n = spec.width - (result.length() - mark);
             if (n > 0) {
+                pad(mark, n);
+            }
+            return this;
+        }
 
-                char align = spec.getAlign('>'); // Right for numbers (wrong for strings)
-                char fill = spec.getFill(' ');
+        /**
+         * Pad the last result (defined as the contents of {@link #result} from argument
+         * <code>leftIndex</code> to the end) using the alignment, by <code>n</code> repetitions of
+         * the fill character defined in {@link #spec}, and distributed according to
+         * <code>spec.align</code>. The value of <code>leftIndex</code> is only used if the
+         * alignment is '&gt;' (left) or '^' (both). The value of the critical lengths (lenWhole,
+         * lenSign, etc.) are not affected, because we assume that <code>leftIndex &lt;= </code>
+         * {@link #start}.
+         *
+         * @param leftIndex the index in result at which to insert left-fill characters.
+         * @param n number of fill characters to insert.
+         */
+        protected void pad(int leftIndex, int n) {
+            char align = spec.getAlign('>'); // Right for numbers (strings will supply '<' align)
+            char fill = spec.getFill(' ');
 
-                // Start by assuming padding is all leading ('>' case or '=')
-                int leading = n;
+            // Start by assuming padding is all leading ('>' case or '=')
+            int leading = n;
 
-                // Split the total padding according to the alignment
-                if (align == '^') {
-                    // Half the padding before
-                    leading = n / 2;
-                } else if (align == '<') {
-                    // All the padding after
-                    leading = 0;
+            // Split the total padding according to the alignment
+            if (align == '^') {
+                // Half the padding before
+                leading = n / 2;
+            } else if (align == '<') {
+                // All the padding after
+                leading = 0;
+            }
+
+            // All padding that is not leading is trailing
+            int trailing = n - leading;
+
+            // Insert the leading space
+            if (leading > 0) {
+                if (align == '=') {
+                    // Incorporate into the (latest) whole part
+                    leftIndex = start + lenSign;
+                    lenWhole += leading;
+                } else {
+                    // Default is to insert at the stated leftIndex <= start.
+                    start += leading;
                 }
-
-                // All padding that is not leading is trailing
-                int trailing = n - leading;
-
-                // Insert the leading space
-                if (leading > 0) {
-                    int pos;
-                    if (align == '=') {
-                        // Incorporate into the (latest) whole part
-                        pos = start + lenSign;
-                        lenWhole += leading;
-                    } else {
-                        // Insert at the very beginning (not start) by default.
-                        pos = 0;
-                        start += leading;
-                    }
-                    makeSpaceAt(pos, leading);
-                    for (int i = 0; i < leading; i++) {
-                        result.setCharAt(pos + i, fill);
-                    }
-                }
-
-                // Append the trailing space
-                for (int i = 0; i < trailing; i++) {
-                    result.append(fill);
-                }
-
-                // Check for special case
-                if (align == '=' && fill == '0' && spec.grouping) {
-                    // We must extend the grouping separator into the padding
-                    zeroPadAfterSignWithGroupingFixup(3, ',');
+                makeSpaceAt(leftIndex, leading);
+                for (int i = 0; i < leading; i++) {
+                    result.setCharAt(leftIndex + i, fill);
                 }
             }
 
-            return this;
+            // Append the trailing space
+            for (int i = 0; i < trailing; i++) {
+                result.append(fill);
+            }
+
+            // Check for special case
+            if (align == '=' && fill == '0' && spec.grouping) {
+                // We must extend the grouping separator into the padding
+                zeroPadAfterSignWithGroupingFixup(3, ',');
+            }
         }
 
         /**
@@ -345,7 +448,7 @@ public class InternalFormat {
          * </pre>
          *
          * The padding has increased the overall length of the result to the target width. About one
-         * in three call to this method adds one to the width, because the whole part cannot start
+         * in three calls to this method adds one to the width, because the whole part cannot start
          * with a comma.
          *
          * <pre>
@@ -354,9 +457,6 @@ public class InternalFormat {
          * &gt;&gt;&gt; format(-12e8, "0=30,.4f")
          * '-<b>0</b>,000,000,001,200,000,000.0000'
          * </pre>
-         *
-         * Insert grouping characters (conventionally commas) into the whole part of the number.
-         * {@link #lenWhole} will increase correspondingly.
          *
          * @param groupSize normally 3.
          * @param comma or some other character to use as a separator.
@@ -386,10 +486,9 @@ public class InternalFormat {
                  * Suppose the format call was format(-12e8, "0=30,.4f"). At the beginning, we had
                  * something like this in result: . [-|000000000001,200,000,000|.|0000||]
                  *
-                 * And now, result looks like this: [-|0000,000,001,200,000,000|.|0000||] in which
-                 * the first zero is wrong as it stands, nor can it just be over-written with a
-                 * comma. We have to insert another zero, even though this makes the result longer
-                 * than we were given.
+                 * And now, result looks like this: [-|,000,000,001,200,000,000|.|0000||] in which
+                 * the first comma is wrong, but so would be a zero. We have to insert another zero,
+                 * even though this makes the result longer than we were asked for.
                  */
                 result.insert(firstZero, '0');
                 lenWhole += 1;
@@ -418,7 +517,19 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException alternateFormNotAllowed(String forType) {
-            return notAllowed("Alternate form (#)", forType);
+            return alternateFormNotAllowed(forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that alternate form is not
+         * allowed in a format specifier for the named type and specified typoe code.
+         *
+         * @param forType the type it was found applied to
+         * @param code the formatting code (or '\0' not to mention one)
+         * @return exception to throw
+         */
+        public static PyException alternateFormNotAllowed(String forType, char code) {
+            return notAllowed("Alternate form (#)", forType, code);
         }
 
         /**
@@ -430,7 +541,30 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException alignmentNotAllowed(char align, String forType) {
-            return notAllowed("'" + align + "' alignment flag", forType);
+            return notAllowed("'" + align + "' alignment flag", forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that specifying a sign is
+         * not allowed in a format specifier for the named type.
+         *
+         * @param forType the type it was found applied to
+         * @param code the formatting code (or '\0' not to mention one)
+         * @return exception to throw
+         */
+        public static PyException signNotAllowed(String forType, char code) {
+            return notAllowed("Sign", forType, code);
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that specifying a
+         * precision is not allowed in a format specifier for the named type.
+         *
+         * @param forType the type it was found applied to
+         * @return exception to throw
+         */
+        public static PyException precisionNotAllowed(String forType) {
+            return notAllowed("Precision", forType, '\0');
         }
 
         /**
@@ -441,20 +575,61 @@ public class InternalFormat {
          * @return exception to throw
          */
         public static PyException zeroPaddingNotAllowed(String forType) {
-            return notAllowed("Zero padding", forType);
+            return notAllowed("Zero padding", forType, '\0');
         }
 
         /**
          * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
-         * feature is not allowed for the named type.
+         * feature is not allowed for the named data type.
          *
-         * @param particularOutrage committed in the present case
-         * @param forType the type it where it is an outrage
+         * @param outrage committed in the present case
+         * @param forType the data type (e.g. "integer") it where it is an outrage
          * @return exception to throw
          */
-        protected static PyException notAllowed(String particularOutrage, String forType) {
-            String msg = particularOutrage + " is not allowed in " + forType + " format specifier";
+        public static PyException notAllowed(String outrage, String forType) {
+            return notAllowed(outrage, forType, '\0');
+        }
+
+        /**
+         * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
+         * feature is not allowed for the named format code and data type. Produces a message like:
+         * <p>
+         * <code>outrage+" not allowed with "+forType+" format specifier '"+code+"'"</code>
+         * <p>
+         * <code>outrage+" not allowed in "+forType+" format specifier"</code>
+         *
+         * @param outrage committed in the present case
+         * @param forType the data type (e.g. "integer") it where it is an outrage
+         * @param code the formatting code for which it is an outrage (or '\0' not to mention one)
+         * @return exception to throw
+         */
+        public static PyException notAllowed(String outrage, String forType, char code) {
+            // Try really hard to be like CPython
+            String codeAsString, withOrIn;
+            if (code == 0) {
+                withOrIn = "in ";
+                codeAsString = "";
+            } else {
+                withOrIn = "with ";
+                codeAsString = " '" + code + "'";
+            }
+            String msg =
+                    outrage + " not allowed " + withOrIn + forType + " format specifier"
+                            + codeAsString;
             return Py.ValueError(msg);
+        }
+
+        /**
+         * Convenience method returning a {@link Py#OverflowError} reporting:
+         * <p>
+         * <code>"formatted "+type+" is too long (precision too large?)"</code>
+         *
+         * @param type of formatting ("integer", "float")
+         * @return exception to throw
+         */
+        public static PyException precisionTooLarge(String type) {
+            String msg = "formatted " + type + " is too long (precision too large?)";
+            return Py.OverflowError(msg);
         }
 
     }
@@ -636,6 +811,12 @@ public class InternalFormat {
                 false, Spec.UNSPECIFIED, Spec.NONE);
 
         /**
+         * Defaults applicable to string types. Equivalent to " &lt;"
+         */
+        public static final Spec STRING = new Spec(' ', '<', Spec.NONE, false, Spec.UNSPECIFIED,
+                false, Spec.UNSPECIFIED, Spec.NONE);
+
+        /**
          * Constructor offering just precision and type.
          *
          * <pre>
@@ -773,11 +954,6 @@ public class InternalFormat {
             // If we haven't reached the end, something is wrong
             if (ptr != spec.length()) {
                 throw new IllegalArgumentException("Invalid conversion specification");
-            }
-
-            // Restrict grouping to known formats. (Mirrors CPython, but misplaced?)
-            if (grouping && "defgEG%F\0".indexOf(type) == -1) {
-                throw new IllegalArgumentException("Cannot specify ',' with '" + type + "'.");
             }
 
             // Create a specification
