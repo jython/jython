@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -54,8 +55,10 @@ public class ParserFacade {
                 return text;
             }
             if (reader.encoding != null) {
-                // restore the original encoding
-                text = new PyUnicode(text).encode(reader.encoding);
+                // The parser used a non-latin encoding: re-encode chars to bytes.
+                Charset cs = Charset.forName(reader.encoding);
+                ByteBuffer decoded = cs.encode(text);
+                text = StringUtil.fromBytes(decoded);
             }
             return text + "\n";
         } catch (IOException ioe) {
@@ -100,8 +103,9 @@ public class ParserFacade {
                         + reader.encoding + "'";
             }
             throw Py.SyntaxError(msg);
+        } else {
+            return Py.JavaError(t);
         }
-        else return Py.JavaError(t);
     }
 
     /**
@@ -121,7 +125,9 @@ public class ParserFacade {
             return parse(bufReader, CompileMode.eval, filename, cflags);
         } catch (Throwable t) {
             if (bufReader == null)
+             {
                 throw Py.JavaError(t); // can't do any more
+            }
             try {
                 // then, try parsing as a module
                 bufReader.reset();
@@ -169,7 +175,7 @@ public class ParserFacade {
             close(bufReader);
         }
     }
-    
+
     public static mod parse(InputStream stream,
                                 CompileMode kind,
                                 String filename,
@@ -268,11 +274,12 @@ public class ParserFacade {
         throws IOException {
         cflags.source_is_utf8 = true;
         cflags.encoding = "utf-8";
-        
+
         BufferedReader bufferedReader = new BufferedReader(reader);
         bufferedReader.mark(MARK_LIMIT);
-        if (findEncoding(bufferedReader) != null)
+        if (findEncoding(bufferedReader) != null) {
             throw new ParseException("encoding declaration in Unicode string");
+        }
         bufferedReader.reset();
 
         return new ExpectedEncodingBufferedReader(bufferedReader, null);
@@ -345,8 +352,9 @@ public class ParserFacade {
             CompilerFlags cflags,
             String filename)
             throws IOException {
-        if (cflags.source_is_utf8)
+        if (cflags.source_is_utf8) {
             return prepBufReader(new StringReader(string), cflags, filename);
+        }
 
         byte[] stringBytes = StringUtil.toBytes(string);
         return prepBufReader(new ByteArrayInputStream(stringBytes), cflags, filename, true, false);

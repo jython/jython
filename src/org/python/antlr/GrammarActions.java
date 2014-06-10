@@ -1,28 +1,18 @@
 package org.python.antlr;
 
-import org.antlr.runtime.Token;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-import org.python.core.Py;
-import org.python.core.PyComplex;
-import org.python.core.PyFloat;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
-import org.python.core.PyString;
-import org.python.core.PyUnicode;
-import org.python.core.codecs;
-import org.python.antlr.ast.alias;
-import org.python.antlr.ast.arguments;
-import org.python.antlr.ast.boolopType;
-import org.python.antlr.ast.cmpopType;
-import org.python.antlr.ast.expr_contextType;
-import org.python.antlr.ast.operatorType;
-import org.python.antlr.ast.unaryopType;
-import org.python.antlr.ast.Context;
-import org.python.antlr.ast.keyword;
+import org.antlr.runtime.Token;
 import org.python.antlr.ast.Attribute;
 import org.python.antlr.ast.BinOp;
 import org.python.antlr.ast.BoolOp;
 import org.python.antlr.ast.Call;
+import org.python.antlr.ast.Context;
 import org.python.antlr.ast.DictComp;
 import org.python.antlr.ast.ExtSlice;
 import org.python.antlr.ast.For;
@@ -34,26 +24,38 @@ import org.python.antlr.ast.Lambda;
 import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Repr;
+import org.python.antlr.ast.SetComp;
 import org.python.antlr.ast.Slice;
+import org.python.antlr.ast.Str;
 import org.python.antlr.ast.TryExcept;
 import org.python.antlr.ast.TryFinally;
 import org.python.antlr.ast.Tuple;
-import org.python.antlr.ast.Repr;
-import org.python.antlr.ast.SetComp;
-import org.python.antlr.ast.Str;
 import org.python.antlr.ast.UnaryOp;
 import org.python.antlr.ast.While;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
+import org.python.antlr.ast.alias;
+import org.python.antlr.ast.arguments;
+import org.python.antlr.ast.boolopType;
+import org.python.antlr.ast.cmpopType;
+import org.python.antlr.ast.expr_contextType;
+import org.python.antlr.ast.keyword;
+import org.python.antlr.ast.operatorType;
+import org.python.antlr.ast.unaryopType;
 import org.python.antlr.base.excepthandler;
 import org.python.antlr.base.expr;
 import org.python.antlr.base.slice;
 import org.python.antlr.base.stmt;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import org.python.core.Py;
+import org.python.core.PyComplex;
+import org.python.core.PyFloat;
+import org.python.core.PyInteger;
+import org.python.core.PyLong;
+import org.python.core.PyString;
+import org.python.core.PyUnicode;
+import org.python.core.codecs;
+import org.python.core.util.StringUtil;
 
 public class GrammarActions {
     private ErrorHandler errorHandler = null;
@@ -183,7 +185,7 @@ public class GrammarActions {
         }
         return result;
     }
-    
+
     List<stmt> makeElse(List elseSuite, PythonTree elif) {
         if (elseSuite != null) {
             return castStmts(elseSuite);
@@ -425,8 +427,9 @@ public class GrammarActions {
         }
         int ndigits = s.length();
         int i=0;
-        while (i < ndigits && s.charAt(i) == '0')
+        while (i < ndigits && s.charAt(i) == '0') {
             i++;
+        }
         if ((ndigits - i) > 11) {
             return Py.newLong(new BigInteger(s, radix));
         }
@@ -449,7 +452,7 @@ public class GrammarActions {
         String getString() {
             return s;
         }
-        
+
         boolean isUnicode() {
             return unicode;
         }
@@ -511,8 +514,10 @@ public class GrammarActions {
         // XXX: No need to re-encode when the encoding is iso-8859-1, but ParserFacade
         // needs to normalize the encoding name
         if (!ustring && encoding != null) {
-            // str with a specified encoding: first re-encode back out
-            string = new PyUnicode(string.substring(start, end)).encode(encoding);
+            // The parser used a non-latin encoding: re-encode chars to bytes.
+            Charset cs = Charset.forName(encoding);
+            ByteBuffer decoded = cs.encode(string.substring(start, end));
+            string = StringUtil.fromBytes(decoded);
             if (!raw) {
                 // Handle escapes in non-raw strs
                 string = PyString.decode_UnicodeEscape(string, 0, string.length(), "strict",
@@ -744,7 +749,7 @@ public class GrammarActions {
         }
         return result;
     }
-    
+
     BoolOp makeBoolOp(Token t, PythonTree left, boolopType op, List right) {
         List values = new ArrayList();
         values.add(left);
@@ -780,7 +785,7 @@ public class GrammarActions {
         }
         return result;
     }
- 
+
     slice castSlice(Object o) {
         if (o instanceof slice) {
             return (slice)o;
