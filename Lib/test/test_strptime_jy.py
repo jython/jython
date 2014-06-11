@@ -22,6 +22,10 @@ class ParsingTests(unittest.TestCase):
         d = strptime('0', '%f')
         self.assertEqual(1900, d.tm_year)
 
+    def test_issue2112(self):
+        d = strptime('1', '%d')
+        self.assertEqual(1900, d.tm_year)
+
 def test_main():
     test_support.run_unittest(
         ParsingTests
