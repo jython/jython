@@ -1,15 +1,18 @@
 package org.python.modules._collections;
 
+import org.python.core.ArgParser;
 import org.python.core.PyIterator;
+import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.core.PyBuiltinCallable;
 import org.python.core.ThreadState;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
@@ -23,18 +26,24 @@ import org.python.expose.MethodType;
  * operations and incur O(n) memory movement costs for pop(0) and insert(0, v) operations which
  * change both the size and position of the underlying data representation.
  * 
- * collections.deque([iterable]) - returns a new deque object initialized left-to-right (using
- * append()) with data from iterable. If iterable is not specified, the new deque is empty.
+ * collections.deque([iterable[, maxlen]]) - returns a new deque object initialized left-to-right
+ * (using append()) with data from iterable. If iterable is not specified, the new deque is empty.
+ * If maxlen is not specified or is None, deques may grow to an arbitrary length. Otherwise, the
+ * deque is bounded to the specified maximum length. Once a bounded length deque is full, when new
+ * items are added, a corresponding number of items are discarded from the opposite end.
  */
 @ExposedType(name = "collections.deque")
 public class PyDeque extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyDeque.class);
 
+    private long state = 0;
     private int size = 0;
 
-    private Node header = new Node(null, null, null); 
-    
+    private int maxlen = -1;
+
+    private Node header = new Node(null, null, null);
+
     public PyDeque() {
         this(TYPE);
     }
@@ -46,41 +55,95 @@ public class PyDeque extends PyObject {
 
     @ExposedNew
     @ExposedMethod
-    final void deque___init__(PyObject[] args, String[] kwds) {
-        if (kwds.length > 0) {
-            throw Py.TypeError("deque() does not take keyword arguments");
+    public synchronized final void deque___init__(PyObject[] args, String[] kwds) {
+        ArgParser ap = new ArgParser("deque", args, kwds, new String[] {"iterable", "maxlen",}, 0);
+
+        PyObject maxlenobj = ap.getPyObject(1, null);
+        if (maxlenobj != null) {
+            if (maxlenobj == Py.None) {
+                maxlen = -1;
+            } else {
+                maxlen = ap.getInt(1);
+                if (maxlen < 0) {
+                    throw Py.ValueError("maxlen must be non-negative");
+                }
+            }
+        } else {
+            maxlen = -1;
         }
-        int nargs = args.length;
-        if (nargs > 1) {
-            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, "deque", 0, 1);
-        } 
-        if (nargs == 0) {
-            return;
+
+        PyObject iterable = ap.getPyObject(0, null);
+        if (iterable != null) {
+            if (size != 0) {
+                // initializing a deque with an iterator when this deque is not empty means that we discard to empty first
+                deque_clear();
+            }
+            deque_extend(iterable);
         }
-        deque_extend(args[0]);
+    }
+
+    /**
+     * If maxlen is not specified or is None, deques may grow to an arbitrary length.
+     * Otherwise, the deque is bounded to the specified maximum length.
+     */
+    @ExposedGet(name = "maxlen")
+    public PyObject getMaxlen() {
+        if (maxlen < 0) {
+            return Py.None;
+        }
+        return Py.newInteger(maxlen);
+    }
+
+    @ExposedSet(name = "maxlen")
+    public void setMaxlen(PyObject o) {
+        // this has to be here because by default, if not defined,
+        // the Jython object model raise a TypeError, where we usually expect
+        // AttributeError here; due to a CPython 2.7 idiosyncracy that has
+        // since been fixed for 3.x in http://bugs.python.org/issue1687163
+        throw Py.AttributeError("attribute 'maxlen' of 'collections.deque' objects is not writable");
     }
 
     /**
      * Add obj to the right side of the deque.
      */	
     @ExposedMethod
-    final void deque_append(PyObject obj) {
-        addBefore(obj, header);		
+    public synchronized final void deque_append(PyObject obj) {
+        if (maxlen >= 0) {
+            assert (size <= maxlen);
+            if (maxlen == 0) {
+                // do nothing; this deque will always be empty
+                return;
+            } else if (size == maxlen) {
+                deque_popleft();
+            }
+        }
+        addBefore(obj, header);
     }
 
     /**
      * Add obj to the left side of the deque.
      */
     @ExposedMethod
-    final void deque_appendleft(PyObject obj) {		
+    public synchronized final void deque_appendleft(PyObject obj) {
+        if (maxlen >= 0) {
+            assert (size <= maxlen);
+            if (maxlen == 0) {
+                // do nothing; this deque will always be empty
+                return;
+            } else if (size == maxlen) {
+                deque_pop();
+            }
+        }
         addBefore(obj, header.right);
     }
 
     private Node addBefore(PyObject obj, Node node) {
+        // should ALWAYS be called inside a synchronized block
         Node newNode = new Node(obj, node, node.left);
         newNode.left.right = newNode;
         newNode.right.left = newNode;
         size++;
+        state++;
         return newNode;
     }
 
@@ -88,7 +151,7 @@ public class PyDeque extends PyObject {
      * Remove all elements from the deque leaving it with length 0.
      */
     @ExposedMethod
-    final void deque_clear() {
+    public synchronized final void deque_clear() {
         Node node = header.right;
         while (node != header) {
             Node right = node.right;
@@ -96,6 +159,7 @@ public class PyDeque extends PyObject {
             node.right = null;
             node.data = null;
             node = right;
+            state++;
         }
         header.right = header.left = header;
         size = 0;
@@ -106,10 +170,15 @@ public class PyDeque extends PyObject {
      * iterable argument.
      */
     @ExposedMethod
-    final void deque_extend(PyObject iterable) {
-        for (PyObject item : iterable.asIterable()) {
-            deque_append(item);			
-        } 
+    public synchronized final void deque_extend(PyObject iterable) {
+        // handle case where iterable == this
+        if (this == iterable) {
+            deque_extend(new PyList(iterable));
+        } else {
+            for (PyObject item : iterable.asIterable()) {
+                deque_append(item);
+            }
+        }
     }
 
     /**
@@ -118,9 +187,14 @@ public class PyDeque extends PyObject {
      * elements in the iterable argument.
      */
     @ExposedMethod
-    final void deque_extendleft(PyObject iterable) {
-        for (PyObject item : iterable.asIterable()) {
-            deque_appendleft(item);
+    public synchronized final void deque_extendleft(PyObject iterable) {
+        // handle case where iterable == this
+        if (this == iterable) {
+            deque_extendleft(new PyList(iterable));
+        } else {
+            for (PyObject item : iterable.asIterable()) {
+                deque_appendleft(item);
+            }
         }
     }
 
@@ -129,7 +203,7 @@ public class PyDeque extends PyObject {
      * elements are present, raises an IndexError.
      */
     @ExposedMethod
-    final PyObject deque_pop() {
+    public synchronized final PyObject deque_pop() {
         return removeNode(header.left);
     }
 
@@ -138,11 +212,12 @@ public class PyDeque extends PyObject {
      * elements are present, raises an IndexError.
      */
     @ExposedMethod
-    final PyObject deque_popleft() {
+    public synchronized final PyObject deque_popleft() {
         return removeNode(header.right);
     }
 
     private PyObject removeNode(Node node) {
+        // should ALWAYS be called inside a synchronized block
         if (node == header) {
             throw Py.IndexError("pop from an empty deque");
         }
@@ -153,6 +228,7 @@ public class PyDeque extends PyObject {
         node.left = null;
         node.data = null;
         size--;
+        state++;
         return obj;
     } 
 
@@ -161,15 +237,16 @@ public class PyDeque extends PyObject {
      * ValueError.
      */
     @ExposedMethod
-    final PyObject deque_remove(PyObject value) {
+    public synchronized final PyObject deque_remove(PyObject value) {
         int n = size;
         Node tmp = header.right;
         boolean match = false;
+        long startState = state;
         for (int i = 0; i < n; i++) {
-            if (tmp.data.equals(value)) { 
+            if (tmp.data.equals(value)) {
                 match = true;
             }
-            if (n != size) { 
+            if (startState != state) {
                 throw Py.IndexError("deque mutated during remove().");
             }
             if (match) {
@@ -181,75 +258,131 @@ public class PyDeque extends PyObject {
     }
 
     /**
+     * Count the number of deque elements equal to x.
+     */
+    @ExposedMethod
+    public synchronized final PyObject deque_count(PyObject x) {
+        int n = size;
+        int count = 0;
+        Node tmp = header.right;
+        long startState = state;
+        for (int i = 0; i < n; i++) {
+            if (tmp.data.equals(x)) {
+                count++;
+            }
+            if (startState != state) {
+                throw Py.RuntimeError("deque mutated during count().");
+            }
+            tmp = tmp.right;
+        }
+        return Py.newInteger(count);
+    }
+
+    /**
      * Rotate the deque n steps to the right. If n is negative, rotate to the 
      * left. Rotating one step to the right is equivalent to: d.appendleft(d.pop()).
      */
     @ExposedMethod(defaults = {"1"})
-    final void deque_rotate(int steps) {
+    public synchronized final void deque_rotate(int steps) {
         if (size == 0) {
             return;
         }
 
-        int halfsize = (size + 1) >> 1; 
+        int halfsize = (size + 1) >> 1;
         if (steps > halfsize || steps < -halfsize) {
             steps %= size;
-            if (steps > halfsize) { 
+            if (steps > halfsize) {
                 steps -= size;
             } else if (steps < -halfsize) {
                 steps += size;
             }
         }
 
-        //rotate right 
+        //rotate right
         for (int i = 0; i < steps; i++) {
             deque_appendleft(deque_pop());
-        } 
+        }
         //rotate left
         for (int i = 0; i > steps; i--) {
             deque_append(deque_popleft());
-        } 
+        }
     }
 
+    /**
+     * Reverse the elements of the deque in-place and then return None.
+     * @return Py.None
+     */
+    @ExposedMethod
+    public synchronized final PyObject deque_reverse() {
+        Node headerRight = header.right;
+        Node headerLeft = header.left;
+        Node node = header.right;
+        while (node != header) {
+            Node right = node.right;
+            Node left = node.left;
+            node.right = left;
+            node.left = right;
+            node = right;
+        }
+        header.right = headerLeft;
+        header.left = headerRight;
+        state++;
+        return Py.None;
+    }
+
+    @Override
     public String toString() {
         return deque_toString();
     }
 
     @ExposedMethod(names = "__repr__")
-    final String deque_toString() {
+    synchronized final String deque_toString() {
         ThreadState ts = Py.getThreadState();
         if (!ts.enterRepr(this)) { 
             return "[...]";
         }
+        long startState = state;
         StringBuilder buf = new StringBuilder("deque").append("([");
         for (Node tmp = header.right; tmp != header; tmp = tmp.right) {
             buf.append(tmp.data.__repr__().toString());
+            if (startState != state) {
+                throw Py.RuntimeError("deque mutated during iteration.");
+            }
             if (tmp.right != header) {
                 buf.append(", ");
             }
         }
-        buf.append("])");
+        buf.append("]");
+        if (maxlen >= 0) {
+            buf.append(", maxlen=");
+            buf.append(maxlen);
+        }
+        buf.append(")");
         ts.exitRepr(this);
         return buf.toString();
     }
 
+    @Override
     public int __len__() {
         return deque___len__();
     }
 
     @ExposedMethod
-    final int deque___len__() {
+    synchronized final int deque___len__() {
         return size;
     }
 
+    @Override
     public boolean __nonzero__() {
         return deque___nonzero__();
     }
 
     @ExposedMethod
-    final boolean deque___nonzero__() {
+    synchronized final boolean deque___nonzero__() {
         return size != 0;
     }
 
+    @Override
     public PyObject __finditem__(PyObject key) {
         try {
             return deque___getitem__(key);
@@ -262,31 +395,34 @@ public class PyDeque extends PyObject {
     }
 
     @ExposedMethod
-    final PyObject deque___getitem__(PyObject index) {
-        return getNode(index).data;				
-    }	
+    synchronized final PyObject deque___getitem__(PyObject index) {
+        return getNode(index).data;
+    }
 
+    @Override
     public void __setitem__(PyObject index, PyObject value) {
         deque___setitem__(index, value);
     }
 
     @ExposedMethod
-    final void deque___setitem__(PyObject index, PyObject value) {
+    synchronized final void deque___setitem__(PyObject index, PyObject value) {
         Node node = getNode(index).right;
         removeNode(node.left);
         addBefore(value, node);
-    }	
+    }
 
+    @Override
     public void __delitem__(PyObject key) {
         deque___delitem__(key);
     }
 
     @ExposedMethod
-    final void deque___delitem__(PyObject key) {
-        removeNode(getNode(key));
+    synchronized final void deque___delitem__(PyObject key) {
+            removeNode(getNode(key));
     }
 
     private Node getNode(PyObject index) {
+        // must ALWAYS be called inside a synchronized block
         int pos = 0;
         if (!index.isIndex()) {
             throw Py.TypeError(String.format("sequence index must be integer, not '%.200s'",
@@ -314,6 +450,7 @@ public class PyDeque extends PyObject {
         return tmp;
     }
 
+    @Override
     public PyObject __iter__() {
         return deque___iter__();
     }
@@ -323,6 +460,7 @@ public class PyDeque extends PyObject {
         return new PyDequeIter();
     }
 
+    @Override
     public synchronized PyObject __eq__(PyObject o) {
         return deque___eq__(o);
     }
@@ -341,6 +479,7 @@ public class PyDeque extends PyObject {
         return (i < 0) ? Py.True : Py.False;
     }
 
+    @Override
     public synchronized PyObject __ne__(PyObject o) {
         return deque___ne__(o);
     }
@@ -359,6 +498,7 @@ public class PyDeque extends PyObject {
         return (i < 0) ? Py.False : Py.True;
     }
 
+    @Override
     public synchronized PyObject __lt__(PyObject o) {
         return deque___lt__(o);
     }
@@ -375,6 +515,7 @@ public class PyDeque extends PyObject {
         return __finditem__(i)._lt(o.__finditem__(i));
     }
 
+    @Override
     public synchronized PyObject __le__(PyObject o) {
         return deque___le__(o);
     }
@@ -391,6 +532,7 @@ public class PyDeque extends PyObject {
         return __finditem__(i)._le(o.__finditem__(i));
     }
 
+    @Override
     public synchronized PyObject __gt__(PyObject o) {
         return deque___gt__(o);
     }
@@ -407,6 +549,7 @@ public class PyDeque extends PyObject {
         return __finditem__(i)._gt(o.__finditem__(i));
     }
 
+    @Override
     public synchronized PyObject __ge__(PyObject o) {
         return deque___ge__(o);
     }
@@ -421,6 +564,17 @@ public class PyDeque extends PyObject {
             return (i == -3 || i == -2) ? Py.True : Py.False;
         }
         return __finditem__(i)._ge(o.__finditem__(i));
+    }
+
+    @Override
+    public synchronized PyObject __iadd__(PyObject o) {
+        return deque___iadd__(o);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY)
+    final synchronized PyObject deque___iadd__(PyObject o) {
+        deque_extend(o);
+        return this;
     }
 
     // Return value >= 0 is the index where the sequences differs.
@@ -445,6 +599,7 @@ public class PyDeque extends PyObject {
         return (ol1 < ol2) ? -1 : -3;
     }
 
+    @Override
     public int hashCode() {
         return deque_hashCode();
     }
@@ -454,6 +609,7 @@ public class PyDeque extends PyObject {
         throw Py.TypeError("deque objects are unhashable");
     }
 
+    @Override
     public PyObject __reduce__() {
         return deque___reduce__();
     }
@@ -499,21 +655,24 @@ public class PyDeque extends PyObject {
     private class PyDequeIter extends PyIterator {
 
         private Node lastReturned = header;
-        private int itersize;
+        private long startState;
 
         public PyDequeIter() {
-            itersize = size;
+            startState = state;
         }
 
-        public PyObject __iternext__() {        	   		
-            if (itersize != size) { 
-                throw Py.RuntimeError("deque changed size during iteration");
+        @Override
+        public PyObject __iternext__() {
+            synchronized (PyDeque.this) {
+                if (startState != state) {
+                    throw Py.RuntimeError("deque changed size during iteration");
+                }
+                if (lastReturned.right != header) {
+                    lastReturned = lastReturned.right;
+                    return lastReturned.data;
+                }
+                return null;
             }
-            if (lastReturned.right != header) {
-                lastReturned = lastReturned.right;
-                return lastReturned.data;
-            }
-            return null;
         }
     }
 }
