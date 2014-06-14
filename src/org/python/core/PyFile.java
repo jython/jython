@@ -478,13 +478,9 @@ public class PyFile extends PyObject {
 
         } else if (obj instanceof BufferProtocol) {
             // Try to get a byte-oriented buffer
-            PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO);
-            try {
+            try (PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO)) {
                 // ... and treat those bytes as a String
                 return buf.toString();
-            } finally {
-                // We should release the buffer
-                buf.release();
             }
         }
 

@@ -5,7 +5,7 @@ package org.python.core;
  * the counterpart of the CPython <code>Py_buffer</code> struct. Several concrete types implement
  * this interface in order to provide tailored support for different storage organisations.
  */
-public interface PyBuffer extends PyBUF, BufferProtocol {
+public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
 
     /*
      * The different behaviours required as the actual structure of the buffer changes (from one
@@ -182,6 +182,10 @@ public interface PyBuffer extends PyBUF, BufferProtocol {
      * more than one call to <code>release</code> for a single call to <code>getBuffer</code>.
      */
     void release();
+
+    /** An alias for {@link #release()} to satisfy {@link AutoCloseable}. */
+    @Override
+    void close();
 
     /**
      * True only if the buffer has been released with (the required number of calls to)

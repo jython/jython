@@ -701,8 +701,13 @@ public class PyBufferTest extends TestCase {
 
         Set<PyBuffer> uniqueBuffers = new HashSet<PyBuffer>();
 
+        // Test a balanced sequence of acquire and release using try-with-resources
         for (BufferTestPair test : buffersToRead) {
-            // Test a pattern of acquire and release with one more release than acquire
+            doTestTryWithResources(test);
+        }
+
+        // Now test a pattern of acquire and release with one more release than acquire
+        for (BufferTestPair test : buffersToRead) {
             doTestRelease(test);
             uniqueBuffers.add(test.view);
         }
@@ -718,6 +723,28 @@ public class PyBufferTest extends TestCase {
                 doTestGetAfterRelease(test);
             }
         }
+
+    }
+
+    /**
+     * Exercise try-with-resources on one BufferTestPair.
+     */
+    private void doTestTryWithResources(BufferTestPair test) {
+
+        if (verbosity > 0) {
+            System.out.println("try with resources: " + test);
+        }
+        int flags = PyBUF.STRIDES | PyBUF.FORMAT;
+        BufferProtocol sub = test.subject;
+
+        // The object will be exporting test.view and N other views we don't know about
+        try (PyBuffer c = sub.getBuffer(flags)) {   // = N+1 exports
+            try (PyBuffer b = sub.getBuffer(PyBUF.FULL_RO); PyBuffer d =c.getBuffer(flags)) {
+                checkExporting(sub);// = N+3 exports
+            }
+            checkExporting(sub);                    // = N+1 exports
+        }
+        checkExporting(sub);                        // = N export
     }
 
     /**

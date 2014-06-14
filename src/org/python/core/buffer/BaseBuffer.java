@@ -522,6 +522,11 @@ public abstract class BaseBuffer implements PyBuffer {
     }
 
     @Override
+    public void close() {
+        release();
+    }
+
+    @Override
     public boolean isReleased() {
         return exports <= 0;
     }
