@@ -1258,8 +1258,8 @@ class Str2StrTest(unittest.TestCase):
 all_unicode_encodings = [
     "ascii",
     "base64_codec",
-# FIXME: Jython issue 1066:    "big5",
-# FIXME: Jython issue 1066:    "big5hkscs",
+    "big5",
+    "big5hkscs",
     "charmap",
     "cp037",
     "cp1006",
@@ -1296,27 +1296,27 @@ all_unicode_encodings = [
     "cp869",
     "cp874",
     "cp875",
-# FIXME: Jython issue 1066:    "cp932",
-# FIXME: Jython issue 1066:    "cp949",
-# FIXME: Jython issue 1066:    "cp950",
-# FIXME: Jython issue 1066:    "euc_jis_2004",
-# FIXME: Jython issue 1066:    'euc_jisx0213',
-# FIXME: Jython issue 1066:    'euc_jp',
-# FIXME: Jython issue 1066:    'euc_kr',
-# FIXME: Jython issue 1066:    'gb18030',
-# FIXME: Jython issue 1066:    'gb2312',
-# FIXME: Jython issue 1066:    'gbk',
+    "cp932",
+    "cp949",
+    "cp950",
+    # "euc_jis_2004",  # Not available on Java
+    # 'euc_jisx0213',  # Not available on Java
+    'euc_jp',
+    'euc_kr',
+    'gb18030',
+    'gb2312',
+    'gbk',
     "hex_codec",
     "hp_roman8",
-# FIXME: Jython issue 1066:    'hz',
-# FIXME: Jython issue 1066:    "idna",
-# FIXME: Jython issue 1066:    'iso2022_jp',
-# FIXME: Jython issue 1066:    'iso2022_jp_1',
-# FIXME: Jython issue 1066:    'iso2022_jp_2',
-# FIXME: Jython issue 1066:    'iso2022_jp_2004',
-# FIXME: Jython issue 1066:    'iso2022_jp_3',
-# FIXME: Jython issue 1066:    'iso2022_jp_ext',
-# FIXME: Jython issue 1066:    'iso2022_kr',
+    # 'hz', # Not available on Java
+    "idna",
+    'iso2022_jp',
+    # 'iso2022_jp_1', # Not available on Java
+    'iso2022_jp_2',
+    # 'iso2022_jp_2004', # Not available on Java
+    # 'iso2022_jp_3', # Not available on Java
+    # 'iso2022_jp_ext', # Not available on Java
+    'iso2022_kr',
     "iso8859_1",
     "iso8859_10",
     "iso8859_11",
@@ -1332,7 +1332,7 @@ all_unicode_encodings = [
     "iso8859_7",
     "iso8859_8",
     "iso8859_9",
-# FIXME: Jython issue 1066:    'johab',
+    'johab',
     "koi8_r",
     "koi8_u",
     "latin_1",
@@ -1347,9 +1347,9 @@ all_unicode_encodings = [
     "punycode",
     "raw_unicode_escape",
     "rot_13",
-# FIXME: Jython issue 1066:    'shift_jis',
-# FIXME: Jython issue 1066:    'shift_jis_2004',
-# FIXME: Jython issue 1066:    'shift_jisx0213',
+    "shift_jis",
+    #'shift_jis_2004', # Not available on Java
+    'shift_jisx0213',
     "tis_620",
     "unicode_escape",
     "unicode_internal",
@@ -1499,11 +1499,14 @@ class BasicUnicodeTest(unittest.TestCase):
                         self.assertEqual(decodedresult, s, "%r != %r (encoding=%r)" % (decodedresult, s, encoding))
 
     def test_seek(self):
-        # all codecs should be able to encode these
-        s = u"%s\n%s\n" % (100*u"abc123", 100*u"def456")
+        # all codecs - except idna on Java - should be able to encode these
+        s1 = u"%s\n%s\n" % (100*u"abc123", 100*u"def456")
         for encoding in all_unicode_encodings:
+            s = s1
             if encoding in broken_unicode_with_streams:
                 continue
+            if encoding == "idna":
+                s =  u"%s\n%s\n" % (5*u"abc123", 5*u"def456") # idna encoder rejects as being too long
             reader = codecs.getreader(encoding)(StringIO.StringIO(s.encode(encoding)))
             for t in xrange(5):
                 # Test that calling seek resets the internal codec state and buffers
