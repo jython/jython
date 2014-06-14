@@ -548,24 +548,25 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
     private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
 
-        PyBuffer view = value.getBuffer(PyBUF.FULL_RO);
+        try (PyBuffer view = value.getBuffer(PyBUF.FULL_RO)) {
 
-        int len = view.getLen();
+            int len = view.getLen();
 
-        if (step == 1) {
-            // Delete this[start:stop] and open a space of the right size
-            storageReplace(start, stop - start, len);
-            view.copyTo(storage, start + offset);
+            if (step == 1) {
+                // Delete this[start:stop] and open a space of the right size
+                storageReplace(start, stop - start, len);
+                view.copyTo(storage, start + offset);
 
-        } else {
-            // This is an extended slice which means we are replacing elements
-            int n = sliceLength(start, stop, step);
-            if (n != len) {
-                throw SliceSizeError("bytes", len, n);
-            }
+            } else {
+                // This is an extended slice which means we are replacing elements
+                int n = sliceLength(start, stop, step);
+                if (n != len) {
+                    throw SliceSizeError("bytes", len, n);
+                }
 
-            for (int io = start + offset, j = 0; j < n; io += step, j++) {
-                storage[io] = view.byteAt(j);    // Assign this[i] = value[j]
+                for (int io = start + offset, j = 0; j < n; io += step, j++) {
+                    storage[io] = view.byteAt(j);    // Assign this[i] = value[j]
+                }
             }
         }
     }
@@ -2021,66 +2022,78 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.bytearray_translate_doc)
     final PyByteArray bytearray_translate(PyObject table, PyObject deletechars) {
 
-        // Normalise the translation table to a View
+        // Work with the translation table (if there is one) as a PyBuffer view.
+        try (PyBuffer tab = getTranslationTable(table)) {
+
+            // Accumulate the result here
+            PyByteArray result = new PyByteArray();
+
+            // There are 4 cases depending on presence/absence of table and deletechars
+
+            if (deletechars != null) {
+
+                // Work with the deletion characters as a buffer too.
+                try (PyBuffer d = getViewOrError(deletechars)) {
+                    // Use a ByteSet to express which bytes to delete
+                    ByteSet del = new ByteSet(d);
+                    int limit = offset + size;
+                    if (tab == null) {
+                        // No translation table, so we're just copying with omissions
+                        for (int i = offset; i < limit; i++) {
+                            int b = storage[i] & 0xff;
+                            if (!del.contains(b)) {
+                                result.append((byte)b);
+                            }
+                        }
+                    } else {
+                        // Loop over this byte array and write translated bytes to the result
+                        for (int i = offset; i < limit; i++) {
+                            int b = storage[i] & 0xff;
+                            if (!del.contains(b)) {
+                                result.append(tab.byteAt(b));
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                // No deletion set.
+                if (tab == null) {
+                    // ... and no translation table either: just copy
+                    result.extend(this);
+                } else {
+                    int limit = offset + size;
+                    // Loop over this byte array and write translated bytes to the result
+                    for (int i = offset; i < limit; i++) {
+                        int b = storage[i] & 0xff;
+                        result.append(tab.byteAt(b));
+                    }
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /**
+     * Return a {@link PyBuffer} representing a translation table, or raise an exception if it is
+     * the wrong size. The caller is responsible for calling {@link PyBuffer#release()} on any
+     * returned buffer.
+     *
+     * @param table the translation table (or <code>null</code> or {@link PyNone})
+     * @return the buffer view of the table or null if there is no table
+     * @throws PyException if the table is not exacltly 256 bytes long
+     */
+    private PyBuffer getTranslationTable(PyObject table) throws PyException {
         PyBuffer tab = null;
+        // Normalise the translation table to a View (if there is one).
         if (table != null && table != Py.None) {
             tab = getViewOrError(table);
             if (tab.getLen() != 256) {
                 throw Py.ValueError("translation table must be 256 bytes long");
             }
         }
-
-        // Accumulate the result here
-        PyByteArray result = new PyByteArray();
-
-        // There are 4 cases depending on presence/absence of table and deletechars
-
-        if (deletechars != null) {
-
-            // Use a ByteSet to express which bytes to delete
-            ByteSet del;
-            del = new ByteSet(getViewOrError(deletechars));
-
-            // Now, loop over this byte array and write translated bytes to the result
-            int limit = offset + size;
-
-            if (tab != null) {
-                for (int i = offset; i < limit; i++) {
-                    int b = storage[i] & 0xff;
-                    if (!del.contains(b)) {
-                        result.append(tab.byteAt(b));
-                    }
-                }
-
-            } else {
-                // No translation table
-                for (int i = offset; i < limit; i++) {
-                    int b = storage[i] & 0xff;
-                    if (!del.contains(b)) {
-                        result.append((byte)b);
-                    }
-                }
-            }
-
-        } else {
-            // No deletion set.
-
-            // Now, loop over this byte array and write translated bytes to the result
-            int limit = offset + size;
-            if (tab != null) {
-                for (int i = offset; i < limit; i++) {
-                    int b = storage[i] & 0xff;
-                    result.append(tab.byteAt(b));
-                }
-
-            } else {
-                // No translation table or deletion set: just copy
-                result.extend(this);
-            }
-
-        }
-
-        return result;
+        return tab;
     }
 
     /**

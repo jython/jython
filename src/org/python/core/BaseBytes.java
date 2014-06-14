@@ -345,10 +345,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     protected void init(BufferProtocol value) throws PyException {
         // Get the buffer view
-        PyBuffer view = value.getBuffer(PyBUF.FULL_RO);
-        // Create storage for the bytes and have the view drop them in
-        newStorage(view.getLen());
-        view.copyTo(storage, offset);
+        try (PyBuffer view = value.getBuffer(PyBUF.FULL_RO)) {
+            // Create storage for the bytes and have the view drop them in
+            newStorage(view.getLen());
+            view.copyTo(storage, offset);
+        }
     }
 
     /**
@@ -834,21 +835,16 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return 0;
 
         } else {
-
             // Try to get a byte-oriented view
-            PyBuffer bv = getView(b);
+            try (PyBuffer bv = getView(b)) {
 
-            if (bv == null) {
-                // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
-                return -2;
+                if (bv == null) {
+                    // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
+                    return -2;
 
-            } else {
-                try {
+                } else {
                     // Compare this with other object viewed as a buffer
                     return compare(this, bv);
-                } finally {
-                    // Must alsways let go of the buffer
-                    bv.release();
                 }
             }
         }
@@ -871,14 +867,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         } else {
 
             // Try to get a byte-oriented view
-            PyBuffer bv = getView(b);
+            try (PyBuffer bv = getView(b)) {
 
-            if (bv == null) {
-                // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
-                return -2;
+                if (bv == null) {
+                    // Signifies a type mis-match. See PyObject._cmp_unsafe() and related code.
+                    return -2;
 
-            } else {
-                try {
+                } else {
                     if (bv.getLen() != size) {
                         // Different size: can't be equal, and we don't care which is bigger
                         return 1;
@@ -886,9 +881,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                         // Compare this with other object viewed as a buffer
                         return compare(this, bv);
                     }
-                } finally {
-                    // Must alsways let go of the buffer
-                    bv.release();
                 }
             }
         }
@@ -1017,13 +1009,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return index(b) >= 0;
         } else {
             // Caller is treating this as a byte-string and looking for substring 'target'
-            PyBuffer targetView = getViewOrError(target);
-            try {
+            try (PyBuffer targetView = getViewOrError(target)) {
                 Finder finder = new Finder(targetView);
                 finder.setText(this);
                 return finder.nextIndex() >= 0;
-            } finally {
-                targetView.release();
             }
         }
     }
@@ -1080,9 +1069,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     private boolean match(PyObject target, int pos, int n, boolean endswith) {
 
         // Error if not something we can treat as a view of bytes
-        PyBuffer vt = getViewOrError(target);
-
-        try {
+        try (PyBuffer vt = getViewOrError(target)) {
             int j = 0, len = vt.getLen();
 
             if (!endswith) {
@@ -1106,10 +1093,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 }
             }
             return true; // They must all have matched
-
-        } finally {
-            // Let go of the buffer we acquired
-            vt.release();
         }
     }
 
@@ -1818,8 +1801,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return count of occurrences of sub within this byte array
      */
     final int basebytes_count(PyObject sub, PyObject ostart, PyObject oend) {
-        PyBuffer vsub = getViewOrError(sub);
-        try {
+        try (PyBuffer vsub = getViewOrError(sub)) {
             Finder finder = new Finder(vsub);
 
             // Convert [ostart:oend] to integers
@@ -1827,8 +1809,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
             // Make this slice the thing we count within.
             return finder.count(storage, offset + index[0], index[3]);
-        } finally {
-            vsub.release();
         }
     }
 
@@ -1846,12 +1826,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_find(PyObject sub, PyObject ostart, PyObject oend) {
-        PyBuffer vsub = getViewOrError(sub);
-        try {
+        try (PyBuffer vsub = getViewOrError(sub)) {
             Finder finder = new Finder(vsub);
             return find(finder, ostart, oend);
-        } finally {
-            vsub.release();
         }
     }
 
@@ -2026,9 +2003,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyTuple basebytes_partition(PyObject sep) {
 
         // View the separator as a byte array (or error if we can't)
-        PyBuffer separator = getViewOrError(sep);
-
-        try {
+        try (PyBuffer separator = getViewOrError(sep)) {
             // Create a Finder for the separator and set it on this byte array
             int n = checkForEmptySeparator(separator);
             Finder finder = new Finder(separator);
@@ -2043,8 +2018,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 // Not found: choose values leading to ([0:size], '', '')
                 return partition(size, size);
             }
-        } finally {
-            separator.release();
         }
     }
 
@@ -2080,12 +2053,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @return index of start of occurrence of sub within this byte array
      */
     final int basebytes_rfind(PyObject sub, PyObject ostart, PyObject oend) {
-        PyBuffer vsub = getViewOrError(sub);
-        try {
+        try (PyBuffer vsub = getViewOrError(sub)) {
             Finder finder = new ReverseFinder(vsub);
             return find(finder, ostart, oend);
-        } finally {
-            vsub.release();
         }
     }
 
@@ -2128,9 +2098,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyByteArray basebytes_replace(PyObject oldB, PyObject newB, int maxcount) {
 
         // View the to and from as byte arrays (or error if we can't)
-        PyBuffer to = getViewOrError(newB), from = null;
-        try {
-            from = getViewOrError(oldB);
+        try (PyBuffer to = getViewOrError(newB); PyBuffer from = getViewOrError(oldB)) {
             /*
              * The logic of the first section is copied exactly from CPython in order to get the
              * same behaviour. The "headline" description of replace is simple enough but the corner
@@ -2183,16 +2151,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             } else {
                 // Otherwise use the generic algorithm
                 return replace_substring(from, to, maxcount);
-            }
-
-        } finally {
-            /*
-             * Release the buffers we acquired: there must be a to buffer and there might be a from
-             * buffer.
-             */
-            to.release();
-            if (from != null) {
-                from.release();
             }
         }
     }
@@ -2475,8 +2433,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyTuple basebytes_rpartition(PyObject sep) {
 
         // View the separator as a byte array (or error if we can't)
-        PyBuffer separator = getViewOrError(sep);
-        try {
+        try (PyBuffer separator = getViewOrError(sep)) {
             // Create a Finder for the separtor and set it on this byte array
             int n = checkForEmptySeparator(separator);
             Finder finder = new ReverseFinder(separator);
@@ -2491,8 +2448,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 // Not found: choose values leading to ('', '', [0:size])
                 return partition(0, 0);
             }
-        } finally {
-            separator.release();
         }
     }
 
@@ -2590,9 +2545,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyList basebytes_rsplit_explicit(PyObject sep, int maxsplit) {
 
         // The separator may be presented as anything viewable as bytes
-        PyBuffer separator = getViewOrError(sep);
-
-        try {
+        try (PyBuffer separator = getViewOrError(sep)) {
             int n = checkForEmptySeparator(separator);
 
             PyList result = new PyList();
@@ -2627,8 +2580,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 result.add(0, word);
             }
             return result;
-        } finally {
-            separator.release();
         }
     }
 
@@ -2794,8 +2745,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final synchronized PyList basebytes_split_explicit(PyObject sep, int maxsplit) {
 
         // The separator may be presented as anything viewable as bytes
-        PyBuffer separator = getViewOrError(sep);
-        try {
+        try (PyBuffer separator = getViewOrError(sep)) {
             checkForEmptySeparator(separator);
 
             PyList result = new PyList();
@@ -2821,8 +2771,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             // Append the remaining unsplit text
             result.append(getslice(p - offset, size));
             return result;
-        } finally {
-            separator.release();
         }
     }
 

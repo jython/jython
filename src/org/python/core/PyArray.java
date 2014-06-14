@@ -1131,8 +1131,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
 
             } else {
                 // Access the bytes
-                PyBuffer pybuf = ((BufferProtocol)input).getBuffer(PyBUF.STRIDED_RO);
-                try {
+                try (PyBuffer pybuf = ((BufferProtocol)input).getBuffer(PyBUF.STRIDED_RO)) {
                     // Provide argument as stream of bytes for fromstream method
                     if (pybuf.getNdim() == 1) {
                         if (pybuf.getStrides()[0] == 1) {
@@ -1149,8 +1148,6 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                         // Currently don't support n-dimensional sources
                         throw Py.ValueError("multi-dimensional buffer not supported");
                     }
-                } finally {
-                    pybuf.release();
                 }
             }
 

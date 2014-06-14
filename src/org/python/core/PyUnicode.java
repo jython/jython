@@ -443,11 +443,8 @@ public class PyUnicode extends PyString implements Iterable {
             return (PyUnicode)o;
         } else if (o instanceof BufferProtocol) {
             // PyString or PyByteArray, PyMemoryView, Py2kBuffer ...
-            PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO);
-            try {
+            try (PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO)) {
                 return new PyUnicode(buf.toString());
-            } finally {
-                buf.release();
             }
         } else {
             // o is some type not allowed:
