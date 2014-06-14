@@ -374,27 +374,18 @@ def bind_port(sock, host=HOST):
     from bind()'ing to our host/port for the duration of the test.
     """
     if is_jython:
-        # Find some random ports that hopefully no one is listening on.
-        # Ideally each test would clean up after itself and not continue
-        # listening on any ports.  However, this isn't the case.  The last port
-        # (0) is a stop-gap that asks the O/S to assign a port.  Whenever the
-        # warning message below is printed, the test that is listening on the
-        # port should be fixed to close the socket at the end of the test.
-        # Another reason why we can't use a port is another process (possibly
-        # another instance of the test suite) is using the same port.
-
-        for port in [54321, 9907, 10243, 32999, 0]:
-            try:
-                sock.bind((host, port))
-                if port == 0:
-                    port = sock.getsockname()[1]
-                return port
-            except socket.error, (err, msg):
-                if err != errno.EADDRINUSE:
-                    raise
-                print >>sys.__stderr__, \
-                    '  WARNING: failed to listen on port %d, trying another' % port
-        raise TestFailed, 'unable to find port to listen on'
+        # Late binding of the jython socket implementation to a
+        # ServerSocketChannel or SocketChannel means that it's not possible to
+        # get the port until a call to connect() or listen(). Hence why a new
+        # socket is created and listen() is called on it.
+        tempsock = socket.socket(sock.family, sock.type)
+        tempsock.bind((host, 0))
+        tempsock.listen(1)
+        port = tempsock.getsockname()[1]
+        tempsock.close()
+        del tempsock
+        sock.bind((host, port))
+        return port
 
     elif sock.family == socket.AF_INET and sock.type == socket.SOCK_STREAM:
         if hasattr(socket, 'SO_REUSEADDR'):
