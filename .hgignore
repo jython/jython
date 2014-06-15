@@ -9,6 +9,7 @@ syntax: glob
 \#*
 *~
 # IntelliJ files
+*.eml
 *.ipr
 *.iml
 *.iws
