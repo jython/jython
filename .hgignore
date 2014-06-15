@@ -15,11 +15,14 @@ syntax: glob
 *.iws
 .idea/*
 
+# Eclipse files
+.classpath
+.externalToolBuilders/*
+.project
+.pydevproject
+
 .AppleDouble
 .DS_Store
-.classpath
-.externalToolBuilders
-.project
 .settings
 __pycache__
 ant.properties
