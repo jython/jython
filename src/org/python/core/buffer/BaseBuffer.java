@@ -662,10 +662,6 @@ public abstract class BaseBuffer implements PyBuffer {
 
         if ((syndrome & ND) != 0) {
             return bufferRequires("shape array");
-        } else if ((syndrome & STRIDES) != 0) {
-            return bufferRequires("strides array");
-        } else if ((syndrome & INDIRECT) != 0) {
-            return bufferRequires("suboffsets array");
         } else if ((syndrome & WRITABLE) != 0) {
             return bufferIsNot("writable");
         } else if ((syndrome & C_CONTIGUOUS) != 0) {
@@ -674,6 +670,10 @@ public abstract class BaseBuffer implements PyBuffer {
             return bufferIsNot("Fortran-contiguous");
         } else if ((syndrome & ANY_CONTIGUOUS) != 0) {
             return bufferIsNot("contiguous");
+        } else if ((syndrome & STRIDES) != 0) {
+            return bufferRequires("strides array");
+        } else if ((syndrome & INDIRECT) != 0) {
+            return bufferRequires("suboffsets array");
         } else {
             // Catch-all error (never in practice if this method is complete)
             return bufferIsNot("capable of matching request");

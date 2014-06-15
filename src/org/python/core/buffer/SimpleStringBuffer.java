@@ -108,11 +108,12 @@ public class SimpleStringBuffer extends SimpleBuffer {
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
         if (stride == 1) {
-            // Unstrided slice of simple buffer is itself simple
+            // Unstrided slice of a SimpleStringBuffer is itself a SimpleStringBuffer.
             return getBufferSlice(flags, start, length);
         } else {
-            // Force creation of the actual byte buffer be a SimpleBuffer
+            // Force creation of the actual byte array from the String.
             getBuf();
+            // Now we are effectively a SimpleBuffer, return the strided view.
             return super.getBufferSlice(flags, start, length, stride);
         }
     }

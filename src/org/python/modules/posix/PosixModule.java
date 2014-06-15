@@ -1,9 +1,6 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
-import jnr.constants.Constant;
-import jnr.constants.platform.Errno;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -20,13 +17,19 @@ import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
 
+import jnr.constants.Constant;
+import jnr.constants.platform.Errno;
 import jnr.posix.FileStat;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.util.Platform;
 
+import org.python.core.BufferProtocol;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
+import org.python.core.PyBUF;
+import org.python.core.PyBuffer;
+import org.python.core.PyBuffer.Pointer;
 import org.python.core.PyBuiltinFunctionNarrow;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -39,9 +42,9 @@ import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.imp;
-import org.python.core.io.IOBase;
 import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
+import org.python.core.io.IOBase;
 import org.python.core.io.RawIOBase;
 import org.python.core.util.StringUtil;
 
@@ -818,14 +821,21 @@ public class PosixModule implements ClassDictInit {
         return new PyTuple(Py.newInteger(pid), Py.newInteger(status[0]));
     }
 
-    public static PyString __doc__write = new PyString(
-        "write(fd, string) -> byteswritten\n\n" +
-        "Write a string to a file descriptor.");
-    public static int write(PyObject fd, String string) {
-        try {
-            return FileDescriptors.get(fd).write(ByteBuffer.wrap(StringUtil.toBytes(string)));
-        } catch (PyException pye) {
-            throw badFD();
+    public static PyString __doc__write = new PyString("write(fd, string) -> byteswritten\n\n"
+            + "Write a string to a file descriptor.");
+    public static int write(PyObject fd, BufferProtocol bytes) {
+        // Get a buffer view: we can cope with N-dimensional data, but not strided data.
+        try (PyBuffer buf = bytes.getBuffer(PyBUF.ND)) {
+            // Get the array and offset of the first real byte.
+            Pointer p = buf.getBuf();
+            // Make a ByteBuffer of that array, setting the position and limit to the real data.
+            ByteBuffer bb = ByteBuffer.wrap(p.storage, p.offset, buf.getLen());
+            try {
+                // Write the data (returning the count of bytes).
+                return FileDescriptors.get(fd).write(bb);
+            } catch (PyException pye) {
+                throw badFD();
+            }
         }
     }
 
