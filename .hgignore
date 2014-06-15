@@ -13,8 +13,7 @@ syntax: glob
 *.ipr
 *.iml
 *.iws
-.idea/misc.xml
-.idea/workspace.xml
+.idea/*
 
 .AppleDouble
 .DS_Store
