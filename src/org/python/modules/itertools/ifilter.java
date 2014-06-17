@@ -2,22 +2,18 @@
 package org.python.modules.itertools;
 
 import org.python.core.ArgParser;
-import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-import java.util.ArrayList;
 
 @ExposedType(name = "itertools.ifilter", base = PyObject.class)
-public class ifilter extends PyObject {
+public class ifilter extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(ifilter.class);
     private PyIterator iter;
@@ -60,13 +56,13 @@ public class ifilter extends PyObject {
         iter = new itertools.FilterIterator(predicate, iterable, true);
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

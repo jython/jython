@@ -1,7 +1,6 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.itertools;
 
-import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyObject;
@@ -9,16 +8,13 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyXRange;
-import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-import java.util.ArrayList;
-
 @ExposedType(name = "itertools.izip", base = PyObject.class)
-public class izip extends PyObject {
+public class izip extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(izip.class);
     private PyIterator iter;
@@ -106,13 +102,13 @@ public class izip extends PyObject {
 
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

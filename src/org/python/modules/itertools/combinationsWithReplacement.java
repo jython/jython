@@ -14,7 +14,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.combinations_with_replacement", base = PyObject.class)
-public class combinationsWithReplacement extends PyObject {
+public class combinationsWithReplacement extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(combinationsWithReplacement.class);
     private itertools.ItertoolsIterator iter;
@@ -86,13 +86,13 @@ public class combinationsWithReplacement extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

@@ -4,7 +4,6 @@ package org.python.modules.itertools;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyIterator;
-import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
@@ -16,7 +15,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.groupby", base = PyObject.class)
-public class groupby extends PyObject {
+public class groupby extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(groupby.class);
     private PyIterator iter;
@@ -113,13 +112,13 @@ public class groupby extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

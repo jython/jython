@@ -3,6 +3,7 @@ package org.python.modules.itertools;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
+import org.python.core.PyIterator;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -12,7 +13,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.compress", base = PyObject.class)
-public class compress extends PyObject {
+public class compress extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(compress.class);
     private itertools.ItertoolsIterator iter;
@@ -69,13 +70,14 @@ public class compress extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
+
 }

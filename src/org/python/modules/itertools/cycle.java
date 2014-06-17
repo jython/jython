@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ExposedType(name = "itertools.count", base = PyObject.class)
-public class cycle extends PyObject {
+public class cycle extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(cycle.class);
     private PyIterator iter;
@@ -83,14 +83,14 @@ public class cycle extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 
 }

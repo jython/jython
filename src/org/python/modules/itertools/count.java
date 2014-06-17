@@ -18,7 +18,7 @@ import org.python.expose.ExposedType;
 import java.util.ArrayList;
 
 @ExposedType(name = "itertools.count", base = PyObject.class)
-public class count extends PyObject {
+public class count extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(count.class);
     private PyIterator iter;
@@ -91,16 +91,6 @@ public class count extends PyObject {
     }
 
     @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
-    }
-
-    @ExposedMethod
-    public PyObject next() {
-        return iter.next();
-    }
-
-    @ExposedMethod
     public PyString __repr__() {
         if (stepper == 1) {
             return (PyString)(Py.newString("count(%d)").__mod__(Py.newInteger(counter)));
@@ -109,6 +99,16 @@ public class count extends PyObject {
             return (PyString)(Py.newString("count(%d, %d)").__mod__(new PyTuple(
                     Py.newInteger(counter), Py.newInteger(stepper))));
         }
+    }
+
+    public PyObject __iternext__() {
+        return iter.__iternext__();
+    }
+
+    @ExposedMethod
+    @Override
+    public PyObject next() {
+        return doNext(__iternext__());
     }
 
 }

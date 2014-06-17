@@ -13,7 +13,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.combinations", base = PyObject.class)
-public class combinations extends PyObject {
+public class combinations extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(combinations.class);
     private PyIterator iter;
@@ -84,13 +84,13 @@ public class combinations extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

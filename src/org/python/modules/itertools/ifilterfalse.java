@@ -1,22 +1,17 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.itertools;
 import org.python.core.ArgParser;
-import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-import java.util.ArrayList;
-
 @ExposedType(name = "itertools.ifilterfalse", base = PyObject.class)
-public class ifilterfalse extends PyObject {
+public class ifilterfalse extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(ifilterfalse.class);
     private PyIterator iter;
@@ -59,14 +54,13 @@ public class ifilterfalse extends PyObject {
         iter = new itertools.FilterIterator(predicate, iterable, false);
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
-
 }

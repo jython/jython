@@ -3,6 +3,7 @@ package org.python.modules.itertools;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyInteger;
+import org.python.core.PyIterator;
 import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -13,7 +14,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.islice", base = PyObject.class)
-public class islice extends PyObject {
+public class islice extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(islice.class);
     private itertools.ItertoolsIterator iter;
@@ -129,13 +130,13 @@ public class islice extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 }

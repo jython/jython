@@ -14,7 +14,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.repeat", base = PyObject.class)
-public class repeat extends PyObject {
+public class repeat extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(repeat.class);
     private PyIterator iter;
@@ -98,16 +98,6 @@ public class repeat extends PyObject {
     }
 
     @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
-    }
-
-    @ExposedMethod
-    public PyObject next() {
-        return iter.next();
-    }
-
-    @ExposedMethod
     public int __len__() {
         if (counter < 0) {
             throw Py.TypeError("object of type 'itertools.repeat' has no len()");
@@ -125,5 +115,15 @@ public class repeat extends PyObject {
             return (PyString)(Py.newString("repeat(%r)").
                     __mod__(new PyTuple(object)));
         }
+    }
+
+    public PyObject __iternext__() {
+        return iter.__iternext__();
+    }
+
+    @ExposedMethod
+    @Override
+    public PyObject next() {
+        return doNext(__iternext__());
     }
 }

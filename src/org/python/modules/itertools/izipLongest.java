@@ -13,7 +13,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "itertools.izip_longest", base = PyObject.class)
-public class izipLongest extends PyObject {
+public class izipLongest extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(izipLongest.class);
     private PyIterator iter;
@@ -102,14 +102,13 @@ public class izipLongest extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
-
 }

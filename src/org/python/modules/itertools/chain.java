@@ -16,7 +16,7 @@ import org.python.expose.ExposedType;
 import java.util.ArrayList;
 
 @ExposedType(name = "itertools.chain", base = PyObject.class)
-public class chain extends PyObject {
+public class chain extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(chain.class);
     private itertools.ItertoolsIterator iter;
@@ -84,14 +84,14 @@ public class chain extends PyObject {
         };
     }
 
-    @ExposedMethod
-    public PyObject __iter__() {
-        return iter;
+    public PyObject __iternext__() {
+        return iter.__iternext__();
     }
 
     @ExposedMethod
+    @Override
     public PyObject next() {
-        return iter.next();
+        return doNext(__iternext__());
     }
 
 }
