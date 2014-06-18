@@ -24,6 +24,10 @@ class EnumerateJyTestCase(unittest.TestCase):
         self.assertEqual(iter(e), e)
         self.assertEqual(list(e), self.res)
 
+    def test_start_maxint(self):
+        e = self.enum(self.seq, sys.maxint)
+        self.assertEqual(list(e), [(2147483647, 'a'), (2147483648L, 'b'), (2147483649L, 'c')])
+
 
 def test_main(verbose=None):
     testclasses = (EnumerateJyTestCase,)

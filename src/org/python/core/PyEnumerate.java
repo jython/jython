@@ -14,7 +14,7 @@ public class PyEnumerate extends PyIterator {
     public static final PyType TYPE = PyType.fromClass(PyEnumerate.class);
 
     /** Current index of enumeration. */
-    private long index;
+    private PyObject index;     // using PyObject so we are not limited to sys.maxint or Integer.MAX_VALUE
 
     /** Secondary iterator of enumeration. */
     private PyObject sit;
@@ -23,13 +23,13 @@ public class PyEnumerate extends PyIterator {
         super(subType);
     }
 
-    public PyEnumerate(PyType subType, PyObject seq, long start) {
+    public PyEnumerate(PyType subType, PyObject seq, PyObject start) {
         super(subType);
         index = start;
         sit = seq.__iter__();
     }
 
-    public PyEnumerate(PyObject seq, long start) {
+    public PyEnumerate(PyObject seq, PyObject start) {
         this(TYPE, seq, start);
     }
 
@@ -51,13 +51,15 @@ public class PyEnumerate extends PyIterator {
     public final static PyObject enumerate_new(PyNewWrapper new_, boolean init, PyType subtype,
                                                PyObject[] args, String[] keywords) {
         if (args.length > 2 || args.length <= 0) {
-            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length, false, "enumerate", 0,
-                                                               1);
+            throw PyBuiltinCallable.DefaultInfo.unexpectedCall(args.length, true, "enumerate", 1, 2);
         }
 
         ArgParser ap = new ArgParser("enumerate", args, keywords, new String[] {"sequence", "start"});
         PyObject seq = ap.getPyObject(0);
-        long start = (long) ap.getInt(1, 0);
+        PyObject start = ap.getPyObject(1, Py.newInteger(0));
+        if (!start.isIndex()) {
+            throw Py.TypeError("an integer is required");
+        }
 
         if (new_.for_type == subtype) {
             return new PyEnumerate(seq, start);
@@ -81,6 +83,9 @@ public class PyEnumerate extends PyIterator {
             return null;
         }
 
-        return new PyTuple(new PyInteger((int)index++), nextItem);
+        PyObject next = new PyTuple(index, nextItem);
+        index = index.__radd__(Py.newInteger(1));
+
+        return next;
     }
 }

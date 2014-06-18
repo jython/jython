@@ -38,7 +38,7 @@ public class PyEnumerateDerived extends PyEnumerate implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PyEnumerateDerived(PyType subtype,PyObject seq,long start) {
+    public PyEnumerateDerived(PyType subtype,PyObject seq,PyObject start) {
         super(subtype,seq,start);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
