@@ -1802,6 +1802,17 @@ class TestGetAddrInfo(unittest.TestCase):
             self.assert_(isinstance(canonname, str))
             self.assert_(isinstance(sockaddr[0], str))
 
+    def testSockAddrAsTuple(self):
+        family, socktype, proto, canonname, sockaddr = socket.getaddrinfo(HOST, PORT, socket.AF_INET, socket.SOCK_STREAM)[0]
+        self.assertEqual(len(sockaddr), 2)
+        self.assertEqual(sockaddr[-1], PORT)
+        self.assertEqual(sockaddr[:2], ('127.0.0.1', PORT))
+
+        family, socktype, proto, canonname, sockaddr = socket.getaddrinfo('::1', PORT, socket.AF_INET6, socket.SOCK_STREAM)[0]
+        self.assertEqual(len(sockaddr), 4)
+        self.assertEqual(sockaddr[-3], PORT)
+        #self.assertEqual(sockaddr[:2], ('::1', PORT))      # FIXME: Got '0:0:...:1' instead!
+
     def testAI_PASSIVE(self):
         # Disabling this test for now; it's expectations are not portable.
         # Expected results are too dependent on system config to be made portable between systems.

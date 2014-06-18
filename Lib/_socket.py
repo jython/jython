@@ -1388,60 +1388,28 @@ def setdefaulttimeout(timeout):
 
 
 # Define data structures to support IPV4 and IPV6.
-# FIXME are these ip address classes required by CPython API? Must they be old-style classes?
 
-class _ip_address_t: pass
+class _ip_address_t(tuple):
+    pass
+
 
 class _ipv4_address_t(_ip_address_t):
 
-    def __init__(self, sockaddr, port, jaddress):
-        self.sockaddr = sockaddr
-        self.port     = port
-        self.jaddress = jaddress
+    jaddress = None
 
-    def __getitem__(self, index):
-        if   0 == index:
-            return self.sockaddr
-        elif 1 == index:
-            return self.port
-        else:
-            raise IndexError()
-
-    def __len__(self):
-        return 2
-
-    def __str__(self):
-        return "('%s', %d)" % (self.sockaddr, self.port)
-
-    __repr__ = __str__
+    def __new__(cls, sockaddr, port, jaddress):
+        ntup = tuple.__new__(cls, (sockaddr, port))
+        ntup.jaddress = jaddress
+        return ntup
 
 class _ipv6_address_t(_ip_address_t):
 
-    def __init__(self, sockaddr, port, jaddress):
-        self.sockaddr = sockaddr
-        self.port     = port
-        self.jaddress = jaddress
+    jaddress = None
 
-    def __getitem__(self, index):
-        if   0 == index:
-            return self.sockaddr
-        elif 1 == index:
-            return self.port
-        elif 2 == index:
-            return 0
-        elif 3 == index:
-            return self.jaddress.scopeId
-        else:
-            raise IndexError()
-
-    def __len__(self):
-        return 4
-
-    def __str__(self):
-        return "('%s', %d, 0, %d)" % (self.sockaddr, self.port, self.jaddress.scopeId)
-
-    __repr__ = __str__
-
+    def __new__(cls, sockaddr, port, jaddress):
+        ntup = tuple.__new__(cls, (sockaddr, port, 0, jaddress.scopeId))
+        ntup.jaddress = jaddress
+        return ntup
 
 
 def _get_jsockaddr(address_object, family, sock_type, proto, flags):
