@@ -3,6 +3,7 @@
 Made for Jython.
 """
 import os
+import array
 import unittest
 from test import test_support
 
@@ -91,11 +92,42 @@ class OSStatTestCase(unittest.TestCase):
         self.assertRaises(OSError, os.lstat, test_support.TESTFN + os.path.sep)
 
 
+class OSWriteTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.fd = os.open(test_support.TESTFN, os.O_WRONLY | os.O_CREAT)
+
+    def tearDown(self):
+        if self.fd :
+            os.close(self.fd)
+            if os.path.exists(test_support.TESTFN):
+                os.remove(test_support.TESTFN)
+
+    def do_write(self, b, nx=None):
+        if nx is None : nx = len(b)
+        n = os.write(self.fd, b)
+        self.assertEqual(n, nx, "os.write length error: " + repr(b))
+
+    def test_write_buffer(self): # Issue 2062
+        s = b"Big Red Book"
+        for type2test in (str, buffer, bytearray, (lambda x : array.array('b',x))) :
+            self.do_write(type2test(s))
+
+        with memoryview(s) as m :
+            self.do_write(m)
+            # not contiguous:
+            self.assertRaises(BufferError, self.do_write, m[1::2])
+
+        # lacks buffer api:
+        self.assertRaises(TypeError, self.do_write, 1.5, 4)
+
+
 def test_main():
     test_support.run_unittest(
         OSFileTestCase, 
         OSDirTestCase,
         OSStatTestCase,
+        OSWriteTestCase,
     )
 
 if __name__ == '__main__':
