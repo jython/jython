@@ -8,6 +8,7 @@ Jython 2.7b3
     - [ 1981 ] ast.And and ast.Or should be subclasses of ast.boolop
   New Features
     - [ 1896215 ] findResource(s) for SyspathJavaLoader
+    - [ 1591 ] Interactive interpreter stuck on '...' loop
 
 Jython 2.7b2
   Bugs Fixed

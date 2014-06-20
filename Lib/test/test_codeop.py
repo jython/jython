@@ -302,6 +302,9 @@ class CodeopTests(unittest.TestCase):
             ai("[i for i in range(10)] = (1, 2, 3)")
             ai("a = 1 and b = 2");
 
+        # Merge test cases below upstream.
+        ai("def x():\n pass\na=1\n")
+
     def test_filename(self):
         self.assertEquals(compile_command("a = 1\n", "abc").co_filename,
                           compile("a = 1\n", "abc", 'single').co_filename)

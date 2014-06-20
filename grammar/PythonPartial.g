@@ -167,7 +167,7 @@ single_input
 
     : NEWLINE
     | simple_stmt
-    | compound_stmt NEWLINE?
+    | compound_stmt NEWLINE? EOF
     ;
 
 //eval_input: testlist NEWLINE* ENDMARKER
