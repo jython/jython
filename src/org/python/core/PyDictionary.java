@@ -732,19 +732,15 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
+        if (this == obj) {
+            return true;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
+        if (obj instanceof PyDictionary) {
+            return ((PyDictionary) obj).getMap().equals(getMap());
+        } else if (obj instanceof Map) {
+            return getMap().equals((Map) obj);
         }
-        final PyDictionary other = (PyDictionary) obj;
-        ConcurrentMap<PyObject, PyObject> map = getMap();
-        ConcurrentMap<PyObject, PyObject> otherMap = other.getMap();
-        if (map != otherMap && (map == null || !map.equals(otherMap))) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
     @ExposedMethod(doc = BuiltinDocs.dict___hash___doc)

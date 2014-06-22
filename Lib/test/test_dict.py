@@ -672,6 +672,11 @@ class DictTest(unittest.TestCase):
             pass
         self._tracked(MyDict())
 
+    def test_list_equality(self):
+        class A(dict): pass
+        for dtype in (A, dict):
+            self.assertEquals([dtype()], [dict()])
+
 
 from test import mapping_tests
 
