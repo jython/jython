@@ -69,7 +69,8 @@ public class PyBZ2Decompressor extends PyObject {
         ByteArrayOutputStream decodedStream = new ByteArrayOutputStream();
         final byte[] buf = accumulator;
         for (int i = 0; i < buf.length; i++) {
-            if (((char) buf[i] == '\\') && ((char) buf[i + 1] == 'x')) {
+            if (((i + 3) < buf.length) &&
+                (((char) buf[i] == '\\') && ((char) buf[i + 1] == 'x'))) {
                 int decodedByte = ((Character.digit((char) buf[i + 2], 16) << 4) + Character
                         .digit((char) buf[i + 3], 16));
                 decodedStream.write(decodedByte);
