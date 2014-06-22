@@ -115,9 +115,30 @@ public class PyXRange extends PySequence {
         return ret;
     }
 
+    @Override
+    public PyObject __iter__() {
+        return xrange___iter__();
+    }
+
     @ExposedMethod(doc = BuiltinDocs.xrange___iter___doc)
     public PyObject xrange___iter__() {
-        return seq___iter__();
+        return range_iter();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.xrange___reversed___doc)
+    public PyObject xrange___reversed__() {
+        return range_reverse();
+    }
+
+    private final PyXRangeIter range_iter() {
+        return new PyXRangeIter(0, (long)start, (long)step, (long)len);
+    }
+
+    private final PyXRangeIter range_reverse() {
+        return new PyXRangeIter(0,
+                (start + (long)(len - 1) * step),   // start
+                (long)(0 - step),                   // step (negative value)
+                len);
     }
 
     @Override

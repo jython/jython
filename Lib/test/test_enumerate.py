@@ -202,7 +202,6 @@ def test_main(verbose=None):
         # XXX: CPython implementation details
         del EnumerateTestCase.test_tuple_reuse
         del TestReversed.test_len
-        del TestReversed.test_xrange_optimization
     testclasses = (EnumerateTestCase, SubclassTestCase, TestEmpty, TestBig,
                    TestReversed)
     test_support.run_unittest(*testclasses)
