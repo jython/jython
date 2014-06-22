@@ -51,7 +51,13 @@ class DumbDBMTestCase(unittest.TestCase):
             os.umask(old_umask)
 
         expected_mode = 0635
-        if os.name != 'posix':
+        is_posix = True
+        if os.name == 'java':
+            if os._name != 'posix':
+                is_posix = False
+        elif os.name != 'posix':
+            is_posix = False
+        if not is_posix:
             # Windows only supports setting the read-only attribute.
             # This shouldn't fail, but doesn't work like Unix either.
             expected_mode = 0666
