@@ -143,6 +143,40 @@ class IOTest(unittest.TestCase):
     def test_fileio_error(self):
         self.assertRaises(FileNotFoundException, FileInputStream, "garbage")
 
+    def fileutil_is_helper(self, mode, expected):
+        old_linesep = System.setProperty("line.separator", "\r\n")
+        try:
+            inputstream = ByteArrayInputStream(bytearray('1\r\n2\r\n3\r\n'))
+            inputfile = FileUtil.wrap(inputstream, mode)
+            actual = inputfile.readlines()
+            inputfile.close()
+            self.assertEquals(expected, actual)
+        finally:
+            System.setProperty("line.separator", old_linesep)
+
+    def test_fileutil_wrap_inputstream(self):
+        self.fileutil_is_helper('r', ['1\n', '2\n', '3\n'])
+
+    def test_fileutil_wrap_inputstream_binary(self):
+        self.fileutil_is_helper('rb', ['1\r\n', '2\r\n', '3\r\n'])
+
+    def fileutil_os_helper(self, mode, expected):
+        old_linesep = System.setProperty("line.separator", "\r\n")
+        try:
+            outputstream = ByteArrayOutputStream()
+            outputfile = FileUtil.wrap(outputstream, mode)
+            outputfile.writelines(["1\n", "2\n", "3\n"])
+            outputfile.close()
+            self.assertEquals(bytearray(outputstream.toByteArray()), expected)
+        finally:
+            System.setProperty("line.separator", old_linesep)
+
+    def test_fileutil_wrap_outputstream_default_textmode(self):
+        self.fileutil_os_helper("w", bytearray("1\r\n2\r\n3\r\n"))
+
+    def test_fileutil_wrap_outputstream_binary(self):
+        self.fileutil_os_helper("wb", bytearray("1\n2\n3\n"))
+
     def test_unsupported_tell(self):
         fp = FileUtil.wrap(System.out)
         self.assertRaises(IOError, fp.tell)
