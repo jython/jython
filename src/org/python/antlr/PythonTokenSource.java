@@ -252,15 +252,27 @@ public class PythonTokenSource implements TokenSource {
     private List<Token> enqueueHiddens(Token t) {
         List<Token> newlines = new ArrayList<Token>();
         if (inSingle && t.getType() == Token.EOF) {
-            if (stream.size() > lastTokenAddedIndex + 1) {
-                Token hidden = stream.get(lastTokenAddedIndex + 1);
+            int k = 1;
+            while (stream.size() > lastTokenAddedIndex + k) {
+                Token hidden = stream.get(lastTokenAddedIndex + k);
                 if (hidden.getType() == PythonLexer.COMMENT) {
                     String text = hidden.getText();
                     int i = text.indexOf("\n");
+                    i = text.indexOf("\n", i + 1);
                     while(i != -1) {
                         newlines.add(hidden);
+                        lastTokenAddedIndex++;
                         i = text.indexOf("\n", i + 1);
                     }
+                    k++;
+                } else if (hidden.getType() == PythonLexer.NEWLINE) {
+                    generateNewline(hidden);
+                    lastTokenAddedIndex++;
+                    break;
+                } else if (hidden.getType() == PythonLexer.LEADING_WS) {
+                    k++;
+                } else {
+                    break;
                 }
             }
         }

@@ -258,6 +258,10 @@ class CodeopTests(unittest.TestCase):
         ai("(x for x in")
         ai("(x for x in (")
 
+        # Merge test cases below upstream.
+        ai("def x():\n pass\n#comment")
+
+
     def test_invalid(self):
         ai = self.assertInvalid
         ai("a b")
