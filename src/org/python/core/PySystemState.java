@@ -271,7 +271,7 @@ public class PySystemState extends PyObject implements ClassDictInit {
 
         if (encoding==null) {
             // We still don't have an explicit selection for this: match the console.
-            encoding = Py.getConsole().getEncodingCharset().name();
+            encoding = Py.getConsole().getEncoding();
         }
 
         ((PyFile)stdin).setEncoding(encoding, errors);

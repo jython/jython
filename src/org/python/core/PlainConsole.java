@@ -72,6 +72,11 @@ public class PlainConsole implements Console {
     }
 
     @Override
+    public String getEncoding() {
+        return encoding;
+    }
+
+    @Override
     public Charset getEncodingCharset() {
         return encodingCharset;
     }

@@ -388,7 +388,7 @@ public class jython {
 
         if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
             // Go interactive with the console: the parser needs to know the encoding.
-            String encoding = Py.getConsole().getEncodingCharset().name();
+            String encoding = Py.getConsole().getEncoding();
 
             // Run the interpreter interactively
             try {

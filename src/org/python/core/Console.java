@@ -31,6 +31,14 @@ public interface Console {
     public void uninstall() throws UnsupportedOperationException;
 
     /**
+     * Name of the encoding, normally supplied during initialisation, and used for line input.
+     * This may not be the cononoical name of the codec returned by {@link #getEncodingCharset()}.
+     *
+     * @return name of the encoding in use.
+     */
+    public String getEncoding();
+
+    /**
      * Accessor for encoding to use for line input as a <code>Charset</code>.
      *
      * @return Charset of the encoding in use.
