@@ -48,7 +48,7 @@ public abstract class PyBaseCode extends PyCode {
         }
         // nested scopes: setup env with closure
         // this should only be done once, so let the frame take care of it
-        frame.setupEnv((PyTuple)closure);
+        frame.setupEnv((PyTuple) closure);
 
         ts.frame = frame;
 
@@ -64,6 +64,7 @@ public abstract class PyBaseCode extends PyCode {
         }
 
         PyObject ret;
+        ThreadStateMapping.enterCall(ts);
         try {
             ret = interpret(frame, ts);
         } catch (Throwable t) {
@@ -84,6 +85,8 @@ public abstract class PyBaseCode extends PyCode {
             ts.exception = previous_exception;
             ts.frame = ts.frame.f_back;
             throw pye;
+        } finally {
+            ThreadStateMapping.exitCall(ts);
         }
 
         if (frame.tracefunc != null) {

@@ -234,7 +234,7 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         PyObject expected = Py.newString("foo got state " + ts.hashCode());
         assertEquals(expected, bound.__call__(Py.getThreadState(), Py.newString("foo")));
         assertEquals(expected, bound.__call__(Py.newString("foo")));
-        ts = new ThreadState(new Thread(), ts.systemState);
+        ts = new ThreadState(ts.systemState);
         assertEquals(Py.newString("foo got state " + ts.hashCode()),
                      bound.__call__(ts, Py.newString("foo")));
     }

@@ -161,6 +161,7 @@ public class PyTableCode extends PyBaseCode
         }
 
         PyObject ret;
+        ThreadStateMapping.enterCall(ts);
         try {
             ret = funcs.call_function(func_id, frame, ts);
         } catch (Throwable t) {
@@ -181,6 +182,8 @@ public class PyTableCode extends PyBaseCode
             ts.exception = previous_exception;
             ts.frame = ts.frame.f_back;
             throw pye;
+        } finally {
+            ThreadStateMapping.exitCall(ts);
         }
 
         if (frame.tracefunc != null) {
