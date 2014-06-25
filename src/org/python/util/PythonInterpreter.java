@@ -31,7 +31,14 @@ public class PythonInterpreter {
     protected PySystemState systemState;
     PyObject globals;
 
-    protected ThreadLocal<PyObject> threadLocals;
+    protected final boolean useThreadLocalState;
+
+    protected static ThreadLocal<Object[]> threadLocals = new ThreadLocal<Object[]>() {
+        @Override
+        protected Object[] initialValue() {
+            return new Object[1];
+        }
+    };
 
     protected CompilerFlags cflags = new CompilerFlags();
 
@@ -103,9 +110,8 @@ public class PythonInterpreter {
         this.systemState = systemState;
         setSystemState();
 
-        if (useThreadLocalState) {
-            threadLocals = new ThreadLocal<PyObject>();
-        } else {
+        this.useThreadLocalState = useThreadLocalState;
+        if (!useThreadLocalState) {
             PyModule module = new PyModule("__main__", dict);
             systemState.modules.__setitem__("__main__", module);
         }
@@ -263,20 +269,24 @@ public class PythonInterpreter {
 
 
     public PyObject getLocals() {
-        if (threadLocals == null)
+        if (!useThreadLocalState) {
             return globals;
-
-        PyObject locals = threadLocals.get();
-        if (locals != null)
-            return locals;
-        return globals;
+        } else {
+            PyObject locals = (PyObject) threadLocals.get()[0];
+            if (locals != null) {
+                return locals;
+            }
+            return globals;
+        }
     }
 
     public void setLocals(PyObject d) {
-        if (threadLocals == null)
+        if (!useThreadLocalState) {
             globals = d;
-        else
-            threadLocals.set(d);
+        }
+        else {
+            threadLocals.get()[0] = d;
+        }
     }
 
     /**
@@ -352,6 +362,7 @@ public class PythonInterpreter {
         } catch (PyException pye) {
             // fall through
         }
+        threadLocals.remove();
         sys.cleanup();
     }
 }
