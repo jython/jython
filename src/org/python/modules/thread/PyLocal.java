@@ -16,7 +16,12 @@ public class PyLocal extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLocal.class);
 
-    private ThreadLocal<PyDictionary> tdict = new ThreadLocal<PyDictionary>();
+    private ThreadLocal<Object[]> tdict = new ThreadLocal() {
+        @Override
+        protected Object initialValue() {
+            return new Object[1];
+        }
+    };
 
     private PyObject args[];
 
@@ -30,7 +35,7 @@ public class PyLocal extends PyObject {
         super(subType);
         // Don't lazy load the underlying dict in the instantiating thread; that would
         // call __init__ a the second time
-        tdict.set(new PyDictionary());
+        tdict.set(new Object[] { new PyDictionary() });
     }
 
     @ExposedNew
@@ -71,10 +76,11 @@ public class PyLocal extends PyObject {
 
     @Override
     public PyObject fastGetDict() {
-        PyDictionary ldict = tdict.get();
+        Object[] local = tdict.get();
+        PyDictionary ldict = (PyDictionary)(local[0]);
         if (ldict == null) {
             ldict = new PyDictionary();
-            tdict.set(ldict);
+            local[0] = ldict;
             dispatch__init__(args, keywords);
         }
         return ldict;
