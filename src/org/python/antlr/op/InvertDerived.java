@@ -986,18 +986,12 @@ public class InvertDerived extends Invert implements Slotted {
     }
 
     public PyObject __call__(PyObject args[],String keywords[]) {
-        ThreadState ts=Py.getThreadState();
-        if (ts.recursion_depth++>ts.systemState.getrecursionlimit())
-            throw Py.RuntimeError("maximum __call__ recursion depth exceeded");
-        try {
-            PyType self_type=getType();
-            PyObject impl=self_type.lookup("__call__");
-            if (impl!=null)
-                return impl.__get__(this,self_type).__call__(args,keywords);
-            return super.__call__(args,keywords);
-        } finally {
-            --ts.recursion_depth;
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__call__");
+        if (impl!=null) {
+            return impl.__get__(this,self_type).__call__(args,keywords);
         }
+        return super.__call__(args,keywords);
     }
 
     public PyObject __findattr_ex__(String name) {
