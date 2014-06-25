@@ -1,4 +1,4 @@
 base_class: PyEnumerate
 want_dict: true
-ctr: PyObject seq
+ctr: PyObject seq, PyObject start
 incl: object
