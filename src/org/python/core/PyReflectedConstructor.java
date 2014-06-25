@@ -203,8 +203,8 @@ public class PyReflectedConstructor extends PyReflectedFunction {
     protected void constructProxy(PyObject obj, Constructor<?> ctor, Object[] args, Class<?> proxy) {
         // Do the actual constructor call
         Object jself = null;
-        PyObject previous = ThreadContext.initializingProxy.get();
-        ThreadContext.initializingProxy.set(obj);
+        Object[] previous = ThreadContext.initializingProxy.get();
+        ThreadContext.initializingProxy.set(new Object[] { obj });
         try {
             try {
                 jself = ctor.newInstance(args);

@@ -938,7 +938,7 @@ public final class Py {
     {
         if (proxy._getPyInstance() != null)
             return;
-        PyObject instance = ThreadContext.initializingProxy.get();
+        PyObject instance = (PyObject)(ThreadContext.initializingProxy.get()[0]);
         ThreadState ts = Py.getThreadState();
         if (instance != null) {
             if (instance.javaProxy != null) {

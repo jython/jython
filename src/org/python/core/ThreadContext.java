@@ -2,7 +2,10 @@
 package org.python.core;
 
 class ThreadContext {
-    
-    static ThreadLocal<PyObject> initializingProxy = new ThreadLocal<PyObject>();
 
+    static ThreadLocal<Object[]> initializingProxy = new ThreadLocal<Object[]>() {
+        protected Object[] initialValue() {
+            return new Object[1];
+        }
+    };
 }
