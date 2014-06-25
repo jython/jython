@@ -1,16 +1,20 @@
 package org.python.core;
 
+import com.google.common.collect.MapMaker;
+
+import java.util.Map;
+
 class ThreadStateMapping {
-    private static final ThreadLocal<ThreadState> cachedThreadState = new ThreadLocal<ThreadState>();
+    private static final Map<Thread, ThreadState> cachedThreadState =
+        new MapMaker().weakKeys().weakValues().makeMap();
 
     public ThreadState getThreadState(PySystemState newSystemState) {
-        ThreadState ts = cachedThreadState.get();
+        Thread currentThread = Thread.currentThread();
+        ThreadState ts = cachedThreadState.get(currentThread);
         if (ts != null) {
             return ts;
         }
 
-
-        Thread t = Thread.currentThread();
         if (newSystemState == null) {
             Py.writeDebug("threadstate", "no current system state");
             if (Py.defaultSystemState == null) {
@@ -19,8 +23,8 @@ class ThreadStateMapping {
             newSystemState = Py.defaultSystemState;
         }
 
-        ts = new ThreadState(t, newSystemState);
-        cachedThreadState.set(ts);
+        ts = new ThreadState(currentThread, newSystemState);
+        cachedThreadState.put(currentThread, ts);
         return ts;
     }
 }
