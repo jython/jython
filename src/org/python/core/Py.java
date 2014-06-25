@@ -1987,16 +1987,10 @@ public final class Py {
         }
 
         if (cls instanceof PyTuple) {
-            ThreadState threadState = Py.getThreadState();
-            threadState.enterRecursiveCall(" in __subclasscheck__");
-            try {
-                for (PyObject item : cls.asIterable()) {
-                    if (isInstance(inst, item)) {
-                        return true;
-                    }
+            for (PyObject item : cls.asIterable()) {
+                if (isInstance(inst, item)) {
+                    return true;
                 }
-            } finally {
-                threadState.leaveRecursiveCall();
             }
             return false;
         }
@@ -2047,16 +2041,10 @@ public final class Py {
 
     public static boolean isSubClass(PyObject derived, PyObject cls) {
         if (cls instanceof PyTuple) {
-            ThreadState threadState = Py.getThreadState();
-            threadState.enterRecursiveCall(" in __subclasscheck__");
-            try {
-                for (PyObject item : cls.asIterable()) {
-                    if (isSubClass(derived, item)) {
-                        return true;
-                    }
+            for (PyObject item : cls.asIterable()) {
+                if (isSubClass(derived, item)) {
+                    return true;
                 }
-            } finally {
-                threadState.leaveRecursiveCall();
             }
             return false;
         }
@@ -2149,15 +2137,7 @@ public final class Py {
             return null;
         }
 
-        PyObject result;
-        ThreadState threadState = Py.getThreadState();
-        threadState.enterRecursiveCall(" in " + checkerName);
-        try {
-            result = checker.__call__(checkerArg);
-        } finally {
-            threadState.leaveRecursiveCall();
-        }
-        return result;
+        return checker.__call__(checkerArg);
     }
 
     /**

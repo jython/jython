@@ -17,7 +17,9 @@ public class PyInstance extends PyObject {
     // xxx doc, final name
     public transient PyClass instclass;
 
-    /** The namespace of this instance.  Contains all instance attributes. */
+    /**
+     * The namespace of this instance.  Contains all instance attributes.
+     */
     public PyObject __dict__;
 
     public PyInstance() {
@@ -41,7 +43,7 @@ public class PyInstance extends PyObject {
     public static PyObject instance___new__(PyNewWrapper new_, boolean init, PyType subtype,
                                             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("instance", args, keywords, "name", "bases", "dict");
-        PyClass klass = (PyClass)ap.getPyObjectByType(0, PyClass.TYPE);
+        PyClass klass = (PyClass) ap.getPyObjectByType(0, PyClass.TYPE);
         PyObject dict = ap.getPyObject(1, Py.None);
         if (dict == Py.None) {
             dict = null;
@@ -57,8 +59,7 @@ public class PyInstance extends PyObject {
 
     /* Override serialization behavior */
     private void readObject(java.io.ObjectInputStream in)
-        throws java.io.IOException, ClassNotFoundException
-    {
+            throws java.io.IOException, ClassNotFoundException {
         in.defaultReadObject();
 
         String module = in.readUTF();
@@ -67,20 +68,19 @@ public class PyInstance extends PyObject {
         /* Check for types and missing members here */
         //System.out.println("module: "+module+", "+name);
         PyObject mod = imp.importName(module.intern(), false);
-        PyClass pyc = (PyClass)mod.__getattr__(name.intern());
+        PyClass pyc = (PyClass) mod.__getattr__(name.intern());
 
         instclass = pyc;
     }
 
     private void writeObject(java.io.ObjectOutputStream out)
-        throws java.io.IOException
-    {
+            throws java.io.IOException {
         //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
         PyObject name = instclass.__findattr__("__module__");
         if (!(name instanceof PyString) || name == Py.None) {
-            throw Py.ValueError("Can't find module for class: "+
-                                instclass.__name__);
+            throw Py.ValueError("Can't find module for class: " +
+                    instclass.__name__);
         }
         out.writeUTF(name.toString());
         name = instclass.__findattr__("__name__");
@@ -128,8 +128,7 @@ public class PyInstance extends PyObject {
                     throw Py.TypeError("this constructor takes no arguments");
                 }
             }
-        }
-        else if (ret != Py.None) {
+        } else if (ret != Py.None) {
             throw Py.TypeError("__init__() should return None");
         }
     }
@@ -250,7 +249,7 @@ public class PyInstance extends PyObject {
     @Override
     public void noAttributeError(String name) {
         throw Py.AttributeError(String.format("%.50s instance has no attribute '%.400s'",
-                                              instclass.__name__, name));
+                instclass.__name__, name));
     }
 
 
@@ -263,7 +262,7 @@ public class PyInstance extends PyObject {
     final void instance___setattr__(String name, PyObject value) {
         if (name == "__class__") {
             if (value instanceof PyClass) {
-                instclass = (PyClass)value;
+                instclass = (PyClass) value;
             } else {
                 throw Py.TypeError("__class__ must be set to a class");
             }
@@ -305,13 +304,13 @@ public class PyInstance extends PyObject {
             } catch (PyException exc) {
                 if (exc.match(Py.KeyError))
                     throw Py.AttributeError("class " + instclass.__name__ +
-                                        " has no attribute '" + name + "'");
-            };
+                            " has no attribute '" + name + "'");
+            }
+            ;
         }
     }
 
-    public PyObject invoke_ex(String name, PyObject[] args, String[] keywords)
-    {
+    public PyObject invoke_ex(String name, PyObject[] args, String[] keywords) {
         PyObject meth = __findattr__(name);
         if (meth == null)
             return null;
@@ -324,12 +323,14 @@ public class PyInstance extends PyObject {
             return null;
         return meth.__call__();
     }
+
     public PyObject invoke_ex(String name, PyObject arg1) {
         PyObject meth = __findattr__(name);
         if (meth == null)
             return null;
         return meth.__call__(arg1);
     }
+
     public PyObject invoke_ex(String name, PyObject arg1, PyObject arg2) {
         PyObject meth = __findattr__(name);
         if (meth == null)
@@ -344,14 +345,7 @@ public class PyInstance extends PyObject {
 
     @ExposedMethod
     final PyObject instance___call__(PyObject args[], String keywords[]) {
-        ThreadState ts = Py.getThreadState();
-        if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-            throw Py.RuntimeError("maximum __call__ recursion depth exceeded");
-        try {
-            return invoke("__call__", args, keywords);
-        } finally {
-            --ts.recursion_depth;
-        }
+        return invoke("__call__", args, keywords);
     }
 
     @Override
@@ -372,7 +366,7 @@ public class PyInstance extends PyObject {
         }
         if (!(ret instanceof PyString))
             throw Py.TypeError("__repr__ method must return a string");
-        return (PyString)ret;
+        return (PyString) ret;
     }
 
     /**
@@ -383,7 +377,7 @@ public class PyInstance extends PyObject {
         PyObject mod = instclass.__dict__.__finditem__("__module__");
         String modStr = (mod == null || !Py.isInstance(mod, PyString.TYPE)) ? "?" : mod.toString();
         return new PyString(String.format("<%s.%s instance at %s>", modStr, instclass.__name__,
-                                          Py.idstr(this)));
+                Py.idstr(this)));
     }
 
     @Override
@@ -398,7 +392,7 @@ public class PyInstance extends PyObject {
             return __repr__();
         if (!(ret instanceof PyString))
             throw Py.TypeError("__str__ method must return a string");
-        return (PyString)ret;
+        return (PyString) ret;
     }
 
     @Override
@@ -409,12 +403,12 @@ public class PyInstance extends PyObject {
     @ExposedMethod
     final PyUnicode instance___unicode__() {
         PyObject ret = invoke_ex("__unicode__");
-        if(ret == null) {
+        if (ret == null) {
             return super.__unicode__();
-        } else if(ret instanceof PyUnicode) {
-            return (PyUnicode)ret;
-        } else if(ret instanceof PyString) {
-            return new PyUnicode((PyString)ret);
+        } else if (ret instanceof PyUnicode) {
+            return (PyUnicode) ret;
+        } else if (ret instanceof PyString) {
+            return new PyUnicode((PyString) ret);
         } else {
             throw Py.TypeError("__unicode__ must return unicode or str");
         }
@@ -431,12 +425,11 @@ public class PyInstance extends PyObject {
             return super.hashCode();
         }
         if (ret instanceof PyInteger) {
-            return ((PyInteger)ret).getValue();
+            return ((PyInteger) ret).getValue();
+        } else if (ret instanceof PyLong) {
+            return ((PyLong) ret).hashCode();
         }
-        else if (ret instanceof PyLong) {
-            return ((PyLong)ret).hashCode();
-        }
-        throw Py.TypeError("__hash__() must really return int" + ret.getType() );
+        throw Py.TypeError("__hash__() must really return int" + ret.getType());
     }
 
     @Override
@@ -462,20 +455,20 @@ public class PyInstance extends PyObject {
             w = other;
         }
         if (v instanceof PyInstance) {
-            ret = ((PyInstance)v).invoke_ex("__cmp__",w);
+            ret = ((PyInstance) v).invoke_ex("__cmp__", w);
             if (ret != null) {
                 if (ret instanceof PyInteger) {
-                    int result = ((PyInteger)ret).getValue();
+                    int result = ((PyInteger) ret).getValue();
                     return result < 0 ? -1 : result > 0 ? 1 : 0;
                 }
                 throw Py.TypeError("__cmp__() must return int");
             }
         }
         if (w instanceof PyInstance) {
-            ret = ((PyInstance)w).invoke_ex("__cmp__",v);
+            ret = ((PyInstance) w).invoke_ex("__cmp__", v);
             if (ret != null) {
                 if (ret instanceof PyInteger) {
-                    int result = ((PyInteger)ret).getValue();
+                    int result = ((PyInteger) ret).getValue();
                     return -(result < 0 ? -1 : result > 0 ? 1 : 0);
                 }
                 throw Py.TypeError("__cmp__() must return int");
@@ -562,12 +555,14 @@ public class PyInstance extends PyObject {
         PyObject meth = null;
         try {
             meth = __findattr__("__nonzero__");
-        } catch (PyException exc) { }
+        } catch (PyException exc) {
+        }
 
         if (meth == null) {
             try {
                 meth = __findattr__("__len__");
-            } catch (PyException exc) { }
+            } catch (PyException exc) {
+            }
             if (meth == null) {
                 return true;
             }
@@ -586,7 +581,7 @@ public class PyInstance extends PyObject {
     final int instance___len__() {
         PyObject ret = invoke("__len__");
         if (ret instanceof PyInteger)
-            return ((PyInteger)ret).getValue();
+            return ((PyInteger) ret).getValue();
         throw Py.TypeError("__len__() should return an int");
     }
 
@@ -745,7 +740,7 @@ public class PyInstance extends PyObject {
     final boolean instance___contains__(PyObject o) {
         PyObject func = __findattr__("__contains__");
         if (func == null)
-           return super.__contains__(o);
+            return super.__contains__(o);
         PyObject ret = func.__call__(o);
         return ret.__nonzero__();
     }
@@ -757,7 +752,7 @@ public class PyInstance extends PyObject {
             return ret;
         if (!(ret instanceof PyTuple))
             throw Py.TypeError("coercion should return None or 2-tuple");
-        return ((PyTuple)ret).getArray();
+        return ((PyTuple) ret).getArray();
     }
 
     @Override
@@ -768,7 +763,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __index__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyObject instance___index__() {
         PyObject ret;
@@ -784,7 +779,7 @@ public class PyInstance extends PyObject {
             return ret;
         }
         throw Py.TypeError(String.format("__index__ returned non-(int,long) (type %s)",
-                                         ret.getType().fastGetName()));
+                ret.getType().fastGetName()));
     }
 
     @Override
@@ -796,7 +791,7 @@ public class PyInstance extends PyObject {
     final PyObject instance___format__(PyObject formatSpec) {
         PyObject func = __findattr__("__format__");
         if (func == null) {
-           return super.__format__(formatSpec);
+            return super.__format__(formatSpec);
         }
         return func.__call__(formatSpec);
     }
@@ -813,12 +808,12 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __hex__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyString instance___hex__() {
         PyObject ret = invoke("__hex__");
         if (ret instanceof PyString)
-            return (PyString)ret;
+            return (PyString) ret;
         throw Py.TypeError("__hex__() should return a string");
     }
 
@@ -830,12 +825,12 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __oct__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyString instance___oct__() {
         PyObject ret = invoke("__oct__");
         if (ret instanceof PyString)
-            return (PyString)ret;
+            return (PyString) ret;
         throw Py.TypeError("__oct__() should return a string");
     }
 
@@ -847,7 +842,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __int__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyObject instance___int__() {
         PyObject ret = invoke("__int__");
@@ -864,12 +859,12 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __float__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyFloat instance___float__() {
         PyObject ret = invoke("__float__");
         if (ret instanceof PyFloat)
-            return (PyFloat)ret;
+            return (PyFloat) ret;
         throw Py.TypeError("__float__() should return a float");
     }
 
@@ -881,7 +876,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyObject instance___long__() {
         PyObject ret = invoke("__long__");
@@ -898,12 +893,12 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __complex__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     final PyComplex instance___complex__() {
         PyObject ret = invoke("__complex__");
         if (ret instanceof PyComplex)
-            return (PyComplex)ret;
+            return (PyComplex) ret;
         throw Py.TypeError("__complex__() should return a complex");
     }
 
@@ -915,7 +910,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __pos__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     public PyObject instance___pos__() {
         return invoke("__pos__");
@@ -929,7 +924,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __neg__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     public PyObject instance___neg__() {
         return invoke("__neg__");
@@ -943,7 +938,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __abs__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     public PyObject instance___abs__() {
         return invoke("__abs__");
@@ -957,7 +952,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __invert__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod
     public PyObject instance___invert__() {
         return invoke("__invert__");
@@ -973,28 +968,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __add__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___add__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__add__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__add__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._add(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._add(o2);
             }
         }
     }
@@ -1007,28 +994,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __radd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___radd__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__radd__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__radd__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._add(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._add(o1);
             }
         }
     }
@@ -1041,7 +1020,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __iadd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___iadd__(PyObject o) {
         PyObject ret = invoke_ex("__iadd__", o);
@@ -1058,28 +1037,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __sub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___sub__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__sub__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__sub__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._sub(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._sub(o2);
             }
         }
     }
@@ -1092,28 +1063,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rsub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rsub__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rsub__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rsub__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._sub(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._sub(o1);
             }
         }
     }
@@ -1126,7 +1089,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __isub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___isub__(PyObject o) {
         PyObject ret = invoke_ex("__isub__", o);
@@ -1143,28 +1106,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __mul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___mul__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__mul__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__mul__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._mul(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._mul(o2);
             }
         }
     }
@@ -1177,28 +1132,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rmul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rmul__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rmul__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rmul__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._mul(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._mul(o1);
             }
         }
     }
@@ -1211,7 +1158,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __imul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___imul__(PyObject o) {
         PyObject ret = invoke_ex("__imul__", o);
@@ -1228,28 +1175,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __div__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___div__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__div__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__div__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._div(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._div(o2);
             }
         }
     }
@@ -1262,28 +1201,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rdiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rdiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rdiv__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rdiv__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._div(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._div(o1);
             }
         }
     }
@@ -1296,7 +1227,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __idiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___idiv__(PyObject o) {
         PyObject ret = invoke_ex("__idiv__", o);
@@ -1313,28 +1244,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __floordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___floordiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__floordiv__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__floordiv__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._floordiv(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._floordiv(o2);
             }
         }
     }
@@ -1347,28 +1270,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rfloordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rfloordiv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rfloordiv__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rfloordiv__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._floordiv(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._floordiv(o1);
             }
         }
     }
@@ -1381,7 +1296,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ifloordiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ifloordiv__(PyObject o) {
         PyObject ret = invoke_ex("__ifloordiv__", o);
@@ -1398,28 +1313,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __truediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___truediv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__truediv__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__truediv__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._truediv(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._truediv(o2);
             }
         }
     }
@@ -1432,28 +1339,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rtruediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rtruediv__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rtruediv__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rtruediv__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._truediv(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._truediv(o1);
             }
         }
     }
@@ -1466,7 +1365,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __itruediv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___itruediv__(PyObject o) {
         PyObject ret = invoke_ex("__itruediv__", o);
@@ -1483,28 +1382,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __mod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___mod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__mod__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__mod__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._mod(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._mod(o2);
             }
         }
     }
@@ -1517,28 +1408,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rmod__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rmod__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._mod(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._mod(o1);
             }
         }
     }
@@ -1551,7 +1434,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __imod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___imod__(PyObject o) {
         PyObject ret = invoke_ex("__imod__", o);
@@ -1568,28 +1451,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __divmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___divmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__divmod__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__divmod__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._divmod(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._divmod(o2);
             }
         }
     }
@@ -1602,28 +1477,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rdivmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rdivmod__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rdivmod__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rdivmod__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._divmod(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._divmod(o1);
             }
         }
     }
@@ -1636,28 +1503,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __pow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___pow__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__pow__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__pow__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._pow(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._pow(o2);
             }
         }
     }
@@ -1670,28 +1529,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rpow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rpow__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rpow__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rpow__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._pow(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._pow(o1);
             }
         }
     }
@@ -1704,7 +1555,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ipow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ipow__(PyObject o) {
         PyObject ret = invoke_ex("__ipow__", o);
@@ -1721,28 +1572,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __lshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___lshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__lshift__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__lshift__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._lshift(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._lshift(o2);
             }
         }
     }
@@ -1755,28 +1598,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rlshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rlshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rlshift__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rlshift__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._lshift(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._lshift(o1);
             }
         }
     }
@@ -1789,7 +1624,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ilshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ilshift__(PyObject o) {
         PyObject ret = invoke_ex("__ilshift__", o);
@@ -1806,28 +1641,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rshift__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rshift__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._rshift(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._rshift(o2);
             }
         }
     }
@@ -1840,28 +1667,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rrshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rrshift__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rrshift__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rrshift__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._rshift(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._rshift(o1);
             }
         }
     }
@@ -1874,7 +1693,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __irshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___irshift__(PyObject o) {
         PyObject ret = invoke_ex("__irshift__", o);
@@ -1891,28 +1710,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __and__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___and__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__and__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__and__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._and(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._and(o2);
             }
         }
     }
@@ -1925,28 +1736,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rand__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rand__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rand__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._and(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._and(o1);
             }
         }
     }
@@ -1959,7 +1762,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __iand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___iand__(PyObject o) {
         PyObject ret = invoke_ex("__iand__", o);
@@ -1976,28 +1779,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __or__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___or__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__or__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__or__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._or(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._or(o2);
             }
         }
     }
@@ -2010,28 +1805,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ror__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ror__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__ror__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__ror__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._or(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._or(o1);
             }
         }
     }
@@ -2044,7 +1831,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ior__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ior__(PyObject o) {
         PyObject ret = invoke_ex("__ior__", o);
@@ -2061,28 +1848,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __xor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___xor__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__xor__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__xor__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o1._xor(o2);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o1._xor(o2);
             }
         }
     }
@@ -2095,28 +1874,20 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __rxor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___rxor__(PyObject o) {
         Object ctmp = __coerce_ex__(o);
         if (ctmp == null || ctmp == Py.None)
             return invoke_ex("__rxor__", o);
         else {
-            PyObject o1 = ((PyObject[])ctmp)[0];
-            PyObject o2 = ((PyObject[])ctmp)[1];
+            PyObject o1 = ((PyObject[]) ctmp)[0];
+            PyObject o2 = ((PyObject[]) ctmp)[1];
             if (this == o1) {
-                // Prevent recusion if __coerce__ return self
+                // Prevent recursion if __coerce__ return self
                 return invoke_ex("__rxor__", o2);
-            }
-            else {
-                ThreadState ts = Py.getThreadState();
-                if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
-                    throw Py.RuntimeError("maximum recursion depth exceeded");
-                try {
-                    return o2._xor(o1);
-                } finally {
-                    --ts.recursion_depth;
-                }
+            } else {
+                return o2._xor(o1);
             }
         }
     }
@@ -2129,7 +1900,7 @@ public class PyInstance extends PyObject {
     /**
      * Implements the __ixor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
-     **/
+     */
     @ExposedMethod(type = MethodType.BINARY)
     public PyObject instance___ixor__(PyObject o) {
         PyObject ret = invoke_ex("__ixor__", o);
