@@ -140,7 +140,7 @@ public class PyTableCode extends PyBaseCode
             } else {
                 //System.err.println("ts: "+ts);
                 //System.err.println("ss: "+ts.systemState);
-                frame.f_builtins = PySystemState.builtins;
+                frame.f_builtins = ts.systemState.builtins;;
             }
         }
         // nested scopes: setup env with closure

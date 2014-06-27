@@ -62,7 +62,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     public static String getDefaultBanner() {
-        return String.format("Jython %s on %s", PySystemState.version, PySystemState.platform);
+        return String.format("Jython %s on %s", PySystemState.version, Py.getSystemState().platform);
     }
 
     public void interact(String banner, PyObject file) {

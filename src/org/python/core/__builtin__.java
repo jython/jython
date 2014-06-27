@@ -1234,7 +1234,7 @@ public class __builtin__ {
         if (frame != null && frame.f_builtins != null) {
             builtins = frame.f_builtins;
         } else {
-            builtins = PySystemState.builtins;
+            builtins = Py.getSystemState().builtins;
         }
 
         PyObject __import__ = builtins.__finditem__("__import__");

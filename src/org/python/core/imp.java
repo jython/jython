@@ -493,7 +493,7 @@ public class imp {
         }
         if (name == "__builtin__") {
             Py.writeComment(IMPORT_LOG, "'" + name + "' as __builtin__ in builtin modules");
-            return new PyModule("__builtin__", PySystemState.builtins);
+            return new PyModule("__builtin__", Py.getSystemState().builtins);
         }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
