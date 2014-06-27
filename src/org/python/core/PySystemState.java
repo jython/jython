@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -48,7 +49,7 @@ import org.python.util.Generic;
  */
 // xxx Many have lamented, this should really be a module!
 // but it will require some refactoring to see this wish come true.
-public class PySystemState extends PyObject implements ClassDictInit {
+public class PySystemState extends PyObject implements AutoCloseable, ClassDictInit, Closeable {
 
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
@@ -1540,6 +1541,8 @@ public class PySystemState extends PyObject implements ClassDictInit {
     public void cleanup() {
         closer.cleanup();
     }
+
+    public void close() { cleanup(); }
 
     private static class PySystemStateCloser {
 
