@@ -8,6 +8,8 @@ import java.util.Properties;
 import org.python.antlr.base.mod;
 import org.python.core.CompileMode;
 import org.python.core.CompilerFlags;
+import org.python.core.imp;
+import org.python.core.Options;
 import org.python.core.ParserFacade;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -117,6 +119,11 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
         if (!useThreadLocalState) {
             PyModule module = new PyModule("__main__", dict);
             systemState.modules.__setitem__("__main__", module);
+        }
+        
+        if (Options.importSite) {
+            // Ensure site-packages are available
+            imp.load("site");
         }
     }
 
