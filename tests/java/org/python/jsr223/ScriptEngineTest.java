@@ -16,6 +16,7 @@ import javax.script.SimpleScriptContext;
 import junit.framework.TestCase;
 
 import org.python.core.PyString;
+import org.python.core.Options;
 
 public class ScriptEngineTest extends TestCase {
 
@@ -270,6 +271,26 @@ public class ScriptEngineTest extends TestCase {
         pythonEngine.eval("import warnings");
         // Would previously fail
         pythonEngine.eval("warnings.warn('test')");
+    }
+
+    public void testSiteImportedByDefault() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        pythonEngine.eval("import sys");
+        pythonEngine.eval("'site' in sys.modules");
+    }
+
+    public void testSiteCanBeNotImported() throws ScriptException {
+	try {
+	    Options.importSite = false;
+	    ScriptEngineManager manager = new ScriptEngineManager();
+	    ScriptEngine pythonEngine = manager.getEngineByName("python");
+
+	    pythonEngine.eval("import sys");
+	    pythonEngine.eval("'site' not in sys.modules");
+        } finally {
+	    Options.importSite = true;
+	}
     }
     
 }
