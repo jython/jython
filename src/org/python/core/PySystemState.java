@@ -1593,12 +1593,33 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
             }
 
             // Close the listed resources (and clear the list)
-            runClosers(resourceClosers);
+            runClosers();
             resourceClosers.clear();
 
             // XXX Not sure this is ok, but it makes repeat testing possible.
             // Re-enable the management of resource closers
             isCleanup = false;
+        }
+
+        private synchronized void runClosers() {
+            // resourceClosers can be null in some strange cases
+            if (resourceClosers != null) {
+            /*
+             * Although a Set, the container iterates in the order closers were added. Make a Deque
+             * of it and deal from the top.
+             */
+                LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
+                Iterator<Callable<Void>> iter = rc.descendingIterator();
+
+                while (iter.hasNext()) {
+                    Callable<Void> callable = iter.next();
+                    try {
+                        callable.call();
+                    } catch (Exception e) {
+                        // just continue, nothing we can do
+                    }
+                }
+            }
         }
 
         // Python scripts expect that files are closed upon an orderly cleanup of the VM.
@@ -1617,7 +1638,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
 
         	@Override
             public synchronized void run() {
-                runClosers(resourceClosers);
+                runClosers();
                 resourceClosers.clear();
             }
         }
@@ -1632,26 +1653,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
      *
      * @param resourceClosers to be called in turn
      */
-    private static void runClosers(Set<Callable<Void>> resourceClosers) {
-        // resourceClosers can be null in some strange cases
-        if (resourceClosers != null) {
-            /*
-             * Although a Set, the container iterates in the order closers were added. Make a Deque
-             * of it and deal from the top.
-             */
-            LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
-            Iterator<Callable<Void>> iter = rc.descendingIterator();
 
-            while (iter.hasNext()) {
-                Callable<Void> callable = iter.next();
-                try {
-                    callable.call();
-                } catch (Exception e) {
-                    // just continue, nothing we can do
-                }
-            }
-        }
-    }
 }
 
 
