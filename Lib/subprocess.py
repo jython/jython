@@ -832,7 +832,8 @@ class Popen(object):
                             startupinfo, creationflags, shell,
                             p2cread, p2cwrite,
                             c2pread, c2pwrite,
-                            errread, errwrite)
+                            errread, errwrite,
+                            stdin, stdout, stderr)
 
         if mswindows:
             if p2cwrite is not None:
@@ -1295,7 +1296,8 @@ class Popen(object):
                            startupinfo, creationflags, shell,
                            p2cread, p2cwrite,
                            c2pread, c2pwrite,
-                           errread, errwrite):
+                           errread, errwrite,
+                           stdin, stdout, stderr):
             """Execute program (Java version)"""
 
             if isinstance(args, types.StringTypes):
@@ -1316,6 +1318,14 @@ class Popen(object):
                 args[0] = executable
 
             builder = java.lang.ProcessBuilder(args)
+
+            if stdin is None:
+                builder.redirectInput(java.lang.ProcessBuilder.Redirect.INHERIT)
+            if stdout is None:
+                builder.redirectOutput(java.lang.ProcessBuilder.Redirect.INHERIT)
+            if stderr is None:
+                builder.redirectError(java.lang.ProcessBuilder.Redirect.INHERIT)
+
             # os.environ may be inherited for compatibility with CPython
             self._setup_env(dict(os.environ if env is None else env),
                             builder.environment())
@@ -1396,7 +1406,7 @@ class Popen(object):
         def terminate(self):
             """Terminates the process
             """
-            _subprocess.TerminateProcess(self._handle, 1)
+            self._process.destroy()
 
         kill = terminate
 
