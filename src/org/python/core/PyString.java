@@ -662,6 +662,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
         }
     }
 
+    /**
+     * Create an instance of the same type as this object, from the Java String given as argument.
+     * This is to be overridden in a subclass to return its own type.
+     *
+     * @param str to wrap
+     * @return
+     */
     public PyString createInstance(String str) {
         return new PyString(str);
     }
@@ -3740,23 +3747,19 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str__formatter_parser_doc)
     final PyObject str__formatter_parser() {
-        return new MarkupIterator(getString());
+        return new MarkupIterator(this);
     }
 
     @ExposedMethod(doc = BuiltinDocs.str__formatter_field_name_split_doc)
     final PyObject str__formatter_field_name_split() {
-        FieldNameIterator iterator = new FieldNameIterator(getString());
-        Object headObj = iterator.head();
-        PyObject head =
-                headObj instanceof Integer ? new PyInteger((Integer)headObj) : new PyString(
-                        (String)headObj);
-        return new PyTuple(head, iterator);
+        FieldNameIterator iterator = new FieldNameIterator(this);
+        return new PyTuple(iterator.pyHead(), iterator);
     }
 
     @ExposedMethod(doc = BuiltinDocs.str_format_doc)
     final PyObject str_format(PyObject[] args, String[] keywords) {
         try {
-            return new PyString(buildFormattedString(getString(), args, keywords, null));
+            return new PyString(buildFormattedString(args, keywords, null, null));
         } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }
@@ -3764,18 +3767,33 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Implements PEP-3101 {}-formatting methods <code>str.format()</code> and
-     * <code>unicode.format()</code>.
+     * <code>unicode.format()</code>. When called with <code>enclosingIterator == null</code>, this
+     * method takes this object as its formatting string. The method is also called (calls itself)
+     * to deal with nested formatting sepecifications. In that case, <code>enclosingIterator</code>
+     * is a {@link MarkupIterator} on this object and <code>value</code> is a substring of this
+     * object needing recursive transaltion.
      *
-     * @param value the format string
      * @param args to be interpolated into the string
      * @param keywords for the trailing args
-     * @param enclosingIterator when used nested
+     * @param enclosingIterator when used nested, null if subject is this <code>PyString</code>
+     * @param value the format string when <code>enclosingIterator</code> is not null
      * @return the formatted string based on the arguments
      */
-    protected String buildFormattedString(String value, PyObject[] args, String[] keywords,
-            MarkupIterator enclosingIterator) {
+    protected String buildFormattedString(PyObject[] args, String[] keywords,
+            MarkupIterator enclosingIterator, String value) {
+
+        MarkupIterator it;
+        if (enclosingIterator == null) {
+            // Top-level call acts on this object.
+            it = new MarkupIterator(this);
+        } else {
+            // Nested call acts on the substring and some state from existing iterator.
+            it = new MarkupIterator(enclosingIterator, value);
+        }
+
+        // Result will be formed here
         StringBuilder result = new StringBuilder();
-        MarkupIterator it = new MarkupIterator(value, enclosingIterator);
+
         while (true) {
             MarkupIterator.Chunk chunk = it.nextChunk();
             if (chunk == null) {
@@ -3784,12 +3802,12 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // A Chunk encapsulates a literal part ...
             result.append(chunk.literalText);
             // ... and the parsed form of the replacement field that followed it (if any)
-            if (chunk.fieldName.length() > 0) {
+            if (chunk.fieldName != null) {
                 // The grammar of the replacement field is:
                 // "{" [field_name] ["!" conversion] [":" format_spec] "}"
 
                 // Get the object referred to by the field name (which may be omitted).
-                PyObject fieldObj = getFieldObject(chunk.fieldName, args, keywords);
+                PyObject fieldObj = getFieldObject(chunk.fieldName, it.isBytes(), args, keywords);
                 if (fieldObj == null) {
                     continue;
                 }
@@ -3811,7 +3829,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
                         throw Py.ValueError("Max string recursion exceeded");
                     }
                     // Recursively interpolate further args into chunk.formatSpec
-                    formatSpec = buildFormattedString(formatSpec, args, keywords, it);
+                    formatSpec = buildFormattedString(args, keywords, it, formatSpec);
                 }
                 renderField(fieldObj, formatSpec, result);
             }
@@ -3824,51 +3842,56 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * argument list, containing positional and keyword arguments.
      *
      * @param fieldName to interpret.
+     * @param bytes true if the field name is from a PyString, false for PyUnicode.
      * @param args argument list (positional then keyword arguments).
      * @param keywords naming the keyword arguments.
      * @return the object designated or <code>null</code>.
      */
-    private PyObject getFieldObject(String fieldName, PyObject[] args, String[] keywords) {
-        FieldNameIterator iterator = new FieldNameIterator(fieldName);
-        Object head = iterator.head();
+    private PyObject getFieldObject(String fieldName, boolean bytes, PyObject[] args, String[] keywords) {
+        FieldNameIterator iterator = new FieldNameIterator(fieldName, bytes);
+        PyObject head = iterator.pyHead();
         PyObject obj = null;
         int positionalCount = args.length - keywords.length;
 
-        if (head instanceof Integer) {
-            int index = (Integer)head;
+        if (head.isIndex()) {
+            // The field name begins with an integer argument index (not a [n]-type index).
+            int index = head.asIndex();
             if (index >= positionalCount) {
                 throw Py.IndexError("tuple index out of range");
             }
             obj = args[index];
 
         } else {
+            // The field name begins with keyword.
             for (int i = 0; i < keywords.length; i++) {
-                if (keywords[i].equals(head)) {
+                if (keywords[i].equals(head.asString())) {
                     obj = args[positionalCount + i];
                     break;
                 }
             }
+            // And if we don't find it, that's an error
             if (obj == null) {
-                throw Py.KeyError((String)head);
+                throw Py.KeyError(head);
             }
         }
 
-        if (obj != null) {
-            while (true) {
-                FieldNameIterator.Chunk chunk = iterator.nextChunk();
-                if (chunk == null) {
-                    break;
-                }
-                if (chunk.is_attr) {
-                    obj = obj.__getattr__((String)chunk.value);
+        // Now deal with the iterated sub-fields
+        while (obj != null) {
+            FieldNameIterator.Chunk chunk = iterator.nextChunk();
+            if (chunk == null) {
+                // End of iterator
+                break;
+            }
+            Object key = chunk.value;
+            if (chunk.is_attr) {
+                // key must be a String
+                obj = obj.__getattr__((String)key);
+            } else {
+                if (key instanceof Integer) {
+                    // Can this happen?
+                    obj = obj.__getitem__(((Integer)key).intValue());
                 } else {
-                    PyObject key =
-                            chunk.value instanceof String ? new PyString((String)chunk.value)
-                                    : new PyInteger((Integer)chunk.value);
-                    obj = obj.__getitem__(key);
-                }
-                if (obj == null) {
-                    break;
+                    obj = obj.__getitem__(new PyString(key.toString()));
                 }
             }
         }

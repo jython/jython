@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.python.core.stringlib.FieldNameIterator;
+import org.python.core.stringlib.MarkupIterator;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -1431,13 +1433,30 @@ public class PyUnicode extends PyString implements Iterable {
 
     @Override
     public PyObject __format__(PyObject formatSpec) {
+        return unicode___format__(formatSpec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.unicode___format___doc)
+    final PyObject unicode___format__(PyObject formatSpec) {
+        // Re-use the str implementation, which adapts itself to unicode.
         return str___format__(formatSpec);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.unicode__formatter_parser_doc)
+    final PyObject unicode__formatter_parser() {
+        return new MarkupIterator(this);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.unicode__formatter_field_name_split_doc)
+    final PyObject unicode__formatter_field_name_split() {
+        FieldNameIterator iterator = new FieldNameIterator(this);
+        return new PyTuple(iterator.pyHead(), iterator);
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode_format_doc)
     final PyObject unicode_format(PyObject[] args, String[] keywords) {
         try {
-            return new PyUnicode(buildFormattedString(getString(), args, keywords, null));
+            return new PyUnicode(buildFormattedString(args, keywords, null, null));
         } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }

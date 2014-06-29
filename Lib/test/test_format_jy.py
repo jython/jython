@@ -1,4 +1,4 @@
-"""String foramtting tests
+"""String formatting tests
 
 Made for Jython.
 """
@@ -78,6 +78,80 @@ class FormatMisc(unittest.TestCase):
         self.assertEqual('%     ', '%-6%' % ())
         self.assertEqual('%     ', '%-06%' % ())
         self.assertEqual('%   ', '%*%' % -4)
+
+    def test_formatter_parser(self):
+
+        def check_parse(fmt, expected):
+            fmt_list = list(fmt._formatter_parser())
+            #print repr(fmt_list)
+            self.assertListEqual(fmt_list, expected)
+            # Tuples elements are strings with type matching fmt or are None
+            t = (type(fmt), type(None))
+            for tup in fmt_list :
+                for s in tup :
+                    self.assertIsInstance(s, t)
+
+        # Verify str._formatter_parser()
+        check_parse('{a:8.2f}', [('', 'a', '8.2f', None)])
+        check_parse('{a!r}', [('', 'a', '', 'r')])
+        check_parse('{a.b[2]!r}', [('', 'a.b[2]', '', 'r')])
+        check_parse('A={a:#12x}', [('A=', 'a', '#12x', None)])
+        check_parse('Hello {2!r:9s} world!',
+                    [('Hello ', '2', '9s', 'r'), (' world!', None, None, None)])
+
+        # Verify unicode._formatter_parser()
+        check_parse(u'{a:8.2f}', [(u'', u'a', u'8.2f', None)])
+        check_parse(u'{a!r}', [(u'', u'a', u'', u'r')])
+        check_parse(u'{a.b[2]!r}', [(u'', u'a.b[2]', u'', u'r')])
+        check_parse(u'A={a:#12x}', [(u'A=', u'a', u'#12x', None)])
+        check_parse(u'Hello {2!r:9s} world!',
+                    [(u'Hello ', u'2', u'9s', u'r'), (u' world!', None, None, None)])
+
+        # Differs from CPython: Jython str._formatter_parser generates the
+        # automatic argument number, while CPython leaves it to the client.
+        check_parse('hello {:{}d} and {:{}.{}f}',
+                    [('hello ', '0', '{}d', None), (' and ', '1', '{}.{}f', None)] )
+        check_parse('hello {[2]:{}d} and {.xx:{}.{}f}',
+                    [('hello ', '0[2]', '{}d', None), (' and ', '1.xx', '{}.{}f', None)] )
+        # The result is the same, however, of:
+        self.assertEqual('hello {:{}d} and {:{}.{}f}'.format(20, 16, 12, 8, 4),
+                      'hello               20 and  12.0000' )
+
+    def test_formatter_field_name_split(self):
+
+        def check_split(name, xfirst, xrest):
+            first, r = name._formatter_field_name_split()
+            rest = list(r)
+            #print repr(first), repr(rest)
+            self.assertEqual(first, xfirst)
+            self.assertListEqual(rest, xrest)
+            # Types ought to match the original if not numeric
+            self.assertIsInstance(first, (type(name), int, long))
+            for is_attr, i in rest :
+                if is_attr :
+                    self.assertIsInstance(i, type(name))
+                else :
+                    self.assertIsInstance(i, (int, long))
+
+        # Verify str._formatter_field_name_split()
+        check_split('a', 'a', [])
+        check_split('2', 2, [])
+        check_split('.b', '', [(True, 'b')])
+        check_split('a.b[2]', 'a', [(True, 'b'), (False, 2)])
+        check_split('a.b[2].c[7]', 'a', [(True, 'b'), (False, 2), (True, 'c'), (False, 7)])
+        check_split('.b[2].c[7]', '', [(True, 'b'), (False, 2), (True, 'c'), (False, 7)])
+        check_split('[3].b[2].c[7]', '',
+                    [(False, 3), (True, 'b'), (False, 2), (True, 'c'), (False, 7)])
+
+        # Verify unicode._formatter_field_name_split()
+        check_split(u'a', 'a', [])
+        check_split(u'2', 2, [])
+        check_split(u'.b', '', [(True, 'b')])
+        check_split(u'a.b[2]', 'a', [(True, 'b'), (False, 2)])
+        check_split(u'a.b[2].c[7]', 'a', [(True, 'b'), (False, 2), (True, 'c'), (False, 7)])
+        check_split(u'.b[2].c[7]', '', [(True, 'b'), (False, 2), (True, 'c'), (False, 7)])
+        check_split(u'[3].b[2].c[7]', '',
+                    [(False, 3), (True, 'b'), (False, 2), (True, 'c'), (False, 7)])
 
 
 def test_main():
