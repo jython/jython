@@ -5,6 +5,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -18,26 +19,27 @@ public class MarkupIterator extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(MarkupIterator.class);
 
-    /** The string from which elements are being returned. */
+    /** The UTF-16 string from which elements are being returned. */
     private final String markup;
+    /** True if originally given a PyString (so must return PyString not PyUnicode). */
+    private final boolean bytes;
     /** How far along that string we are. */
     private int index;
     /** A counter used to auto-number fields when not explicitly numbered in the format. */
     private final FieldNumbering numbering;
 
     /** Constructor used at top-level to enumerate a format. */
-    public MarkupIterator(String markup) {
-        this(markup, null);
+    public MarkupIterator(PyString markupObject) {
+        markup = markupObject.getString();
+        bytes = !(markupObject instanceof PyUnicode);
+        numbering = new FieldNumbering();
     }
 
     /** Variant constructor used when formats are nested. */
-    public MarkupIterator(String markup, MarkupIterator enclosingIterator) {
-        this.markup = markup;
-        if (enclosingIterator != null) {
-            numbering = enclosingIterator.numbering;
-        } else {
-            numbering = new FieldNumbering();
-        }
+    public MarkupIterator(MarkupIterator enclosingIterator, String subMarkup) {
+        markup = subMarkup;
+        bytes = enclosingIterator.bytes;
+        numbering = enclosingIterator.numbering;
     }
 
     @Override
@@ -67,41 +69,82 @@ public class MarkupIterator extends PyObject {
      * </ol>
      * Elements 1-3 are None if this chunk contains no format specifier. Elements 0-2 are
      * zero-length strings if missing from the format, while element 3 will be None if missing.
-     * 
+     *
      * @return <code>PyTuple</code> chunk or <code>null</code>
      */
     @ExposedMethod
     final PyObject formatteriterator___iternext__() {
-        Chunk chunk;
         try {
-            chunk = nextChunk();
+            // Parse off the next literal text and replacement field
+            Chunk chunk = nextChunk();
+
+            if (chunk != null) {
+                // Result will be built here
+                PyObject[] elements = new PyObject[4];
+
+                // Literal text is used verbatim.
+                elements[0] = wrap(chunk.literalText, "");
+
+                if (chunk.fieldName == null) {
+                    // A field name is null only if there was no replacement field at all.
+                    for (int i = 1; i < elements.length; i++) {
+                        elements[i] = Py.None;
+                    }
+
+                } else {
+                    // Otherwise, this is the field name
+                    elements[1] = wrap(chunk.fieldName, "");
+                    // The format spec may be blank
+                    elements[2] = wrap(chunk.formatSpec, "");
+                    // There may have been a conversion specifier (if not, None is signalled).
+                    elements[3] = wrap(chunk.conversion, null);
+                }
+
+                // And those make up the next answer.
+                return new PyTuple(elements);
+
+            } else {
+                // End of format: end of iteration
+                return null;
+            }
+
         } catch (IllegalArgumentException e) {
             throw Py.ValueError(e.getMessage());
         }
-        if (chunk == null) {
-            return null;
-        }
-        PyObject[] elements = new PyObject[4];
-
-        // Literal text is used verbatim.
-        elements[0] = new PyString(chunk.literalText);
-
-        // A field name is empty only if there was no format at all.
-        elements[1] = chunk.fieldName.length() == 0 ? Py.None : new PyString(chunk.fieldName);
-        if (chunk.fieldName.length() > 0) {
-            elements[2] =
-                    chunk.formatSpec == null ? Py.EmptyString : new PyString(chunk.formatSpec);
-        } else {
-            elements[2] = Py.None;
-        }
-
-        // There may have been a conversion specifier.
-        elements[3] = chunk.conversion == null ? Py.None : new PyString(chunk.conversion);
-
-        // And those make up the next answer.
-        return new PyTuple(elements);
     }
 
+    /**
+     * Convenience method for populating the return tuple, returning a <code>PyString</code> or
+     * <code>PyUnicode</code> according to the type of the original markup string, or
+     * <code>Py.None</code> if both arguments are <code>null</code>.
+     *
+     * @param value to wrap as a PyObject or null if <code>defaultValue</code> should be wrapped.
+     * @param defaultValue to return or <code>null</code> if default return is <code>None</code>.
+     * @return object for tuple
+     */
+    private PyObject wrap(String value, String defaultValue) {
+        if (value == null) {
+            value = defaultValue;
+        }
+        if (value == null) {
+            // It's still null, we want a None
+            return Py.None;
+        } else if (value.length() == 0) {
+            // This is frequent so avoid the constructor
+            return bytes ? Py.EmptyString : Py.EmptyUnicode;
+        } else {
+            return bytes ? Py.newString(value) : Py.newUnicode(value);
+        }
+    }
+
+    /**
+     * Return the next {@link Chunk} from the iterator, which is a structure containing parsed
+     * elements of the replacement field (if any), and its preceding text. This is the Java
+     * equivalent of the tuple returned by {@link __iternext__()}. This finds use in the
+     * implementation of <code>str.format</code> and <code>unicode.format</code>.
+     *
+     * @return the chunk
+     */
     public Chunk nextChunk() {
         if (index == markup.length()) {
             return null;
@@ -131,7 +174,6 @@ public class MarkupIterator extends PyObject {
         if (pos < 0) {
             // ... except pos<0, and there is no further format specifier, only literal text.
             result.literalText = unescapeBraces(markup.substring(index));
-            result.fieldName = "";
             index = markup.length();
 
         } else {
@@ -167,6 +209,16 @@ public class MarkupIterator extends PyObject {
         return result;
     }
 
+    /**
+     * If originally given a PyString, string elements in the returned tuples must be PyString not
+     * PyUnicode.
+     *
+     * @return true if originally given a PyString
+     */
+    public final boolean isBytes() {
+        return bytes;
+    }
+
     private String unescapeBraces(String substring) {
         return substring.replace("{{", "{").replace("}}", "}");
     }
@@ -175,7 +227,7 @@ public class MarkupIterator extends PyObject {
      * Parse a "replacement field" consisting of a name, conversion and format specification.
      * According to the Python Standard Library documentation, a replacement field has the
      * structure:
-     * 
+     *
      * <pre>
      * replacement_field ::=  "{" [field_name] ["!" conversion] [":" format_spec] "}"
      * field_name        ::=  arg_name ("." attribute_name | "[" element_index "]")*
@@ -183,9 +235,9 @@ public class MarkupIterator extends PyObject {
      * attribute_name    ::=  identifier
      * element_index     ::=  integer | index_string
      * </pre>
-     * 
+     *
      * except at this point, we have already discarded the outer braces.
-     * 
+     *
      * @param result destination chunk
      * @param fieldMarkup specifying a replacement field, possibly with nesting
      */
@@ -264,7 +316,7 @@ public class MarkupIterator extends PyObject {
         /**
          * Generate a numeric argument index automatically, or raise an error if already started
          * numbering manually.
-         * 
+         *
          * @return index as string
          */
         String nextAutomaticFieldNumber() {

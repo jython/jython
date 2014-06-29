@@ -20,6 +20,9 @@ public class StringFormatTest extends TestCase {
     /** Exception-raising seems to need the interpreter to be initialised **/
     PythonInterpreter interp = new PythonInterpreter();
 
+    /** Switches mode in tests that have a shared implementation for bytes and Unicode modes. */
+    private boolean useBytes = true;
+
     public void testInternalFormatSpec() {
         InternalFormat.Spec spec;
         spec = InternalFormat.fromText("x");
@@ -76,8 +79,9 @@ public class StringFormatTest extends TestCase {
     }
 
     /**
-     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the original
-     * <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>.
+     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the
+     * original <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>
+     * .
      */
     public void testPrepareFormatter() {
         int v = 123;
@@ -137,8 +141,9 @@ public class StringFormatTest extends TestCase {
     }
 
     /**
-     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the original
-     * <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>.
+     * Test the IntegerFormatter returned by {@link PyInteger#prepareFormat}. This is based on the
+     * original <code>testFormatIntOrLong</code> which tested <code>PyInteger.formatIntOrLong</code>
+     * .
      */
     public void testPrepareFormatterLong() {
         BigInteger v = BigInteger.valueOf(123);
@@ -238,34 +243,34 @@ public class StringFormatTest extends TestCase {
         assertEquals("abc   ", f.format(v).pad().getResult());
     }
 
-    public void testMarkupIterator() {
-        MarkupIterator iterator = new MarkupIterator("abc");
+    public void implTestMarkupIterator() {
+        MarkupIterator iterator = newMarkupIterator("abc");
         assertEquals("abc", iterator.nextChunk().literalText);
         assertNull(iterator.nextChunk());
 
-        iterator = new MarkupIterator("First, thou shalt count to {0}");
+        iterator = newMarkupIterator("First, thou shalt count to {0}");
         MarkupIterator.Chunk chunk = iterator.nextChunk();
         assertEquals("First, thou shalt count to ", chunk.literalText);
         assertEquals("0", chunk.fieldName);
         assertNull(iterator.nextChunk());
 
-        iterator = new MarkupIterator("Weight in tons {0.weight!r:s}");
+        iterator = newMarkupIterator("Weight in tons {0.weight!r:s}");
         chunk = iterator.nextChunk();
         assertEquals("Weight in tons ", chunk.literalText);
         assertEquals("0.weight", chunk.fieldName);
         assertEquals("r", chunk.conversion);
         assertEquals("s", chunk.formatSpec);
 
-        chunk = new MarkupIterator("{{").nextChunk();
+        chunk = newMarkupIterator("{{").nextChunk();
         assertEquals("{", chunk.literalText);
 
-        chunk = new MarkupIterator("}}").nextChunk();
+        chunk = newMarkupIterator("}}").nextChunk();
         assertEquals("}", chunk.literalText);
 
-        chunk = new MarkupIterator("{{}}").nextChunk();
+        chunk = newMarkupIterator("{{}}").nextChunk();
         assertEquals("{}", chunk.literalText);
 
-        chunk = new MarkupIterator("{0:.{1}}").nextChunk();
+        chunk = newMarkupIterator("{0:.{1}}").nextChunk();
         assertEquals("0", chunk.fieldName);
         assertEquals(".{1}", chunk.formatSpec);
         assertTrue(chunk.formatSpecNeedsExpanding);
@@ -276,8 +281,23 @@ public class StringFormatTest extends TestCase {
         assertMarkupError("}", "Single '}' encountered in format string");
     }
 
+    public void testMarkupIteratorBytes() {
+        useBytes = true;
+        implTestMarkupIterator();
+    }
+
+    public void testMarkupIteratorUnicode() {
+        useBytes = false;
+        implTestMarkupIterator();
+    }
+
+    private MarkupIterator newMarkupIterator(String markup) {
+        PyString markupObject = useBytes ? Py.newString(markup) : Py.newUnicode(markup);
+        return new MarkupIterator(markupObject);
+    }
+
     private void assertMarkupError(String markup, String expected) {
-        MarkupIterator iterator = new MarkupIterator(markup);
+        MarkupIterator iterator = newMarkupIterator(markup);
         String error = null;
         try {
             iterator.nextChunk();
@@ -287,27 +307,42 @@ public class StringFormatTest extends TestCase {
         assertEquals(expected, error);
     }
 
-    public void testFieldNameIterator() {
-        FieldNameIterator it = new FieldNameIterator("abc");
+    public void implTestFieldNameIterator() {
+        FieldNameIterator it = newFieldNameIterator("abc");
         assertEquals("abc", it.head());
         assertNull(it.nextChunk());
 
-        it = new FieldNameIterator("3");
+        it = newFieldNameIterator("3");
         assertEquals(3, it.head());
         assertNull(it.nextChunk());
 
-        it = new FieldNameIterator("abc[0]");
+        it = newFieldNameIterator("abc[0]");
         assertEquals("abc", it.head());
         FieldNameIterator.Chunk chunk = it.nextChunk();
         assertEquals(0, chunk.value);
         assertFalse(chunk.is_attr);
         assertNull(it.nextChunk());
 
-        it = new FieldNameIterator("abc.def");
+        it = newFieldNameIterator("abc.def");
         assertEquals("abc", it.head());
         chunk = it.nextChunk();
         assertEquals("def", chunk.value);
         assertTrue(chunk.is_attr);
         assertNull(it.nextChunk());
+    }
+
+    public void testFieldNameIteratorBytes() {
+        useBytes = true;
+        implTestFieldNameIterator();
+    }
+
+    public void testFieldNameIteratorUnicode() {
+        useBytes = false;
+        implTestFieldNameIterator();
+    }
+
+    private FieldNameIterator newFieldNameIterator(String field) {
+        PyString fieldObject = useBytes ? Py.newString(field) : Py.newUnicode(field);
+        return new FieldNameIterator(fieldObject);
     }
 }

@@ -4,6 +4,7 @@
 Made for Jython.
 """
 import re
+import string
 import sys
 import unittest
 from StringIO import StringIO
@@ -182,10 +183,424 @@ class UnicodeStdIOTestCase(unittest.TestCase):
         self.assertEqual(sys.stdout.getvalue(), msg)
 
 
+class UnicodeFormatStrTest(unittest.TestCase):
+    # Adapted from test_str StrTest by liberally adding u-prefixes.
+
+    def test__format__(self):
+        def test(value, format, expected):
+            r = value.__format__(format)
+            self.assertEqual(r, expected)
+            # note 'xyz'==u'xyz', so must check type separately
+            self.assertIsInstance(r, unicode)
+            # also test both with the trailing 's'
+            r = value.__format__(format + u's')
+            self.assertEqual(r, expected)
+            self.assertIsInstance(r, unicode)
+
+        test(u'', '', '')
+        test(u'abc', '', 'abc')
+        test(u'abc', '.3', 'abc')
+        test(u'ab', '.3', 'ab')
+        test(u'abcdef', '.3', 'abc')
+        test(u'abcdef', '.0', '')
+        test(u'abc', '3.3', 'abc')
+        test(u'abc', '2.3', 'abc')
+        test(u'abc', '2.2', 'ab')
+        test(u'abc', '3.2', 'ab ')
+        test(u'result', 'x<0', 'result')
+        test(u'result', 'x<5', 'result')
+        test(u'result', 'x<6', 'result')
+        test(u'result', 'x<7', 'resultx')
+        test(u'result', 'x<8', 'resultxx')
+        test(u'result', ' <7', 'result ')
+        test(u'result', '<7', 'result ')
+        test(u'result', '>7', ' result')
+        test(u'result', '>8', '  result')
+        test(u'result', '^8', ' result ')
+        test(u'result', '^9', ' result  ')
+        test(u'result', '^10', '  result  ')
+        test(u'a', '10000', 'a' + ' ' * 9999)
+        test(u'', '10000', ' ' * 10000)
+        test(u'', '10000000', ' ' * 10000000)
+
+    def test_format(self):
+        self.assertEqual(u''.format(), '')
+        self.assertEqual(u'a'.format(), 'a')
+        self.assertEqual(u'ab'.format(), 'ab')
+        self.assertEqual(u'a{{'.format(), 'a{')
+        self.assertEqual(u'a}}'.format(), 'a}')
+        self.assertEqual(u'{{b'.format(), '{b')
+        self.assertEqual(u'}}b'.format(), '}b')
+        self.assertEqual(u'a{{b'.format(), 'a{b')
+
+        # examples from the PEP:
+        import datetime
+        self.assertEqual(u"My name is {0}".format('Fred'), "My name is Fred")
+        self.assertIsInstance(u"My name is {0}".format('Fred'), unicode)
+        self.assertEqual(u"My name is {0[name]}".format(dict(name='Fred')),
+                         "My name is Fred")
+        self.assertEqual(u"My name is {0} :-{{}}".format('Fred'),
+                         "My name is Fred :-{}")
+
+        d = datetime.date(2007, 8, 18)
+        self.assertEqual(u"The year is {0.year}".format(d),
+                         "The year is 2007")
+
+        # classes we'll use for testing
+        class C:
+            def __init__(self, x=100):
+                self._x = x
+            def __format__(self, spec):
+                return spec
+
+        class D:
+            def __init__(self, x):
+                self.x = x
+            def __format__(self, spec):
+                return str(self.x)
+
+        # class with __str__, but no __format__
+        class E:
+            def __init__(self, x):
+                self.x = x
+            def __str__(self):
+                return 'E(' + self.x + ')'
+
+        # class with __repr__, but no __format__ or __str__
+        class F:
+            def __init__(self, x):
+                self.x = x
+            def __repr__(self):
+                return 'F(' + self.x + ')'
+
+        # class with __format__ that forwards to string, for some format_spec's
+        class G:
+            def __init__(self, x):
+                self.x = x
+            def __str__(self):
+                return "string is " + self.x
+            def __format__(self, format_spec):
+                if format_spec == 'd':
+                    return 'G(' + self.x + ')'
+                return object.__format__(self, format_spec)
+
+        # class that returns a bad type from __format__
+        class H:
+            def __format__(self, format_spec):
+                return 1.0
+
+        class I(datetime.date):
+            def __format__(self, format_spec):
+                return self.strftime(format_spec)
+
+        class J(int):
+            def __format__(self, format_spec):
+                return int.__format__(self * 2, format_spec)
+
+
+        self.assertEqual(u''.format(), '')
+        self.assertEqual(u'abc'.format(), 'abc')
+        self.assertEqual(u'{0}'.format('abc'), 'abc')
+        self.assertEqual(u'{0:}'.format('abc'), 'abc')
+        self.assertEqual(u'X{0}'.format('abc'), 'Xabc')
+        self.assertEqual(u'{0}X'.format('abc'), 'abcX')
+        self.assertEqual(u'X{0}Y'.format('abc'), 'XabcY')
+        self.assertEqual(u'{1}'.format(1, 'abc'), 'abc')
+        self.assertEqual(u'X{1}'.format(1, 'abc'), 'Xabc')
+        self.assertEqual(u'{1}X'.format(1, 'abc'), 'abcX')
+        self.assertEqual(u'X{1}Y'.format(1, 'abc'), 'XabcY')
+        self.assertEqual(u'{0}'.format(-15), '-15')
+        self.assertEqual(u'{0}{1}'.format(-15, 'abc'), '-15abc')
+        self.assertEqual(u'{0}X{1}'.format(-15, 'abc'), '-15Xabc')
+        self.assertEqual(u'{{'.format(), '{')
+        self.assertEqual(u'}}'.format(), '}')
+        self.assertEqual(u'{{}}'.format(), '{}')
+        self.assertEqual(u'{{x}}'.format(), '{x}')
+        self.assertEqual(u'{{{0}}}'.format(123), '{123}')
+        self.assertEqual(u'{{{{0}}}}'.format(), '{{0}}')
+        self.assertEqual(u'}}{{'.format(), '}{')
+        self.assertEqual(u'}}x{{'.format(), '}x{')
+
+        # weird field names
+        self.assertEqual(u"{0[foo-bar]}".format({'foo-bar':'baz'}), 'baz')
+        self.assertEqual(u"{0[foo bar]}".format({'foo bar':'baz'}), 'baz')
+        self.assertEqual(u"{0[ ]}".format({' ':3}), '3')
+
+        self.assertEqual(u'{foo._x}'.format(foo=C(20)), '20')
+        self.assertEqual(u'{1}{0}'.format(D(10), D(20)), '2010')
+        self.assertEqual(u'{0._x.x}'.format(C(D('abc'))), 'abc')
+        self.assertEqual(u'{0[0]}'.format(['abc', 'def']), 'abc')
+        self.assertEqual(u'{0[1]}'.format(['abc', 'def']), 'def')
+        self.assertEqual(u'{0[1][0]}'.format(['abc', ['def']]), 'def')
+        self.assertEqual(u'{0[1][0].x}'.format(['abc', [D('def')]]), 'def')
+
+        self.assertIsInstance(u'{0[1][0].x}'.format(['abc', [D('def')]]), unicode)
+
+        # strings
+        self.assertEqual(u'{0:.3s}'.format('abc'), 'abc')
+        self.assertEqual(u'{0:.3s}'.format('ab'), 'ab')
+        self.assertEqual(u'{0:.3s}'.format('abcdef'), 'abc')
+        self.assertEqual(u'{0:.0s}'.format('abcdef'), '')
+        self.assertEqual(u'{0:3.3s}'.format('abc'), 'abc')
+        self.assertEqual(u'{0:2.3s}'.format('abc'), 'abc')
+        self.assertEqual(u'{0:2.2s}'.format('abc'), 'ab')
+        self.assertEqual(u'{0:3.2s}'.format('abc'), 'ab ')
+        self.assertEqual(u'{0:x<0s}'.format('result'), 'result')
+        self.assertEqual(u'{0:x<5s}'.format('result'), 'result')
+        self.assertEqual(u'{0:x<6s}'.format('result'), 'result')
+        self.assertEqual(u'{0:x<7s}'.format('result'), 'resultx')
+        self.assertEqual(u'{0:x<8s}'.format('result'), 'resultxx')
+        self.assertEqual(u'{0: <7s}'.format('result'), 'result ')
+        self.assertEqual(u'{0:<7s}'.format('result'), 'result ')
+        self.assertEqual(u'{0:>7s}'.format('result'), ' result')
+        self.assertEqual(u'{0:>8s}'.format('result'), '  result')
+        self.assertEqual(u'{0:^8s}'.format('result'), ' result ')
+        self.assertEqual(u'{0:^9s}'.format('result'), ' result  ')
+        self.assertEqual(u'{0:^10s}'.format('result'), '  result  ')
+        self.assertEqual(u'{0:10000}'.format('a'), 'a' + ' ' * 9999)
+        self.assertEqual(u'{0:10000}'.format(''), ' ' * 10000)
+        self.assertEqual(u'{0:10000000}'.format(''), ' ' * 10000000)
+
+        # format specifiers for user defined type
+        self.assertEqual(u'{0:abc}'.format(C()), 'abc')
+
+        # !r and !s coercions
+        self.assertEqual(u'{0!s}'.format('Hello'), 'Hello')
+        self.assertEqual(u'{0!s:}'.format('Hello'), 'Hello')
+        self.assertEqual(u'{0!s:15}'.format('Hello'), 'Hello          ')
+        self.assertEqual(u'{0!s:15s}'.format('Hello'), 'Hello          ')
+        self.assertEqual(u'{0!r}'.format('Hello'), "'Hello'")
+        self.assertEqual(u'{0!r:}'.format('Hello'), "'Hello'")
+        self.assertEqual(u'{0!r}'.format(F('Hello')), 'F(Hello)')
+
+        # test fallback to object.__format__
+        self.assertEqual(u'{0}'.format({}), '{}')
+        self.assertEqual(u'{0}'.format([]), '[]')
+        self.assertEqual(u'{0}'.format([1]), '[1]')
+        self.assertEqual(u'{0}'.format(E('data')), 'E(data)')
+        self.assertEqual(u'{0:d}'.format(G('data')), 'G(data)')
+        self.assertEqual(u'{0!s}'.format(G('data')), 'string is data')
+
+        msg = 'object.__format__ with a non-empty format string is deprecated'
+        with test_support.check_warnings((msg, PendingDeprecationWarning)):
+            self.assertEqual(u'{0:^10}'.format(E('data')), ' E(data)  ')
+            self.assertEqual(u'{0:^10s}'.format(E('data')), ' E(data)  ')
+            self.assertEqual(u'{0:>15s}'.format(G('data')), ' string is data')
+
+        #FIXME: not supported in Jython yet:
+        if not test_support.is_jython:
+            self.assertEqual(u"{0:date: %Y-%m-%d}".format(I(year=2007,
+                                                           month=8,
+                                                           day=27)),
+                             "date: 2007-08-27")
+
+            # test deriving from a builtin type and overriding __format__
+            self.assertEqual(u"{0}".format(J(10)), "20")
+
+
+        # string format specifiers
+        self.assertEqual(u'{0:}'.format('a'), 'a')
+
+        # computed format specifiers
+        self.assertEqual(u"{0:.{1}}".format('hello world', 5), 'hello')
+        self.assertEqual(u"{0:.{1}s}".format('hello world', 5), 'hello')
+        self.assertEqual(u"{0:.{precision}s}".format('hello world', precision=5), 'hello')
+        self.assertEqual(u"{0:{width}.{precision}s}".format('hello world', width=10, precision=5), 'hello     ')
+        self.assertEqual(u"{0:{width}.{precision}s}".format('hello world', width='10', precision='5'), 'hello     ')
+
+        self.assertIsInstance(u"{0:{width}.{precision}s}".format('hello world', width='10', precision='5'), unicode)
+
+        # test various errors
+        self.assertRaises(ValueError, u'{'.format)
+        self.assertRaises(ValueError, u'}'.format)
+        self.assertRaises(ValueError, u'a{'.format)
+        self.assertRaises(ValueError, u'a}'.format)
+        self.assertRaises(ValueError, u'{a'.format)
+        self.assertRaises(ValueError, u'}a'.format)
+        self.assertRaises(IndexError, u'{0}'.format)
+        self.assertRaises(IndexError, u'{1}'.format, u'abc')
+        self.assertRaises(KeyError,   u'{x}'.format)
+        self.assertRaises(ValueError, u"}{".format)
+        self.assertRaises(ValueError, u"{".format)
+        self.assertRaises(ValueError, u"}".format)
+        self.assertRaises(ValueError, u"abc{0:{}".format)
+        self.assertRaises(ValueError, u"{0".format)
+        self.assertRaises(IndexError, u"{0.}".format)
+        self.assertRaises(ValueError, u"{0.}".format, 0)
+        self.assertRaises(IndexError, u"{0[}".format)
+        self.assertRaises(ValueError, u"{0[}".format, [])
+        self.assertRaises(KeyError,   u"{0]}".format)
+        self.assertRaises(ValueError, u"{0.[]}".format, 0)
+        self.assertRaises(ValueError, u"{0..foo}".format, 0)
+        self.assertRaises(ValueError, u"{0[0}".format, 0)
+        self.assertRaises(ValueError, u"{0[0:foo}".format, 0)
+        self.assertRaises(KeyError,   u"{c]}".format)
+        self.assertRaises(ValueError, u"{{ {{{0}}".format, 0)
+        self.assertRaises(ValueError, u"{0}}".format, 0)
+        self.assertRaises(KeyError,   u"{foo}".format, bar=3)
+        self.assertRaises(ValueError, u"{0!x}".format, 3)
+        self.assertRaises(ValueError, u"{0!}".format, 0)
+        self.assertRaises(ValueError, u"{0!rs}".format, 0)
+        self.assertRaises(ValueError, u"{!}".format)
+        self.assertRaises(IndexError, u"{:}".format)
+        self.assertRaises(IndexError, u"{:s}".format)
+        self.assertRaises(IndexError, u"{}".format)
+
+        # issue 6089
+        self.assertRaises(ValueError, u"{0[0]x}".format, [None])
+        self.assertRaises(ValueError, u"{0[0](10)}".format, [None])
+
+        # can't have a replacement on the field name portion
+        self.assertRaises(TypeError, u'{0[{1}]}'.format, 'abcdefg', 4)
+
+        # exceed maximum recursion depth
+        self.assertRaises(ValueError, u"{0:{1:{2}}}".format, 'abc', 's', '')
+        self.assertRaises(ValueError, u"{0:{1:{2:{3:{4:{5:{6}}}}}}}".format,
+                          0, 1, 2, 3, 4, 5, 6, 7)
+
+        # string format spec errors
+        self.assertRaises(ValueError, u"{0:-s}".format, '')
+        self.assertRaises(ValueError, format, "", u"-")
+        self.assertRaises(ValueError, u"{0:=s}".format, '')
+
+    def test_format_auto_numbering(self):
+        class C:
+            def __init__(self, x=100):
+                self._x = x
+            def __format__(self, spec):
+                return spec
+
+        self.assertEqual(u'{}'.format(10), '10')
+        self.assertEqual(u'{:5}'.format('s'), 's    ')
+        self.assertEqual(u'{!r}'.format('s'), "'s'")
+        self.assertEqual(u'{._x}'.format(C(10)), '10')
+        self.assertEqual(u'{[1]}'.format([1, 2]), '2')
+        self.assertEqual(u'{[a]}'.format({'a':4, 'b':2}), '4')
+        self.assertEqual(u'a{}b{}c'.format(0, 1), 'a0b1c')
+
+        self.assertEqual(u'a{:{}}b'.format('x', '^10'), 'a    x     b')
+        self.assertEqual(u'a{:{}x}b'.format(20, '#'), 'a0x14b')
+
+        # can't mix and match numbering and auto-numbering
+        self.assertRaises(ValueError, u'{}{1}'.format, 1, 2)
+        self.assertRaises(ValueError, u'{1}{}'.format, 1, 2)
+        self.assertRaises(ValueError, u'{:{1}}'.format, 1, 2)
+        self.assertRaises(ValueError, u'{0:{}}'.format, 1, 2)
+
+        # can mix and match auto-numbering and named
+        self.assertEqual(u'{f}{}'.format(4, f='test'), 'test4')
+        self.assertEqual(u'{}{f}'.format(4, f='test'), '4test')
+        self.assertEqual(u'{:{f}}{g}{}'.format(1, 3, g='g', f=2), ' 1g3')
+        self.assertEqual(u'{f:{}}{}{g}'.format(2, 4, f=1, g='g'), ' 14g')
+
+
+class StringModuleUnicodeTest(unittest.TestCase):
+    # Taken from test_string ModuleTest and converted for unicode
+
+    def test_formatter(self):
+
+        def assertEqualAndUnicode(r, exp):
+            self.assertEqual(r, exp)
+            self.assertIsInstance(r, unicode)
+
+        fmt = string.Formatter()
+        assertEqualAndUnicode(fmt.format(u"foo"), "foo")
+        assertEqualAndUnicode(fmt.format(u"foo{0}", "bar"), "foobar")
+        assertEqualAndUnicode(fmt.format(u"foo{1}{0}-{1}", "bar", 6), "foo6bar-6")
+        assertEqualAndUnicode(fmt.format(u"-{arg!r}-", arg='test'), "-'test'-")
+
+        # override get_value ############################################
+        class NamespaceFormatter(string.Formatter):
+            def __init__(self, namespace={}):
+                string.Formatter.__init__(self)
+                self.namespace = namespace
+
+            def get_value(self, key, args, kwds):
+                if isinstance(key, (str, unicode)):
+                    try:
+                        # Check explicitly passed arguments first
+                        return kwds[key]
+                    except KeyError:
+                        return self.namespace[key]
+                else:
+                    string.Formatter.get_value(key, args, kwds)
+
+        fmt = NamespaceFormatter({'greeting':'hello'})
+        assertEqualAndUnicode(fmt.format(u"{greeting}, world!"), 'hello, world!')
+
+
+        # override format_field #########################################
+        class CallFormatter(string.Formatter):
+            def format_field(self, value, format_spec):
+                return format(value(), format_spec)
+
+        fmt = CallFormatter()
+        assertEqualAndUnicode(fmt.format(u'*{0}*', lambda : 'result'), '*result*')
+
+
+        # override convert_field ########################################
+        class XFormatter(string.Formatter):
+            def convert_field(self, value, conversion):
+                if conversion == 'x':
+                    return None
+                return super(XFormatter, self).convert_field(value, conversion)
+
+        fmt = XFormatter()
+        assertEqualAndUnicode(fmt.format(u"{0!r}:{0!x}", 'foo', 'foo'), "'foo':None")
+
+
+        # override parse ################################################
+        class BarFormatter(string.Formatter):
+            # returns an iterable that contains tuples of the form:
+            # (literal_text, field_name, format_spec, conversion)
+            def parse(self, format_string):
+                for field in format_string.split('|'):
+                    if field[0] == '+':
+                        # it's markup
+                        field_name, _, format_spec = field[1:].partition(':')
+                        yield '', field_name, format_spec, None
+                    else:
+                        yield field, None, None, None
+
+        fmt = BarFormatter()
+        assertEqualAndUnicode(fmt.format(u'*|+0:^10s|*', 'foo'), '*   foo    *')
+
+        # test all parameters used
+        class CheckAllUsedFormatter(string.Formatter):
+            def check_unused_args(self, used_args, args, kwargs):
+                # Track which arguments actually got used
+                unused_args = set(kwargs.keys())
+                unused_args.update(range(0, len(args)))
+
+                for arg in used_args:
+                    unused_args.remove(arg)
+
+                if unused_args:
+                    raise ValueError("unused arguments")
+
+        fmt = CheckAllUsedFormatter()
+        # The next series should maybe also call assertEqualAndUnicode:
+        #assertEqualAndUnicode(fmt.format(u"{0}", 10), "10")
+        #assertEqualAndUnicode(fmt.format(u"{0}{i}", 10, i=100), "10100")
+        #assertEqualAndUnicode(fmt.format(u"{0}{i}{1}", 10, 20, i=100), "1010020")
+        # But string.Formatter.format returns bytes. See CPython Issue 15951.
+        self.assertEqual(fmt.format(u"{0}", 10), "10")
+        self.assertEqual(fmt.format(u"{0}{i}", 10, i=100), "10100")
+        self.assertEqual(fmt.format(u"{0}{i}{1}", 10, 20, i=100), "1010020")
+        self.assertRaises(ValueError, fmt.format, u"{0}{i}{1}", 10, 20, i=100, j=0)
+        self.assertRaises(ValueError, fmt.format, u"{0}", 10, 20)
+        self.assertRaises(ValueError, fmt.format, u"{0}", 10, 20, i=100)
+        self.assertRaises(ValueError, fmt.format, u"{i}", 10, 20, i=100)
+
+
 def test_main():
-    test_support.run_unittest(UnicodeTestCase,
-                              UnicodeFormatTestCase,
-                              UnicodeStdIOTestCase)
+    test_support.run_unittest(
+                UnicodeTestCase,
+                UnicodeFormatTestCase,
+                UnicodeStdIOTestCase,
+                UnicodeFormatStrTest,
+                StringModuleUnicodeTest,
+            )
 
 
 if __name__ == "__main__":
