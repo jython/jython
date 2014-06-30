@@ -1,4 +1,5 @@
 import logging
+import time
 
 try:
     # jarjar-ed version
@@ -112,6 +113,7 @@ class SSLSocket(object):
 
         self.ssl_handler.handshakeFuture().addListener(handshake_step)
         if self.do_handshake_on_connect and self.already_handshaked:
+            time.sleep(0.1)  # FIXME do we need this sleep
             self.ssl_handler.handshakeFuture().sync()
             log.debug("SSL handshaking completed", extra={"sock": self._sock})
 
