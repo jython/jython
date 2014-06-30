@@ -583,15 +583,15 @@ The readme text for the next release will be like:
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-52_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.0.18.Final.jar"/>
+            <zipfileset src="extlibs/netty-buffer-4.0.20.Final.jar"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.0.18.Final.jar"/>
+            <zipfileset src="extlibs/netty-codec-4.0.20.Final.jar"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.0.18.Final.jar"/>
+            <zipfileset src="extlibs/netty-common-4.0.20.Final.jar"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.0.18.Final.jar"/>
+            <zipfileset src="extlibs/netty-handler-4.0.20.Final.jar"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.0.18.Final.jar"/>
+            <zipfileset src="extlibs/netty-transport-4.0.20.Final.jar"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
