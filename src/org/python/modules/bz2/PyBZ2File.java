@@ -180,9 +180,18 @@ public class PyBZ2File extends PyObject {
                 new String[] { "size" }, 0);
 
         int size = ap.getInt(0, -1);
-        final String data = buffer.read(size);
 
-        return new PyString(data);
+        if (size == 0) { return Py.EmptyString; }
+        if (size < 0) { return new PyString(buffer.readall()); }
+        StringBuilder data = new StringBuilder(size);
+        while (data.length() < size) {
+            String chunk = buffer.read(size - data.length());
+            if (chunk.length() == 0) {
+                break;
+            }
+            data.append(chunk);
+        }
+        return new PyString(data.toString());
     }
 
     @ExposedMethod
