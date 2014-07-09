@@ -576,7 +576,7 @@ The readme text for the next release will be like:
 	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
 	    <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/*.SF"/>
 	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-	    <zipfileset src="extlibs/commons-compress-1.8.jar"/>
+	    <zipfileset src="extlibs/commons-compress-1.8.1.jar"/>
 	    <rule pattern="org.apache.**" result="org.python.apache.@1"/>
             <zipfileset src="extlibs/guava-17.0.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
