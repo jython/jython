@@ -1,5 +1,10 @@
+import base64
+import errno
 import logging
+import os.path
+import textwrap
 import time
+import threading
 
 try:
     # jarjar-ed version
@@ -20,27 +25,33 @@ from _socket import (
     SSL_ERROR_ZERO_RETURN,
     SSL_ERROR_WANT_CONNECT,
     SSL_ERROR_EOF,
-    SSL_ERROR_INVALID_ERROR_CODE)
+    SSL_ERROR_INVALID_ERROR_CODE,
+    error as socket_error)
 from _sslcerts import _get_ssl_context
 
 from java.text import SimpleDateFormat
-from java.util import Locale, TimeZone
+from java.util import ArrayList, Locale, TimeZone
+from java.util.concurrent import CountDownLatch
 from javax.naming.ldap import LdapName
 from javax.security.auth.x500 import X500Principal
 
 
-log = logging.getLogger("socket")
+log = logging.getLogger("_socket")
 
+
+# Pretend to be OpenSSL
+OPENSSL_VERSION = "OpenSSL 1.0.0 (as emulated by Java SSL)"
+OPENSSL_VERSION_NUMBER = 0x1000000L
+OPENSSL_VERSION_INFO = (1, 0, 0, 0, 0)
 
 CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED = range(3)
 
-# FIXME need to map to java names as well; there's also possibility some difference between 
-# SSLv2 (Java) and PROTOCOL_SSLv23 (Python) but reading the docs suggest not
-# http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#SSLContext
-
-# Currently ignored, since we just use the default in Java. FIXME
-PROTOCOL_SSLv2, PROTOCOL_SSLv3, PROTOCOL_SSLv23, PROTOCOL_TLSv1 = range(4)
-_PROTOCOL_NAMES = {PROTOCOL_SSLv2: 'SSLv2', PROTOCOL_SSLv3: 'SSLv3', PROTOCOL_SSLv23: 'SSLv23', PROTOCOL_TLSv1: 'TLSv1'}
+# Do not support PROTOCOL_SSLv2, it is highly insecure and it is optional
+_, PROTOCOL_SSLv3, PROTOCOL_SSLv23, PROTOCOL_TLSv1 = range(4)
+_PROTOCOL_NAMES = {
+    PROTOCOL_SSLv3: 'SSLv3', 
+    PROTOCOL_SSLv23: 'SSLv23',
+    PROTOCOL_TLSv1: 'TLSv1'}
 
 _rfc2822_date_format = SimpleDateFormat("MMM dd HH:mm:ss yyyy z", Locale.US)
 _rfc2822_date_format.setTimeZone(TimeZone.getTimeZone("GMT"))
@@ -59,8 +70,7 @@ _ldap_rdn_display_names = {
 }
 
 _cert_name_types = [
-    # FIXME only entry 2 - DNS - has been confirmed w/ cpython;
-    # everything else is coming from this doc:
+    # Fields documented in 
     # http://docs.oracle.com/javase/7/docs/api/java/security/cert/X509Certificate.html#getSubjectAlternativeNames()
     "other",
     "rfc822",
@@ -80,7 +90,7 @@ class SSLInitializer(ChannelInitializer):
 
     def initChannel(self, ch):
         pipeline = ch.pipeline()
-        pipeline.addLast("ssl", self.ssl_handler) 
+        pipeline.addFirst("ssl", self.ssl_handler)
 
 
 class SSLSocket(object):
@@ -89,47 +99,61 @@ class SSLSocket(object):
                  keyfile, certfile, ca_certs,
                  do_handshake_on_connect, server_side):
         self.sock = sock
+        self.do_handshake_on_connect = do_handshake_on_connect
         self._sock = sock._sock  # the real underlying socket
         self.context = _get_ssl_context(keyfile, certfile, ca_certs)
         self.engine = self.context.createSSLEngine()
+        self.server_side = server_side
         self.engine.setUseClientMode(not server_side)
-        self.ssl_handler = SslHandler(self.engine)
-        self.already_handshaked = False
-        self.do_handshake_on_connect = do_handshake_on_connect
+        self.ssl_handler = None
+        # _sslobj is used to follow CPython convention that an object
+        # means we have handshaked, as used by existing code that
+        # looks at this internal
+        self._sslobj = None
+        self.handshake_count = 0
 
-        if self.do_handshake_on_connect and hasattr(self._sock, "connected") and self._sock.connected:
-            self.already_handshaked = True
-            log.debug("Adding SSL handler to pipeline after connection", extra={"sock": self._sock})
-            self._sock.channel.pipeline().addFirst("ssl", self.ssl_handler)
-            self._sock._post_connect()
-            self._sock._notify_selectors()
-            self._sock._unlatch()
-
-        def handshake_step(result):
-            log.debug("SSL handshaking %s", result, extra={"sock": self._sock})
-            if not hasattr(self._sock, "activity_latch"):  # need a better discriminant
-                self._sock._post_connect()
-            self._sock._notify_selectors()
-
-        self.ssl_handler.handshakeFuture().addListener(handshake_step)
-        if self.do_handshake_on_connect and self.already_handshaked:
-            time.sleep(0.1)  # FIXME do we need this sleep
-            self.ssl_handler.handshakeFuture().sync()
-            log.debug("SSL handshaking completed", extra={"sock": self._sock})
+        if self.do_handshake_on_connect and self.sock._sock.connected:
+            self.do_handshake()
 
     def connect(self, addr):
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
         self._sock._connect(addr)
         if self.do_handshake_on_connect:
-            self.already_handshaked = True
-            if self._sock.connected:
-                log.debug("Already connected, adding SSL handler to pipeline...", extra={"sock": self._sock})
+            self.do_handshake()
+
+    def unwrap(self):
+        self._sock.channel.pipeline().remove("ssl")
+        self.ssl_handler.close()
+        return self._sock
+
+    def do_handshake(self):
+        log.debug("SSL handshaking", extra={"sock": self._sock})
+
+        def handshake_step(result):
+            log.debug("SSL handshaking completed %s", result, extra={"sock": self._sock})
+            if not hasattr(self._sock, "active_latch"):
+                log.debug("Post connect step", extra={"sock": self._sock})
+                self._sock._post_connect()
+                self._sock._unlatch()
+            self._sslobj = object()  # we have now handshaked
+            self._notify_selectors()
+
+        if self.ssl_handler is None:
+            self.ssl_handler = SslHandler(self.engine)
+            self.ssl_handler.handshakeFuture().addListener(handshake_step)
+
+            if hasattr(self._sock, "connected") and self._sock.connected:
+                # The underlying socket is already connected, so some extra work to manage
+                log.debug("Adding SSL handler to pipeline after connection", extra={"sock": self._sock})
                 self._sock.channel.pipeline().addFirst("ssl", self.ssl_handler)
             else:
                 log.debug("Not connected, adding SSL initializer...", extra={"sock": self._sock})
                 self._sock.connect_handlers.append(SSLInitializer(self.ssl_handler))
 
-    # Various pass through methods to the wrapper socket
+        handshake = self.ssl_handler.handshakeFuture()
+        self._sock._handle_channel_future(handshake, "SSL handshake")
+
+    # Various pass through methods to the wrapped socket
 
     def send(self, data):
         return self.sock.send(data)
@@ -139,6 +163,18 @@ class SSLSocket(object):
 
     def recv(self, bufsize, flags=0):
         return self.sock.recv(bufsize, flags)
+
+    def recvfrom(self, bufsize, flags=0):
+        return self.sock.recvfrom(bufsize, flags)
+
+    def recvfrom_into(self, buffer, nbytes=0, flags=0):
+        return self.sock.recvfrom_into(buffer, nbytes, flags)
+
+    def recv_into(self, buffer, nbytes=0, flags=0):
+        return self.sock.recv_into(buffer, nbytes, flags)
+
+    def sendto(self, string, arg1, arg2=None):
+        raise socket_error(errno.EPROTO)
 
     def close(self):
         self.sock.close()
@@ -174,12 +210,6 @@ class SSLSocket(object):
 
     def _notify_selectors(self):
         self._sock._notify_selectors()
-
-    def do_handshake(self):
-        if not self.already_handshaked:
-            log.debug("Not handshaked, so adding SSL handler", extra={"sock": self._sock})
-            self.already_handshaked = True
-            self._sock.channel.pipeline().addFirst("ssl", self.ssl_handler)
 
     def getpeername(self):
         return self.sock.getpeername()
@@ -240,9 +270,91 @@ def wrap_socket(sock, keyfile=None, certfile=None, server_side=False, cert_reqs=
         do_handshake_on_connect=do_handshake_on_connect)
 
 
-def unwrap_socket(sock):
-    # FIXME removing SSL handler from pipeline should suffice, but low pri for now
-    raise NotImplemented()
+# some utility functions
+
+def cert_time_to_seconds(cert_time):
+
+    """Takes a date-time string in standard ASN1_print form
+    ("MON DAY 24HOUR:MINUTE:SEC YEAR TIMEZONE") and return
+    a Python time value in seconds past the epoch."""
+
+    import time
+    return time.mktime(time.strptime(cert_time, "%b %d %H:%M:%S %Y GMT"))
+
+PEM_HEADER = "-----BEGIN CERTIFICATE-----"
+PEM_FOOTER = "-----END CERTIFICATE-----"
+
+def DER_cert_to_PEM_cert(der_cert_bytes):
+
+    """Takes a certificate in binary DER format and returns the
+    PEM version of it as a string."""
+
+    if hasattr(base64, 'standard_b64encode'):
+        # preferred because older API gets line-length wrong
+        f = base64.standard_b64encode(der_cert_bytes)
+        return (PEM_HEADER + '\n' +
+                textwrap.fill(f, 64) + '\n' +
+                PEM_FOOTER + '\n')
+    else:
+        return (PEM_HEADER + '\n' +
+                base64.encodestring(der_cert_bytes) +
+                PEM_FOOTER + '\n')
+
+def PEM_cert_to_DER_cert(pem_cert_string):
+
+    """Takes a certificate in ASCII PEM format and returns the
+    DER-encoded version of it as a byte sequence"""
+
+    if not pem_cert_string.startswith(PEM_HEADER):
+        raise ValueError("Invalid PEM encoding; must start with %s"
+                         % PEM_HEADER)
+    if not pem_cert_string.strip().endswith(PEM_FOOTER):
+        raise ValueError("Invalid PEM encoding; must end with %s"
+                         % PEM_FOOTER)
+    d = pem_cert_string.strip()[len(PEM_HEADER):-len(PEM_FOOTER)]
+    return base64.decodestring(d)
+
+def get_server_certificate(addr, ssl_version=PROTOCOL_SSLv3, ca_certs=None):
+
+    """Retrieve the certificate from the server at the specified address,
+    and return it as a PEM-encoded string.
+    If 'ca_certs' is specified, validate the server cert against it.
+    If 'ssl_version' is specified, use it in the connection attempt."""
+
+    host, port = addr
+    if (ca_certs is not None):
+        cert_reqs = CERT_REQUIRED
+    else:
+        cert_reqs = CERT_NONE
+    s = wrap_socket(socket(), ssl_version=ssl_version,
+                    cert_reqs=cert_reqs, ca_certs=ca_certs)
+    s.connect(addr)
+    dercert = s.getpeercert(True)
+    s.close()
+    return DER_cert_to_PEM_cert(dercert)
+
+def get_protocol_name(protocol_code):
+    return _PROTOCOL_NAMES.get(protocol_code, '<unknown>')
+
+# a replacement for the old socket.ssl function
+
+def sslwrap_simple(sock, keyfile=None, certfile=None):
+
+    """A replacement for the old socket.ssl function.  Designed
+    for compability with Python 2.5 and earlier.  Will disappear in
+    Python 3.0."""
+
+    ssl_sock = wrap_socket(sock, keyfile=keyfile, certfile=certfile, ssl_version=PROTOCOL_SSLv23)
+    try:
+        sock.getpeername()
+    except socket_error:
+        # no, no connection yet
+        pass
+    else:
+        # yes, do the handshake
+        ssl_sock.do_handshake()
+
+    return ssl_sock
 
 
 # Underlying Java does a good job of managing entropy, so these are just no-ops
@@ -251,7 +363,8 @@ def RAND_status():
     return True
 
 def RAND_egd(path):
-    pass
+    if os.path.abspath(str(path)) != path:
+        raise TypeError("Must be an absolute path, but ignoring it regardless")
 
 def RAND_add(bytes, entropy):
     pass

@@ -8,5 +8,5 @@ from _socket import (
     POLLHUP,
     POLLNVAL,
     error,
-    #poll,
+    poll,
     select)

@@ -16,7 +16,7 @@ import time
 import thread, threading
 from weakref import proxy
 from StringIO import StringIO
-from _socket import _check_threadpool_for_pending_threads
+from _socket import _check_threadpool_for_pending_threads, NIO_GROUP
 
 PORT = 50100
 HOST = 'localhost'
@@ -126,6 +126,17 @@ class ThreadableTest:
         if not self.server_ready.isSet():
             self.server_ready.set()
         self.client_ready.wait()
+
+    def _assert_no_pending_threads(self, group, msg):
+        # Wait up to one second for there not to be pending threads
+        for i in xrange(10):
+            pending_threads = _check_threadpool_for_pending_threads(group)
+            if len(pending_threads) == 0:
+                break
+            time.sleep(0.1)
+            
+        if pending_threads:
+            self.fail("Pending threads in Netty msg={} pool={}".format(msg, pprint.pformat(pending_threads)))
         
     def _tearDown(self):
         self.done.wait()   # wait for the client to exit
@@ -134,16 +145,13 @@ class ThreadableTest:
         msg = None
         if not self.queue.empty():
             msg = self.queue.get()
+        
+        self._assert_no_pending_threads(NIO_GROUP, "Client thread pool")
+        if hasattr(self, "srv"):
+            self._assert_no_pending_threads(self.srv.group, "Server thread pool")
 
-        # Wait up to one second for there not to be pending threads
-        for i in xrange(10):
-            pending_threads = _check_threadpool_for_pending_threads()
-            if len(pending_threads) == 0:
-                break
-            time.sleep(0.1)
-
-        if pending_threads or msg:
-            self.fail("msg={} Pending threads in Netty pool={}".format(msg, pprint.pformat(pending_threads)))
+        if msg:
+            self.fail("msg={}".format(msg))
 
             
     def clientRun(self, test_func):

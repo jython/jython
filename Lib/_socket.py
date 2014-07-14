@@ -3,7 +3,9 @@ import encodings.idna
 import errno
 import jarray
 import logging
+import numbers
 import pprint
+import struct
 import sys
 import time
 import _google_ipaddr_r234
@@ -15,18 +17,19 @@ from numbers import Number
 from StringIO import StringIO
 from threading import Condition, Lock
 from types import MethodType, NoneType
+from weakref import WeakKeyDictionary
 
 import java
 from java.io import IOException, InterruptedIOException
-from java.lang import Thread
+from java.lang import Thread, IllegalStateException
 from java.net import InetAddress, InetSocketAddress
 from java.nio.channels import ClosedChannelException
 from java.util import NoSuchElementException
 from java.util.concurrent import (
     ArrayBlockingQueue, CopyOnWriteArrayList, CountDownLatch, LinkedBlockingQueue,
     RejectedExecutionException, ThreadFactory, TimeUnit)
-from java.util.concurrent.atomic import AtomicBoolean
-from javax.net.ssl import SSLPeerUnverifiedException
+from java.util.concurrent.atomic import AtomicBoolean, AtomicLong
+from javax.net.ssl import SSLPeerUnverifiedException, SSLException
 
 try:
     # jarjar-ed version
@@ -52,6 +55,8 @@ log = logging.getLogger("_socket")
 def _debug():
     FORMAT = '%(asctime)-15s %(threadName)s %(levelname)s %(funcName)s %(message)s %(sock)s'
     logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+
+# _debug()  # UNCOMMENT to get logging of socket activity
 
 
 # Constants
@@ -185,21 +190,27 @@ _PEER_CLOSED = object()
 # because these threads only handle ephemeral data, such as performing
 # SSL wrap/unwrap.
 
+
 class DaemonThreadFactory(ThreadFactory):
+
+    thread_count = AtomicLong()
+
+    def __init__(self, label):
+        self.label = label
+
     def newThread(self, runnable):
         t = Thread(runnable)
         t.daemon = True
+        t.name = self.label % (self.thread_count.getAndIncrement())
         return t
 
 
-# This number should be configurable by the user. 10 is the default
-# number as of 4.0.17 of Netty. FIXME this default may be based on core count.
+NIO_GROUP = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Client-%s"))
 
-NIO_GROUP = NioEventLoopGroup(10, DaemonThreadFactory())
 
-def _check_threadpool_for_pending_threads():
+def _check_threadpool_for_pending_threads(group):
     pending_threads = []
-    for t in NIO_GROUP:
+    for t in group:
         pending_count = t.pendingTasks()
         if pending_count > 0:
             pending_threads.append((t, pending_count))
@@ -272,6 +283,7 @@ _exception_map = {
 
     IOException            : lambda x: error(errno.ECONNRESET, 'Software caused connection abort'),
     InterruptedIOException : lambda x: timeout(None, 'timed out'),
+    IllegalStateException  : lambda x: error(errno.EPIPE, 'Illegal state exception'),
     
     java.net.BindException            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
     java.net.ConnectException         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
@@ -299,7 +311,8 @@ _exception_map = {
     java.nio.channels.UnresolvedAddressException      : lambda x: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
     java.nio.channels.UnsupportedAddressTypeException : None,
 
-    SSLPeerUnverifiedException: lambda x: SSLError(SSL_ERROR_SSL, "FIXME"),
+    SSLPeerUnverifiedException: lambda x: SSLError(SSL_ERROR_SSL, x.message),
+    SSLException: lambda x: SSLError(SSL_ERROR_SSL, x.message),
 }
 
 
@@ -391,7 +404,9 @@ class _Select(object):
                 # shortcircuiting if the socket was in fact ready for
                 # reading/writing/exception before the select call
                 if selected_rlist or selected_wlist:
-                    return sorted(selected_rlist), sorted(selected_wlist), sorted(selected_xlist)
+                    completed = sorted(selected_rlist), sorted(selected_wlist), sorted(selected_xlist)
+                    log.debug("Completed select %s", completed, extra={"sock": "*"})
+                    return completed
                 elif timeout is not None and time.time() - started >= timeout:
                     return [], [], []
                 self.cv.wait(timeout)
@@ -400,7 +415,12 @@ class _Select(object):
 # poll support
 ##############
 
-_PollNotification = namedtuple("_PollNotification", ["sock", "fd", "exception", "hangup"])
+_PollNotification = namedtuple(
+    "_PollNotification",
+    ["sock",  # the real socket
+     "fd",    # could be the real socket (as returned by fileno) or a wrapping socket object
+     "exception",
+     "hangup"])
 
 
 class poll(object):
@@ -408,30 +428,41 @@ class poll(object):
     def __init__(self):
         self.queue = LinkedBlockingQueue()
         self.registered = dict()  # fd -> eventmask
+        self.socks2fd = WeakKeyDictionary()  # sock -> fd
 
     def notify(self, sock, exception=None, hangup=False):
         notification = _PollNotification(
             sock=sock,
-            fd=sock.fileno(),
+            fd=self.socks2fd.get(sock),
             exception=exception,
             hangup=hangup)
+        log.debug("Notify %s", notification, extra={"sock": "*"})
+
         self.queue.put(notification)
 
     def register(self, fd, eventmask=POLLIN|POLLPRI|POLLOUT):
+        if not hasattr(fd, "fileno"):
+            raise TypeError("argument must have a fileno() method")
+        sock = fd.fileno()
+        log.debug("Register fd=%s eventmask=%s", fd, eventmask, extra={"sock": sock})
         self.registered[fd] = eventmask
-        # NOTE in case fd != sock in a future release, modifiy accordingly
-        sock = fd
+        self.socks2fd[sock] = fd
         sock._register_selector(self)
         self.notify(sock)  # Ensure we get an initial notification
 
     def modify(self, fd, eventmask):
+        if not hasattr(fd, "fileno"):
+            raise TypeError("argument must have a fileno() method")
         if fd not in self.registered:
             raise error(errno.ENOENT, "No such file or directory")
         self.registered[fd] = eventmask
 
     def unregister(self, fd):
+        if not hasattr(fd, "fileno"):
+            raise TypeError("argument must have a fileno() method")
+        log.debug("Unregister socket fd=%s", fd, extra={"sock": fd.fileno()})
         del self.registered[fd]
-        sock = fd
+        sock = fd.fileno()
         sock._unregister_selector(self)
 
     def _event_test(self, notification):
@@ -439,7 +470,8 @@ class poll(object):
         # edges around errors and hangup
         if notification is None:
             return None, 0
-        mask = self.registered.get(notification.sock, 0)   # handle if concurrently removed, by simply ignoring
+        mask = self.registered.get(notification.fd, 0)   # handle if concurrently removed, by simply ignoring
+        log.debug("Testing notification=%s mask=%s", notification, mask, extra={"sock": "*"}) 
         event = 0
         if mask & POLLIN and notification.sock._readable():
             event |= POLLIN
@@ -451,53 +483,58 @@ class poll(object):
             event |= POLLHUP
         if mask & POLLNVAL and not notification.sock.peer_closed:
             event |= POLLNVAL
+        log.debug("Tested notification=%s event=%s", notification, event, extra={"sock": "*"}) 
         return notification.fd, event
 
-    def poll(self, timeout=None):
-        if not timeout or timeout < 0:
-            # Simplify logic around timeout resets
-            timeout = None
-        else:
-            timeout /= 1000.  # convert from milliseconds to seconds
+    def _handle_poll(self, poller):
+        notification = poller()
+        if notification is None:
+            return []
+            
+        # Pull as many outstanding notifications as possible out
+        # of the queue
+        notifications = [notification]
+        self.queue.drainTo(notifications)
+        log.debug("Got notification(s) %s", notifications, extra={"sock": "MODULE"})
+        result = []
+        socks = set()
 
-        while True:
-            if timeout is None:
-                notification = self.queue.take()
-            elif timeout > 0:
+        # But given how we notify, it's possible to see possible
+        # multiple notifications. Just return one (fd, event) for a
+        # given socket
+        for notification in notifications:
+            if notification.sock not in socks:
+                fd, event = self._event_test(notification)
+                if event:
+                    result.append((fd, event))
+                    socks.add(notification.sock)
+
+        # Repump sockets to pick up a subsequent level change
+        for sock in socks:
+            self.notify(sock)
+
+        return result
+
+    def poll(self, timeout=None):
+        if not (timeout is None or isinstance(timeout, numbers.Real)):
+            raise TypeError("timeout must be a number or None, got %r" % (timeout,))
+        if timeout < 0:
+            timeout = None
+        log.debug("Polling timeout=%s", timeout, extra={"sock": "*"})
+        if timeout is None:
+            return self._handle_poll(self.queue.take)
+        elif timeout == 0:
+            return self._handle_poll(self.queue.poll)
+        else:
+            timeout = float(timeout) / 1000.  # convert from milliseconds to seconds
+            while timeout > 0:
                 started = time.time()
                 timeout_in_ns = int(timeout * _TO_NANOSECONDS)
-                notification = self.queue.poll(timeout_in_ns, TimeUnit.NANOSECONDS)
-                # Need to reset the timeout, because this notification
-                # may not be of interest when masked out
+                result = self._handle_poll(partial(self.queue.poll, timeout_in_ns, TimeUnit.NANOSECONDS))
+                if result:
+                    return result
                 timeout = timeout - (time.time() - started)
-            else:
-                return []
-
-            if notification is None:
-                continue
-            
-            # Pull as many outstanding notifications as possible out
-            # of the queue
-            notifications = [notification]
-            self.queue.drainTo(notifications)
-            log.debug("Got notification(s) %s", notifications, extra={"sock": "MODULE"})
-            result = []
-            socks = set()
-
-            # But given how we notify, it's possible to see possible
-            # multiple notifications. Just return one (fd, event) for a
-            # given socket
-            for notification in notifications:
-                if notification.sock not in socks:
-                    fd, event = self._event_test(notification)
-                    if event:
-                        result.append((fd, event))
-                        socks.add(notification.sock)
-            # Repump sockets to pick up a subsequent level change
-            for sock in socks:
-                self.notify(sock)
-            if result:
-                return result
+            return []
 
 
 # integration with Netty
@@ -538,7 +575,7 @@ class ChildSocketHandler(ChannelInitializer):
         self.parent_socket = parent_socket
 
     def initChannel(self, child_channel):
-        child = ChildSocket()
+        child = ChildSocket(self.parent_socket)
         child.proto = IPPROTO_TCP
         child._init_client_mode(child_channel)
 
@@ -551,7 +588,7 @@ class ChildSocketHandler(ChannelInitializer):
             log.debug("Setting inherited options %s", child.options, extra={"sock": child})
             config = child_channel.config()
             for option, value in child.options.iteritems():
-                config.setOption(option, value)
+                _set_option(config.setOption, option, value)
 
         log.debug("Notifing listeners of parent socket %s", self.parent_socket, extra={"sock": child})
         self.parent_socket.child_queue.put(child)
@@ -578,6 +615,35 @@ class ChildSocketHandler(ChannelInitializer):
 
 # FIXME raise exceptions for ops not permitted on client socket, server socket
 UNKNOWN_SOCKET, CLIENT_SOCKET, SERVER_SOCKET, DATAGRAM_SOCKET = range(4)
+_socket_types = {
+    UNKNOWN_SOCKET:  "unknown",
+    CLIENT_SOCKET:   "client", 
+    SERVER_SOCKET:   "server",
+    DATAGRAM_SOCKET: "datagram"
+}
+
+
+
+
+def _identity(value):
+    return value
+
+
+def _set_option(setter, option, value):
+    if option in (ChannelOption.SO_LINGER, ChannelOption.SO_TIMEOUT):
+        # FIXME consider implementing these options. Note these are not settable
+        # via config.setOption in any event:
+        #
+        # * SO_TIMEOUT does not work for NIO sockets, need to use
+        #   IdleStateHandler instead
+        #
+        # * SO_LINGER does not work for nonblocking sockets, so need
+        #   to emulate in calling close on the socket by attempting to
+        #   send any unsent data (it's not clear this actually is
+        #   needed in Netty however...)
+        return
+    else:
+        setter(option, value)
 
 
 # These are the only socket protocols we currently support, so it's easy to map as follows:
@@ -585,19 +651,15 @@ UNKNOWN_SOCKET, CLIENT_SOCKET, SERVER_SOCKET, DATAGRAM_SOCKET = range(4)
 _socket_options = {
     IPPROTO_TCP: {
         (SOL_SOCKET,  SO_KEEPALIVE):   (ChannelOption.SO_KEEPALIVE, bool),
-        (SOL_SOCKET,  SO_LINGER):      (ChannelOption.SO_LINGER, int),
+        (SOL_SOCKET,  SO_LINGER):      (ChannelOption.SO_LINGER, _identity),
         (SOL_SOCKET,  SO_RCVBUF):      (ChannelOption.SO_RCVBUF, int),
         (SOL_SOCKET,  SO_REUSEADDR):   (ChannelOption.SO_REUSEADDR, bool),
         (SOL_SOCKET,  SO_SNDBUF):      (ChannelOption.SO_SNDBUF, int),
-        # FIXME SO_TIMEOUT needs to be handled by an IdleStateHandler -
-        # ChannelOption.SO_TIMEOUT really only applies to OIO (old) socket channels,
-        # we want to use NIO ones
         (SOL_SOCKET,  SO_TIMEOUT):     (ChannelOption.SO_TIMEOUT, int),
         (IPPROTO_TCP, TCP_NODELAY):    (ChannelOption.TCP_NODELAY, bool),
     },
     IPPROTO_UDP: {
         (SOL_SOCKET,  SO_BROADCAST):   (ChannelOption.SO_BROADCAST, bool),
-        (SOL_SOCKET,  SO_LINGER):      (ChannelOption.SO_LINGER, int),
         (SOL_SOCKET,  SO_RCVBUF):      (ChannelOption.SO_RCVBUF, int),
         (SOL_SOCKET,  SO_REUSEADDR):   (ChannelOption.SO_REUSEADDR, bool),
         (SOL_SOCKET,  SO_SNDBUF):      (ChannelOption.SO_SNDBUF, int),
@@ -629,6 +691,7 @@ class _realsocket(object):
                 proto = IPPROTO_UDP
         self.proto = proto
 
+        self._sock = self  # some Python code wants to see a socket
         self._last_error = 0  # supports SO_ERROR
         self.connected = False
         self.timeout = _defaulttimeout
@@ -654,7 +717,7 @@ class _realsocket(object):
 
     def __repr__(self):
         return "<_realsocket at {:#x} type={} open_count={} channel={} timeout={}>".format(
-            id(self), self.socket_type, self.open_count, self.channel, self.timeout)
+            id(self), _socket_types[self.socket_type], self.open_count, self.channel, self.timeout)
 
     def _unlatch(self):
         pass  # no-op once mutated from ChildSocket to normal _socketobject
@@ -689,6 +752,7 @@ class _realsocket(object):
         elif self.timeout:
             self._handle_timeout(future.await, reason)
             if not future.isSuccess():
+                log.exception("Got this failure %s during %s", future.cause(), reason, extra={"sock": self})
                 raise future.cause()
             return future
         else:
@@ -757,7 +821,7 @@ class _realsocket(object):
         self.python_inbound_handler = PythonInboundHandler(self)
         bootstrap = Bootstrap().group(NIO_GROUP).channel(NioSocketChannel)
         for option, value in self.options.iteritems():
-            bootstrap.option(option, value)
+            _set_option(bootstrap.option, option, value)
 
         # FIXME really this is just for SSL handling, so make more
         # specific than a list of connect_handlers
@@ -772,13 +836,12 @@ class _realsocket(object):
             bind_future = bootstrap.bind(self.bind_addr)
             self._handle_channel_future(bind_future, "local bind")
             self.channel = bind_future.channel()
-            future = self.channel.connect(addr)
         else:
             log.debug("Connect to %s", addr, extra={"sock": self})
-            future = bootstrap.connect(addr)
-            self.channel = future.channel()
-            
-        self._handle_channel_future(future, "connect")
+            self.channel = bootstrap.channel()
+
+        connect_future = self.channel.connect(addr)
+        self._handle_channel_future(connect_future, "connect")
         self.bind_timestamp = time.time()
 
     def _post_connect(self):
@@ -818,19 +881,21 @@ class _realsocket(object):
 
     def listen(self, backlog):
         self.socket_type = SERVER_SOCKET
+        self.child_queue = ArrayBlockingQueue(backlog)
+        self.accepted_children = 1  # include the parent as well to simplify close logic
 
         b = ServerBootstrap()
-        self.group = NioEventLoopGroup(10, DaemonThreadFactory())
-        b.group(self.group)
+        self.parent_group = NioEventLoopGroup(2, DaemonThreadFactory("Jython-Netty-Parent-%s"))
+        self.child_group = NioEventLoopGroup(2, DaemonThreadFactory("Jython-Netty-Child-%s"))
+        b.group(self.parent_group, self.child_group)
         b.channel(NioServerSocketChannel)
         b.option(ChannelOption.SO_BACKLOG, backlog)
         for option, value in self.options.iteritems():
-            b.option(option, value)
+            _set_option(b.option, option, value)
             # Note that child options are set in the child handler so
             # that they can take into account any subsequent changes,
             # plus have shadow support
 
-        self.child_queue = ArrayBlockingQueue(backlog)
         self.child_handler = ChildSocketHandler(self)
         b.childHandler(self.child_handler)
 
@@ -854,6 +919,9 @@ class _realsocket(object):
                 raise error(errno.EWOULDBLOCK, "Resource temporarily unavailable")
         peername = child.getpeername() if child else None
         log.debug("Got child %s connected to %s", child, peername, extra={"sock": self})
+        child.accepted = True
+        with self.open_lock:
+            self.accepted_children += 1
         return child, peername
 
     # DATAGRAM METHODS
@@ -870,7 +938,7 @@ class _realsocket(object):
             bootstrap = Bootstrap().group(NIO_GROUP).channel(NioDatagramChannel)
             bootstrap.handler(self.python_inbound_handler)
             for option, value in self.options.iteritems():
-                bootstrap.option(option, value)
+                _set_option(bootstrap.option, option, value)
 
             future = bootstrap.register()
             self._handle_channel_future(future, "register")
@@ -903,14 +971,19 @@ class _realsocket(object):
         self._handle_channel_future(future, "sendto")
         return len(string)
 
-
-    # FIXME implement these methods
-
     def recvfrom_into(self, buffer, nbytes=0, flags=0):
-        raise NotImplementedError()
+        if nbytes == 0:
+            nbytes = len(buffer)
+        data, remote_addr = self.recvfrom(nbytes, flags)
+        buffer[0:len(data)] = data
+        return len(data), remote_addr
 
     def recv_into(self, buffer, nbytes=0, flags=0):
-        raise NotImplementedError()
+        if nbytes == 0:
+            nbytes = len(buffer)
+        data = self.recv(nbytes, flags)
+        buffer[0:len(data)] = data
+        return len(data)
 
     # GENERAL METHODS
                                              
@@ -930,7 +1003,9 @@ class _realsocket(object):
                 # Do not care about tasks that attempt to schedule after close
                 pass
             if self.socket_type == SERVER_SOCKET:
-                self.group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
+                log.debug("Shutting down server socket parent group", extra={"sock": self})
+                self.parent_group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
+                self.accepted_children -= 1
                 while True:
                     child = self.child_queue.poll()
                     if child is None:
@@ -941,6 +1016,7 @@ class _realsocket(object):
             log.debug("Closed socket", extra={"sock": self})
 
     def shutdown(self, how):
+        log.debug("Got request to shutdown socket how=%s", how, extra={"sock": self})
         self._verify_channel()
         if how & SHUT_RD:
             try:
@@ -952,8 +1028,10 @@ class _realsocket(object):
             
     def _readable(self):
         if self.socket_type == CLIENT_SOCKET or self.socket_type == DATAGRAM_SOCKET:
-            return ((self.incoming_head is not None and self.incoming_head.readableBytes()) or
-                    self.incoming.peek())
+            log.debug("Incoming head=%s queue=%s", self.incoming_head, self.incoming, extra={"sock": self})
+            return (
+                (self.incoming_head is not None and self.incoming_head.readableBytes()) or
+                self.incoming.peek())
         elif self.socket_type == SERVER_SOCKET:
             return bool(self.child_queue.peek())
         else:
@@ -986,6 +1064,7 @@ class _realsocket(object):
             raise error(errno.ENOTCONN, 'Socket not connected')
         future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(data))
         self._handle_channel_future(future, "send")
+        log.debug("Sent data <<<{!r:.20}>>>".format(data), extra={"sock": self})
         # FIXME are we sure we are going to be able to send this much data, especially async?
         return len(data)
     
@@ -1008,9 +1087,9 @@ class _realsocket(object):
                     log.debug("No data yet for socket", extra={"sock": self})
                     raise error(errno.EAGAIN, "Resource temporarily unavailable")
 
-        # Only return _PEER_CLOSED once
         msg = self.incoming_head
         if msg is _PEER_CLOSED:
+            # Only return _PEER_CLOSED once
             self.incoming_head = None
             self.peer_closed = True
         return msg
@@ -1073,13 +1152,11 @@ class _realsocket(object):
         except KeyError:
             raise error(errno.ENOPROTOOPT, "Protocol not available")
 
-        # FIXME for NIO sockets, SO_TIMEOUT doesn't work - should use
-        # IdleStateHandler instead
         cast_value = cast(value)
         self.options[option] = cast_value
         log.debug("Setting option %s to %s", optname, value, extra={"sock": self})
         if self.channel:
-            self.channel.config().setOption(option, cast(value))
+            _set_option(self.channel.config().setOption, option, cast_value)
 
     def getsockopt(self, level, optname, buflen=None):
         # Pseudo options for interrogating the status of this socket
@@ -1247,10 +1324,12 @@ socket = SocketType = _socketobject
 
 class ChildSocket(_realsocket):
     
-    def __init__(self):
+    def __init__(self, parent_socket):
         super(ChildSocket, self).__init__()
+        self.parent_socket = parent_socket
         self.active = AtomicBoolean()
         self.active_latch = CountDownLatch(1)
+        self.accepted = False
 
     def _ensure_post_connect(self):
         do_post_connect = not self.active.getAndSet(True)
@@ -1293,6 +1372,14 @@ class ChildSocket(_realsocket):
     def close(self):
         self._ensure_post_connect()
         super(ChildSocket, self).close()
+        if self.open_count > 0:
+            return
+        if self.accepted:
+            with self.parent_socket.open_lock:
+                self.parent_socket.accepted_children -= 1
+                if self.parent_socket.accepted_children == 0:
+                    log.debug("Shutting down child group for parent socket=%s", self.parent_socket, extra={"sock": self})
+                    self.parent_socket.child_group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
 
     def shutdown(self, how):
         self._ensure_post_connect()
@@ -1413,6 +1500,12 @@ class _ipv6_address_t(_ip_address_t):
 
 
 def _get_jsockaddr(address_object, family, sock_type, proto, flags):
+    if family is None:
+        family = AF_UNSPEC
+    if sock_type is None:
+        sock_type = 0
+    if proto is None:
+        proto = 0
     addr = _get_jsockaddr2(address_object, family, sock_type, proto, flags)
     log.debug("Address %s for %s", addr, address_object, extra={"sock": "*"})
     return addr
@@ -1427,9 +1520,10 @@ def _get_jsockaddr2(address_object, family, sock_type, proto, flags):
         address_object = ("", 0)
     error_message = "Address must be a 2-tuple (ipv4: (host, port)) or a 4-tuple (ipv6: (host, port, flow, scope))"
     if not isinstance(address_object, tuple) or \
-            ((family == AF_INET and len(address_object) != 2) or (family == AF_INET6 and len(address_object) not in [2,4] )) or \
-            not isinstance(address_object[0], (basestring, NoneType)) or \
-            not isinstance(address_object[1], (int, long)):
+       ((family == AF_INET and len(address_object) != 2) or \
+        (family == AF_INET6 and len(address_object) not in [2,4] )) or \
+       not isinstance(address_object[0], (basestring, NoneType)) or \
+       not isinstance(address_object[1], (int, long)):
         raise TypeError(error_message)
     if len(address_object) == 4 and not isinstance(address_object[3], (int, long)):
         raise TypeError(error_message)
@@ -1520,8 +1614,10 @@ def _getaddrinfo_get_port(port, flags):
 
 @raises_java_exception
 def getaddrinfo(host, port, family=AF_UNSPEC, socktype=0, proto=0, flags=0):
-    if _ipv4_addresses_only:
-        family = AF_INET
+    if family is None:
+        family = AF_UNSPEC
+    if socktype is None:
+        socktype = 0
     if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
         raise gaierror(errno.EIO, 'ai_family not supported')
     host = _getaddrinfo_get_host(host, family, flags)
