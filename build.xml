@@ -474,7 +474,8 @@ The readme text for the next release will be like:
                deprecation="${deprecation}"
                nowarn="${nowarn}"
                memoryMaximumSize="192m"
-               fork="true">
+               fork="true"
+               encoding="UTF-8">
             <compilerarg line="${javac.Xlint}"/>
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
