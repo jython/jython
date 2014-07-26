@@ -42,6 +42,15 @@ class BuiltinTest(unittest.TestCase):
             self.assertTrue(numeric < Ellipsis)
             self.assertTrue(Ellipsis > numeric)
 
+    def test_max_error_message(self):
+        'fix for http://bugs.jython.org/issue2130'
+        try:
+            max([])
+        except ValueError, e:
+            self.assertEqual(str(e), 'max of empty sequence')
+        else:
+            self.fail('max with empty sequence should raise a proper ValueError')
+
 class LoopTest(unittest.TestCase):
 
     def test_break(self):

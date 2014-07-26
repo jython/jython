@@ -1526,7 +1526,7 @@ class MaxFunction extends PyBuiltinFunction {
             }
         }
         if (max == null) {
-            throw Py.ValueError("min of empty sequence");
+            throw Py.ValueError("max of empty sequence");
         }
         return max;
     }
