@@ -1,0 +1,39 @@
+*.class
+*.pyc
+*.pyd
+*.pyo
+*.orig
+*.rej
+*.swp
+\#*
+*~
+# IntelliJ files
+*.eml
+*.ipr
+*.iml
+*.iws
+.idea/*
+
+# Eclipse files
+.classpath
+.externalToolBuilders/*
+.project
+.pydevproject
+
+# Netbeans files
+nbproject
+nbbuild.xml
+
+.vagrant
+
+.AppleDouble
+.DS_Store
+.settings
+__pycache__
+ant.properties
+bin
+build
+cachedir
+dist
+target
+profile.txt
