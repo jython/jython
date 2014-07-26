@@ -135,6 +135,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
         <property name="junit.reports" value="${dist.dir}/testreports" />
+        <property name="junit.htmlreports" value="${dist.dir}/test-html-reports" />
+
 
         <!-- classpaths -->
         <path id="main.classpath">
@@ -1040,6 +1042,16 @@ The readme text for the next release will be like:
         <arg value="-j"/>
         <arg value="${junit.reports}"/>
       </exec>
+    </target>
+
+    <target name="regrtest-html-report" depends="init" description="generates HTML output out of regrtest JUnit XML">
+        <mkdir dir="${junit.htmlreports}/html"/>
+        <junitreport todir="${junit.htmlreports}">
+            <fileset dir="${junit.reports}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.htmlreports}/html"/>
+        </junitreport>
     </target>
 
     <!-- run bugtests, create a config if necessary -->
