@@ -1,5 +1,7 @@
 package org.python.core.buffer;
 
+import java.nio.ByteBuffer;
+
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 import org.python.core.util.StringUtil;
@@ -226,6 +228,13 @@ public class SimpleBuffer extends BaseBuffer {
             return new Strided1DBuffer.SlicedView(getRoot(), flags, storage, compIndex0, length,
                     stride);
         }
+    }
+
+    @Override
+    public ByteBuffer getNIOByteBuffer() {
+        // Simplify for one-dimensional contiguous bytes
+        ByteBuffer b = ByteBuffer.wrap(storage, index0, shape[0]);
+        return isReadonly() ? b.asReadOnlyBuffer() : b;
     }
 
     @Override

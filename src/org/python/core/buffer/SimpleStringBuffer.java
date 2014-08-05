@@ -1,5 +1,7 @@
 package org.python.core.buffer;
 
+import java.nio.ByteBuffer;
+
 import org.python.core.PyBuffer;
 import org.python.core.util.StringUtil;
 
@@ -112,10 +114,17 @@ public class SimpleStringBuffer extends SimpleBuffer {
             return getBufferSlice(flags, start, length);
         } else {
             // Force creation of the actual byte array from the String.
-            getBuf();
+            ensureHaveBytes();
             // Now we are effectively a SimpleBuffer, return the strided view.
             return super.getBufferSlice(flags, start, length, stride);
         }
+    }
+
+    @Override
+    public ByteBuffer getNIOByteBuffer() {
+        // Force creation of the actual byte array from the String.
+        ensureHaveBytes();
+        return super.getNIOByteBuffer().asReadOnlyBuffer();
     }
 
     /**

@@ -251,8 +251,7 @@ public class PyFileIO extends PyRawIOBase {
             PyBuffer pybuf = writablePyBuffer(buf);
 
             try {
-                PyBuffer.Pointer bp = pybuf.getBuf();
-                ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+                ByteBuffer byteBuffer = pybuf.getNIOByteBuffer();
                 synchronized (ioDelegate) {
                     count = ioDelegate.readinto(byteBuffer);
                 }
@@ -293,8 +292,7 @@ public class PyFileIO extends PyRawIOBase {
 
             try {
                 // Access the data as a java.nio.ByteBuffer [pos:limit] within possibly larger array
-                PyBuffer.Pointer bp = pybuf.getBuf();
-                ByteBuffer byteBuffer = ByteBuffer.wrap(bp.storage, bp.offset, pybuf.getLen());
+                ByteBuffer byteBuffer = pybuf.getNIOByteBuffer();
                 synchronized (ioDelegate) {
                     count = ioDelegate.write(byteBuffer);
                 }
