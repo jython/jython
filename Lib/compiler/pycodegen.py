@@ -291,7 +291,7 @@ class CodeGenerator:
                 self.emit(prefix + '_NAME', name)
             else:
                 self.emit(prefix + '_FAST', name)
-        elif scope == SC_GLOBAL_EXPLICT:
+        elif scope == SC_GLOBAL_EXPLICIT:
             self.emit(prefix + '_GLOBAL', name)
         elif scope == SC_GLOBAL_IMPLICIT:
             if not self.optimized:
