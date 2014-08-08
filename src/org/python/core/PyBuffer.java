@@ -273,11 +273,11 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
     //
 
     /**
-     * Determine whether the exporter is able to offer direct access the exported storage as a Java
-     * byte array (through the API that involves class {@link Pointer}), or only supports the
+     * Determine whether the exporter is able to offer direct access to the exported storage as a
+     * Java byte array (through the API that involves class {@link Pointer}), or only supports the
      * abstract API. See also {@link PyBUF#AS_ARRAY}.
      *
-     * @return true if array access is not allowed, false if it is.
+     * @return true if array access is supported, false if it is not.
      */
     boolean hasArray();
 

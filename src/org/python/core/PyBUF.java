@@ -218,8 +218,8 @@ public interface PyBUF {
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
      * specify that it expects to access the buffer contents directly as an array (rather than
-     * through that the purely abstract part of the API). <code>getBuffer</code> will raise an
-     * exception if the exporter cannot expose its storage as Java array.
+     * through the purely abstract part of the API). <code>getBuffer</code> will raise an exception
+     * if the exporter cannot expose its storage as Java array.
      */
     static final int AS_ARRAY = 0x10000000;
 
