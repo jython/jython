@@ -223,7 +223,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 continue;
             }
             /* Map UTF-16 surrogate pairs to Unicode \UXXXXXXXX escapes */
-            else if (ch >= 0xD800 && ch < 0xDC00) {
+            else if (size > 0 && ch >= 0xD800 && ch < 0xDC00) {
                 char ch2 = str.charAt(i++);
                 size--;
                 if (ch2 >= 0xDC00 && ch2 <= 0xDFFF) {

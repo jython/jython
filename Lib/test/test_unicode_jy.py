@@ -105,6 +105,10 @@ class UnicodeTestCase(unittest.TestCase):
     def test_repr(self):
         self.assert_(isinstance('%r' % u'foo', str))
 
+    def test_unicode_repr(self):
+        # http://bugs.jython.org/issue2190
+        self.assertEqual(repr(unichr(0xd800)), r"u'\ud800'")
+
     def test_concat(self):
         self.assertRaises(UnicodeDecodeError, lambda : u'' + '毛泽东')
         self.assertRaises(UnicodeDecodeError, lambda : '毛泽东' + u'')
