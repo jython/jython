@@ -405,6 +405,9 @@ public class __builtin__ {
         if (i < 0 || i > PySystemState.maxunicode) {
             throw Py.ValueError("unichr() arg not in range(0x110000)");
         }
+        if (i >= 0xD800 && i <= 0xDFFF) {
+            throw Py.ValueError("unichr() arg is a lone surrogate in range (0xD800, 0xDFFF) (Jython UTF-16 encoding)");
+        }
         return i;
     }
 
