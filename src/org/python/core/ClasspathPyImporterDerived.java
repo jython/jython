@@ -2,8 +2,12 @@
 package org.python.core;
 
 import java.io.Serializable;
+import org.python.core.finalization.FinalizeTrigger;
+import org.python.core.finalization.FinalizablePyObjectDerived;
 
-public class ClasspathPyImporterDerived extends ClasspathPyImporter implements Slotted {
+public class ClasspathPyImporterDerived extends ClasspathPyImporter implements Slotted,FinalizablePyObjectDerived {
+
+    public FinalizeTrigger finalizeTrigger;
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -15,9 +19,24 @@ public class ClasspathPyImporterDerived extends ClasspathPyImporter implements S
 
     private PyObject[]slots;
 
+    public void __del__Derived() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__del__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__();
+        }
+    }
+
+    public void ensureFinalizer() {
+        FinalizeTrigger.ensureFinalizer(this);
+    }
+
     public ClasspathPyImporterDerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
     }
 
     public PyString __str__() {
@@ -978,6 +997,8 @@ public class ClasspathPyImporterDerived extends ClasspathPyImporter implements S
         PyObject impl=self_type.lookup("__setattr__");
         if (impl!=null) {
             impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
+            //CPython does not support instance-acquired finalizers.
+            //So we don't check for __del__ here.
             return;
         }
         super.__setattr__(name,value);

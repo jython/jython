@@ -24,6 +24,9 @@ import org.python.core.PyObject;
 import org.python.core.PySequence;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.finalization.FinalizablePyObject;
+import org.python.core.finalization.FinalizableBuiltin;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.io.BinaryIOWrapper;
 import org.python.core.io.BufferedReader;
 import org.python.core.io.BufferedWriter;
@@ -37,7 +40,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "bz2.BZ2File")
-public class PyBZ2File extends PyObject {
+public class PyBZ2File extends PyObject implements FinalizablePyObject, FinalizableBuiltin {
 
     public static final PyType TYPE = PyType.fromClass(PyBZ2File.class);
     private int buffering;
@@ -58,20 +61,23 @@ public class PyBZ2File extends PyObject {
     private boolean needReadBufferInit = false;
     private boolean inReadMode = false;
     private boolean inWriteMode = false;
+    
+    public FinalizeTrigger finalizeTrigger;
 
 
     public PyBZ2File() {
         super(TYPE);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     public PyBZ2File(PyType subType) {
         super(subType);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    public void __del__Builtin() {
         BZ2File_close();
-        super.finalize();
     }
 
     @ExposedNew
@@ -151,6 +157,7 @@ public class PyBZ2File extends PyObject {
         }
     }
 
+    @Override
     @ExposedMethod
     public void __del__() {
         BZ2File_close();

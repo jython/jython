@@ -318,6 +318,8 @@ rest:
     PyObject impl = self_type.lookup("__setattr__");
     if (impl != null) {
       impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
+      //CPython does not support instance-acquired finalizers.
+      //So we don't check for __del__ here.
       return;
     }
     super.__setattr__(name,value);

@@ -99,6 +99,21 @@ public class PyObject implements Serializable {
         return new_.for_type == subtype ? new PyObject() : new PyObjectDerived(subtype);
     }
 
+    /**
+     * <p>
+     * From Jython 2.7 on, {@code PyObject}s must not have finalizers directly.
+     * If a finalizer, a.k.a. {@code __del__} is needed, follow the instructions in the
+     * documentation of {@link org.python.core.finalization.FinalizablePyObject}.
+     * </p>
+     * <p>
+     * Note that this empty finalizer implementation is optimized away by the JVM
+     * (See {@link http://www.javaspecialists.eu/archive/Issue170.html}).
+     * So {@code PyObject}s are not expensively treaded as finalizable objects by the
+     * GC. Its only intention is to prevent subclasses from having Java-style finalizers.
+     * </p>
+     */
+    protected final void finalize() throws Throwable {}
+
     @ExposedMethod(doc = BuiltinDocs.object___init___doc)
     final void object___init__(PyObject[] args, String[] keywords) {
     }

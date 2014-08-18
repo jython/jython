@@ -2,8 +2,12 @@
 package org.python.core;
 
 import java.io.Serializable;
+import org.python.core.finalization.FinalizeTrigger;
+import org.python.core.finalization.FinalizablePyObjectDerived;
 
-public class PyDictionaryDerived extends PyDictionary implements Slotted {
+public class PyDictionaryDerived extends PyDictionary implements Slotted,FinalizablePyObjectDerived {
+
+    public FinalizeTrigger finalizeTrigger;
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -14,6 +18,18 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
     }
 
     private PyObject[]slots;
+
+    public void __del__Derived() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__del__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__();
+        }
+    }
+
+    public void ensureFinalizer() {
+        FinalizeTrigger.ensureFinalizer(this);
+    }
 
     private PyObject dict;
 
@@ -28,6 +44,9 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
     public void setDict(PyObject newDict) {
         if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
             dict=newDict;
+            if (dict.__finditem__(PyString.fromInterned("__del__"))!=null&&finalizeTrigger==null) {
+                finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+            }
         } else {
             throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
         }
@@ -42,6 +61,9 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
     }
 
     public PyString __str__() {
@@ -1002,6 +1024,8 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted {
         PyObject impl=self_type.lookup("__setattr__");
         if (impl!=null) {
             impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
+            //CPython does not support instance-acquired finalizers.
+            //So we don't check for __del__ here.
             return;
         }
         super.__setattr__(name,value);

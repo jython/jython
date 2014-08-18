@@ -4,8 +4,11 @@ define: (CompilationUnit)derived_class
   package org.python.core;
 
   import java.io.Serializable;
+  import org.python.core.finalization.FinalizeTrigger;
+  import org.python.core.finalization.FinalizablePyObjectDerived;
 
-  public class `concat`(`base,Derived) extends `base implements Slotted {
+  public class `concat`(`base,Derived) extends `base implements Slotted, FinalizablePyObjectDerived {
+    public FinalizeTrigger finalizeTrigger;
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -16,6 +19,18 @@ define: (CompilationUnit)derived_class
     }
     
     private PyObject[] slots;
+    
+    public void __del__Derived() {
+    	PyType self_type = getType();
+        PyObject impl = self_type.lookup("__del__");
+        if (impl != null) {
+            impl.__get__(this, self_type).__call__();
+        }
+    }
+    
+    public void ensureFinalizer() {
+        FinalizeTrigger.ensureFinalizer(this);
+    }
 
      `decls;
   }
@@ -81,6 +96,9 @@ define: (ClassBodyDeclarations)userdict
   public void setDict(PyObject newDict) {
     if (newDict instanceof PyStringMap || newDict instanceof PyDictionary ) {
       dict = newDict;
+      if (dict.__finditem__(PyString.fromInterned("__del__")) != null && finalizeTrigger == null) {
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+      }
     }
     else {
       throw Py.TypeError("__dict__ must be set to a Dictionary " + newDict.getClass().getName());
@@ -96,6 +114,9 @@ define: (ClassBodyDeclarations)ctr
   public `concat`(`base,Derived)(PyType subtype,`extraargs) {
     super(subtype,`extra);
     slots = new PyObject[subtype.getNumSlots()];
+    if (subtype.needsFinalizer()) {
+      finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+    }
   }
 
 define: (ClassBodyDeclarations)ctr_userdict
@@ -103,6 +124,9 @@ define: (ClassBodyDeclarations)ctr_userdict
     super(subtype,`extra);
     slots = new PyObject[subtype.getNumSlots()];
     dict = subtype.instDict();
+    if (subtype.needsFinalizer()) {
+      finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+    }
   }
 
 define: (ClassBodyDeclarations)toString
