@@ -112,7 +112,7 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
     }
     
     @Override
-    public void __del__Builtin() {
+    public void __del_builtin__() {
         if (gi_frame == null || gi_frame.f_lasti == -1) {
             return;
         }

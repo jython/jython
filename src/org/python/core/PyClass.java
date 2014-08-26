@@ -190,12 +190,6 @@ public class PyClass extends PyObject {
         if (__del__ != null) {
         	inst.finalizeTrigger = FinalizeTrigger.makeTrigger(inst);
         }
-//        if (__del__ == null) {
-//            inst = new PyInstance(this);
-//        } else {
-//            // the class defined a __del__ method
-//            inst = new PyFinalizableInstance(this);
-//        }
         inst.__init__(args, keywords);
         return inst;
     }

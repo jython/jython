@@ -732,7 +732,7 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin {
     }
 
     @Override
-    public void __del__Builtin() {
+    public void __del_builtin__() {
         closer.dismiss();
         invoke("close");
     }

@@ -76,7 +76,7 @@ public class PyBZ2File extends PyObject implements FinalizablePyObject, Finaliza
     }
 
     @Override
-    public void __del__Builtin() {
+    public void __del_builtin__() {
         BZ2File_close();
     }
 

@@ -9,17 +9,17 @@ package org.python.core.finalization;
  * <p>
  * The difference is that {@code __del__} can be overwritten by a
  * new-style subclass's {@code __del__}-method on Python-side, while
- * {@code __del__Builtin} is always called. If a Python-side
- * finalizer exists, {@code __del__Builtin} will be called after the
+ * {@code __del_builtin__} is always called. If a Python-side
+ * finalizer exists, {@code __del_builtin__} will be called after the
  * Python-side finalizer has been processed.
  * </p>
  * <p>
  * One can even implement both interfaces.
  * If both interfaces are implemented, the {@code FinalizeTrigger} will
- * call {@code __del__} first and then {@code __del__Builtin}. If a
+ * call {@code __del__} first and then {@code __del_builtin__}. If a
  * new-style subclass has an own, Python-side {@code __del__}-method, this
  * overwrites the Java-implemented {@code __del__}, but not
- * {@code __del__Builtin}, which will be called after the Python-side
+ * {@code __del_builtin__}, which will be called after the Python-side
  * finalizer.
  * </p>
  * <p>
@@ -60,14 +60,14 @@ package org.python.core.finalization;
  *    If your finalizer resurrects the object (Python allows this) and you wish the
  *    finalizer to run again on next collection of the object:</br>
  *    In the block where the resurrection occurs, let your {@code __del__}- or
- *    {@code __del__Builtin}-method call<br>
+ *    {@code __del_builtin__}-method call<br>
  *    {@code FinalizeTrigger.ensureFinalizer(this);}.
  * </li>
  * </ol>
  * </p>
  * <p>
  * Note: Regarding to object resurrection, Jython currently behaves like CPython >= 3.4.
- * That means the finalizer {@code __del__} or {@code __del__Builtin} is called only the
+ * That means the finalizer {@code __del__} or {@code __del_builtin__} is called only the
  * first time an object gets gc'ed. If pre 3.4. behavior is required for some reason (i.e.
  * have the finalizer called repeatedly on every collection after a resurrection), one can
  * achieve this manually via step 5).
@@ -75,7 +75,7 @@ package org.python.core.finalization;
  * <p>
  * It is possible to switch finalization on and off at any desired time for a certain object.
  * This can be helpful if it is only necessary to have {@code __del__} or
- * {@code __del__Builtin} called for certain configurations of an object.
+ * {@code __del_builtin__} called for certain configurations of an object.
  * </p>
  * <p>
  * To turn off the finalizer, call</br>

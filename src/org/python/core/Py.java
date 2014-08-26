@@ -31,6 +31,7 @@ import jnr.posix.POSIXFactory;
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules.posix.PosixModule;
 import org.python.util.Generic;
 
@@ -2291,7 +2292,7 @@ class JavaFunc extends PyObject {
     public PyObject __call__(PyObject[] args, String[] kws) {
         Object[] margs = new Object[]{args, kws};
         try {
-            return Py.java2py(method.invoke(null, margs));
+        	return Py.java2py(method.invoke(null, margs));
         } catch (Throwable t) {
             throw Py.JavaError(t);
         }

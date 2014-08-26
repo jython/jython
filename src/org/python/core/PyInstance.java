@@ -18,6 +18,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
     public static final PyType TYPE = PyType.fromClass(PyInstance.class);
 
     public FinalizeTrigger finalizeTrigger;
+    private static JavaFunc __ensure_finalizer__Function;
 
     // xxx doc, final name
     public transient PyClass instclass;
@@ -29,9 +30,6 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
 
     public PyInstance() {
         super(TYPE);
-//        if (TYPE.needsFinalizer()) {
-//            finalizeTrigger = FinalizeTrigger.makeTrigger(this);
-//        }
     }
 
     public PyInstance(PyClass iclass, PyObject dict) {
@@ -41,16 +39,10 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
             dict = new PyStringMap();
         }
         __dict__ = dict;
-//        if (TYPE.needsFinalizer()) {
-//            finalizeTrigger = FinalizeTrigger.makeTrigger(this);
-//        }
     }
 
     public PyInstance(PyClass iclass) {
         this(iclass, null);
-//        if (TYPE.needsFinalizer()) {
-//            finalizeTrigger = FinalizeTrigger.makeTrigger(this);
-//        }
     }
 
     @ExposedNew
@@ -161,9 +153,27 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
         return ifindfunction(name);
     }
 
+    public static void ensureFinalizer(PyObject[] args, String[] kws) {
+    	FinalizeTrigger.ensureFinalizer((PyInstance) args[0]);
+    }
+    
+    private static JavaFunc makeFunction__ensure_finalizer__() {
+        try {
+            return new JavaFunc(
+                PyInstance.class.getMethod("ensureFinalizer",
+                    PyObject[].class, String[].class));
+        } catch (Exception e) {return null;} //cannot happen
+    }
+
     protected PyObject ifindlocal(String name) {
         if (name == "__dict__") return __dict__;
         if (name == "__class__") return instclass;
+        if (name == "__ensure_finalizer__") {
+            if (__ensure_finalizer__Function == null) {
+            	__ensure_finalizer__Function = makeFunction__ensure_finalizer__();
+            }
+        	return new PyMethod(__ensure_finalizer__Function, this, instclass);
+        }
         if (__dict__ == null) return null;
 
         return __dict__.__finditem__(name);
@@ -1928,17 +1938,6 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
             return ret;
         return super.__ixor__(o);
     }
-
-    /*
-    public void ensureFinalizer()
-    {
-    	instance_ensureFinalizer();
-    }
-
-    public void instance_ensureFinalizer() {
-        FinalizeTrigger.ensureFinalizer(this);
-    }
-    */
 
     @Override
     public void __del__() {

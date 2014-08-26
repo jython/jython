@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -236,6 +237,12 @@ public class PyObject implements Serializable {
      **/
     public PyString __str__() {
         return __repr__();
+    }
+
+    @ExposedMethod
+    public void __ensure_finalizer__() {
+        //PyObjects that implement HasFinalizeTrigger shall implement this method via:
+    	//FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyUnicode __unicode__() {

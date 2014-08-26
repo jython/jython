@@ -1,10 +1,6 @@
 package org.python.core.finalization;
 
 import java.lang.reflect.Field;
-import java.lang.ref.WeakReference;
-import java.lang.ref.SoftReference;
-import java.lang.ref.Reference;
-import org.python.core.PyObject;
 
 /**
  * To use finalizers on {@code PyObject}s, read the documentation of
@@ -26,16 +22,6 @@ public class FinalizeTrigger {
         }
     }
 
-    /*
-    public static FinalizeTrigger makeTriggerDerived(FinalizablePyObjectDerived toFinalize) {
-        if (factory != null) {
-            return factory.makeTriggerDerived(toFinalize);
-        } else {
-            return new FinalizeTriggerDerived(toFinalize);
-        }
-    }
-    */
-
     /**
      * Recreates the {@code FinalizeTrigger} of the given object. This makes sure that
      * once the resurrected object is gc'ed again, its {@code __del__}-method will be
@@ -45,12 +31,6 @@ public class FinalizeTrigger {
     	FinalizeTrigger trigger = makeTrigger(resurrect);
     	setFinalizeTrigger(resurrect, trigger);
     }
-
-    /*
-    public static void ensureFinalizerDerived(FinalizablePyObjectDerived resurrect) {
-        setFinalizeTrigger(resurrect, makeTriggerDerived(resurrect));
-    }
-    */
 
     public static void setFinalizeTrigger(HasFinalizeTrigger toFinalize, FinalizeTrigger trigger) {
         Field triggerField;
@@ -92,6 +72,7 @@ public class FinalizeTrigger {
 
 
     protected HasFinalizeTrigger toFinalize;
+
     public void clear() {
         toFinalize = null;
     }
@@ -108,31 +89,13 @@ public class FinalizeTrigger {
     protected void finalize() throws Throwable {
         if (toFinalize != null) {
         	if (toFinalize instanceof FinalizablePyObjectDerived) {
-        		((FinalizablePyObjectDerived) toFinalize).__del__Derived();
+        		((FinalizablePyObjectDerived) toFinalize).__del_derived__();
         	} else if (toFinalize instanceof FinalizablePyObject) {
         		((FinalizablePyObject) toFinalize).__del__();
         	}
         	if (toFinalize instanceof FinalizableBuiltin) {
-        		((FinalizableBuiltin) toFinalize).__del__Builtin();
+        		((FinalizableBuiltin) toFinalize).__del_builtin__();
         	}
         }
     }
-
-
-    /*
-     * A FinalizeTrigger variant that only calls __del__Derived, but not the
-     * built-in's finalizer __del__. It can be used to control finalization
-     * behavior of resurrected objects in more detail.
-     */
-    /*protected static class FinalizeTriggerDerived extends FinalizeTrigger {
-    	protected FinalizeTriggerDerived(FinalizablePyObjectDerived toFinalize) {
-            super(toFinalize);
-        }
-
-        protected void finalize() throws Throwable {
-            if (toFinalize != null) {
-            	((FinalizablePyObjectDerived) toFinalize).__del__Derived();
-            }
-        }
-    }*/
 }

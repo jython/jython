@@ -19,7 +19,7 @@ public class PyListDerived extends PyList implements Slotted,FinalizablePyObject
 
     private PyObject[]slots;
 
-    public void __del__Derived() {
+    public void __del_derived__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__del__");
         if (impl!=null) {
@@ -27,7 +27,7 @@ public class PyListDerived extends PyList implements Slotted,FinalizablePyObject
         }
     }
 
-    public void ensureFinalizer() {
+    public void __ensure_finalizer__() {
         FinalizeTrigger.ensureFinalizer(this);
     }
 

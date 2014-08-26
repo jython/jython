@@ -683,7 +683,7 @@ public class PyFile extends PyObject implements FinalizableBuiltin {
     }
 
     @Override
-    public void __del__Builtin() {
+    public void __del_builtin__() {
         if (closer != null) {
             closer.close();
         }

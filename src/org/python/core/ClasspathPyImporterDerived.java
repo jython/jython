@@ -19,7 +19,7 @@ public class ClasspathPyImporterDerived extends ClasspathPyImporter implements S
 
     private PyObject[]slots;
 
-    public void __del__Derived() {
+    public void __del_derived__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__del__");
         if (impl!=null) {
@@ -27,7 +27,7 @@ public class ClasspathPyImporterDerived extends ClasspathPyImporter implements S
         }
     }
 
-    public void ensureFinalizer() {
+    public void __ensure_finalizer__() {
         FinalizeTrigger.ensureFinalizer(this);
     }
 
