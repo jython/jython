@@ -31,7 +31,6 @@ import jnr.posix.POSIXFactory;
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules.posix.PosixModule;
 import org.python.util.Generic;
 
@@ -838,27 +837,27 @@ public final class Py {
      * @throws ClassNotFoundException if the class wasn't found by the class loader
      */
     private static Class<?> findClassInternal(String name, String reason) throws ClassNotFoundException {
-    	ClassLoader classLoader = Py.getSystemState().getClassLoader();
+        ClassLoader classLoader = Py.getSystemState().getClassLoader();
         if (classLoader != null) {
-        	if (reason != null) {
-        		writeDebug("import", "trying " + name + " as " + reason +
-        		          " in sys.classLoader");
-        	}
+            if (reason != null) {
+                writeDebug("import", "trying " + name + " as " + reason +
+                          " in sys.classLoader");
+            }
             return loadAndInitClass(name, classLoader);
         } 
         if (!syspathJavaLoaderRestricted) {
             try {
                 classLoader = imp.getSyspathJavaLoader();
                 if (classLoader != null && reason != null) {
-	                writeDebug("import", "trying " + name + " as " + reason +
-	                        " in SysPathJavaLoader");
+                    writeDebug("import", "trying " + name + " as " + reason +
+                            " in SysPathJavaLoader");
                 }                
             } catch (SecurityException e) {
                 syspathJavaLoaderRestricted = true;
             }
         }        
         if (syspathJavaLoaderRestricted) {
-        	classLoader = imp.getParentClassLoader();
+            classLoader = imp.getParentClassLoader();
             if (classLoader != null && reason != null) {
                 writeDebug("import", "trying " + name + " as " + reason +
                         " in Jython's parent class loader");     
@@ -866,20 +865,20 @@ public final class Py {
         } 
         if (classLoader != null) {
             try {
-            	return loadAndInitClass(name, classLoader);
+                return loadAndInitClass(name, classLoader);
             } catch (ClassNotFoundException cnfe) {
                 // let the default classloader try
-            	// XXX: by trying another classloader that may not be on a
-            	//      parent/child relationship with the Jython's parent 
-            	//      classsloader we are risking some nasty class loading
-            	//      problems (such as having two incompatible copies for 
-            	//      the same class that is itself a dependency of two 
-            	//      classes loaded from these two different class loaders) 
+                // XXX: by trying another classloader that may not be on a
+                //      parent/child relationship with the Jython's parent 
+                //      classsloader we are risking some nasty class loading
+                //      problems (such as having two incompatible copies for 
+                //      the same class that is itself a dependency of two 
+                //      classes loaded from these two different class loaders) 
             }
         }
         if (reason != null) {
-	        writeDebug("import", "trying " + name + " as " + reason +
-	                   " in context class loader, for backwards compatibility");
+            writeDebug("import", "trying " + name + " as " + reason +
+                       " in context class loader, for backwards compatibility");
         }
         return loadAndInitClass(name, Thread.currentThread().getContextClassLoader());
     }
@@ -891,7 +890,7 @@ public final class Py {
      */
     public static Class<?> findClass(String name) {
         try {
-        	return findClassInternal(name, null);
+            return findClassInternal(name, null);
         } catch (ClassNotFoundException e) {
             //             e.printStackTrace();
             return null;
@@ -931,7 +930,7 @@ public final class Py {
     // We *need* to initialize classes on findClass/findClassEx, so that import 
     // statements can trigger static initializers
     private static Class<?> loadAndInitClass(String name, ClassLoader loader) throws ClassNotFoundException {
-    	return Class.forName(name, true, loader);
+        return Class.forName(name, true, loader);
     } 
  
     
@@ -2292,7 +2291,7 @@ class JavaFunc extends PyObject {
     public PyObject __call__(PyObject[] args, String[] kws) {
         Object[] margs = new Object[]{args, kws};
         try {
-        	return Py.java2py(method.invoke(null, margs));
+            return Py.java2py(method.invoke(null, margs));
         } catch (Throwable t) {
             throw Py.JavaError(t);
         }
