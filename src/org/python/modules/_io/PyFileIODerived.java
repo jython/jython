@@ -3,8 +3,12 @@ package org.python.modules._io;
 
 import java.io.Serializable;
 import org.python.core.*;
+import org.python.core.finalization.FinalizeTrigger;
+import org.python.core.finalization.FinalizablePyObjectDerived;
 
-public class PyFileIODerived extends PyFileIO implements Slotted {
+public class PyFileIODerived extends PyFileIO implements Slotted,FinalizablePyObjectDerived {
+
+    public FinalizeTrigger finalizeTrigger;
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -16,9 +20,24 @@ public class PyFileIODerived extends PyFileIO implements Slotted {
 
     private PyObject[]slots;
 
+    public void __del_derived__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__del__");
+        if (impl!=null) {
+            impl.__get__(this,self_type).__call__();
+        }
+    }
+
+    public void __ensure_finalizer__() {
+        FinalizeTrigger.ensureFinalizer(this);
+    }
+
     public PyFileIODerived(PyType subtype,PyObject file,OpenMode mode,boolean closefd) {
         super(subtype,file,mode,closefd);
         slots=new PyObject[subtype.getNumSlots()];
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
     }
 
     public PyString __str__() {
@@ -979,6 +998,8 @@ public class PyFileIODerived extends PyFileIO implements Slotted {
         PyObject impl=self_type.lookup("__setattr__");
         if (impl!=null) {
             impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
+            //CPython does not support instance-acquired finalizers.
+            //So we don't check for __del__ here.
             return;
         }
         super.__setattr__(name,value);

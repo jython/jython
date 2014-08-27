@@ -1,12 +1,14 @@
 /* Copyright (c) Jython Developers */
 package org.python.core;
 
+import org.python.core.finalization.FinalizableBuiltin;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "generator", base = PyObject.class, isBaseType = false)
-public class PyGenerator extends PyIterator {
+public class PyGenerator extends PyIterator implements FinalizableBuiltin {
 
     public static final PyType TYPE = PyType.fromClass(PyGenerator.class);
 
@@ -20,6 +22,8 @@ public class PyGenerator extends PyIterator {
     protected boolean gi_running;
 
     private PyObject closure;
+    
+    public FinalizeTrigger finalizeTrigger;
 
     public PyGenerator(PyFrame frame, PyObject closure) {
         super(TYPE);
@@ -28,6 +32,7 @@ public class PyGenerator extends PyIterator {
             gi_code = gi_frame.f_code;
         }
         this.closure = closure;
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     public PyObject send(PyObject value) {
@@ -105,9 +110,9 @@ public class PyGenerator extends PyIterator {
         gi_frame.setGeneratorInput(ex);
         return next();
     }
-
+    
     @Override
-    protected void finalize() throws Throwable {
+    public void __del_builtin__() {
         if (gi_frame == null || gi_frame.f_lasti == -1) {
             return;
         }
@@ -127,8 +132,6 @@ public class PyGenerator extends PyIterator {
         } catch (Throwable t) {
             // but we currently ignore any Java exception completely. perhaps we
             // can also output something meaningful too?
-        } finally {
-            super.finalize();
         }
     }
 

@@ -3,6 +3,7 @@ package org.python.core;
 
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.core.finalization.FinalizeTrigger;
 
 /**
  * The classic Python class.
@@ -185,11 +186,9 @@ public class PyClass extends PyObject {
     @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
-        if (__del__ == null) {
-            inst = new PyInstance(this);
-        } else {
-            // the class defined a __del__ method
-            inst = new PyFinalizableInstance(this);
+        inst = new PyInstance(this);
+        if (__del__ != null) {
+        	inst.finalizeTrigger = FinalizeTrigger.makeTrigger(inst);
         }
         inst.__init__(args, keywords);
         return inst;

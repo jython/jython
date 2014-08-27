@@ -82,7 +82,7 @@ public class PyType extends PyObject implements Serializable {
     protected boolean needs_weakref;
 
     /** Whether finalization is required for this type's instances (implements __del__). */
-    private boolean needs_finalizer;
+    protected boolean needs_finalizer;
 
     /** Whether this type's __getattribute__ is object.__getattribute__. */
     private volatile boolean usesObjectGetattribute;
@@ -310,7 +310,7 @@ public class PyType extends PyObject implements Serializable {
         if (wantWeak) {
             createWeakrefSlot();
         }
-        needs_finalizer = lookup_mro("__del__") != null;
+        needs_finalizer = needsFinalizer();
     }
 
     /**
@@ -565,6 +565,24 @@ public class PyType extends PyObject implements Serializable {
             cur = cur.base;
         }
         return cur;
+    }
+
+    /**
+     * Offers public read-only access to the protected field needs_finalizer.
+     *
+     * @return a boolean indicating whether the type implements __del__
+     */
+    public final boolean needsFinalizer() {
+    	//It might be sluggish to assume that if a finalizer was needed
+    	//once, this would never change. However since an expensive
+    	//FinalizeTrigger was created anyway, it won't hurt to keep it.
+    	//Whether there actually is a __del__ in the dict will be checked
+    	//again when the finalizer runs.
+    	if (needs_finalizer) return true;
+    	else {
+    		needs_finalizer = lookup_mro("__del__") != null;
+    		return needs_finalizer;
+    	}
     }
 
     /**

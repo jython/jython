@@ -6,13 +6,19 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+import org.python.core.finalization.FinalizablePyObject;
+import org.python.core.finalization.FinalizeTrigger;
+
 /**
  * An instance of a classic Python class.
  */
 @ExposedType(name = "instance", isBaseType = false)
-public class PyInstance extends PyObject {
+public class PyInstance extends PyObject implements FinalizablePyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyInstance.class);
+
+    public FinalizeTrigger finalizeTrigger;
+    private static JavaFunc __ensure_finalizer__Function;
 
     // xxx doc, final name
     public transient PyClass instclass;
@@ -147,9 +153,27 @@ public class PyInstance extends PyObject {
         return ifindfunction(name);
     }
 
+    public static void ensureFinalizer(PyObject[] args, String[] kws) {
+    	FinalizeTrigger.ensureFinalizer((PyInstance) args[0]);
+    }
+    
+    private static JavaFunc makeFunction__ensure_finalizer__() {
+        try {
+            return new JavaFunc(
+                PyInstance.class.getMethod("ensureFinalizer",
+                    PyObject[].class, String[].class));
+        } catch (Exception e) {return null;} //cannot happen
+    }
+
     protected PyObject ifindlocal(String name) {
         if (name == "__dict__") return __dict__;
         if (name == "__class__") return instclass;
+        if (name == "__ensure_finalizer__") {
+            if (__ensure_finalizer__Function == null) {
+            	__ensure_finalizer__Function = makeFunction__ensure_finalizer__();
+            }
+        	return new PyMethod(__ensure_finalizer__Function, this, instclass);
+        }
         if (__dict__ == null) return null;
 
         return __dict__.__finditem__(name);
@@ -263,6 +287,9 @@ public class PyInstance extends PyObject {
         if (name == "__class__") {
             if (value instanceof PyClass) {
                 instclass = (PyClass) value;
+                if (instclass.__del__ != null && finalizeTrigger == null) {
+                    finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+                }
             } else {
                 throw Py.TypeError("__class__ must be set to a class");
             }
@@ -277,6 +304,9 @@ public class PyInstance extends PyObject {
             setter.__call__(this, new PyString(name), value);
         } else {
             __dict__.__setitem__(name, value);
+        }
+        if (name == "__del__" && finalizeTrigger == null) {
+            finalizeTrigger = FinalizeTrigger.makeTrigger(this);
         }
     }
 
@@ -1909,4 +1939,24 @@ public class PyInstance extends PyObject {
         return super.__ixor__(o);
     }
 
+    @Override
+    public void __del__() {
+    	try {
+            PyObject method = __findattr__("__del__");
+            if (method != null) {
+                method.__call__();
+            } else if (instclass.__del__ != null) {
+                instclass.__del__.__call__(this);
+            }
+        } catch (PyException exc) {
+            // Try to get the right method description.
+            PyObject method = instclass.__del__;
+            try {
+                method = __findattr__("__del__");
+            } catch (PyException e) {
+                // nothing we can do
+            }
+            Py.writeUnraisable(exc, method);
+        }
+    }
 }

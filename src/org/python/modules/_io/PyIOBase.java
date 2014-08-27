@@ -16,6 +16,8 @@ import org.python.core.PyStringMap;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.buffer.SimpleStringBuffer;
+import org.python.core.finalization.FinalizableBuiltin;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.io.FileIO;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -38,20 +40,24 @@ import org.python.expose.ExposedType;
  * in Python.
  */
 @ExposedType(name = "_io._IOBase", doc = PyIOBase.doc)
-public class PyIOBase extends PyObject {
+public class PyIOBase extends PyObject implements FinalizableBuiltin {
 
     public static final PyType TYPE = PyType.fromClass(PyIOBase.class);
 
     /** The ioDelegate's closer object; ensures the stream is closed at shutdown */
     private Closer<PyIOBase> closer;
+    
+    public FinalizeTrigger finalizeTrigger;
 
     protected PyIOBase() {
         this(TYPE);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     protected PyIOBase(PyType subtype) {
         super(subtype);
         closer = new Closer<PyIOBase>(this, Py.getSystemState());
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     /**
@@ -726,10 +732,9 @@ public class PyIOBase extends PyObject {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    public void __del_builtin__() {
         closer.dismiss();
         invoke("close");
-        super.finalize();
     }
 
     /** Convenience method providing the exception in the _checkWhatever() methods. */

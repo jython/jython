@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 
+import org.python.core.finalization.FinalizableBuiltin;
+import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.io.BinaryIOWrapper;
 import org.python.core.io.BufferedIOBase;
 import org.python.core.io.BufferedRandom;
@@ -33,7 +35,7 @@ import org.python.expose.ExposedType;
  * The Python file type. Wraps an {@link TextIOBase} object.
  */
 @ExposedType(name = "file", doc = BuiltinDocs.file_doc)
-public class PyFile extends PyObject {
+public class PyFile extends PyObject implements FinalizableBuiltin {
 
     public static final PyType TYPE = PyType.fromClass(PyFile.class);
 
@@ -80,21 +82,26 @@ public class PyFile extends PyObject {
     /** The file's closer object; ensures the file is closed at
      * shutdown */
     private Closer closer;
+    
+    public FinalizeTrigger finalizeTrigger;
 
-    public PyFile() {}
+    public PyFile() {finalizeTrigger = FinalizeTrigger.makeTrigger(this);}
 
     public PyFile(PyType subType) {
         super(subType);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     public PyFile(RawIOBase raw, String name, String mode, int bufsize) {
         parseMode(mode);
         file___init__(raw, name, mode, bufsize);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(istream, closefd), name, mode, bufsize);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     /**
@@ -126,6 +133,7 @@ public class PyFile extends PyObject {
     public PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(ostream, closefd), name, mode, bufsize);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     /**
@@ -153,6 +161,7 @@ public class PyFile extends PyObject {
 
     public PyFile(String name, String mode, int bufsize) {
         file___init__(new FileIO(name, parseMode(mode)), name, mode, bufsize);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
     @ExposedNew
@@ -674,8 +683,7 @@ public class PyFile extends PyObject {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
+    public void __del_builtin__() {
         if (closer != null) {
             closer.close();
         }
