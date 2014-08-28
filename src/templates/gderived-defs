@@ -17,11 +17,11 @@ define: (CompilationUnit)derived_class
     public void setSlot(int index, PyObject value) {
         slots[index] = value;
     }
-    
+
     private PyObject[] slots;
-    
+
     public void __del_derived__() {
-    	PyType self_type = getType();
+        PyType self_type = getType();
         PyObject impl = self_type.lookup("__del__");
         if (impl != null) {
             impl.__get__(this, self_type).__call__();
@@ -44,7 +44,7 @@ define: (ClassBodyDeclarations)binary
     if (impl != null) {
       PyObject res = impl.__get__(this,self_type).__call__(other);
       if (res == Py.NotImplemented)
-	return null;
+          return null;
       return res;
     }
     return super.`binary(other);
@@ -56,7 +56,7 @@ define: (ClassBodyDeclarations)ibinary
     if (impl != null) {
       PyObject res = impl.__get__(this,self_type).__call__(other);
       if (res == Py.NotImplemented)
-	return null;
+          return null;
       return res;
     }
     return super.`binary(other);

@@ -154,9 +154,10 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
     }
 
     public static void ensureFinalizer(PyObject[] args, String[] kws) {
-    	((PyInstance) args[0]).finalizeTrigger = FinalizeTrigger.makeTrigger((PyInstance) args[0]);
+        ((PyInstance) args[0]).finalizeTrigger = FinalizeTrigger.makeTrigger(
+            (PyInstance) args[0]);
     }
-    
+
     private static JavaFunc makeFunction__ensure_finalizer__() {
         try {
             return new JavaFunc(

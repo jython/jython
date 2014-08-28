@@ -9,8 +9,9 @@ import java.lang.reflect.Field;
 public class FinalizeTrigger {
 
     /**
-     * This optional factory hook allows to replace the
-     * default {@code FinalizeTrigger}. It is f.i. needed by JyNI.
+     * This factory hook is reserved for use by JyNI.
+     * It allows to replace the default {@code FinalizeTrigger}.
+     * JyNI needs it to support garbage collection.
      */
     public static FinalizeTriggerFactory factory;
 

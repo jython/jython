@@ -58,7 +58,7 @@ package org.python.core.finalization;
  * <li>
  *    (optional)<br>
  *    If your finalizer resurrects the object (Python allows this) and you wish the
- *    finalizer to run again on next collection of the object:</br>
+ *    finalizer to run again on next collection of the object:<br>
  *    In the block where the resurrection occurs, let your {@code __del__}- or
  *    {@code __del_builtin__}-method call<br>
  *    {@code FinalizeTrigger.ensureFinalizer(this);}.
