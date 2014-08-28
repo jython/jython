@@ -29,7 +29,7 @@ public class BoolOpDerived extends BoolOp implements Slotted,FinalizablePyObject
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

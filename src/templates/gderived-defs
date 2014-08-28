@@ -29,7 +29,7 @@ define: (CompilationUnit)derived_class
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
     }
 
      `decls;

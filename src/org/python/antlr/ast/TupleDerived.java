@@ -29,7 +29,7 @@ public class TupleDerived extends Tuple implements Slotted,FinalizablePyObjectDe
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

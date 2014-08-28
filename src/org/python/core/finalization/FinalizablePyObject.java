@@ -62,6 +62,10 @@ package org.python.core.finalization;
  *    In the block where the resurrection occurs, let your {@code __del__}- or
  *    {@code __del_builtin__}-method call<br>
  *    {@code FinalizeTrigger.ensureFinalizer(this);}.
+ *    If you implement {@code __del__} in Python and need this functionality, you can
+ *    simply call {@code someObject.__ensure_finalizer__()}<br>
+ *    Note that this is Jython specific and should be surrounded by a {@code try/except}
+ *    block to ensure compatibility with other Python implementations.
  * </li>
  * </ol>
  * </p>
@@ -71,6 +75,21 @@ package org.python.core.finalization;
  * first time an object gets gc'ed. If pre 3.4. behavior is required for some reason (i.e.
  * have the finalizer called repeatedly on every collection after a resurrection), one can
  * achieve this manually via step 5).
+ * </p>
+ * <p>
+ * The built-in function {@code __ensure_finalizer__} is also useful if a class acquires a
+ * finalizer after instances have already been created. Usually only those instances that were
+ * created after their class acquired the finalizer will actually be finalized (in contrast to
+ * CPython).
+ * However, one can manually tell earlier created instances to become finalizable by
+ * calling {@code __ensure_finalizer__()} on them. As mentioned above, it is recommended to
+ * surround this with a {@code try/except} block to ensure compatibility with other Python
+ * implementations.
+ * </p>
+ * <p>
+ * Note that it is not possible to overwrite {@code __ensure_finalizer__} on Python side.
+ * If one overwrites {@code __ensure_finalizer__} on Python side, Jython will ignore the
+ * overwrite-implementation and still call the original one.
  * </p>
  * <p>
  * It is possible to switch finalization on and off at any desired time for a certain object.

@@ -29,7 +29,7 @@ public class comprehensionDerived extends comprehension implements Slotted,Final
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

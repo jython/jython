@@ -28,7 +28,7 @@ public class ClasspathPyImporterDerived extends ClasspathPyImporter implements S
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public ClasspathPyImporterDerived(PyType subtype) {

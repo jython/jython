@@ -29,7 +29,7 @@ public class UnaryOpDerived extends UnaryOp implements Slotted,FinalizablePyObje
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

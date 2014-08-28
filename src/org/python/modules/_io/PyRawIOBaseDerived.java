@@ -29,7 +29,7 @@ public class PyRawIOBaseDerived extends PyRawIOBase implements Slotted,Finalizab
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyRawIOBaseDerived(PyType subtype) {

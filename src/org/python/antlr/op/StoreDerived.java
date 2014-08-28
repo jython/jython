@@ -29,7 +29,7 @@ public class StoreDerived extends Store implements Slotted,FinalizablePyObjectDe
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

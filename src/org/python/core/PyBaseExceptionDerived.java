@@ -28,7 +28,7 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted,F
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyBaseExceptionDerived(PyType subtype) {

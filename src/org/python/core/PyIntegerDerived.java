@@ -28,7 +28,7 @@ public class PyIntegerDerived extends PyInteger implements Slotted,FinalizablePy
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

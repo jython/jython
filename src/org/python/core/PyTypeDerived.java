@@ -28,7 +28,7 @@ public class PyTypeDerived extends PyType implements Slotted,FinalizablePyObject
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyTypeDerived(PyType subtype) {

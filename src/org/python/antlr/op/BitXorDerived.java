@@ -29,7 +29,7 @@ public class BitXorDerived extends BitXor implements Slotted,FinalizablePyObject
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;
