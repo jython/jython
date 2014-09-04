@@ -29,7 +29,7 @@ public class ReprDerived extends Repr implements Slotted,FinalizablePyObjectDeri
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

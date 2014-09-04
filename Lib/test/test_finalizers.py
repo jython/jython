@@ -198,14 +198,14 @@ class TestFinalizers(unittest.TestCase):
         A = DummyClassDel("A")
         A = None
         runGCIfJython()
-        assert("A finalized (DummyClassDel)" in finalizeMsgList)
+        self.assertIn("A finalized (DummyClassDel)", finalizeMsgList)
 
     def test_classAcquiresFinalizer_beforeInstanciation_oldStyleClass(self):
         DummyClass.__del__ = delClass
         B = DummyClass("B")
         B = None
         runGCIfJython()
-        assert("B finalized (acquired by class)" in finalizeMsgList)
+        self.assertIn("B finalized (acquired by class)", finalizeMsgList)
         del DummyClass.__del__
 
     def test_classAcquiresFinalizer_afterInstanciation_oldStyleClass(self):
@@ -218,7 +218,7 @@ class TestFinalizers(unittest.TestCase):
             pass
         C = None
         runGCIfJython()
-        assert("C finalized (acquired by class)" in finalizeMsgList)
+        self.assertIn("C finalized (acquired by class)", finalizeMsgList)
         del DummyClass.__del__
 
     def test_instanceAcquiresFinalizer_bound_oldStyleClass(self):
@@ -227,21 +227,21 @@ class TestFinalizers(unittest.TestCase):
         D.__del__ = dl
         D = None
         runGCIfJython()
-        assert("D finalized (DummyClassDel)" not in finalizeMsgList)
-        assert("D finalized (acquired by object)" in finalizeMsgList)
+        self.assertNotIn("D finalized (DummyClassDel)", finalizeMsgList)
+        self.assertIn("D finalized (acquired by object)", finalizeMsgList)
 
     def test_finalizer_builtin_newStyleClass(self):
         E = DummyClassDelNew("E")
         E = None
         runGCIfJython()
-        assert("E finalized (DummyClassDelNew)" in finalizeMsgList)
+        self.assertIn("E finalized (DummyClassDelNew)", finalizeMsgList)
 
     def test_classAcquiresFinalizer_beforeInstanciation_newStyleClass(self):
         DummyClassNew.__del__ = delClass
         F = DummyClassNew("F")
         F = None
         runGCIfJython()
-        assert("F finalized (acquired by class)" in finalizeMsgList)
+        self.assertIn("F finalized (acquired by class)", finalizeMsgList)
         del DummyClassNew.__del__
 
     def test_classAcquiresFinalizer_afterInstanciation_newStyleClass(self):
@@ -254,7 +254,7 @@ class TestFinalizers(unittest.TestCase):
             pass
         G = None
         runGCIfJython()
-        assert("G finalized (acquired by class)" in finalizeMsgList)
+        self.assertIn("G finalized (acquired by class)", finalizeMsgList)
         del DummyClassNew.__del__
 
     def test_instanceAcquiresFinalizer_bound_newStyleClass(self):
@@ -265,8 +265,8 @@ class TestFinalizers(unittest.TestCase):
         H.__del__ = types.MethodType(delObject, H.name)
         H = None
         runGCIfJython()
-        assert("H finalized (DummyClassDelNew)" in finalizeMsgList)
-        assert("H finalized (acquired by object)" not in finalizeMsgList)
+        self.assertIn("H finalized (DummyClassDelNew)", finalizeMsgList)
+        self.assertNotIn("H finalized (acquired by object)", finalizeMsgList)
 
     def test_instanceAcquiresFinalizer_bound_newStyleClass2(self):
         """
@@ -279,16 +279,16 @@ class TestFinalizers(unittest.TestCase):
         H.__del__()
         H = None
         runGCIfJython()
-        assert("H2 finalized (DummyClassDelNew)" in finalizeMsgList)
-        assert("H2 finalized (acquired by object)" in finalizeMsgList)
+        self.assertIn("H2 finalized (DummyClassDelNew)", finalizeMsgList)
+        self.assertIn("H2 finalized (acquired by object)", finalizeMsgList)
 
     def test_objectResurrection_oldStyleClass(self):
         ResurrectableDummyClass.__del__ = delI
         I = ResurrectableDummyClass("I")
         I = None
         runGCIfJython()
-        assert("I finalized (ResurrectableDummyClass)" in finalizeMsgList)
-        assert(str(resurrectedObject_I) == "I")
+        self.assertIn("I finalized (ResurrectableDummyClass)", finalizeMsgList)
+        self.assertEqual(str(resurrectedObject_I), "I")
 
     def test_objectDoubleResurrection_oldStyleClass(self):
         #okay to fail in Jython without the manual ensureFinalizer calls
@@ -297,12 +297,12 @@ class TestFinalizers(unittest.TestCase):
         J = None
         
         runGCIfJython()
-        assert("J finalized (ResurrectableDummyClass)" in finalizeMsgList)
+        self.assertIn("J finalized (ResurrectableDummyClass)", finalizeMsgList)
         global resurrectedObject_J
-        assert(str(resurrectedObject_J) == "J")
+        self.assertEqual(str(resurrectedObject_J), "J")
         J = resurrectedObject_J
         resurrectedObject_J = None
-        assert(resurrectedObject_J is None)
+        self.assertIsNone(resurrectedObject_J)
         try:
             #For Jython one can restore the finalizer manually.
             #This is offered as an easy fix if the CPython behavior
@@ -313,7 +313,7 @@ class TestFinalizers(unittest.TestCase):
         J = None
 
         runGCIfJython()
-        assert(str(resurrectedObject_J) == "J")
+        self.assertEqual(str(resurrectedObject_J), "J")
         resurrectedObject_J.doResurrection = False
         try:
             #again...
@@ -323,7 +323,7 @@ class TestFinalizers(unittest.TestCase):
         resurrectedObject_J = None
         
         runGCIfJython()
-        assert(resurrectedObject_J is None)
+        self.assertIsNone(resurrectedObject_J)
         
 
     def test_objectDoubleResurrectionAndFinalize_oldStyleClass(self):
@@ -333,14 +333,14 @@ class TestFinalizers(unittest.TestCase):
         K = None
 
         runGCIfJython()
-        assert("K finalized (ResurrectableDummyClass)" in finalizeMsgList)
+        self.assertIn("K finalized (ResurrectableDummyClass)", finalizeMsgList)
         finalizeMsgList.remove("K finalized (ResurrectableDummyClass)")
-        assert("K finalized (ResurrectableDummyClass)" not in finalizeMsgList)
+        self.assertNotIn("K finalized (ResurrectableDummyClass)", finalizeMsgList)
         global resurrectedObject_K
-        assert(str(resurrectedObject_K) == "K")
+        self.assertEqual(str(resurrectedObject_K), "K")
         K = resurrectedObject_K
         resurrectedObject_K = None
-        assert(resurrectedObject_K is None)
+        self.assertIsNone(resurrectedObject_K)
         try:
             K.__ensure_finalizer__()
         except:
@@ -348,16 +348,16 @@ class TestFinalizers(unittest.TestCase):
         K = None
 
         runGCIfJython()
-        assert("K finalized (ResurrectableDummyClass)" in finalizeMsgList)
-        assert(str(resurrectedObject_K) == "K")
+        self.assertIn("K finalized (ResurrectableDummyClass)", finalizeMsgList)
+        self.assertEqual(str(resurrectedObject_K), "K")
 
     def test_objectResurrection_newStyleClass(self):
         ResurrectableDummyClassNew.__del__ = delL
         L = ResurrectableDummyClassNew("L")
         L = None
         runGCIfJython()
-        assert("L finalized (ResurrectableDummyClass)" in finalizeMsgList)
-        assert(str(resurrectedObject_L) == "L")
+        self.assertIn("L finalized (ResurrectableDummyClass)", finalizeMsgList)
+        self.assertEqual(str(resurrectedObject_L), "L")
 
     def test_objectDoubleResurrection_newStyleClass(self):
         #okay to fail in Jython without the manual ensureFinalizer calls
@@ -366,12 +366,12 @@ class TestFinalizers(unittest.TestCase):
         M = None
 
         runGCIfJython()
-        assert("M finalized (ResurrectableDummyClass)" in finalizeMsgList)
+        self.assertIn("M finalized (ResurrectableDummyClass)", finalizeMsgList)
         global resurrectedObject_M
-        assert(str(resurrectedObject_M) == "M")
+        self.assertEqual(str(resurrectedObject_M), "M")
         M = resurrectedObject_M
         resurrectedObject_M = None
-        assert(resurrectedObject_M is None)
+        self.assertIsNone(resurrectedObject_M, None)
         try:
             M.__ensure_finalizer__()
         except:
@@ -379,7 +379,7 @@ class TestFinalizers(unittest.TestCase):
         M = None
 
         runGCIfJython()
-        assert(str(resurrectedObject_M) == "M")
+        self.assertEqual(str(resurrectedObject_M), "M")
 
     def test_objectDoubleResurrectionAndFinalize_newStyleClass(self):
         #okay to fail in Jython without the manual ensureFinalizer calls
@@ -388,14 +388,14 @@ class TestFinalizers(unittest.TestCase):
         N = None
 
         runGCIfJython()
-        assert("N finalized (ResurrectableDummyClass)" in finalizeMsgList)
+        self.assertIn("N finalized (ResurrectableDummyClass)", finalizeMsgList)
         finalizeMsgList.remove("N finalized (ResurrectableDummyClass)")
-        assert("N finalized (ResurrectableDummyClass)" not in finalizeMsgList)
+        self.assertNotIn("N finalized (ResurrectableDummyClass)", finalizeMsgList)
         global resurrectedObject_N
-        assert(str(resurrectedObject_N) == "N")
+        self.assertEqual(str(resurrectedObject_N), "N")
         N = resurrectedObject_N
         resurrectedObject_N = None
-        assert(resurrectedObject_N is None)
+        self.assertIsNone(resurrectedObject_N)
         try:
             N.__ensure_finalizer__()
         except:
@@ -403,15 +403,15 @@ class TestFinalizers(unittest.TestCase):
         N = None
 
         runGCIfJython()
-        assert("N finalized (ResurrectableDummyClass)" in finalizeMsgList)
-        assert(str(resurrectedObject_N) == "N")
+        self.assertIn("N finalized (ResurrectableDummyClass)", finalizeMsgList)
+        self.assertEqual(str(resurrectedObject_N), "N")
 
     def test_file_overwrite_del(self):
         O = DummyFileClassNew("O")
         O = None
 
         runGCIfJython()
-        assert("O finalized (DummyFileClassNew)" in finalizeMsgList)
+        self.assertIn("O finalized (DummyFileClassNew)", finalizeMsgList)
 
 if __name__ == '__main__':
     unittest.main()

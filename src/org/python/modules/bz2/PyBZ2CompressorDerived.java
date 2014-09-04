@@ -29,7 +29,7 @@ public class PyBZ2CompressorDerived extends PyBZ2Compressor implements Slotted,F
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

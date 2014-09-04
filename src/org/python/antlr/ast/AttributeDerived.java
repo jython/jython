@@ -29,7 +29,7 @@ public class AttributeDerived extends Attribute implements Slotted,FinalizablePy
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

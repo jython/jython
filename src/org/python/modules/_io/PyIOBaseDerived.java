@@ -29,7 +29,7 @@ public class PyIOBaseDerived extends PyIOBase implements Slotted,FinalizablePyOb
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyIOBaseDerived(PyType subtype) {

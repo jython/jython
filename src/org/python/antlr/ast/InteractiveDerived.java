@@ -29,7 +29,7 @@ public class InteractiveDerived extends Interactive implements Slotted,Finalizab
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

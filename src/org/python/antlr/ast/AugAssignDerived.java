@@ -29,7 +29,7 @@ public class AugAssignDerived extends AugAssign implements Slotted,FinalizablePy
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

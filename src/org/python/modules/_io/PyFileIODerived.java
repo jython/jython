@@ -29,7 +29,7 @@ public class PyFileIODerived extends PyFileIO implements Slotted,FinalizablePyOb
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyFileIODerived(PyType subtype,PyObject file,OpenMode mode,boolean closefd) {

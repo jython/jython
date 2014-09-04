@@ -29,7 +29,7 @@ public class PyDialectDerived extends PyDialect implements Slotted,FinalizablePy
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     public PyDialectDerived(PyType subtype) {

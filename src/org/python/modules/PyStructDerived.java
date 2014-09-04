@@ -29,7 +29,7 @@ public class PyStructDerived extends PyStruct implements Slotted,FinalizablePyOb
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;

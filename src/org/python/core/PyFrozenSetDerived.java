@@ -28,7 +28,7 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,Finalizab
     }
 
     public void __ensure_finalizer__() {
-        FinalizeTrigger.ensureFinalizer(this);
+        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
     }
 
     private PyObject dict;
