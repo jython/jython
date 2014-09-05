@@ -13,11 +13,11 @@ from collections import namedtuple, Sequence
 from contextlib import contextmanager
 from functools import partial, wraps
 from itertools import chain
+from jythonlib import MapMaker, dict_builder
 from numbers import Number
 from StringIO import StringIO
 from threading import Condition, Lock
 from types import MethodType, NoneType
-from weakref import WeakKeyDictionary
 
 import java
 from java.io import IOException, InterruptedIOException
@@ -428,7 +428,7 @@ class poll(object):
     def __init__(self):
         self.queue = LinkedBlockingQueue()
         self.registered = dict()  # fd -> eventmask
-        self.socks2fd = WeakKeyDictionary()  # sock -> fd
+        self.socks2fd = dict_builder(MapMaker().weakKeys().makeMap)()  # sock -> fd
 
     def notify(self, sock, exception=None, hangup=False):
         notification = _PollNotification(
@@ -566,7 +566,6 @@ class PythonInboundHandler(ChannelInboundHandlerAdapter):
     def exceptionCaught(self, ctx, cause):
         log.debug("Channel caught exception %s", cause, extra={"sock": self.sock})
         self.sock._notify_selectors(exception=cause)
-        ctx.fireExceptionCaught(cause) 
 
 
 class ChildSocketHandler(ChannelInitializer):
@@ -885,8 +884,8 @@ class _realsocket(object):
         self.accepted_children = 1  # include the parent as well to simplify close logic
 
         b = ServerBootstrap()
-        self.parent_group = NioEventLoopGroup(2, DaemonThreadFactory("Jython-Netty-Parent-%s"))
-        self.child_group = NioEventLoopGroup(2, DaemonThreadFactory("Jython-Netty-Child-%s"))
+        self.parent_group = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Parent-%s"))
+        self.child_group = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Child-%s"))
         b.group(self.parent_group, self.child_group)
         b.channel(NioServerSocketChannel)
         b.option(ChannelOption.SO_BACKLOG, backlog)

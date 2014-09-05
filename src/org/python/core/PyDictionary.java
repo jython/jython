@@ -69,6 +69,11 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         this(TYPE, map);
     }
 
+    public PyDictionary(ConcurrentMap<PyObject, PyObject> backingMap, boolean useBackingMap) {
+        super(TYPE);
+        internalMap = backingMap;
+    }
+
     /**
      * Create a new dictionary which is populated with entries the given map.
      */
@@ -460,7 +465,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         updateCommon(args, keywords, "update");
     }
 
-    private void updateCommon(PyObject[] args, String[] keywords, String methName) {
+    public void updateCommon(PyObject[] args, String[] keywords, String methName) {
         int nargs = args.length - keywords.length;
         if (nargs > 1) {
             throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, methName, 0, 1);

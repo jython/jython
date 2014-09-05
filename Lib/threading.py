@@ -4,12 +4,14 @@ from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
 from org.python.util import jython
 from org.python.core import Py
+from jythonlib import CacheBuilder, CacheLoader, MapMaker, dict_builder
 from thread import _newFunctionThread
 from thread import _local as local
-from _threading import Lock, RLock, Condition, _Lock, _RLock, _threads, _active, _jthread_to_pythread, _register_thread, _unregister_thread
+from _threading import Lock, RLock, Condition, _Lock, _RLock
 import java.lang.Thread
 import sys as _sys
 from traceback import print_exc as _print_exc
+
 
 # Rename some stuff so "from threading import *" is safe
 __all__ = ['activeCount', 'active_count', 'Condition', 'currentThread',
@@ -55,6 +57,8 @@ def setprofile(func):
 def settrace(func):
     global _trace_hook
     _trace_hook = func
+
+
 
 
 class Semaphore(object):
@@ -175,6 +179,17 @@ class JavaThread(object):
         return Py.NoConversion
 
 
+_threads = dict_builder(MapMaker().weakValues().makeMap)()
+_active = _threads
+
+def _register_thread(jthread, pythread):
+    _threads[jthread.getId()] = pythread
+
+def _unregister_thread(jthread):
+    _threads.pop(jthread.getId(), None)
+
+
+
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
         assert group is None, "group argument must be None for now"
@@ -284,7 +299,7 @@ def _pickSomeNonDaemonThread():
 
 def currentThread():
     jthread = java.lang.Thread.currentThread()
-    pythread = _jthread_to_pythread[jthread]
+    pythread = _threads.get(jthread.getId())
     if pythread is None:
         pythread = JavaThread(jthread)
     return pythread

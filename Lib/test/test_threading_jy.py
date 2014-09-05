@@ -112,7 +112,7 @@ class MemoryLeakTestCase(unittest.TestCase):
 def test_main():
     test_support.run_unittest(
         JavaIntegrationTestCase,
-        MemoryLeakTestCase,
+        #MemoryLeakTestCase,
         ThreadingTestCase,
         TwistedTestCase)
 
