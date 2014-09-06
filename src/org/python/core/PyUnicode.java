@@ -22,31 +22,44 @@ import org.python.util.Generic;
 @ExposedType(name = "unicode", base = PyBaseString.class, doc = BuiltinDocs.unicode_doc)
 public class PyUnicode extends PyString implements Iterable {
 
-    private enum Plane {
+    /**
+     * Nearly every significant method comes in two versions: one applicable when the string
+     * contains only basic plane characters, and one that is correct when supplementary characters
+     * are also present. Set this constant <code>true</code> to treat all strings as containing
+     * supplementary characters, so that these versions will be exercised in tests.
+     */
+    private static final boolean DEBUG_NON_BMP_METHODS = false;
 
-        UNKNOWN, BASIC, ASTRAL
-    }
-
-    private volatile Plane plane = Plane.UNKNOWN;
-    private volatile int codePointCount = -1;
     public static final PyType TYPE = PyType.fromClass(PyUnicode.class);
 
     // for PyJavaClass.init()
     public PyUnicode() {
-        this(TYPE, "");
+        this(TYPE, "", true);
     }
 
+    /**
+     * Construct a PyUnicode interpreting the Java String argument as UTF-16.
+     *
+     * @param string UTF-16 string encoding the characters (as Java).
+     */
     public PyUnicode(String string) {
-        this(TYPE, string);
+        this(TYPE, string, false);
     }
 
+    /**
+     * Construct a PyUnicode interpreting the Java String argument as UTF-16. If it is known that
+     * the string contains no supplementary characters, argument isBasic may be set true by the
+     * caller. If it is false, the PyUnicode will scan the string to find out.
+     *
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
     public PyUnicode(String string, boolean isBasic) {
-        this(TYPE, string);
-        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;
+        this(TYPE, string, isBasic);
     }
 
     public PyUnicode(PyType subtype, String string) {
-        super(subtype, string);
+        this(subtype, string, false);
     }
 
     public PyUnicode(PyString pystring) {
@@ -54,12 +67,13 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode()
-                .toString());
+        this(subtype, //
+                pystring instanceof PyUnicode ? pystring.string : pystring.decode().toString(), //
+                pystring.isBasicPlane());
     }
 
     public PyUnicode(char c) {
-        this(TYPE, String.valueOf(c));
+        this(TYPE, String.valueOf(c), true);
     }
 
     public PyUnicode(int codepoint) {
@@ -90,6 +104,20 @@ public class PyUnicode extends PyString implements Iterable {
         this(ucs4.iterator());
     }
 
+    /**
+     * Fundamental all-features constructor on which the others depend. If it is known that the
+     * string contains no supplementary characters, argument isBasic may be set true by the caller.
+     * If it is false, the PyUnicode will scan the string to find out.
+     *
+     * @param subtype actual type to create.
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
+    private PyUnicode(PyType subtype, String string, boolean isBasic) {
+        super(subtype, string);
+        translator = isBasic ? BASIC : this.chooseIndexTranslator();
+    }
+
     @Override
     public int[] toCodePoints() {
         int n = getCodePointCount();
@@ -100,6 +128,115 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return codePoints;
     }
+
+    // ------------------------------------------------------------------------------------------
+    // Index translation for Unicode beyond the BMP
+    // ------------------------------------------------------------------------------------------
+
+    /**
+     * Index translation between code point index (as seen by Python) and UTF-16 index (as used in
+     * the Java String.
+     */
+    private interface IndexTranslator {
+
+        /** Number of supplementary characters (hence point code length may be found). */
+        public int suppCount();
+
+        /** Translate a UTF-16 code unit index to its equivalent code point index. */
+        public int codePointIndex(int utf16Index);
+
+        /** Translate a code point index to its equivalent UTF-16 code unit index. */
+        public int utf16Index(int codePointIndex);
+    }
+
+    /**
+     * The instance of index translation in use in this string. It will be set to either
+     * {@link #BASIC} or and instance of {@link #Supplementary}.
+     */
+    private final IndexTranslator translator;
+
+    /**
+     * A singleton provides the translation service (which is a pass-through) for all BMP strings.
+     */
+    static final IndexTranslator BASIC = new IndexTranslator() {
+
+        @Override
+        public int suppCount() {
+            return 0;
+        }
+
+        @Override
+        public int codePointIndex(int u) {
+            return u;
+        }
+
+        @Override
+        public int utf16Index(int i) {
+            return i;
+        }
+    };
+
+    /**
+     * A class of index translation that uses the features provided by the Java String.
+     */
+    private class Supplementary implements IndexTranslator {
+
+        /** The number of supplementary character in this string. */
+        private final int supp;
+
+        Supplementary(int supp) {
+            this.supp = supp;
+        }
+
+        @Override
+        public int codePointIndex(int u) {
+            return string.codePointCount(0, u);
+        }
+
+        @Override
+        public int utf16Index(int i) {
+            return string.offsetByCodePoints(0, i);
+        }
+
+        @Override
+        public int suppCount() {
+            return supp;
+        }
+    }
+
+    /**
+     * Choose an {@link IndexTranslator} implementation for efficient working, according to the
+     * contents of the {@link PyString#string}.
+     *
+     * @return chosen <code>IndexTranslator</code>
+     */
+    private IndexTranslator chooseIndexTranslator() {
+        int n = string.length();
+        int s = n - string.codePointCount(0, n);
+        if (DEBUG_NON_BMP_METHODS) {
+            return new Supplementary(s);
+        } else {
+            return s == 0 ? BASIC : new Supplementary(s);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In the <code>PyUnicode</code> version, the arguments are code point indices, such as are
+     * received from the Python caller, while the first two elements of the returned array have been
+     * translated to UTF-16 indices in the implementation string.
+     */
+    @Override
+    protected int[] translateIndices(PyObject start, PyObject end) {
+        int[] indices = super.translateIndices(start, end);
+        indices[0] = translator.utf16Index(indices[0]);
+        indices[1] = translator.utf16Index(indices[1]);
+        // indices[2] and [3] remain Unicode indices (and may be out of bounds) relative to len()
+        return indices;
+    }
+
+    // ------------------------------------------------------------------------------------------
 
     // modified to know something about codepoints; we just need to return the
     // corresponding substring; darn UTF16!
@@ -122,29 +259,22 @@ public class PyUnicode extends PyString implements Iterable {
         return uni;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @return true if the string consists only of BMP characters
+     */
+    @Override
     public boolean isBasicPlane() {
-        if (plane == Plane.BASIC) {
-            return true;
-        } else if (plane == Plane.UNKNOWN) {
-            plane = (getString().length() == getCodePointCount()) ? Plane.BASIC : Plane.ASTRAL;
+        if (DEBUG_NON_BMP_METHODS) {
+            return false;
+        } else {
+            return translator.suppCount() == 0;
         }
-        return plane == Plane.BASIC;
     }
 
-// RETAIN THE BELOW CODE, it facilitates testing astral support more completely
-
-// public boolean isBasicPlane() {
-// return false;
-// }
-
-// END RETAIN
-
     public int getCodePointCount() {
-        if (codePointCount >= 0) {
-            return codePointCount;
-        }
-        codePointCount = getString().codePointCount(0, getString().length());
-        return codePointCount;
+        return string.length() - translator.suppCount();
     }
 
     @ExposedNew
@@ -193,12 +323,13 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(str);
     }
 
-    // Unicode ops consisting of basic strings can only produce basic strings;
-    // this may not be the case for astral ones - they also might be basic, in
-    // case of deletes. So optimize by providing a tainting mechanism.
+    /**
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
     @Override
-    protected PyString createInstance(String str, boolean isBasic) {
-        return new PyUnicode(str, isBasic);
+    protected PyString createInstance(String string, boolean isBasic) {
+        return new PyUnicode(string, isBasic);
     }
 
     @Override
@@ -443,10 +574,12 @@ public class PyUnicode extends PyString implements Iterable {
     private PyUnicode coerceToUnicode(PyObject o) {
         if (o instanceof PyUnicode) {
             return (PyUnicode)o;
+        } else if (o instanceof PyString) {
+            return new PyUnicode(((PyString)o).getString(), true);
         } else if (o instanceof BufferProtocol) {
-            // PyString or PyByteArray, PyMemoryView, Py2kBuffer ...
+            // PyByteArray, PyMemoryView, Py2kBuffer ...
             try (PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO)) {
-                return new PyUnicode(buf.toString());
+                return new PyUnicode(buf.toString(), true);
             }
         } else {
             // o is some type not allowed:
@@ -998,7 +1131,7 @@ public class PyUnicode extends PyString implements Iterable {
     @Override
     protected PyString fromSubstring(int begin, int end) {
         assert (isBasicPlane()); // can only be used on a codepath from str_ equivalents
-        return new PyUnicode(getString().substring(begin, end));
+        return new PyUnicode(getString().substring(begin, end), true);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
@@ -1021,7 +1154,7 @@ public class PyUnicode extends PyString implements Iterable {
         if (isBasicPlane()) {
             return _count(sub.getString(), start, end);
         }
-        int[] indices = translateIndices(start, end);
+        int[] indices = super.translateIndices(start, end); // do not convert to utf-16 indices.
         int count = 0;
         for (Iterator<Integer> mainIter = newSubsequenceIterator(indices[0], indices[1], 1); mainIter
                 .hasNext();) {
@@ -1043,12 +1176,14 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
     final int unicode_find(PyObject subObj, PyObject start, PyObject end) {
-        return _find(coerceToUnicode(subObj).getString(), start, end);
+        int found = _find(coerceToUnicode(subObj).getString(), start, end);
+        return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_rfind_doc)
     final int unicode_rfind(PyObject subObj, PyObject start, PyObject end) {
-        return _rfind(coerceToUnicode(subObj).getString(), start, end);
+        int found = _rfind(coerceToUnicode(subObj).getString(), start, end);
+        return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
     private static String padding(int n, int pad) {

@@ -290,7 +290,6 @@ class UnicodeIndexMixTest(unittest.TestCase):
         for m in self.material:
             check_slice(m)
 
-    @unittest.skip("Fails on Jython 2.7b3 issue #2100")
     def test_find(self):
         # Test map from internal find result to code point index
         # Fails in Jython 2.7b3
@@ -304,6 +303,7 @@ class UnicodeIndexMixTest(unittest.TestCase):
                     i = u.find(c, start)
                     if i < 0: break
                     self.assertEqual(u[i], c)
+                    self.assertGreaterEqual(i, start)
                     start = i + 1
 
         def check_find_str(m, t):
@@ -325,7 +325,6 @@ class UnicodeIndexMixTest(unittest.TestCase):
                 m.insert(t)
                 check_find_str(m, t)
 
-    @unittest.skip("Fails on Jython 2.7b3 issue #2100")
     def test_rfind(self):
         # Test map from internal rfind result to code point index
         # Fails in Jython 2.7b3
@@ -336,9 +335,11 @@ class UnicodeIndexMixTest(unittest.TestCase):
                 end = m.size
                 u = m.text
                 while True:
-                    end = u.rfind(c, 0, end)
-                    if end < 0: break
-                    self.assertEqual(u[end], c)
+                    i = u.rfind(c, 0, end)
+                    if i < 0: break
+                    self.assertLess(i, end)
+                    self.assertEqual(u[i], c)
+                    end = i
 
         def check_rfind_str(m, t):
             # Check rfind returns correct index for string target
