@@ -155,6 +155,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return pybuf;
     }
 
+    /**
+     * Return a substring of this object as a Java String.
+     *
+     * @param start the beginning index, inclusive.
+     * @param end the ending index, exclusive.
+     * @return the specified substring.
+     */
     public String substring(int start, int end) {
         return getString().substring(start, end);
     }

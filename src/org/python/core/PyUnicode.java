@@ -238,15 +238,20 @@ public class PyUnicode extends PyString implements Iterable {
 
     // ------------------------------------------------------------------------------------------
 
-    // modified to know something about codepoints; we just need to return the
-    // corresponding substring; darn UTF16!
-    // TODO: we could avoid doing this unnecessary copy
+    /**
+     * {@inheritDoc}
+     * The indices  are code point indices, not UTF-16 (<code>char</code>) indices. For example:
+     *
+     * <pre>
+     * PyUnicode u = new PyUnicode("..\ud800\udc02\ud800\udc03...");
+     * // (Python) u = u'..\U00010002\U00010003...'
+     *
+     * String s = u.substring(2, 4);  // = "\ud800\udc02\ud800\udc03" (Java)
+     * </pre>
+     */
     @Override
     public String substring(int start, int end) {
-        if (isBasicPlane()) {
-            return super.substring(start, end);
-        }
-        return new PyUnicode(newSubsequenceIterator(start, end, 1)).getString();
+        return super.substring(translator.utf16Index(start), translator.utf16Index(end));
     }
 
     /**
