@@ -777,6 +777,7 @@ def _mac_ver_gestalt():
     return release,versioninfo,machine
 
 def _mac_ver_xml():
+    return None  # Jython patch
     fn = '/System/Library/CoreServices/SystemVersion.plist'
     if not os.path.exists(fn):
         return None

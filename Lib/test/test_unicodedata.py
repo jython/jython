@@ -17,15 +17,23 @@ encoding = 'utf-8'
 
 ### Run tests
 
+
+def all_codepoints():
+    for i in xrange(sys.maxunicode+1):
+        if i >= 0xD800 and i <= 0xDFFF:
+            continue
+        yield i
+
+
 class UnicodeMethodsTest(unittest.TestCase):
 
     # update this, if the database changes
     expectedchecksum = '4504dffd035baea02c5b9de82bebc3d65e0e0baf'
 
-    @unittest.skipIf(test.test_support.is_jython, "Jython uses ICU4J")
+    @unittest.skipIf(test.test_support.is_jython, "Jython uses ICU4J, so checksum tests are not meaningful")
     def test_method_checksum(self):
         h = hashlib.sha1()
-        for i in range(0x10000):
+        for i in all_codepoints():
             char = unichr(i)
             data = [
                 # Predicates (single char)
@@ -82,7 +90,7 @@ class UnicodeFunctionsTest(UnicodeDatabaseTest):
     # update this, if the database changes
     expectedchecksum = '6ccf1b1a36460d2694f9b0b0f0324942fe70ede6'
 
-    @unittest.skipIf(test.test_support.is_jython, "Jython uses ICU4J")
+    @unittest.skipIf(test.test_support.is_jython, "Jython uses ICU4J, so checksum tests are not meaningful")
     def test_function_checksum(self):
         data = []
         h = hashlib.sha1()
@@ -246,7 +254,7 @@ class UnicodeMiscTest(UnicodeDatabaseTest):
         # i.e. if a character has a decimal value,
         # its numeric value should be the same.
         count = 0
-        for i in xrange(0x10000):
+        for i in all_codepoints():
             c = unichr(i)
             dec = self.db.decimal(c, -1)
             if dec != -1:
@@ -259,7 +267,7 @@ class UnicodeMiscTest(UnicodeDatabaseTest):
         # i.e. if a character has a digit value,
         # its numeric value should be the same.
         count = 0
-        for i in xrange(0x10000):
+        for i in all_codepoints():
             c = unichr(i)
             dec = self.db.digit(c, -1)
             if dec != -1:
@@ -282,12 +290,14 @@ class UnicodeMiscTest(UnicodeDatabaseTest):
         self.assertTrue(u"\u1d79".upper()==u'\ua77d')
         self.assertTrue(u".".upper()==u".")
 
+
+
     def test_bug_5828(self):
         self.assertEqual(u"\u1d79".lower(), u"\u1d79")
         # Only U+0000 should have U+0000 as its upper/lower/titlecase variant
         self.assertEqual(
             [
-                c for c in range(sys.maxunicode+1)
+                c for c in all_codepoints()
                 if u"\x00" in unichr(c).lower()+unichr(c).upper()+unichr(c).title()
             ],
             [0]
@@ -300,7 +310,7 @@ class UnicodeMiscTest(UnicodeDatabaseTest):
         self.assertEqual(u"\u01c6".title(), u"\u01c5")
 
     def test_linebreak_7643(self):
-        for i in range(0x10000):
+        for i in all_codepoints():
             lines = (unichr(i) + u'A').splitlines()
             if i in (0x0a,
                      # 0x0b,

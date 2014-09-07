@@ -240,6 +240,7 @@ class TestSysConfig(unittest.TestCase):
                   'java_user'}
         self.assertEqual({name for name in get_scheme_names()}, wanted)
 
+    @unittest.skipIf(is_jython, "Cannot just symlink Jython startup script")
     def test_symlink(self):
         # Issue 7880
         symlink = get_attribute(os, "symlink")

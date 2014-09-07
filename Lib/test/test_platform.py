@@ -5,12 +5,14 @@ import platform
 import subprocess
 
 from test import test_support
+from test.test_support import is_jython
 
 class PlatformTest(unittest.TestCase):
     def test_architecture(self):
         res = platform.architecture()
 
     if hasattr(os, "symlink"):
+        @unittest.skipIf(is_jython, "Cannot just symlink Jython startup script")
         def test_architecture_via_symlink(self): # issue3762
             def get(python):
                 cmd = [python, '-c',
@@ -162,6 +164,7 @@ class PlatformTest(unittest.TestCase):
     def test_win32_ver(self):
         res = platform.win32_ver()
 
+    @unittest.skipIf(is_jython, "No uname support in Jython")
     def test_mac_ver(self):
         res = platform.mac_ver()
 

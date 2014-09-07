@@ -12,6 +12,7 @@ __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
 from os import _name, _posix_impl
 from org.python.core.Py import newString
+import sys
 
 if _name == 'nt':
     raise ImportError, 'pwd module not supported on Windows'
@@ -48,6 +49,8 @@ def getpwuid(uid):
     Return the password database entry for the given numeric user ID.
     See pwd.__doc__ for more on password database entries.
     """
+    if uid > sys.maxint or uid < 0:
+        raise KeyError
     entry = _posix_impl.getpwuid(uid)
     if not entry:
         raise KeyError(uid)

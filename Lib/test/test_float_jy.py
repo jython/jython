@@ -14,7 +14,7 @@ class FloatTestCase(unittest.TestCase):
     def test_float_repr(self):
         self.assertEqual(repr(12345678.000000005), '12345678.000000006')
         self.assertEqual(repr(12345678.0000000005), '12345678.0')
-        self.assertEqual(repr(math.pi**-100), '1.9275814160560206e-50')
+        self.assertRegexpMatches(repr(math.pi**-100), '1.927581416056020[0-9]e-50')
         self.assertEqual(repr(-1.0), '-1.0')
         self.assertEqual(repr(-9876.543210), '-9876.54321')
         self.assertEqual(repr(0.123456789e+35), '1.23456789e+34')
