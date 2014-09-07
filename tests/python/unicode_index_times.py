@@ -179,9 +179,45 @@ class UnicodeActions(UnicodeMaterial):
                 starts = n - m + 1
                 for i in range(starts):
                     dummy = t[i:i+m]
+                    #print(i, i+m, step, dummy)
                 opcount += starts
                 m *= 5
 
+        return opcount
+
+    def repeat_slice_step(self, mincount):
+        ''' Extract a slice at each feasible position and length,
+            and using different sizes for the step,
+            repeating enough times to do mincount operations, and
+            return the actual number of operations.
+        '''
+        n = self.size
+        t = self.text
+        opcount = 0
+        dummy = None
+        steps = [3, -1, 10]
+
+        while opcount < mincount:
+            for step in steps:
+                if step > 0:
+                    m = 1
+                    while m <= n:
+                        starts = n - m + 1
+                        for i in range(starts):
+                            dummy = t[i:i+m:step]
+                            #print(i, i+m, step, dummy)
+                        opcount += starts
+                        m *= 5
+                else:
+                    m = 1
+                    while m <= n:
+                        starts = n - m + 1
+                        for i in range(starts):
+                            dummy = t[i+m:i:step]
+                            #print(i+m, i, step, dummy)
+                        opcount += starts
+                        m *= 5
+                    
         return opcount
 
     def repeat_find_char(self, mincount):
@@ -313,8 +349,8 @@ def time_all():
         ("long bmp", UnicodeActions(LONG, (lambda ran, i : False))),
         ("long 1%", UnicodeActions(LONG, evenly(0.01))),
         ("long 10%", UnicodeActions(LONG, evenly(0.1))),
-        ("long 10% low", UnicodeActions(LONG, evenly_before(LONG/4, 0.4))),
-        ("long 10% high", UnicodeActions(LONG, evenly_from(LONG-(LONG/4), 0.4))),
+        ("long 10% L", UnicodeActions(LONG, evenly_before(LONG/4, 0.4))),
+        ("long 10% H", UnicodeActions(LONG, evenly_from(LONG-(LONG/4), 0.4))),
         ("long 50%", UnicodeActions(LONG, evenly(0.5))),
         ("huge bmp", UnicodeActions(HUGE, (lambda ran, i : False))),
         ("huge 10%", UnicodeActions(HUGE, evenly(0.1))),
@@ -323,16 +359,17 @@ def time_all():
     ops = [
         ("[i]", "repeat_getitem"),
         ("[i:i+n]", "repeat_slice"),
+        ("[i:i+n:k]", "repeat_slice_step"),
         ("find(c)", "repeat_find_char"),
-        ("find(str)", "repeat_find_str"),
+        ("find(s)", "repeat_find_str"),
         ("rfind(c)", "repeat_rfind_char"),
-        ("rfind(str)", "repeat_rfind_str"),
+        ("rfind(s)", "repeat_rfind_str"),
     ]
 
 
-    print("{:15s}{:>6s}".format("time (us)", "len"), end='')
+    print("{:12s}{:>6s}".format("time (us)", "len"), end='')
     for title, _ in ops:
-        print("{:>12s}".format(title), end='')
+        print("{:>10s}".format(title), end='')
     print()
 
     mintime = dict()
@@ -355,10 +392,10 @@ def time_all():
 
     # Cycle through the cases again to print them.
     for name, material in setups:
-        print("{:15s}{:6d}".format(name, material.size), end='')
+        print("{:12s}{:6d}".format(name, material.size), end='')
         for _, opname in ops:
             t = mintime[(name, opname)]
-            print("{:12.3f}".format(t), end='')
+            print("{:10.2f}".format(t), end='')
         print()
 
     print("y =", trashcan)
