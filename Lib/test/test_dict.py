@@ -6,13 +6,17 @@ import gc, weakref
 
 
 class DictTest(unittest.TestCase):
+
+    _class = None
+
+    def _make_dict(self, pydict):
+        return pydict if not self._class else self._class(pydict)
+
     def test_constructor(self):
         # calling built-in types without argument must return empty
-        self.assertEqual(dict(), {})
-        self.assertIsNot(dict(), {})
+        self.assertEqual(self._make_dict(dict()), {})
+        self.assertIsNot(self._make_dict(dict()), {})
 
-    @unittest.skipIf(test_support.is_jython,
-                     "FIXME: check Jython again when __format__ works better.")
     def test_literal_constructor(self):
         # check literal constructor for different sized dicts
         # (to exercise the BUILD_MAP oparg).
@@ -22,16 +26,16 @@ class DictTest(unittest.TestCase):
             random.shuffle(items)
             formatted_items = ('{!r}: {:d}'.format(k, v) for k, v in items)
             dictliteral = '{' + ', '.join(formatted_items) + '}'
-            self.assertEqual(eval(dictliteral), dict(items))
+            self.assertEqual(self._make_dict(eval(dictliteral)), dict(items))
 
     def test_bool(self):
-        self.assertIs(not {}, True)
-        self.assertTrue({1: 2})
-        self.assertIs(bool({}), False)
-        self.assertIs(bool({1: 2}), True)
+        self.assertIs(not self._make_dict({}), True)
+        self.assertTrue(self._make_dict({1: 2}))
+        self.assertIs(bool(self._make_dict({})), False)
+        self.assertIs(bool(self._make_dict({1: 2})), True)
 
     def test_keys(self):
-        d = {}
+        d = self._make_dict({})
         self.assertEqual(d.keys(), [])
         d = {'a': 1, 'b': 2}
         k = d.keys()
@@ -41,26 +45,28 @@ class DictTest(unittest.TestCase):
         self.assertRaises(TypeError, d.keys, None)
 
     def test_values(self):
-        d = {}
+        d = self._make_dict({})
         self.assertEqual(d.values(), [])
-        d = {1:2}
+
+        d = self._make_dict({1:2})
         self.assertEqual(d.values(), [2])
 
         self.assertRaises(TypeError, d.values, None)
 
     def test_items(self):
-        d = {}
+        d = self._make_dict({})
         self.assertEqual(d.items(), [])
 
-        d = {1:2}
+        d = self._make_dict({1:2})
         self.assertEqual(d.items(), [(1, 2)])
 
         self.assertRaises(TypeError, d.items, None)
 
     def test_has_key(self):
-        d = {}
+        d = self._make_dict({})
         self.assertFalse(d.has_key('a'))
-        d = {'a': 1, 'b': 2}
+
+        d = self._make_dict({'a': 1, 'b': 2})
         k = d.keys()
         k.sort()
         self.assertEqual(k, ['a', 'b'])
@@ -68,11 +74,12 @@ class DictTest(unittest.TestCase):
         self.assertRaises(TypeError, d.has_key)
 
     def test_contains(self):
-        d = {}
+        d = self._make_dict({})
         self.assertNotIn('a', d)
         self.assertFalse('a' in d)
         self.assertTrue('a' not in d)
-        d = {'a': 1, 'b': 2}
+
+        d = self._make_dict({'a': 1, 'b': 2})
         self.assertIn('a', d)
         self.assertIn('b', d)
         self.assertNotIn('c', d)
@@ -80,13 +87,14 @@ class DictTest(unittest.TestCase):
         self.assertRaises(TypeError, d.__contains__)
 
     def test_len(self):
-        d = {}
+        d = self._make_dict({})
         self.assertEqual(len(d), 0)
-        d = {'a': 1, 'b': 2}
+
+        d = self._make_dict({'a': 1, 'b': 2})
         self.assertEqual(len(d), 2)
 
     def test_getitem(self):
-        d = {'a': 1, 'b': 2}
+        d = self._make_dict({'a': 1, 'b': 2})
         self.assertEqual(d['a'], 1)
         self.assertEqual(d['b'], 2)
         d['c'] = 3
@@ -104,7 +112,7 @@ class DictTest(unittest.TestCase):
             def __hash__(self):
                 return 24
 
-        d = {}
+        d = self._make_dict({})
         d[BadEq()] = 42
         self.assertRaises(KeyError, d.__getitem__, 23)
 
@@ -124,14 +132,14 @@ class DictTest(unittest.TestCase):
         self.assertRaises(Exc, d.__getitem__, x)
 
     def test_clear(self):
-        d = {1:1, 2:2, 3:3}
+        d = self._make_dict({1:1, 2:2, 3:3})
         d.clear()
         self.assertEqual(d, {})
 
         self.assertRaises(TypeError, d.clear, None)
 
     def test_update(self):
-        d = {}
+        d = self._make_dict({})
         d.update({1:100})
         d.update({2:20})
         d.update({1:1, 2:2, 3:3})
@@ -202,13 +210,13 @@ class DictTest(unittest.TestCase):
             def next(self):
                 raise Exc()
 
-        self.assertRaises(Exc, {}.update, badseq())
-
-        self.assertRaises(ValueError, {}.update, [(1, 2, 3)])
+        d = self._make_dict({})
+        self.assertRaises(Exc, d.update, badseq())
+        self.assertRaises(ValueError, d.update, [(1, 2, 3)])
 
     def test_fromkeys(self):
         self.assertEqual(dict.fromkeys('abc'), {'a':None, 'b':None, 'c':None})
-        d = {}
+        d = self._make_dict({})
         self.assertIsNot(d.fromkeys('abc'), d)
         self.assertEqual(d.fromkeys('abc'), {'a':None, 'b':None, 'c':None})
         self.assertEqual(d.fromkeys((4,5),0), {4:0, 5:0})
@@ -257,16 +265,17 @@ class DictTest(unittest.TestCase):
         self.assertEqual(dict.fromkeys(d, 0), dict(zip(range(6), [0]*6)))
 
     def test_copy(self):
-        d = {1:1, 2:2, 3:3}
+        d = self._make_dict({1:1, 2:2, 3:3})
         self.assertEqual(d.copy(), {1:1, 2:2, 3:3})
-        self.assertEqual({}.copy(), {})
+        self.assertEqual(self._make_dict({}).copy(), {})
         self.assertRaises(TypeError, d.copy, None)
 
     def test_get(self):
-        d = {}
+        d = self._make_dict({})
         self.assertIs(d.get('c'), None)
         self.assertEqual(d.get('c', 3), 3)
-        d = {'a': 1, 'b': 2}
+
+        d = self._make_dict({'a': 1, 'b': 2})
         self.assertIs(d.get('c'), None)
         self.assertEqual(d.get('c', 3), 3)
         self.assertEqual(d.get('a'), 1)
@@ -276,7 +285,7 @@ class DictTest(unittest.TestCase):
 
     def test_setdefault(self):
         # dict.setdefault()
-        d = {}
+        d = self._make_dict({})
         self.assertIs(d.setdefault('key0'), None)
         d.setdefault('key0', [])
         self.assertIs(d.setdefault('key0'), None)
@@ -314,7 +323,7 @@ class DictTest(unittest.TestCase):
                 self.eq_count += 1
                 return id(self) == id(other)
         hashed1 = Hashed()
-        y = {hashed1: 5}
+        y = self._make_dict({hashed1: 5})
         hashed2 = Hashed()
         y.setdefault(hashed2, [])
         self.assertEqual(hashed1.hash_count, 1)
@@ -345,12 +354,12 @@ class DictTest(unittest.TestCase):
                 self.assertFalse(a)
                 self.assertFalse(b)
 
-        d = {}
+        d = self._make_dict({})
         self.assertRaises(KeyError, d.popitem)
 
     def test_pop(self):
         # Tests for pop with specified key
-        d = {}
+        d = self._make_dict({})
         k, v = 'abc', 'def'
         d[k] = v
         self.assertRaises(KeyError, d.pop, 'ghi')
@@ -364,7 +373,7 @@ class DictTest(unittest.TestCase):
         # (for 64-bit archs).  See SF bug #689659.
         x = 4503599627370496L
         y = 4503599627370496
-        h = {x: 'anything', y: 'something else'}
+        h = self._make_dict({x: 'anything', y: 'something else'})
         self.assertEqual(h[x], h[y])
 
         self.assertEqual(d.pop(k, v), v)
@@ -390,18 +399,19 @@ class DictTest(unittest.TestCase):
 
     def test_mutatingiteration(self):
         # changing dict size during iteration
-        d = {}
+        d = self._make_dict({})
         d[1] = 1
         with self.assertRaises(RuntimeError):
             for i in d:
                 d[i+1] = 1
 
     def test_repr(self):
-        d = {}
+        d = self._make_dict({})
         self.assertEqual(repr(d), '{}')
         d[1] = 2
         self.assertEqual(repr(d), '{1: 2}')
-        d = {}
+
+        d = self._make_dict({})
         d[1] = d
         self.assertEqual(repr(d), '{1: {...}}')
 
@@ -411,12 +421,12 @@ class DictTest(unittest.TestCase):
             def __repr__(self):
                 raise Exc()
 
-        d = {1: BadRepr()}
+        d = self._make_dict({1: BadRepr()})
         self.assertRaises(Exc, repr, d)
 
     def test_le(self):
-        self.assertFalse({} < {})
-        self.assertFalse({1: 2} < {1L: 2L})
+        self.assertFalse(self._make_dict({}) < {})
+        self.assertFalse(self._make_dict({1: 2}) < {1L: 2L})
 
         class Exc(Exception): pass
 
@@ -426,8 +436,8 @@ class DictTest(unittest.TestCase):
             def __hash__(self):
                 return 42
 
-        d1 = {BadCmp(): 1}
-        d2 = {1: 1}
+        d1 = self._make_dict({BadCmp(): 1})
+        d2 = self._make_dict({1: 1})
 
         with self.assertRaises(Exc):
             d1 < d2
@@ -435,7 +445,7 @@ class DictTest(unittest.TestCase):
     def test_missing(self):
         # Make sure dict doesn't have a __missing__ method
         self.assertFalse(hasattr(dict, "__missing__"))
-        self.assertFalse(hasattr({}, "__missing__"))
+        self.assertFalse(hasattr(self._make_dict({}), "__missing__"))
         # Test several cases:
         # (D) subclass defines __missing__ method returning a value
         # (E) subclass defines __missing__ method raising RuntimeError
@@ -477,7 +487,7 @@ class DictTest(unittest.TestCase):
 
     def test_tuple_keyerror(self):
         # SF #1576657
-        d = {}
+        d = self._make_dict({})
         with self.assertRaises(KeyError) as c:
             d[(1,)]
         self.assertEqual(c.exception.args, ((1,),))
@@ -496,7 +506,7 @@ class DictTest(unittest.TestCase):
                     raise CustomException
                 return other
 
-        d = {}
+        d = self._make_dict({})
         x1 = BadDictKey()
         x2 = BadDictKey()
         d[x1] = 1
@@ -519,7 +529,7 @@ class DictTest(unittest.TestCase):
         # exactly the right order, and I can't think of a randomized approach
         # that would be *likely* to hit a failing case in reasonable time.
 
-        d = {}
+        d = self._make_dict({})
         for i in range(5):
             d[i] = i
         for i in range(5):
@@ -538,7 +548,7 @@ class DictTest(unittest.TestCase):
                 if resizing:
                     d.clear()
                 return False
-        d = {}
+        d = self._make_dict({})
         resizing = False
         d[X()] = 1
         d[X()] = 2
@@ -553,8 +563,9 @@ class DictTest(unittest.TestCase):
         # Bug #3537: if an empty but presized dict with a size larger
         # than 7 was in the freelist, it triggered an assertion failure
         with self.assertRaises(ZeroDivisionError):
-            d = {'a': 1 // 0, 'b': None, 'c': None, 'd': None, 'e': None,
-                 'f': None, 'g': None, 'h': None}
+            d = self._make_dict(
+                    {'a': 1 // 0, 'b': None, 'c': None, 'd': None, 'e': None,
+                        'f': None, 'g': None, 'h': None})
         d = {}
 
     def test_container_iterator(self):
