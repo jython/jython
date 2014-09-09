@@ -227,12 +227,14 @@ public class JarInstaller {
         List<String> coreLibFiles = new ArrayList<String>();
         coreLibFiles.add("__future__.py");
         coreLibFiles.add("copy.py");
+        coreLibFiles.add("copy_reg.py");
         coreLibFiles.add("dbexts.py");
         coreLibFiles.add("imaplib.py");
         coreLibFiles.add("isql.py");
         coreLibFiles.add("javaos.py");
         coreLibFiles.add("javapath.py");
         coreLibFiles.add("jreload.py");
+        coreLibFiles.add("linecache.py");
         coreLibFiles.add("marshal.py");
         coreLibFiles.add("ntpath.py");
         coreLibFiles.add("os.py");
@@ -248,7 +250,10 @@ public class JarInstaller {
         coreLibFiles.add("sre_parse.py");
         coreLibFiles.add("stat.py");
         coreLibFiles.add("string.py");
+        coreLibFiles.add("sysconfig.py");
         coreLibFiles.add("threading.py");
+        coreLibFiles.add("traceback.py");
+        coreLibFiles.add("types.py");
         coreLibFiles.add("UserDict.py");
         coreLibFiles.add("zipfile.py");
         coreLibFiles.add("zlib.py");
