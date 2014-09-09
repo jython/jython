@@ -1,5 +1,7 @@
 import unittest
 from test import test_support
+from java.util import Map
+from java.util.concurrent import ConcurrentMap
 
 import UserDict, random, string
 import gc, weakref
@@ -324,6 +326,8 @@ class DictTest(unittest.TestCase):
                 return id(self) == id(other)
         hashed1 = Hashed()
         y = self._make_dict({hashed1: 5})
+        if isinstance(y, Map) and not isinstance(y, ConcurrentMap):
+            raise unittest.SkipTest("java.util.Map objects that do not implement ConcurrentMap have no concurrency guarantees")
         hashed2 = Hashed()
         y.setdefault(hashed2, [])
         self.assertEqual(hashed1.hash_count, 1)
@@ -400,6 +404,8 @@ class DictTest(unittest.TestCase):
     def test_mutatingiteration(self):
         # changing dict size during iteration
         d = self._make_dict({})
+        if isinstance(d, Map):
+            raise unittest.SkipTest("java.util.Map objects do not raise exceptions if mutated over iteration")
         d[1] = 1
         with self.assertRaises(RuntimeError):
             for i in d:
