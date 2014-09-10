@@ -1,16 +1,23 @@
+import re
 import sys
 import types
 import unittest
 import inspect
+import linecache
 import datetime
+from UserList import UserList
+from UserDict import UserDict
 
-from test.test_support import is_jython, run_unittest, check_py3k_warnings
+from test.test_support import run_unittest, check_py3k_warnings, is_jython
 
 with check_py3k_warnings(
         ("tuple parameter unpacking has been removed", SyntaxWarning),
         quiet=True):
     from test import inspect_fodder as mod
     from test import inspect_fodder2 as mod2
+
+# C module for test_findsource_binary, but note it's not C for Jython :)
+import unicodedata
 
 # Functions tested in this suite:
 # ismodule, isclass, ismethod, isfunction, istraceback, isframe, iscode,
@@ -37,15 +44,6 @@ except:
 
 git = mod.StupidGit()
 
-def na_for_jython(fn):
-    if is_jython:
-        def do_nothing(*args, **kw):
-            pass
-        return do_nothing
-    else:
-        return fn
-
-
 class IsTestBase(unittest.TestCase):
     predicates = set([inspect.isbuiltin, inspect.isclass, inspect.iscode,
                       inspect.isframe, inspect.isfunction, inspect.ismethod,
@@ -54,13 +52,13 @@ class IsTestBase(unittest.TestCase):
 
     def istest(self, predicate, exp):
         obj = eval(exp)
-        self.failUnless(predicate(obj), '%s(%s)' % (predicate.__name__, exp))
+        self.assertTrue(predicate(obj), '%s(%s)' % (predicate.__name__, exp))
 
         for other in self.predicates - set([predicate]):
             if predicate == inspect.isgeneratorfunction and\
                other == inspect.isfunction:
                 continue
-            self.failIf(other(obj), 'not %s(%s)' % (other.__name__, exp))
+            self.assertFalse(other(obj), 'not %s(%s)' % (other.__name__, exp))
 
 def generator_function_example(self):
     for i in xrange(2):
@@ -77,12 +75,8 @@ class TestPredicates(IsTestBase):
 
 
     def test_excluding_predicates(self):
-        # XXX: Jython's PySystemState needs more work before this will
-        # be doable.
-        if not is_jython:
-            self.istest(inspect.isbuiltin, 'sys.exit')
+        #self.istest(inspect.isbuiltin, 'sys.exit')  # Not valid for Jython
         self.istest(inspect.isbuiltin, '[].append')
-        self.istest(inspect.isclass, 'mod.StupidGit')
         self.istest(inspect.iscode, 'mod.spam.func_code')
         self.istest(inspect.isframe, 'tb.tb_frame')
         self.istest(inspect.isfunction, 'mod.spam')
@@ -98,17 +92,63 @@ class TestPredicates(IsTestBase):
             self.istest(inspect.isgetsetdescriptor,
                         'type(tb.tb_frame).f_locals')
         else:
-            self.failIf(inspect.isgetsetdescriptor(type(tb.tb_frame).f_locals))
-
-        #FIXME: not working in Jython:
-        #if hasattr(types, 'MemberDescriptorType'):
-        #    self.istest(inspect.ismemberdescriptor, 'datetime.timedelta.days')
-        #else:
-        #    self.failIf(inspect.ismemberdescriptor(datetime.timedelta.days))
+            self.assertFalse(inspect.isgetsetdescriptor(type(tb.tb_frame).f_locals))
+        if hasattr(types, 'MemberDescriptorType'):
+            # Not valid for Jython
+            # self.istest(inspect.ismemberdescriptor, 'datetime.timedelta.days')
+            pass
+        else:
+            self.assertFalse(inspect.ismemberdescriptor(datetime.timedelta.days))
 
     def test_isroutine(self):
-        self.assert_(inspect.isroutine(mod.spam))
-        self.assert_(inspect.isroutine([].count))
+        self.assertTrue(inspect.isroutine(mod.spam))
+        self.assertTrue(inspect.isroutine([].count))
+
+    def test_isclass(self):
+        self.istest(inspect.isclass, 'mod.StupidGit')
+        self.assertTrue(inspect.isclass(list))
+
+        class newstyle(object): pass
+        self.assertTrue(inspect.isclass(newstyle))
+
+        class CustomGetattr(object):
+            def __getattr__(self, attr):
+                return None
+        self.assertFalse(inspect.isclass(CustomGetattr()))
+
+    def test_get_slot_members(self):
+        class C(object):
+            __slots__ = ("a", "b")
+
+        x = C()
+        x.a = 42
+        members = dict(inspect.getmembers(x))
+        self.assertIn('a', members)
+        self.assertNotIn('b', members)
+
+    def test_isabstract(self):
+        from abc import ABCMeta, abstractmethod
+
+        class AbstractClassExample(object):
+            __metaclass__ = ABCMeta
+
+            @abstractmethod
+            def foo(self):
+                pass
+
+        class ClassExample(AbstractClassExample):
+            def foo(self):
+                pass
+
+        a = ClassExample()
+
+        # Test general behaviour.
+        self.assertTrue(inspect.isabstract(AbstractClassExample))
+        self.assertFalse(inspect.isabstract(ClassExample))
+        self.assertFalse(inspect.isabstract(a))
+        self.assertFalse(inspect.isabstract(int))
+        self.assertFalse(inspect.isabstract(5))
+
 
 class TestInterpreterStack(IsTestBase):
     def __init__(self, *args, **kwargs):
@@ -121,7 +161,7 @@ class TestInterpreterStack(IsTestBase):
         self.istest(inspect.isframe, 'mod.fr')
 
     def test_stack(self):
-        self.assert_(len(mod.st) >= 5)
+        self.assertTrue(len(mod.st) >= 5)
         self.assertEqual(mod.st[0][1:],
              (modfile, 16, 'eggs', ['    st = inspect.stack()\n'], 0))
         self.assertEqual(mod.st[1][1:],
@@ -149,11 +189,6 @@ class TestInterpreterStack(IsTestBase):
         self.assertEqual(inspect.formatargvalues(args, varargs, varkw, locals),
                          '(x=11, y=14)')
 
-    # TODO - test_previous_frame could be rewritten such that we could
-    # introspect on the previous frame but without a dependency on
-    # tuple unpacking
-
-    @na_for_jython
     def test_previous_frame(self):
         args, varargs, varkw, locals = inspect.getargvalues(mod.fr.f_back)
         self.assertEqual(args, ['a', 'b', 'c', 'd', ['e', ['f']]])
@@ -169,7 +204,8 @@ class GetSourceBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         unittest.TestCase.__init__(self, *args, **kwargs)
 
-        self.source = file(inspect.getsourcefile(self.fodderFile)).read()
+        with open(inspect.getsourcefile(self.fodderFile)) as fp:
+            self.source = fp.read()
 
     def sourcerange(self, top, bottom):
         lines = self.source.split("\n")
@@ -205,6 +241,8 @@ class TestRetrievingSourceCode(GetSourceBase):
         self.assertEqual(functions, [('eggs', mod.eggs),
                                      ('spam', mod.spam)])
 
+    @unittest.skipIf(sys.flags.optimize >= 2,
+                     "Docstrings are omitted with -O2 and above")
     def test_getdoc(self):
         self.assertEqual(inspect.getdoc(mod), 'A module docstring.')
         self.assertEqual(inspect.getdoc(mod.StupidGit),
@@ -241,6 +279,11 @@ class TestRetrievingSourceCode(GetSourceBase):
     def test_getsourcefile(self):
         self.assertEqual(inspect.getsourcefile(mod.spam), modfile)
         self.assertEqual(inspect.getsourcefile(git.abuse), modfile)
+        fn = "_non_existing_filename_used_for_sourcefile_test.py"
+        co = compile("None", fn, "exec")
+        self.assertEqual(inspect.getsourcefile(co), None)
+        linecache.cache[co.co_filename] = (1, None, "None", co.co_filename)
+        self.assertEqual(inspect.getsourcefile(co), fn)
 
     def test_getfile(self):
         self.assertEqual(inspect.getfile(mod.StupidGit), mod.__file__)
@@ -255,6 +298,23 @@ class TestRetrievingSourceCode(GetSourceBase):
         self.assertEqual(inspect.getsourcefile(m.x.func_code), '<string>')
         del sys.modules[name]
         inspect.getmodule(compile('a=10','','single'))
+
+    def test_proceed_with_fake_filename(self):
+        '''doctest monkeypatches linecache to enable inspection'''
+        fn, source = '<test>', 'def x(): pass\n'
+        getlines = linecache.getlines
+        def monkey(filename, module_globals=None):
+            if filename == fn:
+                return source.splitlines(True)
+            else:
+                return getlines(filename, module_globals)
+        linecache.getlines = monkey
+        try:
+            ns = {}
+            exec compile(source, fn, 'single') in ns
+            inspect.getsource(ns["x"])
+        finally:
+            linecache.getlines = getlines
 
 class TestDecorators(GetSourceBase):
     fodderFile = mod2
@@ -331,9 +391,54 @@ class TestBuggyCases(GetSourceBase):
     def test_method_in_dynamic_class(self):
         self.assertSourceEqual(mod2.method_in_dynamic_class, 95, 97)
 
+    @unittest.skipIf(
+        not hasattr(unicodedata, '__file__') or
+            unicodedata.__file__[-4:] in (".pyc", ".pyo") or unicodedata.__file__.endswith('$py.class'),
+        "unicodedata is not an external binary module")
+    def test_findsource_binary(self):
+        self.assertRaises(IOError, inspect.getsource, unicodedata)
+        self.assertRaises(IOError, inspect.findsource, unicodedata)
+
+    @unittest.skipIf(is_jython, "Not working")
+    def test_findsource_code_in_linecache(self):
+        lines = ["x=1"]
+        co = compile(lines[0], "_dynamically_created_file", "exec")
+        self.assertRaises(IOError, inspect.findsource, co)
+        self.assertRaises(IOError, inspect.getsource, co)
+        linecache.cache[co.co_filename] = (1, None, lines, co.co_filename)
+        self.assertEqual(inspect.findsource(co), (lines,0))
+        self.assertEqual(inspect.getsource(co), lines[0])
+
+
+class _BrokenDataDescriptor(object):
+    """
+    A broken data descriptor. See bug #1785.
+    """
+    def __get__(*args):
+        raise AssertionError("should not __get__ data descriptors")
+
+    def __set__(*args):
+        raise RuntimeError
+
+    def __getattr__(*args):
+        raise AssertionError("should not __getattr__ data descriptors")
+
+
+class _BrokenMethodDescriptor(object):
+    """
+    A broken method descriptor. See bug #1785.
+    """
+    def __get__(*args):
+        raise AssertionError("should not __get__ method descriptors")
+
+    def __getattr__(*args):
+        raise AssertionError("should not __getattr__ method descriptors")
+
+
 # Helper for testing classify_class_attrs.
 def attrs_wo_objs(cls):
     return [t[:3] for t in inspect.classify_class_attrs(cls)]
+
 
 class TestClassesAndFunctions(unittest.TestCase):
     def test_classic_mro(self):
@@ -370,7 +475,6 @@ class TestClassesAndFunctions(unittest.TestCase):
             self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults),
                              formatted)
 
-    @na_for_jython
     def test_getargspec(self):
         self.assertArgSpecEquals(mod.eggs, ['x', 'y'], formatted = '(x, y)')
 
@@ -385,7 +489,6 @@ class TestClassesAndFunctions(unittest.TestCase):
                 pass
         self.assertArgSpecEquals(A.m, ['self'])
 
-    @na_for_jython
     def test_getargspec_sublistofone(self):
         with check_py3k_warnings(
                 ("tuple parameter unpacking has been removed", SyntaxWarning),
@@ -396,135 +499,346 @@ class TestClassesAndFunctions(unittest.TestCase):
             exec 'def fakeSublistOfOne((foo)): return 1'
             self.assertArgSpecEquals(fakeSublistOfOne, ['foo'])
 
+
+    def _classify_test(self, newstyle):
+        """Helper for testing that classify_class_attrs finds a bunch of
+        different kinds of attributes on a given class.
+        """
+        if newstyle:
+            base = object
+        else:
+            class base:
+                pass
+
+        class A(base):
+            def s(): pass
+            s = staticmethod(s)
+
+            def c(cls): pass
+            c = classmethod(c)
+
+            def getp(self): pass
+            p = property(getp)
+
+            def m(self): pass
+
+            def m1(self): pass
+
+            datablob = '1'
+
+            dd = _BrokenDataDescriptor()
+            md = _BrokenMethodDescriptor()
+
+        attrs = attrs_wo_objs(A)
+        self.assertIn(('s', 'static method', A), attrs, 'missing static method')
+        self.assertIn(('c', 'class method', A), attrs, 'missing class method')
+        self.assertIn(('p', 'property', A), attrs, 'missing property')
+        self.assertIn(('m', 'method', A), attrs, 'missing plain method')
+        self.assertIn(('m1', 'method', A), attrs, 'missing plain method')
+        self.assertIn(('datablob', 'data', A), attrs, 'missing data')
+        self.assertIn(('md', 'method', A), attrs, 'missing method descriptor')
+        self.assertIn(('dd', 'data', A), attrs, 'missing data descriptor')
+
+        class B(A):
+            def m(self): pass
+
+        attrs = attrs_wo_objs(B)
+        self.assertIn(('s', 'static method', A), attrs, 'missing static method')
+        self.assertIn(('c', 'class method', A), attrs, 'missing class method')
+        self.assertIn(('p', 'property', A), attrs, 'missing property')
+        self.assertIn(('m', 'method', B), attrs, 'missing plain method')
+        self.assertIn(('m1', 'method', A), attrs, 'missing plain method')
+        self.assertIn(('datablob', 'data', A), attrs, 'missing data')
+        self.assertIn(('md', 'method', A), attrs, 'missing method descriptor')
+        self.assertIn(('dd', 'data', A), attrs, 'missing data descriptor')
+
+
+        class C(A):
+            def m(self): pass
+            def c(self): pass
+
+        attrs = attrs_wo_objs(C)
+        self.assertIn(('s', 'static method', A), attrs, 'missing static method')
+        self.assertIn(('c', 'method', C), attrs, 'missing plain method')
+        self.assertIn(('p', 'property', A), attrs, 'missing property')
+        self.assertIn(('m', 'method', C), attrs, 'missing plain method')
+        self.assertIn(('m1', 'method', A), attrs, 'missing plain method')
+        self.assertIn(('datablob', 'data', A), attrs, 'missing data')
+        self.assertIn(('md', 'method', A), attrs, 'missing method descriptor')
+        self.assertIn(('dd', 'data', A), attrs, 'missing data descriptor')
+
+        class D(B, C):
+            def m1(self): pass
+
+        attrs = attrs_wo_objs(D)
+        self.assertIn(('s', 'static method', A), attrs, 'missing static method')
+        if newstyle:
+            self.assertIn(('c', 'method', C), attrs, 'missing plain method')
+        else:
+            self.assertIn(('c', 'class method', A), attrs, 'missing class method')
+        self.assertIn(('p', 'property', A), attrs, 'missing property')
+        self.assertIn(('m', 'method', B), attrs, 'missing plain method')
+        self.assertIn(('m1', 'method', D), attrs, 'missing plain method')
+        self.assertIn(('datablob', 'data', A), attrs, 'missing data')
+        self.assertIn(('md', 'method', A), attrs, 'missing method descriptor')
+        self.assertIn(('dd', 'data', A), attrs, 'missing data descriptor')
+
+
     def test_classify_oldstyle(self):
-        class A:
-            def s(): pass
-            s = staticmethod(s)
-
-            def c(cls): pass
-            c = classmethod(c)
-
-            def getp(self): pass
-            p = property(getp)
-
-            def m(self): pass
-
-            def m1(self): pass
-
-            datablob = '1'
-
-        attrs = attrs_wo_objs(A)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'class method', A) in attrs, 'missing class method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
-
-        class B(A):
-            def m(self): pass
-
-        attrs = attrs_wo_objs(B)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'class method', A) in attrs, 'missing class method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', B) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
+        """classify_class_attrs finds static methods, class methods,
+        properties, normal methods, and data attributes on an old-style
+        class.
+        """
+        self._classify_test(False)
 
 
-        class C(A):
-            def m(self): pass
-            def c(self): pass
-
-        attrs = attrs_wo_objs(C)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'method', C) in attrs, 'missing plain method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', C) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
-
-        class D(B, C):
-            def m1(self): pass
-
-        attrs = attrs_wo_objs(D)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'class method', A) in attrs, 'missing class method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', B) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', D) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
-
-    # Repeat all that, but w/ new-style classes.
     def test_classify_newstyle(self):
-        class A(object):
+        """Just like test_classify_oldstyle, but for a new-style class.
+        """
+        self._classify_test(True)
 
-            def s(): pass
-            s = staticmethod(s)
+    def test_classify_builtin_types(self):
+        # Simple sanity check that all built-in types can have their
+        # attributes classified.
+        for name in dir(__builtin__):
+            builtin = getattr(__builtin__, name)
+            if isinstance(builtin, type):
+                inspect.classify_class_attrs(builtin)
 
-            def c(cls): pass
-            c = classmethod(c)
+    def test_getmembers_method(self):
+        # Old-style classes
+        class B:
+            def f(self):
+                pass
 
-            def getp(self): pass
-            p = property(getp)
+        self.assertIn(('f', B.f), inspect.getmembers(B))
+        # contrary to spec, ismethod() is also True for unbound methods
+        # (see #1785)
+        self.assertIn(('f', B.f), inspect.getmembers(B, inspect.ismethod))
+        b = B()
+        self.assertIn(('f', b.f), inspect.getmembers(b))
+        self.assertIn(('f', b.f), inspect.getmembers(b, inspect.ismethod))
 
-            def m(self): pass
+        # New-style classes
+        class B(object):
+            def f(self):
+                pass
 
-            def m1(self): pass
-
-            datablob = '1'
-
-        attrs = attrs_wo_objs(A)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'class method', A) in attrs, 'missing class method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
-
-        class B(A):
-
-            def m(self): pass
-
-        attrs = attrs_wo_objs(B)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'class method', A) in attrs, 'missing class method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', B) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
+        self.assertIn(('f', B.f), inspect.getmembers(B))
+        self.assertIn(('f', B.f), inspect.getmembers(B, inspect.ismethod))
+        b = B()
+        self.assertIn(('f', b.f), inspect.getmembers(b))
+        self.assertIn(('f', b.f), inspect.getmembers(b, inspect.ismethod))
 
 
-        class C(A):
+class TestGetcallargsFunctions(unittest.TestCase):
 
-            def m(self): pass
-            def c(self): pass
+    # tuple parameters are named '.1', '.2', etc.
+    is_tuplename = re.compile(r'^\.\d+$').match
 
-        attrs = attrs_wo_objs(C)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'method', C) in attrs, 'missing plain method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', C) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', A) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
+    def assertEqualCallArgs(self, func, call_params_string, locs=None):
+        locs = dict(locs or {}, func=func)
+        r1 = eval('func(%s)' % call_params_string, None, locs)
+        r2 = eval('inspect.getcallargs(func, %s)' % call_params_string, None,
+                  locs)
+        self.assertEqual(r1, r2)
 
-        class D(B, C):
+    def assertEqualException(self, func, call_param_string, locs=None):
+        locs = dict(locs or {}, func=func)
+        try:
+            eval('func(%s)' % call_param_string, None, locs)
+        except Exception, ex1:
+            pass
+        else:
+            self.fail('Exception not raised')
+        try:
+            eval('inspect.getcallargs(func, %s)' % call_param_string, None,
+                 locs)
+        except Exception, ex2:
+            pass
+        else:
+            self.fail('Exception not raised')
+        self.assertIs(type(ex1), type(ex2))
+        self.assertEqual(str(ex1), str(ex2))
 
-            def m1(self): pass
+    def makeCallable(self, signature):
+        """Create a function that returns its locals(), excluding the
+        autogenerated '.1', '.2', etc. tuple param names (if any)."""
+        with check_py3k_warnings(
+            ("tuple parameter unpacking has been removed", SyntaxWarning),
+            quiet=True):
+            code = ("lambda %s: dict(i for i in locals().items() "
+                    "if not is_tuplename(i[0]))")
+            return eval(code % signature, {'is_tuplename' : self.is_tuplename})
 
-        attrs = attrs_wo_objs(D)
-        self.assert_(('s', 'static method', A) in attrs, 'missing static method')
-        self.assert_(('c', 'method', C) in attrs, 'missing plain method')
-        self.assert_(('p', 'property', A) in attrs, 'missing property')
-        self.assert_(('m', 'method', B) in attrs, 'missing plain method')
-        self.assert_(('m1', 'method', D) in attrs, 'missing plain method')
-        self.assert_(('datablob', 'data', A) in attrs, 'missing data')
+    def test_plain(self):
+        f = self.makeCallable('a, b=1')
+        self.assertEqualCallArgs(f, '2')
+        self.assertEqualCallArgs(f, '2, 3')
+        self.assertEqualCallArgs(f, 'a=2')
+        self.assertEqualCallArgs(f, 'b=3, a=2')
+        self.assertEqualCallArgs(f, '2, b=3')
+        # expand *iterable / **mapping
+        self.assertEqualCallArgs(f, '*(2,)')
+        self.assertEqualCallArgs(f, '*[2]')
+        self.assertEqualCallArgs(f, '*(2, 3)')
+        self.assertEqualCallArgs(f, '*[2, 3]')
+        self.assertEqualCallArgs(f, '**{"a":2}')
+        self.assertEqualCallArgs(f, 'b=3, **{"a":2}')
+        self.assertEqualCallArgs(f, '2, **{"b":3}')
+        self.assertEqualCallArgs(f, '**{"b":3, "a":2}')
+        # expand UserList / UserDict
+        self.assertEqualCallArgs(f, '*UserList([2])')
+        self.assertEqualCallArgs(f, '*UserList([2, 3])')
+        self.assertEqualCallArgs(f, '**UserDict(a=2)')
+        self.assertEqualCallArgs(f, '2, **UserDict(b=3)')
+        self.assertEqualCallArgs(f, 'b=2, **UserDict(a=3)')
+        # unicode keyword args
+        self.assertEqualCallArgs(f, '**{u"a":2}')
+        self.assertEqualCallArgs(f, 'b=3, **{u"a":2}')
+        self.assertEqualCallArgs(f, '2, **{u"b":3}')
+        self.assertEqualCallArgs(f, '**{u"b":3, u"a":2}')
+
+    def test_varargs(self):
+        f = self.makeCallable('a, b=1, *c')
+        self.assertEqualCallArgs(f, '2')
+        self.assertEqualCallArgs(f, '2, 3')
+        self.assertEqualCallArgs(f, '2, 3, 4')
+        self.assertEqualCallArgs(f, '*(2,3,4)')
+        self.assertEqualCallArgs(f, '2, *[3,4]')
+        self.assertEqualCallArgs(f, '2, 3, *UserList([4])')
+
+    def test_varkw(self):
+        f = self.makeCallable('a, b=1, **c')
+        self.assertEqualCallArgs(f, 'a=2')
+        self.assertEqualCallArgs(f, '2, b=3, c=4')
+        self.assertEqualCallArgs(f, 'b=3, a=2, c=4')
+        self.assertEqualCallArgs(f, 'c=4, **{"a":2, "b":3}')
+        self.assertEqualCallArgs(f, '2, c=4, **{"b":3}')
+        self.assertEqualCallArgs(f, 'b=2, **{"a":3, "c":4}')
+        self.assertEqualCallArgs(f, '**UserDict(a=2, b=3, c=4)')
+        self.assertEqualCallArgs(f, '2, c=4, **UserDict(b=3)')
+        self.assertEqualCallArgs(f, 'b=2, **UserDict(a=3, c=4)')
+        # unicode keyword args
+        self.assertEqualCallArgs(f, 'c=4, **{u"a":2, u"b":3}')
+        self.assertEqualCallArgs(f, '2, c=4, **{u"b":3}')
+        self.assertEqualCallArgs(f, 'b=2, **{u"a":3, u"c":4}')
+
+    def test_varkw_only(self):
+        # issue11256:
+        f = self.makeCallable('**c')
+        self.assertEqualCallArgs(f, '')
+        self.assertEqualCallArgs(f, 'a=1')
+        self.assertEqualCallArgs(f, 'a=1, b=2')
+        self.assertEqualCallArgs(f, 'c=3, **{"a": 1, "b": 2}')
+        self.assertEqualCallArgs(f, '**UserDict(a=1, b=2)')
+        self.assertEqualCallArgs(f, 'c=3, **UserDict(a=1, b=2)')
+
+    def test_tupleargs(self):
+        f = self.makeCallable('(b,c), (d,(e,f))=(0,[1,2])')
+        self.assertEqualCallArgs(f, '(2,3)')
+        self.assertEqualCallArgs(f, '[2,3]')
+        self.assertEqualCallArgs(f, 'UserList([2,3])')
+        self.assertEqualCallArgs(f, '(2,3), (4,(5,6))')
+        self.assertEqualCallArgs(f, '(2,3), (4,[5,6])')
+        self.assertEqualCallArgs(f, '(2,3), [4,UserList([5,6])]')
+
+    def test_multiple_features(self):
+        f = self.makeCallable('a, b=2, (c,(d,e))=(3,[4,5]), *f, **g')
+        self.assertEqualCallArgs(f, '2, 3, (4,[5,6]), 7')
+        self.assertEqualCallArgs(f, '2, 3, *[(4,[5,6]), 7], x=8')
+        self.assertEqualCallArgs(f, '2, 3, x=8, *[(4,[5,6]), 7]')
+        self.assertEqualCallArgs(f, '2, x=8, *[3, (4,[5,6]), 7], y=9')
+        self.assertEqualCallArgs(f, 'x=8, *[2, 3, (4,[5,6])], y=9')
+        self.assertEqualCallArgs(f, 'x=8, *UserList([2, 3, (4,[5,6])]), '
+                                 '**{"y":9, "z":10}')
+        self.assertEqualCallArgs(f, '2, x=8, *UserList([3, (4,[5,6])]), '
+                                 '**UserDict(y=9, z=10)')
+
+    def test_errors(self):
+        f0 = self.makeCallable('')
+        f1 = self.makeCallable('a, b')
+        f2 = self.makeCallable('a, b=1')
+        # f0 takes no arguments
+        self.assertEqualException(f0, '1')
+        self.assertEqualException(f0, 'x=1')
+        self.assertEqualException(f0, '1,x=1')
+        # f1 takes exactly 2 arguments
+        self.assertEqualException(f1, '')
+        self.assertEqualException(f1, '1')
+        self.assertEqualException(f1, 'a=2')
+        self.assertEqualException(f1, 'b=3')
+        # f2 takes at least 1 argument
+        self.assertEqualException(f2, '')
+        self.assertEqualException(f2, 'b=3')
+        for f in f1, f2:
+            # f1/f2 takes exactly/at most 2 arguments
+            self.assertEqualException(f, '2, 3, 4')
+            self.assertEqualException(f, '1, 2, 3, a=1')
+            self.assertEqualException(f, '2, 3, 4, c=5')
+            self.assertEqualException(f, '2, 3, 4, a=1, c=5')
+            # f got an unexpected keyword argument
+            self.assertEqualException(f, 'c=2')
+            self.assertEqualException(f, '2, c=3')
+            self.assertEqualException(f, '2, 3, c=4')
+            self.assertEqualException(f, '2, c=4, b=3')
+            self.assertEqualException(f, '**{u"\u03c0\u03b9": 4}')
+            # f got multiple values for keyword argument
+            self.assertEqualException(f, '1, a=2')
+            self.assertEqualException(f, '1, **{"a":2}')
+            self.assertEqualException(f, '1, 2, b=3')
+            # XXX: Python inconsistency
+            # - for functions and bound methods: unexpected keyword 'c'
+            # - for unbound methods: multiple values for keyword 'a'
+            #self.assertEqualException(f, '1, c=3, a=2')
+        f = self.makeCallable('(a,b)=(0,1)')
+        self.assertEqualException(f, '1')
+        self.assertEqualException(f, '[1]')
+        self.assertEqualException(f, '(1,2,3)')
+        # issue11256:
+        f3 = self.makeCallable('**c')
+        self.assertEqualException(f3, '1, 2')
+        self.assertEqualException(f3, '1, 2, a=1, b=2')
+
+class TestGetcallargsMethods(TestGetcallargsFunctions):
+
+    def setUp(self):
+        class Foo(object):
+            pass
+        self.cls = Foo
+        self.inst = Foo()
+
+    def makeCallable(self, signature):
+        assert 'self' not in signature
+        mk = super(TestGetcallargsMethods, self).makeCallable
+        self.cls.method = mk('self, ' + signature)
+        return self.inst.method
+
+class TestGetcallargsUnboundMethods(TestGetcallargsMethods):
+
+    def makeCallable(self, signature):
+        super(TestGetcallargsUnboundMethods, self).makeCallable(signature)
+        return self.cls.method
+
+    def assertEqualCallArgs(self, func, call_params_string, locs=None):
+        return super(TestGetcallargsUnboundMethods, self).assertEqualCallArgs(
+            *self._getAssertEqualParams(func, call_params_string, locs))
+
+    def assertEqualException(self, func, call_params_string, locs=None):
+        return super(TestGetcallargsUnboundMethods, self).assertEqualException(
+            *self._getAssertEqualParams(func, call_params_string, locs))
+
+    def _getAssertEqualParams(self, func, call_params_string, locs=None):
+        assert 'inst' not in call_params_string
+        locs = dict(locs or {}, inst=self.inst)
+        return (func, 'inst,' + call_params_string, locs)
 
 def test_main():
-    run_unittest(TestDecorators, TestRetrievingSourceCode, TestOneliners,
-                 TestBuggyCases,
-                 TestInterpreterStack, TestClassesAndFunctions, TestPredicates)
+    run_unittest(
+        TestDecorators, TestRetrievingSourceCode, TestOneliners, TestBuggyCases,
+        TestInterpreterStack, TestClassesAndFunctions, TestPredicates,
+        TestGetcallargsFunctions, TestGetcallargsMethods,
+        TestGetcallargsUnboundMethods)
 
 if __name__ == "__main__":
     test_main()

@@ -17,7 +17,7 @@ Here are some of the useful functions provided by this module:
     getmodule() - determine the module that an object came from
     getclasstree() - arrange classes so as to represent their hierarchy
 
-    getargspec(), getargvalues() - get info about function arguments
+    getargspec(), getargvalues(), getcallargs() - get info about function arguments
     formatargspec(), formatargvalues() - format an argument spec
     getouterframes(), getinnerframes() - get info about frames
     currentframe() - get the current stack frame
@@ -65,7 +65,7 @@ def isclass(object):
     Class objects provide these attributes:
         __doc__         documentation string
         __module__      name of module in which this class was defined"""
-    return isinstance(object, types.ClassType) or hasattr(object, '__bases__')
+    return isinstance(object, (type, types.ClassType))
 
 def ismethod(object):
     """Return true if the object is an instance method.
@@ -160,7 +160,7 @@ def isgeneratorfunction(object):
 
     Generator function objects provides same attributes as functions.
 
-    See isfunction.__doc__ for attributes listing."""
+    See help(isfunction) for attributes listing."""
     return bool((isfunction(object) or ismethod(object)) and
                 object.func_code.co_flags & CO_GENERATOR)
 
@@ -246,14 +246,17 @@ def isroutine(object):
 
 def isabstract(object):
     """Return true if the object is an abstract base class (ABC)."""
-    return isinstance(object, type) and object.__flags__ & TPFLAGS_IS_ABSTRACT
+    return bool(isinstance(object, type) and object.__flags__ & TPFLAGS_IS_ABSTRACT)
 
 def getmembers(object, predicate=None):
     """Return all members of an object as (name, value) pairs sorted by name.
     Optionally, only return members that satisfy a given predicate."""
     results = []
     for key in dir(object):
-        value = getattr(object, key)
+        try:
+            value = getattr(object, key)
+        except AttributeError:
+            continue
         if not predicate or predicate(value):
             results.append((key, value))
     results.sort()
@@ -289,30 +292,21 @@ def classify_class_attrs(cls):
     names = dir(cls)
     result = []
     for name in names:
-        # Get the object associated with the name.
+        # Get the object associated with the name, and where it was defined.
         # Getting an obj from the __dict__ sometimes reveals more than
         # using getattr.  Static and class methods are dramatic examples.
-        if name in cls.__dict__:
-            obj = cls.__dict__[name]
+        # Furthermore, some objects may raise an Exception when fetched with
+        # getattr(). This is the case with some descriptors (bug #1785).
+        # Thus, we only use getattr() as a last resort.
+        homecls = None
+        for base in (cls,) + mro:
+            if name in base.__dict__:
+                obj = base.__dict__[name]
+                homecls = base
+                break
         else:
             obj = getattr(cls, name)
-
-        # Figure out where it was defined.
-        homecls = getattr(obj, "__objclass__", None)
-        if homecls is None:
-            # search the dicts.
-            for base in mro:
-                if name in base.__dict__:
-                    homecls = base
-                    break
-
-        # Get the object again, in order to get it from the defining
-        # __dict__ instead of via getattr (if possible).
-        if homecls is not None and name in homecls.__dict__:
-            obj = homecls.__dict__[name]
-
-        # Also get the object via getattr.
-        obj_via_getattr = getattr(cls, name)
+            homecls = getattr(obj, "__objclass__", homecls)
 
         # Classify the object.
         if isinstance(obj, staticmethod):
@@ -321,11 +315,18 @@ def classify_class_attrs(cls):
             kind = "class method"
         elif isinstance(obj, property):
             kind = "property"
-        elif (ismethod(obj_via_getattr) or
-              ismethoddescriptor(obj_via_getattr)):
+        elif ismethoddescriptor(obj):
             kind = "method"
-        else:
+        elif isdatadescriptor(obj):
             kind = "data"
+        else:
+            obj_via_getattr = getattr(cls, name)
+            if (ismethod(obj_via_getattr) or
+                ismethoddescriptor(obj_via_getattr)):
+                kind = "method"
+            else:
+                kind = "data"
+            obj = obj_via_getattr
 
         result.append(Attribute(name, kind, homecls, obj))
 
@@ -403,12 +404,12 @@ def getfile(object):
     if ismodule(object):
         if hasattr(object, '__file__'):
             return object.__file__
-        raise TypeError('arg is a built-in module')
+        raise TypeError('{!r} is a built-in module'.format(object))
     if isclass(object):
         object = sys.modules.get(object.__module__)
         if hasattr(object, '__file__'):
             return object.__file__
-        raise TypeError('arg is a built-in class')
+        raise TypeError('{!r} is a built-in class'.format(object))
     if ismethod(object):
         object = object.im_func
     if isfunction(object):
@@ -419,8 +420,8 @@ def getfile(object):
         object = object.f_code
     if iscode(object):
         return object.co_filename
-    raise TypeError('arg is not a module, class, method, '
-                    'function, traceback, frame, or code object')
+    raise TypeError('{!r} is not a module, class, method, '
+                    'function, traceback, frame, or code object'.format(object))
 
 ModuleInfo = namedtuple('ModuleInfo', 'name suffix mode module_type')
 
@@ -441,7 +442,9 @@ def getmodulename(path):
     if info: return info[0]
 
 def getsourcefile(object):
-    """Return the Python source file an object was defined in, if it exists."""
+    """Return the filename that can be used to locate an object's source.
+    Return None if no way can be identified to get the source.
+    """
     filename = getfile(object)
     if string.lower(filename[-4:]) in ('.pyc', '.pyo'):
         filename = filename[:-4] + '.py'
@@ -455,6 +458,9 @@ def getsourcefile(object):
         return filename
     # only return a non-existent filename if the module has a PEP 302 loader
     if hasattr(getmodule(object, filename), '__loader__'):
+        return filename
+    # or it is in the linecache
+    if filename in linecache.cache:
         return filename
 
 def getabsfile(object, _filename=None):
@@ -522,7 +528,13 @@ def findsource(object):
     or code object.  The source code is returned as a list of all the lines
     in the file and the line number indexes a line in that list.  An IOError
     is raised if the source code cannot be retrieved."""
-    file = getsourcefile(object) or getfile(object)
+
+    file = getfile(object)
+    sourcefile = getsourcefile(object)
+    if not sourcefile and file[0] + file[-1] != '<>':
+        raise IOError('source code not available')
+    file = sourcefile if sourcefile else file
+
     module = getmodule(object, file)
     if module:
         lines = linecache.getlines(file, module.__dict__)
@@ -742,59 +754,61 @@ def getargs(co):
     'varargs' and 'varkw' are the names of the * and ** arguments or None."""
 
     if not iscode(co):
-        raise TypeError('arg is not a code object')
-
-    if not _jython:
-         # Jython doesn't have co_code
-        code = co.co_code
+        raise TypeError('{!r} is not a code object'.format(co))
 
     nargs = co.co_argcount
     names = co.co_varnames
-    args = list(names[:nargs])
-    step = 0
 
-    # The following acrobatics are for anonymous (tuple) arguments.
-    for i in range(nargs):
-        if args[i][:1] in ('', '.'):
-            stack, remain, count = [], [], []
-            while step < len(code):
-                op = ord(code[step])
-                step = step + 1
-                if op >= dis.HAVE_ARGUMENT:
-                    opname = dis.opname[op]
-                    value = ord(code[step]) + ord(code[step+1])*256
-                    step = step + 2
-                    if opname in ('UNPACK_TUPLE', 'UNPACK_SEQUENCE'):
-                        remain.append(value)
-                        count.append(value)
-                    elif opname == 'STORE_FAST':
-                        stack.append(names[value])
-
-                        # Special case for sublists of length 1: def foo((bar))
-                        # doesn't generate the UNPACK_TUPLE bytecode, so if
-                        # `remain` is empty here, we have such a sublist.
-                        if not remain:
-                            stack[0] = [stack[0]]
-                            break
-                        else:
-                            remain[-1] = remain[-1] - 1
-                            while remain[-1] == 0:
-                                remain.pop()
-                                size = count.pop()
-                                stack[-size:] = [stack[-size:]]
-                                if not remain: break
-                                remain[-1] = remain[-1] - 1
-                            if not remain: break
-            args[i] = stack[0]
+    # Jython manages anonymous tuple args differently, and arguably
+    # with less acrobatics, than CPython which interrogates Python
+    # bytecode. Look at lib-python/2.7/inspect.py for those specifics,
+    # which are removed for clarity of presentation and complete lack
+    # of relevance here.
 
     varargs = None
     if co.co_flags & CO_VARARGS:
         varargs = co.co_varnames[nargs]
-        nargs = nargs + 1
     varkw = None
     if co.co_flags & CO_VARKEYWORDS:
-        varkw = co.co_varnames[nargs]
+        varkw = co.co_varnames[nargs + (1 if varargs else 0)]
+
+    # Jython specific - different style acrobatics for anonymous (tuple) arguments
+    # for example:
+    #
+    # >>> def spam(a, b, c, d=3, (e, (f,))=(4, (5,)), *g, **h): return 42
+    # >>> spam.func_code.co_varnames
+    # ('a', 'b', 'c', 'd', '(e, (f))', 'g', 'h', 'e', 'f')
+    args = []
+    for name in names[:nargs]:
+        if name.startswith('(') and name.endswith(')'):
+            args.append(_parse_anonymous_tuple_arg(name[1:-1]))
+        else:
+            args.append(name)
     return Arguments(args, varargs, varkw)
+
+def _parse_anonymous_tuple_arg(tuple_arg):
+    # simple recursive descent parser, assumes no error checking necessary
+    names = tuple_arg.split(", ")
+    args = []
+    i = 0
+    while i < len(names):
+        name = names[i]
+        if name.startswith('('):
+            if name.endswith(')'):
+                args.append(list(name[1:-1]))
+                i += 1
+            else:
+                # need to recurse. find closing paren.
+                for j in xrange(len(names) - 1, i, -1):
+                    if names[j].endswith(')'):
+                        joined = (", ".join(names[i:j+1]))[1:-1]
+                        args.append(_parse_anonymous_tuple_arg(joined))
+                        i = j + 1
+                        break
+        else:
+            args.append(name)
+            i += 1
+    return args
 
 ArgSpec = namedtuple('ArgSpec', 'args varargs keywords defaults')
 
@@ -810,7 +824,7 @@ def getargspec(func):
     if ismethod(func):
         func = func.im_func
     if not isfunction(func):
-        raise TypeError('arg is not a Python function')
+        raise TypeError('{!r} is not a Python function'.format(func))
     args, varargs, varkw = getargs(func.func_code)
     return ArgSpec(args, varargs, varkw, func.func_defaults)
 
@@ -854,8 +868,8 @@ def formatargspec(args, varargs=None, varkw=None, defaults=None,
     specs = []
     if defaults:
         firstdefault = len(args) - len(defaults)
-    for i in range(len(args)):
-        spec = strseq(args[i], formatarg, join)
+    for i, arg in enumerate(args):
+        spec = strseq(arg, formatarg, join)
         if defaults and i >= firstdefault:
             spec = spec + formatvalue(defaults[i - firstdefault])
         specs.append(spec)
@@ -889,6 +903,95 @@ def formatargvalues(args, varargs, varkw, locals,
         specs.append(formatvarkw(varkw) + formatvalue(locals[varkw]))
     return '(' + string.join(specs, ', ') + ')'
 
+def getcallargs(func, *positional, **named):
+    """Get the mapping of arguments to values.
+
+    A dict is returned, with keys the function argument names (including the
+    names of the * and ** arguments, if any), and values the respective bound
+    values from 'positional' and 'named'."""
+    args, varargs, varkw, defaults = getargspec(func)
+    f_name = func.__name__
+    arg2value = {}
+
+    # The following closures are basically because of tuple parameter unpacking.
+    assigned_tuple_params = []
+    def assign(arg, value):
+        if isinstance(arg, str):
+            arg2value[arg] = value
+        else:
+            assigned_tuple_params.append(arg)
+            value = iter(value)
+            for i, subarg in enumerate(arg):
+                try:
+                    subvalue = next(value)
+                except StopIteration:
+                    raise ValueError('need more than %d %s to unpack' %
+                                     (i, 'values' if i > 1 else 'value'))
+                assign(subarg,subvalue)
+            try:
+                next(value)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError('too many values to unpack')
+    def is_assigned(arg):
+        if isinstance(arg,str):
+            return arg in arg2value
+        return arg in assigned_tuple_params
+    if ismethod(func) and func.im_self is not None:
+        # implicit 'self' (or 'cls' for classmethods) argument
+        positional = (func.im_self,) + positional
+    num_pos = len(positional)
+    num_total = num_pos + len(named)
+    num_args = len(args)
+    num_defaults = len(defaults) if defaults else 0
+    for arg, value in zip(args, positional):
+        assign(arg, value)
+    if varargs:
+        if num_pos > num_args:
+            assign(varargs, positional[-(num_pos-num_args):])
+        else:
+            assign(varargs, ())
+    elif 0 < num_args < num_pos:
+        raise TypeError('%s() takes %s %d %s (%d given)' % (
+            f_name, 'at most' if defaults else 'exactly', num_args,
+            'arguments' if num_args > 1 else 'argument', num_total))
+    elif num_args == 0 and num_total:
+        if varkw:
+            if num_pos:
+                # XXX: We should use num_pos, but Python also uses num_total:
+                raise TypeError('%s() takes exactly 0 arguments '
+                                '(%d given)' % (f_name, num_total))
+        else:
+            raise TypeError('%s() takes no arguments (%d given)' %
+                            (f_name, num_total))
+    for arg in args:
+        if isinstance(arg, str) and arg in named:
+            if is_assigned(arg):
+                raise TypeError("%s() got multiple values for keyword "
+                                "argument '%s'" % (f_name, arg))
+            else:
+                assign(arg, named.pop(arg))
+    if defaults:    # fill in any missing values with the defaults
+        for arg, value in zip(args[-num_defaults:], defaults):
+            if not is_assigned(arg):
+                assign(arg, value)
+    if varkw:
+        assign(varkw, named)
+    elif named:
+        unexpected = next(iter(named))
+        if isinstance(unexpected, unicode):
+            unexpected = unexpected.encode(sys.getdefaultencoding(), 'replace')
+        raise TypeError("%s() got an unexpected keyword argument '%s'" %
+                        (f_name, unexpected))
+    unassigned = num_args - len([arg for arg in args if is_assigned(arg)])
+    if unassigned:
+        num_required = num_args - num_defaults
+        raise TypeError('%s() takes %s %d %s (%d given)' % (
+            f_name, 'at least' if defaults else 'exactly', num_required,
+            'arguments' if num_required > 1 else 'argument', num_total))
+    return arg2value
+
 # -------------------------------------------------- stack frame extraction
 
 Traceback = namedtuple('Traceback', 'filename lineno function code_context index')
@@ -907,7 +1010,7 @@ def getframeinfo(frame, context=1):
     else:
         lineno = frame.f_lineno
     if not isframe(frame):
-        raise TypeError('arg is not a frame or traceback object')
+        raise TypeError('{!r} is not a frame or traceback object'.format(frame))
 
     filename = getsourcefile(frame) or getfile(frame)
     if context > 0:
