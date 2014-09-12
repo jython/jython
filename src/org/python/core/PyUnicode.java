@@ -694,37 +694,19 @@ public class PyUnicode extends PyString implements Iterable {
 
     @Override
     protected PyObject pyget(int i) {
-        if (isBasicPlane()) {
-            return Py.makeCharacter(getString().charAt(i), true);
-        }
-
-        int k = 0;
-        while (i > 0) {
-            int W1 = getString().charAt(k);
-            if (W1 >= 0xD800 && W1 < 0xDC00) {
-                k += 2;
-            } else {
-                k += 1;
-            }
-            i--;
-        }
-        int codepoint = getString().codePointAt(k);
+        int codepoint = getString().codePointAt(translator.utf16Index(i));
         return Py.makeCharacter(codepoint, true);
     }
 
     private class SubsequenceIteratorImpl implements Iterator {
 
-        private int current, k, start, stop, step;
+        private int current, k, stop, step;
 
         SubsequenceIteratorImpl(int start, int stop, int step) {
-            k = 0;
             current = start;
-            this.start = start;
+            k = translator.utf16Index(current);
             this.stop = stop;
             this.step = step;
-            for (int i = 0; i < start; i++) {
-                nextCodePoint();
-            }
         }
 
         SubsequenceIteratorImpl() {
@@ -1631,13 +1613,11 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_startswith_doc)
     final boolean unicode_startswith(PyObject prefix, PyObject start, PyObject end) {
-        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_startswith(prefix, start, end);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_endswith_doc)
     final boolean unicode_endswith(PyObject suffix, PyObject start, PyObject end) {
-        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_endswith(suffix, start, end);
     }
 
