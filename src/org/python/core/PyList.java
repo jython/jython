@@ -4,7 +4,6 @@ package org.python.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -925,13 +924,12 @@ public class PyList extends PySequenceList implements List {
     }
 
     public int hashCode() {
-        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
+        return list___hash__();
     }
 
-    //@ExposedMethod(doc = BuiltinDocs.list___hash___doc)
-    @ExposedGet(name = "__hash__")
-    public PyObject list___hash__() {
-        return Py.None;
+    @ExposedMethod(doc = BuiltinDocs.list___hash___doc)
+    final synchronized int list___hash__() {
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
     @Override
