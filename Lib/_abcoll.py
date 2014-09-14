@@ -19,6 +19,8 @@ __all__ = ["Hashable", "Iterable", "Iterator",
            "Sequence", "MutableSequence",
            ]
 
+_is_jython = sys.platform.startswith("java")
+
 ### ONE-TRICK PONIES ###
 
 def _hasattr(C, attr):
@@ -82,7 +84,7 @@ class Iterator(Iterable):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is Iterator:
-            if _hasattr(C, "next"):
+            if _hasattr(C, "next") and _hasattr(C, "__iter__"):
                 return True
         return NotImplemented
 
@@ -556,8 +558,7 @@ class Sequence(Sized, Iterable, Container):
 
 Sequence.register(tuple)
 Sequence.register(basestring)
-if sys.platform[:4] != "java":
-    Sequence.register(buffer)
+Sequence.register(buffer)
 Sequence.register(xrange)
 
 
@@ -600,3 +601,13 @@ class MutableSequence(Sequence):
         return self
 
 MutableSequence.register(list)
+
+if _is_jython:
+    from org.python.core import PyFastSequenceIter
+    import java
+
+    MutableSequence.register(java.util.List)
+    MutableMapping.register(java.util.Map)
+    MutableSet.register(java.util.Set)
+    Iterator.register(PyFastSequenceIter)
+

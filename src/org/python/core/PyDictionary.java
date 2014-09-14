@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.python.expose.ExposedClassMethod;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -31,6 +32,10 @@ import org.python.core.BaseDictionaryView;
 public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
+    {
+        // Ensure dict is not Hashable
+        TYPE.object___setattr__("__hash__", Py.None);
+    }
 
     private final ConcurrentMap<PyObject, PyObject> internalMap;
 

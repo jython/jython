@@ -295,10 +295,8 @@ class TestOneTrickPonyABCs(ABCTestCase):
         # Check some non-hashables
         non_samples = [list(), set(), dict()]
         for x in non_samples:
-            #FIXME: we need to get __hash__ to be None in non_samples for Jython.
-            pass
-            #self.assertNotIsInstance(x, Hashable)
-            #self.assertFalse(issubclass(type(x), Hashable), repr(type(x)))
+            self.assertNotIsInstance(x, Hashable)
+            self.assertFalse(issubclass(type(x), Hashable), repr(type(x)))
         # Check some hashables
         samples = [None,
                    int(), float(), complex(),

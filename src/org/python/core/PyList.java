@@ -3,6 +3,8 @@ package org.python.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -23,6 +25,11 @@ import java.lang.reflect.Array;
 public class PyList extends PySequenceList implements List {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
+    {
+        // Ensure list is not Hashable
+        TYPE.object___setattr__("__hash__", Py.None);
+    }
+
     private final List<PyObject> list;
     public volatile int gListAllocatedStatus = -1;
 
@@ -918,12 +925,13 @@ public class PyList extends PySequenceList implements List {
     }
 
     public int hashCode() {
-        return list___hash__();
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
     }
 
-    @ExposedMethod(doc = BuiltinDocs.list___hash___doc)
-    final synchronized int list___hash__() {
-        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
+    //@ExposedMethod(doc = BuiltinDocs.list___hash___doc)
+    @ExposedGet(name = "__hash__")
+    public PyObject list___hash__() {
+        return Py.None;
     }
 
     @Override
