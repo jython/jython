@@ -11,6 +11,7 @@ import sys
 import unittest
 from StringIO import StringIO
 from test import test_support
+from java.lang import StringBuilder
 
 class UnicodeTestCase(unittest.TestCase):
 
@@ -359,6 +360,42 @@ class UnicodeIndexMixTest(unittest.TestCase):
                 # Insert in middle then try to find it
                 m.insert(t)
                 check_rfind_str(m, t)
+
+    def test_surrogate_validation(self):
+
+        def insert_sb(text, c1, c2):
+            # Insert code points c1, c2 in the text, as a Java StringBuilder
+            sb = StringBuilder()
+            # c1 at the quarter point
+            p1 = len(mat) // 4
+            for c in mat.text[:p1]:
+                sb.appendCodePoint(ord(c))
+            sb.appendCodePoint(c1)
+            # c2 at the three-quarter point
+            p2 = 3 * p1
+            for c in mat.text[p1:p2]:
+                sb.appendCodePoint(ord(c))
+            sb.appendCodePoint(c2)
+            # Rest of text
+            for c in mat.text[p2:]:
+                sb.appendCodePoint(ord(c))
+            return sb
+
+        # Test that lone surrogates are rejected
+        for surr in [0xdc81, 0xdc00, 0xdfff, 0xd800, 0xdbff]:
+            for mat in self.material:
+
+                # Java StringBuilder with two private-use characters:
+                sb = insert_sb(mat.text, 0xe000, 0xf000)
+                # Check this is acceptable
+                #print repr(unicode(sb))
+                self.assertEqual(len(unicode(sb)), len(mat)+2)
+
+                # Java StringBuilder with private-use and lone surrogate:
+                sb = insert_sb(mat.text, 0xe000, surr)
+                # Check this is detected
+                #print repr(unicode(sb))
+                self.assertRaises(ValueError, unicode, sb)
 
 
 class UnicodeFormatTestCase(unittest.TestCase):

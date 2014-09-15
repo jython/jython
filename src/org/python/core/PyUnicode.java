@@ -336,11 +336,12 @@ public class PyUnicode extends PyString implements Iterable {
         int p; // Index of the current UTF-16 code unit.
 
         /*
-         * We scan to the first supplementary character in a simple loop. If we hit the end before
-         * we find one, no count array will be necessary and we'll use BASIC.
+         * We scan to the first surrogate code unit, in a simple loop. If we hit the end before we
+         * find one, no count array will be necessary and we'll use BASIC. If we find a surrogate it
+         * may be half a supplementary character, or a lone surrogate: we'll find out later.
          */
         for (p = 0; p < n; p++) {
-            if (Character.isHighSurrogate(string.charAt(p))) {
+            if (Character.isSurrogate(string.charAt(p))) {
                 break;
             }
         }
@@ -371,20 +372,15 @@ public class PyUnicode extends PyString implements Iterable {
             /*
              * To get the generation of count[] going efficiently, we need to advance the next whole
              * block. The next loop will complete processing of the block containing the first
-             * supplementary character. Note that in all these loops, if we exit on p==n, the count
-             * for the last partial; block is known from p-q and we take care of that right at the
-             * end of this method.
+             * supplementary character. Note that in all these loops, if we exit because p reaches a
+             * limit, the count for the last partial block is known from p-q and we take care of
+             * that right at the end of this method. The limit of these loops is n-1, so if we spot
+             * a lead surrogate, the we may access the low-surrogate confident that p+1<n.
              */
-            while (p < n) {
+            while (p < n - 1) {
 
-                if (Character.isHighSurrogate(string.charAt(p++))) {
-                    // Integrity checks (also advances p past the trailing surrogate)
-                    if (p == n || !Character.isLowSurrogate(string.charAt(p++))) {
-                        // End of string follows or trailing surrogate does not : oops.
-                        throw unpairedLeadSurrogate(n, p - 1);
-                    }
-                }
-
+                // Catch supplementary characters and lone surrogate code units.
+                p += calcAdvance(string, p);
                 // Advance the code point index
                 q += 1;
 
@@ -401,14 +397,10 @@ public class PyUnicode extends PyString implements Iterable {
              * at least one whole block to go when p+2*M<n.
              */
             while (p + 2 * Supplementary.M < n) {
+
                 for (int i = 0; i < Supplementary.M; i++) {
-                    if (Character.isHighSurrogate(string.charAt(p++))) {
-                        // Integrity checks (also advances p past the trailing surrogate)
-                        if (!Character.isLowSurrogate(string.charAt(p++))) {
-                            // A trailing surrogate does not follow : oops.
-                            throw unpairedLeadSurrogate(n, p);
-                        }
-                    }
+                    // Catch supplementary characters and lone surrogate code units.
+                    p += calcAdvance(string, p);
                 }
 
                 // Advance the code point index one whole block
@@ -419,19 +411,12 @@ public class PyUnicode extends PyString implements Iterable {
             }
 
             /*
-             * We take the remaining UTF-16 code units more carefully, as we can not be sure when
-             * the end of the string will come.
+             * Process the remaining UTF-16 code units, except possibly the last.
              */
-            while (p < n) {
+            while (p < n - 1) {
 
-                if (Character.isHighSurrogate(string.charAt(p++))) {
-                    // Integrity checks (also advances p past the trailing surrogate)
-                    if (p == n || !Character.isLowSurrogate(string.charAt(p++))) {
-                        // End of string follows or trailing surrogate does not : oops.
-                        throw unpairedLeadSurrogate(n, p);
-                    }
-                }
-
+                // Catch supplementary characters and lone surrogate code units.
+                p += calcAdvance(string, p);
                 // Advance the code point index
                 q += 1;
 
@@ -439,6 +424,20 @@ public class PyUnicode extends PyString implements Iterable {
                 if ((q & Supplementary.MASK) == 0) {
                     count[k++] = p - q;
                 }
+            }
+
+            /*
+             * There may be just one UTF-16 unit left (if the last thing processed was not a
+             * surrogate pair).
+             */
+            if (p < n) {
+                // We are at the last UTF-16 unit in string. Any surrogate here is an error.
+                char c = string.charAt(p++);
+                if (Character.isSurrogate(c)) {
+                    throw unpairedSurrogate(p - 1, c);
+                }
+                // Advance the code point index
+                q += 1;
             }
 
             /*
@@ -455,20 +454,53 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     /**
+     * Called at each code point index, returns 2 if this is a surrogate pair, 1 otherwise, and
+     * detects lone surrogates as an error. The return is the amount to advance the UTF-16 index. An
+     * exception is raised if at <code>p</code> we find a lead surrogate without a trailing one
+     * following, or a trailing surrogate directly. It should not be called on the final code unit,
+     * when <code>p==string.length()-1</code>, since it may check the next code unit as well.
+     *
+     * @param string of UTF-16 code units
+     * @param p index into that string
+     * @return 2 if a surrogate pair stands at <code>p</code>, 1 if not
+     * @throws PyException(ValueError) if a lone surrogate stands at <code>p</code>.
+     */
+    private static int calcAdvance(String string, int p) throws PyException {
+
+        // Catch supplementary characters and lone surrogate code units.
+        char c = string.charAt(p);
+
+        if (c >= Character.MIN_SURROGATE) {
+            if (c < Character.MIN_LOW_SURROGATE) {
+                // This is a lead surrogate.
+                if (Character.isLowSurrogate(string.charAt(p + 1))) {
+                    // Required trailing surrogate follows, so step over both.
+                    return 2;
+                } else {
+                    // Required trailing surrogate missing.
+                    throw unpairedSurrogate(p, c);
+                }
+
+            } else if (c <= Character.MAX_SURROGATE) {
+                // This is a lone trailing surrogate
+                throw unpairedSurrogate(p, c);
+
+            } // else this is a private use or special character in 0xE000 to 0xFFFF.
+
+        }
+        return 1;
+    }
+
+    /**
      * Return a ready-to-throw exception indicating an unpaired surrogate.
      *
-     * @param n the UTF-16 length of the array being scanned
-     * @param p pointer within that array
+     * @param p index within that sequence of the problematic code unit
+     * @param c the code unit
      * @return an exception
      */
-    private static PyException unpairedLeadSurrogate(int n, int p) {
-        String msg;
-        if (p + 1 >= n) {
-            msg = "unpaired lead-surrogate at end of string/array";
-        } else {
-            String fmt = "unpaired lead-surrogate at code unit %d";
-            msg = String.format(fmt, p);
-        }
+    private static PyException unpairedSurrogate(int p, int c) {
+        String fmt = "unpaired surrogate %#4x at code unit %d";
+        String msg = String.format(fmt, c, p);
         return Py.ValueError(msg);
     }
 
