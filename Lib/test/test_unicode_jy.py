@@ -3,12 +3,15 @@
 
 Made for Jython.
 """
+import itertools
+import random
 import re
 import string
 import sys
 import unittest
 from StringIO import StringIO
 from test import test_support
+from java.lang import StringBuilder
 
 class UnicodeTestCase(unittest.TestCase):
 
@@ -153,6 +156,251 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEqual(
             unichr(sys.maxunicode).translate({sys.maxunicode: 102}),
             u'f')
+
+
+class UnicodeMaterial(object):
+    ''' Object holding a list of single characters and a unicode string
+        that is their concatenation. The sequence is created from a
+        background sequence of basic plane characters and random
+        replacement with supplementary plane characters (those with
+        point code>0xffff).
+    '''
+
+    base = tuple(u'abcdefghijklmnopqrstuvwxyz')
+    supp = tuple(map(unichr, range(0x10000, 0x1000c)))
+    used = sorted(set(base+supp))
+
+    def __init__(self, size=20, pred=None, ran=None):
+        ''' Create size chars choosing an SP char at i where
+            pred(ran, i)==True where ran is an instance of
+            random.Random supplied in the constructor or created
+            locally (if ran==None).
+        '''
+
+        # Generators for the BMP and SP characters
+        base = itertools.cycle(UnicodeMaterial.base)
+        supp = itertools.cycle(UnicodeMaterial.supp)
+
+        # Each instance gets a random generator
+        if ran is None:
+            ran = random.Random()
+        self.random = ran
+
+        if pred is None:
+            pred = lambda ran, j : ran.random() < DEFAULT_RATE
+
+        # Generate the list
+        r = list()
+        for i in range(size):
+            if pred(self.random, i):
+                c = supp.next()
+            else:
+                c = base.next()
+            r.append(c)
+
+        # The list and its concatenation are our material
+        self.ref = r
+        self.size = len(r)
+        self.text = u''.join(r)
+        self.target = u''
+
+    def __len__(self):
+        return self.size
+
+    def insert(self, target, p=None):
+        ''' Insert target string at position p (or middle), truncating if
+            that would make the material any longer
+        '''
+        if p is None:
+            p = max(0, (self.size-len(target)) // 2)
+
+        n = 0
+        for t in target:
+            if p+n >= self.size:
+                break;
+            self.ref[p+n] = t
+            n += 1
+
+        self.target = target[:n]
+        self.text = u''.join(self.ref)
+
+
+class UnicodeIndexMixTest(unittest.TestCase):
+    # Test indexing where there may be more than one code unit per code point.
+    # See Jython Issue #2100.
+
+    # Functions defining particular distributions of SP codes
+    #
+    def evenly(self, rate=0.2):
+        'Evenly distributed at given rate'
+        def f(ran, i):
+            return ran.random() < rate
+        return f
+
+    def evenly_before(self, k, rate=0.2):
+        'Evenly distributed on i<k at given rate'
+        def f(ran, i):
+            return i < k and ran.random() < rate
+        return f
+
+    def evenly_from(self, k, rate=0.2):
+        'Evenly distributed on i>=k at given rate'
+        def f(ran, i):
+            return i >= k and ran.random() < rate
+        return f
+
+    def at(self, places):
+        'Only at specified places'
+        def f(ran, i):
+            return i in places
+        return f
+
+    def setUp(self):
+        ran = random.Random(1234)  # ensure repeatable
+        mat = list()
+        mat.append(UnicodeMaterial(10, self.at([2]), ran))
+        mat.append(UnicodeMaterial(10, self.at([2, 5]), ran))
+        mat.append(UnicodeMaterial(50, self.evenly(), ran))
+        mat.append(UnicodeMaterial(200, self.evenly_before(70), ran))
+        mat.append(UnicodeMaterial(200, self.evenly_from(130), ran))
+        mat.append(UnicodeMaterial(1000, self.evenly(), ran))
+
+        self.material = mat
+
+
+    def test_getitem(self):
+        # Test map from to code point index to internal representation
+        # Fails in Jython 2.7b3
+
+        def check_getitem(m):
+            # Check indexing the string returns the expected point code
+            for i in xrange(m.size):
+                self.assertEqual(m.text[i], m.ref[i])
+
+        for m in self.material:
+            check_getitem(m)
+
+    def test_slice(self):
+        # Test indexing gets the slice ends correct.
+        # Passes in Jython 2.7b3, but may be touched by #2100 changes.
+
+        def check_slice(m):
+            # Check a range of slices against slices of the reference.
+            n = 1
+            while n <= m.size:
+                for i in range(m.size - n):
+                    exp = u''.join(m.ref[i:i+n])
+                    self.assertEqual(m.text[i:i+n], exp)
+                n *= 3
+
+        for m in self.material:
+            check_slice(m)
+
+    def test_find(self):
+        # Test map from internal find result to code point index
+        # Fails in Jython 2.7b3
+
+        def check_find(ref):
+            # Check find returns indexes for single point codes
+            for c in set(m.used):
+                start = 0
+                u = m.text
+                while start < m.size:
+                    i = u.find(c, start)
+                    if i < 0: break
+                    self.assertEqual(u[i], c)
+                    self.assertGreaterEqual(i, start)
+                    start = i + 1
+
+        def check_find_str(m, t):
+            # Check find returns correct index for string target
+            i = m.text.find(t)
+            self.assertEqual(list(t), m.ref[i:i+len(t)])
+
+        targets = [
+            u"this",
+            u"ab\U00010041de", 
+            u"\U00010041\U00010042\U00010042xx",
+            u"xx\U00010041\U00010042\U00010043yy",
+        ]
+
+        for m in self.material:
+            check_find(m)
+            for t in targets:
+                # Insert in middle then try to find it
+                m.insert(t)
+                check_find_str(m, t)
+
+    def test_rfind(self):
+        # Test map from internal rfind result to code point index
+        # Fails in Jython 2.7b3
+
+        def check_rfind(ref):
+            # Check rfind returns indexes for single point codes
+            for c in set(m.used):
+                end = m.size
+                u = m.text
+                while True:
+                    i = u.rfind(c, 0, end)
+                    if i < 0: break
+                    self.assertLess(i, end)
+                    self.assertEqual(u[i], c)
+                    end = i
+
+        def check_rfind_str(m, t):
+            # Check rfind returns correct index for string target
+            i = m.text.rfind(t)
+            self.assertEqual(list(t), m.ref[i:i+len(t)])
+
+        targets = [
+            u"this",
+            u"ab\U00010041de", 
+            u"\U00010041\U00010042\U00010042xx",
+            u"xx\U00010041\U00010042\U00010043yy",
+        ]
+
+        for m in self.material:
+            check_rfind(m)
+            for t in targets:
+                # Insert in middle then try to find it
+                m.insert(t)
+                check_rfind_str(m, t)
+
+    def test_surrogate_validation(self):
+
+        def insert_sb(text, c1, c2):
+            # Insert code points c1, c2 in the text, as a Java StringBuilder
+            sb = StringBuilder()
+            # c1 at the quarter point
+            p1 = len(mat) // 4
+            for c in mat.text[:p1]:
+                sb.appendCodePoint(ord(c))
+            sb.appendCodePoint(c1)
+            # c2 at the three-quarter point
+            p2 = 3 * p1
+            for c in mat.text[p1:p2]:
+                sb.appendCodePoint(ord(c))
+            sb.appendCodePoint(c2)
+            # Rest of text
+            for c in mat.text[p2:]:
+                sb.appendCodePoint(ord(c))
+            return sb
+
+        # Test that lone surrogates are rejected
+        for surr in [0xdc81, 0xdc00, 0xdfff, 0xd800, 0xdbff]:
+            for mat in self.material:
+
+                # Java StringBuilder with two private-use characters:
+                sb = insert_sb(mat.text, 0xe000, 0xf000)
+                # Check this is acceptable
+                #print repr(unicode(sb))
+                self.assertEqual(len(unicode(sb)), len(mat)+2)
+
+                # Java StringBuilder with private-use and lone surrogate:
+                sb = insert_sb(mat.text, 0xe000, surr)
+                # Check this is detected
+                #print repr(unicode(sb))
+                self.assertRaises(ValueError, unicode, sb)
 
 
 class UnicodeFormatTestCase(unittest.TestCase):
@@ -601,6 +849,7 @@ class StringModuleUnicodeTest(unittest.TestCase):
 def test_main():
     test_support.run_unittest(
                 UnicodeTestCase,
+                UnicodeIndexMixTest,
                 UnicodeFormatTestCase,
                 UnicodeStdIOTestCase,
                 UnicodeFormatStrTest,

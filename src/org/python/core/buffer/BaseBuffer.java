@@ -1,5 +1,7 @@
 package org.python.core.buffer;
 
+import java.nio.ByteBuffer;
+
 import org.python.core.BufferProtocol;
 import org.python.core.Py;
 import org.python.core.PyBUF;
@@ -126,17 +128,17 @@ public abstract class BaseBuffer implements PyBuffer {
      * Construct an instance of BaseBuffer in support of a sub-class, specifying the 'feature
      * flags', or at least a starting set to be adjusted later. These are the features of the buffer
      * exported, not the flags that form the consumer's request. The buffer will be read-only unless
-     * {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} is implicitly added
-     * to the feature flags. The navigation arrays are all null, awaiting action by the sub-class
-     * constructor. To complete initialisation, the sub-class normally must assign: the buffer (
-     * {@link #storage}, {@link #index0}), and the navigation arrays ({@link #shape},
-     * {@link #strides}), and call {@link #checkRequestFlags(int)} passing the consumer's request
-     * flags.
+     * {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} and
+     * {@link PyBUF#AS_ARRAY} are implicitly added to the feature flags. The navigation arrays are
+     * all null, awaiting action by the sub-class constructor. To complete initialisation, the
+     * sub-class normally must assign: the buffer ( {@link #storage}, {@link #index0}), and the
+     * navigation arrays ({@link #shape}, {@link #strides}), and call
+     * {@link #checkRequestFlags(int)} passing the consumer's request flags.
      *
      * @param featureFlags bit pattern that specifies the actual features allowed/required
      */
     protected BaseBuffer(int featureFlags) {
-        setFeatureFlags(featureFlags | FORMAT);
+        setFeatureFlags(featureFlags | FORMAT | AS_ARRAY);
     }
 
     /**
@@ -210,6 +212,12 @@ public abstract class BaseBuffer implements PyBuffer {
     public boolean isReadonly() {
         // WRITABLE is a non-navigational flag, so is inverted in gFeatureFlags
         return (gFeatureFlags & WRITABLE) != 0;
+    }
+
+    @Override
+    public boolean hasArray() {
+        // AS_ARRAY is a non-navigational flag, so is inverted in gFeatureFlags
+        return (gFeatureFlags & AS_ARRAY) != 0;
     }
 
     @Override
@@ -297,7 +305,7 @@ public abstract class BaseBuffer implements PyBuffer {
      * accessors. The default implementation here is suited to N-dimensional arrays.
      *
      * @param indices of the item from the consumer
-     * @return index relative to item x[0,...,0] in actual storage
+     * @return corresponding absolute index in storage
      */
     protected int calcIndex(int... indices) throws IndexOutOfBoundsException {
         final int N = checkDimension(indices);
@@ -307,6 +315,57 @@ public abstract class BaseBuffer implements PyBuffer {
             int[] strides = getStrides();
             for (int k = 0; k < N; k++) {
                 index += indices[k] * strides[k];
+            }
+        }
+        return index;
+    }
+
+    /**
+     * Calculate the absolute byte index in the storage array of the last item of the exported data
+     * (if we are not using indirection). This is the greatest value attained by
+     * {@link #calcIndex(int...)}. The first byte not used will be one <code>itemsize</code> more
+     * than the returned value.
+     *
+     * @return greatest absolute index in storage
+     */
+    protected int calcGreatestIndex() throws IndexOutOfBoundsException {
+        final int N = shape.length;
+        // If all the strides are positive, the maximal value is found from:
+        // index = index0 + sum(k=0,N-1) (shape[k]-1)*strides[k]
+        // but in general, for any k where strides[k]<=0, the term should be zero.
+        int index = index0;
+        if (N > 0) {
+            int[] strides = getStrides();
+            for (int k = 0; k < N; k++) {
+                int stride = strides[k];
+                if (stride > 0) {
+                    index += (shape[k] - 1) * stride;
+                }
+            }
+        }
+        return index;
+    }
+
+    /**
+     * Calculate the absolute byte index in the storage array of the first item of the exported data
+     * (if we are not using indirection). This is the least value attained by
+     * {@link #calcIndex(int...)}.
+     *
+     * @return least absolute index in storage
+     */
+    protected int calcLeastIndex() throws IndexOutOfBoundsException {
+        final int N = shape.length;
+        // If all the strides are positive, the maximal value is just index0,
+        // but in general, we must allow strides[k]<=0 for some k:
+        // index = index0 + sum(k=0,N-1) (strides[k]<0) ? (shape[k]-1)*strides[k] : 0
+        int index = index0;
+        if (N > 0) {
+            int[] strides = getStrides();
+            for (int k = 0; k < N; k++) {
+                int stride = strides[k];
+                if (stride < 0) {
+                    index += (shape[k] - 1) * stride;
+                }
             }
         }
         return index;
@@ -540,6 +599,15 @@ public abstract class BaseBuffer implements PyBuffer {
     // @Override public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {}
 
     @Override
+    public ByteBuffer getNIOByteBuffer() {
+        // Determine the limit of the buffer just beyond the last item.
+        int length = calcGreatestIndex() + getItemsize() - index0;
+        ByteBuffer b = ByteBuffer.wrap(storage, index0, length);
+        // Return as read-only if it is.
+        return isReadonly() ? b.asReadOnlyBuffer() : b;
+    }
+
+    @Override
     public Pointer getBuf() {
         return new Pointer(storage, index0);
     }
@@ -664,6 +732,8 @@ public abstract class BaseBuffer implements PyBuffer {
             return bufferRequires("shape array");
         } else if ((syndrome & WRITABLE) != 0) {
             return bufferIsNot("writable");
+        } else if ((syndrome & AS_ARRAY) != 0) {
+            return bufferIsNot("accessible as a Java array");
         } else if ((syndrome & C_CONTIGUOUS) != 0) {
             return bufferIsNot("C-contiguous");
         } else if ((syndrome & F_CONTIGUOUS) != 0) {

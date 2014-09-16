@@ -29,7 +29,6 @@ import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBUF;
 import org.python.core.PyBuffer;
-import org.python.core.PyBuffer.Pointer;
 import org.python.core.PyBuiltinFunctionNarrow;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -826,10 +825,8 @@ public class PosixModule implements ClassDictInit {
     public static int write(PyObject fd, BufferProtocol bytes) {
         // Get a buffer view: we can cope with N-dimensional data, but not strided data.
         try (PyBuffer buf = bytes.getBuffer(PyBUF.ND)) {
-            // Get the array and offset of the first real byte.
-            Pointer p = buf.getBuf();
-            // Make a ByteBuffer of that array, setting the position and limit to the real data.
-            ByteBuffer bb = ByteBuffer.wrap(p.storage, p.offset, buf.getLen());
+            // Get a ByteBuffer of that data, setting the position and limit to the real data.
+            ByteBuffer bb =  buf.getNIOByteBuffer();
             try {
                 // Write the data (returning the count of bytes).
                 return FileDescriptors.get(fd).write(bb);
@@ -902,7 +899,7 @@ public class PosixModule implements ClassDictInit {
     }
 
     /**
-     * Return a path as a String from a PyObject 
+     * Return a path as a String from a PyObject
      *
      * @param path a PyObject, raising a TypeError if an invalid path type
      * @return a String path

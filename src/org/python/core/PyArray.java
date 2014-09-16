@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -11,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -1130,19 +1130,17 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                 frombytesInternal(StringUtil.toBytes(s));
 
             } else {
-                // Access the bytes
+                // Access the bytes through the abstract API of the BufferProtocol
                 try (PyBuffer pybuf = ((BufferProtocol)input).getBuffer(PyBUF.STRIDED_RO)) {
-                    // Provide argument as stream of bytes for fromstream method
                     if (pybuf.getNdim() == 1) {
                         if (pybuf.getStrides()[0] == 1) {
-                            // Data are contiguous in a byte[]
-                            PyBuffer.Pointer b = pybuf.getBuf();
-                            frombytesInternal(b.storage, b.offset, pybuf.getLen());
+                            // Data are contiguous in the buffer
+                            frombytesInternal(pybuf.getNIOByteBuffer());
                         } else {
                             // As frombytesInternal only knows contiguous bytes, make a copy.
                             byte[] copy = new byte[pybuf.getLen()];
                             pybuf.copyTo(copy, 0);
-                            frombytesInternal(copy);
+                            frombytesInternal(ByteBuffer.wrap(copy));
                         }
                     } else {
                         // Currently don't support n-dimensional sources
@@ -1158,39 +1156,30 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
     }
 
     /**
-     * Common code supporting Java and Python versions of <code>.fromstring()</code>
-     *
-     * @param input string of bytes encoding the array data
-     */
-    private final void fromstringInternal(String input) {
-        frombytesInternal(StringUtil.toBytes(input));
-    }
-
-    /**
      * Common code supporting Java and Python versions of <code>.fromstring()</code> or
      * <code>.frombytes()</code> (Python 3.2+ name).
      *
      * @param bytes array containing the new array data in machine encoding
      */
     private final void frombytesInternal(byte[] bytes) {
-        frombytesInternal(bytes, 0, bytes.length);
+        frombytesInternal(ByteBuffer.wrap(bytes));
     }
 
     /**
-     * Common code supporting Java and Python versions of <code>.fromstring()</code> or
-     * <code>.frombytes()</code> (Python 3.2+ name).
+     * Copy into this array, the remaining bytes of a ByteBuffer (from the current position to the
+     * limit). This is common code supporting Java and Python versions of <code>.fromstring()</code>
+     * or <code>.frombytes()</code> (Python 3.2+ name).
      *
-     * @param bytes array containing the new array data in machine encoding
-     * @param offset of the first byte to read
-     * @param count of bytes to read
+     * @param bytes buffer containing the new array data in machine encoding
      */
-    private final void frombytesInternal(byte[] bytes, int offset, int count) {
+    private final void frombytesInternal(ByteBuffer bytes) {
 
         // Access the bytes
         int origsize = delegate.getSize();
 
         // Check validity wrt array itemsize
         int itemsize = getStorageSize();
+        int count = bytes.remaining();
         if ((count % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
         }
@@ -1201,8 +1190,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
         try {
 
             // Provide argument as stream of bytes for fromstream method
-            ByteArrayInputStream bis = new ByteArrayInputStream(bytes, offset, count);
-            fromStream(bis);
+            InputStream is = new ByteBufferBackedInputStream(bytes);
+            fromStream(is);
 
         } catch (EOFException e) {
             // stubbed catch for fromStream throws
@@ -2117,4 +2106,48 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
         }
     }
 
+    /**
+     * Wrap a <code>ByteBuffer</code> in an InputStream. Reference: <a
+     * href=http://stackoverflow.com/questions/4332264/wrapping-a-bytebuffer-with-an-inputstream>
+     * Stackoverflow question 4332264</a>.
+     */
+    private class ByteBufferBackedInputStream extends InputStream {
+
+        ByteBuffer buf;
+
+        public ByteBufferBackedInputStream(ByteBuffer buf) {
+            this.buf = buf;
+        }
+
+        /**
+         * Return the number of bytes remaining in the underlying buffer.
+         */
+        @Override
+        public int available() throws IOException {
+            return buf.remaining();
+        }
+
+
+        @Override
+        public int read() {
+            return buf.hasRemaining() ? buf.get() & 0xff : -1;
+        }
+
+        @Override
+        public int read(byte[] bytes, int off, int len) {
+            int n = buf.remaining();
+            if (n >= len) {
+                // There are enough bytes remaining to satisfy the request.
+                buf.get(bytes, off, len);
+                return len;
+            } else if (n > 0) {
+                // There are some bytes remaining: truncate request.
+                buf.get(bytes, off, n);
+                return n;
+            } else {
+                // Signal that there are no bytes left
+                return -1;
+            }
+        }
+    }
 }

@@ -352,7 +352,33 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @param count the number of times to repeat this.
      */
     protected synchronized void irepeat(int count) {
-        this.setStorage(repeatImpl(count));
+        // There are several special cases
+        if (size == 0 || count == 1) {
+            // No resize, so no check (consistent with CPython)
+            // Value is unchanged.
+
+        } else if (count <= 0) {
+            // Treat as if count == 0.
+            resizeCheck();
+            this.setStorage(emptyStorage);
+
+        } else {
+            // Open up space (remembering the original size)
+            int orginalSize = size;
+            storageExtend(orginalSize * (count - 1));
+            if (orginalSize == 1) {
+                // Do it efficiently for single bytes
+                byte b = storage[offset];
+                for (int i = 1, p = offset + 1; i < count; i++) {
+                    storage[p++] = b;
+                }
+            } else {
+                // General case
+                for (int i = 1, p = offset + orginalSize; i < count; i++, p += orginalSize) {
+                    System.arraycopy(storage, offset, storage, p, orginalSize);
+                }
+            }
+        }
     }
 
     /**
@@ -924,7 +950,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         return bytearray___imul__(n);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___mul___doc)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___imul___doc)
     final PyObject bytearray___imul__(PyObject n) {
         if (!n.isIndex()) {
             return null;

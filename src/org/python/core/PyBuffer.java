@@ -1,5 +1,7 @@
 package org.python.core;
 
+import java.nio.ByteBuffer;
+
 /**
  * The Jython buffer API for access to a byte array within an exporting object. This interface is
  * the counterpart of the CPython <code>Py_buffer</code> struct. Several concrete types implement
@@ -237,8 +239,47 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      */
     public PyBuffer getBufferSlice(int flags, int start, int length, int stride);
 
+    // java.nio access to actual storage
+    //
+
+    /**
+     * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
+     * exported to the consumer. For a one-dimensional contiguous buffer, assuming the following
+     * client code where <code>obj</code> has type <code>BufferProtocol</code>:
+     *
+     * <pre>
+     * PyBuffer a = obj.getBuffer(PyBUF.SIMPLE);
+     * int itemsize = a.getItemsize();
+     * ByteBuffer bb = a.getNIOBuffer();
+     * </pre>
+     *
+     * the item with index <code>bb.pos()+k</code> is in the buffer <code>bb</code> at positions
+     * <code>bb.pos()+k*itemsize</code> to <code>bb.pos()+(k+1)*itemsize - 1</code> inclusive. And
+     * if <code>itemsize==1</code>, the item is simply the byte at position <code>bb.pos()+k</code>.
+     * The buffer limit is set to the first byte beyond the valid data. A block read or write will
+     * therefore access the contents sequentially.
+     * <p>
+     * If the buffer is multidimensional or non-contiguous (strided), the buffer position is still
+     * the (first byte of) the item at index <code>[0]</code> or <code>[0,...,0]</code>, and the
+     * limit is one item beyond the valid data. However, it is necessary to navigate <code>bb</code>
+     * using the <code>shape</code>, <code>strides</code> and maybe <code>suboffsets</code> provided
+     * by the API.
+     *
+     * @return a ByteBuffer equivalent to the exported data contents.
+     */
+    ByteBuffer getNIOByteBuffer();
+
     // Direct access to actual storage
     //
+
+    /**
+     * Determine whether the exporter is able to offer direct access to the exported storage as a
+     * Java byte array (through the API that involves class {@link Pointer}), or only supports the
+     * abstract API. See also {@link PyBUF#AS_ARRAY}.
+     *
+     * @return true if array access is supported, false if it is not.
+     */
+    boolean hasArray();
 
     /**
      * A class that references a <code>byte[]</code> array and a particular offset within it, as the
@@ -270,11 +311,13 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return a structure describing the slice of a byte array that holds the data being exported to
      * the consumer. For a one-dimensional contiguous buffer, assuming the following client code
      * where <code>obj</code> has type <code>BufferProtocol</code>:
+     *
      * <pre>
-     * PyBuffer a = obj.getBuffer();
+     * PyBuffer a = obj.getBuffer(PyBUF.SIMPLE);
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getBuf();
      * </pre>
+     *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset + k*itemsize]</code> to <code>[b.offset + (k+1)*itemsize - 1]</code>
      * inclusive. And if <code>itemsize==1</code>, the item is simply the byte
@@ -293,12 +336,14 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return a structure describing the position in a byte array of a single item from the data
      * being exported to the consumer. For a one-dimensional contiguous buffer, assuming the
      * following client code where <code>obj</code> has type <code>BufferProtocol</code>:
+     *
      * <pre>
      * int k = ... ;
-     * PyBuffer a = obj.getBuffer();
+     * PyBuffer a = obj.getBuffer(PyBUF.FULL);
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getPointer(k);
      * </pre>
+     *
      * the item with index <code>k</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>
@@ -317,13 +362,15 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * being exported to the consumer, in the case that array may be multi-dimensional. For a
      * 3-dimensional contiguous buffer, assuming the following client code where <code>obj</code>
      * has type <code>BufferProtocol</code>:
+     *
      * <pre>
      * int i, j, k;
      * // ... calculation that assigns i, j, k
-     * PyBuffer a = obj.getBuffer();
+     * PyBuffer a = obj.getBuffer(PyBUF.FULL);
      * int itemsize = a.getItemsize();
      * PyBuffer.Pointer b = a.getPointer(i,j,k);
      * </pre>
+     *
      * the item with index <code>[i,j,k]</code> is in the array <code>b.storage</code> at index
      * <code>[b.offset]</code> to <code>[b.offset + itemsize - 1]</code> inclusive. And if
      * <code>itemsize==1</code>, the item is simply the byte <code>b.storage[b.offset]</code>

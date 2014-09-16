@@ -22,31 +22,44 @@ import org.python.util.Generic;
 @ExposedType(name = "unicode", base = PyBaseString.class, doc = BuiltinDocs.unicode_doc)
 public class PyUnicode extends PyString implements Iterable {
 
-    private enum Plane {
+    /**
+     * Nearly every significant method comes in two versions: one applicable when the string
+     * contains only basic plane characters, and one that is correct when supplementary characters
+     * are also present. Set this constant <code>true</code> to treat all strings as containing
+     * supplementary characters, so that these versions will be exercised in tests.
+     */
+    private static final boolean DEBUG_NON_BMP_METHODS = false;
 
-        UNKNOWN, BASIC, ASTRAL
-    }
-
-    private volatile Plane plane = Plane.UNKNOWN;
-    private volatile int codePointCount = -1;
     public static final PyType TYPE = PyType.fromClass(PyUnicode.class);
 
     // for PyJavaClass.init()
     public PyUnicode() {
-        this(TYPE, "");
+        this(TYPE, "", true);
     }
 
+    /**
+     * Construct a PyUnicode interpreting the Java String argument as UTF-16.
+     *
+     * @param string UTF-16 string encoding the characters (as Java).
+     */
     public PyUnicode(String string) {
-        this(TYPE, string);
+        this(TYPE, string, false);
     }
 
+    /**
+     * Construct a PyUnicode interpreting the Java String argument as UTF-16. If it is known that
+     * the string contains no supplementary characters, argument isBasic may be set true by the
+     * caller. If it is false, the PyUnicode will scan the string to find out.
+     *
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
     public PyUnicode(String string, boolean isBasic) {
-        this(TYPE, string);
-        plane = isBasic ? Plane.BASIC : Plane.UNKNOWN;
+        this(TYPE, string, isBasic);
     }
 
     public PyUnicode(PyType subtype, String string) {
-        super(subtype, string);
+        this(subtype, string, false);
     }
 
     public PyUnicode(PyString pystring) {
@@ -54,12 +67,13 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode()
-                .toString());
+        this(subtype, //
+                pystring instanceof PyUnicode ? pystring.string : pystring.decode().toString(), //
+                pystring.isBasicPlane());
     }
 
     public PyUnicode(char c) {
-        this(TYPE, String.valueOf(c));
+        this(TYPE, String.valueOf(c), true);
     }
 
     public PyUnicode(int codepoint) {
@@ -90,6 +104,20 @@ public class PyUnicode extends PyString implements Iterable {
         this(ucs4.iterator());
     }
 
+    /**
+     * Fundamental all-features constructor on which the others depend. If it is known that the
+     * string contains no supplementary characters, argument isBasic may be set true by the caller.
+     * If it is false, the PyUnicode will scan the string to find out.
+     *
+     * @param subtype actual type to create.
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
+    private PyUnicode(PyType subtype, String string, boolean isBasic) {
+        super(subtype, string);
+        translator = isBasic ? BASIC : this.chooseIndexTranslator();
+    }
+
     @Override
     public int[] toCodePoints() {
         int n = getCodePointCount();
@@ -101,15 +129,428 @@ public class PyUnicode extends PyString implements Iterable {
         return codePoints;
     }
 
-    // modified to know something about codepoints; we just need to return the
-    // corresponding substring; darn UTF16!
-    // TODO: we could avoid doing this unnecessary copy
+    // ------------------------------------------------------------------------------------------
+    // Index translation for Unicode beyond the BMP
+    // ------------------------------------------------------------------------------------------
+
+    /**
+     * Index translation between code point index (as seen by Python) and UTF-16 index (as used in
+     * the Java String.
+     */
+    private interface IndexTranslator {
+
+        /** Number of supplementary characters (hence point code length may be found). */
+        public int suppCount();
+
+        /** Translate a UTF-16 code unit index to its equivalent code point index. */
+        public int codePointIndex(int utf16Index);
+
+        /** Translate a code point index to its equivalent UTF-16 code unit index. */
+        public int utf16Index(int codePointIndex);
+    }
+
+    /**
+     * The instance of index translation in use in this string. It will be set to either
+     * {@link #BASIC} or and instance of {@link #Supplementary}.
+     */
+    private final IndexTranslator translator;
+
+    /**
+     * A singleton provides the translation service (which is a pass-through) for all BMP strings.
+     */
+    static final IndexTranslator BASIC = new IndexTranslator() {
+
+        @Override
+        public int suppCount() {
+            return 0;
+        }
+
+        @Override
+        public int codePointIndex(int u) {
+            return u;
+        }
+
+        @Override
+        public int utf16Index(int i) {
+            return i;
+        }
+    };
+
+    /**
+     * A class of index translation that uses the cumulative count so far of supplementary
+     * characters, tabulated in blocks of a standard size. The count is then used as an offset
+     * between the code point index and the corresponding point in the UTF-16 representation.
+     */
+    private final class Supplementary implements IndexTranslator {
+
+        /** Tabulates cumulative count so far of supplementary characters, by blocks of size M. */
+        final int[] count;
+
+        /** Configure the block size M, as this power of 2. */
+        static final int LOG2M = 4;
+        /** The block size used for indexing (power of 2). */
+        static final int M = 1 << LOG2M;
+        /** A mask used to separate the block number and offset in the block. */
+        static final int MASK = M - 1;
+
+        /**
+         * The constructor works on a count array prepared by
+         * {@link PyUnicode#getSupplementaryCounts(String)}.
+         */
+        Supplementary(int[] count) {
+            this.count = count;
+        }
+
+        @Override
+        public int codePointIndex(int u) {
+            /*
+             * Let the desired result be j such that utf16Index(j) = u. As we have only a forward
+             * index of the string, we have to conduct a search. In principle, we bound j by a pair
+             * of values (j1,j2) such that j1<=j<j2, and in successive iterations, we shorten the
+             * range until a unique j is found. In the first part of the search, we work in terms of
+             * block numbers, that is, indexes into the count array. We have j<u, and so j<k2*M
+             * where:
+             */
+            int k2 = (u >> LOG2M) + 1;
+            // The count of supplementary characters before the start of block k2 is:
+            int c2 = count[k2 - 1];
+            /*
+             * Since the count array is non-decreasing, and j < k2*M, we have u-j <= count[k2-1].
+             * That is, j >= k1*M, where:
+             */
+            int k1 = Math.max(0, u - c2) >> LOG2M;
+            // The count of supplementary characters before the start of block k1 is:
+            int c1 = (k1 == 0) ? 0 : count[k1 - 1];
+
+            /*
+             * Now, j (to be found) is in an unknown block k, where k1<=k<k2. We make a binary
+             * search, maintaining the inequalities, but moving the end points. When k2=k1+1, we
+             * know that j must be in block k1.
+             */
+            while (true) {
+                if (c2 == c1) {
+                    // We can stop: the region contains no supplementary characters so j is:
+                    return u - c1;
+                }
+                // Choose a candidate k in the middle of the range
+                int k = (k1 + k2) / 2;
+                if (k == k1) {
+                    // We must have k2=k1+1, so j is in block k1
+                    break;
+                } else {
+                    // kx divides the range: is j<kx*M?
+                    int c = count[k - 1];
+                    if ((k << LOG2M) + c > u) {
+                        // k*M+c > u therefore j is not in block k but to its left.
+                        k2 = k;
+                        c2 = c;
+                    } else {
+                        // k*M+c <= u therefore j must be in block k, or to its right.
+                        k1 = k;
+                        c1 = c;
+                    }
+                }
+            }
+
+            /*
+             * At this point, j is known to be in block k1 (and k2=k1+1). c1 is the number of
+             * supplementary characters to the left of code point index k1*M and c2 is the number of
+             * supplementary characters to the left of code point index (k1+1)*M. We have to search
+             * this block sequentially. The current position in the UTF-16 is:
+             */
+            int p = (k1 << LOG2M) + c1;
+            while (p < u) {
+                if (Character.isHighSurrogate(string.charAt(p++))) {
+                    // c1 tracks the number of supplementary characters to the left of p
+                    c1 += 1;
+                    if (c1 == c2) {
+                        // We have found all supplementary characters in the block.
+                        break;
+                    }
+                    // Skip the trailing surrogate.
+                    p++;
+                }
+            }
+            // c1 is the number of supplementary characters to the left of u, so the result j is:
+            return u - c1;
+        }
+
+        @Override
+        public int utf16Index(int i) {
+            // The code point index i lies in the k-th block where:
+            int k = i >> LOG2M;
+            // The offset for the code point index k*M is exactly
+            int d = (k == 0) ? 0 : count[k - 1];
+            // The offset for the code point index (k+1)*M is exactly
+            int e = count[k];
+            if (d == e) {
+                /*
+                 * The offset for the code point index (k+1)*M is the same, and since this is a
+                 * non-decreasing function of k, it is also the value for i.
+                 */
+                return i + d;
+            } else {
+                /*
+                 * The offset for the code point index (k+1)*M is different (higher). We must scan
+                 * along until we have found all the supplementary characters that precede i,
+                 * starting the scan at code point index k*M.
+                 */
+                for (int q = i & ~MASK; q < i; q++) {
+                    if (Character.isHighSurrogate(string.charAt(q + d))) {
+                        d += 1;
+                        if (d == e) {
+                            /*
+                             * We have found all the supplementary characters in this block, so we
+                             * must have found all those to the left of i.
+                             */
+                            break;
+                        }
+                    }
+                }
+
+                // d counts all the supplementary characters to the left of i.
+                return i + d;
+            }
+        }
+
+        @Override
+        public int suppCount() {
+            // The last element of the count array is the total number of supplementary characters.
+            return count[count.length - 1];
+        }
+    }
+
+    /**
+     * Generate the table that is used by the class {@link Supplementary} to accelerate access to
+     * the the implementation string. The method returns <code>null</code> if the string passed
+     * contains no surrogate pairs, in which case we'll use {@link #BASIC} as the translator. This
+     * method is sensitive to {@link #DEBUG_NON_BMP_METHODS} which if true will prevent it returning
+     * null, hance we will always use a {@link Supplementary} {@link #translator}.
+     *
+     * @param string to index
+     * @return the index (counts) or null if basic plane
+     */
+    private static int[] getSupplementaryCounts(final String string) {
+
+        final int n = string.length();
+        int p; // Index of the current UTF-16 code unit.
+
+        /*
+         * We scan to the first surrogate code unit, in a simple loop. If we hit the end before we
+         * find one, no count array will be necessary and we'll use BASIC. If we find a surrogate it
+         * may be half a supplementary character, or a lone surrogate: we'll find out later.
+         */
+        for (p = 0; p < n; p++) {
+            if (Character.isSurrogate(string.charAt(p))) {
+                break;
+            }
+        }
+
+        if (p == n && !DEBUG_NON_BMP_METHODS) {
+            // There are no supplementary characters so the 1:1 translator is fine.
+            return null;
+
+        } else {
+            /*
+             * We have to do this properly, using a scheme in which code point indexes are
+             * efficiently translatable to UTF-16 indexes through a table called here count[]. In
+             * this array, count[k] contains the total number of supplementary characters up to the
+             * end of the k.th block, that is, to the left of code point (k+1)M. We have to fill
+             * this array by scanning the string.
+             */
+            int q = p; // The current code point index (q = p+s).
+            int k = q >> Supplementary.LOG2M; // The block number k = q/M.
+
+            /*
+             * When addressing with a code point index q<=L (the length in code points) we will
+             * index the count array with k = q/M. We have q<=L<=n, therefore q/M <= n/M, the
+             * maximum valid k is 1 + n/M. A q>=L should raise IndexOutOfBoundsException, but it
+             * doesn't matter whether that's from indexing this array, or the string later.
+             */
+            int[] count = new int[1 + (n >> Supplementary.LOG2M)];
+
+            /*
+             * To get the generation of count[] going efficiently, we need to advance the next whole
+             * block. The next loop will complete processing of the block containing the first
+             * supplementary character. Note that in all these loops, if we exit because p reaches a
+             * limit, the count for the last partial block is known from p-q and we take care of
+             * that right at the end of this method. The limit of these loops is n-1, so if we spot
+             * a lead surrogate, the we may access the low-surrogate confident that p+1<n.
+             */
+            while (p < n - 1) {
+
+                // Catch supplementary characters and lone surrogate code units.
+                p += calcAdvance(string, p);
+                // Advance the code point index
+                q += 1;
+
+                // Was that the last in a block?
+                if ((q & Supplementary.MASK) == 0) {
+                    count[k++] = p - q;
+                    break;
+                }
+            }
+
+            /*
+             * If the string is long enough, we can work in whole blocks of M, and there are fewer
+             * things to track. We can't know the number of blocks in advance, but we know there is
+             * at least one whole block to go when p+2*M<n.
+             */
+            while (p + 2 * Supplementary.M < n) {
+
+                for (int i = 0; i < Supplementary.M; i++) {
+                    // Catch supplementary characters and lone surrogate code units.
+                    p += calcAdvance(string, p);
+                }
+
+                // Advance the code point index one whole block
+                q += Supplementary.M;
+
+                // The number of supplementary characters to the left of code point index k*M is:
+                count[k++] = p - q;
+            }
+
+            /*
+             * Process the remaining UTF-16 code units, except possibly the last.
+             */
+            while (p < n - 1) {
+
+                // Catch supplementary characters and lone surrogate code units.
+                p += calcAdvance(string, p);
+                // Advance the code point index
+                q += 1;
+
+                // Was that the last in a block?
+                if ((q & Supplementary.MASK) == 0) {
+                    count[k++] = p - q;
+                }
+            }
+
+            /*
+             * There may be just one UTF-16 unit left (if the last thing processed was not a
+             * surrogate pair).
+             */
+            if (p < n) {
+                // We are at the last UTF-16 unit in string. Any surrogate here is an error.
+                char c = string.charAt(p++);
+                if (Character.isSurrogate(c)) {
+                    throw unpairedSurrogate(p - 1, c);
+                }
+                // Advance the code point index
+                q += 1;
+            }
+
+            /*
+             * There may still be some elements of count[] we haven't set, so we fill to the end
+             * with the total count. This also takes care of an incomplete final block.
+             */
+            int total = p - q;
+            while (k < count.length) {
+                count[k++] = total;
+            }
+
+            return count;
+        }
+    }
+
+    /**
+     * Called at each code point index, returns 2 if this is a surrogate pair, 1 otherwise, and
+     * detects lone surrogates as an error. The return is the amount to advance the UTF-16 index. An
+     * exception is raised if at <code>p</code> we find a lead surrogate without a trailing one
+     * following, or a trailing surrogate directly. It should not be called on the final code unit,
+     * when <code>p==string.length()-1</code>, since it may check the next code unit as well.
+     *
+     * @param string of UTF-16 code units
+     * @param p index into that string
+     * @return 2 if a surrogate pair stands at <code>p</code>, 1 if not
+     * @throws PyException(ValueError) if a lone surrogate stands at <code>p</code>.
+     */
+    private static int calcAdvance(String string, int p) throws PyException {
+
+        // Catch supplementary characters and lone surrogate code units.
+        char c = string.charAt(p);
+
+        if (c >= Character.MIN_SURROGATE) {
+            if (c < Character.MIN_LOW_SURROGATE) {
+                // This is a lead surrogate.
+                if (Character.isLowSurrogate(string.charAt(p + 1))) {
+                    // Required trailing surrogate follows, so step over both.
+                    return 2;
+                } else {
+                    // Required trailing surrogate missing.
+                    throw unpairedSurrogate(p, c);
+                }
+
+            } else if (c <= Character.MAX_SURROGATE) {
+                // This is a lone trailing surrogate
+                throw unpairedSurrogate(p, c);
+
+            } // else this is a private use or special character in 0xE000 to 0xFFFF.
+
+        }
+        return 1;
+    }
+
+    /**
+     * Return a ready-to-throw exception indicating an unpaired surrogate.
+     *
+     * @param p index within that sequence of the problematic code unit
+     * @param c the code unit
+     * @return an exception
+     */
+    private static PyException unpairedSurrogate(int p, int c) {
+        String fmt = "unpaired surrogate %#4x at code unit %d";
+        String msg = String.format(fmt, c, p);
+        return Py.ValueError(msg);
+    }
+
+    /**
+     * Choose an {@link IndexTranslator} implementation for efficient working, according to the
+     * contents of the {@link PyString#string}.
+     *
+     * @return chosen <code>IndexTranslator</code>
+     */
+    private IndexTranslator chooseIndexTranslator() {
+        int[] count = getSupplementaryCounts(string);
+        if (DEBUG_NON_BMP_METHODS) {
+            return new Supplementary(count);
+        } else {
+            return count == null ? BASIC : new Supplementary(count);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * In the <code>PyUnicode</code> version, the arguments are code point indices, such as are
+     * received from the Python caller, while the first two elements of the returned array have been
+     * translated to UTF-16 indices in the implementation string.
+     */
+    @Override
+    protected int[] translateIndices(PyObject start, PyObject end) {
+        int[] indices = super.translateIndices(start, end);
+        indices[0] = translator.utf16Index(indices[0]);
+        indices[1] = translator.utf16Index(indices[1]);
+        // indices[2] and [3] remain Unicode indices (and may be out of bounds) relative to len()
+        return indices;
+    }
+
+    // ------------------------------------------------------------------------------------------
+
+    /**
+     * {@inheritDoc} The indices are code point indices, not UTF-16 (<code>char</code>) indices. For
+     * example:
+     *
+     * <pre>
+     * PyUnicode u = new PyUnicode("..\ud800\udc02\ud800\udc03...");
+     * // (Python) u = u'..\U00010002\U00010003...'
+     *
+     * String s = u.substring(2, 4);  // = "\ud800\udc02\ud800\udc03" (Java)
+     * </pre>
+     */
     @Override
     public String substring(int start, int end) {
-        if (isBasicPlane()) {
-            return super.substring(start, end);
-        }
-        return new PyUnicode(newSubsequenceIterator(start, end, 1)).getString();
+        return super.substring(translator.utf16Index(start), translator.utf16Index(end));
     }
 
     /**
@@ -122,29 +563,18 @@ public class PyUnicode extends PyString implements Iterable {
         return uni;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @return true if the string consists only of BMP characters
+     */
+    @Override
     public boolean isBasicPlane() {
-        if (plane == Plane.BASIC) {
-            return true;
-        } else if (plane == Plane.UNKNOWN) {
-            plane = (getString().length() == getCodePointCount()) ? Plane.BASIC : Plane.ASTRAL;
-        }
-        return plane == Plane.BASIC;
+        return translator == BASIC;
     }
 
-// RETAIN THE BELOW CODE, it facilitates testing astral support more completely
-
-// public boolean isBasicPlane() {
-// return false;
-// }
-
-// END RETAIN
-
     public int getCodePointCount() {
-        if (codePointCount >= 0) {
-            return codePointCount;
-        }
-        codePointCount = getString().codePointCount(0, getString().length());
-        return codePointCount;
+        return string.length() - translator.suppCount();
     }
 
     @ExposedNew
@@ -193,12 +623,13 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(str);
     }
 
-    // Unicode ops consisting of basic strings can only produce basic strings;
-    // this may not be the case for astral ones - they also might be basic, in
-    // case of deletes. So optimize by providing a tainting mechanism.
+    /**
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     */
     @Override
-    protected PyString createInstance(String str, boolean isBasic) {
-        return new PyUnicode(str, isBasic);
+    protected PyString createInstance(String string, boolean isBasic) {
+        return new PyUnicode(string, isBasic);
     }
 
     @Override
@@ -295,37 +726,19 @@ public class PyUnicode extends PyString implements Iterable {
 
     @Override
     protected PyObject pyget(int i) {
-        if (isBasicPlane()) {
-            return Py.makeCharacter(getString().charAt(i), true);
-        }
-
-        int k = 0;
-        while (i > 0) {
-            int W1 = getString().charAt(k);
-            if (W1 >= 0xD800 && W1 < 0xDC00) {
-                k += 2;
-            } else {
-                k += 1;
-            }
-            i--;
-        }
-        int codepoint = getString().codePointAt(k);
+        int codepoint = getString().codePointAt(translator.utf16Index(i));
         return Py.makeCharacter(codepoint, true);
     }
 
     private class SubsequenceIteratorImpl implements Iterator {
 
-        private int current, k, start, stop, step;
+        private int current, k, stop, step;
 
         SubsequenceIteratorImpl(int start, int stop, int step) {
-            k = 0;
             current = start;
-            this.start = start;
+            k = translator.utf16Index(current);
             this.stop = stop;
             this.step = step;
-            for (int i = 0; i < start; i++) {
-                nextCodePoint();
-            }
         }
 
         SubsequenceIteratorImpl() {
@@ -443,10 +856,12 @@ public class PyUnicode extends PyString implements Iterable {
     private PyUnicode coerceToUnicode(PyObject o) {
         if (o instanceof PyUnicode) {
             return (PyUnicode)o;
+        } else if (o instanceof PyString) {
+            return new PyUnicode(((PyString)o).getString(), true);
         } else if (o instanceof BufferProtocol) {
-            // PyString or PyByteArray, PyMemoryView, Py2kBuffer ...
+            // PyByteArray, PyMemoryView, Py2kBuffer ...
             try (PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO)) {
-                return new PyUnicode(buf.toString());
+                return new PyUnicode(buf.toString(), true);
             }
         } else {
             // o is some type not allowed:
@@ -998,7 +1413,7 @@ public class PyUnicode extends PyString implements Iterable {
     @Override
     protected PyString fromSubstring(int begin, int end) {
         assert (isBasicPlane()); // can only be used on a codepath from str_ equivalents
-        return new PyUnicode(getString().substring(begin, end));
+        return new PyUnicode(getString().substring(begin, end), true);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
@@ -1021,7 +1436,7 @@ public class PyUnicode extends PyString implements Iterable {
         if (isBasicPlane()) {
             return _count(sub.getString(), start, end);
         }
-        int[] indices = translateIndices(start, end);
+        int[] indices = super.translateIndices(start, end); // do not convert to utf-16 indices.
         int count = 0;
         for (Iterator<Integer> mainIter = newSubsequenceIterator(indices[0], indices[1], 1); mainIter
                 .hasNext();) {
@@ -1043,12 +1458,14 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
     final int unicode_find(PyObject subObj, PyObject start, PyObject end) {
-        return _find(coerceToUnicode(subObj).getString(), start, end);
+        int found = _find(coerceToUnicode(subObj).getString(), start, end);
+        return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_rfind_doc)
     final int unicode_rfind(PyObject subObj, PyObject start, PyObject end) {
-        return _rfind(coerceToUnicode(subObj).getString(), start, end);
+        int found = _rfind(coerceToUnicode(subObj).getString(), start, end);
+        return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
     private static String padding(int n, int pad) {
@@ -1228,13 +1645,11 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_startswith_doc)
     final boolean unicode_startswith(PyObject prefix, PyObject start, PyObject end) {
-        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_startswith(prefix, start, end);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_endswith_doc)
     final boolean unicode_endswith(PyObject suffix, PyObject start, PyObject end) {
-        // FIXME: slice indexing logic incorrect when this is ASTRAL
         return str_endswith(suffix, start, end);
     }
 

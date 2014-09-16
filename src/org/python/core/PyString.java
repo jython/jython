@@ -72,6 +72,17 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return str;
     }
 
+    /**
+     * Determine whether the string consists entirely of basic-plane characters. For a
+     * {@link PyString}, of course, it is always <code>true</code>, but this is useful in cases
+     * where either a <code>PyString</code> or a {@link PyUnicode} is acceptable.
+     *
+     * @return true
+     */
+    public boolean isBasicPlane() {
+        return true;
+    }
+
     @ExposedNew
     static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args,
             String[] keywords) {
@@ -144,6 +155,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return pybuf;
     }
 
+    /**
+     * Return a substring of this object as a Java String.
+     *
+     * @param start the beginning index, inclusive.
+     * @param end the ending index, exclusive.
+     * @return the specified substring.
+     */
     public String substring(int start, int end) {
         return getString().substring(start, end);
     }
@@ -153,7 +171,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return str___str__();
     }
 
-    public @ExposedMethod(doc = BuiltinDocs.str___str___doc)
+    @ExposedMethod(doc = BuiltinDocs.str___str___doc)
     final PyString str___str__() {
         if (getClass() == PyString.class) {
             return this;
@@ -673,6 +691,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return new PyString(str);
     }
 
+    /**
+     * Create an instance of the same type as this object, from the Java String given as argument.
+     * This is to be overridden in a subclass to return its own type.
+     *
+     * @param string UTF-16 string encoding the characters (as Java).
+     * @param isBasic is ignored in <code>PyString</code> (effectively true).
+     * @return
+     */
     protected PyString createInstance(String str, boolean isBasic) {
         // ignore isBasic, doesn't apply to PyString, just PyUnicode
         return new PyString(str);
@@ -2353,41 +2379,6 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param endObj end of slice.
      * @return count of occurrences
      */
-    protected final int _count_old(String sub, PyObject startObj, PyObject endObj) {
-// xxx
-        // Interpret the slice indices as concrete values
-        int[] indices = translateIndices(startObj, endObj);
-        int subLen = sub.length();
-
-        if (subLen == 0) {
-            // Special case counting the occurrences of an empty string
-            if (indices[2] > getString().length()) {
-                return 0;
-            } else {
-                return indices[1] - indices[0] + 1;
-            }
-
-        } else {
-            // Skip down this string finding occurrences of sub
-            int start = indices[0], end = indices[1], count = 0;
-            while (true) {
-                int index = getString().indexOf(sub, start);
-                if (index < 0) {
-                    break; // not found
-                } else {
-                    // Found at index. Next search begins at end of this instance, at:
-                    start = index + subLen;
-                    if (start <= end) {
-                        count += 1; // ... and the instance found fits within this string.
-                    } else {
-                        break; // ... but the instance found overlaps the end, so is not valid.
-                    }
-                }
-            }
-            return count;
-        }
-    }
-
     protected final int _count(String sub, PyObject startObj, PyObject endObj) {
 
         // Interpret the slice indices as concrete values
@@ -2395,17 +2386,21 @@ public class PyString extends PyBaseString implements BufferProtocol {
         int subLen = sub.length();
 
         if (subLen == 0) {
-            // Special case counting the occurrences of an empty string
-            if (indices[2] > getString().length()) {
+            // Special case counting the occurrences of an empty string.
+            int start = indices[2], end = indices[3], n = __len__();
+            if (end < 0 || end < start || start > n) {
+                // Slice is reversed or does not overlap the string.
                 return 0;
             } else {
-                return indices[1] - indices[0] + 1;
+                // Count of '' is one more than number of characters in overlap.
+                return Math.min(end, n) - Math.max(start, 0) + 1;
             }
 
         } else {
 
             // Skip down this string finding occurrences of sub
-            int start = indices[0], limit = indices[1] - subLen, count = 0;
+            int start = indices[0], end = indices[1];
+            int limit = end - subLen, count = 0;
 
             while (start <= limit) {
                 int index = getString().indexOf(sub, start);
@@ -2496,17 +2491,36 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * {@link PyUnicode#unicode_find(PyObject, PyObject, PyObject)}.
      *
      * @param sub substring to find.
-     * @param start start of slice.
-     * @param end end of slice.
+     * @param startObj start of slice.
+     * @param endObj end of slice.
      * @return index of <code>sub</code> in this object or -1 if not found.
      */
-    protected final int _find(String sub, PyObject start, PyObject end) {
-        int[] indices = translateIndices(start, end);
-        int index = getString().indexOf(sub, indices[0]);
-        if (index < indices[2] || index > indices[1]) {
-            return -1;
+    protected final int _find(String sub, PyObject startObj, PyObject endObj) {
+        // Interpret the slice indices as concrete values
+        int[] indices = translateIndices(startObj, endObj);
+        int subLen = sub.length();
+
+        if (subLen == 0) {
+            // Special case: an empty string may be found anywhere, ...
+            int start = indices[2], end = indices[3];
+            if (end < 0 || end < start || start > __len__()) {
+                // ... except ln a reverse slice or beyond the end of the string,
+                return -1;
+            } else {
+                // ... and will be reported at the start of the overlap.
+                return indices[0];
+            }
+
+        } else {
+            // General case: search for first match then check against slice.
+            int start = indices[0], end = indices[1];
+            int found = getString().indexOf(sub, start);
+            if (found >= 0 && found + subLen <= end) {
+                return found;
+            } else {
+                return -1;
+            }
         }
-        return index;
     }
 
     /**
@@ -2582,17 +2596,36 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * {@link PyUnicode#unicode_rfind(PyObject, PyObject, PyObject)}.
      *
      * @param sub substring to find.
-     * @param start start of slice.
-     * @param end end of slice.
+     * @param startObj start of slice.
+     * @param endObj end of slice.
      * @return index of <code>sub</code> in this object or -1 if not found.
      */
-    protected final int _rfind(String sub, PyObject start, PyObject end) {
-        int[] indices = translateIndices(start, end);
-        int index = getString().lastIndexOf(sub, indices[1] - sub.length());
-        if (index < indices[2]) {
-            return -1;
+    protected final int _rfind(String sub, PyObject startObj, PyObject endObj) {
+        // Interpret the slice indices as concrete values
+        int[] indices = translateIndices(startObj, endObj);
+        int subLen = sub.length();
+
+        if (subLen == 0) {
+            // Special case: an empty string may be found anywhere, ...
+            int start = indices[2], end = indices[3];
+            if (end < 0 || end < start || start > __len__()) {
+                // ... except ln a reverse slice or beyond the end of the string,
+                return -1;
+            } else {
+                // ... and will be reported at the end of the overlap.
+                return indices[1];
+            }
+
+        } else {
+            // General case: search for first match then check against slice.
+            int start = indices[0], end = indices[1];
+            int found = getString().lastIndexOf(sub, end - subLen);
+            if (found >= start) {
+                return found;
+            } else {
+                return -1;
+            }
         }
-        return index;
     }
 
     public double atof() {
@@ -3284,51 +3317,80 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     /**
-     * Turns the possibly negative Python slice start and end into valid indices into this string.
+     * Many of the string methods deal with slices specified using Python slice semantics:
+     * endpoints, which are <code>PyObject</code>s, may be <code>null</code> or <code>None</code>
+     * (meaning default to one end or the other) or may be negative (meaning "from the end").
+     * Meanwhile, the implementation methods need integer indices, both within the array, and
+     * <code>0&lt;=start&lt;=end&lt;=N</code> the length of the array.
+     * <p>
+     * This method first translates the Python slice <code>startObj</code> and <code>endObj</code>
+     * according to the slice semantics for null and negative values, and stores these in elements 2
+     * and 3 of the result. Then, since the end points of the range may lie outside this sequence's
+     * bounds (in either direction) it reduces them to the nearest points satisfying
+     * <code>0&lt;=start&lt;=end&lt;=N</code>, and stores these in elements [0] and [1] of the
+     * result.
      *
-     * @return a 3 element array of indices into this string describing a substring from [0] to [1].
-     *         [0] <= [1], [0] >= 0 and [1] <= string.length(). The third element contains the
-     *         unadjusted start value (or nearest int).
+     * @param startObj Python start of slice
+     * @param endObj Python end of slice
+     * @return a 4 element array of two range-safe indices, and two original indices.
      */
-    protected int[] translateIndices(PyObject start, PyObject end) {
-        int iStart, iStartUnadjusted, iEnd;
-        int n = getString().length();
+    protected int[] translateIndices(PyObject startObj, PyObject endObj) {
+        int start, end;
+        int n = __len__();
+        int[] result = new int[4];
 
-        // Make sure the slice end decodes to something in range
-        if (end == null || end == Py.None) {
-            iEnd = n;
+        // Decode the start using slice semantics
+        if (startObj == null || startObj == Py.None) {
+            start = 0;
+            // result[2] = 0 already
         } else {
-            // Convert to int but limit to Integer.MIN_VALUE <= iEnd <= Integer.MAX_VALUE
-            iEnd = end.asIndex(null);
-            if (iEnd > n) {
-                iEnd = n;
-            } else if (iEnd < 0) {
-                iEnd = n + iEnd;
-                if (iEnd < 0) {
-                    iEnd = 0;
+            // Convert to int but limit to Integer.MIN_VALUE <= start <= Integer.MAX_VALUE
+            start = startObj.asIndex(null);
+            if (start < 0) {
+                // Negative value means "from the end"
+                start = n + start;
+            }
+            result[2] = start;
+        }
+
+        // Decode the end using slice semantics
+        if (endObj == null || endObj == Py.None) {
+            result[1] = result[3] = end = n;
+        } else {
+            // Convert to int but limit to Integer.MIN_VALUE <= end <= Integer.MAX_VALUE
+            end = endObj.asIndex(null);
+            if (end < 0) {
+                // Negative value means "from the end"
+                result[3] = end = end + n;
+                // Ensure end is safe for String.substring(start,end).
+                if (end < 0) {
+                    end = 0;
+                    // result[1] = 0 already
+                } else {
+                    result[1] = end;
+                }
+            } else {
+                result[3] = end;
+                // Ensure end is safe for String.substring(start,end).
+                if (end > n) {
+                    result[1] = end = n;
+                } else {
+                    result[1] = end;
                 }
             }
         }
 
-        // Make sure the slice start decodes to something in range
-        if (start == null || start == Py.None) {
-            iStartUnadjusted = iStart = 0;
+        // Ensure start is safe for String.substring(start,end).
+        if (start < 0) {
+            start = 0;
+            // result[0] = 0 already
+        } else if (start > end) {
+            result[0] = start = end;
         } else {
-            // Convert to int but limit to Integer.MIN_VALUE <= iStart <= Integer.MAX_VALUE
-            iStartUnadjusted = iStart = start.asIndex(null);
-            if (iStart > iEnd) {
-                iStart = iEnd;
-            } else if (iStart < 0) {
-                iStart = n + iStart;
-                if (iStart > iEnd) {
-                    iStart = iEnd;
-                } else if (iStart < 0) {
-                    iStart = 0;
-                }
-            }
+            result[0] = start;
         }
 
-        return new int[] {iStart, iEnd, iStartUnadjusted};
+        return result;
     }
 
     /**
@@ -3847,7 +3909,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param keywords naming the keyword arguments.
      * @return the object designated or <code>null</code>.
      */
-    private PyObject getFieldObject(String fieldName, boolean bytes, PyObject[] args, String[] keywords) {
+    private PyObject getFieldObject(String fieldName, boolean bytes, PyObject[] args,
+            String[] keywords) {
         FieldNameIterator iterator = new FieldNameIterator(fieldName, bytes);
         PyObject head = iterator.pyHead();
         PyObject obj = null;
