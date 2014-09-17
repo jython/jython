@@ -86,11 +86,13 @@ public class PyModule extends PyObject {
             return null;
         }
         PyObject path = __dict__.__finditem__("__path__");
+        if (path == null) {
+            path = new PyList();
+        }
         PyObject pyName = __dict__.__finditem__("__name__");
-        if (path == null || pyName == null) {
+        if (pyName == null) {
             return null;
         }
-
         PyObject attr = null;
         String fullName = (pyName.__str__().toString() + '.' + name).intern();
         if (path == Py.None) {
