@@ -4,6 +4,7 @@ import unittest
 from test import test_support
 
 import errno
+import gc
 import jarray
 import Queue
 import platform
@@ -128,7 +129,16 @@ class ThreadableTest:
         self.client_ready.wait()
 
     def _assert_no_pending_threads(self, group, msg):
+        # Ensure __del__ finalizers are called on sockets. Two things to note:
+        # 1. It takes two collections for finalization to run.
+        # 2. gc.collect() is only advisory to the JVM, never mandatory. Still 
+        #    it usually seems to happen under light load.
+        gc.collect()
+        time.sleep(0.1)
+        gc.collect()
+
         # Wait up to one second for there not to be pending threads
+
         for i in xrange(10):
             pending_threads = _check_threadpool_for_pending_threads(group)
             if len(pending_threads) == 0:

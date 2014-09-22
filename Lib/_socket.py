@@ -9,7 +9,7 @@ import struct
 import sys
 import time
 import _google_ipaddr_r234
-from collections import namedtuple, Sequence
+from collections import namedtuple, Iterable
 from contextlib import contextmanager
 from functools import partial, wraps
 from itertools import chain
@@ -54,7 +54,10 @@ log = logging.getLogger("_socket")
 
 def _debug():
     FORMAT = '%(asctime)-15s %(threadName)s %(levelname)s %(funcName)s %(message)s %(sock)s'
-    logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+    debug_sh = logging.StreamHandler()
+    debug_sh.setFormatter(logging.Formatter(FORMAT))
+    log.addHandler(debug_sh)
+    log.setLevel(level=logging.DEBUG)
 
 # _debug()  # UNCOMMENT to get logging of socket activity
 
@@ -575,6 +578,8 @@ class ChildSocketHandler(ChannelInitializer):
 
     def initChannel(self, child_channel):
         child = ChildSocket(self.parent_socket)
+        log.debug("Initializing child %s", extra={"sock": self.parent_socket})
+
         child.proto = IPPROTO_TCP
         child._init_client_mode(child_channel)
 
@@ -1366,8 +1371,6 @@ class ChildSocket(_realsocket):
         self._ensure_post_connect()
         return super(ChildSocket, self).setblocking(mode)
 
-    # FIXME FIXME FIXME other ops.
-
     def close(self):
         self._ensure_post_connect()
         super(ChildSocket, self).close()
@@ -1376,8 +1379,9 @@ class ChildSocket(_realsocket):
         if self.accepted:
             with self.parent_socket.open_lock:
                 self.parent_socket.accepted_children -= 1
-                if self.parent_socket.accepted_children == 0:
-                    log.debug("Shutting down child group for parent socket=%s", self.parent_socket, extra={"sock": self})
+                if self.parent_socket.open_count == 0 and self.parent_socket.accepted_children == 0:
+                    log.debug("Shutting down child group for parent socket=%s accepted_children=%s",
+                              self.parent_socket, self.parent_socket.accepted_children, extra={"sock": self})
                     self.parent_socket.child_group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
 
     def shutdown(self, how):
@@ -1402,7 +1406,7 @@ def socket(family=None, type=None, proto=None):
 
 def select(rlist, wlist, xlist, timeout=None):
     for lst in (rlist, wlist, xlist):
-        if not isinstance(lst, Sequence):
+        if not isinstance(lst, Iterable):
             raise TypeError("arguments 1-3 must be sequences")
     if not(timeout is None or isinstance(timeout, Number)):
         raise TypeError("timeout must be a float or None")
