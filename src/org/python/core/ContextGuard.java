@@ -61,11 +61,11 @@ public class ContextGuard implements ContextManager {
                 PyBaseCode pyCode = (PyBaseCode) code;
                 if (pyCode.co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
                     return new PyFunction(function.__globals__,
-                            function.func_defaults,
+                            function.__defaults__,
                             new ContextCode(pyCode),
                             function.__doc__,
-                            (function.func_closure == null) ? null : 
-                            ((PyTuple)function.func_closure).getArray());
+                            (function.__closure__ == null) ? null :
+                            ((PyTuple)function.__closure__).getArray());
                 }
             }
         }

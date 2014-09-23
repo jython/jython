@@ -4,6 +4,7 @@ package org.python.core;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
@@ -301,6 +302,12 @@ public class PyMethod extends PyObject {
     public PyObject getDoc() {
         return __func__.__getattr__("__doc__");
     }
+
+    // FIXME this should work, but it has a dependency on our descriptor mechanism!
+//    @ExposedSet(name = "__doc__")
+//    public void setDoc() {
+//        throw Py.AttributeError("attribute '__doc__' of 'instancemethod' objects is not writable");
+//    }
 
     @Override
     public String toString() {

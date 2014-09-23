@@ -1,5 +1,6 @@
 package org.python.core;
 
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -12,6 +13,7 @@ public class PyClassMethod extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethod.class);
 
+    @ExposedGet(name = "__func__")
     protected PyObject callable;
 
     public PyClassMethod(PyObject callable) {
