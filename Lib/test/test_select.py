@@ -168,10 +168,18 @@ class ThreadedPollClientSocket(test_socket.SocketConnectedTest):
         except Exception, x:
             self.fail("Selecting on socket.fileno() should not have raised exception: %s" % str(x))
 
+class TestJythonSelect(unittest.TestCase):
+    # Normally we would have a test_select_jy for such testing, but
+    # the reality is that this test module is really that test :)
+    
+    def test_cpython_compatible_select_exists(self):
+        self.assertIs(select.cpython_compatible_select, select.select)
+
 
 def test_main():
 
-    tests = [TestSelectInvalidParameters, TestSelectClientSocket, TestPollClientSocket, ThreadedPollClientSocket]
+    tests = [TestSelectInvalidParameters, TestSelectClientSocket, TestPollClientSocket, ThreadedPollClientSocket,
+             TestJythonSelect]
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support._run_suite(unittest.TestSuite(suites))
 

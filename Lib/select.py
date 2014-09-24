@@ -10,3 +10,10 @@ from _socket import (
     error,
     poll,
     select)
+
+# backwards compatibility with Jython 2.5
+cpython_compatible_select = select
+
+__all__ = [
+    "POLLIN", "POLLOUT", "POLLPRI", "POLLERR", "POLLHUP", "POLLNVAL", 
+    "error", "poll", "select", "cpython_compatible_select"]
