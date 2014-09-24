@@ -22,6 +22,7 @@ from java.io import (ByteArrayInputStream, ByteArrayOutputStream, File, FileInpu
                      FileNotFoundException, FileOutputStream, FileWriter, ObjectInputStream,
                      ObjectOutputStream, OutputStreamWriter, UnsupportedEncodingException)
 from java.util import ArrayList, Date, HashMap, Hashtable, StringTokenizer, Vector
+from java.util.concurrent import Executors
 
 from java.awt import Dimension, Color, Component, Container
 from java.awt.event import ComponentEvent
@@ -833,6 +834,65 @@ class BeanPropertyTest(unittest.TestCase):
         self.assertEqual(target.attribute, value)
 
 
+class WrappedUp(object):
+    def __init__(self):
+        self.data = list()
+    def doit(self):
+        self.data.append(42)
+
+
+class CallableObject(object):
+    def __init__(self):
+        self.data = list()
+    def __call__(self):
+        self.data.append(42)
+
+
+class SingleMethodInterfaceTest(unittest.TestCase):
+
+    def setUp(self):
+        self.executor = Executors.newSingleThreadExecutor()
+
+    def tearDown(self):
+        self.executor.shutdown()
+
+    def test_function(self):
+        x = list()
+        def f():
+            x.append(42)
+        future = self.executor.submit(f)
+        future.get()
+        self.assertEqual(x, [42])
+
+    @unittest.skip("FIXME: not working")
+    def test_callable_object(self):
+        callable_obj = CallableObject()
+        future = self.executor.submit(callable_obj)
+        future.get()
+        self.assertEqual(callable_obj.data, [42])
+
+    def test_bound_method(self):
+        obj = WrappedUp()
+        future = self.executor.submit(obj.doit)
+        future.get()
+        self.assertEqual(obj.data, [42])
+
+    def test_unbound_method(self):
+        with self.assertRaises(TypeError) as exc:
+            future = self.executor.submit(WrappedUp.doit)  # not a bound method
+        self.assertIsInstance(
+            exc.exception, TypeError,
+            "submit(): 1st arg can't be coerced to java.util.concurrent.Callable, java.lang.Runnable")
+
+    def test_some_noncallable_object(self):
+        obj = WrappedUp()
+        with self.assertRaises(TypeError) as exc:
+            future = self.executor.submit(obj)
+        self.assertIsInstance(
+            exc.exception, TypeError,
+            "submit(): 1st arg can't be coerced to java.util.concurrent.Callable, java.lang.Runnable")
+
+
 def test_main():
     test_support.run_unittest(
         BeanPropertyTest,
@@ -852,7 +912,8 @@ def test_main():
         SerializationTest,
         SysIntegrationTest,
         TreePathTest,
-        UnicodeTest)
+        UnicodeTest,
+        SingleMethodInterfaceTest)
 
 if __name__ == "__main__":
     test_main()

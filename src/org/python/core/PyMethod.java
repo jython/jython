@@ -8,11 +8,15 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
 /**
  * A Python method.
  */
 @ExposedType(name = "instancemethod", isBaseType = false, doc = BuiltinDocs.instancemethod_doc)
-public class PyMethod extends PyObject {
+public class PyMethod extends PyObject implements InvocationHandler {
 
     public static final PyType TYPE = PyType.fromClass(PyMethod.class);
 
@@ -356,4 +360,57 @@ public class PyMethod extends PyObject {
         }
         return funcName.toString();
     }
+
+    @Override
+    public Object __tojava__(Class<?> c) {
+        // Automatically coerce to single method interfaces
+        if (__self__ == null) {
+            return super.__tojava__(c); // not a bound method, so no special handling
+        }
+        if (c.isInstance(this) && c != InvocationHandler.class) {
+            // for base types, conversion is simple - so don't wrap!
+            // InvocationHandler is special, since it's a single method interface
+            // that we implement, but if we coerce to it we want the arguments
+            return c.cast( this );
+        } else if (c.isInterface()) {
+            if (c.getDeclaredMethods().length == 1 && c.getInterfaces().length == 0) {
+                // Proper single method interface
+                return proxy(c);
+            } else {
+                // Try coerce to interface with multiple overloaded versions of
+                // the same method (name)
+                String name = null;
+                for (Method method : c.getMethods()) {
+                    if (method.getDeclaringClass() != Object.class) {
+                        if (name == null || name.equals(method.getName())) {
+                            name = method.getName();
+                        } else {
+                            name = null;
+                            break;
+                        }
+                    }
+                }
+                if (name != null) { // single unique method name
+                    return proxy(c);
+                }
+            }
+        }
+        return super.__tojava__(c);
+    }
+
+    private Object proxy( Class<?> c ) {
+        return Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, this);
+    }
+
+    public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
+        // Handle invocation when invoked through Proxy (as coerced to single method interface)
+        if (method.getDeclaringClass() == Object.class) {
+            return method.invoke( this, args );
+        } else if (args == null || args.length == 0) {
+            return __call__().__tojava__(method.getReturnType());
+        } else {
+            return __call__(Py.javas2pys(args)).__tojava__(method.getReturnType());
+        }
+    }
+
 }

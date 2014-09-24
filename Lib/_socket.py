@@ -742,14 +742,7 @@ class _realsocket(object):
         # is managed by this method.
         #
         # All sockets can be selected on, regardless of blocking/nonblocking state.
-
-        def workaround_jython_bug_for_bound_methods(_):
-            # FIXME check for errors, notify the corresponding socket accordingly
-            # FIXME wrapper function is needed because of http://bugs.jython.org/issue2115
-            self._notify_selectors()
-
-        future.addListener(workaround_jython_bug_for_bound_methods)
-
+        future.addListener(self._notify_selectors)
         if self.timeout is None:
             log.debug("Syncing on future %s for %s", future, reason, extra={"sock": self})
             return future.sync()
@@ -1194,7 +1187,7 @@ class _realsocket(object):
             else:
                 return _socktuple(self.bind_addr)
         # Netty 4 currently races between bind to ephemeral port and the availability
-        # of the local address for the channel. Workaround for now is to poll.
+        # of the local address for the channel. Poll to work around this issue.
         while True:
             local_addr = self.channel.localAddress()
             if local_addr:
