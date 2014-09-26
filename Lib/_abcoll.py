@@ -19,7 +19,6 @@ __all__ = ["Hashable", "Iterable", "Iterator",
            "Sequence", "MutableSequence",
            ]
 
-_is_jython = sys.platform.startswith("java")
 
 ### ONE-TRICK PONIES ###
 
@@ -602,12 +601,17 @@ class MutableSequence(Sequence):
 
 MutableSequence.register(list)
 
-if _is_jython:
+if sys.platform.startswith("java"):
     from org.python.core import PyFastSequenceIter
-    import java
+    # the only name conflict is with Set, but be consistent
+    from java.util import List as JList, Map as JMap, Set as JSet
 
-    MutableSequence.register(java.util.List)
-    MutableMapping.register(java.util.Map)
-    MutableSet.register(java.util.Set)
+    MutableSequence.register(JList)
+    MutableMapping.register(JMap)
+    MutableSet.register(JSet)
     Iterator.register(PyFastSequenceIter)
-
+    
+    del PyFastSequenceIter
+    del JList
+    del JMap
+    del JSet
