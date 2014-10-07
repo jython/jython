@@ -50,9 +50,9 @@ public class PyObject implements Serializable {
         primitiveMap.put(Float.TYPE, Float.class);
         primitiveMap.put(Double.TYPE, Double.class);
 
-        if (Py.BOOTSTRAP_TYPES.size() > 0) {
+        if (BootstrapTypesSingleton.getInstance().size() > 0) {
             Py.writeWarning("init", "Bootstrap types weren't encountered in bootstrapping: "
-                            + Py.BOOTSTRAP_TYPES);
+                            + BootstrapTypesSingleton.getInstance());
         }
     }
 

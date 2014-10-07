@@ -34,6 +34,28 @@ import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.posix.PosixModule;
 import org.python.util.Generic;
 
+/** Builtin types that are used to setup PyObject.
+ *
+ * Resolve circular dependency with some laziness. */
+class BootstrapTypesSingleton {
+    private final Set<Class<?>> BOOTSTRAP_TYPES;
+    private BootstrapTypesSingleton() {
+        BOOTSTRAP_TYPES = Generic.set();
+        BOOTSTRAP_TYPES.add(PyObject.class);
+        BOOTSTRAP_TYPES.add(PyType.class);
+        BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
+        BOOTSTRAP_TYPES.add(PyDataDescr.class);
+    }
+
+    private static class LazyHolder {
+        private static final BootstrapTypesSingleton INSTANCE = new BootstrapTypesSingleton();
+    }
+
+    public static Set<Class<?>> getInstance() {
+        return LazyHolder.INSTANCE.BOOTSTRAP_TYPES;
+    }
+}
+
 public final class Py {
 
     static class SingletonResolver implements Serializable {
@@ -57,60 +79,53 @@ public final class Py {
     }
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
-    public static PyObject None;
+    public final static PyObject None = new PyNone();
     /** The singleton Ellipsis Python object - written as ... when indexing */
-    public static PyObject Ellipsis;
+    public final static PyObject Ellipsis = new PyEllipsis();
     /** The singleton NotImplemented Python object. Used in rich comparison */
-    public static PyObject NotImplemented;
+    public final static PyObject NotImplemented = new PyNotImplemented();
     /** A zero-length array of Strings to pass to functions that
     don't have any keyword arguments **/
-    public static String[] NoKeywords;
+    public final static String[] NoKeywords = new String[0];
     /** A zero-length array of PyObject's to pass to functions that
     expect zero-arguments **/
-    public static PyObject[] EmptyObjects;
+    public final static PyObject[] EmptyObjects = new PyObject[0];
     /** A frozenset with zero elements **/
-    public static PyFrozenSet EmptyFrozenSet;
+    public final static PyFrozenSet EmptyFrozenSet = new PyFrozenSet();
     /** A tuple with zero elements **/
-    public static PyTuple EmptyTuple;
+    public final static PyTuple EmptyTuple = new PyTuple(Py.EmptyObjects);
     /** The Python integer 0 **/
-    public static PyInteger Zero;
+    public final static PyInteger Zero = new PyInteger(0);
     /** The Python integer 1 **/
-    public static PyInteger One;
+    public final static PyInteger One = new PyInteger(1);
     /** The Python boolean False **/
-    public static PyBoolean False;
+    public final static PyBoolean False = new PyBoolean(false);
     /** The Python boolean True **/
-    public static PyBoolean True;
+    public final static PyBoolean True = new PyBoolean(true);
     /** A zero-length Python byte string **/
-    public static PyString EmptyString;
+    public final static PyString EmptyString = new PyString("");
     /** A zero-length Python Unicode string **/
-    public static PyUnicode EmptyUnicode;
+    public final static PyUnicode EmptyUnicode = new PyUnicode("");
     /** A Python string containing '\n' **/
-    public static PyString Newline;
+    public final static PyString Newline = new PyString("\n");
     /** A Python unicode string containing '\n' **/
-    public static PyUnicode UnicodeNewline;
+    public final static PyUnicode UnicodeNewline = new PyUnicode("\n");
     /** A Python string containing ' ' **/
-    public static PyString Space;
+    public final static PyString Space = new PyString(" ");
     /** A Python unicode string containing ' ' **/
-    public static PyUnicode UnicodeSpace;
+    public final static PyUnicode UnicodeSpace = new PyUnicode(" ");
     /** Set if the type object is dynamically allocated */
-    public static long TPFLAGS_HEAPTYPE = 1L << 9;
+    public final static long TPFLAGS_HEAPTYPE = 1L << 9;
     /** Set if the type allows subclassing */
-    public static long TPFLAGS_BASETYPE = 1L << 10;
+    public final static long TPFLAGS_BASETYPE = 1L << 10;
     /** Type is abstract and cannot be instantiated */
-    public static long TPFLAGS_IS_ABSTRACT = 1L << 20;
+    public final static long TPFLAGS_IS_ABSTRACT = 1L << 20;
 
-    /** Builtin types that are used to setup PyObject. */
-    static final Set<Class<?>> BOOTSTRAP_TYPES = Generic.set();
-    static {
-        BOOTSTRAP_TYPES.add(PyObject.class);
-        BOOTSTRAP_TYPES.add(PyType.class);
-        BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
-        BOOTSTRAP_TYPES.add(PyDataDescr.class);
-    }
+
 
     /** A unique object to indicate no conversion is possible
     in __tojava__ methods **/
-    public static Object NoConversion;
+    public final static Object NoConversion = new PySingleton("Error");
     public static PyObject OSError;
     public static PyException OSError(String message) {
         return new PyException(Py.OSError, message);
@@ -614,7 +629,7 @@ public final class Py {
     public static PyStringMap newStringMap() {
         // enable lazy bootstrapping (see issue #1671)
         if (!PyType.hasBuilder(PyStringMap.class)) {
-            BOOTSTRAP_TYPES.add(PyStringMap.class);
+            BootstrapTypesSingleton.getInstance().add(PyStringMap.class);
         }
         return new PyStringMap();
     }
@@ -1466,8 +1481,9 @@ public final class Py {
     }
 
     /* A collection of functions for implementing the print statement */
-    public static StdoutWrapper stderr;
-    static StdoutWrapper stdout;
+    public static StdoutWrapper stderr = new StderrWrapper();
+    static StdoutWrapper stdout = new StdoutWrapper();
+
     //public static StdinWrapper stdin;
     public static void print(PyObject file, PyObject o) {
         if (file == None) {

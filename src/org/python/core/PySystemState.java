@@ -75,9 +75,9 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
             | (Version.PY_MINOR_VERSION << 16) | (Version.PY_MICRO_VERSION << 8)
             | (Version.PY_RELEASE_LEVEL << 4) | (Version.PY_RELEASE_SERIAL << 0));
 
-    public static PyTuple version_info;
+    public static final PyTuple version_info = getVersionInfo();
 
-    public final static int maxunicode = 1114111;
+    public static final int maxunicode = 1114111;
 
     // XXX: we should someday make this Long.MAX_VALUE, but see test_index.py
     // for tests that would need to pass but today would not.
@@ -89,23 +89,22 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
 
     public final static Class flags = Options.class;
 
-    public static PyTuple _mercurial;
+    public final static PyTuple _mercurial = new PyTuple(
+            Py.newString("Jython"),
+            Py.newString(Version.getHGIdentifier()),
+            Py.newString(Version.getHGVersion()));
     /**
      * The copyright notice for this release.
      */
 
-    public static final PyObject copyright = Py
-            .newString("Copyright (c) 2000-2014 Jython Developers.\n" + "All rights reserved.\n\n" +
-
+    public static final PyObject copyright = Py.newString(
+            "Copyright (c) 2000-2014 Jython Developers.\n" + "All rights reserved.\n\n" +
             "Copyright (c) 2000 BeOpen.com.\n" + "All Rights Reserved.\n\n" +
-
             "Copyright (c) 2000 The Apache Software Foundation.\n" + "All rights reserved.\n\n" +
-
-            "Copyright (c) 1995-2000 Corporation for National Research " + "Initiatives.\n"
-                    + "All Rights Reserved.\n\n" +
-
-                    "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " + "Amsterdam.\n"
-                    + "All Rights Reserved.");
+            "Copyright (c) 1995-2000 Corporation for National Research Initiatives.\n"
+                + "All Rights Reserved.\n\n" +
+            "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\n"
+                + "All Rights Reserved.");
 
     private static Map<String, String> builtinNames;
     public static PyTuple builtin_module_names = null;
@@ -182,10 +181,10 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
             Generic.concurrentMap();
 
     // float_info
-    public static PyObject float_info;
+    public static final PyObject float_info = FloatInfo.getInfo();
 
     // long_info
-    public static PyObject long_info;
+    public static final PyObject long_info = LongInfo.getInfo();
 
     public PySystemState() {
         initialize();
@@ -1012,7 +1011,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
 
         // other initializations
         initBuiltins(registry);
-        initStaticFields();
+//        initStaticFields();
 
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
@@ -1042,34 +1041,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         return Py.defaultSystemState;
     }
 
-    private static void initStaticFields() {
-        Py.None = new PyNone();
-        Py.NotImplemented = new PyNotImplemented();
-        Py.NoKeywords = new String[0];
-        Py.EmptyObjects = new PyObject[0];
-
-        Py.EmptyTuple = new PyTuple(Py.EmptyObjects);
-        Py.EmptyFrozenSet = new PyFrozenSet();
-        Py.NoConversion = new PySingleton("Error");
-        Py.Ellipsis = new PyEllipsis();
-
-        Py.Zero = new PyInteger(0);
-        Py.One = new PyInteger(1);
-
-        Py.False = new PyBoolean(false);
-        Py.True = new PyBoolean(true);
-
-        Py.EmptyString = new PyString("");
-        Py.EmptyUnicode = new PyUnicode("");
-        Py.Newline = new PyString("\n");
-        Py.UnicodeNewline = new PyUnicode("\n");
-        Py.Space = new PyString(" ");
-        Py.UnicodeSpace = new PyUnicode(" ");
-
-        // Setup standard wrappers for stdout and stderr...
-        Py.stderr = new StderrWrapper();
-        Py.stdout = new StdoutWrapper();
-
+    private static PyTuple getVersionInfo() {
         String s;
         if (Version.PY_RELEASE_LEVEL == 0x0A) {
             s = "alpha";
@@ -1085,17 +1057,12 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
             throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: "
                     + Version.PY_RELEASE_LEVEL);
         }
-        version_info =
-                new PyTuple(Py.newInteger(Version.PY_MAJOR_VERSION),
-                        Py.newInteger(Version.PY_MINOR_VERSION),
-                        Py.newInteger(Version.PY_MICRO_VERSION), Py.newString(s),
-                        Py.newInteger(Version.PY_RELEASE_SERIAL));
-        _mercurial =
-                new PyTuple(Py.newString("Jython"), Py.newString(Version.getHGIdentifier()),
-                        Py.newString(Version.getHGVersion()));
-
-        float_info = FloatInfo.getInfo();
-        long_info = LongInfo.getInfo();
+        return new PyTuple(
+                Py.newInteger(Version.PY_MAJOR_VERSION),
+                Py.newInteger(Version.PY_MINOR_VERSION),
+                Py.newInteger(Version.PY_MICRO_VERSION),
+                Py.newString(s),
+                Py.newInteger(Version.PY_RELEASE_SERIAL));
     }
 
     public static boolean isPackageCacheEnabled() {

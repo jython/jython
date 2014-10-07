@@ -32,7 +32,7 @@ import com.google.common.collect.MapMaker;
 @ExposedType(name = "type", doc = BuiltinDocs.type_doc)
 public class PyType extends PyObject implements Serializable {
 
-    public static PyType TYPE = fromClass(PyType.class);
+    public static final PyType TYPE = fromClass(PyType.class);
 
     /**
      * The type's name. builtin types include their fully qualified name, e.g.:
@@ -498,7 +498,7 @@ public class PyType extends PyObject implements Serializable {
             mro = new PyType[] {this};
         } else {
             Class<?> baseClass;
-            if (!Py.BOOTSTRAP_TYPES.contains(underlying_class)) {
+            if (!BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
                 baseClass = classToBuilder.get(underlying_class).getBase();
             } else {
                 baseClass = PyObject.class;
@@ -508,7 +508,7 @@ public class PyType extends PyObject implements Serializable {
             }
             computeLinearMro(baseClass);
         }
-        if (Py.BOOTSTRAP_TYPES.contains(underlying_class)) {
+        if (BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
             // init will be called again from addBuilder which also removes underlying_class from
             // BOOTSTRAP_TYPES
             return;
@@ -1292,11 +1292,11 @@ public class PyType extends PyObject implements Serializable {
         classToBuilder.put(forClass, builder);
 
         if (class_to_type.containsKey(forClass)) {
-            if (!Py.BOOTSTRAP_TYPES.remove(forClass)) {
-                Py.writeWarning("init", "Bootstrapping class not in Py.BOOTSTRAP_TYPES[class="
+            if (!BootstrapTypesSingleton.getInstance().remove(forClass)) {
+                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
                                 + forClass + "]");
             }
-            // The types in Py.BOOTSTRAP_TYPES are initialized before their builders are assigned,
+            // The types in BootstrapTypesSingleton.getInstance() are initialized before their builders are assigned,
             // so do the work of addFromClass & fillFromClass after the fact
             fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
         }
@@ -1353,10 +1353,11 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
+//        System.out.println("createType c=" + c + ", needsInners=" + needsInners + ", BootstrapTypesSingleton.getInstance()=" + BootstrapTypesSingleton.getInstance());
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
-        } else if (Py.BOOTSTRAP_TYPES.contains(c) || getBuilder(c) != null) {
+        } else if (BootstrapTypesSingleton.getInstance().contains(c) || getBuilder(c) != null) {
             newtype = new PyType();
         } else {
             newtype = new PyJavaType();
@@ -1414,7 +1415,7 @@ public class PyType extends PyObject implements Serializable {
                     // created as PyType instead of PyJavaType
                     if (inner.getAnnotation(ExposedType.class) != null
                             || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
-                        Py.BOOTSTRAP_TYPES.add(inner);
+                        BootstrapTypesSingleton.getInstance().add(inner);
                     }
                     javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner, hardRef));
                 }
