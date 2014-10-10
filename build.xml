@@ -92,7 +92,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
         <!-- Usually zero, only used for alpha, beta and candidate versions
              where it must be greater than zero. -->
-        <property name="jython.release_serial" value="2"/>
+        <property name="jython.release_serial" value="3"/>
         <property name="jython.java.version" value="1.7"/>
 
         <condition property="do.snapshot.build">
