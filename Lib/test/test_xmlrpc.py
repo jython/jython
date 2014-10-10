@@ -1,5 +1,6 @@
 import base64
 import datetime
+import gc
 import sys
 import time
 import unittest
@@ -24,6 +25,10 @@ except NameError:
     have_unicode = False
 else:
     have_unicode = True
+
+if test_support.is_jython:
+    import _socket
+    _socket._NUM_THREADS = 5
 
 alist = [{'astring': 'foo@bar.baz.spam',
           'afloat': 7283.43,
@@ -442,6 +447,10 @@ class BaseServerTestCase(unittest.TestCase):
 
         # disable traceback reporting
         SimpleXMLRPCServer.SimpleXMLRPCServer._send_traceback_header = False
+
+        # force finalization for tests that rely on deterministic
+        # destruction because of ref counting on CPython
+        gc.collect()
 
 # NOTE: The tests in SimpleServerTestCase will ignore failures caused by
 # "temporarily unavailable" exceptions raised in SimpleXMLRPCServer.  This

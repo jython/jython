@@ -29,6 +29,8 @@ if sys.platform == 'mac':
     TEST_FILES = 32
 elif sys.platform in ('openbsd3', 'openbsd4'):
     TEST_FILES = 48
+elif sys.platform.startswith("java"):
+    TEST_FILES = 32  # uniformly have a small number
 else:
     TEST_FILES = 100
 

@@ -6,6 +6,7 @@ import shutil
 import StringIO
 from hashlib import md5
 import errno
+import gc
 
 import unittest
 import tarfile
@@ -46,6 +47,10 @@ class ReadTest(unittest.TestCase):
 
     def tearDown(self):
         self.tar.close()
+        # Not all files are currently being closed in these tests,
+        # so to ensure something similar to CPython's deterministic cleanup,
+        # call gc and have finalization happen
+        gc.collect()
 
 
 class UstarReadTest(ReadTest):

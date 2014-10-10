@@ -27,6 +27,11 @@ os_name = platform.java_ver()[3][0]
 is_bsd = os_name == 'Mac OS X' or 'BSD' in os_name
 is_solaris = os_name == 'SunOS'
 
+if test_support.is_jython:
+    import _socket
+    _socket._NUM_THREADS = 5
+
+
 class SocketTCPTest(unittest.TestCase):
 
     HOST = HOST

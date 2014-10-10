@@ -189,6 +189,8 @@ _PEER_CLOSED = object()
 # Event loop management
 #######################
 
+_NUM_THREADS = 10
+
 # Use daemon threads for the event loop group. This is just fine
 # because these threads only handle ephemeral data, such as performing
 # SSL wrap/unwrap.
@@ -208,7 +210,7 @@ class DaemonThreadFactory(ThreadFactory):
         return t
 
 
-NIO_GROUP = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Client-%s"))
+NIO_GROUP = NioEventLoopGroup(_NUM_THREADS, DaemonThreadFactory("Jython-Netty-Client-%s"))
 
 
 def _check_threadpool_for_pending_threads(group):
@@ -882,8 +884,8 @@ class _realsocket(object):
         self.accepted_children = 1  # include the parent as well to simplify close logic
 
         b = ServerBootstrap()
-        self.parent_group = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Parent-%s"))
-        self.child_group = NioEventLoopGroup(10, DaemonThreadFactory("Jython-Netty-Child-%s"))
+        self.parent_group = NioEventLoopGroup(_NUM_THREADS, DaemonThreadFactory("Jython-Netty-Parent-%s"))
+        self.child_group = NioEventLoopGroup(_NUM_THREADS, DaemonThreadFactory("Jython-Netty-Child-%s"))
         b.group(self.parent_group, self.child_group)
         b.channel(NioServerSocketChannel)
         b.option(ChannelOption.SO_BACKLOG, backlog)
