@@ -6,23 +6,55 @@ import org.python.core.PyFloat;
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
-import org.python.modules.math;
 
 public class cmath {
-    public static PyFloat pi = new PyFloat(Math.PI);
-    public static PyFloat e = new PyFloat(Math.E);
+    public static final PyFloat pi = new PyFloat(Math.PI);
+    public static final PyFloat e = new PyFloat(Math.E);
 
-    private static PyComplex one = new PyComplex(1.0, 0.0);
-    private static PyComplex half = new PyComplex(0.5, 0.0);
-    private static PyComplex i = new PyComplex(0.0, 1.0);
-    private static PyComplex half_i = new PyComplex(0.0, 0.5);
+    private static final PyComplex one = new PyComplex(1.0, 0.0);
+    private static final PyComplex half = new PyComplex(0.5, 0.0);
+    private static final PyComplex i = new PyComplex(0.0, 1.0);
+    private static final PyComplex half_i = new PyComplex(0.0, 0.5);
+
+//    private static PyComplex c_prodi(PyComplex x) {
+//        return (new PyComplex(-x.imag, x.real));
+//    }
 
     private static PyComplex c_prodi(PyComplex x) {
-        return (new PyComplex(-x.imag, x.real));
+        return (PyComplex) x.__mul__(i);
     }
 
-    private static double hypot(double x, double y) {
-        return (Math.sqrt(x * x + y * y));
+
+    private static boolean isNaN(PyComplex x) {
+        return Double.isNaN(x.real) || Double.isNaN(x.imag);
+    }
+
+    private static double abs(PyComplex x) {
+        boolean isNaN = isNaN(x);
+        boolean isInfinite = !isNaN &&
+                (Double.isInfinite(x.real) || Double.isInfinite(x.imag));
+        if (isNaN) {
+            return Double.NaN;
+        }
+        if (isInfinite) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double real_abs = Math.abs(x.real);
+        double imag_abs = Math.abs(x.imag);
+
+        if (real_abs < imag_abs) {
+            if (x.imag == 0.0) {
+                return real_abs;
+            }
+            double q = x.real / x.imag;
+            return imag_abs * Math.sqrt(1 + q * q);
+        } else {
+            if (x.real == 0.0) {
+                return imag_abs;
+            }
+            double q = x.imag / x.real;
+            return real_abs * Math.sqrt(1 + q * q);
+        }
     }
 
     private static PyComplex complexFromPyObject(PyObject obj) {
@@ -60,112 +92,119 @@ public class cmath {
     
     public static PyObject acos(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        return (c_prodi(log(x.__add__(i
-                .__mul__(sqrt(one.__sub__(x.__mul__(x))))))).__neg__());
+        return c_prodi(log(x.__add__(i.__mul__(sqrt(one.__sub__(x.__mul__(x))))))).__neg__();
     }
 
     public static PyComplex acosh(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = null;
-
         PyComplex a = sqrt(x.__sub__(one));
         PyComplex b = sqrt(x.__add__(one));
         PyComplex c = sqrt(half);
-        r = log(c.__mul__(b.__add__(a)));
-
+        PyComplex r = log(c.__mul__(b.__add__(a)));
         return ((PyComplex) r.__add__(r));
     }
 
     public static PyComplex asin(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = null;
-
         PyComplex squared = (PyComplex) x.__mul__(x);
         PyComplex sq1_minus_xsq = sqrt(one.__sub__(squared));
-
-        r = (PyComplex) c_prodi(log(sq1_minus_xsq.__add__(c_prodi(x))))
-                .__neg__();
-        return (r);
+        return (PyComplex) c_prodi(log(sq1_minus_xsq.__add__(c_prodi(x)))).__neg__();
     }
 
     public static PyComplex asinh(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = null;
-
         PyComplex a = sqrt(x.__add__(i));
         PyComplex b = sqrt(x.__sub__(i));
         PyComplex z = sqrt(half);
-        r = log(z.__mul__(a.__add__(b)));
-
+        PyComplex r = log(z.__mul__(a.__add__(b)));
         return ((PyComplex) r.__add__(r));
     }
 
     public static PyComplex atan(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = (PyComplex) half_i.__mul__(log(i.__add__(x).__div__(
+        return (PyComplex) half_i.__mul__(log(i.__add__(x).__div__(
                 i.__sub__(x))));
-
-        return (r);
     }
 
     public static PyComplex atanh(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = (PyComplex) half.__mul__(log(one.__add__(x).__div__(
+        return (PyComplex) half.__mul__(log(one.__add__(x).__div__(
                 one.__sub__(x))));
-        return (r);
     }
 
     public static PyComplex cos(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(Math.cos(x.real) * math.cosh(x.imag), -Math
-                .sin(x.real)
-                * math.sinh(x.imag));
-        return (r);
+        return new PyComplex(
+                Math.cos(x.real) * math.cosh(x.imag),
+                -Math.sin(x.real) * math.sinh(x.imag));
     }
 
     public static PyComplex cosh(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(Math.cos(x.imag) * math.cosh(x.real), Math
-                .sin(x.imag)
-                * math.sinh(x.real));
-        return (r);
+        return new PyComplex(
+                Math.cos(x.imag) * math.cosh(x.real),
+                Math.sin(x.imag) * math.sinh(x.real));
     }
 
     public static PyComplex exp(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(0.0, 0.0);
         double l = Math.exp(x.real);
-        r.real = l * Math.cos(x.imag);
-        r.imag = l * Math.sin(x.imag);
-        return (r);
+        return new PyComplex(
+                l * Math.cos(x.imag),
+                l * Math.sin(x.imag));
     }
 
     public static PyComplex log(PyObject in) {
-        PyComplex r = new PyComplex(0.0, 0.0);
         PyComplex x = complexFromPyObject(in);
-        r.imag = Math.atan2(x.imag, x.real);
-        r.real = Math.log(hypot(x.real, x.imag));
-        return (r);
+        if (isNaN(x)) {
+            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
+                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+            } else {
+                return PyComplex.NaN;
+            }
+        }
+        return new PyComplex(
+                Math.log(abs(x)),
+                Math.atan2(x.imag, x.real));
     }
 
     public static double phase(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        double r = Math.atan2(x.imag, x.real);
-        return r;
+        return Math.atan2(x.imag, x.real);
     }
 
     public static PyTuple polar(PyObject in) {
         PyComplex z = complexFromPyObject(in);
+        if ((Double.isInfinite(z.real) && Double.isNaN(z.imag)) ||
+            (Double.isInfinite(z.imag) && Double.isNaN(z.real))) {
+            return new PyTuple(Py.newFloat(Double.POSITIVE_INFINITY), Py.newFloat(Double.NaN));
+        }
         double phi = Math.atan2(z.imag, z.real);
-        double r = Math.abs(z.real) + Math.abs(z.imag);
+        double r = Math.sqrt(z.real*z.real + z.imag*z.imag);
         return new PyTuple(new PyFloat(r), new PyFloat(phi));
     }
 
     public static PyComplex rect(double r, double phi) {
-        PyComplex z = new PyComplex(0.0, 0.0);
-        z.real = r * Math.cos(phi);
-        z.imag = r * Math.sin(phi);
-        return z;
+        // Handle various edge cases
+        if (Double.isInfinite(r) && (Double.isInfinite(phi) || Double.isNaN(phi))) {
+            return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+        }
+        if (phi == 0.0) { // NB this test will succeed if phi is 0.0 or -0.0
+            if (Double.isNaN(r)) {
+                return new PyComplex(Double.NaN, 0.0);
+            } else if (r == Double.POSITIVE_INFINITY) {
+                return new PyComplex(r, phi);
+            } else if (r == Double.NEGATIVE_INFINITY) {
+                return new PyComplex(r, -phi);
+            }
+        }
+        if (r == 0.0 && (Double.isInfinite(phi) || Double.isNaN(phi))) {
+            return new PyComplex(0.0, 0.0);
+        }
+
+        return new PyComplex(
+                r * Math.cos(phi),
+                r * Math.sin(phi));
     }
 
     /**
@@ -188,71 +227,89 @@ public class cmath {
         PyComplex x = complexFromPyObject(in);
         return Double.isNaN(x.real) || Double.isNaN(x.imag);
     }
-  
+
     public static PyComplex log10(PyObject in) {
-        PyComplex r = new PyComplex(0.0, 0.0);
         PyComplex x = complexFromPyObject(in);
-        double l = hypot(x.real, x.imag);
-        r.imag = Math.atan2(x.imag, x.real) / Math.log(10.0);
-        r.real = math.log10(new PyFloat(l));
-        return (r);
+        if (isNaN(x)) {
+            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
+                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+            } else {
+                return PyComplex.NaN;
+            }
+        }
+        double l = abs(x);
+        return new PyComplex(
+                math.log10(new PyFloat(l)),
+                Math.atan2(x.imag, x.real) / Math.log(10.0));
     }
                     
     public static PyComplex log(PyObject in, PyObject base) {
-        return log(complexFromPyObject(in), base.asDouble());
+        return log(complexFromPyObject(in), complexFromPyObject(base));
     }
-    
-    public static PyComplex log(PyComplex x, double base) {
-        PyComplex r = new PyComplex(0.0, 0.0);
-        double l = hypot(x.real, x.imag);
-        double log_base = Math.log(base);
-        r.imag = Math.atan2(x.imag, x.real) / log_base;
-        r.real = math.log(new PyFloat(l)) / log_base;
-        return (r);
+
+    public static PyComplex log(PyComplex x, PyComplex base) {
+        if (isNaN(x)) {
+            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
+                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+            } else {
+                return PyComplex.NaN;
+            }
+        }
+        double l = abs(x);
+        PyComplex log_base = log(base);
+        return (PyComplex) new PyComplex(
+                math.log(new PyFloat(l)),
+                Math.atan2(x.imag, x.real)).
+                __div__(log_base);
     }
 
     public static PyComplex sin(PyObject in) {
-        PyComplex r = new PyComplex(0.0, 0.0);
         PyComplex x = complexFromPyObject(in);
-        r.real = Math.sin(x.real) * math.cosh(x.imag);
-        r.imag = Math.cos(x.real) * math.sinh(x.imag);
-        return (r);
+        return new PyComplex(
+                Math.sin(x.real) * math.cosh(x.imag),
+                Math.cos(x.real) * math.sinh(x.imag));
     }
 
     public static PyComplex sinh(PyObject in) {
-        PyComplex r = new PyComplex(0.0, 0.0);
         PyComplex x = complexFromPyObject(in);
-        r.real = Math.cos(x.imag) * math.sinh(x.real);
-        r.imag = Math.sin(x.imag) * math.cosh(x.real);
-        return (r);
+        return new PyComplex(
+                Math.cos(x.imag) * math.sinh(x.real),
+                Math.sin(x.imag) * math.cosh(x.real));
     }
 
     public static PyComplex sqrt(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(0.0, 0.0);
 
-        if ((x.real != 0.0) || (x.imag != 0.0)) {
-            double s = Math
-                    .sqrt(0.5 * (Math.abs(x.real) + hypot(x.real, x.imag)));
-            double d = 0.5 * x.imag / s;
-
-            if (x.real > 0) {
-                r.real = s;
-                r.imag = d;
-            } else if (x.imag >= 0) {
-                r.real = d;
-                r.imag = s;
+        if (Double.isInfinite(x.real) && Double.isNaN(x.imag)) {
+            if (x.real == Double.NEGATIVE_INFINITY) {
+                return new PyComplex(Double.NaN, Double.POSITIVE_INFINITY);
             } else {
-                r.real = -d;
-                r.imag = -s;
+                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
             }
         }
-        return (r);
+
+        if (x.imag == Double.POSITIVE_INFINITY) {
+            return new PyComplex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        } else if (x.imag == Double.NEGATIVE_INFINITY) {
+            return new PyComplex(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
+        }
+
+        if (x.real == 0.0 && x.imag == 0.0) {
+            return new PyComplex(0.0, Math.copySign(0.0, x.imag));
+        }
+
+        double t = Math.sqrt((Math.abs(x.real) + abs(x)) / 2.0);
+        if (x.real >= 0.0) {
+            return new PyComplex(t, x.imag / (2.0 * t));
+        } else {
+            return new PyComplex(
+                    Math.abs(x.imag) / (2.0 * t),
+                    Math.copySign(1d, x.imag) * t);
+        }
     }
 
     public static PyComplex tan(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(0.0, 0.0);
 
         double sr = Math.sin(x.real);
         double cr = Math.cos(x.real);
@@ -263,15 +320,14 @@ public class cmath {
         double rc = cr * chi;
         double ic = -sr * shi;
         double d = rc * rc + ic * ic;
-        r.real = ((rs * rc) + (is * ic)) / d;
-        r.imag = ((is * rc) - (rs * ic)) / d;
 
-        return (r);
+        return new PyComplex(
+                ((rs * rc) + (is * ic)) / d,
+                ((is * rc) - (rs * ic)) / d);
     }
 
     public static PyComplex tanh(PyObject in) {
         PyComplex x = complexFromPyObject(in);
-        PyComplex r = new PyComplex(0.0, 0.0);
 
         double si = Math.sin(x.imag);
         double ci = Math.cos(x.imag);
@@ -282,9 +338,9 @@ public class cmath {
         double rc = ci * chr;
         double ic = si * shr;
         double d = rc * rc + ic * ic;
-        r.real = ((rs * rc) + (is * ic)) / d;
-        r.imag = ((is * rc) - (rs * ic)) / d;
 
-        return (r);
+        return new PyComplex(
+                ((rs * rc) + (is * ic)) / d,
+                ((is * rc) - (rs * ic)) / d);
     }
 }

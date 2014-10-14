@@ -27,6 +27,9 @@ public class PyComplex extends PyObject {
 
     static PyComplex J = new PyComplex(0, 1.);
 
+    public static final PyComplex Inf = new PyComplex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+    public static final PyComplex NaN = new PyComplex(Double.NaN, Double.NaN);
+
     @ExposedGet(doc = BuiltinDocs.complex_real_doc)
     public double real;
 
@@ -113,7 +116,12 @@ public class PyComplex extends PyObject {
         }
 
         complexReal.real -= complexImag.imag;
-        complexReal.imag += complexImag.real;
+        if (complexReal.imag == 0.0) {
+            // necessary if complexImag is -0.0, given that adding 0.0 + -0.0 is 0.0
+            complexReal.imag = complexImag.real;
+        } else {
+            complexReal.imag += complexImag.real;
+        }
         if (new_.for_type != subtype) {
             complexReal = new PyComplexDerived(subtype, complexReal.real, complexReal.imag);
         }
@@ -407,7 +415,21 @@ public class PyComplex extends PyObject {
     }
 
     private final static PyObject _mul(PyComplex o1, PyComplex o2) {
-        return new PyComplex(o1.real * o2.real - o1.imag * o2.imag, //
+        if (Double.isNaN(o1.real) ||
+                Double.isNaN(o1.imag) ||
+                Double.isNaN(o2.real) ||
+                Double.isNaN(o2.imag)) {
+            return NaN;
+        }
+        if (Double.isInfinite(o1.real) ||
+                Double.isInfinite(o1.imag) ||
+                Double.isInfinite(o2.real) ||
+                Double.isInfinite(o2.imag)) {
+            return Inf;
+        }
+
+        return new PyComplex(
+                o1.real * o2.real - o1.imag * o2.imag,
                 o1.real * o2.imag + o1.imag * o2.real);
     }
 
