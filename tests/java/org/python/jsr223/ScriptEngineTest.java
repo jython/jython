@@ -2,6 +2,7 @@ package org.python.jsr223;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigInteger;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -15,8 +16,8 @@ import javax.script.SimpleScriptContext;
 
 import junit.framework.TestCase;
 
-import org.python.core.PyString;
 import org.python.core.Options;
+import org.python.core.PyString;
 
 public class ScriptEngineTest extends TestCase {
 
@@ -260,7 +261,7 @@ public class ScriptEngineTest extends TestCase {
                 + "class MyPythonCallable(PythonCallable):\n"
                 + "    def getAString(self): return 'a string'\n\n"
                 + "result = MyPythonCallable().getAString()\n" //
-                + "test = MyPythonCallable()\n"
+                + "test = MyPythonCallable()\n" //
                 + "result2 = test.getAString()");
         assertEquals("a string", pythonEngine.get("result"));
         assertEquals("a string", pythonEngine.get("result2"));
@@ -294,4 +295,11 @@ public class ScriptEngineTest extends TestCase {
         }
     }
 
+    public void testIssue2090() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        pythonEngine.eval("a = 10L\n" + "b = a-1");
+        Object r = pythonEngine.get("b");
+        assertEquals(new BigInteger("9"), r);
+    }
 }

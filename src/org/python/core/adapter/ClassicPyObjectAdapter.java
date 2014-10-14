@@ -1,5 +1,7 @@
 package org.python.core.adapter;
 
+import java.math.BigInteger;
+
 import org.python.core.Py;
 import org.python.core.PyArray;
 import org.python.core.PyFloat;
@@ -88,6 +90,15 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
             }
 
         });
+
+        add(new ClassAdapter(BigInteger.class) {
+
+            public PyObject adapt(Object o) {
+                return new PyLong((BigInteger)o);
+            }
+
+        });
+
         add(new ClassAdapter(Boolean.class) {
 
             public PyObject adapt(Object o) {
@@ -95,6 +106,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
             }
 
         });
+
         addPostClass(new PyObjectAdapter() {
 
             public PyObject adapt(Object o) {
