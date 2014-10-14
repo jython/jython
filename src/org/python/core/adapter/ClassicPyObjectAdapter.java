@@ -14,136 +14,136 @@ import org.python.core.PyUnicode;
 /**
  * Implements the algorithm originally used in {@link Py#java2py} to adapt objects.
  *
- * Pre-class adapters are added to handle instances of PyObject, PyProxy and
- * null values. Class adapters are added to handle builtin Java classes: String,
- * Integer, Float, Double, Byte, Long, Short, Character, Class and Boolean. An
- * adapter is added to the post-class adapters to handle wrapping arrays
- * properly. Finally, if all of the added adapters can handle an object, it's
+ * Pre-class adapters are added to handle instances of PyObject, PyProxy and null values. Class
+ * adapters are added to handle builtin Java classes: String, Integer, Float, Double, Byte, Long,
+ * Short, Character, Class and Boolean. An adapter is added to the post-class adapters to handle
+ * wrapping arrays properly. Finally, if all of the added adapters can handle an object, it's
  * wrapped in a PyJavaInstance.
  *
  */
 public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 
-	public ClassicPyObjectAdapter() {
-		addPreClass(new PyObjectAdapter() {
+    public ClassicPyObjectAdapter() {
+        addPreClass(new PyObjectAdapter() {
 
-			public PyObject adapt(Object o) {
-				return (PyObject) o;
-			}
+            public PyObject adapt(Object o) {
+                return (PyObject)o;
+            }
 
-			public boolean canAdapt(Object o) {
-				return o instanceof PyObject;
-			}
-		});
-		addPreClass(new PyObjectAdapter() {
+            public boolean canAdapt(Object o) {
+                return o instanceof PyObject;
+            }
+        });
+        addPreClass(new PyObjectAdapter() {
 
-			public PyObject adapt(Object o) {
-				return ((PyProxy) o)._getPyInstance();
-			}
+            public PyObject adapt(Object o) {
+                return ((PyProxy)o)._getPyInstance();
+            }
 
-			public boolean canAdapt(Object o) {
-				return o instanceof PyProxy;
-			}
-		});
-		addPreClass(new PyObjectAdapter() {
+            public boolean canAdapt(Object o) {
+                return o instanceof PyProxy;
+            }
+        });
+        addPreClass(new PyObjectAdapter() {
 
-			public boolean canAdapt(Object o) {
-				return o == null;
-			}
+            public boolean canAdapt(Object o) {
+                return o == null;
+            }
 
-			public PyObject adapt(Object o) {
-				return Py.None;
-			}
-		});
+            public PyObject adapt(Object o) {
+                return Py.None;
+            }
+        });
 
-		add(new ClassAdapter(String.class) {
+        add(new ClassAdapter(String.class) {
 
-			public PyObject adapt(Object o) {
-                return new PyUnicode((String) o);
-			}
+            public PyObject adapt(Object o) {
+                return new PyUnicode((String)o);
+            }
 
-		});
-		add(new ClassAdapter(Character.class) {
+        });
+        add(new ClassAdapter(Character.class) {
 
-			public PyObject adapt(Object o) {
+            public PyObject adapt(Object o) {
                 return Py.makeCharacter((Character)o);
             }
 
-		});
-		add(new ClassAdapter(Class.class) {
+        });
+        add(new ClassAdapter(Class.class) {
 
-			public PyObject adapt(Object o) {
+            public PyObject adapt(Object o) {
                 return PyType.fromClass((Class<?>)o, false);
             }
 
-		});
-		add(new NumberToPyFloat(Double.class));
-		add(new NumberToPyFloat(Float.class));
-		add(new NumberToPyInteger(Integer.class));
-		add(new NumberToPyInteger(Byte.class));
-		add(new NumberToPyInteger(Short.class));
-		add(new ClassAdapter(Long.class) {
+        });
+        add(new NumberToPyFloat(Double.class));
+        add(new NumberToPyFloat(Float.class));
+        add(new NumberToPyInteger(Integer.class));
+        add(new NumberToPyInteger(Byte.class));
+        add(new NumberToPyInteger(Short.class));
+        add(new ClassAdapter(Long.class) {
 
-			public PyObject adapt(Object o) {
-				return new PyLong(((Number) o).longValue());
-			}
+            public PyObject adapt(Object o) {
+                return new PyLong(((Number)o).longValue());
+            }
 
-		});
-		add(new ClassAdapter(Boolean.class) {
+        });
+        add(new ClassAdapter(Boolean.class) {
 
-			public PyObject adapt(Object o) {
-				return ((Boolean) o).booleanValue() ? Py.True : Py.False;
-			}
+            public PyObject adapt(Object o) {
+                return ((Boolean)o).booleanValue() ? Py.True : Py.False;
+            }
 
-		});
-		addPostClass(new PyObjectAdapter() {
+        });
+        addPostClass(new PyObjectAdapter() {
 
-			public PyObject adapt(Object o) {
-				return new PyArray(o.getClass().getComponentType(), o);
-			}
+            public PyObject adapt(Object o) {
+                return new PyArray(o.getClass().getComponentType(), o);
+            }
 
-			public boolean canAdapt(Object o) {
-				return o.getClass().isArray();
-			}
-		});
-	}
+            public boolean canAdapt(Object o) {
+                return o.getClass().isArray();
+            }
+        });
+    }
 
     /**
      * Always returns true as we just return new PyJavaInstance(o) if the adapters added to the
      * superclass can't handle o.
      */
-	public boolean canAdapt(Object o) {
-		return true;
-	}
+    public boolean canAdapt(Object o) {
+        return true;
+    }
 
-	public PyObject adapt(Object o) {
-		PyObject result = super.adapt(o);
-		if (result != null) {
-			return result;
-		}
-		return PyJavaType.wrapJavaObject(o);
-	}
+    public PyObject adapt(Object o) {
+        PyObject result = super.adapt(o);
+        if (result != null) {
+            return result;
+        }
+        return PyJavaType.wrapJavaObject(o);
+    }
 
-	private static class NumberToPyInteger extends ClassAdapter {
+    private static class NumberToPyInteger extends ClassAdapter {
 
-		public NumberToPyInteger(Class c) {
-			super(c);
-		}
+        public NumberToPyInteger(Class c) {
+            super(c);
+        }
 
-		public PyObject adapt(Object o) {
-			return new PyInteger(((Number) o).intValue());
-		}
+        public PyObject adapt(Object o) {
+            return new PyInteger(((Number)o).intValue());
+        }
 
-	}
+    }
 
-	private static class NumberToPyFloat extends ClassAdapter {
-		public NumberToPyFloat(Class c) {
-			super(c);
-		}
+    private static class NumberToPyFloat extends ClassAdapter {
 
-		public PyObject adapt(Object o) {
-			return new PyFloat(((Number) o).doubleValue());
-		}
+        public NumberToPyFloat(Class c) {
+            super(c);
+        }
 
-	}
+        public PyObject adapt(Object o) {
+            return new PyFloat(((Number)o).doubleValue());
+        }
+
+    }
 }
