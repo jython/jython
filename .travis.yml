@@ -1,0 +1,11 @@
+language: java
+jdk:
+  - oraclejdk7
+  - openjdk7
+
+os:
+  - linux
+  - osx
+
+script: ant && ant regrtest
+
