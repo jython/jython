@@ -37,7 +37,7 @@ public class Wizard extends AbstractWizard implements TextKeys {
         this.addPage(readmePage);
         this.addPage(successPage);
 
-        setSize(720, 330);
+        setSize(720, 540);
         centerOnScreen();
         validate();
     }

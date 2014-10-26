@@ -575,9 +575,9 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-4.0.jar"/>
             <zipfileset src="extlibs/asm-util-4.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-	    <zipfileset src="extlibs/bcpkix-jdk15on-150.jar" excludes="META-INF/*.SF"/>
+	    <zipfileset src="extlibs/bcpkix-jdk15on-150.jar" excludes="META-INF/**"/>
 	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-	    <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/*.SF"/>
+	    <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/**"/>
 	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
 	    <zipfileset src="extlibs/commons-compress-1.8.1.jar"/>
 	    <rule pattern="org.apache.**" result="org.python.apache.@1"/>
@@ -585,15 +585,15 @@ The readme text for the next release will be like:
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-52_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.0.20.Final.jar"/>
+            <zipfileset src="extlibs/netty-buffer-4.0.20.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.0.20.Final.jar"/>
+            <zipfileset src="extlibs/netty-codec-4.0.20.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.0.20.Final.jar"/>
+            <zipfileset src="extlibs/netty-common-4.0.20.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.0.20.Final.jar"/>
+            <zipfileset src="extlibs/netty-handler-4.0.20.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.0.20.Final.jar"/>
+            <zipfileset src="extlibs/netty-transport-4.0.20.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
@@ -648,8 +648,7 @@ The readme text for the next release will be like:
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
         <jarjar destfile="${dist.dir}/${jython.standalone.jar}">
             <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
-            <fileset dir="${dist.dir}" includes="Lib/**" excludes="Lib/test/**,Lib/email/test/**"/>
-
+            <fileset dir="${dist.dir}" includes="Lib/**"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
@@ -712,6 +711,7 @@ The readme text for the next release will be like:
         <javadoc sourcepath="${source.dir}" 
                  destdir="${apidoc.dir}"
                  source="${jdk.source.version}"
+		 maxmemory="1024m"
                  public="true"
                  breakiterator="yes"
                  packagenames="org.python.core.*, org.python.util.*, org.python.modules.*, com.ziclix.python.sql, com.xhaus.modjy"
@@ -799,15 +799,9 @@ The readme text for the next release will be like:
     </target>
 
     <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">
-        <!-- XXX untested and most likely broken in 2.5
-        <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${jython.base.dir}" includes="Tools/**/*.py" />
-        </copy>
-        -->
-
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${jython.base.dir}/Lib">
-                <exclude name="**/*.class"/>
+	       <exclude name="**/*.class"/>   
             </fileset>
         </copy>
 

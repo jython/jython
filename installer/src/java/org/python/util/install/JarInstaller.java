@@ -76,8 +76,6 @@ public class JarInstaller {
             }
             if (installationType.isStandalone()) {
                 excludeDirs.add("Tools");
-                excludeDirs.add(LIB_NAME_SEP + "email/test");
-                excludeDirs.add(LIB_NAME_SEP + "test");
             }
             int count = 0;
             int percent = 0;
