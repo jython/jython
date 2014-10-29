@@ -1021,6 +1021,7 @@ The readme text for the next release will be like:
     <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows" description="run Python tests expected to work on Jython"/>
     <target name="regrtest-unix" if="os.family.unix">
       <exec executable="${dist.dir}/bin/jython">
+	<env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
