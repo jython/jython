@@ -1054,19 +1054,8 @@ public class PyJavaType extends PyType {
                 }
             };
             PyBuiltinMethodNarrow mapLeProxy = new MapMethod("__le__", 1) {
-//                if not isinstance(other, Set):
-//                    return NotImplemented
-//                if len(self) > len(other):
-//                    return False
-//                for elem in self:
-//                    if elem not in other:
-//                        return False
-//                return True
-
                 @Override
                 public PyObject __call__(PyObject other) {
-                    PyObject mapping =
-                    if (!Py.isInstance(other, ))
                     if (other.getType().isSubType(PyDictionary.TYPE)) {
                         PyDictionary oDict = (PyDictionary) other;
                         if (asMap().size() != oDict.size()) {
