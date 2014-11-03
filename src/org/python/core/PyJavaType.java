@@ -1053,37 +1053,6 @@ public class PyJavaType extends PyType {
                     }
                 }
             };
-            PyBuiltinMethodNarrow mapLeProxy = new MapMethod("__le__", 1) {
-                @Override
-                public PyObject __call__(PyObject other) {
-                    if (other.getType().isSubType(PyDictionary.TYPE)) {
-                        PyDictionary oDict = (PyDictionary) other;
-                        if (asMap().size() != oDict.size()) {
-                            return Py.False;
-                        }
-                        for (Object jkey : asMap().keySet()) {
-                            Object jval = asMap().get(jkey);
-                            PyObject oVal = oDict.__finditem__(Py.java2py(jkey));
-                            if (oVal == null) {
-                                return Py.False;
-                            }
-                            if (!Py.java2py(jval)._eq(oVal).__nonzero__()) {
-                                return Py.False;
-                            }
-                        }
-                        return Py.True;
-                    } else {
-                        Object oj = other.getJavaProxy();
-                        if (oj instanceof Map) {
-                            Map<Object, Object> oMap = (Map<Object, Object>) oj;
-                            return asMap().equals(oMap) ? Py.True : Py.False;
-                        } else {
-                            return null;
-                        }
-                    }
-                }
-            };
-
             PyBuiltinMethodNarrow mapIterProxy = new MapMethod("__iter__", 0) {
                 @Override
                 public PyObject __call__() {
