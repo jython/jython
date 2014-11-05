@@ -22,7 +22,7 @@ import java.io.InputStream;
  * be implemented under Jython.
  */
 
-public class imp {
+public class _imp {
     public static PyString __doc__ = new PyString(
         "This module provides the components needed to build your own\n"+
         "__import__ function.  Undocumented functions are obsolete.\n"

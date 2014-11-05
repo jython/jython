@@ -51,7 +51,7 @@ public class Setup
         "errno",
         "exceptions:org.python.core.exceptions",
         "gc",
-        "imp",
+        "_imp:org.python.modules._imp",
         "itertools:org.python.modules.itertools.itertools",
         "jarray",
         "jffi:org.python.modules.jffi.jffi",

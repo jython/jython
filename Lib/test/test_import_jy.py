@@ -144,11 +144,10 @@ class ImpTestCase(unittest.TestCase):
         self.assertEqual(imp.find_module('sys'), (None, 'sys', ('', '', 6)))
         self.assertEqual(imp.find_module('__builtin__'),
                          (None, '__builtin__', ('', '', 6)))
-        self.assertEqual(imp.find_module('imp'), (None, 'imp', ('', '', 6)))
 
     def test_imp_is_builtin(self):
         self.assertTrue(all(imp.is_builtin(mod)
-                            for mod in ['sys', '__builtin__', 'imp']))
+                            for mod in ['sys', '__builtin__']))
         self.assertFalse(imp.is_builtin('os'))
 
     def test_load_compiled(self):

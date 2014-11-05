@@ -36,7 +36,8 @@ public class zipimport implements ClassDictInit {
         return new PyException(ZipImportError, message);
     }
 
-    // XXX: Ideally this cache would be per PySystemState
+    // FIXME this cache should be per PySystemState, but at the very least it should also be weakly referenced!
+    // FIXME could also do this via a loading cache instead
     public static PyDictionary _zip_directory_cache = new PyDictionary();
 
     public static void classDictInit(PyObject dict) {

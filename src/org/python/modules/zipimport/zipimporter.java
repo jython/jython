@@ -235,6 +235,19 @@ public class zipimporter extends importer<PyObject> {
         return Py.None;
     }
 
+    public PyObject get_filename(String fullname) {
+        return zipimporter_get_filename(fullname);
+    }
+
+    @ExposedMethod
+    final PyObject zipimporter_get_filename(String fullname) {
+        ModuleCodeData moduleCodeData = getModuleCode(fullname);
+        if (moduleCodeData != null) {
+            return new PyString(moduleCodeData.path);
+        }
+        return Py.None;
+    }
+
     /**
      * Return the source code for the module as a string (using
      * newline characters for line endings)
