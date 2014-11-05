@@ -1262,6 +1262,10 @@ _expectations = {
         # Requires Python bytecode compilation support
         test_longexp
 
+        # Nonreliable tests
+        test_asynchat
+        test_asyncore
+
         # Tests that should work with socket-reboot, but currently hang
         test_ftplib
         test_httplib
