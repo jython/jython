@@ -8,6 +8,7 @@ import sys
 import imp
 import os.path
 from types import ModuleType
+from java.lang import IllegalArgumentException
 from org.python.core import imp as _imp, BytecodeLoader
 
 __all__ = [
@@ -21,11 +22,17 @@ __all__ = [
 # diff args to pass into our underlying imp implementation, as
 # accessed by _imp here
 
-def read_jython_code(fullname, file, filename):
-    data = _imp.readCode(filename, file, False)
-    return BytecodeLoader.makeCode(fullname + "$py", data, filename)
+def read_jython_code(fullname, stream, filename):
+    try:
+        data = _imp.readCode(filename, stream, False)
+        return BytecodeLoader.makeCode(fullname + "$py", data, filename)
+    except IllegalArgumentException:
+        return None
 
-read_code = read_jython_code
+def read_code(stream):
+    filename = stream.name
+    fullname = os.path.splitext(os.path.split(filename)[1])[0]
+    return read_jython_code(fullname, stream, filename)
 
 def simplegeneric(func):
     """Make a trivial single-dispatch generic function"""
