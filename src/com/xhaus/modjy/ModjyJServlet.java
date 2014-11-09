@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.python.core.imp;
+import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
@@ -103,6 +103,9 @@ public class ModjyJServlet extends HttpServlet {
     public void init() throws ServletException {
         try {
             Properties props = readConfiguration();
+            // We check for site packages settings before initialising the runtime
+            // https://hg.python.org/jython/rev/51b28cc2c43d
+            checkSitePackages(props);
             PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
             PySystemState systemState = new PySystemState();
             interp = new PythonInterpreter(null, systemState);
@@ -149,8 +152,9 @@ public class ModjyJServlet extends HttpServlet {
     }
 
     /**
-     * Setup the modjy environment, i.e. 1. Find the location of the modjy.jar file and add it to
-     * sys.path 2. Process the WEB-INF/lib-python directory, if it exists
+     * Setup the modjy environment, i.e.
+     *    1. Find the location of the modjy.jar file and add it to sys.path
+     *    2. Process the WEB-INF/lib-python directory, if it exists
      *
      * @param interp
      *            - The PythonInterpreter used to service requests
@@ -163,22 +167,22 @@ public class ModjyJServlet extends HttpServlet {
                                     Properties props,
                                     PySystemState systemState) throws PyException {
         processPythonLib(interp, systemState);
-        checkSitePackages(props);
     }
 
     /**
      * Check if the user has requested to initialise the jython installation "site-packages".
+     * The value defaults to true, i.e. load site packages
      *
      * @param props
      *            - The properties from which config options are found
      */
     protected void checkSitePackages(Properties props) throws PyException {
-        String loadSitePackagesParam = props.getProperty(LOAD_SITE_PACKAGES_PARAM);
         boolean loadSitePackages = true;
-        if (loadSitePackagesParam != null && loadSitePackagesParam.trim().compareTo("0") == 0)
+        String loadSitePackagesParam = props.getProperty(LOAD_SITE_PACKAGES_PARAM);
+        if (loadSitePackagesParam != null && loadSitePackagesParam.trim().compareTo("0") == 0) {
             loadSitePackages = false;
-        if (loadSitePackages)
-            imp.load("site");
+        }
+        Options.importSite = loadSitePackages;
     }
 
     /**
@@ -192,17 +196,21 @@ public class ModjyJServlet extends HttpServlet {
     protected void processPythonLib(PythonInterpreter interp, PySystemState systemState) {
         // Add the lib-python directory to sys.path
         String pythonLibPath = getServletContext().getRealPath(LIB_PYTHON);
-        if (pythonLibPath == null)
+        if (pythonLibPath == null) {
             return;
+        }
         File pythonLib = new File(pythonLibPath);
-        if (!pythonLib.exists())
+        if (!pythonLib.exists()) {
             return;
+        }
         systemState.path.append(new PyString(pythonLibPath));
         // Now check for .pth files in lib-python and process each one
         String[] libPythonContents = pythonLib.list();
-        for (String libPythonContent : libPythonContents)
-            if (libPythonContent.endsWith(PTH_FILE_EXTENSION))
+        for (String libPythonContent : libPythonContents) {
+            if (libPythonContent.endsWith(PTH_FILE_EXTENSION)) {
                 processPthFile(interp, systemState, pythonLibPath, libPythonContent);
+            }
+        }
     }
 
     /**
@@ -227,12 +235,13 @@ public class ModjyJServlet extends HttpServlet {
             String line;
             while ((line = lineReader.readLine()) != null) {
                 line = line.trim();
-                if (line.length() == 0)
+                if (line.length() == 0) {
                     continue;
-                if (line.startsWith("#"))
+                }
+                if (line.startsWith("#")) {
                     continue;
-                if (line.startsWith("import"))
-                {
+                }
+                if (line.startsWith("import")) {
                     interp.exec(line);
                     continue;
                 }
