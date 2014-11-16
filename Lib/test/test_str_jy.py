@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from test import test_support
+import java.lang
 import unittest
 
 class WrappedStrCmpTest(unittest.TestCase):
@@ -23,11 +24,17 @@ class WrappedStrCmpTest(unittest.TestCase):
         ABC = Wrapper('ABC')
         self.assertEquals(1, d[ABC])
 
-class IntToStrTest(unittest.TestCase):
+class StrConstructorTest(unittest.TestCase):
 
     def test_int_to_string_format(self):
         # 0.001 comes out as 0.0010
         self.assertEquals(str(0.001), "0.001")
+
+    def test_unicode_resistance(self):
+        # Issue 2037: prevent byte/str elements > 255
+        self.assertRaises(UnicodeEncodeError, str, java.lang.String(u"caf\xe9 noir"))
+        self.assertRaises(UnicodeEncodeError, str, java.lang.String(u"abc\u0111efgh"))
+
 
 class StringSlicingTest(unittest.TestCase):
 
@@ -165,7 +172,7 @@ class ParserTest(unittest.TestCase):
 def test_main():
     test_support.run_unittest(
         WrappedStrCmpTest,
-        IntToStrTest,
+        StrConstructorTest,
         StringSlicingTest,
         FormatTest,
         DisplayTest,

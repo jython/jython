@@ -611,8 +611,12 @@ public class PyJavaType extends PyType {
             addMethod(new PyBuiltinMethodNarrow("__repr__") {
                 @Override
                 public PyObject __call__() {
+                    /*
+                     * java.lang.Object.toString returns Unicode: preserve as a PyUnicode, then let
+                     * the repr() built-in decide how to handle it. (Also applies to __str__.)
+                     */
                     String toString = self.getJavaProxy().toString();
-                    return toString == null ? Py.EmptyString : Py.newString(toString);
+                    return toString == null ? Py.EmptyUnicode : Py.newUnicode(toString);
                 }
             });
             addMethod(new PyBuiltinMethodNarrow("__unicode__") {
