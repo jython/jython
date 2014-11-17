@@ -14,11 +14,10 @@ public class PyXRange extends PySequence {
 
     public static final PyType TYPE = PyType.fromClass(PyXRange.class);
 
-    private final int start;
-
-    private final int step;
-
-    private final int len;
+    private final long start;
+    private final long step;
+    private final long stop;
+    private final long len;
 
     public PyXRange(int ihigh) {
         this(0, ihigh, 1);
@@ -36,18 +35,19 @@ public class PyXRange extends PySequence {
         }
 
         int n;
-        if (istep > 0) {
-            n = getLenOfRange(ilow, ihigh, istep);
+        long listep = istep;
+        if (listep > 0) {
+            n = getLenOfRange(ilow, ihigh, listep);
         } else {
-            n = getLenOfRange(ihigh, ilow, -istep);
+            n = getLenOfRange(ihigh, ilow, -listep);
         }
         if (n < 0) {
             throw Py.OverflowError("xrange() result has too many items");
         }
-
         start = ilow;
         len = n;
         step = istep;
+        stop = ihigh;
     }
 
     @ExposedNew
@@ -79,16 +79,16 @@ public class PyXRange extends PySequence {
      * @param step int value (> 0)
      * @return int length of range
      */
-    static int getLenOfRange(int lo, int hi, int step) {
-        int n = 0;
+    static int getLenOfRange(long lo, long hi, long step) {
         if (lo < hi) {
             // the base difference may be > Integer.MAX_VALUE
-            long diff = (long)hi - (long)lo - 1;
-            // any long > Integer.MAX_VALUE or < Integer.MIN_VALUE gets casted to a
+            long diff = hi - lo - 1;
+            // any long > Integer.MAX_VALUE or < Integer.MIN_VALUE gets cast to a
             // negative number
-            n = (int)((diff / step) + 1);
+            return (int)((diff / step) + 1);
+        } else {
+            return 0;
         }
-        return n;
     }
 
     @Override
@@ -98,7 +98,7 @@ public class PyXRange extends PySequence {
 
     @ExposedMethod(doc = BuiltinDocs.xrange___len___doc)
     final int xrange___len__() {
-        return len;
+        return (int)len;
     }
 
     @Override
@@ -136,9 +136,20 @@ public class PyXRange extends PySequence {
 
     private final PyXRangeIter range_reverse() {
         return new PyXRangeIter(0,
-                (start + (long)(len - 1) * step),   // start
-                (long)(0 - step),                   // step (negative value)
+                (start + (len - 1) * step),   // start
+                (0 - step),                   // step (negative value)
                 len);
+    }
+
+    @ExposedMethod
+    public PyObject xrange___reduce__() {
+        return new PyTuple(getType(),
+                new PyTuple(Py.newInteger(start), Py.newInteger(stop), Py.newInteger(step)));
+    }
+
+    @Override
+    public PyObject __reduce__() {
+        return xrange___reduce__();
     }
 
     @Override
@@ -165,7 +176,10 @@ public class PyXRange extends PySequence {
 
     @Override
     public String toString() {
-        int stop = start + len * step;
+        long lstop = start + len * step;
+        if (lstop > PySystemState.maxint) { lstop = PySystemState.maxint; }
+        else if (lstop < PySystemState.minint) { lstop = PySystemState.minint; }
+        int stop = (int)lstop;
         if (start == 0 && step == 1) {
             return String.format("xrange(%d)", stop);
         } else if (step == 1) {
