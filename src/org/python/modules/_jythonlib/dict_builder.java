@@ -2,6 +2,7 @@
 package org.python.modules._jythonlib;
 
 import org.python.core.PyDictionary;
+import org.python.core.PyDictionaryDerived;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 
@@ -24,15 +25,28 @@ public class dict_builder extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(dict_builder.class);
     private final PyObject factory;
+    private final PyType dict_type;
 
     public dict_builder(PyObject factory) {
         super();
         this.factory = factory;
+	this.dict_type = null;
+    }
+
+    public dict_builder(PyObject factory, PyType dict_type) {
+	super();
+	this.factory = factory;
+	this.dict_type = dict_type;
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
         ConcurrentMap map = (ConcurrentMap) (factory.__call__().__tojava__(ConcurrentMap.class));
-        PyDictionary dict = new PyDictionary(map, true);
+	PyDictionary dict;
+	if (dict_type == null) {
+	    dict = new PyDictionary(map, true);
+	} else {
+	    dict = new PyDictionaryDerived(dict_type, map, true);
+	}
         dict.updateCommon(args, keywords, "dict");
         return dict;
     }

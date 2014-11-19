@@ -63,14 +63,14 @@ class TestWeakSet(unittest.TestCase):
     def test_new_or_init(self):
         self.assertRaises(TypeError, WeakSet, [], 2)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_len(self):
         self.assertEqual(len(self.s), len(self.d))
         self.assertEqual(len(self.fs), 1)
         del self.obj
         self.assertEqual(len(self.fs), 0)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_contains(self):
         for c in self.letters:
             self.assertEqual(c in self.s, c in self.d)
@@ -167,14 +167,14 @@ class TestWeakSet(unittest.TestCase):
         self.assertFalse(set('a').issubset('cbs'))
         self.assertFalse(set('cbs').issuperset('a'))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_lt(self):
         self.assertTrue(self.ab_weakset < self.abcde_weakset)
         self.assertFalse(self.abcde_weakset < self.def_weakset)
         self.assertFalse(self.ab_weakset < self.ab_weakset)
         self.assertFalse(WeakSet() < WeakSet())
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_gt(self):
         self.assertTrue(self.abcde_weakset > self.ab_weakset)
         self.assertFalse(self.abcde_weakset > self.def_weakset)
@@ -229,7 +229,7 @@ class TestWeakSet(unittest.TestCase):
         self.assertEqual(self.s, dup)
         self.assertNotEqual(id(self.s), id(dup))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_add(self):
         x = SomeClass('Q')
         self.s.add(x)
@@ -356,7 +356,7 @@ class TestWeakSet(unittest.TestCase):
         self.assertFalse(self.s == tuple(self.items))
         self.assertFalse(self.s == 1)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
+    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_weak_destroy_while_iterating(self):
         # Issue #7105: iterators shouldn't crash when a key is implicitly removed
         # Create new items to be sure no-one else holds a reference

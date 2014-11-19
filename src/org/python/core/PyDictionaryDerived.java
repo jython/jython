@@ -1,6 +1,7 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
+import java.util.concurrent.ConcurrentMap;
 import java.io.Serializable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.finalization.FinalizablePyObjectDerived;
@@ -59,6 +60,15 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted,Finaliz
 
     public PyDictionaryDerived(PyType subtype) {
         super(subtype);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
+    }
+
+    public PyDictionaryDerived(PyType subtype, ConcurrentMap<PyObject, PyObject> backingMap, boolean useBackingMap) {
+        super(subtype, backingMap, useBackingMap);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
         if (subtype.needsFinalizer()) {

@@ -6,6 +6,7 @@ import org.python.core.PyFloat;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.expose.ExposedType;
 
 /**
@@ -47,6 +48,7 @@ public class ProxyType extends AbstractReference {
 
     public PyObject __iter__() { return py().__iter__(); }
     public PyString __str__() { return py().__str__(); }
+    public PyUnicode __unicode__() { return py().__unicode__(); }
     public PyString __hex__() { return py().__hex__(); }
     public PyString __oct__() { return py().__oct__(); }
     public PyObject __int__() { return py().__int__(); }
@@ -60,6 +62,7 @@ public class ProxyType extends AbstractReference {
 
 
     public boolean __contains__(PyObject o) { return py().__contains__(o); }
+    public PyObject __index__() { return py().__index__(); }
 
     public PyObject __add__(PyObject o) { return py().__add__(o); }
     public PyObject __radd__(PyObject o) { return py().__radd__(o); }
@@ -71,8 +74,10 @@ public class ProxyType extends AbstractReference {
     public PyObject __rmul__(PyObject o) { return py().__rmul__(o); }
     public PyObject __imul__(PyObject o) { return py().__imul__(o); }
     public PyObject __div__(PyObject o) { return py().__div__(o); }
+    public PyObject __floordiv__(PyObject o) { return py().__floordiv__(o); }
     public PyObject __rdiv__(PyObject o) { return py().__rdiv__(o); }
     public PyObject __idiv__(PyObject o) { return py().__idiv__(o); }
+    public PyObject __ifloordiv__(PyObject o) { return py().__ifloordiv__(o); }
     public PyObject __mod__(PyObject o) { return py().__mod__(o); }
     public PyObject __rmod__(PyObject o) { return py().__rmod__(o); }
     public PyObject __imod__(PyObject o) { return py().__imod__(o); }
@@ -84,7 +89,6 @@ public class ProxyType extends AbstractReference {
     public PyObject __lshift__(PyObject o) { return py().__lshift__(o); }
     public PyObject __rlshift__(PyObject o) { return py().__rlshift__(o);}
     public PyObject __ilshift__(PyObject o) { return py().__ilshift__(o);}
-
     public PyObject __rshift__(PyObject o) { return py().__rshift__(o); }
     public PyObject __rrshift__(PyObject o) { return py().__rrshift__(o);}
     public PyObject __irshift__(PyObject o) { return py().__irshift__(o);}

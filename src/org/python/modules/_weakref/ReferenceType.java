@@ -3,8 +3,10 @@ package org.python.modules._weakref;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
+import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -57,6 +59,11 @@ public class ReferenceType extends AbstractReference {
         // Just ensure at least one arg, leaving other args alone
         ArgParser ap = parseInitArgs("__init__", args, keywords);
         ap.getPyObject(0);
+        int arglen = ap.getList(2).__len__();
+        if (arglen > 2) {
+            throw Py.TypeError(String.format("__init__ expected at most 2 arguments, got %d",
+                    arglen));
+        }
     }
 
     /**

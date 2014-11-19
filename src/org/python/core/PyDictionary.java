@@ -79,6 +79,11 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         internalMap = backingMap;
     }
 
+    public PyDictionary(PyType type, ConcurrentMap<PyObject, PyObject> backingMap, boolean useBackingMap) {
+        super(type);
+        internalMap = backingMap;
+    }
+
     /**
      * Create a new dictionary which is populated with entries the given map.
      */
