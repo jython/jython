@@ -252,7 +252,8 @@ public class BuiltinDocs {
         "x.__delattr__('name') <==> del x.name";
 
     public final static String unicode_doc = 
-        "unicode(string [, encoding[, errors]]) -> object\n" + 
+        "unicode(object='') -> unicode object\n" +
+        "unicode(string[, encoding[, errors]]) -> unicode object\n" + 
         "\n" + 
         "Create a new Unicode object from the given encoded string.\n" + 
         "encoding defaults to the current default string encoding.\n" + 
