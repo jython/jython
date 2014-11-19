@@ -12,25 +12,24 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.product", base = PyObject.class)
+@ExposedType(name = "itertools.product", base = PyObject.class, doc = product.product_doc)
 public class product extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(product.class);
     private PyIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
+    public static final String product_doc =
         "product(*iterables) --> product object\n\n" +
-            "Cartesian product of input iterables.  Equivalent to nested for-loops.\n\n" +
-            "For example, product(A, B) returns the same as:  ((x,y) for x in A for y in B).\n" +
-            "The leftmost iterators are in the outermost for-loop, so the output tuples\n" +
-            "cycle in a manner similar to an odometer (with the rightmost element changing\n" +
-            "on every iteration).\n\n" +
-            "To compute the product of an iterable with itself, specify the number\n" +
-            "of repetitions with the optional repeat keyword argument. For example,\n" +
-            "product(A, repeat=4) means the same as product(A, A, A, A).\n\n" +
-            "product('ab', range(3)) --> ('a',0) ('a',1) ('a',2) ('b',0) ('b',1) ('b',2)\n" +
-            "product((0,1), (0,1), (0,1)) --> (0,0,0) (0,0,1) (0,1,0) (0,1,1) (1,0,0) ...");
+        "Cartesian product of input iterables.  Equivalent to nested for-loops.\n\n" +
+        "For example, product(A, B) returns the same as:  ((x,y) for x in A for y in B).\n" +
+        "The leftmost iterators are in the outermost for-loop, so the output tuples\n" +
+        "cycle in a manner similar to an odometer (with the rightmost element changing\n" +
+        "on every iteration).\n\n" +
+        "To compute the product of an iterable with itself, specify the number\n" +
+        "of repetitions with the optional repeat keyword argument. For example,\n" +
+        "product(A, repeat=4) means the same as product(A, A, A, A).\n\n" +
+        "product('ab', range(3)) --> ('a',0) ('a',1) ('a',2) ('b',0) ('b',1) ('b',2)\n" +
+        "product((0,1), (0,1), (0,1)) --> (0,0,0) (0,0,1) (0,1,0) (0,1,1) (1,0,0) ...";
 
     public product() {
         super();

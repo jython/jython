@@ -12,18 +12,19 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.imap", base = PyObject.class)
+@ExposedType(name = "itertools.imap", base = PyObject.class, doc = imap.imap_doc)
 public class imap extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(imap.class);
     private PyIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "'map(func, *iterables) --> imap object\n\nMake an iterator that computes the "
-                    + "function using arguments from\neach of the iterables.\tLike map() except that it returns\n"
-                    + "an iterator instead of a list and that it stops when the shortest\niterable is exhausted "
-                    + "instead of filling in None for shorter\niterables.");
+    public static final String imap_doc =
+        "'map(func, *iterables) --> imap object\n\n" +
+        "Make an iterator that computes the function using arguments from\n" +
+        "each of the iterables.\tLike map() except that it returns\n" +
+        "an iterator instead of a list and that it stops when the shortest\n" +
+        "iterable is exhausted instead of filling in None for shorter\n" +
+        "iterables.";
 
     public imap() {
         super();

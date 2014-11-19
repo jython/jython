@@ -15,17 +15,17 @@ import org.python.expose.ExposedType;
 
 import java.util.ArrayList;
 
-@ExposedType(name = "itertools.chain", base = PyObject.class)
+@ExposedType(name = "itertools.chain", base = PyObject.class, doc = chain.chain_doc)
 public class chain extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(chain.class);
     private itertools.ItertoolsIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "chain(*iterables) --> chain object\n\nReturn a chain object "
-                    + "whose .next() method returns elements from the\nfirst iterable until it is exhausted, then elements"
-                    + " from the next\niterable, until all of the iterables are exhausted.");
+    public static final String chain_doc =
+        "chain(*iterables) --> chain object\n\n" +
+        "Return a chain object whose .next() method returns elements from the\n" +
+        "first iterable until it is exhausted, then elements from the next\n" +
+        "iterable, until all of the iterables are exhausted.";
 
     public chain() {
         super();

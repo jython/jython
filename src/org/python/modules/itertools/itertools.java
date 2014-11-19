@@ -18,7 +18,7 @@ import org.python.core.PyTuple;
  */
 public class itertools implements ClassDictInit {
 
-    public static PyString __doc__ = new PyString(
+    public static final PyString __doc__ = new PyString(
             "Functional tools for creating and using iterators.\n\nInfinite iterators:\n"
 	        + "count([n]) --> n, n+1, n+2, ...\n"
 	        + "cycle(p) --> p0, p1, ... plast, p0, p1, ...\n"

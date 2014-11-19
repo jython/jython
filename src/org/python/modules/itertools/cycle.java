@@ -13,17 +13,16 @@ import org.python.expose.ExposedType;
 import java.util.ArrayList;
 import java.util.List;
 
-@ExposedType(name = "itertools.count", base = PyObject.class)
+@ExposedType(name = "itertools.count", base = PyObject.class, doc = cycle.cycle_doc)
 public class cycle extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(cycle.class);
     private PyIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "cycle(iterable) --> cycle object\n\n" +
-            "Return elements from the iterable until it is exhausted.\n" +
-            "Then repeat the sequence indefinitely.");
+    public static final String cycle_doc =
+        "cycle(iterable) --> cycle object\n\n" +
+        "Return elements from the iterable until it is exhausted.\n" +
+        "Then repeat the sequence indefinitely.";
 
     public cycle() {
         super();

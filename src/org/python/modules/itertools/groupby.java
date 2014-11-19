@@ -14,7 +14,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.groupby", base = PyObject.class)
+@ExposedType(name = "itertools.groupby", base = PyObject.class, doc = groupby.groupby_doc)
 public class groupby extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(groupby.class);
@@ -38,10 +38,9 @@ public class groupby extends PyIterator {
         groupby___init__(iterable, keyfunc);
     }
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
+    public static final String groupby_doc =
         "groupby(iterable[, keyfunc]) -> create an iterator which returns\n" +
-            "(key, sub-iterator) grouped by each value of key(value).");
+        "(key, sub-iterator) grouped by each value of key(value).";
 
     /**
      * Creates an iterator that returns the items of the iterable for which

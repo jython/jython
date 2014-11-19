@@ -13,19 +13,20 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.izip", base = PyObject.class)
+@ExposedType(name = "itertools.izip", base = PyObject.class, doc = izip.izip_doc)
 public class izip extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(izip.class);
     private PyIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "izip(iter1 [,iter2 [...]]) --> izip object\n\nReturn an izip object "
-                    + "whose .next() method returns a tuple where\nthe i-th element comes from the i-th iterable argument.  "
-                    + "The .next()\nmethod continues until the shortest iterable in the argument sequence\nis exhausted and then it "
-                    + "raises StopIteration.  Works like the zip()\nfunction but consumes less memory by returning an iterator "
-                    + "instead of\na list.");
+    public static final String izip_doc =
+        "izip(iter1 [,iter2 [...]]) --> izip object\n\n" +
+        "Return an izip object whose .next() method returns a tuple where\n" +
+        "the i-th element comes from the i-th iterable argument.  The .next()\n" +
+        "method continues until the shortest iterable in the argument sequence\n" +
+        "is exhausted and then it raises StopIteration.  Works like the zip()\n" +
+        "function but consumes less memory by returning an iterator instead of\n" +
+        "a list.";
 
     public izip() {
         super();

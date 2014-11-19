@@ -12,17 +12,16 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.starmap", base = PyObject.class)
+@ExposedType(name = "itertools.starmap", base = PyObject.class, doc = starmap.starmap_doc)
 public class starmap extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(starmap.class);
     private PyIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-        "starmap(function, sequence) --> starmap object\n\nReturn an "
-            + "iterator whose values are returned from the function evaluated\nwith an argument tuple taken from the "
-            + "given sequence.");
+    public static final String starmap_doc =
+        "starmap(function, sequence) --> starmap object\n\n" +
+        "Return an iterator whose values are returned from the function evaluated\n" +
+        "with an argument tuple taken from the given sequence.";
 
     public starmap() {
         super();

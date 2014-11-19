@@ -10,7 +10,8 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.ifilterfalse", base = PyObject.class)
+@ExposedType(name = "itertools.ifilterfalse", base = PyObject.class,
+    doc = ifilterfalse.ifilterfalse_doc)
 public class ifilterfalse extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(ifilterfalse.class);
@@ -29,11 +30,10 @@ public class ifilterfalse extends PyIterator {
         ifilterfalse___init__(predicate, iterable);
     }
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "'ifilterfalse(function or None, sequence) --> ifilterfalse object\n\n"
-                    + "Return those items of sequence for which function(item) is false.\nIf function is None, "
-                    + "return the items that are false.'");
+    public static final String ifilterfalse_doc =
+        "'ifilterfalse(function or None, sequence) --> ifilterfalse object\n\n" +
+        "Return those items of sequence for which function(item) is false.\n" +
+        "If function is None, return the items that are false.'";
 
     /**
      * Creates an iterator that returns the items of the iterable for which

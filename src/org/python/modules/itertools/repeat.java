@@ -13,7 +13,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.repeat", base = PyObject.class)
+@ExposedType(name = "itertools.repeat", base = PyObject.class, doc = repeat.repeat_doc)
 public class repeat extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(repeat.class);
@@ -21,10 +21,10 @@ public class repeat extends PyIterator {
     private PyObject object;
     private int counter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-        "'repeat(element [,times]) -> create an iterator which returns the element\n"
-            + "for the specified number of times.  If not specified, returns the element\nendlessly.");
+    public static final String repeat_doc =
+        "'repeat(element [,times]) -> create an iterator which returns the element\n" +
+        "for the specified number of times.  If not specified, returns the element\n" +
+        "endlessly.";
 
     public repeat() {
         super();

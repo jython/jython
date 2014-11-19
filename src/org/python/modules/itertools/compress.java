@@ -12,18 +12,17 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "itertools.compress", base = PyObject.class)
+@ExposedType(name = "itertools.compress", base = PyObject.class, doc = compress.compress_doc)
 public class compress extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(compress.class);
     private itertools.ItertoolsIterator iter;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
-            "compress(data, selectors) --> iterator over selected data\n\n" +
-                    "Return data elements corresponding to true selector elements.\n" +
-                    "Forms a shorter iterator from selected data elements using the\n" +
-                    "selectors to choose the data elements.");
+    public static final String compress_doc =
+        "compress(data, selectors) --> iterator over selected data\n\n" +
+        "Return data elements corresponding to true selector elements.\n" +
+        "Forms a shorter iterator from selected data elements using the\n" +
+        "selectors to choose the data elements.";
 
     public compress() {
         super();

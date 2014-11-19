@@ -9,15 +9,12 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
-import java.util.ArrayList;
-
-@ExposedType(name = "itertools.count", base = PyObject.class)
+@ExposedType(name = "itertools.count", base = PyObject.class, doc = count.count_doc)
 public class count extends PyIterator {
 
     public static final PyType TYPE = PyType.fromClass(count.class);
@@ -25,8 +22,7 @@ public class count extends PyIterator {
     private int counter;
     private int stepper;
 
-    @ExposedGet
-    public static PyString __doc__ = new PyString(
+    public static final String count_doc =
         "count(start=0, step=1) --> count object\n\n" +
         "Return a count object whose .next() method returns consecutive values.\n" +
         "  Equivalent to:\n" +
@@ -35,7 +31,7 @@ public class count extends PyIterator {
         "      x = firstval\n" +
         "      while 1:\n" +
         "          yield x\n" +
-        "          x += step\n");
+        "          x += step\n";
 
     public count(PyType subType) {
         super(subType);
