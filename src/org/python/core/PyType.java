@@ -573,16 +573,19 @@ public class PyType extends PyObject implements Serializable {
      * @return a boolean indicating whether the type implements __del__
      */
     public final boolean needsFinalizer() {
-    	//It might be sluggish to assume that if a finalizer was needed
-    	//once, this would never change. However since an expensive
-    	//FinalizeTrigger was created anyway, it won't hurt to keep it.
-    	//Whether there actually is a __del__ in the dict will be checked
-    	//again when the finalizer runs.
-    	if (needs_finalizer) return true;
-    	else {
-    		needs_finalizer = lookup_mro("__del__") != null;
-    		return needs_finalizer;
-    	}
+        /*
+         * It might be sluggish to assume that if a finalizer was needed
+         * once, this would never change. However since an expensive
+         * FinalizeTrigger was created anyway, it won't hurt to keep it.
+         * Whether there actually is a __del__ in the dict, will be checked
+         * again when the finalizer runs.
+         */
+        if (needs_finalizer) {
+            return true;
+        } else {
+            needs_finalizer = lookup_mro("__del__") != null;
+            return needs_finalizer;
+        }
     }
 
     /**
@@ -1989,7 +1992,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * A thead safe, non-blocking version of Armin Rigo's mro cache.
+     * A thread safe, non-blocking version of Armin Rigo's mro cache.
      */
     static class MethodCache {
 

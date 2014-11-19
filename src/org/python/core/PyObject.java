@@ -109,7 +109,7 @@ public class PyObject implements Serializable {
      * <p>
      * Note that this empty finalizer implementation is optimized away by the JVM
      * (See {@link http://www.javaspecialists.eu/archive/Issue170.html}).
-     * So {@code PyObject}s are not expensively treaded as finalizable objects by the
+     * So {@code PyObject}s are not expensively treated as finalizable objects by the
      * GC. Its only intention is to prevent subclasses from having Java-style finalizers.
      * </p>
      */
@@ -239,10 +239,14 @@ public class PyObject implements Serializable {
         return __repr__();
     }
 
+    /**
+     * PyObjects that implement
+     * <code>org.python.core.finalization.HasFinalizeTrigger</code>
+     * shall implement this method via:<br>
+     * <code>FinalizeTrigger.ensureFinalizer(this);</code>
+     **/
     @ExposedMethod
     public void __ensure_finalizer__() {
-        //PyObjects that implement HasFinalizeTrigger shall implement this method via:
-    	//FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyUnicode __unicode__() {
