@@ -18,15 +18,13 @@ import org.python.expose.ExposedType;
 /**
  * The Python CSV Dialect type.
  */
-@ExposedType(name = "_csv.Dialect")
+@ExposedType(name = "_csv.Dialect", doc = PyDialect.Dialect_doc)
 public class PyDialect extends PyObject {
-
     public static final PyType TYPE = PyType.fromClass(PyDialect.class);
-
-    public PyString __doc__ = Py.newString(
-        "CSV dialect\n" +
-        "\n" +
-        "The Dialect type records CSV parsing and generation options.\n");
+    public static final String Dialect_doc =
+            "CSV dialect\n" +
+            "\n" +
+            "The Dialect type records CSV parsing and generation options.\n";
 
     /** Whether " is represented by "". */
     @ExposedGet
