@@ -231,9 +231,6 @@ public abstract class BaseSet extends PyObject implements Set {
 
             @Override
             public PyObject __iternext__() {
-                if (size != size()) {
-                    throw Py.RuntimeError("set changed size during iteration");
-                }
                 if (iterator.hasNext()) {
                     return iterator.next();
                 }
@@ -481,7 +478,7 @@ public abstract class BaseSet extends PyObject implements Set {
     }
 
     /**
-     * Create a new <et of type from iterable.
+     * Create a new set of type from iterable.
      *
      * @param type a set type
      * @param iterable an iterable or null
@@ -494,8 +491,7 @@ public abstract class BaseSet extends PyObject implements Set {
         } else if (type == PyFrozenSet.TYPE) {
             so = new PyFrozenSet(iterable);
         } else if (Py.isSubClass(type, PySet.TYPE)) {
-            so = new PySetDerived(type);
-            so._update(iterable);
+            so = (BaseSet)(type.__call__(iterable == null ? Py.EmptyTuple : iterable));
         } else {
             so = new PyFrozenSetDerived(type, iterable);
         }

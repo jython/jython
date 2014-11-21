@@ -67,15 +67,6 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted,Finaliz
         }
     }
 
-    public PyDictionaryDerived(PyType subtype, ConcurrentMap<PyObject, PyObject> backingMap, boolean useBackingMap) {
-        super(subtype, backingMap, useBackingMap);
-        slots=new PyObject[subtype.getNumSlots()];
-        dict=subtype.instDict();
-        if (subtype.needsFinalizer()) {
-            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
-        }
-    }
-
     public PyString __str__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__str__");
@@ -1147,6 +1138,15 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted,Finaliz
             return((PyTuple)res).getArray();
         }
         return super.__coerce_ex__(o);
+    }
+
+    public PyDictionaryDerived(PyType subtype,ConcurrentMap backingMap,boolean useBackingMap) {
+        super(subtype,backingMap,useBackingMap);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
     }
 
     public String toString() {

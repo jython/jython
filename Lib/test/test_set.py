@@ -310,7 +310,7 @@ class TestJointOps(unittest.TestCase):
             fo.close()
             test_support.unlink(test_support.TESTFN)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: Not yet sure how to fix this")
+    @unittest.skipIf(test_support.is_jython, "Not meaningful for Jython")
     def test_do_not_rehash_dict_keys(self):
         n = 10
         d = dict.fromkeys(map(HashCountingInt, xrange(n)))
@@ -917,6 +917,7 @@ class TestExceptionPropagation(unittest.TestCase):
         set('abc')
         set(gooditer())
 
+    @unittest.skipIf(test_support.is_jython, "Jython provides stronger support for concurrent updates")
     def test_changingSizeWhileIterating(self):
         s = set([1,2,3])
         try:

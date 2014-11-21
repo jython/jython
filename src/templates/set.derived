@@ -2,3 +2,14 @@ base_class: PySet
 want_dict: true
 ctr:
 incl: object
+import: java.util.Set
+rest:
+    public PySetDerived(PyType subtype, Set backing_set, PyObject data) {
+        super(subtype, backing_set, data);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
+    }
+

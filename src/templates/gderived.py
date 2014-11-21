@@ -25,6 +25,8 @@ import org.python.core.finalization.FinalizablePyObjectDerived;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")
 
+added_imports = []
+
 # os.path.samefile unavailable on Windows before Python v3.2
 if hasattr(os.path, "samefile"):
     # Good: available on this platform
@@ -43,6 +45,7 @@ class Gen:
                       'unary1',
                       'binary', 'ibinary',
                       'rest',
+                      'import',
                       'no_toString'
                       ]
 
@@ -81,6 +84,10 @@ class Gen:
             directives.execute(directives.load(os.path.join(scriptdir, 'gderived-defs')), aux_gen)
             self.auxiliary = aux_gen.global_bindings
         return self.auxiliary[name]
+
+    def dire_import(self, name, parm, body):
+        global added_imports
+        added_imports = [x.strip() for x in parm.split(",")]
 
     def dire_require(self, name, parm, body):
         if body is not None:
@@ -217,6 +224,7 @@ def process(fn, outfile, lazy=False):
     directives.execute(directives.load(fn), gen)
     result = gen.generate()
     result = hack_derived_header(outfile, result)
+    result = add_imports(outfile, result)
     print >> open(outfile, 'w'), result
     #gen.debug()
 
@@ -245,6 +253,23 @@ def hack_derived_header(fn, result):
     
     return '\n'.join(result)
 
+def add_imports(fn, result):
+    if not added_imports:
+        return result
+    print 'Adding imports for: %s' % fn
+    result = result.splitlines()
+
+    def f():
+        added = False
+        for line in result:
+            if not added and line.startswith("import "):
+                added = True
+                for addition in added_imports:
+                    yield "import %s;" % (addition,)
+            yield line
+    
+    return '\n'.join(f())
+        
 
 if __name__ == '__main__':
     from gexpose import load_mappings, usage

@@ -2,3 +2,13 @@ base_class: PyDictionary
 want_dict: true
 ctr:
 incl: object
+import: java.util.concurrent.ConcurrentMap
+rest:
+    public PyDictionaryDerived(PyType subtype, ConcurrentMap backingMap, boolean useBackingMap) {
+        super(subtype, backingMap, useBackingMap);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
+    }

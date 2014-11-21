@@ -15,6 +15,8 @@ public class _jythonlib implements ClassDictInit {
         dict.__setitem__("__doc__", __doc__);
         dict.__setitem__("__module__", new PyString("_jythonlib"));
         dict.__setitem__("dict_builder", dict_builder.TYPE);
+        dict.__setitem__("set_builder", set_builder.TYPE);
+
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);

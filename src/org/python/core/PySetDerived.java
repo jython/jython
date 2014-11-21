@@ -1,6 +1,7 @@
 /* Generated file, do not modify.  See jython/src/templates/gderived.py. */
 package org.python.core;
 
+import java.util.Set;
 import java.io.Serializable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.finalization.FinalizablePyObjectDerived;
@@ -1137,6 +1138,15 @@ public class PySetDerived extends PySet implements Slotted,FinalizablePyObjectDe
             return((PyTuple)res).getArray();
         }
         return super.__coerce_ex__(o);
+    }
+
+    public PySetDerived(PyType subtype,Set backing_set,PyObject data) {
+        super(subtype,backing_set,data);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+        if (subtype.needsFinalizer()) {
+            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        }
     }
 
     public String toString() {

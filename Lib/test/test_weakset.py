@@ -1,5 +1,18 @@
+# Jython specific notes:
+#
+# 1. Deletion (del) or reliance on going out of scope must be followed
+#    by a gc.collect(); use extra_collect() if a callback will be
+#    tested as well.
+#
+# 2. Avoid eventual consistency issues in the length computation by
+#    computing the len of the list of the WeakSet
+#
+# 3. Jython can weakly refer to any object, unlike CPython, so don't
+#    test for nonexistent TypeErrors
+
 import unittest
 from test import test_support
+from test.test_weakref import extra_collect
 from weakref import proxy, ref, WeakSet
 import operator
 import copy
@@ -29,6 +42,9 @@ class SomeClass(object):
 
     def __hash__(self):
         return hash((SomeClass, self.value))
+
+    def __repr__(self):
+        return "SC(%s,%s)" % (self.value, id(self.value))
 
 class RefCycle(object):
     def __init__(self):
@@ -63,14 +79,13 @@ class TestWeakSet(unittest.TestCase):
     def test_new_or_init(self):
         self.assertRaises(TypeError, WeakSet, [], 2)
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_len(self):
         self.assertEqual(len(self.s), len(self.d))
         self.assertEqual(len(self.fs), 1)
         del self.obj
+        gc.collect()
         self.assertEqual(len(self.fs), 0)
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_contains(self):
         for c in self.letters:
             self.assertEqual(c in self.s, c in self.d)
@@ -78,6 +93,7 @@ class TestWeakSet(unittest.TestCase):
         self.assertNotIn(1, self.s)
         self.assertIn(self.obj, self.fs)
         del self.obj
+        gc.collect()
         self.assertNotIn(SomeClass('F'), self.fs)
 
     def test_union(self):
@@ -92,10 +108,11 @@ class TestWeakSet(unittest.TestCase):
             c = C(self.items2)
             self.assertEqual(self.s.union(c), x)
             del c
-        self.assertEqual(len(u), len(self.items) + len(self.items2))
+            gc.collect()
+        self.assertEqual(len(list(u)), len(list(self.items)) + len(list(self.items2)))
         self.items2.pop()
         gc.collect()
-        self.assertEqual(len(u), len(self.items) + len(self.items2))
+        self.assertEqual(len(list(u)), len(list(self.items)) + len(list(self.items2)))
 
     def test_or(self):
         i = self.s.union(self.items2)
@@ -115,7 +132,7 @@ class TestWeakSet(unittest.TestCase):
         self.assertEqual(len(i), len(self.items2))
         self.items2.pop()
         gc.collect()
-        self.assertEqual(len(i), len(self.items2))
+        self.assertEqual(len(list(i)), len(list(self.items2)))
 
     def test_isdisjoint(self):
         self.assertTrue(self.s.isdisjoint(WeakSet(self.items2)))
@@ -149,7 +166,7 @@ class TestWeakSet(unittest.TestCase):
         self.assertEqual(len(i), len(self.items) + len(self.items2))
         self.items2.pop()
         gc.collect()
-        self.assertEqual(len(i), len(self.items) + len(self.items2))
+        self.assertEqual(len(list(i)), len(list(self.items)) + len(list(self.items2)))
 
     def test_xor(self):
         i = self.s.symmetric_difference(self.items2)
@@ -167,14 +184,12 @@ class TestWeakSet(unittest.TestCase):
         self.assertFalse(set('a').issubset('cbs'))
         self.assertFalse(set('cbs').issuperset('a'))
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_lt(self):
         self.assertTrue(self.ab_weakset < self.abcde_weakset)
         self.assertFalse(self.abcde_weakset < self.def_weakset)
         self.assertFalse(self.ab_weakset < self.ab_weakset)
         self.assertFalse(WeakSet() < WeakSet())
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_gt(self):
         self.assertTrue(self.abcde_weakset > self.ab_weakset)
         self.assertFalse(self.abcde_weakset > self.def_weakset)
@@ -229,7 +244,6 @@ class TestWeakSet(unittest.TestCase):
         self.assertEqual(self.s, dup)
         self.assertNotEqual(id(self.s), id(dup))
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_add(self):
         x = SomeClass('Q')
         self.s.add(x)
@@ -237,25 +251,29 @@ class TestWeakSet(unittest.TestCase):
         dup = self.s.copy()
         self.s.add(x)
         self.assertEqual(self.s, dup)
-        self.assertRaises(TypeError, self.s.add, [])
+        if not test_support.is_jython:  # Jython/JVM can weakly reference list and other objects
+            self.assertRaises(TypeError, self.s.add, [])
         self.fs.add(Foo())
-        self.assertTrue(len(self.fs) == 1)
+        gc.collect()  # CPython assumes Foo() went out of scope and was collected, so ensure the same
+        self.assertEqual(len(list(self.fs)), 1)
         self.fs.add(self.obj)
-        self.assertTrue(len(self.fs) == 1)
+        self.assertEqual(len(list(self.fs)), 1)
 
     def test_remove(self):
         x = SomeClass('a')
         self.s.remove(x)
         self.assertNotIn(x, self.s)
         self.assertRaises(KeyError, self.s.remove, x)
-        self.assertRaises(TypeError, self.s.remove, [])
+        if not test_support.is_jython:  # Jython/JVM can weakly reference list and other objects
+            self.assertRaises(TypeError, self.s.remove, [])
 
     def test_discard(self):
         a, q = SomeClass('a'), SomeClass('Q')
         self.s.discard(a)
         self.assertNotIn(a, self.s)
         self.s.discard(q)
-        self.assertRaises(TypeError, self.s.discard, [])
+        if not test_support.is_jython:  # Jython/JVM can weakly reference list and other objects
+            self.assertRaises(TypeError, self.s.discard, [])
 
     def test_pop(self):
         for i in range(len(self.s)):
@@ -306,8 +324,9 @@ class TestWeakSet(unittest.TestCase):
                 self.assertIn(c, self.s)
             else:
                 self.assertNotIn(c, self.s)
-        self.assertRaises(TypeError, self.s.difference_update, [[]])
-        self.assertRaises(TypeError, self.s.symmetric_difference_update, [[]])
+        if not test_support.is_jython:  # Jython/JVM can weakly reference list and other objects
+            self.assertRaises(TypeError, self.s.difference_update, [[]])
+            self.assertRaises(TypeError, self.s.symmetric_difference_update, [[]])
 
     def test_isub(self):
         self.s -= set(self.items2)
@@ -348,15 +367,17 @@ class TestWeakSet(unittest.TestCase):
         self.assertEqual(t, WeakSet())
 
     def test_eq(self):
-        # issue 5964
-        self.assertTrue(self.s == self.s)
-        self.assertTrue(self.s == WeakSet(self.items))
-        self.assertFalse(self.s == set(self.items))
-        self.assertFalse(self.s == list(self.items))
-        self.assertFalse(self.s == tuple(self.items))
-        self.assertFalse(self.s == 1)
+        # issue 5964 (http://bugs.python.org/issue5964)
+        self.assertEqual(self.s, self.s)
+        self.assertEqual(self.s, WeakSet(self.items))
+        # Jython diverges here in the next test because it constructs
+        # WeakSet as a subclass of set; this seems to be the proper
+        # thing to do given what is the typical comparison
+        self.assertEqual(self.s, set(self.items))
+        self.assertNotEqual(self.s, list(self.items))
+        self.assertNotEqual(self.s, tuple(self.items))
+        self.assertNotEqual(self.s, 1)
 
-    #@unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_weak_destroy_while_iterating(self):
         # Issue #7105: iterators shouldn't crash when a key is implicitly removed
         # Create new items to be sure no-one else holds a reference
@@ -370,6 +391,7 @@ class TestWeakSet(unittest.TestCase):
         # We have removed either the first consumed items, or another one
         self.assertIn(len(list(it)), [len(items), len(items) - 1])
         del it
+        gc.collect()
         # The removal has been committed
         self.assertEqual(len(s), len(items))
 
@@ -410,6 +432,7 @@ class TestWeakSet(unittest.TestCase):
         items = [RefCycle() for i in range(N)]
         s = WeakSet(items)
         del items
+        gc.collect()
         it = iter(s)
         try:
             next(it)

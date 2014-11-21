@@ -2,6 +2,7 @@ package org.python.core;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -32,6 +33,14 @@ public class PySet extends BaseSet {
 
     public PySet(PyObject[] data) {
         super(TYPE, _update(Generic.<PyObject>concurrentSet(), data));
+    }
+
+    public PySet(Set backing_set, PyObject data) {
+        super(TYPE, _update(backing_set, data));
+    }
+
+    public PySet(PyType type, Set backing_set, PyObject data) {
+        super(type, _update(backing_set, data));
     }
 
     @ExposedNew
