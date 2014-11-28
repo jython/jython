@@ -13,8 +13,11 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
-@ExposedType(name = "itertools.tee", base = PyObject.class, isBaseType = false)
+@ExposedType(name = "itertools.tee", base = PyObject.class,
+    isBaseType = false, doc = PyTeeIterator.tee_doc)
 public class PyTeeIterator extends PyIterator {
+
+    public static final String tee_doc = "Iterator wrapped to make it copyable";
 
     private static class PyTeeData {
         private PyObject iterator;

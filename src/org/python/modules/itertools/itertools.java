@@ -19,31 +19,31 @@ import org.python.core.PyTuple;
 public class itertools implements ClassDictInit {
 
     public static final PyString __doc__ = new PyString(
-            "Functional tools for creating and using iterators.\n\nInfinite iterators:\n"
-	        + "count([n]) --> n, n+1, n+2, ...\n"
-	        + "cycle(p) --> p0, p1, ... plast, p0, p1, ...\n"
-	        + "repeat(elem [,n]) --> elem, elem, elem, ... endlessly or up to n times\n\n"
-	    
-	        + "Iterators terminating on the shortest input sequence:\n"
-	        + "chain(p, q, ...) --> p0, p1, ... plast, q0, q1, ...\n"
-	        + "compress(data, selectors) --> (d[0] if s[0]), (d[1] if s[1]), ...\n"
-	        + "dropwhile(pred, seq) --> seq[n], seq[n+1], starting when pred fails\n"
-	        + "groupby(iterable[, keyfunc]) --> sub-iterators grouped by value of keyfunc(v)\n"
-	        + "ifilter(pred, seq) --> elements of seq where pred(elem) is True\n"
-	        + "ifilterfalse(pred, seq) --> elements of seq where pred(elem) is False\n"
-	        + "islice(seq, [start,] stop [, step]) --> elements from seq[start:stop:step]\n"
-	        + "imap(fun, p, q, ...) --> fun(p0, q0), fun(p1, q1), ...\n"
-	        + "starmap(fun, seq) --> fun(*seq[0]), fun(*seq[1]), ...\n"
-	        + "tee(it, n=2) --> (it1, it2 , ... itn) splits one iterator into n\n"
-	        + "takewhile(pred, seq) --> seq[0], seq[1], until pred fails\n"
-	        + "izip(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n"
-	        + "izip_longest(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n\n"
+            "Functional tools for creating and using iterators.\n\nInfinite iterators:\n" +
+            "count([n]) --> n, n+1, n+2, ...\n" +
+            "cycle(p) --> p0, p1, ... plast, p0, p1, ...\n" +
+            "repeat(elem [,n]) --> elem, elem, elem, ... endlessly or up to n times\n\n" +
+        
+            "Iterators terminating on the shortest input sequence:\n" +
+            "chain(p, q, ...) --> p0, p1, ... plast, q0, q1, ...\n" +
+            "compress(data, selectors) --> (d[0] if s[0]), (d[1] if s[1]), ...\n" +
+            "dropwhile(pred, seq) --> seq[n], seq[n+1], starting when pred fails\n" +
+            "groupby(iterable[, keyfunc]) --> sub-iterators grouped by value of keyfunc(v)\n" +
+            "ifilter(pred, seq) --> elements of seq where pred(elem) is True\n" +
+            "ifilterfalse(pred, seq) --> elements of seq where pred(elem) is False\n" +
+            "islice(seq, [start,] stop [, step]) --> elements from seq[start:stop:step]\n" +
+            "imap(fun, p, q, ...) --> fun(p0, q0), fun(p1, q1), ...\n" +
+            "starmap(fun, seq) --> fun(*seq[0]), fun(*seq[1]), ...\n" +
+            "tee(it, n=2) --> (it1, it2 , ... itn) splits one iterator into n\n" +
+            "takewhile(pred, seq) --> seq[0], seq[1], until pred fails\n" +
+            "izip(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n" +
+            "izip_longest(p, q, ...) --> (p[0], q[0]), (p[1], q[1]), ...\n\n" +
 
-	        + "Combinatoric generators:\n"
-	        + "product(p, q, ... [repeat=1]) --> cartesian product\n"
-	        + "permutations(p[, r])\n"
-	        + "combinations(p, r)\n"
-	        + "combinations_with_replacement(p, r)");
+            "Combinatoric generators:\n" +
+            "product(p, q, ... [repeat=1]) --> cartesian product\n" +
+            "permutations(p[, r])\n" +
+            "combinations(p, r)\n" +
+            "combinations_with_replacement(p, r)");
 
     /**
      * Iterator base class used by most methods.
@@ -98,14 +98,6 @@ public class itertools implements ClassDictInit {
         dict.__setitem__("initClassExceptions", null);
     }
 
-    public static PyString __doc__islice = new PyString(
-            "islice(iterable, [start,] stop [, step]) --> islice object\n"
-                    + "\nReturn an iterator whose next() method returns selected values from an\n"
-                    + "iterable.  If start is specified, will skip all preceding elements;\notherwise, start defaults to zero."
-                    + "Step defaults to one.  If\nspecified as another value, step determines how manyvalues are \n"
-                    + "skipped between successive calls.  Works like a slice() on a list\nbut returns an iterator.");
-
-    
     static int py2int(PyObject obj, int defaultValue, String msg) {
         if (obj instanceof PyNone) {
             return defaultValue;

@@ -32,7 +32,7 @@ public class takewhile extends PyIterator {
 
     public static final String takewhile_doc =
         "takewhile(predicate, iterable) --> takewhile object\n\n" +
-        "Return successive entries from an iterable as long as the \n" +
+        "Return successive entries from an iterable as long as the\n" +
         "predicate evaluates to true for each entry.";
 
     /**

@@ -16,8 +16,14 @@ import org.python.expose.ExposedGet;
  *
  * Analogous to CPython's _csv.c::WriterObj struct.
  */
-@ExposedType(name = "_csv.writer")
+@ExposedType(name = "_csv.writer", doc = PyWriter.writer_doc)
 public class PyWriter extends PyObject {
+
+    public static final String writer_doc =
+    "CSV writer\n" +
+    "\n" +
+    "Writer objects are responsible for generating tabular data\n" +
+    "in CSV format from sequence input.\n";
 
     public static final PyType TYPE = PyType.fromClass(PyWriter.class);
 
@@ -131,14 +137,14 @@ public class PyWriter extends PyObject {
             } else if (field == Py.None) {
                 append_ok = join_append("", len == 1);
             } else {
-            	
+                
                 PyObject str;
                 //XXX: in 3.x this check can go away and we can just always use
                 //     __str__
                 if (field.getClass() == PyFloat.class) {
-                	str = field.__repr__();
+                    str = field.__repr__();
                 } else {
-                	str = field.__str__();
+                    str = field.__str__();
                 }
 
                 if (str == null) {
