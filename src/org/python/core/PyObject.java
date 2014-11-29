@@ -110,7 +110,8 @@ public class PyObject implements Serializable {
      * Note that this empty finalizer implementation is optimized away by the JVM
      * (See {@link http://www.javaspecialists.eu/archive/Issue170.html}).
      * So {@code PyObject}s are not expensively treated as finalizable objects by the
-     * GC. Its only intention is to prevent subclasses from having Java-style finalizers.
+     * Java-GC. Its single intention is to prevent subclasses from having Java-style
+     * finalizers.
      * </p>
      */
     protected final void finalize() throws Throwable {}
