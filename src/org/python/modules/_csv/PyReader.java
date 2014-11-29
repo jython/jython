@@ -1,7 +1,6 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules._csv;
 
-import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;

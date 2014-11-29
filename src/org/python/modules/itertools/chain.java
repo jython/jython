@@ -4,16 +4,12 @@ package org.python.modules.itertools;
 import org.python.core.ArgParser;
 import org.python.core.PyIterator;
 import org.python.core.PyObject;
-import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.expose.ExposedClassMethod;
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
-
-import java.util.ArrayList;
 
 @ExposedType(name = "itertools.chain", base = PyObject.class, doc = chain.chain_doc)
 public class chain extends PyIterator {
