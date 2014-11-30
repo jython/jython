@@ -42,10 +42,19 @@ public class PyString extends PyBaseString implements BufferProtocol {
         this(TYPE, "");
     }
 
+    /**
+     * Fundamental constructor for <code>PyString</code> objects when the client provides a Java
+     * <code>String</code>, necessitating that we range check the characters.
+     *
+     * @param subType the actual type being constructed
+     * @param string a Java String to be wrapped
+     */
     public PyString(PyType subType, String string) {
         super(subType);
         if (string == null) {
             throw new IllegalArgumentException("Cannot create PyString from null!");
+        } else if (!isBytes(string)) {
+            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
         }
         this.string = string;
     }
@@ -60,6 +69,40 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     PyString(StringBuilder buffer) {
         this(TYPE, new String(buffer));
+    }
+
+    /**
+     * Determine whether a string consists entirely of characters in the range 0 to 255. Only such
+     * characters are allowed in the <code>PyString</code> (<code>str</code>) type, when it is not a
+     * {@link PyUnicode}.
+     *
+     * @return true if and only if every character has a code less than 256
+     */
+    private static boolean isBytes(String s) {
+        int k = s.length();
+        if (k == 0) {
+            return true;
+        } else {
+            // Bitwise-or the character codes together in order to test once.
+            char c = 0;
+            // Blocks of 8 to reduce loop tests
+            while (k > 8) {
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+                c |= s.charAt(--k);
+            }
+            // Now the rest
+            while (k > 0) {
+                c |= s.charAt(--k);
+            }
+            // We require there to be no bits set from 0x100 upwards
+            return c < 0x100;
+        }
     }
 
     /**
@@ -88,16 +131,25 @@ public class PyString extends PyBaseString implements BufferProtocol {
             String[] keywords) {
         ArgParser ap = new ArgParser("str", args, keywords, new String[] {"object"}, 0);
         PyObject S = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            if (S == null) {
-                return new PyString("");
-            }
-            return new PyString(S.__str__().toString());
+        // Get the textual representation of the object into str/bytes form
+        String str;
+        if (S == null) {
+            str = "";
         } else {
-            if (S == null) {
-                return new PyStringDerived(subtype, "");
+            // Let the object tell us its representation: this may be str or unicode.
+            S = S.__str__();
+            if (S instanceof PyUnicode) {
+                // Encoding will raise UnicodeEncodeError if not 7-bit clean.
+                str = codecs.encode((PyUnicode)S, null, null);
+            } else {
+                // Must be str/bytes, and should be 8-bit clean already.
+                str = S.toString();
             }
-            return new PyStringDerived(subtype, S.__str__().toString());
+        }
+        if (new_.for_type == subtype) {
+            return new PyString(str);
+        } else {
+            return new PyStringDerived(subtype, str);
         }
     }
 
@@ -4606,7 +4658,7 @@ final class StringFormatter {
 
                 default:
                     throw Py.ValueError("unsupported format character '"
-                            + codecs.encode(Py.newString(spec.type), null, "replace") + "' (0x"
+                            + codecs.encode(Py.newUnicode(spec.type), null, "replace") + "' (0x"
                             + Integer.toHexString(spec.type) + ") at index " + (index - 1));
             }
 

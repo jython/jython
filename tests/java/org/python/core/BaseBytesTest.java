@@ -304,22 +304,18 @@ public class BaseBytesTest extends TestCase {
         // Need interpreter for exceptions to be formed properly
         interp = new PythonInterpreter();
         // A scary set of objects
-        final PyObject[] brantub = {Py.None,
-                                    new PyInteger(-1),
-                                    new PyLong(0x80000000L),
-                                    new PyString("\u00A0\u0100\u00A2\u00A3\u00A4"),
-                                    new PyString("\u00A0\u00A0\u1000\u00A3\u00A4"),
-                                    new PyXRange(3, -2, -1),
-                                    new PyXRange(250, 257)};
+        final PyObject[] brantub = {Py.None, new PyInteger(-1), //
+                new PyLong(0x80000000L), //
+                new PyXRange(3, -2, -1), //
+                new PyXRange(250, 257) //
+                };
         // The PyException types we should obtain
         final PyObject[] boobyPrize = {Py.TypeError, // None
-                                       Py.ValueError, // -1
-                                       Py.OverflowError, // 0x80000000L
-                                       Py.ValueError, // \u0100 byte
-                                       Py.ValueError, // \u1000 byte
-                                       Py.ValueError, // -1 in iterable
-                                       Py.ValueError // 256 in iterable
-        };
+                Py.ValueError, // -1
+                Py.OverflowError, // 0x80000000L
+                Py.ValueError, // -1 in iterable
+                Py.ValueError // 256 in iterable
+                };
         // Work down the lists
         for (int dip = 0; dip < brantub.length; dip++) {
             PyObject aRef = boobyPrize[dip];

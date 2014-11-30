@@ -1652,7 +1652,7 @@ public final class Py {
 
     static {
         for (char j = 0; j < 256; j++) {
-            letters[j] = new PyString(new Character(j).toString());
+            letters[j] = new PyString(j);
         }
     }
 
@@ -1667,11 +1667,8 @@ public final class Py {
     static final PyString makeCharacter(int codepoint, boolean toUnicode) {
         if (toUnicode) {
             return new PyUnicode(codepoint);
-        } else if (codepoint > 65536) {
-            throw new IllegalArgumentException(String.format("Codepoint > 65536 (%d) requires "
-                                                             + "toUnicode argument", codepoint));
-        } else if (codepoint > 256) {
-            return new PyString((char)codepoint);
+        } else if (codepoint > 255) {
+            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
         }
         return letters[codepoint];
     }
