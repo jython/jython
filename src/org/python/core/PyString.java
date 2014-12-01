@@ -758,12 +758,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Return a String equivalent to the argument. This is a helper function to those methods that
-     * accept any byte array type (any object that supports a one-dimensional byte buffer).
+     * accept any byte array type (any object that supports a one-dimensional byte buffer), or
+     * accept a <code>unicode</code> argument which they interpret from its UTF-16 encoded form (the
+     * internal representation returned by {@link PyUnicode#getString()}).
      *
      * @param obj to coerce to a String
      * @return coerced value or <code>null</code> if it can't be
      */
-    private static String asStringOrNull(PyObject obj) {
+    private static String asUTF16StringOrNull(PyObject obj) {
         if (obj instanceof PyString) {
             // str or unicode object: go directly to the String
             return ((PyString)obj).getString();
@@ -779,14 +781,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Return a String equivalent to the argument. This is a helper function to those methods that
-     * accept any byte array type (any object that supports a one-dimensional byte buffer).
+     * accept any byte array type (any object that supports a one-dimensional byte buffer), but
+     * <b>not</b> a <code>unicode</code>.
      *
      * @param obj to coerce to a String
      * @return coerced value
-     * @throws PyException if the coercion fails
+     * @throws PyException if the coercion fails (including <code>unicode</code>)
      */
     private static String asStringOrError(PyObject obj) throws PyException {
-        String ret = asStringOrNull(obj);
+        String ret = (obj instanceof PyUnicode) ? null : asUTF16StringOrNull(obj);
         if (ret != null) {
             return ret;
         } else {
@@ -796,22 +799,23 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Return a String equivalent to the argument according to the calling conventions of methods
-     * that accept anything bearing the buffer interface as a byte string, but also
-     * <code>PyNone</code>. (Or the argument may be omitted, showing up here as null.) These include
-     * the <code>strip</code> and <code>split</code> methods of <code>str</code>, where a null
-     * indicates that the criterion is whitespace, and <code>str.translate</code>.
+     * that accept as a byte string anything bearing the buffer interface, or accept
+     * <code>PyNone</code>, but <b>not</b> a <code>unicode</code>. (Or the argument may be omitted,
+     * showing up here as null.) These include the <code>strip</code> and <code>split</code> methods
+     * of <code>str</code>, where a null indicates that the criterion is whitespace, and
+     * <code>str.translate</code>.
      *
      * @param obj to coerce to a String or null
      * @param name of method
      * @return coerced value or null
-     * @throws PyException if the coercion fails
+     * @throws PyException if the coercion fails (including <code>unicode</code>)
      */
     private static String asStringNullOrError(PyObject obj, String name) throws PyException {
 
         if (obj == null || obj == Py.None) {
             return null;
         } else {
-            String ret = asStringOrNull(obj);
+            String ret = (obj instanceof PyUnicode) ? null : asUTF16StringOrNull(obj);
             if (ret != null) {
                 return ret;
             } else if (name == null) {
@@ -826,18 +830,17 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     /**
      * Return a String equivalent to the argument according to the calling conventions of the
-     * certain methods of <code>str</code>. Those methods accept anything bearing the buffer
-     * interface as a byte string, or accept a unicode argument for which they accept responsibility
-     * to interpret from its UTF16 encoded form (the internal representation returned by
-     * {@link PyUnicode#getString()}).
+     * certain methods of <code>str</code>. Those methods accept as a byte string anything bearing
+     * the buffer interface, or accept a <code>unicode</code> argument which they interpret from its
+     * UTF-16 encoded form (the internal representation returned by {@link PyUnicode#getString()}).
      *
      * @param obj to coerce to a String
      * @return coerced value
      * @throws PyException if the coercion fails
      */
-    private static String asBMPStringOrError(PyObject obj) {
+    private static String asUTF16StringOrError(PyObject obj) {
         // PyUnicode accepted here. Care required in the client if obj is not basic plane.
-        String ret = asStringOrNull(obj);
+        String ret = asUTF16StringOrNull(obj);
         if (ret != null) {
             return ret;
         } else {
@@ -852,7 +855,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str___contains___doc)
     final boolean str___contains__(PyObject o) {
-        String other = asStringOrError(o);
+        String other = asUTF16StringOrError(o);
         return getString().indexOf(other) >= 0;
     }
 
@@ -921,7 +924,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
         } else {
             // Some kind of object with the buffer API
-            String otherStr = asStringOrNull(other);
+            String otherStr = asUTF16StringOrNull(other);
             if (otherStr == null) {
                 // Allow PyObject._basic_add to pick up the pieces or raise informative error
                 return null;
@@ -3278,7 +3281,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
         if (!(prefix instanceof PyTuple)) {
             // It ought to be PyUnicode or some kind of bytes with the buffer API.
-            String s = asBMPStringOrError(prefix);
+            String s = asUTF16StringOrError(prefix);
             // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
             return sliceLen >= s.length() && getString().startsWith(s, start);
 
@@ -3286,7 +3289,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Loop will return true if this slice starts with any prefix in the tuple
             for (PyObject prefixObj : ((PyTuple)prefix).getArray()) {
                 // It ought to be PyUnicode or some kind of bytes with the buffer API.
-                String s = asBMPStringOrError(prefixObj);
+                String s = asUTF16StringOrError(prefixObj);
                 // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
                 if (sliceLen >= s.length() && getString().startsWith(s, start)) {
                     return true;
@@ -3349,7 +3352,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
         if (!(suffix instanceof PyTuple)) {
             // It ought to be PyUnicode or some kind of bytes with the buffer API.
-            String s = asBMPStringOrError(suffix);
+            String s = asUTF16StringOrError(suffix);
             // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
             return substr.endsWith(s);
 
@@ -3357,7 +3360,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Loop will return true if this slice ends with any suffix in the tuple
             for (PyObject suffixObj : ((PyTuple)suffix).getArray()) {
                 // It ought to be PyUnicode or some kind of bytes with the buffer API.
-                String s = asBMPStringOrError(suffixObj);
+                String s = asUTF16StringOrError(suffixObj);
                 // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
                 if (substr.endsWith(s)) {
                     return true;
