@@ -39,7 +39,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     // for PyJavaClass.init()
     public PyString() {
-        this(TYPE, "");
+        this("", true);
     }
 
     /**
@@ -52,7 +52,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     public PyString(PyType subType, String string) {
         super(subType);
         if (string == null) {
-            throw new IllegalArgumentException("Cannot create PyString from null!");
+            throw new IllegalArgumentException("Cannot create PyString from null");
         } else if (!isBytes(string)) {
             throw new IllegalArgumentException("Cannot create PyString with non-byte value");
         }
@@ -69,6 +69,23 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     PyString(StringBuilder buffer) {
         this(TYPE, new String(buffer));
+    }
+
+    /**
+     * Local-use constructor in which the client is allowed to guarantee that the
+     * <code>String</code> argument contains only characters in the byte range. We do not then
+     * range-check the characters.
+     *
+     * @param string a Java String to be wrapped (not null)
+     * @param isBytes true if the client guarantees we are dealing with bytes
+     */
+    private PyString(String string, boolean isBytes) {
+        super(TYPE);
+        if (isBytes || isBytes(string)) {
+            this.string = string;
+        } else {
+            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
+        }
     }
 
     /**
@@ -228,7 +245,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
         if (getClass() == PyString.class) {
             return this;
         }
-        return new PyString(getString());
+        return new PyString(getString(), true);
     }
 
     @Override
@@ -785,6 +802,18 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * <b>not</b> a <code>unicode</code>.
      *
      * @param obj to coerce to a String
+     * @return coerced value or <code>null</code> if it can't be (including <code>unicode</code>)
+     */
+    private static String asStringOrNull(PyObject obj) {
+        return (obj instanceof PyUnicode) ? null : asUTF16StringOrNull(obj);
+    }
+
+    /**
+     * Return a String equivalent to the argument. This is a helper function to those methods that
+     * accept any byte array type (any object that supports a one-dimensional byte buffer), but
+     * <b>not</b> a <code>unicode</code>.
+     *
+     * @param obj to coerce to a String
      * @return coerced value
      * @throws PyException if the coercion fails (including <code>unicode</code>)
      */
@@ -917,21 +946,17 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.str___add___doc)
     final PyObject str___add__(PyObject other) {
-
-        if (other instanceof PyUnicode) {
+        // Expect other to be some kind of byte-like object.
+        String otherStr = asStringOrNull(other);
+        if (otherStr != null) {
+            // Yes it is: concatenate as strings, which are guaranteed byte-like.
+            return new PyString(getString().concat(otherStr), true);
+        } else if (other instanceof PyUnicode) {
             // Convert self to PyUnicode and escalate the problem
             return decode().__add__(other);
-
         } else {
-            // Some kind of object with the buffer API
-            String otherStr = asUTF16StringOrNull(other);
-            if (otherStr == null) {
-                // Allow PyObject._basic_add to pick up the pieces or raise informative error
-                return null;
-            } else {
-                // Concatenate as strings
-                return new PyString(getString().concat(otherStr));
-            }
+            // Allow PyObject._basic_add to pick up the pieces or raise informative error
+            return null;
         }
     }
 
@@ -3161,7 +3186,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             }
             buf.append(((PyString)item).getString());
         }
-        return new PyString(buf.toString());
+        return new PyString(buf.toString(), true); // Guaranteed to be byte-like
     }
 
     final PyUnicode unicodeJoin(PyObject obj) {
