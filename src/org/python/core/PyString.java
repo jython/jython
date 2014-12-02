@@ -727,7 +727,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @Override
     protected PyObject pyget(int i) {
-        return Py.newString(getString().charAt(i));
+        // Method is overridden in PyUnicode, so definitely a PyString
+        return Py.makeCharacter(string.charAt(i));
     }
 
     @Override
@@ -1263,7 +1264,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStringNullOrError(chars, "strip");
             // Strip specified characters or whitespace if stripChars == null
-            return new PyString(_strip(stripChars));
+            return new PyString(_strip(stripChars), true);
         }
     }
 
@@ -1433,7 +1434,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStringNullOrError(chars, "lstrip");
             // Strip specified characters or whitespace if stripChars == null
-            return new PyString(_lstrip(stripChars));
+            return new PyString(_lstrip(stripChars), true);
         }
     }
 
@@ -1522,7 +1523,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // It ought to be None, null, some kind of bytes with the buffer API.
             String stripChars = asStringNullOrError(chars, "rstrip");
             // Strip specified characters or whitespace if stripChars == null
-            return new PyString(_rstrip(stripChars));
+            return new PyString(_rstrip(stripChars), true);
         }
     }
 
@@ -2231,7 +2232,8 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return new object.
      */
     protected PyString fromSubstring(int begin, int end) {
-        return createInstance(getString().substring(begin, end), true);
+        // Method is overridden in PyUnicode, so definitely a PyString
+        return new PyString(getString().substring(begin, end), true);
     }
 
     /**

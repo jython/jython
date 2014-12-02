@@ -633,7 +633,7 @@ public final class Py {
         }
         return new PyStringMap();
     }
-    
+
     public static PyUnicode newUnicode(char c) {
         return (PyUnicode) makeCharacter(c, true);
     }
@@ -1661,14 +1661,20 @@ public final class Py {
     }
 
     public static final PyString makeCharacter(char c) {
-        return makeCharacter(c, false);
+        if (c <= 255) {
+            return letters[c];
+        } else {
+            // This will throw IllegalArgumentException since non-byte value
+            return new PyString(c);
+        }
     }
 
     static final PyString makeCharacter(int codepoint, boolean toUnicode) {
         if (toUnicode) {
             return new PyUnicode(codepoint);
-        } else if (codepoint > 255) {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
+        } else if (codepoint < 0 || codepoint > 255) {
+            // This will throw IllegalArgumentException since non-byte value
+            return new PyString('\uffff');
         }
         return letters[codepoint];
     }

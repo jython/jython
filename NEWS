@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.7b4
+  Bugs Fixed
+    - [ 2037 ] Byte-string containing elements greater than 255
+
 Jython 2.7b3
   Bugs Fixed
     - [ 2225 ] Jython+django-jython - no module named site
