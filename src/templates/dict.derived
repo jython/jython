@@ -3,7 +3,7 @@ want_dict: true
 ctr:
 incl: object
 import: java.util.concurrent.ConcurrentMap
-rest:
+noinherit:
     public PyDictionaryDerived(PyType subtype, ConcurrentMap backingMap, boolean useBackingMap) {
         super(subtype, backingMap, useBackingMap);
         slots=new PyObject[subtype.getNumSlots()];

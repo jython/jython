@@ -25,7 +25,6 @@ import org.python.core.finalization.FinalizablePyObjectDerived;"""
 
 modif_re = re.compile(r"(?:\((\w+)\))?(\w+)")
 
-added_imports = []
 
 # os.path.samefile unavailable on Windows before Python v3.2
 if hasattr(os.path, "samefile"):
@@ -41,6 +40,7 @@ class Gen:
     priority_order = ['require', 'define', 'base_class',
                       'want_dict',
                       'ctr',
+                      'noinherit',
                       'incl',
                       'unary1',
                       'binary', 'ibinary',
@@ -68,6 +68,7 @@ class Gen:
         self.want_dict = None
         self.no_toString = False
         self.ctr_done = 0
+        self.added_imports = []
 
     def debug(self, bindings):
         for name, val in bindings.items():
@@ -86,8 +87,7 @@ class Gen:
         return self.auxiliary[name]
 
     def dire_import(self, name, parm, body):
-        global added_imports
-        added_imports = [x.strip() for x in parm.split(",")]
+        self.added_imports = [x.strip() for x in parm.split(",")]
 
     def dire_require(self, name, parm, body):
         if body is not None:
@@ -134,7 +134,14 @@ class Gen:
     def dire_incl(self, name, parm, body):
         if body is not None:
             self.invalid(name, 'non-empty body')
-        directives.execute(directives.load(parm.strip()+'.derived'),self)
+
+        def load():
+            for d in directives.load(parm.strip()+'.derived'):
+                if d.name not in ('noinherit', 'import'):
+                    yield d
+                
+        included_directives = list(load())
+        directives.execute(included_directives, self)
 
     def dire_ctr(self, name, parm, body):
         if self.ctr_done:
@@ -161,6 +168,13 @@ class Gen:
     def add_decl(self, templ):
         pair = self.get_aux('pair')
         self.decls = pair.tbind({'trailer': self.decls, 'last': templ})
+
+    def dire_noinherit(self, name, param, body):
+        if param:
+            self.invalid(name, 'non-empty parm')
+        if body is None:
+            return
+        self.add_decl(JavaTemplate(body, start='ClassBodyDeclarations'))   
 
     def dire_unary1(self, name, parm, body):
         if body is not None:
@@ -224,7 +238,7 @@ def process(fn, outfile, lazy=False):
     directives.execute(directives.load(fn), gen)
     result = gen.generate()
     result = hack_derived_header(outfile, result)
-    result = add_imports(outfile, result)
+    result = add_imports(gen, outfile, result)
     print >> open(outfile, 'w'), result
     #gen.debug()
 
@@ -253,8 +267,8 @@ def hack_derived_header(fn, result):
     
     return '\n'.join(result)
 
-def add_imports(fn, result):
-    if not added_imports:
+def add_imports(gen, fn, result):
+    if not gen.added_imports:
         return result
     print 'Adding imports for: %s' % fn
     result = result.splitlines()
@@ -264,7 +278,7 @@ def add_imports(fn, result):
         for line in result:
             if not added and line.startswith("import "):
                 added = True
-                for addition in added_imports:
+                for addition in gen.added_imports:
                     yield "import %s;" % (addition,)
             yield line
     
