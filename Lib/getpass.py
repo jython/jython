@@ -29,7 +29,7 @@ def jython_getpass(prompt='Password: ', stream=None):
         stream = sys.stdout
 
     try:
-        terminal = sys._jy_interpreter.reader.terminal
+        terminal = sys._jy_console.reader.terminal
     except:
         return default_getpass(prompt)
 
