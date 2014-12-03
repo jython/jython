@@ -27,7 +27,6 @@ def jython_getpass(prompt='Password: ', stream=None):
     """
     if stream is None:
         stream = sys.stdout
-
     try:
         terminal = sys._jy_console.reader.terminal
     except:
@@ -149,8 +148,8 @@ except (ImportError, AttributeError):
             from EasyDialogs import AskPassword
         except ImportError:
             if os.name == 'java':
-                getpass = jython_getpass
-            else:
+                # disable this option for now, this does not reliably work
+                # getpass = jython_getpass
                 getpass = default_getpass
         else:
             getpass = AskPassword
