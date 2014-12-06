@@ -3965,6 +3965,12 @@ public class PyString extends PyBaseString implements BufferProtocol {
                     throw Py.ValueError("Unknown conversion specifier " + chunk.conversion);
                 }
 
+                // Check for "{}".format(u"abc")
+                if (fieldObj instanceof PyUnicode && !(this instanceof PyUnicode)) {
+                    // Down-convert to PyString, at the risk of raising UnicodeEncodingError
+                    fieldObj = ((PyUnicode)fieldObj).__str__();
+                }
+
                 // The format_spec may be simple, or contained nested replacement fields.
                 String formatSpec = chunk.formatSpec;
                 if (chunk.formatSpecNeedsExpanding) {

@@ -55,6 +55,13 @@ class FormatUnicodeModern(FormatUnicodeBase):
 class FormatMisc(unittest.TestCase):
     # Odd tests Jython used to fail
 
+    def test_str_format_unicode(self):
+        # Check unicode is down-converted to str silently if possible
+        self.assertEqual("full half hour", "full {:s} hour".format(u"half"))
+        self.assertEqual("full \xbd hour", "full {:s} hour".format("\xbd"))
+        self.assertRaises(UnicodeEncodeError, "full {:s} hour".format, u"\xbd")
+        self.assertEqual(u"full \xbd hour", u"full {:s} hour".format(u"\xbd"))
+
     def test_mixtures(self) :
         # Check formatting to a common buffer in PyString
         result = 'The cube of 0.5 -0.866j is -1 to 0.01%.'
