@@ -731,6 +731,10 @@ public class PyUnicode extends PyString implements Iterable {
         return Py.makeCharacter(codepoint, true);
     }
 
+    public int getInt(int i) {
+        return getString().codePointAt(translator.utf16Index(i));
+    }
+
     private class SubsequenceIteratorImpl implements Iterator {
 
         private int current, k, stop, step;

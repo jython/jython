@@ -731,6 +731,10 @@ public class PyString extends PyBaseString implements BufferProtocol {
         return Py.makeCharacter(string.charAt(i));
     }
 
+    public int getInt(int i) {
+        return string.charAt(i);
+    }
+
     @Override
     protected PyObject getslice(int start, int stop, int step) {
         if (step > 0 && stop < start) {
