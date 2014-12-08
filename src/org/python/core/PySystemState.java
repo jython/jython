@@ -428,12 +428,30 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         this.recursionlimit = recursionlimit;
     }
 
+    public PyObject gettrace() {
+        ThreadState ts = Py.getThreadState();
+        if (ts.tracefunc == null) {
+            return Py.None;
+        } else {
+            return ((PythonTraceFunction)ts.tracefunc).tracefunc;
+        }
+    }
+
     public void settrace(PyObject tracefunc) {
         ThreadState ts = Py.getThreadState();
         if (tracefunc == Py.None) {
             ts.tracefunc = null;
         } else {
             ts.tracefunc = new PythonTraceFunction(tracefunc);
+        }
+    }
+
+    public PyObject getprofile() {
+        ThreadState ts = Py.getThreadState();
+        if (ts.profilefunc == null) {
+            return Py.None;
+        } else {
+            return ((PythonTraceFunction)ts.profilefunc).tracefunc;
         }
     }
 
