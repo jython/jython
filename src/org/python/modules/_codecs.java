@@ -36,12 +36,28 @@ public class _codecs {
         codecs.register(search_function);
     }
 
-    public static PyTuple lookup(String encoding) {
-        return codecs.lookup(encoding);
+    private static String _castString(PyString pystr) {
+        // Jython used to treat String as equivalent to PyString, or maybe PyUnicode, as
+        // it made sense. We need to be more careful now! Insert this cast check as necessary
+        // to ensure the appropriate compliance.
+        if (pystr == null) {
+            return null;
+        }
+        String s = pystr.toString();
+        if (pystr instanceof PyUnicode) {
+            return s;
+        } else {
+            // May  throw UnicodeEncodeError, per CPython behavior
+            return codecs.PyUnicode_EncodeASCII(s, s.length(), null);
+        }
     }
 
-    public static PyObject lookup_error(String handlerName) {
-        return codecs.lookup_error(handlerName);
+    public static PyTuple lookup(PyString encoding) {
+        return codecs.lookup(_castString(encoding));
+    }
+
+    public static PyObject lookup_error(PyString handlerName) {
+        return codecs.lookup_error(_castString(handlerName));
     }
 
     public static void register_error(String name, PyObject errorHandler) {
@@ -68,7 +84,7 @@ public class _codecs {
      * @param encoding name of encoding (to look up in codec registry)
      * @return Unicode string decoded from <code>bytes</code>
      */
-    public static PyObject decode(PyString bytes, String encoding) {
+    public static PyObject decode(PyString bytes, PyString encoding) {
         return decode(bytes, encoding, null);
     }
 
@@ -85,8 +101,8 @@ public class _codecs {
      * @param errors error policy name (e.g. "ignore")
      * @return Unicode string decoded from <code>bytes</code>
      */
-    public static PyObject decode(PyString bytes, String encoding, String errors) {
-        return codecs.decode(bytes, encoding, errors);
+    public static PyObject decode(PyString bytes, PyString encoding, PyString errors) {
+        return codecs.decode(bytes, _castString(encoding), _castString(errors));
     }
 
     /**
@@ -109,7 +125,7 @@ public class _codecs {
      * @param encoding name of encoding (to look up in codec registry)
      * @return bytes object encoding <code>unicode</code>
      */
-    public static PyString encode(PyUnicode unicode, String encoding) {
+    public static PyString encode(PyUnicode unicode, PyString encoding) {
         return encode(unicode, encoding, null);
     }
 
@@ -126,8 +142,8 @@ public class _codecs {
      * @param errors error policy name (e.g. "ignore")
      * @return bytes object encoding <code>unicode</code>
      */
-    public static PyString encode(PyUnicode unicode, String encoding, String errors) {
-        return Py.newString(codecs.encode(unicode, encoding, errors));
+    public static PyString encode(PyUnicode unicode, PyString encoding, PyString errors) {
+        return Py.newString(codecs.encode(unicode, _castString(encoding), _castString(errors)));
     }
 
     /* --- Some codec support methods -------------------------------------------- */
