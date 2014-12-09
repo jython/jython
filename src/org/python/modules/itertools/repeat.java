@@ -97,6 +97,11 @@ public class repeat extends PyIterator {
     }
 
     @ExposedMethod
+    final PyObject __copy__() {
+        return new repeat(object, counter);
+    }
+
+    @ExposedMethod
     public int __len__() {
         if (counter < 0) {
             throw Py.TypeError("object of type 'itertools.repeat' has no len()");

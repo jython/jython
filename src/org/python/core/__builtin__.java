@@ -972,7 +972,7 @@ public class __builtin__ {
         }
         try {
             // See PyXRange.getLenOfRange for the primitive version
-            PyObject diff = hi.__sub__(lo).__sub__(Py.One);
+            PyObject diff = hi._sub(lo)._sub(Py.One);
             PyObject n = diff.__floordiv__(step).__add__(Py.One);
             return n.asInt();
         } catch (PyException pye) {
