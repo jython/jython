@@ -2,6 +2,10 @@ from test import test_support
 import random
 import sys
 import unittest
+try:
+    import java
+except ImportError:
+    pass
 
 verbose = test_support.verbose
 nerrors = 0
@@ -39,8 +43,6 @@ def check(tag, expected, raw, compare=None):
             return
 
 class TestBase(unittest.TestCase):
-    @unittest.skipIf(test_support.is_jython,
-            "FIXME: find the part that is too much for Jython.")
     def testStressfully(self):
         # Try a variety of sizes at and around powers of 2, and at powers of 10.
         sizes = [0]
@@ -102,8 +104,15 @@ class TestBase(unittest.TestCase):
                 print "    Checking against an insane comparison function."
                 print "        If the implementation isn't careful, this may segfault."
             s = x[:]
-            s.sort(lambda a, b:  int(random.random() * 3) - 1)
-            check("an insane function left some permutation", x, s)
+
+            if test_support.is_jython:
+                try:
+                    s.sort(lambda a, b:  int(random.random() * 3) - 1)
+                except java.lang.IllegalArgumentException:
+                    pass
+            else:
+                s.sort(lambda a, b:  int(random.random() * 3) - 1)
+                check("an insane function left some permutation", x, s)
 
             x = [Complains(i) for i in x]
             s = x[:]
