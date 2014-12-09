@@ -153,7 +153,7 @@ class ReferencesTestCase(TestBase):
         o2 = C()
         ref3 = weakref.proxy(o2)
         del o2
-        gc.collect()
+        extra_collect()
         self.assertRaises(weakref.ReferenceError, bool, ref3)
 
         self.assertTrue(self.cbcalled == 2)
