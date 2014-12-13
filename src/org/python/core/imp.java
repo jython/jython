@@ -127,6 +127,10 @@ public class imp {
             return module;
         }
         module = new PyModule(name, null);
+        PyModule __builtin__ = (PyModule)modules.__finditem__("__builtin__");
+        PyObject __dict__ = module.__getattr__("__dict__");
+        __dict__.__setitem__("__builtins__", __builtin__.__getattr__("__dict__"));
+        __dict__.__setitem__("__package__", Py.None);
         modules.__setitem__(name, module);
         return module;
     }

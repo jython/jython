@@ -60,7 +60,9 @@ public class PyModule extends PyObject {
         ensureDict();
         __dict__.__setitem__("__name__", name);
         __dict__.__setitem__("__doc__", doc);
-        __dict__.__setitem__("__package__", Py.None);
+        if (name.equals(new PyString("__main__"))) {
+            __dict__.__setitem__("__builtins__", Py.getSystemState().modules.__finditem__("__builtin__"));
+        }
     }
 
     public PyObject fastGetDict() {
@@ -166,10 +168,24 @@ public class PyModule extends PyObject {
     }
 
     public PyObject __dir__() {
-        if (__dict__ == null) {
-            throw Py.TypeError("module.__dict__ is not a dictionary");
+        // Some special casing to ensure that classes deriving from PyModule
+        // can use their own __dict__. Although it would be nice to do this in
+        // PyModuleDerived, current templating in gderived.py does not support
+        // including from object, then overriding a specific method.
+        PyObject d;
+        if (this instanceof PyModuleDerived) {
+            d = __findattr_ex__("__dict__");
+        } else {
+            d = __dict__;
         }
-        return __dict__.invoke("keys");
+        if (d == null ||
+                !(d instanceof PyDictionary ||
+                  d instanceof PyStringMap ||
+                  d instanceof PyDictProxy)) {
+            throw Py.TypeError(String.format("%.200s.__dict__ is not a dictionary",
+                    getType().fastGetName().toLowerCase()));
+        }
+        return d.invoke("keys");
     }
 
     private void ensureDict() {

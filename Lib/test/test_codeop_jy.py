@@ -18,6 +18,7 @@ class CompileTests(unittest.TestCase):
         if values:
             d = {}
             exec code in d
+            del d['__builtins__']
             self.assertEquals(d,values)
         elif value is not None:
             self.assertEquals(eval(code,self.eval_d),value)
