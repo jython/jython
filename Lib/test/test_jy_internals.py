@@ -1,7 +1,6 @@
 """
  test some jython internals
 """
-import gc
 import unittest
 import time
 from test import test_support
@@ -18,7 +17,6 @@ import datetime
 
 class MemoryLeakTests(unittest.TestCase):
 
-    @unittest.skip("FIXME: broken in 2.7.")
     def test_class_to_test_weakness(self):
         # regrtest for bug 1522, adapted from test code submitted by Matt Brinkley
 
@@ -27,16 +25,6 @@ class MemoryLeakTests(unittest.TestCase):
         # demonstrates here that it's the same as the builtin function
         # `type`!)
         class_to_type_map = getField(type, 'class_to_type').get(None)
-
-        def make_clean():
-            # gc a few times just to be really sure, since in this
-            # case we don't really care if it takes a few cycles of GC
-            # for the garbage to be reached
-            gc.collect()
-            time.sleep(0.1)
-            gc.collect()
-            time.sleep(0.5)
-            gc.collect()
 
         def create_proxies():
             pi = PythonInterpreter()
@@ -51,16 +39,20 @@ class Dog(Comparable):
 
 Dog().bark()
 """)
-            make_clean()
-    
         # get to steady state first, then verify we don't create new proxies
         for i in xrange(2):
             create_proxies()
-        start_size = class_to_type_map.size()
+        # Ensure the reaper thread can run and clear out weak refs, so
+        # use this supporting function
+        test_support.gc_collect()
+        # Given that taking the len (or size()) of Guava weak maps is
+        # eventually consistent, we should instead take a len of its
+        # keys.
+        start_size = len(list(class_to_type_map))
         for i in xrange(5):
             create_proxies()
-        make_clean()
-        self.assertEqual(start_size, class_to_type_map.size())
+        test_support.gc_collect()
+        self.assertEqual(start_size, len(list(class_to_type_map)))
 
 
 class WeakIdentityMapTests(unittest.TestCase):
