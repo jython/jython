@@ -238,6 +238,10 @@ public class _codecs {
         return utf_8_decode(str, errors, false);
     }
 
+    public static PyTuple utf_8_decode(String str, String errors, PyObject final_) {
+        return utf_8_decode(str, errors, final_.__nonzero__());
+    }
+
     public static PyTuple utf_8_decode(String str, String errors, boolean final_) {
         int[] consumed = final_ ? null : new int[1];
         return decode_tuple(codecs.PyUnicode_DecodeUTF8Stateful(str, errors, consumed), final_
