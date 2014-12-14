@@ -35,8 +35,8 @@ __version__ = "$Revision: 85213 $"
 
 version     = "0.9.0"
 __author__  = "Lars Gustäbel (lars@gustaebel.de)"
-__date__    = "$Date: 2010-10-04 08:37:53 -0700 (ma, 04 lokaÂ Â  2010) $"
-__cvsid__   = "$Id: tarfile.py 85213 2010-10-04 15:37:53Z lars.gustaebel $"
+__date__    = "$Date$"
+__cvsid__   = "$Id$"
 __credits__ = "Gustavo Niemeyer, Niels Gustäbel, Richard Townsend."
 
 #---------
@@ -454,6 +454,8 @@ class _Stream:
                                             0)
         timestamp = struct.pack("<L", long(time.time()))
         self.__write("\037\213\010\010%s\002\377" % timestamp)
+        if type(self.name) is unicode:
+            self.name = self.name.encode("iso-8859-1", "replace")
         if self.name.endswith(".gz"):
             self.name = self.name[:-3]
         self.__write(self.name + NUL)
@@ -627,7 +629,7 @@ class _StreamProxy(object):
     def getcomptype(self):
         if self.buf.startswith("\037\213\010"):
             return "gz"
-        if self.buf.startswith("BZh91"):
+        if self.buf[0:3] == "BZh" and self.buf[4:10] == "1AY&SY":
             return "bz2"
         return "tar"
 
@@ -1721,7 +1723,6 @@ class TarFile(object):
         try:
             t = cls.taropen(name, mode, fileobj, **kwargs)
         except IOError:
-            fileobj.close()
             raise ReadError("not a gzip file")
         t._extfileobj = False
         return t
@@ -1741,16 +1742,12 @@ class TarFile(object):
 
         if fileobj is not None:
             fileobj = _BZ2Proxy(fileobj, mode)
-            extfileobj = True
         else:
             fileobj = bz2.BZ2File(name, mode, compresslevel=compresslevel)
-            extfileobj = False
 
         try:
             t = cls.taropen(name, mode, fileobj, **kwargs)
         except (IOError, EOFError):
-            if not extfileobj:
-                fileobj.close()
             raise ReadError("not a bzip2 file")
         t._extfileobj = False
         return t
@@ -1987,9 +1984,8 @@ class TarFile(object):
 
         # Append the tar header and data to the archive.
         if tarinfo.isreg():
-            f = bltn_open(name, "rb")
-            self.addfile(tarinfo, f)
-            f.close()
+            with bltn_open(name, "rb") as f:
+                self.addfile(tarinfo, f)
 
         elif tarinfo.isdir():
             self.addfile(tarinfo)
@@ -2197,10 +2193,11 @@ class TarFile(object):
         """Make a file called targetpath.
         """
         source = self.extractfile(tarinfo)
-        target = bltn_open(targetpath, "wb")
-        copyfileobj(source, target)
-        source.close()
-        target.close()
+        try:
+            with bltn_open(targetpath, "wb") as target:
+                copyfileobj(source, target)
+        finally:
+            source.close()
 
     def makeunknown(self, tarinfo, targetpath):
         """Make a file from a TarInfo object with an unknown type
@@ -2241,10 +2238,14 @@ class TarFile(object):
         if hasattr(os, "symlink") and hasattr(os, "link"):
             # For systems that support symbolic and hard links.
             if tarinfo.issym():
+                if os.path.lexists(targetpath):
+                    os.unlink(targetpath)
                 os.symlink(tarinfo.linkname, targetpath)
             else:
                 # See extract().
                 if os.path.exists(tarinfo._link_target):
+                    if os.path.lexists(targetpath):
+                        os.unlink(targetpath)
                     os.link(tarinfo._link_target, targetpath)
                 else:
                     self._extract_member(self._find_link_target(tarinfo), targetpath)
@@ -2262,17 +2263,11 @@ class TarFile(object):
             try:
                 g = grp.getgrnam(tarinfo.gname)[2]
             except KeyError:
-                try:
-                    g = grp.getgrgid(tarinfo.gid)[2]
-                except KeyError:
-                    g = os.getgid()
+                g = tarinfo.gid
             try:
                 u = pwd.getpwnam(tarinfo.uname)[2]
             except KeyError:
-                try:
-                    u = pwd.getpwuid(tarinfo.uid)[2]
-                except KeyError:
-                    u = os.getuid()
+                u = tarinfo.uid
             try:
                 if tarinfo.issym() and hasattr(os, "lchown"):
                     os.lchown(targetpath, u, g)
@@ -2399,7 +2394,7 @@ class TarFile(object):
         """
         if tarinfo.issym():
             # Always search the entire archive.
-            linkname = os.path.dirname(tarinfo.name) + "/" + tarinfo.linkname
+            linkname = "/".join(filter(None, (os.path.dirname(tarinfo.name), tarinfo.linkname)))
             limit = None
         else:
             # Search the archive before the link, because a hard link is

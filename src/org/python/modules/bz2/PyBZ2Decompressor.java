@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.python.core.ArgParser;
 import org.python.core.Py;
+import org.python.core.PyByteArray;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
@@ -89,19 +90,17 @@ public class PyBZ2Decompressor extends PyObject {
             return Py.EmptyString;
         }
 
-        ByteArrayOutputStream databuf = new ByteArrayOutputStream();
+        PyByteArray databuf = new PyByteArray();
         int currentByte = -1;
         try {
             while ((currentByte = decompressStream.read()) != -1) {
-                databuf.write(currentByte);
+                databuf.append((byte)currentByte);
             }
-            returnData = new PyString(new String(databuf.toByteArray()));
+            returnData = databuf.__str__();
             if (compressedData.available() > 0) {
                 byte[] unusedbuf = new byte[compressedData.available()];
                 compressedData.read(unusedbuf);
-
-                unused_data = (PyString) unused_data.__add__(new PyString(
-                        new String(unusedbuf)));
+                unused_data = (PyString)unused_data.__add__((new PyByteArray(unusedbuf)).__str__());
             }
             eofReached = true;
         } catch (IOException e) {
