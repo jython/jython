@@ -618,7 +618,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
         if (!getMap().containsKey(key)) {
             if (defaultValue == null) {
-                throw Py.KeyError("popitem(): dictionary is empty");
+                throw Py.KeyError(key.asString());
             }
             return defaultValue;
         }
