@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -130,6 +131,9 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
     public PyList argv = new PyList();
 
     public PyObject modules;
+    public PyObject modules_reloading;
+    private ReentrantLock importLock;
+    private ClassLoader syspathJavaLoader;
     public PyList path;
 
     public PyList warnoptions = new PyList();
@@ -190,6 +194,9 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         initialize();
         closer = new PySystemStateCloser(this);
         modules = new PyStringMap();
+        modules_reloading = new PyStringMap();
+        importLock = new ReentrantLock();
+        syspathJavaLoader = new SyspathJavaLoader(imp.getParentClassLoader());
 
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
@@ -335,6 +342,14 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
             }
         }
         return codecState;
+    }
+
+    public ReentrantLock getImportLock() {
+        return importLock;
+    }
+
+    public ClassLoader getSyspathJavaLoader() {
+        return syspathJavaLoader;
     }
 
     // xxx fix this accessors

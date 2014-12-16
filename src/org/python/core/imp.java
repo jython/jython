@@ -30,26 +30,15 @@ public class imp {
 
     public static final int NO_MTIME = -1;
 
-    // This should change to 0 for Python 2.7 and 3.0 see PEP 328
+    // This should change to Python 3.x; note that 2.7 allows relative
+    // imports unless `from __future__ import absolute_import`
     public static final int DEFAULT_LEVEL = -1;
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
 
-    /** Synchronizes import operations */
-    public static final ReentrantLock importLock = new ReentrantLock();
-
-    private static Object syspathJavaLoaderLock = new Object();
-
-    private static ClassLoader syspathJavaLoader = null;
-
     public static ClassLoader getSyspathJavaLoader() {
-        synchronized (syspathJavaLoaderLock) {
-            if (syspathJavaLoader == null) {
-        		syspathJavaLoader = new SyspathJavaLoader(getParentClassLoader());
-	        }            	
-        }
-        return syspathJavaLoader;
+        return Py.getSystemState().getSyspathJavaLoader();
     }
     
     /**
@@ -392,14 +381,18 @@ public class imp {
             Py.writeDebug(IMPORT_LOG, String.format("Warning: %s __file__ is unknown", name));
         }
 
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
         try {
             PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
             code.call(Py.getThreadState(), f);
+            return module;
         } catch (RuntimeException t) {
             removeModule(name);
             throw t;
+        } finally {
+            importLock.unlock();
         }
-        return module;
     }
 
     static PyObject createFromClass(String name, Class<?> c) {
@@ -521,7 +514,13 @@ public class imp {
 
     static PyObject loadFromLoader(PyObject importer, String name) {
         PyObject load_module = importer.__getattr__("load_module");
-        return load_module.__call__(new PyObject[] { new PyString(name) });
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return load_module.__call__(new PyObject[]{new PyString(name)});
+        } finally {
+            importLock.unlock();
+        }
     }
 
     public static PyObject loadFromCompiled(String name, InputStream stream, String sourceName,
@@ -634,7 +633,13 @@ public class imp {
      * @return the loaded module
      */
     public static PyObject load(String name) {
-        return import_first(name, new StringBuilder());
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return import_first(name, new StringBuilder());
+        } finally {
+            importLock.unlock();
+        }
     }
 
 	/**
@@ -931,7 +936,13 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
-        return import_module_level(name, top, null, null, DEFAULT_LEVEL);
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return import_module_level(name, top, null, null, DEFAULT_LEVEL);
+        } finally {
+            importLock.unlock();
+        }
     }
 
     /**
@@ -945,6 +956,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
             return import_module_level(name, top, modDict, fromlist, level);
@@ -959,7 +971,7 @@ public class imp {
      */
     @Deprecated
     public static PyObject importOne(String mod, PyFrame frame) {
-    	return importOne(mod, frame, imp.DEFAULT_LEVEL);
+	return importOne(mod, frame, imp.DEFAULT_LEVEL);
     }
     /**
      * Called from jython generated code when a statement like "import spam" is

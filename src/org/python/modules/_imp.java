@@ -299,7 +299,7 @@ public class _imp {
      *
      */
     public static void acquire_lock() {
-        org.python.core.imp.importLock.lock();
+        Py.getSystemState().getImportLock().lock();
     }
 
     /**
@@ -308,7 +308,7 @@ public class _imp {
      */
     public static void release_lock() {
         try{
-            org.python.core.imp.importLock.unlock();
+            Py.getSystemState().getImportLock().unlock();
         }catch(IllegalMonitorStateException e){
             throw Py.RuntimeError("not holding the import lock");
         }
@@ -320,6 +320,6 @@ public class _imp {
      * @return true if the import lock is currently held, else false.
      */
     public static boolean lock_held() {
-        return org.python.core.imp.importLock.isHeldByCurrentThread();
+        return Py.getSystemState().getImportLock().isHeldByCurrentThread();
     }
 }
