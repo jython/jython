@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.python.compiler.Module;
@@ -1146,15 +1147,34 @@ public class imp {
     }
 
     static PyObject reload(PyModule m) {
+        PySystemState sys = Py.getSystemState();
+        PyObject modules = sys.modules;
+        Map<String, PyModule> modules_reloading = sys.modules_reloading;
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return _reload(m, modules, modules_reloading);
+        } finally {
+            modules_reloading.clear();
+            importLock.unlock();
+        }
+    }
+
+    private static PyObject _reload(PyModule m, PyObject modules, Map<String, PyModule> modules_reloading) {
         String name = m.__getattr__("__name__").toString().intern();
-
-        PyObject modules = Py.getSystemState().modules;
         PyModule nm = (PyModule) modules.__finditem__(name);
-
         if (nm == null || !nm.__getattr__("__name__").toString().equals(name)) {
             throw Py.ImportError("reload(): module " + name
                     + " not in sys.modules");
         }
+        PyModule existing_module = modules_reloading.get(name);
+        if (existing_module != null) {
+        // Due to a recursive reload, this module is already being reloaded.
+            return existing_module;
+        }
+        // Since we are already in a re-entrant lock,
+        // this test & set is guaranteed to be atomic
+        modules_reloading.put(name, nm);
 
         PyList path = Py.getSystemState().path;
         String modName = name;

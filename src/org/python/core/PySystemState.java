@@ -19,6 +19,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -131,7 +132,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
     public PyList argv = new PyList();
 
     public PyObject modules;
-    public PyObject modules_reloading;
+    public Map<String, PyModule> modules_reloading;
     private ReentrantLock importLock;
     private ClassLoader syspathJavaLoader;
     public PyList path;
@@ -194,7 +195,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         initialize();
         closer = new PySystemStateCloser(this);
         modules = new PyStringMap();
-        modules_reloading = new PyStringMap();
+        modules_reloading = new HashMap<String, PyModule>();
         importLock = new ReentrantLock();
         syspathJavaLoader = new SyspathJavaLoader(imp.getParentClassLoader());
 
