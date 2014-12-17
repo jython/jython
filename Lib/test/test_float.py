@@ -217,10 +217,9 @@ class GeneralFloatCases(unittest.TestCase):
         # In particular, check signs of zeros.
         mod = operator.mod
 
-        #FIXME: Jython fails some mod edge cases.
-        #self.assertEqualAndEqualSign(mod(-1.0, 1.0), 0.0)
+        self.assertEqualAndEqualSign(mod(-1.0, 1.0), 0.0)
         self.assertEqualAndEqualSign(mod(-1e-100, 1.0), 1.0)
-        #self.assertEqualAndEqualSign(mod(-0.0, 1.0), 0.0)
+        self.assertEqualAndEqualSign(mod(-0.0, 1.0), 0.0)
         self.assertEqualAndEqualSign(mod(0.0, 1.0), 0.0)
         self.assertEqualAndEqualSign(mod(1e-100, 1.0), 1e-100)
         self.assertEqualAndEqualSign(mod(1.0, 1.0), 0.0)
@@ -228,9 +227,9 @@ class GeneralFloatCases(unittest.TestCase):
         self.assertEqualAndEqualSign(mod(-1.0, -1.0), -0.0)
         self.assertEqualAndEqualSign(mod(-1e-100, -1.0), -1e-100)
         self.assertEqualAndEqualSign(mod(-0.0, -1.0), -0.0)
-        #self.assertEqualAndEqualSign(mod(0.0, -1.0), -0.0)
+        self.assertEqualAndEqualSign(mod(0.0, -1.0), -0.0)
         self.assertEqualAndEqualSign(mod(1e-100, -1.0), -1.0)
-        #self.assertEqualAndEqualSign(mod(1.0, -1.0), -0.0)
+        self.assertEqualAndEqualSign(mod(1.0, -1.0), -0.0)
 
     @requires_IEEE_754
     def test_float_pow(self):

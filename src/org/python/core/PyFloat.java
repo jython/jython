@@ -625,15 +625,30 @@ public class PyFloat extends PyObject {
         return new PyFloat(leftv / getValue());
     }
 
+    /**
+     * Python % operator: y = n*x + z. The modulo operator always yields a result with the same sign
+     * as its second operand (or zero). (Compare <code>java.Math.IEEEremainder</code>)
+     *
+     * @param x dividend
+     * @param y divisor
+     * @return <code>x % y</code>
+     */
     private static double modulo(double x, double y) {
-        if (y == 0) {
+        if (y == 0.0) {
             throw Py.ZeroDivisionError("float modulo");
+        } else {
+            double z = x % y;
+            if (z == 0.0) {
+                // Has to be same sign as y (even when zero).
+                return Math.copySign(z, y);
+            } else if ((z > 0.0) == (y > 0.0)) {
+                // z has same sign as y, as it must.
+                return z;
+            } else {
+                // Note abs(z) < abs(y) and opposite sign.
+                return z + y;
+            }
         }
-        double z = Math.IEEEremainder(x, y);
-        if (z * y < 0) {
-            z += y;
-        }
-        return z;
     }
 
     @Override
@@ -934,8 +949,9 @@ public class PyFloat extends PyObject {
     }
 
     /**
-     * Common code for PyFloat, {@link PyInteger} and {@link PyLong} to prepare a {@link FloatFormatter} from a parsed specification.
-     * The object returned has format method {@link FloatFormatter#format(double)}.
+     * Common code for PyFloat, {@link PyInteger} and {@link PyLong} to prepare a
+     * {@link FloatFormatter} from a parsed specification. The object returned has format method
+     * {@link FloatFormatter#format(double)}.
      *
      * @param spec a parsed PEP-3101 format specification.
      * @return a formatter ready to use, or null if the type is not a floating point format type.
