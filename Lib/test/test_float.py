@@ -35,9 +35,8 @@ class GeneralFloatCases(unittest.TestCase):
         self.assertEqual(float("  3.14  "), 3.14)
         self.assertRaises(ValueError, float, "  0x3.1  ")
 
-        #FIXME: not raising ValueError on Jython:
-        #self.assertRaises(ValueError, float, "  -0x3.p-1  ")
-        #self.assertRaises(ValueError, float, "  +0x3.p-1  ")
+        self.assertRaises(ValueError, float, "  -0x3.p-1  ")
+        self.assertRaises(ValueError, float, "  +0x3.p-1  ")
 
         self.assertRaises(ValueError, float, "++3.14")
         self.assertRaises(ValueError, float, "+-3.14")

@@ -4,6 +4,8 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -2710,55 +2712,75 @@ public class PyString extends PyBaseString implements BufferProtocol {
         }
     }
 
+    /**
+     * Convert this PyString to a floating-point value according to Python rules.
+     *
+     * @return the value
+     */
     public double atof() {
-        StringBuilder s = null;
-        int n = getString().length();
-        for (int i = 0; i < n; i++) {
-            char ch = getString().charAt(i);
-            if (ch == '\u0000') {
-                throw Py.ValueError("null byte in argument for float()");
-            }
-            if (Character.isDigit(ch)) {
-                if (s == null) {
-                    s = new StringBuilder(getString());
-                }
-                int val = Character.digit(ch, 10);
-                s.setCharAt(i, Character.forDigit(val, 10));
-            }
-        }
-        String sval = getString();
-        if (s != null) {
-            sval = s.toString();
-        }
-        try {
-            // Double.valueOf allows format specifier ("d" or "f") at the end
-            String lowSval = sval.toLowerCase();
-            if (lowSval.equals("nan")) {
-                return Double.NaN;
-            } else if (lowSval.equals("+nan")) {
-                return Double.NaN;
-            } else if (lowSval.equals("-nan")) {
-                return Double.NaN;
-            } else if (lowSval.equals("inf")) {
-                return Double.POSITIVE_INFINITY;
-            } else if (lowSval.equals("+inf")) {
-                return Double.POSITIVE_INFINITY;
-            } else if (lowSval.equals("-inf")) {
-                return Double.NEGATIVE_INFINITY;
-            } else if (lowSval.equals("infinity")) {
-                return Double.POSITIVE_INFINITY;
-            } else if (lowSval.equals("+infinity")) {
-                return Double.POSITIVE_INFINITY;
-            } else if (lowSval.equals("-infinity")) {
-                return Double.NEGATIVE_INFINITY;
-            }
+        String bogus = null;
+        double x = 0.0;
+        Matcher m = atofPattern.matcher(getString());
 
-            if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
-                throw new NumberFormatException("format specifiers not allowed");
+        if (m.matches()) {
+            // Might be a valid float
+            try {
+                if (m.group(3) == null) {
+                    // No numeric part was found: it's something like "-Inf" or "hOrsE"
+                    x = atofSpecials(m.group(1));
+                } else {
+                    // A numeric part was present, try to convert the whole
+                    x = Double.parseDouble(m.group(1));
+                }
+            } catch (NumberFormatException e) {
+                bogus = m.group(1);
             }
-            return Double.valueOf(sval).doubleValue();
-        } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __float__: " + getString());
+        } else {
+            // This doesn't match the pattern for a float value
+            bogus = getString().trim();
+        }
+
+        // At this point, bogus will have been set to the trimmed string if there was a problem.
+        if (bogus == null) {
+            return x;
+        } else {
+            String fmt = "could not convert string to float: %s";
+            throw Py.ValueError(String.format(fmt, bogus));
+        }
+
+    }
+
+    /**
+     * Regular expression that includes all valid a Python float() arguments, in which group 1
+     * captures the whole, stripped of white space, and group 3 will be present only if the form is
+     * numeric. Invalid non numerics are accepted ("+hOrsE" as "-inf").
+     */
+    private static Pattern atofPattern = Pattern
+            .compile("\\s*([+-]?(((\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?)|\\p{Alpha}+))\\s*");
+
+    /**
+     * Conversion for non-numeric floats, accepting signed or unsigned "inf" and "nan", in any case.
+     *
+     * @param s to convert
+     * @return non-numeric result (if valid)
+     * @throws NumberFormatException if not a valid non-numeric indicator
+     */
+    private static double atofSpecials(String s) throws NumberFormatException {
+        switch (s.toLowerCase()) {
+            case "nan":
+            case "+nan":
+            case "-nan":
+                return Double.NaN;
+            case "inf":
+            case "+inf":
+            case "infinity":
+            case "+infinity":
+                return Double.POSITIVE_INFINITY;
+            case "-inf":
+            case "-infinity":
+                return Double.NEGATIVE_INFINITY;
+            default:
+                throw new NumberFormatException();
         }
     }
 
