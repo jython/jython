@@ -545,7 +545,7 @@ public class PyLong extends PyObject {
         if (aexp > Integer.MAX_VALUE / 8) {
             throw Py.OverflowError("long/long too large for a float");
         } else if (aexp < -(Integer.MAX_VALUE / 8)) {
-            return new PyFloat(0.0);
+            return PyFloat.ZERO;
         }
 
         ad = ad * Math.pow(2.0, aexp * 8);

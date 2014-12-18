@@ -29,6 +29,12 @@ public class PyFloat extends PyObject {
     static final Spec SPEC_REPR = InternalFormat.fromText(" >r");
     /** Format specification used by str(). */
     static final Spec SPEC_STR = Spec.NUMERIC;
+    /** Constant float(0). */
+    static final PyFloat ZERO = new PyFloat(0.0);
+    /** Constant float(1). */
+    static final PyFloat ONE = new PyFloat(1.0);
+    /** Constant float("nan"). */
+    static final PyFloat NAN = new PyFloat(Double.NaN);
 
     private final double value;
 
@@ -56,7 +62,7 @@ public class PyFloat extends PyObject {
         PyObject x = ap.getPyObject(0, null);
         if (x == null) {
             if (new_.for_type == subtype) {
-                return new PyFloat(0.0);
+                return ZERO;
             } else {
                 return new PyFloatDerived(subtype, 0.0);
             }
@@ -90,7 +96,7 @@ public class PyFloat extends PyObject {
 
     @ExposedGet(name = "imag", doc = BuiltinDocs.float_imag_doc)
     public PyObject getImag() {
-        return Py.newFloat(0.0);
+        return ZERO;
     }
 
     @ExposedClassMethod(doc = BuiltinDocs.float_fromhex_doc)
@@ -108,7 +114,7 @@ public class PyFloat extends PyObject {
         if (value.length() == 0) {
             throw Py.ValueError(message);
         } else if (value.equals("nan") || value.equals("-nan") || value.equals("+nan")) {
-            return new PyFloat(Double.NaN);
+            return NAN;
         } else if (value.equals("inf") || value.equals("infinity") || value.equals("+inf")
                 || value.equals("+infinity")) {
             return new PyFloat(Double.POSITIVE_INFINITY);
@@ -760,18 +766,18 @@ public class PyFloat extends PyObject {
          */
         if (w == 0) {
             // v**0 is 1, even 0**0
-            return new PyFloat(1.0);
+            return ONE;
 
         } else if (Double.isNaN(v)) {
             // nan**w = nan, unless w == 0
-            return new PyFloat(Double.NaN);
+            return NAN;
 
         } else if (Double.isNaN(w)) {
             // v**nan = nan, unless v == 1; 1**nan = 1
             if (v == 1.0) {
-                return new PyFloat(1.0);
+                return ONE;
             } else {
-                return new PyFloat(Double.NaN);
+                return NAN;
             }
 
         } else if (Double.isInfinite(w)) {
@@ -780,7 +786,7 @@ public class PyFloat extends PyObject {
              * Python they are all 1.
              */
             if (v == 1.0 || v == -1.0) {
-                return new PyFloat(1.0);
+                return ONE;
             }
 
         } else if (v == 0.0) {
