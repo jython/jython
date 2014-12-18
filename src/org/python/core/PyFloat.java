@@ -731,9 +731,9 @@ public class PyFloat extends PyObject {
             return null;
         } else if (modulo != null) {
             throw Py.TypeError("pow() 3rd argument not allowed unless all arguments are integers");
+        } else {
+            return _pow(getValue(), coerce(right));
         }
-
-        return _pow(getValue(), coerce(right), modulo);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rpow___doc)
@@ -745,43 +745,60 @@ public class PyFloat extends PyObject {
     public PyObject __rpow__(PyObject left) {
         if (!canCoerce(left)) {
             return null;
+        } else {
+            return _pow(coerce(left), getValue());
         }
-
-        return _pow(coerce(left), getValue(), null);
     }
 
-    private static PyFloat _pow(double value, double iw, PyObject modulo) {
-        // Rely completely on Java's pow function
-        if (iw == 0) {
-            if (modulo != null) {
-                return new PyFloat(modulo(1.0, coerce(modulo)));
-            }
+    private static PyFloat _pow(double v, double w) {
+        /*
+         * This code was translated from the CPython implementation at v2.7.8 by progressively
+         * removing cases that could be delegated to Java. Jython differs from CPython in that where
+         * C pow() overflows, Java pow() returns inf (observed on Windows). This is not subject to
+         * regression tests, so we take it as an allowable platform dependency. All other
+         * differences in Java Math.pow() are trapped below and Python behaviour is enforced.
+         */
+        if (w == 0) {
+            // v**0 is 1, even 0**0
             return new PyFloat(1.0);
-        }
 
-        if (value == 0.0) {
-            if (iw < 0.0) {
-                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
-            } else if (Double.isNaN(iw)) {
-                return new PyFloat(Double.NaN);
-            }
-            return new PyFloat(0);
-        }
+        } else if (Double.isNaN(v)) {
+            // nan**w = nan, unless w == 0
+            return new PyFloat(Double.NaN);
 
-        if (Double.isNaN(iw)) {
-            if (value == 1.0) {
+        } else if (Double.isNaN(w)) {
+            // v**nan = nan, unless v == 1; 1**nan = 1
+            if (v == 1.0) {
                 return new PyFloat(1.0);
             } else {
                 return new PyFloat(Double.NaN);
             }
+
+        } else if (Double.isInfinite(w)) {
+            /*
+             * In Java Math pow(1,inf) = pow(-1,inf) = pow(1,-inf) = pow(-1,-inf) = nan, but in
+             * Python they are all 1.
+             */
+            if (v == 1.0 || v == -1.0) {
+                return new PyFloat(1.0);
+            }
+
+        } else if (v == 0.0) {
+            // 0**w is an error if w is negative.
+            if (w < 0.0) {
+                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
+            }
+
+        } else if (!Double.isInfinite(v) && v < 0.0) {
+            if (w != Math.floor(w)) {
+                throw Py.ValueError("negative number cannot be raised to a fractional power");
+            }
+
         }
 
-        if (value < 0 && iw != Math.floor(iw)) {
-            throw Py.ValueError("negative number cannot be raised to a fractional power");
-        }
+        // In all cases not caught above we can entrust the calculation to Java
+        return new PyFloat(Math.pow(v, w));
 
-        double ret = Math.pow(value, iw);
-        return new PyFloat(modulo == null ? ret : modulo(ret, coerce(modulo)));
     }
 
     @Override
