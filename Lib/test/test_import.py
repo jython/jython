@@ -292,12 +292,22 @@ class ImportTests(unittest.TestCase):
         self.assertIs(y, test.test_support, y.__name__)
 
     def test_import_initless_directory_warning(self):
-        # FIXME this is tricky - how does interact with importing Java code?
-        # jars are easy, but what about a directory of classes?
-        with check_warnings(('', ImportWarning)):
-            # Just a random non-package directory we always expect to be
-            # somewhere in sys.path...
-            self.assertRaises(ImportError, __import__, "site-packages")
+        # NOTE: to test this, we have to remove Jython's JavaImporter
+        # (bound to the string '__classpath__', which of course
+        # supports such directories as possible Java packages.
+        # 
+        # For Jython 3.x we really need to rethink what it does, since
+        # it repeatedly causes questions on Jython forums, but too
+        # late to change for 2.7, except perhaps by some option.
+        classpath_entry = sys.path.index('__classpath__')
+        del sys.path[classpath_entry]
+        try:
+            with check_warnings(('', ImportWarning)):
+                # Just a random non-package directory we always expect to be
+                # somewhere in sys.path...
+                self.assertRaises(ImportError, __import__, "site-packages")
+        finally:
+            sys.path.insert(classpath_entry, '__classpath__')
 
     def test_import_by_filename(self):
         path = os.path.abspath(TESTFN)
@@ -335,7 +345,10 @@ class ImportTests(unittest.TestCase):
         sys.path.insert(0, os.curdir)
         try:
             source = TESTFN + ".py"
-            compiled = source + ('c' if __debug__ else 'o')
+            if is_jython:
+                compiled = TESTFN + "$py.class"
+            else:
+                compiled = source + ('c' if __debug__ else 'o')
             with open(source, 'w') as f:
                 pass
             try:
@@ -466,6 +479,7 @@ func_filename = func.func_code.co_filename
         self.assertEqual(mod.code_filename, target)
         self.assertEqual(mod.func_filename, target)
 
+    @unittest.skipIf(is_jython, "Jython does not support compilation to Python bytecode (yet)")
     def test_foreign_code(self):
         py_compile.compile(self.file_name)
         with open(self.compiled_name, "rb") as f:

@@ -363,7 +363,7 @@ public class imp {
      * running c. Sets __file__ on the module to be moduleLocation unless
      * moduleLocation is null. If c comes from a local .py file or compiled
      * $py.class class moduleLocation should be the result of running new
-     * File(moduleLocation).getAbsoultePath(). If c comes from a remote file or
+     * File(moduleLocation).getAbsolutePath(). If c comes from a remote file or
      * is a jar moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
@@ -548,8 +548,15 @@ public class imp {
 
         boolean pkg = false;
         try {
-            pkg = dir.isDirectory() && caseok(dir, name)
-                    && (sourceFile.isFile() || compiledFile.isFile());
+            if (dir.isDirectory()) {
+                if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
+                    pkg = true;
+                } else {
+                    Py.warning(Py.ImportWarning, String.format(
+                            "Not importing directory '%s': missing __init__.py",
+                            dirName));
+                }
+            }
         } catch (SecurityException e) {
             // ok
         }
@@ -669,7 +676,7 @@ public class imp {
 	 */
     private static String get_parent(PyObject dict, int level) {
         String modname;
-        if (dict == null || level == 0) {
+        if ((dict == null && level == -1) || level == 0) {
         	// try an absolute import
             return null;
         }
@@ -744,7 +751,7 @@ public class imp {
             return ret;
         }
         if (mod == null) {
-            ret = find_module(fullName.intern(), name, null);
+            ret = find_module(fullName, name, null);
         } else {
             ret = mod.impAttr(name.intern());
         }
@@ -873,7 +880,11 @@ public class imp {
             }
             parentNameBuffer = new StringBuilder("");
             // could throw ImportError
-            topMod = import_first(firstName, parentNameBuffer, name, fromlist);
+            if (level > 0) {
+                topMod = import_first(pkgName + "." + firstName, parentNameBuffer, name, fromlist);
+            } else {
+                topMod = import_first(firstName, parentNameBuffer, name, fromlist);
+            }
         }
         PyObject mod = topMod;
         if (dot != -1) {
@@ -1189,10 +1200,17 @@ public class imp {
             name = name.substring(dot + 1, name.length()).intern();
         }
 
-        nm.__setattr__("__name__", new PyString(modName));
-        PyObject ret = find_module(name, modName, path);
-        modules.__setitem__(modName, ret);
-        return ret;
+        nm.__setattr__("__name__", new PyString(modName)); // FIXME necessary?!
+        try {
+            PyObject ret = find_module(name, modName, path);
+            modules.__setitem__(modName, ret);
+            return ret;
+        } catch (RuntimeException t) {
+            // Need to restore module, due to the semantics of addModule, which removed it
+            // Fortunately we are in a module import lock
+            modules.__setitem__(modName, nm);
+            throw t;
+        }
     }
 
     public static int getAPIVersion() {
