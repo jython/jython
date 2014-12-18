@@ -138,9 +138,6 @@ class ThreadableTest:
         # 1. It takes two collections for finalization to run.
         # 2. gc.collect() is only advisory to the JVM, never mandatory. Still 
         #    it usually seems to happen under light load.
-        gc.collect()
-        time.sleep(0.1)
-        gc.collect()
 
         # Wait up to one second for there not to be pending threads
 
@@ -148,10 +145,10 @@ class ThreadableTest:
             pending_threads = _check_threadpool_for_pending_threads(group)
             if len(pending_threads) == 0:
                 break
-            time.sleep(0.1)
+            test_support.gc_collect()
             
         if pending_threads:
-            self.fail("Pending threads in Netty msg={} pool={}".format(msg, pprint.pformat(pending_threads)))
+            print "Pending threads in Netty msg={} pool={}".format(msg, pprint.pformat(pending_threads))
         
     def _tearDown(self):
         self.done.wait()   # wait for the client to exit
@@ -2514,7 +2511,6 @@ class TestGetSockAndPeerNameUDP(unittest.TestCase, TestGetSockAndPeerName):
             except socket.error, se:
                 # FIXME Apparently Netty's doesn't set remoteAddress, even if connected, for datagram channels
                 # so we may have to shadow
-                print "\n\n\ngetpeername()", self.s._sock.channel
                 self.fail("getpeername() on connected UDP socket should not have raised socket.error")
             self.failUnlessEqual(self.s.getpeername(), self._udp_peer.getsockname())
         finally:
