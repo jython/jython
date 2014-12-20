@@ -5,6 +5,7 @@
 package org.python.core;
 
 import org.python.modules._systemrestart;
+import com.google.common.base.CharMatcher;
 
 public abstract class PyBaseCode extends PyCode {
 
@@ -199,14 +200,14 @@ public abstract class PyBaseCode extends PyCode {
 
     public PyObject call(ThreadState state, PyObject args[], String kws[], PyObject globals,
                          PyObject[] defs, PyObject closure) {
-        PyFrame frame = new PyFrame(this, globals);
-        int argcount = args.length - kws.length;
+        final PyFrame frame = new PyFrame(this, globals);
+        final int argcount = args.length - kws.length;
 
-        if (co_argcount > 0 || (varargs || varkwargs)) {
+        if ((co_argcount > 0) || varargs || varkwargs) {
             int i;
             int n = argcount;
             PyObject kwdict = null;
-            PyObject[] fastlocals = frame.f_fastlocals;
+            final PyObject[] fastlocals = frame.f_fastlocals;
             if (varkwargs) {
                 kwdict = new PyDictionary();
                 i = co_argcount;
@@ -222,9 +223,9 @@ public abstract class PyBaseCode extends PyCode {
                                                co_name,
                                                defcount > 0 ? "at most" : "exactly",
                                                co_argcount,
-                                               kws.length > 0 ? "non-keyword " : "",
+                                               kws.length > 0 ? "" : "",
                                                co_argcount == 1 ? "" : "s",
-                                               argcount);
+                                               args.length);
                     throw Py.TypeError(msg);
                 }
                 n = co_argcount;
@@ -242,11 +243,6 @@ public abstract class PyBaseCode extends PyCode {
                 String keyword = kws[i];
                 PyObject value = args[i + argcount];
                 int j;
-                // XXX: keywords aren't PyObjects, can't ensure strings
-                //if (keyword == null || keyword.getClass() != PyString.class) {
-                //    throw Py.TypeError(String.format("%.200s() keywords must be strings",
-                //                                     co_name));
-                //}
                 for (j = 0; j < co_argcount; j++) {
                     if (co_varnames[j].equals(keyword)) {
                         break;
@@ -254,11 +250,16 @@ public abstract class PyBaseCode extends PyCode {
                 }
                 if (j >= co_argcount) {
                     if (kwdict == null) {
-                        throw Py.TypeError(String.format("%.200s() got an unexpected keyword "
-                                                         + "argument '%.400s'",
-                                                         co_name, keyword));
+                        throw Py.TypeError(String.format(
+                                "%.200s() got an unexpected keyword argument '%.400s'",
+                                co_name,
+                                Py.newUnicode(keyword).encode("ascii", "replace")));
                     }
-                    kwdict.__setitem__(keyword, value);
+                    if (CharMatcher.ASCII.matchesAllOf(keyword)) {
+                        kwdict.__setitem__(keyword, value);
+                    } else {
+                        kwdict.__setitem__(Py.newUnicode(keyword), value);
+                    }
                 } else {
                     if (fastlocals[j] != null) {
                         throw Py.TypeError(String.format("%.200s() got multiple values for "
@@ -269,16 +270,18 @@ public abstract class PyBaseCode extends PyCode {
                 }
             }
             if (argcount < co_argcount) {
-                int defcount = defs != null ? defs.length : 0;
-                int m = co_argcount - defcount;
+                final int defcount = defs != null ? defs.length : 0;
+                final int m = co_argcount - defcount;
                 for (i = argcount; i < m; i++) {
                     if (fastlocals[i] == null) {
                         String msg =
                                 String.format("%.200s() takes %s %d %sargument%s (%d given)",
-                                              co_name, (varargs || defcount > 0) ?
-                                              "at least" : "exactly",
-                                              m, kws.length > 0 ? "non-keyword " : "",
-                                              m == 1 ? "" : "s", i);
+                                              co_name,
+                                              (varargs || defcount > 0) ? "at least" : "exactly",
+                                              m,
+                                              kws.length > 0 ? "" : "",
+                                              m == 1 ? "" : "s",
+                                              args.length);
                         throw Py.TypeError(msg);
                     }
                 }
@@ -293,9 +296,9 @@ public abstract class PyBaseCode extends PyCode {
                     }
                 }
             }
-        } else if (argcount > 0) {
+        } else if ((argcount > 0) || (args.length > 0 && (co_argcount == 0 && !varargs && !varkwargs))) {
             throw Py.TypeError(String.format("%.200s() takes no arguments (%d given)",
-                                             co_name, argcount));
+                                             co_name, args.length));
         }
 
         if (co_flags.isFlagSet(CodeFlag.CO_GENERATOR)) {
