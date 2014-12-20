@@ -501,8 +501,6 @@ class ComplexTest(unittest.TestCase):
         self.assertEqual(complex(INF, 0).__getnewargs__(), (INF, 0.0))
 
     if float.__getformat__("double").startswith("IEEE"):
-        @unittest.skipIf(test_support.is_jython,
-                         "FIXME: not working in Jython")
         def test_plus_minus_0j(self):
             # test that -0j and 0j literals are not identified
             z1, z2 = 0j, -0j

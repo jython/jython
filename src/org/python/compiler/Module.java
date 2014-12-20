@@ -101,14 +101,12 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyFloatConstant) {
-            double oVal = ((PyFloatConstant)o).value;
-            if (ZERO == value) {
-                // math.copysign() needs to distinguish signs of zeroes
-                return oVal == value && Double.toString(oVal).equals(Double.toString(value));
-            }
-            return oVal == value;
+            // Ensure hashtable works things like for -0.0 and NaN (see java.lang.Double.equals).
+            PyFloatConstant pyco = (PyFloatConstant)o;
+            return Double.doubleToLongBits(pyco.value) == Double.doubleToLongBits(value);
+        } else {
+            return false;
         }
-        return false;
     }
 }
 
@@ -138,7 +136,9 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyComplexConstant) {
-            return ((PyComplexConstant)o).value == value;
+            // Ensure hashtable works things like for -0.0 and NaN (see java.lang.Double.equals).
+            PyComplexConstant pyco = (PyComplexConstant)o;
+            return Double.doubleToLongBits(pyco.value) == Double.doubleToLongBits(value);
         } else {
             return false;
         }
