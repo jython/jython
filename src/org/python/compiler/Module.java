@@ -1,6 +1,10 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.compiler;
 
+import static org.python.util.CodegenUtils.ci;
+import static org.python.util.CodegenUtils.p;
+import static org.python.util.CodegenUtils.sig;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -10,12 +14,17 @@ import java.util.List;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.python.antlr.ParseException;
+import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Num;
+import org.python.antlr.ast.Str;
+import org.python.antlr.ast.Suite;
+import org.python.antlr.base.mod;
 import org.python.core.CodeBootstrap;
 import org.python.core.CodeFlag;
 import org.python.core.CodeLoader;
 import org.python.core.CompilerFlags;
-import org.python.core.ThreadState;
 import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyComplex;
@@ -30,13 +39,7 @@ import org.python.core.PyRunnable;
 import org.python.core.PyRunnableBootstrap;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
-import org.objectweb.asm.Type;
-import org.python.antlr.ParseException;
-import org.python.antlr.PythonTree;
-import org.python.antlr.ast.Str;
-import org.python.antlr.ast.Suite;
-import org.python.antlr.base.mod;
-import static org.python.util.CodegenUtils.*;
+import org.python.core.ThreadState;
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -46,13 +49,14 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.iconst(value);  // it would be nice if we knew we didn't have to box next
         c.invokestatic(p(Py.class), "newInteger", sig(PyInteger.class, Integer.TYPE));
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
@@ -62,14 +66,16 @@ class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyIntegerConstant) {
-            return ((PyIntegerConstant) o).value == value;
+            return ((PyIntegerConstant)o).value == value;
         } else {
             return false;
         }
     }
 }
 
+
 class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
+
     private static final double ZERO = 0.0;
 
     final double value;
@@ -78,17 +84,18 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.ldc(new Double(value));
         c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
-        return (int) value;
+        return (int)value;
     }
 
     @Override
@@ -105,6 +112,7 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
     }
 }
 
+
 class PyComplexConstant extends Constant implements ClassConstants, Opcodes {
 
     final double value;
@@ -113,28 +121,30 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.ldc(new Double(value));
         c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
-        return (int) value;
+        return (int)value;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyComplexConstant) {
-            return ((PyComplexConstant) o).value == value;
+            return ((PyComplexConstant)o).value == value;
         } else {
             return false;
         }
     }
 }
+
 
 class PyStringConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -144,13 +154,14 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.ldc(value);
         c.invokestatic(p(PyString.class), "fromInterned", sig(PyString.class, String.class));
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
@@ -160,12 +171,13 @@ class PyStringConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyStringConstant) {
-            return ((PyStringConstant) o).value.equals(value);
+            return ((PyStringConstant)o).value.equals(value);
         } else {
             return false;
         }
     }
 }
+
 
 class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -175,13 +187,14 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.ldc(value);
         c.invokestatic(p(PyUnicode.class), "fromInterned", sig(PyUnicode.class, String.class));
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
@@ -191,12 +204,13 @@ class PyUnicodeConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyUnicodeConstant) {
-            return ((PyUnicodeConstant) o).value.equals(value);
+            return ((PyUnicodeConstant)o).value.equals(value);
         } else {
             return false;
         }
     }
 }
+
 
 class PyLongConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -206,14 +220,14 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes {
         this.value = value;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.ldc(value);
         c.invokestatic(p(Py.class), "newLong", sig(PyLong.class, String.class));
-
     }
 
-    void put(Code c) throws IOException {
-    }
+    @Override
+    void put(Code c) throws IOException {}
 
     @Override
     public int hashCode() {
@@ -223,12 +237,13 @@ class PyLongConstant extends Constant implements ClassConstants, Opcodes {
     @Override
     public boolean equals(Object o) {
         if (o instanceof PyLongConstant) {
-            return ((PyLongConstant) o).value.equals(value);
+            return ((PyLongConstant)o).value.equals(value);
         } else {
             return false;
         }
     }
 }
+
 
 class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -247,14 +262,13 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
 
     PyCodeConstant(mod tree, String name, boolean fast_locals, String className, boolean classBody,
             boolean printResults, int firstlineno, ScopeInfo scope, CompilerFlags cflags,
-            Module module)
-            throws Exception {
+            Module module) throws Exception {
 
         this.co_name = name;
         this.co_firstlineno = firstlineno;
         this.module = module;
 
-        //Needed so that moreflags can be final.
+        // Needed so that moreflags can be final.
         int _moreflags = 0;
 
         if (scope.ac != null) {
@@ -262,11 +276,11 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
             keywordlist = scope.ac.keywordlist;
             argcount = scope.ac.names.size();
 
-            //Do something to add init_code to tree
-            //XXX: not sure we should be modifying scope.ac in a PyCodeConstant
-            //constructor.
+            // Do something to add init_code to tree
+            // XXX: not sure we should be modifying scope.ac in a PyCodeConstant
+            // constructor.
             if (scope.ac.init_code.size() > 0) {
-                scope.ac.appendInitCode((Suite) tree);
+                scope.ac.appendInitCode((Suite)tree);
             }
         } else {
             arglist = false;
@@ -276,13 +290,13 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
 
         id = module.codes.size();
 
-        //Better names in the future?
+        // Better names in the future?
         if (isJavaIdentifier(name)) {
             fname = name + "$" + id;
         } else {
             fname = "f$" + id;
         }
-        //XXX: is fname needed at all, or should we just use "name"?
+        // XXX: is fname needed at all, or should we just use "name"?
         this.name = fname;
 
         // !classdef only
@@ -313,7 +327,7 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
         moreflags = _moreflags;
     }
 
-    //XXX: this can probably go away now that we can probably just copy the list.
+    // XXX: this can probably go away now that we can probably just copy the list.
     private List<String> toNameAr(List<String> names, boolean nullok) {
         int sz = names.size();
         if (sz == 0 && nullok) {
@@ -341,15 +355,17 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
         return true;
     }
 
+    @Override
     void get(Code c) throws IOException {
         c.getstatic(module.classfile.name, name, ci(PyCode.class));
     }
 
+    @Override
     void put(Code c) throws IOException {
         module.classfile.addField(name, ci(PyCode.class), access);
         c.iconst(argcount);
 
-        //Make all names
+        // Make all names
         int nameArray;
         if (names != null) {
             nameArray = CodeCompiler.makeStrings(c, names);
@@ -388,13 +404,16 @@ class PyCodeConstant extends Constant implements ClassConstants, Opcodes {
 
         c.iconst(moreflags);
 
-        c.invokestatic(p(Py.class), "newCode", sig(PyCode.class, Integer.TYPE,
-                String[].class, String.class, String.class, Integer.TYPE, Boolean.TYPE,
-                Boolean.TYPE, PyFunctionTable.class, Integer.TYPE, String[].class,
-                String[].class, Integer.TYPE, Integer.TYPE));
+        c.invokestatic(
+                p(Py.class),
+                "newCode",
+                sig(PyCode.class, Integer.TYPE, String[].class, String.class, String.class,
+                        Integer.TYPE, Boolean.TYPE, Boolean.TYPE, PyFunctionTable.class,
+                        Integer.TYPE, String[].class, String[].class, Integer.TYPE, Integer.TYPE));
         c.putstatic(module.classfile.name, name, ci(PyCode.class));
     }
 }
+
 
 public class Module implements Opcodes, ClassConstants, CompilationContext {
 
@@ -421,8 +440,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     public Module(String name, String filename, boolean linenumbers, long mtime) {
         this.linenumbers = linenumbers;
         this.mtime = mtime;
-        classfile = new ClassFile(name, p(PyFunctionTable.class),
-                ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
+        classfile =
+                new ClassFile(name, p(PyFunctionTable.class), ACC_SYNCHRONIZED | ACC_PUBLIC, mtime);
         constants = new Hashtable<Constant, Constant>();
         sfilename = filename;
         if (filename != null) {
@@ -446,7 +465,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         }
         ret = c;
         c.module = this;
-        //More sophisticated name mappings might be nice
+        // More sophisticated name mappings might be nice
         c.name = "_" + constants.size();
         constants.put(ret, ret);
         return ret;
@@ -477,27 +496,23 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     PyCodeConstant codeConstant(mod tree, String name, boolean fast_locals, String className,
-                                boolean classBody, boolean printResults, int firstlineno,
-                                ScopeInfo scope, CompilerFlags cflags) throws Exception {
+            boolean classBody, boolean printResults, int firstlineno, ScopeInfo scope,
+            CompilerFlags cflags) throws Exception {
         return codeConstant(tree, name, fast_locals, className, null, classBody, printResults,
-                            firstlineno, scope, cflags);
+                firstlineno, scope, cflags);
     }
 
     PyCodeConstant codeConstant(mod tree, String name, boolean fast_locals, String className,
-                                Str classDoc, boolean classBody, boolean printResults,
-                                int firstlineno, ScopeInfo scope, CompilerFlags cflags)
-        throws Exception {
-        PyCodeConstant code = new PyCodeConstant(tree, name, fast_locals,
-                className, classBody, printResults, firstlineno, scope, cflags,
-                this);
+            Str classDoc, boolean classBody, boolean printResults, int firstlineno,
+            ScopeInfo scope, CompilerFlags cflags) throws Exception {
+        PyCodeConstant code = new PyCodeConstant(tree, name, fast_locals, className, classBody, //
+                printResults, firstlineno, scope, cflags, this);
         codes.add(code);
 
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
-        Code c = classfile.addMethod(
-                code.fname,
-                sig(PyObject.class, PyFrame.class, ThreadState.class),
-                ACC_PUBLIC);
+        Code c = classfile.addMethod(code.fname, //
+                sig(PyObject.class, PyFrame.class, ThreadState.class), ACC_PUBLIC);
 
         compiler.parse(tree, c, fast_locals, className, classDoc, classBody, scope, cflags);
         return code;
@@ -518,8 +533,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     public void addMain() throws IOException {
-        Code c = classfile.addMethod("main", sig(Void.TYPE, String[].class),
-                ACC_PUBLIC | ACC_STATIC);
+        Code c = classfile.addMethod("main", //
+                sig(Void.TYPE, String[].class), ACC_PUBLIC | ACC_STATIC);
         c.new_(classfile.name);
         c.dup();
         c.ldc(classfile.name);
@@ -533,8 +548,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     public void addBootstrap() throws IOException {
-        Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME, sig(CodeBootstrap.class),
-                ACC_PUBLIC | ACC_STATIC);
+        Code c = classfile.addMethod(CodeLoader.GET_BOOTSTRAP_METHOD_NAME, //
+                sig(CodeBootstrap.class), ACC_PUBLIC | ACC_STATIC);
         c.ldc(Type.getType("L" + classfile.name + ";"));
         c.invokestatic(p(PyRunnableBootstrap.class), PyRunnableBootstrap.REFLECTION_METHOD_NAME,
                 sig(CodeBootstrap.class, Class.class));
@@ -548,7 +563,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         Enumeration e = constants.elements();
 
         while (e.hasMoreElements()) {
-            Constant constant = (Constant) e.nextElement();
+            Constant constant = (Constant)e.nextElement();
             constant.put(c);
         }
 
@@ -561,7 +576,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     public void addFunctions() throws IOException {
-        Code code = classfile.addMethod("call_function",
+        Code code = classfile.addMethod("call_function", //
                 sig(PyObject.class, Integer.TYPE, PyFrame.class, ThreadState.class), ACC_PUBLIC);
 
         code.aload(0); // this
@@ -574,18 +589,18 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             labels[i] = new Label();
         }
 
-        //Get index for function to call
+        // Get index for function to call
         code.iload(1);
         code.tableswitch(0, labels.length - 1, def, labels);
         for (i = 0; i < labels.length; i++) {
             code.label(labels[i]);
-            code.invokevirtual(classfile.name, (codes.get(i)).fname, sig(PyObject.class,
-                    PyFrame.class, ThreadState.class));
+            code.invokevirtual(classfile.name, (codes.get(i)).fname,
+                    sig(PyObject.class, PyFrame.class, ThreadState.class));
             code.areturn();
         }
         code.label(def);
 
-        //Should probably throw internal exception here
+        // Should probably throw internal exception here
         code.aconst_null();
         code.areturn();
     }
@@ -606,20 +621,23 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     // Implementation of CompilationContext
+    @Override
     public Future getFutures() {
         return futures;
     }
 
+    @Override
     public String getFilename() {
         return sfilename;
     }
 
+    @Override
     public ScopeInfo getScopeInfo(PythonTree node) {
         return scopes.get(node);
     }
 
-    public void error(String msg, boolean err, PythonTree node)
-            throws Exception {
+    @Override
+    public void error(String msg, boolean err, PythonTree node) throws Exception {
         if (!err) {
             try {
                 Py.warning(Py.SyntaxWarning, msg, (sfilename != null) ? sfilename : "?",
@@ -635,8 +653,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     public static void compile(mod node, OutputStream ostream, String name, String filename,
-            boolean linenumbers, boolean printResults, CompilerFlags cflags)
-            throws Exception {
+            boolean linenumbers, boolean printResults, CompilerFlags cflags) throws Exception {
         compile(node, ostream, name, filename, linenumbers, printResults, cflags,
                 org.python.core.imp.NO_MTIME);
     }
@@ -651,30 +668,28 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         module.futures.preprocessFutures(node, cflags);
         new ScopesCompiler(module, module.scopes).parse(node);
 
-        //Add __doc__ if it exists
+        // Add __doc__ if it exists
 
-        Constant main = module.codeConstant(node, "<module>", false, null, false,
-                printResults, 0,
-                module.getScopeInfo(node),
-                cflags);
+        Constant main = module.codeConstant(node, "<module>", false, null, false, //
+                printResults, 0, module.getScopeInfo(node), cflags);
         module.mainCode = main;
         module.write(ostream);
     }
 
     public void emitNum(Num node, Code code) throws Exception {
         if (node.getInternalN() instanceof PyInteger) {
-            integerConstant(((PyInteger) node.getInternalN()).getValue()).get(code);
+            integerConstant(((PyInteger)node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyLong) {
-            longConstant(((PyObject) node.getInternalN()).__str__().toString()).get(code);
+            longConstant(((PyObject)node.getInternalN()).__str__().toString()).get(code);
         } else if (node.getInternalN() instanceof PyFloat) {
-            floatConstant(((PyFloat) node.getInternalN()).getValue()).get(code);
+            floatConstant(((PyFloat)node.getInternalN()).getValue()).get(code);
         } else if (node.getInternalN() instanceof PyComplex) {
-            complexConstant(((PyComplex) node.getInternalN()).imag).get(code);
+            complexConstant(((PyComplex)node.getInternalN()).imag).get(code);
         }
     }
 
     public void emitStr(Str node, Code code) throws Exception {
-        PyString s = (PyString) node.getInternalS();
+        PyString s = (PyString)node.getInternalS();
         if (s instanceof PyUnicode) {
             unicodeConstant(s.asString()).get(code);
         } else {
@@ -682,7 +697,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         }
     }
 
-    public boolean emitPrimitiveArraySetters(java.util.List<? extends PythonTree> nodes, Code code) throws Exception {
+    public boolean emitPrimitiveArraySetters(java.util.List<? extends PythonTree> nodes, Code code)
+            throws Exception {
         final int n = nodes.size();
         if (n < USE_SETTERS_LIMIT) {
             return false;  // Too small to matter, so bail
@@ -704,25 +720,25 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         code.iconst(n);
         code.anewarray(p(PyObject.class));
         for (int i = 0; i < num_setters; i++) {
-            Code setter = this.classfile.addMethod(
-                    "set$$" + setter_count, sig(Void.TYPE, PyObject[].class), ACC_STATIC | ACC_PRIVATE);
+            Code setter = this.classfile.addMethod("set$$" + setter_count, //
+                    sig(Void.TYPE, PyObject[].class), ACC_STATIC | ACC_PRIVATE);
 
-            for (int j = 0; (j < MAX_SETTINGS_PER_SETTER) && ((i * MAX_SETTINGS_PER_SETTER + j) < n); j++) {
+            for (int j = 0; (j < MAX_SETTINGS_PER_SETTER)
+                    && ((i * MAX_SETTINGS_PER_SETTER + j) < n); j++) {
                 setter.aload(0);
                 setter.iconst(i * MAX_SETTINGS_PER_SETTER + j);
                 PythonTree node = nodes.get(i * MAX_SETTINGS_PER_SETTER + j);
                 if (node instanceof Num) {
                     emitNum((Num)node, setter);
-                }
-                else if (node instanceof Str) {
+                } else if (node instanceof Str) {
                     emitStr((Str)node, setter);
                 }
                 setter.aastore();
             }
             setter.return_();
             code.dup();
-            code.invokestatic(
-                    this.classfile.name, "set$$" + setter_count, sig(Void.TYPE, PyObject[].class));
+            code.invokestatic(this.classfile.name, "set$$" + setter_count,
+                    sig(Void.TYPE, PyObject[].class));
             setter_count++;
         }
         return true;
