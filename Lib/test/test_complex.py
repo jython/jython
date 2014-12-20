@@ -220,7 +220,6 @@ class ComplexTest(unittest.TestCase):
     def test_conjugate(self):
         self.assertClose(complex(5.3, 9.8).conjugate(), 5.3-9.8j)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_constructor(self):
         class OS:
             def __init__(self, value): self.value = value
@@ -264,24 +263,16 @@ class ComplexTest(unittest.TestCase):
         self.assertAlmostEqual(complex(),  0)
         self.assertAlmostEqual(complex("-1"), -1)
         self.assertAlmostEqual(complex("+1"), +1)
-        #FIXME: these are not working in Jython.
         self.assertAlmostEqual(complex("(1+2j)"), 1+2j)
         self.assertAlmostEqual(complex("(1.3+2.2j)"), 1.3+2.2j)
-        # ]
         self.assertAlmostEqual(complex("3.14+1J"), 3.14+1j)
-        #FIXME: these are not working in Jython.
         self.assertAlmostEqual(complex(" ( +3.14-6J )"), 3.14-6j)
         self.assertAlmostEqual(complex(" ( +3.14-J )"), 3.14-1j)
         self.assertAlmostEqual(complex(" ( +3.14+j )"), 3.14+1j)
-        # ]
         self.assertAlmostEqual(complex("J"), 1j)
-        #FIXME: this is not working in Jython.
         self.assertAlmostEqual(complex("( j )"), 1j)
-        # ]
         self.assertAlmostEqual(complex("+J"), 1j)
-        #FIXME: this is not working in Jython.
         self.assertAlmostEqual(complex("( -j)"), -1j)
-        # ]
         self.assertAlmostEqual(complex('1e-500'), 0.0 + 0.0j)
         self.assertAlmostEqual(complex('-1e-500j'), 0.0 - 0.0j)
         self.assertAlmostEqual(complex('-1e-500+1e-500j'), -0.0 + 0.0j)
@@ -301,9 +292,7 @@ class ComplexTest(unittest.TestCase):
             return atan2(x, -1.)
 
         self.assertEqual(split_zeros(complex(1., 0.).imag), split_zeros(0.))
-        #FIXME: this is not working in Jython.
         self.assertEqual(split_zeros(complex(1., -0.).imag), split_zeros(-0.))
-        # ]
         self.assertEqual(split_zeros(complex(0., 1.).real), split_zeros(0.))
         self.assertEqual(split_zeros(complex(-0., 1.).real), split_zeros(-0.))
 
@@ -340,199 +329,19 @@ class ComplexTest(unittest.TestCase):
         self.assertRaises(ValueError, complex, "(1+2j)123")
         if test_support.have_unicode:
             self.assertRaises(ValueError, complex, unicode("x"))
-        #FIXME: these are raising wrong errors in Jython.
         self.assertRaises(ValueError, complex, "1j+2")
         self.assertRaises(ValueError, complex, "1e1ej")
         self.assertRaises(ValueError, complex, "1e++1ej")
         self.assertRaises(ValueError, complex, ")1+2j(")
-        # ]
 
         # the following three are accepted by Python 2.6
-        #FIXME: these are raising wrong errors in Jython.
         self.assertRaises(ValueError, complex, "1..1j")
         self.assertRaises(ValueError, complex, "1.11.1j")
         self.assertRaises(ValueError, complex, "1e1.1j")
-        # ]
 
-        #FIXME: not working in Jython.
         if test_support.have_unicode:
             # check that complex accepts long unicode strings
             self.assertEqual(type(complex(unicode("1"*500))), complex)
-        # ]
-
-        class EvilExc(Exception):
-            pass
-
-        class evilcomplex:
-            def __complex__(self):
-                raise EvilExc
-
-        self.assertRaises(EvilExc, complex, evilcomplex())
-
-        class float2:
-            def __init__(self, value):
-                self.value = value
-            def __float__(self):
-                return self.value
-
-        self.assertAlmostEqual(complex(float2(42.)), 42)
-        self.assertAlmostEqual(complex(real=float2(17.), imag=float2(23.)), 17+23j)
-        self.assertRaises(TypeError, complex, float2(None))
-
-        class complex0(complex):
-            """Test usage of __complex__() when inheriting from 'complex'"""
-            def __complex__(self):
-                return 42j
-
-        class complex1(complex):
-            """Test usage of __complex__() with a __new__() method"""
-            def __new__(self, value=0j):
-                return complex.__new__(self, 2*value)
-            def __complex__(self):
-                return self
-
-        class complex2(complex):
-            """Make sure that __complex__() calls fail if anything other than a
-            complex is returned"""
-            def __complex__(self):
-                return None
-
-        self.assertAlmostEqual(complex(complex0(1j)), 42j)
-        self.assertAlmostEqual(complex(complex1(1j)), 2j)
-        self.assertRaises(TypeError, complex, complex2(1j))
-
-    def test_constructor_jy(self):
-        # These are the parts of test_constructor that work in Jython.
-        # Delete this test when test_constructor skip is removed.
-        class OS:
-            def __init__(self, value): self.value = value
-            def __complex__(self): return self.value
-        class NS(object):
-            def __init__(self, value): self.value = value
-            def __complex__(self): return self.value
-        self.assertEqual(complex(OS(1+10j)), 1+10j)
-        self.assertEqual(complex(NS(1+10j)), 1+10j)
-        self.assertRaises(TypeError, complex, OS(None))
-        self.assertRaises(TypeError, complex, NS(None))
-
-        self.assertAlmostEqual(complex("1+10j"), 1+10j)
-        self.assertAlmostEqual(complex(10), 10+0j)
-        self.assertAlmostEqual(complex(10.0), 10+0j)
-        self.assertAlmostEqual(complex(10L), 10+0j)
-        self.assertAlmostEqual(complex(10+0j), 10+0j)
-        self.assertAlmostEqual(complex(1,10), 1+10j)
-        self.assertAlmostEqual(complex(1,10L), 1+10j)
-        self.assertAlmostEqual(complex(1,10.0), 1+10j)
-        self.assertAlmostEqual(complex(1L,10), 1+10j)
-        self.assertAlmostEqual(complex(1L,10L), 1+10j)
-        self.assertAlmostEqual(complex(1L,10.0), 1+10j)
-        self.assertAlmostEqual(complex(1.0,10), 1+10j)
-        self.assertAlmostEqual(complex(1.0,10L), 1+10j)
-        self.assertAlmostEqual(complex(1.0,10.0), 1+10j)
-        self.assertAlmostEqual(complex(3.14+0j), 3.14+0j)
-        self.assertAlmostEqual(complex(3.14), 3.14+0j)
-        self.assertAlmostEqual(complex(314), 314.0+0j)
-        self.assertAlmostEqual(complex(314L), 314.0+0j)
-        self.assertAlmostEqual(complex(3.14+0j, 0j), 3.14+0j)
-        self.assertAlmostEqual(complex(3.14, 0.0), 3.14+0j)
-        self.assertAlmostEqual(complex(314, 0), 314.0+0j)
-        self.assertAlmostEqual(complex(314L, 0L), 314.0+0j)
-        self.assertAlmostEqual(complex(0j, 3.14j), -3.14+0j)
-        self.assertAlmostEqual(complex(0.0, 3.14j), -3.14+0j)
-        self.assertAlmostEqual(complex(0j, 3.14), 3.14j)
-        self.assertAlmostEqual(complex(0.0, 3.14), 3.14j)
-        self.assertAlmostEqual(complex("1"), 1+0j)
-        self.assertAlmostEqual(complex("1j"), 1j)
-        self.assertAlmostEqual(complex(),  0)
-        self.assertAlmostEqual(complex("-1"), -1)
-        self.assertAlmostEqual(complex("+1"), +1)
-        #FIXME: these are not working in Jython.
-        #self.assertAlmostEqual(complex("(1+2j)"), 1+2j)
-        #self.assertAlmostEqual(complex("(1.3+2.2j)"), 1.3+2.2j)
-        self.assertAlmostEqual(complex("3.14+1J"), 3.14+1j)
-        #FIXME: these are not working in Jython.
-        #self.assertAlmostEqual(complex(" ( +3.14-6J )"), 3.14-6j)
-        #self.assertAlmostEqual(complex(" ( +3.14-J )"), 3.14-1j)
-        #self.assertAlmostEqual(complex(" ( +3.14+j )"), 3.14+1j)
-        self.assertAlmostEqual(complex("J"), 1j)
-        #FIXME: this is not working in Jython.
-        #self.assertAlmostEqual(complex("( j )"), 1j)
-        self.assertAlmostEqual(complex("+J"), 1j)
-        #FIXME: this is not working in Jython.
-        #self.assertAlmostEqual(complex("( -j)"), -1j)
-        self.assertAlmostEqual(complex('1e-500'), 0.0 + 0.0j)
-        self.assertAlmostEqual(complex('-1e-500j'), 0.0 - 0.0j)
-        self.assertAlmostEqual(complex('-1e-500+1e-500j'), -0.0 + 0.0j)
-
-        class complex2(complex): pass
-        self.assertAlmostEqual(complex(complex2(1+1j)), 1+1j)
-        self.assertAlmostEqual(complex(real=17, imag=23), 17+23j)
-        self.assertAlmostEqual(complex(real=17+23j), 17+23j)
-        self.assertAlmostEqual(complex(real=17+23j, imag=23), 17+46j)
-        self.assertAlmostEqual(complex(real=1+2j, imag=3+4j), -3+5j)
-
-        # check that the sign of a zero in the real or imaginary part
-        # is preserved when constructing from two floats.  (These checks
-        # are harmless on systems without support for signed zeros.)
-        def split_zeros(x):
-            """Function that produces different results for 0. and -0."""
-            return atan2(x, -1.)
-
-        self.assertEqual(split_zeros(complex(1., 0.).imag), split_zeros(0.))
-        #FIXME: this is not working in Jython.
-        #self.assertEqual(split_zeros(complex(1., -0.).imag), split_zeros(-0.))
-        self.assertEqual(split_zeros(complex(0., 1.).real), split_zeros(0.))
-        self.assertEqual(split_zeros(complex(-0., 1.).real), split_zeros(-0.))
-
-        c = 3.14 + 1j
-        self.assertTrue(complex(c) is c)
-        del c
-
-        self.assertRaises(TypeError, complex, "1", "1")
-        self.assertRaises(TypeError, complex, 1, "1")
-
-        if test_support.have_unicode:
-            self.assertEqual(complex(unicode("  3.14+J  ")), 3.14+1j)
-
-        # SF bug 543840:  complex(string) accepts strings with \0
-        # Fixed in 2.3.
-        self.assertRaises(ValueError, complex, '1+1j\0j')
-
-        self.assertRaises(TypeError, int, 5+3j)
-        self.assertRaises(TypeError, long, 5+3j)
-        self.assertRaises(TypeError, float, 5+3j)
-        self.assertRaises(ValueError, complex, "")
-        self.assertRaises(TypeError, complex, None)
-        self.assertRaises(ValueError, complex, "\0")
-        self.assertRaises(ValueError, complex, "3\09")
-        self.assertRaises(TypeError, complex, "1", "2")
-        self.assertRaises(TypeError, complex, "1", 42)
-        self.assertRaises(TypeError, complex, 1, "2")
-        self.assertRaises(ValueError, complex, "1+")
-        self.assertRaises(ValueError, complex, "1+1j+1j")
-        self.assertRaises(ValueError, complex, "--")
-        self.assertRaises(ValueError, complex, "(1+2j")
-        self.assertRaises(ValueError, complex, "1+2j)")
-        self.assertRaises(ValueError, complex, "1+(2j)")
-        self.assertRaises(ValueError, complex, "(1+2j)123")
-        if test_support.have_unicode:
-            self.assertRaises(ValueError, complex, unicode("x"))
-        #FIXME: these are raising wrong errors in Jython.
-        #self.assertRaises(ValueError, complex, "1j+2")
-        #self.assertRaises(ValueError, complex, "1e1ej")
-        #self.assertRaises(ValueError, complex, "1e++1ej")
-        #self.assertRaises(ValueError, complex, ")1+2j(")
-
-        # the following three are accepted by Python 2.6
-        #FIXME: these are raising wrong errors in Jython.
-        #self.assertRaises(ValueError, complex, "1..1j")
-        #self.assertRaises(ValueError, complex, "1.11.1j")
-        #self.assertRaises(ValueError, complex, "1e1.1j")
-
-        #FIXME: not working in Jython.
-        #if test_support.have_unicode:
-        #    # check that complex accepts long unicode strings
-        #    self.assertEqual(type(complex(unicode("1"*500))), complex)
 
         class EvilExc(Exception):
             pass
@@ -641,7 +450,6 @@ class ComplexTest(unittest.TestCase):
         for num in nums:
             self.assertAlmostEqual((num.real**2 + num.imag**2)  ** 0.5, abs(num))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: str.__complex__ not working in Jython")
     def test_repr(self):
         self.assertEqual(repr(1+6j), '(1+6j)')
         self.assertEqual(repr(1-6j), '(1-6j)')
@@ -652,32 +460,6 @@ class ComplexTest(unittest.TestCase):
         self.assertEqual(1+6j,complex(repr(1+6j)))
         self.assertEqual(-6j,complex(repr(-6j)))
         self.assertEqual(6j,complex(repr(6j)))
-
-        self.assertEqual(repr(complex(1., INF)), "(1+infj)")
-        self.assertEqual(repr(complex(1., -INF)), "(1-infj)")
-        self.assertEqual(repr(complex(INF, 1)), "(inf+1j)")
-        self.assertEqual(repr(complex(-INF, INF)), "(-inf+infj)")
-        self.assertEqual(repr(complex(NAN, 1)), "(nan+1j)")
-        self.assertEqual(repr(complex(1, NAN)), "(1+nanj)")
-        self.assertEqual(repr(complex(NAN, NAN)), "(nan+nanj)")
-
-        self.assertEqual(repr(complex(0, INF)), "infj")
-        self.assertEqual(repr(complex(0, -INF)), "-infj")
-        self.assertEqual(repr(complex(0, NAN)), "nanj")
-
-    def test_repr_jy(self):
-        # These are just the cases that Jython can do from test_repr
-        # Delete this test when test_repr passes
-        self.assertEqual(repr(1+6j), '(1+6j)')
-        self.assertEqual(repr(1-6j), '(1-6j)')
-
-        self.assertNotEqual(repr(-(1+0j)), '(-1+-0j)')
-
-        # Fails to round-trip:
-#         self.assertEqual(1-6j,complex(repr(1-6j)))
-#         self.assertEqual(1+6j,complex(repr(1+6j)))
-#         self.assertEqual(-6j,complex(repr(-6j)))
-#         self.assertEqual(6j,complex(repr(6j)))
 
         self.assertEqual(repr(complex(1., INF)), "(1+infj)")
         self.assertEqual(repr(complex(1., -INF)), "(1-infj)")
@@ -729,7 +511,6 @@ class ComplexTest(unittest.TestCase):
 
     @unittest.skipUnless(float.__getformat__("double").startswith("IEEE"),
                          "test requires IEEE 754 doubles")
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_overflow(self):
         self.assertEqual(complex("1e500"), complex(INF, 0.0))
         self.assertEqual(complex("-1e500j"), complex(0.0, -INF))
@@ -737,7 +518,6 @@ class ComplexTest(unittest.TestCase):
 
     @unittest.skipUnless(float.__getformat__("double").startswith("IEEE"),
                          "test requires IEEE 754 doubles")
-    @unittest.skipIf(test_support.is_jython, "FIXME: not working in Jython")
     def test_repr_roundtrip(self):
         vals = [0.0, 1e-500, 1e-315, 1e-200, 0.0123, 3.1415, 1e50, INF, NAN]
         vals += [-v for v in vals]
