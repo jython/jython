@@ -27,7 +27,8 @@ public class PyComplex extends PyObject {
 
     static PyComplex J = new PyComplex(0, 1.);
 
-    public static final PyComplex Inf = new PyComplex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+    public static final PyComplex Inf = new PyComplex(Double.POSITIVE_INFINITY,
+            Double.POSITIVE_INFINITY);
     public static final PyComplex NaN = new PyComplex(Double.NaN, Double.NaN);
 
     @ExposedGet(doc = BuiltinDocs.complex_real_doc)
@@ -247,11 +248,53 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___eq___doc)
     final PyObject complex___eq__(PyObject other) {
-        if (!canCoerce(other)) {
-            return null;
+        switch (eq_helper(other)) {
+            case 0:
+                return Py.False;
+            case 1:
+                return Py.True;
+            default:
+                return null;
         }
-        PyComplex c = coerce(other);
-        return Py.newBoolean(real == c.real && imag == c.imag);
+    }
+
+    /**
+     * Helper for {@link #complex___eq__(PyObject)} and {@link #complex___ne__(PyObject)}.
+     *
+     * @param other to compare for equality with this
+     * @return 0 = false, 1 = true, 2 = don't know (ask the <code>other</code> object)
+     */
+    private int eq_helper(PyObject other) {
+        // We only deal with primitive types here. All others delegate upwards (return 2).
+        boolean equal;
+        if (other instanceof PyComplex) {
+            PyComplex c = ((PyComplex)other);
+            equal = (this.real == c.real && this.imag == c.imag);
+        } else if (other instanceof PyFloat) {
+            PyFloat f = ((PyFloat)other);
+            equal = (this.imag == 0.0 && this.real == f.getValue());
+        } else if (other instanceof PyInteger || other instanceof PyLong) {
+            if (this.imag == 0.0) {
+                // The imaginary part is zero: other object primitive might equal the real part.
+                double r = this.real;
+                if (Double.isInfinite(r) || Double.isNaN(r)) {
+                    // No integer primitive type can be infinite, and NaN never equals anything.
+                    equal = false;
+                } else {
+                    // Delegate the logic to PyFloat
+                    PyFloat f = new PyFloat(r);
+                    equal = (f.float___cmp__(other) == 0);
+                }
+            } else {
+                // No other primitive can have an imaginary part.
+                equal = false;
+            }
+        } else {
+            // other is not one of the types we know how to deal with.
+            return 2;
+        }
+        // Only "known" cases end here: translate to return code
+        return equal ? 1 : 0;
     }
 
     @Override
@@ -261,11 +304,14 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.complex___ne___doc)
     final PyObject complex___ne__(PyObject other) {
-        if (!canCoerce(other)) {
-            return null;
+        switch (eq_helper(other)) {
+            case 0:
+                return Py.True;
+            case 1:
+                return Py.False;
+            default:
+                return null;
         }
-        PyComplex c = coerce(other);
-        return Py.newBoolean(real != c.real || imag != c.imag);
     }
 
     private PyObject unsupported_comparison(PyObject other) {
@@ -415,22 +461,17 @@ public class PyComplex extends PyObject {
     }
 
     private final static PyObject _mul(PyComplex o1, PyComplex o2) {
-        if (Double.isNaN(o1.real) ||
-                Double.isNaN(o1.imag) ||
-                Double.isNaN(o2.real) ||
-                Double.isNaN(o2.imag)) {
+        if (Double.isNaN(o1.real) || Double.isNaN(o1.imag) || Double.isNaN(o2.real)
+                || Double.isNaN(o2.imag)) {
             return NaN;
         }
-        if (Double.isInfinite(o1.real) ||
-                Double.isInfinite(o1.imag) ||
-                Double.isInfinite(o2.real) ||
-                Double.isInfinite(o2.imag)) {
+        if (Double.isInfinite(o1.real) || Double.isInfinite(o1.imag) || Double.isInfinite(o2.real)
+                || Double.isInfinite(o2.imag)) {
             return Inf;
         }
 
-        return new PyComplex(
-                o1.real * o2.real - o1.imag * o2.imag,
-                o1.real * o2.imag + o1.imag * o2.real);
+        return new PyComplex(o1.real * o2.real - o1.imag * o2.imag, o1.real * o2.imag + o1.imag
+                * o2.real);
     }
 
     @Override
