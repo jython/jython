@@ -946,6 +946,58 @@ public class PyJavaType extends PyType {
         protected abstract boolean getResult(int comparison);
     }
 
+    private static PyObject mapEq(PyObject self, PyObject other) {
+        Map<Object, Object> selfMap = ((Map<Object, Object>) self.getJavaProxy());
+        if (other.getType().isSubType(PyDictionary.TYPE)) {
+            PyDictionary oDict = (PyDictionary) other;
+            if (selfMap.size() != oDict.size()) {
+                return Py.False;
+            }
+            for (Object jkey : selfMap.keySet()) {
+                Object jval = selfMap.get(jkey);
+                PyObject oVal = oDict.__finditem__(Py.java2py(jkey));
+                if (oVal == null) {
+                    return Py.False;
+                }
+                if (!Py.java2py(jval)._eq(oVal).__nonzero__()) {
+                    return Py.False;
+                }
+            }
+            return Py.True;
+        } else {
+            Object oj = other.getJavaProxy();
+            if (oj instanceof Map) {
+                Map<Object, Object> oMap = (Map<Object, Object>) oj;
+                return Py.newBoolean(selfMap.equals(oMap));
+            } else {
+                return null;
+            }
+        }
+    }
+
+    // Map ordering comparisons (lt, le, gt, ge) are based on the key sets;
+    // we just define mapLe + mapEq for total ordering of such key sets
+    private static PyObject mapLe(PyObject self, PyObject other) {
+        Set<Object> selfKeys = ((Map<Object, Object>) self.getJavaProxy()).keySet();
+        if (other.getType().isSubType(PyDictionary.TYPE)) {
+            PyDictionary oDict = (PyDictionary) other;
+            for (Object jkey : selfKeys) {
+                if (!oDict.__contains__(Py.java2py(jkey))) {
+                    return Py.False;
+                }
+            }
+            return Py.True;
+        } else {
+            Object oj = other.getJavaProxy();
+            if (oj instanceof Map) {
+                Map<Object, Object> oMap = (Map<Object, Object>) oj;
+                return Py.newBoolean(oMap.keySet().containsAll(selfKeys));
+            } else {
+                return null;
+            }
+        }
+    }
+
     /**
      * Build a map of common Java collection base types (Map, Iterable, etc) that need to be
      * injected with Python's equivalent types' builtin methods (__len__, __iter__, iteritems, etc).
@@ -1030,31 +1082,31 @@ public class PyJavaType extends PyType {
             PyBuiltinMethodNarrow mapEqProxy = new MapMethod("__eq__", 1) {
                 @Override
                 public PyObject __call__(PyObject other) {
-                    if (other.getType().isSubType(PyDictionary.TYPE)) {
-                        PyDictionary oDict = (PyDictionary) other;
-                        if (asMap().size() != oDict.size()) {
-                            return Py.False;
-                        }
-                        for (Object jkey : asMap().keySet()) {
-                            Object jval = asMap().get(jkey);
-                            PyObject oVal = oDict.__finditem__(Py.java2py(jkey));
-                            if (oVal == null) {
-                                return Py.False;
-                            }
-                            if (!Py.java2py(jval)._eq(oVal).__nonzero__()) {
-                                return Py.False;
-                            }
-                        }
-                        return Py.True;
-                    } else {
-                        Object oj = other.getJavaProxy();
-                        if (oj instanceof Map) {
-                            Map<Object, Object> oMap = (Map<Object, Object>) oj;
-                            return asMap().equals(oMap) ? Py.True : Py.False;
-                        } else {
-                            return null;
-                        }
-                    }
+                    return mapEq(self, other);
+                }
+            };
+            PyBuiltinMethodNarrow mapLeProxy = new MapMethod("__le__", 1) {
+                @Override
+                public PyObject __call__(PyObject other) {
+                    return mapLe(self, other);
+                }
+            };
+            PyBuiltinMethodNarrow mapGeProxy = new MapMethod("__ge__", 1) {
+                @Override
+                public PyObject __call__(PyObject other) {
+                    return (mapLe(self, other).__not__()).__or__(mapEq(self, other));
+                }
+            };
+            PyBuiltinMethodNarrow mapLtProxy = new MapMethod("__lt__", 1) {
+                @Override
+                public PyObject __call__(PyObject other) {
+                    return mapLe(self, other).__and__(mapEq(self, other).__not__());
+                }
+            };
+            PyBuiltinMethodNarrow mapGtProxy = new MapMethod("__gt__", 1) {
+                @Override
+                public PyObject __call__(PyObject other) {
+                    return mapLe(self, other).__not__();
                 }
             };
             PyBuiltinMethodNarrow mapIterProxy = new MapMethod("__iter__", 0) {
@@ -1340,27 +1392,33 @@ public class PyJavaType extends PyType {
                     }
                 }
             };
-            collectionProxies.put(Map.class, new PyBuiltinMethod[] {mapLenProxy,
-                    // map IterProxy can conflict with Iterable.class; fix after the fact in handleMroError
-                                                                    mapIterProxy,
-                                                                    mapReprProxy,
-                                                                    mapEqProxy,
-                                                                    mapContainsProxy,
-                                                                    mapGetItemProxy,
-                                                                    //mapGetProxy,
-                                                                    mapPutProxy,
-                                                                    mapRemoveProxy,
-                                                                    mapIterItemsProxy,
-                                                                    mapHasKeyProxy,
-                                                                    mapKeysProxy,
-                                                                    //mapValuesProxy,
-                                                                    mapSetDefaultProxy,
-                                                                    mapPopProxy,
-                                                                    mapPopItemProxy,
-                                                                    mapItemsProxy,
-                                                                    mapCopyProxy,
-                                                                    mapUpdateProxy,
-                                                                    mapFromKeysProxy});     // class method
+            collectionProxies.put(Map.class, new PyBuiltinMethod[] {
+                    mapLenProxy,
+                    // map IterProxy can conflict with Iterable.class;
+                    // fix after the fact in handleMroError
+                    mapIterProxy,
+                    mapReprProxy,
+                    mapEqProxy,
+                    mapLeProxy,
+                    mapLtProxy,
+                    mapGeProxy,
+                    mapGtProxy,
+                    mapContainsProxy,
+                    mapGetItemProxy,
+                    //mapGetProxy,
+                    mapPutProxy,
+                    mapRemoveProxy,
+                    mapIterItemsProxy,
+                    mapHasKeyProxy,
+                    mapKeysProxy,
+                    //mapValuesProxy,
+                    mapSetDefaultProxy,
+                    mapPopProxy,
+                    mapPopItemProxy,
+                    mapItemsProxy,
+                    mapCopyProxy,
+                    mapUpdateProxy,
+                    mapFromKeysProxy});     // class method
             postCollectionProxies.put(Map.class, new PyBuiltinMethod[] {mapGetProxy,
                                                                         mapValuesProxy});
 
