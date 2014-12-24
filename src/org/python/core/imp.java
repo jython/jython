@@ -27,13 +27,41 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 34;
+    private static final int APIVersion = 35;
 
     public static final int NO_MTIME = -1;
 
     // This should change to Python 3.x; note that 2.7 allows relative
     // imports unless `from __future__ import absolute_import`
     public static final int DEFAULT_LEVEL = -1;
+
+    public static class CodeData {
+        private final byte[] bytes;
+        private final long mtime;
+        private final String filename;
+
+        public CodeData(byte[] bytes, long mtime, String filename) {
+            this.bytes = bytes;
+            this.mtime = mtime;
+            this.filename = filename;
+        }
+
+        public byte[] getBytes() {
+            return bytes;
+        }
+
+        public long getMTime() {
+            return mtime;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+    }
+
+    public static enum CodeImport {
+        source, compiled_only;
+    }
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
@@ -174,9 +202,14 @@ public class imp {
 
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
                                       String sourceName, String compiledName, long mtime) {
-        byte[] data = null;
+        return createFromPyClass(name, fp, testing, sourceName, compiledName, mtime, CodeImport.source);
+    }
+
+    static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
+                                      String sourceName, String compiledName, long mtime, CodeImport source) {
+        CodeData data = null;
         try {
-            data = readCode(name, fp, testing, mtime);
+            data = readCodeData(name, fp, testing, mtime);
         } catch (IOException ioe) {
             if (!testing) {
                 throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
@@ -188,7 +221,8 @@ public class imp {
         }
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data, sourceName);
+            code = BytecodeLoader.makeCode(name + "$py", data.getBytes(),
+                    source == CodeImport.compiled_only ? data.getFilename() : sourceName);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -199,7 +233,6 @@ public class imp {
 
         Py.writeComment(IMPORT_LOG, String.format("import %s # precompiled from %s", name,
                                                   compiledName));
-
         return createFromCode(name, code, compiledName);
     }
 
@@ -208,6 +241,14 @@ public class imp {
     }
 
     public static byte[] readCode(String name, InputStream fp, boolean testing, long mtime) throws IOException {
+        return readCodeData(name, fp, testing, mtime).getBytes();
+    }
+
+    public static CodeData readCodeData(String name, InputStream fp, boolean testing) throws IOException {
+        return readCodeData(name, fp, testing, NO_MTIME);
+    }
+
+    public static CodeData readCodeData(String name, InputStream fp, boolean testing, long mtime) throws IOException {
         byte[] data = readBytes(fp);
         int api;
         AnnotationReader ar = new AnnotationReader(data);
@@ -226,7 +267,7 @@ public class imp {
                 return null;
             }
         }
-        return data;
+        return new CodeData(data, mtime, ar.getFilename());
     }
 
     public static byte[] compileSource(String name, File file) {
@@ -582,8 +623,9 @@ public class imp {
                     Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
                     if (classTime >= pyTime) {
-                        PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
-                                                         displaySourceName, displayCompiledName, pyTime);
+                        PyObject ret = createFromPyClass(
+                                modName, makeStream(compiledFile), true,
+                                displaySourceName, displayCompiledName, pyTime);
                         if (ret != null) {
                             return ret;
                         }
@@ -598,8 +640,9 @@ public class imp {
             // If no source, try loading precompiled
             Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
             if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-                return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
-                                         displayCompiledName);
+                return createFromPyClass(
+                        modName, makeStream(compiledFile), true, displaySourceName,
+                        displayCompiledName, NO_MTIME, CodeImport.compiled_only);
             }
         } catch (SecurityException e) {
             // ok

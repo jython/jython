@@ -189,7 +189,7 @@ public class ClassFile
             av.visitEnd();
         } 
     }
-    
+
     public void write(OutputStream stream) throws IOException {
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
         AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
@@ -203,6 +203,9 @@ public class ClassFile
         av.visitEnd();
 
         if (sfilename != null) {
+            av = cw.visitAnnotation("Lorg/python/compiler/Filename;", true);
+            av.visit("value", sfilename);
+            av.visitEnd();
             cw.visitSource(sfilename, null);
         }
         endClassAnnotations();
