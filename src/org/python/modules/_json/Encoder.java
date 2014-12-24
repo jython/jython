@@ -58,7 +58,7 @@ public class Encoder extends PyObject {
 
     public PyObject __call__(PyObject obj, PyObject indent_level) {
         PyList rval = new PyList();
-        listencode_obj(rval, obj, 0);
+        encode_obj(rval, obj, 0);
         return rval;
     }
 
@@ -86,7 +86,19 @@ public class Encoder extends PyObject {
         return (PyString) encoder.__call__(obj);
     }
 
-    private void listencode_obj(PyList rval, PyObject obj, int indent_level) {
+    private PyObject checkCircularReference(PyObject obj) {
+        PyObject ident = null;
+        if (markers != null) {
+            ident = Py.newInteger(Py.id(obj));
+            if (markers.__contains__(ident)) {
+                throw Py.ValueError("Circular reference detected");
+            }
+            markers.__setitem__(ident, obj);
+        }
+        return ident;
+    }
+
+    private void encode_obj(PyList rval, PyObject obj, int indent_level) {
         /* Encode Python object obj to a JSON term, rval is a PyList */
         if (obj == Py.None) {
             rval.append(new PyString("null"));
@@ -101,64 +113,31 @@ public class Encoder extends PyObject {
         } else if (obj instanceof PyFloat) {
             rval.append(encode_float(obj));
         } else if (obj instanceof PyList || obj instanceof PyTuple) {
-            listencode_list(rval, obj, indent_level);
+            encode_list(rval, obj, indent_level);
         } else if (obj instanceof PyDictionary) {
-            listencode_dict(rval, (PyDictionary) obj, indent_level);
+            encode_dict(rval, (PyDictionary) obj, indent_level);
         } else {
-            PyObject ident = null;
-            if (markers != null) {
-                boolean contained = false;
-                try {
-                    contained = markers.__contains__(obj);
-                } catch (PyException pye) {
-                    // ignore objects that are not hashable, so they can be
-                    // potentially serialized with defaultfn
-                    if (!pye.match(Py.TypeError)) throw pye;
-                }
-                if (contained) {
-                    throw Py.ValueError("Circular reference detected");
-                }
-                ident = Py.newInteger(Py.id(obj));
-                markers.__setitem__(ident, obj);
-            }
+            PyObject ident = checkCircularReference(obj);
             if (defaultfn == Py.None) {
                 throw Py.TypeError(String.format(".80s is not JSON serializable", obj.__repr__()));
             }
 
-            PyObject newobj;
-            try {
-                newobj = defaultfn.__call__(obj);
-            } catch (StackOverflowError e) {
-                if (markers == Py.None) {
-                    throw e;
-                } else {
-                    throw Py.ValueError("Stack overflow in JSON serialization");
-                }
-            }
-            listencode_obj(rval, newobj, indent_level);
+            PyObject newobj = defaultfn.__call__(obj);
+            encode_obj(rval, newobj, indent_level);
             if (ident != null) {
                 markers.__delitem__(ident);
             }
         }
     }
 
-    private void listencode_dict(PyList rval, PyDictionary dct, int indent_level) {
+    private void encode_dict(PyList rval, PyDictionary dct, int indent_level) {
         /* Encode Python dict dct a JSON term */
-
-        PyObject ident = null;
-
         if (dct.__len__() == 0) {
             rval.append(new PyString("{}"));
             return;
         }
 
-        if (markers != null) {
-            ident = Py.newInteger(Py.id(dct));
-            if (markers.__contains__(ident)) {
-                throw Py.ValueError("Circular reference detected");
-            }
-            markers.__setitem__(ident, dct);
-        }
+        PyObject ident = checkCircularReference(dct);
         rval.append(new PyString("{"));
 
         /* TODO: C speedup not implemented for sort_keys */
@@ -193,7 +172,7 @@ public class Encoder extends PyObject {
             PyString encoded = encode_string(kstr);
             rval.append(encoded);
             rval.append(key_separator);
-            listencode_obj(rval, value, indent_level);
+            encode_obj(rval, value, indent_level);
             idx += 1;
         }
 
@@ -204,17 +183,8 @@ public class Encoder extends PyObject {
     }
 
 
-    private void listencode_list(PyList rval, PyObject seq, int indent_level) {
-        PyObject ident = null;
-
-        if (markers != null) {
-            ident = Py.newInteger(Py.id(seq));
-            if (markers.__contains__(ident)) {
-                throw Py.ValueError("Circular reference detected");
-            }
-            markers.__setitem__(ident, seq);
-        }
-
+    private void encode_list(PyList rval, PyObject seq, int indent_level) {
+        PyObject ident = checkCircularReference(seq);
         rval.append(new PyString("["));
 
         int i = 0;
@@ -222,7 +192,7 @@ public class Encoder extends PyObject {
             if (i > 0) {
                 rval.append(item_separator);
             }
-            listencode_obj(rval, obj, indent_level);
+            encode_obj(rval, obj, indent_level);
             i++;
         }
 
