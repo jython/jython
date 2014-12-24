@@ -676,6 +676,8 @@ public class imp {
 	 */
     private static String get_parent(PyObject dict, int level) {
         String modname;
+        int orig_level = level;
+
         if ((dict == null && level == -1) || level == 0) {
         	// try an absolute import
             return null;
@@ -725,6 +727,19 @@ public class imp {
                 throw Py.ValueError("Attempted relative import beyond toplevel package");
             }
             modname = modname.substring(0, dot);
+        }
+
+        if (Py.getSystemState().modules.__finditem__(modname) == null) {
+            if (orig_level < 1) {
+                Py.warning(Py.RuntimeWarning,
+                        String.format(
+                                "Parent module '%.200s' not found " +
+                                "while handling absolute import", modname));
+            } else {
+                throw Py.SystemError(String.format(
+                        "Parent module '%.200s' not loaded, " +
+                        "cannot perform relative import", modname));
+            }
         }
         return modname.intern();
     }
