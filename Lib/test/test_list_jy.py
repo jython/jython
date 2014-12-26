@@ -3,6 +3,7 @@ import random
 import threading
 import time
 from test import test_support
+import test_list
 
 if test_support.is_jython:
     from java.util import ArrayList
@@ -209,10 +210,23 @@ class ExtendedSliceTestCase(unittest.TestCase):
         self.assertEqual(a, expected4)
 
 
+class JavaListTestCase(test_list.ListTest):
+
+    type2test = ArrayList
+
+    def test_extend_java_ArrayList(self):
+        jl = ArrayList([])
+        jl.extend([1,2])
+        self.assertEqual(jl, ArrayList([1,2]))
+        jl.extend(ArrayList([3,4]))
+        self.assertEqual(jl, [1,2,3,4])
+
+
 def test_main():
     test_support.run_unittest(ListTestCase,
                               ThreadSafetyTestCase,
-                              ExtendedSliceTestCase)
+                              ExtendedSliceTestCase,
+                              JavaListTestCase)
 
 if __name__ == "__main__":
     test_main()

@@ -15,17 +15,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.EventListener;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Queue;
+import java.util.*;
 
+import com.google.common.collect.Lists;
 import org.python.core.util.StringUtil;
 import org.python.util.Generic;
 
@@ -898,6 +890,10 @@ public class PyJavaType extends PyType {
             super(name, numArgs);
         }
 
+        protected ListMethod(String name, int minArgs, int maxArgs) {
+            super(name, minArgs, maxArgs);
+        }
+
         protected List<Object> asList(){
             return (List<Object>)self.getJavaProxy();
         }
@@ -1442,9 +1438,299 @@ public class PyJavaType extends PyType {
                      return Py.None;
                 }
             };
-            collectionProxies.put(List.class, new PyBuiltinMethod[] {listGetProxy,
-                                                                     listSetProxy,
-                                                                     listRemoveProxy});
+            PyBuiltinMethodNarrow listEqProxy = new ListMethod("__eq__", 1) {
+                @Override
+                public PyObject __call__(PyObject other) {
+                    List<Object> jList = asList();
+                    if (other.getType().isSubType(PyList.TYPE)) {
+                        PyList oList = (PyList) other;
+                        if (jList.size() != oList.size()) {
+                            return Py.False;
+                        }
+                        for (int i = 0; i < jList.size(); i++) {
+                            if (!Py.java2py(jList.get(i))._eq(oList.pyget(i)).__nonzero__()) {
+                                return Py.False;
+                            }
+                        }
+                        return Py.True;
+                    } else {
+                        Object oj = other.getJavaProxy();
+                        if (oj instanceof List) {
+                            List<Object> oList = (List<Object>) oj;
+                            if (jList.size() != oList.size()) {
+                                return Py.False;
+                            }
+                            for (int i = 0; i < jList.size(); i++) {
+                                if (!Py.java2py(jList.get(i))._eq(
+                                        Py.java2py(oList.get(i))).__nonzero__()) {
+                                    return Py.False;
+                                }
+                            }
+                            return Py.True;
+                        } else {
+                            return null;
+                        }
+                    }
+                }
+            };
+            PyBuiltinMethodNarrow listAppendProxy = new ListMethod("append", 1) {
+                @Override
+                public PyObject __call__(PyObject value) {
+                    asList().add(value);
+                    return Py.None;
+                }
+            };
+            PyBuiltinMethodNarrow listExtendProxy = new ListMethod("extend", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    List<Object> jList = asList();
+                    if (obj instanceof Collection) {
+                        jList.addAll((Collection) obj);
+                    } else {
+                        for (PyObject item : obj.asIterable()) {
+                            jList.add(item);
+                        }
+                    }
+                    return Py.None;
+                }
+            };
+            PyBuiltinMethodNarrow listInsertProxy = new ListMethod("insert", 2) {
+                @Override
+                public PyObject __call__(PyObject index, PyObject object) {
+                    List<Object> jlist = asList();
+                    ListIndexDelegate lid = new ListIndexDelegate(jlist);
+                    int idx = lid.fixBoundIndex(index.asIndex());
+                    jlist.add(idx, object);
+                    return Py.None;
+                }
+            };
+            PyBuiltinMethodNarrow listPopProxy = new ListMethod("pop", 0, 1) {
+                @Override
+                public PyObject __call__() {
+                    return __call__(Py.newInteger(-1));
+                }
+                @Override
+                public PyObject __call__(PyObject index) {
+                    List<Object> jlist = asList();
+                    if (jlist.isEmpty()) {
+                        throw Py.IndexError("pop from empty list");
+                    }
+                    ListIndexDelegate ldel = new ListIndexDelegate(jlist);
+                    PyObject item = ldel.checkIdxAndFindItem(index.asInt());
+                    if (item == null) {
+                        throw Py.IndexError("pop index out of range");
+                    } else {
+                        ldel.checkIdxAndDelItem(index);
+                        return item;
+                    }
+                }
+            };
+            PyBuiltinMethodNarrow listIndexProxy = new ListMethod("index", 1, 3) {
+                @Override
+                public PyObject __call__(PyObject object) {
+                    return __call__(object, Py.newInteger(0), Py.newInteger(asList().size()));
+                }
+                @Override
+                public PyObject __call__(PyObject object, PyObject start) {
+                    return __call__(object, start, Py.newInteger(asList().size()));
+                }
+                @Override
+                public PyObject __call__(PyObject object, PyObject start, PyObject end) {
+                    List<Object> jlist = asList();
+                    ListIndexDelegate lid = new ListIndexDelegate(jlist);
+                    int st = lid.fixBoundIndex(start.asInt());
+                    int en = lid.fixBoundIndex(end.asInt());
+                    for (int i = st; i < en; i++) {
+                        Object jobj = jlist.get(i);
+                        if (Py.java2py(jobj)._eq(object).__nonzero__()) {
+                            return Py.newInteger(i);
+                        }
+                    }
+                    throw Py.ValueError(object.toString() + " is not in list");
+                }
+            };
+            PyBuiltinMethodNarrow listCountProxy = new ListMethod("count", 1) {
+                @Override
+                public PyObject __call__(PyObject object) {
+                    int count = 0;
+                    List<Object> jlist = asList();
+                    for (int i = 0; i < jlist.size(); i++) {
+                        Object jobj = jlist.get(i);
+                        if (Py.java2py(jobj)._eq(object).__nonzero__()) {
+                            ++count;
+                        }
+                    }
+                    return Py.newInteger(count);
+                }
+            };
+            PyBuiltinMethodNarrow listReverseProxy = new ListMethod("reverse", 0) {
+                @Override
+                public PyObject __call__() {
+                    List<Object> jlist = asList();
+                    Collections.reverse(jlist);
+                    return Py.None;
+                }
+            };
+            PyBuiltinMethodNarrow listRemoveOverrideProxy = new ListMethod("remove", 1) {
+                @Override
+                public PyObject __call__(PyObject object) {
+                    List<Object> jlist = asList();
+                    for (int i = 0; i < jlist.size(); i++) {
+                        Object jobj = jlist.get(i);
+                        if (Py.java2py(jobj)._eq(object).__nonzero__()) {
+                            jlist.remove(i);
+                            return Py.None;
+                        }
+                    }
+                    throw Py.ValueError(object.toString() + " is not in list");
+                }
+            };
+            PyBuiltinMethodNarrow listRAddProxy = new ListMethod("__radd__", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    // first, clone the self list
+                    List<Object> jList = asList();
+                    List<Object> jClone;
+                    try {
+                        jClone = (List<Object>) jList.getClass().newInstance();
+                    } catch (IllegalAccessException e) {
+                        throw Py.JavaError(e);
+                    } catch (InstantiationException e) {
+                        throw Py.JavaError(e);
+                    }
+                    for (Object entry : jList) {
+                        jClone.add(entry);
+                    }
+
+                    // then, extend it with elements from the other list
+                    // (but, since this is reverse add, we are technically
+                    // pre-pending the clone with elements from the other list)
+                    if (obj instanceof Collection) {
+                        jClone.addAll(0, (Collection) obj);
+                    } else {
+                        int i = 0;
+                        for (PyObject item : obj.asIterable()) {
+                            jClone.add(i, item);
+                            i++;
+                        }
+                    }
+
+                    return Py.java2py(jClone);
+                }
+            };
+            PyBuiltinMethodNarrow listIAddProxy = new ListMethod("__iadd__", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    List<Object> jList = asList();
+                    if (obj instanceof Collection) {
+                        jList.addAll((Collection) obj);
+                    } else {
+                        for (PyObject item : obj.asIterable()) {
+                            jList.add(item);
+                        }
+                    }
+                    return self;
+                }
+            };
+            PyBuiltinMethodNarrow listRMulProxy = new ListMethod("__rmul__", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    List<Object> jList = asList();
+                    int mult = obj.asInt();
+
+                    List<Object> jClone;
+                    try {
+                        jClone = (List<Object>) jList.getClass().newInstance();
+                    } catch (IllegalAccessException e) {
+                        throw Py.JavaError(e);
+                    } catch (InstantiationException e) {
+                        throw Py.JavaError(e);
+                    }
+
+                    // anything below 0 multiplier, we return an empty list
+                    if (mult > 0) {
+                        // otherwise, extend it x times, where x is int-cast from obj
+                        for (; mult > 0; mult--) {
+                            for (Object entry : jList) {
+                                jClone.add(entry);
+                            }
+                        }
+                    }
+
+                    return Py.java2py(jClone);
+                }
+            };
+            PyBuiltinMethodNarrow listMulProxy = new ListMethod("__mul__", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    List<Object> jList = asList();
+                    int mult = obj.asInt();
+
+                    List<Object> jClone;
+                    try {
+                        jClone = (List<Object>) jList.getClass().newInstance();
+                    } catch (IllegalAccessException e) {
+                        throw Py.JavaError(e);
+                    } catch (InstantiationException e) {
+                        throw Py.JavaError(e);
+                    }
+
+                    // anything below 0 multiplier, we return an empty list
+                    if (mult > 0) {
+                        // otherwise, extend it x times, where x is int-cast from obj
+                        for (; mult > 0; mult--) {
+                            for (Object entry : jList) {
+                                jClone.add(entry);
+                            }
+                        }
+                    }
+
+                    return Py.java2py(jClone);
+                }
+            };
+            PyBuiltinMethodNarrow listIMulProxy = new ListMethod("__imul__", 1) {
+                @Override
+                public PyObject __call__(PyObject obj) {
+                    List<Object> jList = asList();
+                    int mult = obj.asInt();
+
+                    // anything below 0 multiplier, we clear the list
+                    if (mult <= 0) {
+                        jList.clear();
+                    } else {
+                        // otherwise, extend it (in-place) x times, where x is int-cast from obj
+                        int originalSize = jList.size();
+                        for (mult = mult - 1; mult > 0; mult--) {
+                            for (int i = 0; i < originalSize; i++) {
+                                jList.add(jList.get(i));
+                            }
+                        }
+                    }
+
+                    return self;
+                }
+            };
+            collectionProxies.put(List.class, new PyBuiltinMethod[] {
+                    listGetProxy,
+                    listSetProxy,
+                    listEqProxy,
+                    listRemoveProxy,
+                    listAppendProxy,
+                    listExtendProxy,
+                    listInsertProxy,
+                    listPopProxy,
+                    listIndexProxy,
+                    listCountProxy,
+                    listReverseProxy,
+                    listRAddProxy,
+                    listIAddProxy,
+                    listRMulProxy,
+                    listMulProxy,
+                    listIMulProxy,
+            });
+            postCollectionProxies.put(List.class, new PyBuiltinMethod[]{
+                    listRemoveOverrideProxy,
+            });
         }
         return collectionProxies;
     }
@@ -1501,6 +1787,19 @@ public class PyJavaType extends PyType {
         @Override
         public int len() {
             return list.size();
+        }
+
+        protected int fixBoundIndex(int index) {
+            int l = len();
+            if (index < 0) {
+                index += l;
+                if (index < 0) {
+                    index = 0;
+                }
+            } else if (index > l) {
+                index = l;
+            }
+            return index;
         }
 
         @Override

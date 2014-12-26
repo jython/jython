@@ -2,18 +2,19 @@ import sys
 from test import test_support, list_tests
 
 class ListTest(list_tests.CommonTest):
+
     type2test = list
 
     def test_basic(self):
-        self.assertEqual(list([]), [])
+        self.assertEqual(self.type2test([]), [])
         l0_3 = [0, 1, 2, 3]
-        l0_3_bis = list(l0_3)
+        l0_3_bis = self.type2test(l0_3)
         self.assertEqual(l0_3, l0_3_bis)
         self.assertTrue(l0_3 is not l0_3_bis)
-        self.assertEqual(list(()), [])
-        self.assertEqual(list((0, 1, 2, 3)), [0, 1, 2, 3])
-        self.assertEqual(list(''), [])
-        self.assertEqual(list('spam'), ['s', 'p', 'a', 'm'])
+        self.assertEqual(self.type2test(()), [])
+        self.assertEqual(self.type2test((0, 1, 2, 3)), [0, 1, 2, 3])
+        self.assertEqual(self.type2test(''), [])
+        self.assertEqual(self.type2test('spam'), ['s', 'p', 'a', 'm'])
 
         #FIXME: too brutal for us ATM.
         if not test_support.is_jython:
@@ -41,20 +42,21 @@ class ListTest(list_tests.CommonTest):
 
     def test_truth(self):
         super(ListTest, self).test_truth()
-        self.assertTrue(not [])
-        self.assertTrue([42])
+        self.assertTrue(not self.type2test([]))
+        self.assertTrue(self.type2test([42]))
 
     def test_identity(self):
         self.assertTrue([] is not [])
+        self.assertTrue(self.type2test([]) is not self.type2test([]))
 
     def test_len(self):
         super(ListTest, self).test_len()
-        self.assertEqual(len([]), 0)
-        self.assertEqual(len([0]), 1)
-        self.assertEqual(len([0, 1, 2]), 3)
+        self.assertEqual(len(self.type2test([])), 0)
+        self.assertEqual(len(self.type2test([0])), 1)
+        self.assertEqual(len(self.type2test([0, 1, 2])), 3)
 
     def test_overflow(self):
-        lst = [4, 5, 6, 7]
+        lst = self.type2test([4, 5, 6, 7])
         n = int((sys.maxint*2+2) // len(lst))
         def mul(a, b): return a * b
         def imul(a, b): a *= b
