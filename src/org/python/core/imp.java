@@ -774,10 +774,12 @@ public class imp {
 
         if (Py.getSystemState().modules.__finditem__(modname) == null) {
             if (orig_level < 1) {
-                Py.warning(Py.RuntimeWarning,
-                        String.format(
-                                "Parent module '%.200s' not found " +
-                                "while handling absolute import", modname));
+                if (modname.length() > 0) {
+                    Py.warning(Py.RuntimeWarning,
+                            String.format(
+                                    "Parent module '%.200s' not found " +
+                                    "while handling absolute import", modname));
+                }
             } else {
                 throw Py.SystemError(String.format(
                         "Parent module '%.200s' not loaded, " +
