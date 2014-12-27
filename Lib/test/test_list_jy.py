@@ -214,6 +214,20 @@ class JavaListTestCase(test_list.ListTest):
 
     type2test = ArrayList
 
+    def test_init(self):
+        # Iterable arg is optional
+        self.assertEqual(self.type2test([]), self.type2test())
+
+        # Unlike with builtin types, we do not guarantee objects can
+        # be overwritten; see corresponding tests
+
+        # Mutables always return a new object
+        a = self.type2test([1, 2, 3])
+        b = self.type2test(a)
+        self.assertNotEqual(id(a), id(b))
+        self.assertEqual(a, b)
+
+
     def test_extend_java_ArrayList(self):
         jl = ArrayList([])
         jl.extend([1,2])

@@ -4,6 +4,9 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -716,6 +719,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
             if (c.getComponentType() == Character.TYPE) {
                 return getString().toCharArray();
             }
+        }
+
+        if (c.isAssignableFrom(Collection.class)) {
+            List<Object> list = new ArrayList();
+            for (int i = 0; i < __len__(); i++) {
+                list.add(pyget(i).__tojava__(String.class));
+            }
+            return list;
         }
 
         if (c.isInstance(this)) {

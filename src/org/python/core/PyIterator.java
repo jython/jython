@@ -1,7 +1,10 @@
 // Copyright 2000 Finn Bock
 package org.python.core;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * An abstract helper class useful when implementing an iterator object. This implementation supply
@@ -61,5 +64,23 @@ public abstract class PyIterator extends PyObject implements Iterable<Object> {
                 return getNext().__tojava__(Object.class);
             }
         };
+    }
+
+    @Override
+    public Object __tojava__(Class<?> c) {
+        if (c.isAssignableFrom(Iterable.class)) {
+            return this;
+        }
+        if (c.isAssignableFrom(Iterator.class)) {
+            return iterator();
+        }
+        if (c.isAssignableFrom(Collection.class)) {
+            List<Object> list = new ArrayList();
+            for (Object obj : this) {
+                list.add(obj);
+            }
+            return list;
+        }
+        return super.__tojava__(c);
     }
 }

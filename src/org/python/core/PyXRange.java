@@ -5,6 +5,11 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * The builtin xrange type.
  */
@@ -187,5 +192,23 @@ public class PyXRange extends PySequence {
         } else {
             return String.format("xrange(%d, %d, %d)", start, stop, step);
         }
+    }
+
+    @Override
+    public Object __tojava__(Class<?> c) {
+        if (c.isAssignableFrom(Iterable.class)) {
+            return new JavaIterator(range_iter());
+        }
+        if (c.isAssignableFrom(Iterator.class)) {
+            return (new JavaIterator(range_iter())).iterator();
+        }
+        if (c.isAssignableFrom(Collection.class)) {
+            List<Object> list = new ArrayList();
+            for (Object obj : new JavaIterator(range_iter())) {
+                list.add(obj);
+            }
+            return list;
+        }
+        return super.__tojava__(c);
     }
 }

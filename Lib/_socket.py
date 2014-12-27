@@ -580,7 +580,7 @@ class ChildSocketHandler(ChannelInitializer):
 
     def initChannel(self, child_channel):
         child = ChildSocket(self.parent_socket)
-        log.debug("Initializing child %s", extra={"sock": self.parent_socket})
+        log.debug("Initializing child %s", child, extra={"sock": self.parent_socket})
 
         child.proto = IPPROTO_TCP
         child._init_client_mode(child_channel)
@@ -732,7 +732,10 @@ class _realsocket(object):
         self.selectors.addIfAbsent(selector)
 
     def _unregister_selector(self, selector):
-        return self.selectors.remove(selector)
+        try:
+            return self.selectors.remove(selector)
+        except ValueError:
+            return None
 
     def _notify_selectors(self, exception=None, hangup=False):
         for selector in self.selectors:

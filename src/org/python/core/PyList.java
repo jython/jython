@@ -14,11 +14,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
 import java.lang.reflect.Array;
+import java.util.Map;
 
 @ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
 public class PyList extends PySequenceList implements List {
@@ -101,6 +103,21 @@ public class PyList extends PySequenceList implements List {
         this(TYPE, listify(iter));
     }
 
+    // refactor and put in Py presumably;
+    // presumably we can consume an arbitrary iterable too!
+    private static void addCollection(List<PyObject> list, Collection<Object> seq) {
+        Map<Long, PyObject> seen = new HashMap();
+        for (Object item : seq) {
+            long id = Py.java_obj_id(item);
+            PyObject seen_obj = seen.get(id);
+            if (seen_obj != null) {
+                seen_obj = Py.java2py(item);
+                seen.put(id, seen_obj);
+            }
+            list.add(seen_obj);
+        }
+    }
+
     @ExposedNew
     @ExposedMethod(doc = BuiltinDocs.list___init___doc)
     final void list___init__(PyObject[] args, String[] kwds) {
@@ -114,6 +131,9 @@ public class PyList extends PySequenceList implements List {
             list.addAll(((PyList) seq).list); // don't convert
         } else if (seq instanceof PyTuple) {
             list.addAll(((PyTuple) seq).getList());
+        } else if (seq.getClass().isAssignableFrom(Collection.class)) {
+            System.err.println("Adding from collection");
+            addCollection(list, (Collection)seq);
         } else {
             for (PyObject item : seq.asIterable()) {
                 append(item);
