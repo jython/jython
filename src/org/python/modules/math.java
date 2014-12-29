@@ -9,16 +9,14 @@ import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
-import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
-import org.python.modules.math_erf;
-import org.python.modules.math_gamma;
 
 public class math implements ClassDictInit {
+
     public static PyFloat pi = new PyFloat(Math.PI);
     public static PyFloat e = new PyFloat(Math.E);
-    
+
     private static final double ZERO = 0.0;
     private static final double MINUS_ZERO = -0.0;
     private static final double HALF = 0.5;
@@ -29,11 +27,12 @@ public class math implements ClassDictInit {
     private static final double INF = Double.POSITIVE_INFINITY;
     private static final double NINF = Double.NEGATIVE_INFINITY;
     private static final double NAN = Double.NaN;
-    private static final BigInteger MAX_LONG_BIGINTEGER = new BigInteger(String.valueOf(Long.MAX_VALUE));
-    private static final BigInteger MIN_LONG_BIGINTEGER = new BigInteger(String.valueOf(Long.MIN_VALUE));
+    private static final BigInteger MAX_LONG_BIGINTEGER = new BigInteger(
+            String.valueOf(Long.MAX_VALUE));
+    private static final BigInteger MIN_LONG_BIGINTEGER = new BigInteger(
+            String.valueOf(Long.MIN_VALUE));
 
-    public static void classDictInit(@SuppressWarnings("unused") PyObject dict) {
-    }
+    public static void classDictInit(@SuppressWarnings("unused") PyObject dict) {}
 
     public static double gamma(double v) {
         return math_gamma.gamma(v);
@@ -73,7 +72,7 @@ public class math implements ClassDictInit {
         }
         return Math.acos(v);
     }
-    
+
     public static double acosh(double v) {
         final double ln2 = 6.93147180559945286227e-01;
         final double large = 1 << 28;
@@ -105,7 +104,7 @@ public class math implements ClassDictInit {
         }
         return Math.asin(v);
     }
-    
+
     public static double asinh(double v) {
         if (isnan(v) || isinf(v)) {
             return v;
@@ -125,11 +124,11 @@ public class math implements ClassDictInit {
         if (v > large) {
             temp = log(v) + ln2;
         } else if (v > 2) {
-            temp = log(2*v + 1/(sqrt(v*v+1)+v));
+            temp = log(2 * v + 1 / (sqrt(v * v + 1) + v));
         } else if (v < small) {
-		temp = v;
+            temp = v;
         } else {
-            temp = log1p(v + v*v/(1+sqrt(1+v*v)));
+            temp = log1p(v + v * v / (1 + sqrt(1 + v * v)));
         }
 
         return sign ? -temp : temp;
@@ -141,7 +140,7 @@ public class math implements ClassDictInit {
         }
         return Math.atan(v);
     }
-    
+
     public static double atanh(double v) {
         if (isnan(v)) {
             return v;
@@ -420,10 +419,10 @@ public class math implements ClassDictInit {
                 x = -x;
                 sign = -1;
             }
-            
-            for (; x < HALF; x *= TWO, exponent--); // needs an empty statement
 
-            for (; x >= ONE; x *= HALF, exponent++); // needs an empty statement
+            for (; x < HALF; x *= TWO, exponent--) {}
+
+            for (; x >= ONE; x *= HALF, exponent++) {}
 
             x *= sign;
         }
@@ -471,20 +470,20 @@ public class math implements ClassDictInit {
     public static double degrees(double v) {
         return check(Math.toDegrees(v));
     }
-    
+
     public static boolean isnan(double v) {
         return Double.isNaN(v);
     }
-    
+
     /**
      * @param v
-     * 
+     *
      * @return <code>true</code> if v is positive or negative infinity
      */
     public static boolean isinf(double v) {
         return Double.isInfinite(v);
     }
-    
+
     public static double copysign(double v, double w) {
         if (isnan(v)) {
             return NAN;
@@ -494,7 +493,7 @@ public class math implements ClassDictInit {
         }
         return v *= MINUS_ONE;
     }
-    
+
     public static PyLong factorial(double v) {
         if (v == ZERO || v == ONE) {
             return new PyLong(1);
@@ -517,13 +516,11 @@ public class math implements ClassDictInit {
     public static double log1p(double v) {
         return log(ONE + v);
     }
-    
+
     public static double fsum(final PyObject iterable) {
-        PyFloat result = (PyFloat)__builtin__.__import__("_fsum")
-            .invoke("fsum", iterable);
+        PyFloat result = (PyFloat)__builtin__.__import__("_fsum").invoke("fsum", iterable);
         return result.asDouble();
     }
-
 
     private static double calculateLongLog(PyLong v) {
         int exp[] = new int[1];
@@ -563,7 +560,7 @@ public class math implements ClassDictInit {
         }
         return Math.log10(v);
     }
-    
+
     private static boolean isninf(double v) {
         return v == NINF;
     }
@@ -571,7 +568,7 @@ public class math implements ClassDictInit {
     private static boolean ispinf(double v) {
         return v == INF;
     }
-    
+
     /**
      * work around special Math.signum() behaviour for positive and negative zero
      */
@@ -592,20 +589,22 @@ public class math implements ClassDictInit {
     }
 
     private static double check(double v) {
-        if (isnan(v))
+        if (isnan(v)) {
             throwMathDomainValueError();
-        if (isinf(v))
+        }
+        if (isinf(v)) {
             throw Py.OverflowError("math range error");
+        }
         return v;
     }
-    
+
     private static double checkOverflow(double v) {
         if (isinf(v)) {
             throw Py.OverflowError("math range error");
         }
         return v;
     }
-    
+
     /**
      * convert a PyObject into a long between Long.MIN_VALUE and Long.MAX_VALUE
      */
@@ -615,7 +614,7 @@ public class math implements ClassDictInit {
         }
         return pyo.asLong();
     }
-    
+
     /**
      * convert a PyLong into a long between Long.MIN_VALUE and Long.MAX_VALUE
      */
