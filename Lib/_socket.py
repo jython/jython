@@ -615,6 +615,8 @@ class ChildSocketHandler(ChannelInitializer):
         # thread pool
         child_channel.closeFuture().addListener(unlatch_child)
 
+        if self.parent_socket.timeout is None:
+            child._ensure_post_connect()
         child._wait_on_latch()
         log.debug("Socket initChannel completed waiting on latch", extra={"sock": child})
 
@@ -842,8 +844,8 @@ class _realsocket(object):
             log.debug("Connect to %s", addr, extra={"sock": self})
             self.channel = bootstrap.channel()
 
-        connect_future = self.channel.connect(addr)
-        self._handle_channel_future(connect_future, "connect")
+        self.connect_future = self.channel.connect(addr)
+        self._handle_channel_future(self.connect_future, "connect")
         self.bind_timestamp = time.time()
 
     def _post_connect(self):
@@ -871,12 +873,17 @@ class _realsocket(object):
             log.debug("Completed connection to %s", addr, extra={"sock": self})
 
     def connect_ex(self, addr):
-        self.connect(addr)
-        if self.timeout is None:
+        if not self.connected:
+            try:
+                self.connect(addr)
+            except error as e:
+                return e.errno
+        if not self.connect_future.isDone():
+            return errno.EINPROGRESS
+        elif self.connect_future.isSuccess():
             return errno.EISCONN
         else:
-            return errno.EINPROGRESS
-
+            return errno.ENOTCONN
 
     # SERVER METHODS
     # Calling listen means this is a server socket
@@ -1033,11 +1040,11 @@ class _realsocket(object):
                 pass  # already removed, can safely ignore (presumably)
         if how & SHUT_WR:
             self._can_write = False
-            
+
     def _readable(self):
         if self.socket_type == CLIENT_SOCKET or self.socket_type == DATAGRAM_SOCKET:
             log.debug("Incoming head=%s queue=%s", self.incoming_head, self.incoming, extra={"sock": self})
-            return (
+            return bool(
                 (self.incoming_head is not None and self.incoming_head.readableBytes()) or
                 self.incoming.peek())
         elif self.socket_type == SERVER_SOCKET:
@@ -1338,6 +1345,7 @@ class ChildSocket(_realsocket):
         self.active = AtomicBoolean()
         self.active_latch = CountDownLatch(1)
         self.accepted = False
+        self.timeout = parent_socket.timeout
 
     def _ensure_post_connect(self):
         do_post_connect = not self.active.getAndSet(True)

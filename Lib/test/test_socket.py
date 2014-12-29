@@ -1125,6 +1125,20 @@ class BasicTCPTest(SocketConnectedTest):
         self.serv_conn.send(MSG)
         self.serv_conn.send('and ' + MSG)
 
+    def testSelect(self):
+        # http://bugs.jython.org/issue2242
+        self.assertIs(self.cli_conn.gettimeout(), None, "Server socket is not blocking")
+        start_time = time.time()
+        r, w, x = select.select([self.cli_conn], [], [], 10)
+        if (time.time() - start_time) > 1:
+            self.fail("Child socket was not immediately available for read when set to blocking")
+        self.assertEqual(r[0], self.cli_conn)
+        self.assertEqual(self.cli_conn.recv(1024), MSG)
+
+    def _testSelect(self):
+        self.serv_conn.send(MSG)
+
+
 class UDPBindTest(unittest.TestCase):
 
     HOST = HOST
@@ -1396,7 +1410,6 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     def _testRecvData(self):
         self.cli.connect((self.HOST, self.PORT))
         self.cli.send(MSG)
-        #time.sleep(0.5)
 
     def testRecvNoData(self):
         # Testing non-blocking recv
