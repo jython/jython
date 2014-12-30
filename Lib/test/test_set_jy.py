@@ -1,13 +1,14 @@
 import unittest
-from test import test_support
+from test import test_support, test_set
 
+import pickle
 import threading
 
-if test_support.is_jython:
-    from java.io import (ByteArrayInputStream, ByteArrayOutputStream,
-                         ObjectInputStream, ObjectOutputStream)
-    from java.util import Random
-    from javatests import PySetInJavaTest
+from java.io import (ByteArrayInputStream, ByteArrayOutputStream,
+                     ObjectInputStream, ObjectOutputStream)
+from java.util import Random, HashSet, LinkedHashSet
+from javatests import PySetInJavaTest
+
 
 class SetTestCase(unittest.TestCase):
 
@@ -81,10 +82,41 @@ class SetInJavaTestCase(unittest.TestCase):
         unserializer = ObjectInputStream(input)
         self.assertEqual(s, unserializer.readObject())
 
+
+class TestJavaSet(test_set.TestSet):
+    thetype = HashSet
+
+    def test_init(self):
+        # Instances of Java types cannot be re-initialized
+        pass
+
+    def test_cyclical_repr(self):
+        pass
+
+    def test_cyclical_print(self):
+        pass
+
+    def test_pickling(self):
+        for i in range(pickle.HIGHEST_PROTOCOL + 1):
+            p = pickle.dumps(self.s, i)
+            dup = pickle.loads(p)
+            self.assertEqual(self.s, dup, "%s != %s" % (self.s, dup))
+
+
+class TestJavaHashSet(TestJavaSet):
+    thetype = HashSet
+
+class TestJavaLinkedHashSet(TestJavaSet):
+    thetype = LinkedHashSet
+
+
 def test_main():
-    tests = [SetTestCase]
-    if test_support.is_jython:
-        tests.append(SetInJavaTestCase)
+    tests = [
+        SetTestCase,
+        SetInJavaTestCase,
+        TestJavaHashSet,
+        TestJavaLinkedHashSet,
+    ]
     test_support.run_unittest(*tests)
 
 
