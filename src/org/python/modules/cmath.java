@@ -17,6 +17,9 @@ public class cmath {
     private static final PyComplex i = new PyComplex(0.0, 1.0);
     private static final PyComplex half_i = new PyComplex(0.0, 0.5);
 
+    /** 2<sup>-&#189;</sup> (Ref: Abramowitz &amp; Stegun [1972], p2). */
+    private static final double ROOT_HALF = 0.70710678118654752440;
+
     private static PyComplex c_prodi(PyComplex x) {
         return (PyComplex)x.__mul__(i);
     }
@@ -256,32 +259,113 @@ public class cmath {
                 * math.cosh(x.real));
     }
 
-    public static PyComplex sqrt(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
+    /**
+     * Calculate <i>z = x+iy</i>, such that <i>z<sup>2</sup> = w</i>. In taking the square roots to
+     * get <i>x</i> and <i>y</i>, we choose to have <i>x&ge;0</i> always, and <i>y</i> the same sign
+     * as <i>v</i>.
+     *
+     * @param w to square-root
+     * @return <i>w<sup>&#189;</sup></i>
+     */
+    public static PyComplex sqrt(PyObject w) {
+        /*
+         * All the difficult parts are written for the first quadrant only (+,+), then the true sign
+         * of the parts of w are factored in at the end, by flipping the result around the
+         * diagonals.
+         */
+        PyComplex ww = complexFromPyObject(w);
+        double u = Math.abs(ww.real), v = Math.abs(ww.imag), x, y;
 
-        if (Double.isInfinite(x.real) && Double.isNaN(x.imag)) {
-            if (x.real == Double.NEGATIVE_INFINITY) {
-                return new PyComplex(Double.NaN, Double.POSITIVE_INFINITY);
+        if (Double.isInfinite(u)) {
+            // Special cases: u = inf
+            x = Double.POSITIVE_INFINITY;
+            y = (Double.isNaN(v) || Double.isInfinite(v)) ? v : 0.;
+
+        } else if (Double.isInfinite(v)) {
+            // Special cases: v = inf, u != inf
+            x = y = Double.POSITIVE_INFINITY;
+
+        } else if (Double.isNaN(u)) {
+            // In the remaining cases, u == nan infects all.
+            x = y = u;
+
+        } else {
+
+            if (v == 0.) {
+                // Pure real (and positive since in first quadrant).
+                x = (u == 0.) ? 0. : Math.sqrt(u);
+                y = 0.;
+
+            } else if (u == 0.) {
+                // Pure imaginary, and v is positive.
+                x = y = ROOT_HALF * Math.sqrt(v);
+
             } else {
-                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+                /*
+                 * Let w = u + iv = 2a + 2ib, and define s**2 = a**2 + b**2. Then z = x + iy is
+                 * computed as x**2 = s + a, and y = b /x. Most of the logic here is about managing
+                 * the scaling.
+                 */
+                int ue = Math.getExponent(u), ve = Math.getExponent(v);
+                int diff = ue - ve;
+
+                if (diff > 27) {
+                    // u is so much bigger than v we can ignore v in the square: s = u/2.
+                    x = Math.sqrt(u);
+
+                } else if (diff < -27) {
+                    // v is so much bigger than u we can ignore u in the square: s = v/2.
+                    if (ve >= Double.MAX_EXPONENT) {
+                        x = Math.sqrt(0.5 * u + 0.5 * v); // Avoid overflow in u+v
+                    } else {
+                        x = Math.sqrt(0.5 * (u + v));
+                    }
+
+                } else {
+                    /*
+                     * Use the full-fat formula: s = Math.sqrt(a * a + b * b). During calculation,
+                     * we will be squaring the components, so we scale by 2**n (small values up and
+                     * large values down).
+                     */
+                    double s, a, b;
+                    final int LARGE = 510;  // 1.999... * 2**LARGE is safe to square and double
+                    final int SMALL = -510; // 1.0 * 2**(SMALL-1) may squared with full precision
+                    final int SCALE = 600;  // EVEN and > (52+SMALL-Double.MIN_EXPONENT)
+                    int n = 0;
+                    if (ue > LARGE || ve > LARGE) {
+                        // One of these is too big to square without overflow.
+                        a = Math.scalb(u, -(SCALE + 1));   // a = (u/2) * 2**n
+                        b = Math.scalb(v, -(SCALE + 1));
+                        n = -SCALE;
+                    } else if (ue < SMALL && ve < SMALL) {
+                        // Both of these are too small to square without loss of bits.
+                        a = Math.scalb(u, SCALE - 1);   // a = (u/2) * 2**n
+                        b = Math.scalb(v, SCALE - 1);
+                        n = SCALE;
+                    } else {
+                        a = 0.5 * u;                // a = u/2
+                        b = 0.5 * v;
+                    }
+
+                    s = Math.sqrt(a * a + b * b);
+                    x = Math.sqrt(s + a);
+
+                    // Restore x through the square root of the scale 2**(-n/2)
+                    if (n != 0) {
+                        x = Math.scalb(x, -n / 2);
+                    }
+                }
+
+                // Finally, use y = v/2x
+                y = v / (x + x);
             }
         }
 
-        if (x.imag == Double.POSITIVE_INFINITY) {
-            return new PyComplex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-        } else if (x.imag == Double.NEGATIVE_INFINITY) {
-            return new PyComplex(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
-        }
-
-        if (x.real == 0.0 && x.imag == 0.0) {
-            return new PyComplex(0.0, Math.copySign(0.0, x.imag));
-        }
-
-        double t = Math.sqrt((Math.abs(x.real) + abs(x)) / 2.0);
-        if (x.real >= 0.0) {
-            return new PyComplex(t, x.imag / (2.0 * t));
+        // Flip according to the signs of the components of w.
+        if (ww.real < 0.) {
+            return new PyComplex(y, Math.copySign(x, ww.imag));
         } else {
-            return new PyComplex(Math.abs(x.imag) / (2.0 * t), Math.copySign(1d, x.imag) * t);
+            return new PyComplex(x, Math.copySign(y, ww.imag));
         }
     }
 
