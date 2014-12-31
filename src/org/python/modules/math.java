@@ -84,7 +84,7 @@ public class math implements ClassDictInit {
      */
     public static double acosh(double y) {
         if (y < 1.0) {
-            throw mathDomainValueError();
+            throw mathDomainError();
 
         } else {
             // acosh(y) = ln[y + sqrt(y**2 - 1)]
@@ -162,7 +162,7 @@ public class math implements ClassDictInit {
     public static double atanh(double y) {
         double absy = Math.abs(y);
         if (absy >= 1.0) {
-            throw mathDomainValueError();
+            throw mathDomainError();
         } else {
             // 2x = ln[(1+y)/(1-y)] = ln[1 + 2y/(1-y)]
             double u = (absy + absy) / (1. - absy);
@@ -473,14 +473,22 @@ public class math implements ClassDictInit {
         return checkOverflow(v * Math.pow(TWO, w));
     }
 
-    public static double hypot(double v, double w) {
-        if (isinf(v) || isinf(w)) {
-            return INF;
+    /**
+     * Returns (x<sup>2</sup> +y<sup>2</sup>)<sup>&#189;</sup> without intermediate overflow or
+     * underflow. If either argument is infinite, the result is infinite, but overflow during the
+     * calculation is detected as an error.
+     *
+     * @param x
+     * @param y
+     * @return (x<sup>2</sup> +y<sup>2</sup>)<sup>&#189;</sup>
+     */
+    public static double hypot(double x, double y) {
+        double mag = Math.hypot(x, y);
+        if (Double.isInfinite(mag) && !(Double.isInfinite(x) || Double.isInfinite(y))) {
+            // In these circumstances Math.hypot quietly returns inf, but CPython should raise.
+            throw mathRangeError();
         }
-        if (isnan(v) || isnan(w)) {
-            return NAN;
-        }
-        return Math.hypot(v, w);
+        return mag;
     }
 
     public static double radians(double v) {
@@ -609,8 +617,17 @@ public class math implements ClassDictInit {
      *
      * @return ValueError("math domain error")
      */
-    private static PyException mathDomainValueError() {
+    private static PyException mathDomainError() {
         return Py.ValueError("math domain error");
+    }
+
+    /**
+     * Returns a OverflowError("math range error"), ready to throw from the client code.
+     *
+     * @return OverflowError("math range error")
+     */
+    private static PyException mathRangeError() {
+        return Py.OverflowError("math range error");
     }
 
     private static void throwMathDomainValueError() {

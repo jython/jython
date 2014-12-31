@@ -817,7 +817,12 @@ public class PyComplex extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.complex___abs___doc)
     final PyObject complex___abs__() {
-        return new PyFloat(Math.hypot(real, imag));
+        double mag = Math.hypot(real, imag);
+        if (Double.isInfinite(mag) && !(Double.isInfinite(real) || Double.isInfinite(imag))) {
+            // In these circumstances Math.hypot quietly returns inf, but Python should raise.
+            throw Py.OverflowError("absolute value too large");
+        }
+        return new PyFloat(mag);
     }
 
     @Override

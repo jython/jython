@@ -165,12 +165,8 @@ public class cmath {
 
     public static PyTuple polar(PyObject in) {
         PyComplex z = complexFromPyObject(in);
-        if ((Double.isInfinite(z.real) && Double.isNaN(z.imag))
-                || (Double.isInfinite(z.imag) && Double.isNaN(z.real))) {
-            return new PyTuple(Py.newFloat(Double.POSITIVE_INFINITY), Py.newFloat(Double.NaN));
-        }
         double phi = Math.atan2(z.imag, z.real);
-        double r = Math.sqrt(z.real * z.real + z.imag * z.imag);
+        double r = math.hypot(z.real, z.imag);
         return new PyTuple(new PyFloat(r), new PyFloat(phi));
     }
 
