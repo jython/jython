@@ -29,6 +29,12 @@ public class PyFloat extends PyObject {
     static final Spec SPEC_REPR = InternalFormat.fromText(" >r");
     /** Format specification used by str(). */
     static final Spec SPEC_STR = Spec.NUMERIC;
+    /** Constant float(0). */
+    static final PyFloat ZERO = new PyFloat(0.0);
+    /** Constant float(1). */
+    static final PyFloat ONE = new PyFloat(1.0);
+    /** Constant float("nan"). */
+    static final PyFloat NAN = new PyFloat(Double.NaN);
 
     private final double value;
 
@@ -56,7 +62,7 @@ public class PyFloat extends PyObject {
         PyObject x = ap.getPyObject(0, null);
         if (x == null) {
             if (new_.for_type == subtype) {
-                return new PyFloat(0.0);
+                return ZERO;
             } else {
                 return new PyFloatDerived(subtype, 0.0);
             }
@@ -90,7 +96,7 @@ public class PyFloat extends PyObject {
 
     @ExposedGet(name = "imag", doc = BuiltinDocs.float_imag_doc)
     public PyObject getImag() {
-        return Py.newFloat(0.0);
+        return ZERO;
     }
 
     @ExposedClassMethod(doc = BuiltinDocs.float_fromhex_doc)
@@ -108,7 +114,7 @@ public class PyFloat extends PyObject {
         if (value.length() == 0) {
             throw Py.ValueError(message);
         } else if (value.equals("nan") || value.equals("-nan") || value.equals("+nan")) {
-            return new PyFloat(Double.NaN);
+            return NAN;
         } else if (value.equals("inf") || value.equals("infinity") || value.equals("+inf")
                 || value.equals("+infinity")) {
             return new PyFloat(Double.POSITIVE_INFINITY);
@@ -625,15 +631,30 @@ public class PyFloat extends PyObject {
         return new PyFloat(leftv / getValue());
     }
 
+    /**
+     * Python % operator: y = n*x + z. The modulo operator always yields a result with the same sign
+     * as its second operand (or zero). (Compare <code>java.Math.IEEEremainder</code>)
+     *
+     * @param x dividend
+     * @param y divisor
+     * @return <code>x % y</code>
+     */
     private static double modulo(double x, double y) {
-        if (y == 0) {
+        if (y == 0.0) {
             throw Py.ZeroDivisionError("float modulo");
+        } else {
+            double z = x % y;
+            if (z == 0.0) {
+                // Has to be same sign as y (even when zero).
+                return Math.copySign(z, y);
+            } else if ((z > 0.0) == (y > 0.0)) {
+                // z has same sign as y, as it must.
+                return z;
+            } else {
+                // Note abs(z) < abs(y) and opposite sign.
+                return z + y;
+            }
         }
-        double z = Math.IEEEremainder(x, y);
-        if (z * y < 0) {
-            z += y;
-        }
-        return z;
     }
 
     @Override
@@ -716,9 +737,9 @@ public class PyFloat extends PyObject {
             return null;
         } else if (modulo != null) {
             throw Py.TypeError("pow() 3rd argument not allowed unless all arguments are integers");
+        } else {
+            return _pow(getValue(), coerce(right));
         }
-
-        return _pow(getValue(), coerce(right), modulo);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.float___rpow___doc)
@@ -730,43 +751,60 @@ public class PyFloat extends PyObject {
     public PyObject __rpow__(PyObject left) {
         if (!canCoerce(left)) {
             return null;
+        } else {
+            return _pow(coerce(left), getValue());
         }
-
-        return _pow(coerce(left), getValue(), null);
     }
 
-    private static PyFloat _pow(double value, double iw, PyObject modulo) {
-        // Rely completely on Java's pow function
-        if (iw == 0) {
-            if (modulo != null) {
-                return new PyFloat(modulo(1.0, coerce(modulo)));
-            }
-            return new PyFloat(1.0);
-        }
+    private static PyFloat _pow(double v, double w) {
+        /*
+         * This code was translated from the CPython implementation at v2.7.8 by progressively
+         * removing cases that could be delegated to Java. Jython differs from CPython in that where
+         * C pow() overflows, Java pow() returns inf (observed on Windows). This is not subject to
+         * regression tests, so we take it as an allowable platform dependency. All other
+         * differences in Java Math.pow() are trapped below and Python behaviour is enforced.
+         */
+        if (w == 0) {
+            // v**0 is 1, even 0**0
+            return ONE;
 
-        if (value == 0.0) {
-            if (iw < 0.0) {
-                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
-            } else if (Double.isNaN(iw)) {
-                return new PyFloat(Double.NaN);
-            }
-            return new PyFloat(0);
-        }
+        } else if (Double.isNaN(v)) {
+            // nan**w = nan, unless w == 0
+            return NAN;
 
-        if (Double.isNaN(iw)) {
-            if (value == 1.0) {
-                return new PyFloat(1.0);
+        } else if (Double.isNaN(w)) {
+            // v**nan = nan, unless v == 1; 1**nan = 1
+            if (v == 1.0) {
+                return ONE;
             } else {
-                return new PyFloat(Double.NaN);
+                return NAN;
             }
+
+        } else if (Double.isInfinite(w)) {
+            /*
+             * In Java Math pow(1,inf) = pow(-1,inf) = pow(1,-inf) = pow(-1,-inf) = nan, but in
+             * Python they are all 1.
+             */
+            if (v == 1.0 || v == -1.0) {
+                return ONE;
+            }
+
+        } else if (v == 0.0) {
+            // 0**w is an error if w is negative.
+            if (w < 0.0) {
+                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
+            }
+
+        } else if (!Double.isInfinite(v) && v < 0.0) {
+            if (w != Math.floor(w)) {
+                throw Py.ValueError("negative number cannot be raised to a fractional power");
+            }
+
         }
 
-        if (value < 0 && iw != Math.floor(iw)) {
-            throw Py.ValueError("negative number cannot be raised to a fractional power");
-        }
+        // In all cases not caught above we can entrust the calculation to Java
+        return new PyFloat(Math.pow(v, w));
 
-        double ret = Math.pow(value, iw);
-        return new PyFloat(modulo == null ? ret : modulo(ret, coerce(modulo)));
     }
 
     @Override
@@ -934,8 +972,9 @@ public class PyFloat extends PyObject {
     }
 
     /**
-     * Common code for PyFloat, {@link PyInteger} and {@link PyLong} to prepare a {@link FloatFormatter} from a parsed specification.
-     * The object returned has format method {@link FloatFormatter#format(double)}.
+     * Common code for PyFloat, {@link PyInteger} and {@link PyLong} to prepare a
+     * {@link FloatFormatter} from a parsed specification. The object returned has format method
+     * {@link FloatFormatter#format(double)}.
      *
      * @param spec a parsed PEP-3101 format specification.
      * @return a formatter ready to use, or null if the type is not a floating point format type.

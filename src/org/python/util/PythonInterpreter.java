@@ -25,8 +25,8 @@ import org.python.core.__builtin__;
 import org.python.core.PyFileReader;
 
 /**
- * The PythonInterpreter class is a standard wrapper for a Jython interpreter
- * for embedding in a Java application.
+ * The PythonInterpreter class is a standard wrapper for a Jython interpreter for embedding in a
+ * Java application.
  */
 public class PythonInterpreter implements AutoCloseable, Closeable {
 
@@ -37,6 +37,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     protected final boolean useThreadLocalState;
 
     protected static ThreadLocal<Object[]> threadLocals = new ThreadLocal<Object[]>() {
+
         @Override
         protected Object[] initialValue() {
             return new Object[1];
@@ -48,24 +49,18 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     private volatile boolean closed = false;
 
     /**
-     * Initializes the Jython runtime. This should only be called
-     * once, before any other Python objects (including
-     * PythonInterpreter) are created.
+     * Initializes the Jython runtime. This should only be called once, before any other Python
+     * objects (including PythonInterpreter) are created.
      *
-     * @param preProperties
-     *            A set of properties. Typically
-     *            System.getProperties() is used.  preProperties
-     *            override properties from the registry file.
-     * @param postProperties
-     *            Another set of properties. Values like python.home,
-     *            python.path and all other values from the registry
-     *            files can be added to this property
-     *            set. postProperties override system properties and
-     *            registry properties.
-     * @param argv
-     *            Command line arguments, assigned to sys.argv.
+     * @param preProperties A set of properties. Typically System.getProperties() is used.
+     *            preProperties override properties from the registry file.
+     * @param postProperties Another set of properties. Values like python.home, python.path and all
+     *            other values from the registry files can be added to this property set.
+     *            postProperties override system properties and registry properties.
+     * @param argv Command line arguments, assigned to sys.argv.
      */
-    public static void initialize(Properties preProperties, Properties postProperties, String[] argv) {
+    public static void
+            initialize(Properties preProperties, Properties postProperties, String[] argv) {
         PySystemState.initialize(preProperties, postProperties, argv);
     }
 
@@ -77,13 +72,10 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Creates a new interpreter with the ability to maintain a
-     * separate local namespace for each thread (set by invoking
-     * setLocals()).
+     * Creates a new interpreter with the ability to maintain a separate local namespace for each
+     * thread (set by invoking setLocals()).
      *
-     * @param dict
-     *            a Python mapping object (e.g., a dictionary) for use
-     *            as the default namespace
+     * @param dict a Python mapping object (e.g., a dictionary) for use as the default namespace
      */
     public static PythonInterpreter threadLocalStateInterpreter(PyObject dict) {
         return new PythonInterpreter(dict, null, true);
@@ -92,9 +84,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     /**
      * Creates a new interpreter with a specified local namespace.
      *
-     * @param dict 
-     *            a Python mapping object (e.g., a dictionary) for use
-     *            as the namespace
+     * @param dict a Python mapping object (e.g., a dictionary) for use as the namespace
      */
     public PythonInterpreter(PyObject dict) {
         this(dict, null);
@@ -104,14 +94,16 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
         this(dict, systemState, false);
     }
 
-    protected PythonInterpreter(PyObject dict, PySystemState systemState, boolean useThreadLocalState) {
+    protected PythonInterpreter(PyObject dict, PySystemState systemState,
+            boolean useThreadLocalState) {
         if (dict == null) {
             dict = Py.newStringMap();
         }
         globals = dict;
 
-        if (systemState == null)
+        if (systemState == null) {
             systemState = Py.getSystemState();
+        }
         this.systemState = systemState;
         setSystemState();
 
@@ -120,7 +112,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
             PyModule module = new PyModule("__main__", dict);
             systemState.modules.__setitem__("__main__", module);
         }
-        
+
         if (Options.importSite) {
             // Ensure site-packages are available
             imp.load("site");
@@ -136,59 +128,116 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Sets a Python object to use for the standard input stream.
+     * Sets a Python object to use for the standard input stream, <code>sys.stdin</code>. This
+     * stream is used in a byte-oriented way, through calls to <code>read</code> and
+     * <code>readline</code> on the object.
      *
-     * @param inStream
-     *            a Python file-like object to use as input stream
+     * @param inStream a Python file-like object to use as the input stream
      */
     public void setIn(PyObject inStream) {
         getSystemState().stdin = inStream;
     }
 
+    /**
+     * Sets a {@link Reader} to use for the standard input stream, <code>sys.stdin</code>. This
+     * stream is wrapped such that characters will be narrowed to bytes. A character greater than
+     * <code>U+00FF</code> will raise a Java <code>IllegalArgumentException</code> from within
+     * {@link PyString}.
+     *
+     * @param inStream to use as the input stream
+     */
     public void setIn(java.io.Reader inStream) {
         setIn(new PyFileReader(inStream));
     }
 
     /**
-     * Sets a java.io.InputStream to use for the standard input
-     * stream.
+     * Sets a {@link java.io.InputStream} to use for the standard input stream.
      *
-     * @param inStream
-     *            InputStream to use as input stream
+     * @param inStream InputStream to use as input stream
      */
     public void setIn(java.io.InputStream inStream) {
         setIn(new PyFile(inStream));
     }
 
     /**
-     * Sets a Python object to use for the standard output stream.
+     * Sets a Python object to use for the standard output stream, <code>sys.stdout</code>. This
+     * stream is used in a byte-oriented way (mostly) that depends on the type of file-like object.
+     * The behaviour as implemented is:
+     * <table border=1>
+     * <tr align=center>
+     * <td></td>
+     * <td colspan=3>Python type of object <code>o</code> written</td>
+     * </tr>
+     * <tr align=left>
+     * <th></th>
+     * <th><code>str/bytes</code></th>
+     * <th><code>unicode</code></th>
+     * <th>Any other type</th>
+     * </tr>
+     * <tr align=left>
+     * <th>{@link PyFile}</th>
+     * <td>as bytes directly</td>
+     * <td>respect {@link PyFile#encoding}</td>
+     * <td>call <code>str(o)</code> first</td>
+     * </tr>
+     * <tr align=left>
+     * <th>{@link PyFileWriter}</th>
+     * <td>each byte value as a <code>char</code></td>
+     * <td>write as Java <code>char</code>s</td>
+     * <td>call <code>o.toString()</code> first</td>
+     * </tr>
+     * <tr align=left>
+     * <th>Other {@link PyObject} <code>f</code></th>
+     * <td>invoke <code>f.write(str(o))</code></td>
+     * <td>invoke <code>f.write(o)</code></td>
+     * <td>invoke <code>f.write(str(o))</code></td>
+     * </tr>
+     * </table>
      *
-     * @param outStream
-     *            Python file-like object to use as output stream
+     * @param outStream Python file-like object to use as the output stream
      */
     public void setOut(PyObject outStream) {
         getSystemState().stdout = outStream;
     }
 
+    /**
+     * Sets a {@link Writer} to use for the standard output stream, <code>sys.stdout</code>. The
+     * behaviour as implemented is to output each object <code>o</code> by calling
+     * <code>o.toString()</code> and writing this as UTF-16.
+     *
+     * @param outStream to use as the output stream
+     */
     public void setOut(java.io.Writer outStream) {
         setOut(new PyFileWriter(outStream));
     }
 
     /**
-     * Sets a java.io.OutputStream to use for the standard output
-     * stream.
+     * Sets a {@link java.io.OutputStream} to use for the standard output stream.
      *
-     * @param outStream
-     *            OutputStream to use as output stream
+     * @param outStream OutputStream to use as output stream
      */
     public void setOut(java.io.OutputStream outStream) {
         setOut(new PyFile(outStream));
     }
 
+    /**
+     * Sets a Python object to use for the standard output stream, <code>sys.stderr</code>. This
+     * stream is used in a byte-oriented way (mostly) that depends on the type of file-like object,
+     * in the same way as {@link #setOut(PyObject)}.
+     *
+     * @param outStream Python file-like object to use as the error output stream
+     */
     public void setErr(PyObject outStream) {
         getSystemState().stderr = outStream;
     }
 
+    /**
+     * Sets a {@link Writer} to use for the standard output stream, <code>sys.stdout</code>. The
+     * behaviour as implemented is to output each object <code>o</code> by calling
+     * <code>o.toString()</code> and writing this as UTF-16.
+     *
+     * @param outStream to use as the error output stream
+     */
     public void setErr(java.io.Writer outStream) {
         setErr(new PyFileWriter(outStream));
     }
@@ -198,8 +247,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Evaluates a string as a Python expression and returns the
-     * result.
+     * Evaluates a string as a Python expression and returns the result.
      */
     public PyObject eval(String s) {
         setSystemState();
@@ -253,36 +301,35 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Compiles a string of Python source as either an expression (if
-     * possible) or a module.
+     * Compiles a string of Python source as either an expression (if possible) or a module.
      *
-     * Designed for use by a JSR 223 implementation: "the Scripting
-     * API does not distinguish between scripts which return values
-     * and those which do not, nor do they make the corresponding
-     * distinction between evaluating or executing objects."
-     * (SCR.4.2.1)
+     * Designed for use by a JSR 223 implementation: "the Scripting API does not distinguish between
+     * scripts which return values and those which do not, nor do they make the corresponding
+     * distinction between evaluating or executing objects." (SCR.4.2.1)
      */
     public PyCode compile(String script) {
         return compile(script, "<script>");
     }
+
     public PyCode compile(Reader reader) {
         return compile(reader, "<script>");
     }
+
     public PyCode compile(String script, String filename) {
         return compile(new StringReader(script), filename);
     }
+
     public PyCode compile(Reader reader, String filename) {
         mod node = ParserFacade.parseExpressionOrModule(reader, filename, cflags);
         setSystemState();
         return Py.compile_flags(node, filename, CompileMode.eval, cflags);
     }
 
-
     public PyObject getLocals() {
         if (!useThreadLocalState) {
             return globals;
         } else {
-            PyObject locals = (PyObject) threadLocals.get()[0];
+            PyObject locals = (PyObject)threadLocals.get()[0];
             if (locals != null) {
                 return locals;
             }
@@ -293,8 +340,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     public void setLocals(PyObject d) {
         if (!useThreadLocalState) {
             globals = d;
-        }
-        else {
+        } else {
             threadLocals.get()[0] = d;
         }
     }
@@ -302,11 +348,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     /**
      * Sets a variable in the local namespace.
      *
-     * @param name
-     *            the name of the variable
-     * @param value
-     *            the object to set the variable to (as converted to
-     *            an appropriate Python object)
+     * @param name the name of the variable
+     * @param value the object to set the variable to (as converted to an appropriate Python object)
      */
     public void set(String name, Object value) {
         getLocals().__setitem__(name.intern(), Py.java2py(value));
@@ -315,10 +358,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     /**
      * Sets a variable in the local namespace.
      *
-     * @param name
-     *            the name of the variable
-     * @param value
-     *            the Python object to set the variable to
+     * @param name the name of the variable
+     * @param value the Python object to set the variable to
      */
     public void set(String name, PyObject value) {
         getLocals().__setitem__(name.intern(), value);
@@ -327,10 +368,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     /**
      * Returns the value of a variable in the local namespace.
      *
-     * @param name
-     *            the name of the variable
-     * @return the value of the variable, or null if that name isn't
-     * assigned
+     * @param name the name of the variable
+     * @return the value of the variable, or null if that name isn't assigned
      */
     public PyObject get(String name) {
         return getLocals().__finditem__(name.intern());
@@ -338,17 +377,14 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
 
     /**
      * Returns the value of a variable in the local namespace.
-     * 
-     * The value will be returned as an instance of the given Java class.
-     * <code>interp.get("foo", Object.class)</code> will return the most
-     * appropriate generic Java object.
      *
-     * @param name
-     *            the name of the variable
-     * @param javaclass
-     *            the class of object to return
-     * @return the value of the variable as the given class, or null
-     * if that name isn't assigned
+     * The value will be returned as an instance of the given Java class.
+     * <code>interp.get("foo", Object.class)</code> will return the most appropriate generic Java
+     * object.
+     *
+     * @param name the name of the variable
+     * @param javaclass the class of object to return
+     * @return the value of the variable as the given class, or null if that name isn't assigned
      */
     public <T> T get(String name, Class<T> javaclass) {
         PyObject val = getLocals().__finditem__(name.intern());
@@ -376,6 +412,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
         sys.cleanup();
     }
 
+    @Override
     public void close() {
         if (!closed) {
             closed = true;

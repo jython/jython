@@ -8,6 +8,16 @@ import org.python.core.PyObject;
 import org.python.core.PySystemState;
 import org.python.core.__builtin__;
 
+/**
+ * This class provides the read, execute, print loop needed by a Python console; it is not actually
+ * a console itself. The primary capability is the {@link #interact()} method, which repeatedly
+ * calls {@link #raw_input(PyObject)}, and hence {@link __builtin__#raw_input(PyObject)}, in order
+ * to get lines, and {@link #push(String)} them into the interpreter. The built-in
+ * <code>raw_input()</code> method prompts on <code>sys.stdout</code> and reads from
+ * <code>sys.stdin</code>, the standard console. These may be redirected using
+ * {@link #setOut(java.io.OutputStream)} and {@link #setIn(java.io.InputStream)}, as may also
+ * <code>sys.stderr</code>.
+ */
 // Based on CPython-1.5.2's code module
 public class InteractiveConsole extends InteractiveInterpreter {
 
@@ -15,21 +25,43 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     public String filename;
 
+    /**
+     * Construct an interactive console, which will "run" when {@link #interact()} is called. The
+     * name of the console (e.g. in error messages) will be {@value #CONSOLE_FILENAME}.
+     */
     public InteractiveConsole() {
         this(null, CONSOLE_FILENAME);
     }
 
+    /**
+     * Construct an interactive console, which will "run" when {@link #interact()} is called. The
+     * name of the console (e.g. in error messages) will be {@value #CONSOLE_FILENAME}.
+     *
+     * @param locals dictionary to use, or if <code>null</code>, a new empty one will be created
+     */
     public InteractiveConsole(PyObject locals) {
         this(locals, CONSOLE_FILENAME);
     }
 
+    /**
+     * Construct an interactive console, which will "run" when {@link #interact()} is called.
+     *
+     * @param locals dictionary to use, or if <code>null</code>, a new empty one will be created
+     * @param filename name with which to label this console input (e.g. in error messages).
+     */
     public InteractiveConsole(PyObject locals, String filename) {
         this(locals, filename, false);
     }
 
     /**
-     * @param replaceRawInput if true, we hook this Class's raw_input into the built-ins table so
-     *            that clients like cmd.Cmd use it.
+     * Full-feature constructor for an interactive console, which will "run" when
+     * {@link #interact()} is called. This version allows the caller to replace the built-in
+     * raw_input() methods with {@link #raw_input(PyObject)} and
+     * {@link #raw_input(PyObject, PyObject)}, which may be overridden in a sub-class.
+     *
+     * @param locals dictionary to use, or if <code>null</code>, a new empty one will be created
+     * @param filename name with which to label this console input
+     * @param replaceRawInput if true, hook this class's <code>raw_input</code> into the built-ins.
      */
     public InteractiveConsole(PyObject locals, String filename, boolean replaceRawInput) {
         super(locals);
@@ -52,19 +84,32 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     /**
-     * Closely emulate the interactive Python console.
-     *
-     * The optional banner argument specifies the banner to print before the first interaction; by
-     * default it prints "Jython <version> on <platform>".
+     * Operate a Python console, as in {@link #interact(String, PyObject)}, on the standard input.
+     * The standard input may have been redirected by {@link #setIn(java.io.InputStream)} or its
+     * variants. The banner (printed before first input) is obtained by calling
+     * {@link #getDefaultBanner()}.
      */
     public void interact() {
         interact(getDefaultBanner(), null);
     }
 
+    /**
+     * Returns the banner to print before the first interaction: "Jython <version> on <platform>".
+     *
+     * @return the banner.
+     */
     public static String getDefaultBanner() {
-        return String.format("Jython %s on %s", PySystemState.version, Py.getSystemState().platform);
+        return String
+                .format("Jython %s on %s", PySystemState.version, Py.getSystemState().platform);
     }
 
+    /**
+     * Operate a Python console by repeatedly calling {@link #raw_input(PyObject, PyObject)} and
+     * interpreting the lines read. An end of file causes the method to return.
+     *
+     * @param banner to print before accepting input, or if <code>null</code>, no banner.
+     * @param file from which to read commands, or if <code>null</code>, read the console.
+     */
     public void interact(String banner, PyObject file) {
         if (banner != null) {
             write(banner);
