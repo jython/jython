@@ -31,6 +31,7 @@ import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
+import org.python.core.PySequence;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
@@ -412,7 +413,19 @@ public class Time implements ClassDictInit
         return asctime(localtime());
     }
 
-    public static PyString asctime(PyTuple tup) {
+    public static PyString asctime(PyObject obj) {
+        PyTuple tup;
+        if (obj instanceof PyTuple) {
+            tup = (PyTuple)obj;
+        } else {
+            tup = PyTuple.fromIterable(obj);
+        }
+        int len = tup.__len__();
+        if (len != 9) {
+            throw Py.TypeError(
+                String.format("argument must be sequence of length 9, not %d", len));
+        }
+
         StringBuilder buf = new StringBuilder(25);
         buf.append(enshortdays[item(tup, 6)]).append(' ');
         buf.append(enshortmonths[item(tup, 1)]).append(' ');

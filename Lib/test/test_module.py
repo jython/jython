@@ -1,77 +1,87 @@
 # Test the module type
+import unittest
+from test.test_support import run_unittest, gc_collect
 
-from test.test_support import verify, vereq, verbose, TestFailed
-from types import ModuleType as module
+import StringIO  # Jython: sub this for sys, given the special status of PySystemState
+ModuleType = type(StringIO)
 
-# An uninitialized module has no __dict__ or __name__, and __doc__ is None
-foo = module.__new__(module)
-verify(foo.__dict__ is None)
-try:
-    s = foo.__name__
-except AttributeError:
-    pass
-else:
-    raise TestFailed, "__name__ = %s" % repr(s)
-# __doc__ is None by default in CPython but not in Jython.
-# We're not worrying about that now.
-#vereq(foo.__doc__, module.__doc__)
+class ModuleTests(unittest.TestCase):
+    def test_uninitialized(self):
+        # An uninitialized module has no __dict__ or __name__,
+        # and __doc__ is None
+        foo = ModuleType.__new__(ModuleType)
+        self.assertTrue(foo.__dict__ is None)
+        # CPython raises SystemError, but this is more consistent
+        # and doesn't seem worth special casing for dir() here
+        self.assertRaises(TypeError, dir, foo)
+        try:
+            s = foo.__name__
+            self.fail("__name__ = %s" % repr(s))
+        except AttributeError:
+            pass
+        self.assertEqual(foo.__doc__, ModuleType.__doc__)
 
-try:
-    foo_dir = dir(foo)
-except TypeError:
-    pass
-else:
-    raise TestFailed, "__dict__ = %s" % repr(foo_dir)
+    def test_no_docstring(self):
+        # Regularly initialized module, no docstring
+        foo = ModuleType("foo")
+        self.assertEqual(foo.__name__, "foo")
+        self.assertEqual(foo.__doc__, None)
+        self.assertEqual(foo.__dict__, {"__name__": "foo", "__doc__": None})
 
-try:
-    del foo.somename
-except AttributeError:
-    pass
-else:
-    raise TestFailed, "del foo.somename"
+    def test_ascii_docstring(self):
+        # ASCII docstring
+        foo = ModuleType("foo", "foodoc")
+        self.assertEqual(foo.__name__, "foo")
+        self.assertEqual(foo.__doc__, "foodoc")
+        self.assertEqual(foo.__dict__,
+                         {"__name__": "foo", "__doc__": "foodoc"})
 
-try:
-    del foo.__dict__
-except TypeError:
-    pass
-else:
-    raise TestFailed, "del foo.__dict__"
+    def test_unicode_docstring(self):
+        # Unicode docstring
+        foo = ModuleType("foo", u"foodoc\u1234")
+        self.assertEqual(foo.__name__, "foo")
+        self.assertEqual(foo.__doc__, u"foodoc\u1234")
+        self.assertEqual(foo.__dict__,
+                         {"__name__": "foo", "__doc__": u"foodoc\u1234"})
 
-try:
-    foo.__dict__ = {}
-except TypeError:
-    pass
-else:
-    raise TestFailed, "foo.__dict__ = {}"
-verify(foo.__dict__ is None)
+    def test_reinit(self):
+        # Reinitialization should not replace the __dict__
+        foo = ModuleType("foo", u"foodoc\u1234")
+        foo.bar = 42
+        d = foo.__dict__
+        foo.__init__("foo", "foodoc")
+        self.assertEqual(foo.__name__, "foo")
+        self.assertEqual(foo.__doc__, "foodoc")
+        self.assertEqual(foo.bar, 42)
+        self.assertEqual(foo.__dict__,
+              {"__name__": "foo", "__doc__": "foodoc", "bar": 42})
+        self.assertTrue(foo.__dict__ is d)
 
-# Regularly initialized module, no docstring
-foo = module("foo")
-vereq(foo.__name__, "foo")
-vereq(foo.__doc__, None)
-vereq(foo.__dict__, {"__name__": "foo", "__package__": None, "__doc__": None})
+    # @unittest.expectedFailure - works fine on Jython!
+    def test_dont_clear_dict(self):
+        # See issue 7140.
+        def f():
+            foo = ModuleType("foo")
+            foo.bar = 4
+            return foo
+        gc_collect()
+        self.assertEqual(f().__dict__["bar"], 4)
 
-# ASCII docstring
-foo = module("foo", "foodoc")
-vereq(foo.__name__, "foo")
-vereq(foo.__doc__, "foodoc")
-vereq(foo.__dict__, {"__name__": "foo", "__package__": None, "__doc__": "foodoc"})
+    def test_clear_dict_in_ref_cycle(self):
+        destroyed = []
+        m = ModuleType("foo")
+        m.destroyed = destroyed
+        s = """class A:
+    def __del__(self, destroyed=destroyed):
+        destroyed.append(1)
+a = A()"""
+        exec(s, m.__dict__)
+        del m
+        gc_collect()
+        self.assertEqual(destroyed, [1])
 
-# Unicode docstring
-foo = module("foo", u"foodoc\u1234")
-vereq(foo.__name__, "foo")
-vereq(foo.__doc__, u"foodoc\u1234")
-vereq(foo.__dict__, {"__name__": "foo", "__package__": None, "__doc__": u"foodoc\u1234"})
+def test_main():
+    run_unittest(ModuleTests)
 
-# Reinitialization should not replace the __dict__
-foo.bar = 42
-d = foo.__dict__
-foo.__init__("foo", "foodoc")
-vereq(foo.__name__, "foo")
-vereq(foo.__doc__, "foodoc")
-vereq(foo.bar, 42)
-vereq(foo.__dict__, {"__name__": "foo", "__package__": None, "__doc__": "foodoc", "bar": 42})
-verify(foo.__dict__ is d)
-
-if verbose:
-    print "All OK"
+if __name__ == '__main__':
+    test_main()

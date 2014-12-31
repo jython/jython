@@ -156,7 +156,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___eq__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int tl = __len__();
@@ -174,7 +174,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___ne__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int tl = __len__();
@@ -192,7 +192,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___lt__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -208,7 +208,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___le__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -224,7 +224,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___gt__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int i = cmp(this, -1, o, -1);
@@ -240,7 +240,7 @@ public abstract class PySequence extends PyObject {
     }
 
     final PyObject seq___ge__(PyObject o) {
-        if (!isSubType(o)) {
+        if (!isSubType(o) || o.getType() == PyObject.TYPE) {
             return null;
         }
         int i = cmp(this, -1, o, -1);

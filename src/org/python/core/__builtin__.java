@@ -14,8 +14,6 @@ import java.util.Map;
 
 import org.python.antlr.base.mod;
 import org.python.core.stringlib.IntegerFormatter;
-import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.util.ExtraMath;
 import org.python.core.util.RelativeFile;
 import org.python.modules._functools._functools;
@@ -70,8 +68,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 5:
                 return __builtin__.hash(arg1);
             case 6:
-                return Py.newUnicode(__builtin__.unichr(Py.py2int(arg1, "unichr(): 1st arg can't "
-                                                                  + "be coerced to int")));
+                return Py.newUnicode(__builtin__.unichr(arg1));
             case 7:
                 return __builtin__.abs(arg1);
             case 9:
@@ -401,6 +398,16 @@ public class __builtin__ {
         return obj.isCallable();
     }
 
+    public static int unichr(PyObject obj) {
+        long l = obj.asLong();
+        if (l < PySystemState.minint) {
+            throw Py.OverflowError("signed integer is less than minimum");
+        } else if (l > PySystemState.maxint) {
+            throw Py.OverflowError("signed integer is greater than maximum");
+        }
+        return unichr((int)l);
+    }
+
     public static int unichr(int i) {
         if (i < 0 || i > PySystemState.maxunicode) {
             throw Py.ValueError("unichr() arg not in range(0x110000)");
@@ -435,8 +442,11 @@ public class __builtin__ {
     }
 
     public static PyObject dir(PyObject o) {
-        PyList ret = (PyList) o.__dir__();
-        ret.sort();
+        PyObject ret = o.__dir__();
+        if (!Py.isInstance(ret, PyList.TYPE)) {
+            throw Py.TypeError("__dir__() must return a list, not " + ret.getType().fastGetName());
+        }
+        ((PyList)ret).sort();
         return ret;
     }
 
@@ -884,39 +894,6 @@ public class __builtin__ {
                                          y.getType().fastGetName(), z.getType().fastGetName()));
     }
 
-    public static PyObject range(PyObject start, PyObject stop, PyObject step) {
-        int ilow = 0;
-        int ihigh = 0;
-        int istep = 1;
-        int n;
-
-        try {
-            ilow = start.asInt();
-            ihigh = stop.asInt();
-            istep = step.asInt();
-        } catch (PyException pye) {
-            return handleRangeLongs(start, stop, step);
-        }
-
-        if (istep == 0) {
-            throw Py.ValueError("range() step argument must not be zero");
-        }
-        if (istep > 0) {
-            n = PyXRange.getLenOfRange(ilow, ihigh, istep);
-        } else {
-            n = PyXRange.getLenOfRange(ihigh, ilow, -istep);
-        }
-        if (n < 0) {
-            throw Py.OverflowError("range() result has too many items");
-        }
-
-        PyObject[] range = new PyObject[n];
-        for (int i = 0; i < n; i++, ilow += istep) {
-            range[i] = Py.newInteger(ilow);
-        }
-        return new PyList(range);
-    }
-
     public static PyObject range(PyObject n) {
         return range(Py.Zero, n, Py.One);
     }
@@ -925,10 +902,7 @@ public class __builtin__ {
         return range(start, stop, Py.One);
     }
 
-    /**
-     * Handle range() when PyLong arguments (that OverFlow ints) are given.
-     */
-    private static PyObject handleRangeLongs(PyObject ilow, PyObject ihigh, PyObject istep) {
+    public static PyObject range(PyObject ilow, PyObject ihigh, PyObject istep) {
         ilow = getRangeLongArgument(ilow, "start");
         ihigh = getRangeLongArgument(ihigh, "end");
         istep = getRangeLongArgument(istep, "step");
@@ -949,8 +923,8 @@ public class __builtin__ {
 
         PyObject[] range = new PyObject[n];
         for (int i = 0; i < n; i++) {
-            range[i] = ilow.__long__();
-            ilow = ilow.__add__(istep);
+            range[i] = ilow;
+            ilow = ilow._add(istep);
         }
         return new PyList(range);
     }
@@ -972,7 +946,7 @@ public class __builtin__ {
         }
         try {
             // See PyXRange.getLenOfRange for the primitive version
-            PyObject diff = hi.__sub__(lo).__sub__(Py.One);
+            PyObject diff = hi._sub(lo)._sub(Py.One);
             PyObject n = diff.__floordiv__(step).__add__(Py.One);
             return n.asInt();
         } catch (PyException pye) {
@@ -1400,7 +1374,11 @@ class FormatFunction extends PyBuiltinFunctionNarrow {
 
     @Override
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        return arg1.__format__(arg2);
+        PyObject formatted = arg1.__format__(arg2);
+        if (!Py.isInstance(formatted, PyString.TYPE) && !Py.isInstance(formatted, PyUnicode.TYPE)  ) {
+            throw Py.TypeError("instance.__format__ must return string or unicode, not " + formatted.getType().fastGetName());
+        }
+        return formatted;
     }
 }
 

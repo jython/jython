@@ -304,6 +304,15 @@ def http_server(evt, numrequests, requestHandler=None):
             s.setblocking(True)
             return s, port
 
+        def handle_error(self, request, client_address):
+            # test_partial_post causes a close error (as might be
+            # expected), apparently because the timing is different
+            # between CPython and Jython. So ignore so that the
+            # default SocketServer.handle_error logging does not cause
+            # issues in unexpected text output in the overall
+            # regrtest.
+            pass
+
     if not requestHandler:
         requestHandler = SimpleXMLRPCServer.SimpleXMLRPCRequestHandler
     serv = MyXMLRPCServer(("localhost", 0), requestHandler,
@@ -605,7 +614,10 @@ class SimpleServerTestCase(BaseServerTestCase):
         # Check that a partial POST doesn't make the server loop: issue #14001.
         conn = httplib.HTTPConnection(ADDR, PORT)
         conn.request('POST', '/RPC2 HTTP/1.0\r\nContent-Length: 100\r\n\r\nbye')
-        conn.close()
+        try:
+            conn.close()
+        except Exception, e:
+            print "Got this exception", type(e), e
 
 class MultiPathServerTestCase(BaseServerTestCase):
     threadFunc = staticmethod(http_multi_server)

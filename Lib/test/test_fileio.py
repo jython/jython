@@ -11,7 +11,7 @@ from weakref import proxy
 from functools import wraps
 
 from test.test_support import (TESTFN, check_warnings, run_unittest,
-                               make_bad_fd, is_jython)
+                               make_bad_fd, is_jython, gc_collect)
 from test.test_support import py3k_bytes as bytes
 from test.script_helper import run_python
 
@@ -34,7 +34,6 @@ class AutoFileTests(unittest.TestCase):
             self.f.close()
         os.remove(TESTFN)
 
-    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def testWeakRefs(self):
         # verify weak references
         p = proxy(self.f)
@@ -42,6 +41,7 @@ class AutoFileTests(unittest.TestCase):
         self.assertEqual(self.f.tell(), p.tell())
         self.f.close()
         self.f = None
+        gc_collect()
         self.assertRaises(ReferenceError, getattr, p, 'tell')
 
     def testSeekTell(self):
@@ -294,7 +294,15 @@ class OtherFileTests(unittest.TestCase):
         self.assertEqual(f.isatty(), False)
         f.close()
 
-        if sys.platform != "win32":
+        # Jython specific issues:
+        # On OSX, FileIO("/dev/tty", "w").isatty() is False
+        # On Ubuntu, FileIO("/dev/tty", "w").isatty() throws IOError: Illegal seek
+        #
+        # Much like we see on other platforms, we cannot reliably
+        # determine it is not seekable (or special).
+        #
+        # Related bug: http://bugs.jython.org/issue1945
+        if sys.platform != "win32" and not is_jython:
             try:
                 f = self.f = _FileIO("/dev/tty", "a")
             except EnvironmentError:

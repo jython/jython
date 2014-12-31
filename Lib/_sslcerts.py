@@ -31,32 +31,8 @@ except ImportError:
 log = logging.getLogger("ssl")
 
 
-# FIXME what happens if reloaded?
 Security.addProvider(BouncyCastleProvider())
 
-
-# build the necessary certificate with a CertificateFactory; this can take the pem format:
-# http://docs.oracle.com/javase/7/docs/api/java/security/cert/CertificateFactory.html#generateCertificate(java.io.InputStream)
-
-# not certain if we can include a private key in the pem file; see 
-# http://stackoverflow.com/questions/7216969/getting-rsa-private-key-from-pem-base64-encoded-private-key-file
-
-
-# helpful advice for being able to manage ca_certs outside of Java's keystore
-# specifically the example ReloadableX509TrustManager
-# http://jcalcote.wordpress.com/2010/06/22/managing-a-dynamic-java-trust-store/
-
-# in the case of http://docs.python.org/2/library/ssl.html#ssl.CERT_REQUIRED
-
-# http://docs.python.org/2/library/ssl.html#ssl.CERT_NONE
-# https://github.com/rackerlabs/romper/blob/master/romper/trust.py#L15
-#
-# it looks like CERT_OPTIONAL simply validates certificates if
-# provided, probably something in checkServerTrusted - maybe a None
-# arg? need to verify as usual with a real system... :)
-
-# http://alesaudate.wordpress.com/2010/08/09/how-to-dynamically-select-a-certificate-alias-when-invoking-web-services/
-# is somewhat relevant for managing the keyfile, certfile
 
 
 def _get_ca_certs_trust_manager(ca_certs):

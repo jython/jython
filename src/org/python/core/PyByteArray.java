@@ -151,7 +151,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      *
      * @param storage pre-initialised with desired value: the caller should not keep a reference
      */
-    PyByteArray(byte[] storage) {
+    public PyByteArray(byte[] storage) {
         super(TYPE);
         setStorage(storage);
     }
@@ -165,7 +165,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @throws IllegalArgumentException if the range [0:size] is not within the array bounds of the
      *             storage.
      */
-    PyByteArray(byte[] storage, int size) {
+    public PyByteArray(byte[] storage, int size) {
         super(TYPE);
         setStorage(storage, size);
     }

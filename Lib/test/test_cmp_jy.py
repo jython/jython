@@ -45,6 +45,46 @@ class IntStrCmp(unittest.TestCase):
         assert not (-1 == 'a')
 
 
+class ObjectCmp(unittest.TestCase):
+    def testObjectListCompares(self):
+        # Also applies to tuple objects given common PySequence implementation
+        assert not object() == list()
+        assert object() != list()
+        assert not list() == object()
+        assert list() != object() 
+
+        # Note that <, > rich comparisons in 2.x are broken by the
+        # lexicographic ordering of the type **name**. Example:
+        # 'object' > 'list'
+        assert not object() < list()
+        assert not object() <= list()
+        assert object() > list()
+        assert object() >= list()
+        assert list() < object()
+        assert list() <= object()
+        assert not list() > object()
+        assert not list() >= object()
+
+    def testObjectDictCompares(self):
+        # Also applies to such objects as defaultdict and Counter
+        assert not object() == dict()
+        assert object() != dict()
+        assert not dict() == object()
+        assert dict() != object() 
+
+        # Note that <, > rich comparisons in 2.x are broken by the
+        # lexicographic ordering of the type **name**. Example:
+        # 'object' > 'dict'
+        assert not object() < dict()
+        assert not object() <= dict()
+        assert object() > dict()
+        assert object() >= dict()
+        assert dict() < object()
+        assert dict() <= object()
+        assert not dict() > object()
+        assert not dict() >= object()
+
+
 class CustomCmp(unittest.TestCase):
     def test___cmp___returns(self):
         class Foo(object):
@@ -83,7 +123,8 @@ def test_main():
             UnicodeDerivedCmp,
             LongDerivedCmp,
             IntStrCmp,
-            CustomCmp
+            ObjectCmp,
+            CustomCmp,
             )
 
 

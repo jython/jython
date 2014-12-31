@@ -4,8 +4,11 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
 
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -720,6 +723,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
             }
         }
 
+        if (c.isAssignableFrom(Collection.class)) {
+            List<Object> list = new ArrayList();
+            for (int i = 0; i < __len__(); i++) {
+                list.add(pyget(i).__tojava__(String.class));
+            }
+            return list;
+        }
+
         if (c.isInstance(this)) {
             return this;
         }
@@ -731,6 +742,10 @@ public class PyString extends PyBaseString implements BufferProtocol {
     protected PyObject pyget(int i) {
         // Method is overridden in PyUnicode, so definitely a PyString
         return Py.makeCharacter(string.charAt(i));
+    }
+
+    public int getInt(int i) {
+        return string.charAt(i);
     }
 
     @Override

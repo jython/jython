@@ -153,7 +153,7 @@ class ReferencesTestCase(TestBase):
         o2 = C()
         ref3 = weakref.proxy(o2)
         del o2
-        gc.collect()
+        extra_collect()
         self.assertRaises(weakref.ReferenceError, bool, ref3)
 
         self.assertTrue(self.cbcalled == 2)
@@ -638,7 +638,7 @@ class ReferencesTestCase(TestBase):
         del c1, c2, C   # make them all trash
         self.assertEqual(alist, [])  # del isn't enough to reclaim anything
 
-        gc.collect()
+        extra_collect()
         # c1.wr and c2.wr were part of the cyclic trash, so should have
         # been cleared without their callbacks executing.  OTOH, the weakref
         # to C is bound to a function local (wr), and wasn't trash, so that
@@ -682,7 +682,7 @@ class ReferencesTestCase(TestBase):
 
         del callback, c, d, C
         self.assertEqual(alist, [])  # del isn't enough to clean up cycles
-        gc.collect()
+        extra_collect()
         self.assertEqual(alist, ["safe_callback called"])
         self.assertEqual(external_wr(), None)
 
@@ -755,12 +755,12 @@ class ReferencesTestCase(TestBase):
         weakref.ref(int)
         a = weakref.ref(A, l.append)
         A = None
-        gc.collect()
+        extra_collect()
         self.assertEqual(a(), None)
         self.assertEqual(l, [a])
         b = weakref.ref(B, l.append)
         B = None
-        gc.collect()
+        extra_collect()
         self.assertEqual(b(), None)
         self.assertEqual(l, [a, b])
 
@@ -850,7 +850,7 @@ class SubclassableWeakrefTestCase(TestBase):
         self.assertTrue(mr.called)
         self.assertEqual(mr.value, 24)
         del o
-        gc.collect()
+        extra_collect()
         self.assertTrue(mr() is None)
         self.assertTrue(mr.called)
 

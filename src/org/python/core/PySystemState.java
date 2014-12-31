@@ -19,6 +19,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -29,6 +30,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -130,6 +132,9 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
     public PyList argv = new PyList();
 
     public PyObject modules;
+    public Map<String, PyModule> modules_reloading;
+    private ReentrantLock importLock;
+    private ClassLoader syspathJavaLoader;
     public PyList path;
 
     public PyList warnoptions = new PyList();
@@ -190,6 +195,9 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         initialize();
         closer = new PySystemStateCloser(this);
         modules = new PyStringMap();
+        modules_reloading = new HashMap<String, PyModule>();
+        importLock = new ReentrantLock();
+        syspathJavaLoader = new SyspathJavaLoader(imp.getParentClassLoader());
 
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
@@ -337,6 +345,14 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         return codecState;
     }
 
+    public ReentrantLock getImportLock() {
+        return importLock;
+    }
+
+    public ClassLoader getSyspathJavaLoader() {
+        return syspathJavaLoader;
+    }
+
     // xxx fix this accessors
     @Override
     public PyObject __findattr_ex__(String name) {
@@ -428,12 +444,30 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         this.recursionlimit = recursionlimit;
     }
 
+    public PyObject gettrace() {
+        ThreadState ts = Py.getThreadState();
+        if (ts.tracefunc == null) {
+            return Py.None;
+        } else {
+            return ((PythonTraceFunction)ts.tracefunc).tracefunc;
+        }
+    }
+
     public void settrace(PyObject tracefunc) {
         ThreadState ts = Py.getThreadState();
         if (tracefunc == Py.None) {
             ts.tracefunc = null;
         } else {
             ts.tracefunc = new PythonTraceFunction(tracefunc);
+        }
+    }
+
+    public PyObject getprofile() {
+        ThreadState ts = Py.getThreadState();
+        if (ts.profilefunc == null) {
+            return Py.None;
+        } else {
+            return ((PythonTraceFunction)ts.profilefunc).tracefunc;
         }
     }
 

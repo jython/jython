@@ -20,6 +20,10 @@ public abstract class BaseSet extends PyObject implements Set {
         _set = set;
     }
 
+    public Set<PyObject> getSet() {
+        return _set;
+    }
+
     protected void _update(PyObject data) {
         _update(_set, data);
     }

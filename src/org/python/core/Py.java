@@ -1316,6 +1316,19 @@ public final class Py {
 
         if (globals == null || globals == Py.None) {
             globals = ts.frame.f_globals;
+        } else if (globals.__finditem__("__builtins__") == null) {
+            // Apply side effect of copying into globals,
+            // per documentation of eval and observed behavior of exec
+            try {
+                globals.__setitem__("__builtins__", Py.getSystemState().modules.__finditem__("__builtin__").__getattr__("__dict__"));
+            } catch (PyException e) {
+                // Quietly ignore if cannot set __builtins__ - Jython previously allowed a much wider range of
+                // mappable objects for the globals mapping than CPython, do not want to break existing code
+                // as we try to get better CPython compliance
+                if (!e.match(AttributeError)) {
+                    throw e;
+                }
+            }
         }
 
         PyBaseCode baseCode = null;

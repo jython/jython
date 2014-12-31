@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.CharMatcher;
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.MarkupIterator;
 import org.python.expose.ExposedMethod;
@@ -578,6 +579,11 @@ public class PyUnicode extends PyString implements Iterable {
         return string.length() - translator.suppCount();
     }
 
+    private static String checkEncoding(String s) {
+        if (s == null || CharMatcher.ASCII.matchesAllOf(s)) { return s; }
+        return codecs.PyUnicode_EncodeASCII(s, s.length(), null);
+    }
+
     @ExposedNew
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -585,8 +591,8 @@ public class PyUnicode extends PyString implements Iterable {
                 new ArgParser("unicode", args, keywords, new String[] {"string", "encoding",
                         "errors"}, 0);
         PyObject S = ap.getPyObject(0, null);
-        String encoding = ap.getString(1, null);
-        String errors = ap.getString(2, null);
+        String encoding = checkEncoding(ap.getString(1, null));
+        String errors = checkEncoding(ap.getString(2, null));
         if (new_.for_type == subtype) {
             if (S == null) {
                 return new PyUnicode("");
@@ -729,6 +735,10 @@ public class PyUnicode extends PyString implements Iterable {
     protected PyObject pyget(int i) {
         int codepoint = getString().codePointAt(translator.utf16Index(i));
         return Py.makeCharacter(codepoint, true);
+    }
+
+    public int getInt(int i) {
+        return getString().codePointAt(translator.utf16Index(i));
     }
 
     private class SubsequenceIteratorImpl implements Iterator {

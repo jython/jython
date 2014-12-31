@@ -34,6 +34,7 @@ public class Setup
         "_functools:org.python.modules._functools._functools",
         "_hashlib",
         "_io:org.python.modules._io._io",
+        "_json:org.python.modules._json._json",
         "_jythonlib:org.python.modules._jythonlib._jythonlib",
         "_marshal",
         "_py_compile",

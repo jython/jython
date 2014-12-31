@@ -94,7 +94,7 @@ public class PyTeeIterator extends PyIterator {
             throw Py.ValueError("n must be >= 0");
         }
 
-        PyObject[] tees = new PyTeeIterator[n];
+        PyObject[] tees = new PyObject[n];
 
         if (n == 0) {
             return tees;

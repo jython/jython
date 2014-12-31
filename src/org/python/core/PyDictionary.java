@@ -259,7 +259,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         PyType thisType = getType();
         PyType otherType = otherObj.getType();
         if (otherType != thisType && !thisType.isSubType(otherType)
-                && !otherType.isSubType(thisType)) {
+                && !otherType.isSubType(thisType) || otherType == PyObject.TYPE) {
             return null;
         }
         PyDictionary other = (PyDictionary)otherObj;
@@ -344,7 +344,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         PyType thisType = getType();
         PyType otherType = otherObj.getType();
         if (otherType != thisType && !thisType.isSubType(otherType)
-                && !otherType.isSubType(thisType)) {
+                && !otherType.isSubType(thisType) || otherType == PyObject.TYPE) {
             return -2;
         }
         PyDictionary other = (PyDictionary)otherObj;
@@ -618,7 +618,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
         if (!getMap().containsKey(key)) {
             if (defaultValue == null) {
-                throw Py.KeyError("popitem(): dictionary is empty");
+                throw Py.KeyError(key.toString());
             }
             return defaultValue;
         }

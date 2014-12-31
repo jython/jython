@@ -214,7 +214,12 @@ class ImpImporter:
 
             if not modname and os.path.isdir(path) and '.' not in fn:
                 modname = fn
-                for fn in os.listdir(path):
+                try:
+                    dircontents = os.listdir(path)
+                except OSError:
+                    # ignore unreadable directories like import does
+                    dircontents = []
+                for fn in dircontents:
                     subname = inspect.getmodulename(fn)
                     if subname=='__init__':
                         ispkg = True

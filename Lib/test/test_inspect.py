@@ -633,8 +633,15 @@ class TestClassesAndFunctions(unittest.TestCase):
 
 class TestGetcallargsFunctions(unittest.TestCase):
 
-    # tuple parameters are named '.1', '.2', etc.
-    is_tuplename = re.compile(r'^\.\d+$').match
+    # It's possible to get both the tuple parameters AND the unpacked
+    # parameters by using locals(). However, they are named
+    # differently in CPython and Jython:
+    #
+    # * For CPython, such tuple parameters are named '.1', '.2', etc.
+    # * For Jython, they are actually the formal parameter, eg '(d, (e, f))'
+    #
+    # In both cases, we ignore in testing - they are in fact unpacked
+    is_tuplename = re.compile(r'(?:^\.\d+$)|(?:^\()').match
 
     def assertEqualCallArgs(self, func, call_params_string, locs=None):
         locs = dict(locs or {}, func=func)

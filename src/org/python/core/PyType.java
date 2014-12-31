@@ -203,6 +203,8 @@ public class PyType extends PyObject implements Serializable {
         type.bases = tmpBases.length == 0 ? new PyObject[] {PyObject.TYPE} : tmpBases;
         type.dict = dict;
         type.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
+        // Enable defining a custom __dict__ via a property, method, or other descriptor
+        boolean defines_dict = dict.__finditem__("__dict__") != null;
 
         // immediately setup the javaProxy if applicable. may modify bases
         List<Class<?>> interfaces = Generic.list();
@@ -215,7 +217,7 @@ public class PyType extends PyObject implements Serializable {
                                              base.name));
         }
 
-        type.createAllSlots(!base.needs_userdict, !base.needs_weakref);
+        type.createAllSlots(!(base.needs_userdict || defines_dict), !base.needs_weakref);
         type.ensureAttributes();
         type.invalidateMethodCache();
 

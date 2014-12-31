@@ -4,8 +4,13 @@ Tests common to list and UserList.UserList
 
 import sys
 import os
+import unittest
 
 from test import test_support, seq_tests
+
+if test_support.is_jython:
+    from java.util import List as JList
+
 
 class CommonTest(seq_tests.CommonTest):
 
@@ -40,12 +45,14 @@ class CommonTest(seq_tests.CommonTest):
         self.assertEqual(str(a2), "[0, 1, 2]")
         self.assertEqual(repr(a2), "[0, 1, 2]")
 
-        a2.append(a2)
-        a2.append(3)
-        self.assertEqual(str(a2), "[0, 1, 2, [...], 3]")
-        self.assertEqual(repr(a2), "[0, 1, 2, [...], 3]")
+        if not (test_support.is_jython and issubclass(self.type2test, JList)):
+            # Jython does not support shallow copies of object graphs
+            # when moving back and forth from Java object space
+            a2.append(a2)
+            a2.append(3)
+            self.assertEqual(str(a2), "[0, 1, 2, [...], 3]")
+            self.assertEqual(repr(a2), "[0, 1, 2, [...], 3]")
 
-        #FIXME: not working on Jython
         if not test_support.is_jython:
             l0 = []
             for i in xrange(sys.getrecursionlimit() + 100):
@@ -53,6 +60,8 @@ class CommonTest(seq_tests.CommonTest):
             self.assertRaises(RuntimeError, repr, l0)
 
     def test_print(self):
+        if test_support.is_jython and issubclass(self.type2test, JList):
+            raise unittest.SkipTest("Jython does not support shallow copies of object graphs")
         d = self.type2test(xrange(200))
         d.append(d)
         d.extend(xrange(200,400))
@@ -184,10 +193,14 @@ class CommonTest(seq_tests.CommonTest):
         a[:] = tuple(range(10))
         self.assertEqual(a, self.type2test(range(10)))
 
-        self.assertRaises(TypeError, a.__setslice__, 0, 1, 5)
+        if not (test_support.is_jython and issubclass(self.type2test, JList)):
+            # no support for __setslice__ on Jython for
+            # java.util.List, given that method deprecated since 2.0!
+            self.assertRaises(TypeError, a.__setslice__, 0, 1, 5)
         self.assertRaises(TypeError, a.__setitem__, slice(0, 1, 5))
 
-        self.assertRaises(TypeError, a.__setslice__)
+        if not (test_support.is_jython and issubclass(self.type2test, JList)):
+            self.assertRaises(TypeError, a.__setslice__)
         self.assertRaises(TypeError, a.__setitem__)
 
     def test_delslice(self):
@@ -330,9 +343,12 @@ class CommonTest(seq_tests.CommonTest):
         d = self.type2test(['a', 'b', BadCmp2(), 'c'])
         e = self.type2test(d)
         self.assertRaises(BadExc, d.remove, 'c')
-        for x, y in zip(d, e):
-            # verify that original order and values are retained.
-            self.assertIs(x, y)
+        if not (test_support.is_jython and issubclass(self.type2test, JList)):
+            # When converting back and forth to Java space, Jython does not
+            # maintain object identity
+            for x, y in zip(d, e):
+                # verify that original order and values are retained.
+                self.assertIs(x, y)
 
     def test_count(self):
         a = self.type2test([0, 1, 2])*3
@@ -452,8 +468,13 @@ class CommonTest(seq_tests.CommonTest):
         def selfmodifyingComparison(x,y):
             z.append(1)
             return cmp(x, y)
+
+        # Need to ensure the comparisons are actually executed by
+        # setting up a list
+        z = self.type2test(range(12))
         self.assertRaises(ValueError, z.sort, selfmodifyingComparison)
 
+        z = self.type2test(range(12))
         self.assertRaises(TypeError, z.sort, lambda x, y: 's')
 
         self.assertRaises(TypeError, z.sort, 42, 42, 42, 42)

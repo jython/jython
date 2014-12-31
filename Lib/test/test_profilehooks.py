@@ -17,11 +17,9 @@ class TestGetProfile(unittest.TestCase):
     def tearDown(self):
         sys.setprofile(None)
 
-    @unittest.skip("FIXME: broken")
     def test_empty(self):
         assert sys.getprofile() == None
 
-    @unittest.skip("FIXME: broken")
     def test_setget(self):
         def fn(*args):
             pass

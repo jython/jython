@@ -1266,6 +1266,9 @@ _expectations = {
         test_asynchat
         test_asyncore
 
+        # Command line testing is hard for Jython to do, but revisit
+        test_cmd_line_script
+
         # Tests that should work with socket-reboot, but currently hang
         test_ftplib
         test_httplib
@@ -1311,7 +1314,6 @@ _failures = {
         test_peepholer
         test_pyclbr
         test_pyexpat
-        test_select_new
         test_stringprep
         test_threadsignals
         test_transformer

@@ -16,18 +16,15 @@ DATA_CHUNK_SIZE = 1000
 DATA_CHUNK = "." * DATA_CHUNK_SIZE
 
 #
-# The timing of these tests depends on the how the unerlying OS socket library
+# The timing of these tests depends on the how the underlying OS socket library
 # handles buffering. These values may need tweaking for different platforms
 #
 # The fundamental problem is that there is no reliable way to fill a socket with bytes
-#
+# To address this for running on Netty, we arbitrarily send 10000 bytes
 
-if test_support.is_jython:
-    SELECT_TIMEOUT = 0
-else:
-    # zero select timeout fails these tests on cpython (on windows 2003 anyway)
-    SELECT_TIMEOUT = 0.001
-
+# zero select timeout fails these tests on cpython (on windows 2003 anyway);
+# on Jython with Netty it will result in flaky test runs
+SELECT_TIMEOUT = 0.001
 READ_TIMEOUT = 5
 
 class AsynchronousServer:
@@ -86,6 +83,9 @@ class AsynchronousHandler:
                 if self.select_writable():
                     bytes_sent = self.socket.send(DATA_CHUNK)
                     total_bytes += bytes_sent
+                    if test_support.is_jython and total_bytes > 10000:
+                        # Netty will buffer indefinitely, so just pick an arbitrary cutoff
+                        return total_bytes
                 else:
                     return total_bytes
             except socket.error, se:
@@ -149,7 +149,7 @@ class AsynchronousClient(AsynchronousHandler):
     def start_connect(self):
         result = self.socket.connect_ex(SERVER_ADDRESS)
         if result == errno.EISCONN:
-            self.connected = 1
+            self.connected = True
         else:
             assert result == errno.EINPROGRESS
 

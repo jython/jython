@@ -113,61 +113,63 @@ public class PySlice extends PyObject {
      * @return an array with the start at index 0, stop at index 1, step at index 2 and
      *         slicelength at index 3
      */
-    public int[] indicesEx(int len) {
-        int start;
-        int stop;
-        int step;
-        int slicelength;
+    public int[] indicesEx(int length) {
+        /* The corresponding C code (PySlice_GetIndicesEx) states:
+        *  "this is harder to get right than you might think"
+        *  As a consequence, I have chosen to copy the code and translate to Java.
+        *  Note *rstart, etc., become result_start - the usual changes we need
+        *  when going from pointers to corresponding Java.
+        */
 
-        if (getStep() == Py.None) {
-            step = 1;
+        int defstart, defstop;
+        int result_start, result_stop, result_step, result_slicelength;
+
+        if (step == Py.None) {
+            result_step = 1;
         } else {
-            step = calculateSliceIndex(getStep());
-            if (step == 0) {
+            result_step = calculateSliceIndex(step);
+            if (result_step == 0) {
                 throw Py.ValueError("slice step cannot be zero");
             }
         }
 
-        if (getStart() == Py.None) {
-            start = step < 0 ? len - 1 : 0;
+        defstart = result_step < 0 ? length - 1 : 0;
+        defstop = result_step < 0 ? -1 : length;
+
+        if (start == Py.None) {
+            result_start = defstart;
         } else {
-            start = calculateSliceIndex(getStart());
-            if (start < 0) {
-                start += len;
-            }
-            if (start < 0) {
-                start = step < 0 ? -1 : 0;
-            }
-            if (start >= len) {
-                start = step < 0 ? len - 1 : len;
+            result_start = calculateSliceIndex(start);
+            if (result_start < 0) result_start += length;
+            if (result_start < 0) result_start = (result_step < 0) ? -1 : 0;
+            if (result_start >= length) {
+                result_start = (result_step < 0) ? length - 1 : length;
             }
         }
 
-        if (getStop() == Py.None) {
-            stop = step < 0 ? -1 : len;
+        if (stop == Py.None) {
+            result_stop = defstop;
         } else {
-            stop = calculateSliceIndex(getStop());
-            if (stop < 0) {
-                stop += len;
-            }
-            if (stop < 0) {
-                stop = -1;
-            }
-            if (stop > len) {
-                stop = len;
+            result_stop = calculateSliceIndex(stop);
+            if (result_stop < 0) result_stop += length;
+            if (result_stop < 0) result_stop = (result_step < 0) ? -1 : 0;
+            if (result_stop >= length) {
+                result_stop = (result_step < 0) ? length - 1 : length;
             }
         }
 
-        if ((step < 0 && stop >= start) || (step > 0 && start >= stop)) {
-            slicelength = 0;
-        } else if (step < 0) {
-            slicelength = (stop - start + 1) / (step) + 1;
+        if ((result_step < 0 && result_stop >= result_start)
+                || (result_step > 0 && result_start >= result_stop)) {
+            result_slicelength = 0;
+        } else if (result_step < 0) {
+            result_slicelength = (result_stop - result_start + 1) / (result_step) + 1;
         } else {
-            slicelength = (stop - start - 1) / (step) + 1;
+            result_slicelength = (result_stop - result_start - 1) / (result_step) + 1;
         }
 
-        return new int[] {start, stop, step, slicelength};
+        return new int[]{result_start, result_stop, result_step, result_slicelength};
     }
+
 
     /**
      * Calculate indices for the deprecated __get/set/delslice__ methods.
@@ -229,5 +231,15 @@ public class PySlice extends PyObject {
 
     public final PyObject getStep() {
         return step;
+    }
+
+    @ExposedMethod
+    final PyObject slice___reduce__() {
+        return new PyTuple(getType(), new PyTuple(start, stop, step));
+    }
+
+    @ExposedMethod(defaults = "Py.None")
+    final PyObject slice___reduce_ex__(PyObject protocol) {
+        return new PyTuple(getType(), new PyTuple(start, stop, step));
     }
 }

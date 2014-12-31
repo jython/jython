@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.python.compiler.Module;
@@ -26,30 +27,47 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 34;
+    private static final int APIVersion = 35;
 
     public static final int NO_MTIME = -1;
 
-    // This should change to 0 for Python 2.7 and 3.0 see PEP 328
+    // This should change to Python 3.x; note that 2.7 allows relative
+    // imports unless `from __future__ import absolute_import`
     public static final int DEFAULT_LEVEL = -1;
+
+    public static class CodeData {
+        private final byte[] bytes;
+        private final long mtime;
+        private final String filename;
+
+        public CodeData(byte[] bytes, long mtime, String filename) {
+            this.bytes = bytes;
+            this.mtime = mtime;
+            this.filename = filename;
+        }
+
+        public byte[] getBytes() {
+            return bytes;
+        }
+
+        public long getMTime() {
+            return mtime;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+    }
+
+    public static enum CodeImport {
+        source, compiled_only;
+    }
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
     private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
 
-    /** Synchronizes import operations */
-    public static final ReentrantLock importLock = new ReentrantLock();
-
-    private static Object syspathJavaLoaderLock = new Object();
-
-    private static ClassLoader syspathJavaLoader = null;
-
     public static ClassLoader getSyspathJavaLoader() {
-        synchronized (syspathJavaLoaderLock) {
-            if (syspathJavaLoader == null) {
-        		syspathJavaLoader = new SyspathJavaLoader(getParentClassLoader());
-	        }            	
-        }
-        return syspathJavaLoader;
+        return Py.getSystemState().getSyspathJavaLoader();
     }
     
     /**
@@ -127,6 +145,10 @@ public class imp {
             return module;
         }
         module = new PyModule(name, null);
+        PyModule __builtin__ = (PyModule)modules.__finditem__("__builtin__");
+        PyObject __dict__ = module.__getattr__("__dict__");
+        __dict__.__setitem__("__builtins__", __builtin__.__getattr__("__dict__"));
+        __dict__.__setitem__("__package__", Py.None);
         modules.__setitem__(name, module);
         return module;
     }
@@ -180,9 +202,14 @@ public class imp {
 
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
                                       String sourceName, String compiledName, long mtime) {
-        byte[] data = null;
+        return createFromPyClass(name, fp, testing, sourceName, compiledName, mtime, CodeImport.source);
+    }
+
+    static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
+                                      String sourceName, String compiledName, long mtime, CodeImport source) {
+        CodeData data = null;
         try {
-            data = readCode(name, fp, testing, mtime);
+            data = readCodeData(name, fp, testing, mtime);
         } catch (IOException ioe) {
             if (!testing) {
                 throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
@@ -194,7 +221,8 @@ public class imp {
         }
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data, sourceName);
+            code = BytecodeLoader.makeCode(name + "$py", data.getBytes(),
+                    source == CodeImport.compiled_only ? data.getFilename() : sourceName);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -205,7 +233,6 @@ public class imp {
 
         Py.writeComment(IMPORT_LOG, String.format("import %s # precompiled from %s", name,
                                                   compiledName));
-
         return createFromCode(name, code, compiledName);
     }
 
@@ -214,6 +241,14 @@ public class imp {
     }
 
     public static byte[] readCode(String name, InputStream fp, boolean testing, long mtime) throws IOException {
+        return readCodeData(name, fp, testing, mtime).getBytes();
+    }
+
+    public static CodeData readCodeData(String name, InputStream fp, boolean testing) throws IOException {
+        return readCodeData(name, fp, testing, NO_MTIME);
+    }
+
+    public static CodeData readCodeData(String name, InputStream fp, boolean testing, long mtime) throws IOException {
         byte[] data = readBytes(fp);
         int api;
         AnnotationReader ar = new AnnotationReader(data);
@@ -232,7 +267,7 @@ public class imp {
                 return null;
             }
         }
-        return data;
+        return new CodeData(data, mtime, ar.getFilename());
     }
 
     public static byte[] compileSource(String name, File file) {
@@ -369,7 +404,7 @@ public class imp {
      * running c. Sets __file__ on the module to be moduleLocation unless
      * moduleLocation is null. If c comes from a local .py file or compiled
      * $py.class class moduleLocation should be the result of running new
-     * File(moduleLocation).getAbsoultePath(). If c comes from a remote file or
+     * File(moduleLocation).getAbsolutePath(). If c comes from a remote file or
      * is a jar moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
@@ -388,14 +423,18 @@ public class imp {
             Py.writeDebug(IMPORT_LOG, String.format("Warning: %s __file__ is unknown", name));
         }
 
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
         try {
             PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
             code.call(Py.getThreadState(), f);
+            return module;
         } catch (RuntimeException t) {
             removeModule(name);
             throw t;
+        } finally {
+            importLock.unlock();
         }
-        return module;
     }
 
     static PyObject createFromClass(String name, Class<?> c) {
@@ -517,7 +556,13 @@ public class imp {
 
     static PyObject loadFromLoader(PyObject importer, String name) {
         PyObject load_module = importer.__getattr__("load_module");
-        return load_module.__call__(new PyObject[] { new PyString(name) });
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return load_module.__call__(new PyObject[]{new PyString(name)});
+        } finally {
+            importLock.unlock();
+        }
     }
 
     public static PyObject loadFromCompiled(String name, InputStream stream, String sourceName,
@@ -544,8 +589,15 @@ public class imp {
 
         boolean pkg = false;
         try {
-            pkg = dir.isDirectory() && caseok(dir, name)
-                    && (sourceFile.isFile() || compiledFile.isFile());
+            if (dir.isDirectory()) {
+                if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
+                    pkg = true;
+                } else {
+                    Py.warning(Py.ImportWarning, String.format(
+                            "Not importing directory '%s': missing __init__.py",
+                            dirName));
+                }
+            }
         } catch (SecurityException e) {
             // ok
         }
@@ -571,8 +623,9 @@ public class imp {
                     Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
                     if (classTime >= pyTime) {
-                        PyObject ret = createFromPyClass(modName, makeStream(compiledFile), true,
-                                                         displaySourceName, displayCompiledName, pyTime);
+                        PyObject ret = createFromPyClass(
+                                modName, makeStream(compiledFile), true,
+                                displaySourceName, displayCompiledName, pyTime);
                         if (ret != null) {
                             return ret;
                         }
@@ -587,8 +640,9 @@ public class imp {
             // If no source, try loading precompiled
             Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
             if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-                return createFromPyClass(modName, makeStream(compiledFile), true, displaySourceName,
-                                         displayCompiledName);
+                return createFromPyClass(
+                        modName, makeStream(compiledFile), true, displaySourceName,
+                        displayCompiledName, NO_MTIME, CodeImport.compiled_only);
             }
         } catch (SecurityException e) {
             // ok
@@ -630,7 +684,13 @@ public class imp {
      * @return the loaded module
      */
     public static PyObject load(String name) {
-        return import_first(name, new StringBuilder());
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return import_first(name, new StringBuilder());
+        } finally {
+            importLock.unlock();
+        }
     }
 
 	/**
@@ -659,7 +719,9 @@ public class imp {
 	 */
     private static String get_parent(PyObject dict, int level) {
         String modname;
-        if (dict == null || level == 0) {
+        int orig_level = level;
+
+        if ((dict == null && level == -1) || level == 0) {
         	// try an absolute import
             return null;
         }
@@ -709,6 +771,21 @@ public class imp {
             }
             modname = modname.substring(0, dot);
         }
+
+        if (Py.getSystemState().modules.__finditem__(modname) == null) {
+            if (orig_level < 1) {
+                if (modname.length() > 0) {
+                    Py.warning(Py.RuntimeWarning,
+                            String.format(
+                                    "Parent module '%.200s' not found " +
+                                    "while handling absolute import", modname));
+                }
+            } else {
+                throw Py.SystemError(String.format(
+                        "Parent module '%.200s' not loaded, " +
+                        "cannot perform relative import", modname));
+            }
+        }
         return modname.intern();
     }
 
@@ -734,7 +811,7 @@ public class imp {
             return ret;
         }
         if (mod == null) {
-            ret = find_module(fullName.intern(), name, null);
+            ret = find_module(fullName, name, null);
         } else {
             ret = mod.impAttr(name.intern());
         }
@@ -863,7 +940,11 @@ public class imp {
             }
             parentNameBuffer = new StringBuilder("");
             // could throw ImportError
-            topMod = import_first(firstName, parentNameBuffer, name, fromlist);
+            if (level > 0) {
+                topMod = import_first(pkgName + "." + firstName, parentNameBuffer, name, fromlist);
+            } else {
+                topMod = import_first(firstName, parentNameBuffer, name, fromlist);
+            }
         }
         PyObject mod = topMod;
         if (dot != -1) {
@@ -927,7 +1008,13 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
-        return import_module_level(name, top, null, null, DEFAULT_LEVEL);
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return import_module_level(name, top, null, null, DEFAULT_LEVEL);
+        } finally {
+            importLock.unlock();
+        }
     }
 
     /**
@@ -941,6 +1028,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
             return import_module_level(name, top, modDict, fromlist, level);
@@ -955,7 +1043,7 @@ public class imp {
      */
     @Deprecated
     public static PyObject importOne(String mod, PyFrame frame) {
-    	return importOne(mod, frame, imp.DEFAULT_LEVEL);
+	return importOne(mod, frame, imp.DEFAULT_LEVEL);
     }
     /**
      * Called from jython generated code when a statement like "import spam" is
@@ -1130,15 +1218,34 @@ public class imp {
     }
 
     static PyObject reload(PyModule m) {
+        PySystemState sys = Py.getSystemState();
+        PyObject modules = sys.modules;
+        Map<String, PyModule> modules_reloading = sys.modules_reloading;
+        ReentrantLock importLock = Py.getSystemState().getImportLock();
+        importLock.lock();
+        try {
+            return _reload(m, modules, modules_reloading);
+        } finally {
+            modules_reloading.clear();
+            importLock.unlock();
+        }
+    }
+
+    private static PyObject _reload(PyModule m, PyObject modules, Map<String, PyModule> modules_reloading) {
         String name = m.__getattr__("__name__").toString().intern();
-
-        PyObject modules = Py.getSystemState().modules;
         PyModule nm = (PyModule) modules.__finditem__(name);
-
         if (nm == null || !nm.__getattr__("__name__").toString().equals(name)) {
             throw Py.ImportError("reload(): module " + name
                     + " not in sys.modules");
         }
+        PyModule existing_module = modules_reloading.get(name);
+        if (existing_module != null) {
+        // Due to a recursive reload, this module is already being reloaded.
+            return existing_module;
+        }
+        // Since we are already in a re-entrant lock,
+        // this test & set is guaranteed to be atomic
+        modules_reloading.put(name, nm);
 
         PyList path = Py.getSystemState().path;
         String modName = name;
@@ -1153,10 +1260,17 @@ public class imp {
             name = name.substring(dot + 1, name.length()).intern();
         }
 
-        nm.__setattr__("__name__", new PyString(modName));
-        PyObject ret = find_module(name, modName, path);
-        modules.__setitem__(modName, ret);
-        return ret;
+        nm.__setattr__("__name__", new PyString(modName)); // FIXME necessary?!
+        try {
+            PyObject ret = find_module(name, modName, path);
+            modules.__setitem__(modName, ret);
+            return ret;
+        } catch (RuntimeException t) {
+            // Need to restore module, due to the semantics of addModule, which removed it
+            // Fortunately we are in a module import lock
+            modules.__setitem__(modName, nm);
+            throw t;
+        }
     }
 
     public static int getAPIVersion() {

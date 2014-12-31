@@ -24,9 +24,11 @@ public class AnnotationReader extends ClassVisitor {
 
     private boolean nextVisitIsVersion = false;
     private boolean nextVisitIsMTime = false;
+    private boolean nextVisitIsFilename = false;
 
     private int version = -1;
     private long mtime = -1;
+    private String filename = null;
 
     /**
      * Reads the classfile bytecode in data and to extract the version.
@@ -50,6 +52,7 @@ public class AnnotationReader extends ClassVisitor {
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
         nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
+        nextVisitIsFilename = desc.equals("Lorg/python/compiler/Filename;");
         return new AnnotationVisitor(Opcodes.ASM4) {
 
         	public void visit(String name, Object value) {
@@ -58,8 +61,11 @@ public class AnnotationReader extends ClassVisitor {
         			nextVisitIsVersion = false;
         		} else if (nextVisitIsMTime) {
         			mtime = (Long)value;
-        			nextVisitIsVersion = false;
-        		}
+        			nextVisitIsMTime = false;
+        		} else if (nextVisitIsFilename) {
+                    filename = (String)value;
+                    nextVisitIsFilename = false;
+                }
         	}
 		};
     }
@@ -70,5 +76,9 @@ public class AnnotationReader extends ClassVisitor {
 
     public long getMTime() {
         return mtime;
+    }
+
+    public String getFilename() {
+        return filename;
     }
 }
