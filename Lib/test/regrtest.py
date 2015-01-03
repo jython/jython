@@ -1314,6 +1314,9 @@ _failures = {
         test_peepholer
         test_pyclbr
         test_pyexpat
+        test_select
+        test_select_new
+        test_socket
         test_stringprep
         test_threadsignals
         test_transformer

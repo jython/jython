@@ -1,19 +1,12 @@
 package org.python.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,11 +32,13 @@ public class Generic {
     public static <T> List<T> list() {
         return new ArrayList<T>();
     }
+
     /**
      * Makes a List with its generic type inferred from whatever it's being assigned to filled with
      * the items in <code>contents</code>.
      */
-    public static <T, U extends T> List<T> list(U...contents) {
+    @SafeVarargs
+    public static <T, U extends T> List<T> list(U... contents) {
         List<T> l = new ArrayList<T>(contents.length);
         for (T t : contents) {
             l.add(t);
@@ -78,7 +73,8 @@ public class Generic {
      * Makes a Set using the generic type inferred from whatever this is being assigned to filled
      * with the items in <code>contents</code>.
      */
-    public static <T, U extends T> Set<T> set(U...contents) {
+    @SafeVarargs
+    public static <T, U extends T> Set<T> set(U... contents) {
         Set<T> s = new HashSet<T>(contents.length);
         for (U u : contents) {
             s.add(u);
