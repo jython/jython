@@ -69,7 +69,6 @@ public class PyJavaType extends PyType {
             java.util.concurrent.TimeUnit.class);
 
 
-
     /**
      * Other Java classes this type has MRO conflicts with. This doesn't matter for Java method
      * resolution, but if Python methods are added to the type, the added methods can't overlap with
@@ -233,7 +232,7 @@ public class PyJavaType extends PyType {
             underlying_class = forClass;
             computeLinearMro(baseClass);
         } else {
-                needsInners.add(this);
+            needsInners.add(this);
             javaProxy = forClass;
             objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
             // Wrapped Java types fill in their mro first using all of their interfaces then their
@@ -547,6 +546,7 @@ public class PyJavaType extends PyType {
                 }
             }
         }
+
         if (ClassDictInit.class.isAssignableFrom(forClass) && forClass != ClassDictInit.class) {
             try {
                 Method m = forClass.getMethod("classDictInit", PyObject.class);
@@ -560,6 +560,7 @@ public class PyJavaType extends PyType {
                 throw Py.JavaError(exc);
             }
         }
+
         if (baseClass != Object.class) {
             hasGet = getDescrMethod(forClass, "__get__", OO) != null
                     || getDescrMethod(forClass, "_doget", PyObject.class) != null
@@ -569,8 +570,8 @@ public class PyJavaType extends PyType {
             hasDelete = getDescrMethod(forClass, "__delete__", PyObject.class) != null
                     || getDescrMethod(forClass, "_dodel", PyObject.class) != null;
         }
-        if (forClass == Object.class) {
 
+        if (forClass == Object.class) {
             addMethod(new PyBuiltinMethodNarrow("__copy__") {
                 @Override
                 public PyObject __call__() {
@@ -578,7 +579,6 @@ public class PyJavaType extends PyType {
                             + "Consider monkeypatching __copy__ for " + self.getType().fastGetName());
                 }
             });
-
             addMethod(new PyBuiltinMethodNarrow("__deepcopy__") {
                 @Override
                 public PyObject __call__(PyObject memo) {
@@ -586,7 +586,6 @@ public class PyJavaType extends PyType {
                             + "Consider monkeypatching __deepcopy__ for " + self.getType().fastGetName());
                 }
             });
-
             addMethod(new PyBuiltinMethodNarrow("__eq__", 1) {
                 @Override
                 public PyObject __call__(PyObject o) {
@@ -627,6 +626,7 @@ public class PyJavaType extends PyType {
                 }
             });
         }
+
         if(forClass == Comparable.class) {
             addMethod(new ComparableMethod("__lt__", 1) {
                 @Override
@@ -654,11 +654,8 @@ public class PyJavaType extends PyType {
             });
         }
 
-
         if (immutableClasses.contains(forClass)) {
-
             // __deepcopy__ just works for these objects since it uses serialization instead
-
             addMethod(new PyBuiltinMethodNarrow("__copy__") {
                 @Override
                 public PyObject __call__() {
@@ -673,8 +670,9 @@ public class PyJavaType extends PyType {
                 public PyObject __call__() {
                     Object obj = self.getJavaProxy();
                     Method clone;
-                    // TODO we could specialize so that for well known objects like collections. This would avoid needing to use reflection
-                    // in the general case, because Object#clone is protected (but most subclasses are not).
+                    // TODO we could specialize so that for well known objects like collections.
+                    // This would avoid needing to use reflection in the general case,
+                    // because Object#clone is protected (but most subclasses are not).
                     //
                     // Lastly we can potentially cache the method handle in the proxy instead of looking it up each time
                     try {
@@ -687,7 +685,7 @@ public class PyJavaType extends PyType {
                 }
             });
         }
-            
+
         if(forClass == Serializable.class) {
             addMethod(new PyBuiltinMethodNarrow("__deepcopy__") {
                 @Override
@@ -701,7 +699,6 @@ public class PyJavaType extends PyType {
                     }
                 }
             });
-            
         }
     }
 
@@ -709,67 +706,66 @@ public class PyJavaType extends PyType {
     // http://weblogs.java.net/blog/emcmanus/archive/2007/04/cloning_java_ob.html
     // blog post on deep cloning through serialization -
     // just what we need for __deepcopy__ support of Java objects
-
     private static <T> T cloneX(T x) throws IOException, ClassNotFoundException {
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	CloneOutput cout = new CloneOutput(bout);
-	cout.writeObject(x);
-	byte[] bytes = bout.toByteArray();
-	
-	ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
-	CloneInput cin = new CloneInput(bin, cout);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        CloneOutput cout = new CloneOutput(bout);
+        cout.writeObject(x);
+        byte[] bytes = bout.toByteArray();
 
-	@SuppressWarnings("unchecked")  // thanks to Bas de Bakker for the tip!
-	T clone = (T) cin.readObject();
-	return clone;
+        ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+        CloneInput cin = new CloneInput(bin, cout);
+
+        @SuppressWarnings("unchecked")  // thanks to Bas de Bakker for the tip!
+        T clone = (T) cin.readObject();
+        return clone;
     }
 
     private static class CloneOutput extends ObjectOutputStream {
-	Queue<Class<?>> classQueue = new LinkedList<Class<?>>();
+        Queue<Class<?>> classQueue = new LinkedList<Class<?>>();
 
-	CloneOutput(OutputStream out) throws IOException {
-	    super(out);
-	}
+        CloneOutput(OutputStream out) throws IOException {
+            super(out);
+        }
 
-	@Override
-	protected void annotateClass(Class<?> c) {
-	    classQueue.add(c);
-	}
+        @Override
+        protected void annotateClass(Class<?> c) {
+            classQueue.add(c);
+        }
 
-	@Override
-	protected void annotateProxyClass(Class<?> c) {
-	    classQueue.add(c);
-	}
+        @Override
+        protected void annotateProxyClass(Class<?> c) {
+            classQueue.add(c);
+        }
     }
 
     private static class CloneInput extends ObjectInputStream {
-	private final CloneOutput output;
+        private final CloneOutput output;
 
-	CloneInput(InputStream in, CloneOutput output) throws IOException {
-	    super(in);
-	    this.output = output;
-	}
+        CloneInput(InputStream in, CloneOutput output) throws IOException {
+            super(in);
+            this.output = output;
+        }
 
-    	@Override
-	protected Class<?> resolveClass(ObjectStreamClass osc)
-	throws IOException, ClassNotFoundException {
-	    Class<?> c = output.classQueue.poll();
-	    String expected = osc.getName();
-	    String found = (c == null) ? null : c.getName();
-	    if (!expected.equals(found)) {
-		throw new InvalidClassException("Classes desynchronized: " +
-			"found " + found + " when expecting " + expected);
-	    }
-	    return c;
-	}
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass osc)
+                throws IOException, ClassNotFoundException {
+            Class<?> c = output.classQueue.poll();
+            String expected = osc.getName();
+            String found = (c == null) ? null : c.getName();
+            if (!expected.equals(found)) {
+                throw new InvalidClassException("Classes desynchronized: " +
+                        "found " + found + " when expecting " + expected);
+            }
+            return c;
+        }
 
-    	@Override
-    	protected Class<?> resolveProxyClass(String[] interfaceNames)
-	throws IOException, ClassNotFoundException {
-    	    return output.classQueue.poll();
-    	}
+        @Override
+        protected Class<?> resolveProxyClass(String[] interfaceNames)
+                throws IOException, ClassNotFoundException {
+            return output.classQueue.poll();
+        }
     }
-    
+
     /**
      * Private, protected or package protected classes that implement public interfaces or extend
      * public classes can't have their implementations of the methods of their supertypes called
@@ -865,7 +861,6 @@ public class PyJavaType extends PyType {
     }
 
     private static class EnumerationIter extends PyIterator {
-
         private Enumeration<Object> proxy;
 
         public EnumerationIter(Enumeration<Object> proxy) {
@@ -878,9 +873,11 @@ public class PyJavaType extends PyType {
     }
 
     private static abstract class ComparableMethod extends PyBuiltinMethodNarrow {
+
         protected ComparableMethod(String name, int numArgs) {
             super(name, numArgs);
         }
+
         @Override
         public PyObject __call__(PyObject arg) {
             Object asjava = arg.__tojava__(Object.class);
@@ -942,7 +939,6 @@ public class PyJavaType extends PyType {
                 return Py.newInteger(((Collection<?>) self.getJavaProxy()).size());
             }
         };
-
         PyBuiltinMethodNarrow containsProxy = new PyBuiltinMethodNarrow("__contains__", 1) {
             @Override
             public PyObject __call__(PyObject obj) {
@@ -963,8 +959,7 @@ public class PyJavaType extends PyType {
                 return contained ? Py.True : Py.False;
             }
         };
-        proxies.put(Collection.class, new PyBuiltinMethod[]{lenProxy,
-                containsProxy});
+        proxies.put(Collection.class, new PyBuiltinMethod[]{lenProxy, containsProxy});
 
         PyBuiltinMethodNarrow iteratorProxy = new PyBuiltinMethodNarrow("__iter__") {
             @Override
