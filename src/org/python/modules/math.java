@@ -197,13 +197,7 @@ public class math implements ClassDictInit {
     }
 
     public static double cosh(double v) {
-        if (isinf(v)) {
-            return INF;
-        }
-        if (isnan(v)) {
-            return v;
-        }
-        return HALF * (Math.exp(v) + Math.exp(-v));
+        return Math.cosh(v);
     }
 
     public static double exp(double v) {
@@ -366,29 +360,11 @@ public class math implements ClassDictInit {
     }
 
     public static double sinh(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        if (isinf(v)) {
-            return v;
-        }
-        return HALF * (Math.exp(v) - Math.exp(-v));
+        return Math.sinh(v);
     }
 
     public static double tanh(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        if (isinf(v)) {
-            if (isninf(v)) {
-                return MINUS_ONE;
-            }
-            return ONE;
-        }
-        if (v == MINUS_ZERO) {
-            return v;
-        }
-        return sinh(v) / cosh(v);
+        return Math.tanh(v);
     }
 
     public static double fabs(double v) {

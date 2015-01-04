@@ -1,5 +1,5 @@
 # This work is based on test_math.py in the Python test set.
-# It a provides a tool to generate additional
+# It a provides a tool to generate additional real test cases.
 
 import math
 import mpmath
@@ -116,7 +116,7 @@ def generate_cases() :
 def test_main():
     with mpmath.workprec(100):
         generate_cases()
-    
+
 if __name__ == '__main__':
     test_main()
 
