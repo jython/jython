@@ -316,7 +316,7 @@ public class PosixModule implements ClassDictInit {
         "getcwd() -> path\n\n" +
         "Return a string representing the current working directory.");
     public static PyObject getcwd() {
-        return Py.newString(Py.getSystemState().getCurrentWorkingDir());
+        return Py.newStringOrUnicode(Py.getSystemState().getCurrentWorkingDir());
     }
 
     public static PyString __doc__getcwdu = new PyString(
@@ -494,9 +494,8 @@ public class PosixModule implements ClassDictInit {
         }
 
         PyList list = new PyList();
-        PyString string = (PyString) path;
         for (String name : names) {
-            list.append(string.createInstance(name));
+            list.append(Py.newStringOrUnicode(path, name));
         }
         return list;
     }
@@ -893,7 +892,9 @@ public class PosixModule implements ClassDictInit {
             return environ;
         }
         for (Map.Entry<String, String> entry : env.entrySet()) {
-            environ.__setitem__(Py.newString(entry.getKey()), Py.newString(entry.getValue()));
+            environ.__setitem__(
+                    Py.newStringOrUnicode(entry.getKey()),
+                    Py.newStringOrUnicode(entry.getValue()));
         }
         return environ;
     }

@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import jnr.constants.platform.Errno;
-import jnr.posix.POSIX;
 import jnr.posix.POSIXHandler;
 
 import org.python.core.imp;
@@ -21,15 +20,11 @@ import org.python.core.PyObject;
 public class PythonPOSIXHandler implements POSIXHandler {
 
     public void error(Errno error, String extraData) {
-        // XXX: extraData (filename) could have been unicode!
-        // http://bugs.jython.org/issue1825
-        throw Py.OSError(error, Py.newString(extraData));
+        throw Py.OSError(error, Py.newStringOrUnicode(extraData));
     }
 
     public void error(Errno error, String methodName, String extraData) {
-        // XXX: extraData (filename) could have been unicode!
-        // http://bugs.jython.org/issue1825
-        throw Py.OSError(error, Py.newString(extraData));
+        throw Py.OSError(error, Py.newStringOrUnicode(extraData));
     }
 
     public void unimplementedError(String methodName) {

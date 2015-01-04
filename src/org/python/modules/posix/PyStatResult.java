@@ -8,6 +8,7 @@ import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 
@@ -75,12 +76,17 @@ public class PyStatResult extends PyTuple {
 
     /**
      * Return a Python stat result from a posix layer FileStat object.
+     *
+     * Ideally times would be returned as floats, like CPython, however, the underlying FileStat
+     * object from JNR Posix only has integer resolution.
+     *
+     * We should be able to resolve by using java.nio.file.attribute.PosixFileAttributeView
      */
     public static PyStatResult fromFileStat(FileStat stat) {
-        return new PyStatResult(Py.newInteger(stat.mode()), Py.newLong(stat.ino()),
+        return new PyStatResult(Py.newInteger(stat.mode()), Py.newInteger(stat.ino()),
                                 Py.newLong(stat.dev()), Py.newInteger(stat.nlink()),
                                 Py.newInteger(stat.uid()), Py.newInteger(stat.gid()),
-                                Py.newLong(stat.st_size()), Py.newInteger(stat.atime()),
+                                Py.newInteger(stat.st_size()), Py.newInteger(stat.atime()),
                                 Py.newInteger(stat.mtime()), Py.newInteger(stat.ctime()));
     }
 
@@ -136,5 +142,13 @@ public class PyStatResult extends PyTuple {
     @Override
     public PyTuple __getnewargs__() {
         return new PyTuple(new PyList(getArray()));
+    }
+
+    @Override
+    public PyString __repr__() {
+        return (PyString) Py.newString(
+                "posix.stat_result(" +
+                "st_mode=%r, st_ino=%r, st_dev=%r, st_nlink=%r, st_uid=%r, "+
+                "st_gid=%r, st_size=%r, st_atime=%r, st_mtime=%r, st_ctime=%r)").__mod__(this);
     }
 }

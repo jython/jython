@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
+
 """Misc os module tests
 
 Made for Jython.
 """
-import os
 import array
+import glob
+import os
+import subprocess
+import sys
 import unittest
 from test import test_support
+from java.io import File
+
 
 class OSFileTestCase(unittest.TestCase):
 
@@ -121,6 +128,70 @@ class OSWriteTestCase(unittest.TestCase):
         # lacks buffer api:
         self.assertRaises(TypeError, self.do_write, 1.5, 4)
 
+class OSUnicodeTestCase(unittest.TestCase):
+
+    def test_env(self):
+        with test_support.temp_cwd(name=u"tempcwd-中文"):
+            newenv = os.environ.copy()
+            newenv["TEST_HOME"] = u"首页"
+            p = subprocess.Popen([sys.executable, "-c",
+                                  'import sys,os;' \
+                                  'sys.stdout.write(os.getenv("TEST_HOME").encode("utf-8"))'],
+                                 stdout=subprocess.PIPE,
+                                 env=newenv)
+            self.assertEqual(p.stdout.read().decode("utf-8"), u"首页")
+    
+    def test_getcwd(self):
+        with test_support.temp_cwd(name=u"tempcwd-中文") as temp_cwd:
+            p = subprocess.Popen([sys.executable, "-c",
+                                  'import sys,os;' \
+                                  'sys.stdout.write(os.getcwd().encode("utf-8"))'],
+                                 stdout=subprocess.PIPE)
+            self.assertEqual(p.stdout.read().decode("utf-8"), temp_cwd)
+
+    def test_listdir(self):
+        # It is hard to avoid Unicode paths on systems like OS X. Use
+        # relative paths from a temp CWD to work around this
+        with test_support.temp_cwd() as new_cwd:
+            unicode_path = os.path.join(".", "unicode")
+            self.assertIs(type(unicode_path), str)
+            chinese_path = os.path.join(unicode_path, u"中文")
+            self.assertIs(type(chinese_path), unicode)
+            home_path = os.path.join(chinese_path, u"首页")
+            os.makedirs(home_path)
+            
+            with open(os.path.join(home_path, "test.txt"), "w") as test_file:
+                test_file.write("42\n")
+
+            # Verify works with str paths, returning Unicode as necessary
+            entries = os.listdir(unicode_path)
+            self.assertIn(u"中文", entries)
+
+            # Verify works with Unicode paths
+            entries = os.listdir(chinese_path)
+            self.assertIn(u"首页", entries)
+           
+            # glob.glob builds on os.listdir; note that we don't use
+            # Unicode paths in the arg to glob
+            self.assertEqual(glob.glob("unicode/*"), [u"unicode/中文"])
+            self.assertEqual(glob.glob("unicode/*/*"), [u"unicode/中文/首页"])
+            self.assertEqual(glob.glob("unicode/*/*/*"), [u"unicode/中文/首页/test.txt"])
+
+            # Now use a Unicode path as well as the glob arg
+            self.assertEqual(glob.glob(u"unicode/*"), [u"unicode/中文"])
+            self.assertEqual(glob.glob(u"unicode/*/*"), [u"unicode/中文/首页"])
+            self.assertEqual(glob.glob(u"unicode/*/*/*"), [u"unicode/中文/首页/test.txt"])
+ 
+            # Verify Java integration. But we will need to construct
+            # an absolute path since chdir doesn't work with Java
+            # (except for subprocesses, like below in test_env)
+            for entry in entries:
+                entry_path = os.path.join(new_cwd, chinese_path, entry)
+                f = File(entry_path)
+                self.assertTrue(f.exists(), "File %r (%r) should be testable for existence" % (
+                    f, entry_path))
+
+
 
 def test_main():
     test_support.run_unittest(
@@ -128,6 +199,7 @@ def test_main():
         OSDirTestCase,
         OSStatTestCase,
         OSWriteTestCase,
+        OSUnicodeTestCase
     )
 
 if __name__ == '__main__':

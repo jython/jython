@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.CharMatcher;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
 import jnr.posix.POSIX;
@@ -624,6 +625,25 @@ public final class Py {
 
     public static PyString newString(String s) {
         return new PyString(s);
+    }
+
+    // Use if s may contain Unicode characters,
+    // but we prefer to return a PyString
+    public static PyString newStringOrUnicode(String s) {
+        return newStringOrUnicode(Py.EmptyString, s);
+    }
+
+    // Use when returning a PyString or PyUnicode is based on what "kind" is,
+    // but always fallback to PyUnicode if s contains Unicode characters.
+    public static PyString newStringOrUnicode(PyObject kind, String s) {
+        if (kind instanceof PyUnicode) {
+            return Py.newUnicode(s);
+        }
+        if (CharMatcher.ASCII.matchesAllOf(s)) {
+            return Py.newString(s);
+        } else {
+            return Py.newUnicode(s);
+        }
     }
 
     public static PyStringMap newStringMap() {
