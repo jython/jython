@@ -20,7 +20,6 @@ public class math implements ClassDictInit {
 
     private static final double ZERO = 0.0;
     private static final double MINUS_ZERO = -0.0;
-    private static final double HALF = 0.5;
     private static final double ONE = 1.0;
     private static final double MINUS_ONE = -1.0;
     private static final double TWO = 2.0;
@@ -347,25 +346,36 @@ public class math implements ClassDictInit {
     }
 
     public static PyTuple frexp(double x) {
-        int exponent = 0;
+        int exponent;
+        double mantissa;
 
-        if (isnan(x) || isinf(x) || x == ZERO) {
-            exponent = 0;
-        } else {
-            short sign = 1;
+        switch (exponent = Math.getExponent(x)) {
 
-            if (x < ZERO) {
-                x = -x;
-                sign = -1;
-            }
+            default:
+                // x = m * 2**exponent and 1 <=abs(m) <2
+                exponent = exponent + 1;
+                // x = m * 2**exponent and 0.5 <=abs(m) <1
+                mantissa = Math.scalb(x, -exponent);
+                break;
 
-            for (; x < HALF; x *= TWO, exponent--) {}
+            case 1024:  // nan or inf
+                mantissa = x;
+                exponent = 0;
+                break;
 
-            for (; x >= ONE; x *= HALF, exponent++) {}
-
-            x *= sign;
+            case -1023:
+                if (x == 0.) { // , 0.0 or -0.0
+                    mantissa = x;
+                    exponent = 0;
+                } else { // denormalised value
+                    // x = m * 2**exponent but 0 < abs(m) < 1
+                    exponent = Math.getExponent(x * 0x1p52) - 51;
+                    mantissa = Math.scalb(x, -exponent);
+                }
+                break;
         }
-        return new PyTuple(new PyFloat(x), new PyInteger(exponent));
+
+        return new PyTuple(new PyFloat(mantissa), new PyInteger(exponent));
     }
 
     public static PyObject trunc(PyObject number) {
@@ -373,23 +383,13 @@ public class math implements ClassDictInit {
     }
 
     public static double ldexp(double v, PyObject wObj) {
-        if (ZERO == v) {
-            return v; // can be negative zero
-        }
-        if (isinf(v)) {
-            return v;
-        }
-        if (isnan(v)) {
-            return v;
-        }
         long w = getLong(wObj);
-        if (w == Long.MIN_VALUE) {
-            if (v > ZERO) {
-                return ZERO;
-            }
-            return MINUS_ZERO;
+        if (w < Integer.MIN_VALUE) {
+            w = Integer.MIN_VALUE;
+        } else if (w > Integer.MAX_VALUE) {
+            w = Integer.MAX_VALUE;
         }
-        return checkOverflow(v * Math.pow(TWO, w));
+        return exceptInf(Math.scalb(v, (int)w), v);
     }
 
     /**
@@ -433,13 +433,7 @@ public class math implements ClassDictInit {
     }
 
     public static double copysign(double v, double w) {
-        if (isnan(v)) {
-            return NAN;
-        }
-        if (signum(v) == signum(w)) {
-            return v;
-        }
-        return v *= MINUS_ONE;
+        return Math.copySign(v, w);
     }
 
     public static PyLong factorial(double v) {
@@ -517,21 +511,6 @@ public class math implements ClassDictInit {
     }
 
     /**
-     * work around special Math.signum() behaviour for positive and negative zero
-     */
-    private static double signum(double v) {
-        double signum = ONE;
-        if (v == ZERO) {
-            if ('-' == Double.toString(v).charAt(0)) {
-                signum = MINUS_ONE;
-            }
-        } else {
-            signum = Math.signum(v);
-        }
-        return signum;
-    }
-
-    /**
      * Returns a ValueError("math domain error"), ready to throw from the client code.
      *
      * @return ValueError("math domain error")
@@ -547,13 +526,6 @@ public class math implements ClassDictInit {
      */
     private static PyException mathRangeError() {
         return Py.OverflowError("math range error");
-    }
-
-    private static double checkOverflow(double v) {
-        if (isinf(v)) {
-            throw Py.OverflowError("math range error");
-        }
-        return v;
     }
 
     /**
