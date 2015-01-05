@@ -1,7 +1,7 @@
 # Python test set -- math module
 # XXXX Should not do tests around zero only
 
-from test.test_support import run_unittest, verbose
+from test.test_support import run_unittest, verbose, is_jython
 import unittest
 import math
 import os
@@ -933,6 +933,7 @@ class MathTests(unittest.TestCase):
             else:
                 self.fail("sqrt(-1) didn't raise ValueError")
 
+    @unittest.skipIf(is_jython, "superseded in test_math_jy (don't fix me)")
     @requires_IEEE_754
     def test_testfile(self):
         for id, fn, ar, ai, er, ei, flags in parse_testfile(test_file):
