@@ -3,13 +3,18 @@
 
 package org.python.core.packagecache;
 
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
+import org.python.core.util.FileUtil;
 
-import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Abstract package manager.
@@ -164,73 +169,40 @@ public abstract class PackageManager extends Object {
         return p;
     }
 
+
+    private static class AccessVisitor extends ClassVisitor {
+
+        private int class_access;
+
+        public AccessVisitor() throws IOException {
+            super(Opcodes.ASM5);
+        }
+
+        @Override
+        public void visit(int version, int access, String name,
+                          String signature, String superName, String[] interfaces) {
+            class_access = access;
+        }
+
+        public int getClassAccess() {
+            return class_access;
+        }
+    }
+
     /**
      * Check that a given stream is a valid Java .class file. And return its
      * access permissions as an int.
      */
     static protected int checkAccess(java.io.InputStream cstream)
-            throws java.io.IOException {
-        java.io.DataInputStream istream = new java.io.DataInputStream(cstream);
-
+            throws IOException {
         try {
-            int magic = istream.readInt();
-            if (magic != 0xcafebabe) {
-                return -1;
-            }
-        } catch (EOFException eof) {
-            //Empty or 1 byte file.
+            ClassReader reader = new ClassReader(cstream);
+            AccessVisitor visitor = new AccessVisitor();
+            reader.accept(visitor, 0);
+            return visitor.getClassAccess();
+        } catch (RuntimeException e) {
             return -1;
         }
-        //int minor =
-        istream.readShort();
-        //int major =
-        istream.readShort();
-
-        // Check versions???
-        // System.out.println("magic: "+magic+", "+major+", "+minor);
-        int nconstants = istream.readShort();
-        for (int i = 1; i < nconstants; i++) {
-            int cid = istream.readByte();
-            // System.out.println(""+i+" : "+cid);
-            switch (cid) {
-            case 7:
-                istream.skipBytes(2);
-                break;
-            case 9:
-            case 10:
-            case 11:
-                istream.skipBytes(4);
-                break;
-            case 8:
-                istream.skipBytes(2);
-                break;
-            case 3:
-            case 4:
-                istream.skipBytes(4);
-                break;
-            case 5:
-            case 6:
-                istream.skipBytes(8);
-                i++;
-                break;
-            case 12:
-                istream.skipBytes(4);
-                break;
-            case 1:
-                // System.out.println("utf: "+istream.readUTF()+";");
-                int slength = istream.readUnsignedShort();
-                istream.skipBytes(slength);
-                break;
-            default:
-                // System.err.println("unexpected cid: "+cid+", "+i+", "+
-                // nconstants);
-                // for (int j=0; j<10; j++)
-                // System.err.print(", "+istream.readByte());
-                // System.err.println();
-                return -1;
-            }
-        }
-        return istream.readShort();
     }
 
 }

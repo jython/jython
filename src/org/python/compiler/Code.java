@@ -22,7 +22,7 @@ public class Code extends MethodVisitor implements Opcodes {
     //XXX: I'd really like to get sig and access out of here since MethodVistitor
     //     should already have this information.
     public Code(MethodVisitor mv, String sig, int access) {
-        super(ASM4);
+        super(ASM5);
         this.mv = mv;
         this.sig = sig;
         nlocals = -sigSize(sig, false);
@@ -153,8 +153,8 @@ public class Code extends MethodVisitor implements Opcodes {
         mv.visitMaxs(arg0, arg1);
     }
 
-    public void visitMethodInsn(int arg0, String arg1, String arg2, String arg3) {
-        mv.visitMethodInsn(arg0, arg1, arg2, arg3);
+    public void visitMethodInsn(int arg0, String arg1, String arg2, String arg3, boolean itf) {
+        mv.visitMethodInsn(arg0, arg1, arg2, arg3, itf);
     }
 
     public void visitMultiANewArrayInsn(String arg0, int arg1) {
@@ -468,19 +468,23 @@ public class Code extends MethodVisitor implements Opcodes {
     }
 
     public void invokeinterface(String owner, String name, String type) {
-        mv.visitMethodInsn(INVOKEINTERFACE, owner, name, type);
+        mv.visitMethodInsn(INVOKEINTERFACE, owner, name, type, false);
+    }
+
+    public void invokeinterface(String owner, String name, String type, boolean itf) {
+        mv.visitMethodInsn(INVOKEINTERFACE, owner, name, type, itf);
     }
 
     public void invokespecial(String owner, String name, String type) {
-        mv.visitMethodInsn(INVOKESPECIAL, owner, name, type);
+        mv.visitMethodInsn(INVOKESPECIAL, owner, name, type, false);
     }
 
     public void invokestatic(String owner, String name, String type) {
-        mv.visitMethodInsn(INVOKESTATIC, owner, name, type);
+        mv.visitMethodInsn(INVOKESTATIC, owner, name, type, false);
     }
     
     public void invokevirtual(String owner, String name, String type) {
-        mv.visitMethodInsn(INVOKEVIRTUAL, owner, name, type);
+        mv.visitMethodInsn(INVOKEVIRTUAL, owner, name, type, false);
     }
     
     public void ireturn() {

@@ -114,7 +114,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
-            super(Opcodes.ASM4, cv);
+            super(Opcodes.ASM5, cv);
         }
 
         @Override
@@ -194,11 +194,14 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     .replace('.', '/'));
             mv.visitTypeInsn(NEW, typeExposerType.getInternalName());
             mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKESPECIAL, typeExposerType.getInternalName(), "<init>", "()V");
-            mv.visitMethodInsn(INVOKESTATIC,
-                               PYTYPE.getInternalName(),
-                               "addBuilder",
-                               Type.getMethodDescriptor(VOID, new Type[] {CLASS, TYPEBUILDER}));
+            mv.visitMethodInsn(
+                    INVOKESPECIAL, typeExposerType.getInternalName(), "<init>", "()V", false);
+            mv.visitMethodInsn(
+                    INVOKESTATIC,
+                    PYTYPE.getInternalName(),
+                    "addBuilder",
+                    Type.getMethodDescriptor(VOID, new Type[]{CLASS, TYPEBUILDER}),
+                    false);
         }
 
         /** Adds an inner class reference to inner from the class being visited. */
@@ -225,7 +228,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                                            desc,
                                                                            signature,
                                                                            exceptions);
-                return new MethodVisitor(Opcodes.ASM4, passthroughVisitor) {
+                return new MethodVisitor(Opcodes.ASM5, passthroughVisitor) {
 
                     @Override
                     public void visitCode() {

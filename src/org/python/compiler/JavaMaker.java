@@ -49,7 +49,7 @@ public class JavaMaker extends ProxyMaker {
         code.visitLdcInsn(pythonClass);
         code.visitVarInsn(ALOAD, 1);
         code.visitMethodInsn(INVOKESTATIC, "org/python/core/Py", "initProxy",
-            makeSig("V", $pyProxy, $str, $str, $objArr));
+            makeSig("V", $pyProxy, $str, $str, $objArr), false);
         code.visitInsn(RETURN);
 
     }

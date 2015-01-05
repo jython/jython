@@ -2691,7 +2691,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         // value = mgr.__enter__()
         loadThreadState();
         code.invokeinterface(Type.getType(ContextManager.class).getInternalName(),
-                __enter__.getName(), __enter__.getDescriptor());
+                __enter__.getName(), __enter__.getDescriptor(), true);
         int value_tmp = code.getLocal(p(PyObject.class));
         code.astore(value_tmp);
 
@@ -2716,7 +2716,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 loadThreadState();
                 compiler.code.aconst_null();
                 compiler.code.invokeinterface(Type.getType(ContextManager.class).getInternalName(),
-                        __exit__.getName(), __exit__.getDescriptor());
+                        __exit__.getName(), __exit__.getDescriptor(), true);
                 compiler.code.pop();
             }
         };
@@ -2761,7 +2761,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         loadThreadState();
         code.swap();
         code.invokeinterface(Type.getType(ContextManager.class).getInternalName(),
-                __exit__.getName(), __exit__.getDescriptor());
+                __exit__.getName(), __exit__.getDescriptor(), true);
 
         // # The exceptional case is handled here
         // exc = False # implicit

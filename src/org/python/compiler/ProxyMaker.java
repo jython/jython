@@ -729,7 +729,7 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
     protected void callInitProxy(Class<?>[] parameters, Code code) throws Exception {
         code.visitVarInsn(ALOAD, 0);
         getArgs(code, parameters);
-        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", makeSig("V", $objArr));
+        code.visitMethodInsn(INVOKEVIRTUAL, classfile.name, "__initProxy__", makeSig("V", $objArr), false);
         code.visitInsn(RETURN);
     }
     

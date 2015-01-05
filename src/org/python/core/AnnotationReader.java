@@ -5,6 +5,7 @@
 package org.python.core;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -35,25 +36,23 @@ public class AnnotationReader extends ClassVisitor {
      * @throws IOException - if the classfile is malformed.
      */
     public AnnotationReader(byte[] data) throws IOException {
-        super(Opcodes.ASM4);
+        super(Opcodes.ASM5);
         ClassReader r;
         try {
             r = new ClassReader(data);
         } catch (ArrayIndexOutOfBoundsException e) {
-            IOException ioe = new IOException("Malformed bytecode: not enough data");
-            ioe.initCause(e);// IOException didn't grow a constructor that could take a cause till
-                             // 1.6, so do it the old fashioned way
+            IOException ioe = new IOException("Malformed bytecode: not enough data", e);
             throw ioe;
         }
         r.accept(this, 0);
     }
-    
+
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
         nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
         nextVisitIsFilename = desc.equals("Lorg/python/compiler/Filename;");
-        return new AnnotationVisitor(Opcodes.ASM4) {
+        return new AnnotationVisitor(Opcodes.ASM5) {
 
         	public void visit(String name, Object value) {
         		if (nextVisitIsVersion) {

@@ -160,7 +160,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
         mv.visitMethodInsn(INVOKESPECIAL,
                            onType.getInternalName(),
                            "<init>",
-                           methodDesc(VOID, args));
+                           methodDesc(VOID, args), false);
     }
 
     /** Calls the method on onType with the given return type and argument types. */
@@ -168,7 +168,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
         mv.visitMethodInsn(INVOKEVIRTUAL,
                            onType.getInternalName(),
                            methodName,
-                           methodDesc(returnType, args));
+                           methodDesc(returnType, args), false);
     }
 
     /** Calls the static method on onType with the given return type and argument types. */
@@ -176,7 +176,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
         mv.visitMethodInsn(INVOKESTATIC,
                            onType.getInternalName(),
                            methodName,
-                           methodDesc(returnType, args));
+                           methodDesc(returnType, args), false);
     }
 
     /** Produces a method descriptor with ret as its return type that takes args. */
