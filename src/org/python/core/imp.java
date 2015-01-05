@@ -241,7 +241,12 @@ public class imp {
     }
 
     public static byte[] readCode(String name, InputStream fp, boolean testing, long mtime) throws IOException {
-        return readCodeData(name, fp, testing, mtime).getBytes();
+        CodeData data = readCodeData(name, fp, testing, mtime);
+        if (data == null) {
+            return null;
+        } else {
+            return data.getBytes();
+        }
     }
 
     public static CodeData readCodeData(String name, InputStream fp, boolean testing) throws IOException {
