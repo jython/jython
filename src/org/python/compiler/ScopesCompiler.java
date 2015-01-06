@@ -251,6 +251,10 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitClassDef(ClassDef node) throws Exception {
+        List<expr> decs = node.getInternalDecorator_list();
+        for (int i = decs.size() - 1; i >= 0; i--) {
+            visit(decs.get(i));
+        }
         def(node.getInternalName());
         int n = node.getInternalBases().size();
         for (int i = 0; i < n; i++) {
