@@ -20,7 +20,6 @@ public class math implements ClassDictInit {
 
     private static final double ZERO = 0.0;
     private static final double MINUS_ZERO = -0.0;
-    private static final double HALF = 0.5;
     private static final double ONE = 1.0;
     private static final double MINUS_ONE = -1.0;
     private static final double TWO = 2.0;
@@ -67,13 +66,7 @@ public class math implements ClassDictInit {
     }
 
     public static double acos(double v) {
-        if (isinf(v)) {
-            throwMathDomainValueError();
-        }
-        if (isnan(v)) {
-            return v;
-        }
-        return Math.acos(v);
+        return exceptNaN(Math.acos(v), v);
     }
 
     /**
@@ -108,13 +101,7 @@ public class math implements ClassDictInit {
     }
 
     public static double asin(double v) {
-        if (isinf(v)) {
-            throwMathDomainValueError();
-        }
-        if (isnan(v)) {
-            return v;
-        }
-        return Math.asin(v);
+        return exceptNaN(Math.asin(v), v);
     }
 
     public static double asinh(double v) {
@@ -147,17 +134,14 @@ public class math implements ClassDictInit {
     }
 
     public static double atan(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        return Math.atan(v);
+        return exceptNaN(Math.atan(v), v);
     }
 
     /**
      * Compute <i>tanh<sup>-1</sup>y</i>.
      *
      * @param y
-     * @return x such that <i>tanh x = y</i>
+     * @return <i>x</i> such that <i>tanh x = y</i>
      */
     public static double atanh(double y) {
         double absy = Math.abs(y);
@@ -180,40 +164,19 @@ public class math implements ClassDictInit {
     }
 
     public static double ceil(double v) {
-        if (isnan(v) || isinf(v)) {
-            return v;
-        }
         return Math.ceil(v);
     }
 
     public static double cos(double v) {
-        if (isinf(v)) {
-            throwMathDomainValueError();
-        }
-        if (isnan(v)) {
-            return NAN;
-        }
-        return Math.cos(v);
+        return exceptNaN(Math.cos(v), v);
     }
 
     public static double cosh(double v) {
-        if (isinf(v)) {
-            return INF;
-        }
-        if (isnan(v)) {
-            return v;
-        }
-        return HALF * (Math.exp(v) + Math.exp(-v));
+        return exceptInf(Math.cosh(v), v);
     }
 
     public static double exp(double v) {
-        if (isninf(v)) {
-            return ZERO;
-        }
-        if (isnan(v) || isinf(v)) {
-            return v;
-        }
-        return check(Math.exp(v));
+        return exceptInf(Math.exp(v), v);
     }
 
     public static double floor(PyObject v) {
@@ -221,9 +184,6 @@ public class math implements ClassDictInit {
     }
 
     public static double floor(double v) {
-        if (isnan(v) || isinf(v)) {
-            return v;
-        }
         return Math.floor(v);
     }
 
@@ -238,10 +198,7 @@ public class math implements ClassDictInit {
         } else {
             doubleValue = log(v.asDouble());
         }
-        if (base != null) {
-            return check(applyLoggedBase(doubleValue, base));
-        }
-        return doubleValue;
+        return (base == null) ? doubleValue : applyLoggedBase(doubleValue, base);
     }
 
     public static double pow(double v, double w) {
@@ -260,7 +217,7 @@ public class math implements ClassDictInit {
             } else if (w > ZERO || ispinf(w)) {
                 return ZERO;
             } else {
-                throwMathDomainValueError();
+                throw mathDomainError();
             }
         }
         if (isninf(v)) {
@@ -307,7 +264,7 @@ public class math implements ClassDictInit {
             }
         }
         if (v < ZERO && !isIntegral(w)) {
-            throwMathDomainValueError();
+            throw mathDomainError();
         }
         return Math.pow(v, w);
     }
@@ -317,13 +274,7 @@ public class math implements ClassDictInit {
     }
 
     public static double sin(double v) {
-        if (isinf(v)) {
-            throwMathDomainValueError();
-        }
-        if (isnan(v)) {
-            return v;
-        }
-        return Math.sin(v);
+        return exceptNaN(Math.sin(v), v);
     }
 
     public static double sqrt(PyObject v) {
@@ -331,26 +282,11 @@ public class math implements ClassDictInit {
     }
 
     public static double sqrt(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        if (ispinf(v)) {
-            return v;
-        }
-        if (isninf(v) || v < MINUS_ZERO) {
-            throwMathDomainValueError();
-        }
-        return Math.sqrt(v);
+        return exceptNaN(Math.sqrt(v), v);
     }
 
     public static double tan(double v) {
-        if (isnan(v)) {
-            return NAN;
-        }
-        if (isinf(v)) {
-            throw Py.ValueError("math domain error");
-        }
-        return Math.tan(v);
+        return exceptNaN(Math.tan(v), v);
     }
 
     public static double log10(PyObject v) {
@@ -358,7 +294,7 @@ public class math implements ClassDictInit {
             int exp[] = new int[1];
             double x = ((PyLong)v).scaledDoubleValue(exp);
             if (x <= ZERO) {
-                throwMathDomainValueError();
+                throw mathDomainError();
             }
             return log10(x) + (exp[0] * EIGHT) * log10(TWO);
         }
@@ -366,29 +302,11 @@ public class math implements ClassDictInit {
     }
 
     public static double sinh(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        if (isinf(v)) {
-            return v;
-        }
-        return HALF * (Math.exp(v) - Math.exp(-v));
+        return exceptInf(Math.sinh(v), v);
     }
 
     public static double tanh(double v) {
-        if (isnan(v)) {
-            return v;
-        }
-        if (isinf(v)) {
-            if (isninf(v)) {
-                return MINUS_ONE;
-            }
-            return ONE;
-        }
-        if (v == MINUS_ZERO) {
-            return v;
-        }
-        return sinh(v) / cosh(v);
+        return exceptInf(Math.tanh(v), v);
     }
 
     public static double fabs(double v) {
@@ -403,10 +321,10 @@ public class math implements ClassDictInit {
             return v;
         }
         if (w == ZERO) {
-            throwMathDomainValueError();
+            throw mathDomainError();
         }
         if (isinf(v) && w == ONE) {
-            throwMathDomainValueError();
+            throw mathDomainError();
         }
         return v % w;
     }
@@ -428,25 +346,36 @@ public class math implements ClassDictInit {
     }
 
     public static PyTuple frexp(double x) {
-        int exponent = 0;
+        int exponent;
+        double mantissa;
 
-        if (isnan(x) || isinf(x) || x == ZERO) {
-            exponent = 0;
-        } else {
-            short sign = 1;
+        switch (exponent = Math.getExponent(x)) {
 
-            if (x < ZERO) {
-                x = -x;
-                sign = -1;
-            }
+            default:
+                // x = m * 2**exponent and 1 <=abs(m) <2
+                exponent = exponent + 1;
+                // x = m * 2**exponent and 0.5 <=abs(m) <1
+                mantissa = Math.scalb(x, -exponent);
+                break;
 
-            for (; x < HALF; x *= TWO, exponent--) {}
+            case 1024:  // nan or inf
+                mantissa = x;
+                exponent = 0;
+                break;
 
-            for (; x >= ONE; x *= HALF, exponent++) {}
-
-            x *= sign;
+            case -1023:
+                if (x == 0.) { // , 0.0 or -0.0
+                    mantissa = x;
+                    exponent = 0;
+                } else { // denormalised value
+                    // x = m * 2**exponent but 0 < abs(m) < 1
+                    exponent = Math.getExponent(x * 0x1p52) - 51;
+                    mantissa = Math.scalb(x, -exponent);
+                }
+                break;
         }
-        return new PyTuple(new PyFloat(x), new PyInteger(exponent));
+
+        return new PyTuple(new PyFloat(mantissa), new PyInteger(exponent));
     }
 
     public static PyObject trunc(PyObject number) {
@@ -454,23 +383,13 @@ public class math implements ClassDictInit {
     }
 
     public static double ldexp(double v, PyObject wObj) {
-        if (ZERO == v) {
-            return v; // can be negative zero
-        }
-        if (isinf(v)) {
-            return v;
-        }
-        if (isnan(v)) {
-            return v;
-        }
         long w = getLong(wObj);
-        if (w == Long.MIN_VALUE) {
-            if (v > ZERO) {
-                return ZERO;
-            }
-            return MINUS_ZERO;
+        if (w < Integer.MIN_VALUE) {
+            w = Integer.MIN_VALUE;
+        } else if (w > Integer.MAX_VALUE) {
+            w = Integer.MAX_VALUE;
         }
-        return checkOverflow(v * Math.pow(TWO, w));
+        return exceptInf(Math.scalb(v, (int)w), v);
     }
 
     /**
@@ -492,11 +411,12 @@ public class math implements ClassDictInit {
     }
 
     public static double radians(double v) {
-        return check(Math.toRadians(v));
+        return Math.toRadians(v);
     }
 
     public static double degrees(double v) {
-        return check(Math.toDegrees(v));
+        // Note that this does not raise overflow in Python: 1e307 -> inf as in Java.
+        return Math.toDegrees(v);
     }
 
     public static boolean isnan(double v) {
@@ -513,36 +433,33 @@ public class math implements ClassDictInit {
     }
 
     public static double copysign(double v, double w) {
-        if (isnan(v)) {
-            return NAN;
-        }
-        if (signum(v) == signum(w)) {
-            return v;
-        }
-        return v *= MINUS_ONE;
+        return Math.copySign(v, w);
     }
 
     public static PyLong factorial(double v) {
         if (v == ZERO || v == ONE) {
             return new PyLong(1);
+        } else if (v < ZERO || isnan(v) || isinf(v)) {
+            throw mathDomainError();
+        } else if (!isIntegral(v)) {
+            throw mathDomainError();
+        } else {
+            // long input should be big enough :-)
+            long value = (long)v;
+            BigInteger bi = new BigInteger(Long.toString(value));
+            for (long l = value - 1; l > 1; l--) {
+                bi = bi.multiply(new BigInteger(Long.toString(l)));
+            }
+            return new PyLong(bi);
         }
-        if (v < ZERO || isnan(v) || isinf(v)) {
-            throwMathDomainValueError();
-        }
-        if (!isIntegral(v)) {
-            throwMathDomainValueError();
-        }
-        // long input should be big enough :-)
-        long value = (long)v;
-        BigInteger bi = new BigInteger(Long.toString(value));
-        for (long l = value - 1; l > 1; l--) {
-            bi = bi.multiply(new BigInteger(Long.toString(l)));
-        }
-        return new PyLong(bi);
     }
 
     public static double log1p(double v) {
-        return log(ONE + v);
+        if (v <= -1.) {
+            throw mathDomainError();
+        } else {
+            return Math.log1p(v);
+        }
     }
 
     public static double fsum(final PyObject iterable) {
@@ -554,7 +471,7 @@ public class math implements ClassDictInit {
         int exp[] = new int[1];
         double x = v.scaledDoubleValue(exp);
         if (x <= ZERO) {
-            throwMathDomainValueError();
+            throw mathDomainError();
         }
         return log(x) + (exp[0] * EIGHT) * log(TWO);
     }
@@ -566,27 +483,23 @@ public class math implements ClassDictInit {
         } else {
             loggedBase = log(base.asDouble());
         }
-        return check(loggedValue / loggedBase);
+        return loggedValue / loggedBase;
     }
 
     private static double log(double v) {
-        if (isninf(v) || v <= ZERO) {
-            throwMathDomainValueError();
+        if (v <= 0.) {
+            throw mathDomainError();
+        } else {
+            return Math.log(v);
         }
-        if (isinf(v) || isnan(v)) {
-            return v;
-        }
-        return Math.log(v);
     }
 
     private static double log10(double v) {
-        if (isninf(v)) {
-            throwMathDomainValueError();
+        if (v <= 0.) {
+            throw mathDomainError();
+        } else {
+            return Math.log10(v);
         }
-        if (isinf(v) || isnan(v)) {
-            return v;
-        }
-        return Math.log10(v);
     }
 
     private static boolean isninf(double v) {
@@ -595,21 +508,6 @@ public class math implements ClassDictInit {
 
     private static boolean ispinf(double v) {
         return v == INF;
-    }
-
-    /**
-     * work around special Math.signum() behaviour for positive and negative zero
-     */
-    private static double signum(double v) {
-        double signum = ONE;
-        if (v == ZERO) {
-            if ('-' == Double.toString(v).charAt(0)) {
-                signum = MINUS_ONE;
-            }
-        } else {
-            signum = Math.signum(v);
-        }
-        return signum;
     }
 
     /**
@@ -630,25 +528,57 @@ public class math implements ClassDictInit {
         return Py.OverflowError("math range error");
     }
 
-    private static void throwMathDomainValueError() {
-        throw Py.ValueError("math domain error");
+    /**
+     * Turn a <code>NaN</code> result into a thrown <code>ValueError</code>, a math domain error, if
+     * the original argument was not itself <code>NaN</code>. Use as:
+     *
+     * <pre>
+     * public static double asin(double v) { return exceptNaN(Math.asin(v), v); }
+     * </pre>
+     *
+     * Note that the original function argument is also supplied to this method. Most Java math
+     * library methods do exactly what we need for Python, but some return {@value Double#NaN} when
+     * Python should raise <code>ValueError</code>. This is a brief way to change that.
+     *
+     * @param result to return (if we return)
+     * @param arg to include in check
+     * @return result if <code>arg</code> was <code>NaN</code> or <code>result</code> was not
+     *         <code>NaN</code>
+     * @throws PyException (ValueError) if <code>result</code> was <code>NaN</code> and
+     *             <code>arg</code> was not <code>NaN</code>
+     */
+    private static double exceptNaN(double result, double arg) throws PyException {
+        if (Double.isNaN(result) && !Double.isNaN(arg)) {
+            throw mathDomainError();
+        } else {
+            return result;
+        }
     }
 
-    private static double check(double v) {
-        if (isnan(v)) {
-            throwMathDomainValueError();
-        }
-        if (isinf(v)) {
+    /**
+     * Turn an infinite result into a thrown <code>OverflowError</code>, a math range error, if the
+     * original argument was not itself infinite. Use as:
+     *
+     * <pre>
+     * public static double cosh(double v) { return exceptInf( Math.cosh(v), v); }
+     * </pre>
+     *
+     * Note that the original function argument is also supplied to this method. Most Java math
+     * library methods do exactly what we need for Python, but some return an infinity when Python
+     * should raise <code>OverflowError</code>. This is a brief way to change that.
+     *
+     * @param result to return (if we return)
+     * @param arg to include in check
+     * @return result if <code>arg</code> was infinite or <code>result</code> was not infinite
+     * @throws PyException (ValueError) if <code>result</code> was infinite and <code>arg</code> was
+     *             not infinite
+     */
+    private static double exceptInf(double result, double arg) {
+        if (Double.isInfinite(result) && !Double.isInfinite(arg)) {
             throw Py.OverflowError("math range error");
+        } else {
+            return result;
         }
-        return v;
-    }
-
-    private static double checkOverflow(double v) {
-        if (isinf(v)) {
-            throw Py.OverflowError("math range error");
-        }
-        return v;
     }
 
     /**

@@ -446,11 +446,8 @@ class CMathTests(unittest.TestCase):
         self.assertTrue(math.isnan(abs(complex(2.3, NAN))))
         self.assertEqual(abs(complex(INF, NAN)), INF)
         self.assertTrue(math.isnan(abs(complex(NAN, NAN))))
-        if is_jython:
-            self.assertEqual(abs(complex(1.4e308, 1.4e308)), INF)
-        else:
-            if float.__getformat__("double").startswith("IEEE"):
-                self.assertRaises(OverflowError, abs, complex(1.4e308, 1.4e308))
+        if float.__getformat__("double").startswith("IEEE"):
+            self.assertRaises(OverflowError, abs, complex(1.4e308, 1.4e308))
 
     def assertCEqual(self, a, b):
         eps = 1E-7
