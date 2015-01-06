@@ -86,6 +86,16 @@ class DictCmpTest(unittest.TestCase):
         self.assertEqual(derived_dict_with_custom_cmp(), '')
         self.assertEqual(yet_another_dict(), '')
 
+class DictMiscTest(unittest.TestCase):
+    def test_pop_key_error(self):
+        # tests http://bugs.jython.org/issue2247
+        with self.assertRaisesRegexp(KeyError, r"^1$"):
+            {}.pop(1)
+        with self.assertRaisesRegexp(KeyError, r"^\(\)$"):
+            {}.pop(())
+        with self.assertRaisesRegexp(KeyError, r"^frozenset\(\[\]\)$"):
+            {}.pop(frozenset())
+
 class DerivedDictTest(unittest.TestCase):
     "Tests for derived dict behaviour"
     def test_raising_custom_key_error(self):
@@ -232,7 +242,13 @@ class JavaDictTest(test_dict.DictTest):
 
 
 def test_main():
-    test_support.run_unittest(DictInitTest, DictCmpTest, DerivedDictTest, JavaIntegrationTest, JavaDictTest)
+    test_support.run_unittest(
+        DictInitTest,
+        DictCmpTest,
+        DictMiscTest,
+        DerivedDictTest,
+        JavaIntegrationTest,
+        JavaDictTest)
 
 if __name__ == '__main__':
     test_main()
