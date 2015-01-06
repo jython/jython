@@ -537,9 +537,9 @@ with_var
     : (AS | NAME) expr
     ;
 
-//except_clause: 'except' [test [',' test]]
+//except_clause: 'except' [test [('as' | ',') test]]
 except_clause
-    : EXCEPT (test (COMMA test)?)? COLON suite
+    : EXCEPT (test ((COMMA | AS) test)?)? COLON suite
     ;
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
