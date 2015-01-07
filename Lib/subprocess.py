@@ -1824,6 +1824,29 @@ class Popen(object):
             self.send_signal(signal.SIGKILL)
 
 
+# we need some functionality from subprocess given brokenness for ProcessBuilder,
+# but need to avoid recursive imports
+
+def _os_system(command):
+    """system(command) -> exit_status
+
+    Execute the command (a string) in a subshell."""
+    args = _cmdline2listimpl(command)
+    args = _escape_args(args)
+    args = _shell_command + args
+    cwd = os.getcwd()
+    builder = java.lang.ProcessBuilder(args)
+    builder.directory(java.io.File(cwd))
+    builder.redirectInput(java.lang.ProcessBuilder.Redirect.INHERIT)
+    builder.redirectOutput(java.lang.ProcessBuilder.Redirect.INHERIT)
+    builder.redirectError(java.lang.ProcessBuilder.Redirect.INHERIT)
+    try:
+        return builder.start().waitFor()
+    except (java.io.IOException,
+            java.lang.IllegalArgumentException), e:
+        raise OSError(e.getMessage() or e)
+
+
 def _demo_posix():
     #
     # Example 1: Simple redirection: Get process list

@@ -219,7 +219,7 @@ def renames(old, new):
         except error:
             pass
 
-__all__.extend(["makedirs", "removedirs", "renames"])
+__all__.extend(["makedirs", "removedirs", "renames", "system"])
 
 def walk(top, topdown=True, onerror=None, followlinks=False):
     """Directory tree generator.
@@ -719,3 +719,7 @@ class _wrap_close(object):
         return getattr(self._stream, name)
     def __iter__(self):
         return iter(self._stream)
+
+
+# Recursive import! So need to put it at the end
+from subprocess import _os_system as system
