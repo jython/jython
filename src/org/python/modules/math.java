@@ -515,7 +515,7 @@ public class math implements ClassDictInit {
      *
      * @return ValueError("math domain error")
      */
-    private static PyException mathDomainError() {
+    static PyException mathDomainError() {
         return Py.ValueError("math domain error");
     }
 
@@ -524,7 +524,7 @@ public class math implements ClassDictInit {
      *
      * @return OverflowError("math range error")
      */
-    private static PyException mathRangeError() {
+    static PyException mathRangeError() {
         return Py.OverflowError("math range error");
     }
 
@@ -575,7 +575,7 @@ public class math implements ClassDictInit {
      */
     private static double exceptInf(double result, double arg) {
         if (Double.isInfinite(result) && !Double.isInfinite(arg)) {
-            throw Py.OverflowError("math range error");
+            throw mathRangeError();
         } else {
             return result;
         }

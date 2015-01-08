@@ -2,6 +2,7 @@ package org.python.modules;
 
 import org.python.core.Py;
 import org.python.core.PyComplex;
+import org.python.core.PyException;
 import org.python.core.PyFloat;
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
@@ -19,6 +20,8 @@ public class cmath {
 
     /** 2<sup>-&#189;</sup> (Ref: Abramowitz &amp; Stegun [1972], p2). */
     private static final double ROOT_HALF = 0.70710678118654752440;
+    /** ln({@link Double#MAX_VALUE}) or a little less */
+    private static final double NEARLY_LN_DBL_MAX = 709.4361393;
 
     private static PyComplex c_prodi(PyComplex x) {
         return (PyComplex)x.__mul__(i);
@@ -140,10 +143,65 @@ public class cmath {
                 * math.sinh(x.real));
     }
 
-    public static PyComplex exp(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        double l = Math.exp(x.real);
-        return new PyComplex(l * Math.cos(x.imag), l * Math.sin(x.imag));
+    /**
+     * Return the exponential value e<sup>z</sup>.
+     *
+     * @param z
+     * @return e<sup>z</sup>
+     */
+    public static PyComplex exp(PyObject z) {
+        PyComplex zz = complexFromPyObject(z);
+        double x = zz.real, y = zz.imag, r, u, v;
+        /*
+         * This has a lot of corner-cases, and some of them make little sense sense, but it matches
+         * CPython and passes the regression tests.
+         */
+        if (y == 0.) {
+            // Real value: use a real solution. (This may raise a range error.)
+            u = math.exp(x);
+            // v follows sign of y.
+            v = y;
+
+        } else {
+            // The trig calls will not throw, although if y is infinite, they return nan.
+            double cosy = Math.cos(y), siny = Math.sin(y);
+
+            if (x == Double.NEGATIVE_INFINITY) {
+                // w = (0,0) but "signed" by the direction cosines (even in they are nan).
+                u = Math.copySign(0., cosy);
+                v = Math.copySign(0., siny);
+
+            } else if (x == Double.POSITIVE_INFINITY) {
+                if (!Double.isNaN(cosy)) {
+                    // w = (inf,inf), but "signed" by the direction cosines.
+                    u = Math.copySign(x, cosy);
+                    v = Math.copySign(x, siny);
+                } else {
+                    // Provisionally w = (inf,nan), which will raise domain error if y!=nan.
+                    u = x;
+                    v = Double.NaN;
+                }
+
+            } else if (x > NEARLY_LN_DBL_MAX) {
+                // r = e**x would overflow but maybe not r*cos(y) and r*sin(y).
+                r = Math.exp(x - 1); // = r / e
+                u = r * cosy * Math.E;
+                v = r * siny * Math.E;
+                if (Double.isInfinite(u) || Double.isInfinite(v)) {
+                    // A finite x gave rise to an infinite u or v.
+                    throw math.mathRangeError();
+                }
+
+            } else {
+                // Normal case, without risk of overflow.
+                // Compute r = exp(x), and return w = u + iv = r (cos(y) + i*sin(y))
+                r = Math.exp(x);
+                u = r * cosy;
+                v = r * siny;
+            }
+        }
+        // If that generated a nan, and there wasn't one in the argument, raise domain error.
+        return exceptNaN(new PyComplex(u, v), zz);
     }
 
     public static PyComplex log(PyObject in) {
@@ -396,4 +454,46 @@ public class cmath {
 
         return new PyComplex(((rs * rc) + (is * ic)) / d, ((is * rc) - (rs * ic)) / d);
     }
+
+    /**
+     * Turn a <code>NaN</code> result into a thrown <code>ValueError</code>, a math domain error, if
+     * the original argument was not itself <code>NaN</code>. A <code>PyComplex</code> is a
+     * <code>NaN</code> if either component is a <code>NaN</code>.
+     *
+     * @param result to return (if we return)
+     * @param arg to include in check
+     * @return result if <code>arg</code> was <code>NaN</code> or <code>result</code> was not
+     *         <code>NaN</code>
+     * @throws PyException (ValueError) if <code>result</code> was <code>NaN</code> and
+     *             <code>arg</code> was not <code>NaN</code>
+     */
+    private static PyComplex exceptNaN(PyComplex result, PyComplex arg) throws PyException {
+        if ((Double.isNaN(result.real) || Double.isNaN(result.imag))
+                && !(Double.isNaN(arg.real) || Double.isNaN(arg.imag))) {
+            throw math.mathDomainError();
+        } else {
+            return result;
+        }
+    }
+
+    /**
+     * Turn an infinite result into a thrown <code>OverflowError</code>, a math range error, if the
+     * original argument was not itself infinite. A <code>PyComplex</code> is infinite if either
+     * component is infinite.
+     *
+     * @param result to return (if we return)
+     * @param arg to include in check
+     * @return result if <code>arg</code> was infinite or <code>result</code> was not infinite
+     * @throws PyException (ValueError) if <code>result</code> was infinite and <code>arg</code> was
+     *             not infinite
+     */
+    private static PyComplex exceptInf(PyComplex result, PyComplex arg) {
+        if ((Double.isInfinite(result.real) || Double.isInfinite(result.imag))
+                && !(Double.isInfinite(arg.real) || Double.isInfinite(arg.imag))) {
+            throw math.mathRangeError();
+        } else {
+            return result;
+        }
+    }
+
 }
