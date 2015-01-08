@@ -5,6 +5,23 @@ import sys
 from test import test_support
 from subprocess import PIPE, Popen, _cmdline2list
 
+
+class PidTest(unittest.TestCase):
+
+    def testPid(self):
+        # Cannot use sys.executable here because it's a script and has different
+        # pid than the actual started Java process.
+        p = Popen(['python', '-c', 'import os; print os.getpid()'],
+                  stdout=PIPE)
+        p.wait()
+        self.assertEquals(int(p.stdout.read()), p.pid)
+
+    def testNonExistingField(self):
+        # Test we don't crash if Process class doesn't have field we need.
+        p = Popen(['echo foo'], shell=True, stdout=PIPE)
+        self.assertIsNone(p._get_pid('nonex'))
+
+
 class EnvironmentInheritanceTest(unittest.TestCase):
 
     def testDefaultEnvIsInherited(self):
@@ -70,6 +87,7 @@ class Cmdline2ListTestCase(unittest.TestCase):
 
 def test_main():
     test_support.run_unittest(
+        PidTest,
         EnvironmentInheritanceTest,
         JythonOptsTest,
         Cmdline2ListTestCase)

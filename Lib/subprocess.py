@@ -1350,7 +1350,41 @@ class Popen(object):
             except (java.io.IOException,
                     java.lang.IllegalArgumentException), e:
                 raise OSError(e.getMessage() or e)
+            self.pid = self._get_pid()
             self._child_created = True
+
+
+        # Getting pid based on http://stackoverflow.com/questions/4750470
+
+        def _get_private_field(self, object, field_name):
+            try:
+                field = object.getClass().getDeclaredField(field_name)
+                field.setAccessible(True)
+            except (java.lang.NoSuchFieldException,
+                    java.lang.SecurityException):
+                return None
+            else:
+                return field
+
+        if os._name != 'nt':
+
+            def _get_pid(self, pid_field='pid'):
+                field = self._get_private_field(self._process, pid_field)
+                if field is None:
+                    return None
+                return field.getInt(self._process)
+
+        else:
+
+            import ctypes
+            _handle_to_pid = ctypes.cdll.kernel32.GetProcessId
+            _handle_to_pid.argtypes = (ctypes.c_long,)
+
+            def _get_pid(self, handle_field='handle'):
+                field = self._get_private_field(self._process, handle_field)
+                if field is None:
+                    return None
+                return self._handle_to_pid(field.getLong(self._process))
 
 
         def poll(self, _deadstate=None):
