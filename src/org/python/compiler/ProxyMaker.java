@@ -10,7 +10,11 @@ import java.util.Set;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.util.Generic;
+
+import static org.python.util.CodegenUtils.p;
+import static org.python.util.CodegenUtils.sig;
 
 
 public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opcodes
@@ -382,6 +386,15 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
             callMethod(code, name, parameters, ret, exceptions);
             code.label(returnNull);
             code.pop();
+
+            // throw an exception if we cannot load a Python method for this abstract method
+            // note that the unreachable return is simply to simplify bytecode gen
+            code.ldc("");
+            code.invokestatic(p(Py.class), "NotImplementedError",
+                    sig(PyException.class, String.class));
+            code.checkcast(p(Throwable.class));
+            code.athrow();
+
             doNullReturn(code, ret);
         }
     }

@@ -7,7 +7,7 @@ from test import test_support
 
 from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, Runnable, String,
         Thread, ThreadGroup)
-from java.util import Date, Hashtable, Vector
+from java.util import AbstractList, Date, Hashtable, HashSet, Vector
 from java.util.concurrent import Callable, Executors
 
 from java.awt import Color, Component, Dimension, Rectangle
@@ -374,14 +374,75 @@ class MetaClassTest(unittest.TestCase):
         pool.shutdown()
 
 
+class AbstractMethodTest(unittest.TestCase):
+
+    def test_abstract_method_implemented(self):
+        class C(AbstractList):
+            def get(self, index):
+                return index * 2
+            def size(self):
+                return 7
+
+        c = C()
+        self.assertEqual(c.size(), 7)
+        self.assertEqual([c.get(i) for i in xrange(7)], range(0, 14, 2))
+
+    def test_abstract_method_not_implemented(self):
+        class C(AbstractList):
+            def size(self):
+                return 47
+
+        # note that unlike ABCs in Python - or partial extensions
+        # of abstract classes in Java - we allow such classes to
+        # be instantiated. We may wish to change this in Jython
+        # 3.x
+        c = C()
+        self.assertEqual(c.size(), 47)
+        with self.assertRaisesRegexp(NotImplementedError, r"^$"):
+            C().get(42)
+
+    def test_concrete_method(self):
+        class H(HashSet):
+            def __init__(self):
+                self.added = 0
+                HashSet.__init__(self)
+
+            def add(self, value):
+                self.added += 1
+                HashSet.add(self, value)
+
+        h = H()
+        h.add(42)
+        h.add(47)
+        h.discard(47)
+        self.assertEqual(list(h), [42])
+        self.assertEqual(h.added, 2)
+
+    def test_interface_method_implemented(self):
+        class C(Callable):
+            def call(self):
+                return 42
+
+        self.assertEqual(C().call(), 42)
+
+    def test_interface_method_not_implemented(self):
+        class C(Callable):
+            pass
+        
+        with self.assertRaisesRegexp(NotImplementedError, r"^$"):
+            C().call()
+
+
 def test_main():
-    test_support.run_unittest(InterfaceTest,
-            TableModelTest,
-            AutoSuperTest,
-            PythonSubclassesTest,
-            AbstractOnSyspathTest,
-            ContextClassloaderTest,
-            MetaClassTest)
+    test_support.run_unittest(
+        InterfaceTest,
+        TableModelTest,
+        AutoSuperTest,
+        PythonSubclassesTest,
+        AbstractOnSyspathTest,
+        ContextClassloaderTest,
+        MetaClassTest,
+        AbstractMethodTest)
 
 
 if __name__ == '__main__':
