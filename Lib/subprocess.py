@@ -1366,7 +1366,7 @@ class Popen(object):
             else:
                 return field
 
-        if os._name != 'nt':
+        if os._name not in _win_oses:
 
             def _get_pid(self, pid_field='pid'):
                 field = self._get_private_field(self._process, pid_field)
