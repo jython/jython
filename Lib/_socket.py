@@ -24,6 +24,7 @@ from java.io import IOException, InterruptedIOException
 from java.lang import Thread, IllegalStateException
 from java.net import InetAddress, InetSocketAddress
 from java.nio.channels import ClosedChannelException
+from java.security.cert import CertificateException
 from java.util import NoSuchElementException
 from java.util.concurrent import (
     ArrayBlockingQueue, CopyOnWriteArrayList, CountDownLatch, LinkedBlockingQueue,
@@ -317,16 +318,23 @@ _exception_map = {
     java.nio.channels.UnsupportedAddressTypeException : None,
 
     SSLPeerUnverifiedException: lambda x: SSLError(SSL_ERROR_SSL, x.message),
-    SSLException: lambda x: SSLError(SSL_ERROR_SSL, x.message),
 }
 
 
 def _map_exception(java_exception):
-    mapped_exception = _exception_map.get(java_exception.__class__)
-    if mapped_exception:
-        py_exception = mapped_exception(java_exception)
+    if isinstance(java_exception, SSLException) or isinstance(java_exception, CertificateException):
+        cause = java_exception.cause
+        if cause:
+            msg = "%s (%s)" % (java_exception.message, cause)
+        else:
+            msg = java_exception.message
+        py_exception = SSLError(SSL_ERROR_SSL, msg)
     else:
-        py_exception = error(-1, 'Unmapped exception: %s' % java_exception)
+        mapped_exception = _exception_map.get(java_exception.__class__)
+        if mapped_exception:
+            py_exception = mapped_exception(java_exception)
+        else:
+            py_exception = error(-1, 'Unmapped exception: %s' % java_exception)
     py_exception.java_exception = java_exception
     return _add_exception_attrs(py_exception)
 

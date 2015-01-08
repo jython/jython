@@ -181,7 +181,6 @@ class BasicSocketTests(unittest.TestCase):
             with self.assertRaisesRegexp(ssl.SSLError, "No cipher can be selected"):
                 s.connect(remote)
 
-    @test_support.cpython_only
     def test_refcycle(self):
         # Issue #7943: an SSL object doesn't create reference cycles with
         # itself.
@@ -189,6 +188,7 @@ class BasicSocketTests(unittest.TestCase):
         ss = ssl.wrap_socket(s)
         wr = weakref.ref(ss)
         del ss
+        test_support.gc_collect()  # Usual Jython requirement
         self.assertEqual(wr(), None)
 
     def test_wrapped_unconnected(self):

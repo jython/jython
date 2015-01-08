@@ -26,7 +26,8 @@ from _socket import (
     SSL_ERROR_WANT_CONNECT,
     SSL_ERROR_EOF,
     SSL_ERROR_INVALID_ERROR_CODE,
-    error as socket_error)
+    error as socket_error,
+    CLIENT_SOCKET, DATAGRAM_SOCKET)
 from _sslcerts import _get_ssl_context
 
 from java.text import SimpleDateFormat
@@ -158,11 +159,15 @@ class SSLSocket(object):
     def send(self, data):
         return self.sock.send(data)
 
+    write = send
+
     def sendall(self, data):
         return self.sock.sendall(data)
 
     def recv(self, bufsize, flags=0):
         return self.sock.recv(bufsize, flags)
+
+    read = recv
 
     def recvfrom(self, bufsize, flags=0):
         return self.sock.recvfrom(bufsize, flags)
@@ -195,6 +200,14 @@ class SSLSocket(object):
         self.sock.shutdown(how)
 
     # Need to work with the real underlying socket as well
+
+    def pending(self):
+        # undocumented function, used by some tests
+        # see also http://bugs.python.org/issue21430
+        if self._sock.socket_type == CLIENT_SOCKET or self._sock.socket_type == DATAGRAM_SOCKET:
+            if self._sock.incoming_head is not None:
+                return self._sock.incoming_head.readableBytes()
+        return 0
 
     def _readable(self):
         return self._sock._readable()
@@ -260,6 +273,7 @@ class SSLSocket(object):
 # ssl_version - use SSLEngine.setEnabledProtocols(java.lang.String[])
 # ciphers - SSLEngine.setEnabledCipherSuites(String[] suites)
 
+@raises_java_exception
 def wrap_socket(sock, keyfile=None, certfile=None, server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=None, ca_certs=None, do_handshake_on_connect=True,
                 suppress_ragged_eofs=True, ciphers=None):

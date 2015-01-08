@@ -1032,6 +1032,8 @@ The readme text for the next release will be like:
         <arg value="--expected"/>
         <arg value="-j"/>
         <arg value="${junit.reports}"/>
+        <arg value="--use"/>
+	<arg value="network,subprocess"/>
       </exec>
     </target>
     <target name="regrtest-windows" if="os.family.windows">
@@ -1041,6 +1043,8 @@ The readme text for the next release will be like:
         <arg value="--expected"/>
         <arg value="-j"/>
         <arg value="${junit.reports}"/>
+        <arg value="--use"/>
+	<arg value="network,subprocess"/>
       </exec>
     </target>
 
