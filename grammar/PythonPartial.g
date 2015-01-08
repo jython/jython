@@ -182,6 +182,18 @@ dotted_attr
       |
       )
     ;
+/*
+//FIXME: something like this needed:
+
+//not in CPython's Grammar file
+// This is used to allow PRINT as a NAME for the __future__ print_function.
+name_or_print
+    : NAME
+    | {printFunction}? => PRINT
+    }
+    ;
+
+*/
 
 //attr is here for Java  compatibility.  A Java foo.getIf() can be called from Jython as foo.if
 //     so we need to support any keyword as an attribute.
@@ -527,14 +539,14 @@ try_stmt
       )?
       ;
 
-//with_stmt: 'with' test [ with_var ] ':' suite
+//with_stmt: 'with' with_item (',' with_item)*  ':' suite
 with_stmt
-    : WITH test (with_var)? COLON suite
+    : WITH with_item (options {greedy=true;}:COMMA with_item)* COLON suite
     ;
 
-//with_var: ('as' | NAME) expr
-with_var
-    : (AS | NAME) expr
+//with_item: test ['as' expr]
+with_item
+    : test (AS expr)?
     ;
 
 //except_clause: 'except' [test [('as' | ',') test]]
@@ -697,7 +709,7 @@ power
 
 //atom: ('(' [yield_expr|testlist_gexp] ')' |
 //       '[' [listmaker] ']' |
-//       '{' [dictmaker] '}' |
+//       '{' [dictorsetmaker] '}' |
 //       '`' testlist1 '`' |
 //       NAME | NUMBER | STRING+)
 atom
@@ -713,7 +725,7 @@ atom
       )
       RBRACK
     | LCURLY
-       (dictmaker
+       (dictorsetmaker
        |
        )
        RCURLY
@@ -736,12 +748,12 @@ listmaker
         ) (COMMA)?
     ;
 
-//testlist_gexp: test ( gen_for | (',' test)* [','] )
+//testlist_gexp: test ( comp_for | (',' test)* [','] )
 testlist_gexp
     : test
         ( ((options {k=2;}: COMMA test)* (COMMA)?
           )
-        | (gen_for
+        | (comp_for
           )
         )
     ;
@@ -804,11 +816,20 @@ testlist
     | test
     ;
 
-//dictmaker: test ':' test (',' test ':' test)* [',']
-dictmaker
-    : test COLON test
-        (options {k=2;}:COMMA test COLON test)*
-        (COMMA)?
+//dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
+//                  (test (comp_for | (',' test)* [','])) )
+dictorsetmaker
+    : test
+         (
+             (COLON test
+               ( comp_for
+               | (options {k=2;}:COMMA test COLON test)*
+               )
+             |(COMMA test)*
+             )
+             (COMMA)?
+         | comp_for
+         )
     ;
 
 //classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
@@ -816,23 +837,25 @@ classdef
     : decorators? CLASS NAME (LPAREN testlist? RPAREN)? COLON suite
     ;
 
-//arglist: (argument ',')* (argument [',']| '*' test [',' '**' test] | '**' test)
+//arglist: (argument ',')* (argument [',']
+//                         |'*' test (',' argument)* [',' '**' test]
+//                         |'**' test)
 arglist
     : argument (COMMA argument)*
           (COMMA
-              ( STAR test (COMMA DOUBLESTAR test)?
+              ( STAR test (COMMA argument)* (COMMA DOUBLESTAR test)?
               | DOUBLESTAR test
               )?
           )?
-    | STAR test (COMMA DOUBLESTAR test)?
+    | STAR test (COMMA argument)* (COMMA DOUBLESTAR test)?
     | DOUBLESTAR test
     ;
 
-//argument: test [gen_for] | test '=' test  # Really [keyword '='] test
+//argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 argument
     : test
         ((ASSIGN test)
-        | gen_for
+        | comp_for
         |
         )
     ;
@@ -853,20 +876,20 @@ list_if
     : IF test (list_iter)?
     ;
 
-//gen_iter: gen_for | gen_if
-gen_iter
-    : gen_for
-    | gen_if
+//comp_iter: comp_for | comp_if
+comp_iter
+    : comp_for
+    | comp_if
     ;
 
-//gen_for: 'for' exprlist 'in' or_test [gen_iter]
-gen_for
-    : FOR exprlist IN or_test gen_iter?
+//comp_for: 'for' exprlist 'in' or_test [comp_iter]
+comp_for
+    : FOR exprlist IN or_test comp_iter?
     ;
 
-//gen_if: 'if' old_test [gen_iter]
-gen_if
-    : IF test gen_iter?
+//comp_if: 'if' old_test [comp_iter]
+comp_if
+    : IF test comp_iter?
     ;
 
 //yield_expr: 'yield' [testlist]

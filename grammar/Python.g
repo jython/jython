@@ -1992,8 +1992,6 @@ testlist[expr_contextType ctype]
 
 //dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
 //                  (test (comp_for | (',' test)* [','])) )
-
-//dictmaker: test ':' test (',' test ':' test)* [',']
 dictorsetmaker[Token lcurly]
 @init {
     List gens = new ArrayList();
