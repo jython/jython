@@ -19,15 +19,18 @@ import org.python.antlr.ast.ListComp;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.Return;
 import org.python.antlr.ast.SetComp;
+import org.python.antlr.ast.Tuple;
 import org.python.antlr.ast.With;
 import org.python.antlr.ast.Yield;
 import org.python.antlr.ast.arguments;
+import org.python.antlr.ast.comprehension;
 import org.python.antlr.ast.expr_contextType;
 import org.python.antlr.base.expr;
 import org.python.antlr.base.stmt;
 import org.python.core.ParserFacade;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.List;
@@ -290,21 +293,15 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     @Override
-    public Object visitSetComp(SetComp node) throws Exception {
-        String tmp = "_{" + node.getLine() + "_" + node.getCharPositionInLine()
-                + "}";
-        cur.addBound(tmp);
-        traverse(node);
-        return null;
+    public Object visitDictComp(DictComp node) throws Exception {
+        java.util.List<expr> kv = Arrays.asList(node.getInternalKey(), node.getInternalValue());
+        return visitInternalGenerators(
+                node, new Tuple(node, kv, expr_contextType.UNDEFINED), node.getInternalGenerators());
     }
 
     @Override
-    public Object visitDictComp(DictComp node) throws Exception {
-        String tmp = "_{" + node.getLine() + "_" + node.getCharPositionInLine()
-                + "}";
-        cur.addBound(tmp);
-        traverse(node);
-        return null;
+    public Object visitSetComp(SetComp node) throws Exception {
+        return visitInternalGenerators(node, node.getInternalElt(), node.getInternalGenerators());
     }
 
     @Override
@@ -324,11 +321,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-    @Override
-    public Object visitGeneratorExp(GeneratorExp node) throws Exception {
+    private Object visitInternalGenerators(expr node, expr elt, java.util.List<comprehension> generators)
+            throws Exception {
         // The first iterator is evaluated in the outer scope
-        if (node.getInternalGenerators() != null && node.getInternalGenerators().size() > 0) {
-            visit(node.getInternalGenerators().get(0).getInternalIter());
+        if (generators != null && generators.size() > 0) {
+            visit(generators.get(0).getInternalIter());
         }
         String bound_exp = "_(x)";
         String tmp = "_(" + node.getLine() + "_" + node.getCharPositionInLine()
@@ -345,23 +342,23 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         cur.defineAsGenerator(node);
         cur.yield_count++;
         // The reset of the iterators are evaluated in the inner scope
-        if (node.getInternalElt() != null) {
-            visit(node.getInternalElt());
+        if (elt != null) {
+            visit(elt);
         }
-        if (node.getInternalGenerators() != null) {
-            for (int i = 0; i < node.getInternalGenerators().size(); i++) {
-                if (node.getInternalGenerators().get(i) != null) {
+        if (generators != null) {
+            for (int i = 0; i < generators.size(); i++) {
+                if (generators.get(i) != null) {
                     if (i == 0) {
-                        visit(node.getInternalGenerators().get(i).getInternalTarget());
-                        if (node.getInternalGenerators().get(i).getInternalIfs() != null) {
-                            for (expr cond : node.getInternalGenerators().get(i).getInternalIfs()) {
+                        visit(generators.get(i).getInternalTarget());
+                        if (generators.get(i).getInternalIfs() != null) {
+                            for (expr cond : generators.get(i).getInternalIfs()) {
                                 if (cond != null) {
                                     visit(cond);
                                 }
                             }
                         }
                     } else {
-                        visit(node.getInternalGenerators().get(i));
+                        visit(generators.get(i));
                     }
                 }
             }
@@ -369,6 +366,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
         endScope();
         return null;
+    }
+
+    @Override
+    public Object visitGeneratorExp(GeneratorExp node) throws Exception {
+        return visitInternalGenerators(node, node.getInternalElt(), node.getInternalGenerators());
     }
 
     @Override

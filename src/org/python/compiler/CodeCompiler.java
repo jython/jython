@@ -2176,52 +2176,29 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         return null;
     }
 
-
     @Override
     public Object visitSetComp(SetComp node) throws Exception {
         code.new_(p(PySet.class));
-
         code.dup();
-        code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE));
-
-        code.dup();
-
-        code.ldc("add");
-
-        code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
-        String tmp_append = "_{" + node.getLine() + "_" + node.getCharPositionInLine() + "}";
-
-        java.util.List<expr> args = new ArrayList<expr>();
-        args.add(node.getInternalElt());
-
-        finishComp(node, args, node.getInternalGenerators(), tmp_append);
-
+        visitInternalGenerators(node, node.getInternalElt(), node.getInternalGenerators());
+        code.invokespecial(p(PySet.class), "<init>", sig(Void.TYPE, PyObject.class));
         return null;
     }
 
     @Override
     public Object visitDictComp(DictComp node) throws Exception {
         code.new_(p(PyDictionary.class));
-
         code.dup();
         code.invokespecial(p(PyDictionary.class), "<init>", sig(Void.TYPE));
-
         code.dup();
-
-        code.ldc("__setitem__");
-
-        code.invokevirtual(p(PyDictionary.class), "__getattr__", sig(PyObject.class, String.class));
-        String tmp_append = "_{" + node.getLine() + "_" + node.getCharPositionInLine() + "}";
-
-        java.util.List<expr> args = new ArrayList<expr>();
-        args.add(node.getInternalKey());
-        args.add(node.getInternalValue());
-
-        finishComp(node, args, node.getInternalGenerators(), tmp_append);
-
+        java.util.List<expr> kv = Arrays.asList(node.getInternalKey(), node.getInternalValue());
+        visitInternalGenerators(
+                node,
+                new Tuple(node, kv, expr_contextType.UNDEFINED),
+                node.getInternalGenerators());
+        code.invokevirtual(p(PyDictionary.class), "update", sig(Void.TYPE, PyObject.class));
         return null;
     }
-
 
     private void finishComp(expr node, java.util.List<expr> args, java.util.List<comprehension> generators,
             String tmp_append) throws Exception {
@@ -2583,6 +2560,77 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         } else {
             module.stringConstant(s.asString()).get(code);
         }
+        return null;
+    }
+
+    private Object visitInternalGenerators(expr node, expr elt, java.util.List<comprehension> generators)
+            throws Exception {
+        String bound_exp = "_(x)";
+
+        setline(node);
+
+        code.new_(p(PyFunction.class));
+        code.dup();
+        loadFrame();
+        code.getfield(p(PyFrame.class), "f_globals", ci(PyObject.class));
+
+        ScopeInfo scope = module.getScopeInfo(node);
+
+        int emptyArray = makeArray(new ArrayList<expr>());
+        code.aload(emptyArray);
+        scope.setup_closure();
+        scope.dump();
+
+        stmt n = new Expr(node, new Yield(node, elt));
+
+        expr iter = null;
+        for (int i = generators.size() - 1; i >= 0; i--) {
+            comprehension comp = generators.get(i);
+            for (int j = comp.getInternalIfs().size() - 1; j >= 0; j--) {
+                java.util.List<stmt> bod = new ArrayList<stmt>();
+                bod.add(n);
+                n = new If(comp.getInternalIfs().get(j), comp.getInternalIfs().get(j), bod,
+                        new ArrayList<stmt>());
+            }
+            java.util.List<stmt> bod = new ArrayList<stmt>();
+            bod.add(n);
+            if (i != 0) {
+                n = new For(comp, comp.getInternalTarget(), comp.getInternalIter(), bod,
+                        new ArrayList<stmt>());
+            } else {
+                n = new For(comp, comp.getInternalTarget(), new Name(node, bound_exp,
+                        expr_contextType.Load), bod, new ArrayList<stmt>());
+                iter = comp.getInternalIter();
+            }
+        }
+
+        java.util.List<stmt> bod = new ArrayList<stmt>();
+        bod.add(n);
+        module.codeConstant(new Suite(node, bod), "<genexpr>", true,
+                className, false, false,
+                node.getLine(), scope, cflags).get(code);
+
+        code.aconst_null();
+        if (!makeClosure(scope)) {
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
+                    PyObject[].class, PyCode.class, PyObject.class));
+        } else {
+            code.invokespecial(p(PyFunction.class), "<init>", sig(Void.TYPE, PyObject.class,
+                    PyObject[].class, PyCode.class, PyObject.class, PyObject[].class));
+        }
+        int genExp = storeTop();
+
+        visit(iter);
+        code.aload(genExp);
+        code.freeLocal(genExp);
+        code.swap();
+        code.invokevirtual(p(PyObject.class), "__iter__", sig(PyObject.class));
+        loadThreadState();
+        code.swap();
+        code.invokevirtual(p(PyObject.class), "__call__",
+                sig(PyObject.class, ThreadState.class, PyObject.class));
+        freeArray(emptyArray);
+
         return null;
     }
 
