@@ -23,6 +23,9 @@ public class cmath {
     /** ln({@link Double#MAX_VALUE}) or a little less */
     private static final double NEARLY_LN_DBL_MAX = 709.4361393;
 
+    /** log<sub>10</sub>e (Ref: Abramowitz &amp; Stegun [1972], p3). */
+    private static final double LOG10E = 0.43429448190325182765;
+
     private static PyComplex c_prodi(PyComplex x) {
         return (PyComplex)x.__mul__(i);
     }
@@ -204,18 +207,6 @@ public class cmath {
         return exceptNaN(new PyComplex(u, v), zz);
     }
 
-    public static PyComplex log(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        if (isNaN(x)) {
-            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
-                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
-            } else {
-                return PyComplex.NaN;
-            }
-        }
-        return new PyComplex(Math.log(abs(x)), Math.atan2(x.imag, x.real));
-    }
-
     public static double phase(PyObject in) {
         PyComplex x = complexFromPyObject(in);
         return Math.atan2(x.imag, x.real);
@@ -269,36 +260,125 @@ public class cmath {
         return Double.isNaN(x.real) || Double.isNaN(x.imag);
     }
 
-    public static PyComplex log10(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        if (isNaN(x)) {
-            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
-                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
-            } else {
-                return PyComplex.NaN;
-            }
-        }
-        double l = abs(x);
-        return new PyComplex(math.log10(new PyFloat(l)), Math.atan2(x.imag, x.real)
-                / Math.log(10.0));
+    /**
+     * Returns the natural logarithm of <i>w</i>.
+     *
+     * @param w
+     * @return ln <i>w</i>
+     */
+    public static PyComplex log(PyObject w) {
+        PyComplex ww = complexFromPyObject(w);
+        double u = ww.real, v = ww.imag;
+        // The real part of the result is the log of the magnitude.
+        double lnr = logHypot(u, v);
+        // The imaginary part of the result is the arg. This may result in a nan.
+        double theta = Math.atan2(v, u);
+        PyComplex z = new PyComplex(lnr, theta);
+        return exceptNaN(z, ww);
     }
 
-    public static PyComplex log(PyObject in, PyObject base) {
-        return log(complexFromPyObject(in), complexFromPyObject(base));
+    /**
+     * Returns the common logarithm of <i>w</i> (base 10 logarithm).
+     *
+     * @param w
+     * @return log<sub>10</sub><i>w</i>
+     */
+    public static PyComplex log10(PyObject w) {
+        PyComplex ww = complexFromPyObject(w);
+        double u = ww.real, v = ww.imag;
+        // The expression is the same as for base e, scaled in magnitude.
+        double logr = logHypot(u, v) * LOG10E;
+        double theta = Math.atan2(v, u) * LOG10E;
+        PyComplex z = new PyComplex(logr, theta);
+        return exceptNaN(z, ww);
     }
 
-    public static PyComplex log(PyComplex x, PyComplex base) {
-        if (isNaN(x)) {
-            if (Double.isInfinite(x.real) || Double.isInfinite(x.imag)) {
-                return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
+    /**
+     * Returns the logarithm of <i>w</i> to the given base. If the base is not specified, returns
+     * the natural logarithm of <i>w</i>. There is one branch cut, from 0 along the negative real
+     * axis to -&infin;, continuous from above.
+     *
+     * @param w
+     * @param b
+     * @return log<sub>b</sub><i>w</i>
+     */
+    public static PyComplex log(PyObject w, PyObject b) {
+        PyComplex ww = complexFromPyObject(w), bb = complexFromPyObject(b), z;
+        double u = ww.real, v = ww.imag, br = bb.real, bi = bb.imag, x, y;
+        // Natural log of w is (x,y)
+        x = logHypot(u, v);
+        y = Math.atan2(v, u);
+
+        if (bi != 0. || br <= 0.) {
+            // Complex or negative real base requires complex log: general case.
+            PyComplex lnb = log(bb);
+            z = (PyComplex)(new PyComplex(x, y)).__div__(lnb);
+
+        } else {
+            // Real positive base: frequent case. (b = inf or nan ends up here too.)
+            double lnb = Math.log(br);
+            z = new PyComplex(x / lnb, y / lnb);
+        }
+
+        return exceptNaN(z, ww);
+    }
+
+    /**
+     * Helper function for the log of a complex number, dealing with the log magnitude, and without
+     * intermediate overflow or underflow. It returns ln <i>r</i>, where <i>r<sup>2</sup> =
+     * u<sup>2</sup>+v<sup>2</sup></i>. To do this it computes
+     * &frac12;ln(u<sup>2</sup>+v<sup>2</sup>). Special cases are handled as follows:
+     * <ul>
+     * <li>if u or v is NaN, it returns NaN</li>
+     * <li>if u or v is infinite, it returns positive infinity</li>
+     * <li>if u and v are both zero, it raises a ValueError</li>
+     * </ul>
+     * We have this function instead of <code>Math.log(Math.hypot(u,v))</code> because a valid
+     * result is still possible even when <code>hypot(u,v)</code> overflows, and because there's no
+     * point in taking a square root when a log is to follow.
+     *
+     * @param u
+     * @param v
+     * @return &frac12;ln(u<sup>2</sup>+v<sup>2</sup>)
+     */
+    private static double logHypot(double u, double v) {
+
+        if (Double.isInfinite(u) || Double.isInfinite(v)) {
+            return Double.POSITIVE_INFINITY;
+
+        } else {
+            // Cannot overflow, but if u=v=0 will return -inf.
+            int scale = 0, ue = Math.getExponent(u), ve = Math.getExponent(v);
+            double lnr;
+
+            if (ue < -511 && ve < -511) {
+                // Both u and v are too small to square, or zero. (Just one would be ok.)
+                scale = 600;
+            } else if (ue > 510 || ve > 510) {
+                // One of these is too big to square and double (or is nan or inf).
+                scale = -600;
+            }
+
+            if (scale == 0) {
+                // Normal case: there is no risk of overflow or log of zero.
+                lnr = 0.5 * Math.log(u * u + v * v);
             } else {
-                return PyComplex.NaN;
+                // We must work with scaled values, us = u * 2**n etc..
+                double us = Math.scalb(u, scale);
+                double vs = Math.scalb(v, scale);
+                // rs**2 = r**2 * 2**2n
+                double rs2 = us * us + vs * vs;
+                // So ln(r) = ln(u**2+v**2)/2 = ln(us**2+vs**2)/2 - n ln(2)
+                lnr = 0.5 * Math.log(rs2) - scale * math.LN2;
+            }
+
+            // (u,v) = 0 leads to ln(r) = -inf, but that's a domain error
+            if (lnr == Double.NEGATIVE_INFINITY) {
+                throw math.mathDomainError();
+            } else {
+                return lnr;
             }
         }
-        double l = abs(x);
-        PyComplex log_base = log(base);
-        return (PyComplex)new PyComplex(math.log(new PyFloat(l)), Math.atan2(x.imag, x.real))
-                .__div__(log_base);
     }
 
     public static PyComplex sin(PyObject in) {
