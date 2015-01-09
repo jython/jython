@@ -275,6 +275,8 @@ def java_net_socketexception_handler(exc):
         return _add_exception_attrs(
             error(errno.EAFNOSUPPORT, 
                   'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6_address_support'))
+    if exc.message.startswith('Address already in use'):
+        return error(errno.EADDRINUSE, 'Address already in use')
     return _unmapped_exception(exc)
 
 
@@ -546,7 +548,8 @@ class poll(object):
                 result = self._handle_poll(partial(self.queue.poll, timeout_in_ns, TimeUnit.NANOSECONDS))
                 if result:
                     return result
-                timeout = timeout - (time.time() - started)
+                timeout -= time.time() - started
+                log.debug("Spurious wakeup, retrying with timeout=%s", timeout, extra={"sock": "*"})
             return []
 
 
@@ -764,7 +767,8 @@ class _realsocket(object):
         elif self.timeout:
             self._handle_timeout(future.await, reason)
             if not future.isSuccess():
-                log.exception("Got this failure %s during %s", future.cause(), reason, extra={"sock": self})
+                log.debug("Got this failure %s during %s", future.cause(), reason, extra={"sock": self})
+                print "Got this failure %s during %s (%s)" % (future.cause(), reason, self)
                 raise future.cause()
             return future
         else:
@@ -916,10 +920,10 @@ class _realsocket(object):
         self.child_handler = ChildSocketHandler(self)
         b.childHandler(self.child_handler)
 
-        future = b.bind(self.bind_addr.getAddress(), self.bind_addr.getPort())
-        self._handle_channel_future(future, "listen")
+        self.bind_future = b.bind(self.bind_addr.getAddress(), self.bind_addr.getPort())
+        self._handle_channel_future(self.bind_future, "listen")
         self.bind_timestamp = time.time()
-        self.channel = future.channel()
+        self.channel = self.bind_future.channel()
         log.debug("Bound server socket to %s", self.bind_addr, extra={"sock": self})
 
     def accept(self):
@@ -1059,6 +1063,23 @@ class _realsocket(object):
             return bool(self.child_queue.peek())
         else:
             return False
+
+    def _pending(self):
+        # Used by ssl.py for an undocumented function used in tests
+        # and of course some user code. Note that with Netty,
+        # readableBytes() in incoming or incoming_head are guaranteed
+        # to be plaintext because of the way pipelines work.  However
+        # this is a terrible function to call because it's trying to
+        # do something synchronous in the async setting of sockets.
+        if self.socket_type == CLIENT_SOCKET or self.socket_type == DATAGRAM_SOCKET:
+            if self.incoming_head is not None:
+                pending = self.incoming_head.readableBytes()
+            else:
+                pending = 0
+            for msg in self.incoming:
+                pending += msg.readableBytes()
+            return pending
+        return 0
 
     def _writable(self):
         return self.channel and self.channel.isActive() and self.channel.isWritable()
@@ -1217,13 +1238,17 @@ class _realsocket(object):
         while True:
             local_addr = self.channel.localAddress()
             if local_addr:
-                break
+                if hasattr(self, "bind_future"):
+                    if self.bind_future.isDone():
+                        break
+                else:
+                    break
             if time.time() - self.bind_timestamp > 1:
                 # Presumably after a second something is completely wrong,
                 # so punt
                 raise error(errno.ENOTCONN, "Socket is not connected")
             log.debug("Poll for local address", extra={"sock": self})
-            time.sleep(0.1)  # completely arbitrary
+            time.sleep(0.01)  # completely arbitrary
         if local_addr.getAddress().isAnyLocalAddress():
             # Netty 4 will default to an IPv6 "any" address from a channel even if it was originally bound to an IPv4 "any" address
             # so, as a workaround, let's construct a new "any" address using the port information gathered above

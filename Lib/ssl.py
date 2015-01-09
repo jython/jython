@@ -26,8 +26,7 @@ from _socket import (
     SSL_ERROR_WANT_CONNECT,
     SSL_ERROR_EOF,
     SSL_ERROR_INVALID_ERROR_CODE,
-    error as socket_error,
-    CLIENT_SOCKET, DATAGRAM_SOCKET)
+    error as socket_error)
 from _sslcerts import _get_ssl_context
 
 from java.text import SimpleDateFormat
@@ -204,10 +203,7 @@ class SSLSocket(object):
     def pending(self):
         # undocumented function, used by some tests
         # see also http://bugs.python.org/issue21430
-        if self._sock.socket_type == CLIENT_SOCKET or self._sock.socket_type == DATAGRAM_SOCKET:
-            if self._sock.incoming_head is not None:
-                return self._sock.incoming_head.readableBytes()
-        return 0
+        return self._sock._pending()
 
     def _readable(self):
         return self._sock._readable()

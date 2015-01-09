@@ -1441,3 +1441,28 @@ def strip_python_stderr(stderr):
     """
     stderr = re.sub(br"\[\d+ refs\]\r?\n?$", b"", stderr).strip()
     return stderr
+
+def retry(exceptions, tries=6, delay=3, backoff=1.2):
+    # modified from https://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+    def deco_retry(f):
+
+        def wrapper(*args, **kwds):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwds)
+                except exceptions as e:
+                    print "Got %s, retrying in %.2f seconds..." % (str(e), mdelay)
+                    # FIXME resource cleanup continues to be an issue
+                    # in terms of tests we use from CPython. This only
+                    # represents a bandaid - useful as it might be -
+                    # and it should be revisited.
+                    gc_collect()
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwds)
+
+        return wrapper
+
+    return deco_retry

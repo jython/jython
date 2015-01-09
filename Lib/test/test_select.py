@@ -140,6 +140,7 @@ class ThreadedPollClientSocket(test_socket.SocketConnectedTest):
     def testSocketRegisteredBeforeConnected(self):
         pass
 
+    @test_support.retry(Exception)
     def _testSocketRegisteredBeforeConnected(self):
         timeout = 1000 # milliseconds
         poll_object = select.poll()
@@ -147,14 +148,14 @@ class ThreadedPollClientSocket(test_socket.SocketConnectedTest):
         poll_object.register(self.cli, select.POLLOUT)
         result_list = poll_object.poll(timeout)
         result_sockets = [r[0] for r in result_list]
-        self.failUnless(self.cli in result_sockets, "Unconnected client socket should be selectable")
+        self.assertIn(self.cli, result_sockets, "Unconnected client socket should be selectable")
         # Now connect the socket, but DO NOT register it again
         self.cli.setblocking(0)
         self.cli.connect( (self.HOST, self.PORT) )
         # Now poll again, to check that the poll object has recognised that the socket is now connected
         result_list = poll_object.poll(timeout)
         result_sockets = [r[0] for r in result_list]
-        self.failUnless(self.cli in result_sockets, "Connected client socket should have been selectable")
+        self.assertIn(self.cli, result_sockets, "Connected client socket should have been selectable")
 
     def testSelectOnSocketFileno(self):
         pass
@@ -178,7 +179,10 @@ class TestJythonSelect(unittest.TestCase):
 
 def test_main():
 
-    tests = [TestSelectInvalidParameters, TestSelectClientSocket, TestPollClientSocket, ThreadedPollClientSocket,
+    tests = [TestSelectInvalidParameters,
+             TestSelectClientSocket,
+             TestPollClientSocket,
+             ThreadedPollClientSocket,
              TestJythonSelect]
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support._run_suite(unittest.TestSuite(suites))

@@ -111,7 +111,16 @@ class ThreadableTest:
         it wants the client thread to proceed. This is useful if the
         server is about to execute a blocking routine that is
         dependent upon the client thread during its setup routine."""
-        self.server_ready.set()
+
+        def be_ready():
+            # Because of socket reuse, old server sockets may still be
+            # accepting client connections as they get shutdown, but
+            # before they accept with the new server socket.
+            #
+            # Avoid race by ensuring accept is started before clients
+            # attempt to connect.
+            self.server_ready.set()
+        threading.Timer(0.1, be_ready).start()
 
     def _setUp(self):
         self.server_ready = threading.Event()
@@ -1342,10 +1351,20 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
 
     def testNonBlockingConnect(self):
         # Testing non-blocking connect
-        conn, addr = self.serv.accept()
+        # this can potentially race with the client, so we need to loop
+        while True:
+            read, write, err = select.select([self.serv], [], [], 0.1)
+            if read or write or err:
+                break
+        if self.serv in read:
+            conn, addr = self.serv.accept()
+            conn.close()
+        else:
+            self.fail("Error trying to do accept after select: server socket was not in 'read'able list")
 
     def _testNonBlockingConnect(self):
         # Testing non-blocking connect
+        time.sleep(0.1)
         self.cli.setblocking(0)
         result = self.cli.connect_ex((self.HOST, self.PORT))
         while True:
@@ -1366,6 +1385,7 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     def _testConnectWithLocalBind(self):
         # Testing blocking connect with local bind
         cli_port = self.PORT - 1
+        start = time.time()
         while True:
             # Keep trying until a local port is available
             self.cli.settimeout(1)
@@ -1378,12 +1398,17 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
                 # previous test run). reset the client socket and try
                 # again
                 self.failUnlessEqual(se[0], errno.EADDRINUSE)
+                print "Got an error in connect, will retry", se
                 try:
                     self.cli.close()
                 except socket.error:
                     pass
                 self.clientSetUp()
                 cli_port -= 1
+            # Make sure we have no tests currently holding open this socket
+            test_support.gc_collect()
+            if time.time() - start > 5:
+                self.fail("Timed out after 5 seconds")
         bound_host, bound_port = self.cli.getsockname()
         self.failUnlessEqual(bound_port, cli_port)
 
@@ -1726,7 +1751,8 @@ used, but if it is on your network this failure is bogus.''' % host)
         self.failUnlessRaises(socket.timeout, raise_timeout,
                               "TCP socket recv failed to generate a timeout exception (TCP)")
 
-    def estSendTimeout(self):
+    @unittest.skipIf(test_support.is_jython, "This test takes a very long time")
+    def testSendTimeout(self):
         def raise_timeout(*args, **kwargs):
             cli_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             cli_sock.connect( (self.HOST, self.PORT) )
@@ -1889,7 +1915,7 @@ class TestGetAddrInfo(unittest.TestCase):
             # Maybe no IPv6 configured on the test machine.
             return
         ipv6_address_tuple = addrinfo[0][4]
-        self.failUnless     (ipv6_address_tuple[0] in ["::1", "0:0:0:0:0:0:0:1"])
+        self.assertIn(ipv6_address_tuple[0], ["::1", "0:0:0:0:0:0:0:1"])
         self.failUnlessEqual(ipv6_address_tuple[1], 80)
         self.failUnlessEqual(ipv6_address_tuple[2], 0)
         # Can't have an expectation for scope
@@ -1900,8 +1926,8 @@ class TestGetAddrInfo(unittest.TestCase):
         self.failUnlessRaises(IndexError, lambda: ipv6_address_tuple[4])
         # These str/repr tests may fail on some systems: the scope element of the tuple may be non-zero
         # In this case, we'll have to change the test to use .startswith() or .split() to exclude the scope element
-        self.failUnless(str(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
-        self.failUnless(repr(ipv6_address_tuple) in ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
+        self.assertIn(str(ipv6_address_tuple), ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
+        self.assertIn(repr(ipv6_address_tuple), ["('::1', 80, 0, 0)", "('0:0:0:0:0:0:0:1', 80, 0, 0)"])
 
     def testNonIntPort(self):
         hostname = "localhost"
