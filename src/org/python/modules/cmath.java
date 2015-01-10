@@ -22,6 +22,14 @@ public class cmath {
     private static final double ROOT_HALF = 0.70710678118654752440;
     /** ln({@link Double#MAX_VALUE}) or a little less */
     private static final double NEARLY_LN_DBL_MAX = 709.4361393;
+    /**
+     * For x larger than this, <i>e<sup>-x</sup></i> is negligible compared with
+     * <i>e<sup>x</sup></i>, or equivalently 1 is negligible compared with <i>e<sup>2x</sup></i>, in
+     * IEEE-754 floating point. Beyond this, sinh <i>x</i> and cosh <i>x</i> are adequately
+     * approximated by 0.5<i>e<sup>x</sup></i>. The smallest theoretical value is 27 ln(2).
+     */
+    private static final double ATLEAST_27LN2 = 18.72;
+    private static final double HALF_E2 = 0.5 * Math.E * Math.E;
 
     /** log<sub>10</sub>e (Ref: Abramowitz &amp; Stegun [1972], p3). */
     private static final double LOG10E = 0.43429448190325182765;
@@ -381,16 +389,110 @@ public class cmath {
         }
     }
 
-    public static PyComplex sin(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return new PyComplex(Math.sin(x.real) * math.cosh(x.imag), Math.cos(x.real)
-                * math.sinh(x.imag));
+    /**
+     * Return the sine of z.
+     * @param z
+     * @return sin <i>z</i>
+     */
+    public static PyComplex sin(PyObject z) {
+        return sinOrSinh(complexFromPyObject(z), false);
     }
 
-    public static PyComplex sinh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return new PyComplex(Math.cos(x.imag) * math.sinh(x.real), Math.sin(x.imag)
-                * math.cosh(x.real));
+    /**
+     * Return the hyperbolic sine of z.
+     * @param z
+     * @return sinh <i>z</i>
+     */
+    public static PyComplex sinh(PyObject z) {
+        return sinOrSinh(complexFromPyObject(z), true);
+    }
+
+    /**
+     * Helper to compute either sin <i>z</i> or sinh <i>z</i>.
+     *
+     * @param z
+     * @param h <code>true</code> to compute sinh <i>z</i>, <code>false</code> to compute sin
+     *            <i>z</i>.
+     * @return
+     */
+    private static PyComplex sinOrSinh(PyComplex z, boolean h) {
+        double x, y, u, v;
+        PyComplex w;
+
+        if (h) {
+            // We compute w = sinh(z). Let w = u + iv and z = x + iy. We compute w = sinh(z) from:
+            x = z.real;
+            y = z.imag;
+            // Then the function body computes sinh(x+iy), according to:
+            // u = sinh(x) cos(y),
+            // v = cosh(x) sin(y),
+            // And we return w = u + iv.
+        } else {
+            // We compute w = sin(z). Unusually, let z = y - ix.
+            y = z.real;
+            x = -z.imag;
+            // Then the function body computes sinh(x+iy) = sinh(iz) = i sin(z), according to:
+            // u = sinh(x) cos(y),
+            // v = cosh(x) sin(y).
+            // But we finally return w = v - iu = sin(z)
+        }
+
+        if (y == 0.) {
+            // Real argument for sinh (or imaginary for sin): use real library.
+            u = math.sinh(x);   // This will raise a range error on overflow.
+            // v follows the sign of y (which could be -0.0).
+            v = y;
+
+        } else if (x == 0.) {
+            // Imaginary argument for sinh (or real for sin): imaginary result at this point.
+            v = Math.sin(y);
+            // u follows sign of x (which could be -0.0).
+            u = x;
+
+        } else {
+
+            // The trig calls will not throw, although if y is infinite, they return nan.
+            double cosy = Math.cos(y), siny = Math.sin(y), absx = Math.abs(x);
+
+            if (absx == Double.POSITIVE_INFINITY) {
+                if (!Double.isNaN(cosy)) {
+                    // w = (inf,inf), but "rotated" by the direction cosines.
+                    u = x * cosy;
+                    v = Math.abs(x) * siny;
+                } else {
+                    // Provisionally w = (inf,nan), which will raise domain error if y!=nan.
+                    u = x;
+                    v = Double.NaN;
+                }
+
+            } else if (absx > ATLEAST_27LN2) {
+                // Use 0.5*e**x approximation. This is also the region where we risk overflow.
+                double r = Math.exp(absx - 2.);
+                // r approximates 2cosh(x)/e**2: multiply in this order to avoid inf:
+                v = r * siny * HALF_E2;
+                // r approximates 2sinh(|x|)/e**2: put back the proper sign of x in passing.
+                u = Math.copySign(r, x) * cosy * HALF_E2;
+                if (Double.isInfinite(u) || Double.isInfinite(v)) {
+                    // A finite x gave rise to an infinite u or v.
+                    throw math.mathRangeError();
+                }
+
+            } else {
+                // Normal case, without risk of overflow.
+                u = Math.sinh(x) * cosy;
+                v = Math.cosh(x) * siny;
+            }
+        }
+
+        // Compose the result w according to whether we're computing sin(z) or sinh(z).
+        if (h) {
+            w = new PyComplex(u, v);    // w = u + iv = sinh(x+iy).
+        } else {
+            w = new PyComplex(v, -u);   // w = v - iu = sin(y-ix) = sin(z)
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(w, z);
     }
 
     /**
