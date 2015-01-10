@@ -142,16 +142,105 @@ public class cmath {
         return (PyComplex)half.__mul__(log(one.__add__(x).__div__(one.__sub__(x))));
     }
 
-    public static PyComplex cos(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return new PyComplex(Math.cos(x.real) * math.cosh(x.imag), -Math.sin(x.real)
-                * math.sinh(x.imag));
+    /**
+     * Return the cosine of z.
+     *
+     * @param z
+     * @return cos <i>z</i>
+     */
+    public static PyComplex cos(PyObject z) {
+        return cosOrCosh(complexFromPyObject(z), false);
     }
 
-    public static PyComplex cosh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return new PyComplex(Math.cos(x.imag) * math.cosh(x.real), Math.sin(x.imag)
-                * math.sinh(x.real));
+    /**
+     * Return the hyperbolic cosine of z.
+     *
+     * @param z
+     * @return cosh <i>z</i>
+     */
+    public static PyComplex cosh(PyObject z) {
+        return cosOrCosh(complexFromPyObject(z), true);
+    }
+
+    /**
+     * Helper to compute either cos <i>z</i> or cosh <i>z</i>.
+     *
+     * @param z
+     * @param h <code>true</code> to compute cosh <i>z</i>, <code>false</code> to compute cos
+     *            <i>z</i>.
+     * @return
+     */
+    private static PyComplex cosOrCosh(PyComplex z, boolean h) {
+        double x, y, u, v;
+        PyComplex w;
+
+        if (h) {
+            // We compute w = cosh(z). Let w = u + iv and z = x + iy.
+            x = z.real;
+            y = z.imag;
+            // Then the function body computes cosh(x+iy), according to:
+            // u = cosh(x) cos(y),
+            // v = sinh(x) sin(y),
+            // And we return w = u + iv.
+        } else {
+            // We compute w = sin(z). Unusually, let z = y - ix, so x + iy = iz.
+            y = z.real;
+            x = -z.imag;
+            // Then the function body computes cosh(x+iy) = cosh(iz) = cos(z) as before.
+        }
+
+        if (y == 0.) {
+            // Real argument for cosh (or imaginary for cos): use real library.
+            u = math.cosh(x);   // This will raise a range error on overflow.
+            // v is zero but follows the sign of x*y (in which y could be -0.0).
+            v = Math.copySign(1., x) * y;
+
+        } else if (x == 0.) {
+            // Imaginary argument for cosh (or real for cos): imaginary result at this point.
+            u = Math.cos(y);
+            // v is zero but follows the sign of x*y (in which x could be -0.0).
+            v = x * Math.copySign(1., y);
+
+        } else {
+
+            // The trig calls will not throw, although if y is infinite, they return nan.
+            double cosy = Math.cos(y), siny = Math.sin(y), absx = Math.abs(x);
+
+            if (absx == Double.POSITIVE_INFINITY) {
+                if (!Double.isNaN(cosy)) {
+                    // w = (inf,inf), but "rotated" by the direction cosines.
+                    u = absx * cosy;
+                    v = x * siny;
+                } else {
+                    // Provisionally w = (inf,nan), which will raise domain error if y!=nan.
+                    u = absx;
+                    v = Double.NaN;
+                }
+
+            } else if (absx > ATLEAST_27LN2) {
+                // Use 0.5*e**x approximation. This is also the region where we risk overflow.
+                double r = Math.exp(absx - 2.);
+                // r approximates 2cosh(x)/e**2: multiply in this order to avoid inf:
+                u = r * cosy * HALF_E2;
+                // r approximates 2sinh(|x|)/e**2: put back the proper sign of x in passing.
+                v = Math.copySign(r, x) * siny * HALF_E2;
+                if (Double.isInfinite(u) || Double.isInfinite(v)) {
+                    // A finite x gave rise to an infinite u or v.
+                    throw math.mathRangeError();
+                }
+
+            } else {
+                // Normal case, without risk of overflow.
+                u = Math.cosh(x) * cosy;
+                v = Math.sinh(x) * siny;
+            }
+        }
+
+        // Compose the result w = u + iv.
+        w = new PyComplex(u, v);
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(w, z);
     }
 
     /**
@@ -391,6 +480,7 @@ public class cmath {
 
     /**
      * Return the sine of z.
+     *
      * @param z
      * @return sin <i>z</i>
      */
@@ -400,6 +490,7 @@ public class cmath {
 
     /**
      * Return the hyperbolic sine of z.
+     *
      * @param z
      * @return sinh <i>z</i>
      */
@@ -420,7 +511,7 @@ public class cmath {
         PyComplex w;
 
         if (h) {
-            // We compute w = sinh(z). Let w = u + iv and z = x + iy. We compute w = sinh(z) from:
+            // We compute w = sinh(z). Let w = u + iv and z = x + iy.
             x = z.real;
             y = z.imag;
             // Then the function body computes sinh(x+iy), according to:
@@ -428,13 +519,11 @@ public class cmath {
             // v = cosh(x) sin(y),
             // And we return w = u + iv.
         } else {
-            // We compute w = sin(z). Unusually, let z = y - ix.
+            // We compute w = sin(z). Unusually, let z = y - ix, so x + iy = iz.
             y = z.real;
             x = -z.imag;
-            // Then the function body computes sinh(x+iy) = sinh(iz) = i sin(z), according to:
-            // u = sinh(x) cos(y),
-            // v = cosh(x) sin(y).
-            // But we finally return w = v - iu = sin(z)
+            // Then the function body computes sinh(x+iy) = sinh(iz) = i sin(z) as before,
+            // but we finally return w = v - iu = sin(z).
         }
 
         if (y == 0.) {
@@ -458,7 +547,7 @@ public class cmath {
                 if (!Double.isNaN(cosy)) {
                     // w = (inf,inf), but "rotated" by the direction cosines.
                     u = x * cosy;
-                    v = Math.abs(x) * siny;
+                    v = absx * siny;
                 } else {
                     // Provisionally w = (inf,nan), which will raise domain error if y!=nan.
                     u = x;
