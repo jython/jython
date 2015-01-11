@@ -694,36 +694,108 @@ public class cmath {
         }
     }
 
-    public static PyComplex tan(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-
-        double sr = Math.sin(x.real);
-        double cr = Math.cos(x.real);
-        double shi = math.sinh(x.imag);
-        double chi = math.cosh(x.imag);
-        double rs = sr * chi;
-        double is = cr * shi;
-        double rc = cr * chi;
-        double ic = -sr * shi;
-        double d = rc * rc + ic * ic;
-
-        return new PyComplex(((rs * rc) + (is * ic)) / d, ((is * rc) - (rs * ic)) / d);
+    /**
+     * Return the tangent of z.
+     *
+     * @param z
+     * @return tan <i>z</i>
+     */
+    public static PyComplex tan(PyObject z) {
+        return tanOrTanh(complexFromPyObject(z), false);
     }
 
-    public static PyComplex tanh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
+    /**
+     * Return the hyperbolic tangent of z.
+     *
+     * @param z
+     * @return tanh <i>z</i>
+     */
+    public static PyComplex tanh(PyObject z) {
+        return tanOrTanh(complexFromPyObject(z), true);
+    }
 
-        double si = Math.sin(x.imag);
-        double ci = Math.cos(x.imag);
-        double shr = math.sinh(x.real);
-        double chr = math.cosh(x.real);
-        double rs = ci * shr;
-        double is = si * chr;
-        double rc = ci * chr;
-        double ic = si * shr;
-        double d = rc * rc + ic * ic;
+    /**
+     * Helper to compute either tan <i>z</i> or tanh <i>z</i>. The expression used is:
+     * <p>
+     * tanh(<i>x+iy</i>) = (sinh <i>x</i> cosh <i>x + i</i> sin <i>y</i> cos <i>y</i>) /
+     * (sinh<sup>2</sup><i>x +</i> cos<sup>2</sup><i>y</i>)
+     * <p>
+     * A simplification is made for x sufficiently large that <i>e<sup>2|x|</sup></i>&#x0226B;1 that
+     * deals satisfactorily with large or infinite <i>x</i>. When computing tan, we evaluate
+     * <i>i</i> tan <i>iz</i> instead, and the approximation applies to
+     * <i>e<sup>2|y|</sup></i>&#x0226B;1.
+     *
+     * @param z
+     * @param h <code>true</code> to compute tanh <i>z</i>, <code>false</code> to compute tan
+     *            <i>z</i>.
+     * @return tan or tanh <i>z</i>
+     */
+    private static PyComplex tanOrTanh(PyComplex z, boolean h) {
+        double x, y, u, v, s;
+        PyComplex w;
 
-        return new PyComplex(((rs * rc) + (is * ic)) / d, ((is * rc) - (rs * ic)) / d);
+        if (h) {
+            // We compute w = tanh(z). Let w = u + iv and z = x + iy.
+            x = z.real;
+            y = z.imag;
+            // Then the function body computes tanh(x+iy), according to:
+            // s = sinh**2 x + cos**2 y
+            // u = sinh x cosh x / s,
+            // v = sin y cos y / s,
+            // And we return w = u + iv.
+        } else {
+            // We compute w = tan(z). Unusually, let z = y - ix, so x + iy = iz.
+            y = z.real;
+            x = -z.imag;
+            // Then the function body computes tanh(x+iy) = tanh(iz) = i tan(z) as before,
+            // but we finally return w = v - iu = tan(z).
+        }
+
+        if (y == 0.) {
+            // Real argument for tanh (or imaginary for tan).
+            u = Math.tanh(x);
+            // v is zero but follows the sign of y (which could be -0.0).
+            v = y;
+
+        } else if (x == 0. && !Double.isNaN(y)) {
+            // Imaginary argument for tanh (or real for tan): imaginary result at this point.
+            v = Math.tan(y); // May raise domain error
+            // u is zero but follows sign of x (which could be -0.0).
+            u = x;
+
+        } else {
+            // The trig calls will not throw, although if y is infinite, they return nan.
+            double cosy = Math.cos(y), siny = Math.sin(y), absx = Math.abs(x);
+
+            if (absx > ATLEAST_27LN2) {
+                // e**2x is much greater than 1: exponential approximation to sinh and cosh.
+                s = 0.25 * Math.exp(2 * absx);
+                u = Math.copySign(1., x);
+                if (s == Double.POSITIVE_INFINITY) {
+                    // Either x is inf or 2x is large enough to overflow exp(). v=0, but signed:
+                    v = Math.copySign(0., siny * cosy);
+                } else {
+                    v = siny * cosy / s;
+                }
+
+            } else {
+                // Normal case: possible overflow in s near (x,y) = (0,pi/2) is harmless.
+                double sinhx = Math.sinh(x), coshx = Math.cosh(x);
+                s = sinhx * sinhx + cosy * cosy;
+                u = sinhx * coshx / s;
+                v = siny * cosy / s;
+            }
+        }
+
+        // Compose the result w according to whether we're computing tan(z) or tanh(z).
+        if (h) {
+            w = new PyComplex(u, v);    // w = u + iv = tanh(x+iy).
+        } else {
+            w = new PyComplex(v, -u);   // w = v - iu = tan(y-ix) = tan(z)
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(w, z);
     }
 
     /**
