@@ -360,7 +360,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         tests = map(removepy, tests)
 
     stdtests = STDTESTS[:]
-    nottests = list(NOTTESTS.copy())
+    nottests = list(NOTTESTS)
     if exclude:
         for arg in args:
             if arg in stdtests:
