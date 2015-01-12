@@ -29,13 +29,18 @@ public class JycompileAntTask extends GlobMatchingTask {
         props.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize(System.getProperties(), props);
         for (File src : toCompile) {
-            String name = _py_compile.getModuleName(src);
-            String compiledFilePath = name.replace('.', '/');
-            if (src.getName().endsWith("__init__.py")) {
-                compiledFilePath += "/__init__";
+            try {
+                String name = _py_compile.getModuleName(src);
+                String compiledFilePath = name.replace('.', '/');
+                if (src.getName().endsWith("__init__.py")) {
+                    compiledFilePath += "/__init__";
+                }
+                File compiled = new File(destDir, compiledFilePath + "$py.class");
+                compile(src, compiled, name);
+            } catch (RuntimeException e) {
+                log("Could not compile " + src);
+                throw e;
             }
-            File compiled = new File(destDir, compiledFilePath + "$py.class");
-            compile(src, compiled, name);
         }
     }
 
