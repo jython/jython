@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -32,6 +33,10 @@ public class PyStringMap extends PyObject {
     private static PyType lazyType;
 
     private final ConcurrentMap<Object, PyObject> table;
+
+    public ConcurrentMap<Object, PyObject> getMap() {
+        return table;
+    }
 
     public PyStringMap() {
         this(4);
@@ -71,6 +76,23 @@ public class PyStringMap extends PyObject {
         return map;
     }
 
+    public static PyObject fromkeys(PyObject keys) {
+        return fromkeys(keys, Py.None);
+    }
+
+    public static PyObject fromkeys(PyObject keys, PyObject value) {
+        return stringmap_fromkeys(TYPE, keys, value);
+    }
+
+    @ExposedClassMethod(defaults = "Py.None", doc = BuiltinDocs.dict_fromkeys_doc)
+    static PyObject stringmap_fromkeys(PyType type, PyObject keys, PyObject value) {
+        PyObject d = type.__call__();
+        for (PyObject o : keys.asIterable()) {
+            d.__setitem__(o, value);
+        }
+        return d;
+    }
+
     @Override
     public int __len__() {
         return stringmap___len__();
@@ -105,7 +127,7 @@ public class PyStringMap extends PyObject {
     public PyObject __getitem__(String key) {
         PyObject o = __finditem__(key);
         if (null == o) {
-            throw Py.KeyError("'" + key + "'");
+            throw Py.KeyError(key);
         } else {
             return o;
         }
@@ -123,7 +145,7 @@ public class PyStringMap extends PyObject {
         } else {
             PyObject o = __finditem__(key);
             if (null == o) {
-                throw Py.KeyError("'" + key.toString() + "'");
+                throw Py.KeyError(key);
             } else {
                 return o;
             }
@@ -185,7 +207,7 @@ public class PyStringMap extends PyObject {
         } else {
             Object ret = table.remove(key);
             if (ret == null) {
-                throw Py.KeyError(key.toString());
+                throw Py.KeyError(key);
             }
         }
     }
@@ -493,7 +515,7 @@ public class PyStringMap extends PyObject {
         PyObject value = table.remove(pyToKey(key));
         if (value == null) {
             if (failobj == null) {
-                throw Py.KeyError(key.__repr__().toString());
+                throw Py.KeyError(key);
             } else {
                 return failobj;
             }

@@ -328,9 +328,13 @@ class DictTest(unittest.TestCase):
         y = self._make_dict({hashed1: 5})
         if isinstance(y, Map) and not isinstance(y, ConcurrentMap):
             raise unittest.SkipTest("java.util.Map objects that do not implement ConcurrentMap have no concurrency guarantees")
+        # given that there are potentially multiple copies of the
+        # above dict in self._make_dict, record the hash_count so it
+        # can be subtracted out
+        setup_hash_count = hashed1.hash_count
         hashed2 = Hashed()
         y.setdefault(hashed2, [])
-        self.assertEqual(hashed1.hash_count, 1)
+        self.assertEqual(hashed1.hash_count, setup_hash_count)
         self.assertEqual(hashed2.hash_count, 1)
         self.assertEqual(hashed1.eq_count + hashed2.eq_count, 1)
 

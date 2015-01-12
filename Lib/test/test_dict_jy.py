@@ -241,6 +241,22 @@ class JavaDictTest(test_dict.DictTest):
         self.assertGreater({1L: 2L, 3L: 4L}, self._make_dict({1: 2}))
 
 
+class PyStringMapTest(test_dict.DictTest):
+    # __dict__ for objects uses PyStringMap for historical reasons, so
+    # we have to test separately
+
+    def _class(self, d):
+        # PyStringMap pretends to be a regular dict, so doing
+        # type(C().__dict__)() will not be helpful - it creates a
+        # regular dict. So explicitly create new objects and return
+        # their __dict__
+        class C(object):
+            pass
+        newdict = C().__dict__
+        newdict.update(d)
+        return newdict
+
+
 def test_main():
     test_support.run_unittest(
         DictInitTest,
@@ -248,7 +264,8 @@ def test_main():
         DictMiscTest,
         DerivedDictTest,
         JavaIntegrationTest,
-        JavaDictTest)
+        JavaDictTest,
+        PyStringMapTest)
 
 if __name__ == '__main__':
     test_main()
