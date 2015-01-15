@@ -1130,7 +1130,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         PyList argv = new PyList();
         if (args != null) {
             for (String arg : args) {
-                argv.append(new PyString(arg));
+                argv.append(Py.newStringOrUnicode(arg));
             }
         }
         return argv;

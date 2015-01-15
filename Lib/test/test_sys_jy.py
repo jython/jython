@@ -2,6 +2,7 @@
 from __future__ import with_statement
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -240,15 +241,29 @@ class SysEncodingTest(unittest.TestCase):
         self.assertEqual(check(0xa2, None, "backslashreplace"), r"\xa2")
         self.assertEqual(check(0xa2, "cp850"), "\xbd")
 
+class SysArgvTest(unittest.TestCase):
+    def test_unicode_argv(self):
+        """Unicode roundtrips successfully through sys.argv arguments"""
+        zhongwen = u'\u4e2d\u6587'
+        with test_support.temp_cwd(name=u"tempcwd-%s" % zhongwen):
+            p = subprocess.Popen(
+                [sys.executable, '-c',
+                 'import sys;' \
+                 'sys.stdout.write(sys.argv[1].encode("utf-8"))',
+                 zhongwen],
+                stdout=subprocess.PIPE)
+            self.assertEqual(p.stdout.read().decode("utf-8"), zhongwen)
+
 
 def test_main():
     test_support.run_unittest(
-                              SysTest,
-                              ShadowingTest,
-                              SyspathResourceTest,
-                              SyspathUnicodeTest,
-                              SysEncodingTest,
-                             )
+        SysTest,
+        ShadowingTest,
+        SyspathResourceTest,
+        SyspathUnicodeTest,
+        SysEncodingTest,
+        SysArgvTest
+    )
 
 if __name__ == "__main__":
     test_main()
