@@ -66,6 +66,15 @@ import traceback
 _is_jython = sys.platform.startswith("java")
 if _is_jython:
     _ModuleType = type(os)
+    # Follow what Python 3.4 has done, http://bugs.python.org/issue5845
+    # FIXME add tab-as-indent support if preceding is whitespace
+    try:
+        import readline
+    except ImportError:
+        pass
+    else:
+        import rlcompleter
+        readline.parse_and_bind("tab: complete")
 
 # Prefixes for site-packages; add additional prefixes like /usr/local here
 PREFIXES = [sys.prefix, sys.exec_prefix]

@@ -147,7 +147,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
         Py.stderr.write(data);
     }
 
-    public StringBuffer buffer = new StringBuffer();
+    public StringBuilder buffer = new StringBuilder();
     public String filename = "<stdin>";
 
     public void resetbuffer() {

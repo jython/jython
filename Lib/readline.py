@@ -1,9 +1,14 @@
-from __future__ import with_statement
 import os.path
 import sys
 from warnings import warn
 
-import java.lang.reflect.Array
+try:
+    # jarjar-ed version
+    from org.python.jline.console.history import MemoryHistory
+except ImportError:
+    # dev version from extlibs
+    from jline.console.history import MemoryHistory
+
 
 __all__ = ['add_history', 'clear_history', 'get_begidx', 'get_completer',
            'get_completer_delims', 'get_current_history_length',
@@ -18,7 +23,7 @@ try:
     _console = sys._jy_console
     _reader = _console.reader
 except AttributeError:
-    raise ImportError("Cannot access JLineConsole reader")
+    raise ImportError("Cannot access JLine2 setup")
 
 _history_list = None
 
@@ -51,21 +56,7 @@ def _setup_history():
 _setup_history()
 
 def parse_and_bind(string):
-    if string == "tab: complete":
-        try:
-            keybindings_field = _reader.class.getDeclaredField("keybindings")
-            keybindings_field.setAccessible(True)
-            keybindings = keybindings_field.get(_reader)
-            COMPLETE = _reader.KEYMAP_NAMES.get('COMPLETE')
-            if java.lang.reflect.Array.getShort(keybindings, 9) != COMPLETE:
-                java.lang.reflect.Array.setShort(keybindings, 9, COMPLETE)
-        except:
-            warn("Cannot bind tab key to complete. You need to do this in a .jlinebindings.properties file instead", SecurityWarning, stacklevel=2)
-    else:
-        warn("Cannot bind key %s. You need to do this in a .jlinebindings.properties file instead" % (string,), NotImplementedWarning, stacklevel=2)
-
-def get_line_buffer():
-    return str(_reader.cursorBuffer.buffer)
+    pass
 
 def insert_text(string):
     _reader.putString(string)
@@ -87,7 +78,7 @@ def read_history_file(filename="~/.history"):
 def write_history_file(filename="~/.history"):
     expanded = os.path.expanduser(filename)
     with open(expanded, 'w') as f:
-        for line in _reader.history.historyList:
+        for line in _reader.history.entries():
             f.write(line)
             f.write("\n")
 
@@ -95,7 +86,7 @@ def clear_history():
     _reader.history.clear()
 
 def add_history(line):
-    _reader.history.addToHistory(line)
+    _reader.history.add(line)
 
 def get_history_length():
     return _reader.history.maxSize
@@ -104,32 +95,26 @@ def set_history_length(length):
     _reader.history.maxSize = length
 
 def get_current_history_length():
-    return len(_reader.history.historyList)
+    return _reader.history.size()
 
 def get_history_item(index):
     # JLine indexes from 0 while readline indexes from 1 (at least in test_readline)
     if index>0:
-        return _reader.history.historyList[index-1]
+        return _reader.history.get(index-1)
     else:
         return None
 
 def remove_history_item(pos):
-    if _history_list:
-        _history_list.remove(pos)
-    else:
-        warn("Cannot remove history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
+    _reader.history.remove(pos)
 
 def replace_history_item(pos, line):
-    if _history_list:
-        _history_list.set(pos, line)
-    else:
-        warn("Cannot replace history item at position: %s" % (pos,), SecurityWarning, stacklevel=2)
+    _reader.history.set(pos, line)
 
 def redisplay():
     _reader.redrawLine()
 
 def set_startup_hook(function=None):
-    _console.startupHook = function
+    _console.startup_hook = function
 
 def set_pre_input_hook(function=None):
     warn("set_pre_input_hook %s" % (function,), NotImplementedWarning, stacklevel=2)
@@ -161,7 +146,7 @@ def set_completer(function=None):
                 break
         return start
 
-    _reader.addCompletor(complete_handler)
+    _reader.addCompleter(complete_handler)
 
 
 def get_completer():

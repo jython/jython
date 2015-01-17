@@ -25,23 +25,14 @@ def jython_getpass(prompt='Password: ', stream=None):
 
     Restore terminal settings at end.
     """
-    if stream is None:
-        stream = sys.stdout
     try:
-        terminal = sys._jy_console.reader.terminal
+        reader = sys._jy_console.reader
     except:
         return default_getpass(prompt)
-
-    echoed = terminal.getEcho()
-    terminal.disableEcho()
-    try:
-        passwd = _raw_input(prompt, stream)
-    finally:
-        if echoed:
-           terminal.enableEcho()
-
-    stream.write('\n')
-    return passwd
+    if stream is not None:
+        stream.write(prompt)
+        prompt = ''
+    return reader.readLine(prompt, '\0').encode(sys._jy_console.encoding)
 
 
 def unix_getpass(prompt='Password: ', stream=None):
@@ -148,9 +139,7 @@ except (ImportError, AttributeError):
             from EasyDialogs import AskPassword
         except ImportError:
             if os.name == 'java':
-                # disable this option for now, this does not reliably work
-                # getpass = jython_getpass
-                getpass = default_getpass
+                getpass = jython_getpass
         else:
             getpass = AskPassword
     else:

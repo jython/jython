@@ -134,6 +134,14 @@ public class InteractiveConsole extends InteractiveInterpreter {
                 }
                 write("\n");
                 break;
+            } catch (Throwable t) {
+                // catch jline.console.UserInterruptException, rethrow as a KeyboardInterrupt
+                throw Py.JavaError(t);
+                // One would expect that it would be possible to then catch the KeyboardInterrupt at the
+                // bottom of this loop, however, for some reason the control-C restores the input text,
+                // so simply doing
+                // resetbuffer(); more = false;
+                // is not sufficient
             }
             more = push(line);
         }

@@ -5,20 +5,19 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-import jline.ConsoleReader;
-import jline.Terminal;
+import jline.console.ConsoleKeys;
+import jline.console.ConsoleReader;
 import jline.WindowsTerminal;
+import jline.console.history.FileHistory;
 import jnr.constants.platform.Errno;
 
 import org.python.core.PlainConsole;
@@ -76,6 +75,22 @@ public class JLineConsole extends PlainConsole {
         // ... not "jline.UnixTerminal.input.encoding" as you might think, not even in JLine2
     }
 
+    private static class HistoryCloser implements Runnable {
+        FileHistory history;
+        public HistoryCloser(FileHistory history) {
+            this.history = history;
+        }
+
+        @Override
+        public void run() {
+            try {
+                history.flush();
+            } catch (IOException e) {
+                // could not save console history, but quietly ignore in this case
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      * <p>
@@ -85,34 +100,25 @@ public class JLineConsole extends PlainConsole {
      */
     @Override
     public void install() {
-        Terminal.setupTerminal();
-
         String userHomeSpec = System.getProperty("user.home", ".");
 
         // Configure a ConsoleReader (the object that does most of the line editing).
         try {
-            /*
-             * Wrap System.out in the specified encoding. jline.ConsoleReader.readLine() echoes the
-             * line through this Writer.
-             */
-            Writer out = new PrintWriter(new OutputStreamWriter(System.out, encoding));
-
-            // Get the key bindings (built in ones treat TAB Pythonically).
-            InputStream bindings = getBindings(userHomeSpec, getClass().getClassLoader());
-
             // Create the reader as unbuffered as possible
             InputStream in = new FileInputStream(FileDescriptor.in);
-            reader = new ConsoleReader(in, out, bindings);
+            reader = new ConsoleReader("jython", in, System.out, null, encoding);
+            reader.setKeyMap("jython");
+            reader.setHandleUserInterrupt(true);
 
             // We find the bell too noisy
             reader.setBellEnabled(false);
 
             /*
-             * Everybody else, using sys.stdout or java.lang.System.out gets to write on a special
+             * Everybody else, using sys.stdout or java.lang.System.out, gets to write on a special
              * PrintStream that keeps the last incomplete line in case it turns out to be a console
              * prompt.
              */
-            outWrapper = new ConsoleOutputStream(System.out, reader.getTermwidth());
+            outWrapper = new ConsoleOutputStream(System.out, reader.getTerminal().getWidth());
             System.setOut(new PrintStream(outWrapper, true, encoding));
 
         } catch (IOException e) {
@@ -122,7 +128,9 @@ public class JLineConsole extends PlainConsole {
         // Access and load (if possible) the line history.
         try {
             File historyFile = new File(userHomeSpec, ".jline-jython.history");
-            reader.getHistory().setHistoryFile(historyFile);
+            FileHistory history = new FileHistory(historyFile);
+            Runtime.getRuntime().addShutdownHook(new Thread(new HistoryCloser(history)));
+            reader.setHistory(history);
         } catch (IOException e) {
             // oh well, no history from file
         }
@@ -185,14 +193,19 @@ public class JLineConsole extends PlainConsole {
                     startup_hook.__call__();
                 }
 
+                try {
+                    // Resumption from control-Z suspension may occur without JLine telling us
+                    // Work around by putting the terminal into a well-known state before
+                    // each read line, if possible
+                    reader.getTerminal().init();
+                } catch (Exception exc) {}
+
                 // Send the cursor to the start of the line (no prompt, empty buffer).
-                reader.setDefaultPrompt(null);
+                reader.setPrompt(null);
                 reader.redrawLine();
 
                 // The prompt is whatever was already on the line.
-                String line = reader.readLine(prompt);
-                return line;
-
+                return reader.readLine(prompt);
             } catch (IOException ioe) {
                 // Something went wrong, or we were interrupted (seems only BSD throws this)
                 if (!fromSuspend(ioe)) {
@@ -203,7 +216,7 @@ public class JLineConsole extends PlainConsole {
                     // The interruption seems to be (return from) a ctrl-Z suspension:
                     try {
                         // Must reset JLine and continue (not repeating the prompt)
-                        reader.getTerminal().initializeTerminal();
+                        reader.resetPromptLine (prompt, null, 0);
                         prompt = "";
                     } catch (Exception e) {
                         // Do our best to say what went wrong
@@ -213,46 +226,6 @@ public class JLineConsole extends PlainConsole {
             }
         }
 
-    }
-
-    /**
-     * Return the JLine bindings file.
-     *
-     * This handles loading the user's custom key bindings (normally JLine does) so it can fall back
-     * to Jython's (which disable tab completion) when the user's are not available.
-     *
-     * @return an InputStream of the JLine bindings file.
-     */
-    protected static InputStream getBindings(String userHomeSpec, ClassLoader loader) {
-
-        // The key bindings file may be specified explicitly
-        String bindingsFileSpec = System.getProperty("jline.keybindings");
-        File bindingsFile;
-
-        if (bindingsFileSpec != null) {
-            // Bindings file explicitly specified
-            bindingsFile = new File(bindingsFileSpec);
-        } else {
-            // Otherwise try ~/.jlinebindings.properties
-            bindingsFile = new File(userHomeSpec, ".jlinebindings.properties");
-        }
-
-        // See if that file really exists (and can be read)
-        try {
-            if (bindingsFile.isFile()) {
-                try {
-                    return new FileInputStream(bindingsFile);
-                } catch (FileNotFoundException fnfe) {
-                    // Shouldn't really ever happen
-                    fnfe.printStackTrace();
-                }
-            }
-        } catch (SecurityException se) {
-            // continue
-        }
-
-        // User/specific key bindings could not be read: use the ones from the class path or jar.
-        return loader.getResourceAsStream("org/python/util/jline-keybindings.properties");
     }
 
     /**

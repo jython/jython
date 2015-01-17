@@ -24,11 +24,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.CharMatcher;
+import jline.console.UserInterruptException;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 
+import jnr.posix.util.Platform;
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -144,6 +146,14 @@ public final class Py {
     
     public static PyException OSError(Constant errno, PyObject filename) {
         int value = errno.intValue();
+        // see https://github.com/jruby/jruby/commit/947c661e46683ea82f8016dde9d3fa597cd10e56
+        // for rationale to do this mapping, but in a nutshell jnr-constants is automatically
+        // generated from header files, so that's not the right place to do this mapping,
+        // but for Posix compatibility reasons both CPython andCRuby do this mapping;
+        // except CPython chooses EEXIST instead of CRuby's ENOENT
+        if (Platform.IS_WINDOWS && (value == 20047 || value == Errno.ESRCH.intValue())) {
+            value = Errno.EEXIST.intValue();
+        }
         // Pass to strerror because jnr-constants currently lacks Errno descriptions on
         // Windows, and strerror falls back to Linux's
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value), filename);
@@ -172,9 +182,9 @@ public final class Py {
         return new PyException(Py.RuntimeError, message);
     }
     public static PyObject KeyboardInterrupt;
-    /*public static PyException KeyboardInterrupt(String message) {
-    return new PyException(Py.KeyboardInterrupt, message);
-    }*/
+    public static PyException KeyboardInterrupt(String message) {
+        return new PyException(Py.KeyboardInterrupt, message);
+    }
     public static PyObject FloatingPointError;
 
     public static PyException FloatingPointError(String message) {
@@ -527,6 +537,8 @@ public final class Py {
             return Py.RuntimeError("maximum recursion depth exceeded (Java StackOverflowError)");
         } else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError) t);
+        } else if (t instanceof UserInterruptException) {
+            return Py.KeyboardInterrupt("");
         }
         PyObject exc = PyJavaType.wrapJavaObject(t);
         PyException pyex = new PyException(exc.getType(), exc);
