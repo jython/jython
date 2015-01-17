@@ -9,12 +9,9 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-import jline.console.ConsoleKeys;
 import jline.console.ConsoleReader;
 import jline.WindowsTerminal;
 import jline.console.history.FileHistory;
@@ -109,6 +106,7 @@ public class JLineConsole extends PlainConsole {
             reader = new ConsoleReader("jython", in, System.out, null, encoding);
             reader.setKeyMap("jython");
             reader.setHandleUserInterrupt(true);
+            reader.setCopyPasteDetection(true);
 
             // We find the bell too noisy
             reader.setBellEnabled(false);

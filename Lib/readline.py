@@ -134,7 +134,27 @@ def set_completer(function=None):
     def complete_handler(buffer, cursor, candidates):
         start = _get_delimited(buffer, cursor)[0]
         delimited = buffer[start:cursor]
-        for state in xrange(100): # TODO arbitrary, what's the number used by gnu readline?
+
+        if _reader.prompt == sys.ps2 and (not delimited or delimited.isspace()):
+            # Insert tab (as expanded to 4 spaces), but only if if
+            # preceding is whitespace/empty and in console
+            # continuation; this is a planned featue for Python 3 per
+            # http://bugs.python.org/issue5845
+            #
+            # Ideally this would not expand tabs, in case of mixed
+            # copy&paste of tab-indented code, however JLine2 gets
+            # confused as to the cursor position if certain, but not
+            # all, subsequent editing if the tab is backspaced
+            candidates.add(" " * 4)
+            return start
+
+        # TODO: if there are a reasonably large number of completions
+        # (need to get specific numbers), CPython 3.4 will show a
+        # message like so:
+        # >>>
+        # Display all 186 possibilities? (y or n)
+        # Currently Jython arbitrarily limits this to 100 and displays them
+        for state in xrange(100):
             completion = None
             try:
                 completion = function(delimited, state)
