@@ -34,41 +34,6 @@ public class cmath {
     /** log<sub>10</sub>e (Ref: Abramowitz &amp; Stegun [1972], p3). */
     private static final double LOG10E = 0.43429448190325182765;
 
-    private static PyComplex c_prodi(PyComplex x) {
-        return (PyComplex)x.__mul__(i);
-    }
-
-    private static boolean isNaN(PyComplex x) {
-        return Double.isNaN(x.real) || Double.isNaN(x.imag);
-    }
-
-    private static double abs(PyComplex x) {
-        boolean isNaN = isNaN(x);
-        boolean isInfinite = !isNaN && (Double.isInfinite(x.real) || Double.isInfinite(x.imag));
-        if (isNaN) {
-            return Double.NaN;
-        }
-        if (isInfinite) {
-            return Double.POSITIVE_INFINITY;
-        }
-        double real_abs = Math.abs(x.real);
-        double imag_abs = Math.abs(x.imag);
-
-        if (real_abs < imag_abs) {
-            if (x.imag == 0.0) {
-                return real_abs;
-            }
-            double q = x.real / x.imag;
-            return imag_abs * Math.sqrt(1 + q * q);
-        } else {
-            if (x.real == 0.0) {
-                return imag_abs;
-            }
-            double q = x.imag / x.real;
-            return real_abs * Math.sqrt(1 + q * q);
-        }
-    }
-
     private static PyComplex complexFromPyObject(PyObject obj) {
         // If op is already of type PyComplex_Type, return its value
         if (obj instanceof PyComplex) {
@@ -102,34 +67,261 @@ public class cmath {
         return new PyComplex(obj.asDouble(), 0);
     }
 
-    public static PyObject acos(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return c_prodi(log(x.__add__(i.__mul__(sqrt(one.__sub__(x.__mul__(x))))))).__neg__();
+    /**
+     * Return the arc cosine of w. There are two branch cuts. One extends right from 1 along the
+     * real axis to &infin;, continuous from below. The other extends left from -1 along the real
+     * axis to -&infin;, continuous from above.
+     *
+     * @param w
+     * @return cos<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex acos(PyObject w) {
+        return _acos(complexFromPyObject(w));
     }
 
-    public static PyComplex acosh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        PyComplex a = sqrt(x.__sub__(one));
-        PyComplex b = sqrt(x.__add__(one));
-        PyComplex c = sqrt(half);
-        PyComplex r = log(c.__mul__(b.__add__(a)));
-        return ((PyComplex)r.__add__(r));
+    /**
+     * Helper to compute cos<sup>-1</sup><i>w</i>. The method used is as in CPython:
+     * <p>
+     * <i>a = (1-w)<sup>&frac12;</sup> = &radic;2</i> sin <i>z/2</i> <br>
+     * <i>b = (1+w)<sup>&frac12;</sup> = &radic;2</i> cos <i>z/2</i>
+     * <p>
+     * Then, with <i>z = x+iy</i>, <i>a = a<sub>1</sub>+ia<sub>2</sub></i>, and <i>b =
+     * b<sub>1</sub>+ib<sub>2</sub></i>,
+     * <p>
+     * a<sub>1</sub> / b<sub>1</sub> = tan <i>x/2</i> <br>
+     * a<sub>2</sub>b<sub>1</sub> - a<sub>1</sub>b<sub>2</sub> = sinh <i>y</i>
+     * <p>
+     * and we use {@link Math#atan2(double, double)} and {@link math#asinh(double)} to obtain
+     * <i>x</i> and <i>y</i>.
+     * <p>
+     * For <i>w</i> sufficiently large that <i>w<sup>2</sup></i>&#x0226B;1, cos<sup>-1</sup><i>w</i>
+     * &asymp; -i ln(<i>2w</i>).
+     *
+     * @param w
+     * @return cos<sup>-1</sup><i>w</i>
+     */
+    private static PyComplex _acos(PyComplex w) {
+
+        // Let z = x + iy and w = u + iv.
+        double x, y, u = w.real, v = w.imag;
+
+        if (Math.abs(u) > 0x1p27 || Math.abs(v) > 0x1p27) {
+            /*
+             * w is large: approximate 2cos(z) by exp(i(x+iy)) or exp(-i(x+iy)), whichever
+             * dominates. Hence, z = x+iy = i ln(2(u+iv)) or -i ln(2(u+iv))
+             */
+            x = Math.atan2(Math.abs(v), u);
+            y = Math.copySign(logHypot(u, v) + math.LN2, -v);
+
+        } else if (Double.isNaN(v)) {
+            // Special cases
+            x = (u == 0.) ? Math.PI / 2. : v;
+            y = v;
+
+        } else {
+            // Normal case, without risk of overflow.
+            PyComplex a = sqrt(new PyComplex(1. - u, -v)); // a = sqrt(1-w) = sqrt(2) sin(z/2)
+            PyComplex b = sqrt(new PyComplex(1 + u, v));   // b = sqrt(1+w) = sqrt(2) cos(z/2)
+            // Arguments here are sin(x/2)cosh(y/2), cos(x/2)cosh(y/2) giving tan(x/2)
+            x = 2. * Math.atan2(a.real, b.real);
+            // 2 (cos(x/2)**2+sin(x/2)**2) sinh(y/2)cosh(y/2) = sinh y
+            y = math.asinh(a.imag * b.real - a.real * b.imag);
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(new PyComplex(x, y), w);
     }
 
-    public static PyComplex asin(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        PyComplex squared = (PyComplex)x.__mul__(x);
-        PyComplex sq1_minus_xsq = sqrt(one.__sub__(squared));
-        return (PyComplex)c_prodi(log(sq1_minus_xsq.__add__(c_prodi(x)))).__neg__();
+    /**
+     * Return the hyperbolic arc cosine of w. There is one branch cut, extending left from 1 along
+     * the real axis to -&infin;, continuous from above.
+     *
+     * @param w
+     * @return cosh<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex acosh(PyObject w) {
+        return _acosh(complexFromPyObject(w));
     }
 
-    public static PyComplex asinh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        PyComplex a = sqrt(x.__add__(i));
-        PyComplex b = sqrt(x.__sub__(i));
-        PyComplex z = sqrt(half);
-        PyComplex r = log(z.__mul__(a.__add__(b)));
-        return ((PyComplex)r.__add__(r));
+    /**
+     * Helper to compute z = cosh<sup>-1</sup><i>w</i>. The method used is as in CPython:
+     * <p>
+     * <i>a = (w-1)<sup>&frac12;</sup> = &radic;2</i> sinh <i>z/2</i> <br>
+     * <i>b = (w+1)<sup>&frac12;</sup> = &radic;2</i> cosh <i>z/2</i>
+     * <p>
+     * Then, with <i>z = x+iy</i>, <i>a = a<sub>1</sub>+ia<sub>2</sub></i>, and <i>b =
+     * b<sub>1</sub>+ib<sub>2</sub></i>,
+     * <p>
+     * a<sub>1</sub>b<sub>1</sub> + a<sub>2</sub>b<sub>2</sub> = sinh <i>x</i> <br>
+     * a<sub>2</sub> / b<sub>1</sub> = tan <i>y/2</i>
+     * <p>
+     * and we use {@link math#asinh(double)} and {@link Math#atan2(double, double)} to obtain
+     * <i>x</i> and <i>y</i>.
+     * <p>
+     * For <i>w</i> sufficiently large that <i>w<sup>2</sup></i>&#x0226B;1,
+     * cosh<sup>-1</sup><i>w</i> &asymp; ln(<i>2w</i>). We do not use this method also to compute
+     * cos<sup>-1</sup><i>w</i>, because the branch cuts do not correspond.
+     *
+     * @param w
+     * @return cosh<sup>-1</sup><i>w</i>
+     */
+    private static PyComplex _acosh(PyComplex w) {
+
+        // Let z = x + iy and w = u + iv.
+        double x, y, u = w.real, v = w.imag;
+
+        if (Math.abs(u) > 0x1p27 || Math.abs(v) > 0x1p27) {
+            /*
+             * w is large: approximate 2cosh(z) by exp(x+iy) or exp(-x-iy), whichever dominates.
+             * Hence, z = x+iy = ln(2(u+iv)) or -ln(2(u+iv))
+             */
+            x = logHypot(u, v) + math.LN2;
+            y = Math.atan2(v, u);
+
+        } else if (v == 0. && !Double.isNaN(u)) {
+            /*
+             * We're on the real axis (and maybe the branch cut). u = cosh x cos y. In all cases,
+             * the sign of y follows v.
+             */
+            if (u >= 1.) {
+                // As real library, cos y = 1, u = cosh x.
+                x = math.acosh(u);
+                y = v;
+            } else if (u < -1.) {
+                // Left part of cut: cos y = -1, u = -cosh x
+                x = math.acosh(-u);
+                y = Math.copySign(Math.PI, v);
+            } else {
+                // -1 <= u <= 1: cosh x = 1, u = cos y.
+                x = 0.;
+                y = Math.copySign(Math.acos(u), v);
+            }
+
+        } else {
+            // Normal case, without risk of overflow.
+            PyComplex a = sqrt(new PyComplex(u - 1., v)); // a = sqrt(w-1) = sqrt(2) sinh(z/2)
+            PyComplex b = sqrt(new PyComplex(u + 1., v)); // b = sqrt(w+1) = sqrt(2) cosh(z/2)
+            // 2 sinh(x/2)cosh(x/2) (cos(y/2)**2+sin(y/2)**2) = sinh x
+            x = math.asinh(a.real * b.real + a.imag * b.imag);
+            // Arguments here are cosh(x/2)sin(y/2) and cosh(x/2)cos(y/2) giving tan y/2
+            y = 2. * Math.atan2(a.imag, b.real);
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(new PyComplex(x, y), w);
+    }
+
+    /**
+     * Return the arc sine of w. There are two branch cuts. One extends right from 1 along the real
+     * axis to &infin;, continuous from below. The other extends left from -1 along the real axis to
+     * -&infin;, continuous from above.
+     *
+     * @param w
+     * @return sin<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex asin(PyObject w) {
+        return asinOrAsinh(complexFromPyObject(w), false);
+    }
+
+    /**
+     * Return the hyperbolic arc sine of w. There are two branch cuts. One extends from 1j along the
+     * imaginary axis to &infin;j, continuous from the right. The other extends from -1j along the
+     * imaginary axis to -&infin;j, continuous from the left.
+     *
+     * @param w
+     * @return sinh<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex asinh(PyObject w) {
+        return asinOrAsinh(complexFromPyObject(w), true);
+    }
+
+    /**
+     * Helper to compute either sin<sup>-1</sup><i>w</i> or sinh<sup>-1</sup><i>w</i>. The method
+     * used is as in CPython:
+     * <p>
+     * <i>a = (1-iw)<sup>&frac12;</sup> = &radic;2 </i>sin(<i>&pi;/4-iz/2</i>) <br>
+     * <i>b = (1+iw)<sup>&frac12;</sup> = &radic;2 </i>cos(<i>&pi;/4-iz/2</i>)
+     * <p>
+     * Then, with <i>w = u+iv</i>, <i>z = x+iy</i>, <i>a = a<sub>1</sub>+ia<sub>2</sub></i>, and
+     * <i>b = b<sub>1</sub>+ib<sub>2</sub></i>,
+     * <p>
+     * a<sub>1</sub>b<sub>2</sub> - a<sub>2</sub>b<sub>2</sub> = sinh <i>x</i> <br>
+     * v / (a<sub>2</sub>b<sub>1</sub> - a<sub>1</sub>b<sub>2</sub>) = tan <i>y</i>
+     * <p>
+     * and we use {@link math#asinh(double)} and {@link Math#atan2(double, double)} to obtain
+     * <i>x</i> and <i>y</i>.
+     * <p>
+     * For <i>w</i> sufficiently large that <i>w<sup>2</sup></i>&#x0226B;1,
+     * sinh<sup>-1</sup><i>w</i> &asymp; ln(<i>2w</i>). When computing sin<sup>-1</sup><i>w</i>, we
+     * evaluate <i>-i</i> sinh<sup>-1</sup><i>iw</i> instead.
+     *
+     * @param w
+     * @param h <code>true</code> to compute sinh<sup>-1</sup><i>w</i>, <code>false</code> to
+     *            compute sin<sup>-1</sup><i>w</i>.
+     * @return sinh<sup>-1</sup><i>w</i> or sin<sup>-1</sup><i>w</i>
+     */
+    private static PyComplex asinOrAsinh(PyComplex w, boolean h) {
+        double u, v, x, y;
+        PyComplex z;
+
+        if (h) {
+            // We compute z = asinh(w). Let z = x + iy and w = u + iv.
+            u = w.real;
+            v = w.imag;
+            // Then the function body computes x + iy = asinh(w).
+        } else {
+            // We compute w = asin(z). Unusually, let w = u - iv, so u + iv = iw.
+            v = w.real;
+            u = -w.imag;
+            // Then as before, the function body computes asinh(u+iv) = asinh(iw) = i asin(w),
+            // but we finally return z = y - ix = -i asinh(iw) = asin(w).
+        }
+
+        if (Double.isNaN(u)) {
+            // Special case for nan in real part. Default clause deals naturally with v=nan.
+            if (v == 0.) {
+                x = u;
+                y = v;
+            } else if (Double.isInfinite(v)) {
+                x = Double.POSITIVE_INFINITY;
+                y = u;
+            } else { // Any other value of v -> nan+nanj
+                x = y = u;
+            }
+
+        } else if (Math.abs(u) > 0x1p27 || Math.abs(v) > 0x1p27) {
+            /*
+             * w is large: approximate 2sinh(z) by exp(x+iy) or -exp(-x-iy), whichever dominates.
+             * Hence, z = x+iy = ln(2(u+iv)) or -ln(-2(u+iv))
+             */
+            x = logHypot(u, v) + math.LN2;
+            if (Math.copySign(1., u) > 0.) {
+                y = Math.atan2(v, u);
+            } else {
+                // Adjust for sign, choosing the angle so that -pi/2 < y < pi/2
+                x = -x;
+                y = Math.atan2(v, -u);
+            }
+
+        } else {
+            // Normal case, without risk of overflow.
+            PyComplex a = sqrt(new PyComplex(1. + v, -u)); // a = sqrt(1-iw)
+            PyComplex b = sqrt(new PyComplex(1. - v, u));  // b = sqrt(1+iw)
+            // Combine the parts so as that terms in y cancel, leaving us with sinh x:
+            x = math.asinh(a.real * b.imag - a.imag * b.real);
+            // The arguments are v = cosh x sin y, and cosh x cos y
+            y = Math.atan2(v, a.real * b.real - a.imag * b.imag);
+        }
+
+        // Compose the result w according to whether we're computing asin(w) or asinh(w).
+        if (h) {
+            z = new PyComplex(x, y);    // z = x + iy = asinh(u+iv).
+        } else {
+            z = new PyComplex(y, -x);   // z = y - ix = -i asinh(v-iu) = sin(w)
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(z, w);
     }
 
     public static PyComplex atan(PyObject in) {
@@ -522,7 +714,7 @@ public class cmath {
             // We compute w = sin(z). Unusually, let z = y - ix, so x + iy = iz.
             y = z.real;
             x = -z.imag;
-            // Then the function body computes sinh(x+iy) = sinh(iz) = i sin(z) as before,
+            // Then as before, the function body computes sinh(x+iy) = sinh(iz) = i sin(z),
             // but we finally return w = v - iu = sin(z).
         }
 
