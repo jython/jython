@@ -1,9 +1,75 @@
 Jython NEWS
 
+For more details, please see https://hg.python.org/jython
+
 Jython 2.7b4
   Bugs Fixed
+    - [ 2032 ] Fixed typo in compiler/pycodegen.py
+    - [ 2190 ] Raise ValueError when unichr() is called with isolated surrogate codepoint
+    - [ 1057 ] Finalizer support (__del__) for new style classes
+    - [ 2192 ] Server requests were hanging using jython, django and django-jython
+    - [ 2204 ] Minimum (core) install will now suport Jython console
+    - [ 2184 ] inspect.callargs, including anonymous tuples in function params
+    - [ 2100 ] Fix deficiencies in PyUnicode beyond the BMP
+    - Fix bug in supporting meta path importers for six
+    - [ 2183 ] Rework function attributes support
+    - [ 2115 ] Allow bound methods as arg for single method interface param
+    - [ 2163 ] Refactor Py, PySystemState to init constants early
+    - [ 2217 ] Update serial release to 3 for sys.version_info
+    - [ 2090, 1494 ] Behaviour of long in the JSR-223 engine
+    - [ 2196 ] Do not emit duplicate entries in building standalone jar
+    - [ 1708 ] Ensure regrtest runs in a C locale to avoid failures
+    - [ 2037 ] Prevent non-byte values appearing in str()
+    - [ 2205 ] Guard via module import lock all entry points from Java into import
+    - [ 1631 ] Fully proxy java.util.Map objects as Python dicts
+    - [ 2215 ] Fully proxy java.util.List objects as Python lists
+    - [ 2242 ] select.select and related socket.connect_ex fixes
+    - [ 2241 ] Fully proxy java.util.Set objects as Python sets
+    - [ 2239, 1825 ] os.getenv, os.listdir may return unicode instead of bytes
+    - [ 2110 ] Update Java Native Runtime jars
     - [ 2236 ] Interactive parser does not accept try ... except E as e: syntax
-    - [ 2037 ] Byte-string containing elements greater than 255
+    - [ 2232 ] Visit class decorators when visiting class def in scopes compilation
+    - [ 2247 ] dict.pop should not add additional quoting in KeyError
+    - [ 2238 ] os.system now uses a simpler wrapping of ProcessBuilder
+    - [ 1561 ] Raises NotImplementedError if abstract method from Java is not implemented
+    - [ 2221 ] Implement Popen.pid 
+    - [ 2150 ] Fix regrtest to support -x to exclude tests
+    - [ 1152612 ] All dict methods for __dict__ except views
+    - [ 1762054 ] Add webbrowser module
+    - [ 2252 ] Args in sys.argv are now unicode if characters > 127
+    - [ 2092 ] Upgrade to JLine2 and add tab completion support
+    - [ 2236 ] Interactive parser does not accept try ... except E as e: syntax
+    - [ 2237 ] More robust math/cmath support (ongoing)
+
+  New features
+    - Full support of Python buffer protocol, along with Java ByteBuffer support
+    - Add index to PyUnicode facilitating O(1) access to strings beyond the BMP.
+    - java.util.{Map, List, Set} are now treated as subclasses of the
+      corresponding Python abstract base classes
+    - jythonlib module to simplify usage of Java internals from Python;
+      weakref collections now directly use corresponding collections from
+      Google Guava and java.util
+    - CPython's _json.c was ported to Java to speed up JSON encoding/decoding
+    - Upgraded third party libraries
+    - Initial support for ensurepip module
+
+  Potentially backwards breaking changes, removing silent errors:
+
+    - remove method on proxied List objects now follows Python
+      sematics: a ValueError is raised if the item is not found in the
+      java.util.List. In the past, Java semantics were used, with a
+      boolean returned indicating if the item was removed or
+      not. Given how this interacted with Jython, such remove
+      invocations were in the past silent, and perhaps were actually a
+      bug.
+
+    - d[key_not_present], if d implement java.util.Map, no longer
+      returns None, but raises KeyError, which means this behavior now
+      matches standard dict semantics.
+
+    - Abstract methods of an inherited class or interface from Java now raise
+      NotImplementedError, instead of returning None (in Java, null) or some
+      "zero", if they are not implemented in the extending Python class.
 
 Jython 2.7b3
   Bugs Fixed
@@ -15,6 +81,7 @@ Jython 2.7b3
   New Features
     - [ 1896215 ] findResource(s) for SyspathJavaLoader
     - [ 1591 ] Interactive interpreter stuck on '...' loop
+    - Added socket reboot work, using Netty 4 to fully support socket, select, and ssl API
 
 Jython 2.7b2
   Bugs Fixed
