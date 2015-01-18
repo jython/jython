@@ -625,25 +625,42 @@ public class cmath {
         return new PyTuple(new PyFloat(r), new PyFloat(phi));
     }
 
+    /**
+     * Return the complex number x with polar coordinates r and phi. Equivalent to
+     * <code>r * (math.cos(phi) + math.sin(phi)*1j)</code>.
+     *
+     * @param r radius
+     * @param phi angle
+     * @return
+     */
     public static PyComplex rect(double r, double phi) {
-        // Handle various edge cases
-        if (Double.isInfinite(r) && (Double.isInfinite(phi) || Double.isNaN(phi))) {
-            return new PyComplex(Double.POSITIVE_INFINITY, Double.NaN);
-        }
-        if (phi == 0.0) { // NB this test will succeed if phi is 0.0 or -0.0
-            if (Double.isNaN(r)) {
-                return new PyComplex(Double.NaN, 0.0);
-            } else if (r == Double.POSITIVE_INFINITY) {
-                return new PyComplex(r, phi);
-            } else if (r == Double.NEGATIVE_INFINITY) {
-                return new PyComplex(r, -phi);
-            }
-        }
-        if (r == 0.0 && (Double.isInfinite(phi) || Double.isNaN(phi))) {
-            return new PyComplex(0.0, 0.0);
-        }
+        double x, y;
 
-        return new PyComplex(r * Math.cos(phi), r * Math.sin(phi));
+        if (Double.isInfinite(r) && (Double.isInfinite(phi) || Double.isNaN(phi))) {
+            x = Double.POSITIVE_INFINITY;
+            y = Double.NaN;
+
+        } else if (phi == 0.0) {
+            // cos(phi)=1, sin(phi)=phi: finesse oddball r in computing y, but not x.
+            x = r;
+            if (Double.isNaN(r)) {
+                y = phi;
+            } else if (Double.isInfinite(r)) {
+                y = phi * Math.copySign(1., r);
+            } else {
+                y = phi * r;
+            }
+
+        } else if (r == 0.0 && (Double.isInfinite(phi) || Double.isNaN(phi))) {
+            // Ignore any problems (inf, nan) with phi
+            x = y = 0.;
+
+        } else {
+            // Text-book case, using the trig functions.
+            x = r * Math.cos(phi);
+            y = r * Math.sin(phi);
+        }
+        return exceptNaN(new PyComplex(x, y), r, phi);
     }
 
     /**
@@ -1122,6 +1139,15 @@ public class cmath {
     private static PyComplex exceptNaN(PyComplex result, PyComplex arg) throws PyException {
         if ((Double.isNaN(result.real) || Double.isNaN(result.imag))
                 && !(Double.isNaN(arg.real) || Double.isNaN(arg.imag))) {
+            throw math.mathDomainError();
+        } else {
+            return result;
+        }
+    }
+
+    private static PyComplex exceptNaN(PyComplex result, double a, double b) throws PyException {
+        if ((Double.isNaN(result.real) || Double.isNaN(result.imag))
+                && !(Double.isNaN(a) || Double.isNaN(b))) {
             throw math.mathDomainError();
         } else {
             return result;
