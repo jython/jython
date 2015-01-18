@@ -1,47 +1,74 @@
 # -*- coding: utf-8 -*-
 ACKNOWLEDGMENTS
-Copyright (c) Corporation for National Research Initiatives
 
-    Jim Hugunin invented JPython and was the primary developer while
-    he was at CNRI.  In February 1999, Jim left CNRI for sunny
-    California and Barry Warsaw became the primary maintainer.
-    When Barry and the rest of PythonLabs left CNRI, Barry renamed
-    JPython to Jython, put the sources on SourceForge and made 
-    Finn Bock the primary maintainer.
+Jython: Python for the Java Platform
 
-    Python's inventor Guido van Rossum and the rest of PythonLabs
-    continues to help and support Jython by their understanding
-    of how Jython must live with the limits of Java.
+Copyright (c) 2000-2014 Jython Developers.
+All rights reserved.
 
-    You can contact the Jython maintainers directly via
-    jython-dev@lists.sourceforge.net, or the Jython community at
-    jython-users@lists.sourceforge.net.
+Copyright (c) 2000 BeOpen.com.
+All Rights Reserved.
 
-    Harry Mantakos contributed the underlying md5 implementation.
+Copyright (c) 2000 The Apache Software Foundation.
+All rights reserved.
 
-    The SHA1 implementation is taken from cryptix.
+Copyright (c) 1995-2000 Corporation for National Research Initiatives.
+All Rights Reserved.
 
-    Samuele Pedroni has designed and implemented the improved 
-    PackageManagers and java reload support and also fixed a lot 
-    of bugs.
+Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
+All Rights Reserved.
 
-    Kevin Butler has written and contributed the code for os.environ and 
-    os.system().
+Jython links the following libraries:
 
-    Brian Zimmer contributed zxJDBC which is a Python DB API subsystem.
+* Antlr 3, licensed under the Antlr 3 (BSD) license
+* ASM 5, licensed under a BSD license from France Télécom
+* BouncyCastle, licensed under a MIT license from The Legion of the
+  Bouncy Castle Inc.
+* Apache Commons Compression and Xerces, licensed under an Apache 2.0
+  License from the Apache Software Foundation
+* Google Guava, licensed under an Apache 2.0 License from Google
+* Jar Jar Links, licensed uner the Apache 2.0 License from Tonic Systems
+* Java Native Runtime, licensed under the Common Public License
+* JLine2, licensed under a BSD license
+* JUnit, licenseed under Eclipse Public License 1.0 from the JUnit project
+* Mock Runner, licensed under the Apache 1.1 license
+* Netty 4, licensed under the Apache 2.0 license from the Netty project
 
-    Cyrille Morvan has written the code for the Jythonc ant task.
+Jython follows closely the Python language and its reference
+implementation CPython, as created by Guido van Rossum.
+Jython 2.7 corresponds to CPython 2.7.
 
-    Alan Kennedy contributed modjy, which bridges WSGI to the Servlet API
+Jython started as JPython, created by Jim Hugunin in 1997. JPython was
+renamed to Jython by Barry Warsaw in 1999 with the 2.0 release. Since
+then, Jython 2.x releases have corresponded to equivalent CPython 2.x
+releases.
 
-    Chris Gokey, David Syer and Finn Bock added PyServlet.
+Contacts:
+
+* Jython developers jython-dev@lists.sourceforge.net
+* Jython user community jython-users@lists.sourceforge.net.
+
+Samuele Pedroni contributed package manager support.
+
+Brian Zimmer contributed zxJDBC to provide Python DB API using JDBC.
+
+Cyrille Morvan contributed the code for the Jythonc ant task.
+
+Alan Kennedy contributed modjy, which bridges WSGI to the Servlet API
+
+Chris Gokey, David Syer and Finn Bock added PyServlet.
     
-    Yin Wang and Steve Yegge contributed the static analyzer from Google (also called indexer).
+Yin Wang and Steve Yegge contributed the static analyzer from Google
+(also called indexer).
 
-    A huge thanks goes to all the members of the jpython/jython
-    mailing lists.  Other folks who have contributed to JPython and 
-    Jython in ways large and small, in no particular order:
+The Jython startup script (bin/jython) was adapted from the similar
+script written for JRuby.
 
+A huge thanks goes to all the members of the jpython/jython
+mailing lists.  Other folks who have contributed to JPython and 
+Jython in ways large and small, in no particular order:
+
+    Kevin Butler
     Greg Ward
     Tony Plate
     Jim Althoff
