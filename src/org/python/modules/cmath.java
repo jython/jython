@@ -13,11 +13,6 @@ public class cmath {
     public static final PyFloat pi = new PyFloat(Math.PI);
     public static final PyFloat e = new PyFloat(Math.E);
 
-    private static final PyComplex one = new PyComplex(1.0, 0.0);
-    private static final PyComplex half = new PyComplex(0.5, 0.0);
-    private static final PyComplex i = new PyComplex(0.0, 1.0);
-    private static final PyComplex half_i = new PyComplex(0.0, 0.5);
-
     /** 2<sup>-&#189;</sup> (Ref: Abramowitz &amp; Stegun [1972], p2). */
     private static final double ROOT_HALF = 0.70710678118654752440;
     /** ln({@link Double#MAX_VALUE}) or a little less */
@@ -317,21 +312,143 @@ public class cmath {
         if (h) {
             z = new PyComplex(x, y);    // z = x + iy = asinh(u+iv).
         } else {
-            z = new PyComplex(y, -x);   // z = y - ix = -i asinh(v-iu) = sin(w)
+            z = new PyComplex(y, -x);   // z = y - ix = -i asinh(v-iu) = asin(w)
         }
 
         // If that generated a nan, and there wasn't one in the argument, raise a domain error.
         return exceptNaN(z, w);
     }
 
-    public static PyComplex atan(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return (PyComplex)half_i.__mul__(log(i.__add__(x).__div__(i.__sub__(x))));
+    /**
+     * Return the arc tangent of w. There are two branch cuts. One extends from 1j along the
+     * imaginary axis to &infin;j, continuous from the right. The other extends from -1j along the
+     * imaginary axis to -&infin;j, continuous from the left.
+     *
+     * @param w
+     * @return tan<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex atan(PyObject w) {
+        return atanOrAtanh(complexFromPyObject(w), false);
     }
 
-    public static PyComplex atanh(PyObject in) {
-        PyComplex x = complexFromPyObject(in);
-        return (PyComplex)half.__mul__(log(one.__add__(x).__div__(one.__sub__(x))));
+    /**
+     * Return the hyperbolic arc tangent of w. There are two branch cuts. One extends from 1 along
+     * the real axis to &infin;, continuous from below. The other extends from -1 along the real
+     * axis to -&infin;, continuous from above.
+     *
+     * @param w
+     * @return tanh<sup>-1</sup><i>w</i>
+     */
+    public static PyComplex atanh(PyObject w) {
+        return atanOrAtanh(complexFromPyObject(w), true);
+    }
+
+    /**
+     * Helper to compute either tan<sup>-1</sup><i>w</i> or tanh<sup>-1</sup><i>w</i>. The method
+     * used is close to that used in CPython. For <i>z</i> = tanh<sup>-1</sup><i>w</i>:
+     * <p>
+     * <i>z = </i>&frac12;ln(<i>1 + 2w/(1-w)</i>)
+     * <p>
+     * Then, letting <i>z = x+iy</i>, and <i>w = u+iv</i>,
+     * <p>
+     * <i>x = </i>&frac14;ln(<i>1 + 4u/((1-u)<sup>2</sup>+v<sup>2</sup>)</i>) <i> =
+     * -</i>&frac14;ln(<i>1 - 4u/((1+u)<sup>2</sup>+v<sup>2</sup>)</i>)<br>
+     * <i>y = </i>&frac12;tan<sup>-1</sup>(<i>2v / ((1+u)(1-u)-v<sup>2</sup>)</i>)<br>
+     * <p>
+     * We use {@link math#log1p(double)} and {@link Math#atan2(double, double)} to obtain <i>x</i>
+     * and <i>y</i>. The second expression for <code>x</code> is used when <i>u&lt;0</i>. For
+     * <i>w</i> sufficiently large that <i>w<sup>2</sup></i>&#x0226B;1, tanh<sup>-1</sup><i>w</i>
+     * &asymp; 1/w &plusmn; <i>i&pi;/2</i>). For small <i>w</i>, tanh<sup>-1</sup><i>w</i> &asymp;
+     * <i>w</i>. When computing tan<sup>-1</sup><i>w</i>, we evaluate <i>-i</i>
+     * tanh<sup>-1</sup><i>iw</i> instead.
+     *
+     * @param w
+     * @param h <code>true</code> to compute tanh<sup>-1</sup><i>w</i>, <code>false</code> to
+     *            compute tan<sup>-1</sup><i>w</i>.
+     * @return tanh<sup>-1</sup><i>w</i> or tan<sup>-1</sup><i>w</i>
+     */
+    private static PyComplex atanOrAtanh(PyComplex w, boolean h) {
+        double u, v, x, y;
+        PyComplex z;
+
+        if (h) {
+            // We compute z = atanh(w). Let z = x + iy and w = u + iv.
+            u = w.real;
+            v = w.imag;
+            // Then the function body computes x + iy = atanh(w).
+        } else {
+            // We compute w = atan(z). Unusually, let w = u - iv, so u + iv = iw.
+            v = w.real;
+            u = -w.imag;
+            // Then as before, the function body computes atanh(u+iv) = atanh(iw) = i atan(w),
+            // but we finally return z = y - ix = -i atanh(iw) = atan(w).
+        }
+
+        double absu = Math.abs(u), absv = Math.abs(v);
+
+        if (absu >= 0x1p511 || absv >= 0x1p511) {
+            // w is large: approximate atanh(w) by 1/w + i pi/2. 1/w = conjg(w)/|w|**2.
+            if (Double.isInfinite(absu) || Double.isInfinite(absv)) {
+                x = Math.copySign(0., u);
+            } else {
+                // w is also too big to square, carry a 2**-N scaling factor.
+                int N = 520;
+                double uu = Math.scalb(u, -N), vv = Math.scalb(v, -N);
+                double mod2w = uu * uu + vv * vv;
+                x = Math.scalb(uu / mod2w, -N);
+            }
+            // We don't need the imaginary part of 1/z. Just pi/2 with the sign of v. (If not nan.)
+            if (Double.isNaN(v)) {
+                y = v;
+            } else {
+                y = Math.copySign(Math.PI / 2., v);
+            }
+
+        } else if (absu < 0x1p-53) {
+            // u is small enough that u**2 may be neglected relative to 1.
+            if (absv > 0x1p-27) {
+                // v is not small, but is not near overflow either.
+                double v2 = v * v;
+                double d = 1. + v2;
+                x = Math.copySign(Math.log1p(4. * absu / d), u) * 0.25;
+                y = Math.atan2(2. * v, 1. - v2) * 0.5;
+            } else {
+                // v is also small enough that v**2 may be neglected (or is nan). So z = w.
+                x = u;
+                y = v;
+            }
+
+        } else if (absu == 1. && absv < 0x1p-27) {
+            // w is close to +1 or -1: needs a different expression, good as v->0
+            x = Math.copySign(Math.log(absv) - math.LN2, u) * 0.5;
+            if (v == 0.) {
+                y = Double.NaN;
+            } else {
+                y = Math.copySign(Math.atan2(2., absv), v) * 0.5;
+            }
+
+        } else {
+            /*
+             * Normal case, without risk of overflow. The basic expression is z =
+             * 0.5*ln((1+w)/(1-w)), which for positive u we rearrange as 0.5*ln(1+2w/(1-w)) and for
+             * negative u as -0.5*ln(1-2w/(1+w)). By use of absu, we reduce the difference between
+             * the expressions fo u>=0 and u<0 to a sign transfer.
+             */
+            double lmu = (1. - absu), lpu = (1. + absu), v2 = v * v;
+            double d = lmu * lmu + v2;
+            x = Math.copySign(Math.log1p(4. * absu / d), u) * 0.25;
+            y = Math.atan2(2. * v, lmu * lpu - v2) * 0.5;
+        }
+
+        // Compose the result w according to whether we're computing atan(w) or atanh(w).
+        if (h) {
+            z = new PyComplex(x, y);    // z = x + iy = atanh(u+iv).
+        } else {
+            z = new PyComplex(y, -x);   // z = y - ix = -i atanh(v-iu) = atan(w)
+        }
+
+        // If that generated a nan, and there wasn't one in the argument, raise a domain error.
+        return exceptNaN(z, w);
     }
 
     /**
