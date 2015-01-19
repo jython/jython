@@ -50,7 +50,7 @@ def getpwuid(uid):
     See pwd.__doc__ for more on password database entries.
     """
     if uid > sys.maxint or uid < 0:
-        raise KeyError
+        raise KeyError(uid)
     entry = _posix_impl.getpwuid(uid)
     if not entry:
         raise KeyError(uid)
