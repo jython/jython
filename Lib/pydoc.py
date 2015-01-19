@@ -64,6 +64,8 @@ except ImportError:
         def popleft(self):
             return self.pop(0)
 
+_is_windows = sys.platform == 'win32' or (os.name == 'java' and os._name == 'nt')
+
 # --------------------------------------------------------- common routines
 
 def pathdirs():
@@ -598,7 +600,7 @@ class HTMLDoc(Doc):
         try:
             path = inspect.getabsfile(object)
             url = path
-            if sys.platform == 'win32':
+            if _is_windows:
                 import nturl2path
                 url = nturl2path.pathname2url(path)
             filelink = '<a href="file:%s">%s</a>' % (url, path)
@@ -1328,6 +1330,14 @@ class TextDoc(Doc):
             line += '\n' + self.indent(str(doc))
         return line
 
+class AnsiDoc(TextDoc):
+    """Formatter class for ANSI texst documentation."""
+
+    def bold(self, text):
+        """Format a string in bold by overstriking."""
+        return "\x1b[1m" + text + "\x1b[0m"
+
+
 # --------------------------------------------------------- user interfaces
 
 def pager(text):
@@ -1336,14 +1346,95 @@ def pager(text):
     pager = getpager()
     pager(text)
 
+
+class JLine2Pager(object):
+    
+
+    @staticmethod
+    def available():
+        try:
+            sys._jy_console.reader
+            return True
+        except AttributeError:
+            return False
+
+    def __init__(self, lines):
+        self.data = lines.split("\n")
+        self.reader = sys._jy_console.reader
+        self.index = 0
+        ansi_codes = {
+            "bold": "\x1b[1m",
+            "negative": "\x1b[7m",
+            "normal": "\x1b[0m"
+        }
+        self.more_prompt_back = "--more-- space/{bold}b{normal}ack/{bold}q{normal}uit:".format(**ansi_codes)
+        self.more_prompt = "--more-- space/{bold}q{normal}uit:".format(**ansi_codes)
+        self.end_prompt_back = "{negative}(END){normal} {bold}b{normal}ack/{bold}q{normal}uit:".format(**ansi_codes)
+        self.end_prompt = "{negative}(END){normal} {bold}q{normal}uit:".format(**ansi_codes)
+
+    @property
+    def visible(self):
+        # The terminal may be resized at any time by the user,
+        # so check terminal.height on each iteration
+        return self.reader.terminal.height - 1
+
+    def handle_prompt(self):
+        can_go_back = self.index - self.visible > 0
+        if self.index == len(self.data):
+            if can_go_back:
+                self.reader.resetPromptLine(self.end_prompt_back, "", 0)
+            else:
+                self.reader.resetPromptLine(self.end_prompt, "", 0)
+        else:
+            if can_go_back:
+                self.reader.resetPromptLine(self.more_prompt_back, "", 0)
+            else:
+                self.reader.resetPromptLine(self.more_prompt, "", 0)
+        c = chr(self.reader.readCharacter())
+        self.reader.resetPromptLine("", "", 0)
+        if c == "q":
+            return "quit"
+        elif c == "b":
+            if not can_go_back:
+                return "reprompt"
+            self.index -= self.visible * 2
+            if self.index < 0:
+                self.index = 0
+        elif self.index != len(self.data):
+            return "forward"
+        else:
+            return "reprompt"
+
+    def page(self):
+        # TODO count wrapped lines with respect to terminal width by
+        # taking in account ANSI formatting codes
+        row_count = 0
+        while self.index < len(self.data):
+            line = self.data[self.index]
+            self.reader.print(line + "\n")
+            self.index += 1
+            row_count += 1
+            if row_count == self.visible or self.index == len(self.data):
+                while True:
+                    action = self.handle_prompt()
+                    if action == "quit":
+                        return
+                    elif action != "reprompt":
+                        break
+                row_count = 0
+        self.reader.resetPromptLine("", "", 0)
+
+
 def getpager():
     """Decide what method to use for paging through text."""
+    if _is_windows and JLine2Pager.available():
+        return lambda text: JLine2Pager(text).page()
     if type(sys.stdout) is not types.FileType:
         return plainpager
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         return plainpager
     if 'PAGER' in os.environ:
-        if sys.platform == 'win32': # pipes completely broken in Windows
+        if _is_windows: # pipes completely broken in Windows
             return lambda text: tempfilepager(plain(text), os.environ['PAGER'])
         elif os.environ.get('TERM') in ('dumb', 'emacs'):
             return lambda text: pipepager(plain(text), os.environ['PAGER'])
@@ -1351,7 +1442,7 @@ def getpager():
             return lambda text: pipepager(text, os.environ['PAGER'])
     if os.environ.get('TERM') in ('dumb', 'emacs'):
         return plainpager
-    if sys.platform == 'win32' or sys.platform.startswith('os2'):
+    if _is_windows or sys.platform.startswith('os2'):
         return lambda text: tempfilepager(plain(text), 'more <')
     if hasattr(os, 'system') and os.system('(less) 2>/dev/null') == 0:
         return lambda text: pipepager(text, 'less')
@@ -1484,7 +1575,10 @@ def locate(path, forceload=0):
 
 # --------------------------------------- interactive interpreter interface
 
-text = TextDoc()
+if _is_windows and JLine2Pager.available():
+    text = AnsiDoc()
+else:
+    text = TextDoc()
 html = HTMLDoc()
 
 class _OldStyleClass: pass
@@ -2110,7 +2204,7 @@ def gui():
             self.search_ent.bind('<Return>', self.search)
             self.stop_btn = Tkinter.Button(self.search_frm,
                 text='stop', pady=0, command=self.stop, state='disabled')
-            if sys.platform == 'win32':
+            if _is_windows:
                 # Trying to hide and show this button crashes under Windows.
                 self.stop_btn.pack(side='right')
 
@@ -2126,7 +2220,7 @@ def gui():
             self.search_frm.pack(side='top', fill='x')
             self.search_ent.focus_set()
 
-            font = ('helvetica', sys.platform == 'win32' and 8 or 10)
+            font = ('helvetica', _is_windows and 8 or 10)
             self.result_lst = Tkinter.Listbox(window, font=font, height=6)
             self.result_lst.bind('<Button-1>', self.select)
             self.result_lst.bind('<Double-Button-1>', self.goto)
@@ -2172,7 +2266,7 @@ def gui():
                 import webbrowser
                 webbrowser.open(url)
             except ImportError: # pre-webbrowser.py compatibility
-                if sys.platform == 'win32':
+                if _is_windows:
                     os.system('start "%s"' % url)
                 else:
                     rc = os.system('netscape -remote "openURL(%s)" &' % url)
@@ -2217,7 +2311,7 @@ def gui():
             self.search_lbl.config(text='Search for')
             self.search_lbl.pack(side='left')
             self.search_ent.pack(side='right', fill='x', expand=1)
-            if sys.platform != 'win32': self.stop_btn.forget()
+            if not _is_windows: self.stop_btn.forget()
             self.stop_btn.config(state='disabled')
 
         def select(self, event=None):
