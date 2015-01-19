@@ -140,7 +140,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <!-- classpaths -->
         <path id="main.classpath">
-            <pathelement path="${extlibs.dir}/libreadline-java-0.8.jar" />
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />

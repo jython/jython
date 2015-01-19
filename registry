@@ -39,10 +39,9 @@ python.packages.directories = java.ext.dirs
 #python.console=org.python.util.JLineConsole
 # To activate  the featureless Jython console explicitly, choose:
 #python.console=org.python.core.PlainConsole
-# By setting this to the name of a different console class,
-# new console features can be enabled. For example:
-#python.console=org.python.util.ReadlineConsole
-#python.console.readlinelib=GnuReadline
+# You may also set this to the name of a different console class in
+# your classpath that extends PlainConsole. Note that
+# org.python.util.ReadlineConsole has been removed in 2.7.
 
 # Setting this to a valid (Java) codec name will cause the console to use a
 # different encoding when reading commands from the console.
