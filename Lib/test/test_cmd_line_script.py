@@ -73,9 +73,9 @@ class CmdLineTest(unittest.TestCase):
             print 'Output from test script %r:' % script_name
             print data
         self.assertEqual(exit_code, 0)
-        printed_file = '__file__==%r' % expected_file
-        printed_argv0 = 'sys.argv[0]==%r' % expected_argv0
-        printed_package = '__package__==%r' % expected_package
+        printed_file = '__file__==%r' % str(expected_file)
+        printed_argv0 = 'sys.argv[0]==%r' % str(expected_argv0)
+        printed_package = '__package__==%r' % (str(expected_package) if expected_package is not None else expected_package)
         if verbose:
             print 'Expected output:'
             print printed_file
