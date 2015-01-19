@@ -8,6 +8,4 @@ public interface PythonCodeBundle {
 
     void writeTo(OutputStream stream) throws Exception;
 
-    void saveCode(String directory) throws Exception;
-
 }

@@ -30,7 +30,6 @@ public class CompilerFacade {
         try {
             PythonCodeBundle bundle = compiler.compile(node, name, filename,
                     linenumbers, printResults, cflags);
-            bundle.saveCode(Options.proxyDebugDirectory);
             return bundle.loadCode();
         } catch (Throwable t) {
             throw ParserFacade.fixParseError(null, t, filename);

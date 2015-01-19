@@ -53,11 +53,6 @@ public class LegacyCompiler implements PythonCompiler {
             }
         }
 
-        public void saveCode(String directory) throws Exception {
-            // FIXME: this is slightly broken, it should use the directory
-            Py.saveClassFile(name, ostream());
-        }
-
         private ByteArrayOutputStream ostream() throws Exception {
             if (ostream == null) {
                 ostream = new ByteArrayOutputStream();

@@ -52,6 +52,8 @@ Jython 2.7b4
     - CPython's _json.c was ported to Java to speed up JSON encoding/decoding
     - Upgraded third party libraries
     - Initial support for ensurepip module
+    - Callbacks can be registered/unregistered to be notified when
+      bytecode is loaded, using jythonlib.bytecodetools
 
   Potentially backwards breaking changes, removing silent errors:
 

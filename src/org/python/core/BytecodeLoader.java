@@ -34,7 +34,9 @@ public class BytecodeLoader {
             } catch (SecurityException e) {
             }
         }
-        return loader.loadClassFromBytes(name, data);
+        Class<?> c = loader.loadClassFromBytes(name, data);
+        BytecodeNotification.notify(name, data, c);
+        return c;
     }
 
     /**

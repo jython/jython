@@ -1,4 +1,5 @@
 from _jythonlib import *
+import _bytecodetools as bytecodetools
 
 # Convenience imports, since this is the most common case for using
 # jythonlib, especially with MapMaker

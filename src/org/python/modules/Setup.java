@@ -28,6 +28,7 @@ public class Setup
 
     public static String[] builtinModules = {
         "_ast:org.python.antlr.ast.AstModule",
+        "_bytecodetools",
         "_codecs",
         "_collections:org.python.modules._collections.Collections",
         "_csv:org.python.modules._csv._csv",
