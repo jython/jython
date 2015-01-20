@@ -103,14 +103,24 @@ cases_to_generate = {
     }
 
 def generate_cases() :
-    fmt = "{}{:04d} {} {!r} 0.0 -> {} 0.0"
+    fmt = "{}{:04d} {} {!r} 0.0 -> {} {!r}"
     for fn in sorted(cases_to_generate.keys()):
         print "-- Additional real values (Jython)"
         count, xlist = cases_to_generate[fn]
         for x in xlist:
+            # Compute the function (in the reference library)
             func = getattr(mpmath, fn)
             y = func(x)
-            print fmt.format(fn, count, fn, x, mpmath.nstr(y, 20) )
+            # For the benefit of cmath tests, get the sign of imaginary zero right
+            zero = 0.0
+            if math.copysign(1., x) > 0.:
+                if fn=='cos' :
+                    zero = -0.0
+            else :
+                if fn=='cosh' :
+                    zero = -0.0
+            # Output one test case at sufficient precision
+            print fmt.format(fn, count, fn, x, mpmath.nstr(y, 20), zero )
             count += 1
 
 def test_main():

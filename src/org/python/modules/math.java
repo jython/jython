@@ -24,7 +24,7 @@ public class math implements ClassDictInit {
     private static final double MINUS_ONE = -1.0;
     private static final double TWO = 2.0;
     private static final double EIGHT = 8.0;
-    private static final double LN2 = 0.693147180559945309417232121458; // Ref OEIS A002162
+    static final double LN2 = 0.693147180559945309417232121458; // Ref OEIS A002162
 
     private static final double INF = Double.POSITIVE_INFINITY;
     private static final double NINF = Double.NEGATIVE_INFINITY;
@@ -515,7 +515,7 @@ public class math implements ClassDictInit {
      *
      * @return ValueError("math domain error")
      */
-    private static PyException mathDomainError() {
+    static PyException mathDomainError() {
         return Py.ValueError("math domain error");
     }
 
@@ -524,7 +524,7 @@ public class math implements ClassDictInit {
      *
      * @return OverflowError("math range error")
      */
-    private static PyException mathRangeError() {
+    static PyException mathRangeError() {
         return Py.OverflowError("math range error");
     }
 
@@ -575,7 +575,7 @@ public class math implements ClassDictInit {
      */
     private static double exceptInf(double result, double arg) {
         if (Double.isInfinite(result) && !Double.isInfinite(arg)) {
-            throw Py.OverflowError("math range error");
+            throw mathRangeError();
         } else {
             return result;
         }

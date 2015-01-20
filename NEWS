@@ -39,7 +39,8 @@ Jython 2.7b4
     - [ 2252 ] Args in sys.argv are now unicode if characters > 127
     - [ 2092 ] Upgrade to JLine2 and add tab completion support
     - [ 2236 ] Interactive parser does not accept try ... except E as e: syntax
-    - [ 2237 ] More robust math/cmath support (ongoing)
+    - [ 2237 ] Fully conformant math and cmath support
+    - [ 2244 ] More robust testing of math and cmath modules
 
   New features
     - Full support of Python buffer protocol, along with Java ByteBuffer support

@@ -839,10 +839,7 @@ public class PyFloat extends PyObject {
 
     @ExposedMethod(doc = BuiltinDocs.float___abs___doc)
     final PyObject float___abs__() {
-        if (getValue() < 0) {
-            return float___neg__();
-        }
-        return float___float__();
+        return new PyFloat(Math.abs(getValue()));
     }
 
     @Override

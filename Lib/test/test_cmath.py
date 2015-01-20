@@ -1,4 +1,4 @@
-from test.test_support import run_unittest, is_jython
+from test.test_support import run_unittest, verbose
 from test.test_math import parse_testfile, test_file
 import unittest
 import cmath, math
@@ -52,7 +52,6 @@ class CMathTests(unittest.TestCase):
             'cos', 'cosh', 'exp', 'log', 'log10', 'sin', 'sinh',
             'sqrt', 'tan', 'tanh']]
     # test first and second arguments independently for 2-argument log
-
     test_functions.append(lambda x : cmath.log(x, 1729. + 0j))
     test_functions.append(lambda x : cmath.log(14.-27j, x))
 
@@ -244,24 +243,30 @@ class CMathTests(unittest.TestCase):
         unit_interval = test_values + [-x for x in test_values] + \
             [0., 1., -1.]
 
+        # test_values for acosh, atanh
+        ge_one = [1.] + [1./x for x in test_values]
+        unit_open = test_values + [-x for x in test_values] + [0.]
+
         # test_values for log, log10, sqrt
-        positive = test_values + [1.] + [1./x for x in test_values]
+        positive = test_values + ge_one
         nonnegative = [0.] + positive
 
         # test_values for functions defined on the whole real line
         real_line = [0.] + positive + [-x for x in positive]
 
         test_functions = {
-            # FIXME uncomment tests for Jython
-            #'acos' : unit_interval,
-            #'asin' : unit_interval,
-            #'atan' : real_line,
-            #'cos' : real_line,
-            #'cosh' : real_line,
+            'acos' : unit_interval,
+            'asin' : unit_interval,
+            'atan' : real_line,
+            'acosh' : ge_one,           # Jython added
+            'asinh' : real_line,        # Jython added
+            'atanh' : unit_open,        # Jython added
+            'cos' : real_line,
+            'cosh' : real_line,
             'exp' : real_line,
             'log' : positive,
             'log10' : positive,
-            #'sin' : real_line,
+            'sin' : real_line,
             'sinh' : real_line,
             'sqrt' : nonnegative,
             'tan' : real_line,
@@ -273,7 +278,7 @@ class CMathTests(unittest.TestCase):
             for v in values:
                 z = complex_fn(v)
                 self.rAssertAlmostEqual(float_fn(v), z.real)
-                self.rAssertAlmostEqual(0., z.imag)
+                self.assertEqual(0., z.imag)
 
         # test two-argument version of log with various bases
         for base in [0.5, 2., 10.]:
@@ -282,10 +287,9 @@ class CMathTests(unittest.TestCase):
                 self.rAssertAlmostEqual(math.log(v, base), z.real)
                 self.assertEqual(0., z.imag)
 
-    @unittest.skipIf(is_jython, "FIXME: not working in Jython")
     def test_specific_values(self):
         if not float.__getformat__("double").startswith("IEEE"):
-            return
+            self.skipTest('needs IEEE double')
 
         def rect_complex(z):
             """Wrapped version of rect that accepts a complex number instead of
@@ -297,78 +301,88 @@ class CMathTests(unittest.TestCase):
             two floats."""
             return complex(*polar(z))
 
+        raised_fmt = '\n' \
+                '{}: {}(complex({!r}, {!r}))\n' \
+                'Raised: {!r}\n' \
+                'Expected: complex({!r}, {!r})'
+        not_raised_fmt = '\n' \
+                '{} not raised in test {}: {}(complex({!r}, {!r}))\n' \
+                'Received: complex({!r}, {!r})'
+        value_fmt = '\n' \
+                '{}: {}(complex({!r}, {!r}))\n' \
+                'Expected: complex({!r}, {!r})\n' \
+                'Received: complex({!r}, {!r})\n' \
+                'Received value insufficiently close to expected value.'
+        failures = 0
+
         for id, fn, ar, ai, er, ei, flags in parse_testfile(test_file):
             arg = complex(ar, ai)
-            expected = complex(er, ei)
             if fn == 'rect':
                 function = rect_complex
             elif fn == 'polar':
                 function = polar_complex
             else:
                 function = getattr(cmath, fn)
-            if 'divide-by-zero' in flags or 'invalid' in flags:
-                try:
+
+            try:
+                # Catch and count failing test cases locally
+                if 'divide-by-zero' in flags or 'invalid' in flags:
                     try:
                         actual = function(arg)
                     except ValueError:
-                        continue
+                        pass
                     else:
-                        self.fail('ValueError not raised in test '
-                                  '{}: {}(complex({!r}, {!r}))'.format(id, fn, ar, ai))
-                except AssertionError, ex:
-                    print "Got", function, ex
-                except BaseException, ex:
-                    print "Got", function, ex
+                        failures += 1
+                        self.fail(not_raised_fmt.format('ValueError',
+                                id, fn, ar, ai, actual.real, actual.imag))
 
-            try:
-                if 'overflow' in flags:
+                elif 'overflow' in flags:
                     try:
                         actual = function(arg)
                     except OverflowError:
-                        continue
-                    except BaseException, ex:
-                        print "\nGot", function, ex
+                        pass
                     else:
-                        self.fail('OverflowError not raised in test '
-                                  '{}: {}(complex({!r}, {!r}))'.format(id, fn, ar, ai))
-            except AssertionError, ex:
-                print "\nGot", function, ex
+                        failures += 1
+                        self.fail(not_raised_fmt.format('OverflowError',
+                                id, fn, ar, ai, actual.real, actual.imag))
 
-            try:
-                actual = function(arg)
-            except BaseException, ex:
-                print "\nGot", function, ex
+                else :
+                    actual = function(arg)
 
-            if 'ignore-real-sign' in flags:
-                actual = complex(abs(actual.real), actual.imag)
-                expected = complex(abs(expected.real), expected.imag)
-            if 'ignore-imag-sign' in flags:
-                actual = complex(actual.real, abs(actual.imag))
-                expected = complex(expected.real, abs(expected.imag))
+                    # Make sign of expected conform to actual, where ignored.
+                    exr, exi = er, ei
+                    if 'ignore-real-sign' in flags:
+                        exr = math.copysign(er, actual.real)
+                    if 'ignore-imag-sign' in flags:
+                        exi = math.copysign(ei, actual.imag)
 
-            # for the real part of the log function, we allow an
-            # absolute error of up to 2e-15.
-            if fn in ('log', 'log10'):
-                real_abs_err = 2e-15
-            else:
-                real_abs_err = 5e-323
+                    # for the real part of the log function, we allow an
+                    # absolute error of up to 2e-15.
+                    if fn in ('log', 'log10'):
+                        real_abs_err = 2e-15
+                    else:
+                        real_abs_err = 5e-323
 
-            error_message = (
-                '{}: {}(complex({!r}, {!r}))\n'
-                'Expected: complex({!r}, {!r})\n'
-                'Received: complex({!r}, {!r})\n'
-                'Received value insufficiently close to expected value.'
-                ).format(id, fn, ar, ai,
-                     expected.real, expected.imag,
-                     actual.real, actual.imag)
-            try:
-                self.rAssertAlmostEqual(expected.real, actual.real,
-                                        abs_err=real_abs_err,
-                                        msg=error_message)
-                self.rAssertAlmostEqual(expected.imag, actual.imag,
-                                        msg=error_message)
-            except AssertionError, ex:
-                print "\nGot", ex, error_message
+                    error_message = value_fmt.format(id, fn, ar, ai, er, ei,
+                                            actual.real, actual.imag)
+                    self.rAssertAlmostEqual(exr, actual.real,
+                                            abs_err=real_abs_err,
+                                            msg=error_message)
+                    self.rAssertAlmostEqual(exi, actual.imag,
+                                            msg=error_message)
+
+            except AssertionError as ex:
+                failures += 1
+                if verbose :
+                    print(ex)
+            except BaseException as ex:
+                failures += 1
+                if verbose :
+                    print(raised_fmt.format(id, fn, ar, ai, ex, er, ei))
+
+        if failures :
+            self.fail('{} discrepancies'.format(failures))
+
 
     def assertCISEqual(self, a, b):
         eps = 1E-7
@@ -446,6 +460,8 @@ class CMathTests(unittest.TestCase):
         self.assertTrue(math.isnan(abs(complex(2.3, NAN))))
         self.assertEqual(abs(complex(INF, NAN)), INF)
         self.assertTrue(math.isnan(abs(complex(NAN, NAN))))
+
+        # result overflows
         if float.__getformat__("double").startswith("IEEE"):
             self.assertRaises(OverflowError, abs, complex(1.4e308, 1.4e308))
 

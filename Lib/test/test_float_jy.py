@@ -85,6 +85,13 @@ class FloatTestCase(unittest.TestCase):
         self.assert_(type(float('inf')), float)
         self.assertRaises(OverflowError, long, float('Infinity'))
 
+    def test_minus_zero(self):
+        # Some operations confused by -0.0
+        mz = float('-0.0')
+        self.assertEquals(mz, 0.)
+        self.assertEquals(repr(mz)[0], '-')
+        self.assertEquals(repr(abs(mz))[0], '0')
+
     def test_float_none(self):
         self.assertRaises(TypeError, float, None)
 
