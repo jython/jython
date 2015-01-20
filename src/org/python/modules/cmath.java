@@ -1145,30 +1145,15 @@ public class cmath {
         }
     }
 
+    /**
+     * Raise <code>ValueError</code> if <code>result</code> is a <code>NaN</code>, but neither
+     * <code>a</code> nor <code>b</code> is <code>NaN</code>. Same as
+     * {@link #exceptNaN(PyComplex, PyComplex)}.
+     */
     private static PyComplex exceptNaN(PyComplex result, double a, double b) throws PyException {
         if ((Double.isNaN(result.real) || Double.isNaN(result.imag))
                 && !(Double.isNaN(a) || Double.isNaN(b))) {
             throw math.mathDomainError();
-        } else {
-            return result;
-        }
-    }
-
-    /**
-     * Turn an infinite result into a thrown <code>OverflowError</code>, a math range error, if the
-     * original argument was not itself infinite. A <code>PyComplex</code> is infinite if either
-     * component is infinite.
-     *
-     * @param result to return (if we return)
-     * @param arg to include in check
-     * @return result if <code>arg</code> was infinite or <code>result</code> was not infinite
-     * @throws PyException (ValueError) if <code>result</code> was infinite and <code>arg</code> was
-     *             not infinite
-     */
-    private static PyComplex exceptInf(PyComplex result, PyComplex arg) {
-        if ((Double.isInfinite(result.real) || Double.isInfinite(result.imag))
-                && !(Double.isInfinite(arg.real) || Double.isInfinite(arg.imag))) {
-            throw math.mathRangeError();
         } else {
             return result;
         }
