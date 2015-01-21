@@ -72,7 +72,7 @@ public class FileIO extends RawIOBase {
         File absPath = new RelativeFile(name.toString());
 
         try {
-            if (appending && !(reading || plus)) {
+            if ((appending && !(reading || plus)) || (writing && !reading && !plus)) {
                 // Take advantage of FileOutputStream's append mode
                 fromFileOutputStream(absPath);
             } else {
@@ -181,7 +181,7 @@ public class FileIO extends RawIOBase {
      * @param absPath The absolute path File to open
      */
     private void fromFileOutputStream(File absPath) throws FileNotFoundException {
-        fileOutputStream = new FileOutputStream(absPath, true);
+        fileOutputStream = new FileOutputStream(absPath, appending);
         fileChannel = fileOutputStream.getChannel();
     }
 

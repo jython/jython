@@ -43,6 +43,14 @@ class FileTestCase(unittest.TestCase):
         else:
             self.assertTrue(False)
 
+    @unittest.skipUnless(hasattr(os, 'chmod'), 'chmod() support required for this test')
+    def test_issue2081(self):
+        f = open(test_support.TESTFN, 'wb')
+        f.close()
+        os.chmod(test_support.TESTFN, 200)      # write-only
+        f = open(test_support.TESTFN, 'w')      # should succeed, raised IOError (permission denied) prior to fix
+        f.close()
+
 
 def test_main():
     test_support.run_unittest(FileTestCase)
