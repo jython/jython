@@ -37,20 +37,20 @@ class CodeopTests(unittest.TestCase):
                 ctx = {'a': 2}
                 d = { 'value': eval(code,ctx) }
                 r = { 'value': eval(str,ctx) }
-            self.assertEquals(unify_callables(r),unify_callables(d))
+            self.assertEqual(unify_callables(r),unify_callables(d))
         else:
             expected = compile(str, "<input>", symbol, PyCF_DONT_IMPLY_DEDENT)
-            self.assertEquals( compile_command(str, "<input>", symbol), expected)
+            self.assertEqual(compile_command(str, "<input>", symbol), expected)
 
     def assertIncomplete(self, str, symbol='single'):
         '''succeed iff str is the start of a valid piece of code'''
-        self.assertEquals( compile_command(str, symbol=symbol), None)
+        self.assertEqual(compile_command(str, symbol=symbol), None)
 
     def assertInvalid(self, str, symbol='single', is_syntax=1):
         '''succeed iff str is the start of an invalid piece of code'''
         try:
             compile_command(str,symbol=symbol)
-            self.fail("No exception thrown for invalid code")
+            self.fail("No exception raised for invalid code")
         except SyntaxError:
             self.assertTrue(is_syntax)
         except OverflowError:
@@ -61,12 +61,12 @@ class CodeopTests(unittest.TestCase):
 
         # special case
         if not is_jython:
-            self.assertEquals(compile_command(""),
-                            compile("pass", "<input>", 'single',
-                                    PyCF_DONT_IMPLY_DEDENT))
-            self.assertEquals(compile_command("\n"),
-                            compile("pass", "<input>", 'single',
-                                    PyCF_DONT_IMPLY_DEDENT))
+            self.assertEqual(compile_command(""),
+                             compile("pass", "<input>", 'single',
+                                     PyCF_DONT_IMPLY_DEDENT))
+            self.assertEqual(compile_command("\n"),
+                             compile("pass", "<input>", 'single',
+                                     PyCF_DONT_IMPLY_DEDENT))
         else:
             av("")
             av("\n")
@@ -109,7 +109,6 @@ class CodeopTests(unittest.TestCase):
         av("#a\n#b\na**3","eval")
 
         av("\n\na = 1\n\n")
-
         av("\n\nif 1: a=1\n\n")
 
         av("if 1:\n pass\n if 1:\n  pass\n else:\n  pass\n")
@@ -119,9 +118,7 @@ class CodeopTests(unittest.TestCase):
         av("\n \na**3","eval")
         av("#a\n#b\na**3","eval")
 
-        # this failed under Jython 2.2.1
         av("def f():\n try: pass\n finally: [x for x in (1,2)]\n")
-
         av("def f():\n pass\n#foo\n")
 
         #XXX: works in CPython
@@ -169,8 +166,6 @@ class CodeopTests(unittest.TestCase):
         ai("9+ \\","eval")
         ai("lambda z: \\","eval")
 
-        #Did not work in Jython 2.5rc2 see first issue in
-        # http://bugs.jython.org/issue1354
         ai("if True:\n if True:\n  if True:   \n")
 
         ai("@a(")
@@ -303,22 +298,17 @@ class CodeopTests(unittest.TestCase):
             ai("del (1,)")
             ai("del [1]")
             ai("del '1'")
+
             ai("[i for i in range(10)] = (1, 2, 3)")
-            ai("a = 1 and b = 2");
 
         # Merge test cases below upstream.
         ai("def x():\n pass\na=1\n")
 
     def test_filename(self):
-        self.assertEquals(compile_command("a = 1\n", "abc").co_filename,
-                          compile("a = 1\n", "abc", 'single').co_filename)
-        self.assertNotEquals(compile_command("a = 1\n", "abc").co_filename,
-                             compile("a = 1\n", "def", 'single').co_filename)
-
-    def test_no_universal_newlines(self):
-        # previously \r was translated due to universal newlines
-        code = compile_command("'\rfoo\r'", symbol='eval')
-        self.assertEqual(eval(code), '\rfoo\r')
+        self.assertEqual(compile_command("a = 1\n", "abc").co_filename,
+                         compile("a = 1\n", "abc", 'single').co_filename)
+        self.assertNotEqual(compile_command("a = 1\n", "abc").co_filename,
+                            compile("a = 1\n", "def", 'single').co_filename)
 
 
 def test_main():
