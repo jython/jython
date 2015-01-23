@@ -2,8 +2,66 @@
 import unittest
 import os
 import sys
+import signal
+import time
 from test import test_support
 from subprocess import PIPE, Popen, _cmdline2list
+
+
+class TerminationAndSignalTest(unittest.TestCase):
+
+    def setUp(self):
+        program = '''
+import signal, sys
+
+def print_signal(signum, frame):
+    print signum
+
+def exit_signal(signum, frame):
+    sys.exit(signum)
+
+signal.signal(signal.SIGTERM, print_signal)
+signal.signal(signal.SIGINT, exit_signal)
+
+print 'Started'
+sys.stdout.flush()
+
+while True:
+    pass
+'''
+        self.proc = Popen(['python', '-c', program], stdout=PIPE, stderr=PIPE)
+        assert self.proc.stdout.readline().strip() == 'Started'
+
+    def tearDown(self):
+        if self.proc.poll() is None:
+            self.proc.kill()
+
+    def test_kill(self):
+        self.proc.kill()
+        self.assertNotEqual(self.proc.wait(), 0)
+
+    if os._name != 'nt':
+
+        def test_terminate_can_be_ignored_on_posix(self):
+            self.proc.terminate()
+            self.assertIsNone(self.proc.poll())
+
+        def test_send_signals_on_posix(self):
+            self.proc.send_signal(signal.SIGTERM)
+            time.sleep(0.01)  # Make sure SIGTERM is handled first
+            self.proc.send_signal(signal.SIGINT)
+            self.assertEqual(self.proc.wait(), 2)
+            self.assertEqual(self.proc.stdout.read(), '15\n')
+
+    else:
+
+        def test_terminate_cannot_be_ignored_on_windows(self):
+            self.proc.terminate()
+            self.assertNotEqual(self.proc.wait(), 0)
+
+        def test_sending_sigterm_signal_terminates_on_windows(self):
+            self.proc.send_signal(signal.SIGTERM)
+            self.assertNotEqual(self.proc.wait(), 0)
 
 
 class PidTest(unittest.TestCase):
@@ -87,6 +145,7 @@ class Cmdline2ListTestCase(unittest.TestCase):
 
 def test_main():
     test_support.run_unittest(
+        TerminationAndSignalTest,
         PidTest,
         EnvironmentInheritanceTest,
         JythonOptsTest,

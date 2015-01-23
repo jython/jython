@@ -1425,24 +1425,36 @@ class Popen(object):
                     self._stdin_thread.interrupt()
             return self.returncode
 
-        def send_signal(self, sig):
-            """Send a signal to the process
-            """
-            if sig == signal.SIGTERM:
-                self.terminate()
-            elif sig == signal.CTRL_C_EVENT:
-                os.kill(self.pid, signal.CTRL_C_EVENT)
-            elif sig == signal.CTRL_BREAK_EVENT:
-                os.kill(self.pid, signal.CTRL_BREAK_EVENT)
-            else:
-                raise ValueError("Unsupported signal: {}".format(sig))
-
         def terminate(self):
             """Terminates the process
             """
             self._process.destroy()
 
-        kill = terminate
+        if os._name not in _win_oses:
+
+            def kill(self):
+                if hasattr(self._process, 'destroyForcibly'):
+                    self._process.destroyForcibly()
+                else:
+                    self.send_signal(signal.SIGKILL)
+
+            def send_signal(self, sig):
+                """Send a signal to the process
+                """
+                os.kill(self.pid, sig)
+
+        else:
+
+            kill = terminate
+
+            def send_signal(self, sig):
+                """Send a signal to the process
+                """
+                if sig == signal.SIGTERM:
+                    self.terminate()
+                else:
+                    raise ValueError("Unsupported signal: {}".format(sig))
+
 
     else:
         #
