@@ -128,7 +128,7 @@ class OSWriteTestCase(unittest.TestCase):
         # lacks buffer api:
         self.assertRaises(TypeError, self.do_write, 1.5, 4)
 
-class OSUnicodeTestCase(unittest.TestCase):
+class UnicodeTestCase(unittest.TestCase):
 
     def test_env(self):
         with test_support.temp_cwd(name=u"tempcwd-中文"):
@@ -191,6 +191,70 @@ class OSUnicodeTestCase(unittest.TestCase):
                 self.assertTrue(f.exists(), "File %r (%r) should be testable for existence" % (
                     f, entry_path))
 
+class LocaleTestCase(unittest.TestCase):
+
+    def get_installed_locales(self, codes, msg=None):
+        def normalize(code):
+            # OS X and Ubuntu (at the very least) differ slightly in locale code formatting
+            return code.strip().replace("-", "").lower()
+
+        try:
+            installed_codes = dict(((normalize(code), code) for 
+                                    code in subprocess.check_output(["locale", "-a"]).split()))
+        except subprocess.CalledProcessError:
+            unittest.skip("locale command not available, cannot test")
+
+        if msg is None:
+            msg = "One of %s tested locales is not installed" % (codes,)
+        available_codes = []
+        for code in codes:
+            if normalize(code) in installed_codes:
+                available_codes.append(installed_codes[normalize(code)])
+        unittest.skipUnless(available_codes, msg)
+        return available_codes
+
+    # must be on posix and turkish locale supported
+    def test_turkish_locale_posix_module(self):
+        # Verifies fix of http://bugs.jython.org/issue1874
+        self.get_installed_locales(["tr_TR.UTF-8"], "Turkish locale not installed, cannot test")
+        newenv = os.environ.copy()
+        newenv["LC_ALL"] = "tr_TR.UTF-8"  # set to Turkish locale
+        self.assertEqual(
+            subprocess.check_output(
+                [sys.executable, "-c",
+                 "import sys; assert 'posix' in sys.builtin_module_names"],
+                env=newenv),
+            "")
+
+    def test_turkish_locale_string_lower_upper(self):
+        # Verifies fix of http://bugs.jython.org/issue1874
+        self.get_installed_locales(["tr_TR.UTF-8"], "Turkish locale not installed, cannot test")
+        newenv = os.environ.copy()
+        newenv["LC_ALL"] = "tr_TR.UTF-8"  # set to Turkish locale
+        self.assertEqual(
+            subprocess.check_output(
+                [sys.executable, "-c",
+                 'print repr(["I".lower(), u"I".lower(), "i".upper(), u"i".upper()])'],
+                env=newenv),
+            # Should not convert str for 'i'/'I', but should convert
+            # unicode if in Turkish locale; this behavior intentionally is
+            # different than CPython; see also http://bugs.python.org/issue17252
+            "['i', u'\\u0131', 'I', u'\\u0130']\n")
+
+    def test_strptime_locale(self):
+        # Verifies fix of http://bugs.jython.org/issue2261
+        newenv = os.environ.copy()
+        codes = [
+            "cs_CZ.UTF-8", "pl_PL.UTF-8", "ru_RU.UTF-8",
+            "sk_SK.UTF-8", "uk_UA.UTF-8", "zh_CN.UTF-8"]
+        for code in self.get_installed_locales(codes):
+            newenv["LC_ALL"] = code
+            self.assertEqual(
+                subprocess.check_output(
+                    [sys.executable, "-c",
+                     'import datetime; print(datetime.datetime.strptime("2015-01-22", "%Y-%m-%d"))'],
+                    env=newenv),
+                "2015-01-22 00:00:00\n")
 
 
 def test_main():
@@ -199,7 +263,8 @@ def test_main():
         OSDirTestCase,
         OSStatTestCase,
         OSWriteTestCase,
-        OSUnicodeTestCase
+        UnicodeTestCase,
+        LocaleTestCase,
     )
 
 if __name__ == '__main__':

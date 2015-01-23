@@ -678,7 +678,7 @@ public class Time implements ClassDictInit
         //        os.environ)
         //
         // TODO:  Check how CPython deals with this problem.
-        return new PyString(s);
+        return Py.newStringOrUnicode(s);
     }
 
 

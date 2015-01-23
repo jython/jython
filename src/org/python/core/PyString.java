@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.List;
+import java.util.Locale;
 
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -1048,7 +1049,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_lower_doc)
     final String str_lower() {
-        return getString().toLowerCase();
+        return getString().toLowerCase(Locale.ENGLISH);
     }
 
     public String upper() {
@@ -1057,7 +1058,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_upper_doc)
     final String str_upper() {
-        return getString().toUpperCase();
+        return getString().toUpperCase(Locale.ENGLISH);
     }
 
     public String title() {

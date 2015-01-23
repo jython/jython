@@ -1,6 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules.posix;
 
+import java.util.Locale;
 import org.python.core.PySystemState;
 
 /**
@@ -32,7 +33,7 @@ enum OS {
     }
 
     String getModuleName() {
-        return name().toLowerCase();
+        return name().toLowerCase(Locale.ENGLISH);
     }
 
     String[][] getShellCommands() {

@@ -936,12 +936,12 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_lower_doc)
     final PyObject unicode_lower() {
-        return new PyUnicode(str_lower());
+        return new PyUnicode(getString().toLowerCase());
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode_upper_doc)
     final PyObject unicode_upper() {
-        return new PyUnicode(str_upper());
+        return new PyUnicode(getString().toUpperCase());
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode_title_doc)
