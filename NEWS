@@ -74,6 +74,14 @@ Jython 2.7b4
       NotImplementedError, instead of returning None (in Java, null) or some
       "zero", if they are not implemented in the extending Python class.
 
+    - os.getenv, os.listdir, sys.argv now return unicode instead of
+      str values if a given value is not ascii, thus allowing such
+      values to be passed through to Java, eg
+      java.io.File(sys.argv[1]). Earlier such behavior was potentially
+      silently failing in Python functions, but passing through to
+      Java because of bug 2037. This behavior conforms with Python
+      3.x, which uses Unicode.
+
 Jython 2.7b3
   Bugs Fixed
     - [ 2225 ] Jython+django-jython - no module named site
