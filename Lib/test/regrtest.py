@@ -677,6 +677,10 @@ def cleanup_test_droppings(testname, verbose):
         if not os.path.exists(name):
             continue
 
+        # work around tests depending on refcounting files,
+        # but this doesn't work with respect to Windows
+        test_support.gc_collect()
+
         if os.path.isdir(name):
             kind, nuker = "directory", shutil.rmtree
         elif os.path.isfile(name):

@@ -189,7 +189,7 @@ def unload(name):
     except KeyError:
         pass
 
-if sys.platform.startswith("win"):
+if sys.platform.startswith("win") or os.name == "java" and os._name == "nt":
     def _waitfor(func, pathname, waitall=False):
         # Peform the operation
         func(pathname)

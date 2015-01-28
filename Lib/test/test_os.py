@@ -23,6 +23,7 @@ warnings.filterwarnings("ignore", "tmpnam", RuntimeWarning, __name__)
 # Tests creating TESTFN
 class FileTests(unittest.TestCase):
     def setUp(self):
+        test_support.gc_collect()
         if os.path.exists(test_support.TESTFN):
             os.unlink(test_support.TESTFN)
     tearDown = setUp
@@ -32,6 +33,8 @@ class FileTests(unittest.TestCase):
         os.close(f)
         self.assertTrue(os.access(test_support.TESTFN, os.W_OK))
 
+    @unittest.skipIf(test_support.is_jython and os._name == "nt",
+                     "Does not properly close files under Windows")
     def test_closerange(self):
         first = os.open(test_support.TESTFN, os.O_CREAT|os.O_RDWR)
         # We must allocate two consecutive file descriptors, otherwise
