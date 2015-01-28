@@ -274,7 +274,13 @@ class Thread(JavaThread):
 
 class _MainThread(Thread):
     def __init__(self):
-        Thread.__init__(self, name="MainThread")
+        if java.lang.Thread.currentThread().name == "main":
+            # Do not clobber the thread name if the user set it to
+            # something different
+            kw = dict(name="MainThread")
+        else:
+            kw = {}
+        Thread.__init__(self, **kw)
         import atexit
         atexit.register(self.__exitfunc)
 
