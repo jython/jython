@@ -2,19 +2,23 @@
 package org.python.core.io;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
 import jnr.constants.platform.Errno;
+import jnr.posix.util.FieldAccess;
 import jnr.posix.util.Platform;
 import org.python.core.Py;
+import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.util.RelativeFile;
 import org.python.modules.posix.PosixModule;
@@ -434,5 +438,38 @@ public class FileIO extends RawIOBase {
     @Override
     public FileChannel getChannel() {
         return fileChannel;
+    }
+
+    public FileDescriptor getFD() {
+        if (file != null) {
+            try {
+                return file.getFD();
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
+            }
+        } else if (fileOutputStream != null) {
+            try {
+                return fileOutputStream.getFD();
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
+            }
+        }
+        throw Py.OSError(Errno.EBADF);
+    }
+
+    public PyObject __int__() {
+        int intFD = -1;
+        try {
+            Field fdField = FieldAccess.getProtectedField(FileDescriptor.class, "fd");
+            intFD = fdField.getInt(getFD());
+        } catch (SecurityException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        }
+        return Py.newInteger(intFD);
+    }
+
+    public PyObject __add__(PyObject otherObj) {
+        return __int__().__add__(otherObj);
     }
 }

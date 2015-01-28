@@ -32,7 +32,7 @@ class TestFilenoTestCase(unittest.TestCase):
         self.assertEqual(os.path.getsize(self.filename), 0)
 
         self.fp.close()
-        raises(IOError, 9, os.ftruncate, self.fd, 0)
+        raises(OSError, 9, os.ftruncate, self.fd, 0)
 
     def test_lseek(self):
         self.assertEqual(os.lseek(self.fd, 0, 1), 0)

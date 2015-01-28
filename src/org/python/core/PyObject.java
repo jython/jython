@@ -590,6 +590,15 @@ public class PyObject implements Serializable {
     }
 
     /**
+     * Determine if this object can act as an int (implements __int__).
+     *
+     * @return true if the object can act as an int
+     */
+    public boolean isInteger() {
+        return getType().lookup("__int__") != null;
+    }
+
+    /**
      * Determine if this object can act as an index (implements __index__).
      *
      * @return true if the object can act as an index

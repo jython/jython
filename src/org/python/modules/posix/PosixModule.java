@@ -6,10 +6,13 @@ import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -19,9 +22,12 @@ import java.util.Map;
 
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
+import jnr.constants.platform.Sysconf;
 import jnr.posix.FileStat;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
+import jnr.posix.Times;
+import jnr.posix.util.FieldAccess;
 import jnr.posix.util.Platform;
 
 import org.python.core.BufferProtocol;
@@ -34,14 +40,11 @@ import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyFloat;
-import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.imp;
-import org.python.core.io.FileDescriptors;
 import org.python.core.io.FileIO;
 import org.python.core.io.IOBase;
 import org.python.core.io.RawIOBase;
@@ -114,7 +117,8 @@ public class PosixModule implements ClassDictInit {
         dict.__setitem__("error", Py.OSError);
         dict.__setitem__("stat_result", PyStatResult.TYPE);
 
-        // Faster call paths
+        // Faster call paths, because __call__ is defined
+        dict.__setitem__("fstat", new FstatFunction());
         dict.__setitem__("lstat", new LstatFunction());
         dict.__setitem__("stat", new StatFunction());
 
@@ -139,6 +143,81 @@ public class PosixModule implements ClassDictInit {
 
         dict.__setitem__("__name__", new PyString(os.getModuleName()));
         dict.__setitem__("__doc__", __doc__);
+    }
+
+    // Combine Java FileDescriptor objects with
+    // Posix int file descriptors in one representation
+    private static class FDUnion {
+        volatile int intFD;
+        final FileDescriptor javaFD;
+
+        FDUnion(int fd) {
+            intFD = fd;
+            javaFD = null;
+        }
+        FDUnion(FileDescriptor fd) {
+            intFD = -1;
+            javaFD = fd;
+        }
+
+        boolean isIntFD() {
+            return intFD != -1;
+        }
+
+        // FIXME should this store this int fd -> FileDescriptor in a weak value map so it can be looked up later?
+        int getIntFD() {
+            return getIntFD(true);
+        }
+
+        int getIntFD(boolean checkFD) {
+            if (intFD == -1) {
+                if (!(javaFD instanceof FileDescriptor)) {
+                    throw Py.OSError(Errno.EBADF);
+                }
+                try {
+                    Field fdField = FieldAccess.getProtectedField(FileDescriptor.class, "fd");
+                    intFD = fdField.getInt(javaFD);
+                } catch (SecurityException e) {
+                } catch (IllegalArgumentException e) {
+                } catch (IllegalAccessException e) {
+                }
+            }
+            if (checkFD) {
+                posix.fstat(intFD); // check if this a good FD or not
+            }
+            return intFD;
+        }
+
+        @Override
+        public String toString() {
+            return "FDUnion(int=" + intFD  + ", java=" + javaFD + ")";
+        }
+
+    }
+
+    private static FDUnion getFD(PyObject fdObj) {
+        if (fdObj.isInteger()) {
+            int intFd = fdObj.asInt();
+            switch (intFd) {
+                case 0:
+                    return new FDUnion(FileDescriptor.in);
+                case 1:
+                    return new FDUnion(FileDescriptor.out);
+                case 2:
+                    return new FDUnion(FileDescriptor.err);
+                default:
+                    return new FDUnion(intFd);
+            }
+        }
+        Object tojava = fdObj.__tojava__(FileDescriptor.class);
+        if (tojava != Py.NoConversion) {
+            return new FDUnion((FileDescriptor) tojava);
+        }
+        tojava = fdObj.__tojava__(FileIO.class);
+        if (tojava != Py.NoConversion) {
+            return new FDUnion(((FileIO)tojava).getFD());
+        }
+        throw Py.TypeError("an integer or Java/Jython file descriptor is required");
     }
 
     public static PyString __doc___exit = new PyString(
@@ -226,11 +305,30 @@ public class PosixModule implements ClassDictInit {
         "close(fd)\n\n" +
         "Close a file descriptor (for low level IO).");
     public static void close(PyObject fd) {
-        try {
-            FileDescriptors.get(fd).close();
-        } catch (PyException pye) {
-            throw badFD();
+        Object obj = fd.__tojava__(RawIOBase.class);
+        if (obj != Py.NoConversion) {
+            ((RawIOBase)obj).close();
+        } else {
+            posix.close(getFD(fd).getIntFD());
         }
+    }
+
+    public static void closerange(PyObject fd_lowObj, PyObject fd_highObj) {
+        int fd_low = getFD(fd_lowObj).getIntFD(false);
+        int fd_high = getFD(fd_highObj).getIntFD(false);
+        for (int i = fd_low; i < fd_high; i++) {
+            try {
+                posix.close(i); // FIXME catch exceptions
+            } catch (Exception e) {}
+        }
+    }
+
+    public static PyObject dup(PyObject fd1) {
+        return Py.newInteger(posix.dup(getFD(fd1).getIntFD()));
+    }
+
+    public static PyObject dup2(PyObject fd1, PyObject fd2) {
+        return Py.newInteger(posix.dup2(getFD(fd1).getIntFD(), getFD(fd2).getIntFD()));
     }
 
     public static PyString __doc__fdopen = new PyString(
@@ -249,7 +347,12 @@ public class PosixModule implements ClassDictInit {
         if (mode.length() == 0 || !"rwa".contains("" + mode.charAt(0))) {
             throw Py.ValueError(String.format("invalid file mode '%s'", mode));
         }
-        RawIOBase rawIO = FileDescriptors.get(fd);
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj == Py.NoConversion) {
+            getFD(fd).getIntFD();
+            throw Py.NotImplementedError("Integer file descriptors not currently supported for fdopen");
+        }
+        RawIOBase rawIO = (RawIOBase)javaobj;
         if (rawIO.closed()) {
             throw badFD();
         }
@@ -270,21 +373,30 @@ public class PosixModule implements ClassDictInit {
         "does not force update of metadata.");
     @Hide(OS.NT)
     public static void fdatasync(PyObject fd) {
-        fsync(fd, false);
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj != Py.NoConversion) {
+            fsync((RawIOBase)javaobj, false);
+        } else {
+            posix.fdatasync(getFD(fd).getIntFD());
+        }
     }
 
     public static PyString __doc__fsync = new PyString(
         "fsync(fildes)\n\n" +
         "force write of file with filedescriptor to disk.");
     public static void fsync(PyObject fd) {
-        fsync(fd, true);
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj != Py.NoConversion) {
+            fsync((RawIOBase)javaobj, true);
+        } else {
+            posix.fsync(getFD(fd).getIntFD());
+        }
     }
 
     /**
      * Internal fsync implementation.
      */
-    private static void fsync(PyObject fd, boolean metadata) {
-        RawIOBase rawIO = FileDescriptors.get(fd);
+    private static void fsync(RawIOBase rawIO, boolean metadata) {
         rawIO.checkClosed();
         Channel channel = rawIO.getChannel();
         if (!(channel instanceof FileChannel)) {
@@ -304,11 +416,17 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__ftruncate = new PyString(
         "ftruncate(fd, length)\n\n" +
         "Truncate a file to a specified length.");
+
     public static void ftruncate(PyObject fd, long length) {
-        try {
-            FileDescriptors.get(fd).truncate(length);
-        } catch (PyException pye) {
-            throw Py.IOError(Errno.EBADF);
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj != Py.NoConversion) {
+            try {
+                ((RawIOBase) javaobj).truncate(length);
+            } catch (PyException pye) {
+                throw Py.OSError(Errno.EBADF);
+            }
+        } else {
+            posix.ftruncate(getFD(fd).getIntFD(), length);
         }
     }
 
@@ -390,40 +508,40 @@ public class PosixModule implements ClassDictInit {
         return posix.getpgrp();
     }
 
+
+
     public static PyString __doc__isatty = new PyString(
         "isatty(fd) -> bool\n\n" +
         "Return True if the file descriptor 'fd' is an open file descriptor\n" +
         "connected to the slave end of a terminal.");
     public static boolean isatty(PyObject fdObj) {
-        if (fdObj instanceof PyInteger) {
-            FileDescriptor fd;
-            switch (fdObj.asInt()) {
-            case 0:
-                fd = FileDescriptor.in;
-                break;
-            case 1:
-                fd = FileDescriptor.out;
-                break;
-            case 2:
-                fd = FileDescriptor.err;
-                break;
-            default:
-                throw Py.NotImplementedError("Integer file descriptor compatibility only "
-                                             + "available for stdin, stdout and stderr (0-2)");
-            }
-            return posix.isatty(fd);
-        }
-
-        Object tojava = fdObj.__tojava__(FileDescriptor.class);
+        Object tojava = fdObj.__tojava__(IOBase.class);
         if (tojava != Py.NoConversion) {
-            return posix.isatty((FileDescriptor)tojava);
+            try {
+                return ((IOBase) tojava).isatty();
+            } catch (PyException pye) {
+                if (pye.match(Py.ValueError)) {
+                    return false;
+                }
+                throw pye;
+            }
         }
 
-        tojava = fdObj.__tojava__(IOBase.class);
-        if (tojava == Py.NoConversion) {
-            throw Py.TypeError("a file descriptor is required");
+        FDUnion fd = getFD(fdObj);
+        if (fd.javaFD != null) {
+            return posix.isatty(fd.javaFD);
         }
-        return ((IOBase)tojava).isatty();
+        try {
+            fd.getIntFD();  // evaluate for side effect of checking EBADF or raising TypeError
+        } catch (PyException pye) {
+            if (pye.match(Py.OSError)) {
+                return false;
+            }
+            throw pye;
+        }
+        throw Py.NotImplementedError(
+                "Integer file descriptor compatibility only "
+                + "available for stdin, stdout and stderr (0-2)");
     }
 
     public static PyString __doc__kill = new PyString(
@@ -504,10 +622,15 @@ public class PosixModule implements ClassDictInit {
         "lseek(fd, pos, how) -> newpos\n\n" +
         "Set the current position of a file descriptor.");
     public static long lseek(PyObject fd, long pos, int how) {
-        try {
-            return FileDescriptors.get(fd).seek(pos, how);
-        } catch (PyException pye) {
-            throw badFD();
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj != Py.NoConversion) {
+            try {
+                return ((RawIOBase) javaobj).seek(pos, how);
+            } catch (PyException pye) {
+                throw badFD();
+            }
+        } else {
+            return posix.lseek(getFD(fd).getIntFD(), pos, how);
         }
     }
 
@@ -610,10 +733,17 @@ public class PosixModule implements ClassDictInit {
         "read(fd, buffersize) -> string\n\n" +
         "Read a file descriptor.");
     public static PyObject read(PyObject fd, int buffersize) {
-        try {
-            return new PyString(StringUtil.fromBytes(FileDescriptors.get(fd).read(buffersize)));
-        } catch (PyException pye) {
-            throw badFD();
+        Object javaobj = fd.__tojava__(RawIOBase.class);
+        if (javaobj != Py.NoConversion) {
+            try {
+                return new PyString(StringUtil.fromBytes(((RawIOBase) javaobj).read(buffersize)));
+            } catch (PyException pye) {
+                throw badFD();
+            }
+        } else {
+            ByteBuffer buffer = ByteBuffer.allocate(buffersize);
+            posix.read(getFD(fd).getIntFD(), buffer, buffersize);
+            return new PyString(StringUtil.fromBytes(buffer));
         }
     }
 
@@ -707,6 +837,26 @@ public class PosixModule implements ClassDictInit {
         if (posix.symlink(asPath(src), absolutePath(dst)) < 0) {
             throw errorFromErrno();
         }
+    }
+
+    private static PyFloat ratio(long num, long div) {
+        return Py.newFloat(((double)num)/((double)div));
+    }
+
+    public static PyString __doc__times = new PyString(
+        "times() -> (utime, stime, cutime, cstime, elapsed_time)\n\n" +
+        "Return a tuple of floating point numbers indicating process times.");
+
+    public static PyTuple times() {
+        Times times = posix.times();
+        long CLK_TCK = Sysconf._SC_CLK_TCK.longValue();
+        return new PyTuple(
+                ratio(times.utime(), CLK_TCK),
+                ratio(times.stime(), CLK_TCK),
+                ratio(times.cutime(), CLK_TCK),
+                ratio(times.cstime(), CLK_TCK),
+                ratio(ManagementFactory.getRuntimeMXBean().getUptime(), 1000)
+        );
     }
 
     public static PyString __doc__umask = new PyString(
@@ -810,18 +960,23 @@ public class PosixModule implements ClassDictInit {
         return new PyTuple(Py.newInteger(pid), Py.newInteger(status[0]));
     }
 
-    public static PyString __doc__write = new PyString("write(fd, string) -> byteswritten\n\n"
-            + "Write a string to a file descriptor.");
+    public static PyString __doc__write = new PyString(
+            "write(fd, string) -> byteswritten\n\n" +
+            "Write a string to a file descriptor.");
     public static int write(PyObject fd, BufferProtocol bytes) {
         // Get a buffer view: we can cope with N-dimensional data, but not strided data.
         try (PyBuffer buf = bytes.getBuffer(PyBUF.ND)) {
             // Get a ByteBuffer of that data, setting the position and limit to the real data.
-            ByteBuffer bb =  buf.getNIOByteBuffer();
-            try {
-                // Write the data (returning the count of bytes).
-                return FileDescriptors.get(fd).write(bb);
-            } catch (PyException pye) {
-                throw badFD();
+            ByteBuffer bb = buf.getNIOByteBuffer();
+            Object javaobj = fd.__tojava__(RawIOBase.class);
+            if (javaobj != Py.NoConversion) {
+                try {
+                    return ((RawIOBase) javaobj).write(bb);
+                } catch (PyException pye) {
+                    throw badFD();
+                }
+            } else {
+                return posix.write(getFD(fd).getIntFD(), bb, bb.position());
             }
         }
     }
@@ -907,11 +1062,21 @@ public class PosixModule implements ClassDictInit {
     /**
      * Return the absolute form of path.
      *
-     * @param path a PyObject, raising a TypeError if an invalid path type
+     * @param pathObj a PyObject, raising a TypeError if an invalid path type
      * @return an absolute path String
      */
-    private static String absolutePath(PyObject path) {
-        return PySystemState.getPathLazy(asPath(path));
+    private static String absolutePath(PyObject pathObj) {
+        String pathStr = asPath(pathObj);
+        if (pathStr.equals("")) {
+            // Otherwise this path will get prefixed with the current working directory,
+            // which is both wrong and very surprising!
+            throw Py.OSError(Errno.ENOENT, pathObj);
+        }
+        Path path = FileSystems.getDefault().getPath(pathStr);
+        if (!path.isAbsolute()) {
+            path = FileSystems.getDefault().getPath(Py.getSystemState().getCurrentWorkingDir(), pathStr);
+        }
+        return path.toAbsolutePath().normalize().toString();
     }
 
     private static PyException badFD() {
@@ -967,7 +1132,6 @@ public class PosixModule implements ClassDictInit {
         @Override
         public PyObject __call__(PyObject path) {
             String absolutePath = absolutePath(path);
-
             // round tripping from a string to a file to a string loses
             // trailing slashes so add them back back in to get correct posix.stat
             // behaviour if path is not a directory.
@@ -975,6 +1139,25 @@ public class PosixModule implements ClassDictInit {
                 absolutePath = absolutePath + File.separator;
             }
             return PyStatResult.fromFileStat(posix.stat(absolutePath));
+        }
+    }
+
+    static class FstatFunction extends PyBuiltinFunctionNarrow {
+        FstatFunction() {
+            super("fstat", 1, 1,
+                    "fstat(fd) -> stat result\\n\\nLike stat(), but for an open file descriptor.");
+        }
+
+        @Override
+        public PyObject __call__(PyObject fdObj) {
+            FDUnion fd = getFD(fdObj);
+            FileStat stat;
+            if (fd.isIntFD()) {
+                stat = posix.fstat(fd.intFD);
+            } else {
+                stat = posix.fstat(fd.javaFD);;
+            }
+            return PyStatResult.fromFileStat(stat);
         }
     }
 }
