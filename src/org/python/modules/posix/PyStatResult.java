@@ -18,6 +18,11 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 @ExposedType(name = "stat_result", isBaseType = false)
 public class PyStatResult extends PyTuple {
 
@@ -74,20 +79,105 @@ public class PyStatResult extends PyTuple {
         }
     }
 
-    /**
-     * Return a Python stat result from a posix layer FileStat object.
-     *
-     * Ideally times would be returned as floats, like CPython, however, the underlying FileStat
-     * object from JNR Posix only has integer resolution.
-     *
-     * We should be able to resolve by using java.nio.file.attribute.PosixFileAttributeView
-     */
+    // Return a Python stat result from a posix layer FileStat object, a bulk Map retrieval of attributes, or AttributeView.
     public static PyStatResult fromFileStat(FileStat stat) {
-        return new PyStatResult(Py.newInteger(stat.mode()), Py.newInteger(stat.ino()),
-                                Py.newLong(stat.dev()), Py.newInteger(stat.nlink()),
-                                Py.newInteger(stat.uid()), Py.newInteger(stat.gid()),
-                                Py.newInteger(stat.st_size()), Py.newInteger(stat.atime()),
-                                Py.newInteger(stat.mtime()), Py.newInteger(stat.ctime()));
+        return new PyStatResult(
+                Py.newInteger(stat.mode()),
+                Py.newInteger(stat.ino()),
+                Py.newLong(stat.dev()),
+                Py.newInteger(stat.nlink()),
+                Py.newInteger(stat.uid()),
+                Py.newInteger(stat.gid()),
+                Py.newInteger(stat.st_size()),
+                Py.newFloat(stat.atime()),
+                Py.newFloat(stat.mtime()),
+                Py.newFloat(stat.ctime()));
+    }
+
+    private static double fromFileTime(FileTime fileTime) {
+        return fileTime.to(TimeUnit.NANOSECONDS) / 1e9;
+    }
+
+    private static Long zeroOrValue(Long value) {
+        if (value == null) {
+            return new Long(0L);
+        } else {
+            return value;
+        }
+    }
+
+    private static Integer zeroOrValue(Integer value) {
+        if (value == null) {
+            return new Integer(0);
+        } else {
+            return value;
+        }
+    }
+
+    public static PyStatResult fromUnixFileAttributes(Map<String, Object> stat) {
+
+        Integer mode = zeroOrValue((Integer)stat.get("mode"));
+        Long ino = zeroOrValue((Long)stat.get("ino"));
+        Long dev = zeroOrValue((Long)stat.get("dev"));
+        Integer nlink = zeroOrValue((Integer)stat.get("nlink"));
+        Integer uid = zeroOrValue((Integer)stat.get("uid"));
+        Integer gid = zeroOrValue((Integer)stat.get("gid"));
+        Long size = zeroOrValue((Long)stat.get("size"));
+
+        return new PyStatResult(
+                Py.newInteger(mode),
+                Py.newInteger(ino),
+                Py.newLong(dev),
+                Py.newInteger(nlink),
+                Py.newInteger(uid),
+                Py.newInteger(gid),
+                Py.newInteger(size),
+                Py.newFloat(fromFileTime((FileTime)stat.get("lastAccessTime"))),
+                Py.newFloat(fromFileTime((FileTime)stat.get("lastModifiedTime"))),
+                Py.newFloat(fromFileTime((FileTime) stat.get("ctime"))));
+    }
+
+    public static PyStatResult fromDosFileAttributes(int mode, DosFileAttributes stat) {
+        return new PyStatResult(
+                Py.newInteger(mode),
+                Py.newInteger(0),
+                Py.newLong(0),
+                Py.newInteger(0),
+                Py.newInteger(0),
+                Py.newInteger(0),
+                Py.newInteger(stat.size()),
+                Py.newFloat(fromFileTime(stat.lastAccessTime())),
+                Py.newFloat(fromFileTime(stat.lastModifiedTime())),
+                Py.newFloat(fromFileTime(stat.creationTime())));
+    }
+
+    // Override pyget, getslice to preserve backwards compatiblity that ints are returned for time elements
+    // if accessing by an index or slice
+
+    private final static int ST_ATIME = 7;
+    private final static int ST_MTIME = 8;
+    private final static int ST_CTIME = 9;
+
+    @Override
+    public PyObject pyget(int index) {
+        if (index == ST_ATIME || index == ST_MTIME || index == ST_CTIME) {
+            return super.pyget(index).__int__();
+        } else {
+            return super.pyget(index);
+        }
+    }
+
+    @Override
+    protected PyObject getslice(int start, int stop, int step) {
+        if (step > 0 && stop < start) {
+            stop = start;
+        }
+        int n = sliceLength(start, stop, step);
+        PyObject[] newArray = new PyObject[n];
+        for (int i = start, j = 0; j < n; i += step, j++) {
+            newArray[j] = pyget(i);
+        }
+        return new PyTuple(newArray, false);
     }
 
     @Override
