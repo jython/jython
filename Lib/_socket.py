@@ -51,6 +51,7 @@ except ImportError:
 
 
 log = logging.getLogger("_socket")
+log.setLevel(level=logging.WARNING)
 
 
 def _debug():
