@@ -1879,7 +1879,8 @@ class ChildLoggerTest(BaseTest):
 
 class HandlerTest(BaseTest):
 
-    @unittest.skipIf(os.name in ('java', 'nt'), 'WatchedFileHandler not appropriate for Jython or Windows.')
+    @unittest.skipIf(os.name == 'nt' or (os.name == 'java' and os._name == 'nt'),
+                     'WatchedFileHandler not appropriate for Windows.')
     @unittest.skipUnless(threading, 'Threading required for this test.')
     def test_race(self):
         # Issue #14632 refers.
