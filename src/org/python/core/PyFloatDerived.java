@@ -856,9 +856,7 @@ public class PyFloatDerived extends PyFloat implements Slotted,FinalizablePyObje
         PyObject impl=self_type.lookup("__len__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyInteger)
-                return((PyInteger)res).getValue();
-            throw Py.TypeError("__len__ should return a int");
+            return res.asInt();
         }
         return super.__len__();
     }
