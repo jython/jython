@@ -387,6 +387,48 @@ class ClassMetaclassRepr(unittest.TestCase):
         self.assertEqual(str(Bar), 'foo')
 
 
+class LenTestCase(unittest.TestCase):
+    """__len__ of new-style classes should raise OverflowError if length is too long"""
+
+    # Verifies fix for http://bugs.jython.org/issue1929
+
+    def test_len(self):
+        class C(object):
+            def __len__(self):
+                return 2 ** 70
+        with self.assertRaises(OverflowError) as cm:
+            len(C())
+        self.assertEqual(str(cm.exception), "long int too large to convert to int")
+
+        class D(object):
+            def __len__(self):
+                return "foo"
+        with self.assertRaises(TypeError) as cm:
+            len(D())
+        self.assertEqual(str(cm.exception), "an integer is required")
+
+    def test_len_faux_int(self):
+        class C(object):
+            def __len__(self):
+                class FauxInt(object):
+                    def __int__(self):
+                        return 2 ** 70
+                return FauxInt()
+        with self.assertRaises(OverflowError) as cm:
+            len(C())
+        self.assertEqual(str(cm.exception), "long int too large to convert to int")
+
+    def test_len_derived_int(self):
+        class C(object):
+            def __len__(self):
+                class MyInt(int):
+                    pass
+                return MyInt(2 ** 70)
+        with self.assertRaises(OverflowError) as cm:
+            len(C())
+        self.assertEqual(str(cm.exception), "long int too large to convert to int")
+
+
 def test_main():
     test_support.run_unittest(
         ClassGeneralTestCase,
@@ -396,7 +438,8 @@ def test_main():
         IsDescendentTestCase,
         JavaClassNamingTestCase,
         ClassDefinesDunderModule,
-        ClassMetaclassRepr)
+        ClassMetaclassRepr,
+        LenTestCase)
 
 
 if __name__ == "__main__":
