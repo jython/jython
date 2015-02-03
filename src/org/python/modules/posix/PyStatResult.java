@@ -237,7 +237,7 @@ public class PyStatResult extends PyTuple {
     @Override
     public PyString __repr__() {
         return (PyString) Py.newString(
-                "posix.stat_result(" +
+                TYPE.fastGetName() + "(" +
                 "st_mode=%r, st_ino=%r, st_dev=%r, st_nlink=%r, st_uid=%r, "+
                 "st_gid=%r, st_size=%r, st_atime=%r, st_mtime=%r, st_ctime=%r)").__mod__(this);
     }
