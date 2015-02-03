@@ -216,12 +216,10 @@ public class FileIO extends RawIOBase {
                 // ERROR_INVALID_HANDLE on ttys. Identifying those by the IOException
                 // message is tedious as their messages are localized, so we suppress them
                 // all =[
-                if (Platform.IS_WINDOWS ||
-                    ((Platform.IS_SOLARIS || Platform.IS_LINUX)
-                     && Errno.EINVAL.description().equals(ioe.getMessage()))) {
-                    return;
-                }
-                throw Py.IOError(ioe);
+                //
+                // Unfortunately attempting to distinguish by localized messages is too hard.
+                // Give up and swallow the exception.
+                // See http://bugs.jython.org/issue1944
             }
         }
     }
