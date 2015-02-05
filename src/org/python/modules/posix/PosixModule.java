@@ -333,13 +333,16 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
-    public static PyObject dup(PyObject fd1) {
-        return Py.newInteger(posix.dup(getFD(fd1).getIntFD()));
-    }
+    // Disable dup support until it fully works with fdopen;
+    // this incomplete support currently breaks py.test
 
-    public static PyObject dup2(PyObject fd1, PyObject fd2) {
-        return Py.newInteger(posix.dup2(getFD(fd1).getIntFD(), getFD(fd2).getIntFD()));
-    }
+//    public static PyObject dup(PyObject fd1) {
+//        return Py.newInteger(posix.dup(getFD(fd1).getIntFD()));
+//    }
+//
+//    public static PyObject dup2(PyObject fd1, PyObject fd2) {
+//        return Py.newInteger(posix.dup2(getFD(fd1).getIntFD(), getFD(fd2).getIntFD()));
+//    }
 
     public static PyString __doc__fdopen = new PyString(
         "fdopen(fd [, mode='r' [, bufsize]]) -> file_object\n\n" +
