@@ -721,5 +721,15 @@ class _wrap_close(object):
         return iter(self._stream)
 
 
-# Recursive import! So need to put it at the end
-from subprocess import _os_system as system
+def system(command):
+    """system(command) -> exit_status
+
+    Execute the command (a string) in a subshell."""
+    # Because this is a circular import, we need to perform
+    # a late binding. Monkeypatch to avoid doing this import
+    # repeatedly.
+    global system  # writable name of this function!
+    
+    from subprocess import _os_system
+    system = _os_system
+    return _os_system(command)

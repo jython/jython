@@ -257,6 +257,26 @@ class LocaleTestCase(unittest.TestCase):
                 "2015-01-22 00:00:00\n")
 
 
+class SystemTestCase(unittest.TestCase):
+
+    def test_system_no_site_import(self):
+        # If not importing site (-S), importing traceback previously
+        # would fail with an import error due to creating a circular
+        # import chain. This root cause is because the os module
+        # imports the subprocess module for the system function; but
+        # the subprocess module imports from os. Verrifies that this
+        # managed by making the import late; also verify the
+        # monkeypatching optimization is successful by calling
+        # os.system twice.
+        with test_support.temp_cwd() as temp_cwd:
+            self.assertEqual(
+                subprocess.check_output(
+                    [sys.executable, "-S", "-c",
+                     "import traceback; import os; os.system('echo 42'); os.system('echo 47')"])\
+                .replace("\r", ""),  # in case of running on Windows
+                "42\n47\n")
+
+
 def test_main():
     test_support.run_unittest(
         OSFileTestCase, 
@@ -265,6 +285,7 @@ def test_main():
         OSWriteTestCase,
         UnicodeTestCase,
         LocaleTestCase,
+        SystemTestCase
     )
 
 if __name__ == '__main__':
