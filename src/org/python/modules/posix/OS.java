@@ -33,7 +33,7 @@ enum OS {
     }
 
     String getModuleName() {
-        return name().toLowerCase(Locale.ENGLISH);
+        return name().toLowerCase(Locale.ROOT);
     }
 
     String[][] getShellCommands() {

@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.security.SecureRandom;
 import java.util.Iterator;
@@ -84,9 +85,6 @@ public class PosixModule implements ClassDictInit {
     private static final int X_OK = 1 << 0;
     private static final int W_OK = 1 << 1;
     private static final int R_OK = 1 << 2;
-
-    /** os.path.realpath function for use by chdir. Lazily loaded. */
-    private static volatile PyObject realpath;
 
     /** Lazily initialzed singleton source for urandom. */
     private static class UrandomSource {
@@ -282,14 +280,15 @@ public class PosixModule implements ClassDictInit {
         "Change the current working directory to the specified path.");
     public static void chdir(PyObject path) {
         // stat raises ENOENT for us if path doesn't exist
-        if (!posix.stat(absolutePath(path).toString()).isDirectory()) {
+        Path absolutePath = absolutePath(path);
+        if (!basicstat(path, absolutePath).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         }
-
-        if (realpath == null) {
-            realpath = imp.load("os.path").__getattr__("realpath");
+        try {
+            Py.getSystemState().setCurrentWorkingDir(absolutePath.toRealPath().toString());
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
         }
-        Py.getSystemState().setCurrentWorkingDir(realpath.__call__(path).asString());
     }
 
     public static PyString __doc__chmod = new PyString(
@@ -1122,6 +1121,23 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    private static BasicFileAttributes basicstat(PyObject path, Path absolutePath) {
+        try {
+            BasicFileAttributes attributes = Files.readAttributes(absolutePath, BasicFileAttributes.class);
+            if (!attributes.isDirectory()) {
+                String pathStr = path.toString();
+                if (pathStr.endsWith(File.separator) || pathStr.endsWith("/")) {
+                    throw Py.OSError(Errno.ENOTDIR, path);
+                }
+            }
+            return attributes;
+        } catch (NoSuchFileException ex) {
+            throw Py.OSError(Errno.ENOENT, path);
+        } catch (IOException ioe) {
+            throw Py.OSError(Errno.EBADF, path);
+        }
+    }
+
     static class LstatFunction extends PyBuiltinFunctionNarrow {
         LstatFunction() {
             super("lstat", 1, 1,
@@ -1216,6 +1232,12 @@ public class PosixModule implements ClassDictInit {
             Path absolutePath = absolutePath(path);
             try {
                 DosFileAttributes attributes = Files.readAttributes(absolutePath, DosFileAttributes.class);
+                if (!attributes.isDirectory()) {
+                    String pathStr = path.toString();
+                    if (pathStr.endsWith(File.separator) || pathStr.endsWith("/")) {
+                        throw Py.OSError(Errno.ENOTDIR, path);
+                    }
+                }
                 int mode = attributes_to_mode(attributes);
                 String extension = com.google.common.io.Files.getFileExtension(absolutePath.toString());
                 if (extension.equals("bat") || extension.equals("cmd") || extension.equals("exe") || extension.equals("com")) {

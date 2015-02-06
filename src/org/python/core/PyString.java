@@ -1049,7 +1049,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_lower_doc)
     final String str_lower() {
-        return getString().toLowerCase(Locale.ENGLISH);
+        return getString().toLowerCase(Locale.ROOT);
     }
 
     public String upper() {
@@ -1058,7 +1058,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_upper_doc)
     final String str_upper() {
-        return getString().toUpperCase(Locale.ENGLISH);
+        return getString().toUpperCase(Locale.ROOT);
     }
 
     public String title() {

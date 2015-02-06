@@ -189,7 +189,7 @@ def unload(name):
     except KeyError:
         pass
 
-if sys.platform.startswith("win") or os.name == "java" and os._name == "nt":
+if sys.platform.startswith("win") or (os.name == "java" and os._name == "nt"):
     def _waitfor(func, pathname, waitall=False):
         # Peform the operation
         func(pathname)
@@ -220,6 +220,7 @@ if sys.platform.startswith("win") or os.name == "java" and os._name == "nt":
             # Increase the timeout and try again
             time.sleep(timeout)
             timeout *= 2
+        print "Still cannot delete", pathname
         warnings.warn('tests may fail, delete still pending for ' + pathname,
                       RuntimeWarning, stacklevel=4)
 
