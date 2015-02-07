@@ -58,6 +58,9 @@ _setup_history()
 def parse_and_bind(string):
     pass
 
+def get_line_buffer():
+    return str(_reader.cursorBuffer.buffer)
+
 def insert_text(string):
     _reader.putString(string)
 
