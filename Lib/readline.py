@@ -39,22 +39,6 @@ class SecurityWarning(ImportWarning):
     """Security manager prevents access to private field"""
 
 
-def _setup_history():
-    # This is obviously not desirable, but avoids O(n) workarounds to
-    # modify the history (ipython uses the function
-    # remove_history_item to mutate the history relatively frequently)
-    global _history_list
-
-    history = _reader.history
-    try:
-        history_list_field = history.class.getDeclaredField("history")
-        history_list_field.setAccessible(True)
-        _history_list = history_list_field.get(history)
-    except:
-        pass
-
-_setup_history()
-
 def parse_and_bind(string):
     pass
 
@@ -68,21 +52,15 @@ def read_init_file(filename=None):
     warn("read_init_file: %s" % (filename,), NotImplementedWarning, "module", 2)
 
 def read_history_file(filename="~/.history"):
-    print "Reading history:", filename
     expanded = os.path.expanduser(filename)
-    new_history = _reader.getHistory().getClass()()
-    # new_history.clear()
     with open(expanded) as f:
-        for line in f:
-            new_history.addToHistory(line.rstrip())
-    _reader.history = new_history
-    _setup_history()
+        _reader.history.load(f)
 
 def write_history_file(filename="~/.history"):
     expanded = os.path.expanduser(filename)
     with open(expanded, 'w') as f:
         for line in _reader.history.entries():
-            f.write(line)
+            f.write(line.value().encode("utf-8"))
             f.write("\n")
 
 def clear_history():
