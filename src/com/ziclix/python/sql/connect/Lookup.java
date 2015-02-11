@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.Untraversable;
 
 import com.ziclix.python.sql.PyConnection;
 import com.ziclix.python.sql.zxJDBC;
@@ -36,6 +37,7 @@ import com.ziclix.python.sql.util.PyArgParser;
  *
  * @author brian zimmer
  */
+@Untraversable
 public class Lookup extends PyObject {
 
     private static final PyString _doc =

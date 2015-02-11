@@ -9,6 +9,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
@@ -18,6 +19,7 @@ import org.python.expose.ExposedType;
 /**
  * The Python CSV Dialect type.
  */
+@Untraversable
 @ExposedType(name = "_csv.Dialect", doc = PyDialect.Dialect_doc)
 public class PyDialect extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyDialect.class);

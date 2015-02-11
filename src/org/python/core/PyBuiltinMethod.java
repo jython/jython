@@ -3,7 +3,7 @@ package org.python.core;
 import org.python.expose.ExposeAsSuperclass;
 
 public abstract class PyBuiltinMethod extends PyBuiltinCallable implements ExposeAsSuperclass,
-        Cloneable {
+        Cloneable, Traverseproc {
 
     protected PyObject self;
 
@@ -70,5 +70,17 @@ public abstract class PyBuiltinMethod extends PyBuiltinCallable implements Expos
         }
         int compareTo = info.getName().compareTo(otherMethod.info.getName());
         return compareTo < 0 ? -1 : compareTo > 0 ? 1 : 0;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return self != null ? visit.visit(self, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == self;
     }
 }

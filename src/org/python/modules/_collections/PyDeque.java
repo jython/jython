@@ -9,6 +9,8 @@ import org.python.core.PyType;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.ThreadState;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -33,7 +35,7 @@ import org.python.expose.MethodType;
  * items are added, a corresponding number of items are discarded from the opposite end.
  */
 @ExposedType(name = "collections.deque")
-public class PyDeque extends PyObject {
+public class PyDeque extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDeque.class);
 
@@ -105,7 +107,7 @@ public class PyDeque extends PyObject {
 
     /**
      * Add obj to the right side of the deque.
-     */	
+     */    
     @ExposedMethod
     public synchronized final void deque_append(PyObject obj) {
         if (maxlen >= 0) {
@@ -625,7 +627,7 @@ public class PyDeque extends PyObject {
 
     @ExposedMethod
     final PyObject deque___copy__() {
-        PyDeque pd = (PyDeque)this.getType().__call__();	
+        PyDeque pd = (PyDeque)this.getType().__call__();    
         pd.deque_extend(this);
         return pd;
     }
@@ -674,5 +676,56 @@ public class PyDeque extends PyObject {
                 return null;
             }
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            int retVal = super.traverse(visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+            return lastReturned == null ? 0 : traverseNode(lastReturned, visit, arg);
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+            if (ob == null) {
+                return false;
+            } else if (super.refersDirectlyTo(ob)) {
+                return true;
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+    }
+
+
+    /* Traverseproc implementation */
+    private static int traverseNode(Node node, Visitproc visit, Object arg) {
+        int retVal;
+        if (node.data != null) {
+            retVal = visit.visit(node.data, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (node.left != null) {
+            retVal = traverseNode(node.left, visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return node.right == null ? 0 : traverseNode(node.right, visit, arg);
+    }
+
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return header == null ? 0 : traverseNode(header, visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
     }
 }

@@ -6,6 +6,7 @@ import org.python.core.Py;
 import org.python.core.PyIterator;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -77,4 +78,19 @@ public class compress extends PyIterator {
         return doNext(__iternext__());
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        return iter != null ? visit.visit(iter, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (iter == ob || super.refersDirectlyTo(ob));
+    }
 }

@@ -5,6 +5,7 @@ import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "classmethod_descriptor", isBaseType = false)
 public class PyClassMethodDescr extends PyMethodDescr {
 

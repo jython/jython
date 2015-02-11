@@ -9,8 +9,8 @@ package org.python.core;
  * <ul>
  * <li>An instance of the proxy class. The _getPyInstance() will return a reference to the
  * PyInstance.
- * <li>An instance of PyInstance. The PyInstance.javaProxy contains a reference to the proxy class
- * instance.
+ * <li>An instance of PyInstance. The PyInstance's java proxy attribute contains a reference to the
+ * proxy class instance.
  * </ul>
  *
  * All proxy classes implement this interface.

@@ -8,6 +8,7 @@ package org.python.core;
  * method with a switch on the index number.
  *
  */
+@Untraversable
 public class PyBuiltinFunctionSet extends PyBuiltinFunctionNarrow {
 
     // used as an index into a big switch statement in the various derived

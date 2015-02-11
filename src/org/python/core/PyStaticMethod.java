@@ -9,7 +9,7 @@ import org.python.expose.ExposedType;
  * The staticmethod descriptor.
  */
 @ExposedType(name = "staticmethod", doc = BuiltinDocs.staticmethod_doc)
-public class PyStaticMethod extends PyObject {
+public class PyStaticMethod extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyStaticMethod.class);
 
@@ -40,5 +40,17 @@ public class PyStaticMethod extends PyObject {
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.staticmethod___get___doc)
     final PyObject staticmethod___get__(PyObject obj, PyObject type) {
         return callable;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return callable != null ? visit.visit(callable, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == callable;
     }
 }

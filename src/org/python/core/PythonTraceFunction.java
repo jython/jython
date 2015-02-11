@@ -2,7 +2,7 @@
 package org.python.core;
 
 
-class PythonTraceFunction extends TraceFunction {
+class PythonTraceFunction extends TraceFunction implements Traverseproc {
 
     PyObject tracefunc;
 
@@ -56,5 +56,17 @@ class PythonTraceFunction extends TraceFunction {
         PyObject safeTraceback = exc.traceback == null ? Py.None : exc.traceback;
         return safeCall(frame, "exception",
                 new PyTuple(exc.type, exc.value, safeTraceback));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return tracefunc == null ? 0 : visit.visit(tracefunc, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == tracefunc;
     }
 }

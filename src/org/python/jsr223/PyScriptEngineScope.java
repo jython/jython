@@ -14,6 +14,8 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedType;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -24,6 +26,7 @@ import org.python.expose.ExposedMethod;
  * with its own bindings.  We adapt this multi-scope object for use as both
  * a local and global dictionary.
  */
+@Untraversable
 @ExposedType(name = "scope", isBaseType = false)
 public final class PyScriptEngineScope extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyScriptEngineScope.class);
@@ -201,6 +204,22 @@ public final class PyScriptEngineScope extends PyObject {
                 result = _keys.__getitem__(_index);
             }
             return result;
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            int retVal = super.traverse(visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+            return _keys != null ? visit.visit(_keys, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == _keys || super.refersDirectlyTo(ob));
         }
     }
 }

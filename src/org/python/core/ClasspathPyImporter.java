@@ -11,6 +11,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
+@Untraversable
 @ExposedType(name="ClasspathPyImporter")
 public class ClasspathPyImporter extends importer<String> {
 

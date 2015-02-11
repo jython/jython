@@ -19,6 +19,8 @@ import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.finalization.FinalizableBuiltin;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.io.FileIO;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -40,24 +42,22 @@ import org.python.expose.ExposedType;
  * in Python.
  */
 @ExposedType(name = "_io._IOBase", doc = PyIOBase.doc)
-public class PyIOBase extends PyObject implements FinalizableBuiltin {
+public class PyIOBase extends PyObject implements FinalizableBuiltin, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyIOBase.class);
 
     /** The ioDelegate's closer object; ensures the stream is closed at shutdown */
     private Closer<PyIOBase> closer;
-    
-    public FinalizeTrigger finalizeTrigger;
 
     protected PyIOBase() {
         this(TYPE);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     protected PyIOBase(PyType subtype) {
         super(subtype);
         closer = new Closer<PyIOBase>(this, Py.getSystemState());
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     /**
@@ -910,4 +910,23 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin {
             + "fp is closed after the suite of the with statement is complete:\n" + "\n"
             + "with open('spam.txt', 'r') as fp:\n" + "    fp.write('Spam and eggs!')\n";
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+    	//closer cannot be null
+        if (closer.sys != null) {
+        	int retVal = visit.visit(closer.sys, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        //__dict__ cannot be null
+        return visit.visit(__dict__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == closer.sys || ob == __dict__);
+    }
 }

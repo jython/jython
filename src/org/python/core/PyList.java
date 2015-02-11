@@ -1224,4 +1224,27 @@ public class PyList extends PySequenceList implements List {
     public synchronized boolean remove(Object o) {
         return list.remove(Py.java2py(o));
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (list != null) {
+            int retVal;
+            for (PyObject ob: list) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return list == null ? false : list.contains(ob);
+    }
 }

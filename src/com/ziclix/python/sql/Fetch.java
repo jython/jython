@@ -13,6 +13,8 @@ import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 import java.sql.CallableStatement;
 import java.sql.DatabaseMetaData;
@@ -48,7 +50,7 @@ import java.util.Set;
  *
  * @author brian zimmer
  */
-abstract public class Fetch {
+abstract public class Fetch implements Traverseproc {
 
     /**
      * The total number of rows in the result set.
@@ -464,6 +466,43 @@ abstract public class Fetch {
     public boolean removeWarningListener(WarningListener listener) {
         return this.listeners.remove(listener);
     }
+
+
+    /* Traverseproc support for Fetch */
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = visit.visit(description, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (listeners != null) {
+        	for (WarningListener obj: listeners) {
+        		if (obj != null) {
+        			if (obj instanceof PyObject) {
+        				retVal = visit.visit((PyObject) obj, arg);
+    		            if (retVal != 0) {
+    		            	return retVal;
+    		            }
+        			} else if (obj instanceof Traverseproc) {
+        				retVal = ((Traverseproc) obj).traverse(visit, arg);
+    		            if (retVal != 0) {
+    		            	return retVal;
+    		            }
+        			}
+        		}
+        	}
+        }
+        return 0;
+    }
+
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        } else if (ob == description) {
+            return true;
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
 }
 
 /**
@@ -690,6 +729,49 @@ class StaticFetch extends Fetch {
         super.close();
         this.rownumber = -1;
         this.results.clear();
+    }
+
+
+    /* Traverseproc support for StaticFetch */
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (results != null) {
+        	for (PyObject obj: results) {
+        		if (obj != null) {
+    				retVal = visit.visit((PyObject) obj, arg);
+		            if (retVal != 0) {
+		            	return retVal;
+		            }
+        		}
+        	}
+        }
+        if (descriptions != null) {
+        	for (PyObject obj: descriptions) {
+        		if (obj != null) {
+    				retVal = visit.visit((PyObject) obj, arg);
+		            if (retVal != 0) {
+		            	return retVal;
+		            }
+        		}
+        	}
+        }
+        return 0;
+    }
+
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        }
+        if (results != null && results.contains(ob)) {
+        	return true;
+        }
+        if (descriptions != null && descriptions.contains(ob)) {
+        	return true;
+        }
+        return super.refersDirectlyTo(ob);
     }
 }
 

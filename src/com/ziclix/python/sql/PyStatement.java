@@ -7,6 +7,7 @@
  */
 package com.ziclix.python.sql;
 
+import org.python.core.Visitproc;
 import org.python.core.codecs;
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -14,6 +15,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -25,7 +27,7 @@ import java.sql.Statement;
  *
  * @author brian zimmer
  */
-public class PyStatement extends PyObject {
+public class PyStatement extends PyObject implements Traverseproc {
 
     /** Denotes a simple Statement with no parameters. */
     public static final int STATEMENT_STATIC = 2;
@@ -276,6 +278,39 @@ public class PyStatement extends PyObject {
             throw zxJDBC.makeException(e);
         } finally {
             closed = true;
+        }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (sql != null) {
+            if (sql instanceof PyObject) {
+                int retVal = visit.visit((PyObject) sql, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            } else if (sql instanceof Traverseproc) {
+                int retVal = ((Traverseproc) sql).traverse(visit, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (sql == null || ob == null) {
+            return false;
+        } else if (sql instanceof PyObject) {
+            return sql == ob;
+        } else if (sql instanceof Traverseproc) {
+            return ((Traverseproc) sql).refersDirectlyTo(ob);
+        } else{
+            return false;
         }
     }
 }

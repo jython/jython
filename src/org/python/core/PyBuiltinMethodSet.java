@@ -1,7 +1,7 @@
 /* Copyright (c) Jython Developers */
 package org.python.core;
 
-public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements Cloneable {
+public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements Cloneable, Traverseproc {
 
     private Class<?> type;
 
@@ -56,5 +56,17 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements Cloneabl
     @Override
     public String toString() {
         return String.format("<built-in method %s>", info.getName());
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return visit.visit(__self__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob == __self__;
     }
 }

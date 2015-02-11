@@ -6,6 +6,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
@@ -271,5 +272,34 @@ public class PyReader extends PyIterator {
     private enum ParserState {
         START_RECORD, START_FIELD, ESCAPED_CHAR, IN_FIELD, IN_QUOTED_FIELD, ESCAPE_IN_QUOTED_FIELD,
         QUOTE_IN_QUOTED_FIELD, EAT_CRNL;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (dialect != null) {
+            retVal = visit.visit(dialect, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (input_iter != null) {
+            retVal = visit.visit(input_iter, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return fields != null ? visit.visit(fields, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob == null && (ob == fields || ob == dialect
+            || ob == input_iter || super.refersDirectlyTo(ob));
     }
 }

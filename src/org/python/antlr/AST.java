@@ -4,8 +4,10 @@ import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "_ast.AST", base = PyObject.class)
 public class AST extends PyObject {
     public static final PyType TYPE = PyType.fromClass(AST.class);

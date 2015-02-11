@@ -10,6 +10,7 @@ import org.python.modules.zipimport.zipimport;
  * The builtin exceptions module. The entire module should be imported from
  * python. None of the methods defined here should be called from java.
  */
+@Untraversable
 public class exceptions extends PyObject implements ClassDictInit {
 
     public static String __doc__ = "Python's standard exception class hierarchy.\n"
@@ -640,6 +641,7 @@ public class exceptions extends PyObject implements ClassDictInit {
         return new BoundStaticJavaMethod(name, javaMethod);
     }
 
+    @Untraversable
     static class BoundStaticJavaMethod extends PyBuiltinMethod {
 
         /** The Java Method to be bound. Its signature must be:

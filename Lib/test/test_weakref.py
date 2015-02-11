@@ -1367,7 +1367,7 @@ True
 True
 >>> del o, o2
 >>> import gc  # Addition for Jython
->>> gc.collect()
+>>> gc_count = gc.collect()
 >>> print r()
 None
 
@@ -1421,7 +1421,7 @@ True
 True
 >>> del a
 >>> import gc  # addition for Jython
->>> gc.collect()
+>>> gc_count = gc.collect()
 >>> try:
 ...     id2obj(a_id)
 ... except KeyError:

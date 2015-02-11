@@ -9,7 +9,7 @@ import org.python.core.finalization.FinalizeTrigger;
  * The classic Python class.
  */
 @ExposedType(name = "classobj", isBaseType = false)
-public class PyClass extends PyObject {
+public class PyClass extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyClass.class);
 
@@ -188,7 +188,7 @@ public class PyClass extends PyObject {
         PyInstance inst;
         inst = new PyInstance(this);
         if (__del__ != null) {
-        	inst.finalizeTrigger = FinalizeTrigger.makeTrigger(inst);
+            FinalizeTrigger.ensureFinalizer(inst);
         }
         inst.__init__(args, keywords);
         return inst;
@@ -280,5 +280,67 @@ public class PyClass extends PyObject {
             throw Py.TypeError("__name__ must not contain null bytes");
         }
         __name__ = name;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (__bases__ != null) {
+            retVal = visit.visit(__bases__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__dict__ != null) {
+            retVal = visit.visit(__dict__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        //CPython also traverses the name, which is not stored
+        //as a PyObject in Jython.
+        //Py_VISIT(o->cl_name);
+        if (__getattr__ != null) {
+            retVal = visit.visit(__getattr__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__setattr__ != null) {
+            retVal = visit.visit(__setattr__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__delattr__ != null) {
+            retVal = visit.visit(__delattr__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        
+        /* Jython-only */
+        if (__tojava__ != null) {
+            retVal = visit.visit(__tojava__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__del__ != null) {
+            retVal = visit.visit(__del__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return __contains__ != null ? visit.visit(__contains__, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (__dict__ == ob || __bases__ == ob
+            || __getattr__ == ob || __setattr__ == ob || __delattr__ == ob
+            || __tojava__ == ob || __del__ == ob || __contains__ == ob);
     }
 }

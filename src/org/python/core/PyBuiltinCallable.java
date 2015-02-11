@@ -6,6 +6,7 @@ import java.io.Serializable;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "builtin_function_or_method", isBaseType = false)
 public abstract class PyBuiltinCallable extends PyObject {
 

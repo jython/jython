@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.InstantiationException;
 
+@Untraversable
 public class PyReflectedConstructor extends PyReflectedFunction {
 
     public PyReflectedConstructor(String name) {
@@ -106,7 +107,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         } else if (Modifier.isAbstract(mods)) {
             throw Py.TypeError("can't instantiate abstract class (" + declaringClass.getName() + ")");
         }
-        if (self.javaProxy != null) {
+        if (JyAttribute.hasAttr(self, JyAttribute.JAVA_PROXY_ATTR)) {
             Class<?> sup = javaClass;
             if (PyProxy.class.isAssignableFrom(sup)) {
                 sup = sup.getSuperclass();
@@ -224,7 +225,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         } finally {
             ThreadContext.initializingProxy.set(previous);
         }
-        obj.javaProxy = jself;
+        JyAttribute.setAttr(obj, JyAttribute.JAVA_PROXY_ATTR, jself);
     }
 
     @Override

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class PyBytecode extends PyBaseCode {
+public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     // for debugging
     private int count = 0; // total number of opcodes run so far in this code obj
@@ -170,11 +170,12 @@ public class PyBytecode extends PyBaseCode {
         RETURN, /* 'return' statement */
         BREAK, /* 'break' statement */
         CONTINUE, /* 'continue' statement */
-        YIELD	/* 'yield' operator */
+        YIELD    /* 'yield' operator */
 
     };
 
     // to enable why's to be stored on a PyStack
+    @Untraversable
     private static class PyStackWhy extends PyObject {
 
         Why why;
@@ -189,7 +190,7 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
-    private static class PyStackException extends PyObject {
+    private static class PyStackException extends PyObject implements Traverseproc {
 
         PyException exception;
 
@@ -200,6 +201,18 @@ public class PyBytecode extends PyBaseCode {
         @Override
         public String toString() {
             return String.format("PyStackException<%s,%s,%.100s>", exception.type, exception.value, exception.traceback);
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return exception != null ? exception.traverse(visit, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && exception.refersDirectlyTo(ob);
         }
     }
 
@@ -257,7 +270,7 @@ public class PyBytecode extends PyBaseCode {
     protected PyObject interpret(PyFrame f, ThreadState ts) {
         final PyStack stack = new PyStack(co_stacksize);
         int next_instr = -1;
-        int opcode;	/* Current opcode */
+        int opcode;    /* Current opcode */
         int oparg = 0; /* Current opcode argument, if any */
         Why why = Why.NOT;
         PyObject retval = null;
@@ -1479,13 +1492,14 @@ public class PyBytecode extends PyBaseCode {
         }
     }
 
+    @Untraversable
     private static class PyTryBlock extends PyObject { // purely to sit on top of the existing PyFrame in f_exits!!!
 
-        int b_type;			/* what kind of block this is */
+        int b_type;         /* what kind of block this is */
 
-        int b_handler;		/* where to jump to find handler */
+        int b_handler;      /* where to jump to find handler */
 
-        int b_level;		/* value stack level to pop to */
+        int b_level;        /* value stack level to pop to */
 
 
         PyTryBlock(int type, int handler, int level) {
@@ -1609,6 +1623,36 @@ public class PyBytecode extends PyBaseCode {
         }
         return x;
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue;
+        if (co_consts != null) {
+            for (PyObject ob: co_consts) {
+                if (ob != null) {
+                    retValue = visit.visit(ob, arg);
+                    if (retValue != 0) {
+                        return retValue;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null || co_consts == null) {
+            return false;
+        } else {
+            for (PyObject obj: co_consts) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
-
-

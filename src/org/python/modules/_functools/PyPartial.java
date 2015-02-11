@@ -10,6 +10,8 @@ import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -18,7 +20,7 @@ import org.python.expose.ExposedType;
 import org.python.util.Generic;
 
 @ExposedType(name = "_functools.partial")
-public class PyPartial extends PyObject {
+public class PyPartial extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyPartial.class);
 
@@ -150,7 +152,7 @@ public class PyPartial extends PyObject {
 
     @Override
     public void __setattr__(String name, PyObject value) {
-    	partial___setattr__(name, value);
+        partial___setattr__(name, value);
     }
 
     @ExposedMethod
@@ -184,5 +186,44 @@ public class PyPartial extends PyObject {
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (func != null) {
+            retVal = visit.visit(func, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (args != null) {
+            for (PyObject ob: args) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return __dict__ != null ? visit.visit(__dict__, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        }
+        if (args != null) {
+            for (PyObject obj: args) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        return ob == func || ob == __dict__;
     }
 }

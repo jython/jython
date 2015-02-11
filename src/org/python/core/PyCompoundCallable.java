@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.python.util.Generic;
 
-public class PyCompoundCallable extends PyObject {
+public class PyCompoundCallable extends PyObject implements Traverseproc {
 
     private List<PyObject> callables = Generic.list();
 
@@ -30,5 +30,32 @@ public class PyCompoundCallable extends PyObject {
 
     public String toString() {
         return "<CompoundCallable with " + callables.size() + " callables>";
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue;
+        if (systemState != null) {
+        	retValue = visit.visit(systemState, arg);
+	        if (retValue != 0) {
+	            return retValue;
+	        }
+        }
+        if (callables != null) {
+	        for (PyObject ob: callables) {
+	            retValue = visit.visit(ob, arg);
+	            if (retValue != 0) {
+	                return retValue;
+	            }
+	        }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == systemState || callables.contains(ob));
     }
 }

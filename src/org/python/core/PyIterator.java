@@ -14,7 +14,7 @@ import java.util.List;
  * If the implementation raises a StopIteration exception, it should be stored in stopException so
  * the correct exception can be thrown to preserve the line numbers in the traceback.
  */
-public abstract class PyIterator extends PyObject implements Iterable<Object> {
+public abstract class PyIterator extends PyObject implements Iterable<Object>, Traverseproc {
 
     protected PyException stopException;
 
@@ -75,12 +75,24 @@ public abstract class PyIterator extends PyObject implements Iterable<Object> {
             return iterator();
         }
         if (c.isAssignableFrom(Collection.class)) {
-            List<Object> list = new ArrayList();
+            List<Object> list = new ArrayList<>();
             for (Object obj : this) {
                 list.add(obj);
             }
             return list;
         }
         return super.__tojava__(c);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return stopException != null ? stopException.traverse(visit, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && stopException != null && stopException.refersDirectlyTo(ob);
     }
 }

@@ -12,6 +12,7 @@ import org.python.expose.ExposedType;
 /**
  * The singleton None object.
  */
+@Untraversable
 @ExposedType(name = "NoneType", isBaseType = false)
 public class PyNone extends PyObject implements Serializable {
 

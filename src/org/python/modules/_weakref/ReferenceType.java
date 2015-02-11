@@ -3,10 +3,8 @@ package org.python.modules._weakref;
 
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -44,7 +42,6 @@ public class ReferenceType extends AbstractReference {
             if (callback == null) {
                 ReferenceType ret = (ReferenceType)gref.find(ReferenceType.class);
                 if (ret != null) {
-                    // We can re-use an existing reference.
                     return ret;
                 }
             }
@@ -92,11 +89,11 @@ public class ReferenceType extends AbstractReference {
     @ExposedMethod
     final PyObject weakref___call__(PyObject args[], String keywords[]) {
         new ArgParser("__call__", args, keywords, Py.NoKeywords, 0);
-        return Py.java2py(gref.get());
+        return Py.java2py(get());
     }
 
     public String toString() {
-        PyObject obj = (PyObject)gref.get();
+        PyObject obj = get();
         if (obj == null) {
             return String.format("<weakref at %s; dead>", Py.idstr(this));
         }

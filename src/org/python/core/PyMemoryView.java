@@ -15,7 +15,7 @@ import org.python.expose.MethodType;
  */
 @ExposedType(name = "memoryview", doc = BuiltinDocs.memoryview_doc, base = PyObject.class,
         isBaseType = false)
-public class PyMemoryView extends PySequence implements BufferProtocol {
+public class PyMemoryView extends PySequence implements BufferProtocol, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyMemoryView.class);
 
@@ -843,4 +843,48 @@ public class PyMemoryView extends PySequence implements BufferProtocol {
         }
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (backing != null) {
+            if (backing instanceof PyObject) {
+                retVal = visit.visit((PyObject) backing, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            } else if (backing instanceof Traverseproc) {
+                retVal = ((Traverseproc) backing).traverse(visit, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        if (shape != null) {
+            retVal = visit.visit(shape, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (strides != null) {
+            retVal = visit.visit(strides, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return suboffsets == null ? 0 : visit.visit(suboffsets, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob != null && (ob == backing || ob == shape || ob == strides
+            || ob == suboffsets)) {
+            return true;
+        } else if (suboffsets instanceof Traverseproc) {
+            return ((Traverseproc) suboffsets).refersDirectlyTo(ob);
+        } else {
+            return false;
+        }
+    }
 }

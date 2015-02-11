@@ -9,7 +9,7 @@ import org.python.expose.ExposedType;
  * A python traceback object.
  */
 @ExposedType(name = "traceback", isBaseType = false)
-public class PyTraceback extends PyObject {
+public class PyTraceback extends PyObject implements Traverseproc {
     
     public static final PyType TYPE = PyType.fromClass(PyTraceback.class);
 
@@ -119,5 +119,24 @@ public class PyTraceback extends PyObject {
         buf.append("Traceback (most recent call last):\n");
         dumpStack(buf);
         return buf.toString();
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (tb_next != null) {
+            int retVal = visit.visit(tb_next, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        //__dict__ cannot be null
+        return tb_frame == null ? 0 : visit.visit(tb_frame, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == tb_next || ob == tb_frame);
     }
 }

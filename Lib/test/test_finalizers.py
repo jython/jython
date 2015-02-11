@@ -209,7 +209,7 @@ class TestFinalizers(unittest.TestCase):
         del DummyClass.__del__
 
     def test_classAcquiresFinalizer_afterInstanciation_oldStyleClass(self):
-        #okay to fail in Jython without the manual ensureFinalizer call
+        #okay to fail in Jython without the manual __ensure_finalizer__ call
         C = DummyClass("C")
         DummyClass.__del__ = delClass
         try:
@@ -245,7 +245,7 @@ class TestFinalizers(unittest.TestCase):
         del DummyClassNew.__del__
 
     def test_classAcquiresFinalizer_afterInstanciation_newStyleClass(self):
-        #okay to fail in Jython without the manual ensureFinalizer call
+        #okay to fail in Jython without the manual __ensure_finalizer__ call
         G = DummyClassNew("G")
         DummyClassNew.__del__ = delClass
         try:
@@ -270,7 +270,7 @@ class TestFinalizers(unittest.TestCase):
 
     def test_instanceAcquiresFinalizer_bound_newStyleClass2(self):
         """
-        It seems, CPython prohibits new style instances from acquiring a finalizer.
+        In CPython, new style instances can't acquire a finalizer.
         If one calls the instance-acquired __del__ manually, it works, but the gc
         will still call the old one.
         """
@@ -327,7 +327,7 @@ class TestFinalizers(unittest.TestCase):
         
 
     def test_objectDoubleResurrectionAndFinalize_oldStyleClass(self):
-        #okay to fail in Jython without the manual ensureFinalizer calls
+        #okay to fail in Jython without the manual __ensure_finalizer__ calls
         ResurrectableDummyClass.__del__ = delK
         K = ResurrectableDummyClass("K")
         K = None
@@ -360,7 +360,7 @@ class TestFinalizers(unittest.TestCase):
         self.assertEqual(str(resurrectedObject_L), "L")
 
     def test_objectDoubleResurrection_newStyleClass(self):
-        #okay to fail in Jython without the manual ensureFinalizer calls
+        #okay to fail in Jython without the manual __ensure_finalizer__ calls
         ResurrectableDummyClassNew.__del__ = delM
         M = ResurrectableDummyClassNew("M")
         M = None
@@ -382,7 +382,7 @@ class TestFinalizers(unittest.TestCase):
         self.assertEqual(str(resurrectedObject_M), "M")
 
     def test_objectDoubleResurrectionAndFinalize_newStyleClass(self):
-        #okay to fail in Jython without the manual ensureFinalizer calls
+        #okay to fail in Jython without the manual __ensure_finalizer__ calls
         ResurrectableDummyClassNew.__del__ = delN
         N = ResurrectableDummyClassNew("N")
         N = None

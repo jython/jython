@@ -8,10 +8,12 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.core.ThreadState;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "_threading.Lock")
 public class Lock extends PyObject implements ContextManager {
 

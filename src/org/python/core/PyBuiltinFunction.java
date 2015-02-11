@@ -2,6 +2,7 @@ package org.python.core;
 
 import org.python.expose.ExposeAsSuperclass;
 
+@Untraversable
 public class PyBuiltinFunction extends PyBuiltinCallable implements ExposeAsSuperclass {
 
     protected PyBuiltinFunction(String name, String doc) {

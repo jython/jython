@@ -1,8 +1,14 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.modules.thread;
 
-import org.python.core.*;
+import org.python.core.PyObject;
+import org.python.core.ContextManager;
+import org.python.core.Py;
+import org.python.core.ThreadState;
+import org.python.core.PyException;
+import org.python.core.Untraversable;
 
+@Untraversable
 public class PyLock extends PyObject implements ContextManager {
 
     private boolean locked = false;

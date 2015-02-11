@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.python.core.finalization.FinalizeTrigger;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -17,6 +16,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.util.Generic;
+import org.python.modules.gc;
 
 /**
  * All objects known to the Jython runtime system are represented by an instance
@@ -27,15 +27,31 @@ public class PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
-    /** The type of this object. */
+    /**
+     * This should have been suited at org.python.modules.gc, but that would cause
+     * a dependency cycle in the init-phases of gc.class and PyObject.class.
+     * Now this boolean mirrors the presence of the MONITOR_GLOBAL-flag of
+     * Jython's gc module.
+     */
+    public static boolean gcMonitorGlobal = false;
+
+    /** The type of this object.
+     */
     protected PyType objtype;
 
     /**
-     * An underlying Java instance that this object is wrapping or is a subclass
-     * of. Anything attempting to use the proxy should go through {@link #getJavaProxy()}
-     * which ensures that it's initialized.
+     * {@code attributes} is a general purpose linked list of arbitrary
+     * Java objects that should be kept alive by this PyObject. These
+     * objects can be accessed by the methods and keys in
+     * {@link org.python.core.JyAttribute}.
+     * A notable attribute is the javaProxy (accessible via
+     * {@code JyAttribute.getAttr(this, JAVA_PROXY_ATTR)}),
+     * an underlying Java instance that this object is wrapping or is a
+     * subclass of. Anything attempting to use the proxy should go through
+     * {@link #getJavaProxy()} which ensures that it's initialized.
      */
-    protected Object javaProxy;
+    //protected Object javaProxy;
+    protected Object attributes;
 
     /** Primitives classes their wrapper classes. */
     private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
@@ -58,6 +74,8 @@ public class PyObject implements Serializable {
 
     public PyObject(PyType objtype) {
         this.objtype = objtype;
+        if (gcMonitorGlobal)
+            gc.monitorObject(this);
     }
 
     /**
@@ -66,6 +84,8 @@ public class PyObject implements Serializable {
      **/
     public PyObject() {
         objtype = PyType.fromClass(getClass(), false);
+        if (gcMonitorGlobal)
+            gc.monitorObject(this);
     }
 
     /**
@@ -74,6 +94,8 @@ public class PyObject implements Serializable {
      */
     PyObject(boolean ignored) {
         objtype = (PyType)this;
+        if (gcMonitorGlobal)
+            gc.monitorObject(this);
     }
 
     @ExposedNew
@@ -156,6 +178,7 @@ public class PyObject implements Serializable {
      */
     void proxyInit() {
         Class<?> c = getType().getProxyType();
+        Object javaProxy = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
         if (javaProxy != null || c == null) {
             return;
         }
@@ -183,6 +206,7 @@ public class PyObject implements Serializable {
         } finally {
             ThreadContext.initializingProxy.set(previous);
         }
+        javaProxy = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
         if (javaProxy != null && javaProxy != proxy) {
             throw Py.TypeError("Proxy instance already initialized");
         }
@@ -190,7 +214,7 @@ public class PyObject implements Serializable {
         if (proxyInstance != null && proxyInstance != this) {
             throw Py.TypeError("Proxy initialized with another instance");
         }
-        javaProxy = proxy;
+        JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, proxy);
     }
 
     /**
@@ -306,7 +330,7 @@ public class PyObject implements Serializable {
      **/
     public Object __tojava__(Class<?> c) {
         if ((c == Object.class || c == Serializable.class) && getJavaProxy() != null) {
-            return javaProxy;
+            return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
         }
         if (c.isInstance(this)) {
             return this;
@@ -318,7 +342,7 @@ public class PyObject implements Serializable {
             }
         }
         if (c.isInstance(getJavaProxy())) {
-            return javaProxy;
+            return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
         }
 
         // convert faux floats
@@ -338,10 +362,10 @@ public class PyObject implements Serializable {
     }
 
     protected synchronized Object getJavaProxy() {
-        if (javaProxy == null) {
+        if (!JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR)) {
             proxyInit();
         }
-        return javaProxy;
+        return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
     }
 
     /**
@@ -1684,7 +1708,10 @@ public class PyObject implements Serializable {
     public PyObject _is(PyObject o) {
         // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
         // will initialize a new object with a different identity
-        return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
+        //return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
+        return this == o || (JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) &&
+            JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) ==
+            JyAttribute.getAttr(o, JyAttribute.JAVA_PROXY_ATTR)) ? Py.True : Py.False;
     }
 
     /**
@@ -1696,7 +1723,10 @@ public class PyObject implements Serializable {
     public PyObject _isnot(PyObject o) {
         // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
         // will initialize a new object with a different identity
-        return this != o && (javaProxy == null || javaProxy != o.javaProxy) ? Py.True : Py.False;
+        //return this != o && (javaProxy == null || javaProxy != o.javaProxy) ? Py.True : Py.False;
+        return this != o && (!JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) ||
+                JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) !=
+                JyAttribute.getAttr(o, JyAttribute.JAVA_PROXY_ATTR)) ? Py.True : Py.False;
     }
 
     /**
@@ -4205,7 +4235,7 @@ public class PyObject implements Serializable {
  * by hashing and comparing its elements by identity.
  */
 
-class PyIdentityTuple extends PyObject {
+class PyIdentityTuple extends PyObject implements Traverseproc {
 
     PyObject[] list;
 
@@ -4241,4 +4271,34 @@ class PyIdentityTuple extends PyObject {
         return true;
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (list != null) {
+            int retVal;
+            for (PyObject ob: list) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null || list == null) {
+            return false;
+        }
+        for (PyObject obj: list) {
+            if (ob == obj) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

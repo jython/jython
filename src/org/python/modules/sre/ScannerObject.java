@@ -17,7 +17,7 @@ package org.python.modules.sre;
 
 import org.python.core.*;
 
-public class ScannerObject extends PyObject {
+public class ScannerObject extends PyObject implements Traverseproc {
     public PatternObject pattern;
     PyString string;
     SRE_STATE state;
@@ -52,8 +52,22 @@ public class ScannerObject extends PyObject {
 
         return match;
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (pattern != null) {
+            int retVal = visit.visit(pattern, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return string != null ? visit.visit(string, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == pattern || ob == string);
+    }
 }
-
-
-
-

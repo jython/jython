@@ -48,6 +48,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.imp;
+import org.python.core.Untraversable;
 import org.python.core.io.FileIO;
 import org.python.core.io.IOBase;
 import org.python.core.io.RawIOBase;
@@ -161,6 +162,7 @@ public class PosixModule implements ClassDictInit {
             intFD = fd;
             javaFD = null;
         }
+
         FDUnion(FileDescriptor fd) {
             intFD = -1;
             javaFD = fd;
@@ -1138,6 +1140,7 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    @Untraversable
     static class LstatFunction extends PyBuiltinFunctionNarrow {
         LstatFunction() {
             super("lstat", 1, 1,
@@ -1171,6 +1174,7 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    @Untraversable
     static class StatFunction extends PyBuiltinFunctionNarrow {
         StatFunction() {
             super("stat", 1, 1,
@@ -1200,6 +1204,7 @@ public class PosixModule implements ClassDictInit {
     // daylight savings time in timestamps.
     //
     // Another advantage is setting the st_mode the same as CPython would return.
+    @Untraversable
     static class WindowsStatFunction extends PyBuiltinFunctionNarrow {
         WindowsStatFunction() {
             super("stat", 1, 1,
@@ -1252,6 +1257,7 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    @Untraversable
     static class FstatFunction extends PyBuiltinFunctionNarrow {
         FstatFunction() {
             super("fstat", 1, 1,

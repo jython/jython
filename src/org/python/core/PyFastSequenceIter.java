@@ -9,6 +9,7 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "fastsequenceiterator", base = PyObject.class, isBaseType = false)
 public class PyFastSequenceIter extends PyIterator {
+    //note: Already implements Traverseproc, inheriting it from PyIterator
 
     public static final PyType TYPE = PyType.fromClass(PyFastSequenceIter.class);
 
@@ -47,5 +48,21 @@ public class PyFastSequenceIter extends PyIterator {
             seq = null;
         }
         return result;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue = super.traverse(visit, arg);
+        if (retValue != 0) {
+            return retValue;
+        }
+        return seq == null ? 0 : visit.visit(seq, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == seq || super.refersDirectlyTo(ob));
     }
 }

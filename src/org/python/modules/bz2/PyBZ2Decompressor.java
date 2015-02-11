@@ -16,9 +16,11 @@ import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 @ExposedType(name = "bz2.BZ2Decompressor")
-public class PyBZ2Decompressor extends PyObject {
+public class PyBZ2Decompressor extends PyObject implements Traverseproc {
 
     @ExposedGet
     public PyString unused_data = Py.EmptyString;
@@ -110,4 +112,15 @@ public class PyBZ2Decompressor extends PyObject {
         return returnData;
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return unused_data != null ? visit.visit(unused_data, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && unused_data == ob;
+    }
 }

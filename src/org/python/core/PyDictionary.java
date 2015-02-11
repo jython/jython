@@ -29,7 +29,7 @@ import org.python.core.BaseDictionaryView;
  * A builtin python dictionary.
  */
 @ExposedType(name = "dict", doc = BuiltinDocs.dict_doc)
-public class PyDictionary extends PyObject implements ConcurrentMap {
+public class PyDictionary extends PyObject implements ConcurrentMap, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
     {
@@ -300,38 +300,38 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___lt___doc)
     final PyObject dict___lt__(PyObject otherObj) {
-    	int result = __cmp__(otherObj);
-    	if (result == -2) {
-    		return null;
-    	}
-    	return result < 0 ? Py.True : Py.False;
+        int result = __cmp__(otherObj);
+        if (result == -2) {
+            return null;
+        }
+        return result < 0 ? Py.True : Py.False;
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___gt___doc)
     final PyObject dict___gt__(PyObject otherObj) {
-    	int result = __cmp__(otherObj);
-    	if (result == -2) {
-    		return null;
-    	}
-    	return result > 0 ? Py.True : Py.False;
+        int result = __cmp__(otherObj);
+        if (result == -2) {
+            return null;
+        }
+        return result > 0 ? Py.True : Py.False;
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___le___doc)
     final PyObject dict___le__(PyObject otherObj) {
-    	int result = __cmp__(otherObj);
-    	if (result == -2) {
-    		return null;
-    	}
-    	return result <= 0 ? Py.True : Py.False;
+        int result = __cmp__(otherObj);
+        if (result == -2) {
+            return null;
+        }
+        return result <= 0 ? Py.True : Py.False;
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.dict___ge___doc)
     final PyObject dict___ge__(PyObject otherObj) {
-    	int result = __cmp__(otherObj);
-    	if (result == -2) {
-    		return null;
-    	}
-    	return result >= 0 ? Py.True : Py.False;
+        int result = __cmp__(otherObj);
+        if (result == -2) {
+            return null;
+        }
+        return result >= 0 ? Py.True : Py.False;
     }
 
     @Override
@@ -716,7 +716,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     @ExposedMethod(doc = BuiltinDocs.dict_viewkeys_doc)
     public PyObject viewkeys() {
-    	return new PyDictionaryViewKeys(this);
+        return new PyDictionaryViewKeys(this);
     }
     
     /**
@@ -732,7 +732,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
      */
     @ExposedMethod(doc = BuiltinDocs.dict_viewvalues_doc)
     public PyObject viewvalues() {
-    	return new PyDictionaryViewValues(this);
+        return new PyDictionaryViewValues(this);
     }
     
     @ExposedMethod(doc = BuiltinDocs.dict_itervalues_doc)
@@ -1165,6 +1165,30 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
         return tojava(getMap().replace(Py.java2py(key), Py.java2py(value)));
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        for (Map.Entry<PyObject, PyObject> ent: internalMap.entrySet()) {
+            retVal = visit.visit(ent.getKey(), arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+            if (ent.getValue() != null) {
+                retVal = visit.visit(ent.getValue(), arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (internalMap.containsKey(ob) || internalMap.containsValue(ob));
+    }
 }
 
 /** Basic implementation of Entry that just holds onto a key and value and returns them. */

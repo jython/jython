@@ -19,6 +19,7 @@ import javax.sql.DataSource;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.Untraversable;
 
 import com.ziclix.python.sql.PyConnection;
 import com.ziclix.python.sql.zxJDBC;
@@ -29,17 +30,18 @@ import com.ziclix.python.sql.util.PyArgParser;
  *
  * @author brian zimmer
  */
+@Untraversable
 public class Connectx extends PyObject {
 
-    private final String SET = "set";
-    private final PyString doc =
+    private static final String SET = "set";
+    private static final PyString _doc =
             new PyString("establish a connection through a javax.sql.DataSource or "
                          + "javax.sql.ConnectionPooledDataSource");
 
     @Override
     public PyObject __findattr_ex__(String name) {
         if ("__doc__".equals(name)) {
-            return doc;
+            return _doc;
         }
         return super.__findattr_ex__(name);
     }

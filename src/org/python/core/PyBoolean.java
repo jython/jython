@@ -10,6 +10,7 @@ import org.python.expose.MethodType;
  * The builtin python bool. It would be nice if it didn't extend PyInteger,
  * but too hard to avoid pre-Python 2.2 semantics here.
  */
+@Untraversable
 @ExposedType(name = "bool", isBaseType = false, doc = BuiltinDocs.bool_doc)
 public class PyBoolean extends PyInteger {
 

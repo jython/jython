@@ -22,6 +22,7 @@ import org.python.expose.MethodType;
  * This may relate to parameters, or to the target object itself (in text that applies equally to
  * base or sibling classes).
  */
+@Untraversable
 @ExposedType(name = "bytearray", base = PyObject.class, doc = BuiltinDocs.bytearray_doc)
 public class PyByteArray extends BaseBytes implements BufferProtocol {
 

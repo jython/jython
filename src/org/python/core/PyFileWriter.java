@@ -10,6 +10,7 @@ package org.python.core;
 import java.io.Writer;
 import java.io.IOException;
 
+@Untraversable
 public class PyFileWriter extends PyObject {
 
     private final Writer writer;

@@ -8,6 +8,7 @@ import org.python.core.PyIterator;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -139,5 +140,51 @@ public class PyTeeIterator extends PyIterator {
     @ExposedMethod
     public final PyTeeIterator tee___copy__() {
         return new PyTeeIterator(teeData);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (teeData != null) {
+            if (teeData.iterator != null) {
+                retVal = visit.visit(teeData.iterator, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            if (teeData.buffer != null) {
+                for (PyObject ob: teeData.buffer.values()) {
+                    if (ob != null) {
+                        retVal = visit.visit(ob, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+            if (teeData.stopException != null) {
+                retVal = teeData.stopException.traverse(visit, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        } else if (super.refersDirectlyTo(ob)) {
+            return true;
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
 }

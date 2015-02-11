@@ -15,7 +15,6 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
         this(name, numArgs, numArgs);
     }
 
-
     /**
      * Creates a method for the given name that takes at least <code>minArgs</code> and at most
      * <code>maxArgs</code> arguments.

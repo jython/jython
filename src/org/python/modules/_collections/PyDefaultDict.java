@@ -12,6 +12,8 @@ import org.python.core.PyDictionary;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -35,7 +37,7 @@ import org.python.core.BuiltinDocs;
  * passed to the dict constructor, including keyword arguments.
  */
 @ExposedType(name = "collections.defaultdict")
-public class PyDefaultDict extends PyDictionary {
+public class PyDefaultDict extends PyDictionary implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDefaultDict.class);
     /**
@@ -175,5 +177,47 @@ public class PyDefaultDict extends PyDictionary {
         } else {
             return defaultObj;
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        retVal = visit.visit(defaultFactory, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (backingMap != null) {
+            for (Map.Entry<PyObject, PyObject> ent: backingMap.asMap().entrySet()) {
+                retVal = visit.visit(ent.getKey(), arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+                if (ent.getValue() != null) {
+                    retVal = visit.visit(ent.getValue(), arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        } else if (super.refersDirectlyTo(ob)) {
+            return true;
+        }
+        if (backingMap == null) {
+            return false;
+        }
+        return backingMap.asMap().containsKey(ob) || backingMap.asMap().containsValue(ob);
     }
 }

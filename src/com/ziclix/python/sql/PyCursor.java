@@ -23,6 +23,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 import com.ziclix.python.sql.util.PyArgParser;
 import org.python.core.ContextManager;
@@ -35,7 +37,8 @@ import org.python.core.ThreadState;
  *
  * @author brian zimmer
  */
-public class PyCursor extends PyObject implements ClassDictInit, WarningListener, ContextManager {
+public class PyCursor extends PyObject implements ClassDictInit, WarningListener,
+        ContextManager, Traverseproc {
 
     /** Field fetch */
     protected Fetch fetch;
@@ -899,6 +902,68 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
     public boolean __exit__(PyObject type, PyObject value, PyObject traceback) {
         close();
         return false;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {        
+        int retVal;
+        if (fetch != null) {
+            retVal = fetch.traverse(visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (rsType != null) {
+            retVal = visit.visit(rsType, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (rsConcur != null) {
+            retVal = visit.visit(rsConcur, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (warnings != null) {
+            retVal = visit.visit(warnings, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (lastrowid != null) {
+            retVal = visit.visit(lastrowid, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (updatecount != null) {
+            retVal = visit.visit(updatecount, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (connection != null) {
+            retVal = visit.visit(connection, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return statement != null ? visit.visit(statement, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        } else if (ob == rsType || ob == rsConcur || ob == warnings || ob == lastrowid
+                || ob == updatecount || ob == connection || ob == statement) {
+            return true;
+        } else {
+            return fetch.refersDirectlyTo(ob);
+        }
     }
 }
 

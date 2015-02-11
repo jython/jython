@@ -8,6 +8,7 @@ package org.python.core;
 
 import org.python.modules._systemrestart;
 
+@Untraversable
 public class PyTableCode extends PyBaseCode
 {
 

@@ -9,6 +9,7 @@ import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.Visitproc;
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -160,6 +161,29 @@ public class itertools implements ClassDictInit {
                 }
             }
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            int retVal = super.traverse(visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+            if (iterator != null) {
+                retVal = visit.visit(iterator, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            return predicate != null ? visit.visit(predicate, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == iterator || ob == predicate ||
+                    super.refersDirectlyTo(ob));
+        }
     }
 
     /**
@@ -209,6 +233,29 @@ public class itertools implements ClassDictInit {
                 }
 
             }
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            int retVal = super.traverse(visit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+            if (iterator != null) {
+                retVal = visit.visit(iterator, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            return predicate != null ? visit.visit(predicate, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == iterator || ob == predicate ||
+                    super.refersDirectlyTo(ob));
         }
     }
 

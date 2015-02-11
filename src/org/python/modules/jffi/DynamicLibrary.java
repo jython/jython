@@ -5,11 +5,13 @@ import com.kenai.jffi.Library;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "jffi.DynamicLibrary", base = PyObject.class)
 public class DynamicLibrary extends PyObject {
 

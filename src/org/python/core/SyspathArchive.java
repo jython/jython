@@ -3,6 +3,7 @@ package org.python.core;
 import java.io.*;
 import java.util.zip.*;
 
+@Untraversable
 public class SyspathArchive extends PyString {
     private ZipFile zipFile;
 

@@ -9,7 +9,7 @@ import org.python.expose.ExposedType;
  * The classmethod descriptor.
  */
 @ExposedType(name = "classmethod", doc = BuiltinDocs.classmethod_doc)
-public class PyClassMethod extends PyObject {
+public class PyClassMethod extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyClassMethod.class);
 
@@ -49,5 +49,17 @@ public class PyClassMethod extends PyObject {
             type = obj.getType();
         }
         return new PyMethod(callable, type, type.getType());
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return callable != null ? visit.visit(callable, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == callable;
     }
 }

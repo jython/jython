@@ -19,6 +19,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python int.
  */
+@Untraversable
 @ExposedType(name = "int", doc = BuiltinDocs.int_doc)
 public class PyInteger extends PyObject {
 

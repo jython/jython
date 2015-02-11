@@ -30,7 +30,8 @@ import org.python.expose.MethodType;
 /**
  * A builtin python string.
  */
-@ExposedType(name = "str", doc = BuiltinDocs.str_doc)
+@Untraversable
+@ExposedType(name = "str", base = PyBaseString.class, doc = BuiltinDocs.str_doc)
 public class PyString extends PyBaseString implements BufferProtocol {
 
     public static final PyType TYPE = PyType.fromClass(PyString.class);

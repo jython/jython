@@ -7,6 +7,8 @@ import org.python.core.PyFloat;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedGet;
@@ -17,7 +19,7 @@ import org.python.expose.ExposedGet;
  * Analogous to CPython's _csv.c::WriterObj struct.
  */
 @ExposedType(name = "_csv.writer", doc = PyWriter.writer_doc)
-public class PyWriter extends PyObject {
+public class PyWriter extends PyObject implements Traverseproc {
 
     public static final String writer_doc =
     "CSV writer\n" +
@@ -137,7 +139,6 @@ public class PyWriter extends PyObject {
             } else if (field == Py.None) {
                 append_ok = join_append("", len == 1);
             } else {
-                
                 PyObject str;
                 //XXX: in 3.x this check can go away and we can just always use
                 //     __str__
@@ -279,5 +280,23 @@ public class PyWriter extends PyObject {
             rec.append(c);
         }
         rec_len++;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (dialect != null) {
+            int retVal = visit.visit(dialect, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return writeline != null ? visit.visit(writeline, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == dialect || ob == writeline);
     }
 }

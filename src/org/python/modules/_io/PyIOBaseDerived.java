@@ -6,9 +6,7 @@ import org.python.core.*;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.finalization.FinalizablePyObjectDerived;
 
-public class PyIOBaseDerived extends PyIOBase implements Slotted,FinalizablePyObjectDerived {
-
-    public FinalizeTrigger finalizeTrigger;
+public class PyIOBaseDerived extends PyIOBase implements Slotted,FinalizablePyObjectDerived,TraverseprocDerived {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -29,15 +27,33 @@ public class PyIOBaseDerived extends PyIOBase implements Slotted,FinalizablePyOb
     }
 
     public void __ensure_finalizer__() {
-        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
+
+    /* TraverseprocDerived implementation */
+    public int traverseDerived(Visitproc visit,Object arg) {
+        int retVal;
+        for(int i=0;i<slots.length;++i) {
+            retVal=visit.visit(slots[i],arg);
+            if (retVal!=0) {
+                return retVal;
+            }
+        }
+        return traverseDictIfAny(visit,arg);
+    }
+
+    /* end of TraverseprocDerived implementation */
 
     public PyIOBaseDerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
         if (subtype.needsFinalizer()) {
-            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+            FinalizeTrigger.ensureFinalizer(this);
         }
+    }
+
+    public int traverseDictIfAny(Visitproc visit,Object arg) {
+        return 0;
     }
 
     public PyString __str__() {

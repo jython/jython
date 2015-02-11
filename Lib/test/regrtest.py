@@ -1311,7 +1311,6 @@ _failures = {
         test_dummy_threading
         test_eof
         test_frozen  # not meaningful for Jython, although it is similar to Clamp singlejar
-        test_gc
         test_iterlen
         test_multibytecodec
         test_multibytecodec_support

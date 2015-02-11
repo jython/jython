@@ -48,6 +48,7 @@ import java.util.ListIterator;
  * {@link #getBuilder(int)} to return instances of its own type. See the documentation of particular
  * methods for more information.
  */
+@Untraversable
 public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**

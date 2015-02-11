@@ -73,12 +73,19 @@ public class IdImpl {
     private long sequentialId;
 
     public synchronized long id(PyObject o) {
-        Object javaProxy = o.getJavaProxy();
-        if (javaProxy != null) {
-            return java_obj_id(javaProxy);
-        } else {
-            return java_obj_id(o);
+        Object id = JyAttribute.getAttr(o, JyAttribute.PY_ID_ATTR);
+        if (id != null) {
+            return ((Long) id).longValue();
         }
+        Object javaProxy = o.getJavaProxy();
+        long result;
+        if (javaProxy != null) {
+            result = java_obj_id(javaProxy);
+        } else {
+            result = java_obj_id(o);
+        }
+        JyAttribute.setAttr(o, JyAttribute.PY_ID_ATTR, result);
+        return result;
     }
 
     public String idstr(PyObject o) {

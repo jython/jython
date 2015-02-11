@@ -9,7 +9,7 @@ package org.python.core;
 import java.util.Iterator;
 import org.python.core.PyObject;
 
-public abstract class BaseDictionaryView extends PyObject {
+public abstract class BaseDictionaryView extends PyObject implements Traverseproc {
     protected final PyDictionary dvDict;
     
     public BaseDictionaryView(PyDictionary dvDict) {
@@ -161,5 +161,17 @@ public abstract class BaseDictionaryView extends PyObject {
         buf.append("])");
         ts.exitRepr(this);
         return buf.toString();
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return dvDict != null ? visit.visit(dvDict, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && dvDict == ob;
     }
 }

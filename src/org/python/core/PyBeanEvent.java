@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.lang.reflect.Method;
 
+@Untraversable
 public class PyBeanEvent<T> extends PyObject {
 
     public Method addMethod;

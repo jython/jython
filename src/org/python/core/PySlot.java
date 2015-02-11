@@ -4,6 +4,7 @@ import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "member_descriptor", base = PyObject.class, isBaseType = false)
 public class PySlot extends PyDescriptor {
 

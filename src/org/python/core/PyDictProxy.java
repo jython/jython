@@ -10,7 +10,7 @@ import org.python.expose.MethodType;
  *
  */
 @ExposedType(name = "dictproxy", isBaseType = false)
-public class PyDictProxy extends PyObject {
+public class PyDictProxy extends PyObject implements Traverseproc {
 
     /** The dict proxied to. */
     PyObject dict;
@@ -144,5 +144,17 @@ public class PyDictProxy extends PyObject {
     @Override
     public boolean isSequenceType() {
         return false;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return dict == null ? 0 : visit.visit(dict, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == dict;
     }
 }

@@ -10,7 +10,7 @@ import org.python.expose.ExposedType;
  * The Python super type.
  */
 @ExposedType(name = "super", doc = BuiltinDocs.super_doc)
-public class PySuper extends PyObject {
+public class PySuper extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PySuper.class);
 
@@ -162,5 +162,30 @@ public class PySuper extends PyObject {
 
     public PyType getObjType() {
         return objType;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (superType != null) {
+            retVal = visit.visit(superType, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (obj != null) {
+            retVal = visit.visit(obj, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return objType == null ? 0 : visit.visit(objType, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == superType || ob == obj || ob == objType);
     }
 }

@@ -3,7 +3,6 @@ package org.python.modules._json;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
-import org.python.core.PyException;
 import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
@@ -13,11 +12,13 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "_json.encoder", base = PyObject.class)
-public class Encoder extends PyObject {
+public class Encoder extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(Encoder.class);
 
@@ -200,5 +201,56 @@ public class Encoder extends PyObject {
             markers.__delitem__(ident);
         }
         rval.append(new PyString("]"));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (markers != null) {
+            retVal = visit.visit(markers, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (defaultfn != null) {
+            retVal = visit.visit(defaultfn, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (encoder != null) {
+            retVal = visit.visit(encoder, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (indent != null) {
+            retVal = visit.visit(indent, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (key_separator != null) {
+            retVal = visit.visit(key_separator, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (item_separator != null) {
+            retVal = visit.visit(item_separator, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return sort_keys != null ? visit.visit(sort_keys, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == markers || ob == defaultfn
+            || ob == encoder || ob == indent || ob == key_separator
+            || ob == item_separator || ob == sort_keys);
     }
 }

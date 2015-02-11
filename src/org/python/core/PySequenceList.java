@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public abstract class PySequenceList extends PySequence {
+public abstract class PySequenceList extends PySequence implements Traverseproc {
 
     protected PySequenceList(PyType type) {
         super(type);
@@ -79,4 +79,22 @@ public abstract class PySequenceList extends PySequence {
 
     public abstract String toString();
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        for (int i = 0; i < size(); ++i) {
+            retVal = visit.visit(pyget(i), arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
 }

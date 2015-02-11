@@ -10,9 +10,11 @@ import org.python.core.ThreadState;
 import org.python.expose.ExposedType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 @ExposedType(name = "_threading.Condition")
-public class Condition extends PyObject implements ContextManager {
+public class Condition extends PyObject implements ContextManager, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(Condition.class);
     private final Lock _lock;
@@ -138,5 +140,16 @@ public class Condition extends PyObject implements ContextManager {
     final boolean Condition__is_owned() {
         return _lock._lock.isHeldByCurrentThread();
     }
-}
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return _lock != null ? visit.visit(_lock, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && _lock == ob;
+    }
+}

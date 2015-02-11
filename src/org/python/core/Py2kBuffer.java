@@ -21,6 +21,7 @@ import org.python.expose.MethodType;
  * arguments the same (one-dimensional byte-array) types. Their behaviour differs as detailed in the
  * documentation.
  */
+@Untraversable
 @ExposedType(name = "buffer", doc = BuiltinDocs.buffer_doc, base = PyObject.class,
         isBaseType = false)
 public class Py2kBuffer extends PySequence implements BufferProtocol {

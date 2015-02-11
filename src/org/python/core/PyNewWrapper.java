@@ -1,6 +1,6 @@
 package org.python.core;
 
-public abstract class PyNewWrapper extends PyBuiltinMethod {
+public abstract class PyNewWrapper extends PyBuiltinMethod implements Traverseproc {
 
     public PyType for_type;
 
@@ -69,5 +69,17 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
         PyObject[] rest = new PyObject[nargs - 1];
         System.arraycopy(args, 1, rest, 0, nargs - 1);
         return new_impl(false, subtype, rest, keywords);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return for_type == null ? 0 : visit.visit(for_type, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == for_type;
     }
 }

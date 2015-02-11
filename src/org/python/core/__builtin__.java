@@ -18,6 +18,7 @@ import org.python.core.util.ExtraMath;
 import org.python.core.util.RelativeFile;
 import org.python.modules._functools._functools;
 
+@Untraversable
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
     public static final PyObject module = Py.newString("__builtin__");
@@ -1249,6 +1250,7 @@ public class __builtin__ {
     }
 }
 
+@Untraversable
 class ImportFunction extends PyBuiltinFunction {
     ImportFunction() {
         super("__import__",
@@ -1280,6 +1282,7 @@ class ImportFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class SortedFunction extends PyBuiltinFunction {
     SortedFunction() {
         super("sorted", "sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list");
@@ -1315,6 +1318,7 @@ class SortedFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class AllFunction extends PyBuiltinFunctionNarrow {
     AllFunction() {
         super("all", 1, 1,
@@ -1337,6 +1341,7 @@ class AllFunction extends PyBuiltinFunctionNarrow {
     }
 }
 
+@Untraversable
 class AnyFunction extends PyBuiltinFunctionNarrow {
     AnyFunction() {
         super("any", 1, 1,
@@ -1359,6 +1364,7 @@ class AnyFunction extends PyBuiltinFunctionNarrow {
     }
 }
 
+@Untraversable
 class FormatFunction extends PyBuiltinFunctionNarrow {
     FormatFunction() {
         super("format", 1, 2,
@@ -1382,6 +1388,7 @@ class FormatFunction extends PyBuiltinFunctionNarrow {
     }
 }
 
+@Untraversable
 class PrintFunction extends PyBuiltinFunction {
     PrintFunction() {
 
@@ -1456,6 +1463,7 @@ class PrintFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class MaxFunction extends PyBuiltinFunction {
     MaxFunction() {
         super("max",
@@ -1514,6 +1522,7 @@ class MaxFunction extends PyBuiltinFunction {
 
 }
 
+@Untraversable
 class MinFunction extends PyBuiltinFunction {
     MinFunction() {
         super("min",
@@ -1571,6 +1580,7 @@ class MinFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class RoundFunction extends PyBuiltinFunction {
     RoundFunction() {
         super("round", "round(number[, ndigits]) -> floating point number\n\n" +
@@ -1594,6 +1604,7 @@ class RoundFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class CompileFunction extends PyBuiltinFunction {
     CompileFunction() {
         super("compile",
@@ -1684,6 +1695,7 @@ class CompileFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class OpenFunction extends PyBuiltinFunction {
     OpenFunction() {
         super("open", "Open a file using the file() type, returns a file object.  This is the\n"
@@ -1714,6 +1726,7 @@ class OpenFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class NextFunction extends PyBuiltinFunction {
     NextFunction() {
         super("next", "next(iterator[, default])\n\n"
@@ -1745,6 +1758,7 @@ class NextFunction extends PyBuiltinFunction {
     }
 }
 
+@Untraversable
 class BinFunction extends PyBuiltinFunction {
     BinFunction() {
         super("bin", "bin(number)\n\n"

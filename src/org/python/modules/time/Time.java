@@ -13,17 +13,12 @@
 package org.python.modules.time;
 
 import java.text.DateFormatSymbols;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -31,11 +26,12 @@ import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
-import org.python.core.PySequence;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
+import org.python.core.Untraversable;
 
+@Untraversable
 class TimeFunctions extends PyBuiltinFunctionSet
 {
     public TimeFunctions(String name, int index, int argcount) {
@@ -56,7 +52,7 @@ class TimeFunctions extends PyBuiltinFunctionSet
 
 public class Time implements ClassDictInit
 {
-    public static PyString __doc__ = new PyString(
+    public static final PyString __doc__ = new PyString(
         "This module provides various functions to manipulate time values.\n"+
         "\n"+
         "There are two standard representations of time.  One is the "+

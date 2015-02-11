@@ -7,8 +7,8 @@
  */
 package com.ziclix.python.sql;
 
-import org.python.core.PyClass;
 import org.python.core.PyInteger;
+import org.python.core.Untraversable;
 
 /**
  * This class wraps the types from java.sql.Type in order for
@@ -17,6 +17,7 @@ import org.python.core.PyInteger;
  *
  * @author brian zimmer
  */
+@Untraversable
 public final class DBApiType extends PyInteger {
 
     /**

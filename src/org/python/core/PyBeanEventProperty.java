@@ -9,6 +9,7 @@ import java.util.WeakHashMap;
 
 import org.python.util.Generic;
 
+@Untraversable
 public class PyBeanEventProperty extends PyObject {
 
     private static Map<String, Class<?>> adapterClasses = Generic.map();

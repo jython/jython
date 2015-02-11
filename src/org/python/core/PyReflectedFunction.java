@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.python.util.Generic;
 
-public class PyReflectedFunction extends PyObject {
+public class PyReflectedFunction extends PyObject implements Traverseproc {
 
     public String __name__;
 
@@ -334,5 +334,17 @@ public class PyReflectedFunction extends PyObject {
     @Override
     public String toString() {
         return "<java function " + __name__ + " " + Py.idstr(this) + ">";
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return __doc__ != null ? visit.visit(__doc__, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == __doc__;
     }
 }

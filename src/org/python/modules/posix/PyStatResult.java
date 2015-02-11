@@ -11,6 +11,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -240,5 +241,77 @@ public class PyStatResult extends PyTuple {
                 TYPE.fastGetName() + "(" +
                 "st_mode=%r, st_ino=%r, st_dev=%r, st_nlink=%r, st_uid=%r, "+
                 "st_gid=%r, st_size=%r, st_atime=%r, st_mtime=%r, st_ctime=%r)").__mod__(this);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (st_mode != null) {
+            retVal = visit.visit(st_mode, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_ino != null) {
+            retVal = visit.visit(st_ino, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_dev != null) {
+            retVal = visit.visit(st_dev, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_nlink != null) {
+            retVal = visit.visit(st_nlink, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_uid != null) {
+            retVal = visit.visit(st_uid, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_gid != null) {
+            retVal = visit.visit(st_gid, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_size != null) {
+            retVal = visit.visit(st_size, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_atime != null) {
+            retVal = visit.visit(st_atime, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (st_mtime != null) {
+            retVal = visit.visit(st_mtime, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return st_ctime != null ? visit.visit(st_ctime, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == st_mode || ob == st_ino || ob == st_dev || ob == st_nlink
+            || ob == st_uid || ob == st_gid || ob == st_size || ob == st_atime
+            || ob == st_mtime || ob == st_ctime || super.refersDirectlyTo(ob));
     }
 }

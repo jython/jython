@@ -4,25 +4,22 @@
 package org.python.core;
 
 import org.python.core.packagecache.PackageManager;
-
 import java.util.StringTokenizer;
 
 /**
  * A representation of java package.
  */
-
-public class PyJavaPackage extends PyObject {
+public class PyJavaPackage extends PyObject implements Traverseproc {
     public String __name__;
 
 
     public PyStringMap __dict__;
-    //public String _unparsedAll;
+
     /** Its keys are the names of statically known classes.
      * E.g. from jars pre-scan.
      */
     public PyStringMap clsSet;
     public String __file__;
-    //public PyList __all__;
 
     /** (Control) package manager whose hierarchy contains this java pkg.
      */
@@ -134,7 +131,7 @@ public class PyJavaPackage extends PyObject {
             return addPackage(name);
         }
 
-        Class c = __mgr__.findClass(__name__,name);
+        Class<?> c = __mgr__.findClass(__name__,name);
         if (c != null) return addClass(name,c);
 
         if (name == "__name__") return new PyString(__name__);
@@ -169,5 +166,29 @@ public class PyJavaPackage extends PyObject {
 
     public String toString()  {
         return "<java package "+__name__+" "+Py.idstr(this)+">";
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        //__dict__ cannot be null
+        int retVal = visit.visit(__dict__, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+
+        //clsSet cannot be null
+        retVal = visit.visit(clsSet, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        //__mgr__ and __mgr__.topLevelPackage cannot be null
+        return visit.visit(__mgr__.topLevelPackage, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == __dict__ || ob == clsSet || ob == __mgr__.topLevelPackage);
     }
 }

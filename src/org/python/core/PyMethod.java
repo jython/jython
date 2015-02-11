@@ -16,7 +16,7 @@ import java.lang.reflect.Proxy;
  * A Python method.
  */
 @ExposedType(name = "instancemethod", isBaseType = false, doc = BuiltinDocs.instancemethod_doc)
-public class PyMethod extends PyObject implements InvocationHandler {
+public class PyMethod extends PyObject implements InvocationHandler, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyMethod.class);
 
@@ -413,4 +413,28 @@ public class PyMethod extends PyObject implements InvocationHandler {
         }
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (im_class != null) {
+            retVal = visit.visit(im_class, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__func__ != null) {
+            retVal = visit.visit(__func__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return __self__ == null ? 0 : visit.visit(__self__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == im_class || ob == __func__ || ob == __self__);
+    }
 }

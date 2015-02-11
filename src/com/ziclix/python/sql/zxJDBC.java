@@ -18,6 +18,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
+import org.python.core.Untraversable;
 
 import java.io.CharArrayWriter;
 import java.io.PrintWriter;
@@ -41,6 +42,7 @@ import java.util.ResourceBundle;
  *
  * @author brian zimmer
  */
+@Untraversable
 public class zxJDBC extends PyObject implements ClassDictInit {
 
     /**
@@ -428,6 +430,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
     }
 }
 
+@Untraversable
 class zxJDBCFunc extends PyBuiltinFunctionSet {
 
     zxJDBCFunc(String name, int index, int minargs, int maxargs, String doc) {

@@ -11,6 +11,7 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.__builtin__;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
@@ -158,4 +159,35 @@ public class count extends PyIterator {
         return doNext(__iternext__());
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (iter != null) {
+            retVal = visit.visit(iter, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (counter != null) {
+            retVal = visit.visit(counter, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (stepper != null) {
+            retVal = visit.visit(stepper, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return super.traverse(visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (iter == ob || counter == ob
+            || stepper == ob || super.refersDirectlyTo(ob));
+    }
 }

@@ -606,4 +606,50 @@ public class PyTuple extends PySequenceList implements List {
         }
         return converted;
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        for (PyObject ob: array) {
+            if (ob != null) {
+                retVal = visit.visit(ob, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        if (cachedList != null) {
+            for (PyObject ob: cachedList) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        }
+        for (PyObject obj: array) {
+            if (obj == ob) {
+                return true;
+            }
+        }
+        if (cachedList != null) {
+            for (PyObject obj: cachedList) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

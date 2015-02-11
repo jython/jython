@@ -22,8 +22,6 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
     protected boolean gi_running;
 
     private PyObject closure;
-    
-    public FinalizeTrigger finalizeTrigger;
 
     public PyGenerator(PyFrame frame, PyObject closure) {
         super(TYPE);
@@ -32,7 +30,7 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
             gi_code = gi_frame.f_code;
         }
         this.closure = closure;
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyObject send(PyObject value) {
@@ -172,5 +170,34 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
             return null;
         }
         return result;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue = super.traverse(visit, arg);
+        if (retValue != 0) {
+            return retValue;
+        }
+        if (gi_frame != null) {
+            retValue = visit.visit(gi_frame, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        if (gi_code != null) {
+            retValue = visit.visit(gi_code, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return closure == null ? 0 : visit.visit(closure, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == gi_frame || ob == gi_code
+            || ob == closure || super.refersDirectlyTo(ob));
     }
 }

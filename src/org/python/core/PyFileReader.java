@@ -8,7 +8,7 @@ import java.io.Reader;
 import java.io.IOException;
 import java.io.BufferedReader;
 
-
+@Untraversable
 public class PyFileReader extends PyObject
 {
     static final int DEFAULT_BUF_SIZE = 1024;

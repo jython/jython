@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class BaseSet extends PyObject implements Set {
+public abstract class BaseSet extends PyObject implements Set, Traverseproc {
 
     /** The underlying Set. */
     protected Set<PyObject> _set;
@@ -43,9 +43,9 @@ public abstract class BaseSet extends PyObject implements Set {
             // Skip the iteration if both are sets
             set.addAll(((BaseSet)data)._set);
         } else {
-        	for (PyObject item : data.asIterable()) {
-        		set.add(item);
-        	}
+            for (PyObject item : data.asIterable()) {
+                set.add(item);
+            }
         }
         return set;
     }
@@ -126,24 +126,24 @@ public abstract class BaseSet extends PyObject implements Set {
     }
     
     final PyObject baseset_difference(PyObject other) {
-    	return baseset_difference(new PyObject[] {other});
+        return baseset_difference(new PyObject[] {other});
     }
     
     final PyObject baseset_difference(PyObject [] args) {
-    	if (args.length == 0) {
-    		return BaseSet.makeNewSet(getType(), this);
-    	}
-    	
-    	BaseSet o = BaseSet.makeNewSet(getType(), this);
-    	for (PyObject item: args) {
-    		BaseSet bs = args[0] instanceof BaseSet ? (BaseSet)item : new PySet(item);
-    		Set<PyObject> set = bs._set;
+        if (args.length == 0) {
+            return BaseSet.makeNewSet(getType(), this);
+        }
+        
+        BaseSet o = BaseSet.makeNewSet(getType(), this);
+        for (PyObject item: args) {
+            BaseSet bs = args[0] instanceof BaseSet ? (BaseSet)item : new PySet(item);
+            Set<PyObject> set = bs._set;
 
-    		for (PyObject p : set) {
-    			if (_set.contains(p)) {
-    				o._set.remove(p);
-    			}
-    		}
+            for (PyObject p : set) {
+                if (_set.contains(p)) {
+                    o._set.remove(p);
+                }
+            }
         }
         return o;
     }
@@ -348,7 +348,7 @@ public abstract class BaseSet extends PyObject implements Set {
     final PyObject baseset_union(PyObject [] args) {
         BaseSet result = BaseSet.makeNewSet(getType(), this);
         for (PyObject item: args) {
-        	result._update(item);
+            result._update(item);
         }
         return result;
     }
@@ -372,15 +372,15 @@ public abstract class BaseSet extends PyObject implements Set {
     }
     
     final PyObject baseset_intersection(PyObject [] args) {
-    	BaseSet result = BaseSet.makeNewSet(getType(), this);
-    	if (args.length == 0) {
-    		return result;
+        BaseSet result = BaseSet.makeNewSet(getType(), this);
+        if (args.length == 0) {
+            return result;
         }
-    	
-    	for (PyObject other: args) {
-    		result = (BaseSet)result.baseset_intersection(other);
-    	}
-    	return result;
+        
+        for (PyObject other: args) {
+            result = (BaseSet)result.baseset_intersection(other);
+        }
+        return result;
     }
 
     final PyObject baseset_copy() {
@@ -407,8 +407,8 @@ public abstract class BaseSet extends PyObject implements Set {
     }
     
     final PyObject baseset_isdisjoint(PyObject other) {
-    	BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
-    	return Collections.disjoint(_set, bs._set) ? Py.True : Py.False;
+        BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
+        return Collections.disjoint(_set, bs._set) ? Py.True : Py.False;
     }
 
     public String toString() {
@@ -598,5 +598,24 @@ public abstract class BaseSet extends PyObject implements Set {
             a[size] = null;
         }
         return a;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue;
+        for (PyObject ob: _set) {
+            retValue = visit.visit(ob, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return _set.contains(ob);
     }
 }

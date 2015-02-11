@@ -9,6 +9,9 @@ import org.python.core.PyDictionary;
 import org.python.core.PyObject;
 import org.python.core.PyMethod;
 import org.python.core.Py;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
+
 
 public class synchronize {
 
@@ -34,7 +37,7 @@ public class synchronize {
         return new SynchronizedCallable(callable);
     }
 
-    public static class SynchronizedCallable extends PyObject {
+    public static class SynchronizedCallable extends PyObject implements Traverseproc {
 
         PyObject callable;
 
@@ -93,6 +96,18 @@ public class synchronize {
         @Override
         public boolean isCallable() {
             return true;
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return callable != null ? visit.visit(callable, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && ob == callable;
         }
     }
 }

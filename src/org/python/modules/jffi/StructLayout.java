@@ -12,6 +12,8 @@ import org.python.core.PyList;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -40,7 +42,7 @@ public class StructLayout extends CType.Custom {
     }
 
     @ExposedType(name = "jffi.StructLayout.Field", base = PyObject.class)
-    public static class Field extends PyObject {
+    public static class Field extends PyObject implements Traverseproc {
         public static final PyType TYPE = PyType.fromClass(Field.class);
         @ExposedGet
         final CType ctype;
@@ -103,6 +105,24 @@ public class StructLayout extends CType.Custom {
             op.put(asPointer(obj).getMemory(), offset, value);
 
             return value;
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (name != null) {
+                int retVal = visit.visit(name, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            return ctype != null ? visit.visit(ctype, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == name || ob == ctype);
         }
     }
 

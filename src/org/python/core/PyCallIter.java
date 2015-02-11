@@ -1,6 +1,7 @@
 package org.python.core;
 
 public class PyCallIter extends PyIterator {
+    //note: Already implements Traverseproc, inheriting it from PyIterator
 
     private PyObject callable;
 
@@ -35,5 +36,27 @@ public class PyCallIter extends PyIterator {
             return null;
         }
         return result;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue = super.traverse(visit, arg);
+        if (retValue != 0) {
+            return retValue;
+        }
+        if (callable != null) {
+            retValue = visit.visit(callable, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return sentinel != null ? visit.visit(sentinel, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == callable || ob == sentinel || super.refersDirectlyTo(ob));
     }
 }

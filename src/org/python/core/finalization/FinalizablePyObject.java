@@ -1,5 +1,7 @@
 package org.python.core.finalization;
 
+import org.python.core.JyAttribute;
+
 /**
  * <p>
  * This interface allows {@code PyObject}s to have finalizers.
@@ -24,31 +26,18 @@ package org.python.core.finalization;
  * </p>
  * <p>
  * If you are writing a custom built-in that shall directly
- * extend {@link org.python.core.PyObject} and have a finalizer, you can simply
- * extend {@link org.python.core.finalization.PyFinalizableObject}
- * and overwrite its {@code __del__}-method.
- * Follow the instructions below, starting at 4).
+ * extend {@link org.python.core.PyObject} or some other not-yet-finalizable
+ * builtin and have a finalizer, follow the instructions below.
  * </p>
  * <p>
- * If you want to extend some subclass of PyObject that does not yet implement
- * this interface, you have to take care of the following steps:
  * <ol>
  * <li>
  *     Let your subclass implement {@code FinalizablePyObject}
  *     (or {@link org.python.core.finalization.FinalizableBuiltin}).
  * </li>
  * <li>
- *     Let it have a member<br>
- *     {@code public FinalizeTrigger finalizeTrigger;}<br>
- *     Other scopes also work, but might fail with security managers.
- * </li>
- * <li>
- *    In every constructor initialize this member via<br>
- *    {@code finalizeTrigger = FinalizeTrigger.makeTrigger(this);}<br>
- *    or<br>
+ *    In every constructor call<br>
  *    {@code FinalizeTrigger.ensureFinalizer(this);}<br>
- *    The latter is a better abstraction, but slightly less performant,
- *    since it uses reflection.
  * </li>
  * <li>
  *    Write your {@code __del__}-method however you intend it.
@@ -72,7 +61,7 @@ package org.python.core.finalization;
  * <p>
  * Note: Regarding to object resurrection, Jython currently behaves like CPython >= 3.4.
  * That means the finalizer {@code __del__} or {@code __del_builtin__} is called only the
- * first time an object gets gc'ed. If pre 3.4. behavior is required for some reason (i.e.
+ * first time an object gets gc'ed. If pre-3.4.-behavior is required for some reason (i.e.
  * have the finalizer called repeatedly on every collection after a resurrection), one can
  * achieve this manually via step 5).
  * </p>
@@ -98,12 +87,12 @@ package org.python.core.finalization;
  * </p>
  * <p>
  * To turn off the finalizer, call</br>
- * {@code finalizeTrigger.clear();}</br>
+ * {@code ((FinalizeTrigger) JyAttribute.getAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)).clear();}</br>
  * To turn it on again, call</br>
- * {@code finalizeTrigger.trigger(this);}
+ * {@code ((FinalizeTrigger) JyAttribute.getAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)).trigger(this);}
  * </p>
  */
 
-public interface FinalizablePyObject extends HasFinalizeTrigger {
+public interface FinalizablePyObject {
     public void __del__();
 }

@@ -7,7 +7,7 @@ import java.io.*;
  * subclasses of PyException. Instead the python exception class is stored in the <code>type</code>
  * field and value or class instance is stored in the <code>value</code> field.
  */
-public class PyException extends RuntimeException
+public class PyException extends RuntimeException implements Traverseproc
 {
 
     /**
@@ -331,5 +331,33 @@ public class PyException extends RuntimeException
      */
     public static String exceptionClassName(PyObject obj) {
         return obj instanceof PyClass ? ((PyClass)obj).__name__ : ((PyType)obj).fastGetName();
+    }
+    
+    
+    /* Traverseproc support */
+
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue;
+        if (type != null) {
+            retValue = visit.visit(type, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        } if (value != null) {
+            retValue = visit.visit(value, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        } if (traceback != null) {
+            retValue = visit.visit(traceback, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return 0;
+    }
+
+    public boolean refersDirectlyTo(PyObject ob) {
+    	return ob != null && (type == ob || value == ob || traceback == ob);
     }
 }

@@ -19,6 +19,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Untraversable;
 import org.python.core.io.FileIO;
 import org.python.core.io.RawIOBase;
 import org.python.core.io.StreamIO;
@@ -30,6 +31,7 @@ import org.python.expose.ExposedType;
 
 import jnr.constants.platform.Errno;
 
+@Untraversable
 @ExposedType(name = "_io.FileIO", base = PyRawIOBase.class)
 public class PyFileIO extends PyRawIOBase {
 

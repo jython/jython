@@ -15,6 +15,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python complex number
  */
+@Untraversable
 @ExposedType(name = "complex", doc = BuiltinDocs.complex_doc)
 public class PyComplex extends PyObject {
 

@@ -13,7 +13,7 @@ import org.python.expose.ExposedType;
  *
  */
 @ExposedType(name = "exceptions.BaseException", doc = BuiltinDocs.BaseException_doc)
-public class PyBaseException extends PyObject {
+public class PyBaseException extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyBaseException.class);
 
@@ -256,5 +256,30 @@ public class PyBaseException extends PyObject {
             __dict__.__delitem__("message");
         }
         message = null;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue;
+        if (message != null) {
+            retValue = visit.visit(message, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        if (args != null) {
+            retValue = visit.visit(args, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return __dict__ != null ? visit.visit(__dict__, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == message || ob == args || ob == __dict__);
     }
 }

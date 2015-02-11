@@ -8,10 +8,9 @@ import java.util.Set;
  * Proxy Java objects implementing java.util.List with Python methods
  * corresponding to the standard list type
  */
-
-
 class JavaProxyMap {
 
+    @Untraversable
     private static class MapMethod extends PyBuiltinMethodNarrow {
         protected MapMethod(String name, int numArgs) {
             super(name, numArgs);
@@ -26,6 +25,7 @@ class JavaProxyMap {
         }
     }
 
+    @Untraversable
     private static class MapClassMethod extends PyBuiltinClassMethodNarrow {
         protected MapClassMethod(String name, int minArgs, int maxArgs) {
             super(name, minArgs, maxArgs);

@@ -14,6 +14,9 @@ import org.python.core.PyClass;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
+
 import com.ziclix.python.sql.PyConnection;
 import com.ziclix.python.sql.zxJDBC;
 import com.ziclix.python.sql.pipe.Pipe;
@@ -23,7 +26,7 @@ import com.ziclix.python.sql.pipe.db.DBSource;
 /**
  * A class to perform efficient Bulk CoPy of database tables.
  */
-public class BCP extends PyObject implements ClassDictInit {
+public class BCP extends PyObject implements ClassDictInit, Traverseproc {
 
     /**
      * Field sourceDH, destDH
@@ -181,6 +184,24 @@ public class BCP extends PyObject implements ClassDictInit {
         DBSink sink = new DBSink(this.destination, destDH, _toTable, exclude, bindings, this.batchsize);
 
         return pipe.pipe(source, sink).__sub__(Py.newInteger(1));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (source != null) {
+            int retVal = visit.visit(source, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return destination != null ? visit.visit(destination, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == source || ob == destination);
     }
 }
 

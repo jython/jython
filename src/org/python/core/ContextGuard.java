@@ -72,7 +72,7 @@ public class ContextGuard implements ContextManager {
         throw Py.TypeError("Argument must be a generator function.");
     }
 
-    private static class ContextCode extends PyBaseCode {
+    private static class ContextCode extends PyBaseCode implements Traverseproc {
         private final PyBaseCode code;
         ContextCode(PyBaseCode code) {
             this.co_name = code.co_name;
@@ -116,10 +116,22 @@ public class ContextGuard implements ContextManager {
                 }
             };
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return code != null ? visit.visit(code, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && ob == code;
+        }
     }
     
     @SuppressWarnings("serial")
-    private static abstract class GeneratorContextManager extends PyObject implements ContextManager {
+    private static abstract class GeneratorContextManager extends PyObject implements ContextManager, Traverseproc {
         final PyFrame frame;
 
         public GeneratorContextManager(PyFrame frame) {
@@ -155,5 +167,17 @@ public class ContextGuard implements ContextManager {
         }
 
         abstract PyObject body(ThreadState ts);
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return frame != null ? visit.visit(frame, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && ob == frame;
+        }
     }
 }

@@ -34,6 +34,8 @@ import jnr.posix.util.Platform;
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.modules.posix.PosixModule;
 import org.python.util.Generic;
 
@@ -988,10 +990,10 @@ public final class Py {
         PyObject instance = (PyObject)(ThreadContext.initializingProxy.get()[0]);
         ThreadState ts = Py.getThreadState();
         if (instance != null) {
-            if (instance.javaProxy != null) {
+            if (JyAttribute.hasAttr(instance, JyAttribute.JAVA_PROXY_ATTR)) {
                 throw Py.TypeError("Proxy instance reused");
             }
-            instance.javaProxy = proxy;
+            JyAttribute.setAttr(instance, JyAttribute.JAVA_PROXY_ATTR, proxy);
             proxy._setPyInstance(instance);
             proxy._setPySystemState(ts.systemState);
             return;
@@ -1014,7 +1016,7 @@ public final class Py {
             pargs = Py.javas2pys(args);
         }
         instance = pyc.__call__(pargs);
-        instance.javaProxy = proxy;
+        JyAttribute.setAttr(instance, JyAttribute.JAVA_PROXY_ATTR, proxy);
         proxy._setPyInstance(instance);
         proxy._setPySystemState(ts.systemState);
     }
@@ -2273,7 +2275,7 @@ class FixedFileWrapper extends StdoutWrapper {
 /**
  * A code object wrapper for a python function.
  */
-class JavaCode extends PyCode {
+class JavaCode extends PyCode implements Traverseproc {
 
     private PyObject func;
 
@@ -2337,12 +2339,25 @@ class JavaCode extends PyCode {
             PyObject[] defaults, PyObject closure) {
         return func.__call__(arg1, arg2, arg3, arg4);
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return func != null ? visit.visit(func, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == func;
+    }
 }
 
 /**
  * A function object wrapper for a java method which comply with the
  * PyArgsKeywordsCall standard.
  */
+@Untraversable
 class JavaFunc extends PyObject {
 
     Method method;

@@ -8,6 +8,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -122,5 +123,71 @@ public class PyTimeTuple extends PyTuple {
     final String struct_time_toString() {
         return String.format("time.struct_time(tm_year=%s, tm_mon=%s, tm_mday=%s, tm_hour=%s, tm_min=%s, tm_sec=%s, tm_wday=%s, tm_yday=%s, tm_isdst=%s)",
                              tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (tm_year != null) {
+            retVal = visit.visit(tm_year, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_mon != null) {
+            retVal = visit.visit(tm_mon, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_mday != null) {
+            retVal = visit.visit(tm_mday, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_hour != null) {
+            retVal = visit.visit(tm_hour, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_min != null) {
+            retVal = visit.visit(tm_min, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_sec != null) {
+            retVal = visit.visit(tm_sec, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_wday != null) {
+            retVal = visit.visit(tm_wday, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tm_yday != null) {
+            retVal = visit.visit(tm_yday, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return tm_isdst != null ? visit.visit(tm_isdst, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == tm_year || ob == tm_mon || ob == tm_mday
+            || ob == tm_hour || ob == tm_min || ob == tm_sec || ob == tm_wday
+            || ob == tm_yday || ob == tm_isdst || super.refersDirectlyTo(ob));
     }
 }

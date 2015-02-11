@@ -20,7 +20,7 @@ import java.util.*;
 import org.python.core.*;
 import org.python.core.util.StringUtil;
 
-public class PatternObject extends PyObject {
+public class PatternObject extends PyObject implements Traverseproc {
     int[] code; /* link to the code string object */
     public PyString pattern; /* link to the pattern source (or None) */
     public int groups;
@@ -381,5 +381,30 @@ public class PatternObject extends PyObject {
 
         // Neither of those things worked
         throw Py.TypeError("expected string or buffer, but got " + obj.getType());
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (pattern != null) {
+            retVal = visit.visit(pattern, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (groupindex != null) {
+            retVal = visit.visit(groupindex, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return indexgroup != null ? visit.visit(indexgroup, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == pattern || ob == groupindex || ob == indexgroup);
     }
 }

@@ -17,6 +17,8 @@ import org.python.core.PyLong;
 import org.python.core.PySet;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 public class _marshal implements ClassDictInit {
 
@@ -50,7 +52,7 @@ public class _marshal implements ClassDictInit {
     private final static int MAX_MARSHAL_STACK_DEPTH = 2000;
     private final static int CURRENT_VERSION = 2;
 
-    public static class Marshaller extends PyObject {
+    public static class Marshaller extends PyObject implements Traverseproc {
 
         private final PyIOFile file;
         private final int version;
@@ -241,11 +243,24 @@ public class _marshal implements ClassDictInit {
             }
 
             depth--;
+        }
 
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return file != null && file instanceof Traverseproc ?
+                ((Traverseproc) file).traverse(visit, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return file != null && file instanceof Traverseproc ?
+                    ((Traverseproc) file).refersDirectlyTo(ob) : false;
         }
     }
 
-    public static class Unmarshaller extends PyObject {
+    public static class Unmarshaller extends PyObject implements Traverseproc {
 
         private final PyIOFile file;
         private final PyList strings = new PyList();
@@ -518,6 +533,30 @@ public class _marshal implements ClassDictInit {
                     throw Py.ValueError("bad marshal data");
             }
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (file instanceof Traverseproc) {
+                int retVal = ((Traverseproc) file).traverse(visit, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            return visit.visit(strings,  arg);
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            if (ob == null) {
+                return false;
+            } else if (file != null && file instanceof Traverseproc
+                && ((Traverseproc) file).refersDirectlyTo(ob)) {
+                return true;
+            } else {
+                return ob == strings;
+            }
+        }
     }
 }
-

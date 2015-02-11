@@ -10,11 +10,13 @@ import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "bz2.BZ2Compressor")
 public class PyBZ2Compressor extends PyObject {
 

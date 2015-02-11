@@ -13,7 +13,7 @@ import org.python.expose.ExposedType;
  * A Python frame object.
  */
 @ExposedType(name = "frame", isBaseType = false)
-public class PyFrame extends PyObject {
+public class PyFrame extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyFrame.class);
 
@@ -362,5 +362,179 @@ public class PyFrame extends PyObject {
 
     public void to_cell(int parm_index, int env_index) {
         f_env[env_index].ob_ref = f_fastlocals[parm_index];
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (f_back != null) {
+            retVal = visit.visit(f_back, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (f_code != null) {
+            retVal = visit.visit(f_code, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (f_builtins != null) {
+            retVal = visit.visit(f_builtins, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (f_globals != null) {
+            retVal = visit.visit(f_globals, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (f_locals != null) {
+            retVal = visit.visit(f_locals, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (tracefunc != null && tracefunc instanceof Traverseproc) {
+            retVal = ((Traverseproc) tracefunc).traverse(visit, arg);
+            if (retVal != 0) {
+                   return retVal;
+               }
+        }
+
+//      CPython also features fields for an exception.
+//        These are not present in PyFrame in Jython:
+//        Py_VISIT(f->f_exc_type);
+//        Py_VISIT(f->f_exc_value);
+//        Py_VISIT(f->f_exc_traceback);
+
+        /* locals */
+        if (f_fastlocals != null) {
+            for (PyObject ob: f_fastlocals) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+
+        if (f_savedlocals != null) {
+            for (Object ob: f_savedlocals) {
+                if (ob != null) {
+                    if (ob instanceof PyObject) {
+                        retVal = visit.visit((PyObject) ob, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    } else if (ob instanceof Traverseproc) {
+                        retVal = ((Traverseproc) ob).traverse(visit, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Jython-only miscellaneous */
+        if (f_env != null) {
+            for (PyCell ob: f_env) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+
+        if (generatorInput != null) {
+            if (generatorInput instanceof PyObject) {
+                retVal = visit.visit((PyObject) generatorInput, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            } else if (generatorInput instanceof Traverseproc) {
+                retVal = ((Traverseproc) generatorInput).traverse(visit, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+
+        if (f_exits != null) {
+            for (PyObject ob: f_exits) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+
+//      CPython also traverses the stack. This seems to be not necessary
+//      in Jython since there is no stack-equivalent in PyFrame:
+//
+//      /* stack */
+//      if (f->f_stacktop != NULL) {
+//          for (p = f->f_valuestack; p < f->f_stacktop; p++)
+//              Py_VISIT(*p);
+//      }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        } else if (ob == f_back || ob == f_code || ob == f_builtins
+            || ob == f_globals || ob == f_locals || ob == generatorInput) {
+            return true;
+        }
+
+        if (f_fastlocals != null) {
+            for (PyObject obj: f_fastlocals) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        if (f_env != null) {
+            for (PyObject obj: f_env) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        if (f_exits != null) {
+            for (PyObject obj: f_exits) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        if (f_savedlocals != null) {
+            for (Object obj: f_savedlocals) {
+                if (obj == ob) {
+                    return true;
+                } else if (obj != null && obj instanceof Traverseproc
+                        &&((Traverseproc) obj).refersDirectlyTo(ob)) {
+                    return true;
+                }
+            }
+        }
+        if (tracefunc != null && tracefunc instanceof Traverseproc
+                &&((Traverseproc) tracefunc).refersDirectlyTo(ob)) {
+            return true;
+        }
+        return generatorInput instanceof Traverseproc ?
+            ((Traverseproc) generatorInput).refersDirectlyTo(ob) : false;
     }
 }

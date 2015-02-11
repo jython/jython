@@ -5,7 +5,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "method_descriptor", base = PyObject.class, isBaseType = false)
-public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Info {
+public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Info, Traverseproc {
 
     protected int minargs, maxargs;
 
@@ -91,5 +91,17 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
     @ExposedGet(name = "__objclass__")
     public PyObject getObjClass() {
         return dtype;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return meth == null ? 0 : visit.visit(meth, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == meth;
     }
 }

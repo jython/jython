@@ -51,7 +51,8 @@ import org.python.util.Generic;
  */
 // xxx Many have lamented, this should really be a module!
 // but it will require some refactoring to see this wish come true.
-public class PySystemState extends PyObject implements AutoCloseable, ClassDictInit, Closeable {
+public class PySystemState extends PyObject implements AutoCloseable,
+        ClassDictInit, Closeable, Traverseproc {
 
     public static final String PYTHON_CACHEDIR = "python.cachedir";
     public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
@@ -1637,7 +1638,7 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
 
         private class ShutdownCloser implements Runnable {
 
-        	@Override
+            @Override
             public synchronized void run() {
                 runClosers();
                 resourceClosers.clear();
@@ -1645,6 +1646,192 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
         }
 
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+//      Potential PyObject refs in PySystemState:
+//      public PyList argv = new PyList();
+//      public PyObject modules;
+//      public PyList path;
+//      public PyList warnoptions = new PyList();
+//      public PyObject builtins;
+//      public PyObject platform = defaultPlatform;
+//      public PyList meta_path;
+//      public PyList path_hooks;
+//      public PyObject path_importer_cache;
+//      public PyObject ps1 = new PyString(">>> ");
+//      public PyObject ps2 = new PyString("... ");
+//      public PyObject executable;
+//      public PyObject stdout, stderr, stdin;
+//      public PyObject __stdout__, __stderr__, __stdin__;
+//      public PyObject __displayhook__, __excepthook__;
+//      public PyObject last_value = Py.None;
+//      public PyObject last_type = Py.None;
+//      public PyObject last_traceback = Py.None;
+//      public PyObject __name__ = new PyString("sys");
+//      public PyObject __dict__;
+        int retVal;
+        if (argv != null) {
+            retVal = visit.visit(argv, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (modules != null) {
+            retVal = visit.visit(modules, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (path != null) {
+            retVal = visit.visit(path, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (warnoptions != null) {
+            retVal = visit.visit(warnoptions, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (builtins != null) {
+            retVal = visit.visit(builtins, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (platform != null) {
+            retVal = visit.visit(platform, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (meta_path != null) {
+            retVal = visit.visit(meta_path, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (path_hooks != null) {
+            retVal = visit.visit(path_hooks, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (path_importer_cache != null) {
+            retVal = visit.visit(path_importer_cache, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (ps1 != null) {
+            retVal = visit.visit(ps1, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (ps2 != null) {
+            retVal = visit.visit(ps2, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (executable != null) {
+            retVal = visit.visit(executable, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (stdout != null) {
+            retVal = visit.visit(stdout, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (stderr != null) {
+            retVal = visit.visit(stderr, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (stdin != null) {
+            retVal = visit.visit(stdin, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__stdout__ != null) {
+            retVal = visit.visit(__stdout__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__stderr__ != null) {
+            retVal = visit.visit(__stderr__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__stdin__ != null) {
+            retVal = visit.visit(__stdin__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__displayhook__ != null) {
+            retVal = visit.visit(__displayhook__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__excepthook__ != null) {
+            retVal = visit.visit(__excepthook__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (last_value != null) {
+            retVal = visit.visit(last_value, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (last_type != null) {
+            retVal = visit.visit(last_type, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (last_traceback != null) {
+            retVal = visit.visit(last_traceback, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (__name__ != null) {
+            retVal = visit.visit(__name__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return __dict__ == null ? 0 : visit.visit(__dict__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == argv || ob ==  modules || ob == path
+            || ob == warnoptions || ob == builtins || ob == platform
+            || ob == meta_path || ob == path_hooks || ob == path_importer_cache
+            || ob == ps1 || ob == ps2 || ob == executable || ob == stdout
+            || ob == stderr || ob == stdin || ob == __stdout__ || ob == __stderr__
+            || ob == __stdin__ || ob == __displayhook__ || ob == __excepthook__
+            || ob ==  last_value || ob == last_type || ob == last_traceback
+            || ob ==__name__ || ob == __dict__);
+    }
+
 
     /**
      * Helper abstracting common code from {@link ShutdownCloser#run()} and
@@ -1654,10 +1841,10 @@ public class PySystemState extends PyObject implements AutoCloseable, ClassDictI
      *
      * @param resourceClosers to be called in turn
      */
-
 }
 
 
+@Untraversable
 class PySystemStateFunctions extends PyBuiltinFunctionSet {
 
     PySystemStateFunctions(String name, int index, int minargs, int maxargs) {
@@ -1692,6 +1879,7 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet {
  * Value of a class or instance variable when the corresponding attribute is deleted. Used only in
  * PySystemState for now.
  */
+@Untraversable
 class PyAttributeDeleted extends PyObject {
 
     final static PyAttributeDeleted INSTANCE = new PyAttributeDeleted();
@@ -1760,6 +1948,81 @@ class FloatInfo extends PyTuple {
                 Py.newLong(1)                        // FLT_ROUNDS
         );
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (max != null) {
+            retVal = visit.visit(max, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (max_exp != null) {
+            retVal = visit.visit(max_exp, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (max_10_exp != null) {
+            retVal = visit.visit(max_10_exp, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (min != null) {
+            retVal = visit.visit(min, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (min_exp != null) {
+            retVal = visit.visit(min_exp, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (min_10_exp != null) {
+            retVal = visit.visit(min_10_exp, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (dig != null) {
+            retVal = visit.visit(dig, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (mant_dig != null) {
+            retVal = visit.visit(mant_dig, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (epsilon != null) {
+            retVal = visit.visit(epsilon, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (radix != null) {
+            retVal = visit.visit(radix, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return rounds == null ? 0 : visit.visit(rounds, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == max || ob == max_exp || ob == max_10_exp || ob == min
+            || ob == min_exp || ob == min_10_exp || ob == dig
+            || ob == mant_dig || ob == epsilon || ob == radix || ob == rounds);
+    }
 }
 
 
@@ -1782,5 +2045,24 @@ class LongInfo extends PyTuple {
     // local Ubuntu system. I'm not sure that they are correct.
     static public LongInfo getInfo() {
         return new LongInfo(Py.newLong(30), Py.newLong(4));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (bits_per_digit != null) {
+            retVal = visit.visit(bits_per_digit, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return sizeof_digit == null ? 0 : visit.visit(sizeof_digit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == bits_per_digit || ob == sizeof_digit);
     }
 }

@@ -41,6 +41,8 @@ Jython 2.7b4
     - [ 2236 ] Interactive parser does not accept try ... except E as e: syntax
     - [ 2237 ] Fully conformant math and cmath support
     - [ 2244 ] More robust testing of math and cmath modules
+    - [ 2224 ] id(...) now persists object resurrection and a pattern is provided to solve similar issues
+               (i.e. attributes bound to a PyObject via a WeakHashMap) in an analogue way (See JyAttribute.java).
 
   New features
     - Full support of Python buffer protocol, along with Java ByteBuffer support
@@ -55,6 +57,9 @@ Jython 2.7b4
     - Initial support for ensurepip module
     - Callbacks can be registered/unregistered to be notified when
       bytecode is loaded, using jythonlib.bytecodetools
+    - Jython now features an optional, but recommended-to-implement traverseproc-mechanism
+      like CPython. This enables some new gc-features to optionally emulate CPython-specific
+      gc-behavior. See doc in gc.java and Traverseproc.java.
 
   Potentially backwards breaking changes, removing silent errors:
 

@@ -5,9 +5,7 @@ import java.io.Serializable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.core.finalization.FinalizablePyObjectDerived;
 
-public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,FinalizablePyObjectDerived {
-
-    public FinalizeTrigger finalizeTrigger;
+public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,FinalizablePyObjectDerived,TraverseprocDerived {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -28,8 +26,22 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,Finalizab
     }
 
     public void __ensure_finalizer__() {
-        finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
+
+    /* TraverseprocDerived implementation */
+    public int traverseDerived(Visitproc visit,Object arg) {
+        int retVal;
+        for(int i=0;i<slots.length;++i) {
+            retVal=visit.visit(slots[i],arg);
+            if (retVal!=0) {
+                return retVal;
+            }
+        }
+        return traverseDictIfAny(visit,arg);
+    }
+
+    /* end of TraverseprocDerived implementation */
 
     private PyObject dict;
 
@@ -44,8 +56,8 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,Finalizab
     public void setDict(PyObject newDict) {
         if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
             dict=newDict;
-            if (dict.__finditem__(PyString.fromInterned("__del__"))!=null&&finalizeTrigger==null) {
-                finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+            if (dict.__finditem__(PyString.fromInterned("__del__"))!=null&&!JyAttribute.hasAttr(this,JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+                FinalizeTrigger.ensureFinalizer(this);
             }
         } else {
             throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
@@ -62,8 +74,12 @@ public class PyFrozenSetDerived extends PyFrozenSet implements Slotted,Finalizab
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
         if (subtype.needsFinalizer()) {
-            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+            FinalizeTrigger.ensureFinalizer(this);
         }
+    }
+
+    public int traverseDictIfAny(Visitproc visit,Object arg) {
+        return visit.visit(dict,arg);
     }
 
     public PyString __str__() {

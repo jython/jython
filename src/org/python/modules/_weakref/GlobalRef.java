@@ -1,7 +1,6 @@
 /* Copyright (c) Jython Developers */
 package org.python.modules._weakref;
 
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -10,13 +9,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.python.core.JyAttribute;
 import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
 import org.python.util.Generic;
+import org.python.modules.gc;
 
-public class GlobalRef extends WeakReference {
+public class GlobalRef extends WeakReference<PyObject> {
 
     /**
      * This reference's hashCode: the System.identityHashCode of the referent. Only used
@@ -33,14 +34,25 @@ public class GlobalRef extends WeakReference {
     /** Whether pythonHashCode was already determined. */
     private boolean havePythonHashCode;
 
-    private List references = new ArrayList();
+    /**
+     * This boolean is set true when the callback is processed. If the reference is
+     * cleared it might potentially be restored until this boolean is set true.
+     * If weak reference restoring is activated (c.f.
+     * gc.PRESERVE_WEAKREFS_ON_RESURRECTION), AbstractReference.get would block
+     * until a consistent state is reached (i.e. referent is non-null or
+     * cleared == true). 
+     */
+    protected boolean cleared = false;
 
-    private static ReferenceQueue referenceQueue = new ReferenceQueue();
+    private List<WeakReference<AbstractReference>> references = new ArrayList<>();
+
+    private static ReferenceQueue<PyObject> referenceQueue = new ReferenceQueue<>();
 
     private static Thread reaperThread;
     private static ReentrantReadWriteLock reaperLock = new ReentrantReadWriteLock();
 
     private static ConcurrentMap<GlobalRef, GlobalRef> objects = Generic.concurrentMap();
+    private static List<GlobalRef> delayedCallbacks;
 
     public GlobalRef(PyObject object) {
         super(object, referenceQueue);
@@ -48,17 +60,17 @@ public class GlobalRef extends WeakReference {
     }
 
     public synchronized void add(AbstractReference ref) {
-        Reference r = new WeakReference(ref);
+        WeakReference<AbstractReference> r = new WeakReference<>(ref);
         references.add(r);
     }
 
     private final AbstractReference getReferenceAt(int idx) {
-        WeakReference wref = (WeakReference)references.get(idx);
-        return (AbstractReference)wref.get();
+        WeakReference<AbstractReference> wref = references.get(idx);
+        return wref.get();
     }
 
     /**
-     * Search for a reusable refrence. To be reused, it must be of the
+     * Search for a reusable reference. To be reused, it must be of the
      * same class and it must not have a callback.
      */
     synchronized AbstractReference find(Class cls) {
@@ -77,14 +89,55 @@ public class GlobalRef extends WeakReference {
      * Call each of the registered references.
      */
     synchronized void call() {
-        for (int i = references.size() - 1; i >= 0; i--) {
-            AbstractReference r = getReferenceAt(i);
-            if (r == null) {
-                references.remove(i);
-            } else {
-                r.call();
+        if (!cleared) {
+            cleared = true;
+            for (int i = references.size() - 1; i >= 0; i--) {
+                AbstractReference r = getReferenceAt(i);
+                if (r == null) {
+                    references.remove(i);
+                } else {
+                    Thread pendingGet = (Thread) JyAttribute.getAttr(
+                            r, JyAttribute.WEAKREF_PENDING_GET_ATTR);
+                    if (pendingGet != null) {
+                        pendingGet.interrupt();
+                    }
+                    r.call();
+                }
             }
         }
+    }
+
+    /**
+     * Call all callbacks that were enqueued via delayedCallback method.
+     */
+    public static void processDelayedCallbacks() {
+        if (delayedCallbacks != null) {
+            synchronized (delayedCallbacks) {
+                for (GlobalRef gref: delayedCallbacks) {
+                    gref.call();
+                }
+                delayedCallbacks.clear();
+            }
+        }
+    }
+
+    /**
+     * Stores the callback for later processing. This is needed if
+     * weak reference restoration (c.f. gc.PRESERVE_WEAKREFS_ON_RESURRECTION)
+     * is activated. In this case the callback is delayed until it was
+     * determined whether a resurrection restored the reference.
+     */
+    private static void delayedCallback(GlobalRef cl) {
+        if (delayedCallbacks == null) {
+            delayedCallbacks = new ArrayList<>();
+        }
+        synchronized (delayedCallbacks) {
+            delayedCallbacks.add(cl);
+        }
+    }
+
+    public static boolean hasDelayedCallbacks() {
+        return delayedCallbacks != null && !delayedCallbacks.isEmpty();
     }
 
     synchronized public int count() {
@@ -98,7 +151,7 @@ public class GlobalRef extends WeakReference {
     }
 
     synchronized public PyList refs() {
-        List list = new ArrayList();
+        List<AbstractReference> list = new ArrayList<>();
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
@@ -123,8 +176,55 @@ public class GlobalRef extends WeakReference {
         GlobalRef ref = objects.putIfAbsent(newRef, newRef);
         if (ref == null) {
             ref = newRef;
+            JyAttribute.setAttr(object, JyAttribute.WEAK_REF_ATTR, ref);
+        } else {
+            // We clear the not-needed Global ref so that it won't
+            // pop up in ref-reaper thread's activity.
+            newRef.clear();
+            newRef.cleared = true;
         }
         return ref;
+    }
+
+    /**
+     * Restores this weak reference to its former referent.
+     * This actually means that a fresh GlobalRef is created
+     * and inserted into all adjacent AbstractRefs. The
+     * current GlobalRef is disbanded.
+     * If the given PyObject is not the former referent of
+     * this weak reference, an IllegalArgumentException is
+     * thrown.
+     */
+    public void restore(PyObject formerReferent) {
+        if (JyAttribute.getAttr(formerReferent, JyAttribute.WEAK_REF_ATTR) != this) {
+            throw new IllegalArgumentException(
+                    "Argument is not former referent of this GlobalRef.");
+        }
+        if (delayedCallbacks != null) {
+            synchronized (delayedCallbacks) {
+                delayedCallbacks.remove(this);
+            }
+        }
+        clear();
+        createReaperThreadIfAbsent();
+        GlobalRef restore = new GlobalRef(formerReferent);
+        restore.references = references;
+        objects.remove(this);
+        objects.put(restore, restore);
+        AbstractReference aref;
+        for (int i = references.size() - 1; i >= 0; i--) {
+            aref = getReferenceAt(i);
+            if (aref == null) {
+                references.remove(i);
+            } else {
+                aref.gref = restore;
+                Thread pendingGet = (Thread) JyAttribute.getAttr(
+                        aref, JyAttribute.WEAKREF_PENDING_GET_ATTR);
+                if (pendingGet != null) {
+                    pendingGet.interrupt();
+                }
+            }
+        }
     }
 
     private static void createReaperThreadIfAbsent() {
@@ -233,12 +333,17 @@ public class GlobalRef extends WeakReference {
         private Thread thread;
 
         public void collect() throws InterruptedException {
-            GlobalRef gr = (GlobalRef)referenceQueue.remove();
-            gr.call();
+            GlobalRef gr = (GlobalRef) referenceQueue.remove();
+            if ((gc.getJythonGCFlags() & gc.PRESERVE_WEAKREFS_ON_RESURRECTION) == 0) {
+                gr.call();
+            } else {
+                delayedCallback(gr);
+            }
             objects.remove(gr);
             gr = null;
         }
 
+        @Override
         public void run() {
             // Store the actual reaper thread so that when PySystemState.cleanup()
             // is called this thread can be interrupted and die.
@@ -264,7 +369,6 @@ public class GlobalRef extends WeakReference {
                 this.thread.interrupt();
                 this.thread = null;
             }
-
             return null;
         }
     }

@@ -7,14 +7,15 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
-import org.python.core.PyUnicode;
 import org.python.core.codecs;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
 
 @ExposedType(name = "_json.Scanner", base = PyObject.class)
-public class Scanner extends PyObject {
+public class Scanner extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(Scanner.class);
 
@@ -77,7 +78,6 @@ public class Scanner extends PyObject {
         PyString str = pystr;
         int end_idx = pystr.__len__() - 1;
         PyList pairs = new PyList();
-        PyObject item;
         PyObject key;
         PyObject val;
 
@@ -156,7 +156,6 @@ public class Scanner extends PyObject {
         PyString str = pystr;
         int end_idx = pystr.__len__() - 1;
         PyList rval = new PyList();
-        int next_idx;
 
         /* skip whitespace after [ */
         while (idx <= end_idx && IS_WHITESPACE(str.getInt(idx))) idx++;
@@ -340,4 +339,40 @@ public class Scanner extends PyObject {
     }
 
 
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (object_hook != null) {
+            retVal = visit.visit(object_hook, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (pairs_hook != null) {
+            retVal = visit.visit(pairs_hook, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (parse_float != null) {
+            retVal = visit.visit(parse_float, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (parse_int != null) {
+            retVal = visit.visit(parse_int, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return parse_constant != null ? visit.visit(parse_constant, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == object_hook || ob == pairs_hook
+            || ob == parse_float || ob == parse_int || ob == parse_constant);
+    }
 }

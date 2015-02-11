@@ -5,6 +5,8 @@ import org.python.core.PyDictionary;
 import org.python.core.PyDictionaryDerived;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
  * also be unboxed this way, so the wrapping thread could not be looked up!
  */
 
-public class dict_builder extends PyObject {
+public class dict_builder extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(dict_builder.class);
     private final PyObject factory;
@@ -51,4 +53,15 @@ public class dict_builder extends PyObject {
         return dict;
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return factory != null ? visit.visit(factory, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && factory == ob;
+    }
 }

@@ -16,7 +16,7 @@ import org.python.expose.ExposedType;
  * A Python function.
  */
 @ExposedType(name = "function", isBaseType = false, doc = BuiltinDocs.function_doc)
-public class PyFunction extends PyObject implements InvocationHandler {
+public class PyFunction extends PyObject implements InvocationHandler, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyFunction.class);
 
@@ -544,4 +544,69 @@ public class PyFunction extends PyObject implements InvocationHandler {
 
     @Override
     public boolean isSequenceType() { return false; }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        //globals cannot be null
+        int retVal = visit.visit(__globals__, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (__code__ != null) {
+            retVal = visit.visit(__code__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        //__module__ cannot be null
+        retVal = visit.visit(__module__, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (__defaults__ != null) {
+            for (PyObject ob: __defaults__) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        //__doc__ cannot be null
+        retVal = visit.visit(__doc__, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        
+//      CPython also traverses the name, which is not stored
+//      as a PyObject in Jython:
+//      Py_VISIT(f->func_name);
+
+        if (__dict__ != null) {
+            retVal = visit.visit(__dict__, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return __closure__ != null ? visit.visit(__closure__, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        }
+        if (__defaults__ != null) {
+            for (PyObject obj: __defaults__) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        return ob == __doc__ || ob == __globals__ || ob == __code__
+            || ob == __dict__ || ob == __closure__ || ob == __module__;
+    }
 }

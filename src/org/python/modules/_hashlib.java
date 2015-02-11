@@ -13,6 +13,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Untraversable;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -111,6 +112,7 @@ public class _hashlib implements ClassDictInit {
     /**
      * A generic wrapper around a MessageDigest.
      */
+    @Untraversable
     @ExposedType(name = "_hashlib.HASH")
     public static class Hash extends PyObject {
 

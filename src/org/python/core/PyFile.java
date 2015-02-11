@@ -35,7 +35,7 @@ import org.python.expose.ExposedType;
  * The Python file type. Wraps an {@link TextIOBase} object.
  */
 @ExposedType(name = "file", doc = BuiltinDocs.file_doc)
-public class PyFile extends PyObject implements FinalizableBuiltin {
+public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyFile.class);
 
@@ -82,26 +82,24 @@ public class PyFile extends PyObject implements FinalizableBuiltin {
     /** The file's closer object; ensures the file is closed at
      * shutdown */
     private Closer closer;
-    
-    public FinalizeTrigger finalizeTrigger;
 
-    public PyFile() {finalizeTrigger = FinalizeTrigger.makeTrigger(this);}
+    public PyFile() {FinalizeTrigger.ensureFinalizer(this);}
 
     public PyFile(PyType subType) {
         super(subType);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyFile(RawIOBase raw, String name, String mode, int bufsize) {
         parseMode(mode);
         file___init__(raw, name, mode, bufsize);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(istream, closefd), name, mode, bufsize);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     /**
@@ -133,7 +131,7 @@ public class PyFile extends PyObject implements FinalizableBuiltin {
     public PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
         file___init__(new StreamIO(ostream, closefd), name, mode, bufsize);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     /**
@@ -161,7 +159,7 @@ public class PyFile extends PyObject implements FinalizableBuiltin {
 
     public PyFile(String name, String mode, int bufsize) {
         file___init__(new FileIO(name, parseMode(mode)), name, mode, bufsize);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     @ExposedNew
@@ -733,5 +731,14 @@ public class PyFile extends PyObject implements FinalizableBuiltin {
     }
 
 
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return name == null ? 0 : visit.visit(name, arg);
+    }
 
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == name;
+    }
 }

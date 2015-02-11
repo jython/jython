@@ -8,8 +8,11 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
+import org.python.modules.gc;
 
 /**
  * This class is an implementation of the iterator object returned by
@@ -20,8 +23,9 @@ import org.python.expose.ExposedType;
  * function, since as well as "being" the iterator, the object has an extra method {@link #head()}
  * to return the required first member of the pair.
  */
+
 @ExposedType(name = "fieldnameiterator", base = PyObject.class, isBaseType = false)
-public class FieldNameIterator extends PyObject {
+public class FieldNameIterator extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(FieldNameIterator.class);
 
@@ -218,5 +222,27 @@ public class FieldNameIterator extends PyObject {
         public boolean is_attr;
         /** Integer or String. */
         public Object value;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (head == null || !gc.canLinkToPyObject(head.getClass(), true)) {
+        	return 0;
+        }
+        return gc.traverseByReflection(head, visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob)
+            throws UnsupportedOperationException {
+        if (ob != null && ob == head) {
+        	return true;
+        }
+        if (!gc.canLinkToPyObject(head.getClass(), true)) {
+        	return false;
+        }
+        throw new UnsupportedOperationException();
     }
 }

@@ -24,6 +24,7 @@ import org.python.core.PyObject;
 import org.python.core.PySequence;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.core.finalization.FinalizablePyObject;
 import org.python.core.finalization.FinalizableBuiltin;
 import org.python.core.finalization.FinalizeTrigger;
@@ -39,6 +40,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "bz2.BZ2File")
 public class PyBZ2File extends PyObject implements FinalizablePyObject, FinalizableBuiltin {
 
@@ -61,18 +63,15 @@ public class PyBZ2File extends PyObject implements FinalizablePyObject, Finaliza
     private boolean needReadBufferInit = false;
     private boolean inReadMode = false;
     private boolean inWriteMode = false;
-    
-    public FinalizeTrigger finalizeTrigger;
-
 
     public PyBZ2File() {
         super(TYPE);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     public PyBZ2File(PyType subType) {
         super(subType);
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
 
     @Override

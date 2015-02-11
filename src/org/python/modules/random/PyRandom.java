@@ -15,10 +15,12 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "_random.Random")
 public class PyRandom extends PyObject {
 

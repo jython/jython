@@ -8,11 +8,13 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "struct.Struct", base = PyObject.class)
 public class PyStruct extends PyObject {
     public static final PyType TYPE = PyType.fromClass(PyStruct.class);

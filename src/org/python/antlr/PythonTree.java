@@ -4,14 +4,17 @@ import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 
+import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.antlr.ast.Name;
 import org.python.antlr.ast.VisitorIF;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PythonTree extends AST {
+public class PythonTree extends AST implements Traverseproc {
 
     public boolean from_future_checked = false;
     private int charStartIndex = -1;
@@ -460,4 +463,15 @@ public class PythonTree extends AST {
         }
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return parent != null ? visit.visit(parent, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == parent;
+    }
 }

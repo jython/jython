@@ -9,7 +9,7 @@ rest:
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
         if (subtype.needsFinalizer()) {
-            finalizeTrigger=FinalizeTrigger.makeTrigger(this);
+            FinalizeTrigger.ensureFinalizer(this);
         }
     }
 

@@ -6,6 +6,7 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
@@ -14,6 +15,7 @@ import org.python.expose.ExposedType;
  * is an iterator returning successive 4-tuples, the sequence being equivalent to the original
  * string.
  */
+@Untraversable
 @ExposedType(name = "formatteriterator", base = PyObject.class, isBaseType = false)
 public class MarkupIterator extends PyObject {
 

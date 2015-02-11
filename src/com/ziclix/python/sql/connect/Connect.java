@@ -19,6 +19,7 @@ import com.ziclix.python.sql.util.*;
  *
  * @author brian zimmer
  */
+@Untraversable
 public class Connect extends PyObject {
 
     private static final PyString _doc = new PyString("establish a connection through java.sql.DriverManager");

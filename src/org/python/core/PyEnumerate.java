@@ -10,6 +10,7 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "enumerate", base = PyObject.class, doc = BuiltinDocs.enumerate_doc)
 public class PyEnumerate extends PyIterator {
+    //note: Already implements Traverseproc, inheriting it from PyIterator
 
     public static final PyType TYPE = PyType.fromClass(PyEnumerate.class);
 
@@ -87,5 +88,27 @@ public class PyEnumerate extends PyIterator {
         index = index.__radd__(Py.newInteger(1));
 
         return next;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retValue = super.traverse(visit, arg);
+        if (retValue != 0) {
+            return retValue;
+        }
+        if (index != null) {
+            retValue = visit.visit(index, arg);
+            if (retValue != 0) {
+                return retValue;
+            }
+        }
+        return sit == null ? 0 : visit.visit(sit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == index || ob == sit || super.refersDirectlyTo(ob));
     }
 }

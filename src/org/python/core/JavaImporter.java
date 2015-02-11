@@ -3,6 +3,7 @@ package org.python.core;
 /**
  * Load Java classes.
  */
+@Untraversable
 public class JavaImporter extends PyObject {
 
     public static final String JAVA_IMPORT_PATH_ENTRY = "__classpath__";

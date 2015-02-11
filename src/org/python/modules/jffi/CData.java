@@ -4,11 +4,13 @@ package org.python.modules.jffi;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.CData", base = PyObject.class)
-public abstract class CData extends PyObject {
+public abstract class CData extends PyObject implements Traverseproc {
     public static final PyType TYPE = PyType.fromClass(CData.class);
     
     private final CType ctype;
@@ -105,5 +107,17 @@ public abstract class CData extends PyObject {
         DynamicLibrary.Symbol sym = (DynamicLibrary.Symbol) ((DynamicLibrary) lib).find_symbol(name);
         
         return sym.getMemory();
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return ctype != null ? visit.visit(ctype, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == ctype;
     }
 }

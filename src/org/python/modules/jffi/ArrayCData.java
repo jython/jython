@@ -9,6 +9,7 @@ import org.python.core.PyObject;
 import org.python.core.PySequenceList;
 import org.python.core.PyType;
 import org.python.core.SequenceIndexDelegate;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -172,4 +173,19 @@ public class ArrayCData extends CData implements Pointer {
         }
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        return componentType != null ? visit.visit(componentType, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (componentType == ob || super.refersDirectlyTo(ob));
+    }
 }

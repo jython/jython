@@ -10,7 +10,7 @@ import org.python.expose.ExposedType;
  * The Python slice object.
  */
 @ExposedType(name = "slice", isBaseType = false, doc = BuiltinDocs.slice_doc)
-public class PySlice extends PyObject {
+public class PySlice extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PySlice.class);
 
@@ -241,5 +241,27 @@ public class PySlice extends PyObject {
     @ExposedMethod(defaults = "Py.None")
     final PyObject slice___reduce_ex__(PyObject protocol) {
         return new PyTuple(getType(), new PyTuple(start, stop, step));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        //start, stop, step cannot be null
+        int retVal = visit.visit(start, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        retVal = visit.visit(stop, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        return visit.visit(step, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        //start, stop, step cannot be null
+        return ob == start || ob == stop || ob == step;
     }
 }

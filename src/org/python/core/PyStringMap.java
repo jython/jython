@@ -24,7 +24,7 @@ import org.python.util.Generic;
  * to PyObject unlike PyDictionary.
  */
 @ExposedType(name = "stringmap", isBaseType = false)
-public class PyStringMap extends PyObject {
+public class PyStringMap extends PyObject implements Traverseproc {
 
     /**
      * TYPE computed lazily, PyStringMap is used early in the bootstrap process and
@@ -658,8 +658,8 @@ public class PyStringMap extends PyObject {
             super(c);
         }
 
-            @Override
-            public PyObject stringMapNext() {
+        @Override
+        public PyObject stringMapNext() {
             return iterator.next();
         }
     }
@@ -702,5 +702,32 @@ public class PyStringMap extends PyObject {
         } else {
             return pyKey;
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        Object key;
+        PyObject value;
+        for (Map.Entry<Object, PyObject> ent: table.entrySet()) {
+        	key = ent.getKey();
+        	value = ent.getValue();
+            if (key instanceof PyObject) {
+                retVal = visit.visit((PyObject) key, arg);
+                if (retVal != 0) return retVal;
+            }
+            if (value != null) {
+                retVal = visit.visit(value, arg);
+                if (retVal != 0) return retVal;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (table.containsKey(ob) || table.containsValue(ob));
     }
 }

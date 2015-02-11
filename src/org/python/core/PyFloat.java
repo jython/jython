@@ -20,6 +20,7 @@ import org.python.modules.math;
 /**
  * A builtin python float.
  */
+@Untraversable
 @ExposedType(name = "float", doc = BuiltinDocs.float_doc)
 public class PyFloat extends PyObject {
 

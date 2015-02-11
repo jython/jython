@@ -24,6 +24,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyUnicode;
 import org.python.core.ThreadState;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 import com.ziclix.python.sql.util.PyArgParser;
 
@@ -32,7 +34,7 @@ import com.ziclix.python.sql.util.PyArgParser;
  *
  * @author brian zimmer
  */
-public class PyConnection extends PyObject implements ClassDictInit, ContextManager {
+public class PyConnection extends PyObject implements ClassDictInit, ContextManager, Traverseproc {
 
     /** True if closed. */
     protected boolean closed;
@@ -448,6 +450,43 @@ public class PyConnection extends PyObject implements ClassDictInit, ContextMana
         return false;
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        for (PyObject ob: cursors) {
+            if (ob != null) {
+                retVal = visit.visit(ob, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        for (PyObject ob: statements) {
+            if (ob != null) {
+                retVal = visit.visit(ob, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        }
+        if (cursors != null && cursors.contains(ob)) {
+            return true;
+        } else if (statements != null && statements.contains(ob)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 class ConnectionFunc extends PyBuiltinMethodSet {

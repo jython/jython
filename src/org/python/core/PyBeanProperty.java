@@ -2,6 +2,7 @@
 package org.python.core;
 import java.lang.reflect.*;
 
+@Untraversable
 public class PyBeanProperty extends PyReflectedField {
     public Method getMethod, setMethod;
     public Class<?> myType;

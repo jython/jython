@@ -17,6 +17,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -276,6 +277,50 @@ public class arguments extends PythonTree {
         }
         for(PythonTree t : this.defaults) {
             addChild(t);
+        }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (args != null) {
+            for (PyObject ob: args) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        if (defaults != null) {
+            for (PyObject ob: defaults) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        } else if (args != null && args.contains(ob)) {
+            return true;
+        } else if (defaults != null && defaults.contains(ob)) {
+            return true;
+        } else {
+            return super.refersDirectlyTo(ob);
         }
     }
 }

@@ -20,7 +20,7 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 @ExposedType(name = "_ast.astlist", base = PyList.class)
-public class AstList extends PySequence implements Cloneable, List {
+public class AstList extends PySequence implements Cloneable, List, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(AstList.class);
 
@@ -635,4 +635,22 @@ public class AstList extends PySequence implements Cloneable, List {
         return Py.NoConversion;
     }
 
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        for (Object ob: data) {
+            if (ob instanceof PyObject) {
+                retVal = visit.visit((PyObject) ob, arg);
+                if (retVal != 0) return retVal;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return data.contains(ob);
+    }
 }

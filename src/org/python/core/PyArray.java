@@ -22,6 +22,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
+import org.python.modules.gc;
 
 /**
  * A wrapper class around native java arrays.
@@ -30,8 +31,9 @@ import org.python.expose.MethodType;
  * <p>
  * See also the jarray module.
  */
+
 @ExposedType(name = "array.array", base = PyObject.class)
-public class PyArray extends PySequence implements Cloneable, BufferProtocol {
+public class PyArray extends PySequence implements Cloneable, BufferProtocol, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyArray.class);
 
@@ -2149,5 +2151,24 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol {
                 return -1;
             }
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (data == null || !gc.canLinkToPyObject(data.getClass(), true)) {
+            return 0;
+        }
+        return gc.traverseByReflection(data, visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob)
+            throws UnsupportedOperationException {
+        if (data == null || !gc.canLinkToPyObject(data.getClass(), true)) {
+            return false;
+        }
+        throw new UnsupportedOperationException();
     }
 }

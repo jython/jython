@@ -7,6 +7,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.core.__builtin__;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 
 // XXX - add support for StringIO, not just cStringIO
 
@@ -59,7 +61,7 @@ public class PyIOFileFactory {
 
 
     // Use a PyFile as a file.
-    static class FileIOFile implements PyIOFile {
+    static class FileIOFile implements PyIOFile, Traverseproc {
 
         PyFile file;
 
@@ -89,11 +91,23 @@ public class PyIOFileFactory {
             String line = file.readline().toString();
             return line.substring(0, line.length() - 1);
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            return file == null ? 0 : visit.visit(file, arg);
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && ob == file;
+        }
     }
 
 
     // Use any python object as a file.
-    static class ObjectIOFile implements PyIOFile {
+    static class ObjectIOFile implements PyIOFile, Traverseproc {
 
         char[] charr = new char[1];
         StringBuilder buff = new StringBuilder();
@@ -135,6 +149,31 @@ public class PyIOFileFactory {
         public String readlineNoNl() {
             String line = readline.__call__().toString();
             return line.substring(0, line.length() - 1);
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            int retVal;
+            if (write != null) {
+                retVal = visit.visit(write, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            if (read != null) {
+                retVal = visit.visit(read, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            return readline == null ? 0 : visit.visit(readline, arg);
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == write || ob == read || ob == readline);
         }
     }
 }

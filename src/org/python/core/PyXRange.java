@@ -13,6 +13,7 @@ import java.util.List;
 /**
  * The builtin xrange type.
  */
+@Untraversable
 @ExposedType(name = "xrange", base = PyObject.class, isBaseType = false,
              doc = BuiltinDocs.xrange_doc)
 public class PyXRange extends PySequence {

@@ -3,8 +3,10 @@ package org.python.modules.jffi;
 
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedType;
 
+@Untraversable
 @ExposedType(name = "jffi.ByReference", base = PyObject.class)
 public final class ByReference extends PyObject implements Pointer {
     public static final PyType TYPE = PyType.fromClass(ByReference.class);

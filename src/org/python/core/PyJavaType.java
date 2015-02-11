@@ -84,7 +84,7 @@ public class PyJavaType extends PyType {
 
     public static PyObject wrapJavaObject(Object o) {
         PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass(), false));
-        obj.javaProxy = o;
+        JyAttribute.setAttr(obj, JyAttribute.JAVA_PROXY_ATTR, o);
         return obj;
     }
 
@@ -233,7 +233,7 @@ public class PyJavaType extends PyType {
             computeLinearMro(baseClass);
         } else {
             needsInners.add(this);
-            javaProxy = forClass;
+            JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, forClass);
             objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
             // Wrapped Java types fill in their mro first using all of their interfaces then their
             // super class.
@@ -253,11 +253,11 @@ public class PyJavaType extends PyType {
                 }
                 visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
             }
-            if (javaProxy == Object.class) {
+            if (JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) == Object.class) {
                 base = PyType.fromClassSkippingInners(PyObject.class, needsInners);
             } else if(baseClass == null) {
                 base = PyType.fromClassSkippingInners(Object.class, needsInners);
-            }else if (javaProxy == Class.class) {
+            }else if (JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) == Class.class) {
                 base = PyType.fromClassSkippingInners(PyType.class, needsInners);
             } else {
                 base = PyType.fromClassSkippingInners(baseClass, needsInners);
@@ -893,6 +893,9 @@ public class PyJavaType extends PyType {
         protected abstract boolean getResult(int comparison);
     }
 
+    // Traverseproc-note: Usually we would have to traverse this class, but we can
+    // leave this out, since CollectionProxies is only used locally in private
+    // static fields.
     private static class CollectionProxies {
         final Map<Class<?>, PyBuiltinMethod[]> proxies;
         final Map<Class<?>, PyBuiltinMethod[]> postProxies;
@@ -923,7 +926,7 @@ public class PyJavaType extends PyType {
      *         injected methods.
      */
     private static Map<Class<?>, PyBuiltinMethod[]> buildCollectionProxies() {
-        final Map<Class<?>, PyBuiltinMethod[]> proxies = new HashMap();
+        final Map<Class<?>, PyBuiltinMethod[]> proxies = new HashMap<>();
 
         PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__") {
             @Override
@@ -983,10 +986,46 @@ public class PyJavaType extends PyType {
     }
 
     private static Map<Class<?>, PyBuiltinMethod[]> buildPostCollectionProxies() {
-        final Map<Class<?>, PyBuiltinMethod[]> postProxies = new HashMap();
+        final Map<Class<?>, PyBuiltinMethod[]> postProxies = new HashMap<>();
         postProxies.put(List.class, JavaProxyList.getPostProxyMethods());
         postProxies.put(Map.class, JavaProxyMap.getPostProxyMethods());
         postProxies.put(Set.class, JavaProxySet.getPostProxyMethods());
         return Collections.unmodifiableMap(postProxies);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (conflicted != null) {
+            for (PyObject ob: conflicted) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        }
+        if (conflicted != null) {
+            for (PyObject obj: conflicted) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        return super.refersDirectlyTo(ob);
     }
 }

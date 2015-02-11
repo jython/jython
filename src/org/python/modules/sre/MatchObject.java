@@ -22,10 +22,12 @@ import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.core.imp;
 
 
-public class MatchObject extends PyObject {
+public class MatchObject extends PyObject implements Traverseproc {
     public PyString string; /* link to the target string */
     public PyObject regs; /* cached list of matching spans */
     PatternObject pattern; /* link to the regex (pattern) object */
@@ -205,5 +207,30 @@ public class MatchObject extends PyObject {
             return regs();
         }
         return super.__findattr_ex__(key);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (pattern != null) {
+            retVal = visit.visit(pattern, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (string != null) {
+            retVal = visit.visit(string, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return regs != null ? visit.visit(regs, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == pattern || ob == string || ob == regs);
     }
 }

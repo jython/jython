@@ -6,18 +6,21 @@ import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyIgnoreMethodTag;
-import org.python.core.PyMethod;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
+@Untraversable
 class OperatorFunctions extends PyBuiltinFunctionSet
 {
     public OperatorFunctions(String name, int index, int argcount) {
@@ -117,6 +120,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
     }
 }
 
+@Untraversable
 public class operator extends PyObject implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(
@@ -274,7 +278,7 @@ public class operator extends PyObject implements ClassDictInit
      * The attrgetter type.
      */
     @ExposedType(name = "operator.attrgetter", isBaseType = false)
-    static class PyAttrGetter extends PyObject {
+    static class PyAttrGetter extends PyObject implements Traverseproc {
 
         public static final PyType TYPE = PyType.fromClass(PyAttrGetter.class);
 
@@ -327,13 +331,43 @@ public class operator extends PyObject implements ClassDictInit
             return obj;
         }
 
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (attrs != null) {
+                int retVal;
+                for (PyObject ob: attrs) {
+                    if (ob != null) {
+                        retVal = visit.visit(ob, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            if (ob == null || attrs == null) {
+                return false;
+            }
+            for (PyObject obj: attrs) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
      * The itemgetter type.
      */
     @ExposedType(name = "operator.itemgetter", isBaseType = false)
-    static class PyItemGetter extends PyObject {
+    static class PyItemGetter extends PyObject implements Traverseproc {
 
         public static final PyType TYPE = PyType.fromClass(PyItemGetter.class);
 
@@ -373,13 +407,44 @@ public class operator extends PyObject implements ClassDictInit
             }
             return new PyTuple(result);
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (items != null) {
+                int retVal;
+                for (PyObject ob: items) {
+                    if (ob != null) {
+                        retVal = visit.visit(ob, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            if (ob == null || items == null) {
+                return false;
+            }
+            for (PyObject obj: items) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
      * The methodcaller type.
      */
     @ExposedType(name = "operator.methodcaller", isBaseType = false)
-    static class PyMethodCaller extends PyObject {
+    static class PyMethodCaller extends PyObject implements Traverseproc {
 
         public static final PyType TYPE = PyType.fromClass(PyMethodCaller.class);
 
@@ -428,6 +493,37 @@ public class operator extends PyObject implements ClassDictInit
             ArgParser ap = new ArgParser("methodcaller", args, Py.NoKeywords, "obj");
             PyObject obj = ap.getPyObject(0);
             return obj.invoke(name, this.args, this.keywords);
+        }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (args != null) {
+                int retVal;
+                for (PyObject ob: args) {
+                    if (ob != null) {
+                        retVal = visit.visit(ob, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            if (ob == null || args == null) {
+                return false;
+            }
+            for (PyObject obj: args) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

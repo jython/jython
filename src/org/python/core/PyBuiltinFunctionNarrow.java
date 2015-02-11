@@ -1,5 +1,6 @@
 package org.python.core;
 
+@Untraversable
 public class PyBuiltinFunctionNarrow extends PyBuiltinFunction {
 
     protected PyBuiltinFunctionNarrow(String name, int minargs, int maxargs, String doc) {

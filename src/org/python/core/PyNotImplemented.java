@@ -3,6 +3,7 @@ package org.python.core;
 import java.io.Serializable;
 
 // XXX: isBaseType = false
+@Untraversable
 public class PyNotImplemented extends PySingleton implements Serializable
 {
     PyNotImplemented() {

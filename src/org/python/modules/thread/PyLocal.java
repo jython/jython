@@ -6,13 +6,15 @@ import org.python.core.PyDictionary;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "thread._local")
-public class PyLocal extends PyObject {
+public class PyLocal extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyLocal.class);
 
@@ -84,5 +86,58 @@ public class PyLocal extends PyObject {
             dispatch__init__(args, keywords);
         }
         return ldict;
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (args != null) {
+            for (PyObject ob: args) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+                
+            }
+        }
+        Object[] ob0 = tdict.get();
+        if (ob0 != null) {
+            for (Object obj: ob0) {
+                if (obj != null) {
+                    if (obj instanceof PyObject) {
+                        retVal = visit.visit((PyObject) obj, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    } else if (obj instanceof Traverseproc) {
+                        retVal = ((Traverseproc) obj).traverse(visit, arg);
+                        if (retVal != 0) {
+                            return retVal;
+                        }
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob == null) {
+            return false;
+        }
+        if (args != null) {
+            for (PyObject obj: args) {
+                if (obj == ob) {
+                    return true;
+                }
+                
+            }
+        }
+        throw new UnsupportedOperationException();
     }
 }

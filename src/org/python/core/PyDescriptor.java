@@ -1,6 +1,6 @@
 package org.python.core;
 
-public abstract class PyDescriptor extends PyObject {
+public abstract class PyDescriptor extends PyObject implements Traverseproc {
 
     protected PyType dtype;
 
@@ -22,5 +22,17 @@ public abstract class PyDescriptor extends PyObject {
         String msg = String.format("descriptor '%s' for '%s' objects doesn't apply to '%s' object",
                                    name, dtype.fastGetName(), type.fastGetName());
         throw Py.TypeError(msg);
-     }    
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return dtype != null ? visit.visit(dtype,  arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob == dtype;
+    }
 }

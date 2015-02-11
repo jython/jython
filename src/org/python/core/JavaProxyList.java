@@ -19,6 +19,7 @@ import java.util.ListIterator;
 
 class JavaProxyList {
 
+    @Untraversable
     private static class ListMethod extends PyBuiltinMethodNarrow {
         protected ListMethod(String name, int numArgs) {
             super(name, numArgs);
@@ -116,7 +117,7 @@ class JavaProxyList {
             if (stop < start) {
                 stop = start;
             }
-            if (value.javaProxy == this.list) {
+            if (JyAttribute.getAttr(value, JyAttribute.JAVA_PROXY_ATTR) == this.list) {
                 List xs = Generic.list();
                 xs.addAll(this.list);
                 setsliceList(start, stop, step, xs);
@@ -205,7 +206,7 @@ class JavaProxyList {
         }
     }
 
-
+    @Untraversable
     private static class ListMulProxyClass extends ListMethod {
         protected ListMulProxyClass(String name, int numArgs) {
             super(name, numArgs);

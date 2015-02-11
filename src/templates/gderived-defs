@@ -7,8 +7,7 @@ define: (CompilationUnit)derived_class
   import org.python.core.finalization.FinalizeTrigger;
   import org.python.core.finalization.FinalizablePyObjectDerived;
 
-  public class `concat`(`base,Derived) extends `base implements Slotted, FinalizablePyObjectDerived {
-    public FinalizeTrigger finalizeTrigger;
+  public class `concat`(`base,Derived) extends `base implements Slotted, FinalizablePyObjectDerived, TraverseprocDerived {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -29,8 +28,21 @@ define: (CompilationUnit)derived_class
     }
 
     public void __ensure_finalizer__() {
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        FinalizeTrigger.ensureFinalizer(this);
     }
+
+    /* TraverseprocDerived implementation */
+    public int traverseDerived(Visitproc visit, Object arg) {
+        int retVal;
+        for (int i = 0; i < slots.length; ++i) {
+            retVal = visit.visit(slots[i], arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return traverseDictIfAny(visit, arg);
+    }
+    /* end of TraverseprocDerived implementation */
 
      `decls;
   }
@@ -96,8 +108,9 @@ define: (ClassBodyDeclarations)userdict
   public void setDict(PyObject newDict) {
     if (newDict instanceof PyStringMap || newDict instanceof PyDictionary ) {
       dict = newDict;
-      if (dict.__finditem__(PyString.fromInterned("__del__")) != null && finalizeTrigger == null) {
-        finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+      if (dict.__finditem__(PyString.fromInterned("__del__")) != null &&
+        !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+        FinalizeTrigger.ensureFinalizer(this);
       }
     }
     else {
@@ -115,8 +128,12 @@ define: (ClassBodyDeclarations)ctr
     super(subtype,`extra);
     slots = new PyObject[subtype.getNumSlots()];
     if (subtype.needsFinalizer()) {
-      finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+      FinalizeTrigger.ensureFinalizer(this);
     }
+  }
+
+  public int traverseDictIfAny(Visitproc visit, Object arg) {
+    return 0;
   }
 
 define: (ClassBodyDeclarations)ctr_userdict
@@ -125,8 +142,12 @@ define: (ClassBodyDeclarations)ctr_userdict
     slots = new PyObject[subtype.getNumSlots()];
     dict = subtype.instDict();
     if (subtype.needsFinalizer()) {
-      finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+      FinalizeTrigger.ensureFinalizer(this);
     }
+  }
+
+  public int traverseDictIfAny(Visitproc visit, Object arg) {
+    return visit.visit(dict, arg);
   }
 
 define: (ClassBodyDeclarations)toString

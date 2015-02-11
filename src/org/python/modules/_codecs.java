@@ -20,6 +20,7 @@ import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyUnicode;
 import org.python.core.codecs;
+import org.python.core.Untraversable;
 import org.python.expose.ExposedType;
 
 /**
@@ -1605,6 +1606,7 @@ public class _codecs {
      * Uses a trie structure instead of a dictionary; the speedup primarily comes from not creating
      * integer objects in the process. The trie is created by inverting the encoding map.
      */
+    @Untraversable
     @ExposedType(name = "EncodingMap", isBaseType = false)
     public static class EncodingMap extends PyObject {
 

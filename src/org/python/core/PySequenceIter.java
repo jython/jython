@@ -34,4 +34,20 @@ public class PySequenceIter extends PyIterator {
         }
         return result;
     }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        return seq == null ? 0 : visit.visit(seq, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == seq || super.refersDirectlyTo(ob));
+    }
 }

@@ -10,7 +10,7 @@ import org.python.expose.ExposedType;
  * Cells are used to implement variables referenced by multiple scopes.
  */
 @ExposedType(name = "cell", isBaseType = false)
-public class PyCell extends PyObject {
+public class PyCell extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyCell.class);
 
@@ -36,5 +36,17 @@ public class PyCell extends PyObject {
         }
         return String.format("<cell at %s: %.80s object at %s>", Py.idstr(this),
                              ob_ref.getType().getName(), Py.idstr(ob_ref));
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return ob_ref != null ? visit.visit(ob_ref, arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob_ref == ob;
     }
 }

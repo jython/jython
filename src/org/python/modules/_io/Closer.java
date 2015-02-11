@@ -30,7 +30,7 @@ class Closer<C extends PyIOBase> implements Callable<Void> {
     private final WeakReference<C> client;
 
     /** Interpreter state that will call {@link #call()} on shutdown. */
-    private PySystemState sys;
+    protected PySystemState sys;
 
     public Closer(C toClose, PySystemState sys) {
         this.client = new WeakReference<C>(toClose);

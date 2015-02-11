@@ -7,7 +7,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "property", doc = BuiltinDocs.property_doc)
-public class PyProperty extends PyObject {
+public class PyProperty extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyProperty.class);
 
@@ -159,5 +159,36 @@ public class PyProperty extends PyObject {
         }
 
         return getType().__call__(get, set, del, doc);
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal;
+        if (fget != null) {
+            retVal = visit.visit(fget, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (fset != null) {
+            retVal = visit.visit(fset, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (fdel != null) {
+            retVal = visit.visit(fdel, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        return doc == null ? 0 : visit.visit(doc, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == fget || ob == fset || ob == fdel || ob == doc);
     }
 }

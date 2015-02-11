@@ -13,7 +13,7 @@ import org.python.expose.ExposedType;
  *
  */
 @ExposedType(name = "module")
-public class PyModule extends PyObject {
+public class PyModule extends PyObject implements Traverseproc {
     private final PyObject moduleDoc = new PyString(
         "module(name[, doc])\n" +
         "\n" +
@@ -192,5 +192,17 @@ public class PyModule extends PyObject {
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return __dict__ == null ? 0 : visit.visit(__dict__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && ob == __dict__;
     }
 }

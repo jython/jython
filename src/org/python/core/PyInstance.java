@@ -13,11 +13,10 @@ import org.python.core.finalization.FinalizeTrigger;
  * An instance of a classic Python class.
  */
 @ExposedType(name = "instance", isBaseType = false)
-public class PyInstance extends PyObject implements FinalizablePyObject {
+public class PyInstance extends PyObject implements FinalizablePyObject, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyInstance.class);
 
-    public FinalizeTrigger finalizeTrigger;
     private static JavaFunc __ensure_finalizer__Function;
 
     // xxx doc, final name
@@ -81,7 +80,6 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
 
     private void writeObject(java.io.ObjectOutputStream out)
             throws java.io.IOException {
-        //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
         PyObject name = instclass.__findattr__("__module__");
         if (!(name instanceof PyString) || name == Py.None) {
@@ -154,8 +152,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
     }
 
     public static void ensureFinalizer(PyObject[] args, String[] kws) {
-        ((PyInstance) args[0]).finalizeTrigger = FinalizeTrigger.makeTrigger(
-            (PyInstance) args[0]);
+        FinalizeTrigger.ensureFinalizer((PyInstance) args[0]);
     }
 
     private static JavaFunc makeFunction__ensure_finalizer__() {
@@ -171,9 +168,9 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
         if (name == "__class__") return instclass;
         if (name == "__ensure_finalizer__") {
             if (__ensure_finalizer__Function == null) {
-            	__ensure_finalizer__Function = makeFunction__ensure_finalizer__();
+                __ensure_finalizer__Function = makeFunction__ensure_finalizer__();
             }
-        	return new PyMethod(__ensure_finalizer__Function, this, instclass);
+            return new PyMethod(__ensure_finalizer__Function, this, instclass);
         }
         if (__dict__ == null) return null;
 
@@ -288,8 +285,9 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
         if (name == "__class__") {
             if (value instanceof PyClass) {
                 instclass = (PyClass) value;
-                if (instclass.__del__ != null && finalizeTrigger == null) {
-                    finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+                if (instclass.__del__ != null &&
+                    !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+                    FinalizeTrigger.ensureFinalizer(this);
                 }
             } else {
                 throw Py.TypeError("__class__ must be set to a class");
@@ -306,8 +304,8 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
         } else {
             __dict__.__setitem__(name, value);
         }
-        if (name == "__del__" && finalizeTrigger == null) {
-            finalizeTrigger = FinalizeTrigger.makeTrigger(this);
+        if (name == "__del__" && !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+            FinalizeTrigger.ensureFinalizer(this);
         }
     }
 
@@ -1942,7 +1940,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
 
     @Override
     public void __del__() {
-    	try {
+        try {
             PyObject method = __findattr__("__del__");
             if (method != null) {
                 method.__call__();
@@ -1959,5 +1957,27 @@ public class PyInstance extends PyObject implements FinalizablePyObject {
             }
             Py.writeUnraisable(exc, method);
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+//        Potential PyObject refs in PyInstance:
+//        public transient PyClass instclass;
+//        public PyObject __dict__;
+        if (instclass != null) {
+            int retVal = visit.visit(instclass, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        //__dict__ cannot be null
+        return visit.visit(__dict__, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == instclass || ob == __dict__);
     }
 }
