@@ -35,6 +35,7 @@ class FileTests(unittest.TestCase):
 
     @unittest.skipIf(test_support.is_jython and os._name == "nt",
                      "Does not properly close files under Windows")
+    @unittest.skipUnless(hasattr(os, "dup"), "No os.dup function")
     def test_closerange(self):
         first = os.open(test_support.TESTFN, os.O_CREAT|os.O_RDWR)
         # We must allocate two consecutive file descriptors, otherwise
