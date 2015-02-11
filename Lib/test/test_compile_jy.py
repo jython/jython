@@ -1,10 +1,14 @@
-import unittest
-import os
-import sys
-import shutil
 import __builtin__
+import compileall
+import os
 import py_compile
-from test.test_support import run_unittest, TESTFN, is_jython
+import shutil
+import subprocess
+import sys
+import textwrap
+import unittest
+from test.test_support import TESTFN, is_jython, run_unittest, temp_cwd
+
 
 class TestMtime(unittest.TestCase):
 
@@ -50,8 +54,52 @@ class TestMtime(unittest.TestCase):
         finally:
             shutil.rmtree(TESTFN)
 
+
+class TestCompileall(unittest.TestCase):
+
+    def write_code(self, package, name, code):
+        with open(os.path.join(package, name), "w") as f:
+            f.write(textwrap.dedent(code))
+
+    def test_compileall(self):
+        with temp_cwd():
+            PACKAGE = os.path.realpath("./greetings")
+            PYC_GREETER = os.path.join(PACKAGE, "greeter.pyc")
+            PYCLASS_GREETER = os.path.join(PACKAGE, "greeter$py.class")
+            PYCLASS_TEST = os.path.join(PACKAGE, "test$py.class")            
+
+            os.mkdir(PACKAGE)
+            self.write_code(
+                PACKAGE, "greeter.py",
+                """
+                def greet():
+                    print 'Hello world!'
+                """)
+            self.write_code(
+                PACKAGE, "test.py",
+                """
+                from greeter import greet
+                greet()
+                """)
+
+            # pretend we have a Python bytecode compiler by touching this file
+            open(PYC_GREETER, "a").close()
+            
+            compileall.compile_dir(PACKAGE)
+            self.assertTrue(os.path.exists(PYC_GREETER))     # still exists
+            self.assertTrue(os.path.exists(PYCLASS_TEST))    # along with these new compiled files
+            self.assertTrue(os.path.exists(PYCLASS_GREETER))
+
+            # verify we can work with just compiled files
+            os.unlink(os.path.join(PACKAGE, "greeter.py"))
+            self.assertEqual(
+                subprocess.check_output([sys.executable, os.path.join(PACKAGE, "test.py")]).rstrip(),
+                "Hello world!")
+
+
 def test_main():
-    run_unittest(TestMtime)
+    run_unittest(TestMtime, TestCompileall)
+
 
 if __name__ == "__main__":
     test_main()
