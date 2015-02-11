@@ -112,6 +112,9 @@ public class JLineConsole extends PlainConsole {
             // We find the bell too noisy
             reader.setBellEnabled(false);
 
+            // Do not attempt to expand ! in the input
+            reader.setExpandEvents(false);
+
             /*
              * Everybody else, using sys.stdout or java.lang.System.out, gets to write on a special
              * PrintStream that keeps the last incomplete line in case it turns out to be a console
