@@ -4,16 +4,18 @@ import java.io.Serializable;
 
 /**
  * <p>
- * Manages a linked list of general purpose Object-attributes, which
- * can be attached to arbitrary {@code PyObject}s. This method replaces
- * the formerly used method of maintaining weak hash maps for such cases.
- * These weak hash maps were used to map {@code PyObject}s to such
- * attributes, for instance to attach
+ * Manages a linked list of general purpose Object-attributes that
+ * can be attached to arbitrary {@link org.python.core.PyObject}s.
+ * This method replaces the formerly used method of maintaining weak
+ * hash-maps ({@link java.util.WeakHashMap}) for such cases.
+ * These weak hash-maps were used to map
+ * {@code PyObject}s to such attributes, for instance
+ * to attach
  * {@link org.python.modules._weakref.GlobalRef}-objects in the
  * {@link org.python.modules._weakref.WeakrefModule}.
  * </p>
  * <p>
- * Attributes attached via the weak hash map method break, if the
+ * Attributes attached via the weak hash-map-method break, if the
  * {@code PyObject} is resurrected in its finalizer. The
  * {@code JyAttribute}-method is resurrection-safe.
  * </p>
@@ -35,18 +37,18 @@ public abstract class JyAttribute implements Serializable {
     public static final byte JAVA_PROXY_ATTR = Byte.MIN_VALUE;
 
     /**
-     * Stores list of weak references linking to this PyObject.
+     * Stores list of weak references linking to this {@code PyObject}.
      * This list is weakref-based, so it does not keep the
      * weakrefs alive. This is the only way to find out which
      * weakrefs (i.e. org.python.modules._weakref.AbstractReference)
      * linked to the object after a resurrection. A weak
-     * hashmap-based approach for this purpose would break on
+     * hash-map-based approach for this purpose would break on
      * resurrection.
      */
     public static final byte WEAK_REF_ATTR = 0; //first transient
 
     /**
-     * Reserved for use by JyNI.
+     * Reserved for use by <a href="http://www.jyni.org">JyNI</a>.
      */
     public static final byte JYNI_HANDLE_ATTR = 1;
 
@@ -57,8 +59,9 @@ public abstract class JyAttribute implements Serializable {
     public static final byte PY_ID_ATTR = 2;
 
     /**
-     * Holds the current thread for an AbstractReference while
-     * referent-retrieval is pending due to a potentially
+     * Holds the current thread for an
+     * {@link org.python.modules._weakref.AbstractReference}
+     * while referent-retrieval is pending due to a potentially
      * restored-by-resurrection weak reference. After the
      * restore has happened or the clear was confirmed, the
      * thread is interrupted and the attribute is cleared.
@@ -66,34 +69,28 @@ public abstract class JyAttribute implements Serializable {
     public static final byte WEAKREF_PENDING_GET_ATTR = 3;
 
     /**
-     * Used by gc module to mark cyclic trash. Searching for cyclic
-     * trash is usually not required by Jython. It is only done if
-     * gc features are enabled that mimic CPython behavior.
+     * Used by {@link org.python.modules.gc}-module to mark cyclic
+     * trash. Searching for cyclic trash is usually not required
+     * by Jython. It is only done if gc-features are enabled that
+     * mimic CPython behavior.
      */
     public static final byte GC_CYCLE_MARK_ATTR = 4;
 
     /**
-     * Used by gc module to mark monitored objects before they
-     * become unmonitored for deletion. In case of a resurrection
-     * this is the only way for gc to detect that the object was
-     * to be monitored and should be monitored again.
+     * Used by {@link org.python.modules.gc}-module to mark
+     * finalizable objects that might have been resurrected
+     * during a delayed finalization process.
      */
-    //public static final byte GC_MONITOR_MARK_ATTR = 5;
-
-    /**
-     * Used by gc module to mark finalizable objects that might have
-     * been resurrected during a delayed finalization process.
-     */
-    public static final byte GC_DELAYED_FINALIZE_CRITIC_MARK_ATTR = 6;
+    public static final byte GC_DELAYED_FINALIZE_CRITIC_MARK_ATTR = 5;
 
     public static final byte FINALIZE_TRIGGER_ATTR = Byte.MAX_VALUE;
     private static byte nonBuiltinAttrTypeOffset = Byte.MIN_VALUE+1;
-    private static byte nonBuiltinTransientAttrTypeOffset = 7;
+    private static byte nonBuiltinTransientAttrTypeOffset = 6;
 
     /**
-     * Reserves and returns a new attr type for custom use. 
+     * Reserves and returns a new non-transient attr type for custom use. 
      * 
-     * @return an attr type for custom use
+     * @return a non-transient attr type for custom use
      */
     public static byte reserveCustomAttrType() {
         if (nonBuiltinAttrTypeOffset == 0) {
@@ -178,8 +175,8 @@ public abstract class JyAttribute implements Serializable {
     protected abstract void setValue(Object value);
 
     /**
-     * Checks whether the given {@code PyObject} has an attribute
-     * of the given type attached.
+     * Checks whether the given {@link org.python.core.PyObject}
+     * has an attribute of the given type attached.
      */
     public static synchronized boolean hasAttr(PyObject ob, byte attr_type) {
         if (ob.attributes == null) {
@@ -197,7 +194,7 @@ public abstract class JyAttribute implements Serializable {
 
     /**
      * Retrieves the attribute of the given type from the given
-     * {@code PyObject}.
+     * {@link org.python.core.PyObject}.
      * If no attribute of the given type is attached, null is returned.
      */
     public static synchronized Object getAttr(PyObject ob, byte attr_type) {
@@ -214,6 +211,11 @@ public abstract class JyAttribute implements Serializable {
         return att != null && att.attr_type == attr_type ? att.getValue() : null;
     }
 
+    /**
+     * Prints the current state of the attribute-list of the
+     * given object to the given stream.
+     * (Intended for debugging)
+     */
     public static synchronized void debugPrintAttributes(PyObject o, java.io.PrintStream out) {
         out.println("debugPrintAttributes of "+System.identityHashCode(o)+":");
         if (o.attributes == null) {
@@ -230,6 +232,11 @@ public abstract class JyAttribute implements Serializable {
         out.println("debugPrintAttributes done");
     }
 
+    /**
+     * Sets the attribute of type {@code attr_type} in {@code ob} to {@code value}.
+     * If no corresponding attribute exists yet, one is created. If {@value == null},
+     * the attribute is removed (if it existed at all).
+     */
     public static synchronized void setAttr(PyObject ob, byte attr_type, Object value) {
         if (value == null) {
             delAttr(ob, attr_type);
@@ -281,6 +288,11 @@ public abstract class JyAttribute implements Serializable {
         }
     }
 
+    /**
+     * Removes the attribute of given type from the given object's attribute-list
+     * (if it existed at all). This is equivalent to calling
+     * {@code setAttr(ob, attr_type, null)}.
+     */
     public static synchronized void delAttr(PyObject ob, byte attr_type) {
         if (ob.attributes == null) {
             return;

@@ -38,9 +38,9 @@ public class GlobalRef extends WeakReference<PyObject> {
      * This boolean is set true when the callback is processed. If the reference is
      * cleared it might potentially be restored until this boolean is set true.
      * If weak reference restoring is activated (c.f.
-     * gc.PRESERVE_WEAKREFS_ON_RESURRECTION), AbstractReference.get would block
-     * until a consistent state is reached (i.e. referent is non-null or
-     * cleared == true). 
+     * {@code gc.PRESERVE_WEAKREFS_ON_RESURRECTION}), {@code AbstractReference.get}
+     * would block until a consistent state is reached (i.e. referent is
+     * non-{@code null} or {@code cleared == true}).
      */
     protected boolean cleared = false;
 
@@ -73,7 +73,7 @@ public class GlobalRef extends WeakReference<PyObject> {
      * Search for a reusable reference. To be reused, it must be of the
      * same class and it must not have a callback.
      */
-    synchronized AbstractReference find(Class cls) {
+    synchronized AbstractReference find(Class<?> cls) {
         for (int i = references.size() - 1; i >= 0; i--) {
             AbstractReference r = getReferenceAt(i);
             if (r == null) {
@@ -123,8 +123,9 @@ public class GlobalRef extends WeakReference<PyObject> {
 
     /**
      * Stores the callback for later processing. This is needed if
-     * weak reference restoration (c.f. gc.PRESERVE_WEAKREFS_ON_RESURRECTION)
-     * is activated. In this case the callback is delayed until it was
+     * weak reference restoration (c.f.
+     * {@code gc.PRESERVE_WEAKREFS_ON_RESURRECTION})
+     * is active. In this case the callback is delayed until it was
      * determined whether a resurrection restored the reference.
      */
     private static void delayedCallback(GlobalRef cl) {
@@ -164,10 +165,10 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Create a new tracked GlobalRef.
+     * Create a new tracked {@code GlobalRef}.
      *
-     * @param object a PyObject to reference
-     * @return a new tracked GlobalRef
+     * @param object a {@link org.python.core.PyObject} to reference
+     * @return a new tracked {@code GlobalRef}
      */
     public static GlobalRef newInstance(PyObject object) {
         createReaperThreadIfAbsent();
@@ -188,12 +189,13 @@ public class GlobalRef extends WeakReference<PyObject> {
 
     /**
      * Restores this weak reference to its former referent.
-     * This actually means that a fresh GlobalRef is created
-     * and inserted into all adjacent AbstractRefs. The
-     * current GlobalRef is disbanded.
-     * If the given PyObject is not the former referent of
-     * this weak reference, an IllegalArgumentException is
-     * thrown.
+     * This actually means that a fresh {@code GlobalRef} is created
+     * and inserted into all adjacent
+     * {@link org.python.modules._weakref.AbstractReference}s. The
+     * current {@code GlobalRef} is disbanded.
+     * If the given {@link org.python.core.PyObject} is not the former
+     * referent of this weak reference, an
+     * {@link java.lang.IllegalArgumentException} is thrown.
      */
     public void restore(PyObject formerReferent) {
         if (JyAttribute.getAttr(formerReferent, JyAttribute.WEAK_REF_ATTR) != this) {
@@ -248,7 +250,8 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Return the number of references to the specified PyObject.
+     * Return the number of references to the specified
+     * {@link org.python.core.PyObject}.
      *
      * @param object a PyObject
      * @return an int reference count
@@ -259,7 +262,8 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Return a list of references to the specified PyObject.
+     * Return a list of references to the specified
+     * {@link org.python.core.PyObject}.
      *
      * @param object a PyObject
      * @return a PyList of references. may be empty
@@ -270,7 +274,7 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Allow GlobalRef's to be used as hashtable keys.
+     * Allow {@code GlobalRef}s to be used as hashtable-keys.
      */
     public boolean equals(Object o) {
         if (this == o) {
@@ -292,18 +296,20 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Allows GlobalRef to be used as hashtable keys.
+     * Allows {@code GlobalRef} to be used as hashtable-keys.
      *
-     * @return a hashCode int value
+     * @return a hashCode {@code int}-value
      */
     public int hashCode() {
         return hashCode;
     }
 
     /**
-     * The publicly used hashCode, for the AbstractReference wrapper.
+     * The publicly used {@code hashCode}, for the
+     * {@link org.python.modules._weakref.AbstractReference}
+     * wrapper.
      *
-     * @return a hashCode int value
+     * @return a hashCode {@code int}-value
      */
     public int pythonHashCode() {
         if (havePythonHashCode) {
