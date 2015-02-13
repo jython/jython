@@ -68,9 +68,9 @@ public class ReferenceType extends AbstractReference {
      * to passthru).
      *
      * @param funcName the name of the caller
-     * @param args PyObject array of args
-     * @param keywords String array of keywords
-     * @return an ArgParser instance
+     * @param args {@link or.python.core.PyObject} array of args
+     * @param keywords {@code String}-array of keywords
+     * @return an {@link or.python.core.ArgParser} instance
      */
     private static ArgParser parseInitArgs(String funcName, PyObject[] args, String[] keywords) {
         if (keywords.length > 0) {

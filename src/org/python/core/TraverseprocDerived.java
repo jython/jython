@@ -6,7 +6,7 @@ package org.python.core;
  * {@code fooDerived}-classes. This way we avoid that the traverse
  * method of a traversable {@link org.python.core.PyObject} is
  * overwritten by the derived version.
- * The {@link org.python.modules.gc}-module takes care of
+ * {@link org.python.modules.gc#traverse(PyObject, Visitproc, Object)} takes care of
  * exploiting both traverse methods.
  */
 public interface TraverseprocDerived {

@@ -84,7 +84,7 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
                 return null;
             }
             if ((gc.getJythonGCFlags() & gc.VERBOSE_WEAKREF) != 0) {
-                Py.writeDebug("gc", "pending in get of abstract ref "+this+": "+
+                gc.writeDebug("gc", "pending in get of abstract ref "+this+": "+
                         Thread.currentThread().getId());
             }
             JyAttribute.setAttr(this, JyAttribute.WEAKREF_PENDING_GET_ATTR, Thread.currentThread());
@@ -96,14 +96,14 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
             }
             JyAttribute.delAttr(this, JyAttribute.WEAKREF_PENDING_GET_ATTR);
             if ((gc.getJythonGCFlags() & gc.VERBOSE_WEAKREF) != 0) {
-                Py.writeDebug("gc", "pending of "+this+" resolved: "+
+                gc.writeDebug("gc", "pending of "+this+" resolved: "+
                         Thread.currentThread().getId());
                 if (gref.cleared) {
-                    Py.writeDebug("gc", "reference was cleared.");
+                    gc.writeDebug("gc", "reference was cleared.");
                 } else if (result != null){
-                    Py.writeDebug("gc", "reference was restored.");
+                    gc.writeDebug("gc", "reference was restored.");
                 } else {
-                    Py.writeDebug("gc", "something went very wrong.");
+                    gc.writeDebug("gc", "something went very wrong.");
                 }
             }
             return result;

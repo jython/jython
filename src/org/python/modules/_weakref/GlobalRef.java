@@ -20,8 +20,8 @@ import org.python.modules.gc;
 public class GlobalRef extends WeakReference<PyObject> {
 
     /**
-     * This reference's hashCode: the System.identityHashCode of the referent. Only used
-     * internally.
+     * This reference's hashCode: The {@code System.identityHashCode} of the referent.
+     * Only used internally.
      */
     private int hashCode;
 
@@ -31,16 +31,19 @@ public class GlobalRef extends WeakReference<PyObject> {
      */
     private int pythonHashCode;
 
-    /** Whether pythonHashCode was already determined. */
+    /** Whether {@link #pythonHashCode} was already determined. */
     private boolean havePythonHashCode;
 
     /**
-     * This boolean is set true when the callback is processed. If the reference is
-     * cleared it might potentially be restored until this boolean is set true.
-     * If weak reference restoring is activated (c.f.
-     * {@code gc.PRESERVE_WEAKREFS_ON_RESURRECTION}), {@code AbstractReference.get}
+     * This boolean is set {@code true} when the callback is processed.
+     * If the reference is cleared it might potentially be restored until
+     * this boolean is set true. If weak reference restoring is activated (c.f.
+     * {@link gc#PRESERVE_WEAKREFS_ON_RESURRECTION}), {@link AbstractReference#get()}
      * would block until a consistent state is reached (i.e. referent is
      * non-{@code null} or {@code cleared == true}).
+     *
+     * @see gc#PRESERVE_WEAKREFS_ON_RESURRECTION
+     * @see AbstractReference#get()
      */
     protected boolean cleared = false;
 
@@ -108,7 +111,10 @@ public class GlobalRef extends WeakReference<PyObject> {
     }
 
     /**
-     * Call all callbacks that were enqueued via delayedCallback method.
+     * Call all callbacks that were enqueued via
+     * {@link #delayedCallback(GlobalRef)} method.
+     *
+     * @see #delayedCallback(GlobalRef)
      */
     public static void processDelayedCallbacks() {
         if (delayedCallbacks != null) {
@@ -124,9 +130,11 @@ public class GlobalRef extends WeakReference<PyObject> {
     /**
      * Stores the callback for later processing. This is needed if
      * weak reference restoration (c.f.
-     * {@code gc.PRESERVE_WEAKREFS_ON_RESURRECTION})
+     * {@link gc#PRESERVE_WEAKREFS_ON_RESURRECTION})
      * is active. In this case the callback is delayed until it was
      * determined whether a resurrection restored the reference.
+     *
+     * @see gc#PRESERVE_WEAKREFS_ON_RESURRECTION
      */
     private static void delayedCallback(GlobalRef cl) {
         if (delayedCallbacks == null) {
@@ -196,6 +204,9 @@ public class GlobalRef extends WeakReference<PyObject> {
      * If the given {@link org.python.core.PyObject} is not the former
      * referent of this weak reference, an
      * {@link java.lang.IllegalArgumentException} is thrown.
+     *
+     * @throws java.lang.IllegalArgumentException if {@code formerReferent} is not
+     * the actual former referent.
      */
     public void restore(PyObject formerReferent) {
         if (JyAttribute.getAttr(formerReferent, JyAttribute.WEAK_REF_ATTR) != this) {
@@ -265,8 +276,8 @@ public class GlobalRef extends WeakReference<PyObject> {
      * Return a list of references to the specified
      * {@link org.python.core.PyObject}.
      *
-     * @param object a PyObject
-     * @return a PyList of references. may be empty
+     * @param object a {@link org.python.core.PyObject}
+     * @return a {@link org.python.core.PyList} of references. May be empty.
      */
     public static PyList getRefs(PyObject object) {
         GlobalRef ref = objects.get(new GlobalRef(object));

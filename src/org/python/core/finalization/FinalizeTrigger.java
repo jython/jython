@@ -12,35 +12,15 @@ import org.python.modules.gc;
 public class FinalizeTrigger {
     /**
      * This flag tells the finalize trigger to call
-     * gc.notifyFinalize after it called the finalizer.
+     * {@link gc#notifyFinalize(PyObject)} after it called the finalizer.
      */
     public static final byte NOTIFY_GC_FLAG =           (1<<0);
-    
-    /**
-     * This flag tells the finalize trigger to refrain from actually
-     * running the PyObject's {@code __del__} method (or variants for
-     * derived or builtins).
-     * It can be used to have finalize triggers for debugging and
-     * monitoring purposes. The actual purpose is for Jython gc's
-     * {@code DONT_FINALIZE_CYCLIC_GARBAGE} flag that tells the gc to emulate
-     * CPython's <3.4 policy never to finalize cyclic garbage.
-     */
-    //public static final byte INHIBIT_FINALIZER_FLAG =   (1<<1);
-    
-    /**
-     * Tells the finalizer to add the finalized PyObject to the gc's
-     * garbage list. This allows gc to mimic CPython's way to deal
-     * with cyclic finalizable objects prior 3.4
-     * (c.f. CPython's gc's DEBUG_SAVEALL flag).
-     */
-    //public static final byte ADD_TO_GARBAGE_LIST_FLAG = (1<<2);
 
     /**
-     * Similar to {@code INHIBIT_FINALIZER_FLAG}, but indicates that the
-     * underlying PyObject was never intended to be finalized, while
-     * {@code INHIBIT_FINALIZER_FLAG} indicates that there actually *is* a
-     * finalizer that is just not processed due to special
-     * circumstances (i.e. inactive {@code DONT_FINALIZE_CYCLIC_GARBAGE} flag).
+     * Indicates that the underlying PyObject was never intended to be finalized.
+     * It is actually not finalizable and the trigger only exists to notify
+     * {@link org.python.modules.gc} that the underlying object was finalized.
+     * This is needed for some advanced gc-functionality.
      */
     public static final byte NOT_FINALIZABLE_FLAG = (1<<3);
 
@@ -186,7 +166,7 @@ public class FinalizeTrigger {
             	}
             }
             if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		Py.writeDebug("gc", "finalization of "+toFinalize);
+        		gc.writeDebug("gc", "finalization of "+toFinalize);
         	}
             if (saveGarbage == 1 || (saveGarbage == 0 &&
                     (gc.get_debug() & gc.DEBUG_SAVEALL) != 0 && isCyclic())) {
@@ -199,13 +179,13 @@ public class FinalizeTrigger {
                 }
                 gc.garbage.add(toFinalize);
                 if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-                	Py.writeDebug("gc", toFinalize+" added to garbage.");
+                	gc.writeDebug("gc", toFinalize+" added to garbage.");
             	}
             }
         }
         if ((flags & NOTIFY_GC_FLAG) != 0) {
         	if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		Py.writeDebug("gc", "notify finalization of "+toFinalize);
+        		gc.writeDebug("gc", "notify finalization of "+toFinalize);
         	}
             gc.notifyFinalize(toFinalize);
             flags &= ~NOTIFY_GC_FLAG;
@@ -217,7 +197,7 @@ public class FinalizeTrigger {
         gc.notifyPreFinalization();
         if (gc.delayedFinalizationEnabled() && toFinalize != null) {
         	if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		Py.writeDebug("gc", "delayed finalization for "+toFinalize);
+        		gc.writeDebug("gc", "delayed finalization for "+toFinalize);
         	}
             gc.registerForDelayedFinalization(toFinalize);
         } else {

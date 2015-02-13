@@ -20,7 +20,7 @@ import org.python.modules.gc;
 
 /**
  * All objects known to the Jython runtime system are represented by an instance
- * of the class <code>PyObject</code> or one of its subclasses.
+ * of the class {@code PyObject} or one of its subclasses.
  */
 @ExposedType(name = "object", doc = BuiltinDocs.object_doc)
 public class PyObject implements Serializable {
@@ -28,10 +28,14 @@ public class PyObject implements Serializable {
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
 
     /**
-     * This should have been suited at org.python.modules.gc, but that would cause
-     * a dependency cycle in the init-phases of gc.class and PyObject.class.
-     * Now this boolean mirrors the presence of the MONITOR_GLOBAL-flag of
-     * Jython's gc module.
+     * This should have been suited at {@link org.python.modules.gc},
+     * but that would cause a dependency cycle in the init-phases of
+     * {@code gc.class} and {@code PyObject.class}. Now this boolean
+     * mirrors the presence of the
+     * {@link org.python.modules.gc#MONITOR_GLOBAL}-flag in Jython's
+     * gc module.<br>
+     * <br>
+     * <b>Do not change manually.</b>
      */
     public static boolean gcMonitorGlobal = false;
 
@@ -45,12 +49,15 @@ public class PyObject implements Serializable {
      * objects can be accessed by the methods and keys in
      * {@link org.python.core.JyAttribute}.
      * A notable attribute is the javaProxy (accessible via
-     * {@code JyAttribute.getAttr(this, JAVA_PROXY_ATTR)}),
+     * {@code JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR)}),
      * an underlying Java instance that this object is wrapping or is a
      * subclass of. Anything attempting to use the proxy should go through
      * {@link #getJavaProxy()} which ensures that it's initialized.
+     *
+     * @see org.python.core.JyAttribute
+     * @see org.python.core.JyAttribute#JAVA_PROXY_ATTR
+     * @see #getJavaProxy()
      */
-    //protected Object javaProxy;
     protected Object attributes;
 
     /** Primitives classes their wrapper classes. */
@@ -1708,7 +1715,6 @@ public class PyObject implements Serializable {
     public PyObject _is(PyObject o) {
         // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
         // will initialize a new object with a different identity
-        //return this == o || (javaProxy != null && javaProxy == o.javaProxy) ? Py.True : Py.False;
         return this == o || (JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) &&
             JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) ==
             JyAttribute.getAttr(o, JyAttribute.JAVA_PROXY_ATTR)) ? Py.True : Py.False;
@@ -1723,7 +1729,6 @@ public class PyObject implements Serializable {
     public PyObject _isnot(PyObject o) {
         // Access javaProxy directly here as is is for object identity, and at best getJavaProxy
         // will initialize a new object with a different identity
-        //return this != o && (javaProxy == null || javaProxy != o.javaProxy) ? Py.True : Py.False;
         return this != o && (!JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) ||
                 JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) !=
                 JyAttribute.getAttr(o, JyAttribute.JAVA_PROXY_ATTR)) ? Py.True : Py.False;

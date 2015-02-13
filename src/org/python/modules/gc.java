@@ -18,6 +18,7 @@ import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyInstance;
+import org.python.core.PyString;
 import org.python.core.Traverseproc;
 import org.python.core.TraverseprocDerived;
 import org.python.core.Visitproc;
@@ -25,9 +26,11 @@ import org.python.core.Untraversable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules._weakref.GlobalRef;
 
+import com.sun.management.GarbageCollectionNotificationInfo;
+
 public class gc {
     /**
-     * A constant that can occur as result of {@code gc.collect} and
+     * A constant that can occur as result of {@link #collect()} and
      * indicates an unknown number of collected cyclic trash.
      * It is intentionally not valued -1 as that value is
      * reserved to indicate an error.
@@ -36,9 +39,14 @@ public class gc {
     
     /* Jython-specific gc-flags: */
     /**
-     * Tells every newly created PyObject to register for
-     * gc-monitoring. This allows {@code gc.collect} to report the
+     * This flag tells every newly created PyObject to register for
+     * gc-monitoring. This allows {@link #collect()} to report the
      * number of collected objects.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short MONITOR_GLOBAL =                    (1<<0);
 
@@ -47,6 +55,11 @@ public class gc {
      * PyObjects, while Jython does this by default. This flag
      * tells Jython's gc to mimic CPython <3.4 behavior (i.e.
      * add such objects to {@code gc.garbage} list instead).
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short DONT_FINALIZE_CYCLIC_GARBAGE =      (1<<1);
 
@@ -65,6 +78,11 @@ public class gc {
      * delay garbage collection of some weak referenced objects
      * for several gc cycles if activated. So we recommend to
      * use it only for debugging.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short PRESERVE_WEAKREFS_ON_RESURRECTION = (1<<2);
 
@@ -80,6 +98,11 @@ public class gc {
      * significant cost as it can delay collection of many objects
      * for several gc-cycles. Its main intention is for debugging
      * resurrection-sensitive code.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short DONT_FINALIZE_RESURRECTED_OBJECTS = (1<<3);
 
@@ -88,6 +111,11 @@ public class gc {
      * is deactivated by default for now. This means that
      * {@code DONT_TRAVERSE_BY_REFLECTION} is set by default.
      * Once it is stable, reflection-based traversion will be active by default.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short DONT_TRAVERSE_BY_REFLECTION =       (1<<4);
 
@@ -109,6 +137,11 @@ public class gc {
      * This is because in an ideal implementation reflection-based traversion never
      * occurs; it is only an inefficient fallback.
      * </p>
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING =    (1<<5);
 
@@ -119,14 +152,65 @@ public class gc {
      * gc-messages, no matter what overall verbose level is selected.
      * This flag tells Jython to use {@code Py.writeDebug} for debugging output.
      * If it is not set (default-case), gc-debugging output (if gc-{@code VERBOSE}
-     * or -{@code DEBUG} flags are set) is directly written to {@code System.err}.  
+     * or -{@code DEBUG} flags are set) is directly written to {@code System.err}.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static final short USE_PY_WRITE_DEBUG = (1<<6);
 
+    /**
+     * Enables collection-related verbose-output.
+     * 
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static final short VERBOSE_COLLECT =  (1<<7);
+
+    /**
+     * Enables weakref-related verbose-output.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static final short VERBOSE_WEAKREF =  (1<<8);
+
+    /**
+     * Enables delayed finalization related verbose-output.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static final short VERBOSE_DELAYED =  (1<<9);
+
+    /**
+     * Enables finalization-related verbose-output.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static final short VERBOSE_FINALIZE = (1<<10);
+
+    /**
+     * Bit-combination of the flags {@link #VERBOSE_COLLECT},
+     * {@link #VERBOSE_WEAKREF}, {@link #VERBOSE_DELAYED},
+     * {@link #VERBOSE_FINALIZE}.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static final short VERBOSE =
             VERBOSE_COLLECT | VERBOSE_WEAKREF | VERBOSE_DELAYED | VERBOSE_FINALIZE;
 
@@ -134,38 +218,65 @@ public class gc {
     /**
      * print collection statistics
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_STATS         = (1<<0);
 
     /**
      * print collectable objects
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_COLLECTABLE   = (1<<1);
 
     /**
      * print uncollectable objects
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_UNCOLLECTABLE = (1<<2);
 
     /**
      * print instances
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_INSTANCES     = (1<<3);
 
     /**
      * print other objects
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_OBJECTS       = (1<<4);
 
     /**
      * save all garbage in gc.garbage
      * (in Jython scoped on monitored objects)
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
      */
     public static final int DEBUG_SAVEALL       = (1<<5);
+
+    /**
+     * Bit-combination of the flags {@link #DEBUG_COLLECTABLE},
+     * {@link #DEBUG_UNCOLLECTABLE}, {@link #DEBUG_INSTANCES},
+     * {@link #DEBUG_OBJECTS}, {@link #DEBUG_SAVEALL}.
+     *
+     * @see #set_debug(int)
+     * @see #get_debug()
+     */
     public static final int DEBUG_LEAK = DEBUG_COLLECTABLE |
                                          DEBUG_UNCOLLECTABLE |
                                          DEBUG_INSTANCES |
@@ -184,6 +295,10 @@ public class gc {
     private static long lastRemoveTimeStamp = -1, maxWaitTime = initWaitTime;
     private static int gcMonitoredRunCount = 0;
     public static long gcRecallTime = 4000;
+    
+    /**
+     * list of uncollectable objects
+     */
     public static PyList garbage = new PyList();
 
     //Finalization preprocess/postprocess-related declarations:
@@ -207,16 +322,112 @@ public class gc {
     private static boolean notifyRerun = false;
 
     public static final String __doc__ =
-            "This module provides access to the garbage collector.\n" +
+            "This module provides access to the garbage collector for reference cycles.\n" +
             "\n" +
-            "enable() -- Enable automatic garbage collection (does nothing).\n" +
+            "enable() -- Enable automatic garbage collection (does nothing in Jython).\n" +
+            "disable() -- Disable automatic garbage collection (raises NotImplementedError in Jython).\n" +
             "isenabled() -- Returns True because Java garbage collection cannot be disabled.\n" +
-            "collect() -- Trigger a Java garbage collection (potentially expensive).\n" +
-            "get_debug() -- Get debugging flags (returns 0).\n" +
-            "\n" +
-            "Other functions raise NotImplementedError because they do not apply to Java.\n";
+            "collect() -- Do a full collection right now (potentially expensive).\n" +
+            "get_count() -- Return the current collection counts (raises NotImplementedError in Jython).\n" +
+            "set_debug() -- Set debugging flags.\n" +
+            "get_debug() -- Get debugging flags.\n" +
+            "set_threshold() -- Set the collection thresholds (raise NotImplementedError in Jython).\n" +
+            "get_threshold() -- Return the current the collection thresholds (raise NotImplementedError in Jython).\n" +
+            "get_objects() -- Return a list of all objects tracked by the collector (raises NotImplementedError in Jython).\n" +
+            "is_tracked() -- Returns true if a given object is tracked (i.e. monitored in Jython).\n" +
+            "get_referrers() -- Return the list of objects that refer to an object (only finds monitored referrers in Jython).\n" +
+            "get_referents() -- Return the list of objects that an object refers to.\n";
 
     public static final String __name__ = "gc";
+
+    public static final PyString __doc__enable = new PyString(
+            "enable() -> None\n" +
+            "\n" +
+            "Enable automatic garbage collection.\n" +
+            "(does nothing in Jython)\n");
+
+    public static final PyString __doc__disable = new PyString(
+            "disable() -> None\n" +
+            "\n" +
+            "Disable automatic garbage collection.\n" +
+            "(raises NotImplementedError in Jython)\n");
+
+    public static final PyString __doc__isenabled = new PyString(
+            "isenabled() -> status\n" +
+            "\n" +
+            "Returns true if automatic garbage collection is enabled.\n");
+
+    public static final PyString __doc__collect = new PyString(
+            "collect([generation]) -> n\n" +
+            "\n" +
+            "With no arguments, run a full collection.  The optional argument\n" +
+            "may be an integer specifying which generation to collect.  A ValueError\n" +
+            "is raised if the generation number is invalid.\n\n" +
+            "The number of unreachable objects is returned.\n" +
+            "(Jython emulates CPython cyclic trash counting if objects are monitored.\n" +
+            "If no objects are monitored, returns -2\n");
+
+    public static final PyString __doc__get_count = new PyString(
+            "get_count() -> (count0, count1, count2)\n" +
+            "\n" +
+            "Return the current collection counts\n" +
+            "(raises NotImplementedError in Jython)\n");
+
+    public static final PyString __doc__set_debug = new PyString(
+            "set_debug(flags) -> None\n" +
+            "\n" +
+            "Set the garbage collection debugging flags. Debugging information is\n" +
+            "written to sys.stderr.\n" +
+            "\n" +
+            "flags is an integer and can have the following bits turned on:\n" +
+            "\n" +
+            "  DEBUG_STATS - Print statistics during collection.\n" +
+            "  DEBUG_COLLECTABLE - Print collectable objects found.\n" +
+            "  DEBUG_UNCOLLECTABLE - Print unreachable but uncollectable objects found.\n" +
+            "  DEBUG_INSTANCES - Print instance objects.\n" +
+            "  DEBUG_OBJECTS - Print objects other than instances.\n" +
+            "  DEBUG_SAVEALL - Save objects to gc.garbage rather than freeing them.\n" +
+            "  DEBUG_LEAK - Debug leaking programs (everything but STATS).\n");
+
+    public static final PyString __doc__get_debug = new PyString(
+            "get_debug() -> flags\n" +
+            "\n" +
+            "Get the garbage collection debugging flags.\n");
+
+    public static final PyString __doc__set_thresh = new PyString(
+            "set_threshold(threshold0, [threshold1, threshold2]) -> None\n" +
+            "\n" +
+            "Sets the collection thresholds.  Setting threshold0 to zero disables\n" +
+            "collection.\n" +
+            "(raises NotImplementedError in Jython)\n");
+
+    public static final PyString __doc__get_thresh = new PyString(
+            "get_threshold() -> (threshold0, threshold1, threshold2)\n" +
+            "\n" +
+            "Return the current collection thresholds\n" +
+            "(raises NotImplementedError in Jython)\n");
+
+    public static final PyString __doc__get_objects = new PyString(
+            "get_objects() -> [...]\n" +
+            "\n" +
+            "Return a list of objects tracked by the collector (excluding the list\n" +
+            "returned).\n" +
+            "(raises NotImplementedError in Jython)\n");
+
+    public static final PyString __doc__is_tracked = new PyString(
+            "is_tracked(obj) -> bool\n" +
+            "\n" +
+            "Returns true if the object is tracked by the garbage collector.\n" +
+            "(i.e. monitored in Jython)\n");
+
+    public static final PyString __doc__get_referrers = new PyString(
+            "get_referrers(*objs) -> list\n" +
+            "Return the list of objects that directly refer to any of objs.\n" +
+            "(only finds monitored referrers in Jython)");
+
+    public static final PyString __doc__get_referents = new PyString(
+            "get_referents(*objs) -> list\n" +
+            "Return the list of objects that are directly referred to by objs.");
 
 
     public static class CycleMarkAttr {
@@ -382,7 +593,17 @@ public class gc {
         }
     }
 
-    private static void writeDebug(String type, String msg) {
+    /**
+     * Works like {@link org.python.core.Py#writeDebug(String, String)},
+     * but prints to {@link org.python.core.Py#writeDebug(String, String)}
+     * (i.e. subject to Jython's verbose level)
+     * or directly to {@code System.err}, according to
+     * {@link #USE_PY_WRITE_DEBUG}.
+     *
+     * @see #USE_PY_WRITE_DEBUG
+     * @see org.python.core.Py#writeDebug(String, String)
+     */
+    public static void writeDebug(String type, String msg) {
         if ((gcFlags & USE_PY_WRITE_DEBUG) != 0) {
             Py.writeDebug(type, msg);
         } else {
@@ -1102,6 +1323,25 @@ public class gc {
     //----------end of Monitoring section--------------------------------------
 
 
+    /**
+     * Gets the current Jython-specific gc-flags.
+     *
+     * @see #MONITOR_GLOBAL
+     * @see #DONT_FINALIZE_CYCLIC_GARBAGE
+     * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
+     * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
+     * @see #DONT_TRAVERSE_BY_REFLECTION
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #USE_PY_WRITE_DEBUG
+     * @see #VERBOSE_COLLECT
+     * @see #VERBOSE_WEAKREF
+     * @see #VERBOSE_DELAYED
+     * @see #VERBOSE_FINALIZE
+     * @see #VERBOSE
+     * @see #setJythonGCFlags(short)
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static short getJythonGCFlags() {
         if (((gcFlags & MONITOR_GLOBAL) != 0) != PyObject.gcMonitorGlobal) {
             if (PyObject.gcMonitorGlobal) {
@@ -1113,6 +1353,44 @@ public class gc {
         return gcFlags;
     }
 
+    /**
+     * Sets the current Jython-specific gc-flags.
+     * <br>
+     * {@code flags} is a {@code short} and can have the following bits turned on:<br>
+     * <br>
+     *   {@link #MONITOR_GLOBAL} - Automatically monitors all PyObjects created from now on.<br>
+     *   {@link #DONT_FINALIZE_CYCLIC_GARBAGE} - Adds cyclic finalizable PyObjects to {@link #garbage}.<br>
+     *   {@link #PRESERVE_WEAKREFS_ON_RESURRECTION} - Keeps weak references alive if the referent is resurrected.<br>
+     *   {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} - 
+     *   Emulates CPython behavior regarding resurrected objects and finalization.<br>
+     *   {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversion.<br>
+     *   {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} - 
+     *   Suppress warnings for PyObjects that neither implement {@link org.python.core.Traverseproc} nor
+     *   are marked as {@link org.python.core.Untraversable}.<br>
+     *   {@link #USE_PY_WRITE_DEBUG} - uses {@link org.python.core.Py#writeDebug(String, String)} for
+     *   debugging output instead of directly writing to {@link java.lang.System#err}.<br>
+     *   {@link #VERBOSE_COLLECT} - Enable collection-related verbose output.<br>
+     *   {@link #VERBOSE_WEAKREF} - Enable weakref-related verbose output.<br>
+     *   {@link #VERBOSE_DELAYED} - Enable delayed finalization-related verbose output.<br>
+     *   {@link #VERBOSE_FINALIZE} - Enable finalization-related verbose output.<br>
+     *   {@link #VERBOSE} - All previous verbose-flags combined.
+     *
+     * @see #MONITOR_GLOBAL
+     * @see #DONT_FINALIZE_CYCLIC_GARBAGE
+     * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
+     * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
+     * @see #DONT_TRAVERSE_BY_REFLECTION
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #USE_PY_WRITE_DEBUG
+     * @see #VERBOSE_COLLECT
+     * @see #VERBOSE_WEAKREF
+     * @see #VERBOSE_DELAYED
+     * @see #VERBOSE_FINALIZE
+     * @see #VERBOSE
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     */
     public static void setJythonGCFlags(short flags) {
         gcFlags = flags;
         PyObject.gcMonitorGlobal = (gcFlags & MONITOR_GLOBAL) != 0;
@@ -1121,6 +1399,22 @@ public class gc {
 
     /**
      * This is a convenience method to add flags via bitwise or.
+     *
+     * @see #MONITOR_GLOBAL
+     * @see #DONT_FINALIZE_CYCLIC_GARBAGE
+     * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
+     * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
+     * @see #DONT_TRAVERSE_BY_REFLECTION
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #USE_PY_WRITE_DEBUG
+     * @see #VERBOSE_COLLECT
+     * @see #VERBOSE_WEAKREF
+     * @see #VERBOSE_DELAYED
+     * @see #VERBOSE_FINALIZE
+     * @see #VERBOSE
+     * @see #getJythonGCFlags()
+     * @see #setJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
      */
     public static void addJythonGCFlags(short flags) {
         gcFlags |= flags;
@@ -1130,6 +1424,22 @@ public class gc {
 
     /**
      * This is a convenience method to remove flags via bitwise and-not.
+     *
+     * @see #MONITOR_GLOBAL
+     * @see #DONT_FINALIZE_CYCLIC_GARBAGE
+     * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
+     * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
+     * @see #DONT_TRAVERSE_BY_REFLECTION
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #USE_PY_WRITE_DEBUG
+     * @see #VERBOSE_COLLECT
+     * @see #VERBOSE_WEAKREF
+     * @see #VERBOSE_DELAYED
+     * @see #VERBOSE_FINALIZE
+     * @see #VERBOSE
+     * @see #getJythonGCFlags()
+     * @see #setJythonGCFlags(short)
+     * @see #addJythonGCFlags(short)
      */
     public static void removeJythonGCFlags(short flags) {
         gcFlags &= ~flags;
@@ -1161,21 +1471,34 @@ public class gc {
         notifyFinalize(abort);
     }
 
+    /**
+     * Does nothing in Jython as Java-gc is always enabled.
+     */
     public static void enable() {}
 
+    /**
+     * Not supported by Jython.
+     * Throws {@link org.python.core.Py#NotImplementedError}.
+     *
+     * @throws org.python.core.Py#NotImplementedError
+     */
     public static void disable() {
         throw Py.NotImplementedError("can't disable Java GC");
     }
 
+    /**
+     * Always returns {@code true} in Jython.
+     */
     public static boolean isenabled() { return true; }
 
     /**
      * The generation parameter is only for compatibility with
-     * CPython {@code gc.collect} and is ignored.
+     * CPython {@link gc.collect()} and is ignored.
      * @param generation (ignored)
      * @return Collected monitored cyclic trash-objects or
      * {@code gc.UNKNOWN_COUNT} if nothing is monitored or -1 if
      * an error occurred and collection did not complete.
+     * @see #collect()
      */
     public static int collect(int generation) {
         return collect();
@@ -1194,14 +1517,16 @@ public class gc {
 
     /**
      * If no objects are monitored, this just delegates to
-     * {@code System.gc} and returns {@code gc.UNKNOWN_COUNT} as a
+     * {@code System.gc()} and returns {@link #UNKNOWN_COUNT} as a
      * non-erroneous default value. If objects are monitored,
-     * it emulates a synchronous gc run in the sense that it waits
+     * it emulates a synchronous gc-run in the sense that it waits
      * until all collected monitored objects were finalized.
      * 
      * @return Number of collected monitored cyclic trash-objects
-     * or {@code gc.UNKNOWN_COUNT} if nothing is monitored or -1
+     * or {@link #UNKNOWN_COUNT} if nothing is monitored or -1
      * if an error occurred and collection did not complete.
+     * @see #UNKNOWN_COUNT
+     * @see #collect(int)
      */
     public static int collect() {
         try {
@@ -1619,26 +1944,79 @@ public class gc {
         stat[1] -= abortedCyclicFinalizers;
     }
 
+    /**
+     * Not supported by Jython.
+     * Throws {@link org.python.core.Py#NotImplementedError}.
+     *
+     * @throws org.python.core.Py#NotImplementedError
+     */
     public static PyObject get_count() {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
 
+    /**
+     * Copied from CPython-doc:<br>
+     * <br>
+     * Set the garbage collection debugging flags. Debugging information is
+     * written to {@code System.err}.<br>
+     * <br>
+     * {@flags} flags is an {@code int}eger and can have the following bits turned on:<br>
+     * <br>
+     *   {@link #DEBUG_STATS} - Print statistics during collection.<br>
+     *   {@link #DEBUG_COLLECTABLE} - Print collectable objects found.<br>
+     *   {@link #DEBUG_UNCOLLECTABLE} - Print unreachable but uncollectable objects found.<br>
+     *   {@link #DEBUG_INSTANCES} - Print instance objects.<br>
+     *   {@link #DEBUG_OBJECTS} - Print objects other than instances.<br>
+     *   {@link #DEBUG_SAVEALL} - Save objects to gc.garbage rather than freeing them.<br>
+     *   {@link #DEBUG_LEAK} - Debug leaking programs (everything but STATS).
+     *
+     * @see #DEBUG_STATS
+     * @see #DEBUG_COLLECTABLE
+     * @see #DEBUG_UNCOLLECTABLE
+     * @see #DEBUG_INSTANCES
+     * @see #DEBUG_OBJECTS
+     * @see #DEBUG_SAVEALL
+     * @see #DEBUG_LEAK
+     */
     public static void set_debug(int flags) {
         debugFlags = flags;
     }
 
+    /**
+     * Copied from CPython-doc:<br>
+     * <br>
+     * Get the garbage collection debugging flags.
+     */
     public static int get_debug() {
         return debugFlags;
     }
 
+    /**
+     * Not supported by Jython.
+     * Throws {@link org.python.core.Py#NotImplementedError}.
+     *
+     * @throws org.python.core.Py#NotImplementedError
+     */
     public static void set_threshold(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
 
+    /**
+     * Not supported by Jython.
+     * Throws {@link org.python.core.Py#NotImplementedError}.
+     *
+     * @throws org.python.core.Py#NotImplementedError
+     */
     public static PyObject get_threshold() {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
 
+    /**
+     * Not supported by Jython.
+     * Throws {@link org.python.core.Py#NotImplementedError}.
+     *
+     * @throws org.python.core.Py#NotImplementedError
+     */
     public static PyObject get_objects() {
         throw Py.NotImplementedError("not applicable to Java GC");
     }
@@ -2007,6 +2385,23 @@ public class gc {
         return search;
     }
 
+    /**
+     * Does its best to traverse the given {@link org.python.core.PyObject}
+     * {@code ob}. It exploits both
+     * {@link org.python.core.Traverseproc#traverse(Visitproc, Object)} and
+     * {@link org.python.core.TraverseprocDerived#traverseDerived(Visitproc, Object)}.
+     * If {@code ob} neither implements {@link org.python.core.Traverseproc} nor
+     * {@link org.python.core.Traverseproc} and is not annotated with
+     * {@link org.python.core.Untraversable}, reflection-based traversion via
+     * {@link #traverseByReflection(Object, Visitproc, Object)} may be attempted
+     * according to {@link #DONT_TRAVERSE_BY_REFLECTION}.
+     *
+     * @see org.python.core.Traverseproc#traverse(Visitproc, Object)
+     * @see org.python.core.TraverseprocDerived#traverseDerived(Visitproc, Object)
+     * @see #DONT_TRAVERSE_BY_REFLECTION
+     * @see org.python.core.Untraversable
+     * @see #traverseByReflection(Object, Visitproc, Object)
+     */
     public static int traverse(PyObject ob, Visitproc visit, Object arg) {
         int retVal;
         boolean traversed = false;
