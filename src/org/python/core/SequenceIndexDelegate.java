@@ -109,7 +109,14 @@ public abstract class SequenceIndexDelegate implements Serializable {
         }
     }
 
-    private void delSlice(int[] indices) {
+    /**
+     * Implement the deletion of a slice. This method is called by
+     * {@link #checkIdxAndDelItem(PyObject)} when the argument is a {@link PySlice}. The argument is
+     * the return from {@link PySlice#indicesEx(int)}.
+     *
+     * @param indices containing [start, stop, step, count] of the slice to delete
+     */
+    protected void delSlice(int[] indices) {
         int p = indices[0], step = indices[2], count = indices[3];
         if (step > 1) {
             /*
