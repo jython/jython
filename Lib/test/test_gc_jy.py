@@ -1,31 +1,21 @@
 """
 Tests some Jython-specific gc aspects and debugging
 features.
+Skips and try-blocks assure that this test-script is
+still runnable with CPython and passes there as far
+as not skipped.
 """
 
 import unittest
-#from test.test_support import verbose, run_unittest
-#import sys
+from test import test_support
 import time
 import gc
 import weakref
-from java.lang import System, Runnable
-
-# class FinalizationDummy:
-#     def __del__(self):
-#         time.sleep(3.5)
-#         print "FinalizationDummy.__del__"
-#         time.sleep(3.5)
-# 
-# class ResurrectionDummy:
-#     def __del__(self):
-#         print "ResurrectionDummy.__del__"
-#         ResurrectionDummy.resurrected = self.toResurrect
-# 
-# class SelfResurrectionDummy:
-#     def __del__(self):
-#         print "SelfResurrectionDummy.__del__"
-#         SelfResurrectionDummy.resurrected = self
+try:
+    from java.lang import System, Runnable
+except ImportError:
+    #i.e. Jython is running
+    pass
 
 class GCTests_Jy_CyclicGarbage(unittest.TestCase):
 
@@ -101,6 +91,8 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
             self.fail("didn't find obj in garbage (finalizer)")
         gc.garbage.remove(obj)
 
+    @unittest.skipUnless(test_support.is_jython,
+        'CPython has no monitor state')
     def test_manual_monitoring(self):
         # since tuples are immutable we close the loop with a list
         l = []
@@ -117,6 +109,8 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
         self.assertEqual(gc.collect(), 1)
 
 
+@unittest.skipUnless(test_support.is_jython,
+        'CPython has no gc preprocess and postprocess features')
 class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
 
     def test_finalization_preprocess_and_postprocess(self):
@@ -156,7 +150,8 @@ class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
         prePr = PreProcess()
         postPr = PostProcess()
         time.sleep(1) #   <- to avoid that the newly registered processes
-                      #      become subject to previous run
+                      #      become subject to previous run (remember: We
+                      #      are not in monitor-mode, i.e. gc runs async.
         gc.registerPreFinalizationProcess(prePr)
         gc.registerPostFinalizationProcess(postPr)
         #Note that order matters here:
@@ -176,6 +171,8 @@ class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
         gc.unregisterPostFinalizationProcess(postPr)
 
 
+@unittest.skipUnless(test_support.is_jython,
+        'This class tests detailed Jython-specific behavior.')
 class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
 
     @classmethod
@@ -197,17 +194,13 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
             pass
 
     def test_finalization_preprocess_and_postprocess(self):
-        #print "test_finalization_preprocess_and_postprocess"
         #Note that this test is done here again (already was in another class
         #in this module), to see that everything works as it should also with
         #a different flag-context.
-        #print "test_finalization_preprocess_and_postprocess"
-        #gc.removeJythonGCFlags(gc.DONT_FINALIZE_RESURRECTED_OBJECTS)
         comments = []
         self0 = self
         class A:
             def __del__(self):
-                #print "del A"
                 self0.assertIn("run PreProcess", comments)
                 comments.append("A del")
                 #let's simulate a time-consuming finalizer
@@ -254,8 +247,6 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
 
 
     def test_delayedFinalization(self):
-        #gc.addJythonGCFlags(gc.DONT_FINALIZE_RESURRECTED_OBJECTS)
-        #gc.addJythonGCFlags(gc.VERBOSE)
         resurrect = []
         comments = []
 
@@ -291,15 +282,17 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         del c
         self.assertNotEqual(gc.collect(), 0)
         time.sleep(1)
-        #print comments
-        #print resurrect
+        #Note that CPython would collect a, b and c in one run.
+        #With gc.DONT_FINALIZE_RESURRECTED_OBJECTS set, Jython
+        #Would not collect a and b in the same run with c
+        #because a and b might have been resurrected by c and
+        #Java allows not to detect such resurrection in any
+        #other way than waiting for the next gc-run.
         self.assertIn('del c', comments)
         self.assertEqual(1, len(comments))
         comments = []
         self.assertNotEqual(gc.collect(), 0)
         time.sleep(1)
-        #print comments
-        #print resurrect
         self.assertIn('del a', comments)
         self.assertEqual(1, len(comments))
         comments = []
@@ -307,8 +300,6 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         time.sleep(1)
         self.assertIn('del b', comments)
         self.assertEqual(1, len(comments))
-        #gc.removeJythonGCFlags(gc.DONT_FINALIZE_RESURRECTED_OBJECTS)
-        #gc.removeJythonGCFlags(gc.VERBOSE)
 
 
 class GCTests_Jy_Monitoring(unittest.TestCase):
@@ -336,6 +327,7 @@ class GCTests_Jy_Monitoring(unittest.TestCase):
         except Exception:
             pass
 
+    @unittest.skipUnless(test_support.is_jython, 'CPython has no monitor-state.')
     def test_monitor_status_after_delayed_finalization(self):
         resurrect = []
         comments = []
@@ -409,8 +401,11 @@ class GCTests_Jy_Monitoring(unittest.TestCase):
         a.b.lst = lst
         del lst
         del lst1
-        self.assertTrue(gc.isMonitored(a))
-        self.assertTrue(gc.isMonitored(a.b))
+        try:
+            self.assertTrue(gc.isMonitored(a))
+            self.assertTrue(gc.isMonitored(a.b))
+        except AttributeError:
+            pass
         del a
         self.assertEqual(gc.collect(), 2) # c is not cyclic and a, b are resurrected,
                                           # the cycle of two lists is counted here
@@ -543,6 +538,7 @@ class GCTests_Jy_Weakref(unittest.TestCase):
         except Exception:
             pass
 
+    @unittest.skipUnless(test_support.is_jython, '')
     def test_weakref_after_resurrection_threadsafe(self):
         resurrect = []
         comments = []
@@ -587,7 +583,6 @@ class GCTests_Jy_Weakref(unittest.TestCase):
             # restored or the deletion is confirmed.
         except Exception:
             pass
-        #self.assertEqual(str(wa()), '<a>')
         self.assertEqual(comments, [])
         self.assertEqual(resurrect, [])
         while comments == [] or resurrect == []:
