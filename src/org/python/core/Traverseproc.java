@@ -20,8 +20,7 @@ package org.python.core;
  * tracefunc in {@link org.python.core.PyFrame}).
  * PyObjects that don't own references to other PyObjects under any condition
  * and neither inherit such references from a superclass are strictly recommended
- * to be annotated {@code {@literal @}Untraversable}
- * (see {@link org.python.core.Untraversable} for details).
+ * to be annotated {@link org.python.core.Untraversable}.
  * </p>
  * <p>
  * Jython's traverse mechanism serves debugging purposes to ease finding memory
@@ -42,14 +41,16 @@ package org.python.core;
  * Note that the slots-array and - if existent - the user-dict of fooDerived classes
  * is traversed by {@link org.python.core.TraverseProcDerived}.
  * The gc module takes care of exploiting both traverse methods in its static traverse
- * method. So for manual traversion one should always use {@code gc.traverse} rather
+ * method. So for manual traversion one should always use
+ * {@link org.python.modules.gc#traverse(PyObject, Visitproc, Object)} rather
  * than directly calling methods in this interface.
  * </p>
  * <p>
- * Also note that {@code objtype} is not subject to {@code Traverseproc}s
- * by default. In CPython only objects with heap-types traverse their
- * ob_type field. In Jython, {@code fooDerived}-classes are the
- * equivalents of heapTypes. For such classes, objtype is actually
+ * Also note that {@link org.python.core.PyObject#objtype} is not subject to
+ * {@code Traverseproc}s by default. In CPython only objects with heap-types
+ * traverse their {@code ob_type}-field. In Jython, {@code fooDerived}-classes
+ * are the equivalents of heapTypes. For such classes
+ * {@link org.python.core.PyObject#objtype} is actually
  * traversed (along with the user dict).
  * </p>
  * <p>
@@ -439,6 +440,9 @@ package org.python.core;
  *   UAdd                          - no refs, extends PythonTree<br>
  *   USub                          - no refs, extends PythonTree<br>
  * </p>
+ * @see org.python.core.Untraversable
+ * @see org.python.core.Visitproc
+ * @see org.python.modules.gc#traverse(PyObject, Visitproc, Object)
  */
 public interface Traverseproc {
 

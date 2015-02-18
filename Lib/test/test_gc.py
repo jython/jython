@@ -1,9 +1,10 @@
 import unittest
-#from test.test_support import verbose, run_unittest
+from test.test_support import verbose, run_unittest
 from test import test_support
 import sys
 import gc
 import weakref
+import time
 
 try:
     import threading
@@ -59,6 +60,7 @@ class GCTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        #Jython-specific block:
         try:
             gc.setJythonGCFlags(cls.savedJythonGCFlags)
             gc.stopMonitoring()
@@ -203,17 +205,12 @@ class GCTests(unittest.TestCase):
         self.assertEqual(gc.collect(), 2)
 
     def test_frame(self):
-        flg = gc.getJythonGCFlags()
-        #gc.addJythonGCFlags(gc.VERBOSE)
-        #sporadically fails in Jython, no idea why.
         def f():
             frame = sys._getframe()
         gc.collect()
         f()
         col = gc.collect()
-        gc.setJythonGCFlags(flg)
         self.assertEqual(col, 1)
-        
 
     def test_saveall(self):
         # Verify that cyclic garbage like lists show up in gc.garbage if the
@@ -316,104 +313,115 @@ class GCTests(unittest.TestCase):
         gc.collect(2)
         assertEqual(gc.get_count(), (0, 0, 0))
 
-#     def test_trashcan(self):
-#         class Ouch:
-#             n = 0
-#             def __del__(self):
-#                 Ouch.n = Ouch.n + 1
-#                 if Ouch.n % 17 == 0:
-#                     gc.collect()
-#      
-#         # "trashcan" is a hack to prevent stack overflow when deallocating
-#         # very deeply nested tuples etc.  It works in part by abusing the
-#         # type pointer and refcount fields, and that can yield horrible
-#         # problems when gc tries to traverse the structures.
-#         # If this test fails (as it does in 2.0, 2.1 and 2.2), it will
-#         # most likely die via segfault.
-#      
-#         # Note:  In 2.3 the possibility for compiling without cyclic gc was
-#         # removed, and that in turn allows the trashcan mechanism to work
-#         # via much simpler means (e.g., it never abuses the type pointer or
-#         # refcount fields anymore).  Since it's much less likely to cause a
-#         # problem now, the various constants in this expensive (we force a lot
-#         # of full collections) test are cut back from the 2.2 version.
-#         gc.enable()
-#         N = 150
-#         for count in range(2):
-#             t = []
-#             for i in range(N):
-#                 t = [t, Ouch()]
-#             u = []
-#             for i in range(N):
-#                 u = [u, Ouch()]
-#             v = {}
-#             for i in range(N):
-#                 v = {1: v, 2: Ouch()}
-#         gc.disable()
+    def test_trashcan(self):
+        class Ouch:
+            n = 0
+            def __del__(self):
+                Ouch.n = Ouch.n + 1
+                if Ouch.n % 17 == 0:
+                    gc.collect()
+     
+        # "trashcan" is a hack to prevent stack overflow when deallocating
+        # very deeply nested tuples etc.  It works in part by abusing the
+        # type pointer and refcount fields, and that can yield horrible
+        # problems when gc tries to traverse the structures.
+        # If this test fails (as it does in 2.0, 2.1 and 2.2), it will
+        # most likely die via segfault.
+     
+        # Note:  In 2.3 the possibility for compiling without cyclic gc was
+        # removed, and that in turn allows the trashcan mechanism to work
+        # via much simpler means (e.g., it never abuses the type pointer or
+        # refcount fields anymore).  Since it's much less likely to cause a
+        # problem now, the various constants in this expensive (we force a lot
+        # of full collections) test are cut back from the 2.2 version.
+        gc.enable()
+        N = 150
+        for count in range(2):
+            t = []
+            for i in range(N):
+                t = [t, Ouch()]
+            u = []
+            for i in range(N):
+                u = [u, Ouch()]
+            v = {}
+            for i in range(N):
+                v = {1: v, 2: Ouch()}
+        try:
+            gc.disable()
+        except NotImplementedError:
+            #i.e. Jython is running (or other non-CPython interpreter without gc-disabling)
+            pass
 
-#     @unittest.skipUnless(threading, "test meaningless on builds without threads")
-#     def test_trashcan_threads(self):
-#         # Issue #13992: trashcan mechanism should be thread-safe
-#         NESTING = 60
-#         N_THREADS = 2
-# 
-#         def sleeper_gen():
-#             """A generator that releases the GIL when closed or dealloc'ed."""
-#             try:
-#                 yield
-#             finally:
-#                 time.sleep(0.000001)
-# 
-#         class C(list):
-#             # Appending to a list is atomic, which avoids the use of a lock.
-#             inits = []
-#             dels = []
-#             def __init__(self, alist):
-#                 self[:] = alist
-#                 C.inits.append(None)
-#             def __del__(self):
-#                 # This __del__ is called by subtype_dealloc().
-#                 C.dels.append(None)
-#                 # `g` will release the GIL when garbage-collected.  This
-#                 # helps assert subtype_dealloc's behaviour when threads
-#                 # switch in the middle of it.
-#                 g = sleeper_gen()
-#                 next(g)
-#                 # Now that __del__ is finished, subtype_dealloc will proceed
-#                 # to call list_dealloc, which also uses the trashcan mechanism.
-# 
-#         def make_nested():
-#             """Create a sufficiently nested container object so that the
-#             trashcan mechanism is invoked when deallocating it."""
-#             x = C([])
-#             for i in range(NESTING):
-#                 x = [C([x])]
-#             del x
-# 
-#         def run_thread():
-#             """Exercise make_nested() in a loop."""
-#             while not exit:
-#                 make_nested()
-# 
-#         old_checkinterval = sys.getcheckinterval()
-#         sys.setcheckinterval(3)
-#         try:
-#             exit = False
-#             threads = []
-#             for i in range(N_THREADS):
-#                 t = threading.Thread(target=run_thread)
-#                 threads.append(t)
-#             for t in threads:
-#                 t.start()
-#             time.sleep(1.0)
-#             exit = True
-#             for t in threads:
-#                 t.join()
-#         finally:
-#             pass
-#             sys.setcheckinterval(old_checkinterval)
-#         gc.collect()
-#         self.assertEqual(len(C.inits), len(C.dels))
+    @unittest.skipIf(test_support.is_jython,
+        '''
+        Jython does not have a trashcan mechanism.
+        This test should still not fail but currently does.
+        This is because the massive referencing in this test brings
+        sync gc emulation to its limit. Making this more robust is
+        of no priority for now.
+        ''')
+    @unittest.skipUnless(threading, "test meaningless on builds without threads")
+    def test_trashcan_threads(self):
+        # Issue #13992: trashcan mechanism should be thread-safe
+        NESTING = 60
+        N_THREADS = 2
+     
+        def sleeper_gen():
+            """A generator that releases the GIL when closed or dealloc'ed."""
+            try:
+                yield
+            finally:
+                time.sleep(0.000001)
+     
+        class C(list):
+            # Appending to a list is atomic, which avoids the use of a lock.
+            inits = []
+            dels = []
+            def __init__(self, alist):
+                self[:] = alist
+                C.inits.append(None)
+            def __del__(self):
+                # This __del__ is called by subtype_dealloc().
+                C.dels.append(None)
+                # `g` will release the GIL when garbage-collected.  This
+                # helps assert subtype_dealloc's behaviour when threads
+                # switch in the middle of it.
+                g = sleeper_gen()
+                next(g)
+                # Now that __del__ is finished, subtype_dealloc will proceed
+                # to call list_dealloc, which also uses the trashcan mechanism.
+     
+        def make_nested():
+            """Create a sufficiently nested container object so that the
+            trashcan mechanism is invoked when deallocating it."""
+            x = C([])
+            for i in range(NESTING):
+                x = [C([x])]
+            del x
+     
+        def run_thread():
+            """Exercise make_nested() in a loop."""
+            while not exit:
+                make_nested()
+     
+        old_checkinterval = sys.getcheckinterval()
+        sys.setcheckinterval(3)
+        try:
+            exit = False
+            threads = []
+            for i in range(N_THREADS):
+                t = threading.Thread(target=run_thread)
+                threads.append(t)
+            for t in threads:
+                t.start()
+            time.sleep(0.01)
+            exit = True
+            for t in threads:
+                t.join()
+        finally:
+            pass
+            sys.setcheckinterval(old_checkinterval)
+        self.assertEqual(len(C.inits), len(C.dels))
 
     def test_boom(self):
         class Boom:
@@ -733,28 +741,29 @@ class GCTogglingTests(unittest.TestCase):
             # empty __dict__.
             self.assertEqual(x, None)
 
-# def test_main():
-#     unittest.main()
-#     enabled = gc.isenabled()
-#     gc.disable()
-#     assert not gc.isenabled()
-#     debug = gc.get_debug()
-#     gc.set_debug(debug & ~gc.DEBUG_LEAK) # this test is supposed to leak
-# 
-#     try:
-#         gc.collect() # Delete 2nd generation garbage
-#         run_unittest(GCTests, GCTogglingTests)
-#     finally:
-#         gc.set_debug(debug)
-#         # test gc.enable() even if GC is disabled by default
-#         if verbose:
-#             print "restoring automatic collection"
-#         # make sure to always test gc.enable()
-#         gc.enable()
-#         assert gc.isenabled()
-#         if not enabled:
-#             gc.disable()
+def test_main():
+    enabled = gc.isenabled()
+    try:
+        gc.disable()
+        assert not gc.isenabled()
+    except  NotImplementedError:
+        pass
+    debug = gc.get_debug()
+    gc.set_debug(debug & ~gc.DEBUG_LEAK) # this test is supposed to leak
+
+    try:
+        gc.collect() # Delete 2nd generation garbage
+        run_unittest(GCTests, GCTogglingTests)
+    finally:
+        gc.set_debug(debug)
+        # test gc.enable() even if GC is disabled by default
+        if verbose:
+            print "restoring automatic collection"
+        # make sure to always test gc.enable()
+        gc.enable()
+        assert gc.isenabled()
+        if not enabled:
+            gc.disable()
 
 if __name__ == "__main__":
-    #test_main()
     unittest.main()

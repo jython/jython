@@ -164,13 +164,13 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     enum Why {
 
-        NOT, /* No error */
+        NOT,       /* No error */
         EXCEPTION, /* Exception occurred */
-        RERAISE, /* Exception re-raised by 'finally' */
-        RETURN, /* 'return' statement */
-        BREAK, /* 'break' statement */
-        CONTINUE, /* 'continue' statement */
-        YIELD    /* 'yield' operator */
+        RERAISE,   /* Exception re-raised by 'finally' */
+        RETURN,    /* 'return' statement */
+        BREAK,     /* 'break' statement */
+        CONTINUE,  /* 'continue' statement */
+        YIELD      /* 'yield' operator */
 
     };
 
@@ -1054,7 +1054,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
 
                     case Opcode.WITH_CLEANUP: {
-                        /* TOP is the context.__exit__ bound method.
+                        /*
+                        TOP is the context.__exit__ bound method.
                         Below that are 1-3 values indicating how/why
                         we entered the finally clause:
                         - SECOND = None
