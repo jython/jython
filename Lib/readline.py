@@ -3,6 +3,12 @@ import sys
 from warnings import warn
 
 try:
+    _console = sys._jy_console
+    _reader = _console.reader
+except AttributeError:
+    raise ImportError("Cannot access JLine2 setup")
+
+try:
     # jarjar-ed version
     from org.python.jline.console.history import MemoryHistory
 except ImportError:
@@ -18,12 +24,6 @@ __all__ = ['add_history', 'clear_history', 'get_begidx', 'get_completer',
            'remove_history_item', 'set_completer', 'set_completer_delims',
            'set_history_length', 'set_pre_input_hook', 'set_startup_hook',
            'write_history_file']
-
-try:
-    _console = sys._jy_console
-    _reader = _console.reader
-except AttributeError:
-    raise ImportError("Cannot access JLine2 setup")
 
 _history_list = None
 

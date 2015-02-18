@@ -1521,6 +1521,10 @@ public final class Py {
      * @return true if (we think) we are in an interactive environment
      */
     public static boolean isInteractive() {
+        String isTTY = System.getProperty("python.launcher.tty");
+        if (isTTY != null && isTTY.equals("true")) {
+            return true;
+        }
         // Decide if System.in is interactive
         POSIX posix = POSIXFactory.getPOSIX();
         FileDescriptor in = FileDescriptor.in;

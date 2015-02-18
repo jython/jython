@@ -2,21 +2,16 @@
 package org.python.util;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
 
 import org.python.Version;
 import org.python.core.CodeFlag;
@@ -50,7 +45,7 @@ public class jython {
     private static final String usage = usageHeader
             + "Options and arguments:\n"
             // + "(and corresponding environment variables):\n"
-            + "-B       : don't write .py[co] files on import\n"
+            + "-B       : don't write bytecode files on import\n"
             // + "also PYTHONDONTWRITEBYTECODE=x\n" +
             + "-c cmd   : program passed in as string (terminates option list)\n"
             // + "-d       : debug output from parser (also PYTHONDEBUG=x)\n"
