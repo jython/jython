@@ -85,7 +85,7 @@ class TestCompileall(unittest.TestCase):
             # pretend we have a Python bytecode compiler by touching this file
             open(PYC_GREETER, "a").close()
             
-            compileall.compile_dir(PACKAGE)
+            compileall.compile_dir(PACKAGE, quiet=True)
             self.assertTrue(os.path.exists(PYC_GREETER))     # still exists
             self.assertTrue(os.path.exists(PYCLASS_TEST))    # along with these new compiled files
             self.assertTrue(os.path.exists(PYCLASS_GREETER))
