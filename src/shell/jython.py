@@ -162,8 +162,7 @@ class JythonCommand(object):
             return self._classpath
         if os.path.exists(os.path.join(self.jython_home, "jython-dev.jar")):
             jars = [os.path.join(self.jython_home, "jython-dev.jar")]
-            for jar in glob.iglob(os.path.join(self.jython_home, "javalib", "*.jar")):
-                jars.append(jar)
+            jars.append(os.path.join(self.jython_home, "javalib", "*"))
         elif not os.path.exists(os.path.join(self.jython_home, "jython.jar")): 
             self.parser.error(
 """{executable}:
