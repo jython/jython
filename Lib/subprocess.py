@@ -1406,7 +1406,7 @@ class Popen(object):
                 except java.lang.IllegalThreadStateException:
                     # The child process is not ready to return status, so None os still right.
                     pass
-                except java.io.IOException:
+                except (java.io.IOException, AttributeError) as e:
                     # Child has exited but returncode lost?
                     self.returncode = _deadstate
             return self.returncode
