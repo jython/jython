@@ -13,8 +13,9 @@ import gc
 import weakref
 try:
     from java.lang import System, Runnable
+    from javatests import GCTestHelper
 except ImportError:
-    #i.e. Jython is running
+    #i.e. not Jython is running
     pass
 
 class GCTests_Jy_CyclicGarbage(unittest.TestCase):
@@ -590,6 +591,56 @@ class GCTests_Jy_Weakref(unittest.TestCase):
             self.assertEqual(wc(), None)
         self.assertEqual(str(wa()), '<a>')
         self.assertEqual(wc(), None)
+
+
+@unittest.skipUnless(test_support.is_jython,
+        '''
+        The test involves Java-classes and is thus not supported by
+        non-Jython interpreters.
+        ''')
+class GCTests_Jy_TraverseByReflection(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        #Jython-specific block:
+        try:
+            cls.savedJythonGCFlags = gc.getJythonGCFlags()
+            gc.addJythonGCFlags(gc.SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING)
+            gc.setMonitorGlobal(True)
+        except Exception:
+            pass
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            gc.setJythonGCFlags(cls.savedJythonGCFlags)
+            gc.stopMonitoring()
+        except Exception:
+            pass
+
+
+    def test_weakref_after_resurrection_threadsafe(self):
+        gc.collect()
+
+        prt = GCTestHelper.reflectionTraverseTestField()
+        del prt
+        self.assertEqual(gc.collect(), 1)
+
+        prt = GCTestHelper.reflectionTraverseTestList()
+        del prt
+        self.assertEqual(gc.collect(), 1)
+
+        prt = GCTestHelper.reflectionTraverseTestArray()
+        del prt
+        self.assertEqual(gc.collect(), 1)
+
+        prt = GCTestHelper.reflectionTraverseTestPyList()
+        del prt
+        self.assertEqual(gc.collect(), 2)
+
+        prt = GCTestHelper.reflectionTraverseTestCycle()
+        del prt
+        self.assertEqual(gc.collect(), 0)
 
 
 if __name__ == "__main__":

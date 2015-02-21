@@ -107,15 +107,40 @@ public class gc {
     public static final short DONT_FINALIZE_RESURRECTED_OBJECTS = (1<<3);
 
     /**
-     * Reflection-based traversion is currently an experimental feature and
-     * is deactivated by default for now. This means that
-     * {@code DONT_TRAVERSE_BY_REFLECTION} is set by default.
-     * Once it is stable, reflection-based traversion will be active by default.
+     * <p>
+     * Reflection-based traversion is an inefficient fallback-method to
+     * traverse PyObject-subtypes that don't implement
+     * {@link org.python.core.Traverseproc} and
+     * are not marked as {@link org.python.core.Untraversable}.
+     * Such a situation indicates that the programmer was not aware of
+     * Jython's traverseproc-mechanism and reflection is used to
+     * compensate this.
+     * </p>
+     * <p>
+     * This flag allows to inhibit reflection-based traversion. If it is
+     * activated, objects that don't implement
+     * {@link org.python.core.Traverseproc}
+     * are always treated as if they were marked as
+     * {@link org.python.core.Untraversable}.
+     * </p>
+     * <p>
+     * Note that reflection-based traversion fallback is performed by
+     * default. Further note that Jython emits warning-messages if
+     * reflection-based traversion occurs or if an object is encountered
+     * that neither implements {@link org.python.core.Traverseproc}
+     * nor is marked as {@link org.python.core.Untraversable} (even if
+     * reflection-based traversion is inhibited). See
+     * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} and
+     * {@link #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING} to control
+     * these warning-messages.
+     * </p>
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      */
     public static final short DONT_TRAVERSE_BY_REFLECTION =       (1<<4);
 
@@ -142,8 +167,24 @@ public class gc {
      * @see #getJythonGCFlags()
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      */
     public static final short SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING =    (1<<5);
+
+    /**
+     * Makes gc emit reflection-based traversion warning for every traversed
+     * object instead of only once per class.
+     * A potential reflection-based traversion occurs whenever an object is
+     * traversed that neither implements {@link org.python.core.Traverseproc},
+     * nor is annotated with the {@link org.python.core.Untraversable}-annotation.
+     *
+     * @see #setJythonGCFlags(short)
+     * @see #getJythonGCFlags()
+     * @see #addJythonGCFlags(short)
+     * @see #removeJythonGCFlags(short)
+     * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     */
+    public static final short INSTANCE_TRAVERSE_BY_REFLECTION_WARNING =    (1<<6);
 
     /**
      * In Jython one usually uses {@code Py.writeDebug} for debugging output.
@@ -159,7 +200,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short USE_PY_WRITE_DEBUG = (1<<6);
+    public static final short USE_PY_WRITE_DEBUG = (1<<7);
 
     /**
      * Enables collection-related verbose-output.
@@ -169,7 +210,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_COLLECT =  (1<<7);
+    public static final short VERBOSE_COLLECT =  (1<<8);
 
     /**
      * Enables weakref-related verbose-output.
@@ -179,7 +220,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_WEAKREF =  (1<<8);
+    public static final short VERBOSE_WEAKREF =  (1<<9);
 
     /**
      * Enables delayed finalization related verbose-output.
@@ -189,7 +230,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_DELAYED =  (1<<9);
+    public static final short VERBOSE_DELAYED =  (1<<10);
 
     /**
      * Enables finalization-related verbose-output.
@@ -199,7 +240,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_FINALIZE = (1<<10);
+    public static final short VERBOSE_FINALIZE = (1<<11);
 
     /**
      * Bit-combination of the flags {@link #VERBOSE_COLLECT},
@@ -283,19 +324,20 @@ public class gc {
                                          DEBUG_OBJECTS |
                                          DEBUG_SAVEALL;
 
-    private static short gcFlags = DONT_TRAVERSE_BY_REFLECTION;
+    private static short gcFlags = 0;
     private static int debugFlags = 0;
     private static boolean monitorNonTraversable = false;
     private static boolean waitingForFinalizers = false;
     private static AtomicBoolean gcRunning = new AtomicBoolean(false);
     private static HashSet<WeakReferenceGC> monitoredObjects;
+    private static HashSet<Class<? extends PyObject>> reflectionWarnedClasses;
     private static ReferenceQueue<Object> gcTrash;
     private static int finalizeWaitCount = 0;
     private static int initWaitTime = 10, defaultWaitFactor = 2;
     private static long lastRemoveTimeStamp = -1, maxWaitTime = initWaitTime;
     private static int gcMonitoredRunCount = 0;
     public static long gcRecallTime = 4000;
-    
+
     /**
      * list of uncollectable objects
      */
@@ -611,7 +653,7 @@ public class gc {
         }
     }
 
-    //----------delayed finalization section-----------------------------------
+//--------------delayed finalization section-----------------------------------
 
     private static class DelayedFinalizationProcess implements Runnable {
         static DelayedFinalizationProcess defaultInstance =
@@ -849,12 +891,12 @@ public class gc {
             delayedFinalizables.put(ob, ob);
         }
     }
-    //----------end of delayed finalization section----------------------------
+//--------------end of delayed finalization section----------------------------
 
 
 
 
-    //----------Finalization preprocess/postprocess section--------------------
+//--------------Finalization preprocess/postprocess section--------------------
 
     protected static class PostFinalizationProcessor implements Runnable {
         protected static PostFinalizationProcessor defaultInstance =
@@ -1166,12 +1208,12 @@ public class gc {
             postFinalizationProcessRemove = null;
         }
     }
-    //----------end of Finalization preprocess/postprocess section-------------
+//--------------end of Finalization preprocess/postprocess section-------------
 
 
 
 
-    //----------Monitoring section---------------------------------------------
+//--------------Monitoring section---------------------------------------------
     
     public static void monitorObject(PyObject ob) {
         monitorObject(ob, false);
@@ -1180,11 +1222,17 @@ public class gc {
     public static void monitorObject(PyObject ob, boolean initString) {
         //Already collected garbage should not be monitored,
         //thus also not the garbage list:
-        if (ob == garbage) {
+        if (ob == null || ob == garbage) {
             return;
         }
-        if (!monitorNonTraversable && !isTraversable(ob)) {
-            if (!JyAttribute.hasAttr(ob, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+
+        //In contrast to isTraversable(ob) we don't look for DONT_TRAVERSE_BY_REFLECTION
+        //here. Objects not explicitly marked as Untraversable get monitored so we are
+        //able to print out warnings in Traverseproc.
+        if (!monitorNonTraversable &&
+                !(ob instanceof Traverseproc || ob instanceof TraverseprocDerived)) {
+            if (ob.getClass().isAnnotationPresent(Untraversable.class) &&
+                    !JyAttribute.hasAttr(ob, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
                 return;
             }
         }
@@ -1320,7 +1368,7 @@ public class gc {
         }
         PyObject.gcMonitorGlobal = flag;
     }
-    //----------end of Monitoring section--------------------------------------
+//--------------end of Monitoring section--------------------------------------
 
 
     /**
@@ -1332,6 +1380,7 @@ public class gc {
      * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
      * @see #DONT_TRAVERSE_BY_REFLECTION
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      * @see #USE_PY_WRITE_DEBUG
      * @see #VERBOSE_COLLECT
      * @see #VERBOSE_WEAKREF
@@ -1381,6 +1430,7 @@ public class gc {
      * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
      * @see #DONT_TRAVERSE_BY_REFLECTION
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      * @see #USE_PY_WRITE_DEBUG
      * @see #VERBOSE_COLLECT
      * @see #VERBOSE_WEAKREF
@@ -1406,6 +1456,7 @@ public class gc {
      * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
      * @see #DONT_TRAVERSE_BY_REFLECTION
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      * @see #USE_PY_WRITE_DEBUG
      * @see #VERBOSE_COLLECT
      * @see #VERBOSE_WEAKREF
@@ -1431,6 +1482,7 @@ public class gc {
      * @see #DONT_FINALIZE_RESURRECTED_OBJECTS
      * @see #DONT_TRAVERSE_BY_REFLECTION
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
+     * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      * @see #USE_PY_WRITE_DEBUG
      * @see #VERBOSE_COLLECT
      * @see #VERBOSE_WEAKREF
@@ -2415,14 +2467,26 @@ public class gc {
             traversed = true;
             if (retVal != 0) return retVal;
         }
+        boolean justAddedWarning = false;
         if ((gcFlags & SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING) == 0) {
             if (! (ob instanceof Traverseproc || ob instanceof TraverseprocDerived ||
                     ob.getClass() == PyObject.class ||
                     ob.getClass().isAnnotationPresent(Untraversable.class)) ) {
-                Py.writeWarning("gc", "The PyObject-subclass "+ob.getClass().getName()+"\n" +
-                        "should either implement Traverseproc or be marked with the\n" +
-                        "@Untraversable annotation. See the instructions\n" +
-                        "in javadoc of org.python.core.Traverseproc.java.");
+                if (((gcFlags & INSTANCE_TRAVERSE_BY_REFLECTION_WARNING) != 0) ||
+                        reflectionWarnedClasses == null ||
+                        !reflectionWarnedClasses.contains(ob.getClass())) {
+                    if ((gcFlags & INSTANCE_TRAVERSE_BY_REFLECTION_WARNING) == 0) {
+                        if (reflectionWarnedClasses == null) {
+                            reflectionWarnedClasses = new HashSet<>();
+                        }
+                        reflectionWarnedClasses.add(ob.getClass());
+                        justAddedWarning = true;
+                    }
+                    Py.writeWarning("gc", "The PyObject-subclass "+ob.getClass().getName()+"\n" +
+                            "should either implement Traverseproc or be marked with the\n" +
+                            "@Untraversable annotation. See instructions in\n" +
+                            "javadoc of org.python.core.Traverseproc.java.");
+                }
             }
         }
         if ((gcFlags & DONT_TRAVERSE_BY_REFLECTION) != 0) {
@@ -2434,9 +2498,21 @@ public class gc {
             return 0;
         }
         if ((gcFlags & SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING) == 0) {
-            Py.writeWarning("gc", "Traverse by reflection: "+ob.getClass().getName()+"\n" +
-                    "This is an inefficient procedure. It is recommended to\n" +
-                    "implement the traverseproc mechanism properly.");
+            if (((gcFlags & INSTANCE_TRAVERSE_BY_REFLECTION_WARNING) != 0) ||
+                    justAddedWarning ||
+                    reflectionWarnedClasses == null ||
+                    !reflectionWarnedClasses.contains(ob.getClass())) {
+                if ((gcFlags & INSTANCE_TRAVERSE_BY_REFLECTION_WARNING) == 0 &&
+                        !justAddedWarning) {
+                    if (reflectionWarnedClasses == null) {
+                        reflectionWarnedClasses = new HashSet<>();
+                    }
+                    reflectionWarnedClasses.add(ob.getClass());
+                }
+                Py.writeWarning("gc", "Traverse by reflection: "+ob.getClass().getName()+"\n" +
+                        "This is an inefficient procedure. It is recommended to\n" +
+                        "implement the traverseproc mechanism properly.");
+            }
         }
         return traverseByReflection(ob, visit, arg);
     }
@@ -2478,16 +2554,16 @@ public class gc {
     private static int traverseByReflectionIntern(Object ob,
             IdentityHashMap<Object, Object> alreadyTraversed, Visitproc visit, Object arg) {
         Class<? extends Object> cls = ob.getClass();
-        int result;
+        int result = 0;
         Object element;
         if (cls.isArray() && canLinkToPyObject(cls.getComponentType(), false)) {
             for (int i = 0; i < Array.getLength(ob); ++i) {
                 element = Array.get(ob, i);
-                if (element != null && !alreadyTraversed.containsKey(element)) {
-                    alreadyTraversed.put(element, element);
+                if (element != null) {
                     if (element instanceof PyObject) {
                         result = visit.visit((PyObject) element, arg);
-                    } else {
+                    } else if (!alreadyTraversed.containsKey(element)) {
+                        alreadyTraversed.put(element, element);
                         result = traverseByReflectionIntern(element,
                                 alreadyTraversed, visit, arg);
                     }
@@ -2508,11 +2584,11 @@ public class gc {
                         if (canLinkToPyObject(declFields[i].getType(), false)) {
                             try {
                                 element = declFields[i].get(ob);
-                                if (!alreadyTraversed.containsKey(element)) {
-                                    alreadyTraversed.put(element, element);
+                                if (element != null) {
                                     if (element instanceof PyObject) {
                                         result = visit.visit((PyObject) element, arg);
-                                    } else {
+                                    } else if (!alreadyTraversed.containsKey(element)) {
+                                        alreadyTraversed.put(element, element);
                                         result = traverseByReflectionIntern(element,
                                                 alreadyTraversed, visit, arg);
                                     }
@@ -2551,7 +2627,7 @@ public class gc {
      * </p>
      */
     public static boolean canLinkToPyObject(Class<?> cls, boolean actual) {
-        // At first some quick fail fast/succeed fast-checks:
+        // At first some quick (fail-fast/succeed-fast)-checks:
         if (quickCheckCannotLinkToPyObject(cls)) {
             return false;
         }
@@ -2674,7 +2750,7 @@ public class gc {
                 cls.isAnnotationPresent(Untraversable.class));
     }
 
-    //----------Visitproc section----------------------------------------------
+//--------------Visitproc section----------------------------------------------
 
     static class ReferentsFinder implements Visitproc {
         public static ReferentsFinder defaultInstance = new ReferentsFinder();
@@ -2823,5 +2899,5 @@ public class gc {
             return 0;
         }
     }
-    //----------end of Visitproc section---------------------------------------
+//--------------end of Visitproc section---------------------------------------
 }
