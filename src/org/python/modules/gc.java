@@ -942,7 +942,7 @@ public class gc {
      * must not terminate by throwing an exception). (Note: Using this for extern
      * finalizers is currently experimental and needs more testing.)
      * This works independently from monitoring, which is mainly needed to allow
-     * counting of cyclic garbage in {@code gc.collect}.
+     * counting of cyclic garbage in {@link #collect()}.
      * </p>
      * <p>
      * This feature compensates that Java's gc does not provide any guarantees about
@@ -973,7 +973,7 @@ public class gc {
     }
 
     /**
-     * See doc of {@core registerPreFinalizationProcess(Runnable process)}.
+     * See doc of {@link #registerPreFinalizationProcess(Runnable)}.
      */
     public static void registerPreFinalizationProcess(Runnable process, int index) {
         while (true) {
@@ -1042,7 +1042,7 @@ public class gc {
      * must not terminate by throwing an exception). (Note: Using this for extern
      * finalizers is currently experimental and needs more testing.)
      * This works independently from monitoring (which is mainly needed to allow
-     * garbage counting in {@code gc.collect}).
+     * garbage counting in {@link #collect()}).
      * </p>
      * <p>
      * This feature compensates that Java's gc does not provide any guarantees about
@@ -1059,7 +1059,7 @@ public class gc {
      * already during finalization phase. This can happen if external frameworks use
      * their own finalizers. This can be cured by letting these finalizers call
      * {@code gc.notifyPreFinalization()} before anything else is done and
-     * {@code notifyPostFinalization()} right before the finalization method returns.
+     * {@code gc.notifyPostFinalization()} right before the finalization method returns.
      * Between these calls the finalizer must not terminate by throwing an exception.
      * (Note: Using this for extern finalizers is currently experimental and needs more testing.)
      * </p>
@@ -1074,7 +1074,7 @@ public class gc {
     }
 
     /**
-     * See doc of {@code registerPostFinalizationProcess(Runnable process)}.
+     * See doc of {@link #registerPostFinalizationProcess(Runnable)}.
      */
     public static void registerPostFinalizationProcess(Runnable process, int index) {
         while (true) {
@@ -1407,22 +1407,22 @@ public class gc {
      * <br>
      * {@code flags} is a {@code short} and can have the following bits turned on:<br>
      * <br>
-     *   {@link #MONITOR_GLOBAL} - Automatically monitors all PyObjects created from now on.<br>
-     *   {@link #DONT_FINALIZE_CYCLIC_GARBAGE} - Adds cyclic finalizable PyObjects to {@link #garbage}.<br>
-     *   {@link #PRESERVE_WEAKREFS_ON_RESURRECTION} - Keeps weak references alive if the referent is resurrected.<br>
-     *   {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} - 
-     *   Emulates CPython behavior regarding resurrected objects and finalization.<br>
-     *   {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversion.<br>
-     *   {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} - 
-     *   Suppress warnings for PyObjects that neither implement {@link org.python.core.Traverseproc} nor
-     *   are marked as {@link org.python.core.Untraversable}.<br>
-     *   {@link #USE_PY_WRITE_DEBUG} - uses {@link org.python.core.Py#writeDebug(String, String)} for
-     *   debugging output instead of directly writing to {@link java.lang.System#err}.<br>
-     *   {@link #VERBOSE_COLLECT} - Enable collection-related verbose output.<br>
-     *   {@link #VERBOSE_WEAKREF} - Enable weakref-related verbose output.<br>
-     *   {@link #VERBOSE_DELAYED} - Enable delayed finalization-related verbose output.<br>
-     *   {@link #VERBOSE_FINALIZE} - Enable finalization-related verbose output.<br>
-     *   {@link #VERBOSE} - All previous verbose-flags combined.
+     * {@link #MONITOR_GLOBAL} - Automatically monitors all PyObjects created from now on.<br>
+     * {@link #DONT_FINALIZE_CYCLIC_GARBAGE} - Adds cyclic finalizable PyObjects to {@link #garbage}.<br>
+     * {@link #PRESERVE_WEAKREFS_ON_RESURRECTION} - Keeps weak references alive if the referent is resurrected.<br>
+     * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} - 
+     * Emulates CPython behavior regarding resurrected objects and finalization.<br>
+     * {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversion.<br>
+     * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} - 
+     * Suppress warnings for PyObjects that neither implement {@link org.python.core.Traverseproc} nor
+     * are marked as {@link org.python.core.Untraversable}.<br>
+     * {@link #USE_PY_WRITE_DEBUG} - uses {@link org.python.core.Py#writeDebug(String, String)} for
+     * debugging output instead of directly writing to {@link java.lang.System#err}.<br>
+     * {@link #VERBOSE_COLLECT} - Enable collection-related verbose output.<br>
+     * {@link #VERBOSE_WEAKREF} - Enable weakref-related verbose output.<br>
+     * {@link #VERBOSE_DELAYED} - Enable delayed finalization-related verbose output.<br>
+     * {@link #VERBOSE_FINALIZE} - Enable finalization-related verbose output.<br>
+     * {@link #VERBOSE} - All previous verbose-flags combined.
      *
      * @see #MONITOR_GLOBAL
      * @see #DONT_FINALIZE_CYCLIC_GARBAGE
@@ -2014,13 +2014,13 @@ public class gc {
      * <br>
      * {@flags} flags is an {@code int}eger and can have the following bits turned on:<br>
      * <br>
-     *   {@link #DEBUG_STATS} - Print statistics during collection.<br>
-     *   {@link #DEBUG_COLLECTABLE} - Print collectable objects found.<br>
-     *   {@link #DEBUG_UNCOLLECTABLE} - Print unreachable but uncollectable objects found.<br>
-     *   {@link #DEBUG_INSTANCES} - Print instance objects.<br>
-     *   {@link #DEBUG_OBJECTS} - Print objects other than instances.<br>
-     *   {@link #DEBUG_SAVEALL} - Save objects to gc.garbage rather than freeing them.<br>
-     *   {@link #DEBUG_LEAK} - Debug leaking programs (everything but STATS).
+     * {@link #DEBUG_STATS} - Print statistics during collection.<br>
+     * {@link #DEBUG_COLLECTABLE} - Print collectable objects found.<br>
+     * {@link #DEBUG_UNCOLLECTABLE} - Print unreachable but uncollectable objects found.<br>
+     * {@link #DEBUG_INSTANCES} - Print instance objects.<br>
+     * {@link #DEBUG_OBJECTS} - Print objects other than instances.<br>
+     * {@link #DEBUG_SAVEALL} - Save objects to gc.garbage rather than freeing them.<br>
+     * {@link #DEBUG_LEAK} - Debug leaking programs (everything but STATS).
      *
      * @see #DEBUG_STATS
      * @see #DEBUG_COLLECTABLE
