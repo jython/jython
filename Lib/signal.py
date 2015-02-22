@@ -132,9 +132,9 @@ def signal(sig, action):
         raise ValueError("signal number out of range")
 
     if callable(action):
-        prev = sun.misc.Signal.handle(signal, JythonSignalHandler(action))
+        prev = _register_signal(signal, JythonSignalHandler(action))
     elif action in (SIG_IGN, SIG_DFL) or isinstance(action, sun.misc.SignalHandler):
-        prev = sun.misc.Signal.handle(signal, action)
+        prev = _register_signal(signal, action)
     else:
         raise TypeError("signal handler must be signal.SIG_IGN, signal.SIG_DFL, or a callable object")
 
@@ -142,6 +142,13 @@ def signal(sig, action):
         return prev.action
     else:
         return prev
+
+
+def _register_signal(signal, action):
+    try:
+        return sun.misc.Signal.handle(signal, action)
+    except IllegalArgumentException, err:
+        raise ValueError(err.getMessage())
 
 
 # dangerous! don't use!
@@ -162,8 +169,8 @@ def getsignal(sig):
         signal = _signals[sig]
     except KeyError:
         raise ValueError("signal number out of range")
-    current = sun.misc.Signal.handle(signal, SIG_DFL)
-    sun.misc.Signal.handle(signal, current) # and reinstall
+    current = _register_signal(signal, SIG_DFL)
+    _register_signal(signal, current) # and reinstall
 
     if isinstance(current, JythonSignalHandler):
         return current.action
@@ -222,7 +229,10 @@ def alarm(time):
         raise NotImplementedError("alarm not implemented on this platform")
 
     def raise_alarm():
-        sun.misc.Signal.raise(_signals[SIGALRM])
+        try:
+            sun.misc.Signal.raise(_signals[SIGALRM])
+        except IllegalArgumentException, err:
+            raise ValueError(err.getMessage())
 
     if time > 0:
         new_alarm_timer = _Alarm(time, raise_alarm)
