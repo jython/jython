@@ -22,6 +22,8 @@ import org.python.core.PyCode;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyList;
+import org.python.core.PyNullImporter;
+import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
@@ -185,6 +187,37 @@ public class jython {
         }
     }
 
+    private static void runModule(InteractiveConsole interp, String moduleName) {
+        runModule(interp, moduleName, false);
+    }
+
+    private static void runModule(InteractiveConsole interp, String moduleName, boolean set_argv0) {
+        // PEP 338 - Execute module as a script
+        try {
+            PyObject runpy = imp.importName("runpy", true);
+            PyObject runmodule = runpy.__findattr__("_run_module_as_main");
+            runmodule.__call__(Py.newStringOrUnicode(moduleName), Py.newBoolean(set_argv0));
+        } catch (Throwable t) {
+            Py.printException(t);
+            interp.cleanup();
+            System.exit(-1);
+        }
+    }
+
+    private static boolean runMainFromImporter(InteractiveConsole interp, String filename) {
+        // Support http://bugs.python.org/issue1739468 - Allow interpreter to execute a zip file or directory
+        PyString argv0 = Py.newStringOrUnicode(filename);
+        PyObject importer = imp.getImporter(argv0);
+        if (!(importer instanceof PyNullImporter)) {
+             /* argv0 is usable as an import source, so
+                put it in sys.path[0] and import __main__ */
+            Py.getSystemState().path.insert(0, argv0);
+            runModule(interp, "__main__", true);
+            return true;
+        }
+        return false;
+    }
+
     public static void run(String[] args) {
         // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
@@ -285,6 +318,11 @@ public class jython {
 
         // was there a filename on the command line?
         if (opts.filename != null) {
+            if (runMainFromImporter(interp, opts.filename)) {
+                interp.cleanup();
+                return;
+            }
+
             String path;
             try {
                 path = new File(opts.filename).getCanonicalFile().getParent();
@@ -294,7 +332,7 @@ public class jython {
             if (path == null) {
                 path = "";
             }
-            Py.getSystemState().path.insert(0, new PyString(path));
+            Py.getSystemState().path.insert(0, Py.newStringOrUnicode(path));
             if (opts.jar) {
                 try {
                     runJar(opts.filename);
@@ -366,18 +404,9 @@ public class jython {
             }
 
             if (opts.moduleName != null) {
-                // PEP 338 - Execute module as a script
-                try {
-                    interp.exec("import runpy");
-                    interp.set("name", Py.newString(opts.moduleName));
-                    interp.exec("runpy.run_module(name, run_name='__main__', alter_sys=True)");
-                    interp.cleanup();
-                    return;
-                } catch (Throwable t) {
-                    Py.printException(t);
-                    interp.cleanup();
-                    System.exit(-1);
-                }
+                runModule(interp, opts.moduleName);
+                interp.cleanup();
+                return;
             }
         }
 

@@ -228,7 +228,7 @@ public class PyObject implements Serializable {
      * Equivalent to the standard Python __repr__ method.  This method
      * should not typically need to be overrriden.  The easiest way to
      * configure the string representation of a <code>PyObject</code> is to
-     * override the standard Java <code>toString</code> method.
+         * override the standard Java <code>toString</code> method.
      **/
     // counter-intuitively exposing this as __str__, otherwise stack overflow
     // occurs during regression testing.  XXX: more detail for this comment

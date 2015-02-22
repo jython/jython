@@ -456,6 +456,11 @@ public class imp {
         return PyType.fromClass(c, false); // xxx?
     }
 
+    public static PyObject getImporter(PyObject p) {
+        PySystemState sys = Py.getSystemState();
+        return getPathImporter(sys.path_importer_cache, sys.path_hooks, p);
+    }
+
     static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {
 
         // attempt to get an importer for the path
@@ -480,8 +485,21 @@ public class imp {
             }
         }
 
-        importer = (importer == null ? Py.None : importer);
-        cache.__setitem__(p, importer);
+        if (importer == null) {
+            try {
+                importer = new PyNullImporter(p);
+            } catch (PyException e) {
+                if (!e.match(Py.ImportError)) {
+                    throw e;
+                }
+            }
+        }
+
+        if (importer != null) {
+            cache.__setitem__(p, importer);
+        } else {
+            importer = Py.None;
+        }
 
         return importer;
     }
