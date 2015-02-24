@@ -939,8 +939,7 @@ public class gc {
      * to care for other finalizers these must call
      * {@code gc.notifyPreFinalization()} before anything else is done and
      * {@code gc.notifyPostFinalization()} afterwards; between these calls the finalizer
-     * must not terminate by throwing an exception). (Note: Using this for extern
-     * finalizers is currently experimental and needs more testing.)
+     * must not terminate by throwing an exception).
      * This works independently from monitoring, which is mainly needed to allow
      * counting of cyclic garbage in {@link #collect()}.
      * </p>
@@ -960,7 +959,6 @@ public class gc {
      * {@code gc.notifyPreFinalization()} before anything else is done and
      * {@code gc.notifyPostFinalization()} right before the finalization method returns.
      * Between these calls the finalizer must not terminate by throwing an exception.
-     * (Note: Using this for extern finalizers is currently experimental and needs more testing.)
      * </p>
      * <p>
      * We recommend to use this feature in a way such that false-positive runs are
@@ -1039,8 +1037,7 @@ public class gc {
      * to care for other finalizers these must call
      * {@code gc.notifyPreFinalization()} before anything else is done and
      * {@code gc.notifyPostFinalization()} afterwards; between these calls the finalizer
-     * must not terminate by throwing an exception). (Note: Using this for extern
-     * finalizers is currently experimental and needs more testing.)
+     * must not terminate by throwing an exception).
      * This works independently from monitoring (which is mainly needed to allow
      * garbage counting in {@link #collect()}).
      * </p>
@@ -1061,7 +1058,6 @@ public class gc {
      * {@code gc.notifyPreFinalization()} before anything else is done and
      * {@code gc.notifyPostFinalization()} right before the finalization method returns.
      * Between these calls the finalizer must not terminate by throwing an exception.
-     * (Note: Using this for extern finalizers is currently experimental and needs more testing.)
      * </p>
      * <p>
      * If it runs too early, we can at least guarantee that it will run again after
@@ -1532,7 +1528,7 @@ public class gc {
      * Not supported by Jython.
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py#NotImplementedError
+     * @throws org.python.core.Py.NotImplementedError
      */
     public static void disable() {
         throw Py.NotImplementedError("can't disable Java GC");
@@ -2000,7 +1996,7 @@ public class gc {
      * Not supported by Jython.
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py#NotImplementedError
+     * @throws org.python.core.Py.NotImplementedError
      */
     public static PyObject get_count() {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2047,7 +2043,7 @@ public class gc {
      * Not supported by Jython.
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py#NotImplementedError
+     * @throws org.python.core.Py.NotImplementedError
      */
     public static void set_threshold(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2057,7 +2053,7 @@ public class gc {
      * Not supported by Jython.
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py#NotImplementedError
+     * @throws org.python.core.Py.NotImplementedError
      */
     public static PyObject get_threshold() {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2067,7 +2063,7 @@ public class gc {
      * Not supported by Jython.
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py#NotImplementedError
+     * @throws org.python.core.Py.NotImplementedError
      */
     public static PyObject get_objects() {
         throw Py.NotImplementedError("not applicable to Java GC");

@@ -2,10 +2,12 @@ package org.python.core;
 
 /**
  * <p>
- * This interface defines a CPython equivalent traverse mechanism allowing
- * to detect reference cycles. While this is crucial for cyclic gc support
- * in CPython, it only serves debugging purposes in Jython. As a side effect
- * it allows a more complete implementation of the gc module.
+ * This interface defines a
+ * <a href="https://docs.python.org/2.7/c-api/gcsupport.html" target="_blank">
+ * CPython equivalent traverse mechanism
+ * </a> allowing to detect reference cycles. While this is crucial for cyclic
+ * gc support in CPython, it only serves debugging purposes in Jython. As a side
+ * effect it allows a more complete implementation of the gc module.
  * </p>
  * <p>
  * Note that implementing this interface is only OPTIONAL.<b> Gc will work fine
@@ -32,7 +34,8 @@ package org.python.core;
  * gc behaviors.
  * </p>
  * <p>
- * Further this mechanism is crucial for some aspects of gc-support of the JyNI
+ * Further this mechanism is crucial for some aspects of gc-support of the
+ * <a href="http://www.jyni.org" target="_blank">JyNI</a>
  * project. JyNI does not strictly depend on it to emulate CPython's gc
  * for extensions, but would have to perform inefficient reflection-based
  * traversal in some edge-cases (which might also conflict security managers).
@@ -447,19 +450,23 @@ package org.python.core;
 public interface Traverseproc {
 
     /**
-     * Traverses all reachable {@code PyObject}s.
+     * Traverses all directly contained {@code PyObject}s.
      * Like in CPython, {@code arg} must be passed
      * unmodified to {@code visit} as its second parameter.
-     * If {@code visit.visit} returns nonzero, this return value
+     * If {@link Visitproc#visit(PyObject, Object)} returns
+     * nonzero, this return value
      * must be returned immediately by traverse.
+     * 
+     * {@link Visitproc#visit(PyObject, Object)} must not be
+     * called with a {@code null} PyObject-argument.
      */
     public int traverse(Visitproc visit, Object arg);
 
     /**
      * Optional operation.
      * Should only be implemented if it is more efficient
-     * than calling {@code traverse} with a visitproc
-     * that just watches out for {@code ob}.
+     * than calling {@link #traverse(Visitproc, Object)} with
+     * a visitproc that just watches out for {@code ob}.
      * Must return {@code false} if {@code ob} is {@code null}.
      */
     public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException;

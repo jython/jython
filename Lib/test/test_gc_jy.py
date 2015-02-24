@@ -18,6 +18,7 @@ except ImportError:
     #i.e. not Jython is running
     pass
 
+
 class GCTests_Jy_CyclicGarbage(unittest.TestCase):
 
     @classmethod
@@ -37,7 +38,6 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
             gc.setJythonGCFlags(cls.savedJythonGCFlags)
         except Exception:
             pass
-
 
     # In contrast to the tests in test_gc, these finalizer tests shall work
     # even if gc-monitoring is disabled.
@@ -65,7 +65,6 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
         else:
             self.fail("didn't find obj in garbage (finalizer)")
         gc.garbage.remove(obj)
-
 
     def test_finalizer_newclass(self):
         # A() is uncollectable if it is part of a cycle, make sure it shows up
@@ -115,17 +114,13 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
 class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
 
     def test_finalization_preprocess_and_postprocess(self):
-        #print "test_finalization_preprocess_and_postprocess"
         #Note that this test is done here again (already was in another class
         #in this module), to see that everything works as it should also with
         #a different flag-context.
-        #print "test_finalization_preprocess_and_postprocess"
-        #gc.removeJythonGCFlags(gc.DONT_FINALIZE_RESURRECTED_OBJECTS)
         comments = []
         self0 = self
         class A:
             def __del__(self):
-                #print "del A"
                 self0.assertIn("run PreProcess", comments)
                 comments.append("A del")
                 #let's simulate a time-consuming finalizer
@@ -167,6 +162,55 @@ class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
         #and must wait for the finalizer of A
         time.sleep(2)
         self.assertIn("run PostProcess", comments)
+        comments = []
+        gc.unregisterPreFinalizationProcess(prePr)
+        gc.unregisterPostFinalizationProcess(postPr)
+
+    def test_with_extern_NonPyObjectFinalizer_that_notifies_gc(self):
+        #Note that this test is done here again (already was in another class
+        #in this module), to see that everything works as it should also with
+        #a different flag-context.
+        comments = []
+        class A:
+            def __init__(self, index):
+                self.index = index
+
+            def __del__(self):
+                comments.append("A_del_"+str(self.index))
+
+        class PreProcess(Runnable):
+            preCount = 0
+            def run(self):
+                PreProcess.preCount += 1
+
+        class PostProcess(Runnable):
+            postCount = 0
+            def run(self):
+                PostProcess.postCount += 1
+
+        prePr = PreProcess()
+        postPr = PostProcess()
+        time.sleep(1) #   <- to avoid that the newly registered processes
+                      #      become subject to previous run (remember: We
+                      #      are not in monitor-mode, i.e. gc runs async.
+        gc.registerPreFinalizationProcess(prePr)
+        gc.registerPostFinalizationProcess(postPr)
+        for i in range(4):
+            f = A(i)
+            del f
+        #NastyFinalizer would cause this test occasionally to fail
+        externFinalizer = GCTestHelper.NotSoNastyFinalizer()
+        del externFinalizer
+        for i in range(4, 8):
+            f = A(i)
+            del f
+        System.gc()
+        #we wait a bit longer here, since PostProcess runs asynchronous
+        #and must wait for the finalizer of A
+        time.sleep(4)
+        self.assertEqual(len(comments), 8)
+        self.assertEqual(PreProcess.preCount, 1)
+        self.assertEqual(PostProcess.postCount, 1)
         comments = []
         gc.unregisterPreFinalizationProcess(prePr)
         gc.unregisterPostFinalizationProcess(postPr)
@@ -367,7 +411,6 @@ class GCTests_Jy_Monitoring(unittest.TestCase):
         del a
         del c
         #gc.set_debug(gc.DEBUG_SAVEALL)
-        #gc.collect()
         self.assertEqual(gc.collect(), 0) #c is not cyclic and a, b are resurrected,
                                           #so nothing to count here
         #self.asserEqual(len(gc.garbage), 0)
@@ -381,7 +424,6 @@ class GCTests_Jy_Monitoring(unittest.TestCase):
 
     def test_notifyRerun_for_delayed_finalization(self):
         gc.collect()
-        resurrect = []
         comments = []
 
         class Test_Finalizable(object):
@@ -617,7 +659,6 @@ class GCTests_Jy_TraverseByReflection(unittest.TestCase):
             gc.stopMonitoring()
         except Exception:
             pass
-
 
     def test_weakref_after_resurrection_threadsafe(self):
         gc.collect()

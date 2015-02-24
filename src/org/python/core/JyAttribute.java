@@ -40,7 +40,7 @@ public abstract class JyAttribute implements Serializable {
      * Stores list of weak references linking to this {@code PyObject}.
      * This list is weakref-based, so it does not keep the
      * weakrefs alive. This is the only way to find out which
-     * weakrefs (i.e. org.python.modules._weakref.AbstractReference)
+     * weakrefs (i.e. {@link org.python.modules._weakref.AbstractReference})
      * linked to the object after a resurrection. A weak
      * hash-map-based approach for this purpose would break on
      * resurrection.
@@ -48,7 +48,7 @@ public abstract class JyAttribute implements Serializable {
     public static final byte WEAK_REF_ATTR = 0; //first transient
 
     /**
-     * Reserved for use by <a href="http://www.jyni.org">JyNI</a>.
+     * Reserved for use by <a href="http://www.jyni.org" target="_blank">JyNI</a>.
      */
     public static final byte JYNI_HANDLE_ATTR = 1;
 

@@ -4,7 +4,12 @@ import org.python.core.*;
 import java.util.*;
 
 public class GCTestHelper {
-    
+
+	/**
+     * NastyFinalizer is a non-PyObject class with a time-consuming
+     * finalizer that does not notify Jython-gc. This would cause
+     * some tests in test_gc_jy.py to fail.
+     */
     public static class NastyFinalizer {
 
         public void finalize() {
@@ -12,6 +17,24 @@ public class GCTestHelper {
                 Thread.sleep(2000);
             } catch (InterruptedException ie) {
             }
+        }
+    }
+
+    /**
+     * In contrast to Nasty finalizer, this class - still equally
+     * time-consuming - calls {@code gc.notifyPreFinalization()}
+     * and {@code gc.notifyPostFinalization()} and thus lets all
+     * tests work as expected.
+     */
+    public static class NotSoNastyFinalizer {
+
+        public void finalize() {
+            org.python.modules.gc.notifyPreFinalization();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ie) {
+            }
+            org.python.modules.gc.notifyPostFinalization();
         }
     }
 

@@ -1963,9 +1963,6 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
-//        Potential PyObject refs in PyInstance:
-//        public transient PyClass instclass;
-//        public PyObject __dict__;
         if (instclass != null) {
             int retVal = visit.visit(instclass, arg);
             if (retVal != 0) {

@@ -33,12 +33,15 @@ public class PyUnicodeDerived extends PyUnicode implements Slotted,FinalizablePy
     public int traverseDerived(Visitproc visit,Object arg) {
         int retVal;
         for(int i=0;i<slots.length;++i) {
-            retVal=visit.visit(slots[i],arg);
-            if (retVal!=0) {
-                return retVal;
+            if (slots[i]!=null) {
+                retVal=visit.visit(slots[i],arg);
+                if (retVal!=0) {
+                    return retVal;
+                }
             }
         }
-        return traverseDictIfAny(visit,arg);
+        retVal=visit.visit(objtype,arg);
+        return retVal!=0?retVal:traverseDictIfAny(visit,arg);
     }
 
     /* end of TraverseprocDerived implementation */
