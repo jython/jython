@@ -40,14 +40,16 @@ import sun.misc.SignalHandler
 import sys
 import threading
 import time
-from java.lang import IllegalArgumentException
+from java.lang import RuntimeException
 from java.util.concurrent.atomic import AtomicReference
 
 debug = 0
 
 def _init_signals():
-    # install signals by checking for standard names
-    # using IllegalArgumentException to diagnose
+    # Install signals by checking for standard names, by using
+    # RuntimeException to diagnose. On some platforms like J9,
+    # RuntimeException wraps IllegalArgumentException, but it's also
+    # the superclass of IllegalArgumentException.
 
     possible_signals = """
         SIGABRT
@@ -89,7 +91,7 @@ def _init_signals():
     for signal_name in possible_signals:
         try:
             java_signal = sun.misc.Signal(signal_name[3:])
-        except IllegalArgumentException:
+        except RuntimeException:
             continue
 
         signal_number = java_signal.getNumber()
@@ -147,7 +149,7 @@ def signal(sig, action):
 def _register_signal(signal, action):
     try:
         return sun.misc.Signal.handle(signal, action)
-    except IllegalArgumentException, err:
+    except RuntimeException, err:
         raise ValueError(err.getMessage())
 
 
@@ -231,7 +233,7 @@ def alarm(time):
     def raise_alarm():
         try:
             sun.misc.Signal.raise(_signals[SIGALRM])
-        except IllegalArgumentException, err:
+        except RuntimeException, err:
             raise ValueError(err.getMessage())
 
     if time > 0:
