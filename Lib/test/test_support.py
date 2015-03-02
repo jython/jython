@@ -1456,7 +1456,8 @@ def retry(exceptions, tries=6, delay=3, backoff=1.2):
                 try:
                     return f(*args, **kwds)
                 except exceptions as e:
-                    print "Got %s, retrying in %.2f seconds..." % (str(e), mdelay)
+                    if verbose:
+                        print "Got %s, retrying in %.2f seconds..." % (str(e), mdelay)
                     # FIXME resource cleanup continues to be an issue
                     # in terms of tests we use from CPython. This only
                     # represents a bandaid - useful as it might be -
