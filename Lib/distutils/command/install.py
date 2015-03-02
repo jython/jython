@@ -89,7 +89,14 @@ INSTALL_SCHEMES = {
         'headers': '$base/Include/$dist_name',
         'scripts': '$base/bin',
         'data'   : '$base',
-        }
+        },
+    'java_user': {
+        'purelib': '$usersite',
+        'platlib': '$usersite',
+        'headers': '$userbase/include/python$py_version_short/$dist_name',
+        'scripts': '$userbase/bin',
+        'data'   : '$userbase',
+        },
     }
 
 # The keys to an installation scheme; if any new types of files are to be
