@@ -20,6 +20,49 @@ from __future__ import division
 import time as _time
 import math as _math
 import struct as _struct
+import sys as _sys
+
+if _sys.platform.startswith('java'):
+    from java.lang import Object
+    from java.sql import Date, Time, Timestamp
+    from java.util import Calendar, GregorianCalendar, TimeZone
+    from org.python.core import Py
+
+    # Java does have the distinction between naive and aware times and
+    # datetimes provided by Python. To avoid using the local timezone,
+    # we assume it is UTC as this is most conventional (and least
+    # surprising). See for example - or in this library itself! -
+    # https://docs.python.org/2.7/library/datetime.html#datetime.datetime.utcnow
+    # - tzinfo is None
+
+    _utc_timezone = TimeZone.getTimeZone("UTC")
+    _is_jython = True
+
+    def _make_java_utc_calendar():
+        cal = GregorianCalendar(_utc_timezone)
+        cal.clear()
+        return cal
+
+    def _make_java_calendar(d):
+        tzinfo = d.tzinfo
+        if tzinfo == None:
+            cal = GregorianCalendar(_utc_timezone)
+        else:
+            tzname = tzinfo.tzname(d)
+            if tzname != None:
+                # Only applicable if Python code is using the Olson
+                # timezone database, which is what Java uses
+                tz = TimeZone.getTimeZone(tzname)
+                if tz.getID() != tzname and tz.getID() == "GMT":
+                    cal = GregorianCalendar(_utc_timezone)
+                    cal.set(Calendar.DST_OFFSET, int(tzinfo.dst(d).total_seconds() * 1000))
+                    cal.set(Calendar.ZONE_OFFSET, int(tzinfo.utcoffset(d).total_seconds() * 1000))
+                else:
+                    cal = GregorianCalendar(tz)
+        return cal
+else:
+    _is_jython = False
+
 
 def _cmp(x, y):
     return 0 if x == y else 1 if x > y else -1
@@ -1026,6 +1069,18 @@ class date(object):
     def __reduce__(self):
         return (self.__class__, self._getstate())
 
+    if _is_jython:
+        def __tojava__(self, java_class):
+            if java_class not in (Calendar, Date, Object):
+                return Py.NoConversion
+            calendar = _make_java_utc_calendar()
+            calendar.set(self.year, self.month - 1, self.day)
+            if java_class == Calendar:
+                return calendar
+            else:
+                return Date(calendar.getTimeInMillis())
+
+
 _date_class = date  # so functions w/ args named "date" can get at the class
 
 date.min = date(1, 1, 1)
@@ -1430,6 +1485,21 @@ class time(object):
 
     def __reduce__(self):
         return (time, self._getstate())
+
+    if _is_jython:
+        def __tojava__(self, java_class):
+            if java_class not in (Calendar, Time, Object):
+                return Py.NoConversion
+            calendar = _make_java_calendar(self)
+            if calendar == Py.NoConversion:
+                return Py.NoConversion
+            epoch_ms = (self.hour * 3600 + self.minute * 60 + self.second) * 1000 + self.microsecond // 1000
+            calendar.setTimeInMillis(epoch_ms)
+            if java_class == Calendar:
+                return calendar
+            else:
+                return Time(calendar.getTimeInMillis())
+
 
 _time_class = time  # so functions w/ args named "time" can get at the class
 
@@ -1927,6 +1997,24 @@ class datetime(date):
 
     def __reduce__(self):
         return (self.__class__, self._getstate())
+
+    if _is_jython:
+        def __tojava__(self, java_class):
+            if java_class not in (Calendar, Timestamp, Object):
+                return Py.NoConversion
+            calendar = _make_java_calendar(self)
+            if calendar == Py.NoConversion:
+                return Py.NoConversion
+            calendar.set(self.year, self.month - 1, self.day,
+                         self.hour, self.minute, self.second)
+
+            if java_class == Calendar:
+                calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
+                return calendar
+            else:
+                timestamp = Timestamp(calendar.getTimeInMillis())
+                timestamp.setNanos(self.microsecond * 1000)
+                return timestamp
 
 
 datetime.min = datetime(1, 1, 1)
