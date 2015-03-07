@@ -449,12 +449,19 @@ public class Time implements ClassDictInit
     }
 
     public static void sleep(double secs) {
-        try {
-            java.lang.Thread.sleep((long)(secs * 1000));
-        }
-        catch (java.lang.InterruptedException e) {
-            throw new PyException(Py.KeyboardInterrupt, "interrupted sleep");
-        }
+	if (secs == 0) {
+	    // Conform to undocumented, or at least very underdocumented, but quite
+	    // reasonable behavior in CPython. See Alex Martelli's answer,
+	    // http://stackoverflow.com/a/790246/423006
+	    java.lang.Thread.yield();
+	} else {
+	    try {
+		java.lang.Thread.sleep((long)(secs * 1000));
+	    }
+	    catch (java.lang.InterruptedException e) {
+		throw new PyException(Py.KeyboardInterrupt, "interrupted sleep");
+	    }
+	}
     }
 
     // set by classDictInit()
