@@ -121,6 +121,13 @@ class SSLSocket(object):
         if self.do_handshake_on_connect:
             self.do_handshake()
 
+    def connect_ex(self, addr):
+        log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
+        self._sock._connect(addr)
+        if self.do_handshake_on_connect:
+            self.do_handshake()
+        return self._sock.connect_ex(addr)
+
     def unwrap(self):
         self._sock.channel.pipeline().remove("ssl")
         self.ssl_handler.close()
@@ -151,7 +158,11 @@ class SSLSocket(object):
                 self._sock.connect_handlers.append(SSLInitializer(self.ssl_handler))
 
         handshake = self.ssl_handler.handshakeFuture()
-        self._sock._handle_channel_future(handshake, "SSL handshake")
+        time.sleep(0.001)  # Necessary apparently for the handler to get into a good state
+        try:
+            self._sock._handle_channel_future(handshake, "SSL handshake")
+        except socket_error, e:
+            raise SSLError(SSL_ERROR_SSL, e.strerror)
 
     # Various pass through methods to the wrapped socket
 

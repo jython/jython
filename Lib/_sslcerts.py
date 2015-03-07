@@ -28,9 +28,8 @@ except ImportError:
     from org.bouncycastle.openssl import PEMKeyPair, PEMParser
     from org.bouncycastle.openssl.jcajce import JcaPEMKeyConverter
 
-log = logging.getLogger("ssl")
 
-
+log = logging.getLogger("_socket")
 Security.addProvider(BouncyCastleProvider())
 
 
@@ -91,7 +90,9 @@ def _get_openssl_key_manager(cert_file, key_file=None):
                 elif isinstance(obj, X509CertificateHolder):
                     certs.append(cert_converter.getCertificate(obj))
 
-    assert private_key, "No private key loaded"
+    if not private_key:
+        from _socket import SSLError, SSL_ERROR_SSL
+        raise SSLError(SSL_ERROR_SSL, "No private key loaded")
     key_store = KeyStore.getInstance(KeyStore.getDefaultType())
     key_store.load(None, None)
     key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)

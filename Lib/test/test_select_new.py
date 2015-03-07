@@ -36,8 +36,8 @@ class AsynchronousServer:
         self.server_addr = self.server_socket.getsockname()
         try:
             self.server_socket.accept()
-        except socket.error:
-            pass
+        except socket.error, e:
+            pass  # at this point, always gets EWOULDBLOCK - nothing to accept
 
     def select_acceptable(self):
         return select.select([self.server_socket], [self.server_socket], [], SELECT_TIMEOUT)[0]
@@ -151,7 +151,7 @@ class AsynchronousClient(AsynchronousHandler):
         if result == errno.EISCONN:
             self.connected = True
         else:
-            assert result == errno.EINPROGRESS, \
+            assert result in [errno.EINPROGRESS, errno.ENOTCONN], \
                 "connect_ex returned %s (%s)" % (result, errno.errorcode.get(result, "Unknown errno"))
 
     def finish_connect(self):

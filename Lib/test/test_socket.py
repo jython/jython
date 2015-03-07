@@ -172,6 +172,7 @@ class ThreadableTest:
             self._assert_no_pending_threads(self.srv.group, "Server thread pool")
 
         if msg:
+            print "Got this message=%s %r" % (type(msg), msg)
             self.fail("msg={}".format(msg))
 
             

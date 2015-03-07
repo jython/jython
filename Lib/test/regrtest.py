@@ -1269,6 +1269,7 @@ _expectations = {
         # Nonreliable tests
         test_asynchat
         test_asyncore
+        test_select_new
 
         # Command line testing is hard for Jython to do, but revisit
         test_cmd_line_script
@@ -1279,9 +1280,7 @@ _expectations = {
         test_poplib
         test_smtplib
         test_socket_ssl
-        test_socketserver
         test_telnetlib
-        test_timeout
 
         test_sys_setprofile  # revisit for GC
         test_sys_settrace    # revisit for line jumping
