@@ -3,6 +3,7 @@
 Made for Jython.
 """
 from test import test_support
+from java.util import HashMap
 import unittest
 
 # The strict tests fail on PyPy (but work on CPython and Jython).
@@ -134,10 +135,105 @@ class SlottedWithWeakrefTestCase(unittest.TestCase):
         self.assert_(hasattr(Foo, '__weakref__'))
 
 
+class SpecialSlotsBaseTestCase(unittest.TestCase):
+    
+    # Tests for http://bugs.jython.org/issue2272, including support for
+    # werkzeug.local.LocalProxy
+    
+    def make_class(self, base, slot):
+        class C(base):
+            __slots__ = (slot)
+            if slot == "__dict__":
+                @property
+                def __dict__(self):
+                    return {"x": 42, "y": 47}
+                def __getattr__(self, name):
+                    try:
+                        return self.__dict__[name]
+                    except KeyError:
+                        raise AttributeError("%r object has no attribute %r" % (
+                            self.__class__.__name__, name))
+        return C
+
+    def test_dict_slot(self):
+        C = self.make_class(object, "__dict__")
+        c = C()
+        self.assertIn("__dict__", dir(c))
+        self.assertIn("x", dir(c))
+        self.assertIn("y", dir(c))
+        self.assertEqual(c.__dict__.get("x"), 42)
+        self.assertEqual(c.x, 42)
+        self.assertEqual(c.y, 47)
+        with self.assertRaisesRegexp(AttributeError, r"'C' object has no attribute 'z'"):
+            c.z
+
+    def test_dict_slot_str(self):
+        # Unlike CPython, Jython does not arbitrarily limit adding
+        # __dict__ slot to str and other types that are not object
+        C = self.make_class(str, "__dict__")
+        c = C("abc123")
+        self.assertTrue(c.startswith("abc"))
+        self.assertIn("__dict__", dir(c))
+        self.assertIn("x", dir(c))
+        self.assertIn("y", dir(c))
+        self.assertEqual(c.__dict__.get("x"), 42)
+        self.assertEqual(c.x, 42)
+        self.assertEqual(c.y, 47)
+        with self.assertRaisesRegexp(AttributeError, r"'C' object has no attribute 'z'"):
+            c.z
+
+    def test_dict_slot_subclass(self):
+        # Unlike CPython, Jython does not arbitrarily limit adding __dict__ slot to subtypes
+        class B(object):
+            @property
+            def w(self):
+                return 23
+        C = self.make_class(B, "__dict__")
+        c = C()
+        self.assertIn("__dict__", dir(c))
+        self.assertIn("x", dir(c))
+        self.assertIn("y", dir(c))
+        self.assertEqual(c.__dict__.get("x"), 42)
+        self.assertEqual(c.x, 42)
+        self.assertEqual(c.y, 47)
+        with self.assertRaisesRegexp(AttributeError, r"'C' object has no attribute 'z'"):
+            c.z
+        self.assertEqual(c.w, 23)
+
+    def test_dict_slot_subclass_java_hashmap(self):
+        C = self.make_class(HashMap, "__dict__")
+        # has everything in a HashMap, including Python semantic equivalence
+        c = C({"a": 1, "b": 2})
+        self.assertTrue(c.containsKey("a"))
+        self.assertEqual(sorted(c.iteritems()), [("a", 1), ("b", 2)])
+        # but also has a __dict__ slot for further interesting ;) possibilities
+        self.assertIn("__dict__", dir(c))
+        self.assertIn("x", dir(c))
+        self.assertIn("y", dir(c))
+        self.assertEqual(c.__dict__.get("x"), 42)
+        self.assertEqual(c.x, 42)
+        self.assertEqual(c.y, 47)
+        with self.assertRaisesRegexp(AttributeError, r"'C' object has no attribute 'z'"):
+            c.z
+
+    def test_weakref_slot(self):
+        self.assertNotIn("__weakref__", dir(object()))
+        self.assertIn("__weakref__", dir(self.make_class(object, "__weakref__")()))
+        class B(object):
+            pass
+        self.assertIn("__weakref__", dir(B()))
+        self.assertIn("__weakref__", dir(self.make_class(B, "__weakref__")()))
+        self.assertNotIn("__weakref__", dir("abc"))
+        self.assertIn("__weakref__", dir(self.make_class(str, "__weakref__")()))
+        self.assertNotIn("__weakref__", dir(HashMap()))
+        self.assertIn("__weakref__", dir(self.make_class(HashMap, "__weakref__")()))
+
+
 def test_main():
     test_support.run_unittest(SlottedTestCase,
                               SlottedWithDictTestCase,
-                              SlottedWithWeakrefTestCase)
+                              SlottedWithWeakrefTestCase,
+                              SpecialSlotsBaseTestCase)
 
 
 if __name__ == '__main__':

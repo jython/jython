@@ -102,7 +102,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     /** Mapping of Java classes to their PyTypes. */
     private static Map<Class<?>, PyType> class_to_type;
     private static Set<PyType> exposedTypes;
-    
+
     /** Mapping of Java classes to their TypeBuilders. */
     private static Map<Class<?>, TypeBuilder> classToBuilder;
 
@@ -255,19 +255,31 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
                 if (slotName.equals("__dict__")) {
                     if (!mayAddDict || wantDict) {
-                        throw Py.TypeError("__dict__ slot disallowed: we already got one");
+                        // CPython is stricter here, but this seems arbitrary. To reproduce CPython
+                        // behavior
+                        // if (base != PyObject.TYPE) {
+                        //     throw Py.TypeError("__dict__ slot disallowed: we already got one");
+                        // }
+                    } else {
+                        wantDict = true;
+                        continue;
                     }
-                    wantDict = true;
                 } else if (slotName.equals("__weakref__")) {
-                    if (!mayAddWeak || wantWeak) {
-                        throw Py.TypeError("__weakref__ slot disallowed: we already got one");
+                    if ((!mayAddWeak || wantWeak) && base != PyObject.TYPE) {
+                        // CPython is stricter here, but this seems arbitrary. To reproduce CPython
+                        // behavior
+                        // if (base != PyObject.TYPE) {
+                        //     throw Py.TypeError("__weakref__ slot disallowed: we already got one");
+                        // }
+                    } else {
+                        wantWeak = true;
+                        continue;
                     }
-                    wantWeak = true;
-                } else {
-                    slotName = mangleName(name, slotName);
-                    if (dict.__finditem__(slotName) == null) {
-                        dict.__setitem__(slotName, new PySlot(this, slotName, numSlots++));
-                    }
+                }
+
+                slotName = mangleName(name, slotName);
+                if (dict.__finditem__(slotName) == null) {
+                    dict.__setitem__(slotName, new PySlot(this, slotName, numSlots++));
                 }
             }
 
