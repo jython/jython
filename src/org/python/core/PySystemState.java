@@ -1546,7 +1546,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public void close() { cleanup(); }
 
-    private static class PySystemStateCloser {
+    public static class PySystemStateCloser {
 
         private final Set<Callable<Void>> resourceClosers = new LinkedHashSet<Callable<Void>>();
         private volatile boolean isCleanup = false;
@@ -1568,57 +1568,64 @@ public class PySystemState extends PyObject implements AutoCloseable,
             }
         }
 
-        private synchronized void registerCloser(Callable<Void> closer) {
-            if (!isCleanup) {
-                resourceClosers.add(closer);
+        private void registerCloser(Callable<Void> closer) {
+            synchronized (PySystemStateCloser.class) {
+                if (!isCleanup) {
+                    resourceClosers.add(closer);
+                }
             }
         }
 
-        private synchronized boolean unregisterCloser(Callable<Void> closer) {
-            return resourceClosers.remove(closer);
+        private boolean unregisterCloser(Callable<Void> closer) {
+            synchronized (PySystemStateCloser.class) {
+                return resourceClosers.remove(closer);
+            }
         }
 
         private synchronized void cleanup() {
-            if (isCleanup) {
-                return;
-            }
-            isCleanup = true;
-
-            // close this thread so we can unload any associated classloaders in cycle
-            // with this instance
-            if (shutdownHook != null) {
-                try {
-                    Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                } catch (IllegalStateException e) {
-                    // JVM is already shutting down, so we cannot remove this shutdown hook anyway
+            synchronized (PySystemStateCloser.class) {
+                if (isCleanup) {
+                    return;
                 }
-            }
+                isCleanup = true;
 
-            // Close the listed resources (and clear the list)
-            runClosers();
-            resourceClosers.clear();
-
-            // XXX Not sure this is ok, but it makes repeat testing possible.
-            // Re-enable the management of resource closers
-            isCleanup = false;
-        }
-
-        private synchronized void runClosers() {
-            // resourceClosers can be null in some strange cases
-            if (resourceClosers != null) {
-            /*
-             * Although a Set, the container iterates in the order closers were added. Make a Deque
-             * of it and deal from the top.
-             */
-                LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
-                Iterator<Callable<Void>> iter = rc.descendingIterator();
-
-                while (iter.hasNext()) {
-                    Callable<Void> callable = iter.next();
+                // close this thread so we can unload any associated classloaders in cycle
+                // with this instance
+                if (shutdownHook != null) {
                     try {
-                        callable.call();
-                    } catch (Exception e) {
-                        // just continue, nothing we can do
+                        Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                    } catch (IllegalStateException e) {
+                        // JVM is already shutting down, so we cannot remove this shutdown hook anyway
+                    }
+                }
+
+                // Close the listed resources (and clear the list)
+                runClosers();
+                resourceClosers.clear();
+
+                // XXX Not sure this is ok, but it makes repeat testing possible.
+                // Re-enable the management of resource closers
+                isCleanup = false;
+            }
+        }
+        private void runClosers() {
+            synchronized (PySystemStateCloser.class) {
+                // resourceClosers can be null in some strange cases
+                if (resourceClosers != null) {
+                    /*
+                     * Although a Set, the container iterates in the order closers were added. Make a Deque
+                     * of it and deal from the top.
+                     */
+                    LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
+                    Iterator<Callable<Void>> iter = rc.descendingIterator();
+
+                    while (iter.hasNext()) {
+                        Callable<Void> callable = iter.next();
+                        try {
+                            callable.call();
+                        } catch (Exception e) {
+                            // just continue, nothing we can do
+                        }
                     }
                 }
             }
@@ -1639,9 +1646,11 @@ public class PySystemState extends PyObject implements AutoCloseable,
         private class ShutdownCloser implements Runnable {
 
             @Override
-            public synchronized void run() {
-                runClosers();
-                resourceClosers.clear();
+            public void run() {
+                synchronized (PySystemStateCloser.class) {
+                    runClosers();
+                    resourceClosers.clear();
+                }
             }
         }
 

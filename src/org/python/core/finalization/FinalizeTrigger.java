@@ -3,6 +3,7 @@ package org.python.core.finalization;
 import org.python.core.PyObject;
 import org.python.core.JyAttribute;
 import org.python.core.Py;
+import org.python.core.PySystemState;
 import org.python.modules.gc;
 
 /**
@@ -76,21 +77,26 @@ public class FinalizeTrigger {
     }
 
     public static void runFinalizer(PyObject toFinalize, boolean runBuiltinOnly) {
-        if (!runBuiltinOnly) {
-            if (toFinalize instanceof FinalizablePyObjectDerived) {
-                try {
-                    ((FinalizablePyObjectDerived) toFinalize).__del_derived__();
-                } catch (Exception e) {}
-            } else if (toFinalize instanceof FinalizablePyObject) {
-                try {
-                    ((FinalizablePyObject) toFinalize).__del__();
-                } catch (Exception e) {}
+        synchronized (PySystemState.PySystemStateCloser.class) {
+            if (!runBuiltinOnly) {
+                if (toFinalize instanceof FinalizablePyObjectDerived) {
+                    try {
+                        ((FinalizablePyObjectDerived) toFinalize).__del_derived__();
+                    } catch (Exception e) {
+                    }
+                } else if (toFinalize instanceof FinalizablePyObject) {
+                    try {
+                        ((FinalizablePyObject) toFinalize).__del__();
+                    } catch (Exception e) {
+                    }
+                }
             }
-        }
-        if (toFinalize instanceof FinalizableBuiltin) {
-            try {
-                ((FinalizableBuiltin) toFinalize).__del_builtin__();
-            } catch (Exception e) {}
+            if (toFinalize instanceof FinalizableBuiltin) {
+                try {
+                    ((FinalizableBuiltin) toFinalize).__del_builtin__();
+                } catch (Exception e) {
+                }
+            }
         }
     }
 
