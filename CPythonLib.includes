@@ -116,6 +116,7 @@ pipes.py
 plistlib.py
 poplib.py
 posixfile.py
+posixpath.py
 pprint.py
 profile.py
 pstats.py

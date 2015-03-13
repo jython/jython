@@ -11,7 +11,7 @@ is raised if the entry asked for cannot be found.
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
 from os import _name, _posix_impl
-from org.python.core.Py import newString
+from org.python.core.Py import newStringOrUnicode
 import sys
 
 if _name == 'nt':
@@ -30,9 +30,9 @@ class struct_passwd(tuple):
              'pw_dir', 'pw_shell']
 
     def __new__(cls, pwd):
-        pwd = (newString(pwd.loginName), newString(pwd.password), int(pwd.UID),
-               int(pwd.GID), newString(pwd.GECOS), newString(pwd.home),
-               newString(pwd.shell))
+        pwd = (newStringOrUnicode(pwd.loginName), newStringOrUnicode(pwd.password), int(pwd.UID),
+               int(pwd.GID), newStringOrUnicode(pwd.GECOS), newStringOrUnicode(pwd.home),
+               newStringOrUnicode(pwd.shell))
         return tuple.__new__(cls, pwd)
 
     def __getattr__(self, attr):
