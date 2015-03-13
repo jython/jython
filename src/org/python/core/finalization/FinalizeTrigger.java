@@ -2,7 +2,6 @@ package org.python.core.finalization;
 
 import org.python.core.PyObject;
 import org.python.core.JyAttribute;
-import org.python.core.Py;
 import org.python.core.PySystemState;
 import org.python.modules.gc;
 
@@ -131,27 +130,27 @@ public class FinalizeTrigger {
     }
 
     protected boolean isCyclic() {
-    	gc.CycleMarkAttr cm = (gc.CycleMarkAttr)
-    			JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
+        gc.CycleMarkAttr cm = (gc.CycleMarkAttr)
+                JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
         if (cm != null && cm.isCyclic()) {
             return true;
         } else {
             gc.markCyclicObjects(toFinalize, (flags & NOT_FINALIZABLE_FLAG) == 0);
             cm = (gc.CycleMarkAttr)
-        			JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
+                    JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
             return cm != null && cm.isCyclic();
         }
     }
 
     protected boolean isUncollectable() {
-    	gc.CycleMarkAttr cm = (gc.CycleMarkAttr)
-    			JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
+        gc.CycleMarkAttr cm = (gc.CycleMarkAttr)
+                JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
         if (cm != null && cm.isUncollectable()) {
             return true;
         } else {
             gc.markCyclicObjects(toFinalize, (flags & NOT_FINALIZABLE_FLAG) == 0);
             cm = (gc.CycleMarkAttr)
-        			JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
+                    JyAttribute.getAttr(toFinalize, JyAttribute.GC_CYCLE_MARK_ATTR);
             return cm != null && cm.isUncollectable();
         }
     }
@@ -167,13 +166,13 @@ public class FinalizeTrigger {
                     runFinalizer(toFinalize, (flags & ONLY_BUILTIN_FLAG) != 0);
                 }
             } else {
-            	if ((flags & NOT_FINALIZABLE_FLAG) == 0) {
-            		runFinalizer(toFinalize, (flags & ONLY_BUILTIN_FLAG) != 0);
-            	}
+                if ((flags & NOT_FINALIZABLE_FLAG) == 0) {
+                    runFinalizer(toFinalize, (flags & ONLY_BUILTIN_FLAG) != 0);
+                }
             }
             if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		gc.writeDebug("gc", "finalization of "+toFinalize);
-        	}
+                gc.writeDebug("gc", "finalization of "+toFinalize);
+            }
             if (saveGarbage == 1 || (saveGarbage == 0 &&
                     (gc.get_debug() & gc.DEBUG_SAVEALL) != 0 && isCyclic())) {
                 if ((flags & NOT_FINALIZABLE_FLAG) == 0) {
@@ -185,14 +184,14 @@ public class FinalizeTrigger {
                 }
                 gc.garbage.add(toFinalize);
                 if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-                	gc.writeDebug("gc", toFinalize+" added to garbage.");
-            	}
+                    gc.writeDebug("gc", toFinalize+" added to garbage.");
+                }
             }
         }
         if ((flags & NOTIFY_GC_FLAG) != 0) {
-        	if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		gc.writeDebug("gc", "notify finalization of "+toFinalize);
-        	}
+            if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
+                gc.writeDebug("gc", "notify finalization of "+toFinalize);
+            }
             gc.notifyFinalize(toFinalize);
             flags &= ~NOTIFY_GC_FLAG;
         }
@@ -202,9 +201,9 @@ public class FinalizeTrigger {
         flags |= FINALIZED_FLAG;
         gc.notifyPreFinalization();
         if (gc.delayedFinalizationEnabled() && toFinalize != null) {
-        	if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
-        		gc.writeDebug("gc", "delayed finalization for "+toFinalize);
-        	}
+            if ((gc.getJythonGCFlags() & gc.VERBOSE_FINALIZE) != 0) {
+                gc.writeDebug("gc", "delayed finalization for "+toFinalize);
+            }
             gc.registerForDelayedFinalization(toFinalize);
         } else {
             performFinalization();

@@ -26,8 +26,149 @@ import org.python.core.Untraversable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules._weakref.GlobalRef;
 
-import com.sun.management.GarbageCollectionNotificationInfo;
+//These imports belong to the out-commented section on MXBean-based
+//GC-sync far below. That section is kept to document this failed
+//approach and allow easy reproduction of this failure.
+//import java.lang.management.*;
+//import javax.management.*;
+//import javax.management.openmbean.*;
 
+/**
+ * <p>
+ * In Jython, the gc-module notably differs from that in CPython.
+ * This comes from the different ways Jython and CPython perform
+ * garbage-collection. While CPython's garbage collection is based on
+ * <a href="http://en.wikipedia.org/wiki/Reference_counting" target="_blank">
+ * reference-counting</a>, Jython is backed by Java's gc, which is
+ * based on a
+ * <a href="http://en.wikipedia.org/wiki/Tracing_garbage_collection" target="_blank">
+ * mark-and-sweep-approach</a>.
+ * </p>
+ * <p>
+ * This difference becomes most notable if finalizers are involved that perform resurrection.
+ * While the resurrected object itself behaves rather similar between Jython and CPython,
+ * things are more delicate with objects that are reachable (i.e. strongly referenced)
+ * via the resurrected object exclusively.
+ * While in CPython such objects do not get their finalizers called, Jython/Java would
+ * call all their finalizers. That is because Java detects the whole unreachable subgraph
+ * as garbage and thus calls all their finalizers without any chance of direct intervention.
+ * CPython instead detects the unreachable object and calls its finalizer, which makes the
+ * object reachable again. Then all other objects are reachable from it and CPython does not
+ * treat them as garbage and does not call their finalizers at all.
+ * This further means that in Jython weak references to such indirectly resurrected objects
+ * break, while these persist in CPython.
+ * </p>
+ * <p>
+ * As of Jython 2.7, the gc-module offers some options to emulate CPython-behavior.
+ * Especially see the flags {@link #PRESERVE_WEAKREFS_ON_RESURRECTION},
+ * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} and {@link #DONT_FINALIZE_CYCLIC_GARBAGE}
+ * for this.
+ * </p>
+ * <p>
+ * Another difference is that CPython's gc-module offers some debug-features like counting
+ * of collected cyclic trash, which are hard to support by Jython. As of Jython 2.7 the
+ * introduction of a traverseproc-mechanism (c.f. {@link org.python.core.Traverseproc})
+ * made support of these features feasible. As support of these features comes
+ * with a significant emulation-cost, one must explicitly tell gc to perform this.
+ * To make objects subject to cyclic trash-counting, these objects must be gc-monitored in
+ * Jython. See {@link #monitorObject(PyObject)}, {@link #unmonitorObject(PyObject)},
+ * {@link #MONITOR_GLOBAL} and {@link #stopMonitoring()} for this.<br>
+ * If at least one object is gc-monitored, {@link #collect()} works synchronously in the
+ * sense that it blocks until all gc-monitored objects that are garbage actually have been
+ * collected and had their finalizers called and completed. {@link #collect()} will report
+ * the number of collected objects in the same manner as in CPython, i.e. counts only those
+ * that participate in reference cycles. This allows a unified test-implementation across
+ * Jython and CPython (which applies to most tests in test_gc.py). If not any object is
+ * gc-monitored, {@link #collect()} just delegates to {@link java.lang.System.gc()}, runs
+ * asynchronously (i.e. non-blocking) and returns {@link #UNKNOWN_COUNT}.
+ * See also {@link #DEBUG_SAVEALL} for a useful gc-debugging feature that is supported by
+ * Jython from version 2.7 onwards.
+ * </p>
+ * <p>
+ * Implementing all these features in Jython involved a lot of synchronization logic.
+ * While care was taken to implement this without using timeouts as far as possible and
+ * rely on locks, states and system/hardware independent synchronization techniques,
+ * this was not entirely feasible.<br>
+ * The aspects that were only feasible using a timeout are waiting for gc to enqueue all
+ * collected objects (i.e. weak references to monitored objects that were gc'ed) to the
+ * reference queue and waiting for gc to run all PyObject-finalizers.
+ * </p>
+ * <p>
+ * Waiting for trash could in theory be strictly synchronized by using {@code MXBean}s, i.e.
+ * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
+ * target="_blank">GarbageCollectionNotificationInfo</a> and related API.
+ * However, experiments showed that the arising GC-notifications do not reliably indicate
+ * when enqueuing was done for a specific GC-run. We kept the experimental implementation
+ * in source-code comments to allow easy reproducibility of this issue. (Note that out-commented
+ * code contradicts Jython-styleguide, but this one - however - is needed to document this
+ * infeasible approach and is explicitly declared accordingly).<br>
+ * But how <b>is</b> sync done now?
+ * We insert a sentinel before running gc and wait until this sentinel was collected.
+ * Timestamps are taken to give us an idea at which time-scales the gc of the current JVM
+ * performs. We then wait until twice the measured time (i.e. duration from call to
+ * {@link java.lang.System#gc()} until the sentinel reference was enqueued) has passed after
+ * the last reference was enqueued by gc. While this approach is not entirely safe in theory,
+ * it passes all tests on various systems and machines we had available for testing so far.
+ * We consider it more robust than a fixed-length timeout and regard it the best known feasible
+ * compromise to emulate synchronous gc-runs in Java.
+ * </p>
+ * <p>
+ * The other timing-based synchronization issue - waiting for finalizers to run - is solved as
+ * follows. Since PyObject-finalizers are based on
+ * {@link org.python.core.finalization.FinalizeTrigger}s, Jython has full control about
+ * these finalization process from a central point. Before such a finalizer runs, it calls
+ * {@link #notifyPreFinalization()} and when it is done, it calls
+ * {@link #notifyPostFinalization()}. While processing of a finalizer can be of arbitrary
+ * duration, it widely holds that Java's gc-thread calls the next finalizer almost
+ * instantaneously after the former. That means that a timestamp taken in
+ * {@link #notifyPreFinalization()} is usually delayed only few milliseconds
+ * - often even reported as 0 milliseconds - after the last taken timestamp in
+ * {@link #notifyPostFinalization()} (i.e. that was called by the previous finalizer).
+ * Jython's gc-module assumes the end of Java's finalization process if
+ * {@link #postFinalizationTimeOut} milliseconds passed after a call of
+ * {@link #notifyPostFinalization()} without another call to
+ * {@link #notifyPreFinalization()} in that time. The default value of
+ * {@link #postFinalizationTimeOut} is {@code 100}, which is far larger than the
+ * usual almost-zero duration between finalizer calls.<br>
+ * This process can be disturbed by third-party finalizers of non-PyObjects brought
+ * into the process by external libraries. If these finalizers are of short duration
+ * (which applies to typical finalizers), one can deal with this by adjusting
+ * {@link #postFinalizationTimeOut}, which was declared {@code public} for exactly this
+ * purpose. However if the external framework causing the issue is Jython-aware, a
+ * cleaner solution would be to let its finalizers call {@link #notifyPreFinalization()}
+ * and {@link #notifyPostFinalization()} appropriately. In that case these finalizers
+ * must not terminate by throwing an exception before {@link #notifyPostFinalization()}
+ * was called. This is a strict requirement, since a deadlock can be caused otherwise.<br>
+ * <br>
+ * Note that the management API
+ * (c.f.
+ * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html
+ * target="_blank">com.sun.management.GarbageCollectionNotificationInfo</a>) does not emit any
+ * notifications that allow to detect the end of the finalization-phase. So this API
+ * provides no alternative to the described technique.
+ * </p>
+ * <p>
+ * Usually Java's gc provides hardly any guarantee about its collection-  and finalization-
+ * process. It not even guarantees that finalizers are called at all (c.f.
+ * <a href="http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java"
+ * target="_blank">http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java</a>).
+ * While at least the most common JVM implementations usually <b>do</b> call finalizers
+ * reliably under normal conditions, there still is no specific finalization-order guaranteed
+ * (one might reasonably expect that this would be related to reference-connection graph
+ * topology, but this appears not to be the case).
+ * However Jython now offers some functionality to compensate this
+ * situation. Via {@link #registerPreFinalizationProcess(Runnable)} and
+ * {@link #registerPostFinalizationProcess(Runnable)} and related methods one can now
+ * listen to beginning and end of the finalization process. Note that this functionality
+ * relies on the technique described in the former paragraph (i.e. based on calls to
+ * {@link #notifyPreFinalization()} and {@link #notifyPostFinalization()}) and thus
+ * underlies its unsafety, if third-party finalizers are involved. Such finalizers can
+ * cause false-positive runs of registered (pre/post)-finalization-processes, so this
+ * feature should be used with some care. It is recommended to use it only in such a way
+ * that false-positive runs would not cause serious harm, but only some loss in
+ * performance or so.
+ * </p>
+ */
 public class gc {
     /**
      * A constant that can occur as result of {@link #collect()} and
@@ -347,7 +488,7 @@ public class gc {
     private static List<Runnable> preFinalizationProcess, postFinalizationProcess;
     private static List<Runnable> preFinalizationProcessRemove, postFinalizationProcessRemove;
     private static Thread postFinalizationProcessor;
-    private static long postFinalizationTimeOut = 100;
+    public static long postFinalizationTimeOut = 100;
     private static long postFinalizationTimestamp = System.currentTimeMillis()-2*postFinalizationTimeOut;
     private static int openFinalizeCount = 0;
     private static boolean postFinalizationPending = false;
@@ -611,8 +752,7 @@ public class gc {
         }
 
         protected void finalize() throws Throwable {
-            //TODO: Find out why this would cause test to fail:
-            //notifyPreFinalization();
+            notifyPreFinalization();
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
                 writeDebug("gc", "Sentinel finalizer called...");
             }
@@ -631,7 +771,7 @@ public class gc {
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
                 writeDebug("gc", "Sentinel finalizer done");
             }
-            //notifyPostFinalization();
+            notifyPostFinalization();
         }
     }
 
@@ -898,7 +1038,7 @@ public class gc {
 
 //--------------Finalization preprocess/postprocess section--------------------
 
-    protected static class PostFinalizationProcessor implements Runnable {
+    private static class PostFinalizationProcessor implements Runnable {
         protected static PostFinalizationProcessor defaultInstance =
                 new PostFinalizationProcessor();
 
@@ -1627,8 +1767,8 @@ public class gc {
                 // objects get monitored, because with monitorGlobal activated
                 // the objects get monitored just when they are created and some
                 // of them are in an invalid state then and cannot directly obtain
-                // their string representation (produce overflow errors and such bad
-                // stuff). So we do it here...
+                // their string representation (would produce overflow errors and
+                // such bad stuff). So we do it here...
                 List<WeakReferenceGC> lst = new ArrayList<>();
                 for (WeakReferenceGC wr: monitoredObjects) {
                     if (wr.str == null) {
@@ -1666,7 +1806,6 @@ public class gc {
             } else if ((gcFlags & VERBOSE_COLLECT) != 0) {
                 writeDebug("gc", "sync collect done.");
             }
-
             delayedFinalizationMode = DO_NOTHING_SPECIAL;
             gcRunning.set(false);
             result = stat[0];
@@ -1766,8 +1905,6 @@ public class gc {
             }
         }
         maxWaitTime = initWaitTime;
-        WeakReference<GCSentinel> sentRef =
-        new WeakReference<>(new GCSentinel(Thread.currentThread()), gcTrash);
         lastRemoveTimeStamp = System.currentTimeMillis();
         if (finalizeWaitCount != 0) {
             System.err.println("Finalize wait count should be initially 0!");
@@ -1812,56 +1949,31 @@ public class gc {
             writeDebug("gc", "call System.gc.");
         }
         cyclicLookup = null;
-        System.gc();
-        List<WeakReferenceGC> collectBuffer = null;
-        if (needsCollectBuffer()) {
-            collectBuffer = new ArrayList<>();
-        }
-        long removeTime;
-        try {
-            while(true) {
-                removeTime = System.currentTimeMillis()-lastRemoveTimeStamp;
-                if (removeTime > maxWaitTime) {
-                    maxWaitTime = removeTime;
-                }
-                lastRemoveTimeStamp = System.currentTimeMillis();
-                trash = gcTrash.remove(Math.max(gcRecallTime, maxWaitTime*defaultWaitFactor));
-                if (trash != null) {
-                    if (trash instanceof WeakReferenceGC) {
-                        synchronized(monitoredObjects) {
-                            monitoredObjects.remove(trash);
-                        }
-                        //We avoid counting jython-specific objects in order to
-                        //obtain CPython-comparable results.
-                        if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
-                            ++stat[0];
-                            if (collectBuffer != null) {
-                                collectBuffer.add((WeakReferenceGC) trash);
-                            }
-                            if ((gcFlags & VERBOSE_COLLECT) != 0) {
-                                writeDebug("gc", "Collected cyclic object: "+trash);
-                            }
-                        }
-                        if (((WeakReferenceGC) trash).hasFinalizer) {
-                            ++finalizeWaitCount;
-                            if ((gcFlags & VERBOSE_FINALIZE) != 0) {
-                                writeDebug("gc", "Collected finalizable object: "+trash);
-                                writeDebug("gc", "New finalizeWaitCount: "+finalizeWaitCount);
-                            }
-                        }
-                    } else if (trash == sentRef && (gcFlags & VERBOSE_COLLECT) != 0) {
-                        writeDebug("gc", "Sentinel collected.");
-                    }
-                } else {
-                    System.gc();
-                }
-            }
-        } catch (InterruptedException iex) {}
+        List<WeakReferenceGC> collectBuffer;
+        
+        /* The following out-commented block is a nice idea to sync gc in a more
+         * elegant way. Unfortunately it proved infeasible because MXBean appears
+         * to be no reliable measurement for gc to have finished enqueueing trash.
+         * We leave it here to document this failed approach for future generations,
+         * so nobody needs to waste time on this again/can quickly reproduce how
+         * it fails.
 
+        // Yes, Errors should not be caught, but in this case we have a very good
+        // reason for it.
+        // collectSyncViaMXBean uses inofficial API, i.e. classes from com.sun.management.
+        // In case that a JVM does not provide this API, we have a less elegant fallback
+        // at hand, which is based on a sentinel- and timeout-technique.
+        try {
+            collectBuffer = collectSyncViaMXBean(stat, cyclic);
+        } catch (NoClassDefFoundError ncdfe) {
+            collectBuffer = collectSyncViaSentinel(stat, cyclic);
+        }
         if ((gcFlags & VERBOSE_COLLECT) != 0) {
             writeDebug("gc", "all objects from run enqueud in trash queue.");
             writeDebug("gc", "pending finalizers: "+finalizeWaitCount);
-        }
+        }*/
+
+        collectBuffer = collectSyncViaSentinel(stat, cyclic);
         //lockPostFinalization assures that postFinalization process
         //only runs once per syncCollect-call.
         lockPostFinalization = false;
@@ -1870,40 +1982,15 @@ public class gc {
             postFinalizationProcessor.interrupt();
         }
         waitingForFinalizers = true;
-        if (finalizeWaitCount != 0) {
-            if ((gcFlags & VERBOSE_COLLECT) != 0) {
-                writeDebug("gc", "waiting for "+finalizeWaitCount+
-                        " pending finalizers.");
-                if (finalizeWaitCount < 0) {
-                    //Maybe even throw exception here?
-                    Py.writeError("gc", "There should never be "+
-                            "less than zero pending finalizers!");
-                }
-            }
-            // It is important to have the while  *inside* the synchronized block.
-            // Otherwise the notify might come just between the check and the wait,
-            // causing an endless waiting.
-            synchronized(GCSentinel.class) {
-                while (finalizeWaitCount != 0) {
-                    try {
-                        GCSentinel.class.wait();
-                    } catch (InterruptedException ie2) {}
-                }
-            }
-            if ((gcFlags & VERBOSE_COLLECT) != 0) {
-                writeDebug("gc", "no more finalizers pending.");
-            }
-        }
+        waitForFinalizers();
         waitingForFinalizers = false;
-
         if (postFinalizationPending) {
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
-                writeDebug("gc",
-                        "waiting for pending post-finalization process.");
+                writeDebug("gc", "waiting for pending post-finalization process.");
             }
             // It is important to have the while (which is actually an "if" since the
             // InterruptedException is very unlikely to occur) *inside* the synchronized
-            // block. Otherwise the notify might come just between the check and the wait,
+            // block. Otherwise the notification might come just between the check and the wait,
             // causing an endless waiting. This is no pure academic consideration, but was
             // actually observed to happen from time to time, especially on faster systems.
             synchronized(PostFinalizationProcessor.class) {
@@ -1990,6 +2077,247 @@ public class gc {
         }
         stat[0] -= abortedCyclicFinalizers;
         stat[1] -= abortedCyclicFinalizers;
+    }
+
+    /*
+     * The following out-commented section belongs to the out-commented
+     * block on MXBean-based GC sync somewhere above.
+     * We keep it here to document this failed approach and to enable
+     * future developers to quickly reproduce and analyse this failure.
+
+    private static class GCListener implements NotificationListener {
+        private int index;
+        private Thread toNotify;
+
+        public GCListener(int index, Thread toNotify) {
+            this.index = index;
+            this.toNotify = toNotify;
+        }
+
+        public void handleNotification(Notification notif, Object handback) {
+            if (waitForGCNotification[index]) {
+                String notifType = notif.getType();
+                if (notifType.equals(
+                        com.sun.management.GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
+                    // retrieve the garbage collection notification information
+                    CompositeData cd = (CompositeData) notif.getUserData();
+                    com.sun.management.GarbageCollectionNotificationInfo info =
+                            com.sun.management.GarbageCollectionNotificationInfo.from(cd);
+                    if (info.getGcCause().equals("System.gc()") &&
+                            info.getGcAction().startsWith("end of ") &&
+                            info.getGcAction().endsWith(" GC")) {
+                        synchronized (GCListener.class) {
+                            --outstandingNotifications;
+                            if (toNotify != null && waitingForTrash && outstandingNotifications == 0) {
+                                toNotify.interrupt();
+                                toNotify = null;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean[] waitForGCNotification;
+    private static int outstandingNotifications = 0;
+    private static List<GarbageCollectorMXBean> currentGCBeans;
+    private static String failFast = null;
+    private static boolean waitingForTrash = false;
+    private static List<WeakReferenceGC> collectSyncViaMXBean(int[] stat, Set<WeakReferenceGC> cyclic) {
+        // This step should be done first in order to fail fast,
+        // if com.sun.management is not available.
+        if (failFast == null) {
+            failFast =
+                com.sun.management.GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION;
+        }
+        //Reaching this line successfully means that com.sun.management exists.
+        Reference<? extends Object> trash;
+        currentGCBeans = ManagementFactory.getGarbageCollectorMXBeans();
+        long[] initialGCCounts = new long[currentGCBeans.size()];
+        GCListener[] listeners = new GCListener[initialGCCounts.length];
+        int i = 0;
+        for (GarbageCollectorMXBean gcb: currentGCBeans) {
+            listeners[i] = new GCListener(i, Thread.currentThread());
+            ((NotificationBroadcaster) gcb).addNotificationListener(
+                    listeners[i], null, null);
+            initialGCCounts[i++] = gcb.getCollectionCount();
+        }
+        if (waitForGCNotification == null || waitForGCNotification.length != initialGCCounts.length) {
+            waitForGCNotification = new boolean[initialGCCounts.length];
+        }
+        synchronized (GCListener.class) {
+            boolean gcRunDetected = false;
+            outstandingNotifications = 0;
+            while (!gcRunDetected) {
+                System.gc();
+                for (i = 0; i < waitForGCNotification.length; ++i) {
+                    waitForGCNotification[i] =
+                            currentGCBeans.get(i).getCollectionCount() > initialGCCounts[i];
+                    ++outstandingNotifications;
+                    if (waitForGCNotification[i]) {
+                        // at least one counter should change if a gc-run occurred.
+                        gcRunDetected = true;
+                    }
+                }
+            }
+        }
+        List<WeakReferenceGC> collectBuffer = null;
+        if (needsCollectBuffer()) {
+            collectBuffer = new ArrayList<>();
+        }
+        while (outstandingNotifications > 0) {
+            try {
+                waitingForTrash = true;
+                Thread.sleep(2000);
+            } catch (InterruptedException ie)
+            {
+            }
+            waitingForTrash = false;
+        }
+        trash = gcTrash.poll();
+        while (trash != null) {
+            if (trash instanceof WeakReferenceGC) {
+                synchronized(monitoredObjects) {
+                    monitoredObjects.remove(trash);
+                }
+                //We avoid counting jython-specific objects in order to
+                //obtain CPython-comparable results.
+                if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
+                    ++stat[0];
+                    if (collectBuffer != null) {
+                        collectBuffer.add((WeakReferenceGC) trash);
+                    }
+                    if ((gcFlags & VERBOSE_COLLECT) != 0) {
+                        writeDebug("gc", "Collected cyclic object: "+trash);
+                    }
+                }
+                if (((WeakReferenceGC) trash).hasFinalizer) {
+                    ++finalizeWaitCount;
+                    if ((gcFlags & VERBOSE_FINALIZE) != 0) {
+                        writeDebug("gc", "Collected finalizable object: "+trash);
+                        writeDebug("gc", "New finalizeWaitCount: "+finalizeWaitCount);
+                    }
+                }
+            }
+            trash = gcTrash.poll();
+        }
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException ie) {
+        }
+        trash = gcTrash.poll();
+        if (trash != null) {
+            //This should not happen, but actually does.
+            //So MXBean-based sync is not reliable!
+            System.out.println("Late trash: "+trash);
+            System.out.println("Late trash: "+trash.getClass());
+            System.out.println("Late trash: "+System.identityHashCode(trash));
+            int count = 0;
+            while (trash != null) {
+                System.out.println("Late trash "+count+": "+trash);
+                ++count;
+                trash = gcTrash.poll();
+            }
+            System.out.println("Late trash count: "+count);
+        }
+        i = 0;
+        for (GarbageCollectorMXBean gcb: currentGCBeans) {
+            try {
+                ((NotificationBroadcaster) gcb).removeNotificationListener(
+                        listeners[i++]);
+            } catch (ListenerNotFoundException lnfe) {
+            }
+        }
+        return collectBuffer;
+    }
+    */
+
+    private static List<WeakReferenceGC> collectSyncViaSentinel(int[] stat, Set<WeakReferenceGC> cyclic) {
+        WeakReference<GCSentinel> sentRef =
+                new WeakReference<>(new GCSentinel(Thread.currentThread()), gcTrash);
+        Reference<? extends Object> trash;
+        System.gc();
+        List<WeakReferenceGC> collectBuffer = null;
+        if (needsCollectBuffer()) {
+            collectBuffer = new ArrayList<>();
+        }
+        long removeTime;
+        try {
+            while(true) {
+                removeTime = System.currentTimeMillis()-lastRemoveTimeStamp;
+                if (removeTime > maxWaitTime) {
+                    maxWaitTime = removeTime;
+                }
+                lastRemoveTimeStamp = System.currentTimeMillis();
+                trash = gcTrash.remove(Math.max(gcRecallTime, maxWaitTime*defaultWaitFactor));
+                if (trash != null) {
+                    if (trash instanceof WeakReferenceGC) {
+                        synchronized(monitoredObjects) {
+                            monitoredObjects.remove(trash);
+                        }
+                        //We avoid counting jython-specific objects in order to
+                        //obtain CPython-comparable results.
+                        if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
+                            ++stat[0];
+                            if (collectBuffer != null) {
+                                collectBuffer.add((WeakReferenceGC) trash);
+                            }
+                            if ((gcFlags & VERBOSE_COLLECT) != 0) {
+                                writeDebug("gc", "Collected cyclic object: "+trash);
+                            }
+                        }
+                        if (((WeakReferenceGC) trash).hasFinalizer) {
+                            ++finalizeWaitCount;
+                            if ((gcFlags & VERBOSE_FINALIZE) != 0) {
+                                writeDebug("gc", "Collected finalizable object: "+trash);
+                                writeDebug("gc", "New finalizeWaitCount: "+finalizeWaitCount);
+                            }
+                        }
+                    } else if (trash == sentRef && (gcFlags & VERBOSE_COLLECT) != 0) {
+                        writeDebug("gc", "Sentinel collected.");
+                    }
+                } else {
+                    System.gc();
+                }
+            }
+        } catch (InterruptedException iex) {}
+        return collectBuffer;
+    }
+
+    private static void waitForFinalizers() {
+        if (finalizeWaitCount != 0) {
+            if ((gcFlags & VERBOSE_COLLECT) != 0) {
+                writeDebug("gc", "waiting for "+finalizeWaitCount+
+                        " pending finalizers.");
+                if (finalizeWaitCount < 0) {
+                    //Maybe even throw exception here?
+                    Py.writeError("gc", "There should never be "+
+                            "less than zero pending finalizers!");
+                }
+            }
+            // It is important to have the while *inside* the synchronized block.
+            // Otherwise the notify might come just between the check and the wait,
+            // causing an endless waiting.
+            synchronized(GCSentinel.class) {
+                while (finalizeWaitCount != 0) {
+                    try {
+                        GCSentinel.class.wait();
+                    } catch (InterruptedException ie2) {}
+                }
+            }
+            if ((gcFlags & VERBOSE_COLLECT) != 0) {
+                writeDebug("gc", "no more finalizers pending.");
+            }
+        }
+        //Can the following block be skipped if monitor global is active?
+        //No, because there could already be unmonitored finalizable objects!
+        while (openFinalizeCount > 0 || System.currentTimeMillis() - postFinalizationTimestamp
+                < postFinalizationTimeOut) {
+            try {
+                Thread.sleep(postFinalizationTimeOut);
+            } catch (InterruptedException ie) {}
+        }
     }
 
     /**
@@ -2748,7 +3076,7 @@ public class gc {
 
 //--------------Visitproc section----------------------------------------------
 
-    static class ReferentsFinder implements Visitproc {
+    private static class ReferentsFinder implements Visitproc {
         public static ReferentsFinder defaultInstance = new ReferentsFinder();
 
         /**
@@ -2771,7 +3099,7 @@ public class gc {
      * knows they need to be explored further. Only traversable objects are
      * considered by this visitproc.
      */
-    static class ReachableFinder implements Visitproc {
+    private static class ReachableFinder implements Visitproc {
         public static ReachableFinder defaultInstance = new ReachableFinder();
 
         /**
@@ -2790,7 +3118,7 @@ public class gc {
         }
     }
 
-    static class ReachableFinderWeakRefs implements Visitproc {
+    private static class ReachableFinderWeakRefs implements Visitproc {
         public static ReachableFinderWeakRefs defaultInstance = new ReachableFinderWeakRefs();
 
         @SuppressWarnings("unchecked")
@@ -2808,7 +3136,7 @@ public class gc {
         }
     }
 
-    static class ReferrerFinder implements Visitproc {
+    private static class ReferrerFinder implements Visitproc {
         public static ReferrerFinder defaultInstance = new ReferrerFinder();
 
         /**
@@ -2831,7 +3159,7 @@ public class gc {
      * behavior. This method is useful if one is not interested in the referrers,
      * but only wants to know (quickly) whether a connection exists or not.
      */
-    static class RefersToSetFinder implements Visitproc {
+    private static class RefersToSetFinder implements Visitproc {
         public static RefersToSetFinder defaultInstance = new RefersToSetFinder();
 
         @SuppressWarnings("unchecked")
@@ -2855,7 +3183,7 @@ public class gc {
      * By repeated use one can collect all objects referring to a given set
      * of objects in another set.
      */
-    static class RefInListFinder implements Visitproc {
+    private static class RefInListFinder implements Visitproc {
         public static RefInListFinder defaultInstance = new RefInListFinder();
         public boolean found = false;
 
@@ -2876,7 +3204,7 @@ public class gc {
         }
     }
 
-    static class ObjectInListFinder implements Visitproc {
+    private static class ObjectInListFinder implements Visitproc {
         public static ObjectInListFinder defaultInstance = new ObjectInListFinder();
         public boolean found = false;
 

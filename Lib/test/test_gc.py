@@ -313,6 +313,14 @@ class GCTests(unittest.TestCase):
         gc.collect(2)
         assertEqual(gc.get_count(), (0, 0, 0))
 
+    @unittest.skipIf(test_support.is_jython,
+        '''
+        While this test passes in Jython, it leads to internal
+        allocation failures because of the massive referencing
+        in this test. To keep the JVM-process healthy and to
+        avoid subsequent failures due to bad conditions caused
+        by this test, we skip it for now.
+        ''')
     def test_trashcan(self):
         class Ouch:
             n = 0

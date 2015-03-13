@@ -21,7 +21,7 @@ public class GCTestHelper {
     }
 
     /**
-     * In contrast to Nasty finalizer, this class - still equally
+     * In contrast to NastyFinalizer, this class - still equally
      * time-consuming - calls {@code gc.notifyPreFinalization()}
      * and {@code gc.notifyPostFinalization()} and thus lets all
      * tests work as expected.

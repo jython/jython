@@ -113,6 +113,22 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
         'CPython has no gc preprocess and postprocess features')
 class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        #Jython-specific block:
+        try:
+            cls.savedJythonGCFlags = gc.getJythonGCFlags()
+            gc.setMonitorGlobal(True)
+        except Exception:
+            pass
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            gc.setJythonGCFlags(cls.savedJythonGCFlags)
+        except Exception:
+            pass
+
     def test_finalization_preprocess_and_postprocess(self):
         #Note that this test is done here again (already was in another class
         #in this module), to see that everything works as it should also with
@@ -167,9 +183,6 @@ class GCTests_Jy_preprocess_and_postprocess(unittest.TestCase):
         gc.unregisterPostFinalizationProcess(postPr)
 
     def test_with_extern_NonPyObjectFinalizer_that_notifies_gc(self):
-        #Note that this test is done here again (already was in another class
-        #in this module), to see that everything works as it should also with
-        #a different flag-context.
         comments = []
         class A:
             def __init__(self, index):
@@ -238,6 +251,8 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         except Exception:
             pass
 
+    #Tests from GCTests_Jy_preprocess_and_postprocess are repeated here
+    #without monitoring.
     def test_finalization_preprocess_and_postprocess(self):
         #Note that this test is done here again (already was in another class
         #in this module), to see that everything works as it should also with
@@ -290,8 +305,54 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         gc.unregisterPreFinalizationProcess(prePr)
         gc.unregisterPostFinalizationProcess(postPr)
 
+    def test_with_extern_NonPyObjectFinalizer_that_notifies_gc(self):
+        comments = []
+        class A:
+            def __init__(self, index):
+                self.index = index
+
+            def __del__(self):
+                comments.append("A_del_"+str(self.index))
+
+        class PreProcess(Runnable):
+            preCount = 0
+            def run(self):
+                PreProcess.preCount += 1
+
+        class PostProcess(Runnable):
+            postCount = 0
+            def run(self):
+                PostProcess.postCount += 1
+
+        prePr = PreProcess()
+        postPr = PostProcess()
+        time.sleep(1) #   <- to avoid that the newly registered processes
+                      #      become subject to previous run (remember: We
+                      #      are not in monitor-mode, i.e. gc runs async.
+        gc.registerPreFinalizationProcess(prePr)
+        gc.registerPostFinalizationProcess(postPr)
+        for i in range(4):
+            f = A(i)
+            del f
+        #NastyFinalizer would cause this test occasionally to fail
+        externFinalizer = GCTestHelper.NotSoNastyFinalizer()
+        del externFinalizer
+        for i in range(4, 8):
+            f = A(i)
+            del f
+        System.gc()
+        #we wait a bit longer here, since PostProcess runs asynchronous
+        #and must wait for the finalizer of A
+        time.sleep(4)
+        self.assertEqual(len(comments), 8)
+        self.assertEqual(PreProcess.preCount, 1)
+        self.assertEqual(PostProcess.postCount, 1)
+        comments = []
+        gc.unregisterPreFinalizationProcess(prePr)
+        gc.unregisterPostFinalizationProcess(postPr)
 
     def test_delayedFinalization(self):
+        #time.sleep(2)
         resurrect = []
         comments = []
 

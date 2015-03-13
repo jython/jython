@@ -20,6 +20,8 @@ import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.core.util.FileUtil;
 import org.python.core.util.StringUtil;
 import org.python.core.util.importer;
@@ -34,7 +36,7 @@ import org.python.expose.ExposedType;
  * @author Philip Jenvey
  */
 @ExposedType(name = "zipimport.zipimporter", base = PyObject.class)
-public class zipimporter extends importer<PyObject> {
+public class zipimporter extends importer<PyObject> implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(zipimporter.class);
 
@@ -546,5 +548,23 @@ public class zipimporter extends importer<PyObject> {
                 throw Py.IOError(ioe);
             }
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+    	if (files != null) {
+    		int retVal = visit.visit(files, arg);
+    		if (retVal != 0) {
+    			return retVal;
+    		}
+    	}
+        return sys == null ? 0 : visit.visit(sys, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == files || ob == sys);
     }
 }
