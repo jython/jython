@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -140,7 +141,7 @@ public class PyUnicode extends PyString implements Iterable {
      * Index translation between code point index (as seen by Python) and UTF-16 index (as used in
      * the Java String.
      */
-    private interface IndexTranslator {
+    private interface IndexTranslator extends Serializable {
 
         /** Number of supplementary characters (hence point code length may be found). */
         public int suppCount();
