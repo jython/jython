@@ -1,6 +1,10 @@
 import re
+import sys
 import unittest
 import test.test_support
+import unicodedata
+from unicodedata import category
+
 
 class ReTest(unittest.TestCase):
 
@@ -28,8 +32,45 @@ class ReTest(unittest.TestCase):
 
     def test_unkown_groupname(self):
         self.assertRaises(IndexError,
-                          re.match("(?P<int>\d+)\.(\d*)", '3.14').group,
-                          "misspelled")
+                          re.match(r'(?P<int>\d+)\.(\d*)', '3.14').group,
+                          'misspelled')
+
+    def test_whitespace(self):
+        # Test for http://bugs.jython.org/issue2226 - verify against cpython
+        ws_re = re.compile(r'\s')
+        not_ws_re = re.compile(r'\S')
+        cpython_ascii_whitespace = set(' \t\n\r\f\v')
+        for i in xrange(256):
+            c = chr(i)
+            if c in cpython_ascii_whitespace:
+                self.assertRegexpMatches(c, ws_re)
+                self.assertNotRegexpMatches(c, not_ws_re)
+            else:
+                self.assertNotRegexpMatches(c, ws_re)
+                self.assertRegexpMatches(c, not_ws_re)
+
+    def test_unicode_whitespace(self):
+        # Test for http://bugs.jython.org/issue2226
+        ws_re = re.compile(r'\s', re.UNICODE)
+        not_ws_re = re.compile(r'\S', re.UNICODE)
+        separator_categories = set(['Zl', 'Zp', 'Zs'])
+        separators = {chr(c) for c in [28, 29, 30, 31]}
+        special = set([
+            unicodedata.lookup('MONGOLIAN VOWEL SEPARATOR'),
+            u'\u0085', # NEXT LINE (NEL)
+            ])
+        cpython_whitespace = set(' \t\n\r\f\v') | separators | special
+        for i in xrange(0xFFFF): # could test to sys.maxunicode, but does not appear to be necessary
+            if i >= 0xD800 and i <= 0xDFFF:
+                continue
+            c = unichr(i)
+            if c in cpython_whitespace or category(c) in separator_categories:
+                self.assertRegexpMatches(c, ws_re)
+                self.assertNotRegexpMatches(c, not_ws_re)
+            else:
+                self.assertNotRegexpMatches(c, ws_re)
+                self.assertRegexpMatches(c, not_ws_re)
+
 
 def test_main():
     test.test_support.run_unittest(ReTest)

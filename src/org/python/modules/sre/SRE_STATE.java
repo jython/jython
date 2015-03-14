@@ -230,9 +230,9 @@ for line in sys.stdin:
             return !Character.isDigit(ch);
 
         case SRE_CATEGORY_UNI_SPACE:
-            return Character.isWhitespace(ch);
+            return Character.isSpaceChar(ch) || Character.isWhitespace(ch) || ch == 0x0085;
         case SRE_CATEGORY_UNI_NOT_SPACE:
-            return !Character.isWhitespace(ch);
+            return !(Character.isSpaceChar(ch) || Character.isWhitespace(ch) || ch == 0x0085);
 
         case SRE_CATEGORY_UNI_WORD:
             return Character.isLetterOrDigit(ch) || ch == '_';
