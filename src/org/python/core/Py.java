@@ -1185,7 +1185,11 @@ public final class Py {
                 stderr.println(getStackTrace((Throwable) javaError));
             }
         }
-        stderr.println(formatException(type, value));
+        try {
+            stderr.println(formatException(type, value));
+        } catch (Exception ex) {
+            stderr.println(formatException(type, Py.None));
+        }
     }
 
     /**

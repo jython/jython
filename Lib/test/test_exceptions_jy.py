@@ -2,9 +2,10 @@
 
 Made for Jython.
 """
-from test import test_support
+import sys
 import unittest
 from javatests import StackOverflowErrorTest
+from test import test_support
 
 
 class C:
@@ -55,6 +56,25 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assertEqual(
             cm.exception.message,
             "maximum recursion depth exceeded (Java StackOverflowError)")
+
+    def test_unicode_args(self):
+        e = RuntimeError(u"Drink \u2615")  # coffee emoji
+        # Can take the repr of any object
+        self.assertEqual(repr(e), "RuntimeError(u'Drink \u2615',)")
+        # Cannot of course turn a non-ascii Unicode object into a str, even if it's an exception object
+        with self.assertRaises(UnicodeEncodeError) as cm:
+            str(e)
+        self.assertEqual(
+            str(cm.exception),
+            "'ascii' codec can't encode character u'\u2615' in position 6: ordinal not in range(128)")
+        # But the exception hook, via Py#displayException, does not fail when attempting to __str__ the exception args
+        with test_support.captured_stderr() as s:
+            sys.excepthook(RuntimeError, u"Drink \u2615", None)
+        self.assertEqual(s.getvalue(), "RuntimeError\n")  
+        # It is fine with ascii values, of course
+        with test_support.captured_stderr() as s:
+            sys.excepthook(RuntimeError, u"Drink java", None)
+        self.assertEqual(s.getvalue(), "RuntimeError: Drink java\n")  
 
 
 def test_main():
