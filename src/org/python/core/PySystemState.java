@@ -1660,27 +1660,6 @@ public class PySystemState extends PyObject implements AutoCloseable,
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
-//      Potential PyObject refs in PySystemState:
-//      public PyList argv = new PyList();
-//      public PyObject modules;
-//      public PyList path;
-//      public PyList warnoptions = new PyList();
-//      public PyObject builtins;
-//      public PyObject platform = defaultPlatform;
-//      public PyList meta_path;
-//      public PyList path_hooks;
-//      public PyObject path_importer_cache;
-//      public PyObject ps1 = new PyString(">>> ");
-//      public PyObject ps2 = new PyString("... ");
-//      public PyObject executable;
-//      public PyObject stdout, stderr, stdin;
-//      public PyObject __stdout__, __stderr__, __stdin__;
-//      public PyObject __displayhook__, __excepthook__;
-//      public PyObject last_value = Py.None;
-//      public PyObject last_type = Py.None;
-//      public PyObject last_traceback = Py.None;
-//      public PyObject __name__ = new PyString("sys");
-//      public PyObject __dict__;
         int retVal;
         if (argv != null) {
             retVal = visit.visit(argv, arg);

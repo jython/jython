@@ -27,7 +27,7 @@ import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules._weakref.GlobalRef;
 
 //These imports belong to the out-commented section on MXBean-based
-//GC-sync far below. That section is kept to document this failed
+//gc-sync far below. That section is kept to document this failed
 //approach and allow easy reproduction of this failure.
 //import java.lang.management.*;
 //import javax.management.*;
@@ -97,8 +97,8 @@ import org.python.modules._weakref.GlobalRef;
  * Waiting for trash could in theory be strictly synchronized by using {@code MXBean}s, i.e.
  * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
  * target="_blank">GarbageCollectionNotificationInfo</a> and related API.
- * However, experiments showed that the arising GC-notifications do not reliably indicate
- * when enqueuing was done for a specific GC-run. We kept the experimental implementation
+ * However, experiments showed that the arising gc-notifications do not reliably indicate
+ * when enqueuing was done for a specific gc-run. We kept the experimental implementation
  * in source-code comments to allow easy reproducibility of this issue. (Note that out-commented
  * code contradicts Jython-styleguide, but this one - however - is needed to document this
  * infeasible approach and is explicitly declared accordingly).<br>
@@ -2935,7 +2935,7 @@ public class gc {
      * This method checks via type-checking-only, whether an object
      * of the given class can in principle hold a ref to a {@code PyObject}.
      * Especially if arrays are involved, this can safe a lot performance.
-     * For now, no generic-type info is exploited.
+     * For now, no generic type-info is exploited.
      * </p>
      * <p>
      * If {@code actual} is true, the answer will hold for an object

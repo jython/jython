@@ -1,13 +1,16 @@
 package org.python.core;
 
+import org.python.expose.ExposedType;
+import org.python.modules.gc;
+
 /**
  * <p>
  * This interface defines a
  * <a href="https://docs.python.org/2.7/c-api/gcsupport.html" target="_blank">
- * CPython equivalent traverse mechanism
+ * CPython-equivalent traverse-mechanism
  * </a> allowing to detect reference cycles. While this is crucial for cyclic
- * gc support in CPython, it only serves debugging purposes in Jython. As a side
- * effect it allows a more complete implementation of the gc module.
+ * gc support in CPython, it only serves debugging purposes in Jython. As a
+ * side-effect it allows a more complete implementation of the gc module.
  * </p>
  * <p>
  * Note that implementing this interface is only OPTIONAL.<b> Gc will work fine
@@ -16,13 +19,13 @@ package org.python.core;
  * custom PyObject-implementations.
  * </p>
  * <p>
- * Of course this interface shall only be implemented by PyObjects that
- * potentially own direct references to other PyObjects. Note that indirect
+ * Of course this interface shall only be implemented by {@code PyObject}s that
+ * potentially own direct references to other {@code PyObject}s. Note that indirect
  * references via non-PyObjects should also be treated as "direct" (c.f.
  * tracefunc in {@link org.python.core.PyFrame}).
- * PyObjects that don't own references to other PyObjects under any condition
- * and neither inherit such references from a superclass are strictly recommended
- * to be annotated {@link org.python.core.Untraversable}.
+ * {@code PyObject}s that don't own references to other {@code PyObject}s under any
+ * condition and neither inherit such references from a superclass are strictly
+ * recommended to be annotated {@link org.python.core.Untraversable}.
  * </p>
  * <p>
  * Jython's traverse mechanism serves debugging purposes to ease finding memory
@@ -31,19 +34,19 @@ package org.python.core;
  * from these different behaviors. Jython's traverse mechanism is intended to
  * allow finding such bugs by comparing gc behavior to CPython and isolating
  * the Python code that is not robust enough to work invariant under different
- * gc behaviors.
+ * gc behaviors. See also {@link org.python.modules.gc} for more details on this.
  * </p>
  * <p>
  * Further this mechanism is crucial for some aspects of gc-support of the
  * <a href="http://www.jyni.org" target="_blank">JyNI</a>
  * project. JyNI does not strictly depend on it to emulate CPython's gc
  * for extensions, but would have to perform inefficient reflection-based
- * traversal in some edge-cases (which might also conflict security managers).
+ * traversal in some edge-cases (which might also conflict with security managers).
  * </p>
  * <p>
- * Note that the slots-array and - if existent - the user-dict of fooDerived classes
- * is traversed by {@link org.python.core.TraverseProcDerived}.
- * The gc module takes care of exploiting both traverse methods in its static traverse
+ * Note that the slots-array and - if existent - the user-dict of {@code fooDerived}
+ * classes is traversed by {@link org.python.core.TraverseProcDerived}.
+ * The gc-module takes care of exploiting both traverse methods in its static traverse
  * method. So for manual traversion one should always use
  * {@link org.python.modules.gc#traverse(PyObject, Visitproc, Object)} rather
  * than directly calling methods in this interface.
@@ -57,25 +60,209 @@ package org.python.core;
  * traversed (along with the user dict).
  * </p>
  * <p>
- * Note for implementing:<br>
- * Every non-static strong referenced PyObject should be passed to the
+ * <b>Note for implementing:</b><br>
+ * Every non-static, strong-referenced {@code PyObject} should be passed to the
  * {@link org.python.core.Visitproc}. If {@code Object}s or {@code interface}-types are
  * referenced where it is not known, whether it is a {@code PyObject} or
  * references other {@code PyObjects}, one should check for {@code PyObject}
- * via {@code instanceof} and otherwise also check whether it at least
- * implements {@code Traverseproc} itself. In latter case one should traverse
- * it by delegating to its {@code Traverseproc} methods.<br>
- * Warning:<br>
+ * via {@code instanceof}. If a non-{@code PyObject}
+ * implements {@code Traverseproc}, one can traverse
+ * it by delegating to its {@code Traverseproc} methods.<br><br>
+ * <b>Warning:</b><br>
  * If one lets non-{@code PyObject}s implement {@code Traverseproc}, extreme
  * care must be taken, whether the traverse call shall be passed on to other
  * non-{@code PyObject} {@code Traverseproc}-implementers, as this can cause
  * infinite traverse cycles.<br>
  * Examples for non-{@code PyObject}s that implement {@code Traverseproc} are
  * {@link org.python.core.PyException} and {@link com.ziclix.python.sql.Fetch}.
+ * A safer, but potentially slower way to deal with
+ * non-{@code PyObject}-{@code Traverseproc}s or any other non-{@code PyObject}
+ * that might contain references to other {@code PyObject}s is
+ * {@link org.python.modules.gc#traverseByReflection(Object, Visitproc, Object)}.
+ * This is for instance used in {@link org.python.core.PyArray}.
  * </p>
  * <p>
- * It follows a list of PyObject subclasses in Jython, excluding derived classes.<br>
- * PyObject subclasses in Jython checked for need of Traverseproc:<br>
+ * <br>
+ * <b>Examples</b><br><br>
+ * In the following we provide some examples with code-snippets to demonstrate
+ * and streamline the writing of {@code Traverseproc}-implementations.<br>
+ * Since this peace of API was introduced to enhance a large existing
+ * code-base, we recommend to put the {@code Traverseproc}-implementation always
+ * to the end of a class and separate it from the original code by two blank
+ * lines and a comment "Traverseproc implementation".<br><br>
+ * Let's start with classes that don't hold references to {@code PyObject}s.
+ * If the class extends some other class that implements {@code Traverseproc}, nothing
+ * special needs to be done. For instance, we have this situation in
+ * {@link org.python.core.PySet}. It extends {@link org.python.core.BaseSet},
+ * which in turn implements {@code Traverseproc}:<br><br>
+ * <pre>
+ * {@literal @}ExposedType(name = "set", base = PyObject.class, doc = BuiltinDocs.set_doc)
+ * public class PySet extends BaseSet {
+ *   ...
+ * }
+ * </pre>
+ * If the class neither contains {@code PyObject}-references, nor extends some
+ * {@code Traverseproc}-implementing class, it is recommended to be annotated
+ * {@link org.python.core.Untraversable}. {@link org.python.core.PyInteger} is
+ * an example for this:<br><br>
+ * <pre>
+ * {@literal @}Untraversable
+ * {@literal @}ExposedType(name = "int", doc = BuiltinDocs.int_doc)
+ * public class PyInteger extends PyObject {
+ *   ...
+ * }
+ * </pre>
+ * If there are simply some {@code PyObject}(-subclass), non-static fields in the class,
+ * let it implement {@link org.python.core.Traverseproc}.
+ * Write {@link org.python.core.Traverseproc#traverse(Visitproc, Object)} by
+ * just visiting the fields one by one. Check each to be non-{@code null} previously
+ * unless the field cannot be {@code null} for some good reason. If
+ * {@link org.python.core.Visitproc#visit(PyObject, Object)} returns non-zero,
+ * return the result immediately (i.e. abort the traverse process).
+ * The following example is taken from
+ * {@link org.python.core.PyMethod}:<br><br>
+ * <pre>
+ *  /{@literal *} Traverseproc implementation {@literal *}/
+ *  {@literal @}Override
+ *  public int traverse(Visitproc visit, Object arg) {
+ *      int retVal;
+ *      if (im_class != null) {
+ *          retVal = visit.visit(im_class, arg);
+ *          if (retVal != 0) {
+ *              return retVal;
+ *          }
+ *      }
+ *      if (__func__ != null) {
+ *          retVal = visit.visit(__func__, arg);
+ *          if (retVal != 0) {
+ *              return retVal;
+ *          }
+ *      }
+ *      return __self__ == null ? 0 : visit.visit(__self__, arg);
+ *  }
+ * </pre>
+ * Implement {@link org.python.core.Traverseproc#refersDirectlyTo(PyObject)}
+ * by checking the argument to be non-{@code null} and identity-comparing it to
+ * every field:<br><br>
+ * <pre>
+ *  {@literal @}Override
+ *  public boolean refersDirectlyTo(PyObject ob) {
+ *      return ob != null && (ob == im_class || ob == __func__ || ob == __self__);
+ *  }
+ * </pre>
+ * If there is a Java-set or other iterable that it is not a {@code PyObject},
+ * but contains {@code PyObject}s, visit every element. Don't forget to check
+ * for non-{@code null} if necessary and return immediately, if
+ * {@link org.python.core.Visitproc#visit(PyObject, Object)} returns non-zero.
+ * The following example is taken from {@link org.python.core.BaseSet}:<br><br>
+ * <pre>
+ *  /{@literal *} Traverseproc implementation {@literal *}/
+ *  {@literal @}Override
+ *  public int traverse(Visitproc visit, Object arg) {
+ *      int retValue;
+ *      for (PyObject ob: _set) {
+ *          if (ob != null) {
+ *              retValue = visit.visit(ob, arg);
+ *              if (retValue != 0) {
+ *                  return retValue;
+ *              }
+ *          }
+ *      }
+ *      return 0;
+ *  }
+ * </pre>
+ * In this case, {@link org.python.core.Traverseproc#refersDirectlyTo(PyObject)}
+ * can be implemented (potentially) efficiently by using the backing set's
+ * {@code contains}-method:<br><br>
+ * <pre>
+ *  {@literal @}Override
+ *  public boolean refersDirectlyTo(PyObject ob) {
+ *      return ob != null && _set.contains(ob);
+ *  }
+ * </pre>
+ * If a class extends a {@code Traverseproc}-implementing class and adds
+ * {@code PyObject}-references to it, the parent-{@code traverse}-method
+ * should be called initially via {@code super} (example is taken from
+ * {@link org.python.core.PyJavaType}):<br><br>
+ * <pre>
+ *  /{@literal *} Traverseproc implementation {@literal *}/
+ *  {@literal @}Override
+ *  public int traverse(Visitproc visit, Object arg) {
+ *      int retVal = super.traverse(visit, arg);
+ *      if (retVal != 0) {
+ *          return retVal;
+ *      }
+ *      if (conflicted != null) {
+ *          for (PyObject ob: conflicted) {
+ *              if (ob != null) {
+ *                  retVal = visit.visit(ob, arg);
+ *                  if (retVal != 0) {
+ *                      return retVal;
+ *                  }
+ *              }
+ *          }
+ *      }
+ *      return 0;
+ *  }
+ * </pre>
+ * In contrast to that, {@link org.python.core.Traverseproc#refersDirectlyTo(PyObject)}
+ * should call its parent-method as late as possible, because that method might throw an
+ * {@code UnsupportedOperationException}. By calling it in the end, we have the chance
+ * to fail- or succeed fast before a potential exception occurs:<br><br>
+ * <pre>
+ *  {@literal @}Override
+ *  public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+ *      if (ob == null) {
+ *          return false;
+ *      }
+ *      if (conflicted != null) {
+ *          for (PyObject obj: conflicted) {
+ *              if (obj == ob) {
+ *                  return true;
+ *              }
+ *          }
+ *      }
+ *      return super.refersDirectlyTo(ob);
+ *  }
+ * </pre>
+ * While reflection-based traversal should be avoided if possible, it can be used to
+ * traverse fields that might contain references to {@code PyObject}s, but cannot be
+ * inferred at compile-time.
+ * {@link org.python.modules.gc#canLinkToPyObject(Class, boolean)} can help to safe
+ * some performance by failing fast if type-info already rules out the possibility
+ * of the field holding {@code PyObject}-references.
+ * This technique is for instance used to traverse the content of
+ * {@link org.python.core.PyArray}:<br><br>
+ * <pre>
+ *  /{@literal *} Traverseproc implementation {@literal *}/
+ *  {@literal @}Override
+ *  public int traverse(Visitproc visit, Object arg) {
+ *      if (data == null || !gc.canLinkToPyObject(data.getClass(), true)) {
+ *          return 0;
+ *      }
+ *      return gc.traverseByReflection(data, visit, arg);
+ *  }
+ * </pre>
+ * {@link org.python.modules.gc#canLinkToPyObject(Class, boolean)} also
+ * offers a way to let {@link org.python.core.Traverseproc#refersDirectlyTo(PyObject)}
+ * fail fast by type-information:<br><br>
+ * <pre>
+ *  {@literal @}Override
+ *  public boolean refersDirectlyTo(PyObject ob)
+ *          throws UnsupportedOperationException {
+ *      if (data == null || !gc.canLinkToPyObject(data.getClass(), true)) {
+ *          return false;
+ *      }
+ *      throw new UnsupportedOperationException();
+ *  }
+ * </pre>
+ * </p>
+ * <p>
+ * <br>
+ * <b>List of {@code PyObject}-subclasses</b><br><br>
+ * We conclude with a list of {@code PyObject} subclasses in Jython, excluding
+ * derived classes.<br>
+ * {@code PyObject}-subclasses in Jython checked for need of {@code Traverseproc}:<br>
  * <br>
  * <br>
  * org.python.core:<br>
@@ -96,7 +283,6 @@ package org.python.core;
  *     BinFunction                 - no refs, untraversable<br>
  *   AstList                       - Traverseproc<br>
  *   BaseBytes                     - no refs, untraversable<br>
- *     IndexDelegate               - no PyObject<br>
  *   BaseDictionaryView            - Traverseproc<br>
  *   BaseSet                       - Traverseproc<br>
  *   ClasspathPyImporter           - no refs, untraversable<br>
@@ -269,7 +455,9 @@ package org.python.core;
  *   PyPartial                     - Traverseproc<br>
  * <br>
  * org.python.modules._io:<br>
- *   PyFileIO                      - no refs, untraversable (there is a final PyString "mode", which is guarenteed to be a PyString and no subclass; as such it needs not be traversed since it cannot have refs itself)<br>
+ *   PyFileIO                      - no refs, untraversable (there is a final PyString
+ *   "mode" that is guaranteed to be a PyString and no subclass; as such it needs not be
+ *   traversed since it cannot have refs itself)<br>
  *   PyIOBase                      - Traverseproc<br>
  *   PyRawIOBase                   - no refs, extends PyIOBase<br>
  * <br>
@@ -357,6 +545,9 @@ package org.python.core;
  *   PyTimeTuple                   - Traverseproc (with call to super)<br>
  *   Time:<br>
  *     TimeFunctions               - no refs, untraversable<br>
+ * <br>
+ * org.python.modules.zipimport:<br>
+ *   zipimporter                   - Traverseproc<br>
  * <br>
  * org.python.util:<br>
  *   InteractiveInterpreter        - no PyObject<br>
@@ -446,6 +637,8 @@ package org.python.core;
  * @see org.python.core.Untraversable
  * @see org.python.core.Visitproc
  * @see org.python.modules.gc#traverse(PyObject, Visitproc, Object)
+ * @see org.python.modules.gc#traverseByReflection(Object, Visitproc, Object)
+ * @see org.python.modules.gc#canLinkToPyObject(Class, boolean)
  */
 public interface Traverseproc {
 

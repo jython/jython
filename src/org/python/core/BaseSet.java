@@ -606,9 +606,11 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
     public int traverse(Visitproc visit, Object arg) {
         int retValue;
         for (PyObject ob: _set) {
-            retValue = visit.visit(ob, arg);
-            if (retValue != 0) {
-                return retValue;
+            if (ob != null) {
+                retValue = visit.visit(ob, arg);
+                if (retValue != 0) {
+                    return retValue;
+                }
             }
         }
         return 0;
@@ -616,6 +618,6 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
 
     @Override
     public boolean refersDirectlyTo(PyObject ob) {
-        return _set.contains(ob);
+        return ob != null && _set.contains(ob);
     }
 }
