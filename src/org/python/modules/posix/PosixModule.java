@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -293,7 +294,7 @@ public class PosixModule implements ClassDictInit {
     public static void chmod(PyObject path, int mode) {
         if (os == OS.NT) {
             try {
-                if (!absolutePath(path).toFile().setWritable((mode & FileStat.S_IWUSR) == 0)) {
+                if (!absolutePath(path).toFile().setWritable((mode & FileStat.S_IWUSR) != 0)) {
                     throw Py.OSError(Errno.EPERM, path);
                 }
             } catch (SecurityException ex) {
@@ -658,9 +659,16 @@ public class PosixModule implements ClassDictInit {
     public static void mkdir(PyObject path, int mode) {
         if (os == OS.NT) {
             try {
-                if (!absolutePath(path).toFile().mkdir()) {
-                    throw Py.OSError(Errno.EPERM, path);
-                }
+                Path nioPath = absolutePath(path);
+                // Windows does not use any mode attributes in creating a directory;
+                // see the corresponding function in posixmodule.c, posix_mkdir;
+                // further work on mapping mode to PosixAttributes would have to be done
+                // for non Windows; posix.mkdir would still be necessary for mode bits like stat.S_ISGID
+                Files.createDirectory(nioPath);
+            } catch (FileAlreadyExistsException ex) {
+                throw Py.OSError(Errno.EEXIST, path);
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
             } catch (SecurityException ex) {
                 throw Py.OSError(Errno.EACCES, path);
             }
