@@ -87,7 +87,7 @@ public class PosixModule implements ClassDictInit {
     private static final int W_OK = 1 << 1;
     private static final int R_OK = 1 << 2;
 
-    /** Lazily initialzed singleton source for urandom. */
+    /** Lazily initialized singleton source for urandom. */
     private static class UrandomSource {
         static final SecureRandom INSTANCE = new SecureRandom();
     }
@@ -262,17 +262,11 @@ public class PosixModule implements ClassDictInit {
         if ((mode & W_OK) != 0 && !file.canWrite()) {
             result = false;
         }
-        if ((mode & X_OK) != 0) {
-            // NOTE: always true without native jna-posix stat
-            try {
-                result = posix.stat(absolutePath(path).toString()).isExecutable();
-            } catch (PyException pye) {
-                if (!pye.match(Py.OSError)) {
-                    throw pye;
-                }
-                // ENOENT
-                result = false;
-            }
+        if ((mode & X_OK) != 0 && !file.canExecute()) {
+            // Previously Jython used JNR Posix, but this is unnecessary -
+            // File#canExecute uses the same code path
+            // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6379654
+            result = false;
         }
         return result;
     }
@@ -297,7 +291,16 @@ public class PosixModule implements ClassDictInit {
         "chmod(path, mode)\n\n" +
         "Change the access permissions of a file.");
     public static void chmod(PyObject path, int mode) {
-        if (posix.chmod(absolutePath(path).toString(), mode) < 0) {
+        if (os == OS.NT) {
+            try {
+                if (!absolutePath(path).toFile().setWritable((mode & FileStat.S_IWUSR) == 0)) {
+                    throw Py.OSError(Errno.EPERM, path);
+                }
+            } catch (SecurityException ex) {
+                throw Py.OSError(Errno.EACCES, path);
+            }
+
+        } else if (posix.chmod(absolutePath(path).toString(), mode) < 0) {
             throw errorFromErrno(path);
         }
     }
@@ -329,7 +332,7 @@ public class PosixModule implements ClassDictInit {
         int fd_high = getFD(fd_highObj).getIntFD(false);
         for (int i = fd_low; i < fd_high; i++) {
             try {
-                posix.close(i); // FIXME catch exceptions
+                posix.close(i);
             } catch (Exception e) {}
         }
     }
@@ -509,6 +512,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getpid = new PyString(
         "getpid() -> pid\n\n" +
         "Return the current process id");
+
     @Hide(posixImpl = PosixImpl.JAVA)
     public static int getpid() {
         return posix.getpid();
@@ -593,6 +597,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__link = new PyString(
         "link(src, dst)\n\n" +
         "Create a hard link to a file.");
+
     @Hide(OS.NT)
     public static void link(PyObject src, PyObject dst) {
         if (posix.link(absolutePath(src).toString(), absolutePath(dst).toString()) < 0) {
@@ -651,7 +656,15 @@ public class PosixModule implements ClassDictInit {
     }
 
     public static void mkdir(PyObject path, int mode) {
-        if (posix.mkdir(absolutePath(path).toString(), mode) < 0) {
+        if (os == OS.NT) {
+            try {
+                if (!absolutePath(path).toFile().mkdir()) {
+                    throw Py.OSError(Errno.EPERM, path);
+                }
+            } catch (SecurityException ex) {
+                throw Py.OSError(Errno.EACCES, path);
+            }
+        } else if (posix.mkdir(absolutePath(path).toString(), mode) < 0) {
             throw errorFromErrno(path);
         }
     }
@@ -840,6 +853,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__symlink = new PyString(
         "symlink(src, dst)\n\n" +
         "Create a symbolic link pointing to src named dst.");
+
     @Hide(OS.NT)
     public static void symlink(PyObject src, PyObject dst) {
         if (posix.symlink(asPath(src), absolutePath(dst).toString()) < 0) {
@@ -885,10 +899,10 @@ public class PosixModule implements ClassDictInit {
                 throw Py.OSError(Errno.EISDIR, path);
             } else if (!Files.deleteIfExists(nioPath)) {
                 // Something went wrong, does stat raise an error?
-                posix.stat(nioPath.toString());
+                basicstat(path, nioPath);
                 // It exists, do we not have permissions?
                 if (!Files.isWritable(nioPath)) {
-                    throw Py.OSError(Errno.EPERM, path);
+                    throw Py.OSError(Errno.EACCES, path);
                 }
                 throw Py.OSError("unlink(): an unknown error occurred: " + nioPath.toString());
             }
@@ -1137,6 +1151,8 @@ public class PosixModule implements ClassDictInit {
             throw Py.OSError(Errno.ENOENT, path);
         } catch (IOException ioe) {
             throw Py.OSError(Errno.EBADF, path);
+        } catch (SecurityException ex) {
+            throw Py.OSError(Errno.EACCES, path);
         }
     }
 
@@ -1170,6 +1186,8 @@ public class PosixModule implements ClassDictInit {
                 throw Py.OSError(Errno.ENOENT, path);
             } catch (IOException ioe) {
                 throw Py.OSError(Errno.EBADF, path);
+            } catch (SecurityException ex) {
+                throw Py.OSError(Errno.EACCES, path);
             }
         }
     }
@@ -1195,6 +1213,8 @@ public class PosixModule implements ClassDictInit {
                 throw Py.OSError(Errno.ENOENT, path);
             } catch (IOException ioe) {
                 throw Py.OSError(Errno.EBADF, path);
+            } catch (SecurityException ex) {
+                throw Py.OSError(Errno.EACCES, path);
             }
         }
     }
@@ -1253,6 +1273,8 @@ public class PosixModule implements ClassDictInit {
                 throw Py.OSError(Errno.ENOENT, path);
             } catch (IOException ioe) {
                 throw Py.OSError(Errno.EBADF, path);
+            } catch (SecurityException ex) {
+                throw Py.OSError(Errno.EACCES, path);
             }
         }
     }
@@ -1273,7 +1295,6 @@ public class PosixModule implements ClassDictInit {
                     stat = posix.fstat(fd.intFD);
                 } else {
                     stat = posix.fstat(fd.javaFD);
-                    ;
                 }
                 return PyStatResult.fromFileStat(stat);
             } catch (PyException ex) {
