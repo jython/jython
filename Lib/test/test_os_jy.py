@@ -5,6 +5,7 @@
 Made for Jython.
 """
 import array
+import errno
 import glob
 import os
 import subprocess
@@ -293,6 +294,79 @@ class SystemTestCase(unittest.TestCase):
                 "42\n47\n")
 
 
+@unittest.skipUnless(hasattr(os, 'link'), "os.link not available")
+class LinkTestCase(unittest.TestCase):
+
+    def test_bad_link(self):
+        with test_support.temp_cwd() as new_cwd:
+            target = os.path.join(new_cwd, "target")
+            with open(target, "w") as f:
+                f.write("TARGET")
+            source = os.path.join(new_cwd, "source")
+            with self.assertRaises(OSError) as cm:
+                os.link(target, target)
+            self.assertEqual(cm.exception.errno, errno.EEXIST)
+
+            with self.assertRaises(OSError) as cm:
+                os.link("nonexistent-file", source)
+            self.assertEqual(cm.exception.errno, errno.ENOENT)
+
+    def test_link(self):
+        with test_support.temp_cwd() as new_cwd:
+            target = os.path.join(new_cwd, "target")
+            with open(target, "w") as f:
+                f.write("TARGET")
+            source = os.path.join(new_cwd, "source")
+            os.link(target, source)
+            with open(source, "r") as f:
+                self.assertEqual(f.read(), "TARGET")
+
+
+@unittest.skipUnless(hasattr(os, 'symlink'), "symbolic link support  not available")
+class SymbolicLinkTestCase(unittest.TestCase):
+
+    def test_bad_symlink(self):
+        with test_support.temp_cwd() as new_cwd:
+            target = os.path.join(new_cwd, "target")
+            with open(target, "w") as f:
+                f.write("TARGET")
+            source = os.path.join(new_cwd, "source")
+            with self.assertRaises(OSError) as cm:
+                os.symlink(source, target)  # reversed args!
+            self.assertEqual(cm.exception.errno, errno.EEXIST)
+
+    def test_readlink(self):
+        with test_support.temp_cwd() as new_cwd:
+            target = os.path.join(new_cwd, "target")
+            with open(target, "w") as f:
+                f.write("TARGET")
+            source = os.path.join(new_cwd, "source")
+            os.symlink(target, source)
+            self.assertEqual(os.readlink(source), target)
+            self.assertEqual(os.readlink(unicode(source)), unicode(target))
+            self.assertIsInstance(os.readlink(unicode(source)), unicode)
+            
+    def test_readlink_non_symlink(self):
+        """os.readlink of a non symbolic link should raise an error"""
+        # test for http://bugs.jython.org/issue2292
+        with test_support.temp_cwd() as new_cwd:
+            target = os.path.join(new_cwd, "target")
+            with open(target, "w") as f:
+                f.write("TARGET")
+            with self.assertRaises(OSError) as cm:
+                os.readlink(target)
+            self.assertEqual(cm.exception.errno, errno.EINVAL)
+            self.assertEqual(cm.exception.filename, target)
+
+    def test_readlink_nonexistent(self):
+        with test_support.temp_cwd() as new_cwd:
+            nonexistent_file = os.path.join(new_cwd, "nonexistent-file")
+            with self.assertRaises(OSError) as cm:
+                os.readlink(nonexistent_file)
+            self.assertEqual(cm.exception.errno, errno.ENOENT)
+            self.assertEqual(cm.exception.filename, nonexistent_file)
+
+
 def test_main():
     test_support.run_unittest(
         OSFileTestCase, 
@@ -301,7 +375,9 @@ def test_main():
         OSWriteTestCase,
         UnicodeTestCase,
         LocaleTestCase,
-        SystemTestCase
+        SystemTestCase,
+        LinkTestCase,
+        SymbolicLinkTestCase,
     )
 
 if __name__ == '__main__':

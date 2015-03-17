@@ -16,8 +16,10 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NotLinkException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.security.SecureRandom;
@@ -601,8 +603,17 @@ public class PosixModule implements ClassDictInit {
 
     @Hide(OS.NT)
     public static void link(PyObject src, PyObject dst) {
-        if (posix.link(absolutePath(src).toString(), absolutePath(dst).toString()) < 0) {
-            throw errorFromErrno();
+        try {
+            Files.createLink(Paths.get(asPath(dst)), Paths.get(asPath(src)));
+        } catch (FileAlreadyExistsException ex) {
+            throw Py.OSError(Errno.EEXIST);
+        } catch (NoSuchFileException ex) {
+            throw Py.OSError(Errno.ENOENT);
+        } catch (IOException ioe) {
+            System.err.println("Got this exception " + ioe);
+            throw Py.OSError(ioe);
+        } catch (SecurityException ex) {
+            throw Py.OSError(Errno.EACCES);
         }
     }
 
@@ -662,8 +673,6 @@ public class PosixModule implements ClassDictInit {
                 Path nioPath = absolutePath(path);
                 // Windows does not use any mode attributes in creating a directory;
                 // see the corresponding function in posixmodule.c, posix_mkdir;
-                // further work on mapping mode to PosixAttributes would have to be done
-                // for non Windows; posix.mkdir would still be necessary for mode bits like stat.S_ISGID
                 Files.createDirectory(nioPath);
             } catch (FileAlreadyExistsException ex) {
                 throw Py.OSError(Errno.EEXIST, path);
@@ -672,6 +681,9 @@ public class PosixModule implements ClassDictInit {
             } catch (SecurityException ex) {
                 throw Py.OSError(Errno.EACCES, path);
             }
+        // Further work on mapping mode to PosixAttributes would have to be done
+        // for non Windows platforms. In addition, posix.mkdir would still be necessary
+        // for mode bits like stat.S_ISGID
         } else if (posix.mkdir(absolutePath(path).toString(), mode) < 0) {
             throw errorFromErrno(path);
         }
@@ -780,11 +792,17 @@ public class PosixModule implements ClassDictInit {
         "readlink(path) -> path\n\n" +
         "Return a string representing the path to which the symbolic link points.");
     @Hide(OS.NT)
-    public static String readlink(PyObject path) {
+    public static PyString readlink(PyObject path) {
         try {
-            return posix.readlink(absolutePath(path).toString());
+            return Py.newStringOrUnicode(path, Files.readSymbolicLink(absolutePath(path)).toString());
+        } catch (NotLinkException ex) {
+            throw Py.OSError(Errno.EINVAL, path);
+        } catch (NoSuchFileException ex) {
+            throw Py.OSError(Errno.ENOENT, path);
         } catch (IOException ioe) {
             throw Py.OSError(ioe);
+        } catch (SecurityException ex) {
+            throw Py.OSError(Errno.EACCES, path);
         }
     }
 
@@ -864,8 +882,14 @@ public class PosixModule implements ClassDictInit {
 
     @Hide(OS.NT)
     public static void symlink(PyObject src, PyObject dst) {
-        if (posix.symlink(asPath(src), absolutePath(dst).toString()) < 0) {
-            throw errorFromErrno();
+        try {
+            Files.createSymbolicLink(Paths.get(asPath(dst)), Paths.get(asPath(src)));
+        } catch (FileAlreadyExistsException ex) {
+            throw Py.OSError(Errno.EEXIST);
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
+        } catch (SecurityException ex) {
+            throw Py.OSError(Errno.EACCES);
         }
     }
 
