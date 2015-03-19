@@ -7,6 +7,8 @@ import io
 import re
 import string
 
+_is_jython = os.name == "java"
+
 try:
     import zlib # We may need its compression method
     crc32 = zlib.crc32
@@ -1423,7 +1425,7 @@ class PyZipFile(ZipFile):
         /python/lib/string, return (/python/lib/string.pyc, string).
         """
         file_py  = pathname + ".py"
-        file_pyc = pathname + ".pyc"
+        file_pyc = pathname + (".pyc" if not _is_jython else "$py.class")
         file_pyo = pathname + ".pyo"
         if os.path.isfile(file_pyo) and \
                             os.stat(file_pyo).st_mtime >= os.stat(file_py).st_mtime:
