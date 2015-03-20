@@ -74,6 +74,7 @@ ftplib.py
 functools.py
 genericpath.py
 getopt.py
+gettext.py
 glob.py
 gopherlib.py
 hashlib.py
