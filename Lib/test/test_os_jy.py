@@ -59,6 +59,21 @@ class OSFileTestCase(unittest.TestCase):
             else:
                 self.assertTrue(False)
 
+    def test_issue2068(self):
+        os.remove(test_support.TESTFN)
+        for i in range(2):
+            fd = os.open(test_support.TESTFN, os.O_RDWR | os.O_CREAT | os.O_APPEND)
+            try:
+                os.write(fd, bytes('one'))
+                os.write(fd, bytes('two'))
+                os.write(fd, bytes('three'))
+            finally:
+                fd.close()
+
+        with open(test_support.TESTFN, 'rb') as f:
+            content = f.read()
+        self.assertEqual(content, 2 * b'onetwothree')
+
 
 class OSDirTestCase(unittest.TestCase):
 

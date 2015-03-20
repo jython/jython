@@ -306,11 +306,20 @@ public class FileIO extends RawIOBase {
         checkClosed();
         checkWritable();
         try {
-            return !emulateAppend ? fileChannel.write(buf) :
-                    fileChannel.write(buf, fileChannel.position());
+            return emulateAppend ? appendFromByteBuffer(buf)    // use this helper function to advance the file channel's position post-write
+                                    : fileChannel.write(buf);   // this does change the file channel's position
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
+    }
+
+    private int appendFromByteBuffer(ByteBuffer buf) throws IOException {
+        int written = fileChannel.write(buf, fileChannel.position());   // this does not change the file channel's position!
+        if (written > 0) {
+            // we need to manually update the file channel's position post-write
+            fileChannel.position(fileChannel.position() + written);
+        }
+        return written;
     }
 
     /**
@@ -344,7 +353,8 @@ public class FileIO extends RawIOBase {
             if (!buf.hasRemaining()) {
                 continue;
             }
-            if ((bufCount = fileChannel.write(buf, fileChannel.position())) == 0) {
+            bufCount = appendFromByteBuffer(buf);
+            if (bufCount == 0) {
                 break;
             }
             count += bufCount;
