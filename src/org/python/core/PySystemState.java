@@ -718,13 +718,12 @@ public class PySystemState extends PyObject implements AutoCloseable,
             if (root == null) {
                 root = preProperties.getProperty("install.root");
             }
-
             determinePlatform(preProperties);
         } catch (Exception exc) {
             return null;
         }
         // If install.root is undefined find JYTHON_JAR in class.path
-        if (root == null) {
+        if (root == null || root.equals("")) {
             String classpath = preProperties.getProperty("java.class.path");
             if (classpath != null) {
                 String lowerCaseClasspath = classpath.toLowerCase();

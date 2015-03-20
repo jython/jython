@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Misc. import tests
 
 Made for Jython.
@@ -194,9 +195,8 @@ class ImpTestCase(unittest.TestCase):
             try:
                 os.mkdir(test_support.TESTFN)
                 init = os.path.join(test_support.TESTFN, "__init__.py")
-                fp = open(init, 'w')
-                fp.write("test = 'imported'")
-                fp.close()
+                with open(init, 'w') as fp:
+                    fp.write("test = 'imported'")
                 os.symlink(test_support.TESTFN, sym)
                 module = os.path.basename(sym)
                 module_obj = __import__(module)
@@ -217,10 +217,21 @@ class ImpTestCase(unittest.TestCase):
         __import__("os", [], level=-1)
 
 
+class UnicodeNamesTestCase(unittest.TestCase):
+
+    def test_import_unicode_module(self):
+        with self.assertRaises(UnicodeEncodeError) as cm:
+            __import__("mødülé")
+        self.assertEqual(cm.exception.encoding, "ascii")
+        self.assertEqual(cm.exception.object, "mødülé")
+        self.assertEqual(cm.exception.reason, "ordinal not in range(128)")
+
+
 def test_main():
     test_support.run_unittest(MislabeledImportTestCase,
                               OverrideBuiltinsImportTestCase,
-                              ImpTestCase)
+                              ImpTestCase,
+                              UnicodeNamesTestCase)
 
 if __name__ == '__main__':
     test_main()

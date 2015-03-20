@@ -114,9 +114,15 @@ public class PosixModule implements ClassDictInit {
         // Successful termination
         dict.__setitem__("EX_OK", Py.Zero);
 
-        boolean nativePosix = posix.isNative();
-        dict.__setitem__("_native_posix", Py.newBoolean(nativePosix));
-        dict.__setitem__("_posix_impl", Py.java2py(posix));
+        // SecurityManager may restrict access to native implementation,
+        // so use Java-only implementation as necessary
+        boolean nativePosix = false;
+        try {
+            nativePosix = posix.isNative();
+            dict.__setitem__("_native_posix", Py.newBoolean(nativePosix));
+            dict.__setitem__("_posix_impl", Py.java2py(posix));
+        } catch (SecurityException ex) {}
+
         dict.__setitem__("environ", getEnviron());
         dict.__setitem__("error", Py.OSError);
         dict.__setitem__("stat_result", PyStatResult.TYPE);
@@ -483,7 +489,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getgid = new PyString(
         "getgid() -> gid\n\n" +
         "Return the current process's group id.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static int getgid() {
         return posix.getgid();
     }
@@ -491,7 +497,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getlogin = new PyString(
         "getlogin() -> string\n\n" +
         "Return the actual login name.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static PyObject getlogin() {
         return new PyString(posix.getlogin());
     }
@@ -499,7 +505,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getppid = new PyString(
         "getppid() -> ppid\n\n" +
         "Return the parent's process id.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static int getppid() {
         return posix.getppid();
     }
@@ -507,7 +513,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getuid = new PyString(
         "getuid() -> uid\n\n" +
         "Return the current process's user id.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static int getuid() {
         return posix.getuid();
     }
@@ -524,7 +530,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__getpgrp = new PyString(
         "getpgrp() -> pgrp\n\n" +
         "Return the current process group id.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static int getpgrp() {
         return posix.getpgrp();
     }
@@ -535,6 +541,7 @@ public class PosixModule implements ClassDictInit {
         "isatty(fd) -> bool\n\n" +
         "Return True if the file descriptor 'fd' is an open file descriptor\n" +
         "connected to the slave end of a terminal.");
+    @Hide(posixImpl = PosixImpl.JAVA)
     public static boolean isatty(PyObject fdObj) {
         Object tojava = fdObj.__tojava__(IOBase.class);
         if (tojava != Py.NoConversion) {
@@ -568,7 +575,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__kill = new PyString(
         "kill(pid, sig)\n\n" +
         "Kill a process with a signal.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static void kill(int pid, int sig) {
         if (posix.kill(pid, sig) < 0) {
             throw errorFromErrno();
@@ -579,7 +586,7 @@ public class PosixModule implements ClassDictInit {
         "lchmod(path, mode)\n\n" +
         "Change the access permissions of a file. If path is a symlink, this\n" +
         "affects the link itself rather than the target.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static void lchmod(PyObject path, int mode) {
         if (posix.lchmod(absolutePath(path).toString(), mode) < 0) {
             throw errorFromErrno(path);
@@ -590,7 +597,7 @@ public class PosixModule implements ClassDictInit {
         "lchown(path, uid, gid)\n\n" +
         "Change the owner and group id of path to the numeric uid and gid.\n" +
         "This function will not follow symbolic links.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static void lchown(PyObject path, int uid, int gid) {
         if (posix.lchown(absolutePath(path).toString(), uid, gid) < 0) {
             throw errorFromErrno(path);
@@ -842,7 +849,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__setpgrp = new PyString(
         "setpgrp()\n\n" +
         "Make this process a session leader.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static void setpgrp() {
         if (posix.setpgrp(0, 0) < 0) {
             throw errorFromErrno();
@@ -852,7 +859,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__setsid = new PyString(
         "setsid()\n\n" +
         "Call the system call setsid().");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static void setsid() {
         if (posix.setsid() < 0) {
             throw errorFromErrno();
@@ -901,6 +908,7 @@ public class PosixModule implements ClassDictInit {
         "times() -> (utime, stime, cutime, cstime, elapsed_time)\n\n" +
         "Return a tuple of floating point numbers indicating process times.");
 
+    @Hide(posixImpl = PosixImpl.JAVA)
     public static PyTuple times() {
         Times times = posix.times();
         long CLK_TCK = Sysconf._SC_CLK_TCK.longValue();
@@ -991,7 +999,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__wait = new PyString(
         "wait() -> (pid, status)\n\n" +
         "Wait for completion of a child process.");
-    @Hide(OS.NT)
+    @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static PyObject wait$() {
         int[] status = new int[1];
         int pid = posix.wait(status);
@@ -1004,6 +1012,7 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__waitpid = new PyString(
         "wait() -> (pid, status)\n\n" +
         "Wait for completion of a child process.");
+    @Hide(posixImpl = PosixImpl.JAVA)
     public static PyObject waitpid(int pid, int options) {
         int[] status = new int[1];
         pid = posix.waitpid(pid, status, options);

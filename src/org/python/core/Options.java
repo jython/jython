@@ -201,5 +201,7 @@ public class Options {
         }
 
         Options.sreCacheSpec = getStringOption("sre.cachespec", Options.sreCacheSpec);
+
+        Options.importSite = getBooleanOption("import.site", Options.importSite);
     }
 }

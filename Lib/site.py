@@ -58,9 +58,14 @@ ImportError exception, it is silently ignored.
 
 """
 
-import sys
-import os
+# these first two imports will always be available if we got this far,
+# since they are implemented in Java
 import __builtin__
+import sys
+
+# but the remaining imports may fail, if so, this is because
+# python.home is incorrect; see the diagnosis in Py.importSiteIfSelected
+import os
 import traceback
 
 _is_jython = sys.platform.startswith("java")

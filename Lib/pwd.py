@@ -10,8 +10,11 @@ is raised if the entry asked for cannot be found.
 
 __all__ = ['getpwuid', 'getpwnam', 'getpwall']
 
-from os import _name, _posix_impl
-from org.python.core.Py import newStringOrUnicode
+try:
+    from os import _name, _posix_impl
+    from org.python.core.Py import newStringOrUnicode
+except:
+    raise ImportError
 import sys
 
 if _name == 'nt':

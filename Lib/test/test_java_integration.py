@@ -476,11 +476,7 @@ class JavaDelegationTest(unittest.TestCase):
 
 class SecurityManagerTest(unittest.TestCase):
 
-    @unittest.skip("XXX: not working")
     def test_nonexistent_import_with_security(self):
-        if os._name == 'nt':
-            # http://bugs.jython.org/issue1371
-            return
         script = test_support.findfile("import_nonexistent.py")
         home = os.path.realpath(sys.prefix)
         if not os.path.commonprefix((home, os.path.realpath(script))) == home:
@@ -490,6 +486,21 @@ class SecurityManagerTest(unittest.TestCase):
         self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
             "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
             0)
+
+    def test_import_signal_fails_with_import_error_using_security(self):
+        policy = test_support.findfile("python_home.policy")
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            subprocess.check_output(
+                [sys.executable,
+                 "-J-Dpython.cachedir.skip=true",
+                 "-J-Djava.security.manager",
+                 "-J-Djava.security.policy=%s" % policy,
+                 "-c", "import signal"],
+                stderr=subprocess.STDOUT)
+        self.assertIn(
+            'ImportError: signal module requires sun.misc.Signal, which is not allowed by your security profile',
+            cm.exception.output)
+
 
 class JavaWrapperCustomizationTest(unittest.TestCase):
     def tearDown(self):

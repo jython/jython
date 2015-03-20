@@ -109,8 +109,8 @@ _SCHEME_KEYS = ('stdlib', 'platstdlib', 'purelib', 'platlib', 'include',
 _PY_VERSION = sys.version.split()[0]
 _PY_VERSION_SHORT = sys.version[:3]
 _PY_VERSION_SHORT_NO_DOT = _PY_VERSION[0] + _PY_VERSION[2]
-_PREFIX = os.path.normpath(sys.prefix)
-_EXEC_PREFIX = os.path.normpath(sys.exec_prefix)
+_PREFIX = os.path.normpath(sys.prefix) if sys.prefix is not None else None
+_EXEC_PREFIX = os.path.normpath(sys.exec_prefix) if sys.exec_prefix is not None else None
 _CONFIG_VARS = None
 _USER_BASE = None
 
@@ -173,7 +173,10 @@ def _expand_vars(scheme, vars):
 
     for key, value in _INSTALL_SCHEMES[scheme].items():
         if os.name in ('posix', 'nt', 'java'):
-            value = os.path.expanduser(value)
+            try:
+                value = os.path.expanduser(value)
+            except ImportError:
+                pass  # ignore missing pwd if no native posix for Jython
         res[key] = os.path.normpath(_subst_vars(value, vars))
     return res
 
@@ -189,7 +192,7 @@ def _getuserbase():
         return os.path.expanduser(os.path.join(*args))
 
     # what about 'os2emx', 'riscos' ?
-    if os.name == "nt":
+    if os.name == "nt" or os._name == "nt":
         base = os.environ.get("APPDATA") or "~"
         return env_base if env_base else joinuser(base, "Python")
 
@@ -199,8 +202,12 @@ def _getuserbase():
             return env_base if env_base else \
                                joinuser("~", "Library", framework, "%d.%d"
                                             % (sys.version_info[:2]))
-
-    return env_base if env_base else joinuser("~", ".local")
+    if env_base:
+        return env_base
+    try:
+        return joinuser("~", ".local")
+    except:
+        return None  # SecurityManager prevents this for Jython
 
 
 def _parse_makefile(filename, vars=None):

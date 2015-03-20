@@ -413,6 +413,7 @@ public class imp {
      * is a jar moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
+        PyUnicode.checkEncoding(name);
         PyModule module = addModule(name);
 
         PyTableCode code = null;
@@ -578,6 +579,7 @@ public class imp {
     }
 
     static PyObject loadFromLoader(PyObject importer, String name) {
+        PyUnicode.checkEncoding(name);
         PyObject load_module = importer.__getattr__("load_module");
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
@@ -707,6 +709,7 @@ public class imp {
      * @return the loaded module
      */
     public static PyObject load(String name) {
+        PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
@@ -1031,6 +1034,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
+        PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
@@ -1051,6 +1055,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top,
             PyObject modDict, PyObject fromlist, int level) {
+        PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {

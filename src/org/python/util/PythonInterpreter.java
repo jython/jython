@@ -113,10 +113,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
             systemState.modules.__setitem__("__main__", module);
         }
 
-        if (Options.importSite) {
-            // Ensure site-packages are available
-            imp.load("site");
-        }
+        Py.importSiteIfSelected();
     }
 
     public PySystemState getSystemState() {

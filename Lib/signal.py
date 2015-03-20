@@ -29,11 +29,13 @@
     an ImportError is raised.
 """
 
-
+from java.lang import SecurityException
 try:
     import sun.misc.Signal
 except ImportError:
     raise ImportError("signal module requires sun.misc.Signal, which is not available on this platform")
+except SecurityException, ex:
+    raise ImportError("signal module requires sun.misc.Signal, which is not allowed by your security profile: %s" % ex)
 
 import os
 import sun.misc.SignalHandler

@@ -288,18 +288,9 @@ public class jython {
             System.err.println(InteractiveConsole.getDefaultBanner());
         }
 
-        if (Options.importSite) {
-            try {
-                imp.load("site");
-                if (opts.interactive && opts.notice && !opts.runModule) {
-                    System.err.println(COPYRIGHT);
-                }
-            } catch (PyException pye) {
-                if (!pye.match(Py.ImportError)) {
-                    System.err.println("error importing site");
-                    Py.printException(pye);
-                    System.exit(-1);
-                }
+        if (Py.importSiteIfSelected()) {
+            if (opts.interactive && opts.notice && !opts.runModule) {
+                System.err.println(COPYRIGHT);
             }
         }
 
@@ -359,7 +350,11 @@ public class jython {
                         throw Py.IOError(e);
                     }
                     try {
-                        if (PosixModule.getPOSIX().isatty(file.getFD())) {
+                        boolean isInteractive = false;
+                        try {
+                            isInteractive = PosixModule.getPOSIX().isatty(file.getFD());
+                        } catch (SecurityException ex) {}
+                        if (isInteractive) {
                             opts.interactive = true;
                             interp.interact(null, new PyFile(file));
                             return;
