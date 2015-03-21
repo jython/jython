@@ -1034,7 +1034,7 @@ The readme text for the next release will be like:
       </exec>
     </target>
     <target name="regrtest-windows" if="os.family.windows">
-      <exec executable="${dist.dir}/bin/jython.bat">
+      <exec executable="${dist.dir}/bin/jython.exe">
         <arg value="${dist.dir}/Lib/test/regrtest.py"/>
         <!-- Only run the tests that are expected to work on Jython -->
         <arg value="--expected"/>
