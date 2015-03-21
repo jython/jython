@@ -569,7 +569,7 @@ The readme text for the next release will be like:
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
 
-    <target name="jar-complete" depends="jar">
+    <target name="jar-complete" depends="jar, pycompile">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
         <jarjar destfile="${dist.dir}/${jython.deploy.jar}">
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
@@ -646,12 +646,12 @@ The readme text for the next release will be like:
         </jarjar>
     </target>
 
-<target name="jar-standalone" depends="jar-complete, copy-lib">
+    <target name="jar-standalone" depends="jar-complete">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
-        <jarjar destfile="${dist.dir}/${jython.standalone.jar}">
-            <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
-            <fileset dir="${dist.dir}" includes="Lib/**"/>
-            <manifest>
+        <jar destfile="${dist.dir}/${jython.standalone.jar}">
+	  <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
+	  <fileset dir="${dist.dir}" includes="Lib/**" excludes="Lib/test/**" />
+          <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
@@ -665,7 +665,7 @@ The readme text for the next release will be like:
                     <attribute name="debug" value="${debug}" />
                 </section>
             </manifest>
-        </jarjar>
+	</jar>
     </target>
 
     <target name="jar" depends="compile,expose">
