@@ -208,7 +208,7 @@ setting {envvar_specifier}JYTHON_HOME.""".\
         return os.path.join(self.jython_home, "javalib", "profile.jar")
 
     def set_encoding(self):
-        if "JAVA_ENCODING" not in os.environ and self.uname == "darwin":
+        if "JAVA_ENCODING" not in os.environ and self.uname == "darwin" and "file.encoding" not in self.args.properties:
             self.args.properties["file.encoding"] = "UTF-8"
 
     def convert(self, arg):
@@ -233,25 +233,29 @@ setting {envvar_specifier}JYTHON_HOME.""".\
         args = [self.java_command]
         args.extend(self.java_opts)
         args.extend(self.args.java)
-        for k, v in self.args.properties.iteritems():
-            args.append("-D%s=%s" % (self.convert(k), self.convert(v)))
         if self.args.boot:
             args.append("-Xbootclasspath/a:%s" % self.convert_path(self.classpath))
             if self.args.classpath:
                 args.extend(["-classpath", self.convert_path(self.args.classpath)])
         else:
             args.extend(["-classpath", self.convert_path(self.classpath)])
-        args.append("-Dpython.home=%s" % self.convert_path(self.jython_home))
-        args.append("-Dpython.executable=%s" % self.convert_path(self.executable))
-        args.append("-Dpython.launcher.uname=%s" % self.uname)
+        if "python.home" not in self.args.properties:
+            args.append("-Dpython.home=%s" % self.convert_path(self.jython_home))
+        if "python.executable" not in self.args.properties:
+            args.append("-Dpython.executable=%s" % self.convert_path(self.executable))
+        if "python.launcher.uname" not in self.args.properties:
+            args.append("-Dpython.launcher.uname=%s" % self.uname)
         # determine if is-a-tty for the benefit of running on cygwin - mintty doesn't behave like
         # a standard windows tty and so JNR posix doesn't detect it properly
-        args.append("-Dpython.launcher.tty=%s" % str(os.isatty(sys.stdin.fileno())).lower())
-        if self.uname == "cygwin":
+        if "python.launcher.tty" not in self.args.properties:
+            args.append("-Dpython.launcher.tty=%s" % str(os.isatty(sys.stdin.fileno())).lower())
+        if self.uname == "cygwin" and "python.console" not in self.args.properties:
             args.append("-Dpython.console=org.python.core.PlainConsole")
         if self.args.profile:
             args.append("-XX:-UseSplitVerifier")
             args.append("-javaagent:%s" % self.convert_path(self.java_profile_agent))
+        for k, v in self.args.properties.iteritems():
+            args.append("-D%s=%s" % (self.convert(k), self.convert(v)))
         args.append("org.python.util.jython")
         if self.args.help:
             args.append("--help")
