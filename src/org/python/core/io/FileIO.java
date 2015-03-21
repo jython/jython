@@ -30,6 +30,14 @@ import org.python.modules.posix.PosixModule;
  */
 public class FileIO extends RawIOBase {
 
+    // would be nicer if we directly imported from os, but crazy to do so
+    // since in python code itself
+    private static class os {
+        public static final int SEEK_SET = 0;
+        public static final int SEEK_CUR = 1;
+        public static final int SEEK_END = 2;
+    }
+
     /** The underlying file channel */
     private FileChannel fileChannel;
 
@@ -204,7 +212,7 @@ public class FileIO extends RawIOBase {
      */
     private void initPosition() {
         if (appending) {
-            seek(0, 2);
+            seek(0, os.SEEK_END);
         } else if (writing && !reading) {
             try {
                 fileChannel.truncate(0);
@@ -367,12 +375,12 @@ public class FileIO extends RawIOBase {
         checkClosed();
         try {
             switch (whence) {
-            case 0:
+            case os.SEEK_SET:
                 break;
-            case 1:
+            case os.SEEK_CUR:
                 pos += fileChannel.position();
                 break;
-            case 2:
+            case os.SEEK_END:
                 pos += fileChannel.size();
                 break;
             default:

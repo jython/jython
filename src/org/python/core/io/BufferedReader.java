@@ -29,6 +29,11 @@ public class BufferedReader extends BufferedIOMixin {
 
     @Override
     public int readinto(ByteBuffer bytes) {
+        return readinto(bytes, true);
+    }
+
+    @Override
+    protected int readinto(ByteBuffer bytes, boolean buffered) {
         int size = bytes.remaining();
 
         if (size == 0) {
@@ -46,15 +51,26 @@ public class BufferedReader extends BufferedIOMixin {
 
         // Drain the buffer then request more from the RawIO
         bytes.put(buffer);
-        buffer.clear();
 
-        // Only attempt one read. The buffering layer should not wait
-        // for more data (block) to fulfill the entire read
-        long read = rawIO.readinto(new ByteBuffer[] {bytes, buffer});
-        read -= buffer.flip().limit();
+        long read;
+        if (buffered) {
+            // Only attempt one read. The buffering layer should not wait
+            // for more data (block) to fulfill the entire read.
+            // Use scatter I/O read operation to read (potentially) farther
+            // than suggested in `bytes.remaining()` to fill in internal
+            // buffer `buffer`, that can be used to fulfill future read requests.
+            buffer.clear();
+            read = rawIO.readinto(new ByteBuffer[]{bytes, buffer});
+            read -= buffer.flip().limit();
+        } else {
+            // Clear internal buffer and only read up to specified size
+            // (implicit in `bytes.remaining()`) from the underlying stream
+            clear();
+            read = rawIO.readinto(bytes);
+        }
 
         // This is an int after subtracting the buffer size anyway
-        return (int)read;
+        return (int) read;
     }
 
     @Override

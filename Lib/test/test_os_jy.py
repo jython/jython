@@ -4,13 +4,15 @@
 
 Made for Jython.
 """
+import os
+import sys
+import glob
 import array
 import errno
-import glob
-import os
-import subprocess
-import sys
+import struct
 import unittest
+import subprocess
+
 from test import test_support
 from java.io import File
 
@@ -73,6 +75,54 @@ class OSFileTestCase(unittest.TestCase):
         with open(test_support.TESTFN, 'rb') as f:
             content = f.read()
         self.assertEqual(content, 2 * b'onetwothree')
+
+    def test_issue1011(self):
+        # prepare the input file containing 256 bytes of sorted byte-sized numbers
+        fd = file(test_support.TESTFN, 'wb')
+        try:
+            for x in range(256):
+                fd.write(chr(x))
+        finally:
+            fd.close()
+
+        # reopen in read/append mode
+        fd = file(test_support.TESTFN, 'rb+')
+        try:
+            # read forward from the beginning
+            for x in range(256):
+                pos = fd.tell()
+                self.assertEqual(pos, x,
+                        '[forward] before read: pos should be %d but is %d' % (x, pos))
+
+                # read just one byte
+                c = struct.unpack('B', fd.read(1))[0]
+
+                pos = fd.tell()
+                self.assertEqual(pos, x + 1,
+                        '[forward] after read: pos should be %d but is %d' % (x + 1, pos))
+                
+                self.assertEqual(c, x)
+
+            # read backward from the end
+            fd.seek(-1, os.SEEK_END)
+            for x in range(255, -1, -1):
+                pos = fd.tell()
+                self.assertEqual(pos, x,
+                        '[backward] before read: pos should be %d but is %d' % (x, pos))
+
+                # read just one byte
+                c = ord(fd.read(1))
+
+                pos = fd.tell()
+                self.assertEqual(pos, x + 1,
+                        '[backward] after read: pos should be %d but is %d' % (x + 1, pos))
+                
+                self.assertEqual(c, x)
+
+                if x > 0:
+                    fd.seek(-2, os.SEEK_CUR)
+        finally:
+            fd.close()
 
 
 class OSDirTestCase(unittest.TestCase):

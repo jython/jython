@@ -26,7 +26,7 @@ public abstract class BufferedIOBase extends IOBase {
         }
 
         ByteBuffer bytes = ByteBuffer.allocate(size);
-        readinto(bytes);
+        readinto(bytes, false);
         // flip()ing here is more convenient as there's no real use
         // case for appending to buffers returned from read. readinto
         // doesn't/shouldn't flip()
@@ -53,6 +53,21 @@ public abstract class BufferedIOBase extends IOBase {
      * @return the amount of data read as an int
      */
     public int readinto(ByteBuffer bytes) {
+        unsupported("readinto");
+        return -1;
+    }
+
+    /**
+     * Read up to bytes.remaining() bytes into the given ByteBuffer, but control
+     * whether to attempt to buffer the rest of the underlying stream.
+     *
+     * Returns the number of bytes read (0 for EOF)
+     *
+     * @param bytes a ByteBuffer to read bytes into
+     * @param buffered whether to buffer the remaining bytes of the stream, if we can
+     * @return the amount of data read as an int
+     */
+    protected int readinto(ByteBuffer bytes, boolean buffered) {
         unsupported("readinto");
         return -1;
     }
