@@ -76,7 +76,7 @@ class OSFileTestCase(unittest.TestCase):
             content = f.read()
         self.assertEqual(content, 2 * b'onetwothree')
 
-    def test_issue1011(self):
+    def test_issue1793(self):
         # prepare the input file containing 256 bytes of sorted byte-sized numbers
         fd = file(test_support.TESTFN, 'wb')
         try:
