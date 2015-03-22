@@ -1,15 +1,12 @@
-Welcome to Jython 2.7b4
+Welcome to Jython 2.7rc1
 =======================
 
-This is the fourth beta release of the 2.7 version of Jython. Thanks to
-Amobee (http://www.amobee.com/) for sponsoring this release.
-Thanks to all who contribute to Jython.
+This is the first release candidate of the 2.7 version of Jython. Thanks to
+Amobee (http://www.amobee.com/) for sponsoring this release.  Thanks to all who
+contribute to Jython.
 
-Jython 2.7b4 includes many bug fixes and code stabilization in prep for
+Jython 2.7rc1 includes many bug fixes and code stabilization in prep for
 release candidates.
-
-As a beta release we are concentrating on bug fixing and stabilizion for a
-production release.
 
 Please see the NEWS file for detailed release notes.
 
