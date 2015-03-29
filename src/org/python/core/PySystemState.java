@@ -147,8 +147,9 @@ public class PySystemState extends PyObject implements AutoCloseable,
     public PyList path_hooks;
     public PyObject path_importer_cache;
 
-    public PyObject ps1 = new PyString(">>> ");
-    public PyObject ps2 = new PyString("... ");
+    // Only defined if interactive, see https://docs.python.org/2/library/sys.html#sys.ps1
+    public PyObject ps1 = PyAttributeDeleted.INSTANCE;
+    public PyObject ps2 = PyAttributeDeleted.INSTANCE;
 
     public PyObject executable;
 

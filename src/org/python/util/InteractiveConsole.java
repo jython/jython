@@ -5,6 +5,7 @@ import org.python.core.Py;
 import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyException;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.__builtin__;
 
@@ -111,6 +112,19 @@ public class InteractiveConsole extends InteractiveInterpreter {
      * @param file from which to read commands, or if <code>null</code>, read the console.
      */
     public void interact(String banner, PyObject file) {
+        PyObject old_ps1 = systemState.ps1;
+        PyObject old_ps2 = systemState.ps2;
+        systemState.ps1 = new PyString(">>> ");
+        systemState.ps2 = new PyString("... ");
+        try {
+            _interact(banner, file);
+        } finally {
+            systemState.ps1 = old_ps1;
+            systemState.ps2 = old_ps2;
+        }
+    }
+
+    public void _interact(String banner, PyObject file) {
         if (banner != null) {
             write(banner);
             write("\n");

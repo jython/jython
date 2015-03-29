@@ -254,6 +254,19 @@ class SysArgvTest(unittest.TestCase):
                 stdout=subprocess.PIPE)
             self.assertEqual(p.stdout.read().decode("utf-8"), zhongwen)
 
+class InteractivePromptTest(unittest.TestCase):
+    # TODO ps1, ps2 being defined for interactive usage should be
+    # captured by test_doctest, however, it would be ideal to add
+    # pexpect tests (using CPython).
+
+    def test_prompts_not_defined_if_not_interactive(self):
+        p = subprocess.Popen(
+            [sys.executable, '-c',
+             'import sys;' \
+             'print hasattr(sys, "ps1");' \
+             'print hasattr(sys, "ps2");'],
+            stdout=subprocess.PIPE)
+        self.assertEqual(''.join(p.stdout.read().split()), 'FalseFalse')
 
 def test_main():
     test_support.run_unittest(
@@ -262,7 +275,8 @@ def test_main():
         SyspathResourceTest,
         SyspathUnicodeTest,
         SysEncodingTest,
-        SysArgvTest
+        SysArgvTest,
+        InteractivePromptTest
     )
 
 if __name__ == "__main__":
