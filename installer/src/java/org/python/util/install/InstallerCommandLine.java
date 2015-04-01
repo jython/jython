@@ -354,6 +354,9 @@ public class InstallerCommandLine {
                 if (INEXCLUDE_SOURCES.equals(includeParts[i])) {
                     installationType.addSources();
                 }
+                if (INEXCLUDE_ENSUREPIP.equals(includeParts[i])) {
+                    installationType.addEnsurepip();
+                }
             }
         }
         // remove parts to exclude
@@ -371,6 +374,9 @@ public class InstallerCommandLine {
                 }
                 if (INEXCLUDE_SOURCES.equals(excludeParts[i])) {
                     installationType.removeSources();
+                }
+                if (INEXCLUDE_ENSUREPIP.equals(excludeParts[i])) {
+                    installationType.removeEnsurepip();
                 }
             }
         }

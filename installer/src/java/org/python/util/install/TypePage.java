@@ -254,6 +254,12 @@ public class TypePage extends AbstractWizardPage {
                     } else {
                         installationType.removeSources();
                     }
+                } else if (InstallerCommandLine.INEXCLUDE_ENSUREPIP.equals(actionCommand)) {
+                    if (selected) {
+                        installationType.addEnsurepip();
+                    } else {
+                        installationType.removeEnsurepip();
+                    }
                 }
             }
             FrameInstaller.setInstallationType(installationType);

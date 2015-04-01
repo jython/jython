@@ -1,5 +1,3 @@
-// FIXME change to ProcessBuilder so we can set environment variables (specifically LC_ALL=C)
-
 package org.python.util.install;
 
 import java.io.BufferedReader;

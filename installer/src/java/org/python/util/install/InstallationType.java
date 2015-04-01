@@ -61,9 +61,13 @@ public class InstallationType {
         _installSources = false;
     }
 
-    public void addEnsurepip() { _ensurepip = true; }
+    public void addEnsurepip() {
+        _ensurepip = true;
+    }
 
-    public void removeEnsurepip() { _ensurepip = false; }
+    public void removeEnsurepip() {
+        _ensurepip = false;
+    }
 
     public void setStandalone() {
         _isStandalone = true;
