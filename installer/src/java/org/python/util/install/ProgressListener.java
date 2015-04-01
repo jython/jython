@@ -12,4 +12,6 @@ public interface ProgressListener extends InstallationListener {
 
     public void progressStandalone();
 
+    public void progressEnsurepip();
+
 }

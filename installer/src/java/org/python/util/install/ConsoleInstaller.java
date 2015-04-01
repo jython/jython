@@ -606,4 +606,6 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
     public void progressStandalone() {
         message(getText(C_PACKING_STANDALONE_JAR));
     }
+
+    public void progressEnsurepip() { message(getText(C_ENSUREPIP)); }
 }

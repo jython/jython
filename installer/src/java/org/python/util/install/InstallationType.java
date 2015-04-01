@@ -6,6 +6,7 @@ public class InstallationType {
     private boolean _installDemosAndExamples = true;
     private boolean _installDocumentation = true;
     private boolean _installSources = false;
+    private boolean _ensurepip = true;
     private boolean _isStandalone = false;
 
     public boolean installLibraryModules() {
@@ -22,6 +23,10 @@ public class InstallationType {
 
     public boolean installSources() {
         return _installSources;
+    }
+
+    public boolean ensurepip() {
+        return _ensurepip;
     }
 
     public void addLibraryModules() {
@@ -56,12 +61,17 @@ public class InstallationType {
         _installSources = false;
     }
 
+    public void addEnsurepip() { _ensurepip = true; }
+
+    public void removeEnsurepip() { _ensurepip = false; }
+
     public void setStandalone() {
         _isStandalone = true;
         addLibraryModules();
         removeDemosAndExamples();
         removeDocumentation();
         removeSources();
+        removeEnsurepip();
     }
 
     public boolean isStandalone() {
@@ -73,23 +83,27 @@ public class InstallationType {
         addDemosAndExamples();
         addDocumentation();
         addSources();
+        addEnsurepip();
         _isStandalone = false;
     }
 
     public boolean isAll() {
-        return installLibraryModules() && installDemosAndExamples() && installDocumentation() && installSources();
+        return installLibraryModules() && installDemosAndExamples() &&
+                installDocumentation() && installSources() && ensurepip();
     }
 
     public void setStandard() {
         addLibraryModules();
         addDemosAndExamples();
         addDocumentation();
+        addEnsurepip();
         removeSources();
         _isStandalone = false;
     }
 
     public boolean isStandard() {
-        return installLibraryModules() && installDemosAndExamples() && installDocumentation() && !installSources();
+        return installLibraryModules() && installDemosAndExamples() && ensurepip() &&
+                installDocumentation() && !installSources();
     }
 
     public void setMinimum() {
@@ -97,11 +111,13 @@ public class InstallationType {
         removeDemosAndExamples();
         removeDocumentation();
         removeSources();
+        removeEnsurepip();
         _isStandalone = false;
     }
 
     public boolean isMinimum() {
-        return !installLibraryModules() && !installDemosAndExamples() && !installDocumentation() && !installSources();
+        return !installLibraryModules() && !installDemosAndExamples() &&
+                !ensurepip() && !installDocumentation() && !installSources();
     }
 
     /**

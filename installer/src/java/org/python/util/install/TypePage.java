@@ -29,6 +29,7 @@ public class TypePage extends AbstractWizardPage {
     private JCheckBox _demo;
     private JCheckBox _doc;
     private JCheckBox _src;
+    private JCheckBox _ensurepip;
 
     private boolean _firstTime = true;
 
@@ -90,15 +91,20 @@ public class TypePage extends AbstractWizardPage {
         _src.setEnabled(true);
         _src.setActionCommand(InstallerCommandLine.INEXCLUDE_SOURCES);
         _src.addActionListener(typeChangeListener);
+        _ensurepip = new JCheckBox();
+        _ensurepip.setEnabled(true);
+        _ensurepip.setActionCommand(InstallerCommandLine.INEXCLUDE_ENSUREPIP);
+        _ensurepip.addActionListener(typeChangeListener);
 
         JPanel checkboxPanel = new JPanel();
-        GridLayout gridLayout = new GridLayout(5, 1);
+        GridLayout gridLayout = new GridLayout(6, 1);
         checkboxPanel.setLayout(gridLayout);
         checkboxPanel.add(_core);
         checkboxPanel.add(_mod);
         checkboxPanel.add(_demo);
         checkboxPanel.add(_doc);
         checkboxPanel.add(_src);
+        checkboxPanel.add(_ensurepip);
 
         JPanel panel = new JPanel();
         GridBagLayout gridBagLayout = new GridBagLayout();
@@ -178,6 +184,7 @@ public class TypePage extends AbstractWizardPage {
         _demo.setText(getText(DEMOS_EXAMPLES));
         _doc.setText(getText(DOCUMENTATION));
         _src.setText(getText(SOURCES));
+        _ensurepip.setText(getText(ENSUREPIP));
         setCheckboxes(installationType);
     }
 
@@ -220,6 +227,7 @@ public class TypePage extends AbstractWizardPage {
                 _demo.setEnabled(true);
                 _doc.setEnabled(true);
                 _src.setEnabled(true);
+                _ensurepip.setEnabled(true);
             } else {
                 boolean selected = ((JCheckBox) e.getSource()).isSelected();
                 if (InstallerCommandLine.INEXCLUDE_LIBRARY_MODULES.equals(actionCommand)) {
@@ -258,11 +266,13 @@ public class TypePage extends AbstractWizardPage {
         _demo.setSelected(installationType.installDemosAndExamples());
         _doc.setSelected(installationType.installDocumentation());
         _src.setSelected(installationType.installSources());
+        _ensurepip.setSelected(installationType.ensurepip());
         _standaloneButton.setSelected(installationType.isStandalone());
         _mod.setEnabled(!installationType.isPredefined());
         _demo.setEnabled(!installationType.isPredefined());
         _doc.setEnabled(!installationType.isPredefined());
         _src.setEnabled(!installationType.isPredefined());
+        _ensurepip.setEnabled(!installationType.isPredefined());
     }
 
 }

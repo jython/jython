@@ -1,8 +1,14 @@
+// FIXME change to ProcessBuilder so we can set environment variables (specifically LC_ALL=C)
+
 package org.python.util.install;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Easy start of a child process.
@@ -20,16 +26,23 @@ public class ChildProcess {
     /**
      * Inner class for reading stdout of the child process and printing it onto the caller's stdout.
      */
-    private class StdoutMonitor extends Thread {
+    private class OutputMonitor extends Thread {
 
-        private StdoutMonitor() {}
+        private final List<String> output = new ArrayList<>();
+
+        private final InputStream inputStream;
+
+        public OutputMonitor(InputStream inputStream) {
+            this.inputStream = inputStream;
+        }
 
         public void run() {
-            String line = null;
-            BufferedReader stdout = new BufferedReader(new InputStreamReader(_process.getInputStream()));
+            String line;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             try {
                 // blocks until input found or process dead
-                while ((line = stdout.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
+                    output.add(line);
                     if (!isSilent()) {
                         System.out.println(line);
                     }
@@ -39,43 +52,20 @@ public class ChildProcess {
                     ioe.printStackTrace();
                 }
             } finally {
-                if (stdout != null)
+                if (reader != null)
                     try {
-                        stdout.close();
+                        reader.close();
                     } catch (IOException e) {}
             }
         }
-    }
 
-    /**
-     * Inner class for reading stderr of the child process and printing it onto the caller's stderr.
-     */
-    private class StderrMonitor extends Thread {
-
-        private StderrMonitor() {}
-
-        public void run() {
-            String line = null;
-            BufferedReader stderr = new BufferedReader(new InputStreamReader(_process.getErrorStream()));
-            try {
-                // blocks until input found or process dead
-                while ((line = stderr.readLine()) != null) {
-                    if (!isSilent()) {
-                        System.err.println(line);
-                    }
-                }
-            } catch (IOException ioe) {
-                if (!isSilent()) {
-                    ioe.printStackTrace();
-                }
-            } finally {
-                if (stderr != null)
-                    try {
-                        stderr.close();
-                    } catch (IOException e) {}
-            }
+        public List<String> getOutput() {
+            return output;
         }
     }
+
+    private List<String> stdout;
+    private List<String> stderr;
 
     /**
      * Constant indicating no timeout at all.
@@ -133,6 +123,11 @@ public class ChildProcess {
     private boolean _silent = false;
 
     /**
+     * path for current working directory of the child process
+     */
+    private Path _cwd;
+
+    /**
      * Default constructor
      */
     public ChildProcess() {}
@@ -174,6 +169,10 @@ public class ChildProcess {
     public String[] getCommand() {
         return _command;
     }
+
+    public void setCWD(Path cwd) { _cwd = cwd; }
+
+    public Path getCWD() { return _cwd; }
 
     /**
      * Set the timeout (how long should the calling process wait for the child).
@@ -267,12 +266,18 @@ public class ChildProcess {
             // determine start time
             _startTime = System.currentTimeMillis();
             // start the process
-            _process = Runtime.getRuntime().exec(getCommand());
+            ProcessBuilder pb = new ProcessBuilder();
+            pb.command(getCommand());
+            pb.inheritIO();
+            if (getCWD() != null) {
+                pb.directory(getCWD().toFile());
+            }
+            _process = pb.start();
             debugCommand();
             // handle stdout and stderr
-            StdoutMonitor stdoutMonitor = new StdoutMonitor();
+            OutputMonitor stdoutMonitor = new OutputMonitor(_process.getInputStream());
             stdoutMonitor.start();
-            StderrMonitor stderrMonitor = new StderrMonitor();
+            OutputMonitor stderrMonitor = new OutputMonitor(_process.getErrorStream());
             stderrMonitor.start();
             // run the subprocess as long as wanted
             while (!isTimeout() && isAlive()) {
@@ -292,6 +297,8 @@ public class ChildProcess {
                     System.out.println("[ChildProcess] ended itself");
                 }
             }
+            stdout = stdoutMonitor.getOutput();
+            stderr = stderrMonitor.getOutput();
         } catch (IOException ioe) {
             if (!isSilent()) {
                 ioe.printStackTrace();
@@ -305,6 +312,14 @@ public class ChildProcess {
      */
     public int getExitValue() {
         return _exitValue;
+    }
+
+    public List<String> getStdout() {
+        return stdout;
+    }
+
+    public List<String> getStderr() {
+        return stderr;
     }
 
     private void setExitValue(int exitValue) {

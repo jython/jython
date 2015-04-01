@@ -20,8 +20,11 @@ public class Wizard extends AbstractWizard implements TextKeys {
         TypePage typePage = new TypePage();
         DirectorySelectionPage directoryPage = new DirectorySelectionPage(jarInfo);
         directoryPage.setValidator(new DirectorySelectionPageValidator(directoryPage));
-        JavaSelectionPage javaPage = new JavaSelectionPage();
-        javaPage.setValidator(new JavaSelectionPageValidator(javaPage));
+        // 2.7.0rc2 removed JAVA_HOME support from script generation,
+        // due to jython.exe. May consider re-enabling if we have a good
+        // strategy for doing so.
+//        JavaSelectionPage javaPage = new JavaSelectionPage();
+//        javaPage.setValidator(new JavaSelectionPageValidator(javaPage));
         OverviewPage overviewPage = new OverviewPage();
         ProgressPage progressPage = new ProgressPage(jarInfo, autotest);
         ReadmePage readmePage = new ReadmePage(jarInfo);
@@ -31,7 +34,7 @@ public class Wizard extends AbstractWizard implements TextKeys {
         this.addPage(licensePage);
         this.addPage(typePage);
         this.addPage(directoryPage);
-        this.addPage(javaPage);
+//        this.addPage(javaPage);
         this.addPage(overviewPage);
         this.addPage(progressPage);
         this.addPage(readmePage);

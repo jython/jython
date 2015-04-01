@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -41,10 +42,11 @@ public class JarInstaller {
     }
 
     /**
-     * Do the pysical installation:
+     * Do the physical installation:
      * <ul>
      * <li>unzip the files
      * <li>generate the start scripts
+     * <li>run ensurepip if selected
      * </ul>
      * 
      * @param targetDirectory
@@ -144,6 +146,11 @@ public class JarInstaller {
                 _progressListener.progressStartScripts();
                 StartScriptGenerator generator = new StartScriptGenerator(targetDirectory, javaHomeHandler);
                 generator.generateStartScripts();
+                if (installationType.ensurepip()) {
+                    _progressListener.progressEnsurepip();
+                    _progressListener.progressChanged(90); // approx
+                    ensurepip(targetDirectory.toPath().resolve("bin"));
+                }
             } else {
                 _progressListener.progressStandalone();
                 File jythonJar = new File(targetDirectory, JYTHON_JAR);
@@ -169,6 +176,21 @@ public class JarInstaller {
         }
     }
 
+    private int ensurepip(Path bindir) {
+        int errorCode = 0;
+        try {
+            String launcher = bindir.resolve("jython").toString();
+            String command[] = new String[]{
+                    launcher, "-m", "ensurepip"};
+            ChildProcess childProcess = new ChildProcess(command);
+            childProcess.setCWD(bindir);
+            errorCode = childProcess.run();
+        } catch (Throwable t) {
+            errorCode = 1;
+        }
+        return errorCode;
+    }
+
     public void addInstallationListener(InstallationListener installationListener) {
         if (installationListener != null) {
             _installationListeners.add(installationListener);
@@ -192,6 +214,9 @@ public class JarInstaller {
         }
         if (installationType.installSources()) {
             numberOfEntries += 1000;
+        }
+        if (installationType.ensurepip()) {
+            numberOfEntries += 2000;
         }
         return numberOfEntries;
     }

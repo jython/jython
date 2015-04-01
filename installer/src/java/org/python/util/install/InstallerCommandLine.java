@@ -20,6 +20,7 @@ public class InstallerCommandLine {
     protected static final String INEXCLUDE_DEMOS_AND_EXAMPLES = "demo";
     protected static final String INEXCLUDE_DOCUMENTATION = "doc";
     protected static final String INEXCLUDE_SOURCES = "src";
+    protected static final String INEXCLUDE_ENSUREPIP = "ensurepip";
 
     protected static final String CONSOLE_SHORT = "c";
     protected static final String CONSOLE_LONG = "console";

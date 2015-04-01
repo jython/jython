@@ -20,6 +20,7 @@ public interface TextKeys {
     public static final String DO_NOT_ACCEPT = "DO_NOT_ACCEPT";
     public static final String EMPTY_TARGET_DIRECTORY = "EMPTY_TARGET_DIRECTORY";
     public static final String ENGLISH = "ENGLISH";
+    public static final String ENSUREPIP = "ENSUREPIP";
     public static final String ERROR = "ERROR";
     public static final String ERROR_ACCESS_JARFILE = "ERROR_ACCESS_JARFILE";
     public static final String FINISH = "FINISH";
@@ -88,6 +89,7 @@ public interface TextKeys {
     public static final String C_CONGRATULATIONS = "C_CONGRATULATIONS";
     public static final String C_CREATE_DIRECTORY = "C_CREATE_DIRECTORY";
     public static final String C_ENGLISH = "C_ENGLISH";
+    public static final String C_ENSUREPIP = "C_ENSUREPIP";
     public static final String C_ENTER_TARGET_DIRECTORY = "C_ENTER_TARGET_DIRECTORY";
     public static final String C_ENTER_JAVA_HOME = "C_ENTER_JAVA_HOME";
     public static final String C_EXCLUDE = "C_EXCLUDE";

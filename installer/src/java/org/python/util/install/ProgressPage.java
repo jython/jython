@@ -119,4 +119,6 @@ public class ProgressPage extends AbstractWizardPage implements ProgressListener
         _progressEntry.setText(getText(PACKING_STANDALONE_JAR));
     }
 
+    public void progressEnsurepip() { _progressEntry.setText(getText(C_ENSUREPIP)); }
+
 }

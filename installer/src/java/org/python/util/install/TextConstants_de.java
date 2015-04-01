@@ -25,6 +25,7 @@ public class TextConstants_de extends ListResourceBundle implements TextKeys, Un
         { DO_NOT_ACCEPT, "Nein, ich akzeptiere nicht" }, // license
         { EMPTY_TARGET_DIRECTORY, "Das Zielverzeichnis darf nicht leer sein" }, // error
         { ENGLISH, "Englisch" }, // language
+        { ENSUREPIP, "Installieren pip und setuptools"},
         { ERROR, "Fehler" }, // error
         { ERROR_ACCESS_JARFILE, "Problem beim Zugriff auf das jar File" }, // error
         { FINISH, "Beenden" }, // button
@@ -96,6 +97,7 @@ public class TextConstants_de extends ListResourceBundle implements TextKeys, Un
         { C_ENTER_TARGET_DIRECTORY, "Bitte geben Sie das Zielverzeichnis ein" }, // console
         { C_ENTER_JAVA_HOME, "Bitte geben Sie das gewuenschte Java Home Verzeichnis ein (Enter fuer das aktuelle)" }, // console
         { C_ENGLISH, "Englisch" }, // language
+        { C_ENSUREPIP, "Installieren pip und setuptools"},
         { C_EXCLUDE, "Moechten Sie Teile von der Installation ausschliessen ?" }, // installation type
         { C_GENERATING_START_SCRIPTS, "Start Scripts werden generiert ..." }, // progress
         { C_GERMAN, "Deutsch" }, // language

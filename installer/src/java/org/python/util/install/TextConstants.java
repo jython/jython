@@ -25,6 +25,7 @@ public class TextConstants extends ListResourceBundle implements TextKeys {
         { DOCUMENTATION, "Documentation" }, // installation type
         { EMPTY_TARGET_DIRECTORY, "Target directory must not be empty" }, // error
         { ENGLISH, "English" }, // language
+        { ENSUREPIP, "Install pip and setuptools"},
         { ERROR, "Error" }, // error
         { ERROR_ACCESS_JARFILE, "Error accessing jar file" }, // error
         { FINISH, "Finish" }, // button
@@ -95,6 +96,7 @@ public class TextConstants extends ListResourceBundle implements TextKeys {
         { C_ENTER_TARGET_DIRECTORY, "Please enter the target directory" }, // console
         { C_ENTER_JAVA_HOME, "Please enter the java home directory (empty for using the current java runtime)" }, // console
         { C_ENGLISH, "English" }, // language
+        { C_ENSUREPIP, "Installing pip and setuptools"},
         { C_EXCLUDE, "Do you want to exclude parts from the installation ?" }, // installation type
         { C_GENERATING_START_SCRIPTS, "Generating start scripts ..." }, // progress
         { C_GERMAN, "German" }, // language
