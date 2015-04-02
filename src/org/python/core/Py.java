@@ -660,6 +660,15 @@ public final class Py {
         }
     }
 
+    public static PyString newStringUTF8(String s) {
+        if (CharMatcher.ASCII.matchesAllOf(s)) {
+            // ascii of course is a subset of UTF-8
+            return Py.newString(s);
+        } else {
+            return Py.newString(codecs.PyUnicode_EncodeUTF8(s, null));
+        }
+    }
+
     public static PyStringMap newStringMap() {
         // enable lazy bootstrapping (see issue #1671)
         if (!PyType.hasBuilder(PyStringMap.class)) {

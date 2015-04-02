@@ -338,6 +338,19 @@ class LocaleTestCase(unittest.TestCase):
                     env=newenv),
                 "2015-01-22 00:00:00\n")
 
+    def test_strftime_japanese_locale(self):
+        # Verifies fix of http://bugs.jython.org/issue2301 - produces
+        # UTF-8 encoded output per what CPython does, rather than Unicode.
+        # We will revisit in Jython 3.x!
+        self.get_installed_locales("ja_JP.UTF-8")
+        self.assertEqual(
+            subprocess.check_output(
+                [sys.executable, 
+                 "-J-Duser.country=JP", "-J-Duser.language=ja",
+                 "-c",
+                 "import time; print repr(time.strftime('%c', (2015, 3, 29, 14, 55, 13, 6, 88, 0)))"]),
+            "'\\xe6\\x97\\xa5 3 29 14:55:13 2015'\n")
+        
 
 class SystemTestCase(unittest.TestCase):
 

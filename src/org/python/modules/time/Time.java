@@ -671,7 +671,7 @@ public class Time implements ClassDictInit
             i++;
         }
         // FIXME: This have problems with localized data:
-        //        $ LANG=es_ES.UTF-8 jythont -c "import time; print time.strftime('%A')"
+        //        $ LANG=es_ES.UTF-8 jython -c "import time; print time.strftime('%A')"
         //        s?bado
         //
         //        On the other hand, returning unicode would break some doctests
@@ -681,7 +681,7 @@ public class Time implements ClassDictInit
         //        os.environ)
         //
         // TODO:  Check how CPython deals with this problem.
-        return Py.newStringOrUnicode(s);
+        return Py.newStringUTF8(s);
     }
 
 
