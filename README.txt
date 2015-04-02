@@ -1,11 +1,11 @@
-Welcome to Jython 2.7rc1
-=======================
+Welcome to Jython 2.7rc2
+========================
 
-This is the first release candidate of the 2.7 version of Jython. Thanks to
+This is the second release candidate of the 2.7 version of Jython. Thanks to
 Amobee (http://www.amobee.com/) for sponsoring this release.  Thanks to all who
 contribute to Jython.
 
-Jython 2.7rc1 includes many bug fixes and code stabilization in prep for
+Jython 2.7rc2 includes many bug fixes and code stabilization in prep for
 release candidates.
 
 Please see the NEWS file for detailed release notes.
