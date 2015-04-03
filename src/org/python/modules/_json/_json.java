@@ -24,6 +24,7 @@ import java.util.Iterator;
 public class _json implements ClassDictInit {
 
     public static final PyString __doc__ = new PyString("Port of _json C module.");
+    public static final PyObject module = Py.newString("_json");
 
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", new PyString("_json"));
@@ -83,9 +84,8 @@ public class _json implements ClassDictInit {
         }
 
         @Override
-        @ExposedGet(name = "__module__")
         public PyObject getModule() {
-            return new PyString("_json");
+            return module;
         }
 
 
@@ -311,9 +311,8 @@ public class _json implements ClassDictInit {
         }
 
         @Override
-        @ExposedGet(name = "__module__")
         public PyObject getModule() {
-            return new PyString("_json");
+            return module;
         }
 
         @Override

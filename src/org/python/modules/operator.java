@@ -23,6 +23,8 @@ import org.python.expose.ExposedType;
 @Untraversable
 class OperatorFunctions extends PyBuiltinFunctionSet
 {
+    public static final PyObject module = Py.newString("operator");
+
     public OperatorFunctions(String name, int index, int argcount) {
         this(name, index, argcount, argcount);
     }
@@ -32,6 +34,11 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         super(name, index, minargs, maxargs);
     }
 
+    @Override
+    public PyObject getModule() {
+        return module;
+    }
+    
     public PyObject __call__(PyObject arg1) {
         switch (index) {
         case 10: return arg1.__abs__();

@@ -1,5 +1,6 @@
 import operator
 import unittest
+import inspect
 
 from test import test_support
 
@@ -33,6 +34,16 @@ class Seq2(object):
 
 
 class OperatorTestCase(unittest.TestCase):
+    def test_missing_module_attribute(self):
+        skip = {'__subclasshook__', '__new__'}
+
+        def _predicate(member):
+            return inspect.isbuiltin(member) and member.__name__ not in skip
+
+        objects = inspect.getmembers(operator, predicate=_predicate)
+        for _, value in objects:
+            self.assertEqual(value.__module__, "operator", value)
+
     def test_lt(self):
         self.failUnlessRaises(TypeError, operator.lt)
         self.failUnlessRaises(TypeError, operator.lt, 1j, 2j)

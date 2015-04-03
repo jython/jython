@@ -8,6 +8,10 @@ class TimeTestCase(unittest.TestCase):
     def setUp(self):
         self.t = time.time()
 
+    def test_missing_module_attribute(self):
+        self.assertEqual(time.clock.__module__, 'time')
+        self.assertEqual(time.time.__module__, 'time')
+
     def test_data_attributes(self):
         time.altzone
         time.daylight
