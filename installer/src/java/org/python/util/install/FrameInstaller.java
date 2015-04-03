@@ -40,9 +40,7 @@ public class FrameInstaller {
         if (commandLine.hasDirectoryOption()) {
             setTargetDirectory(commandLine.getTargetDirectory().getAbsolutePath());
         }
-        if (commandLine.hasJavaHomeOption()) {
-            setJavaHomeHandler(commandLine.getJavaHomeHandler());
-        }
+        setJavaHomeHandler(commandLine.getJavaHomeHandler());
         initDefaultJava();
         Wizard wizard = new Wizard(jarInfo, autotest);
         wizard.addWindowListener(new WindowAdapter() {

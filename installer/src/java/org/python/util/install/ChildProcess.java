@@ -266,7 +266,6 @@ public class ChildProcess {
             // start the process
             ProcessBuilder pb = new ProcessBuilder();
             pb.command(getCommand());
-            pb.inheritIO();
             if (getCWD() != null) {
                 pb.directory(getCWD().toFile());
             }

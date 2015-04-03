@@ -71,31 +71,31 @@ public class GuiAutotest extends Autotest {
      * @throws DriverException
      */
     protected void execute() throws DriverException {
-        try {
-            _robot = new Robot();
-
-            System.out.println("waiting 2 seconds for the first gui ... please do not change focus");
-            _robot.delay(2000); // initial gui load
-
-            Iterator actionsIterator = _keyActions.iterator();
-            while (actionsIterator.hasNext()) {
-                KeyAction keyAction = (KeyAction) actionsIterator.next();
-                setWaiting(keyAction.isWait());
-                if (isWaiting()) {
-                    System.out.println("waiting for the installation to finish ...");
-                }
-                while (isWaiting()) {
-                    try {
-                        Thread.sleep(_DEFAULT_DELAY);
-                    } catch (InterruptedException e) {
-                        throw new DriverException(e);
-                    }
-                }
-                executeKeyAction(keyAction);
-            }
-        } catch (AWTException ae) {
-            throw new DriverException(ae);
-        }
+//        try {
+//            _robot = new Robot();
+//
+//            System.out.println("waiting 2 seconds for the first gui ... please do not change focus");
+//            _robot.delay(2000); // initial gui load
+//
+//            Iterator actionsIterator = _keyActions.iterator();
+//            while (actionsIterator.hasNext()) {
+//                KeyAction keyAction = (KeyAction) actionsIterator.next();
+//                setWaiting(keyAction.isWait());
+//                if (isWaiting()) {
+//                    System.out.println("waiting for the installation to finish ...");
+//                }
+//                while (isWaiting()) {
+//                    try {
+//                        Thread.sleep(_DEFAULT_DELAY);
+//                    } catch (InterruptedException e) {
+//                        throw new DriverException(e);
+//                    }
+//                }
+//                executeKeyAction(keyAction);
+//            }
+//        } catch (AWTException ae) {
+//            throw new DriverException(ae);
+//        }
 
     }
 

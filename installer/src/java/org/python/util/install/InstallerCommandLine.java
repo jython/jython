@@ -36,17 +36,10 @@ public class InstallerCommandLine {
     private static final String VERBOSE_DESC = "print more output during the installation\n"
             + "(also valid in GUI and autotest mode)";
 
-    private static final String JRE_SHORT = "j";
-    private static final String JRE_LONG = "jre";
-    private static final String JRE_DESC = "home directory of the runtime jre or jdk\n"
-            + "(executables are assumed in the /bin subdirectory)\n" + "select this if you want to run Jython with a\n"
-            + "different java version than the installation";
-
     private static final String AUTOTEST_SHORT = "A";
     private static final String AUTOTEST_LONG = "autotest";
     private static final String AUTOTEST_DESC = "automatic stress tests for the installer\n"
-            + "most of the other options are ignored\n" + "allowed additional options: '" + VERBOSE_LONG + "', '"
-            + JRE_LONG + "'";
+            + "most of the other options are ignored\n" + "allowed additional options: '" + VERBOSE_LONG;
 
     private static final String DIRECTORY_SHORT = "d";
     private static final String DIRECTORY_LONG = "directory";
@@ -62,18 +55,23 @@ public class InstallerCommandLine {
     private static final String STANDALONE_DOCUMENTATION = "install a single, executable .jar,\ncontaining all the modules";
 
     private static final String INEXCLUDE_ARG = "part(s)";
-    private static final String INEXCLUDE_PARTS = "more than one of the following is possible:\n" + "- "
-            + INEXCLUDE_LIBRARY_MODULES + ": library modules\n" + "- " + INEXCLUDE_DEMOS_AND_EXAMPLES
-            + ": demos and examples\n" + "- " + INEXCLUDE_DOCUMENTATION + ": documentation\n" + "- "
-            + INEXCLUDE_SOURCES + ": java source code";
+    private static final String INEXCLUDE_PARTS = "more than one of the following is possible:\n"
+            + "- " + INEXCLUDE_LIBRARY_MODULES + ": library modules\n"
+            + "- " + INEXCLUDE_DEMOS_AND_EXAMPLES + ": demos and examples\n"
+            + "- " + INEXCLUDE_DOCUMENTATION + ": documentation\n"
+            + "- " + INEXCLUDE_SOURCES + ": java source code\n"
+            + "- " + INEXCLUDE_ENSUREPIP + ": install pip and setuptools";
 
     private static final String TYPE_SHORT = "t";
     private static final String TYPE_LONG = "type";
     private static final String TYPE_ARG = TYPE_LONG;
     private static final String TYPE_DESC = "installation type\n" + "one of the following types is possible\n"
-            + "(see also include/exclude parts):\n" + "- " + TYPE_ALL + ": everything (including " + INEXCLUDE_SOURCES
-            + ")\n" + "- " + TYPE_STANDARD + ": core, " + INEXCLUDE_LIBRARY_MODULES + ", "
-            + INEXCLUDE_DEMOS_AND_EXAMPLES + ", " + INEXCLUDE_DOCUMENTATION + ",\n"+ TYPE_STANDARD+ " is the default\n" + "- " + TYPE_MINIMUM + ": core\n"
+            + "(see also include/exclude parts):\n"
+            + "- " + TYPE_ALL + ": everything (including " + INEXCLUDE_SOURCES + ")\n"
+            + "- " + TYPE_STANDARD + ": core, " + INEXCLUDE_LIBRARY_MODULES + ", "
+            + INEXCLUDE_DEMOS_AND_EXAMPLES + ", " + INEXCLUDE_DOCUMENTATION + ", " + INEXCLUDE_ENSUREPIP + "\n"
+            + TYPE_STANDARD+ " is the default\n"
+            + "- " + TYPE_MINIMUM + ": core\n"
             + "- " + TYPE_STANDALONE + ": " + STANDALONE_DOCUMENTATION;
 
     private static final String INCLUDE_SHORT = "i";
@@ -92,25 +90,23 @@ public class InstallerCommandLine {
 
     private static final String SYNTAX = "\n\tjava -jar jython_version.jar";
     private static final String HEADER = "\nNo option at all will start the interactive GUI installer, except:\n"
-            + "Options respected in GUI mode are '" + DIRECTORY_LONG + "' and '" + JRE_LONG
+            + "Options respected in GUI mode are '" + DIRECTORY_LONG
             + "', which serve as default values in the wizard.\n"
-            + "In non-GUI mode the following options are available:\n.";
+            + "In non-GUI mode the following options are available:\n";
     private static final String SYNTAX_WITHOUT_JAR = "\n\tjava -jar ";
     private static final String FOOTER = "";
     private static final String EXAMPLES = "\nexample of a GUI installation:{0}"
             + "\n\nexample of a console installation:{0} -" + CONSOLE_SHORT
             + "\n\nexample of a silent installation:{0} -" + SILENT_SHORT + " -" + DIRECTORY_SHORT + " targetDirectory"
-            + "\n\nexamples of a silent installation with more options:{0} -" + SILENT_SHORT + " -" + DIRECTORY_SHORT
-            + " targetDirectory -" + TYPE_SHORT + " " + TYPE_MINIMUM + " -" + INCLUDE_SHORT + " " + INEXCLUDE_SOURCES
-            + " -" + JRE_SHORT + " javaHome" + "{0} -" + SILENT_SHORT + " -" + DIRECTORY_SHORT + " targetDirectory -"
-            + TYPE_SHORT + " " + TYPE_STANDARD + " -" + EXCLUDE_SHORT + " " + INEXCLUDE_DEMOS_AND_EXAMPLES + " "
-            + INEXCLUDE_DOCUMENTATION + "\n\t\t -" + INCLUDE_SHORT + " " + INEXCLUDE_SOURCES + " -" + JRE_SHORT
-            + " javaHome -" + VERBOSE_SHORT
+            + "\n\nexamples of a silent installation with more options:{0} -" + SILENT_SHORT
+            + " -" + DIRECTORY_SHORT + " targetDirectory -" + TYPE_SHORT + " " + TYPE_MINIMUM
+            + " -" + INCLUDE_SHORT + " " + INEXCLUDE_SOURCES
+            + "{0} -" + SILENT_SHORT + " -" + DIRECTORY_SHORT + " targetDirectory -" + TYPE_SHORT + " " + TYPE_STANDARD
+            + " -" + EXCLUDE_SHORT + " " + INEXCLUDE_DEMOS_AND_EXAMPLES + " " + INEXCLUDE_DOCUMENTATION
+            + " -" + INCLUDE_SHORT + " " + INEXCLUDE_SOURCES
             + "\n\nexample of an autotest installation into temporary directories:{0} -" + AUTOTEST_SHORT
-            + "\n\t(make sure you do NOT touch mouse NOR keyboard after hitting enter/return!)"
-            + "\n\nexample of an autotest installation, using a different jre for the start scripts:{0} -"
-            + AUTOTEST_SHORT + " -" + JRE_SHORT + " javaHome" + " -" + VERBOSE_SHORT
-            + "\n\t(make sure you do NOT touch mouse NOR keyboard after hitting enter/return!)";
+            + "\n\t(uses java.awt.Robot; make sure you do NOT touch mouse NOR keyboard"
+            + "\n\t after hitting enter/return!)";
 
     private String[] _args;
     private Options _options;
@@ -270,10 +266,6 @@ public class InstallerCommandLine {
         return _commandLine.hasOption(EXCLUDE_SHORT) || _commandLine.hasOption(EXCLUDE_LONG);
     }
 
-    public boolean hasJavaHomeOption() {
-        return _commandLine.hasOption(JRE_SHORT) || _commandLine.hasOption(JRE_LONG);
-    }
-
     public boolean hasVerboseOption() {
         return hasVerboseOption(_commandLine);
     }
@@ -309,15 +301,10 @@ public class InstallerCommandLine {
     }
 
     /**
-     * @return a java home handler for the requested java home directory, or a default handler if no
-     *         java home specified
+     * @return a a default handler for java home (no longer supports specifying different java home since 2.7rc2
      */
     public JavaHomeHandler getJavaHomeHandler() {
-        if (hasJavaHomeOption()) {
-            return new JavaHomeHandler(_commandLine.getOptionValue(JRE_SHORT));
-        } else {
             return new JavaHomeHandler();
-        }
     }
 
     /**
@@ -437,11 +424,6 @@ public class InstallerCommandLine {
         excludeOption.setLongOpt(EXCLUDE_LONG);
         _options.addOption(excludeOption);
 
-        // runtime jre
-        Option jreOption = new Option(JRE_SHORT, JRE_LONG, true, JRE_DESC);
-        jreOption.setArgName(DIRECTORY_ARG);
-        _options.addOption(jreOption);
-
         // verbose
         Option verboseOption = new Option(VERBOSE_SHORT, VERBOSE_LONG, false, VERBOSE_DESC);
         _options.addOption(verboseOption);
@@ -456,8 +438,11 @@ public class InstallerCommandLine {
     }
 
     private boolean isValidInExcludePart(String part) {
-        return INEXCLUDE_DEMOS_AND_EXAMPLES.equals(part) || INEXCLUDE_DOCUMENTATION.equals(part)
-                || INEXCLUDE_LIBRARY_MODULES.equals(part) || INEXCLUDE_SOURCES.equals(part);
+        return INEXCLUDE_DEMOS_AND_EXAMPLES.equals(part)
+                || INEXCLUDE_DOCUMENTATION.equals(part)
+                || INEXCLUDE_LIBRARY_MODULES.equals(part)
+                || INEXCLUDE_SOURCES.equals(part)
+                || INEXCLUDE_ENSUREPIP.equals(part);
     }
 
 }

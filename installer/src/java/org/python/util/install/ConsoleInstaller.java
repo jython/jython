@@ -249,6 +249,8 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
                             installationType.addDocumentation();
                         } else if (InstallerCommandLine.INEXCLUDE_SOURCES.equals(answer)) {
                             installationType.addSources();
+                        } else if (InstallerCommandLine.INEXCLUDE_ENSUREPIP.equals(answer)) {
+                            installationType.addEnsurepip();
                         }
                         if (!no.equals(answer)) {
                             message(getText(C_SCHEDULED, answer));
@@ -270,6 +272,8 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
                             installationType.removeDocumentation();
                         } else if (InstallerCommandLine.INEXCLUDE_SOURCES.equals(answer)) {
                             installationType.removeSources();
+                        } else if (InstallerCommandLine.INEXCLUDE_ENSUREPIP.equals(answer)) {
+                            installationType.removeEnsurepip();
                         }
                         if (!no.equals(answer)) {
                             message(getText(C_UNSCHEDULED, answer));
@@ -399,29 +403,7 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
     }
 
     private JavaHomeHandler determineJavaHome() {
-        JavaHomeHandler javaHomeHandler = null;
-        boolean javaFound = false;
-        while (!javaFound) {
-            String javaHomeName = question(getText(C_ENTER_JAVA_HOME), null, true, CURRENT_JRE);
-            // only validate deviations
-            if (CURRENT_JRE.equals(javaHomeName)) {
-                javaHomeHandler = new JavaHomeHandler();
-                javaFound = true;
-            } else {
-                javaHomeHandler = new JavaHomeHandler(javaHomeName);
-                if (javaHomeHandler.isDeviation()) {
-                    if (!javaHomeHandler.isValidHome()) {
-                        String binDirName = javaHomeName.concat("/bin");
-                        message(getText(C_NO_JAVA_EXECUTABLE, binDirName));
-                    } else {
-                        javaFound = true;
-                    }
-                } else {
-                    javaFound = true;
-                }
-            }
-        }
-        return javaHomeHandler;
+        return new JavaHomeHandler();
     }
 
     private void checkTargetDirectorySilent(File targetDirectory) {
@@ -490,6 +472,8 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
                         + installationType.installDocumentation());
                 message("  - " + InstallerCommandLine.INEXCLUDE_SOURCES + ": "
                         + installationType.installSources());
+                message("  - " + InstallerCommandLine.INEXCLUDE_ENSUREPIP + ": "
+                        + installationType.ensurepip());
                 if (javaHomeHandler.isValidHome()) {
                     message("  - JRE: " + javaHomeHandler.getHome().getAbsolutePath());
                 } else {
@@ -537,6 +521,7 @@ public class ConsoleInstaller implements ProgressListener, TextKeys {
         answers.add(InstallerCommandLine.INEXCLUDE_DEMOS_AND_EXAMPLES);
         answers.add(InstallerCommandLine.INEXCLUDE_DOCUMENTATION);
         answers.add(InstallerCommandLine.INEXCLUDE_SOURCES);
+        answers.add(InstallerCommandLine.INEXCLUDE_ENSUREPIP);
         answers.add(getText(C_NO));
         return answers;
     }
