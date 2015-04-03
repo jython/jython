@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7 -E
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 # Launch script for Jython. It may be wrapped as an executable with
