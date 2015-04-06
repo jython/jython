@@ -393,6 +393,22 @@ class test_gettempdir(TC):
 
         self.assert_(a is b)
 
+    def test_case_sensitive(self):
+        # gettempdir should not flatten its case
+        # even on a case-insensitive file system
+        # See CPython Issue 14255 (back-ported for Jython)
+        case_sensitive_tempdir = tempfile.mkdtemp("-Temp")
+        _tempdir, tempfile.tempdir = tempfile.tempdir, None
+        try:
+            with test_support.EnvironmentVarGuard() as env:
+                # Fake the first env var which is checked as a candidate
+                env["TMPDIR"] = case_sensitive_tempdir
+                self.assertEqual(tempfile.gettempdir(), case_sensitive_tempdir)
+        finally:
+            tempfile.tempdir = _tempdir
+            test_support.rmdir(case_sensitive_tempdir)
+
+
 test_classes.append(test_gettempdir)
 
 
