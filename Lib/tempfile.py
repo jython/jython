@@ -160,11 +160,17 @@ def _candidate_tempdir_list():
         dirname = _os.getenv(envname)
         if dirname: dirlist.append(dirname)
 
+    # Real name of OS
+    if _os.name != 'java':
+        os_name = _os.name
+    else:
+        os_name = _os._name
+
     # Failing that, try OS-specific locations.
-    if _os.name == 'riscos':
+    if os_name == 'riscos':
         dirname = _os.getenv('Wimp$ScrapDir')
         if dirname: dirlist.append(dirname)
-    elif _os.name == 'nt':
+    elif os_name == "nt":
         dirlist.extend([ r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ])
     else:
         dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
