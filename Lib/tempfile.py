@@ -29,6 +29,7 @@ __all__ = [
 
 # Imports.
 
+import io as _io
 import os as _os
 import errno as _errno
 from random import Random as _Random
@@ -170,7 +171,7 @@ def _candidate_tempdir_list():
     if os_name == 'riscos':
         dirname = _os.getenv('Wimp$ScrapDir')
         if dirname: dirlist.append(dirname)
-    elif os_name == "nt":
+    elif os_name == 'nt':
         dirlist.extend([ r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ])
     else:
         dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
@@ -204,15 +205,18 @@ def _get_default_tempdir():
             name = namer.next()
             filename = _os.path.join(dir, name)
             try:
-                fd = _os.open(filename, flags, 0600)
-                fp = _os.fdopen(fd, 'w')
-                fp.write('blat')
-                fp.close()
-                _os.unlink(filename)
-                del fp, fd
+                fd = _os.open(filename, flags, 0o600)
+                try:
+                    try:
+                        with _io.open(fd, 'wb', closefd=False) as fp:
+                            fp.write(b'blat')
+                    finally:
+                        _os.close(fd)
+                finally:
+                    _os.unlink(filename)
                 return dir
-            except (OSError, IOError), e:
-                if e[0] != _errno.EEXIST:
+            except (OSError, IOError) as e:
+                if e.args[0] != _errno.EEXIST:
                     break # no point trying more names in this directory
                 pass
     raise IOError, (_errno.ENOENT,
@@ -558,7 +562,7 @@ class SpooledTemporaryFile:
         return self._file.closed
 
     @property
-    def encoding(self):
+    def encoding(self): # Jython not CPython
         return self._file.encoding
 
     def fileno(self):
@@ -573,14 +577,20 @@ class SpooledTemporaryFile:
 
     @property
     def mode(self):
-        return self._file.mode
+        try:
+            return self._file.mode
+        except AttributeError:
+            return self._TemporaryFileArgs[0]
 
     @property
     def name(self):
-        return self._file.name
+        try:
+            return self._file.name
+        except AttributeError:
+            return None
 
     @property
-    def newlines(self):
+    def newlines(self): # Jython not CPython
         return self._file.newlines
 
     def next(self):
@@ -621,4 +631,7 @@ class SpooledTemporaryFile:
         return rv
 
     def xreadlines(self, *args):
-        return self._file.xreadlines(*args)
+        try:
+            return self._file.xreadlines(*args)
+        except AttributeError:
+            return iter(self._file.readlines(*args))
