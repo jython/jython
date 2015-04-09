@@ -736,20 +736,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     private class IndexDelegate extends PySequence.DefaultIndexDelegate {
 
-        /*
+        /**
          * bytearray treats assignment of a zero-length object to a slice as equivalent to deletion,
          * unlike list, even for an extended slice.
          */
-        // >>> a = range(10)
-        // >>> b = bytearray(a)
-        // >>> a[1:6:2] = []
-        // Traceback (most recent call last):
-        // File "<stdin>", line 1, in <module>
-        // ValueError: attempt to assign sequence of size 0 to extended slice of size 3
-        // >>> b[1:6:2] = []
-        // >>> b
-        // bytearray(b'\x00\x02\x04\x06\x07\x08\t')
-        //
         @Override
         public void checkIdxAndSetSlice(PySlice slice, PyObject value) {
             if (value.__len__() != 0) {
@@ -757,8 +747,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 super.checkIdxAndSetSlice(slice, value);
             } else {
                 // Treat as deletion
-                super.checkIdxAndDelItem(slice);
+                checkIdxAndDelItem(slice);
             }
+        }
+
+        @Override
+        protected void delSlice(int[] indices) {
+            delslice(indices[0], indices[1], indices[2], indices[3]);
         }
     };
 

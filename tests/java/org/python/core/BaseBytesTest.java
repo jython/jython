@@ -33,7 +33,7 @@ public class BaseBytesTest extends TestCase {
     // Constants for array sizes
     public static final int SMALL = 7; // Less than minimum storage size
     public static final int MEDIUM = 25; // Medium array size
-    public static final int LARGE = 10000; // Large enough for performance measurement
+    public static final int LARGE = 2000; // Large enough for performance measurement
     public static final int HUGE = 100000; // Serious performance challenge
 
     /**
@@ -55,7 +55,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Turn a String into ints, but in the Python byte range, reducing character codes mod 256.
-     * 
+     *
      * @param s the string
      * @return
      */
@@ -71,7 +71,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Generate ints at random in the range 0..255.
-     * 
+     *
      * @param random the random generator
      * @param n length of array
      * @return the array of random values
@@ -86,7 +86,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Generate ints at random in a restricted range.
-     * 
+     *
      * @param random the random generator
      * @param n length of array
      * @param lo lowest value to generate
@@ -104,7 +104,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Compare expected and result array sections at specified locations and length.
-     * 
+     *
      * @param expected reference values (may be null iff len==0)
      * @param first first value to compare in expected values
      * @param result bytearray from method under test
@@ -114,7 +114,9 @@ public class BaseBytesTest extends TestCase {
     static void checkInts(int[] expected, int first, BaseBytes result, int start, int len) {
         if (len > 0) {
             int end = first + len;
-            if (end > expected.length) end = expected.length;
+            if (end > expected.length) {
+                end = expected.length;
+            }
             for (int i = first, j = start; i < end; i++, j++) {
                 assertEquals("element value", expected[i], result.intAt(j));
             }
@@ -123,7 +125,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Compare expected and result array in their entirety.
-     * 
+     *
      * @param expected
      * @param result
      */
@@ -138,7 +140,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Compare expected List<PyInteger> and result array in their entirety.
-     * 
+     *
      * @param expected
      * @param result
      */
@@ -157,7 +159,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Compare expected List<PyInteger> and result object in their entirety.
-     * 
+     *
      * @param expected
      * @param result
      */
@@ -168,7 +170,7 @@ public class BaseBytesTest extends TestCase {
     /**
      * Turn array into Iterable<PyObject>, treating as unsigned (Python-style) bytes, and producing
      * an abusive mixture of object types.
-     * 
+     *
      * @return iterable list
      */
     public static Iterable<PyObject> iterableBytes(int[] source) {
@@ -198,14 +200,13 @@ public class BaseBytesTest extends TestCase {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see junit.framework.TestCase#setUp()
      */
     protected void setUp() throws Exception {
         super.setUp();
         random = new Random(20120310L);
     }
-
 
     /**
      * Test method for {@link org.python.core.BaseBytes#init(int)} via MyBytes constructor, and for
@@ -274,17 +275,13 @@ public class BaseBytesTest extends TestCase {
      */
     public void testInit_PyObject() {
         // A scary set of objects
-        final PyObject[] brantub = {null,
-                                    new PyInteger(5),
-                                    new PyString("\u00A0\u00A1\u00A2\u00A3\u00A4"),
-                                    getInstance(new int[] {180, 190, 200}),
-                                    new PyXRange(1, 301, 50)};
+        final PyObject[] brantub =
+                {null, new PyInteger(5), new PyString("\u00A0\u00A1\u00A2\u00A3\u00A4"),
+                        getInstance(new int[] {180, 190, 200}), new PyXRange(1, 301, 50)};
         // The array contents we should obtain
-        final int[][] prize = { {},
-                               {0, 0, 0, 0, 0},
-                               {160, 161, 162, 163, 164},
-                               {180, 190, 200},
-                               {1, 51, 101, 151, 201, 251}};
+        final int[][] prize =
+                { {}, {0, 0, 0, 0, 0}, {160, 161, 162, 163, 164}, {180, 190, 200},
+                        {1, 51, 101, 151, 201, 251}};
         // Work down the lists
         for (int dip = 0; dip < brantub.length; dip++) {
             int[] aRef = prize[dip];
@@ -359,7 +356,7 @@ public class BaseBytesTest extends TestCase {
 
     /**
      * Test method for {@link BaseBytes#getslice(int, int, int)}.
-     * 
+     *
      * @see PySequence#__getslice__(PyObject, PyObject)
      */
     public void testGetslice() {
@@ -480,7 +477,7 @@ public class BaseBytesTest extends TestCase {
             a.setslice(start, stop, step, x);
             System.out.println(toString(a));
             fail(String.format("Exception not thrown for setslice(%d,%d,%d,%s)", start, stop, step,
-                               x));
+                    x));
         } catch (PyException pye) {
             // System.out.println(pye);
             PyObject b = pye.type;
@@ -549,7 +546,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Create a zero-length Python byte array of explicitly-specified sub-type
-         * 
+         *
          * @param type explicit Jython type
          */
         public MyBytes(PyType type) {
@@ -565,7 +562,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Create zero-filled Python byte array of specified size.
-         * 
+         *
          * @param size of byte array
          */
         public MyBytes(int size) {
@@ -574,7 +571,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Create from integer array
-         * 
+         *
          * @param value
          */
         MyBytes(int[] value) {
@@ -583,7 +580,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Create a new array filled exactly by a copy of the contents of the source byte array.
-         * 
+         *
          * @param value of the bytes
          */
         public MyBytes(BaseBytes value) {
@@ -593,7 +590,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Create a new array filled exactly by a copy of the contents of the source.
-         * 
+         *
          * @param value source of the bytes (and size)
          */
         public MyBytes(BufferProtocol value) {
@@ -604,7 +601,7 @@ public class BaseBytesTest extends TestCase {
         /**
          * Create a new array filled from an iterable of PyObject. The iterable must yield objects
          * convertible to Python bytes (non-negative integers less than 256 or strings of length 1).
-         * 
+         *
          * @param value of the bytes
          */
         public MyBytes(Iterable<? extends PyObject> value) {
@@ -615,7 +612,7 @@ public class BaseBytesTest extends TestCase {
         /**
          * Create a new array by encoding a PyString argument to bytes. If the PyString is actually
          * a PyUnicode, the encoding must be explicitly specified.
-         * 
+         *
          * @param arg primary argument from which value is taken
          * @param encoding name of optional encoding (must be a string type)
          * @param errors name of optional errors policy (must be a string type)
@@ -628,7 +625,7 @@ public class BaseBytesTest extends TestCase {
         /**
          * Create a new array by encoding a PyString argument to bytes. If the PyString is actually
          * a PyUnicode, the encoding must be explicitly specified.
-         * 
+         *
          * @param arg primary argument from which value is taken
          * @param encoding name of optional encoding (may be null to select the default for this
          *            installation)
@@ -658,7 +655,7 @@ public class BaseBytesTest extends TestCase {
          * {@link #MyBytes(PyString, String, String)}. If the PyString is actually a PyUnicode, an
          * encoding must be specified, and using this constructor will throw an exception about
          * that.
-         * 
+         *
          * @param arg primary argument from which value is taken (may be null)
          * @throws PyException in the same circumstances as bytes(arg), TypeError for non-iterable,
          *             non-integer argument type, and ValueError if iterables do not yield byte
@@ -675,7 +672,7 @@ public class BaseBytesTest extends TestCase {
          * just one term. It is safe because MyBytes is immutable. But it may not be wise if the
          * source object is a large array from which only a small part needs to be retained in
          * memory.
-         * 
+         *
          * @param type explicit Jython type
          * @param start index of first byte to use in source
          * @param stop 1 + index of last byte to use in source
@@ -689,7 +686,7 @@ public class BaseBytesTest extends TestCase {
         /**
          * Returns a PyByteArray that repeats this sequence the given number of times, as in the
          * implementation of <tt>__mul__</tt> for strings.
-         * 
+         *
          * @param count the number of times to repeat this.
          * @return this byte array repeated count times.
          */
@@ -702,7 +699,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Returns a range of elements from the sequence.
-         * 
+         *
          * @see org.python.core.PySequence#getslice(int, int, int)
          */
         @Override
@@ -727,7 +724,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Return number of elements
-         * 
+         *
          * @see org.python.core.PyObject#__len__()
          */
         @Override
@@ -776,7 +773,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Store integer array as bytes: range must be 0..255 inclusive.
-         * 
+         *
          * @param value integers to store
          */
         BufferedObject(int[] value) {
@@ -823,8 +820,9 @@ public class BaseBytesTest extends TestCase {
 
         // Show in image s[pos:pos+n] (as 2*n characters)
         private void append(byte[] s, int pos, int n) {
-            if (pos < 0 || pos + n > s.length)
+            if (pos < 0 || pos + n > s.length) {
                 return;
+            }
             for (int i = 0; i < n; i++) {
                 int c = 0xff & ((int)s[pos + i]);
                 if (c == 0) {
@@ -836,7 +834,7 @@ public class BaseBytesTest extends TestCase {
             }
         }
 
-        // Show an extent of n bytes (as 2*n charactrs)
+        // Show an extent of n bytes (as 2*n characters)
         public void padTo(int n) {
             while (n > image.length()) {
                 image.append(' ');
@@ -845,7 +843,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Write summary numbers offset [ size ] remainder
-         * 
+         *
          * @param b
          */
         public String showSummary(BaseBytes b) {
@@ -857,7 +855,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Make text image of just the buffer boundaries.
-         * 
+         *
          * @param b
          */
         public String showExtent(BaseBytes b) {
@@ -871,7 +869,7 @@ public class BaseBytesTest extends TestCase {
 
         /**
          * Make text image of the buffer content and boundaries.
-         * 
+         *
          * @param b
          */
         public String showContent(BaseBytes b) {
@@ -895,7 +893,7 @@ public class BaseBytesTest extends TestCase {
      * struct</a>. <code>buf</code> is an n-dimensional array of Object, implementing the storage of
      * some Python type, and it is required to access one element of it at an index defined by n
      * integers in sequence.
-     * 
+     *
      * @param n The number of dimensions the memory represents as a multi-dimensional array.
      * @param buf An n-dimensional array containing the value of the object
      * @param strides An array of length n giving the number of elements to skip to get to a new
@@ -904,7 +902,8 @@ public class BaseBytesTest extends TestCase {
      * @param indices An array of n indices indexing the element to retrieve.
      * @return
      */
-    private static Object getItem(int n, Object buf, int[] strides, int[] suboffsets, int[] indices) {
+    private static Object
+            getItem(int n, Object buf, int[] strides, int[] suboffsets, int[] indices) {
         for (int i = 0; i < n; i++) {
             Object[] p = (Object[])buf;
             buf = p[indices[i] * strides[i] + suboffsets[i]];
@@ -916,7 +915,8 @@ public class BaseBytesTest extends TestCase {
      * If it was an ndim-dimensional array of byte, we treat it as an (ndim-1)-dimensional array of
      * byte[] arrays. This method exemplifies getting just one byte.
      */
-    private static byte getByte(int ndim, Object buf, int[] strides, int[] suboffsets, int[] indices) {
+    private static byte
+            getByte(int ndim, Object buf, int[] strides, int[] suboffsets, int[] indices) {
         int n = ndim - 1;
         byte[] b = (byte[])getItem(n, buf, strides, suboffsets, indices);
         return b[indices[n] + suboffsets[n]];

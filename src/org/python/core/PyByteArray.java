@@ -676,53 +676,59 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         }
     }
 
-    /*
-     * Deletes an element from the sequence (and closes up the gap).
-     *
-     * @param index index of the element to delete.
-     */
     @Override
     protected synchronized void del(int index) {
-        // XXX Change SequenceIndexDelegate to avoid repeated calls to del(int) for extended slice
         storageDelete(index, 1);
     }
 
-    /*
-     * Deletes contiguous sub-sequence (and closes up the gap).
-     *
-     * @param start the position of the first element.
-     *
-     * @param stop one more than the position of the last element.
-     */
     @Override
     protected synchronized void delRange(int start, int stop) {
         storageDelete(start, stop - start);
     }
 
-    /**
-     * Deletes a simple or extended slice and closes up the gap(s).
-     *
-     * @param start the position of the first element.
-     * @param stop one more than the position of the last element.
-     * @param step from one element to the next
-     */
-    protected synchronized void delslice(int start, int stop, int step) {
-        if (step == 1) {
-            // Delete this[start:stop] and closing up the space
-            storageDelete(start, stop - start);
-        } else {
-            // This is an extended slice which means we are removing isolated elements
-            int n = sliceLength(start, stop, step);
+    @Override
+    protected synchronized void delslice(int start, int stop, int step, int n) {
+        // This will not be possible if this object has buffer exports
+        resizeCheck();
 
-            if (n > 0) {
-                if (step > 0) {
-                    // The first element is x[start] and the last is x[start+(n-1)*step+1]
-                    storageDeleteEx(start, step, n);
-                } else {
-                    // The first element is x[start+(n-1)*step+1] and the last is x[start]
-                    storageDeleteEx(start + (n - 1) * step + 1, -step, n);
+        if (step == 1) {
+            // Delete this[start:stop] and close up the space.
+            storageDelete(start, n);
+
+        } else if (step == -1) {
+            // Also a contiguous case, but start > stop.
+            storageDelete(stop + 1, n);
+
+        } else {
+            // This is an extended slice. We will be deleting n isolated elements.
+            int p, m;
+
+            // We delete by copying from high to low memory, whatever the sign of step.
+            if (step > 1) {
+                // The lowest numbered element to delete is x[start]
+                p = start;
+                m = step - 1;
+            } else {
+                // The lowest numbered element to delete is x[start+(n-1)*step]]
+                p = start + (n - 1) * step;
+                m = -1 - step;
+            }
+
+            // Offset p to be a storage index.
+            p += offset;
+
+            // Copy n-1 blocks blocks of m bytes, each time skipping the byte to be deleted.
+            for (int i = 1; i < n; i++) {
+                // Skip q over the one we are deleting
+                int q = p + i;
+                // Now copy the m elements that follow.
+                for (int j = 0; j < m; j++) {
+                    storage[p++] = storage[q++];
                 }
             }
+
+            // Close up the gap. Note that for the copy, p was adjusted by the storage offset.
+            storageDelete(p - offset, n);
         }
     }
 
@@ -2654,47 +2660,4 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         }
     }
 
-    /**
-     * Delete <code>d</code> elements on a stride of <code>c</code> beginning at index
-     * <code>a</code> by moving together the surrounding elements. The method manipulates the
-     * <code>storage</code> array, <code>size</code> and <code>offset</code>, and will allocate a
-     * new storage array if the deletion is big enough. If the initial storage looks like this:
-     *
-     * <pre>
-     * |-                               L                                -|
-     *       |-                    s                    -|
-     * |--f--|-----a-----|---------e---------|-----b-----|----------------|
-     * </pre>
-     *
-     * then after the call the (possibly new) storage looks like this:
-     *
-     * <pre>
-     * |-                   L'                         -|
-     *      |-                s'               -|
-     * |-f'-|-----a-----|---(e-d)---|-----b-----|-------|
-     * </pre>
-     *
-     * where the regions of length <code>a</code> and <code>b=size-(a+e)</code> have been preserved
-     * and the <code>e</code> intervening elements reduced to <code>e-d</code> elements, by removing
-     * exactly the elements with indices (relative to the start of valid data) <code>a+k*c</code>
-     * for <code>k=0...d-1</code>. The effect on this <code>PyByteArray</code> is that:
-     *
-     * <pre>
-     * this.offset = f'
-     * this.size = s' = a+b
-     * </pre>
-     *
-     * The method does not implement the Python repertoire of slice indices but avoids indexing
-     * outside the <code>bytearray</code> by silently adjusting a to be within it. Negative d is
-     * treated as 0 and if d is too large, it is truncated to the array end.
-     *
-     * @param a index of hole in byte array
-     * @param c (>0) step size between the locations of elements to delete
-     * @param d number to discard (will discard x[a+k*c] for k=0...d-1)
-     */
-    private void storageDeleteEx(int a, int c, int d) {
-
-        // XXX Base this on storageReplace with the same a<b logic but piecewise copy
-        // XXX Change SequenceIndexDelegate to use (and PyList to implement) delslice()
-    }
 }

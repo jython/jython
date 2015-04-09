@@ -2,8 +2,8 @@
 package org.python.core;
 
 /**
- * The abstract superclass of PyObjects that implements a Sequence. Minimize the work in
- * creating such objects.
+ * The abstract superclass of PyObjects that implements a Sequence. Minimize the work in creating
+ * such objects.
  *
  * Method names are designed to make it possible for subclasses of PySequence to implement
  * java.util.List.
@@ -24,7 +24,7 @@ public abstract class PySequence extends PyObject {
 
     /**
      * Construct a PySequence for the given sub-type with the default index behaviour.
-     * 
+     *
      * @param type actual (Python) type of sub-class
      */
     protected PySequence(PyType type) {
@@ -36,7 +36,7 @@ public abstract class PySequence extends PyObject {
      * Construct a PySequence for the given sub-type with custom index behaviour. In practice,
      * restrictions on the construction of inner classes will mean null has to be passed and the
      * actual delegator assigned later.
-     * 
+     *
      * @param type actual (Python) type of sub-class
      * @param behaviour specific index behaviour (or null)
      */
@@ -51,7 +51,7 @@ public abstract class PySequence extends PyObject {
      * PySequence in its implementation of {@link #__getitem__} It is guaranteed by PySequence that
      * when it calls <code>pyget(int)</code> the index is within the bounds of the array. Any other
      * clients must make the same guarantee.
-     * 
+     *
      * @param index index of element to return.
      * @return the element at the given position in the list.
      */
@@ -68,8 +68,8 @@ public abstract class PySequence extends PyObject {
     protected abstract PyObject getslice(int start, int stop, int step);
 
     /**
-     * Returns a (concrete subclass of) PySequence that repeats the given sequence, as
-     * in the implementation of <code>__mul__</code> for strings.
+     * Returns a (concrete subclass of) PySequence that repeats the given sequence, as in the
+     * implementation of <code>__mul__</code> for strings.
      *
      * @param count the number of times to repeat the sequence.
      * @return this sequence repeated count times.
@@ -82,7 +82,7 @@ public abstract class PySequence extends PyObject {
      * called by PySequence in its implementation of {@link #__setitem__} It is guaranteed by
      * PySequence that when it calls pyset(int) the index is within the bounds of the array. Any
      * other clients must make the same guarantee.
-     * 
+     *
      * @param index index of the element to set.
      * @param value the value to set this element to.
      */
@@ -91,45 +91,60 @@ public abstract class PySequence extends PyObject {
     }
 
     /**
-     * Sets the given range of elements according to Python slice assignment semantics.
-     * If the step size is one, it is a simple slice and the operation is equivalent to
-     * deleting that slice, then inserting the value at that position, regarding the
-     * value as a sequence (if possible) or as a single element if it is not a sequence.
-     * If the step size is not one, but <code>start==stop</code>, it is equivalent to insertion
-     * at that point.
-     * If the step size is not one, and <code>start!=stop</code>, the slice defines a certain number
-     * of elements to be replaced, and the value must be a sequence of exactly that many
-     * elements (or convertible to such a sequence).
-     * 
+     * Sets the given range of elements according to Python slice assignment semantics. If the step
+     * size is one, it is a simple slice and the operation is equivalent to deleting that slice,
+     * then inserting the value at that position, regarding the value as a sequence (if possible) or
+     * as a single element if it is not a sequence. If the step size is not one, but
+     * <code>start==stop</code>, it is equivalent to insertion at that point. If the step size is
+     * not one, and <code>start!=stop</code>, the slice defines a certain number of elements to be
+     * replaced, and the value must be a sequence of exactly that many elements (or convertible to
+     * such a sequence).
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param value an object consistent with the slice assignment
      */
     protected void setslice(int start, int stop, int step, PyObject value) {
-        throw Py.TypeError(String.format("'%s' object does not support item assignment",
-                                         getType().fastGetName()));
+        throw Py.TypeError(String.format("'%s' object does not support item assignment", getType()
+                .fastGetName()));
     }
 
     /**
      * Deletes an element from the sequence (and closes up the gap).
-     * 
+     *
      * @param index index of the element to delete.
      */
     protected void del(int index) {
-        throw Py.TypeError(String.format("'%s' object does not support item deletion",
-                                         getType().fastGetName()));
+        delslice(index, index, 1, 1); // Raises TypeError (for immutable types).
     }
 
     /**
      * Deletes a contiguous sub-sequence (and closes up the gap).
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      */
     protected void delRange(int start, int stop) {
-        throw Py.TypeError(String.format("'%s' object does not support item deletion",
-                                         getType().fastGetName()));
+        delslice(start, stop, 1, Math.abs(stop - start)); // Raises TypeError (for immutable types).
+    }
+
+    /**
+     * Deletes a simple or extended slice and closes up the gap(s). The slice parameters
+     * <code>[start:stop:step]</code> mean what they would in Python, <i>after</i> application of
+     * the "end-relative" rules for negative numbers and <code>None</code>. The count <code>n</code>
+     * is as supplied by {@link PySlice#indicesEx(int)}. This method is unsafe in that slice
+     * parameters are assumed correct.
+     *
+     * @param start the position of the first element.
+     * @param stop beyond the position of the last element (not necessarily just beyond).
+     * @param step from one element to the next (positive or negative)
+     * @param n number of elements to delete
+     */
+    protected void delslice(int start, int stop, int step, int n) {
+        // Raises TypeError (for immutable types).
+        throw Py.TypeError(String.format("'%s' object does not support item deletion", getType()
+                .fastGetName()));
     }
 
     @Override
@@ -265,10 +280,9 @@ public abstract class PySequence extends PyObject {
     /**
      * Compare the specified object/length pairs.
      *
-     * @return value >= 0 is the index where the sequences differs.
-     *         -1: reached the end of o1 without a difference
-     *         -2: reached the end of both seqeunces without a difference
-     *         -3: reached the end of o2 without a difference
+     * @return value >= 0 is the index where the sequences differs. -1: reached the end of o1
+     *         without a difference -2: reached the end of both seqeunces without a difference -3:
+     *         reached the end of o2 without a difference
      */
     protected static int cmp(PyObject o1, int ol1, PyObject o2, int ol2) {
         if (ol1 < 0) {
@@ -320,9 +334,8 @@ public abstract class PySequence extends PyObject {
     }
 
     /**
-     * Adjusts <code>index</code> such that it's >= 0 and <= __len__. If
-     * <code>index</code> starts off negative, it's treated as an index from the end of
-     * the sequence going back to the start.
+     * Adjusts <code>index</code> such that it's >= 0 and <= __len__. If <code>index</code> starts
+     * off negative, it's treated as an index from the end of the sequence going back to the start.
      */
     protected int boundToSequence(int index) {
         int length = __len__();
@@ -513,7 +526,6 @@ public abstract class PySequence extends PyObject {
         public void delItems(int start, int stop) {
             delRange(start, stop);
         }
-
 
         @Override
         public PyObject getItem(int idx) {

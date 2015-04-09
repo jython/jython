@@ -7,7 +7,6 @@ import java.util.Random;
 
 import org.python.util.PythonInterpreter;
 
-
 /**
  * JUnit tests for PyByteArray.
  */
@@ -15,6 +14,7 @@ public class PyByteArrayTest extends BaseBytesTest {
 
     /**
      * Constructor required by JUnit.
+     *
      * @param name
      */
     public PyByteArrayTest(String name) {
@@ -137,7 +137,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param y source of the E data
      * @param result the result to be tested against A+E+B
      */
-    public static void checkSlice(int na, int nd, int nb, int ne, int[] x, int[] y, BaseBytes result) {
+    public static void
+            checkSlice(int na, int nd, int nb, int ne, int[] x, int[] y, BaseBytes result) {
         // Check the size is right
         assertEquals("size", na + ne + nb, result.size());
         // Check that A is preserved
@@ -293,6 +294,7 @@ public class PyByteArrayTest extends BaseBytesTest {
      *
      * @see org.python.core.BaseBytesTest#setUp()
      */
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
     }
@@ -305,7 +307,7 @@ public class PyByteArrayTest extends BaseBytesTest {
     public void test__getslice__2() {
         int verbose = 0;
         // __getslice__() deals with start, stop values also relative to the end.
-        String ver = "D�rob�e au sang de nos c�urs";
+        String ver = "L'un a la pourpre de nos âmes";
         final int L = ver.length();
         int[] aRef = toInts(ver);
         BaseBytes a = getInstance(aRef);
@@ -370,11 +372,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param bList reference answer
      * @param verbose 0..4 control output
      */
-    private void doTest__getslice__2(BaseBytes a,
-                                     PyObject pyStart,
-                                     PyObject pyStop,
-                                     List<PyInteger> bList,
-                                     int verbose) {
+    private void doTest__getslice__2(BaseBytes a, PyObject pyStart, PyObject pyStop,
+            List<PyInteger> bList, int verbose) {
         if (verbose >= 4) {
             System.out.printf("    __getslice__(%s,%s)\n", pyStart, pyStop);
         }
@@ -519,12 +518,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param bList reference answer
      * @param verbose 0..4 control output
      */
-    private void doTest__getslice__3(BaseBytes a,
-                                     PyObject pyStart,
-                                     PyObject pyStop,
-                                     PyObject pyStep,
-                                     List<PyInteger> bList,
-                                     int verbose) {
+    private void doTest__getslice__3(BaseBytes a, PyObject pyStart, PyObject pyStop,
+            PyObject pyStep, List<PyInteger> bList, int verbose) {
         if (verbose >= 4) {
             System.out.printf("    __getslice__(%s,%s,%s)\n", pyStart, pyStop, pyStep);
         }
@@ -539,6 +534,7 @@ public class PyByteArrayTest extends BaseBytesTest {
      * Test method for {@link PyByteArray#__setitem__(int,PyObject)}, and through it of
      * {@link PyByteArray#pyset(int,PyObject)}.
      */
+    @Override
     public void testPyset() {
         int verbose = 0;
 
@@ -629,8 +625,8 @@ public class PyByteArrayTest extends BaseBytesTest {
                         b.setslice(na, na + nd, 1, e);
 
                         if (verbose >= 2) {
-                            boolean avAlloc = (b.storage != oldStorage)
-                                    && (bRef.length <= oldStorage.length);
+                            boolean avAlloc =
+                                    (b.storage != oldStorage) && (bRef.length <= oldStorage.length);
                             if (b.storage.length * 2 < oldStorage.length) {
                                 avAlloc = false;
                             }
@@ -664,7 +660,7 @@ public class PyByteArrayTest extends BaseBytesTest {
                         PyByteArray e = y.getslice(0, ne, 1);
                         if (verbose >= 2) {
                             System.out.printf("setslice(start=%d, stop=%d, step=%d, e[len=%d])\n",
-                                              na, na + nd, 1, ne);
+                                    na, na + nd, 1, ne);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                                 System.out.println("e = " + toString(e));
@@ -714,8 +710,7 @@ public class PyByteArrayTest extends BaseBytesTest {
             }
 
             for (int stop : posStop) {
-                if (stop < start)
-                 {
+                if (stop < start) {
                     continue; // Skip backwards cases
                 }
 
@@ -732,16 +727,16 @@ public class PyByteArrayTest extends BaseBytesTest {
                 for (int n = 0; n <= eRef.length; n++) {
                     // Generate test result and check it
                     doTest__setslice__2(uRef, pyStart, pyStop, eFull, n, eRef, start, stop,
-                                        verbose + 2);
+                            verbose + 2);
                     // Repeat same result specifying start relative to end
                     doTest__setslice__2(uRef, pyStart_L, pyStop, eFull, n, eRef, start, stop,
-                                        verbose);
+                            verbose);
                     // Repeat same result specifying stop relative to end
                     doTest__setslice__2(uRef, pyStart, pyStop_L, eFull, n, eRef, start, stop,
-                                        verbose);
+                            verbose);
                     // Repeat same result specifying start and stop relative to end
                     doTest__setslice__2(uRef, pyStart_L, pyStop_L, eFull, n, eRef, start, stop,
-                                        verbose);
+                            verbose);
                 }
             }
         }
@@ -759,15 +754,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param eRef from which eFull was initialised
      * @param verbose 0..4 control output
      */
-    private void doTest__setslice__2(int[] uRef,
-                                     PyObject pyStart,
-                                     PyObject pyStop,
-                                     BaseBytes eFull,
-                                     int n,
-                                     int[] eRef,
-                                     int start,
-                                     int stop,
-                                     int verbose) {
+    private void doTest__setslice__2(int[] uRef, PyObject pyStart, PyObject pyStop,
+            BaseBytes eFull, int n, int[] eRef, int start, int stop, int verbose) {
         PyByteArray u = getInstance(uRef);
         BaseBytes e = eFull.getslice(0, n, 1);
         if (verbose >= 4) {
@@ -790,6 +778,7 @@ public class PyByteArrayTest extends BaseBytesTest {
      * slice to replace is extended (3-argument slice and step!=0). Note that PySequence checks and
      * converts arguments first, so we need only test with valid combinations of indices.
      */
+    @Override
     public void testSetslice3() {
         int verbose = 0;
 
@@ -820,7 +809,7 @@ public class PyByteArrayTest extends BaseBytesTest {
                         BaseBytes e = eFull.getslice(0, n, 1);
                         if (verbose >= 2) {
                             System.out.printf("setslice(start=%d, stop=%d, step=%d, e[len=%d])\n",
-                                              start, stop, step, n);
+                                    start, stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                                 System.out.println("e = " + toString(e));
@@ -855,7 +844,7 @@ public class PyByteArrayTest extends BaseBytesTest {
                         BaseBytes e = eFull.getslice(0, n, 1);
                         if (verbose >= 2) {
                             System.out.printf("setslice(start=%d, stop=%d, step=%d, e[len=%d])\n",
-                                              start, stop, step, n);
+                                    start, stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                                 System.out.println("e = " + toString(e));
@@ -913,8 +902,8 @@ public class PyByteArrayTest extends BaseBytesTest {
                         PyByteArray u = getInstance(uRef);
                         BaseBytes e = eFull.getslice(0, n, 1);
                         if (verbose >= 2) {
-                            System.out.printf("setslice(%d,%d,%d, e[len=%d])\n", start, stop, step,
-                                              n);
+                            System.out.printf("setslice(%d,%d,%d, e[len=%d])\n", //
+                                    start, stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                                 System.out.println("e = " + toString(e));
@@ -951,8 +940,8 @@ public class PyByteArrayTest extends BaseBytesTest {
                         PyByteArray u = getInstance(uRef);
                         BaseBytes e = eFull.getslice(0, n, 1);
                         if (verbose >= 2) {
-                            System.out.printf("setslice(%d,%d,%d, e[len=%d])\n", start, stop, step,
-                                              n);
+                            System.out.printf("setslice(%d,%d,%d, e[len=%d])\n", //
+                                    start, stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                                 System.out.println("e = " + toString(e));
@@ -975,10 +964,10 @@ public class PyByteArrayTest extends BaseBytesTest {
      */
     public void testSetsliceTime() {
         int verbose = 1;
-        timeSetslice(100, 200, SMALL, 2*SMALL, verbose);
-        timeSetslice(100, 200, MEDIUM, MEDIUM, verbose);
-        timeSetslice(1000, 20, LARGE, LARGE/5, verbose);
-//        timeSetslice(1000, 4, HUGE, HUGE/5, verbose);
+        timeSetslice(50, 100, SMALL, 2 * SMALL, verbose);
+        timeSetslice(50, 100, MEDIUM, MEDIUM, verbose);
+        timeSetslice(500, 20, LARGE, LARGE / 5, verbose);
+        // timeSetslice(1000, 4, HUGE, HUGE/5, verbose);
     }
 
     /**
@@ -1092,12 +1081,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param verbose amount of output
      * @return elapsed time in nanoseconds for setslice operation on array of objects
      */
-    private long doTimeSetslice(PyByteArray[] u,
-                                int start,
-                                int stop,
-                                BaseBytes e,
-                                BaseBytes x,
-                                int verbose) {
+    private long doTimeSetslice(PyByteArray[] u, int start, int stop, BaseBytes e, BaseBytes x,
+            int verbose) {
 
         // The call is either to do a time trial (block of test objects) or one test of correctness
         int repeats = 1;
@@ -1147,24 +1132,9 @@ public class PyByteArrayTest extends BaseBytesTest {
         return t;
     }
 
-//    /**
-//     * Test method for {@link org.python.core.PyByteArray#del(int)}.
-//     */
-//    public void testDel() {
-//        fail("Not yet implemented");
-//    }
-//
-//    /**
-//     * Test method for {@link org.python.core.PyByteArray#delRange(int, int)}.
-//     */
-//    public void testDelRange() {
-//        fail("Not yet implemented");
-//    }
-//
-
     /**
-     * Test method for {@link org.python.core.PyByteArray#delslice(int,int,int)}, when the
-     * slice to delete is simple (a contiguous 2-argument slice).
+     * Test method for {@link org.python.core.PyByteArray#delslice(int,int,int)}, when the slice to
+     * delete is simple (a contiguous 2-argument slice).
      */
     public void testDelslice2() {
         int verbose = 0;
@@ -1175,39 +1145,38 @@ public class PyByteArrayTest extends BaseBytesTest {
         int[] ndList = {5, 20, 0};  // Slice to delete is small, large or zero
         int[] nbList = {4, 7, 0};   // Interesting cases: slice is at end, or not at end
 
-            for (int nd : ndList) {
-                for (int na : naList) {
-                    for (int nb : nbList) {
-                        int[] aRef = adbInts(na, nd, nb);
-                        int[] bRef = aebInts(na, 0, nb);
+        for (int nd : ndList) {
+            for (int na : naList) {
+                for (int nb : nbList) {
+                    int[] aRef = adbInts(na, nd, nb);
+                    int[] bRef = aebInts(na, 0, nb);
 
-                        PyByteArray b = getInstance(aRef);
+                    PyByteArray b = getInstance(aRef);
 
-                        byte[] oldStorage = b.storage;
+                    byte[] oldStorage = b.storage;
 
-                        if (verbose >= 2) {
-                            System.out.printf("delslice(%d,%d,%d)\n",
-                                              na, na + nd, 1);
-                            if (verbose >= 3) {
-                                System.out.println(toString(b));
-                            }
+                    if (verbose >= 2) {
+                        System.out.printf("delslice(%d,%d,%d,%d)\n", na, na + nd, 1, nd);
+                        if (verbose >= 3) {
+                            System.out.println(toString(b));
                         }
-
-                        b.delslice(na, na + nd, 1);
-
-                        if (verbose >= 2) {
-                            // Was there a reallocation?
-                            boolean avAlloc = (b.storage != oldStorage);
-                            // Justified if ...
-                            if (bRef.length * 2 <= oldStorage.length) {
-                                avAlloc = false;
-                            }
-                            System.out.println(toString(b) + (avAlloc ? " avoidable new" : ""));
-                        }
-                        checkInts(bRef, b);
                     }
+
+                    b.delslice(na, na + nd, 1, nd);
+
+                    if (verbose >= 2) {
+                        // Was there a reallocation?
+                        boolean avAlloc = (b.storage != oldStorage);
+                        // Justified if ...
+                        if (bRef.length * 2 <= oldStorage.length) {
+                            avAlloc = false;
+                        }
+                        System.out.println(toString(b) + (avAlloc ? " avoidable new" : ""));
+                    }
+                    checkInts(bRef, b);
                 }
             }
+        }
 
         // Deletions at a range of positions and all sizes with random data
 
@@ -1224,21 +1193,21 @@ public class PyByteArrayTest extends BaseBytesTest {
 
         for (int na = 0; na <= AMAX; na++) {
             for (int nb : nbList2) {
-                for (int nd = 0; nd < DMAX; nd++){
-                        PyByteArray u = x.getslice(0, na + nd + nb, 1);
-                        if (verbose >= 2) {
-                            System.out.printf("delslice(start=%d, stop=%d, step=%d)\n",
-                                              na, na + nd, 1);
-                            if (verbose >= 3) {
-                                System.out.println("u = " + toString(u));
-                            }
+                for (int nd = 0; nd < DMAX; nd++) {
+                    PyByteArray u = x.getslice(0, na + nd + nb, 1);
+                    if (verbose >= 2) {
+                        System.out.printf("delslice(start=%d, stop=%d, step=%d, n=%d)\n", na, na
+                                + nd, 1, nd);
+                        if (verbose >= 3) {
+                            System.out.println("u = " + toString(u));
                         }
-                        u.delslice(na, na + nd, 1);
-                        if (verbose >= 1) {
-                            System.out.println("u'= " + toString(u));
-                        }
-                        checkSlice(na, nd, nb, 0, xInts, null, u);
                     }
+                    u.delslice(na, na + nd, 1, nd);
+                    if (verbose >= 1) {
+                        System.out.println("u'= " + toString(u));
+                    }
+                    checkSlice(na, nd, nb, 0, xInts, null, u);
+                }
             }
         }
     }
@@ -1260,8 +1229,6 @@ public class PyByteArrayTest extends BaseBytesTest {
 
         final int[] posStart = new int[] {0, 3, 7, 16, L - 1};
         final int[] posStop = new int[] {0, 3, 7, 16, L - 6, L};
-//        final int[] posStart = new int[] {16};
-//        final int[] posStop = new int[] {L};
 
         for (int start : posStart) {
             PyObject pyStart, pyStop, pyStart_L, pyStop_L;
@@ -1275,8 +1242,7 @@ public class PyByteArrayTest extends BaseBytesTest {
             }
 
             for (int stop : posStop) {
-                if (stop < start)
-                 {
+                if (stop < start) {
                     continue; // Skip backwards cases
                 }
 
@@ -1311,10 +1277,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param pyStop
      * @param verbose 0..4 control output
      */
-    private void doTest__delslice__2(int[] uRef,
-                                     PyObject pyStart,
-                                     PyObject pyStop,
-                                     int start, int stop, int verbose) {
+    private void doTest__delslice__2(int[] uRef, PyObject pyStart, PyObject pyStop, int start,
+            int stop, int verbose) {
         PyByteArray u = getInstance(uRef);
         if (verbose >= 4) {
             System.out.printf("    __delslice__(%s,%s,1)\n", pyStart, pyStop);
@@ -1325,26 +1289,21 @@ public class PyByteArrayTest extends BaseBytesTest {
         if (verbose >= 3) {
             System.out.println("u'= " + toString(u));
         }
-        int nd = stop-start;
-        int nb = uRef.length-stop;
+        int nd = stop - start;
+        int nb = uRef.length - stop;
         checkSlice(start, nd, nb, 0, uRef, null, u);
     }
 
-
     /**
-     * Test method for {@link org.python.core.PyByteArray#delslice(int,int,int)}, when the
-     * slice to delete is extended (3-argument slice and step!=0). Note that PySequence checks and
-     * converts arguments first, so we need only test with valid combinations of indices.
+     * Test method for {@link org.python.core.PyByteArray#delslice(int,int,int)}, when the slice to
+     * delete is extended (3-argument slice and step!=0). Note that PySequence checks and converts
+     * arguments first, so we need only test with valid combinations of indices.
      */
     public void test__delslice__3() {
         int verbose = 0;
 
         // Need interpreter
         interp = new PythonInterpreter();
-
-        // Source of assigned values.
-//        int[] eRef = randomInts(random, MEDIUM, 'A', 'H');
-//        BaseBytes eFull = new BaseBytesTest.MyBytes(eRef);
 
         // Forwards cases
 
@@ -1370,8 +1329,8 @@ public class PyByteArrayTest extends BaseBytesTest {
                         // Now do the test
                         PyByteArray u = getInstance(uRef);
                         if (verbose >= 2) {
-                            System.out.printf("delslice(%d,%d,%d) (%d deletions)\n",
-                                              start, stop, step, n);
+                            System.out.printf("__delslice__(%d,%d,%d) (%d deletions)\n", start,
+                                    stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                             }
@@ -1406,8 +1365,8 @@ public class PyByteArrayTest extends BaseBytesTest {
                         // Now do the test
                         PyByteArray u = getInstance(uRef);
                         if (verbose >= 2) {
-                            System.out.printf("delslice(%d,%d,%d) (%d deletions)\n",
-                                              start, stop, step, n);
+                            System.out.printf("__delslice__(%d,%d,%d) (%d deletions)\n", start,
+                                    stop, step, n);
                             if (verbose >= 3) {
                                 System.out.println("u = " + toString(u));
                             }
@@ -1430,9 +1389,9 @@ public class PyByteArrayTest extends BaseBytesTest {
      */
     public void testDelsliceTime3() {
         int verbose = 1;
-        timeDelslice3(100, 200, SMALL, verbose);
-        timeDelslice3(100, 200, MEDIUM, verbose);
-        timeDelslice3(10, 4, LARGE, verbose);
+        timeDelslice3(50, 100, SMALL, verbose);
+        timeDelslice3(50, 100, MEDIUM, verbose);
+        timeDelslice3(20, 4, LARGE, verbose);
         // timeDelslice3(10, 1, HUGE, verbose);
     }
 
@@ -1494,10 +1453,10 @@ public class PyByteArrayTest extends BaseBytesTest {
 
                     if (step > 0) {
                         // Deletions available from start location to end of array
-                        n = (xRef.length - start + step-1) / step;
+                        n = (xRef.length - start + step - 1) / step;
                     } else {
                         // Deletions available from start location to beginning of array
-                        n = (start + (-step) ) / (-step);
+                        n = (start + (-step)) / (-step);
                     }
 
                     // Make objects of the arguments
@@ -1554,12 +1513,8 @@ public class PyByteArrayTest extends BaseBytesTest {
      * @param verbose amount of output
      * @return elapsed time in nanoseconds for delslice operation on array of objects
      */
-    private long doTimeDelslice3(PyByteArray[] u,
-                                 PyObject pyStart,
-                                 PyObject pyStop,
-                                 PyObject pyStep,
-                                 BaseBytes x,
-                                 int verbose) {
+    private long doTimeDelslice3(PyByteArray[] u, PyObject pyStart, PyObject pyStop,
+            PyObject pyStep, BaseBytes x, int verbose) {
 
         // The call is either to do a time trial (block of test objects) or one test of correctness
         int repeats = 1;
@@ -1614,41 +1569,49 @@ public class PyByteArrayTest extends BaseBytesTest {
      * with a similar signature. The idea is to override the getInstance() methods to return an
      * instance of the class actually under test in the derived test.
      */
+    @Override
     public PyByteArray getInstance(PyType type) {
         return new PyByteArray(type);
     }
 
+    @Override
     public PyByteArray getInstance() {
         return new PyByteArray();
     }
 
+    @Override
     public PyByteArray getInstance(int size) {
         return new PyByteArray(size);
     }
 
+    @Override
     public PyByteArray getInstance(int[] value) {
         return new PyByteArray(value);
     }
 
+    @Override
     public PyByteArray getInstance(BaseBytes source) {
         return new PyByteArray(source);
     }
 
+    @Override
     public PyByteArray getInstance(Iterable<? extends PyObject> source) {
         return new PyByteArray(source);
     }
 
+    @Override
     public PyByteArray getInstance(PyString arg, PyObject encoding, PyObject errors) {
         return new PyByteArray(arg, encoding, errors);
     }
 
+    @Override
     public PyByteArray getInstance(PyString arg, String encoding, String errors) {
         return new PyByteArray(arg, encoding, errors);
     }
 
+    @Override
     public PyByteArray getInstance(PyObject arg) throws PyException {
         return new PyByteArray(arg);
     }
-
 
 }
