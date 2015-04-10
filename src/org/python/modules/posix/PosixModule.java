@@ -289,11 +289,7 @@ public class PosixModule implements ClassDictInit {
         if (!basicstat(path, absolutePath).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         }
-        try {
-            Py.getSystemState().setCurrentWorkingDir(absolutePath.toRealPath().toString());
-        } catch (IOException ioe) {
-            throw Py.OSError(ioe);
-        }
+        Py.getSystemState().setCurrentWorkingDir(absolutePath.toString());
     }
 
     public static PyString __doc__chmod = new PyString(
@@ -1122,7 +1118,8 @@ public class PosixModule implements ClassDictInit {
     }
 
     /**
-     * Return the absolute form of path.
+     * Return the absolute, normalised form of path, equivalent to Python os.path.abspath(), except
+     * that it is an error for pathObj to be an empty string or unacceptable in the file system.
      *
      * @param pathObj a PyObject, raising a TypeError if an invalid path type
      * @return an absolute path String
@@ -1130,20 +1127,24 @@ public class PosixModule implements ClassDictInit {
     private static Path absolutePath(PyObject pathObj) {
         String pathStr = asPath(pathObj);
         if (pathStr.equals("")) {
-            // Otherwise this path will get prefixed with the current working directory,
-            // which is both wrong and very surprising!
+            // Returning current working directory would be wrong in our context (chdir, etc.).
             throw Py.OSError(Errno.ENOENT, pathObj);
         }
         try {
-            Path path = FileSystems.getDefault().getPath(pathStr);
+            Path path = Paths.get(pathStr);
             if (!path.isAbsolute()) {
-                path = FileSystems.getDefault().getPath(Py.getSystemState().getCurrentWorkingDir(), pathStr);
+                // Relative path: augment from current working directory.
+                path = Paths.get(Py.getSystemState().getCurrentWorkingDir()).resolve(path);
             }
-            return path.toAbsolutePath();
+            // Strip redundant navigation a/b/../c -> a/c
+            return path.normalize();
         } catch (java.nio.file.InvalidPathException ex) {
-            // Thrown on Windows for paths like foo/bar/<test>, where <test> is the literal text, not a metavariable :)
-            // NOTE: In this case on CPython, Windows throws the Windows-specific internal error WindowsError [Error 123],
-            // but it seems excessive to duplicate this error hierarchy
+            /*
+             * Thrown on Windows for paths like foo/bar/<test>, where <test> is the literal text,
+             * not a metavariable :) NOTE: CPython, Windows throws the Windows-specific internal
+             * error WindowsError [Error 123], but it seems excessive to duplicate this error
+             * hierarchy.
+             */
             throw Py.OSError(Errno.EINVAL, pathObj);
         }
     }
