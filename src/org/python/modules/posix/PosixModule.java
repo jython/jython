@@ -49,6 +49,7 @@ import org.python.core.PyFloat;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.imp;
 import org.python.core.Untraversable;
@@ -284,12 +285,23 @@ public class PosixModule implements ClassDictInit {
         "chdir(path)\n\n" +
         "Change the current working directory to the specified path.");
     public static void chdir(PyObject path) {
-        // stat raises ENOENT for us if path doesn't exist
+        PySystemState sys = Py.getSystemState();
         Path absolutePath = absolutePath(path);
+        // stat raises ENOENT for us if path doesn't exist
         if (!basicstat(path, absolutePath).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         }
-        Py.getSystemState().setCurrentWorkingDir(absolutePath.toString());
+        if (os == OS.NT) {
+            // No symbolic links and preserve dos-like names (e.g. PROGRA~1)
+            sys.setCurrentWorkingDir(absolutePath.toString());
+        } else {
+            // Resolve symbolic links
+            try {
+                sys.setCurrentWorkingDir(absolutePath.toRealPath().toString());
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
+            }
+        }
     }
 
     public static PyString __doc__chmod = new PyString(
@@ -1132,12 +1144,18 @@ public class PosixModule implements ClassDictInit {
         }
         try {
             Path path = Paths.get(pathStr);
-            if (!path.isAbsolute()) {
-                // Relative path: augment from current working directory.
-                path = Paths.get(Py.getSystemState().getCurrentWorkingDir()).resolve(path);
-            }
+            // Relative path: augment from current working directory.
+            path = Paths.get(Py.getSystemState().getCurrentWorkingDir()).resolve(path);
+            // In case of a root different from cwd, resolve does not guarantee absolute.
+            path = path.toAbsolutePath();
             // Strip redundant navigation a/b/../c -> a/c
-            return path.normalize();
+            path = path.normalize();
+            // Prevent trailing slash (possibly Java bug), except when '/' or C:\
+            pathStr = path.toString();
+            if (pathStr.endsWith(path.getFileSystem().getSeparator()) && path.getNameCount()>0) {
+                path = Paths.get(pathStr.substring(0, pathStr.length()-1));
+            }
+            return path;
         } catch (java.nio.file.InvalidPathException ex) {
             /*
              * Thrown on Windows for paths like foo/bar/<test>, where <test> is the literal text,
