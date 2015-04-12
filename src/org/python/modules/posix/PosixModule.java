@@ -1144,12 +1144,18 @@ public class PosixModule implements ClassDictInit {
         }
         try {
             Path path = Paths.get(pathStr);
-            if (!path.isAbsolute()) {
-                // Relative path: augment from current working directory.
-                path = Paths.get(Py.getSystemState().getCurrentWorkingDir()).resolve(path);
-            }
+            // Relative path: augment from current working directory.
+            path = Paths.get(Py.getSystemState().getCurrentWorkingDir()).resolve(path);
+            // In case of a root different from cwd, resolve does not guarantee absolute.
+            path = path.toAbsolutePath();
             // Strip redundant navigation a/b/../c -> a/c
-            return path.normalize();
+            path = path.normalize();
+            // Prevent trailing slash (possibly Java bug), except when '/' or C:\
+            pathStr = path.toString();
+            if (pathStr.endsWith(path.getFileSystem().getSeparator()) && path.getNameCount()>0) {
+                path = Paths.get(pathStr.substring(0, pathStr.length()-1));
+            }
+            return path;
         } catch (java.nio.file.InvalidPathException ex) {
             /*
              * Thrown on Windows for paths like foo/bar/<test>, where <test> is the literal text,
