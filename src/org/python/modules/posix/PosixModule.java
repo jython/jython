@@ -49,6 +49,7 @@ import org.python.core.PyFloat;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.imp;
 import org.python.core.Untraversable;
@@ -284,12 +285,23 @@ public class PosixModule implements ClassDictInit {
         "chdir(path)\n\n" +
         "Change the current working directory to the specified path.");
     public static void chdir(PyObject path) {
-        // stat raises ENOENT for us if path doesn't exist
+        PySystemState sys = Py.getSystemState();
         Path absolutePath = absolutePath(path);
+        // stat raises ENOENT for us if path doesn't exist
         if (!basicstat(path, absolutePath).isDirectory()) {
             throw Py.OSError(Errno.ENOTDIR, path);
         }
-        Py.getSystemState().setCurrentWorkingDir(absolutePath.toString());
+        if (os == OS.NT) {
+            // No symbolic links and preserve dos-like names (e.g. PROGRA~1)
+            sys.setCurrentWorkingDir(absolutePath.toString());
+        } else {
+            // Resolve symbolic links
+            try {
+                sys.setCurrentWorkingDir(absolutePath.toRealPath().toString());
+            } catch (IOException ioe) {
+                throw Py.OSError(ioe);
+            }
+        }
     }
 
     public static PyString __doc__chmod = new PyString(
