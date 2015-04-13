@@ -57,6 +57,7 @@ __all__ = ["SMTPException", "SMTPServerDisconnected", "SMTPResponseException",
 SMTP_PORT = 25
 SMTP_SSL_PORT = 465
 CRLF = "\r\n"
+_MAXLINE = 8192 # more than 8 times larger than RFC 821, 4.5.3
 
 OLDSTYLE_AUTH = re.compile(r"auth=(.*)", re.I)
 
@@ -179,10 +180,14 @@ else:
         def __init__(self, sslobj):
             self.sslobj = sslobj
 
-        def readline(self):
+        def readline(self, size=-1):
+            if size < 0:
+                size = None
             str = ""
             chr = None
             while chr != "\n":
+                if size is not None and len(str) >= size:
+                    break
                 chr = self.sslobj.read(1)
                 if not chr:
                     break
@@ -237,10 +242,12 @@ class SMTP:
 
         If specified, `host' is the name of the remote host to which to
         connect.  If specified, `port' specifies the port to which to connect.
-        By default, smtplib.SMTP_PORT is used.  An SMTPConnectError is raised
-        if the specified `host' doesn't respond correctly.  If specified,
-        `local_hostname` is used as the FQDN of the local host.  By default,
-        the local hostname is found using socket.getfqdn().
+        By default, smtplib.SMTP_PORT is used.  If a host is specified the
+        connect method is called, and if it returns anything other than a
+        success code an SMTPConnectError is raised.  If specified,
+        `local_hostname` is used as the FQDN of the local host for the
+        HELO/EHLO command.  Otherwise, the local hostname is found using
+        socket.getfqdn().
 
         """
         self.timeout = timeout
@@ -276,12 +283,12 @@ class SMTP:
         """
         self.debuglevel = debuglevel
 
-    def _get_socket(self, port, host, timeout):
+    def _get_socket(self, host, port, timeout):
         # This makes it simpler for SMTP_SSL to use the SMTP connect code
         # and just alter the socket connection bit.
         if self.debuglevel > 0:
             print>>stderr, 'connect:', (host, port)
-        return socket.create_connection((port, host), timeout)
+        return socket.create_connection((host, port), timeout)
 
     def connect(self, host='localhost', port=0):
         """Connect to a host on a given port.
@@ -351,7 +358,7 @@ class SMTP:
             self.file = self.sock.makefile('rb')
         while 1:
             try:
-                line = self.file.readline()
+                line = self.file.readline(_MAXLINE + 1)
             except socket.error as e:
                 self.close()
                 raise SMTPServerDisconnected("Connection unexpectedly closed: "
@@ -361,6 +368,8 @@ class SMTP:
                 raise SMTPServerDisconnected("Connection unexpectedly closed")
             if self.debuglevel > 0:
                 print>>stderr, 'reply:', repr(line)
+            if len(line) > _MAXLINE:
+                raise SMTPResponseException(500, "Line too long.")
             resp.append(line[4:].strip())
             code = line[:3]
             # Check that the error code is syntactically correct.
@@ -752,18 +761,25 @@ class SMTP:
     def quit(self):
         """Terminate the SMTP session."""
         res = self.docmd("quit")
+        # A new EHLO is required after reconnecting with connect()
+        self.ehlo_resp = self.helo_resp = None
+        self.esmtp_features = {}
+        self.does_esmtp = False
         self.close()
         return res
 
 if _have_ssl:
 
     class SMTP_SSL(SMTP):
-        """ This is a subclass derived from SMTP that connects over an SSL encrypted
-        socket (to use this class you need a socket module that was compiled with SSL
-        support). If host is not specified, '' (the local host) is used. If port is
-        omitted, the standard SMTP-over-SSL port (465) is used. keyfile and certfile
-        are also optional - they can contain a PEM formatted private key and
-        certificate chain file for the SSL connection.
+        """ This is a subclass derived from SMTP that connects over an SSL
+        encrypted socket (to use this class you need a socket module that was
+        compiled with SSL support). If host is not specified, '' (the local
+        host) is used. If port is omitted, the standard SMTP-over-SSL port
+        (465) is used.  local_hostname has the same meaning as it does in the
+        SMTP class.  keyfile and certfile are also optional - they can contain
+        a PEM formatted private key and certificate chain file for the SSL
+        connection.
+
         """
 
         default_port = SMTP_SSL_PORT
@@ -794,9 +810,10 @@ class LMTP(SMTP):
     """LMTP - Local Mail Transfer Protocol
 
     The LMTP protocol, which is very similar to ESMTP, is heavily based
-    on the standard SMTP client. It's common to use Unix sockets for LMTP,
-    so our connect() method must support that as well as a regular
-    host:port server. To specify a Unix socket, you must use an absolute
+    on the standard SMTP client. It's common to use Unix sockets for
+    LMTP, so our connect() method must support that as well as a regular
+    host:port server.  local_hostname has the same meaning as it does in
+    the SMTP class.  To specify a Unix socket, you must use an absolute
     path as the host, starting with a '/'.
 
     Authentication is supported, using the regular SMTP mechanism. When
