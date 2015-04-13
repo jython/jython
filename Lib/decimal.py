@@ -402,7 +402,7 @@ except ImportError:
     del sys, MockThreading
 
 try:
-    from java.lang import Object
+    from java.lang import Object, Float, Double
     from java.math import BigDecimal
     from org.python.core import Py
 except ImportError:
@@ -3691,9 +3691,13 @@ class Decimal(object):
 
     # support for Jython __tojava__:
     def __tojava__(self, java_class):
-        if java_class not in (BigDecimal, Object):
-            return Py.NoConversion
-        return BigDecimal(str(self))
+        if java_class is Float:
+            return Float(str(self))
+        if java_class is Double:
+            return Double(str(self))
+        if java_class in (BigDecimal, Object):
+            return BigDecimal(str(self))
+        return Py.NoConversion
 
 def _dec_from_triple(sign, coefficient, exponent, special=False):
     """Create a decimal instance directly, without any validation,
