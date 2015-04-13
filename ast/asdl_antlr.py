@@ -75,6 +75,7 @@ class EmitVisitor(asdl.VisitorBase):
             print >> self.file, 'import org.python.core.PyString;'
             print >> self.file, 'import org.python.core.PyStringMap;'
             print >> self.file, 'import org.python.core.PyType;'
+            print >> self.file, 'import org.python.core.Visitproc;'
             print >> self.file, 'import org.python.expose.ExposedGet;'
             print >> self.file, 'import org.python.expose.ExposedMethod;'
             print >> self.file, 'import org.python.expose.ExposedNew;'
@@ -641,7 +642,6 @@ class JavaVisitor(EmitVisitor):
         return jtype
     
     def indexerSupport(self, name, depth):
-	self.emit("// Support for indexer below", depth + 1)
         self.file.write(indexer_support[name])
 
 class VisitorVisitor(EmitVisitor):
@@ -707,7 +707,8 @@ def main(outdir, grammar="Python.asdl"):
                         VisitorVisitor(outdir))
     c.visit(mod)
 
-indexer_support = {"Attribute": """
+indexer_support = {"Attribute": """    // Support for indexer below
+
     private Name attrName;
     public Name getInternalAttrName() {
         return attrName;
@@ -729,9 +730,11 @@ indexer_support = {"Attribute": """
         this.attrName = attr;
         this.ctx = ctx;
     }
+    // End indexer support
 """,
 
-"ClassDef": """
+"ClassDef": """    // Support for indexer below
+
     private Name nameNode;
     public Name getInternalNameNode() {
         return nameNode;
@@ -763,9 +766,11 @@ indexer_support = {"Attribute": """
             addChild(t);
         }
     }
+    // End indexer support
 """,
 
-"FunctionDef": """
+"FunctionDef": """    // Support for indexer below
+
     private Name nameNode;
     public Name getInternalNameNode() {
         return nameNode;
@@ -791,9 +796,11 @@ indexer_support = {"Attribute": """
             addChild(t);
         }
     }
+    // End indexer support
 """,
 
-"Global": """
+"Global": """    // Support for indexer below
+
     private java.util.List<Name> nameNodes;
     public java.util.List<Name> getInternalNameNodes() {
         return nameNodes;
@@ -803,9 +810,11 @@ indexer_support = {"Attribute": """
         this.names = names;
         this.nameNodes = nameNodes;
     }
+    // End indexer support
 """,
 
-"ImportFrom": """
+"ImportFrom": """    // Support for indexer below
+
     private java.util.List<Name> moduleNames;
     public java.util.List<Name> getInternalModuleNames() {
         return moduleNames;
@@ -831,9 +840,11 @@ indexer_support = {"Attribute": """
         }
         this.level = level;
     }
+    // End indexer support
 """,
 
-"alias": """
+"alias": """    // Support for indexer below
+
     private java.util.List<Name> nameNodes;
     public java.util.List<Name> getInternalNameNodes() {
         return nameNodes;
@@ -856,9 +867,11 @@ indexer_support = {"Attribute": """
             this.asname = asname.getInternalId();
         }
     }
+    // End indexer support
 """,
 
-"arguments": """
+"arguments": """    // Support for indexer below
+
     private Name varargName;
     public Name getInternalVarargName() {
         return varargName;
@@ -892,8 +905,104 @@ indexer_support = {"Attribute": """
             addChild(t);
         }
     }
+    // End indexer support
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (args != null) {
+            for (PyObject ob: args) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        if (defaults != null) {
+            for (PyObject ob: defaults) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        } else if (args != null && args.contains(ob)) {
+            return true;
+        } else if (defaults != null && defaults.contains(ob)) {
+            return true;
+        } else {
+            return super.refersDirectlyTo(ob);
+        }
+    }
 """,
 
+"keyword": """
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        return value != null ? visit.visit(value,  arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        return ob != null && (ob == value || super.refersDirectlyTo(ob));
+    }
+""",
+"comprehension": """
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int retVal = super.traverse(visit, arg);
+        if (retVal != 0) {
+            return retVal;
+        }
+        if (iter != null) {
+            retVal = visit.visit(iter, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        if (ifs != null) {
+            for (PyObject ob: ifs) {
+                if (ob != null) {
+                    retVal = visit.visit(ob, arg);
+                    if (retVal != 0) {
+                        return retVal;
+                    }
+                }
+            }
+        }
+        
+        return target != null ? visit.visit(target,  arg) : 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob == null) {
+            return false;
+        } else if (ifs != null && ifs.contains(ob)) {
+            return true;
+        } else {
+            return ob == iter || ob == target || super.refersDirectlyTo(ob);
+        }
+    }
+""",
 }
 
 if __name__ == "__main__":

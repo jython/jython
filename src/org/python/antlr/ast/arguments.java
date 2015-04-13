@@ -279,6 +279,7 @@ public class arguments extends PythonTree {
             addChild(t);
         }
     }
+    // End indexer support
 
 
     /* Traverseproc implementation */

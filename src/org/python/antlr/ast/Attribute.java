@@ -17,6 +17,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -239,4 +240,5 @@ public static final PyType TYPE = PyType.fromClass(Attribute.class);
         this.attrName = attr;
         this.ctx = ctx;
     }
+    // End indexer support
 }
