@@ -575,6 +575,7 @@ public class PyInteger extends PyObject {
             return null;
         }
 
+        modulo = (modulo == Py.None) ? null : modulo;
         if (modulo != null && !canCoerce(modulo)) {
             return null;
         }
@@ -582,21 +583,17 @@ public class PyInteger extends PyObject {
         return _pow(getValue(), coerce(right), modulo, this, right);
     }
 
-    public PyObject __rpow__(PyObject left, PyObject modulo) {
+    @Override
+    public PyObject __rpow__(PyObject left) {
         if (!canCoerce(left)) {
             return null;
         }
-
-        if (modulo != null && !canCoerce(modulo)) {
-            return null;
-        }
-
-        return _pow(coerce(left), getValue(), modulo, left, this);
+        return _pow(coerce(left), getValue(), null, left, this);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.int___rpow___doc)
     final PyObject int___rpow__(PyObject left) {
-        return __rpow__(left, null);
+        return __rpow__(left);
     }
 
     private static PyObject _pow(int value, int pow, PyObject modulo,//

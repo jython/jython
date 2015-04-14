@@ -99,8 +99,9 @@ class FloatTestCase(unittest.TestCase):
         class Foo(object):
             def __rpow__(self, other):
                 return other ** 2
-        # regression in 2.5 alphas
-        self.assertEqual(4.0 ** Foo(), 16.0)
+
+        self.assertEqual(4.0 ** Foo(), 16.0)  # regression in 2.5 alphas
+        self.assertEqual((4.0).__pow__(2, None), 16.0)
 
     def test_faux(self):
         class F(object):

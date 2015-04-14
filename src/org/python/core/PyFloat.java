@@ -736,7 +736,10 @@ public class PyFloat extends PyObject {
     final PyObject float___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right)) {
             return null;
-        } else if (modulo != null) {
+        }
+
+        modulo = (modulo == Py.None) ? null : modulo;
+        if (modulo != null) {
             throw Py.TypeError("pow() 3rd argument not allowed unless all arguments are integers");
         } else {
             return _pow(getValue(), coerce(right));

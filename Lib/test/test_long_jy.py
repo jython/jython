@@ -26,6 +26,12 @@ class LongTestCase(unittest.TestCase):
         # http://bugs.jython.org/issue1828
         self.assertTrue(bool(MyLong(42)))
 
+    def test_long_pow(self):
+        self.assertEquals(pow(10L, 10L, None), 10000000000L)
+        self.assertEquals(long.__pow__(10L, 10L, None), 10000000000L)
+        self.assertEquals((10L).__pow__(10L, None), 10000000000L)
+        self.assertEquals((10L).__pow__(10, None), 10000000000L)
+
 
 def test_main():
     test_support.run_unittest(LongTestCase)

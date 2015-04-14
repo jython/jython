@@ -660,9 +660,11 @@ public class PyLong extends PyObject {
             return null;
         }
 
-        if (modulo != null && !canCoerce(right)) {
+        modulo = (modulo == Py.None) ? null : modulo;
+        if (modulo != null && !canCoerce(modulo)) {
             return null;
         }
+
         return _pow(getValue(), coerce(right), modulo, this, right);
     }
 
@@ -676,6 +678,7 @@ public class PyLong extends PyObject {
         if (!canCoerce(left)) {
             return null;
         }
+
         return _pow(coerce(left), getValue(), null, left, this);
     }
 
