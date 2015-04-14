@@ -7,6 +7,7 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Untraversable;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -81,6 +82,7 @@ public abstract class CType extends PyObject {
         return t;
     }
 
+    @Untraversable
     static final class Builtin extends CType implements ExposeAsSuperclass {
         public Builtin(NativeType type) {
             super(type, MemoryOp.getMemoryOp(type));
