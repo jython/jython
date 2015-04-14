@@ -405,11 +405,10 @@ class DictTest(unittest.TestCase):
         x.fail = True
         self.assertRaises(Exc, d.pop, x)
 
+    @unittest.skipIf(test_support.is_jython, "Weakly consistent iteration is compatible with mutation") 
     def test_mutatingiteration(self):
         # changing dict size during iteration
         d = self._make_dict({})
-        if isinstance(d, Map):
-            raise unittest.SkipTest("java.util.Map objects do not raise exceptions if mutated over iteration")
         d[1] = 1
         with self.assertRaises(RuntimeError):
             for i in d:

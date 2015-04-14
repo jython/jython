@@ -16,13 +16,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.python.expose.ExposedClassMethod;
-import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.util.Generic;
-import org.python.core.BaseDictionaryView;
 
 
 /**
@@ -786,9 +784,6 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
 
         @Override
         public PyObject __iternext__() {
-            if (getMap().size() != size) {
-                throw Py.RuntimeError("dictionary changed size during iteration");
-            }
             if (!iterator.hasNext()) {
                 return null;
             }
@@ -809,9 +804,6 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
 
         @Override
         public PyObject __iternext__() {
-            if (getMap().size() != size) {
-                throw Py.RuntimeError("dictionary changed size during iteration");
-            }
             if (!iterator.hasNext()) {
                 return null;
             }

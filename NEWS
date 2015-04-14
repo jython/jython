@@ -2,6 +2,10 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
+Jython 2.7rc3
+  Bugs fixed
+   - [ 2326 ] Java's weakly consistent iteration of ConcurrentMap is compatible with mutation
+
 Jython 2.7rc2
   Bugs fixed
    - [ 2301 ] time.strftime now always returns a bytestring (fixes pip on Japanese locales)
