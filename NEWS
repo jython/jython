@@ -6,7 +6,7 @@ Jython 2.7rc2
   Bugs fixed
    - [ 2301 ] time.strftime now always returns a bytestring (fixes pip on Japanese locales)
    - [ 2297 ] Updates Jython installer to use jython.exe
-   - [ 2298 ] Fix setuptools wheel bundled by ensurepip so it check for Windows on Jython
+   - [ 2298 ] Fix setuptools wheel bundled by ensurepip so it checks for Windows on Jython
    - [ 2300 ] Fix bin/jython.py to not consume subcommand args
   New features
    - Installer installs pip, setuptools by default, but custom builds can de-select.
@@ -146,9 +146,9 @@ Jython 2.7b3
     - [ 1497 ] ast classes do not have appropiate base classes
     - [ 1980 ] ast.Eq, ast.Gt, ast.GtE, ast.In, ast.Is, ast.IsNot, ast.Lt, ast.LtE, ast.NotEq and ast.NotIn should be subclasses of ast.cmpop
     - [ 1981 ] ast.And and ast.Or should be subclasses of ast.boolop
+    - [ 1591 ] Interactive interpreter stuck on '...' loop
   New Features
     - [ 1896215 ] findResource(s) for SyspathJavaLoader
-    - [ 1591 ] Interactive interpreter stuck on '...' loop
     - Added socket reboot work, using Netty 4 to fully support socket, select, and ssl API
 
 Jython 2.7b2
@@ -174,6 +174,8 @@ Jython 2.7b2
   New Features
     - Command line option -E (ignore environment variables)
     - Environment variable PYTHONIOENCODING, and corresponding registry items
+  Removed support
+    - No longer supports Java 6; the minimum version is now Java 7
 
 Jython 2.7b1
   Bugs Fixed
