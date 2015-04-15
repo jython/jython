@@ -242,6 +242,8 @@ class SysEncodingTest(unittest.TestCase):
         self.assertEqual(check(0xa2, "cp850"), "\xbd")
 
 class SysArgvTest(unittest.TestCase):
+
+    @unittest.skipIf(os._name == "nt", "FIXME should work on Windows")
     def test_unicode_argv(self):
         """Unicode roundtrips successfully through sys.argv arguments"""
         zhongwen = u'\u4e2d\u6587'
@@ -259,14 +261,24 @@ class InteractivePromptTest(unittest.TestCase):
     # captured by test_doctest, however, it would be ideal to add
     # pexpect tests (using CPython).
 
-    def test_prompts_not_defined_if_not_interactive(self):
+    def test_prompts_not_defined_if_noninteractive(self):
         p = subprocess.Popen(
             [sys.executable, '-c',
              'import sys;' \
              'print hasattr(sys, "ps1");' \
              'print hasattr(sys, "ps2");'],
             stdout=subprocess.PIPE)
-        self.assertEqual(''.join(p.stdout.read().split()), 'FalseFalse')
+        self.assertEqual(p.stdout.read(),
+                         os.linesep.join(['False', 'False', '']))
+
+    def test_prompts_not_printed_if_noninteractive(self):
+        p = subprocess.Popen(
+            [sys.executable],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+        self.assertEqual(p.communicate('print 47'),
+                         ('47' + os.linesep, None))
+
 
 def test_main():
     test_support.run_unittest(
