@@ -408,11 +408,16 @@ public class jython {
         if (opts.fixInteractive || (opts.filename == null && opts.command == null)) {
             // Go interactive with the console: the parser needs to know the encoding.
             String encoding = Py.getConsole().getEncoding();
-
             // Run the interpreter interactively
             try {
                 interp.cflags.encoding = encoding;
-                interp.interact(null, null);
+                if (!opts.interactive) {
+                    // Don't print prompts. http://bugs.jython.org/issue2325
+                    interp._interact(null, null);
+                }
+                else {
+                    interp.interact(null, null);
+                }
             } catch (Throwable t) {
                 Py.printException(t);
             }

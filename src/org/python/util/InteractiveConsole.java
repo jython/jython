@@ -146,7 +146,9 @@ public class InteractiveConsole extends InteractiveInterpreter {
                 if (!exc.match(Py.EOFError)) {
                     throw exc;
                 }
-                write("\n");
+                if (banner != null) {
+                    write("\n");
+                }
                 break;
             } catch (Throwable t) {
                 // catch jline.console.UserInterruptException, rethrow as a KeyboardInterrupt

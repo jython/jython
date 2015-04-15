@@ -1533,9 +1533,13 @@ public final class Py {
      * @return true if (we think) we are in an interactive environment
      */
     public static boolean isInteractive() {
+        // python.launcher.tty is authoratative; see http://bugs.jython.org/issue2325
         String isTTY = System.getProperty("python.launcher.tty");
         if (isTTY != null && isTTY.equals("true")) {
             return true;
+        }
+        if (isTTY != null && isTTY.equals("false")) {
+            return false;
         }
         // Decide if System.in is interactive
         try {
