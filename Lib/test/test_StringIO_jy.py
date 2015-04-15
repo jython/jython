@@ -28,6 +28,17 @@ class TestWrite(unittest.TestCase):
         f.write("uvwxyz")
         self.assertEqual(f.getvalue(), 'abcdef\x00\x00\x00\x00uvwxyz')
 
+    def test_write_seek_back_then_write(self):
+        # http://bugs.jython.org/issue2324
+        s = "abcdef"
+        for i in xrange(len(s)):
+            f = cStringIO.StringIO()
+            f.write(s)
+            f.seek(i)
+            f.write("x" * 47)
+            self.assertEqual(f.getvalue(), s[:i] + ("x" * 47))
+
+
 class TestGetValueAfterClose(unittest.TestCase):
 
     # This test, or something like it, should be really be pushed upstream

@@ -372,8 +372,8 @@ public class cStringIO {
 
             if (spos < slen) {
                 if (newpos > slen) {
-                    buf.replace(spos, slen - spos, s);
-                    buf.append(s.substring(slen));
+                    buf.replace(spos, slen, s);
+                    buf.append(s.substring(slen - spos));
                     slen = newpos;
                 } else {
                     buf.replace(spos, spos + s.length(), s);

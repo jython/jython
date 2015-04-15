@@ -5,6 +5,7 @@ import StringIO
 import cStringIO
 import types
 import array
+import sys
 from test import test_support
 
 
@@ -27,6 +28,8 @@ class TestGenericStringIO(unittest.TestCase):
         eq = self.assertEqual
         self.assertRaises(TypeError, self._fp.seek)
         eq(self._fp.read(10), self._line[:10])
+        eq(self._fp.read(0), '')
+        eq(self._fp.readline(0), '')
         eq(self._fp.readline(), self._line[10:] + '\n')
         eq(len(self._fp.readlines(60)), 2)
         self._fp.seek(0)
@@ -105,6 +108,45 @@ class TestGenericStringIO(unittest.TestCase):
         self._fp.close()
         self.assertRaises(ValueError, self._fp.getvalue)
 
+    @test_support.bigmemtest(test_support._2G + 2**26, memuse=2.001)
+    def test_reads_from_large_stream(self, size):
+        linesize = 2**26 # 64 MiB
+        lines = ['x' * (linesize - 1) + '\n'] * (size // linesize) + \
+                ['y' * (size % linesize)]
+        f = self.MODULE.StringIO(''.join(lines))
+        for i, expected in enumerate(lines):
+            line = f.read(len(expected))
+            self.assertEqual(len(line), len(expected))
+            self.assertEqual(line, expected)
+        self.assertEqual(f.read(), '')
+        f.seek(0)
+        for i, expected in enumerate(lines):
+            line = f.readline()
+            self.assertEqual(len(line), len(expected))
+            self.assertEqual(line, expected)
+        self.assertEqual(f.readline(), '')
+        f.seek(0)
+        self.assertEqual(f.readlines(), lines)
+        self.assertEqual(f.readlines(), [])
+        f.seek(0)
+        self.assertEqual(f.readlines(size), lines)
+        self.assertEqual(f.readlines(), [])
+
+    # In worst case cStringIO requires 2 + 1 + 1/2 + 1/2**2 + ... = 4
+    # bytes per input character.
+    @test_support.bigmemtest(test_support._2G, memuse=4)
+    def test_writes_to_large_stream(self, size):
+        s = 'x' * 2**26 # 64 MiB
+        f = self.MODULE.StringIO()
+        n = size
+        while n > len(s):
+            f.write(s)
+            n -= len(s)
+        s = None
+        f.write('x' * n)
+        self.assertEqual(len(f.getvalue()), size)
+
+
 class TestStringIO(TestGenericStringIO):
     MODULE = StringIO
 
@@ -153,8 +195,10 @@ class TestcStringIO(TestGenericStringIO):
         self.assertEqual(s, 'abcde')
         self.assertEqual(type(s), str)
 
-        # This cStringIO/StringIO difference seems CPython specific to me...
-        if not test_support.is_jython:
+        if not test_support.is_jython:  # FIXME re-enable in a future release
+            # On Jython, this should raise UnicodeEncodeError, however, we
+            # have to do more work on preventing inadvertent mixing of Unicode
+            # into String-supporting objects like StringBuilder
             self.assertRaises(UnicodeEncodeError, self.MODULE.StringIO, u'\xf4')
 
 
