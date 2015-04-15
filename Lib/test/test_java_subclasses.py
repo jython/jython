@@ -7,7 +7,7 @@ from test import test_support
 
 from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, Runnable, String,
         Thread, ThreadGroup)
-from java.util import AbstractList, Date, Hashtable, HashSet, Vector
+from java.util import AbstractList, ArrayList, Date, Hashtable, HashSet, Vector
 from java.util.concurrent import Callable, Executors
 
 from java.awt import Color, Component, Dimension, Rectangle
@@ -433,6 +433,32 @@ class AbstractMethodTest(unittest.TestCase):
             C().call()
 
 
+class SuperIsSuperTest(unittest.TestCase):
+    # Testing how the vision described in Raymond Hettinger's blog
+    # https://rhettinger.wordpress.com/2011/05/26/super-considered-super/
+    # - super in Python is really next-method - can be merged with
+    # Java's super, which is a conventional super that dispatches up
+    # the class inheritance hierarchy
+    
+    def test_super_dispatches_through_proxy(self):
+        # Verify fix for http://bugs.jython.org/issue1540
+        
+        class MyList(ArrayList):
+
+            def get(self, index):
+                return super(MyList, self).get(index)
+
+            def toString(self):
+                return "MyList<<<" + super(MyList, self).toString() + ">>>"
+        
+        my_list = MyList([0, 1, 2, 3, 4, 5])
+        self.assertEqual(my_list.get(5), 5)
+        self.assertEqual(
+            str(my_list),
+            "MyList<<<[0, 1, 2, 3, 4, 5]>>>")
+        self.assertEqual(my_list.size(), 6)
+
+
 def test_main():
     test_support.run_unittest(
         InterfaceTest,
@@ -442,7 +468,8 @@ def test_main():
         AbstractOnSyspathTest,
         ContextClassloaderTest,
         MetaClassTest,
-        AbstractMethodTest)
+        AbstractMethodTest,
+        SuperIsSuperTest)
 
 
 if __name__ == '__main__':

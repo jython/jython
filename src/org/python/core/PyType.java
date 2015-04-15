@@ -1285,6 +1285,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     public PyObject super_lookup(PyType ref, String name) {
+        String lookupName;  // the method name to lookup
         PyObject[] mro = this.mro;
         if (mro == null) {
             return null;
@@ -1296,11 +1297,26 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
         i++;
         for (; i < mro.length; i++) {
+            if (mro[i] instanceof PyJavaType) {
+                // The MRO contains this proxy for classes extending a Java class and/or
+                // interfaces, but the proxy points back to this starting Python class.
+                // So break out of this infinite loop by ignoring this entry for super purposes.
+                // The use of super__ parallels the workaround seen in PyReflectedFunction
+                // Fixes http://bugs.jython.org/issue1540
+                if(!name.startsWith("super__")) {
+                     lookupName = "super__" + name;
+                } else {
+                    lookupName = name;
+                }
+            } else {
+                lookupName = name;
+            }
             PyObject dict = mro[i].fastGetDict();
             if (dict != null) {
-                PyObject obj = dict.__finditem__(name);
-                if (obj != null)
+                PyObject obj = dict.__finditem__(lookupName);
+                if (obj != null) {
                     return obj;
+                }
             }
         }
         return null;
