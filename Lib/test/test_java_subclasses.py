@@ -6,7 +6,7 @@ import unittest
 from test import test_support
 
 from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, Runnable, String,
-        Thread, ThreadGroup)
+                       Thread, ThreadGroup, UnsupportedOperationException)
 from java.util import AbstractList, ArrayList, Date, Hashtable, HashSet, Vector
 from java.util.concurrent import Callable, Executors
 
@@ -15,6 +15,8 @@ from javax.swing import ComboBoxModel, ListModel
 from javax.swing.table import AbstractTableModel
 
 from org.python.tests import BeanInterface, Callbacker, Coercions, OwnMethodCaller
+from javatests import InheritanceA, InheritanceB, InheritanceC, InheritanceD
+
 
 class InterfaceTest(unittest.TestCase):
     def test_java_calling_python_interface_implementation(self):
@@ -459,6 +461,100 @@ class SuperIsSuperTest(unittest.TestCase):
         self.assertEqual(my_list.size(), 6)
 
 
+class HierarchyTest(unittest.TestCase):
+
+    # Attempt to expand upon the inheritance hierarchy described as
+    # being a bug in http://bugs.jython.org/issue2104, but this test
+    # currently only confirms existing behavior.
+
+    def assertB(self, b2, level, cls):
+        self.assertIsInstance(b2, cls)
+        self.assertEqual(b2.whoAmI(), level)
+        self.assertEqual(b2.staticWhoAmI(), level)
+        self.assertEqual(b2.root(), "A")
+        self.assertEqual(b2.staticRoot(), "A")
+        self.assertEqual(b2.everyOther(), "A")
+        self.assertEqual(b2.notInAbstract(), "B")
+
+    def test_b(self):
+        b = InheritanceB()
+        self.assertB(b.replicateMe(), "B", InheritanceB)
+        self.assertB(b.build(), "B", InheritanceB)
+        with self.assertRaises(UnsupportedOperationException):
+            b.replicateParent()
+        with self.assertRaises(UnsupportedOperationException):
+            b.buildParent()
+
+    def assertC(self, c2, level, cls):
+        self.assertIsInstance(c2, cls)
+        self.assertEqual(c2.whoAmI(), level)
+        self.assertEqual(c2.staticWhoAmI(), level)
+        self.assertEqual(c2.root(), "A")
+        self.assertEqual(c2.staticRoot(), "A")
+        self.assertEqual(c2.everyOther(),
+                         "C" if isinstance(c2, InheritanceC) else "A")
+        self.assertEqual(c2.notInAbstract(), "B")
+
+    def test_c(self):
+        c = InheritanceC()
+        self.assertC(c.replicateMe(), "C", InheritanceC)
+        self.assertC(c.replicateParent(), "B", InheritanceB)
+        self.assertC(c.build(), "C", InheritanceC)
+        self.assertC(c.buildParent(), "B", InheritanceB)
+
+    def assertD(self, d2, level, cls):
+        self.assertIsInstance(d2, cls)
+        self.assertEqual(d2.whoAmI(), level)
+        self.assertEqual(d2.staticWhoAmI(), level)
+        self.assertEqual(d2.root(), "A")
+        self.assertEqual(d2.staticRoot(), "A")
+        self.assertEqual(d2.everyOther(), "C")
+        self.assertEqual(d2.notInAbstract(), "B")
+
+    def test_d(self):
+        d = InheritanceD()
+        self.assertD(d.replicateMe(), "D", InheritanceD)
+        self.assertD(d.replicateParent(), "C", InheritanceC)
+        self.assertD(d.build(), "D", InheritanceD)
+        self.assertD(d.buildParent(), "C", InheritanceC)
+
+    def assertE(self, e2, level, cls, tested):
+        self.assertIsInstance(e2, cls)
+        self.assertEqual(e2.whoAmI(), level)
+        self.assertEqual(e2.staticWhoAmI(), level)
+        self.assertEqual(e2.root(), "A")
+        self.assertEqual(e2.staticRoot(), "A")
+        self.assertEqual(e2.everyOther(),
+                         "E" if isinstance(e2, tested) else "C")
+        self.assertEqual(e2.notInAbstract(), "B")
+
+    def test_e(self):
+        class E(InheritanceD):
+            def replicateMe(self):
+                return E()
+            def replicateParent(self):
+                return InheritanceD()
+            @staticmethod
+            def build():
+                return E()
+            @staticmethod
+            def buildParent():
+                return InheritanceD()
+            def whoAmI(self):
+                return "E"
+            @staticmethod
+            def staticWhoAmI():
+                return "E"
+            def everyOther(self):
+                return "E"
+
+        e = E()
+        self.assertE(e.replicateMe(), "E", E, E)
+        self.assertE(e.replicateParent(), "D", InheritanceD, E)
+        self.assertE(e.build(), "E", E, E)
+        self.assertE(e.buildParent(), "D", InheritanceD, E)
+
+
 def test_main():
     test_support.run_unittest(
         InterfaceTest,
@@ -469,7 +565,8 @@ def test_main():
         ContextClassloaderTest,
         MetaClassTest,
         AbstractMethodTest,
-        SuperIsSuperTest)
+        SuperIsSuperTest,
+        HierarchyTest)
 
 
 if __name__ == '__main__':
