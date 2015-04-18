@@ -929,7 +929,10 @@ The readme text for the next release will be like:
         <!-- Clean any old test output -->
         <delete dir="${junit.reports}"/>
     </target>
-    <target name="javatest" depends="developer-build" description="run all the JUnit tests">
+    <target name="javatest" depends="javatest-basepath,importest"
+            description="run all the JUnit tests">
+    </target>
+    <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
@@ -942,6 +945,7 @@ The readme text for the next release will be like:
                     <exclude name="**/InterpTestCase.java" />
                     <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
                     <exclude name="org/python/antlr/**" />
+                    <exclude name="org/python/tests/imp/**" /> <!-- See importest -->
                     <exclude name=".classpath" />
                     <exclude name=".project" />
                 </fileset>
