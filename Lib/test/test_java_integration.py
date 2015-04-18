@@ -748,7 +748,7 @@ public class BarkTheDog {
             classpath = os.pathsep.join(jars)
             compile_java_source(
                 ["-classpath", classpath, "-d", tempdir],
-                "BarkTheDog", source)           
+                "BarkTheDog", source)
 
             # Then in a completely different JVM running our
             # BarkTheDog code, verify we get an appropriate bark
@@ -763,11 +763,8 @@ public class BarkTheDog {
             self.assertRegexpMatches(
                 subprocess.check_output(cmd, env=env, universal_newlines=True,
                                         stderr=subprocess.STDOUT),
-                os.path.join(
-                    r"^\*sys-package-mgr\*: processing new jar, '.+?",
-                    r"proxies.jar'\n"
-                    "Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
-                    "Rover barks 42 times\n$".format(tempdir)))
+                r"^Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
+                                        "Rover barks 42 times$")
         finally:
             pass
             # print "Will not remove", tempdir
@@ -775,7 +772,7 @@ public class BarkTheDog {
 
 
 class CopyTest(unittest.TestCase):
-    
+
     def test_copy(self):
         fruits = ArrayList(["apple", "banana"])
         fruits_copy = copy.copy(fruits)
