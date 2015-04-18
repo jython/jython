@@ -272,7 +272,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
                 if ((entry == null || !(new File(entry.cachefile).exists()))
                         && cache) {
-                    message("processing new jar, '" + jarcanon + "'");
+                    comment("processing new jar, '" + jarcanon + "'");
 
                     String jarname;
                     if (localfile) {
@@ -303,7 +303,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 if (caching) {
                     this.indexModified = true;
                     if (entry.mtime != 0) {
-                        message("processing modified jar, '" + jarcanon + "'");
+                        comment("processing modified jar, '" + jarcanon + "'");
                     }
                     entry.mtime = mtime;
                 }
