@@ -149,7 +149,6 @@ class LockTests(BaseLockTests):
     Tests for non-recursive, weak locks
     (which can be acquired and released from different threads).
     """
-    @unittest.skipIf(support.is_jython, "Jython only supports recursive locks")
     def test_reacquire(self):
         # Lock needs to be released before re-acquiring.
         lock = self.locktype()
@@ -169,7 +168,6 @@ class LockTests(BaseLockTests):
             _wait()
         self.assertEqual(len(phase), 2)
 
-    @unittest.skipIf(support.is_jython, "Java does not allow locks to be released from different threads")
     def test_different_thread(self):
         # Lock can be released from a different thread.
         lock = self.locktype()
@@ -291,10 +289,9 @@ class EventTests(BaseTestCase):
             results2.append((r, t2 - t1))
         Bunch(f, N).wait_for_finished()
         self.assertEqual(results1, [False] * N)
-        epsilon = 1e-5  # wait time is hard to test precisely, so keep low resolution
         for r, dt in results2:
             self.assertFalse(r)
-            self.assertTrue(dt >= (0.2 - epsilon), dt)
+            self.assertTrue(dt >= 0.2, dt)
         # The event is set
         results1 = []
         results2 = []
@@ -321,13 +318,13 @@ class ConditionTests(BaseTestCase):
         lock = threading.Lock()
         cond = self.condtype(lock)
         cond.acquire()
-        self.assertTrue(lock.acquire(False))  # All locks in Jython are recursive!
+        self.assertFalse(lock.acquire(False))
         cond.release()
         self.assertTrue(lock.acquire(False))
-        self.assertTrue(cond.acquire(False))  # All locks in Jython are recursive!
+        self.assertFalse(cond.acquire(False))
         lock.release()
         with cond:
-            self.assertTrue(lock.acquire(False))  # All locks in Jython are recursive!
+            self.assertFalse(lock.acquire(False))
 
     def test_unacquired_wait(self):
         cond = self.condtype()
@@ -355,17 +352,9 @@ class ConditionTests(BaseTestCase):
         b.wait_for_started()
         _wait()
         self.assertEqual(results1, [])
-        # FIXME: notify(n) is not currently implemented in Jython, trying
-        # repeated notifies instead. (and honestly w/o understanding what
-        # notify(n) really even means for CPython...).
-
         # Notify 3 threads at first
         cond.acquire()
-        ###cond.notify(3)
-        cond.notify()
-        cond.notify()
-        cond.notify()
-
+        cond.notify(3)
         _wait()
         phase_num = 1
         cond.release()
@@ -375,12 +364,7 @@ class ConditionTests(BaseTestCase):
         self.assertEqual(results2, [])
         # Notify 5 threads: they might be in their first or second wait
         cond.acquire()
-        ###cond.notify(5)
-        cond.notify()
-        cond.notify()
-        cond.notify()
-        cond.notify()
-        cond.notify()
+        cond.notify(5)
         _wait()
         phase_num = 2
         cond.release()
@@ -419,9 +403,8 @@ class ConditionTests(BaseTestCase):
             results.append(t2 - t1)
         Bunch(f, N).wait_for_finished()
         self.assertEqual(len(results), 5)
-        epsilon = 1e-5  # wait time is hard to test precisely, so keep low resolution
         for dt in results:
-            self.assertTrue(dt >= (0.2 - epsilon), dt)
+            self.assertTrue(dt >= 0.2, dt)
 
 
 class BaseSemaphoreTests(BaseTestCase):

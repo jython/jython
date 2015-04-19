@@ -1,8 +1,8 @@
 package org.python.modules._threading;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
+import java.util.concurrent.TimeUnit;
 import org.python.core.ContextManager;
-import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
@@ -15,13 +15,20 @@ import org.python.expose.ExposedType;
 
 @Untraversable
 @ExposedType(name = "_threading.Lock")
-public class Lock extends PyObject implements ContextManager {
+public class Lock extends PyObject implements ContextManager, ConditionSupportingLock {
 
     public static final PyType TYPE = PyType.fromClass(Lock.class);
-    final ReentrantLock _lock;
+    // see http://bugs.jython.org/issue2328 - need to support another thread
+    // releasing this lock, per CPython semantics, so support semantics with
+    // custom non-reentrant lock, not a ReentrantLock
+    private final Mutex _lock;
 
     public Lock() {
-        _lock = new ReentrantLock();
+        this._lock = new Mutex();
+    }
+
+    public java.util.concurrent.locks.Lock getLock() {
+        return _lock;
     }
 
     @ExposedNew
@@ -30,7 +37,6 @@ public class Lock extends PyObject implements ContextManager {
         final int nargs = args.length;
         return new Lock();
     }
-    
 
     @ExposedMethod(defaults = "true")
     final boolean Lock_acquire(boolean blocking) {
@@ -63,9 +69,6 @@ public class Lock extends PyObject implements ContextManager {
 
     @ExposedMethod
     final void Lock_release() {
-        if (!_lock.isHeldByCurrentThread() || _lock.getHoldCount() <= 0) {
-            throw Py.RuntimeError("cannot release un-acquired lock");
-        }
         _lock.unlock();
     }
 
@@ -95,10 +98,62 @@ public class Lock extends PyObject implements ContextManager {
 
     @ExposedMethod
     final boolean Lock__is_owned() {
-        return _lock.isHeldByCurrentThread();
+        return _lock.isLocked();
     }
 
     public boolean _is_owned() {
         return Lock__is_owned();
     }
+
+}
+
+
+final class Mutex implements java.util.concurrent.locks.Lock {
+
+	// Our internal   helper class
+	private static class Sync extends AbstractQueuedSynchronizer {
+		// Reports whether in locked state
+		protected boolean isHeldExclusively() {
+			return getState() == 1;
+		}
+
+		// Acquires the lock if state is zero
+		public boolean tryAcquire(int acquires) {
+			assert acquires == 1; // Otherwise unused
+			if (compareAndSetState(0, 1)) {
+				setExclusiveOwnerThread(Thread.currentThread());
+				return true;
+			}
+			return false;
+		}
+
+		// Releases the lock by setting state to zero
+		protected boolean tryRelease(int releases) {
+			assert releases == 1; // Otherwise unused
+			if (getState() == 0) throw new IllegalMonitorStateException();
+			setExclusiveOwnerThread(null);
+			setState(0);
+			return true;
+		}
+
+		// Provides a Condition
+		ConditionObject newCondition() { return new ConditionObject(); }
+	}
+
+	// The sync object does all the hard work. We just forward to it.
+	private final Sync sync = new Sync();
+
+	public void lock()                { sync.acquire(1); }
+	public boolean tryLock()          { return sync.tryAcquire(1); }
+	public void unlock()              { sync.release(1); }
+	public java.util.concurrent.locks.Condition newCondition()   { return sync.newCondition(); }
+	public boolean isLocked()         { return sync.isHeldExclusively(); }
+	public boolean hasQueuedThreads() { return sync.hasQueuedThreads(); }
+	public void lockInterruptibly() throws InterruptedException {
+		sync.acquireInterruptibly(1);
+	}
+	public boolean tryLock(long timeout, TimeUnit unit)
+		throws InterruptedException {
+		return sync.tryAcquireNanos(1, unit.toNanos(timeout));
+	}
 }
