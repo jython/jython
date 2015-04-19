@@ -1110,8 +1110,11 @@ public class PyBaseExceptionDerived extends PyBaseException implements Slotted,F
         // Otherwise, we call the derived __tojava__, if it exists:
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__tojava__");
-        if (impl!=null)
-            return impl.__get__(this,self_type).__call__(Py.java2py(c)).__tojava__(Object.class);
+        if (impl!=null) {
+            PyObject delegate=impl.__get__(this,self_type).__call__(Py.java2py(c));
+            if (delegate!=this)
+                return delegate.__tojava__(Object.class);
+        }
         return super.__tojava__(c);
     }
 

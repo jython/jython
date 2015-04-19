@@ -1,12 +1,13 @@
 '''Tests subclassing Java classes in Python'''
 import os
 import sys
+import threading
 import unittest
 
 from test import test_support
 
 from java.lang import (Boolean, Class, ClassLoader, Comparable,Integer, Object, Runnable, String,
-                       Thread, ThreadGroup, UnsupportedOperationException)
+                       Thread, ThreadGroup, InterruptedException, UnsupportedOperationException)
 from java.util import AbstractList, ArrayList, Date, Hashtable, HashSet, Vector
 from java.util.concurrent import Callable, Executors
 
@@ -15,7 +16,9 @@ from javax.swing import ComboBoxModel, ListModel
 from javax.swing.table import AbstractTableModel
 
 from org.python.tests import BeanInterface, Callbacker, Coercions, OwnMethodCaller
-from javatests import InheritanceA, InheritanceB, InheritanceC, InheritanceD
+from javatests import (
+    InheritanceA, InheritanceB, InheritanceC, InheritanceD,
+    ExtendedInterface, UseExtendedInterface)
 
 
 class InterfaceTest(unittest.TestCase):
@@ -555,6 +558,73 @@ class HierarchyTest(unittest.TestCase):
         self.assertE(e.buildParent(), "D", InheritanceD, E)
 
 
+class ChooseCorrectToJavaTest(unittest.TestCase):
+
+    # Verifies fix for http://bugs.jython.org/issue1795
+    #
+    # Note that we use threading.Thread because we have imported
+    # java.lang.Thread as Thread
+
+    def test_extended_thread(self):
+
+        class ExtendedThread(threading.Thread, ExtendedInterface):
+            def returnSomething(self):
+                return "yo yo yo"
+
+        result = [None]
+        def f(r):
+            r[0] = 47
+
+        t = ExtendedThread(target=f, args=(result,))
+        self.assertEqual(
+            UseExtendedInterface().countWords(t),
+            3)
+
+        # Also verify that t still works as a regular thread
+        t.start()
+        t.join()
+        self.assertFalse(t.isAlive())
+        self.assertEqual(result[0], 47)
+
+    def test_interruption(self):
+        # based on this code http://www.jython.org/jythonbook/en/1.0/Concurrency.html#interruption,
+        # which demonstrates __tojava__ works properly
+
+        class ExtendedThread(threading.Thread, ExtendedInterface):
+            def returnSomething(self):
+                return "yo yo yo"
+
+        def wait_until_interrupted(cv):
+            with cv:
+                while not Thread.currentThread().isInterrupted():
+                    try:
+                        # this condition variable is never notified, so will only
+                        # succeed if interrupted
+                        cv.wait()
+                    except InterruptedException, e:
+                        break
+
+        unfair_condition = threading.Condition()
+        threads = [
+           ExtendedThread(
+                name="thread #%d" % i,
+                target=wait_until_interrupted,
+                args=(unfair_condition,))
+            for i in xrange(5)]
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            Thread.interrupt(thread)
+        for thread in threads:
+            thread.join(5)
+        
+        # this assertion only succeeds if threads terminated because
+        # they were interrupted
+        for thread in threads:
+            self.assertFalse(thread.isAlive())
+
+
 def test_main():
     test_support.run_unittest(
         InterfaceTest,
@@ -566,7 +636,8 @@ def test_main():
         MetaClassTest,
         AbstractMethodTest,
         SuperIsSuperTest,
-        HierarchyTest)
+        HierarchyTest,
+        ChooseCorrectToJavaTest)
 
 
 if __name__ == '__main__':
