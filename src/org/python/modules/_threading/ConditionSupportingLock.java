@@ -11,4 +11,5 @@ interface ConditionSupportingLock
     boolean acquire(boolean blocking);
     void release();
     boolean _is_owned();
+    int	getWaitQueueLength(java.util.concurrent.locks.Condition condition);
 }

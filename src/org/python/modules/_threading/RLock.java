@@ -1,11 +1,13 @@
 package org.python.modules._threading;
 
-import java.util.concurrent.locks.ReentrantLock;
+
 import org.python.core.ContextManager;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.ThreadState;
 import org.python.core.Untraversable;
@@ -18,23 +20,21 @@ import org.python.expose.ExposedType;
 public class RLock extends PyObject implements ContextManager, ConditionSupportingLock {
 
     public static final PyType TYPE = PyType.fromClass(RLock.class);
-    private final ReentrantLock _lock;
+    private final RLockImplementation _lock = new RLockImplementation();
 
     public RLock() {
-        this._lock = new ReentrantLock();
     }
 
-	public java.util.concurrent.locks.Lock getLock() {
-		return _lock;
-	}
+    public java.util.concurrent.locks.Lock getLock() {
+        return _lock;
+    }
 
     @ExposedNew
-    final static PyObject RLock___new__ (PyNewWrapper new_, boolean init,
-            PyType subtype, PyObject[] args, String[] keywords) {
+    final static PyObject RLock___new__(PyNewWrapper new_, boolean init,
+                                        PyType subtype, PyObject[] args, String[] keywords) {
         final int nargs = args.length;
-        return new Lock();
+        return new RLock();
     }
-
 
     @ExposedMethod(defaults = "true")
     final boolean RLock_acquire(boolean blocking) {
@@ -105,4 +105,27 @@ public class RLock extends PyObject implements ContextManager, ConditionSupporti
     public boolean _is_owned() {
         return RLock__is_owned();
     }
+
+    public int getWaitQueueLength(java.util.concurrent.locks.Condition condition) {
+        return _lock.getWaitQueueLength(condition);
+    }
+
+    @ExposedMethod
+    public String toString() {
+        String owner = _lock.getOwnerName();
+        return Py.newString("<_threading.RLock owner=%r count=%d>").
+                __mod__(new PyTuple(
+                        owner != null ? Py.newStringOrUnicode(owner) : Py.None,
+                        Py.newInteger(_lock.getHoldCount()))).toString();
+    }
 }
+
+
+final class RLockImplementation extends java.util.concurrent.locks.ReentrantLock {
+    String getOwnerName() {
+        Thread owner = getOwner();
+        return owner != null ? owner.getName() : null;
+    }
+}
+
+

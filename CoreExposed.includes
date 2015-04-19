@@ -105,6 +105,7 @@ org/python/modules/jffi/StructLayout$Field.class
 org/python/modules/jffi/StructLayout$ScalarField.class
 org/python/modules/_threading/Condition.class
 org/python/modules/_threading/Lock.class
+org/python/modules/_threading/RLock.class
 org/python/modules/_weakref/CallableProxyType.class
 org/python/modules/_weakref/ProxyType.class
 org/python/modules/_weakref/ReferenceType.class

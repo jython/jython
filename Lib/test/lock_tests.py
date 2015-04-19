@@ -291,7 +291,13 @@ class EventTests(BaseTestCase):
         self.assertEqual(results1, [False] * N)
         for r, dt in results2:
             self.assertFalse(r)
-            self.assertTrue(dt >= 0.2, dt)
+            # Fudge factor for running on the JVM - actual waits on
+            # some OS platforms might be like this example,
+            # 0.199999809265, slightly less than 0.2 seconds. To avoid
+            # unnecessary flakiness in testing, make epsilon
+            # relatively large:
+            epsilon = 0.01
+            self.assertTrue(dt >= 0.2 - epsilon, dt)
         # The event is set
         results1 = []
         results2 = []

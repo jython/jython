@@ -97,22 +97,37 @@ class JavaIntegrationTestCase(unittest.TestCase):
         self.assertEqual(joined_threads, num_threads)
 
 
-class MemoryLeakTestCase(unittest.TestCase):
-    def test_socket_server(self):
-        # run socketserver with a small amount of memory; verify it exits cleanly
+class ReprTestCase(unittest.TestCase):
 
-        
-        rc = subprocess.call([sys.executable,
-                   "-J-Xmx32m",
-                   test_support.findfile("socketserver_test.py")])
-        # stdout=PIPE)
-        self.assertEquals(rc, 0)
+    def test_condition(self):
+        l = Lock()
+        c = Condition(l)
+        self.assertEqual(repr(c), "<_threading.Condition(<_threading.Lock owner=None locked=False>), 0")
+        l.acquire()
+        self.assertEqual(repr(c), "<_threading.Condition(<_threading.Lock owner='MainThread' locked=True>), 0")
+    
+    def test_lock(self):
+        l = Lock()
+        self.assertEqual(repr(l), "<_threading.Lock owner=None locked=False>")
+        r.acquire()
+        self.assertEqual(repr(r), "<_threading.RLock owner='MainThread' locked=True>")
+        r.release()
+        self.assertEqual(repr(r), "<_threading.RLock owner=None locked=False>")
+
+    def test_rlock(self):
+        r = RLock()
+        self.assertEqual(repr(r), "<_threading.RLock owner=None count=0>")
+        r.acquire()
+        self.assertEqual(repr(r), "<_threading.RLock owner='MainThread' count=1>")
+        r.acquire()
+        self.assertEqual(repr(r), "<_threading.RLock owner='MainThread' count=2>")
+        r.release(); r.release()
+        self.assertEqual(repr(r), "<_threading.RLock owner=None count=0>")
 
 
 def test_main():
     test_support.run_unittest(
         JavaIntegrationTestCase,
-        #MemoryLeakTestCase,
         ThreadingTestCase,
         TwistedTestCase)
 

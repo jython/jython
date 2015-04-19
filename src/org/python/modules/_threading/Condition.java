@@ -5,6 +5,8 @@ import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.ThreadState;
 import org.python.expose.ExposedType;
@@ -143,6 +145,19 @@ public class Condition extends PyObject implements ContextManager, Traverseproc 
         return _lock._is_owned();
     }
 
+    @Override
+    public String toString() {
+        int count = 0;
+        try {
+            count = _lock.getWaitQueueLength(_condition);
+        } catch (IllegalMonitorStateException ex) {
+            // ignore if lock is not held
+        }
+        return (Py.newString("<_threading.Condition(%s, %d)>").__mod__(
+                new PyTuple(
+                        Py.newString(_lock.toString()),
+                        Py.newInteger(count)))).toString();
+    }
 
     /* Traverseproc implementation */
     @Override
