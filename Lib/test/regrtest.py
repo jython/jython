@@ -376,16 +376,31 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         import trace
         tracer = trace.Trace(ignoredirs=[sys.prefix, sys.exec_prefix],
                              trace=False, count=True)
+
     test_times = []
     test_support.verbose = verbose      # Tell tests to be moderately quiet
     test_support.use_resources = use_resources
     test_support.junit_xml_dir = junit_xml
     save_modules = sys.modules.keys()
+
     skips = _ExpectedSkips()
     failures = _ExpectedFailures()
+
+    if expected:
+        # Suppress expected failure from the list of tests.
+        for t in failures.getexpected():
+            if t in tests:
+                tests.remove(t)
+        # Suppress expected skips from the list of tests.
+        for t in skips.getexpected():
+            if t in tests:
+                tests.remove(t)
+
+    # Prevent reporting unexpected success in things we failed to try
+    failures.keep_only(tests)
+    skips.keep_only(tests)
+
     for test in tests:
-        if expected and (test in skips or test in failures):
-            continue
         if not quiet:
             print test
             sys.stdout.flush()
@@ -517,7 +532,7 @@ NOTTESTS = {
 
 def findtests(testdir=None, stdtests=STDTESTS, nottests=NOTTESTS):
     """Return a list of all applicable test modules."""
-    if not testdir: testdir = findtestdir()
+    testdir = findtestdir()
     names = os.listdir(testdir)
     tests = []
     for name in names:
@@ -792,13 +807,8 @@ def dash_R_cleanup(fs, ps, pic, abcs):
     # Collect cyclic trash.
     gc.collect()
 
-def findtestdir():
-    if __name__ == '__main__':
-        file = sys.argv[0]
-    else:
-        file = __file__
-    testdir = os.path.dirname(file) or os.curdir
-    return testdir
+def findtestdir(path=None):
+    return path or os.path.dirname(__file__) or os.curdir
 
 def removepy(name):
     if name.endswith(os.extsep + "py"):
@@ -1260,8 +1270,8 @@ _expectations = {
         test_locale
 
         # Should fix these tests so they are not hardcoded for CPython pyc files
-        # test_compileall
-        # test_pydoc
+        test_compileall
+        test_pydoc
 
         # Requires Python bytecode compilation support
         test_longexp
@@ -1343,7 +1353,7 @@ class _ExpectedSkips:
         self.valid = False
         if _platform in _expectations:
             s = _expectations[_platform]
-            self.expected = set(s.split())
+            self.expected = set(self.split_commented(s))
 
             # expected to be skipped on every platform, even Linux
             self.expected.add('test_linuxaudiodev')
@@ -1373,7 +1383,6 @@ class _ExpectedSkips:
                     self.expected.add(skip)
             elif len(u'\0'.encode('unicode-internal')) == 4:
                 self.expected.add("test_macostools")
-
 
             if sys.platform != "win32":
                 # test_sqlite is only reliable on Windows where the library
@@ -1423,12 +1432,29 @@ class _ExpectedSkips:
     def __contains__(self, key):
         return key in self.expected
 
+    def remove(self, item):
+        self.expected.remove(item)
+
+    def keep_only(self, items):
+        "Remove items not in the supplied iterable"
+        self.expected &= set(items)
+
+    @staticmethod
+    def split_commented(modlist):
+        """Split list of words (values from _expectations or _failures)
+           handling #-comments.
+        """
+        for line in modlist.splitlines():
+            trunc_line = line.split('#', 1)[0]
+            for word in trunc_line.split():
+                yield word
+
 class _ExpectedFailures(_ExpectedSkips):
     def __init__(self):
         self.valid = False
         if _platform in _failures:
             s = _failures[_platform]
-            self.expected = set(s.split())
+            self.expected = set(self.split_commented(s))
             self.valid = True
 
 def savememo(memo,good,bad,skipped):
