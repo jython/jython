@@ -5,6 +5,7 @@ For more details, please see https://hg.python.org/jython
 Jython 2.7rc3
   Bugs fixed
    - [ 1572 ] sys-package-mgr console messages silenced by default. Thanks to Emmanuel Jannetti.
+   - [ 2332 ] jython -m test.regrtest -e now finds the tests it should.
 
 Jython 2.7rc2
   Bugs fixed
