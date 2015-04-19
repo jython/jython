@@ -6,7 +6,8 @@ import cStringIO
 import pickletools
 import copy_reg
 
-from test.test_support import TestFailed, have_unicode, TESTFN, is_jython
+from test.test_support import (TestFailed, have_unicode, TESTFN, _2G, _1M,
+                               precisionbigmemtest, is_jython)
 
 # Tests that try a number of pickle protocols should have a
 #     for proto in protocols:
@@ -123,6 +124,21 @@ class metaclass(type):
 
 class use_metaclass(object):
     __metaclass__ = metaclass
+
+class pickling_metaclass(type):
+    def __eq__(self, other):
+        return (type(self) == type(other) and
+                self.reduce_args == other.reduce_args)
+
+    def __reduce__(self):
+        return (create_dynamic_class, self.reduce_args)
+
+    __hash__ = None
+
+def create_dynamic_class(name, bases):
+    result = pickling_metaclass(name, bases, dict())
+    result.reduce_args = (name, bases)
+    return result
 
 # DATA0 .. DATA2 are the pickles we expect under the various protocols, for
 # the object returned by create_data().
@@ -487,10 +503,10 @@ class AbstractPickleTests(unittest.TestCase):
         i = C()
         i.attr = i
         for proto in protocols:
-            s = self.dumps(i, 2)
+            s = self.dumps(i, proto)
             x = self.loads(s)
             self.assertEqual(dir(x), dir(i))
-            self.assertTrue(x.attr is x)
+            self.assertIs(x.attr, x)
 
     def test_recursive_multi(self):
         l = []
@@ -574,8 +590,6 @@ class AbstractPickleTests(unittest.TestCase):
                         self.assertEqual(n, got)
         # Try a monster.  This is quadratic-time in protos 0 & 1, so don't
         # bother with those.
-        if is_jython:#see http://jython.org/bugs/1754225
-            return
         nbase = long("deadbeeffeedface", 16)
         nbase += nbase << 1000000
         for n in nbase, -nbase:
@@ -583,7 +597,6 @@ class AbstractPickleTests(unittest.TestCase):
             got = self.loads(p)
             self.assertEqual(n, got)
 
-    @unittest.skip("FIXME: not working.")
     def test_float(self):
         test_values = [0.0, 4.94e-324, 1e-310, 7e-308, 6.626e-34, 0.1, 0.5,
                        3.14, 263.44582062374053, 6.022e23, 1e30]
@@ -611,6 +624,14 @@ class AbstractPickleTests(unittest.TestCase):
             s = self.dumps(a, proto)
             b = self.loads(s)
             self.assertEqual(a.__class__, b.__class__)
+
+    def test_dynamic_class(self):
+        a = create_dynamic_class("my_dynamic_class", (object,))
+        copy_reg.pickle(pickling_metaclass, pickling_metaclass.__reduce__)
+        for proto in protocols:
+            s = self.dumps(a, proto)
+            b = self.loads(s)
+            self.assertEqual(a, b)
 
     def test_structseq(self):
         import time
@@ -906,7 +927,6 @@ class AbstractPickleTests(unittest.TestCase):
             y = self.loads(s)
             self.assertEqual(y._proto, proto)
 
-    @unittest.skip("FIXME: max recursion")
     def test_reduce_calls_base(self):
         for proto in protocols:
             x = REX_five()
@@ -953,7 +973,7 @@ class AbstractPickleTests(unittest.TestCase):
                              "Failed protocol %d: %r != %r"
                              % (proto, obj, loaded))
 
-    @unittest.skip("FIXME: not working.")
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython")
     def test_attribute_name_interning(self):
         # Test that attribute names of pickled objects are interned when
         # unpickling.
@@ -1082,7 +1102,6 @@ class AbstractPickleModuleTests(unittest.TestCase):
         # Of course this needs to be changed when HIGHEST_PROTOCOL changes.
         self.assertEqual(self.module.HIGHEST_PROTOCOL, 2)
 
-    @unittest.skip("FIXME: not working.")
     def test_callapi(self):
         f = cStringIO.StringIO()
         # With and without keyword arguments
@@ -1093,12 +1112,11 @@ class AbstractPickleModuleTests(unittest.TestCase):
         self.module.Pickler(f, -1)
         self.module.Pickler(f, protocol=-1)
 
-    @unittest.skip("FIXME: not working.")
     def test_incomplete_input(self):
         s = StringIO.StringIO("X''.")
         self.assertRaises(EOFError, self.module.load, s)
 
-    @unittest.skip("FIXME: not working.")
+    @unittest.skipIf(is_jython, "FIXME: not working on Jython, do similar patch for http://bugs.python.org/issue7128")
     def test_restricted(self):
         # issue7128: cPickle failed in restricted mode
         builtins = {self.module.__name__: self.module,
@@ -1108,7 +1126,6 @@ class AbstractPickleModuleTests(unittest.TestCase):
         exec teststr in {'__builtins__': builtins}, d
         d['f']()
 
-    @unittest.skip("FIXME: not working.")
     def test_bad_input(self):
         # Test issue4298
         s = '\x58\0\0\0\x54'
@@ -1266,3 +1283,31 @@ class AbstractPicklerUnpicklerObjectTests(unittest.TestCase):
         f.write(pickled2)
         f.seek(0)
         self.assertEqual(unpickler.load(), data2)
+
+class BigmemPickleTests(unittest.TestCase):
+
+    # Memory requirements: 1 byte per character for input strings, 1 byte
+    # for pickled data, 1 byte for unpickled strings, 1 byte for internal
+    # buffer and 1 byte of free space for resizing of internal buffer.
+
+    @precisionbigmemtest(size=_2G + 100*_1M, memuse=5)
+    def test_huge_strlist(self, size):
+        chunksize = 2**20
+        data = []
+        while size > chunksize:
+            data.append('x' * chunksize)
+            size -= chunksize
+            chunksize += 1
+        data.append('y' * size)
+
+        try:
+            for proto in protocols:
+                try:
+                    pickled = self.dumps(data, proto)
+                    res = self.loads(pickled)
+                    self.assertEqual(res, data)
+                finally:
+                    res = None
+                    pickled = None
+        finally:
+            data = None
