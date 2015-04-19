@@ -120,7 +120,7 @@ public class StdoutWrapper extends OutputStream {
         if (o instanceof PyString) {
             s = ((PyString) o).getString();
         } else {
-            s = o.toString();
+            s = o.__str__().toString();
         }
         file.write(s);
         return s;

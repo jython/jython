@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import java.io
+import os
 import sys
 import traceback
 import types
@@ -9,6 +10,7 @@ from org.python.core.util import StringUtil
 from org.python.core import PyFile
 from _codecs import encode
 from sun.awt.image import BufImgVolatileSurfaceManager
+
 
 def exec_code_in_pi(source, inp=None, out=None, err=None, locals=None):
     """Runs code in a separate context: (thread, PySystemState, PythonInterpreter)"""
@@ -101,13 +103,14 @@ class InterpreterTest(unittest.TestCase):
         self.assertEquals(42, len(output))
 
 
-@unittest.skip("FIXME: Disabled for now (failing in dictionary compare)")
 class UnicodeSourceTest(unittest.TestCase):
 
     # When the core PythonInterpreter is embedded in a Java program
     # it may be supplied as Unicode source as a string or via streams.
 
-    def do_test(self, source, ref_out=u'', ref_var={}, inp=None):
+    def do_test(self, source, ref_out=u'', ref_var=None, inp=None):
+        if ref_var is None:
+            ref_var = {}
         out = java.io.StringWriter()
         err = java.io.StringWriter()
         var = {}
@@ -118,6 +121,7 @@ class UnicodeSourceTest(unittest.TestCase):
                 inp = java.io.StringReader(inp)
 
         exec_code_in_pi(source, inp, out, err, var)
+        del var['__builtins__']
         self.assertEquals(ref_var, var)
         self.assertEquals(ref_out, out.toString())
 
@@ -307,11 +311,30 @@ class InterpreterSetInTest(unittest.TestCase):
     # There is no readinto() with pi.setIn(Reader)
 
 
+class StdoutWrapperTest(unittest.TestCase):
+
+    def test_choose_str(self):
+
+        def f():
+            class Example:
+                def __str__(self):
+                    return "str"
+                def __repr__(self):
+                    return "repr"
+            print Example()
+
+        out = java.io.StringWriter()
+        err = java.io.StringWriter()
+        exec_code_in_pi(f, None, out, err)
+        self.assertEqual(out.toString(), "str" + os.linesep)
+
+
 def test_main():
     test.test_support.run_unittest(
             InterpreterTest,
             UnicodeSourceTest,
             InterpreterSetInTest,
+            StdoutWrapperTest
     )
 
 if __name__ == "__main__":
