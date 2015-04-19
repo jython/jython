@@ -125,7 +125,7 @@ public class PyObject implements Serializable {
             throw Py.TypeError(String.format("Can't instantiate abstract class %s with abstract "
                                              + "methods %s", subtype.fastGetName(), methods));
         }
-        
+
         return new_.for_type == subtype ? new PyObject() : new PyObjectDerived(subtype);
     }
 
@@ -3950,6 +3950,25 @@ public class PyObject implements Serializable {
     }
 
     /**
+     * A common helper method, use to prevent infinite recursion
+     * when a Python object implements __reduce__ and sometimes calls
+     * object.__reduce__. Trying to do it all in __reduce__ex__ caused
+     # this problem. See http://bugs.jython.org/issue2323.
+     */
+    private PyObject commonReduce(int proto) {
+        PyObject res;
+
+        if (proto >= 2) {
+            res = reduce_2();
+        } else {
+            PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
+            PyObject copyreg_reduce = copyreg.__findattr__("_reduce_ex");
+            res = copyreg_reduce.__call__(this, new PyInteger(proto));
+        }
+        return res;
+    }
+
+    /**
      * Used for pickling.  Default implementation calls object___reduce__.
      *
      * @return a tuple of (class, tuple)
@@ -3960,7 +3979,7 @@ public class PyObject implements Serializable {
 
     @ExposedMethod(doc = BuiltinDocs.object___reduce___doc)
     final PyObject object___reduce__() {
-        return object___reduce_ex__(0);
+        return commonReduce(0);
     }
 
     /** Used for pickling.  If the subclass specifies __reduce__, it will
@@ -3987,12 +4006,8 @@ public class PyObject implements Serializable {
 
         if (clsreduce != objreduce) {
             res = this.__reduce__();
-        } else if (arg >= 2) {
-            res = reduce_2();
         } else {
-            PyObject copyreg = __builtin__.__import__("copy_reg", null, null, Py.EmptyTuple);
-            PyObject copyreg_reduce = copyreg.__findattr__("_reduce_ex");
-            res = copyreg_reduce.__call__(this, new PyInteger(arg));
+            res = commonReduce(arg);
         }
         return res;
     }

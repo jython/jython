@@ -610,7 +610,6 @@ public class cPickle implements ClassDictInit {
         return dumps(object, 0);
     }
 
-
     /**
      * Shorthand function which pickles and returns the string representation.
      * @param object    a data object which should be pickled.
@@ -623,7 +622,6 @@ public class cPickle implements ClassDictInit {
         return file.getvalue();
     }
 
-
     /**
      * Shorthand function which unpickles a object from the file and returns
      * the new object.
@@ -633,7 +631,16 @@ public class cPickle implements ClassDictInit {
      * @return         a new object.
      */
     public static Object load(PyObject file) {
-        return new Unpickler(file).load();
+        try {
+            return new Unpickler(file).load();
+        }
+        catch (ArrayIndexOutOfBoundsException e) {
+            // invalid data, bad stack
+            throw Py.IndexError(e.getMessage());
+        } catch (StringIndexOutOfBoundsException e) {
+            // short data
+            throw Py.EOFError(e.getMessage());
+        }
     }
 
 
@@ -646,13 +653,13 @@ public class cPickle implements ClassDictInit {
      */
     public static Object loads(PyObject str) {
         cStringIO.StringIO file = cStringIO.StringIO(str.toString());
-        return new Unpickler(file).load();
+        return load(file);
     }
 
 
 
     // Factory for creating PyIOFile representation.
-    
+
     /**
      * The Pickler object
      * @see cPickle#Pickler(PyObject)
