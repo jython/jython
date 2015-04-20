@@ -7,6 +7,7 @@ Jython 2.7rc3
    - [ 2326 ] Java's weakly consistent iteration of ConcurrentMap is compatible with mutation
    - [ 1572 ] sys-package-mgr console messages silenced by default. Thanks to Emmanuel Jannetti.
    - [ 2332 ] jython -m test.regrtest -e now finds the tests it should.
+   - [ 2310 ] test_import runs on Windows (and passes with 4 skips).
 
 Jython 2.7rc2
   Bugs fixed
