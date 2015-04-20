@@ -326,7 +326,7 @@ class StdoutWrapperTest(unittest.TestCase):
         out = java.io.StringWriter()
         err = java.io.StringWriter()
         exec_code_in_pi(f, None, out, err)
-        self.assertEqual(out.toString(), "str" + os.linesep)
+        self.assertEqual(out.toString(), "str\n")
 
 
 def test_main():
