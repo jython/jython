@@ -4,9 +4,26 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7rc3
   Bugs fixed
-   - [ 2326 ] Java's weakly consistent iteration of ConcurrentMap is compatible with mutation
+   - [ 2311, 2319 ] Many compatibility fixes for launcher (bin/jython, bin/jython.exe)
+   - [ 2332 ] jython -m test.regrtest -e now finds the tests it should
    - [ 1572 ] sys-package-mgr console messages silenced by default. Thanks to Emmanuel Jannetti.
-   - [ 2332 ] jython -m test.regrtest -e now finds the tests it should.
+   - [ 2327 ] Tests in org/python/tests/imp run only with  proper path
+   - [ 2105 ] Fix inconsistent conversion of PyObject to String in StdoutWrapper
+   - [ 1795 ] Support both subclassing from Java in a Python class and a Python implementation of __tojava__
+   - [ 1861 ] Fix threading.Lock to support non-reentrant semantics
+   - [ 2323 ] Fixes pickling issues in object.__reduce__ and cPickle.{load, loads}
+   - [ 1540 ] Fix stack overflow due to how proxies for Java classes resolve super method in Java
+   - [ 2325 ] Enable piping input into Jython without getting extraneous prompt output
+   - [ 2324 ] Fix index computation for StringBuilder after seek back in cStringIO
+   - [ 2171 ] Fixed direct calls to __pow__() on int, long and float with a modulo of None
+   - [ 2326 ] Java's weakly consistent iteration of ConcurrentMap is compatible with mutation
+   - [ 2322 ] Refreshed several networking modules from CPython 2.7.9 due to CVE-2013-1752
+   - [ 1670 ] Added automatic type coercion of decimal.Decimal to java.lang.{Double, Float}
+   - Pull in hand coded AST work into code gen in asdl_antlr
+   - [ 2307 ] Fixed normalization of paths on Windows
+   - Module tempfile now returns temporary directory in proper case (See also CPython issue 14255)
+   - Faster extended slice deletion in bytearray.
+   - [ 2304 ] Fixed __module__ missing from functions in the time and operator modules
 
 Jython 2.7rc2
   Bugs fixed
