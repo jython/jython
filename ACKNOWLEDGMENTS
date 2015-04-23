@@ -44,6 +44,12 @@ renamed to Jython by Barry Warsaw in 1999 with the 2.0 release. Since
 then, Jython 2.x releases have corresponded to equivalent CPython 2.x
 releases.
 
+Jython includes, modifying as necessary, the CPython standard library,
+other code objects, in certain cases ported from C to either Python
+and/or Java, and other components such as documentation. These
+components are licensed, like Jython itself, under the Python Software
+Foundation License version 2 from the Python Software Foundation.
+
 Contacts:
 
 * Jython developers jython-dev@lists.sourceforge.net
