@@ -1,14 +1,13 @@
 Jython: Python for the Java Platform
 
-Welcome to Jython 2.7rc3!
+Welcome to Jython 2.7.0!
 
-This is the third release candidate of the 2.7 version of
-Jython. Along with language and runtime compatibility with CPython
-2.7, Jython 2.7rc3 provides substantial support of the Python
-ecosystem. This includes built-in support of pip/setuptools (you can
-use with bin/pip) and a native launcher for Windows (bin/jython.exe),
-with the implication that you can finally install Jython scripts on
-Windows.
+This is the final release of the 2.7.0 version of Jython. Along with language
+and runtime compatibility with CPython 2.7.0, Jython 2.7 provides substantial
+support of the Python ecosystem. This includes built-in support of
+pip/setuptools (you can use with bin/pip) and a native launcher for Windows
+(bin/jython.exe), with the implication that you can finally install Jython
+scripts on Windows.
 
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including
 demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
