@@ -9,6 +9,9 @@ pip/setuptools (you can use with bin/pip) and a native launcher for Windows
 (bin/jython.exe), with the implication that you can finally install Jython
 scripts on Windows.
 
+* Note that if you have JYTHON_HOME set, you should unset it to avoid problems
+with the installer and pip/setuptools.
+
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including
 demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
 
