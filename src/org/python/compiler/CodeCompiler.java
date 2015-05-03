@@ -921,14 +921,16 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     /**
-     * Push the import level <code>0</code> or <code>-1</code>.
+     * Return the implied import level, which is different from the argument only if the argument is
+     * zero (no leading dots) meaning try relative then absolute (in Python 2), signified by
+     * returning level <code>-1</code>.
      */
-    private void defaultImportLevel() {
+    private int impliedImportLevel(int level) {
         // already prepared for a future change of DEFAULT_LEVEL
-        if (module.getFutures().isAbsoluteImportOn() || imp.DEFAULT_LEVEL == 0) {
-            code.iconst_0();
+        if (imp.DEFAULT_LEVEL == 0 || level != 0 || module.getFutures().isAbsoluteImportOn()) {
+            return level;
         } else {
-            code.iconst_m1();
+            return imp.DEFAULT_LEVEL;
         }
     }
 
@@ -942,7 +944,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 asname = a.getInternalAsname();
                 code.ldc(name);
                 loadFrame();
-                defaultImportLevel();
+                code.iconst(impliedImportLevel(0));
                 code.invokestatic(p(imp.class), "importOneAs",
                         sig(PyObject.class, String.class, PyFrame.class, Integer.TYPE));
             } else {
@@ -953,7 +955,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
                 }
                 code.ldc(name);
                 loadFrame();
-                defaultImportLevel();
+                code.iconst(impliedImportLevel(0));
                 code.invokestatic(p(imp.class), "importOne",
                         sig(PyObject.class, String.class, PyFrame.class, Integer.TYPE));
             }
@@ -986,9 +988,10 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             }
 
             loadFrame();
-            defaultImportLevel();
+            code.iconst(impliedImportLevel(node.getInternalLevel()));
             code.invokestatic(p(imp.class), "importAll",
                     sig(Void.TYPE, String.class, PyFrame.class, Integer.TYPE));
+
         } else {
             java.util.List<String> fromNames = new ArrayList<String>(); // [names.size()];
             java.util.List<String> asnames = new ArrayList<String>(); // [names.size()];
@@ -1004,12 +1007,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
             code.freeLocal(strArray);
 
             loadFrame();
-
-            if (node.getInternalLevel() == 0) {
-                defaultImportLevel();
-            } else {
-                code.iconst(node.getInternalLevel());
-            }
+            code.iconst(impliedImportLevel(node.getInternalLevel()));
             code.invokestatic(
                     p(imp.class),
                     "importFrom",

@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
   Bugs fixed
    - [ 2347 ] failures in test_import_pep328 when run with -m
+   - [ 2158, 2259 ] Fixed behaviour of relative from ... import *
 
 Jython 2.7rc3
   Bugs fixed

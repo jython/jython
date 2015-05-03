@@ -34,6 +34,7 @@ import sys
 import types
 
 EXPLAIN = False # If True, produce commentary in TestImportFunction
+MAXDOTS = 10 # adjust enthusiasm of dotted tests
 
 def dump_module(m):
     "Print values of attributes relevant to import mechanism"
@@ -45,13 +46,19 @@ def dump_module(m):
 
 origImport = __import__ 
 
-class TestImportStatementError(exceptions.ImportError):
+class TestImportStatementTell(exceptions.ImportError):
+    # Raised by TestImportStatement.importFunction to tell us how it was called
     def __init__(self, args):
+        # Smuggle the arguments of importFunction() through the call stack
+        if EXPLAIN: print "\nimport:"
         names = ['name', 'globals', 'locals', 'fromlist', 'level']
         self.len = len(args)
         for a in args:
             n = names.pop(0)
             setattr(self, n, a)
+            if EXPLAIN:
+                too_long = not isinstance(a, (int, tuple, str, unicode))
+                print "    {:12s}= {}".format(n, a if not too_long else type(a))
         for n in names:
             setattr(self, n, None)
 
@@ -69,7 +76,7 @@ class TestImportStatement(unittest.TestCase):
     def importFunction(*args):
         if args[0] == '__future__':
             return origImport(*args)
-        raise TestImportStatementError(args)
+        raise TestImportStatementTell(args)
     importFunction = staticmethod(importFunction)
 
     def setUp(self):
@@ -83,73 +90,79 @@ class TestImportStatement(unittest.TestCase):
         g = {}
         try:
             exec statement in g, l 
-        except TestImportStatementError, e:
+        except TestImportStatementTell, e:
             self.assert_(e.globals is g, "globals is changed")
             self.assert_(e.locals is l, "locals is changed")
             return e
-        self.fail("Expected a TestImportStatementError")
+        self.fail("Expected a TestImportStatementTell")
+
+    @staticmethod
+    def dotrange(n=MAXDOTS):
+        "Return a longer sequence of dots in each iteration"
+        for i in range(1, n):
+            yield '.'*i
 
     def testFromDotsOnly(self):
-        dots = ''
-        for i in range(1, 10):
-            dots += '.'
+        for dots in self.dotrange():
             a = self.runImport("from %s import (A,B)" % (dots,))
             self.assertEqual(a.len, 5)
             self.assertEqual(a.name, "")
-            self.assertEqual(a.level, i)
+            self.assertEqual(a.level, len(dots))
             self.assertEqual(a.fromlist, ('A', 'B'))
 
     def testFromDotsOnlyAs(self):
-        dots = ''
-        for i in range(1, 10):
-            dots += '.'
+        for dots in self.dotrange():
             a = self.runImport("from %s import A as B" % (dots,))
             self.assertEqual(a.len, 5)
             self.assertEqual(a.name, "")
             self.assertEqual(a.fromlist, ('A',))
-            self.assertEqual(a.level, i)
+            self.assertEqual(a.level, len(dots))
 
     def testFromDotsAndName(self):
-        dots = ''
-        for i in range(1, 10):
-            dots += '.'
+        for dots in self.dotrange():
             a = self.runImport("from %sX import A" % (dots,))
             self.assertEqual(a.len, 5)
             self.assertEqual(a.name, "X")
             self.assertEqual(a.fromlist, ('A',))
-            self.assertEqual(a.level, i)
+            self.assertEqual(a.level, len(dots))
 
-    def testFromDotsAndDotedName(self):
-        dots = ''
-        for i in range(1, 10):
-            dots += '.'
+    def testFromDotsAndDottedName(self):
+        for dots in self.dotrange():
             a = self.runImport("from %sX.Y import A" % (dots,))
             self.assertEqual(a.len, 5)
             self.assertEqual(a.name, "X.Y")
             self.assertEqual(a.fromlist, ('A',))
-            self.assertEqual(a.level, i)
+            self.assertEqual(a.level, len(dots))
 
-    def testAbsoluteFromDotedNameAs(self):
+    def testFromDotsAndDottedNameAll(self):
+        for dots in self.dotrange():
+            a = self.runImport("from %sX.Y import *" % (dots,))
+            self.assertEqual(a.len, 5, "level argument elided") # Issue 2158
+            self.assertEqual(a.name, "X.Y")
+            self.assertEqual(a.fromlist, ('*',))
+            self.assertEqual(a.level, len(dots))
+
+    def testAbsoluteFromDottedNameAs(self):
         a = self.runImport(self.AI + "from X.Y import A as B")
         self.assertEqual(a.len, 5)
         self.assertEqual(a.name, "X.Y")
         self.assertEqual(a.fromlist, ('A',))
         self.assertEqual(a.level, 0)
 
-    def testRelativeOrAbsoluteFromDotedNameAs(self):
+    def testRelativeOrAbsoluteFromDottedNameAs(self):
         a = self.runImport("from X.Y import A as B")
         self.assertEqual(a.name, "X.Y")
         self.assertEqual(a.fromlist, ('A',))
         self.assertEqual(a.len, 4)
 
-    def testAbsoluteFromDotedNameAll(self):
+    def testAbsoluteFromDottedNameAll(self):
         a = self.runImport(self.AI + "from X.Y import *")
         self.assertEqual(a.len, 5)
         self.assertEqual(a.name, "X.Y")
         self.assertEqual(a.fromlist, ('*',))
         self.assertEqual(a.level, 0)
 
-    def testRelativeOrAbsoluteFromDotedNameAll(self):
+    def testRelativeOrAbsoluteFromDottedNameAll(self):
         a = self.runImport("from X.Y import *")
         self.assertEqual(a.name, "X.Y")
         self.assertEqual(a.fromlist, ('*',))
@@ -162,7 +175,7 @@ class TestImportStatement(unittest.TestCase):
         self.assertEqual(a.fromlist, None)
         self.assertEqual(a.level, 0)
 
-    def testAbsoluteImportDotedName(self):
+    def testAbsoluteImportDottedName(self):
         a = self.runImport(self.AI + "import X.Y")
         self.assertEqual(a.len, 5)
         self.assertEqual(a.name, "X.Y")
@@ -175,13 +188,13 @@ class TestImportStatement(unittest.TestCase):
         self.assertEqual(a.fromlist, None)
         self.assertEqual(a.len, 4)
 
-    def testRelativeOrAbsoluteImportDotedName(self):
+    def testRelativeOrAbsoluteImportDottedName(self):
         a = self.runImport("import X.Y")
         self.assertEqual(a.name, "X.Y")
         self.assertEqual(a.fromlist, None)
         self.assertEqual(a.len, 4)
 
-    def testAbsoluteImportDotedNameAs(self):
+    def testAbsoluteImportDottedNameAs(self):
         a = self.runImport(self.AI + "import X.Y as Z")
         self.assertEqual(a.len, 5)
         self.assertEqual(a.name, "X.Y")
@@ -484,8 +497,10 @@ except ImportError:
     test_main = unittest.main
 else:
     def test_main():
-        test_support.run_unittest(TestImportStatement,
-                              TestImportFunction)
+        test_support.run_unittest(
+                TestImportStatement,
+                TestImportFunction,
+                )
 
 if __name__ == '__main__':
     test_main()
