@@ -307,10 +307,16 @@ public class PosixModule implements ClassDictInit {
     public static PyString __doc__chmod = new PyString(
         "chmod(path, mode)\n\n" +
         "Change the access permissions of a file.");
+
     public static void chmod(PyObject path, int mode) {
         if (os == OS.NT) {
             try {
-                if (!absolutePath(path).toFile().setWritable((mode & FileStat.S_IWUSR) != 0)) {
+                // We can only allow/deny write access (not read & execute)
+                boolean writable = (mode & FileStat.S_IWUSR) != 0;
+                File f = absolutePath(path).toFile();
+                if (!f.exists()) {
+                    throw Py.OSError(Errno.ENOENT, path);
+                } else if (!f.setWritable(writable)) {
                     throw Py.OSError(Errno.EPERM, path);
                 }
             } catch (SecurityException ex) {

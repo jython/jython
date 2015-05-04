@@ -2,6 +2,11 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
+  Bugs fixed
+   - [ 2310 ] test_import runs on Windows (and passes with 4 skips).
+   - [ 2347 ] failures in test_import_pep328 when run with -m
+   - [ 2158, 2259 ] Fixed behaviour of relative from ... import *
+
 Jython 2.7rc3
   Bugs fixed
    - [ 2311, 2319 ] Many compatibility fixes for launcher (bin/jython, bin/jython.exe)
