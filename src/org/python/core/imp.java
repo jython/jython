@@ -28,7 +28,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 36;
+    private static final int APIVersion = 37;
 
     public static final int NO_MTIME = -1;
 
@@ -208,7 +208,7 @@ public class imp {
             String sourceName, String compiledName, long mtime, CodeImport source) {
         CodeData data = null;
         try {
-            data = readCodeData(name, fp, testing, mtime);
+            data = readCodeData(compiledName, fp, testing, mtime);
         } catch (IOException ioe) {
             if (!testing) {
                 throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
@@ -264,8 +264,8 @@ public class imp {
             if (testing) {
                 return null;
             } else {
-                throw Py.ImportError("invalid api version(" + api + " != " + APIVersion + ") in: "
-                        + name);
+                String fmt = "compiled unit contains version %d code (%d required): %.200s";
+                throw Py.ImportError(String.format(fmt, api, APIVersion, name));
             }
         }
         if (testing && mtime != NO_MTIME) {
@@ -639,9 +639,9 @@ public class imp {
                     Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
                     if (classTime >= pyTime) {
-                        PyObject ret =
-                                createFromPyClass(modName, makeStream(compiledFile), true,
-                                        displaySourceName, displayCompiledName, pyTime);
+                        PyObject ret = createFromPyClass(modName, makeStream(compiledFile), //
+                                true, // OK to fail here as we have the source
+                                displaySourceName, displayCompiledName, pyTime);
                         if (ret != null) {
                             return ret;
                         }
@@ -656,7 +656,8 @@ public class imp {
             // If no source, try loading precompiled
             Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
             if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
-                return createFromPyClass(modName, makeStream(compiledFile), true,
+                return createFromPyClass(modName, makeStream(compiledFile), //
+                        false, // throw ImportError here if this fails
                         displaySourceName, displayCompiledName, NO_MTIME, CodeImport.compiled_only);
             }
         } catch (SecurityException e) {
