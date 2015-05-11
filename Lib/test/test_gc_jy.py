@@ -11,6 +11,8 @@ from test import test_support
 import time
 import gc
 import weakref
+from Queue import Queue
+
 try:
     from java.lang import System, Runnable
     from javatests import GCTestHelper
@@ -743,6 +745,17 @@ class GCTests_Jy_TraverseByReflection(unittest.TestCase):
         prt = GCTestHelper.reflectionTraverseTestCycle()
         del prt
         self.assertEqual(gc.collect(), 0)
+
+class GCTests_Misc(unittest.TestCase):
+
+    #Test for issue 2337
+    def test_queue(self):
+        class X(object):
+            def __init__(self, q):
+                self.q = q
+        x = X(Queue())
+        gc.monitorObject(x)
+        gc.collect()
 
 
 if __name__ == "__main__":

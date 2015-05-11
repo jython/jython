@@ -685,7 +685,13 @@ public class PyDeque extends PyObject implements Traverseproc {
             if (retVal != 0) {
                 return retVal;
             }
-            return lastReturned == null ? 0 : traverseNode(lastReturned, visit, arg);
+            /* On first thought one would traverse the circular list
+             * starting with lastReturned. However due to synchronization
+             * it is guaranteed that this would traverse the same objects
+             * as starting with header would do. So we can simply call the
+             * traverse-method of PyDeque.this.
+             */
+            return PyDeque.this.traverse(visit, arg);
         }
 
         @Override
@@ -702,26 +708,29 @@ public class PyDeque extends PyObject implements Traverseproc {
 
 
     /* Traverseproc implementation */
-    private static int traverseNode(Node node, Visitproc visit, Object arg) {
-        int retVal;
-        if (node.data != null) {
-            retVal = visit.visit(node.data, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (node.left != null) {
-            retVal = traverseNode(node.left, visit, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        return node.right == null ? 0 : traverseNode(node.right, visit, arg);
-    }
-
     @Override
-    public int traverse(Visitproc visit, Object arg) {
-        return header == null ? 0 : traverseNode(header, visit, arg);
+    public synchronized int traverse(Visitproc visit, Object arg) {
+    	if (header == null) {
+            return 0;
+        }
+        int retVal = 0;
+        if (header.data != null) {
+            retVal = visit.visit(header.data, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
+        Node tmp = header.right;
+        while (tmp != header) {
+            if (tmp.data != null) {
+                retVal = visit.visit(tmp.data, arg);
+                if (retVal != 0) {
+                    return retVal;
+                }
+            }
+            tmp = tmp.right;
+        }
+        return retVal;
     }
 
     @Override
