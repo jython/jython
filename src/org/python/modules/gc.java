@@ -641,7 +641,7 @@ public class gc {
     }
 
     private static class WeakReferenceGC extends WeakReference<PyObject> {
-        int hashCode;
+        int hashCode = 0;
         public String str = null, inst_str = null;
         public String cls;
         boolean isInstance;
@@ -705,12 +705,32 @@ public class gc {
         }
 
         public boolean equals(Object ob) {
+            Object ownReferent = get();
             if (ob instanceof WeakReferenceGC) {
-                return ((WeakReferenceGC) ob).get().equals(get())
-                    && ((WeakReferenceGC) ob).hashCode() == hashCode();
+                Object otherReferent = ((WeakReferenceGC) ob).get();
+                if (ownReferent == null || otherReferent == null) {
+                    return ownReferent == otherReferent &&
+                //We compare the cached hash-codes in order to get an idea
+                //whether in the both-null-case the referent was equal once.
+                            hashCode == ((WeakReferenceGC) ob).hashCode;
+                } else {
+                    return otherReferent.equals(ownReferent)
+                //Here the hash-codes are only compared as a consistency check.
+                            && ((WeakReferenceGC) ob).hashCode == hashCode;
+                }
             } else if (ob instanceof WeakrefGCCompareDummy) {
-                return ((WeakrefGCCompareDummy) ob).compare != null
-                        && ((WeakrefGCCompareDummy) ob).compare.equals(get());
+                if (ownReferent == null ||
+                        ((WeakrefGCCompareDummy) ob).compare == null) {
+                    return ownReferent ==
+                            ((WeakrefGCCompareDummy) ob).compare &&
+                //We compare the cached hash-codes in order to get an idea
+                //whether in the both-null-case the referent was equal once.
+                            hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
+                } else {
+                    return ownReferent.equals(((WeakrefGCCompareDummy) ob).compare)
+                //Here the hash-codes are only compared as a consistency check.
+                            && hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
+                }
             } else {
                 return false;
             }
@@ -720,14 +740,19 @@ public class gc {
     private static class WeakrefGCCompareDummy {
         public static WeakrefGCCompareDummy defaultInstance =
                 new WeakrefGCCompareDummy();
-        PyObject compare;
-        int hashCode;
+        protected PyObject compare;
+        int hashCode = 0;
         
         public void setCompare(PyObject compare) {
             this.compare = compare;
             hashCode = System.identityHashCode(compare);
         }
-        
+
+        public void clearCompare() {
+            compare = null;
+            hashCode = 0;
+        }
+
         public int hashCode() {
             return hashCode;
         }
@@ -1430,7 +1455,7 @@ public class gc {
                 WeakrefGCCompareDummy.defaultInstance.setCompare(ob);
                 boolean result = monitoredObjects.contains(
                     WeakrefGCCompareDummy.defaultInstance);
-                WeakrefGCCompareDummy.defaultInstance.compare = null;
+                WeakrefGCCompareDummy.defaultInstance.clearCompare();
                 return result;
             }
         } catch (NullPointerException npe) {
@@ -1448,7 +1473,7 @@ public class gc {
                 }
                 boolean result = monitoredObjects.remove(
                     WeakrefGCCompareDummy.defaultInstance);
-                WeakrefGCCompareDummy.defaultInstance.compare = null;
+                WeakrefGCCompareDummy.defaultInstance.clearCompare();
                 JyAttribute.delAttr(ob, JyAttribute.GC_CYCLE_MARK_ATTR);
                 FinalizeTrigger ft = (FinalizeTrigger)
                     JyAttribute.getAttr(ob, JyAttribute.FINALIZE_TRIGGER_ATTR);

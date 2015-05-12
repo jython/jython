@@ -14,7 +14,7 @@ import weakref
 from Queue import Queue
 
 try:
-    from java.lang import System, Runnable
+    from java.lang import System, Runnable, Class
     from javatests import GCTestHelper
 except ImportError:
     #i.e. not Jython is running
@@ -746,9 +746,15 @@ class GCTests_Jy_TraverseByReflection(unittest.TestCase):
         del prt
         self.assertEqual(gc.collect(), 0)
 
+
+@unittest.skipUnless(test_support.is_jython,
+        '''
+        The test involves Jython-specifics and is thus not supported by
+        non-Jython interpreters.
+        ''')
 class GCTests_Misc(unittest.TestCase):
 
-    #Test for issue 2337
+    # Test for issue 2337
     def test_queue(self):
         class X(object):
             def __init__(self, q):
@@ -756,6 +762,27 @@ class GCTests_Misc(unittest.TestCase):
         x = X(Queue())
         gc.monitorObject(x)
         gc.collect()
+
+    # Test for issue 2336
+    def test_gc_null(self):
+        WeakReferenceGC = Class.forName('org.python.modules.gc$WeakReferenceGC')
+        # We have to actually construct the right type, the constructor is protected
+        # and Jython doesn't expose that to us; we'd get a plain WeakReference
+        # if we tried WeakReferenceGC()
+        con = WeakReferenceGC.getDeclaredConstructors()[0]
+        con.setAccessible(True)
+        x = object()
+        ref = con.newInstance(x)
+        # It works to start with
+        self.assertTrue(ref == ref)
+        self.assertTrue(ref.get() is x)
+        # Now clean up the referent
+        del x
+        while ref.get():
+            gc.collect()
+        self.assertIsNone(ref.get())
+        # Boom!
+        self.assertTrue(ref == ref)
 
 
 if __name__ == "__main__":
