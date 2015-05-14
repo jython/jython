@@ -54,6 +54,32 @@ public class ClasspathPyImporter extends importer<String> {
     }
 
     /**
+     * Determine whether a module is a package.
+     *
+     * @param fullname the fully qualified name of the module
+     * @return whether the module is a package
+     */
+    @ExposedMethod
+    final boolean ClasspathPyImporter_is_package(String fullname) {
+        return importer_is_package(fullname);
+    }
+
+    /**
+     * Return the code object associated with the module.
+     *
+     * @param fullname the fully qualified name of the module
+     * @return the module's PyCode object or None
+     */
+    @ExposedMethod
+    final PyObject ClasspathPyImporter_get_code(String fullname) {
+        ModuleCodeData moduleCodeData = getModuleCode(fullname);
+        if (moduleCodeData != null) {
+            return moduleCodeData.code;
+        }
+        return Py.None;
+    }
+
+    /**
      * Load a module for the fully qualified name.
      *
      * @param fullname the fully qualified name of the module

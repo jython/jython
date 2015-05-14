@@ -112,6 +112,16 @@ public abstract class importer<T> extends PyObject {
     }
 
     /**
+     * @param fullname
+     *            the fully qualified name of the module
+     * @return whether the module is a package
+     */
+    protected final boolean importer_is_package(String fullname) {
+        ModuleInfo info = getModuleInfo(fullname);
+        return info == ModuleInfo.PACKAGE;
+    }
+
+    /**
      * Bundle is an InputStream, bundled together with a method that can close the input stream and
      * whatever resources are associated with it when the resource is imported.
      */
