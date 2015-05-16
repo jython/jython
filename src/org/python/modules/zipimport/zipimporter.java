@@ -165,11 +165,12 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
 
     /**
      * Return the uncompressed data for the file at the specified path
-     * as a String.
+     * as bytes.
      *
      * @param path a String path name within the archive
      * @return a String of data in binary mode (no CRLF)
      */
+    @Override
     public String get_data(String path) {
         return zipimporter_get_data(path);
     }
@@ -280,12 +281,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
         }
 
         PyObject tocEntry = files.__finditem__(path);
-        if (tocEntry != null) {
-            return get_data(path);
-        }
-
-        // we have the module, but no source
-        return null;
+        return (tocEntry == null) ? null : get_data(path);
     }
 
     /**

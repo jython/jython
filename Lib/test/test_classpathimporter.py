@@ -78,7 +78,7 @@ class PyclasspathImporterTestCase(unittest.TestCase):
                       os.path.join(compile_path, 'jar_pkg', compiled))
         return compiled
 
-    def addResourceToJar(self, jar, package='/jar_pkg'):
+    def addResourceToJar(self, jar, package='jar_pkg'):
         name = 'testdata.dat'
         with zipfile.ZipFile(jar, 'a') as zip:
             zip.writestr(package + '/' + name, self.RESOURCE_DATA)
@@ -141,14 +141,52 @@ class PyclasspathImporterTestCase(unittest.TestCase):
         exec code in space
         self.assertEquals(space['compiled'], True)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: missing get_data.")
+    def test_pkgutil_get_data(self):
+        # Test loader.get_data used via pkgutil
+        jar = self.prepareJar('classimport.jar')
+        name = self.addResourceToJar(jar)
+        Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
+        data = pkgutil.get_data('jar_pkg', name)
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, self.RESOURCE_DATA)
+
     def test_loader_get_data(self):
+        # Test loader.get_data used via pkgutil.get_loader
         jar = self.prepareJar('classimport.jar')
         name = self.addResourceToJar(jar)
         Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
         loader = pkgutil.get_loader('jar_pkg')
-        data = loader.get_data('jar_pkg', name)
+        # path is a resource path (not file system path using os.path.sep)
+        path = 'jar_pkg/' + name
+        data = loader.get_data(path)
+        self.assertIsInstance(data, bytes)
         self.assertEqual(data, self.RESOURCE_DATA)
+
+    def test_importer_get_data(self):
+        # Test loader.get_data used via pkgutil.get_importer
+        jar = self.prepareJar('classimport.jar')
+        name = self.addResourceToJar(jar)
+        Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
+        importer = pkgutil.get_importer('__pyclasspath__/')
+        # path is a resource path (may be file system path using os.path.sep)
+        path = os.path.join('jar_pkg', name)
+        data = importer.get_data(path)
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(data, self.RESOURCE_DATA)
+        # Check works a second time (stream use internal to implementation)
+        data = importer.get_data(path)
+        self.assertEqual(data, self.RESOURCE_DATA)
+
+    def test_importer_get_source(self):
+        # Test loader.get_source used via pkgutil.get_importer
+        jar = self.prepareJar('classimport.jar')
+        Thread.currentThread().contextClassLoader = test_support.make_jar_classloader(jar)
+        importer = pkgutil.get_importer('__pyclasspath__/')
+        # In package
+        mod = 'jar_pkg.prefer_compiled'
+        source = importer.get_source(mod)
+        self.assertIsInstance(source, bytes)
+        self.assertEqual(source, 'compiled = False\n')
 
 
 def test_main():

@@ -6,6 +6,8 @@ For more details, please see https://hg.python.org/jython
    - [ 2310 ] test_import runs on Windows (and passes with 4 skips).
    - [ 2347 ] failures in test_import_pep328 when run with -m
    - [ 2158, 2259 ] Fixed behaviour of relative from ... import *
+   - [ 1879 ] -m command now executes scripts from inside a jar file 
+   - [ 2058 ] ClasspathPyImporter implements PEP 302 get_data (and others)
 
 Jython 2.7rc3
   Bugs fixed
