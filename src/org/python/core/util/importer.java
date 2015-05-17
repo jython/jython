@@ -4,6 +4,7 @@ package org.python.core.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
+
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyCode;
@@ -38,6 +39,11 @@ public abstract class importer<T> extends PyObject {
     public importer() {
         searchOrder = makeSearchOrder();
     }
+
+    /**
+     * Return the bytes for the data located at <code>path</code>.
+     */
+    public abstract String get_data(String path);
 
     /**
      * Returns the separator between directories and files used by this type of importer.
@@ -112,10 +118,20 @@ public abstract class importer<T> extends PyObject {
     }
 
     /**
+     * @param fullname
+     *            the fully qualified name of the module
+     * @return whether the module is a package
+     */
+    protected final boolean importer_is_package(String fullname) {
+        ModuleInfo info = getModuleInfo(fullname);
+        return info == ModuleInfo.PACKAGE;
+    }
+
+    /**
      * Bundle is an InputStream, bundled together with a method that can close the input stream and
      * whatever resources are associated with it when the resource is imported.
      */
-    protected abstract static class Bundle {
+    protected abstract static class Bundle implements AutoCloseable {
         public InputStream inputStream;
 
         public Bundle(InputStream inputStream) {
@@ -125,6 +141,7 @@ public abstract class importer<T> extends PyObject {
         /**
          * Close the underlying resource if necessary. Raises an IOError if a problem occurs.
          */
+        @Override
         public abstract void close();
     }
 
