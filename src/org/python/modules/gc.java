@@ -484,7 +484,7 @@ public class gc {
      */
     public static PyList garbage = new PyList();
 
-    //Finalization preprocess/postprocess-related declarations:
+    /* Finalization preprocess/postprocess-related declarations: */
     private static List<Runnable> preFinalizationProcess, postFinalizationProcess;
     private static List<Runnable> preFinalizationProcessRemove, postFinalizationProcessRemove;
     private static Thread postFinalizationProcessor;
@@ -494,10 +494,10 @@ public class gc {
     private static boolean postFinalizationPending = false;
     private static boolean lockPostFinalization = false;
 
-    //Resurrection-safe finalizer- and weakref-related declarations:
+    /* Resurrection-safe finalizer- and weakref-related declarations: */
     private static IdentityHashMap<PyObject, PyObject> delayedFinalizables, resurrectionCritics;
     private static int abortedCyclicFinalizers = 0;
-    //Some modes to control aspects of delayed finalization:
+    /* Some modes to control aspects of delayed finalization: */
     private static final byte DO_NOTHING_SPECIAL = 0;
     private static final byte MARK_REACHABLE_CRITICS = 1;
     private static final byte NOTIFY_FOR_RERUN = 2;
@@ -695,11 +695,11 @@ public class gc {
                         +System.identityHashCode(ref)+">";
             }
         }
-        
+
         public String toString() {
             return str;
         }
-        
+
         public int hashCode() {
             return hashCode;
         }
@@ -710,12 +710,13 @@ public class gc {
                 Object otherReferent = ((WeakReferenceGC) ob).get();
                 if (ownReferent == null || otherReferent == null) {
                     return ownReferent == otherReferent &&
-                //We compare the cached hash-codes in order to get an idea
-                //whether in the both-null-case the referent was equal once.
+                /* We compare the cached hash-codes in order to get an idea
+                 * whether in the both-null-case the referent was equal once.
+                 */
                             hashCode == ((WeakReferenceGC) ob).hashCode;
                 } else {
                     return otherReferent.equals(ownReferent)
-                //Here the hash-codes are only compared as a consistency check.
+                /* Here the hash-codes are only compared as a consistency check. */
                             && ((WeakReferenceGC) ob).hashCode == hashCode;
                 }
             } else if (ob instanceof WeakrefGCCompareDummy) {
@@ -723,12 +724,13 @@ public class gc {
                         ((WeakrefGCCompareDummy) ob).compare == null) {
                     return ownReferent ==
                             ((WeakrefGCCompareDummy) ob).compare &&
-                //We compare the cached hash-codes in order to get an idea
-                //whether in the both-null-case the referent was equal once.
+                /* We compare the cached hash-codes in order to get an idea
+                 * whether in the both-null-case the referent was equal once.
+                 */
                             hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
                 } else {
                     return ownReferent.equals(((WeakrefGCCompareDummy) ob).compare)
-                //Here the hash-codes are only compared as a consistency check.
+                /* Here the hash-codes are only compared as a consistency check. */
                             && hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
                 }
             } else {
@@ -874,7 +876,7 @@ public class gc {
             cyclicCritics.retainAll(critics);
             critics.removeAll(cyclicCritics);
             Set<PyObject> criticReachablePool = findReachables(critics);
-            //to avoid concurrent modification:
+            /* to avoid concurrent modification: */
             ArrayList<PyObject> criticReachables = new ArrayList<>();
             FinalizeTrigger fn;
             if (delayedFinalizationMode == MARK_REACHABLE_CRITICS) {
@@ -914,8 +916,7 @@ public class gc {
             }
             criticReachablePool.clear();
             if ((gcFlags & DONT_FINALIZE_RESURRECTED_OBJECTS) != 0) {
-                //restore all finalizers that might belong to resurrected
-                //objects:
+                /* restore all finalizers that might belong to resurrected objects: */
                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
                     writeDebug("gc", "restore "+criticReachables.size()+
                             " potentially resurrected finalizers...");
@@ -961,10 +962,11 @@ public class gc {
             }
             if (delayedFinalizationMode == MARK_REACHABLE_CRITICS &&
                     !critics.isEmpty() && !criticReachables.isEmpty()) {
-                // This means some critic-reachables might be not critic-reachable any more.
-                // In a synchronized gc collection approach System.gc should run again while
-                // something like this is found. (Yes, not exactly a cheap task, but since this
-                // is for debugging, correctness counts.)
+                /* This means some critic-reachables might be not critic-reachable any more.
+                 * In a synchronized gc collection approach System.gc should run again while
+                 * something like this is found. (Yes, not exactly a cheap task, but since this
+                 * is for debugging, correctness counts.)
+                 */
                 notifyRerun = true;
             }
             if (delayedFinalizationMode == NOTIFY_FOR_RERUN && !notifyRerun) {
@@ -1022,7 +1024,7 @@ public class gc {
         if (resurrectionCritics == null) {
             resurrectionCritics = new IdentityHashMap<>();
         }
-        //add post-finalization process (and cancel pending suspension process if any)
+        /* add post-finalization process (and cancel pending suspension process if any) */
         try {
             synchronized(postFinalizationProcessRemove) {
                 postFinalizationProcessRemove.remove(
@@ -1068,8 +1070,9 @@ public class gc {
                 new PostFinalizationProcessor();
 
         public void run() {
-            // We wait until last postFinalizationTimestamp is at least timeOut ago.
-            // This should only be measured when openFinalizeCount is zero.
+            /* We wait until last postFinalizationTimestamp is at least timeOut ago.
+             * This should only be measured when openFinalizeCount is zero.
+             */
             long current = System.currentTimeMillis();
             while (true) {
                 if (!lockPostFinalization && openFinalizeCount == 0
@@ -1381,15 +1384,17 @@ public class gc {
     }
 
     public static void monitorObject(PyObject ob, boolean initString) {
-        //Already collected garbage should not be monitored,
-        //thus also not the garbage list:
+        /* Already collected garbage should not be monitored,
+         * thus also not the garbage list:
+         */
         if (ob == null || ob == garbage) {
             return;
         }
 
-        //In contrast to isTraversable(ob) we don't look for DONT_TRAVERSE_BY_REFLECTION
-        //here. Objects not explicitly marked as Untraversable get monitored so we are
-        //able to print out warnings in Traverseproc.
+        /* In contrast to isTraversable(ob) we don't look for DONT_TRAVERSE_BY_REFLECTION
+         * here. Objects not explicitly marked as Untraversable get monitored so we are
+         * able to print out warnings in Traverseproc.
+         */
         if (!monitorNonTraversable &&
                 !(ob instanceof Traverseproc || ob instanceof TraverseprocDerived)) {
             if (ob.getClass().isAnnotationPresent(Untraversable.class) &&
@@ -1767,33 +1772,36 @@ public class gc {
                 writeDebug("gc", "no monitoring; perform ordinary async System.gc...");
             }
             System.gc();
-            result = UNKNOWN_COUNT; //indicates unknown result (-1 would indicate error)
+            result = UNKNOWN_COUNT; /* indicates unknown result (-1 would indicate error) */
         } else {
             if (!gcRunning.compareAndSet(false, true)) {
                 if ((gcFlags & VERBOSE_COLLECT) != 0) {
                     writeDebug("gc", "collect already running...");
                 }
-                //We must fail fast in this case to avoid deadlocks.
-                //Deadlock would for instance occur if a finalizer calls
-                //gc.collect (like is done in some tests in test_gc). 
-                //Former version: throw new IllegalStateException("GC is already running.");
-                return -1; //better not throw exception here, as calling code
-                           //is usually not prepared for that
+                /* We must fail fast in this case to avoid deadlocks.
+                 * Deadlock would for instance occur if a finalizer calls
+                 * gc.collect (like is done in some tests in test_gc). 
+                 * Former version: throw new IllegalStateException("GC is already running.");
+                 */
+                return -1; /* better not throw exception here, as calling code
+                            * is usually not prepared for that
+                            */
             }
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
                 writeDebug("gc", "perform monitored sync gc run...");
             }
             if (needsTrashPrinting() || (gcFlags & VERBOSE) != 0) {
-                // When the weakrefs are enqueued, the referents won't be available
-                // any more to provide their string representations, so we must
-                // save the string representations in the weak ref objects while
-                // the referents are still alive.
-                // We cannot save the string representations in the moment when the
-                // objects get monitored, because with monitorGlobal activated
-                // the objects get monitored just when they are created and some
-                // of them are in an invalid state then and cannot directly obtain
-                // their string representation (would produce overflow errors and
-                // such bad stuff). So we do it here...
+                /* When the weakrefs are enqueued, the referents won't be available
+                 * any more to provide their string representations, so we must
+                 * save the string representations in the weak ref objects while
+                 * the referents are still alive.
+                 * We cannot save the string representations in the moment when the
+                 * objects get monitored, because with monitorGlobal activated
+                 * the objects get monitored just when they are created and some
+                 * of them are in an invalid state then and cannot directly obtain
+                 * their string representation (would produce overflow errors and
+                 * such bad stuff). So we do it here...
+                 */
                 List<WeakReferenceGC> lst = new ArrayList<>();
                 for (WeakReferenceGC wr: monitoredObjects) {
                     if (wr.str == null) {
@@ -1899,13 +1907,14 @@ public class gc {
                     ft = (FinalizeTrigger)
                         JyAttribute.getAttr(wrg.get(), JyAttribute.FINALIZE_TRIGGER_ATTR);
                     ft.flags |= FinalizeTrigger.NOTIFY_GC_FLAG;
-                    //The NOTIFY_GC_FLAG is needed, because monitor state changes during
-                    //collection. So the FinalizeTriggers can't use gc.isMonitored to know
-                    //whether gc notification is needed.
+                    /* The NOTIFY_GC_FLAG is needed, because monitor state changes during
+                     * collection. So the FinalizeTriggers can't use gc.isMonitored to know
+                     * whether gc notification is needed.
+                     */
                 }
             }
 
-            //Typically this line causes a gc-run:
+            /* Typically this line causes a gc-run: */
             cyclicLookup = removeNonCyclicWeakRefs(monitoredObjects);
             cyclic = new HashSet<>(cyclicLookup.values());
             if (debugStat) {
@@ -1936,13 +1945,14 @@ public class gc {
             finalizeWaitCount = 0;
         }
         
-        // We tidy up a bit... (Because it is not unlikely that
-        // the preparation-stuff done so far has caused a gc-run.)
-        // This is not entirely safe as gc could interfere with
-        // this process at any time again. Since this is intended
-        // for debugging, this solution is sufficient in practice.
-        // Maybe we will include more mechanisms to ensure safety
-        // in the future.
+        /* We tidy up a bit... (Because it is not unlikely that
+         * the preparation-stuff done so far has caused a gc-run.)
+         * This is not entirely safe as gc could interfere with
+         * this process at any time again. Since this is intended
+         * for debugging, this solution is sufficient in practice.
+         * Maybe we will include more mechanisms to ensure safety
+         * in the future.
+         */
         
         try {
             trash = gcTrash.remove(initWaitTime);
@@ -2013,11 +2023,12 @@ public class gc {
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
                 writeDebug("gc", "waiting for pending post-finalization process.");
             }
-            // It is important to have the while (which is actually an "if" since the
-            // InterruptedException is very unlikely to occur) *inside* the synchronized
-            // block. Otherwise the notification might come just between the check and the wait,
-            // causing an endless waiting. This is no pure academic consideration, but was
-            // actually observed to happen from time to time, especially on faster systems.
+            /* It is important to have the while (which is actually an "if" since the
+             * InterruptedException is very unlikely to occur) *inside* the synchronized
+             * block. Otherwise the notification might come just between the check and the wait,
+             * causing an endless waiting. This is no pure academic consideration, but was
+             * actually observed to happen from time to time, especially on faster systems.
+             */
             synchronized(PostFinalizationProcessor.class) {
                 while (postFinalizationPending) {
                     try {
@@ -2051,15 +2062,15 @@ public class gc {
              * - stores only those objects from the cycle that actually have
              * finalizers in gc.garbage.
              * 
-             * While slightly contradictionary to the doc, we reproduce this
+             * While slightly contradictory to the doc, we reproduce this
              * behavior here.
              */
             if ((debugFlags & gc.DEBUG_COLLECTABLE) != 0 &&
                     (    (debugFlags & gc.DEBUG_OBJECTS) != 0 ||
                         (debugFlags & gc.DEBUG_INSTANCES) != 0)) {
-                //note that all cycleMarks should have been initialized when
-                //objects became monitored.
-
+                /* note that all cycleMarks should have been initialized when
+                 * objects became monitored.
+                 */
                 for (WeakReferenceGC wrg: collectBuffer) {
                     if (!wrg.cycleMark.isUncollectable()) {
                         if (wrg.isInstance) {
@@ -2281,8 +2292,9 @@ public class gc {
                         synchronized(monitoredObjects) {
                             monitoredObjects.remove(trash);
                         }
-                        //We avoid counting jython-specific objects in order to
-                        //obtain CPython-comparable results.
+                        /* We avoid counting jython-specific objects in order to
+                         * obtain CPython-comparable results.
+                         */
                         if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
                             ++stat[0];
                             if (collectBuffer != null) {
@@ -2316,14 +2328,15 @@ public class gc {
                 writeDebug("gc", "waiting for "+finalizeWaitCount+
                         " pending finalizers.");
                 if (finalizeWaitCount < 0) {
-                    //Maybe even throw exception here?
+                    /* Maybe even throw exception here? */
                     Py.writeError("gc", "There should never be "+
                             "less than zero pending finalizers!");
                 }
             }
-            // It is important to have the while *inside* the synchronized block.
-            // Otherwise the notify might come just between the check and the wait,
-            // causing an endless waiting.
+            /* It is important to have the while *inside* the synchronized block.
+             * Otherwise the notify might come just between the check and the wait,
+             * causing an endless waiting.
+             */
             synchronized(GCSentinel.class) {
                 while (finalizeWaitCount != 0) {
                     try {
@@ -2335,8 +2348,9 @@ public class gc {
                 writeDebug("gc", "no more finalizers pending.");
             }
         }
-        //Can the following block be skipped if monitor global is active?
-        //No, because there could already be unmonitored finalizable objects!
+        /* Can the following block be skipped if monitor global is active?
+         * No, because there could already be unmonitored finalizable objects!
+         */
         while (openFinalizeCount > 0 || System.currentTimeMillis() - postFinalizationTimestamp
                 < postFinalizationTimeOut) {
             try {
@@ -2444,7 +2458,7 @@ public class gc {
         synchronized(monitoredObjects) {
             for (PyObject ob: args) {
                 for (WeakReferenceGC src0: monitoredObjects) {
-                    src = (PyObject) src0.get(); //Sentinels should not be in monitoredObjects
+                    src = (PyObject) src0.get(); /* Sentinels should not be in monitoredObjects */
                     if (src instanceof Traverseproc) {
                         try {
                             if (((Traverseproc) src).refersDirectlyTo(ob)) {
@@ -2516,7 +2530,9 @@ public class gc {
         pools[1] = new IdentityHashMap<PyObject, WeakReferenceGC>();
         PyObject referent;
         if (monitorNonTraversable) {
-            //this means there might be non-traversable objects in the pool we must filter out now
+            /* this means there might be non-traversable objects in
+             * the pool we must filter out now
+             */
             for (WeakReferenceGC ref: pool) {
                 referent = ref.get();
                 if (referent != null && isTraversable(referent)) {
@@ -2524,7 +2540,7 @@ public class gc {
                 }
             }
         } else {
-            //this means the pool is already entirely traversable
+            /* this means the pool is already entirely traversable */
             for (WeakReferenceGC ref: pool) {
                 referent = ref.get();
                 if (referent != null)
@@ -2533,7 +2549,7 @@ public class gc {
         }
         IdentityHashMap<PyObject, WeakReferenceGC> tmp;
         IdentityHashMap<PyObject, WeakReferenceGC> toProcess = new IdentityHashMap<>();
-        //We complete pools[0] with all reachable objects.
+        /* We complete pools[0] with all reachable objects. */
         for (WeakReferenceGC ref: pools[0].values()) {
             traverse((PyObject) ref.get(), ReachableFinderWeakRefs.defaultInstance, pools);
         }
@@ -2547,18 +2563,19 @@ public class gc {
             }
             toProcess.clear();
         }
-        //pools[0] should now be a closed set in the sense that it contains all PyObjects
-        //reachable from pools[0]. Now we are going to remove non-cyclic objects:
-        
+        /* pools[0] should now be a closed set in the sense that it contains all PyObjects
+         * reachable from pools[0]. Now we are going to remove non-cyclic objects:
+         */
         boolean done = false;
         while (!done) {
             done = true;
-            //After this loop pools[1] contains all objects from pools[0]
-            //that some object in pools[0] points to.
-            //toRemove will contain all objects from pools[0] that don't
-            //point to any object in pools[0]. Removing toRemove from
-            //pools[1] and repeating this procedure until nothing changes
-            //any more will let only cyclic trash remain.
+            /* After this loop pools[1] contains all objects from pools[0]
+             * that some object in pools[0] points to.
+             * toRemove will contain all objects from pools[0] that don't
+             * point to any object in pools[0]. Removing toRemove from
+             * pools[1] and repeating this procedure until nothing changes
+             * any more will let only cyclic trash remain.
+             */
             for (WeakReferenceGC ref: pools[0].values()) {
                 RefInListFinder.defaultInstance.found = false;
                 referent = ref.get();
@@ -2596,11 +2613,12 @@ public class gc {
         IdentityHashMap<PyObject, PyObject> tmp;
         IdentityHashMap<PyObject, PyObject> toProcess = new IdentityHashMap<>();
         
-        //We complete pools[0] with all reachable objects.
-        //Note the difference to the implementation in removeNonCyclic.
-        //There pools[0] was initialized with the contents of pool and
-        //then used here as iteration source. In contrast to that we don't
-        //want to have pool contained in the reachable set in any case here.
+        /* We complete pools[0] with all reachable objects.
+         * Note the difference to the implementation in removeNonCyclic.
+         * There pools[0] was initialized with the contents of pool and
+         * then used here as iteration source. In contrast to that we don't
+         * want to have pool contained in the reachable set in any case here.
+         */
         for (PyObject obj: pool) {
             if (isTraversable(obj)) {
                 traverse(obj, ReachableFinder.defaultInstance, pools);
@@ -2616,8 +2634,9 @@ public class gc {
             }
             toProcess.clear();
         }
-        //pools[0] should now be a closed set in the sense that it contains all PyObjects
-        //reachable from pools[0].
+        /* pools[0] should now be a closed set in the sense that it contains
+         * all PyObjects reachable from pools[0].
+         */
         return pools[0].keySet();
     }
 
@@ -2638,14 +2657,16 @@ public class gc {
         pools[0] = new IdentityHashMap<PyObject, PyObject>();
         pools[1] = new IdentityHashMap<PyObject, PyObject>();
         if (monitorNonTraversable) {
-            //this means there might be non-traversable objects in the pool we must filter out now
+            /* this means there might be non-traversable objects in
+             * the pool we must filter out now
+             */
             for (PyObject obj: pool) {
                 if (isTraversable(obj)) {
                     pools[0].put(obj, obj);
                 }
             }
         } else {
-            //this means the pool is already entirely traversable
+            /* this means the pool is already entirely traversable */
             for (PyObject obj: pool) {
                 pools[0].put(obj, obj);
             }
@@ -2653,7 +2674,7 @@ public class gc {
         IdentityHashMap<PyObject, PyObject> tmp;
         IdentityHashMap<PyObject, PyObject> toProcess = new IdentityHashMap<>();
         
-        //We complete pools[0] with all reachable objects.
+        /* We complete pools[0] with all reachable objects. */
         for (PyObject obj: pools[0].keySet()) {
             traverse(obj, ReachableFinder.defaultInstance, pools);
         }
@@ -2667,18 +2688,19 @@ public class gc {
             }
             toProcess.clear();
         }
-        //pools[0] now is a closed set in the sense that it contains all PyObjects
-        //reachable from pools[0]. Now we are going to remove non-cyclic objects:
-        
+        /* pools[0] now is a closed set in the sense that it contains all PyObjects
+         * reachable from pools[0]. Now we are going to remove non-cyclic objects:
+         */
         boolean done = false;
         while (!done) {
             done = true;
-            // After this loop pools[1] contains all objects from pools[0]
-            // that some object in pools[0] points to.
-            // toRemove will contain all objects from pools[0] that don't
-            // point to any object in pools[0]. Removing toRemove from
-            // pools[1] and repeating this procedure until nothing changes
-            // any more will let only cyclic trash remain.
+            /* After this loop pools[1] contains all objects from pools[0]
+             * that some object in pools[0] points to.
+             * toRemove will contain all objects from pools[0] that don't
+             * point to any object in pools[0]. Removing toRemove from
+             * pools[1] and repeating this procedure until nothing changes
+             * any more will let only cyclic trash remain.
+             */
             for (PyObject obj: pools[0].keySet()) {
                 ObjectInListFinder.defaultInstance.found = false;
                 traverse(obj, ObjectInListFinder.defaultInstance, pools);
@@ -2709,9 +2731,10 @@ public class gc {
         if (search == null) {
             return;
         }
-        //Search contains the cyclic objects that participate in a cycle with start,
-        //i.e. which are reachable from start AND can reach start. 
-        //Mark these...
+        /* Search contains the cyclic objects that participate in a cycle with start,
+         * i.e. which are reachable from start AND can reach start. 
+         * Mark these...
+         */
         CycleMarkAttr cm;
         for (PyObject obj: search) {
             cm = (CycleMarkAttr) JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
@@ -2739,7 +2762,7 @@ public class gc {
         if (!isTraversable(start)) {
             return null;
         }
-        //first determine the reachable set:
+        /* first determine the reachable set: */
         @SuppressWarnings("unchecked")
         IdentityHashMap<PyObject, PyObject>[] reachSearch =
             (IdentityHashMap<PyObject, PyObject>[]) new IdentityHashMap[2];
@@ -2761,7 +2784,7 @@ public class gc {
             tmp.clear();
             reachSearch[1] = tmp;
         }
-        //reachSearch[0] is now the reachable set, but still contains non-cyclic objects
+        /* reachSearch[0] is now the reachable set, but still contains non-cyclic objects */
         if (!reachSearch[0].containsKey(start)) {
             return null;
         }
@@ -2776,7 +2799,7 @@ public class gc {
                     tmp.put(obj, obj);
                 }
             }
-            //move all objects that can reach start from reachSearch[0] to search
+            /* move all objects that can reach start from reachSearch[0] to search */
             search.putAll(tmp);
             for (PyObject key: tmp.keySet()) {
                 reachSearch[0].remove(key);
@@ -2976,12 +2999,12 @@ public class gc {
      * </p>
      */
     public static boolean canLinkToPyObject(Class<?> cls, boolean actual) {
-        // At first some quick (fail-fast/succeed-fast)-checks:
+        /* At first some quick (fail-fast/succeed-fast)-checks: */
         if (quickCheckCannotLinkToPyObject(cls)) {
             return false;
         }
         if (!actual && (!Modifier.isFinal(cls.getModifiers()))) {
-            return true; //a subclass could contain anything
+            return true; /* a subclass could contain anything */
         }
         if (quickCheckCanLinkToPyObject(cls)) {
             return true;
@@ -2994,7 +3017,7 @@ public class gc {
         }
         Class<?> cls2 = cls;
         
-        // Fail fast if no fields exist in cls:
+        /* Fail fast if no fields exist in cls: */
         int fieldCount = cls2.getDeclaredFields().length;
         while (fieldCount == 0 && cls2 != Object.class) {
             cls2 = cls2.getSuperclass();
