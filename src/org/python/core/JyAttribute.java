@@ -81,7 +81,7 @@ public abstract class JyAttribute implements Serializable {
      * finalizable objects that might have been resurrected
      * during a delayed finalization process.
      */
-    public static final byte GC_DELAYED_FINALIZE_CRITIC_MARK_ATTR = 5;
+    public static final byte GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR = 5;
 
     public static final byte FINALIZE_TRIGGER_ATTR = Byte.MAX_VALUE;
     private static byte nonBuiltinAttrTypeOffset = Byte.MIN_VALUE+1;

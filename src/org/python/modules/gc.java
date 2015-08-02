@@ -247,6 +247,9 @@ public class gc {
      */
     public static final short DONT_FINALIZE_RESURRECTED_OBJECTS = (1<<3);
 
+    public static final short FORCE_DELAYED_FINALIZATION = (1<<4);
+    public static final short FORCE_DELAYED_WEAKREF_CALLBACKS = (1<<5);
+
     /**
      * <p>
      * Reflection-based traversion is an inefficient fallback-method to
@@ -283,7 +286,7 @@ public class gc {
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
      * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      */
-    public static final short DONT_TRAVERSE_BY_REFLECTION =       (1<<4);
+    public static final short DONT_TRAVERSE_BY_REFLECTION =       (1<<6);
 
     /**
      * <p>
@@ -310,7 +313,7 @@ public class gc {
      * @see #removeJythonGCFlags(short)
      * @see #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING
      */
-    public static final short SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING =    (1<<5);
+    public static final short SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING =    (1<<7);
 
     /**
      * Makes gc emit reflection-based traversion warning for every traversed
@@ -325,7 +328,7 @@ public class gc {
      * @see #removeJythonGCFlags(short)
      * @see #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING
      */
-    public static final short INSTANCE_TRAVERSE_BY_REFLECTION_WARNING =    (1<<6);
+    public static final short INSTANCE_TRAVERSE_BY_REFLECTION_WARNING =    (1<<8);
 
     /**
      * In Jython one usually uses {@code Py.writeDebug} for debugging output.
@@ -341,7 +344,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short USE_PY_WRITE_DEBUG = (1<<7);
+    public static final short USE_PY_WRITE_DEBUG = (1<<9);
 
     /**
      * Enables collection-related verbose-output.
@@ -351,7 +354,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_COLLECT =  (1<<8);
+    public static final short VERBOSE_COLLECT =  (1<<10);
 
     /**
      * Enables weakref-related verbose-output.
@@ -361,7 +364,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_WEAKREF =  (1<<9);
+    public static final short VERBOSE_WEAKREF =  (1<<11);
 
     /**
      * Enables delayed finalization related verbose-output.
@@ -371,7 +374,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_DELAYED =  (1<<10);
+    public static final short VERBOSE_DELAYED =  (1<<12);
 
     /**
      * Enables finalization-related verbose-output.
@@ -381,7 +384,7 @@ public class gc {
      * @see #addJythonGCFlags(short)
      * @see #removeJythonGCFlags(short)
      */
-    public static final short VERBOSE_FINALIZE = (1<<11);
+    public static final short VERBOSE_FINALIZE = (1<<13);
 
     /**
      * Bit-combination of the flags {@link #VERBOSE_COLLECT},
@@ -495,11 +498,11 @@ public class gc {
     private static boolean lockPostFinalization = false;
 
     /* Resurrection-safe finalizer- and weakref-related declarations: */
-    private static IdentityHashMap<PyObject, PyObject> delayedFinalizables, resurrectionCritics;
+    private static IdentityHashMap<PyObject, PyObject> delayedFinalizables, resurrectionCriticals;
     private static int abortedCyclicFinalizers = 0;
     /* Some modes to control aspects of delayed finalization: */
     private static final byte DO_NOTHING_SPECIAL = 0;
-    private static final byte MARK_REACHABLE_CRITICS = 1;
+    private static final byte MARK_REACHABLE_CRITICALS = 1;
     private static final byte NOTIFY_FOR_RERUN = 2;
     private static byte delayedFinalizationMode = DO_NOTHING_SPECIAL;
     private static boolean notifyRerun = false;
@@ -822,11 +825,95 @@ public class gc {
 
 //--------------delayed finalization section-----------------------------------
 
+    /**
+     * In addition to what
+     * {@link org.python.core.finalization.FinalizeTrigger#ensureFinalizer(PyObject)}
+     * does, this method also restores the finalizer's
+     * {@link org.python.core.finalization.FinalizeTrigger}'s flags by taking the
+     * values from the former finalizer. On the other hand - in contrast to
+     * {@link org.python.core.finalization.FinalizeTrigger#ensureFinalizer(PyObject)} -
+     * this method would not create a {@link org.python.core.finalization.FinalizeTrigger}
+     * for an object that did not have one before (i.e. the method checks for an old
+     * (dead) trigger before it creates a new one. <br><br>
+     * If a new finalizer is needed due to an
+     * ordinary resurrection (i.e. the object's finalizer was called),
+     * {@link org.python.core.finalization.FinalizeTrigger#ensureFinalizer(PyObject)}
+     * is the right choice. If a finalization was vetoed in context of delayed
+     * finalization (i.e. a resurrection that pretends not to be one and didn't run
+     * the finalizer), this method is the better choice as it helps to make the new
+     * {@link org.python.core.finalization.FinalizeTrigger} look exactly like the
+     * old one regarding flags etc.
+     * E.g. this method is called by {@link #abortDelayedFinalization(PyObject)}.
+     *
+     * @see #abortDelayedFinalization(PyObject)
+     */
+    public static void restoreFinalizer(PyObject obj) {
+        FinalizeTrigger ft =
+                (FinalizeTrigger) JyAttribute.getAttr(obj, JyAttribute.FINALIZE_TRIGGER_ATTR);
+        boolean notify = false;
+        if (ft != null) {
+            FinalizeTrigger.ensureFinalizer(obj);
+            /* ensure that the old finalize won't run in any case */
+            ft.clear();
+            ((FinalizeTrigger) JyAttribute.getAttr(obj,
+                    JyAttribute.FINALIZE_TRIGGER_ATTR)).flags = ft.flags;
+            notify = (ft.flags & FinalizeTrigger.NOTIFY_GC_FLAG) != 0;
+        }
+        if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
+            writeDebug("gc", "restore finalizer of "+obj);
+        }
+        CycleMarkAttr cm = (CycleMarkAttr)
+                JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
+        if (cm != null && cm.monitored) {
+            monitorObject(obj, true);
+        }
+        if (notify) {
+
+            boolean cyclic;
+            if (cm != null && cm.isUncollectable()) {
+                cyclic = true;
+            } else {
+                markCyclicObjects(obj, true);
+                cm = (CycleMarkAttr) JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
+                cyclic = cm != null && cm.isUncollectable();
+            }
+            
+            if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
+                writeDebug("gc", "notify finalizer abort;  cyclic? "+cyclic);
+            }
+            notifyAbortFinalize(obj, cyclic);
+        }
+    }
+
+    /**
+     * Restores weak references pointing to {@code rst}. Note that
+     * this does not prevent callbacks, unless it is called during
+     * finalization phase (e.g. by a finalizer) and
+     * {@link #delayedWeakrefCallbacksEnabled()} returns {@code true}.
+     * In a manual fashion, one can enforce this by using the gc-flag
+     * {@link #FORCE_DELAYED_WEAKREF_CALLBACKS}. Alternatively, one can
+     * use the automatic way via the gc-flag
+     * {@link #PRESERVE_WEAKREFS_ON_RESURRECTION}, but then one would
+     * not need to call this method anyway. The manual way has better
+     * performance, but also brings more responsibilies.
+     *
+     * @see #delayedWeakrefCallbacksEnabled()
+     * @see #FORCE_DELAYED_WEAKREF_CALLBACKS
+     * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
+     */
+    public static void restoreWeakReferences(PyObject rst) {
+        GlobalRef toRestore = (GlobalRef)
+                JyAttribute.getAttr(rst, JyAttribute.WEAK_REF_ATTR);
+        if (toRestore != null) {
+            toRestore.restore(rst);
+        }
+    }
+
     private static class DelayedFinalizationProcess implements Runnable {
         static DelayedFinalizationProcess defaultInstance =
                 new DelayedFinalizationProcess();
 
-        private void performFinalization(PyObject del) {
+        private static void performFinalization(PyObject del) {
             if ((gcFlags & VERBOSE_DELAYED) != 0) {
                 writeDebug("gc", "delayed finalize of "+del);
             }
@@ -839,110 +926,98 @@ public class gc {
             }
         }
 
-        private void restoreFinalizer(PyObject obj, boolean cyclic) {
-            FinalizeTrigger ft =
-                    (FinalizeTrigger) JyAttribute.getAttr(obj, JyAttribute.FINALIZE_TRIGGER_ATTR);
-            FinalizeTrigger.ensureFinalizer(obj);
-            boolean notify = false;
-            if (ft != null) {
-                ((FinalizeTrigger)
-                    JyAttribute.getAttr(obj, JyAttribute.FINALIZE_TRIGGER_ATTR)).flags
-                    = ft.flags;
-                notify = (ft.flags & FinalizeTrigger.NOTIFY_GC_FLAG) != 0;
-            }
-            if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
-                writeDebug("gc", "restore finalizer of "+obj+";  cyclic? "+cyclic);
-            }
-            CycleMarkAttr cm = (CycleMarkAttr)
-                    JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
-            if (cm != null && cm.monitored) {
-                monitorObject(obj, true);
-            }
-            if (notify) {
-                if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
-                    writeDebug("gc", "notify finalizer abort.");
-                }
-                notifyAbortFinalize(obj, cyclic);
-            }
-        }
-
         public void run() {
             if ((gcFlags & VERBOSE_DELAYED) != 0) {
                 writeDebug("gc", "run delayed finalization. Index: "+
                         gcMonitoredRunCount);
             }
-            Set<PyObject> critics = resurrectionCritics.keySet();
-            Set<PyObject> cyclicCritics = removeNonCyclic(critics);
-            cyclicCritics.retainAll(critics);
-            critics.removeAll(cyclicCritics);
-            Set<PyObject> criticReachablePool = findReachables(critics);
+            Set<PyObject> criticals = resurrectionCriticals.keySet();
+            if (delayedFinalizationMode == DO_NOTHING_SPECIAL &&
+                    (gcFlags & (PRESERVE_WEAKREFS_ON_RESURRECTION |
+                    DONT_FINALIZE_RESURRECTED_OBJECTS)) == 0) {
+                /* In this case we can do a cheap variant... */
+                if ((gcFlags & FORCE_DELAYED_WEAKREF_CALLBACKS) != 0) {
+                    if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                        writeDebug("gc", "process delayed callbacks (force-branch)");
+                    }
+                    GlobalRef.processDelayedCallbacks();
+                }
+                if ((gcFlags & FORCE_DELAYED_FINALIZATION) != 0) {
+                    if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                        writeDebug("gc", "process delayed finalizers (force-branch)");
+                    }
+                    for (PyObject del: delayedFinalizables.keySet()) {
+                        performFinalization(del);
+                    }
+                    for (PyObject cr: criticals) {
+                        performFinalization(cr);
+                    }
+                    delayedFinalizables.clear();
+                    resurrectionCriticals.clear();
+                }
+                if ((gcFlags & VERBOSE_DELAYED) != 0) {
+                    writeDebug("gc", "forced delayed finalization run done");
+                }
+                return;
+            }
+
+            Set<PyObject> cyclicCriticals = removeNonCyclic(criticals);
+            cyclicCriticals.retainAll(criticals);
+            criticals.removeAll(cyclicCriticals);
+            Set<PyObject> criticalReachablePool = findReachables(criticals);
             /* to avoid concurrent modification: */
-            ArrayList<PyObject> criticReachables = new ArrayList<>();
+            ArrayList<PyObject> criticalReachables = new ArrayList<>();
             FinalizeTrigger fn;
-            if (delayedFinalizationMode == MARK_REACHABLE_CRITICS) {
-                for (PyObject obj: criticReachablePool) {
+            if (delayedFinalizationMode == MARK_REACHABLE_CRITICALS) {
+                for (PyObject obj: criticalReachablePool) {
                     fn = (FinalizeTrigger) JyAttribute.getAttr(obj,
                             JyAttribute.FINALIZE_TRIGGER_ATTR);
                     if (fn != null && fn.isActive() && fn.isFinalized()) {
-                        criticReachables.add(obj);
+                        criticalReachables.add(obj);
                         JyAttribute.setAttr(obj,
-                            JyAttribute.GC_DELAYED_FINALIZE_CRITIC_MARK_ATTR,
+                            JyAttribute.GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR,
                             Integer.valueOf(gcMonitoredRunCount));
                     }
                 }
             } else {
-                for (PyObject obj: criticReachablePool) {
+                for (PyObject obj: criticalReachablePool) {
                     fn = (FinalizeTrigger) JyAttribute.getAttr(obj,
                             JyAttribute.FINALIZE_TRIGGER_ATTR);
                     if (fn != null && fn.isActive() && fn.isFinalized()) {
-                        criticReachables.add(obj);
+                        criticalReachables.add(obj);
                     }
                 }
             }
-            critics.removeAll(criticReachables);
+            criticals.removeAll(criticalReachables);
             if ((gcFlags & PRESERVE_WEAKREFS_ON_RESURRECTION) != 0) {
                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
                     writeDebug("gc", "restore potentially resurrected weak references...");
                 }
-                GlobalRef toRestore;
-                for (PyObject rst: criticReachablePool) {
-                    toRestore = (GlobalRef)
-                            JyAttribute.getAttr(rst, JyAttribute.WEAK_REF_ATTR);
-                    if (toRestore != null) {
-                        toRestore.restore(rst);
-                    }
+                for (PyObject rst: criticalReachablePool) {
+                    restoreWeakReferences(rst);
                 }
                 GlobalRef.processDelayedCallbacks();
             }
-            criticReachablePool.clear();
+            criticalReachablePool.clear();
             if ((gcFlags & DONT_FINALIZE_RESURRECTED_OBJECTS) != 0) {
                 /* restore all finalizers that might belong to resurrected objects: */
                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
-                    writeDebug("gc", "restore "+criticReachables.size()+
+                    writeDebug("gc", "restore "+criticalReachables.size()+
                             " potentially resurrected finalizers...");
                 }
-                for (PyObject obj: criticReachables) {
-                    CycleMarkAttr cm = (CycleMarkAttr)
-                            JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
-                    if (cm != null && cm.isUncollectable()) {
-                        restoreFinalizer(obj, true);
-                    } else {
-                        gc.markCyclicObjects(obj, true);
-                        cm = (CycleMarkAttr)
-                                JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
-                        restoreFinalizer(obj, cm != null && cm.isUncollectable());
-                    }
+                for (PyObject obj: criticalReachables) {
+                    restoreFinalizer(obj);
                 }
             } else {
                 if ((gcFlags & VERBOSE_DELAYED) != 0) {
-                    writeDebug("gc", "delayed finalization of "+criticReachables.size()+
+                    writeDebug("gc", "delayed finalization of "+criticalReachables.size()+
                             " potentially resurrected finalizers...");
                 }
-                for (PyObject del: criticReachables) {
+                for (PyObject del: criticalReachables) {
                     performFinalization(del);
                 }
             }
-            cyclicCritics.removeAll(criticReachables);
+            cyclicCriticals.removeAll(criticalReachables);
             if ((gcFlags & VERBOSE_DELAYED) != 0 && !delayedFinalizables.isEmpty()) {
                 writeDebug("gc", "process "+delayedFinalizables.size()+
                         " delayed finalizers...");
@@ -950,19 +1025,19 @@ public class gc {
             for (PyObject del: delayedFinalizables.keySet()) {
                 performFinalization(del);
             }
-            if ((gcFlags & VERBOSE_DELAYED) != 0 && !cyclicCritics.isEmpty()) {
-                writeDebug("gc", "process "+cyclicCritics.size()+" cyclic delayed finalizers...");
+            if ((gcFlags & VERBOSE_DELAYED) != 0 && !cyclicCriticals.isEmpty()) {
+                writeDebug("gc", "process "+cyclicCriticals.size()+" cyclic delayed finalizers...");
             }
-            for (PyObject del: cyclicCritics) {
+            for (PyObject del: cyclicCriticals) {
                 performFinalization(del);
             }
-            if ((gcFlags & VERBOSE_DELAYED) != 0 && !critics.isEmpty()) {
-                writeDebug("gc", "calling "+critics.size()+
-                        " critic finalizers not reachable by other critic finalizers...");
+            if ((gcFlags & VERBOSE_DELAYED) != 0 && !criticals.isEmpty()) {
+                writeDebug("gc", "calling "+criticals.size()+
+                        " critical finalizers not reachable by other critical finalizers...");
             }
-            if (delayedFinalizationMode == MARK_REACHABLE_CRITICS &&
-                    !critics.isEmpty() && !criticReachables.isEmpty()) {
-                /* This means some critic-reachables might be not critic-reachable any more.
+            if (delayedFinalizationMode == MARK_REACHABLE_CRITICALS &&
+                    !criticals.isEmpty() && !criticalReachables.isEmpty()) {
+                /* This means some critical-reachables might be not critical-reachable any more.
                  * In a synchronized gc collection approach System.gc should run again while
                  * something like this is found. (Yes, not exactly a cheap task, but since this
                  * is for debugging, correctness counts.)
@@ -970,10 +1045,10 @@ public class gc {
                 notifyRerun = true;
             }
             if (delayedFinalizationMode == NOTIFY_FOR_RERUN && !notifyRerun) {
-                for (PyObject del: critics) {
+                for (PyObject del: criticals) {
                     if (!notifyRerun) {
                         Object m = JyAttribute.getAttr(del,
-                                JyAttribute.GC_DELAYED_FINALIZE_CRITIC_MARK_ATTR);
+                                JyAttribute.GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR);
                         if (m != null && ((Integer) m).intValue() == gcMonitoredRunCount) {
                             notifyRerun = true;
                         }
@@ -981,31 +1056,43 @@ public class gc {
                     performFinalization(del);
                 }
             } else {
-                for (PyObject del: critics) {
+                for (PyObject del: criticals) {
                     performFinalization(del);
                 }
             }
             delayedFinalizables.clear();
-            resurrectionCritics.clear();
+            resurrectionCriticals.clear();
             if ((gcFlags & VERBOSE_DELAYED) != 0) {
                 writeDebug("gc", "delayed finalization run done");
             }
         }
     }
 
+    public static boolean delayedWeakrefCallbacksEnabled() {
+        return (gcFlags & (PRESERVE_WEAKREFS_ON_RESURRECTION |
+                FORCE_DELAYED_WEAKREF_CALLBACKS)) != 0;
+    }
+
     public static boolean delayedFinalizationEnabled() {
         return (gcFlags & (PRESERVE_WEAKREFS_ON_RESURRECTION |
-                DONT_FINALIZE_RESURRECTED_OBJECTS)) != 0;
+                DONT_FINALIZE_RESURRECTED_OBJECTS |
+                FORCE_DELAYED_FINALIZATION)) != 0;
     }
 
     private static void updateDelayedFinalizationState() {
-        if (delayedFinalizationEnabled()) {
+        /*
+         * There might be the case where delayed weakref callbacks are enabled,
+         * but not delayed finalization. We still register a DelayedFinalizationProcess
+         * then. That process detects the situation by checking the flags and only
+         * performs GlobalRef.processDelayedCallbacks() then.
+         */
+        if (delayedFinalizationEnabled() || delayedWeakrefCallbacksEnabled()) {
             resumeDelayedFinalization();
         } else if (indexOfPostFinalizationProcess(
                 DelayedFinalizationProcess.defaultInstance) != -1) {
             suspendDelayedFinalization();
         }
-        if ((gcFlags & PRESERVE_WEAKREFS_ON_RESURRECTION) == 0) {
+        if (delayedWeakrefCallbacksEnabled()) {
             if (GlobalRef.hasDelayedCallbacks()) {
                 Thread dlcProcess = new Thread() {
                     public void run() {
@@ -1021,8 +1108,8 @@ public class gc {
         if (delayedFinalizables == null) {
             delayedFinalizables = new IdentityHashMap<>();
         }
-        if (resurrectionCritics == null) {
-            resurrectionCritics = new IdentityHashMap<>();
+        if (resurrectionCriticals == null) {
+            resurrectionCriticals = new IdentityHashMap<>();
         }
         /* add post-finalization process (and cancel pending suspension process if any) */
         try {
@@ -1046,17 +1133,26 @@ public class gc {
                 DelayedFinalizationProcess.defaultInstance);
     }
 
-    private static boolean isResurrectionCritic(PyObject ob) {
+    private static boolean isResurrectionCritical(PyObject ob) {
         return (isTraversable(ob))
                 && FinalizeTrigger.hasActiveTrigger(ob);
     }
 
     public static void registerForDelayedFinalization(PyObject ob) {
-        if (isResurrectionCritic(ob)) {
-            resurrectionCritics.put(ob, ob);
+        if (isResurrectionCritical(ob)) {
+            resurrectionCriticals.put(ob, ob);
         } else {
             delayedFinalizables.put(ob, ob);
         }
+    }
+
+    public static void abortDelayedFinalization(PyObject ob) {
+        resurrectionCriticals.remove(ob);
+        delayedFinalizables.remove(ob);
+        if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
+            writeDebug("gc", "abort delayed finalization of "+ob);
+        }
+        restoreFinalizer(ob);
     }
 //--------------end of delayed finalization section----------------------------
 
@@ -1814,7 +1910,7 @@ public class gc {
                 lst.clear();
             }
             ++gcMonitoredRunCount;
-            delayedFinalizationMode = MARK_REACHABLE_CRITICS;
+            delayedFinalizationMode = MARK_REACHABLE_CRITICALS;
             notifyRerun = false;
             
             int[] stat = {0, 0};

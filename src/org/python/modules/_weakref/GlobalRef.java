@@ -208,7 +208,8 @@ public class GlobalRef extends WeakReference<PyObject> {
      * @throws java.lang.IllegalArgumentException if {@code formerReferent} is not
      * the actual former referent.
      */
-    public void restore(PyObject formerReferent) {
+    public synchronized void restore(PyObject formerReferent) {
+        /* This method is synchronized to avoid concurrent invocation of call(). */
         if (JyAttribute.getAttr(formerReferent, JyAttribute.WEAK_REF_ATTR) != this) {
             throw new IllegalArgumentException(
                     "Argument is not former referent of this GlobalRef.");
@@ -238,6 +239,15 @@ public class GlobalRef extends WeakReference<PyObject> {
                 }
             }
         }
+        /* We must clear the old global ref to avoid processing of the
+         * callback in spite of restore (might happen because of bad timing).
+         * (The remove from delayed callback list might happen before
+         * the insert.) However we can only set cleared = true after
+         * all gref-variables were updated, otherwise some refs might
+         * break. To avoid callback-rocessing in the unsafe state
+         * between these actions, this method is synchronized (as is call()).
+         */
+        cleared = true;
     }
 
     private static void createReaperThreadIfAbsent() {
@@ -351,7 +361,7 @@ public class GlobalRef extends WeakReference<PyObject> {
 
         public void collect() throws InterruptedException {
             GlobalRef gr = (GlobalRef) referenceQueue.remove();
-            if ((gc.getJythonGCFlags() & gc.PRESERVE_WEAKREFS_ON_RESURRECTION) == 0) {
+            if (!gc.delayedWeakrefCallbacksEnabled()) {
                 gr.call();
             } else {
                 delayedCallback(gr);

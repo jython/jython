@@ -79,7 +79,7 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
 
     protected PyObject get() {
         PyObject result = gref.get();
-        if (result == null && (gc.getJythonGCFlags() & gc.PRESERVE_WEAKREFS_ON_RESURRECTION) != 0) {
+        if (result == null && gc.delayedWeakrefCallbacksEnabled()) {
             if (gref.cleared) {
                 return null;
             }
