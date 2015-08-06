@@ -15,11 +15,11 @@ public class ReferenceType extends AbstractReference {
 
     public static final PyType TYPE = PyType.fromClass(ReferenceType.class);
 
-    public ReferenceType(PyType subType, GlobalRef gref, PyObject callback) {
+    public ReferenceType(PyType subType, ReferenceBackend gref, PyObject callback) {
         super(subType, gref, callback);
     }
 
-    public ReferenceType(GlobalRef gref, PyObject callback) {
+    public ReferenceType(ReferenceBackend gref, PyObject callback) {
         this(TYPE, gref, callback);
     }
 
@@ -33,7 +33,7 @@ public class ReferenceType extends AbstractReference {
             callback = null;
         }
 
-        GlobalRef gref = GlobalRef.newInstance(ob);
+        ReferenceBackend gref = GlobalRef.newInstance(ob);
         if (new_.for_type == subtype) {
             // NOTE: CPython disallows weakrefs to many builtin types (e.g. dict, list)
             // and would check weakrefability here. We aren't as strict since the JVM can

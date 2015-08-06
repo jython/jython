@@ -73,7 +73,7 @@ public class ReferenceTypeDerived extends ReferenceType implements Slotted,Final
         dict=new PyStringMap();
     }
 
-    public ReferenceTypeDerived(PyType subtype,GlobalRef gref,PyObject callback) {
+    public ReferenceTypeDerived(PyType subtype,ReferenceBackend gref,PyObject callback) {
         super(subtype,gref,callback);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();

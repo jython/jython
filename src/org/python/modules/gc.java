@@ -25,6 +25,7 @@ import org.python.core.Visitproc;
 import org.python.core.Untraversable;
 import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules._weakref.GlobalRef;
+import org.python.modules._weakref.ReferenceBackend;
 
 //These imports belong to the out-commented section on MXBean-based
 //gc-sync far below. That section is kept to document this failed
@@ -902,7 +903,7 @@ public class gc {
      * @see #PRESERVE_WEAKREFS_ON_RESURRECTION
      */
     public static void restoreWeakReferences(PyObject rst) {
-        GlobalRef toRestore = (GlobalRef)
+        ReferenceBackend toRestore = (ReferenceBackend)
                 JyAttribute.getAttr(rst, JyAttribute.WEAK_REF_ATTR);
         if (toRestore != null) {
             toRestore.restore(rst);

@@ -16,9 +16,9 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
 
     PyObject callback;
 
-    protected GlobalRef gref;
+    protected ReferenceBackend gref;
 
-    public AbstractReference(PyType subType, GlobalRef gref, PyObject callback) {
+    public AbstractReference(PyType subType, ReferenceBackend gref, PyObject callback) {
         super(subType);
         this.gref = gref;
         this.callback = callback;
@@ -47,6 +47,10 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
     @Override
     public boolean equals(Object ob_other) {
         return ob_other == this;
+    }
+
+    public boolean hasCallback() {
+        return callback != null;
     }
 
     public int hashCode() {
@@ -80,15 +84,16 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
     protected PyObject get() {
         PyObject result = gref.get();
         if (result == null && gc.delayedWeakrefCallbacksEnabled()) {
-            if (gref.cleared) {
+            if (gref.isCleared()) {
                 return null;
             }
             if ((gc.getJythonGCFlags() & gc.VERBOSE_WEAKREF) != 0) {
                 gc.writeDebug("gc", "pending in get of abstract ref "+this+": "+
                         Thread.currentThread().getId());
             }
-            JyAttribute.setAttr(this, JyAttribute.WEAKREF_PENDING_GET_ATTR, Thread.currentThread());
-            while (!gref.cleared && result == null) {
+            JyAttribute.setAttr(this, JyAttribute.WEAKREF_PENDING_GET_ATTR,
+                    Thread.currentThread());
+            while (!gref.isCleared() && result == null) {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ie) {}
@@ -98,7 +103,7 @@ public abstract class AbstractReference extends PyObject implements Traverseproc
             if ((gc.getJythonGCFlags() & gc.VERBOSE_WEAKREF) != 0) {
                 gc.writeDebug("gc", "pending of "+this+" resolved: "+
                         Thread.currentThread().getId());
-                if (gref.cleared) {
+                if (gref.isCleared()) {
                     gc.writeDebug("gc", "reference was cleared.");
                 } else if (result != null){
                     gc.writeDebug("gc", "reference was restored.");
