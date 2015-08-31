@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1b1
   Bugs fixed
+   - [ 1423 ] Circular imports no longer cause RuntimeError.
    - [ 2310 ] test_import runs on Windows (and passes with 4 skips).
    - [ 2347 ] failures in test_import_pep328 when run with -m
    - [ 2158, 2259 ] Fixed behaviour of relative from ... import *

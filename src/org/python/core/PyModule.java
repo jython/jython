@@ -66,24 +66,29 @@ public class PyModule extends PyObject implements Traverseproc {
         }
     }
 
+    @Override
     public PyObject fastGetDict() {
         return __dict__;
     }
 
+    @Override
     public PyObject getDict() {
         return __dict__;
     }
 
+    @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         throw Py.TypeError("readonly attribute");
     }
 
+    @Override
     @ExposedDelete(name = "__dict__")
     public void delDict() {
         throw Py.TypeError("readonly attribute");
     }
 
+    @Override
     protected PyObject impAttr(String name) {
         if (__dict__ == null) {
             return null;
@@ -96,14 +101,19 @@ public class PyModule extends PyObject implements Traverseproc {
         if (pyName == null) {
             return null;
         }
-        PyObject attr = null;
+
         String fullName = (pyName.__str__().toString() + '.' + name).intern();
+        PyObject modules = Py.getSystemState().modules;
+        PyObject attr = modules.__finditem__(fullName);
+
         if (path == Py.None) {
             // XXX: disabled
             //attr = imp.loadFromClassLoader(fullName,
             //                               Py.getSystemState().getClassLoader());
         } else if (path instanceof PyList) {
-            attr = imp.find_module(name, fullName, (PyList)path);
+            if (attr == null) {
+                attr = imp.find_module(name, fullName, (PyList)path);
+            }
         } else {
             throw Py.TypeError("__path__ must be list or None");
         }
@@ -114,7 +124,7 @@ public class PyModule extends PyObject implements Traverseproc {
 
         if (attr != null) {
             // Allow a package component to change its own meaning
-            PyObject found = Py.getSystemState().modules.__finditem__(fullName);
+            PyObject found = modules.__finditem__(fullName);
             if (found != null) {
                 attr = found;
             }
@@ -125,6 +135,7 @@ public class PyModule extends PyObject implements Traverseproc {
         return null;
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
         module___setattr__(name, value);
     }
@@ -137,6 +148,7 @@ public class PyModule extends PyObject implements Traverseproc {
         super.__setattr__(name, value);
     }
 
+    @Override
     public void __delattr__(String name) {
         module___delattr__(name);
     }
@@ -146,6 +158,7 @@ public class PyModule extends PyObject implements Traverseproc {
         super.__delattr__(name);
     }
 
+    @Override
     public String toString()  {
         return module_toString();
     }
@@ -168,6 +181,7 @@ public class PyModule extends PyObject implements Traverseproc {
         return String.format("<module '%s' from '%s'>", name, filename);
     }
 
+    @Override
     public PyObject __dir__() {
         // Some special casing to ensure that classes deriving from PyModule
         // can use their own __dict__. Although it would be nice to do this in
