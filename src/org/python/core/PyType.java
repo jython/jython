@@ -1303,7 +1303,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 // So break out of this infinite loop by ignoring this entry for super purposes.
                 // The use of super__ parallels the workaround seen in PyReflectedFunction
                 // Fixes http://bugs.jython.org/issue1540
-                if(!name.startsWith("super__")) {
+                // Also ignore this if we're doing super during __init__ as we want it to behave
+                // Fixes http://bugs.jython.org/issue2375
+                if(name != "__init__" && !name.startsWith("super__")) {
                      lookupName = "super__" + name;
                 } else {
                     lookupName = name;

@@ -14,6 +14,7 @@ from java.util.concurrent import Callable, Executors
 from java.awt import Color, Component, Dimension, Rectangle
 from javax.swing import ComboBoxModel, ListModel
 from javax.swing.table import AbstractTableModel
+from javax.swing.tree import DefaultTreeModel, DefaultMutableTreeNode
 
 from org.python.tests import BeanInterface, Callbacker, Coercions, OwnMethodCaller
 from javatests import (
@@ -625,6 +626,25 @@ class ChooseCorrectToJavaTest(unittest.TestCase):
             self.assertFalse(thread.isAlive())
 
 
+class OldAndNewStyleInitSuperTest(unittest.TestCase):
+    """
+    http://bugs.jython.org/issue2375
+    """
+
+    def test_new_style_init(self):
+        class AModel(DefaultTreeModel):
+            def __init__(self):
+                super(AModel, self).__init__(DefaultMutableTreeNode())
+
+        AModel()
+
+    def test_old_style_init(self):
+        class AModel(DefaultTreeModel):
+            def __init__(self):
+                DefaultTreeModel.__init__(self, DefaultMutableTreeNode())
+
+        AModel()
+
 def test_main():
     test_support.run_unittest(
         InterfaceTest,
@@ -636,6 +656,7 @@ def test_main():
         MetaClassTest,
         AbstractMethodTest,
         SuperIsSuperTest,
+        OldAndNewStyleInitSuperTest,
         HierarchyTest,
         ChooseCorrectToJavaTest)
 
