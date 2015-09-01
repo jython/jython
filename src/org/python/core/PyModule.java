@@ -106,15 +106,11 @@ public class PyModule extends PyObject implements Traverseproc {
         PyObject modules = Py.getSystemState().modules;
         PyObject attr = modules.__finditem__(fullName);
 
-        if (path == Py.None) {
-            // XXX: disabled
-            //attr = imp.loadFromClassLoader(fullName,
-            //                               Py.getSystemState().getClassLoader());
-        } else if (path instanceof PyList) {
+        if (path instanceof PyList) {
             if (attr == null) {
                 attr = imp.find_module(name, fullName, (PyList)path);
             }
-        } else {
+        } else if (path != Py.None) {
             throw Py.TypeError("__path__ must be list or None");
         }
 
