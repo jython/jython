@@ -13,19 +13,19 @@ public class PySystemStateTest extends TestCase {
 
     public void testGetJarFileNameFromURL() throws Exception {
         // null
-        assertNull(PySystemState.getJarFileNameFromURL(null));
+        assertNull(Py.getJarFileNameFromURL(null));
         // plain jar url
         String urlString = "jar:file:/some_dir/some.jar!/a/package/with/A.class";
         URL url = new URL(urlString);
-        assertEquals("/some_dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+        assertEquals("/some_dir/some.jar", Py.getJarFileNameFromURL(url));
         // jar url to decode
         urlString = "jar:file:/some%20dir/some.jar!/a/package/with/A.class";
         url = new URL(urlString);
-        assertEquals("/some dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+        assertEquals("/some dir/some.jar", Py.getJarFileNameFromURL(url));
         // jar url with + signs to escape
         urlString = "jar:file:/some+dir/some.jar!/a/package/with/A.class";
         url = new URL(urlString);
-        assertEquals("/some+dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+        assertEquals("/some+dir/some.jar", Py.getJarFileNameFromURL(url));
     }
 
     public void testGetJarFileNameFromURL_jboss() throws Exception {
@@ -41,33 +41,33 @@ public class PySystemStateTest extends TestCase {
             url = new URL(protocol, host, port, file, handler);
             // tests with jboss on windows gave URL's like this:
             assertEquals("vfszip:/C:/some_dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:/some_dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("C:/some_dir/some.jar", Py.getJarFileNameFromURL(url));
             // jboss url to decode
             file = "/C:/some%20dir/some.jar/org/python/core/PySystemState.class";
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/C:/some%20dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:/some dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("C:/some dir/some.jar", Py.getJarFileNameFromURL(url));
             // jboss url with + to escape
             file = "/C:/some+dir/some.jar/org/python/core/PySystemState.class";
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/C:/some+dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:/some+dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("C:/some+dir/some.jar", Py.getJarFileNameFromURL(url));
         } else {
             // plain jboss url
             file = "/some_dir/some.jar/org/python/core/PySystemState.class";
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/some_dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some_dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("/some_dir/some.jar", Py.getJarFileNameFromURL(url));
             // jboss url to decode
             file = "/some%20dir/some.jar/org/python/core/PySystemState.class";
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/some%20dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("/some dir/some.jar", Py.getJarFileNameFromURL(url));
             // jboss url with + to escape
             file = "/some+dir/some.jar/org/python/core/PySystemState.class";
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/some+dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some+dir/some.jar", PySystemState.getJarFileNameFromURL(url));
+            assertEquals("/some+dir/some.jar", Py.getJarFileNameFromURL(url));
         }
     }
 

@@ -64,11 +64,6 @@ public class PySystemState extends PyObject implements AutoCloseable,
     public static final String JYTHON_JAR = "jython.jar";
     public static final String JYTHON_DEV_JAR = "jython-dev.jar";
 
-    private static final String JAR_URL_PREFIX = "jar:file:";
-    private static final String JAR_SEPARATOR = "!";
-    private static final String VFSZIP_PREFIX = "vfszip:";
-    private static final String VFS_PREFIX = "vfs:";
-
     public static final PyString version = new PyString(Version.getVersion());
 
     public static final PyTuple subversion = new PyTuple(new PyString("Jython"), Py.newString(""),
@@ -1036,7 +1031,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         initialized = true;
         Py.setAdapter(adapter);
         boolean standalone = false;
-        String jarFileName = getJarFileName();
+        String jarFileName = Py._getJarFileName();
         if (jarFileName != null) {
             standalone = isStandalone(jarFileName);
         }
@@ -1341,65 +1336,6 @@ public class PySystemState extends PyObject implements AutoCloseable,
             }
         }
         return standalone;
-    }
-
-    /**
-     * @return the full name of the jar file containing this class, <code>null</code> if not
-     *         available.
-     */
-    private static String getJarFileName() {
-        Class<PySystemState> thisClass = PySystemState.class;
-        String fullClassName = thisClass.getName();
-        String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
-        URL url = thisClass.getResource(className + ".class");
-        return getJarFileNameFromURL(url);
-    }
-
-    protected static String getJarFileNameFromURL(URL url) {
-        String jarFileName = null;
-        if (url != null) {
-            try {
-                // escape plus signs, since the URLDecoder would turn them into spaces
-                final String plus = "\\+";
-                final String escapedPlus = "__ppluss__";
-                String rawUrl = url.toString();
-                rawUrl = rawUrl.replaceAll(plus, escapedPlus);
-                String urlString = URLDecoder.decode(rawUrl, "UTF-8");
-                urlString = urlString.replaceAll(escapedPlus, plus);
-                int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
-                if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
-                    // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
-                    jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
-                } else if (urlString.startsWith(VFSZIP_PREFIX)) {
-                    // vfszip:/some/path/jython.jar/org/python/core/PySystemState.class
-                    final String path = PySystemState.class.getName().replace('.', '/');
-                    int jarIndex = urlString.indexOf(".jar/".concat(path));
-                    if (jarIndex > 0) {
-                        jarIndex += 4;
-                        int start = VFSZIP_PREFIX.length();
-                        if (Platform.IS_WINDOWS) {
-                            // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
-                            start++;
-                        }
-                        jarFileName = urlString.substring(start, jarIndex);
-                    }
-                } else if (urlString.startsWith(VFS_PREFIX)) {
-                    // vfs:/some/path/jython.jar/org/python/core/PySystemState.class
-                    final String path = PySystemState.class.getName().replace('.', '/');
-                    int jarIndex = urlString.indexOf(".jar/".concat(path));
-                    if (jarIndex > 0) {
-                        jarIndex += 4;
-                        int start = VFS_PREFIX.length();
-                        if (Platform.IS_WINDOWS) {
-                            // vfs:/C:/some/path/jython.jar/org/python/core/PySystemState.class
-                            start++;
-                        }
-                        jarFileName = urlString.substring(start, jarIndex);
-                    }
-                }
-            } catch (Exception e) {}
-        }
-        return jarFileName;
     }
 
     private static void addPaths(PyList path, String pypath) {

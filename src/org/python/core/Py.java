@@ -15,6 +15,8 @@ import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -29,8 +31,8 @@ import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
-
 import jnr.posix.util.Platform;
+
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -2301,6 +2303,155 @@ public final class Py {
         }
         return objs.toArray(Py.EmptyObjects);
     }
+
+    /**
+     * Infers the usual Jython executable name from the position of the
+     * jar-file returned by {@link #getJarFileName()} by replacing the
+     * file name with "bin/jython". This is intended as an easy fallback
+     * for cases where {@code sys.executable} is {@code None} due to
+     * direct launching via the java executable.<br>
+     * Note that this does not necessarily return the actual executable,
+     * but instead infers the place where it is usually expected to be.
+     * Use {@code sys.executable} to get the actual executable (may be
+     * {@code None}.
+     *
+     * In contrast to {@link #getJarFileName()} and
+     * {@link #getJarFileNameFromURL(java.net.URL)} this method returns
+     * the path using system-specific separator characters.
+     *
+     * @return usual Jython-executable as absolute path
+     */
+    public static String getDefaultExecutableName() {
+        return getDefaultBinDir()+File.separator+(
+                Platform.IS_WINDOWS ? "jython.exe" : "jython");
+    }
+
+    /**
+     * Infers the usual Jython bin-dir from the position of the jar-file
+     * returned by {@link #getJarFileName()} byr replacing the file name
+     * with "bin". This is intended as an easy fallback for cases where
+     * {@code sys.executable} is {@code null} due to direct launching via
+     * the java executable.<br>
+     * Note that this does not necessarily return the actual bin-directory,
+     * but instead infers the place where it is usually expected to be.
+     *
+     * In contrast to {@link #getJarFileName()} and
+     * {@link #getJarFileNameFromURL(java.net.URL)} this method returns
+     * the path using system-specific separator characters.
+     *
+     * @return usual Jython bin-dir as absolute path
+     */
+    public static String getDefaultBinDir() {
+        String jar = _getJarFileName();
+        if (File.separatorChar != '/') {
+            jar = jar.replace('/', File.separatorChar);
+        }
+        int start = 0;
+        if (Platform.IS_WINDOWS && jar.startsWith(File.separator)) {
+            ++start;
+        }
+        return jar.substring(start, jar.lastIndexOf(File.separatorChar)+1)+"bin";
+    }
+
+    /**
+     * Utility-method to obtain the name (including absolute path) of the currently used
+     * jython-jar-file. Usually this is jython.jar, but can also be jython-dev.jar or
+     * jython-standalone.jar or something custom.
+     *
+     * @return the full name of the jar file containing this class, <code>null</code>
+     *         if not available.
+     */
+    public static String getJarFileName() {
+        String jar = _getJarFileName();
+        if (File.separatorChar != '/') {
+            jar = jar.replace('/', File.separatorChar);
+        }
+        int start = 0;
+        if (Platform.IS_WINDOWS && jar.startsWith(File.separator)) {
+            ++start;
+        }
+        return jar.substring(start);
+    }
+
+    /**
+     * Utility-method to obtain the name (including absolute path) of the currently used
+     * jython-jar-file. Usually this is jython.jar, but can also be jython-dev.jar or
+     * jython-standalone.jar or something custom.
+     * 
+     * Note that it does not use system-specific seperator-chars, but always
+     * '/'. Also, on windows it might prepend a '/' before the drive-letter. (Is this a bug?)
+     *
+     * @return the full name of the jar file containing this class, <code>null</code>
+     *         if not available.
+     */
+    protected static String _getJarFileName() {
+        Class<Py> thisClass = Py.class;
+        String fullClassName = thisClass.getName();
+        String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
+        URL url = thisClass.getResource(className + ".class");
+        return getJarFileNameFromURL(url);
+    }
+
+    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
+    private static final String JAR_URL_PREFIX = "jar:file:";
+    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
+    private static final String JAR_SEPARATOR = "!";
+    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
+    private static final String VFSZIP_PREFIX = "vfszip:";
+    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
+    private static final String VFS_PREFIX = "vfs:";
+
+    /**
+     * Converts a url that points to a jar-file to the actual jar-file name.
+     * Note that it does not use system-specific seperator-chars, but always
+     * '/'. Also, on windows it might prepend a '/' before the drive-letter.
+     */
+    public static String getJarFileNameFromURL(URL url) {
+        String jarFileName = null;
+        if (url != null) {
+            try {
+                // escape plus signs, since the URLDecoder would turn them into spaces
+                final String plus = "\\+";
+                final String escapedPlus = "__ppluss__";
+                String rawUrl = url.toString();
+                rawUrl = rawUrl.replaceAll(plus, escapedPlus);
+                String urlString = URLDecoder.decode(rawUrl, "UTF-8");
+                urlString = urlString.replaceAll(escapedPlus, plus);
+                int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
+                if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                    // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
+                    jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
+                } else if (urlString.startsWith(VFSZIP_PREFIX)) {
+                    // vfszip:/some/path/jython.jar/org/python/core/PySystemState.class
+                    final String path = Py.class.getName().replace('.', '/');
+                    int jarIndex = urlString.indexOf(".jar/".concat(path));
+                    if (jarIndex > 0) {
+                        jarIndex += 4;
+                        int start = VFSZIP_PREFIX.length();
+                        if (Platform.IS_WINDOWS) {
+                            // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
+                            start++;
+                        }
+                        jarFileName = urlString.substring(start, jarIndex);
+                    }
+                } else if (urlString.startsWith(VFS_PREFIX)) {
+                    // vfs:/some/path/jython.jar/org/python/core/PySystemState.class
+                    final String path = Py.class.getName().replace('.', '/');
+                    int jarIndex = urlString.indexOf(".jar/".concat(path));
+                    if (jarIndex > 0) {
+                        jarIndex += 4;
+                        int start = VFS_PREFIX.length();
+                        if (Platform.IS_WINDOWS) {
+                            // vfs:/C:/some/path/jython.jar/org/python/core/PySystemState.class
+                            start++;
+                        }
+                        jarFileName = urlString.substring(start, jarIndex);
+                    }
+                }
+            } catch (Exception e) {}
+        }
+        return jarFileName;
+    }
 }
 
 class FixedFileWrapper extends StdoutWrapper {
@@ -2407,7 +2558,7 @@ class JavaCode extends PyCode implements Traverseproc {
 }
 
 /**
- * A function object wrapper for a java method which comply with the
+ * A function object wrapper for a java method that complies with the
  * PyArgsKeywordsCall standard.
  */
 @Untraversable
