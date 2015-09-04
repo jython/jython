@@ -1,7 +1,7 @@
 # dispatches to _socket for actual implementation
 
 from _socket import (
-    socket, error, herror, gaierror, timeout, has_ipv6,
+    socket, SocketType, error, herror, gaierror, timeout, has_ipv6,
 
     create_connection,
 

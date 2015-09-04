@@ -702,11 +702,11 @@ def _socktuple(addr):
 
 class _realsocket(object):
 
-    def __init__(self, family=None, type=None, proto=None):
+    def __init__(self, family=None, type=None, proto=0):
         # FIXME verify args are correct
         self.family = family
         self.type = type
-        if proto is None:
+        if not proto:
             if type == SOCK_STREAM:
                 proto = IPPROTO_TCP
             elif type == SOCK_DGRAM:
@@ -1309,8 +1309,7 @@ class _socketobject(object):
 
     __doc__ = _realsocket.__doc__
 
-
-    def __init__(self, family=AF_INET, type=SOCK_STREAM, proto=0, _sock=None):
+    def __init__(self, family=AF_INET, type=SOCK_STREAM, proto=None, _sock=None):
         if _sock is None:
             _sock = _realsocket(family, type, proto)
         self._sock = _sock
@@ -1452,10 +1451,6 @@ class ChildSocket(_realsocket):
 
 
 # EXPORTED constructors
-
-def socket(family=None, type=None, proto=None):
-    return _socketobject(family, type, proto)
-
 
 def select(rlist, wlist, xlist, timeout=None):
     for lst in (rlist, wlist, xlist):

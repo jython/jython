@@ -189,7 +189,9 @@ class SSLSocket(object):
         return self.sock.recv_into(buffer, nbytes, flags)
 
     def sendto(self, string, arg1, arg2=None):
-        raise socket_error(errno.EPROTO)
+        # as observed on CPython, sendto when wrapped ignores the
+        # destination address, thereby behaving just like send
+        return self.sock.send(string)
 
     def close(self):
         self.sock.close()

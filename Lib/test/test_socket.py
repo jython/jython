@@ -94,7 +94,7 @@ class ThreadableTest:
 
     Note, the server setup function cannot call any blocking
     functions that rely on the client thread during setup,
-    unless serverExplicityReady() is called just before
+    unless serverExplicitReady() is called just before
     the blocking call (such as in setting up a client/server
     connection and performing the accept() in setUp().
     """
@@ -655,6 +655,9 @@ class GeneralModuleTests(unittest.TestCase):
         sock.settimeout(1)
         sock.close()
         self.assertRaises(socket.error, sock.send, "spam")
+
+    def testSocketTypeAvailable(self):
+        self.assertIs(socket.socket, socket.SocketType)
 
 class IPAddressTests(unittest.TestCase):
 
@@ -1372,7 +1375,6 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
             rfds, wfds, xfds = select.select([self.cli], [self.cli], [], 0.1)
             if rfds or wfds or xfds:
                 break
-        self.failUnless(self.cli in wfds)
         try:
             self.cli.send(MSG)
         except socket.error:
@@ -2549,12 +2551,66 @@ class TestGetSockAndPeerNameUDP(unittest.TestCase, TestGetSockAndPeerName):
             try:
                 self.s.getpeername()
             except socket.error, se:
-                # FIXME Apparently Netty's doesn't set remoteAddress, even if connected, for datagram channels
-                # so we may have to shadow
+                # FIXME Apparently Netty doesn't set remoteAddress,
+                # even if connected, for datagram channels so we may
+                # have to shadow
                 self.fail("getpeername() on connected UDP socket should not have raised socket.error")
             self.failUnlessEqual(self.s.getpeername(), self._udp_peer.getsockname())
         finally:
             self._udp_peer.close()
+
+class ConfigurableClientSocketTest(SocketTCPTest, ThreadableTest):
+
+    # Too bad we are not using cooperative multiple inheritance -
+    # **super is super**, after all!  So this means we currently have
+    # a bit of code duplication with respect to other unit tests. May
+    # want to refactor these unit tests accordingly at some point.
+
+    def config_client(self):
+        raise NotImplementedError("subclassing unit tests must define")
+
+    def __init__(self, methodName='runTest'):
+        SocketTCPTest.__init__(self, methodName=methodName)
+        ThreadableTest.__init__(self)
+
+    def setUp(self):
+        SocketTCPTest.setUp(self)
+        # Indicate explicitly we're ready for the client thread to
+        # proceed and then perform the blocking call to accept
+        self.serverExplicitReady()
+        self.cli_conn, _ = self.serv.accept()
+
+    def clientSetUp(self):
+        self.cli = self.config_client()
+        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.cli.connect((self.HOST, self.PORT))
+        self.serv_conn = self.cli
+
+    def clientTearDown(self):
+        self.cli.close()
+        self.cli = None
+        ThreadableTest.clientTearDown(self)
+
+    def testRecv(self):
+        # Testing large receive over TCP
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testRecv(self):
+        self.serv_conn.send(MSG)
+
+class ProtocolCanBeZeroTest(ConfigurableClientSocketTest):
+
+    def config_client(self):
+        return socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+
+class SocketClassCanBeSubclassed(ConfigurableClientSocketTest):
+
+    def config_client(self):
+        class MySocket(socket.socket):
+            pass
+        return MySocket()
+
 
 def test_main():
     tests = [
@@ -2590,6 +2646,8 @@ def test_main():
         TestGetSockAndPeerNameTCPClient, 
         TestGetSockAndPeerNameTCPServer, 
         TestGetSockAndPeerNameUDP,
+        ProtocolCanBeZeroTest,
+        SocketClassCanBeSubclassed
     ]
 
     if hasattr(socket, "socketpair"):
