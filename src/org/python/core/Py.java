@@ -2348,11 +2348,7 @@ public final class Py {
         if (File.separatorChar != '/') {
             jar = jar.replace('/', File.separatorChar);
         }
-        int start = 0;
-        if (Platform.IS_WINDOWS && jar.startsWith(File.separator)) {
-            ++start;
-        }
-        return jar.substring(start, jar.lastIndexOf(File.separatorChar)+1)+"bin";
+        return jar.substring(0, jar.lastIndexOf(File.separatorChar)+1)+"bin";
     }
 
     /**
@@ -2368,11 +2364,7 @@ public final class Py {
         if (File.separatorChar != '/') {
             jar = jar.replace('/', File.separatorChar);
         }
-        int start = 0;
-        if (Platform.IS_WINDOWS && jar.startsWith(File.separator)) {
-            ++start;
-        }
-        return jar.substring(start);
+        return jar;
     }
 
     /**
@@ -2380,13 +2372,12 @@ public final class Py {
      * jython-jar-file. Usually this is jython.jar, but can also be jython-dev.jar or
      * jython-standalone.jar or something custom.
      * 
-     * Note that it does not use system-specific seperator-chars, but always
-     * '/'. Also, on windows it might prepend a '/' before the drive-letter. (Is this a bug?)
+     * Note that it does not use system-specific seperator-chars, but always '/'.
      *
      * @return the full name of the jar file containing this class, <code>null</code>
      *         if not available.
      */
-    protected static String _getJarFileName() {
+    public static String _getJarFileName() {
         Class<Py> thisClass = Py.class;
         String fullClassName = thisClass.getName();
         String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
@@ -2405,8 +2396,7 @@ public final class Py {
 
     /**
      * Converts a url that points to a jar-file to the actual jar-file name.
-     * Note that it does not use system-specific seperator-chars, but always
-     * '/'. Also, on windows it might prepend a '/' before the drive-letter.
+     * Note that it does not use system-specific seperator-chars, but always '/'.
      */
     public static String getJarFileNameFromURL(URL url) {
         String jarFileName = null;
@@ -2422,7 +2412,11 @@ public final class Py {
                 int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
                 if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
                     // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
-                    jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
+                    int start = JAR_URL_PREFIX.length();
+                    if (Platform.IS_WINDOWS) {
+                        start++;
+                    }
+                    jarFileName = urlString.substring(start, jarSeparatorIndex);
                 } else if (urlString.startsWith(VFSZIP_PREFIX)) {
                     // vfszip:/some/path/jython.jar/org/python/core/PySystemState.class
                     final String path = Py.class.getName().replace('.', '/');
