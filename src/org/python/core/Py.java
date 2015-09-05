@@ -2475,11 +2475,13 @@ public final class Py {
             if (!cls.isInterface()) throw
                 new IllegalArgumentException("cls must be an interface.");
             interfaces.add(0, cls);
+            pyClasses.add(0, pyCls);
             for (int i = interfaces.size()-1; i > 0; --i) {
-                if (interfaces.get(i).isAssignableFrom(cls))
+                if (interfaces.get(i).isAssignableFrom(cls)) {
                     interfaces.remove(i);
+                    pyClasses.remove(i);
+                }
             }
-            pyClasses.add(pyCls);
         }
     }
 
