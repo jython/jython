@@ -3089,38 +3089,62 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     // Character class operations
     //
 
+
+    // Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa.
+    private static final int SWAP_CASE = 0x20;
+
+    // Bit masks and sets to use with the byte classification table
+    private static final byte UPPER = 0b1;
+    private static final byte LOWER = 0b10;
+    private static final byte DIGIT = 0b100;
+    private static final byte SPACE = 0b1000;
+    private static final byte ALPHA = UPPER | LOWER;
+    private static final byte ALNUM = ALPHA | DIGIT;
+
+    // Character (byte) classification table.
+    private static final byte[] ctype = new byte[256];
+    static {
+        for (int c = 'A'; c <= 'Z'; c++) {
+            ctype[0x80 + c] = UPPER;
+            ctype[0x80 + SWAP_CASE + c] = LOWER;
+        }
+        for (int c = '0'; c <= '9'; c++) {
+            ctype[0x80 + c] = DIGIT;
+        }
+        for (char c : " \t\n\u000b\f\r".toCharArray()) {
+            ctype[0x80 + c] = SPACE;
+        }
+    }
+
     /** @return 'A'<= b <='Z'. */
-    static final boolean isupper(int b) {
-        return ((b - 'A') & 0xff) < 26;
+    static final boolean isupper(byte b) {
+        return (ctype[0x80 + b] & UPPER) != 0;
     }
 
     /** @return 'a'<= b <='z'. */
-    static final boolean islower(int b) {
-        return ((b - 'a') & 0xff) < 26;
+    static final boolean islower(byte b) {
+        return (ctype[0x80 + b] & LOWER) != 0;
     }
 
     /** @return 'A'<= b <='Z' or 'a'<= b <='z'. */
-    static final boolean isalpha(int b) {
-        return (((b | 0x20) - 'a') & 0xff) < 26; // b|0x20 maps A to a, Z to z, etc.
+    static final boolean isalpha(byte b) {
+        return (ctype[0x80 + b] & ALPHA) != 0;
     }
 
     /** @return '0'<= b <='9'. */
-    static final boolean isdigit(int b) {
-        return ((b - '0') & 0xff) < 10;
+    static final boolean isdigit(byte b) {
+        return (ctype[0x80 + b] & DIGIT) != 0;
     }
 
     /** @return 'A'<= b <='Z' or 'a'<= b <='z' or '0'<= b <='9'. */
-    static final boolean isalnum(int b) {
-        return isalpha(b) || isdigit(b);
+    static final boolean isalnum(byte b) {
+        return (ctype[0x80 + b] & ALNUM) != 0;
     }
 
     /** @return b in ' \t\n\v\f\r' */
-    static final boolean isspace(int b) {
-        return b == ' ' || ((b - '\t') & 0xff) < 5;
+    static final boolean isspace(byte b) {
+        return (ctype[0x80 + b] & SPACE) != 0;
     }
-
-    /** Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa */
-    private final int SWAP_CASE = 0x20;
 
     /**
      * Java API equivalent of Python <code>isalnum()</code>. This method treats the bytes as
@@ -3140,11 +3164,19 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         least one byte, false otherwise.
      */
     final boolean basebytes_isalnum() {
-        int i;
-        // Work backwards through the bytes, stopping early if the test is false.
-        for (i = size - 1; i >= 0 && isalnum(storage[offset + i]); --i) {}
-        // Result is true if we reached the beginning (and there were some bytes)
-        return i < 0 && size > 0;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isalnum(storage[offset]);
+        } else {
+            // Work through the bytes, stopping early if the test is false.
+            for (int i = 0; i < size; i++) {
+                if (!isalnum(storage[offset + i])) {
+                    return false;
+                }
+            }
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
+        }
     }
 
     /**
@@ -3165,11 +3197,19 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         otherwise
      */
     final boolean basebytes_isalpha() {
-        int i;
-        // Work backwards through the bytes, stopping early if the test is false.
-        for (i = size - 1; i >= 0 && isalpha(storage[offset + i]); --i) {}
-        // Result is true if we reached the beginning (and there were some bytes)
-        return i < 0 && size > 0;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isalpha(storage[offset]);
+        } else {
+            // Work through the bytes, stopping early if the test is false.
+            for (int i = 0; i < size; i++) {
+                if (!isalpha(storage[offset + i])) {
+                    return false;
+                }
+            }
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
+        }
     }
 
     /**
@@ -3190,11 +3230,19 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         byte, false otherwise.
      */
     final boolean basebytes_isdigit() {
-        int i;
-        // Work backwards through the bytes, stopping early if the test is false.
-        for (i = size - 1; i >= 0 && isdigit(storage[offset + i]); --i) {}
-        // Result is true if we reached the beginning (and there were some bytes)
-        return i < 0 && size > 0;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isdigit(storage[offset]);
+        } else {
+            // Work through the bytes, stopping early if the test is false.
+            for (int i = 0; i < size; i++) {
+                if (!isdigit(storage[offset + i])) {
+                    return false;
+                }
+            }
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
+        }
     }
 
     /**
@@ -3215,20 +3263,35 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         there is at least one cased byte, false otherwise.
      */
     final boolean basebytes_islower() {
-        boolean hasCased = false;
-        // Test the bytes
-        for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
-            if (isupper(c)) {
-                return false;
-            } else if (hasCased) {
-                continue;   // Don't need to keep checking for cased characters
-            } else if (islower(c)) {
-                hasCased = true;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return islower(storage[offset]);
+
+        } else {
+            int i;
+            byte c = 0;
+            // Test the bytes until a cased byte is encountered
+            for (i = 0; i < size; i++) {
+                if (isalpha(c = storage[offset + i])) {
+                    break;
+                }
             }
+
+            if (i == size || isupper(c)) {
+                // We reached the end without finding a cased byte, or it was upper case.
+                return false;
+            }
+
+            // Continue to end or until an upper case byte is encountered
+            for (i = i + 1; i < size; i++) {
+                if (isupper(storage[offset + i])) {
+                    return false;
+                }
+            }
+
+            // Found no upper case bytes, and at least one lower case byte.
+            return true;
         }
-        // Found no upper case bytes, but did we find any cased bytes at all?
-        return hasCased;
     }
 
     /**
@@ -3249,11 +3312,19 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         there is at least one byte, false otherwise.
      */
     final boolean basebytes_isspace() {
-        int i;
-        // Work backwards through the bytes, stopping early if the test is false.
-        for (i = size - 1; i >= 0 && isspace(storage[offset + i]); --i) {}
-        // Result is true if we reached the beginning (and there were some bytes)
-        return i < 0 && size > 0;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isspace(storage[offset]);
+        } else {
+            // Work through the bytes, stopping early if the test is false.
+            for (int i = 0; i < size; i++) {
+                if (!isspace(storage[offset + i])) {
+                    return false;
+                }
+            }
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
+        }
     }
 
     /**
@@ -3283,7 +3354,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         // 2 = in a word (hence have have seen cased character)
 
         for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
+            byte c = storage[offset+i];
             if (isupper(c)) {
                 if (state == 2) {
                     // Violation: can't continue a word in upper case
@@ -3326,20 +3397,35 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         there is at least one cased byte, false otherwise.
      */
     final boolean basebytes_isupper() {
-        boolean hasCased = false;
-        // Test the bytes
-        for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
-            if (islower(c)) {
-                return false;
-            } else if (hasCased) {
-                continue;   // Don't need to keep checking for cased characters
-            } else if (isupper(c)) {
-                hasCased = true;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isupper(storage[offset]);
+
+        } else {
+            int i;
+            byte c = 0;
+            // Test the bytes until a cased byte is encountered
+            for (i = 0; i < size; i++) {
+                if (isalpha(c = storage[offset + i])) {
+                    break;
+                }
             }
+
+            if (i == size || islower(c)) {
+                // We reached the end without finding a cased byte, or it was lower case.
+                return false;
+            }
+
+            // Continue to end or until a lower case byte is encountered
+            for (i = i + 1; i < size; i++) {
+                if (islower(storage[offset + i])) {
+                    return false;
+                }
+            }
+
+            // Found no lower case bytes, and at least one upper case byte.
+            return true;
         }
-        // Found no lower case bytes, but did we find any cased bytes at all?
-        return hasCased;
     }
 
     //
@@ -3370,21 +3456,21 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
         if (size > 0) {
             // Treat first character
-            int c = byteAt(0);
+            byte c = storage[offset];
             if (islower(c)) {
                 c ^= SWAP_CASE;         // 'a' -> 'A', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
 
             // Treat the rest
             for (int i = 1; i < size; i++) {
-                c = byteAt(i);
+                c = storage[offset+i];
                 if (isupper(c)) {
                     c ^= SWAP_CASE;     // 'A' -> 'a', etc.
                 }
                 // Put the adjusted character in the output as a byte
-                builder.append((byte)c);
+                builder.append(c);
             }
         }
 
@@ -3413,12 +3499,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
+            byte c = storage[offset+i];
             if (isupper(c)) {
                 c ^= SWAP_CASE;     // 'A' -> 'a', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
@@ -3446,12 +3532,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
+            byte c = storage[offset+i];
             if (isalpha(c)) {
                 c ^= SWAP_CASE;     // 'a' -> 'A', 'A' -> 'a', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
@@ -3484,7 +3570,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         boolean inWord = false; // We begin, not in a word (sequence of cased characters)
 
         for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
+            byte c = storage[offset+i];
 
             if (!inWord) {
                 // When we are not in a word ...
@@ -3504,7 +3590,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 }
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
         return builder.getResult();
     }
@@ -3532,12 +3618,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            int c = byteAt(i);
+            byte c = storage[offset+i];
             if (islower(c)) {
                 c ^= SWAP_CASE;     // 'a' -> 'A' etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
