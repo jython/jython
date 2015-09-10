@@ -10,6 +10,7 @@ Jython 2.7.1b1
    - [ 2158, 2259 ] Fixed behaviour of relative from ... import *
    - [ 1879 ] -m command now executes scripts from inside a jar file 
    - [ 2058 ] ClasspathPyImporter implements PEP 302 get_data (and others)
+   - [ 2364 ] bytearray and str: isalpha(), isupper() etc. now match Python 2
 
 Jython 2.7
   same as 2.7rc3
