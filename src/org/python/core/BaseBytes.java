@@ -1737,9 +1737,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     protected int lstripIndex() {
         int limit = offset + size;
-        // Run up the storage until non-whitespace (or hit end)t
+        // Run up the storage until non-whitespace (or hit end)
         for (int left = offset; left < limit; left++) {
-            if (!Character.isWhitespace(storage[left] & 0xff)) {
+            if (!isspace(storage[left])) {
                 return left - offset;
             }
         }
@@ -1777,7 +1777,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     protected int rstripIndex() {
         // Run down the storage until next is non-whitespace (or hit start)
         for (int right = offset + size; right > offset; --right) {
-            if (!Character.isWhitespace(storage[right - 1] & 0xff)) {
+            if (!isspace(storage[right - 1])) {
                 return right - offset;
             }
         }
@@ -2604,7 +2604,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
         // Scan backwards over trailing whitespace
         for (q = offset + size; q > offset; --q) {
-            if (!Character.isWhitespace(storage[q - 1] & 0xff)) {
+            if (!isspace(storage[q - 1])) {
                 break;
             }
         }
@@ -2617,7 +2617,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             // Delimit the word whose last byte is storage[q-1]
             // Skip p backwards over the non-whitespace
             for (p = q; p > offset; --p) {
-                if (Character.isWhitespace(storage[p - 1] & 0xff)) {
+                if (isspace(storage[p - 1])) {
                     break;
                 }
             }
@@ -2626,7 +2626,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             result.add(0, word);
             // Skip q backwards over the whitespace
             for (q = p; q > offset; --q) {
-                if (!Character.isWhitespace(storage[q - 1] & 0xff)) {
+                if (!isspace(storage[q - 1])) {
                     break;
                 }
             }
@@ -2795,7 +2795,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         int p, q; // Indexes of unsplit text and whitespace
 
         // Scan over leading whitespace
-        for (p = offset; p < limit && Character.isWhitespace(storage[p] & 0xff); p++) {
+        for (p = offset; p < limit && isspace(storage[p]); p++) {
             ; // continue
         }
 
@@ -2807,13 +2807,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             // Delimit a word at p
             // storage[p] is not whitespace or at the limit: it is the start of a word
             // Skip q over the non-whitespace at p
-            for (q = p; q < limit && !Character.isWhitespace(storage[q] & 0xff); q++) {
+            for (q = p; q < limit && !isspace(storage[q]); q++) {
                 ; // continue
             }
             // storage[q] is whitespace or it is at the limit
             result.append(getslice(p - offset, q - offset));
             // Skip p over the whitespace at q
-            for (p = q; p < limit && Character.isWhitespace(storage[p] & 0xff); p++) {
+            for (p = q; p < limit && isspace(storage[p]); p++) {
                 ; // continue
             }
         }
@@ -3089,11 +3089,68 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     // Character class operations
     //
 
+
+    // Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa.
+    private static final int SWAP_CASE = 0x20;
+
+    // Bit masks and sets to use with the byte classification table
+    private static final byte UPPER = 0b1;
+    private static final byte LOWER = 0b10;
+    private static final byte DIGIT = 0b100;
+    private static final byte SPACE = 0b1000;
+    private static final byte ALPHA = UPPER | LOWER;
+    private static final byte ALNUM = ALPHA | DIGIT;
+
+    // Character (byte) classification table.
+    private static final byte[] ctype = new byte[256];
+    static {
+        for (int c = 'A'; c <= 'Z'; c++) {
+            ctype[0x80 + c] = UPPER;
+            ctype[0x80 + SWAP_CASE + c] = LOWER;
+        }
+        for (int c = '0'; c <= '9'; c++) {
+            ctype[0x80 + c] = DIGIT;
+        }
+        for (char c : " \t\n\u000b\f\r".toCharArray()) {
+            ctype[0x80 + c] = SPACE;
+        }
+    }
+
+    /** @return 'A'<= b <='Z'. */
+    static final boolean isupper(byte b) {
+        return (ctype[0x80 + b] & UPPER) != 0;
+    }
+
+    /** @return 'a'<= b <='z'. */
+    static final boolean islower(byte b) {
+        return (ctype[0x80 + b] & LOWER) != 0;
+    }
+
+    /** @return 'A'<= b <='Z' or 'a'<= b <='z'. */
+    static final boolean isalpha(byte b) {
+        return (ctype[0x80 + b] & ALPHA) != 0;
+    }
+
+    /** @return '0'<= b <='9'. */
+    static final boolean isdigit(byte b) {
+        return (ctype[0x80 + b] & DIGIT) != 0;
+    }
+
+    /** @return 'A'<= b <='Z' or 'a'<= b <='z' or '0'<= b <='9'. */
+    static final boolean isalnum(byte b) {
+        return (ctype[0x80 + b] & ALNUM) != 0;
+    }
+
+    /** @return b in ' \t\n\v\f\r' */
+    static final boolean isspace(byte b) {
+        return (ctype[0x80 + b] & SPACE) != 0;
+    }
+
     /**
-     * Java API equivalent of Python <code>isalnum()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isLetterOrDigit(char)}.
+     * Java API equivalent of Python <code>isalnum()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
-     * @return true if all bytes in the array are point codes for alphanumerics and there is at
+     * @return true if all bytes in the array are code points for alphanumerics and there is at
      *         least one byte, false otherwise.
      */
     public boolean isalnum() {
@@ -3103,27 +3160,28 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>isalnum()</code>.
      *
-     * @return true if all bytes in the array are point codes for alphanumerics and there is at
+     * @return true if all bytes in the array are code points for alphanumerics and there is at
      *         least one byte, false otherwise.
      */
     final boolean basebytes_isalnum() {
-        if (size <= 0) {
-            // Treat empty string as special case
-            return false;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isalnum(storage[offset]);
         } else {
-            // Test the bytes
+            // Work through the bytes, stopping early if the test is false.
             for (int i = 0; i < size; i++) {
-                if (!Character.isLetterOrDigit(charAt(i))) {
+                if (!isalnum(storage[offset + i])) {
                     return false;
                 }
             }
-            return true;
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
         }
     }
 
     /**
-     * Java API equivalent of Python <code>isalpha()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isLetter(char)}.
+     * Java API equivalent of Python <code>isalpha()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
      * @return true if all bytes in the array are alphabetic and there is at least one byte, false
      *         otherwise
@@ -3139,25 +3197,26 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *         otherwise
      */
     final boolean basebytes_isalpha() {
-        if (size <= 0) {
-            // Treat empty string as special case
-            return false;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isalpha(storage[offset]);
         } else {
-            // Test the bytes
+            // Work through the bytes, stopping early if the test is false.
             for (int i = 0; i < size; i++) {
-                if (!Character.isLetter(charAt(i))) {
+                if (!isalpha(storage[offset + i])) {
                     return false;
                 }
             }
-            return true;
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
         }
     }
 
     /**
-     * Java API equivalent of Python <code>isdigit()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isDigit(char)}.
+     * Java API equivalent of Python <code>isdigit()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
-     * @return true if all bytes in the array are point codes for digits and there is at least one
+     * @return true if all bytes in the array are code points for digits and there is at least one
      *         byte, false otherwise.
      */
     public boolean isdigit() {
@@ -3167,29 +3226,30 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>isdigit()</code>.
      *
-     * @return true if all bytes in the array are point codes for digits and there is at least one
+     * @return true if all bytes in the array are code points for digits and there is at least one
      *         byte, false otherwise.
      */
     final boolean basebytes_isdigit() {
-        if (size <= 0) {
-            // Treat empty string as special case
-            return false;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isdigit(storage[offset]);
         } else {
-            // Test the bytes
+            // Work through the bytes, stopping early if the test is false.
             for (int i = 0; i < size; i++) {
-                if (!Character.isDigit(charAt(i))) {
+                if (!isdigit(storage[offset + i])) {
                     return false;
                 }
             }
-            return true;
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
         }
     }
 
     /**
-     * Java API equivalent of Python <code>islower()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isLowerCase(char)}.
+     * Java API equivalent of Python <code>islower()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
-     * @return true if all cased bytes in the array are point codes for lowercase characters and
+     * @return true if all cased bytes in the array are code points for lowercase characters and
      *         there is at least one cased byte, false otherwise.
      */
     public boolean islower() {
@@ -3199,31 +3259,46 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>islower()</code>.
      *
-     * @return true if all cased bytes in the array are point codes for lowercase characters and
+     * @return true if all cased bytes in the array are code points for lowercase characters and
      *         there is at least one cased byte, false otherwise.
      */
     final boolean basebytes_islower() {
-        boolean hasCased = false;
-        // Test the bytes
-        for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isUpperCase(c)) {
-                return false;
-            } else if (hasCased) {
-                continue;   // Don't need to keep checking for cased characters
-            } else if (Character.isLowerCase(c)) {
-                hasCased = true;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return islower(storage[offset]);
+
+        } else {
+            int i;
+            byte c = 0;
+            // Test the bytes until a cased byte is encountered
+            for (i = 0; i < size; i++) {
+                if (isalpha(c = storage[offset + i])) {
+                    break;
+                }
             }
+
+            if (i == size || isupper(c)) {
+                // We reached the end without finding a cased byte, or it was upper case.
+                return false;
+            }
+
+            // Continue to end or until an upper case byte is encountered
+            for (i = i + 1; i < size; i++) {
+                if (isupper(storage[offset + i])) {
+                    return false;
+                }
+            }
+
+            // Found no upper case bytes, and at least one lower case byte.
+            return true;
         }
-        // Found no upper case bytes, but did we find any cased bytes at all?
-        return hasCased;
     }
 
     /**
-     * Java API equivalent of Python <code>isspace()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isWhitespace(char)}.
+     * Java API equivalent of Python <code>isspace()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
-     * @return true if all the bytes in the array are point codes for whitespace characters and
+     * @return true if all the bytes in the array are code points for whitespace characters and
      *         there is at least one byte, false otherwise.
      */
     public boolean isspace() {
@@ -3233,28 +3308,28 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>isspace()</code>.
      *
-     * @return true if all the bytes in the array are point codes for whitespace characters and
+     * @return true if all the bytes in the array are code points for whitespace characters and
      *         there is at least one byte, false otherwise.
      */
     final boolean basebytes_isspace() {
-        if (size <= 0) {
-            // Treat empty string as special case
-            return false;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isspace(storage[offset]);
         } else {
-            // Test the bytes
+            // Work through the bytes, stopping early if the test is false.
             for (int i = 0; i < size; i++) {
-                if (!Character.isWhitespace(charAt(i))) {
+                if (!isspace(storage[offset + i])) {
                     return false;
                 }
             }
-            return true;
+            // Result is true if we reached the end (and there were some bytes)
+            return size > 0;
         }
     }
 
     /**
-     * Java API equivalent of Python <code>istitle()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isUpperCase(char)} and
-     * {@link Character#isLowerCase(char)}.
+     * Java API equivalent of Python <code>istitle()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
      * @return true if the string is a titlecased string and there is at least one cased byte, for
      *         example uppercase characters may only follow uncased bytes and lowercase characters
@@ -3279,8 +3354,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         // 2 = in a word (hence have have seen cased character)
 
         for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isUpperCase(c)) {
+            byte c = storage[offset+i];
+            if (isupper(c)) {
                 if (state == 2) {
                     // Violation: can't continue a word in upper case
                     return false;
@@ -3288,7 +3363,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                     // Validly in a word
                     state = 2;
                 }
-            } else if (Character.isLowerCase(c)) {
+            } else if (islower(c)) {
                 if (state != 2) {
                     // Violation: can't start a word in lower case
                     return false;
@@ -3305,10 +3380,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Java API equivalent of Python <code>isupper()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#isUpperCase(char)}.
+     * Java API equivalent of Python <code>isupper()</code>. This method treats the bytes as
+     * US-ASCII code points.
      *
-     * @return true if all cased bytes in the array are point codes for uppercase characters and
+     * @return true if all cased bytes in the array are code points for uppercase characters and
      *         there is at least one cased byte, false otherwise.
      */
     public boolean isupper() {
@@ -3318,24 +3393,39 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     /**
      * Ready-to-expose implementation of Python <code>isupper()</code>.
      *
-     * @return true if all cased bytes in the array are point codes for uppercase characters and
+     * @return true if all cased bytes in the array are code points for uppercase characters and
      *         there is at least one cased byte, false otherwise.
      */
     final boolean basebytes_isupper() {
-        boolean hasCased = false;
-        // Test the bytes
-        for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isLowerCase(c)) {
-                return false;
-            } else if (hasCased) {
-                continue;   // Don't need to keep checking for cased characters
-            } else if (Character.isUpperCase(c)) {
-                hasCased = true;
+        if (size == 1) {
+            // Special case strings of length one (i.e. characters)
+            return isupper(storage[offset]);
+
+        } else {
+            int i;
+            byte c = 0;
+            // Test the bytes until a cased byte is encountered
+            for (i = 0; i < size; i++) {
+                if (isalpha(c = storage[offset + i])) {
+                    break;
+                }
             }
+
+            if (i == size || islower(c)) {
+                // We reached the end without finding a cased byte, or it was lower case.
+                return false;
+            }
+
+            // Continue to end or until a lower case byte is encountered
+            for (i = i + 1; i < size; i++) {
+                if (islower(storage[offset + i])) {
+                    return false;
+                }
+            }
+
+            // Found no lower case bytes, and at least one upper case byte.
+            return true;
         }
-        // Found no lower case bytes, but did we find any cased bytes at all?
-        return hasCased;
     }
 
     //
@@ -3344,9 +3434,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Java API equivalent of Python <code>capitalize()</code>. This method treats the bytes as
-     * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
-     * {@link Character#toLowerCase(char)}. The <code>BaseBytes</code> returned by this method has
-     * the same actual type as <code>this/self</code>.
+     * US-ASCII code points. The <code>BaseBytes</code> returned by this method has the same actual
+     * type as <code>this/self</code>.
      *
      * @return a copy of the array with its first character capitalized and the rest lowercased.
      */
@@ -3367,21 +3456,21 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
         if (size > 0) {
             // Treat first character
-            char c = charAt(0);
-            if (Character.isLowerCase(c)) {
-                c = Character.toUpperCase(c);
+            byte c = storage[offset];
+            if (islower(c)) {
+                c ^= SWAP_CASE;         // 'a' -> 'A', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
 
             // Treat the rest
             for (int i = 1; i < size; i++) {
-                c = charAt(i);
-                if (Character.isUpperCase(c)) {
-                    c = Character.toLowerCase(c);
+                c = storage[offset+i];
+                if (isupper(c)) {
+                    c ^= SWAP_CASE;     // 'A' -> 'a', etc.
                 }
                 // Put the adjusted character in the output as a byte
-                builder.append((byte)c);
+                builder.append(c);
             }
         }
 
@@ -3389,9 +3478,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Java API equivalent of Python <code>lower()</code>. This method treats the bytes as Unicode
-     * pont codes and is consistent with Java's {@link Character#toLowerCase(char)}. The
-     * <code>BaseBytes</code> returned by this method has the same actual type as
+     * Java API equivalent of Python <code>lower()</code>. This method treats the bytes as US-ASCII
+     * code points. The <code>BaseBytes</code> returned by this method has the same actual type as
      * <code>this/self</code>.
      *
      * @return a copy of the array with all the cased characters converted to lowercase.
@@ -3411,12 +3499,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isUpperCase(c)) {
-                c = Character.toLowerCase(c);
+            byte c = storage[offset+i];
+            if (isupper(c)) {
+                c ^= SWAP_CASE;     // 'A' -> 'a', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
@@ -3424,9 +3512,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Java API equivalent of Python <code>swapcase()</code>. This method treats the bytes as
-     * Unicode pont codes and is consistent with Java's {@link Character#toUpperCase(char)} and
-     * {@link Character#toLowerCase(char)}. The <code>BaseBytes</code> returned by this method has
-     * the same actual type as <code>this/self</code>.
+     * US-ASCII code points. The <code>BaseBytes</code> returned by this method has the same actual
+     * type as <code>this/self</code>.
      *
      * @return a copy of the array with uppercase characters converted to lowercase and vice versa.
      */
@@ -3445,14 +3532,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isUpperCase(c)) {
-                c = Character.toLowerCase(c);
-            } else if (Character.isLowerCase(c)) {
-                c = Character.toUpperCase(c);
+            byte c = storage[offset+i];
+            if (isalpha(c)) {
+                c ^= SWAP_CASE;     // 'a' -> 'A', 'A' -> 'a', etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
@@ -3485,27 +3570,27 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         boolean inWord = false; // We begin, not in a word (sequence of cased characters)
 
         for (int i = 0; i < size; i++) {
-            char c = charAt(i);
+            byte c = storage[offset+i];
 
             if (!inWord) {
                 // When we are not in a word ...
-                if (Character.isLowerCase(c)) {
-                    c = Character.toUpperCase(c);   // ... a lowercase letter must be upcased
+                if (islower(c)) {
+                    c ^= SWAP_CASE;                 // ... a lowercase letter must be upcased
                     inWord = true;                  // and it starts a word.
-                } else if (Character.isUpperCase(c)) {
+                } else if (isupper(c)) {
                     inWord = true;                  // ... an uppercase letter just starts the word
                 }
 
             } else {
                 // When we are in a word ...
-                if (Character.isUpperCase(c)) {
-                    c = Character.toLowerCase(c);   // ... an uppercase letter must be downcased
-                } else if (!Character.isLowerCase(c)) {
+                if (isupper(c)) {
+                    c ^= SWAP_CASE;                 // ... an uppercase letter must be downcased
+                } else if (!islower(c)) {
                     inWord = false;                 // ... and a non-letter ends the word
                 }
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
         return builder.getResult();
     }
@@ -3533,12 +3618,12 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         Builder builder = getBuilder(size);
 
         for (int i = 0; i < size; i++) {
-            char c = charAt(i);
-            if (Character.isLowerCase(c)) {
-                c = Character.toUpperCase(c);
+            byte c = storage[offset+i];
+            if (islower(c)) {
+                c ^= SWAP_CASE;     // 'a' -> 'A' etc.
             }
             // Put the adjusted character in the output as a byte
-            builder.append((byte)c);
+            builder.append(c);
         }
 
         return builder.getResult();
@@ -3572,18 +3657,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     public synchronized int intAt(int index) throws PyException {
         indexCheck(index);
         return 0xff & byteAt(index);
-    }
-
-    /**
-     * Return the Python byte (in range 0 to 255 inclusive) at the given index, interpreted as an
-     * unsigned point code, without checking the index.
-     *
-     * @param index of value in byte array
-     * @return the char value at the index
-     * @throws IndexOutOfBoundsException if outside storage array
-     */
-    private final char charAt(int index) throws IndexOutOfBoundsException {
-        return (char)(0xff & storage[index + offset]);
     }
 
     /**
@@ -3638,7 +3711,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
     /**
      * Almost ready-to-expose Python <code>__repr__()</code>, based on treating the bytes as point
-     * codes. The value added by this method is conversion of non-printing point codes to
+     * codes. The value added by this method is conversion of non-printing code points to
      * hexadecimal escapes in printable ASCII, and bracketed by the given before and after strings.
      * These are used to get the required presentation:
      *
