@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.CharMatcher;
+
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.MarkupIterator;
 import org.python.expose.ExposedMethod;
@@ -582,7 +583,9 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     public static String checkEncoding(String s) {
-        if (s == null || CharMatcher.ASCII.matchesAllOf(s)) { return s; }
+        if (s == null || CharMatcher.ASCII.matchesAllOf(s)) {
+            return s;
+        }
         return codecs.PyUnicode_EncodeASCII(s, s.length(), null);
     }
 
@@ -739,19 +742,21 @@ public class PyUnicode extends PyString implements Iterable {
         return Py.makeCharacter(codepoint, true);
     }
 
+    @Override
     public int getInt(int i) {
         return getString().codePointAt(translator.utf16Index(i));
     }
 
-    private class SubsequenceIteratorImpl implements Iterator {
+    /**
+     * An iterator returning code points from this array, for use when not basic plane.
+     */
+    private class SubsequenceIteratorImpl extends SubsequenceIteratorBasic {
 
-        private int current, k, stop, step;
+        private int k; // UTF-16 index (of current)
 
         SubsequenceIteratorImpl(int start, int stop, int step) {
-            current = start;
+            super(start, stop, step);
             k = translator.utf16Index(current);
-            this.stop = stop;
-            this.step = step;
         }
 
         SubsequenceIteratorImpl() {
@@ -759,22 +764,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         @Override
-        public boolean hasNext() {
-            return current < stop;
-        }
-
-        @Override
-        public Object next() {
-            int codePoint = nextCodePoint();
-            current += 1;
-            for (int j = 1; j < step && hasNext(); j++) {
-                nextCodePoint();
-                current += 1;
-            }
-            return codePoint;
-        }
-
-        private int nextCodePoint() {
+        protected int nextCodePoint() {
             int U;
             int W1 = getString().charAt(k);
             if (W1 >= 0xD800 && W1 < 0xDC00) {
@@ -785,7 +775,44 @@ public class PyUnicode extends PyString implements Iterable {
                 U = W1;
                 k += 1;
             }
+            current += 1;
             return U;
+        }
+    }
+
+    /**
+     * An iterator returning code points from this array, for use when basic plane.
+     */
+    private class SubsequenceIteratorBasic implements Iterator<Integer> {
+
+        protected int current, stop, step; // Character indexes
+
+        SubsequenceIteratorBasic(int start, int stop, int step) {
+            current = start;
+            this.stop = stop;
+            this.step = step;
+        }
+
+        SubsequenceIteratorBasic() {
+            this(0, getCodePointCount(), 1);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return current < stop;
+        }
+
+        @Override
+        public Integer next() {
+            int codePoint = nextCodePoint();
+            for (int j = 1; j < step && hasNext(); j++) {
+                nextCodePoint();
+            }
+            return codePoint;
+        }
+
+        protected int nextCodePoint() {
+            return getString().charAt(current++);
         }
 
         @Override
@@ -845,16 +872,31 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     // XXX: Parameterize SubsequenceIteratorImpl and friends (and make them Iterable)
+    /** Get an iterator over the code point sequence. */
     public Iterator<Integer> newSubsequenceIterator() {
-        return new SubsequenceIteratorImpl();
+        if (isBasicPlane()) {
+            return new SubsequenceIteratorBasic();
+        } else {
+            return new SubsequenceIteratorImpl();
+        }
     }
 
+    /** Get an iterator over a slice of the code point sequence. */
     public Iterator<Integer> newSubsequenceIterator(int start, int stop, int step) {
-        if (step < 0) {
-            return new SteppedIterator(step * -1, new ReversedIterator(new SubsequenceIteratorImpl(
-                    stop + 1, start + 1, 1)));
+        if (isBasicPlane()) {
+            if (step < 0) {
+                return new SteppedIterator(step * -1, new ReversedIterator(
+                        new SubsequenceIteratorBasic(stop + 1, start + 1, 1)));
+            } else {
+                return new SubsequenceIteratorBasic(start, stop, step);
+            }
         } else {
-            return new SubsequenceIteratorImpl(start, stop, step);
+            if (step < 0) {
+                return new SteppedIterator(step * -1, new ReversedIterator(
+                        new SubsequenceIteratorImpl(stop + 1, start + 1, 1)));
+            } else {
+                return new SubsequenceIteratorImpl(start, stop, step);
+            }
         }
     }
 
@@ -948,9 +990,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_title_doc)
     final PyObject unicode_title() {
-        if (isBasicPlane()) {
-            return new PyUnicode(str_title());
-        }
         StringBuilder buffer = new StringBuilder(getString().length());
         boolean previous_is_cased = false;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
@@ -973,9 +1012,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_swapcase_doc)
     final PyObject unicode_swapcase() {
-        if (isBasicPlane()) {
-            return new PyUnicode(str_swapcase());
-        }
         StringBuilder buffer = new StringBuilder(getString().length());
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codePoint = iter.next();
@@ -1416,9 +1452,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(defaults = "false", doc = BuiltinDocs.unicode___getslice___doc)
     final PyList unicode_splitlines(boolean keepends) {
-        if (isBasicPlane()) {
-            return str_splitlines(keepends);
-        }
         return new PyList(new LineSplitIterator(keepends));
 
     }
@@ -1582,9 +1615,6 @@ public class PyUnicode extends PyString implements Iterable {
         if (getString().length() == 0) {
             return this;
         }
-        if (isBasicPlane()) {
-            return new PyUnicode(str_capitalize());
-        }
         StringBuilder buffer = new StringBuilder(getString().length());
         boolean first = true;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
@@ -1671,13 +1701,8 @@ public class PyUnicode extends PyString implements Iterable {
         return _codecs.translateCharmap(this, "ignore", table);
     }
 
-    // these tests need to be UTF-16 aware because they are character-by-character tests,
-    // so we can only use equivalent str_XXX tests if we are in basic plane
     @ExposedMethod(doc = BuiltinDocs.unicode_islower_doc)
     final boolean unicode_islower() {
-        if (isBasicPlane()) {
-            return str_islower();
-        }
         boolean cased = false;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codepoint = iter.next();
@@ -1692,9 +1717,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isupper_doc)
     final boolean unicode_isupper() {
-        if (isBasicPlane()) {
-            return str_isupper();
-        }
         boolean cased = false;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codepoint = iter.next();
@@ -1709,9 +1731,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isalpha_doc)
     final boolean unicode_isalpha() {
-        if (isBasicPlane()) {
-            return str_isalpha();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
@@ -1725,15 +1744,13 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isalnum_doc)
     final boolean unicode_isalnum() {
-        if (isBasicPlane()) {
-            return str_isalnum();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codePoint = iter.next();
-            if (!(Character.isLetterOrDigit(codePoint) || Character.getType(codePoint) == Character.LETTER_NUMBER)) {
+            if (!(Character.isLetterOrDigit(codePoint) || //
+            Character.getType(codePoint) == Character.LETTER_NUMBER)) {
                 return false;
             }
         }
@@ -1742,9 +1759,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isdecimal_doc)
     final boolean unicode_isdecimal() {
-        if (isBasicPlane()) {
-            return str_isdecimal();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
@@ -1758,9 +1772,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isdigit_doc)
     final boolean unicode_isdigit() {
-        if (isBasicPlane()) {
-            return str_isdigit();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
@@ -1774,9 +1785,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isnumeric_doc)
     final boolean unicode_isnumeric() {
-        if (isBasicPlane()) {
-            return str_isnumeric();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
@@ -1792,9 +1800,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_istitle_doc)
     final boolean unicode_istitle() {
-        if (isBasicPlane()) {
-            return str_istitle();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
@@ -1823,9 +1828,6 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod(doc = BuiltinDocs.unicode_isspace_doc)
     final boolean unicode_isspace() {
-        if (isBasicPlane()) {
-            return str_isspace();
-        }
         if (getCodePointCount() == 0) {
             return false;
         }
