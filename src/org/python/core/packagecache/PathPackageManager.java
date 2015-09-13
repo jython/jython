@@ -75,6 +75,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
         private boolean python;
 
+        @Override
         public boolean accept(File dir, String name) {
             if(name.endsWith(".py") || name.endsWith("$py.class") || name.endsWith("$_PyInner.class")) {
                 python = true;
@@ -193,6 +194,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     /**
      * Add directory dir (if exists) to {@link #searchPath}.
      */
+    @Override
     public void addDirectory(File dir) {
         try {
             if (dir.getPath().length() == 0) {
@@ -235,6 +237,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         }
     }
 
+    @Override
     public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
             boolean exclpkgs) {
         PyList basic = basicDoDir(jpkg, instantiate, exclpkgs);
@@ -245,6 +248,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         return merge(basic, ret);
     }
 
+    @Override
     public boolean packageExists(String pkg, String name) {
         return packageExists(this.searchPath, pkg, name);
     }

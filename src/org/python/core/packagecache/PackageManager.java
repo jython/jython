@@ -97,8 +97,9 @@ public abstract class PackageManager extends Object {
 
             for (PyObject name : dictKeys.asIterable()) {
                 if (!cls.has_key(name)) {
-                    if (exclpkgs && dict.get(name) instanceof PyJavaPackage)
+                    if (exclpkgs && dict.get(name) instanceof PyJavaPackage) {
                         continue;
+                    }
                     ret.append(name);
                 }
             }
@@ -139,8 +140,9 @@ public abstract class PackageManager extends Object {
             }
             firstName = firstName.intern();
             top = top.__findattr__(firstName);
-            if (top == null)
+            if (top == null) {
                 return null;
+            }
             // ??pending: test for jpkg/jclass?
             name = lastName;
         } while (name != null);
@@ -160,11 +162,13 @@ public abstract class PackageManager extends Object {
     public PyJavaPackage makeJavaPackage(String name, String classes,
             String jarfile) {
         PyJavaPackage p = this.topLevelPackage;
-        if (name.length() != 0)
+        if (name.length() != 0) {
             p = p.addPackage(name, jarfile);
+        }
 
-        if (classes != null)
+        if (classes != null) {
             p.addPlaceholders(classes);
+        }
 
         return p;
     }

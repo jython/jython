@@ -17,18 +17,22 @@ import java.io.*;
  */
 public class SysPackageManager extends PathPackageManager {
 
+    @Override
     protected void message(String msg) {
         Py.writeMessage("*sys-package-mgr*", msg);
     }
 
+    @Override
     protected void warning(String warn) {
         Py.writeWarning("*sys-package-mgr*", warn);
     }
 
+    @Override
     protected void comment(String msg) {
         Py.writeComment("*sys-package-mgr*", msg);
     }
 
+    @Override
     protected void debug(String msg) {
         Py.writeDebug("*sys-package-mgr*", msg);
     }
@@ -41,6 +45,7 @@ public class SysPackageManager extends PathPackageManager {
         }
     }
 
+    @Override
     public void addJar(String jarfile, boolean cache) {
         addJarToPackages(new File(jarfile), cache);
         if (cache) {
@@ -48,6 +53,7 @@ public class SysPackageManager extends PathPackageManager {
         }
     }
 
+    @Override
     public void addJarDir(String jdir, boolean cache) {
         addJarDir(jdir, cache, cache);
     }
@@ -111,6 +117,7 @@ public class SysPackageManager extends PathPackageManager {
         }
     }
 
+    @Override
     public void notifyPackageImport(String pkg, String name) {
         if (pkg != null && pkg.length() > 0) {
             name = pkg + '.' + name;
@@ -118,6 +125,7 @@ public class SysPackageManager extends PathPackageManager {
         Py.writeComment("import", "'" + name + "' as java package");
     }
 
+    @Override
     public Class findClass(String pkg, String name) {
         Class c = super.findClass(pkg, name);
         if (c != null) {
@@ -126,6 +134,7 @@ public class SysPackageManager extends PathPackageManager {
         return c;
     }
 
+    @Override
     public Class findClass(String pkg, String name, String reason) {
         if (pkg != null && pkg.length() > 0) {
             name = pkg + '.' + name;
@@ -133,6 +142,7 @@ public class SysPackageManager extends PathPackageManager {
         return Py.findClassEx(name, reason);
     }
 
+    @Override
     public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
             boolean exclpkgs) {
         PyList basic = basicDoDir(jpkg, instantiate, exclpkgs);
@@ -149,6 +159,7 @@ public class SysPackageManager extends PathPackageManager {
         return merge(basic, ret);
     }
 
+    @Override
     public boolean packageExists(String pkg, String name) {
         if (packageExists(this.searchPath, pkg, name)) {
             return true;

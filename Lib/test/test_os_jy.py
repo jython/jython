@@ -100,7 +100,7 @@ class OSFileTestCase(unittest.TestCase):
                 pos = fd.tell()
                 self.assertEqual(pos, x + 1,
                         '[forward] after read: pos should be %d but is %d' % (x + 1, pos))
-                
+
                 self.assertEqual(c, x)
 
             # read backward from the end
@@ -116,7 +116,7 @@ class OSFileTestCase(unittest.TestCase):
                 pos = fd.tell()
                 self.assertEqual(pos, x + 1,
                         '[backward] after read: pos should be %d but is %d' % (x + 1, pos))
-                
+
                 self.assertEqual(c, x)
 
                 if x > 0:
@@ -206,7 +206,7 @@ class UnicodeTestCase(unittest.TestCase):
                                  stdout=subprocess.PIPE,
                                  env=newenv)
             self.assertEqual(p.stdout.read().decode("utf-8"), u"首页")
-    
+
     def test_getcwd(self):
         with test_support.temp_cwd(name=u"tempcwd-中文") as temp_cwd:
             p = subprocess.Popen([sys.executable, "-c",
@@ -225,7 +225,7 @@ class UnicodeTestCase(unittest.TestCase):
             self.assertIs(type(chinese_path), unicode)
             home_path = os.path.join(chinese_path, u"首页")
             os.makedirs(home_path)
-            
+
             with open(os.path.join(home_path, "test.txt"), "w") as test_file:
                 test_file.write("42\n")
 
@@ -236,7 +236,7 @@ class UnicodeTestCase(unittest.TestCase):
             # Verify works with Unicode paths
             entries = os.listdir(chinese_path)
             self.assertIn(u"首页", entries)
-           
+
             # glob.glob builds on os.listdir; note that we don't use
             # Unicode paths in the arg to glob
             self.assertEqual(
@@ -259,7 +259,7 @@ class UnicodeTestCase(unittest.TestCase):
             self.assertEqual(
                 glob.glob(os.path.join(u"unicode", "*", "*", "*")),
                 [os.path.join(u"unicode", u"中文", u"首页", "test.txt")])
- 
+
             # Verify Java integration. But we will need to construct
             # an absolute path since chdir doesn't work with Java
             # (except for subprocesses, like below in test_env)
@@ -277,7 +277,7 @@ class LocaleTestCase(unittest.TestCase):
             return code.strip().replace("-", "").lower()
 
         try:
-            installed_codes = dict(((normalize(code), code) for 
+            installed_codes = dict(((normalize(code), code) for
                                     code in subprocess.check_output(["locale", "-a"]).split()))
         except (subprocess.CalledProcessError, OSError):
             raise unittest.SkipTest("locale command not available, cannot test")
@@ -317,7 +317,7 @@ class LocaleTestCase(unittest.TestCase):
             # Should not convert str for 'i'/'I', but should convert
             # unicode if in Turkish locale; this behavior intentionally is
             # different than CPython; see also http://bugs.python.org/issue17252
-            # 
+            #
             # Note that JVMs seem to have some latitude here however, so support
             # either for now.
             ["['i', u'\\u0131', 'I', u'\\u0130']\n",
@@ -345,12 +345,12 @@ class LocaleTestCase(unittest.TestCase):
         self.get_installed_locales("ja_JP.UTF-8")
         self.assertEqual(
             subprocess.check_output(
-                [sys.executable, 
+                [sys.executable,
                  "-J-Duser.country=JP", "-J-Duser.language=ja",
                  "-c",
                  "import time; print repr(time.strftime('%c', (2015, 3, 29, 14, 55, 13, 6, 88, 0)))"]),
             "'\\xe6\\x97\\xa5 3 29 14:55:13 2015'\n")
-        
+
 
 class SystemTestCase(unittest.TestCase):
 
@@ -423,7 +423,7 @@ class SymbolicLinkTestCase(unittest.TestCase):
             self.assertEqual(os.readlink(source), target)
             self.assertEqual(os.readlink(unicode(source)), unicode(target))
             self.assertIsInstance(os.readlink(unicode(source)), unicode)
-            
+
     def test_readlink_non_symlink(self):
         """os.readlink of a non symbolic link should raise an error"""
         # test for http://bugs.jython.org/issue2292
@@ -447,7 +447,7 @@ class SymbolicLinkTestCase(unittest.TestCase):
 
 def test_main():
     test_support.run_unittest(
-        OSFileTestCase, 
+        OSFileTestCase,
         OSDirTestCase,
         OSStatTestCase,
         OSWriteTestCase,
