@@ -95,7 +95,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
     /**
      * Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}. Scans for
-     * package jpkg content over the directories in path. Add to ret the founded
+     * package jpkg content over the directories in path. Add to ret the found
      * classes/pkgs. Filter out classes using {@link #filterByName},{@link #filterByAccess}.
      */
     protected void doDir(PyList path, PyList ret, PyJavaPackage jpkg,
@@ -142,7 +142,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 }
 
                 jname = jname.substring(0, jlen);
-                PyString name = new PyString(jname);
+                PyString name = Py.newStringOrUnicode(jname);
 
                 if (filterByName(jname, pkgCand)) {
                     continue;
@@ -200,7 +200,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             if (dir.getPath().length() == 0) {
                 this.searchPath.append(Py.EmptyString);
             } else {
-                this.searchPath.append(new PyString(dir.getCanonicalPath()));
+                this.searchPath.append(Py.newStringOrUnicode(dir.getCanonicalPath()));
             }
         } catch (IOException e) {
             warning("skipping bad directory, '" + dir + "'");

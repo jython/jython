@@ -645,19 +645,31 @@ public final class Py {
         return new PyString(s);
     }
 
-    // Use if s may contain Unicode characters,
-    // but we prefer to return a PyString
+    /**
+     * Return a {@link PyString} for the given Java <code>String</code>, if it can be represented as
+     * US-ASCII, and a {@link PyUnicode} otherwise.
+     *
+     * @param s string content
+     * @return <code>PyString</code> or <code>PyUnicode</code> according to content of
+     *         <code>s</code>.
+     */
     public static PyString newStringOrUnicode(String s) {
         return newStringOrUnicode(Py.EmptyString, s);
     }
 
-    // Use when returning a PyString or PyUnicode is based on what "kind" is,
-    // but always fallback to PyUnicode if s contains Unicode characters.
-    public static PyString newStringOrUnicode(PyObject kind, String s) {
-        if (kind instanceof PyUnicode) {
-            return Py.newUnicode(s);
-        }
-        if (CharMatcher.ASCII.matchesAllOf(s)) {
+    /**
+     * Return a {@link PyString} for the given Java <code>String</code>, if it can be represented as
+     * US-ASCII and if a preceding object is not a <code>PyUnicode</code>, and a {@link PyUnicode}
+     * otherwise. In some contexts, we want the result to be a <code>PyUnicode</code> if some
+     * preceding result is a <code>PyUnicode</code>.
+     *
+     * @param precedent string of which the type sets a precedent
+     * @param s string content
+     * @return <code>PyString</code> or <code>PyUnicode</code> according to content of
+     *         <code>s</code>.
+     */
+    public static PyString newStringOrUnicode(PyObject precedent, String s) {
+        if (!(precedent instanceof PyUnicode) && CharMatcher.ASCII.matchesAllOf(s)) {
             return Py.newString(s);
         } else {
             return Py.newUnicode(s);
