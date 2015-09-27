@@ -63,6 +63,9 @@ public class GlobalRef extends WeakReference<PyObject> implements ReferenceBacke
     private static ConcurrentMap<GlobalRef, ReferenceBackend> objects = Generic.concurrentMap();
     private static List<GlobalRef> delayedCallbacks;
 
+    /*
+     * Consider to make this protected, so use of newInstance is enforced.
+     */
     public GlobalRef(PyObject object) {
         super(object, referenceQueue);
         hashCode = System.identityHashCode(object);
@@ -247,7 +250,7 @@ public class GlobalRef extends WeakReference<PyObject> implements ReferenceBacke
                 objects.put(newRef,  ref);
                 JyAttribute.setAttr(object, JyAttribute.WEAK_REF_ATTR, ref);
             } else {
-                // We clear the not-needed Global ref so that it won't
+                // We clear the not-needed GlobalRef so that it won't
                 // pop up in ref-reaper thread's activity.
                 newRef.clear();
                 newRef.cleared = true;

@@ -1,7 +1,5 @@
 package org.python.core.finalization;
 
-import org.python.core.JyAttribute;
-
 /**
  * <p>
  * This interface allows {@code PyObject}s to have finalizers.

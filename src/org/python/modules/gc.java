@@ -1093,15 +1093,16 @@ public class gc {
                 DelayedFinalizationProcess.defaultInstance) != -1) {
             suspendDelayedFinalization();
         }
-        if (delayedWeakrefCallbacksEnabled()) {
-            if (GlobalRef.hasDelayedCallbacks()) {
-                Thread dlcProcess = new Thread() {
-                    public void run() {
-                        GlobalRef.processDelayedCallbacks();
-                    }
-                };
-                dlcProcess.start();
-            }
+        if (!delayedWeakrefCallbacksEnabled() &&
+                GlobalRef.hasDelayedCallbacks()) {
+            // If delayed callbacks were turned off, we process remaining
+            // queued callbacks immediately (but in a new thread though):
+            Thread dlcProcess = new Thread() {
+                public void run() {
+                    GlobalRef.processDelayedCallbacks();
+                }
+            };
+            dlcProcess.start();
         }
     }
 
@@ -1394,8 +1395,41 @@ public class gc {
     }
 
     public static void notifyPreFinalization() {
+        long callTime = System.currentTimeMillis();
+/*
+ * This section is experimental and kept for further investigation. In theory, it can
+ * prevent potential problems in JyNI-gc, if a gc-run overlaps the previous run's
+ * post-finalization phase. However it currently breaks gc-tests, so is out-commented
+ * so far. In practical sense, JyNI's gc-support also works fine without it so far.
+ */
+//        if (postFinalizationPending) {
+//            if ((gcFlags & VERBOSE_COLLECT) != 0) {
+//                writeDebug("gc", "waiting for pending post-finalization process.");
+//            }
+//            /* It is important to have the while (which is actually an "if" since the
+//             * InterruptedException is very unlikely to occur) *inside* the synchronized
+//             * block. Otherwise the notification might come just between the check and the wait,
+//             * causing an endless waiting. This is no pure academic consideration, but was
+//             * actually observed to happen from time to time, especially on faster systems.
+//             */
+//            synchronized(PostFinalizationProcessor.class) {
+//                while (postFinalizationPending) {
+//                    try {
+//                        PostFinalizationProcessor.class.wait();
+//                    } catch (InterruptedException ie3) {}
+//                }
+//            }
+//            if ((gcFlags & VERBOSE_COLLECT) != 0) {
+//                writeDebug("gc", "post-finalization finished.");
+//            }
+//        }
+//        /*
+//         * Increment of openFinalizeCount must not happen before waiting for pending
+//         * post-finalization process is done. Otherwise PostFinalizationProcessor can
+//         * be waiting for a neutral openFinalizeCount, causing a deadlock.
+//         */
         ++openFinalizeCount;
-        if (System.currentTimeMillis() - postFinalizationTimestamp
+        if (callTime - postFinalizationTimestamp
                 < postFinalizationTimeOut) {
             return;
         }
