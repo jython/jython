@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Tests against problems we have seen in Jython's implementation of
 # buffer, bytes, bytearray, and memoryview to prevent possible
 # regression as well as integration with Java.
@@ -58,11 +60,11 @@ class SimpleOperationsTest(unittest.TestCase):
 
     def checkequal(self, expected, obj, methodname, *args):
         "check that object.method() returns expected result"
-        for B in (bytearray,): # (bytes, bytearray):
+        for B in (bytes, bytearray):
             obj = B(obj)
             realresult = getattr(obj, methodname)()
-            grumble = "%r.%s() returned %s" % (obj, methodname, realresult)
-            self.assertIs(expected, realresult, grumble)
+            grumble = "%r.%s() returned %r" % (obj, methodname, realresult)
+            self.assertEqual(expected, realresult, grumble)
             # print grumble, 'x' if realresult != expected else '.'
 
     LOWER = b'\xe0\xe7\xe9\xff' # Uppercase in Latin-1 but not ascii
@@ -114,6 +116,41 @@ class SimpleOperationsTest(unittest.TestCase):
             self.checkequal(True, b'A' + c + b'Titlecased Line', 'istitle')
             self.checkequal(True, b'A ' + c + b' Titlecased Line', 'istitle')
 
+    # The following case-twiddling tests supplement string_tests for
+    # non-ascii examples, using characters that are upper/lower-case
+    # in latin-1 but uncased in ascii.
+
+    def test_upper(self):
+        self.checkequal(b"WAS LOWER:" + self.LOWER,
+                        b"was lower:" + self.LOWER, 'upper')
+
+    def test_lower(self):
+        self.checkequal(b"was upper:" + self.UPPER,
+                        b"WAS UPPER:" + self.UPPER, 'lower')
+
+    def test_capitalize(self):
+        for c in self.LOWER:
+            self.checkequal(c + b"abcde",
+                            c + b"AbCdE", 'capitalize')
+
+    def test_swapcase(self):
+        self.checkequal(b"WAS lower:" + self.LOWER,
+                        b"was LOWER:" + self.LOWER, 'swapcase')
+        self.checkequal(b"was UPPER:" + self.UPPER,
+                        b"WAS upper:" + self.UPPER, 'swapcase')
+
+    def test_title(self):
+        utitle = u"Le Dîner À Étretat"
+        title = utitle.encode('latin-1')
+        lower = utitle.lower().encode('latin-1')
+        upper = utitle.upper().encode('latin-1')
+        # Check we treat an accented character as un-cased (=space)
+        self.checkequal(u"Le DîNer à éTretat".encode('latin-1'),
+                        lower, 'title')
+        self.checkequal(u"Le DÎNer À ÉTretat".encode('latin-1'),
+                        upper, 'title')
+        self.checkequal(u"Le DîNer À ÉTretat".encode('latin-1'),
+                        title, 'title')
 
 def test_main():
     test.test_support.run_unittest(
