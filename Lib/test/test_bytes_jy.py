@@ -152,6 +152,32 @@ class SimpleOperationsTest(unittest.TestCase):
         self.checkequal(u"Le DîNer À ÉTretat".encode('latin-1'),
                         title, 'title')
 
+    # *strip() tests to supplement string_tests with non-ascii examples,
+    # using characters that are spaces in latin-1 but not in ascii.
+
+    def test_strip(self):
+        for c in self.SPACE:
+            # These should not be stripped at left or right because of c
+            sp = b" \t "
+            s = c + sp + b"hello" + sp + c
+            self.checkequal( s, s, 'strip')
+            self.checkequal( s, sp+s+sp, 'strip')
+            self.checkequal( sp+s, sp+s, 'rstrip')
+            self.checkequal( sp+s, sp+s+sp, 'rstrip')
+            self.checkequal( s+sp, s+sp, 'lstrip')
+            self.checkequal( s+sp, sp+s+sp, 'lstrip')
+
+    def test_split(self):
+        for c in self.SPACE:
+            # These should not be split at c
+            s = b"AAA" + c + b"BBB"
+            self.assertEqual(1, len(s.split()), "split made in " + repr(s))
+            self.assertEqual(1, len(s.rsplit()), "rsplit made in " + repr(s))
+            s = bytearray(s)
+            self.assertEqual(1, len(s.split()), "split made in " + repr(s))
+            self.assertEqual(1, len(s.rsplit()), "rsplit made in " + repr(s))
+
+
 def test_main():
     test.test_support.run_unittest(
             ByteArraySubclassTest,
