@@ -388,10 +388,12 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
             code.pop();
 
             // throw an exception if we cannot load a Python method for this abstract method
-            // note that the unreachable return is simply to simplify bytecode gen
-            code.ldc("");
-            code.invokestatic(p(Py.class), "NotImplementedError",
-                    sig(PyException.class, String.class));
+            // note that the unreachable return is simply present to simplify bytecode gen
+            code.aload(0);
+            code.ldc(pyName);
+            code.ldc(declaringClass.getName());
+            code.invokestatic("org/python/compiler/ProxyCodeHelpers", "notImplementedAbstractMethod",
+                    makeSig($pyExc, $pyProxy, $str, $str));
             code.checkcast(p(Throwable.class));
             code.athrow();
 

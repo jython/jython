@@ -404,7 +404,8 @@ class AbstractMethodTest(unittest.TestCase):
         # 3.x
         c = C()
         self.assertEqual(c.size(), 47)
-        with self.assertRaisesRegexp(NotImplementedError, r"^$"):
+        msg = r"^'C' object does not implement abstract method 'get' from 'java.util.AbstractList'$"
+        with self.assertRaisesRegexp(NotImplementedError, msg):
             C().get(42)
 
     def test_concrete_method(self):
@@ -435,7 +436,8 @@ class AbstractMethodTest(unittest.TestCase):
         class C(Callable):
             pass
         
-        with self.assertRaisesRegexp(NotImplementedError, r"^$"):
+        msg = r"^'C' object does not implement abstract method 'call' from 'java.util.concurrent.Callable'$"
+        with self.assertRaisesRegexp(NotImplementedError, msg):
             C().call()
 
 

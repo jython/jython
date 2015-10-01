@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import org.objectweb.asm.Type;
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyMethod;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
@@ -83,6 +84,17 @@ public class ProxyCodeHelpers {
         }
         Py.setSystemState(proxy._getPySystemState());
         return ret;
+    }
+
+    public static PyException notImplementedAbstractMethod(
+            PyProxy proxy, String name, String superClass) {
+        PyObject o = proxy._getPyInstance();
+        String msg = String.format(
+                "'%.200s' object does not implement abstract method '%.200s' from '%.200s'",
+                o.getType().fastGetName(),
+                name,
+                superClass);
+        return Py.NotImplementedError(msg);
     }
 
     public static String mapClass(Class<?> c) {
