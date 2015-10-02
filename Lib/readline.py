@@ -116,7 +116,13 @@ def set_completer(function=None):
         start = _get_delimited(buffer, cursor)[0]
         delimited = buffer[start:cursor]
 
-        if _reader.prompt == sys.ps2 and (not delimited or delimited.isspace()):
+        try:
+            sys.ps2
+            have_ps2 = True
+        except AttributeError:
+            have_ps2 = False
+
+        if (have_ps2 and _reader.prompt == sys.ps2) and (not delimited or delimited.isspace()):
             # Insert tab (as expanded to 4 spaces), but only if if
             # preceding is whitespace/empty and in console
             # continuation; this is a planned featue for Python 3 per
