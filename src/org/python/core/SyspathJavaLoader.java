@@ -134,11 +134,9 @@ public class SyspathJavaLoader extends ClassLoader {
     @Override
     protected URL findResource(String res) {
     	PySystemState sys = Py.getSystemState();
-    	
-    	if (res.charAt(0) == SLASH_CHAR) {
-            res = res.substring(1);
-        }
-    	String entryRes = res;
+
+        res = deslashResource(res);
+        String entryRes = res;
         if (File.separatorChar != SLASH_CHAR) {
             res = res.replace(SLASH_CHAR, File.separatorChar);
             entryRes = entryRes.replace(File.separatorChar, SLASH_CHAR);
@@ -183,10 +181,8 @@ public class SyspathJavaLoader extends ClassLoader {
         List<URL> resources = new ArrayList<URL>();
         
         PySystemState sys = Py.getSystemState();
-        
-        if (res.charAt(0) == SLASH_CHAR) {
-            res = res.substring(1);
-        }
+
+        res = deslashResource(res);
         String entryRes = res;
         if (File.separatorChar != SLASH_CHAR) {
             res = res.replace(SLASH_CHAR, File.separatorChar);
@@ -258,5 +254,11 @@ public class SyspathJavaLoader extends ClassLoader {
         return new RelativeFile(dir, accum + ".class");
     }
 
+    private static String deslashResource(String res) {
+        if (!res.isEmpty() && res.charAt(0) == SLASH_CHAR) {
+            res = res.substring(1);
+        }
+        return res;
+    }
 
 }
