@@ -237,6 +237,10 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
     def endEntity(self, name):
         pass # TODO
 
+    def skippedEntity(self, name):
+        pass
+
+
 def _fixTuple(nsTuple, frm, to):
     if isinstance(nsTuple, tuple) and len(nsTuple) == 2:
         nsUri, localName = nsTuple
