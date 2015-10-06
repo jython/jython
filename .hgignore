@@ -31,3 +31,4 @@ build
 cachedir
 dist
 profile.txt
+out
