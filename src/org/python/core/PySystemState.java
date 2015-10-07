@@ -73,7 +73,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
             | (Version.PY_MINOR_VERSION << 16) | (Version.PY_MICRO_VERSION << 8)
             | (Version.PY_RELEASE_LEVEL << 4) | (Version.PY_RELEASE_SERIAL << 0));
 
-    public static final PyTuple version_info = getVersionInfo();
+    public static final PyVersionInfo version_info = getVersionInfo();
 
     public static final int maxunicode = 1114111;
 
@@ -1071,7 +1071,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         return Py.defaultSystemState;
     }
 
-    private static PyTuple getVersionInfo() {
+    private static PyVersionInfo getVersionInfo() {
         String s;
         if (Version.PY_RELEASE_LEVEL == 0x0A) {
             s = "alpha";
@@ -1087,7 +1087,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
             throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: "
                     + Version.PY_RELEASE_LEVEL);
         }
-        return new PyTuple(
+        return new PyVersionInfo(
                 Py.newInteger(Version.PY_MAJOR_VERSION),
                 Py.newInteger(Version.PY_MINOR_VERSION),
                 Py.newInteger(Version.PY_MICRO_VERSION),
