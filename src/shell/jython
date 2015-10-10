@@ -98,7 +98,8 @@ if $cygwin; then
   # switch delimiter only after building a Unix style $CP
   CP_DELIMITER=";"
   CP=`cygpath -p -w "$CP"`
-  PRG=`cygpath -w "$PRG"`
+  # ensure sys.executable is the Windows executable wrapper
+  PRG=`cygpath -w "$PRG"`.exe
 fi
 
 # ----- Execute the requested command -----------------------------------------
