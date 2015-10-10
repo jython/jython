@@ -2,6 +2,12 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
+Jython 2.7.1b2
+  Bugs fixed
+   - [ 2396 ] test_threading and others fail under Cygwin (sys.executable).
+   - [ 2397 ] test.test_os_jy fails on Windows due to non-byte PyString.
+   - [ 2405 ] os.getpid() is missing (JNR JARs updated). 
+
 Jython 2.7.1b1
   Bugs fixed
    - [ 1423 ] Circular imports no longer cause RuntimeError.
