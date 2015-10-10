@@ -157,7 +157,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     private List<String>[] createGenericStringListArray(){
         return new List[] { Generic.list(), Generic.list() };
     }
-    
+
     // Extract all of the packages in a single jarfile
     private Map<String, String> getZipPackages(InputStream jarin) throws IOException {
         Map<String, List<String>[]> zipPackages = Generic.map();
@@ -280,8 +280,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     } else {
                         jarname = jarurl.getFile();
                         int slash = jarname.lastIndexOf('/');
-                        if (slash != -1)
+                        if (slash != -1) {
                             jarname = jarname.substring(slash + 1);
+                        }
                     }
                     jarname = jarname.substring(0, jarname.length() - 4);
 
@@ -421,7 +422,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 String classes = kv.getValue();
                 // Make sure each package is not larger than 64k
                 for (String part : splitString(classes, 65535)) {
-                    // For each chunk, write the package name followed by the classes. 
+                    // For each chunk, write the package name followed by the classes.
                     ostream.writeUTF(kv.getKey());
                     ostream.writeUTF(part);
                 }
@@ -441,11 +442,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /**
      * Split up a string into several chunks based on a certain size
-     * 
+     *
      *  The writeCacheFile method will use the writeUTF method on a
-     *  DataOutputStream which only allows writing 64k chunks, so use 
+     *  DataOutputStream which only allows writing 64k chunks, so use
      *  this utility method to split it up
-     * 
+     *
      * @param str - The string to split up into chunks
      * @param maxLength - The max size a string should be
      * @return - An array of strings, each of which will not be larger than maxLength
@@ -642,8 +643,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 index += 1;
             }
             entry.cachefile = cachefile.getCanonicalPath();
-        } else
+        } else {
             cachefile = new File(entry.cachefile);
+        }
 
         return new DataOutputStream(new BufferedOutputStream(
                 new FileOutputStream(cachefile)));

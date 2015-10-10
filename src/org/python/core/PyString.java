@@ -1050,7 +1050,21 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_lower_doc)
     final String str_lower() {
-        return getString().toLowerCase(Locale.ROOT);
+        String s = getString();
+        int n = s.length();
+        if (n == 1) {
+            // Special-case single byte string
+            char c = s.charAt(0);
+            return _isupper(c) ? String.valueOf((char)(c ^ SWAP_CASE)) : s;
+        } else {
+            // Copy chars to buffer, converting to lower-case.
+            char[] buf = new char[n];
+            for (int i = 0; i < n; i++) {
+                char c = s.charAt(i);
+                buf[i] = _isupper(c) ? (char)(c ^ SWAP_CASE) : c;
+            }
+            return new String(buf);
+        }
     }
 
     public String upper() {
@@ -1059,7 +1073,21 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_upper_doc)
     final String str_upper() {
-        return getString().toUpperCase(Locale.ROOT);
+        String s = getString();
+        int n = s.length();
+        if (n == 1) {
+            // Special-case single byte string
+            char c = s.charAt(0);
+            return _islower(c) ? String.valueOf((char)(c ^ SWAP_CASE)) : s;
+        } else {
+            // Copy chars to buffer, converting to upper-case.
+            char[] buf = new char[n];
+            for (int i = 0; i < n; i++) {
+                char c = s.charAt(i);
+                buf[i] = _islower(c) ? (char)(c ^ SWAP_CASE) : c;
+            }
+            return new String(buf);
+        }
     }
 
     public String title() {
@@ -1070,19 +1098,25 @@ public class PyString extends PyBaseString implements BufferProtocol {
     final String str_title() {
         char[] chars = getString().toCharArray();
         int n = chars.length;
-
         boolean previous_is_cased = false;
         for (int i = 0; i < n; i++) {
             char ch = chars[i];
-            if (previous_is_cased) {
-                chars[i] = Character.toLowerCase(ch);
-            } else {
-                chars[i] = Character.toTitleCase(ch);
-            }
-
-            if (Character.isLowerCase(ch) || Character.isUpperCase(ch) || Character.isTitleCase(ch)) {
+            if (_isalpha(ch)) {
+                if (previous_is_cased) {
+                    // Should be lower case
+                    if (_isupper(ch)) {
+                        chars[i] = (char)(ch ^ SWAP_CASE);
+                    }
+                } else {
+                    // Should be upper case
+                    if (_islower(ch)) {
+                        chars[i] = (char)(ch ^ SWAP_CASE);
+                    }
+                }
+                // And this was a letter
                 previous_is_cased = true;
             } else {
+                // This was not a letter
                 previous_is_cased = false;
             }
         }
@@ -1095,18 +1129,25 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_swapcase_doc)
     final String str_swapcase() {
-        char[] chars = getString().toCharArray();
-        int n = chars.length;
-        for (int i = 0; i < n; i++) {
-            char c = chars[i];
-            if (Character.isUpperCase(c)) {
-                chars[i] = Character.toLowerCase(c);
-            } else if (Character.isLowerCase(c)) {
-                chars[i] = Character.toUpperCase(c);
+        String s = getString();
+        int n = s.length();
+        if (n == 1) {
+            // Special-case single byte string
+            char c = s.charAt(0);
+            return _isalpha(c) ? String.valueOf((char)(c ^ SWAP_CASE)) : s;
+        } else {
+            // Copy chars to buffer, converting lower to upper case, upper to lower case.
+            char[] buf = new char[n];
+            for (int i = 0; i < n; i++) {
+                char c = s.charAt(i);
+                buf[i] = _isalpha(c) ? (char)(c ^ SWAP_CASE) : c;
             }
+            return new String(buf);
         }
-        return new String(chars);
     }
+
+    // Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa.
+    private static final int SWAP_CASE = 0x20;
 
     /**
      * Equivalent of Python <code>str.strip()</code> with no argument, meaning strip whitespace. Any
@@ -3071,11 +3112,22 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.str_capitalize_doc)
     final String str_capitalize() {
-        if (getString().length() == 0) {
-            return getString();
+        String s = getString();
+        int n = s.length();
+        if (n == 0) {
+            return s;
+        } else {
+            char[] buf = new char[n];
+            // At least one byte: if lower convert to upper case.
+            char c = s.charAt(0);
+            buf[0] = _islower(c) ? (char)(c ^ SWAP_CASE) : c;
+            // Copy the rest, converting to lower case.
+            for (int i = 1; i < n; i++) {
+                c = s.charAt(i);
+                buf[i] = _isupper(c) ? (char)(c ^ SWAP_CASE) : c;
+            }
+            return new String(buf);
         }
-        String first = getString().substring(0, 1).toUpperCase();
-        return first.concat(getString().substring(1).toLowerCase());
     }
 
     /**

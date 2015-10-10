@@ -75,6 +75,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
         private boolean python;
 
+        @Override
         public boolean accept(File dir, String name) {
             if(name.endsWith(".py") || name.endsWith("$py.class") || name.endsWith("$_PyInner.class")) {
                 python = true;
@@ -94,7 +95,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
     /**
      * Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}. Scans for
-     * package jpkg content over the directories in path. Add to ret the founded
+     * package jpkg content over the directories in path. Add to ret the found
      * classes/pkgs. Filter out classes using {@link #filterByName},{@link #filterByAccess}.
      */
     protected void doDir(PyList path, PyList ret, PyJavaPackage jpkg,
@@ -141,7 +142,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 }
 
                 jname = jname.substring(0, jlen);
-                PyString name = new PyString(jname);
+                PyString name = Py.newStringOrUnicode(jname);
 
                 if (filterByName(jname, pkgCand)) {
                     continue;
@@ -193,12 +194,13 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     /**
      * Add directory dir (if exists) to {@link #searchPath}.
      */
+    @Override
     public void addDirectory(File dir) {
         try {
             if (dir.getPath().length() == 0) {
                 this.searchPath.append(Py.EmptyString);
             } else {
-                this.searchPath.append(new PyString(dir.getCanonicalPath()));
+                this.searchPath.append(Py.newStringOrUnicode(dir.getCanonicalPath()));
             }
         } catch (IOException e) {
             warning("skipping bad directory, '" + dir + "'");
@@ -235,6 +237,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         }
     }
 
+    @Override
     public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
             boolean exclpkgs) {
         PyList basic = basicDoDir(jpkg, instantiate, exclpkgs);
@@ -245,6 +248,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         return merge(basic, ret);
     }
 
+    @Override
     public boolean packageExists(String pkg, String name) {
         return packageExists(this.searchPath, pkg, name);
     }
