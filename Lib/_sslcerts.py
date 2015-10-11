@@ -34,15 +34,16 @@ Security.addProvider(BouncyCastleProvider())
 
 
 
-def _get_ca_certs_trust_manager(ca_certs):
+def _get_ca_certs_trust_manager(ca_certs=None):
     trust_store = KeyStore.getInstance(KeyStore.getDefaultType())
     trust_store.load(None, None)
     num_certs_installed = 0
-    with open(ca_certs) as f:
-        cf = CertificateFactory.getInstance("X.509")
-        for cert in cf.generateCertificates(BufferedInputStream(f)):
-            trust_store.setCertificateEntry(str(uuid.uuid4()), cert)
-            num_certs_installed += 1
+    if ca_certs is not None:
+        with open(ca_certs) as f:
+            cf = CertificateFactory.getInstance("X.509")
+            for cert in cf.generateCertificates(BufferedInputStream(f)):
+                trust_store.setCertificateEntry(str(uuid.uuid4()), cert)
+                num_certs_installed += 1
     tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
     tmf.init(trust_store)
     log.debug("Installed %s certificates", num_certs_installed, extra={"sock": "*"})
@@ -67,9 +68,13 @@ def _extract_readers(cert_file):
     return _stringio_as_reader(private_key), _stringio_as_reader(certs)
 
 
-def _get_openssl_key_manager(cert_file, key_file=None):
+def _get_openssl_key_manager(cert_file=None, key_file=None, password=None, _key_store=None):
+    if password is None:
+        password = []
+
     paths = [key_file] if key_file else []
-    paths.append(cert_file)
+    if cert_file:
+        paths.append(cert_file)
 
     # Go from Bouncy Castle API to Java's; a bit heavyweight for the Python dev ;)
     key_converter = JcaPEMKeyConverter().setProvider("BC")
@@ -90,39 +95,21 @@ def _get_openssl_key_manager(cert_file, key_file=None):
                 elif isinstance(obj, X509CertificateHolder):
                     certs.append(cert_converter.getCertificate(obj))
 
-    if not private_key:
-        from _socket import SSLError, SSL_ERROR_SSL
-        raise SSLError(SSL_ERROR_SSL, "No private key loaded")
-    key_store = KeyStore.getInstance(KeyStore.getDefaultType())
-    key_store.load(None, None)
-    key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)
+
+    if _key_store is None:
+        key_store = KeyStore.getInstance(KeyStore.getDefaultType())
+        key_store.load(None, None)
+
+    if cert_file is not None:
+        if not private_key:
+            from _socket import SSLError, SSL_ERROR_SSL
+            raise SSLError(SSL_ERROR_SSL, "No private key loaded")
+
+        key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)
+
     kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
     kmf.init(key_store, [])
     return kmf
-
-
-def _get_ssl_context(keyfile, certfile, ca_certs):
-    if certfile is None and ca_certs is None:
-        log.debug("Using default SSL context", extra={"sock": "*"})
-        return SSLContext.getDefault()
-    else:
-        log.debug("Setting up a specific SSL context for keyfile=%s, certfile=%s, ca_certs=%s",
-                  keyfile, certfile, ca_certs, extra={"sock": "*"})
-        if ca_certs:
-            # should support composite usage below
-            trust_managers = _get_ca_certs_trust_manager(ca_certs).getTrustManagers()
-        else:
-            trust_managers = None
-        if certfile:
-            key_managers = _get_openssl_key_manager(certfile, keyfile).getKeyManagers()
-        else:
-            key_managers = None
-
-        # FIXME FIXME for performance, cache this lookup in the future
-        # to avoid re-reading files on every lookup
-        context = SSLContext.getInstance("SSL")
-        context.init(key_managers, trust_managers, None)
-        return context
 
 
 # CompositeX509KeyManager and CompositeX509TrustManager allow for mixing together Java built-in managers
@@ -214,3 +201,16 @@ class CompositeX509TrustManager(X509TrustManager):
         for trust_manager in self.trust_managers:
             certs.extend(trustManager.getAcceptedIssuers())
         return certs
+
+
+# To use with CERT_NONE
+class NoVerifyX509TrustManager(X509TrustManager):
+
+    def checkClientTrusted(self, chain, auth_type):
+        pass
+
+    def checkServerTrusted(self, chain, auth_type):
+        pass
+
+    def getAcceptedIssuers(self):
+        return None
