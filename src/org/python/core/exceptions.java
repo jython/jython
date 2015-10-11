@@ -269,15 +269,18 @@ public class exceptions extends PyObject implements ClassDictInit {
         PyObject errno = self.__findattr__("errno");
         PyObject strerror = self.__findattr__("strerror");
         PyObject filename = self.__findattr__("filename");
-        String result;
+        PyString result;
         if (filename.__nonzero__()) {
-            result = String.format("[Errno %s] %s: %s", errno, strerror, filename.__repr__());
+            result = Py.newString("[Errno %s] %s: %s");
+            result = (PyString)result.__mod__(new PyTuple(errno, strerror, filename.__repr__()));
+
         } else if (errno.__nonzero__() && strerror.__nonzero__()) {
-            result = String.format("[Errno %s] %s", errno, strerror);
+            result = Py.newString("[Errno %s] %s");
+            result = (PyString)result.__mod__(new PyTuple(errno, strerror));
         } else {
             return PyBaseException.TYPE.invoke("__str__", self, args, kwargs);
         }
-        return Py.newString(result);
+        return result;
     }
 
     public static PyObject EnvironmentError__reduce__(PyObject self, PyObject[] args,
