@@ -28,7 +28,7 @@ Jython links the following libraries:
   License from the Apache Software Foundation
 * Google Guava, licensed under an Apache 2.0 License from Google
 * ICU4J, licensed under a BSD license ("ICU License") from IBM and others
-* Jar Jar Links, licensed uner the Apache 2.0 License from Tonic Systems
+* Jar Jar Links, licensed under the Apache 2.0 License from Tonic Systems
 * Java Native Runtime, licensed under the Common Public License
 * JLine2, licensed under a BSD license
 * JUnit, licenseed under Eclipse Public License 1.0 from the JUnit project
