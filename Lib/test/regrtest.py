@@ -500,7 +500,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         os.system("leaks %d" % os.getpid())
 
     if memo:
-        savememo(memo,good,bad,skipped)
+        savememo(memo,good,failures,bad,skips,skipped,allran,resource_denieds)
 
     sys.exit(surprises > 0)
 
@@ -821,7 +821,7 @@ def count(n, word):
     else:
         return "%d %ss" % (n, word)
 
-def printlist(x, width=70, indent=4):
+def printlist(x, width=70, indent=4, output_to=sys.stdout):
     """Print the elements of iterable x to stdout.
 
     Optional arg width (default 70) is the maximum line length.
@@ -832,25 +832,35 @@ def printlist(x, width=70, indent=4):
     from textwrap import fill
     blanks = ' ' * indent
     # Print the sorted list: 'x' may be a '--random' list or a set()
-    print fill(' '.join(str(elt) for elt in sorted(x)), width,
+    print >> output_to, fill(' '.join(str(elt) for elt in sorted(x)), width,
                initial_indent=blanks, subsequent_indent=blanks)
 
-def countsurprises(expected, actual, action, antiaction, allran, resource_denieds):
+def countsurprises(expected, actual, action, antiaction, allran, resource_denieds, output_to=sys.stdout):
     """returns the number of items in actual that aren't in expected."""
-    printlist(actual)
+    printlist(actual,output_to=output_to)
     if not expected.isvalid():
-        print "Ask someone to teach regrtest.py about which tests are"
-        print "expected to %s on %s." % (action, sys.platform)
+        print >> output_to, "Ask someone to teach regrtest.py about which tests are"
+        print >> output_to, "expected to %s on %s." % (action, sys.platform)
         return 1#Surprising not to know what to expect....
     good_surprise = expected.getexpected() - set(actual)
     if allran and good_surprise:
-        print count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
-        printlist(good_surprise)
+        print >> output_to, count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
+        printlist(good_surprise,output_to=output_to)
     bad_surprise = set(actual) - expected.getexpected() - set(resource_denieds)
     if bad_surprise:
-        print count(len(bad_surprise), action), "unexpected:"
-        printlist(bad_surprise)
+        print >> output_to, count(len(bad_surprise), action), "unexpected:"
+        printlist(bad_surprise,output_to=output_to)
     return len(bad_surprise)
+
+
+def skip_conditional_support(test_module,module_name):
+    try:
+        test_support.import_module(module_name)
+    except unittest.SkipTest:
+        return '\n' + test_module
+    return ""
+
+
 
 # Map sys.platform to a string containing the basenames of tests
 # expected to be skipped on that platform.
@@ -1209,6 +1219,7 @@ _expectations = {
         test_capi
         test_cd
         test_cl
+        test_closuregen
         test_ctypes
         test_dl
         test_fcntl
@@ -1259,9 +1270,11 @@ _expectations = {
         test_zipfile64
 
         # Could rewrite these tests
+        test_descr
         test_epoll
         test_poll
         test_profile
+        test_struct
 
         # The following tests cause issues for tests that are subsequently run
         test_distutils
@@ -1294,6 +1307,9 @@ _expectations = {
 
         test_sys_setprofile  # revisit for GC
         test_sys_settrace    # revisit for line jumping
+
+        # Not yet Jython 3.x
+        test_lib2to3
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
@@ -1320,6 +1336,7 @@ _failures = {
         test_dummy_threading
         test_eof
         test_frozen  # not meaningful for Jython, although it is similar to Clamp singlejar
+        test_gc      # test_gc_jy replaces this
         test_iterlen
         test_multibytecodec
         test_multibytecodec_support
@@ -1344,6 +1361,26 @@ if _platform[:4] == 'java':
         if ' ' in sys.executable:
             # http://bugs.python.org/issue1559298
             _failures['java'] += '\ntest_popen'
+    if os._name != 'darwin':
+        _expectations['java'] += '\ntest__osx_support'
+    if os.name != 'posix':
+        _expectations['java'] += """
+                        test_commands
+                        test_pipes"""
+
+
+
+# tests for modules which themselves test for compatability, based on
+# additional installed libraries, etc
+conditional_support = {'test_dbm':'dbm',
+                       'test_readline':'readline',
+                       'test_sax':'sax'}
+
+for test_module in conditional_support:
+    _expectations[_platform] += \
+        skip_conditional_support(test_module,conditional_support[test_module])
+
+   
 
 class _ExpectedSkips:
     def __init__(self):
@@ -1378,7 +1415,7 @@ class _ExpectedSkips:
             if not sys.platform in ("mac", "darwin"):
                 MAC_ONLY = ["test_macos", "test_macostools", "test_aepack",
                             "test_plistlib", "test_scriptpackages",
-                            "test_applesingle"]
+                            "test_applesingle.pyingle"]
                 for skip in MAC_ONLY:
                     self.expected.add(skip)
             elif len(u'\0'.encode('unicode-internal')) == 4:
@@ -1457,7 +1494,7 @@ class _ExpectedFailures(_ExpectedSkips):
             self.expected = set(self.split_commented(s))
             self.valid = True
 
-def savememo(memo,good,bad,skipped):
+def savememo(memo,good,failures,bad,skips,skipped,allran, resource_denieds):
     f = open(memo,'w')
     try:
         for n,l in [('good',good),('bad',bad),('skipped',skipped)]:
@@ -1465,8 +1502,18 @@ def savememo(memo,good,bad,skipped):
             for x in l:
                 print >>f,"    %r," % x
             print >>f," ]"
+        print >>f, count(len(skipped), "test"), "skipped:"
+        countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds,f)
+        print >>f, count(len(bad), "test"), "failed:"
+        countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds,f)
+        import platform
+        print >>f, "Platform: "
+        print >>f, "    %r" % platform.platform()
+        print >>f, "Command line: "
+        print >>f, "    %r" % sys.argv
     finally:
         f.close()
+
 
 if __name__ == '__main__':
     # Remove regrtest.py's own directory from the module search path.  This
