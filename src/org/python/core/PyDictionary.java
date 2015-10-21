@@ -27,7 +27,7 @@ import org.python.util.Generic;
  * A builtin python dictionary.
  */
 @ExposedType(name = "dict", doc = BuiltinDocs.dict_doc)
-public class PyDictionary extends PyObject implements ConcurrentMap, Traverseproc {
+public class PyDictionary extends AbstractDict implements ConcurrentMap, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
     {
@@ -520,6 +520,35 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     }
 
     /**
+     * Merge another PyObject that supports keys() with this
+     * dict.
+     *
+     * @param other a PyObject with a keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void merge(PyObject other, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                merge(other);
+            } else {
+                if (other instanceof PyDictionary) {
+                    Set<Map.Entry<PyObject, PyObject>> entrySet =
+                            ((PyDictionary)other).internalMap.entrySet();
+                    for (Map.Entry<PyObject, PyObject> ent: entrySet) {
+                        if (!internalMap.containsKey(ent.getKey())) {
+                            internalMap.put(ent.getKey(), ent.getValue());
+                        }
+                    }
+                } else if (other instanceof PyStringMap) {
+                    mergeFromKeys(other, ((PyStringMap)other).keys(), override);
+                } else {
+                    mergeFromKeys(other, other.invoke("keys"), override);
+                }
+            }
+        }
+    }
+
+    /**
      * Merge another PyObject via its keys() method
      *
      * @param other a PyObject with a keys() method
@@ -528,6 +557,27 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     private void mergeFromKeys(PyObject other, PyObject keys) {
         for (PyObject key : keys.asIterable()) {
             dict___setitem__(key, other.__getitem__(key));
+        }
+    }
+
+    /**
+     * Merge another PyObject via its keys() method
+     *
+     * @param other a PyObject with a keys() method
+     * @param keys the result of other's keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromKeys(PyObject other, PyObject keys, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                mergeFromKeys(other, keys);
+            } else {
+                for (PyObject key : keys.asIterable()) {
+                    if (!dict___contains__(key)) {
+                        dict___setitem__(key, other.__getitem__(key));
+                    }
+                }
+            }
         }
     }
 
@@ -557,6 +607,44 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
                                                   + "has length %d; 2 is required", i, n));
             }
             dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
+        }
+    }
+
+    /**
+     * Merge any iterable object producing iterable objects of length
+     * 2 into this dict.
+     *
+     * @param other another PyObject
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromSeq(PyObject other, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                mergeFromSeq(other);
+            } else {
+                PyObject pairs = other.__iter__();
+                PyObject pair;
+        
+                for (int i = 0; (pair = pairs.__iternext__()) != null; i++) {
+                    try {
+                        pair = PySequence.fastSequence(pair, "");
+                    } catch(PyException pye) {
+                        if (pye.match(Py.TypeError)) {
+                            throw Py.TypeError(String.format("cannot convert dictionary update sequence "
+                                                             + "element #%d to a sequence", i));
+                        }
+                        throw pye;
+                    }
+                    int n;
+                    if ((n = pair.__len__()) != 2) {
+                        throw Py.ValueError(String.format("dictionary update sequence element #%d "
+                                                          + "has length %d; 2 is required", i, n));
+                    }
+                    if (!dict___contains__(pair.__getitem__(0))) {
+                        dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
+                    }
+                }
+            }
         }
     }
 
