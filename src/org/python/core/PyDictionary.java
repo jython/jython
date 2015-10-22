@@ -26,7 +26,7 @@ import org.python.util.Generic;
 /**
  * A builtin python dictionary.
  */
-@ExposedType(name = "dict", doc = BuiltinDocs.dict_doc)
+@ExposedType(name = "dict", base = PyObject.class, doc = BuiltinDocs.dict_doc)
 public class PyDictionary extends AbstractDict implements ConcurrentMap, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);

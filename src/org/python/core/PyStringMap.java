@@ -23,7 +23,7 @@ import org.python.util.Generic;
  * Special fast dict implementation for __dict__ instances. Allows interned String keys in addition
  * to PyObject unlike PyDictionary.
  */
-@ExposedType(name = "stringmap", isBaseType = false)
+@ExposedType(name = "stringmap", base = PyObject.class, isBaseType = false)
 public class PyStringMap extends AbstractDict implements Traverseproc {
 
     /**
