@@ -429,6 +429,7 @@ elif jython:
     import threading
     import java.io.File
     import java.io.IOException
+    import java.io.FileNotFoundException
     import java.lang.IllegalArgumentException
     import java.lang.IllegalThreadStateException
     import java.lang.ProcessBuilder
@@ -1349,7 +1350,13 @@ class Popen(object):
                 self._process = builder.start()
             except (java.io.IOException,
                     java.lang.IllegalArgumentException), e:
-                raise OSError(e.getMessage() or e)
+                msg = e.getMessage()
+
+                # Does not raise the more descriptive FileNotFoundException, resort to string matching
+                if msg and 'error=2,' in msg:
+                    raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
+                raise OSError(msg or e)
+
             self.pid = self._get_pid()
             self._child_created = True
 
