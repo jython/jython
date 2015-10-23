@@ -8,11 +8,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.python.core.PyMapSet.PySetIter;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
-
 public abstract class AbstractDict extends PyObject {
 
     public AbstractDict(PyType type) {
