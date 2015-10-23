@@ -8,10 +8,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.AbstractSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.python.core.PyMapSet.PySetIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -23,8 +25,8 @@ import org.python.util.Generic;
  * Special fast dict implementation for __dict__ instances. Allows interned String keys in addition
  * to PyObject unlike PyDictionary.
  */
-@ExposedType(name = "stringmap", isBaseType = false)
-public class PyStringMap extends PyObject implements Traverseproc {
+@ExposedType(name = "stringmap", base = PyObject.class, isBaseType = false)
+public class PyStringMap extends AbstractDict implements Traverseproc {
 
     /**
      * TYPE computed lazily, PyStringMap is used early in the bootstrap process and
@@ -239,8 +241,8 @@ public class PyStringMap extends PyObject implements Traverseproc {
         for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String) {
-                // This is a bit complicated, but prevents us to duplicate
-                // PyString#__repr__ logic here.
+                /* This is a bit complicated, but prevents us to duplicate
+                   PyString#__repr__ logic here. */
                 buf.append(new PyString((String)key).__repr__().toString());
             } else {
                 buf.append(((PyObject)key).__repr__().toString());
@@ -410,6 +412,35 @@ public class PyStringMap extends PyObject implements Traverseproc {
     }
 
     /**
+     * Merge another PyObject that supports keys() with this
+     * dict.
+     *
+     * @param other a PyObject with a keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void merge(PyObject other, boolean override) {
+        synchronized(table) {
+            if (override) {
+                merge(other);
+            } else {
+                if (other instanceof PyStringMap) {
+                    Set<Map.Entry<Object, PyObject>> entrySet =
+                            ((PyStringMap)other).table.entrySet();
+                    for (Map.Entry<Object, PyObject> ent: entrySet) {
+                        if (!table.containsKey(ent.getKey())) {
+                            table.put(ent.getKey(), ent.getValue());
+                        }
+                    }
+                } else if (other instanceof PyDictionary) {
+                    mergeFromKeys(other, ((PyDictionary)other).keys(), override);
+                } else {
+                    mergeFromKeys(other, other.invoke("keys"), override);
+                }
+            }
+        }
+    }
+
+    /**
      * Merge another PyObject via its keys() method
      *
      * @param other a PyObject with a keys() method
@@ -418,6 +449,27 @@ public class PyStringMap extends PyObject implements Traverseproc {
     private void mergeFromKeys(PyObject other, PyObject keys) {
         for (PyObject key : keys.asIterable()) {
             __setitem__(key, other.__getitem__(key));
+        }
+    }
+
+    /**
+     * Merge another PyObject via its keys() method
+     *
+     * @param other a PyObject with a keys() method
+     * @param keys the result of other's keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromKeys(PyObject other, PyObject keys, boolean override) {
+        synchronized(table) {
+            if (override) {
+                mergeFromKeys(other, keys);
+            } else {
+                for (PyObject key : keys.asIterable()) {
+                    if (!__contains__(key)) {
+                        __setitem__(key, other.__getitem__(key));
+                    }
+                }
+            }
         }
     }
 
@@ -447,6 +499,44 @@ public class PyStringMap extends PyObject implements Traverseproc {
                                                   + "has length %d; 2 is required", i, n));
             }
             __setitem__(pair.__getitem__(0), pair.__getitem__(1));
+        }
+    }
+
+    /**
+     * Merge any iterable object producing iterable objects of length
+     * 2 into this dict.
+     *
+     * @param other another PyObject
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromSeq(PyObject other, boolean override) {
+        synchronized(table) {
+            if (override) {
+                mergeFromSeq(other);
+            } else {
+                PyObject pairs = other.__iter__();
+                PyObject pair;
+        
+                for (int i = 0; (pair = pairs.__iternext__()) != null; i++) {
+                    try {
+                        pair = PySequence.fastSequence(pair, "");
+                    } catch(PyException pye) {
+                        if (pye.match(Py.TypeError)) {
+                            throw Py.TypeError(String.format("cannot convert dictionary update sequence "
+                                                             + "element #%d to a sequence", i));
+                        }
+                        throw pye;
+                    }
+                    int n;
+                    if ((n = pair.__len__()) != 2) {
+                        throw Py.ValueError(String.format("dictionary update sequence element #%d "
+                                                          + "has length %d; 2 is required", i, n));
+                    }
+                    if (!__contains__(pair.__getitem__(0))) {
+                        __setitem__(pair.__getitem__(0), pair.__getitem__(1));
+                    }
+                }
+            }
         }
     }
 
@@ -498,7 +588,7 @@ public class PyStringMap extends PyObject implements Traverseproc {
         return tuple;
     }
 
-    // not correct - we need to determine size and remove at the same time!
+    /* not correct - we need to determine size and remove at the same time! */
     public PyObject pop(PyObject key) {
         if (table.size() == 0) {
             throw Py.KeyError("pop(): dictionary is empty");
@@ -590,8 +680,8 @@ public class PyStringMap extends PyObject implements Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.dict_iterkeys_doc)
     final PyObject stringmap_iterkeys() {
-        // Python allows one to change the dict while iterating over it, including
-        // deletion. Java does not. Can we resolve with CHM?
+        /* Python allows one to change the dict while iterating over it, including
+           deletion. Java does not. Can we resolve with CHM? */
         return new KeysIter(table.keySet());
     }
 
@@ -604,7 +694,7 @@ public class PyStringMap extends PyObject implements Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.dict_itervalues_doc)
     final PyObject stringmap_itervalues() {
-        return new ValuesIter(table.values());
+        return new StringMapValuesIter(table.values());
     }
 
     @Override
@@ -652,9 +742,9 @@ public class PyStringMap extends PyObject implements Traverseproc {
         protected abstract PyObject stringMapNext();
     }
 
-    private class ValuesIter extends StringMapIter<PyObject> {
+    private class StringMapValuesIter extends StringMapIter<PyObject> {
 
-        public ValuesIter(Collection<PyObject> c) {
+        public StringMapValuesIter(Collection<PyObject> c) {
             super(c);
         }
 
@@ -704,6 +794,78 @@ public class PyStringMap extends PyObject implements Traverseproc {
         }
     }
 
+    private static class PyStringMapKeySetWrapper extends AbstractSet<PyObject>
+    {
+        Set<Object> backend;
+
+        PyStringMapKeySetWrapper(Set<Object> backend) {
+            this.backend = backend;
+        }
+
+        class PyStringMapKeySetIter implements Iterator<PyObject> {
+            Iterator<Object> itr;
+
+            PyStringMapKeySetIter(Iterator<Object> itr) {
+                this.itr = itr;
+            }
+
+            public boolean hasNext() {
+                return itr.hasNext();
+            }
+
+            public PyObject next() {
+                return keyToPy(itr.next());
+            }
+
+            public void remove() {
+                itr.remove();
+            }
+        }
+
+        @Override
+        public Iterator<PyObject> iterator() {
+            return new PyStringMapKeySetIter(backend.iterator());
+        }
+
+        @Override
+        public int size() {
+            return backend.size();
+        }
+    }
+
+    public Set<PyObject> pyKeySet() {
+        return new PyStringMapKeySetWrapper(table.keySet());
+    }
+
+    /** @see java.util.Map#entrySet() */
+    public Set entrySet() {
+        return new PyMapEntrySet(getMap().entrySet());
+    }
+
+    /**
+     * Returns a dict_keys on the dictionary's keys
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewkeys_doc)
+    public PyObject viewkeys() {
+        return super.viewkeys();
+    }
+
+    /**
+     * Returns a dict_items on the dictionary's items
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewitems_doc)
+    public PyObject viewitems() {
+        return super.viewitems();
+    }
+
+    /**
+     * Returns a dict_values on the dictionary's values
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewvalues_doc)
+    public PyObject viewvalues() {
+        return super.viewvalues();
+    }
+
 
     /* Traverseproc implementation */
     @Override
@@ -712,8 +874,8 @@ public class PyStringMap extends PyObject implements Traverseproc {
         Object key;
         PyObject value;
         for (Map.Entry<Object, PyObject> ent: table.entrySet()) {
-        	key = ent.getKey();
-        	value = ent.getValue();
+            key = ent.getKey();
+            value = ent.getValue();
             if (key instanceof PyObject) {
                 retVal = visit.visit((PyObject) key, arg);
                 if (retVal != 0) return retVal;

@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.python.core.AbstractDict.ValuesIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -26,12 +27,12 @@ import org.python.util.Generic;
 /**
  * A builtin python dictionary.
  */
-@ExposedType(name = "dict", doc = BuiltinDocs.dict_doc)
-public class PyDictionary extends PyObject implements ConcurrentMap, Traverseproc {
+@ExposedType(name = "dict", base = PyObject.class, doc = BuiltinDocs.dict_doc)
+public class PyDictionary extends AbstractDict implements ConcurrentMap, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
     {
-        // Ensure dict is not Hashable
+        /* Ensure dict is not Hashable */
         TYPE.object___setattr__("__hash__", Py.None);
     }
 
@@ -95,13 +96,13 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
      * Create a new dictionary without initializing table. Used for dictionary
      * factories, with different backing maps, at the cost that it prevents us from making table be final.
      */
-    // TODO we may want to revisit this API, but our chain calling of super makes this tough
+    /* TODO we may want to revisit this API, but our chain calling of super makes this tough */
     protected PyDictionary(PyType type, boolean initializeBacking) {
         super(type);
         if (initializeBacking) {
             internalMap = Generic.concurrentMap();
         } else {
-            internalMap = null; // for later initialization
+            internalMap = null; /* for later initialization */
         }
     }
 
@@ -175,7 +176,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
             return result;
         }
 
-        // Look up __missing__ method if we're a subclass.
+        /* Look up __missing__ method if we're a subclass. */
         PyType type = getType();
         if (type != TYPE) {
             PyObject missing = type.lookup("__missing__");
@@ -445,7 +446,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
 
     @ExposedMethod(doc = BuiltinDocs.dict_copy_doc)
     final PyDictionary dict_copy() {
-        return new PyDictionary(getMap()); // no need to clone()
+        return new PyDictionary(getMap()); /* no need to clone() */
     }
 
     /**
@@ -520,6 +521,35 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     }
 
     /**
+     * Merge another PyObject that supports keys() with this
+     * dict.
+     *
+     * @param other a PyObject with a keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void merge(PyObject other, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                merge(other);
+            } else {
+                if (other instanceof PyDictionary) {
+                    Set<Map.Entry<PyObject, PyObject>> entrySet =
+                            ((PyDictionary)other).internalMap.entrySet();
+                    for (Map.Entry<PyObject, PyObject> ent: entrySet) {
+                        if (!internalMap.containsKey(ent.getKey())) {
+                            internalMap.put(ent.getKey(), ent.getValue());
+                        }
+                    }
+                } else if (other instanceof PyStringMap) {
+                    mergeFromKeys(other, ((PyStringMap)other).keys(), override);
+                } else {
+                    mergeFromKeys(other, other.invoke("keys"), override);
+                }
+            }
+        }
+    }
+
+    /**
      * Merge another PyObject via its keys() method
      *
      * @param other a PyObject with a keys() method
@@ -528,6 +558,27 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     private void mergeFromKeys(PyObject other, PyObject keys) {
         for (PyObject key : keys.asIterable()) {
             dict___setitem__(key, other.__getitem__(key));
+        }
+    }
+
+    /**
+     * Merge another PyObject via its keys() method
+     *
+     * @param other a PyObject with a keys() method
+     * @param keys the result of other's keys() method
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromKeys(PyObject other, PyObject keys, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                mergeFromKeys(other, keys);
+            } else {
+                for (PyObject key : keys.asIterable()) {
+                    if (!dict___contains__(key)) {
+                        dict___setitem__(key, other.__getitem__(key));
+                    }
+                }
+            }
         }
     }
 
@@ -561,6 +612,44 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     }
 
     /**
+     * Merge any iterable object producing iterable objects of length
+     * 2 into this dict.
+     *
+     * @param other another PyObject
+     * @param override if true, the value from other is used on key-collision
+     */
+    public void mergeFromSeq(PyObject other, boolean override) {
+        synchronized(internalMap) {
+            if (override) {
+                mergeFromSeq(other);
+            } else {
+                PyObject pairs = other.__iter__();
+                PyObject pair;
+        
+                for (int i = 0; (pair = pairs.__iternext__()) != null; i++) {
+                    try {
+                        pair = PySequence.fastSequence(pair, "");
+                    } catch(PyException pye) {
+                        if (pye.match(Py.TypeError)) {
+                            throw Py.TypeError(String.format("cannot convert dictionary update sequence "
+                                                             + "element #%d to a sequence", i));
+                        }
+                        throw pye;
+                    }
+                    int n;
+                    if ((n = pair.__len__()) != 2) {
+                        throw Py.ValueError(String.format("dictionary update sequence element #%d "
+                                                          + "has length %d; 2 is required", i, n));
+                    }
+                    if (!dict___contains__(pair.__getitem__(0))) {
+                        dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Return this[key] if the key exist, otherwise insert key with
      * a None value and return None.
      *
@@ -588,7 +677,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
         return oldValue == null ? failobj : oldValue;
     }
 
-    // XXX: needs __doc__ but CPython does not define setifabsent
+    /* XXX: needs __doc__ but CPython does not define setifabsent */
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setifabsent(PyObject key, PyObject failobj) {
         PyObject oldValue = getMap().putIfAbsent(key, failobj);
@@ -708,31 +797,7 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     public PyObject itervalues() {
         return dict_itervalues();
     }
-    
-    /**
-     * Returns a dict_keys on the dictionary's keys
-     */
-    @ExposedMethod(doc = BuiltinDocs.dict_viewkeys_doc)
-    public PyObject viewkeys() {
-        return new PyDictionaryViewKeys(this);
-    }
-    
-    /**
-     * Returns a dict_items on the dictionary's items
-     */
-    @ExposedMethod(doc = BuiltinDocs.dict_viewitems_doc)
-    public PyObject viewitems() {
-        return new PyDictionaryViewItems(this);
-    }
-    
-    /**
-     * Returns a dict_values on the dictionary's values
-     */
-    @ExposedMethod(doc = BuiltinDocs.dict_viewvalues_doc)
-    public PyObject viewvalues() {
-        return new PyDictionaryViewValues(this);
-    }
-    
+
     @ExposedMethod(doc = BuiltinDocs.dict_itervalues_doc)
     final PyObject dict_itervalues() {
         return new ValuesIter(getMap().values());
@@ -771,26 +836,30 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
         return false;
     }
 
-    class ValuesIter extends PyIterator {
-
-        private final Iterator<PyObject> iterator;
-
-        private final int size;
-
-        public ValuesIter(Collection<PyObject> values) {
-            iterator = values.iterator();
-            size = values.size();
-        }
-
-        @Override
-        public PyObject __iternext__() {
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            return iterator.next();
-        }
+    /**
+     * Returns a dict_keys on the dictionary's keys
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewkeys_doc)
+    public PyObject viewkeys() {
+        return super.viewkeys();
     }
 
+    /**
+     * Returns a dict_items on the dictionary's items
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewitems_doc)
+    public PyObject viewitems() {
+        return super.viewitems();
+    }
+
+    /**
+     * Returns a dict_values on the dictionary's values
+     */
+    @ExposedMethod(doc = BuiltinDocs.dict_viewvalues_doc)
+    public PyObject viewvalues() {
+        return super.viewvalues();
+    }
+    
     class ItemsIter extends PyIterator {
 
         private final Iterator<Entry<PyObject, PyObject>> iterator;
@@ -812,266 +881,10 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
         }
     }
 
-    @ExposedType(name = "dict_values", base = PyObject.class, doc = "")
-    class PyDictionaryViewValues extends BaseDictionaryView {
-        public final PyType TYPE = PyType.fromClass(PyDictionaryViewValues.class);
-        
-        public PyDictionaryViewValues(PyDictionary dvDict) {
-            super(dvDict);
-        }
-        
-        @Override
-        public PyObject __iter__() {
-            return dict_values___iter__();
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
-        final PyObject dict_values___iter__() {
-            return new ValuesIter(dvDict.getMap().values());
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___len___doc)
-        final int dict_values___len__() {
-            return dict_view___len__();
-        }
-        
-        @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.set___str___doc)
-        final String dict_values_toString() {
-            return dict_view_toString();
-        }
-    }
-    
-    @ExposedType(name = "dict_keys", base = PyObject.class)
-    class PyDictionaryViewKeys extends BaseDictionaryView {
-        public final PyType TYPE = PyType.fromClass(PyDictionaryViewKeys.class);
-        
-        public PyDictionaryViewKeys(PyDictionary dvDict) {
-            super(dvDict);
-        }
-        
-        @Override
-        public PyObject __iter__() {
-            return dict_keys___iter__();
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
-        final PyObject dict_keys___iter__() {
-            return new ValuesIter(dvDict.getMap().keySet());
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
-        final PyObject dict_keys___ne__(PyObject otherObj) {
-            return dict_view___ne__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
-        final PyObject dict_keys___eq__(PyObject otherObj) {
-            return dict_view___eq__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
-        final PyObject dict_keys___lt__(PyObject otherObj) {
-            return dict_view___lt__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
-        final PyObject dict_keys___gt__(PyObject otherObj) {
-            return dict_view___gt__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
-        final PyObject dict_keys___ge__(PyObject otherObj) {
-            return dict_view___ge__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
-        final PyObject dict_keys___le__(PyObject otherObj) {
-            return dict_view___le__(otherObj);
-        }
-
-        @Override
-        public PyObject __or__(PyObject otherObj) {
-            return dict_keys___or__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
-        final PyObject dict_keys___or__(PyObject otherObj) {
-            PySet result = new PySet(dvDict);
-            result.set_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public PyObject __xor__(PyObject otherObj) {
-            return dict_keys___xor__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
-        final PyObject dict_keys___xor__(PyObject otherObj) {
-            PySet result = new PySet(dvDict);
-            result.set_symmetric_difference_update(otherObj);
-            return result;
-        }
-
-        @Override
-        public PyObject __sub__(PyObject otherObj) {
-            return dict_keys___sub__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
-        final PyObject dict_keys___sub__(PyObject otherObj) {
-            PySet result = new PySet(dvDict);
-            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public PyObject __and__(PyObject otherObj) {
-            return dict_keys___and__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
-        final PyObject dict_keys___and__(PyObject otherObj) {
-            PySet result = new PySet(dvDict);
-            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public boolean __contains__(PyObject otherObj) {
-            return dict_keys___contains__(otherObj);
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
-        final boolean dict_keys___contains__(PyObject item) {
-            return dvDict.__contains__(item);
-        }
-        
-        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
-        final String dict_keys_toString() {
-            return dict_view_toString();
-        }
+    public Set<PyObject> pyKeySet() {
+        return internalMap.keySet();
     }
 
-    @ExposedType(name = "dict_items")
-    class PyDictionaryViewItems extends BaseDictionaryView {
-        public final PyType TYPE = PyType.fromClass(PyDictionaryViewItems.class);
-        
-        public PyDictionaryViewItems(PyDictionary dvDict) {
-            super(dvDict);
-        }
-        
-        @Override
-        public PyObject __iter__() {
-            return dict_items___iter__();
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
-        final PyObject dict_items___iter__() {
-            return new ItemsIter(dvDict.getMap().entrySet());
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
-        final PyObject dict_items___ne__(PyObject otherObj) {
-            return dict_view___ne__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
-        final PyObject dict_items___eq__(PyObject otherObj) {
-            return dict_view___eq__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
-        final PyObject dict_items___lt__(PyObject otherObj) {
-            return dict_view___lt__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
-        final PyObject dict_items___gt__(PyObject otherObj) {
-            return dict_view___gt__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
-        final PyObject dict_items___ge__(PyObject otherObj) {
-            return dict_view___ge__(otherObj);
-        }
-
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
-        final PyObject dict_items___le__(PyObject otherObj) {
-            return dict_view___le__(otherObj);
-        }
-
-        @Override
-        public PyObject __or__(PyObject otherObj) {
-            return dict_items___or__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
-        final PyObject dict_items___or__(PyObject otherObj) {
-            PySet result = new PySet(dvDict.iteritems());
-            result.set_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public PyObject __xor__(PyObject otherObj) {
-            return dict_items___xor__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
-        final PyObject dict_items___xor__(PyObject otherObj) {
-            PySet result = new PySet(dvDict.iteritems());
-            result.set_symmetric_difference_update(otherObj);
-            return result;
-        }
-
-        @Override
-        public PyObject __sub__(PyObject otherObj) {
-            return dict_items___sub__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
-        final PyObject dict_items___sub__(PyObject otherObj) {
-            PySet result = new PySet(dvDict.iteritems());
-            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public PyObject __and__(PyObject otherObj) {
-            return dict_items___and__(otherObj);
-        }
-        
-        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
-        final PyObject dict_items___and__(PyObject otherObj) {
-            PySet result = new PySet(dvDict.iteritems());
-            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
-            return result;
-        }
-
-        @Override
-        public boolean __contains__(PyObject otherObj) {
-            return dict_items___contains__(otherObj);
-        }
-        
-        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
-        final boolean dict_items___contains__(PyObject item) {
-            if (item instanceof PyTuple) {
-                PyTuple tupleItem = (PyTuple)item;
-                if (tupleItem.size() == 2) {
-                    SimpleEntry entry = new SimpleEntry(tupleItem.get(0), tupleItem.get(1));
-                    return dvDict.entrySet().contains(entry);
-                }
-            }
-            return false;
-        }
-        
-        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
-        final String dict_keys_toString() {
-            return dict_view_toString();
-        }
-    }
-    
     /*
      * The following methods implement the java.util.Map interface which allows PyDictionary to be
      * passed to java methods that take java.util.Map as a parameter. Basically, the Map methods are
@@ -1136,11 +949,6 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
         return getMap().size();
     }
 
-    /** Convert return values to java objects */
-    static Object tojava(Object val) {
-        return val == null ? null : ((PyObject)val).__tojava__(Object.class);
-    }
-
     public Object putIfAbsent(Object key, Object value) {
         return tojava(getMap().putIfAbsent(Py.java2py(key), Py.java2py(value)));
     }
@@ -1155,6 +963,266 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
 
     public Object replace(Object key, Object value) {
         return tojava(getMap().replace(Py.java2py(key), Py.java2py(value)));
+    }
+
+    @ExposedType(name = "dict_values", base = PyObject.class, doc = "")
+    static class PyDictionaryViewValues extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewValues.class);
+
+        public PyDictionaryViewValues(AbstractDict dvDict) {
+            super(dvDict);
+        }
+
+        @Override
+        public PyObject __iter__() {
+            return dict_values___iter__();
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_values___iter__() {
+            return new ValuesIter(dvDict.getMap().values());
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___len___doc)
+        final int dict_values___len__() {
+            return dict_view___len__();
+        }
+
+        @ExposedMethod(names = {"__repr__", "__str__"}, doc = BuiltinDocs.set___str___doc)
+        final String dict_values_toString() {
+            return dict_view_toString();
+        }
+    }
+
+    @ExposedType(name = "dict_keys", base = PyObject.class)
+    static class PyDictionaryViewKeys extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewKeys.class);
+
+        public PyDictionaryViewKeys(AbstractDict dvDict) {
+            super(dvDict);
+        }
+
+        @Override
+        public PyObject __iter__() {
+            return dict_keys___iter__();
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_keys___iter__() {
+            return new ValuesIter(dvDict.pyKeySet());
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
+        final PyObject dict_keys___ne__(PyObject otherObj) {
+            return dict_view___ne__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
+        final PyObject dict_keys___eq__(PyObject otherObj) {
+            return dict_view___eq__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
+        final PyObject dict_keys___lt__(PyObject otherObj) {
+            return dict_view___lt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
+        final PyObject dict_keys___gt__(PyObject otherObj) {
+            return dict_view___gt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
+        final PyObject dict_keys___ge__(PyObject otherObj) {
+            return dict_view___ge__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
+        final PyObject dict_keys___le__(PyObject otherObj) {
+            return dict_view___le__(otherObj);
+        }
+
+        @Override
+        public PyObject __or__(PyObject otherObj) {
+            return dict_keys___or__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
+        final PyObject dict_keys___or__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __xor__(PyObject otherObj) {
+            return dict_keys___xor__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
+        final PyObject dict_keys___xor__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_symmetric_difference_update(otherObj);
+            return result;
+        }
+
+        @Override
+        public PyObject __sub__(PyObject otherObj) {
+            return dict_keys___sub__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
+        final PyObject dict_keys___sub__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __and__(PyObject otherObj) {
+            return dict_keys___and__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
+        final PyObject dict_keys___and__(PyObject otherObj) {
+            PySet result = new PySet(dvDict);
+            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public boolean __contains__(PyObject otherObj) {
+            return dict_keys___contains__(otherObj);
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
+        final boolean dict_keys___contains__(PyObject item) {
+            return dvDict.__contains__(item);
+        }
+
+        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
+        final String dict_keys_toString() {
+            return dict_view_toString();
+        }
+    }
+
+    @ExposedType(name = "dict_items", base = PyObject.class)
+    static class PyDictionaryViewItems extends BaseDictionaryView {
+        public final PyType TYPE = PyType.fromClass(PyDictionaryViewItems.class);
+
+        public PyDictionaryViewItems(AbstractDict dvDict) {
+            super(dvDict);
+        }
+
+        @Override
+        public PyObject __iter__() {
+            return dict_items___iter__();
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___iter___doc)
+        final PyObject dict_items___iter__() {
+            return dvDict.iteritems();
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ne___doc)
+        final PyObject dict_items___ne__(PyObject otherObj) {
+            return dict_view___ne__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___eq___doc)
+        final PyObject dict_items___eq__(PyObject otherObj) {
+            return dict_view___eq__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___lt___doc)
+        final PyObject dict_items___lt__(PyObject otherObj) {
+            return dict_view___lt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___gt___doc)
+        final PyObject dict_items___gt__(PyObject otherObj) {
+            return dict_view___gt__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___ge___doc)
+        final PyObject dict_items___ge__(PyObject otherObj) {
+            return dict_view___ge__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___le___doc)
+        final PyObject dict_items___le__(PyObject otherObj) {
+            return dict_view___le__(otherObj);
+        }
+
+        @Override
+        public PyObject __or__(PyObject otherObj) {
+            return dict_items___or__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___or___doc)
+        final PyObject dict_items___or__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __xor__(PyObject otherObj) {
+            return dict_items___xor__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___xor___doc)
+        final PyObject dict_items___xor__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_symmetric_difference_update(otherObj);
+            return result;
+        }
+
+        @Override
+        public PyObject __sub__(PyObject otherObj) {
+            return dict_items___sub__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___sub___doc)
+        final PyObject dict_items___sub__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_difference_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public PyObject __and__(PyObject otherObj) {
+            return dict_items___and__(otherObj);
+        }
+
+        @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.set___and___doc)
+        final PyObject dict_items___and__(PyObject otherObj) {
+            PySet result = new PySet(dvDict.iteritems());
+            result.set_intersection_update(new PyObject[]{otherObj}, new String[] {});
+            return result;
+        }
+
+        @Override
+        public boolean __contains__(PyObject otherObj) {
+            return dict_items___contains__(otherObj);
+        }
+
+        @ExposedMethod(doc = BuiltinDocs.set___contains___doc)
+        final boolean dict_items___contains__(PyObject item) {
+            if (item instanceof PyTuple) {
+                PyTuple tupleItem = (PyTuple)item;
+                if (tupleItem.size() == 2) {
+                    SimpleEntry entry = new SimpleEntry(tupleItem.get(0), tupleItem.get(1));
+                    return dvDict.entrySet().contains(entry);
+                }
+            }
+            return false;
+        }
+
+        @ExposedMethod(names = "__repr__", doc = BuiltinDocs.set___repr___doc)
+        final String dict_keys_toString() {
+            return dict_view_toString();
+        }
     }
 
 
@@ -1180,239 +1248,5 @@ public class PyDictionary extends PyObject implements ConcurrentMap, Traversepro
     @Override
     public boolean refersDirectlyTo(PyObject ob) {
         return ob != null && (internalMap.containsKey(ob) || internalMap.containsValue(ob));
-    }
-}
-
-/** Basic implementation of Entry that just holds onto a key and value and returns them. */
-class SimpleEntry implements Entry {
-
-    protected Object key;
-
-    protected Object value;
-
-    public SimpleEntry(Object key, Object value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public Object getKey() {
-        return key;
-    }
-
-    public Object getValue() {
-        return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Map.Entry)) {
-            return false;
-        }
-        Map.Entry e = (Map.Entry)o;
-        return eq(key, e.getKey()) && eq(value, e.getValue());
-    }
-
-    private static boolean eq(Object o1, Object o2) {
-        return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
-    @Override
-    public int hashCode() {
-        return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
-    }
-
-    @Override
-    public String toString() {
-        return key + "=" + value;
-    }
-
-    public Object setValue(Object val) {
-        throw new UnsupportedOperationException("Not supported by this view");
-    }
-}
-
-/**
- * Wrapper for a Entry object returned from the java.util.Set object which in turn is returned by
- * the entrySet method of java.util.Map. This is needed to correctly convert from PyObjects to java
- * Objects. Note that we take care in the equals and hashCode methods to make sure these methods are
- * consistent with Entry objects that contain java Objects for a value so that on the java side they
- * can be reliable compared.
- */
-class PyToJavaMapEntry extends SimpleEntry {
-
-    /** Create a copy of the Entry with Py.None converted to null */
-    PyToJavaMapEntry(Entry entry) {
-        super(entry.getKey(), entry.getValue());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || !(o instanceof Entry)) {
-            return false;
-        }
-        Entry me = new JavaToPyMapEntry((Entry)o);
-        return o.equals(me);
-    }
-
-    // tojava is called in getKey and getValue so the raw key and value can be
-    // used to create a new SimpleEntry in getEntry.
-    @Override
-    public Object getKey() {
-        return PyDictionary.tojava(key);
-    }
-
-    @Override
-    public Object getValue() {
-        return PyDictionary.tojava(value);
-    }
-
-    /**
-     * @return an entry that returns the original values given to this entry.
-     */
-    public Entry getEntry() {
-        return new SimpleEntry(key, value);
-    }
-
-    @Override
-    public int hashCode() {
-        return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
-    }
-
-}
-
-/**
- * MapEntry Object for java MapEntry objects passed to the java.util.Set interface which is returned
- * by the entrySet method of PyDictionary. Essentially like PyTojavaMapEntry, but going the other
- * way converting java Objects to PyObjects.
- */
-class JavaToPyMapEntry extends SimpleEntry {
-
-    public JavaToPyMapEntry(Entry entry) {
-        super(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
-    }
-}
-
-/**
- * Wrapper collection class for the keySet and values methods of java.util.Map
- */
-class PyMapKeyValSet extends PyMapSet {
-
-    PyMapKeyValSet(Collection coll) {
-        super(coll);
-    }
-
-    @Override
-    Object toJava(Object o) {
-        return PyDictionary.tojava(o);
-    }
-
-    @Override
-    Object toPython(Object o) {
-        return Py.java2py(o);
-    }
-}
-
-/**
- * Set wrapper for the entrySet method. Entry objects are wrapped further in JavaToPyMapEntry and
- * PyToJavaMapEntry. Note - The set interface is reliable for standard objects like strings and
- * integers, but may be inconsistent for other types of objects since the equals method may return
- * false for Entry object that hold more elaborate PyObject types. However, we insure that this
- * interface works when the Entry object originates from a Set object retrieved from a PyDictionary.
- */
-class PyMapEntrySet extends PyMapSet {
-
-    PyMapEntrySet(Collection coll) {
-        super(coll);
-    }
-
-    // We know that PyMapEntrySet will only contains entries, so if the object being passed in is
-    // null or not an Entry, then return null which will match nothing for remove and contains
-    // methods.
-    @Override
-    Object toPython(Object o) {
-        if (o == null || !(o instanceof Entry)) {
-            return null;
-        }
-        if (o instanceof PyToJavaMapEntry) {
-            // Use the original entry from PyDictionary
-            return ((PyToJavaMapEntry)o).getEntry();
-        } else {
-            return new JavaToPyMapEntry((Entry)o);
-        }
-    }
-
-    @Override
-    Object toJava(Object o) {
-        return new PyToJavaMapEntry((Entry)o);
-    }
-}
-
-/**
- * PyMapSet serves as a wrapper around Set Objects returned by the java.util.Map interface of
- * PyDictionary. entrySet, values and keySet methods return this type for the java.util.Map
- * implementation. This class is necessary as a wrapper to convert PyObjects to java Objects for
- * methods that return values, and convert Objects to PyObjects for methods that take values. The
- * translation is necessary to provide java access to jython dictionary objects. This wrapper also
- * provides the expected backing functionality such that changes to the wrapper set or reflected in
- * PyDictionary.
- */
-abstract class PyMapSet extends AbstractSet {
-
-    private final Collection coll;
-
-    PyMapSet(Collection coll) {
-        this.coll = coll;
-    }
-
-    abstract Object toJava(Object obj);
-
-    abstract Object toPython(Object obj);
-
-    @Override
-    public int size() {
-        return coll.size();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return coll.contains(toPython(o));
-    }
-
-    @Override
-     public boolean remove(Object o) {
-         return coll.remove(toPython(o));
-    }
-
-    @Override
-    public void clear() {
-        coll.clear();
-    }
-
-    // Iterator wrapper class returned by the PyMapSet iterator
-    // method. We need this wrapper to return PyToJavaMapEntry objects
-    // for the 'next()' method.
-    class PySetIter implements Iterator {
-        Iterator itr;
-
-        PySetIter(Iterator itr) {
-            this.itr = itr;
-        }
-
-        public boolean hasNext() {
-            return itr.hasNext();
-        }
-
-        public Object next() {
-            return toJava(itr.next());
-        }
-
-        public void remove() {
-            itr.remove();
-        }
-    }
-
-    @Override
-    public Iterator iterator() {
-        return new PySetIter(coll.iterator());
     }
 }

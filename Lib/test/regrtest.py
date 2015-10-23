@@ -1415,7 +1415,7 @@ class _ExpectedSkips:
             if not sys.platform in ("mac", "darwin"):
                 MAC_ONLY = ["test_macos", "test_macostools", "test_aepack",
                             "test_plistlib", "test_scriptpackages",
-                            "test_applesingle.pyingle"]
+                            "test_applesingle"]
                 for skip in MAC_ONLY:
                     self.expected.add(skip)
             elif len(u'\0'.encode('unicode-internal')) == 4:

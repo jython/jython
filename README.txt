@@ -19,6 +19,14 @@ The release was compiled on OSX using JDK 7 and requires a minimum of
 Java 7 to run.
 
 Please try this release out and report any bugs at http://bugs.jython.org
+You can test your installation of Jython (not the standalone JAR) by running
+the regression tests, with the command:
+
+jython -m test.regrtest -e -m regrtest_memo.txt
+
+For Windows, there is a simple script to do this: jython_regrtest.bat. In
+either case, the memo file regrtest_memo.txt will be useful in the bug report
+if you see test failures. The regression tests can take about half an hour.
 
 Please see ACKNOWLEDGMENTS for details about Jython's copyright,
 license, contributors, and mailing lists; and NEWS for detailed
