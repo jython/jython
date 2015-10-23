@@ -100,9 +100,8 @@ public class PyDictionaryDerived extends PyDictionary implements Slotted,Finaliz
         PyObject impl=self_type.lookup("__str__");
         if (impl!=null) {
             PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyString) {
+            if (res instanceof PyString)
                 return(PyString)res;
-            }
             throw Py.TypeError("__str__"+" returned non-"+"string"+" (type "+res.getType().fastGetName()+")");
         }
         return super.__str__();
