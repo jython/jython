@@ -359,7 +359,7 @@ class SystemTestCase(unittest.TestCase):
         # would fail with an import error due to creating a circular
         # import chain. This root cause is because the os module
         # imports the subprocess module for the system function; but
-        # the subprocess module imports from os. Verrifies that this
+        # the subprocess module imports from os. Verifies that this is
         # managed by making the import late; also verify the
         # monkeypatching optimization is successful by calling
         # os.system twice.
@@ -370,6 +370,23 @@ class SystemTestCase(unittest.TestCase):
                      "import traceback; import os; os.system('echo 42'); os.system('echo 47')"])\
                 .replace("\r", ""),  # in case of running on Windows
                 "42\n47\n")
+
+    def test_system_uses_os_environ(self):
+        """Writing to os.environ is made available as env vars in os.system subprocesses"""
+        # This test likely requires additional customization for
+        # environments like AS/400, but I do not have current access.
+        # Verifies fix for http://bugs.jython.org/issue2416
+        if os._name == "nt":
+            echo_command = 'echo %TEST_ENVVAR%'
+        else:
+            echo_command = 'echo $TEST_ENVVAR'
+        with test_support.temp_cwd() as temp_cwd:
+            self.assertEqual(
+                subprocess.check_output(
+                    [sys.executable, "-c",
+                     "import os; os.environ['TEST_ENVVAR'] = 'works on 2.7.1+'; os.system('%s')" % echo_command])\
+                .replace("\r", ""),  # in case of running on Windows
+                "works on 2.7.1+\n")
 
 
 @unittest.skipUnless(hasattr(os, 'link'), "os.link not available")

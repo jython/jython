@@ -768,6 +768,31 @@ if jython:
                     raise
 
 
+if jython:
+    def _setup_env(env, builder_env):
+        """Carefully merge env with ProcessBuilder's only
+        overwriting key/values that differ
+
+        System.getenv (Map<String, String>) may be backed by
+        <byte[], byte[]> on UNIX platforms where these are really
+        bytes. ProcessBuilder's env inherits its contents and will
+        maintain those byte values (which may be butchered as
+        Strings) for the subprocess if they haven't been modified.
+        """
+        # Determine what's safe to merge
+        merge_env = dict((key, value) for key, value in env.iteritems()
+                         if key not in builder_env or
+                         builder_env.get(key) != value)
+
+        # Prune anything not in env
+        entries = builder_env.entrySet().iterator()
+        for entry in entries:
+            if entry.getKey() not in env:
+                entries.remove()
+
+        builder_env.putAll(merge_env)
+
+
 class Popen(object):
     def __init__(self, args, bufsize=0, executable=None,
                  stdin=None, stdout=None, stderr=None,
@@ -1268,28 +1293,6 @@ class Popen(object):
             return _CouplerThread(*args, **kwargs)
 
 
-        def _setup_env(self, env, builder_env):
-            """Carefully merge env with ProcessBuilder's only
-            overwriting key/values that differ
-
-            System.getenv (Map<String, String>) may be backed by
-            <byte[], byte[]> on UNIX platforms where these are really
-            bytes. ProcessBuilder's env inherits its contents and will
-            maintain those byte values (which may be butchered as
-            Strings) for the subprocess if they haven't been modified.
-            """
-            # Determine what's safe to merge
-            merge_env = dict((key, value) for key, value in env.iteritems()
-                             if key not in builder_env or
-                             builder_env.get(key) != value)
-
-            # Prune anything not in env
-            entries = builder_env.entrySet().iterator()
-            for entry in entries:
-                if entry.getKey() not in env:
-                    entries.remove()
-
-            builder_env.putAll(merge_env)
 
 
         def _execute_child(self, args, executable, preexec_fn, close_fds,
@@ -1328,8 +1331,8 @@ class Popen(object):
                 builder.redirectError(java.lang.ProcessBuilder.Redirect.INHERIT)
 
             # os.environ may be inherited for compatibility with CPython
-            self._setup_env(dict(os.environ if env is None else env),
-                            builder.environment())
+            _setup_env(dict(os.environ if env is None else env),
+                       builder.environment())
 
             if cwd is None:
                 cwd = os.getcwd()
@@ -1888,11 +1891,15 @@ def _os_system(command):
     args = _escape_args(args)
     args = _shell_command + args
     cwd = os.getcwd()
+
+
+
     builder = java.lang.ProcessBuilder(args)
     builder.directory(java.io.File(cwd))
     builder.redirectInput(java.lang.ProcessBuilder.Redirect.INHERIT)
     builder.redirectOutput(java.lang.ProcessBuilder.Redirect.INHERIT)
     builder.redirectError(java.lang.ProcessBuilder.Redirect.INHERIT)
+    _setup_env(dict(os.environ), builder.environment())
     try:
         return builder.start().waitFor()
     except (java.io.IOException,
