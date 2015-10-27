@@ -2,6 +2,13 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
+Jython 2.7.1rc
+  Bugs fixed
+    - [ 2416 ] os.system does not use changes to os.environ in subprocesses
+  New Features
+    - Use latest upstream bundled wheels for ensurepip: pip (7.1.2), setuptools (18.4),
+      replacing wheels patched specifically for Jython
+
 Jython 2.7.1b2
   Bugs fixed
    - [ 2396 ] test_threading and others fail under Cygwin (sys.executable).
