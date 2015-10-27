@@ -501,7 +501,6 @@ class SSLContext(object):
         pass
 
     def load_verify_locations(self, cafile=None, capath=None, cadata=None):
-        print cafile
         if cafile is not None:
             with open(cafile) as f:
                 self._load_certificates(f)
