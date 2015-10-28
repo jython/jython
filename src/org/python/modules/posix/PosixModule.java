@@ -13,18 +13,20 @@ import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NotLinkException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
@@ -973,41 +975,45 @@ public class PosixModule implements ClassDictInit {
         "Set the access and modified time of the file to the given values.  If the\n" +
         "second form is used, set the access and modified times to the current time.");
     public static void utime(PyObject path, PyObject times) {
-        long[] atimeval;
-        long[] mtimeval;
+        FileTime atime;
+        FileTime mtime;
 
         if (times == Py.None) {
-            atimeval = mtimeval = null;
+            // FIXME dynamically bind to java.time.Instant, available in Java 8,
+            // to potentially get higher resolution (nanosecond) time
+            atime = mtime = FileTime.from(
+                    System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         } else if (times instanceof PyTuple && times.__len__() == 2) {
-            atimeval = extractTimeval(times.__getitem__(0));
-            mtimeval = extractTimeval(times.__getitem__(1));
+            atime = getFileTime(times.__getitem__(0));
+            mtime = getFileTime(times.__getitem__(1));
         } else {
             throw Py.TypeError("utime() arg 2 must be a tuple (atime, mtime)");
         }
-        if (posix.utimes(absolutePath(path).toString(), atimeval, mtimeval) < 0) {
-            throw errorFromErrno(path);
+
+        try {
+            Files.getFileAttributeView(absolutePath(path), BasicFileAttributeView.class).
+                    setTimes(mtime, atime, null);
+        } catch (NoSuchFileException ex) {
+            throw Py.OSError(Errno.ENOENT, path);
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
+        } catch (SecurityException ex) {
+            throw Py.OSError(Errno.EACCES, path);
         }
     }
 
-    /**
-     * Convert seconds (with a possible fraction) from epoch to a 2 item array of seconds,
-     * microseconds from epoch as longs.
-     *
-     * @param seconds a PyObject number
-     * @return a 2 item long[]
-     */
-    private static long[] extractTimeval(PyObject seconds) {
-        long[] timeval = new long[] {Platform.IS_32_BIT ? seconds.asInt() : seconds.asLong(), 0L};
-        if (seconds instanceof PyFloat) {
-            // can't exceed 1000000
-            long usec = (long)((seconds.asDouble() - timeval[0]) * 1e6);
-            if (usec < 0) {
-                // If rounding gave us a negative number, truncate
-                usec = 0;
+    private static FileTime getFileTime(PyObject seconds) {
+        try {
+            return FileTime.from(
+                    (long) (seconds.__float__().asDouble() * 1e6),
+                    TimeUnit.MICROSECONDS);
+        } catch (PyException pye) {
+            if (!pye.match(Py.AttributeError)) {
+                throw pye;
+            } else {
+                throw Py.TypeError("an integer or float is required");
             }
-            timeval[1] = usec;
         }
-        return timeval;
     }
 
     public static PyString __doc__wait = new PyString(
