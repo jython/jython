@@ -364,6 +364,20 @@ public class PyObject implements Serializable {
                 }
             }
         }
+        if (c.isArray()) {
+            Class<?> component = c.getComponentType();
+            try {
+                int n = __len__();
+                PyArray array = new PyArray(component, n);
+                for (int i = 0; i < n; i++) {
+                    PyObject o = __getitem__(i);
+                    array.set(i, o);
+                }
+                return array.getArray();
+            } catch (Throwable t) {
+                // ok
+            }
+        }
 
         return Py.NoConversion;
     }
