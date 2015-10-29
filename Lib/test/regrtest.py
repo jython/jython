@@ -347,9 +347,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         tests = []
         fp = open(fromfile)
         for line in fp:
-            guts = line.split() # assuming no test has whitespace in its name
-            if guts and not guts[0].startswith('#'):
-                tests.extend(guts)
+            # Potentially multiple names and a comment on one line of the file
+            trunc_line = line.split('#', 1)[0]
+            tests.extend(trunc_line.split())
         fp.close()
 
     # Strip .py extensions.
@@ -500,7 +500,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         os.system("leaks %d" % os.getpid())
 
     if memo:
-        savememo(memo,good,failures,bad,skips,skipped,allran,resource_denieds)
+        savememo(memo, good, failures, bad, skips, skipped, allran, resource_denieds)
 
     sys.exit(surprises > 0)
 
@@ -1409,9 +1409,8 @@ conditional_support = {'test_dbm':'dbm',
 
 for test_module in conditional_support:
     _expectations[_platform] += \
-        skip_conditional_support(test_module,conditional_support[test_module])
+        skip_conditional_support(test_module, conditional_support[test_module])
 
-   
 
 class _ExpectedSkips:
     def __init__(self):
@@ -1525,18 +1524,18 @@ class _ExpectedFailures(_ExpectedSkips):
             self.expected = set(self.split_commented(s))
             self.valid = True
 
-def savememo(memo,good,failures,bad,skips,skipped,allran, resource_denieds):
+def savememo(memo, good, failures, bad, skips, skipped, allran, resource_denieds):
     f = open(memo,'w')
     try:
-        for n,l in [('good',good),('bad',bad),('skipped',skipped)]:
+        for n,l in [('good',good), ('bad',bad), ('skipped',skipped)]:
             print >>f,"%s = [" % n
             for x in l:
                 print >>f,"    %r," % x
             print >>f," ]"
         print >>f, count(len(skipped), "test"), "skipped:"
-        countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds,f)
+        countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds, f)
         print >>f, count(len(bad), "test"), "failed:"
-        countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds,f)
+        countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds, f)
         import platform
         print >>f, "Platform: "
         print >>f, "    %r" % platform.platform()
