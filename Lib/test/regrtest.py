@@ -217,11 +217,11 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hvqxsSrf:lu:t:TD:NLR:wM:em:j:',
                                    ['help', 'verbose', 'quiet', 'exclude',
-                                    'single', 'slow', 'random', 'fromfile',
+                                    'single', 'slow', 'random', 'fromfile=',
                                     'findleaks', 'use=', 'threshold=', 'trace',
                                     'coverdir=', 'nocoverdir', 'runleaks',
                                     'huntrleaks=', 'verbose2', 'memlimit=',
-                                    'expected', 'memo'
+                                    'expected', 'memo=', 'junit-xml='
                                     ])
     except getopt.error, msg:
         usage(2, msg)

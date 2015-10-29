@@ -137,7 +137,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="junit.reports" value="${dist.dir}/testreports" />
         <property name="junit.htmlreports" value="${dist.dir}/test-html-reports" />
 
-
         <!-- classpaths -->
         <path id="main.classpath">
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
@@ -469,9 +468,8 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
         -->
-
     </target>
- 
+
     <target name="compile" depends="init,antlr_gen,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
@@ -1061,6 +1059,39 @@ The readme text for the next release will be like:
             <arg value="${junit.reports}"/>
             <arg value="--use"/>
             <arg value="network,subprocess"/>
+        </exec>
+    </target>
+
+    <target name="regrtest-file"
+        depends="developer-build,regrtest-unix-file,regrtest-windows-file"
+        description="run Python tests specified in file regr.tests"/>
+
+    <target name="regrtest-unix-file" if="os.family.unix">
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <arg value="--junit-xml"/>
+            <arg value="${junit.reports}"/>
+            <!-- <arg value="-v"/> -->
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+            <!-- Only run the tests specified in the named file -->
+            <arg value="--fromfile"/>
+            <arg value="${jython.base.dir}/regr.tests"/>
+        </exec>
+    </target>
+
+    <target name="regrtest-windows-file" if="os.family.windows">
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <arg value="--junit-xml"/>
+            <arg value="${junit.reports}"/>
+            <!-- <arg value="-v"/> -->
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+            <!-- Only run the tests specified in the named file -->
+            <arg value="--fromfile"/>
+            <arg value="${jython.base.dir}/regr.tests"/>
         </exec>
     </target>
 
