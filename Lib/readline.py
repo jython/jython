@@ -95,7 +95,7 @@ def redisplay():
     _reader.redrawLine()
 
 def set_startup_hook(function=None):
-    _console.startup_hook = function
+    _console.startupHook = function
 
 def set_pre_input_hook(function=None):
     warn("set_pre_input_hook %s" % (function,), NotImplementedWarning, stacklevel=2)
