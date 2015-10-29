@@ -35,7 +35,8 @@ __all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
            "verbose", "use_resources", "max_memuse", "record_original_stdout",
            "get_original_stdout", "unload", "unlink", "rmtree", "forget",
            "is_resource_enabled", "requires", "find_unused_port", "bind_port",
-           "fcmp", "have_unicode", "is_jython", "TESTFN", "HOST", "FUZZ",
+           "fcmp", "have_unicode", "is_jython", "is_jython_nt",
+           "TESTFN", "HOST", "FUZZ",
            "SAVEDCWD", "temp_cwd", "findfile", "sortdict", "check_syntax_error",
            "open_urlresource", "check_warnings", "check_py3k_warnings",
            "CleanImport", "EnvironmentVarGuard", "captured_output",
@@ -46,6 +47,11 @@ __all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
            "check_impl_detail", "get_attribute", "py3k_bytes",
            "import_fresh_module", "threading_cleanup", "reap_children",
            "strip_python_stderr"]
+
+
+# We use these extensively in adapting the regression tests for Jython
+is_jython = sys.platform.startswith('java')
+is_jython_nt = is_jython and (os._name == 'nt')
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -188,7 +194,7 @@ def unload(name):
     except KeyError:
         pass
 
-if sys.platform.startswith("win") or (os.name == "java" and os._name == "nt"):
+if sys.platform.startswith("win") or is_jython_nt:
     def _waitfor(func, pathname, waitall=False):
         # Peform the operation
         func(pathname)
@@ -426,14 +432,13 @@ try:
 except NameError:
     have_unicode = False
 
-is_jython = sys.platform.startswith('java')
 if is_jython:
     def make_jar_classloader(jar):
         import os
         from java.net import URL, URLClassLoader
 
         url = URL('jar:file:%s!/' % jar)
-        if os._name == 'nt':
+        if is_jython_nt:
             # URLJarFiles keep a cached open file handle to the jar even
             # after this ClassLoader is GC'ed, disallowing Windows tests
             # from removing the jar file from disk when finished with it
@@ -447,7 +452,7 @@ if is_jython:
         return URLClassLoader([url])
 
 # Filename used for testing
-if os.name == 'java':
+if is_jython:
     # Jython disallows @ in module names
     TESTFN = '$test'
 elif os.name == 'riscos':
