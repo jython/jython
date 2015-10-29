@@ -1204,7 +1204,8 @@ _expectations = {
         """,
     'java':
         """
-        # Not supportable on Java, or at least requires additional emulation in Jython
+        # Not supportable on Java, or at least requires additional emulation 
+        # in Jython
         test__locale
         test__rawffi
         test_aepack
@@ -1222,8 +1223,12 @@ _expectations = {
         test_closuregen
         test_ctypes
         test_dl
+        test_dummy_threading # skip unexpected; cannot import _newFunctionThread
         test_fcntl
         test_fork1
+        # Rare failures depending on timing of Java gc
+        # If frequency increases should exclude + fix + reinclude
+        # test_gc
         test_gdb
         test_gdbm
         test_getargs2
@@ -1269,6 +1274,9 @@ _expectations = {
         test_winsound
         test_zipfile64
 
+        # Not yet Jython 3.x
+        test_lib2to3
+
         # Could rewrite these tests
         test_descr
         test_epoll
@@ -1289,10 +1297,24 @@ _expectations = {
         # Requires Python bytecode compilation support
         test_longexp
 
+        # No module named _multibytecodec
+        test_multibytecodec 
+
+        # No module named _testcapi
+        test_ucn
+
+        # Requires servlet
+        test___all__
+
         # Nonreliable tests
         test_asynchat
         test_asyncore
+        test_logging
+        test_select
         test_select_new
+
+        # Rare failures observed on timing tests but often passes
+        test_threading
 
         # Command line testing is hard for Jython to do, but revisit
         test_cmd_line_script
@@ -1308,8 +1330,6 @@ _expectations = {
         test_sys_setprofile  # revisit for GC
         test_sys_settrace    # revisit for line jumping
 
-        # Not yet Jython 3.x
-        test_lib2to3
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
@@ -1333,21 +1353,32 @@ _failures = {
         test_codecmaps_tw
         test_compiler
         test_dis
-        test_dummy_threading
         test_eof
         test_frozen  # not meaningful for Jython, although it is similar to Clamp singlejar
-        test_gc      # test_gc_jy replaces this
         test_iterlen
-        test_multibytecodec
-        test_multibytecodec_support
         test_peepholer
         test_pyclbr
         test_pyexpat
         test_stringprep
         test_threadsignals
         test_transformer
-        test_ucn
         test_zipimport
+        # fails on Windows standalone, probably shouldn't
+        test_file2k
+        test_httpservers
+        test_netrc
+        test_runpy
+        test_shutil   # Operation not permitted errors
+        test_socket
+        test_sys
+        test_tarfile
+        test_urllib2
+        test_zipfile
+        # fails on Windows standalone too, but more embarassing as java specific
+        test_os_jy
+        test_subprocess_jy
+        # passes standalone on Windows but fails in full regrtest
+        test_sys_jy
         """,
 }
 
