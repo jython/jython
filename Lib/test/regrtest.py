@@ -1204,8 +1204,7 @@ _expectations = {
         """,
     'java':
         """
-        # Not supportable on Java, or at least requires additional emulation 
-        # in Jython
+        # These always skip (e.g. fail to import a certain module).
         test__locale
         test__rawffi
         test_aepack
@@ -1220,15 +1219,12 @@ _expectations = {
         test_capi
         test_cd
         test_cl
-        test_closuregen
-        test_ctypes
+        test_closuregen        # cannot import name verify
+        test_ctypes            # cannot import name verify
         test_dl
-        test_dummy_threading # skip unexpected; cannot import _newFunctionThread
+        test_dummy_threading   # cannot import _newFunctionThread
         test_fcntl
         test_fork1
-        # Rare failures depending on timing of Java gc
-        # If frequency increases should exclude + fix + reinclude
-        # test_gc
         test_gdb
         test_gdbm
         test_getargs2
@@ -1238,7 +1234,6 @@ _expectations = {
         test_imgfile
         test_ioctl
         test_kqueue
-        test_largefile
         test_linuxaudiodev
         test_macfs
         test_macostools
@@ -1250,7 +1245,6 @@ _expectations = {
         test_openpty
         test_ossaudiodev
         test_parser
-        test_plistlib
         test_pty
         test_resource
         test_rgbimg
@@ -1259,77 +1253,37 @@ _expectations = {
         test_strop
         test_structmembers
         test_sunaudiodev
-        test_sundry
         test_symtable
         test_tcl
         test_tk
         test_tools
         test_ttk_guionly
         test_ttk_textonly
-        test_unicode_file
-        test_wait3
-        test_wait4
+        test_unicode_file      # cannot import name TESTFN_UNICODE
+        test_wait3             # os.fork not defined
+        test_wait4             # os.fork not defined
         test_wave
         test_winreg
         test_winsound
-        test_zipfile64
+        test_zipfile64         # requires bogus resource "extralargefile"
 
         # Not yet Jython 3.x
         test_lib2to3
 
         # Could rewrite these tests
-        test_descr
-        test_epoll
-        test_poll
-        test_profile
-        test_struct
+        test_descr             # cannot import name verify
+        test_epoll             # test works only on Linux 2.6
+        test_poll              # cannot import name TestSkipped
+        test_struct            # cannot import name verify
 
-        # The following tests cause issues for tests that are subsequently run
-        test_distutils
-        test_email_codecs
-        test_io
         test_locale
 
         # Should fix these tests so they are not hardcoded for CPython pyc files
         test_compileall
-        test_pydoc
+        test_longexp           # Requires Python bytecode compilation support
 
-        # Requires Python bytecode compilation support
-        test_longexp
-
-        # No module named _multibytecodec
-        test_multibytecodec 
-
-        # No module named _testcapi
-        test_ucn
-
-        # Requires servlet
-        test___all__
-
-        # Nonreliable tests
-        test_asynchat
-        test_asyncore
-        test_logging
-        test_select
-        test_select_new
-
-        # Rare failures observed on timing tests but often passes
-        test_threading
-
-        # Command line testing is hard for Jython to do, but revisit
-        test_cmd_line_script
-
-        # Tests that should work with socket-reboot, but currently hang
-        test_ftplib
-        test_httplib
-        test_poplib
-        test_smtplib
-        test_socket_ssl
-        test_telnetlib
-
-        test_sys_setprofile  # revisit for GC
-        test_sys_settrace    # revisit for line jumping
-
+        test_multibytecodec    # No module named _multibytecodec
+        test_ucn               # No module named _testcapi
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
@@ -1345,9 +1299,7 @@ _failures = {
         test_codecencodings_iso2022
         test_codecencodings_jp
         test_codecencodings_kr
-        test_codecencodings_tw
         test_codecmaps_cn
-        test_codecmaps_hk
         test_codecmaps_jp
         test_codecmaps_kr
         test_codecmaps_tw
@@ -1359,26 +1311,53 @@ _failures = {
         test_peepholer
         test_pyclbr
         test_pyexpat
-        test_stringprep
+        test_stringprep # UnicodeDecodeError
         test_threadsignals
         test_transformer
         test_zipimport
+
         # fails on Windows standalone, probably shouldn't
-        test_file2k
-        test_httpservers
-        test_netrc
-        test_runpy
-        test_shutil   # Operation not permitted errors
-        test_socket
-        test_sys
-        test_tarfile
-        test_urllib2
+        test_netrc             # KeyError: 'foo.domain.com'
+        test_runpy             # OSError: unlink()
+        test_shutil            # Operation not permitted errors
+        test_urllib2           # file not on local host (likely Windows only)
         test_zipfile
+
         # fails on Windows standalone too, but more embarassing as java specific
-        test_os_jy
+        test_os_jy             # Locale tests run and fail on Cygwin
         test_subprocess_jy
-        # passes standalone on Windows but fails in full regrtest
-        test_sys_jy
+        test_sys_jy            # OSError handling wide-character filename
+
+        test_asyncore 
+        test_compileall
+        test_distutils
+        test_email_codecs
+        test_largefile         # [Errno 9] Bad file descriptor
+        test_locale
+        test_profile
+        test_pydoc             # Hangs with prompt (Windows)
+        test_select            # Unconnected client socket should be selectable
+        test_sundry            # ImportError: No module named audiodev
+
+        test_sys_setprofile    # revisit for GC
+        test_sys_settrace      # revisit for line jumping
+
+        # Unreliable tests 
+        test_asynchat
+        test_gc                # Rare failures depending on timing of Java gc
+        test_logging
+        test_select_new
+        test_socket            # flakey (Windows)
+        test_tarfile           # flakey (Windows)
+        test_threading
+        test_urllib2net        # unexpected output makes this a failure to regrtest.py
+
+        # Tests that should work with socket-reboot, but currently fail/hang
+        test_ftplib            # NoSuchElementException ssl
+        test_httplib
+        test_poplib            # 'NoneType' is not iterable
+        test_smtplib
+
         """,
 }
 
