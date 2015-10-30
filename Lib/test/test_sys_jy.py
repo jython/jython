@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from test import test_support
+from test.test_support import is_jython, is_jython_nt
 
 class SysTest(unittest.TestCase):
 
@@ -22,7 +23,7 @@ class SysTest(unittest.TestCase):
             self.assertEquals(str(e), "leaving now")
 
     def test_tuple_args(self):
-        "Exceptions raised unpacking tuple args have right line number"
+        # Exceptions raised unpacking tuple args have right line number
         def tuple_args( (x,y) ): pass
         try:
             tuple_args( 10 )
@@ -193,6 +194,7 @@ class SysEncodingTest(unittest.TestCase):
     # Adapted from CPython 2.7 test_sys to exercise setting Jython registry
     # values related to encoding and error policy.
 
+    @unittest.skipIf(is_jython_nt, "FIXME: fails probably due to issue 2312")
     def test_ioencoding(self):  # adapted from CPython v2.7 test_sys
         import subprocess, os
         env = dict(os.environ)
@@ -243,9 +245,8 @@ class SysEncodingTest(unittest.TestCase):
 
 class SysArgvTest(unittest.TestCase):
 
-    @unittest.skipIf(os._name == "nt", "FIXME should work on Windows")
     def test_unicode_argv(self):
-        """Unicode roundtrips successfully through sys.argv arguments"""
+        # Unicode roundtrips successfully through sys.argv arguments
         zhongwen = u'\u4e2d\u6587'
         with test_support.temp_cwd(name=u"tempcwd-%s" % zhongwen):
             p = subprocess.Popen(

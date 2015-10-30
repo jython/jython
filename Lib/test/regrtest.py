@@ -217,11 +217,11 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hvqxsSrf:lu:t:TD:NLR:wM:em:j:',
                                    ['help', 'verbose', 'quiet', 'exclude',
-                                    'single', 'slow', 'random', 'fromfile',
+                                    'single', 'slow', 'random', 'fromfile=',
                                     'findleaks', 'use=', 'threshold=', 'trace',
                                     'coverdir=', 'nocoverdir', 'runleaks',
                                     'huntrleaks=', 'verbose2', 'memlimit=',
-                                    'expected', 'memo'
+                                    'expected', 'memo=', 'junit-xml='
                                     ])
     except getopt.error, msg:
         usage(2, msg)
@@ -347,9 +347,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         tests = []
         fp = open(fromfile)
         for line in fp:
-            guts = line.split() # assuming no test has whitespace in its name
-            if guts and not guts[0].startswith('#'):
-                tests.extend(guts)
+            # Potentially multiple names and a comment on one line of the file
+            trunc_line = line.split('#', 1)[0]
+            tests.extend(trunc_line.split())
         fp.close()
 
     # Strip .py extensions.
@@ -500,7 +500,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         os.system("leaks %d" % os.getpid())
 
     if memo:
-        savememo(memo,good,failures,bad,skips,skipped,allran,resource_denieds)
+        savememo(memo, good, failures, bad, skips, skipped, allran, resource_denieds)
 
     sys.exit(surprises > 0)
 
@@ -1204,7 +1204,7 @@ _expectations = {
         """,
     'java':
         """
-        # Not supportable on Java, or at least requires additional emulation in Jython
+        # These always skip (e.g. fail to import a certain module).
         test__locale
         test__rawffi
         test_aepack
@@ -1219,9 +1219,10 @@ _expectations = {
         test_capi
         test_cd
         test_cl
-        test_closuregen
-        test_ctypes
+        test_closuregen        # cannot import name verify
+        test_ctypes            # cannot import name verify
         test_dl
+        test_dummy_threading   # cannot import _newFunctionThread
         test_fcntl
         test_fork1
         test_gdb
@@ -1233,7 +1234,6 @@ _expectations = {
         test_imgfile
         test_ioctl
         test_kqueue
-        test_largefile
         test_linuxaudiodev
         test_macfs
         test_macostools
@@ -1245,7 +1245,6 @@ _expectations = {
         test_openpty
         test_ossaudiodev
         test_parser
-        test_plistlib
         test_pty
         test_resource
         test_rgbimg
@@ -1254,62 +1253,37 @@ _expectations = {
         test_strop
         test_structmembers
         test_sunaudiodev
-        test_sundry
         test_symtable
         test_tcl
         test_tk
         test_tools
         test_ttk_guionly
         test_ttk_textonly
-        test_unicode_file
-        test_wait3
-        test_wait4
+        test_unicode_file      # cannot import name TESTFN_UNICODE
+        test_wait3             # os.fork not defined
+        test_wait4             # os.fork not defined
         test_wave
         test_winreg
         test_winsound
-        test_zipfile64
+        test_zipfile64         # requires bogus resource "extralargefile"
+
+        # Not yet Jython 3.x
+        test_lib2to3
 
         # Could rewrite these tests
-        test_descr
-        test_epoll
-        test_poll
-        test_profile
-        test_struct
+        test_descr             # cannot import name verify
+        test_epoll             # test works only on Linux 2.6
+        test_poll              # cannot import name TestSkipped
+        test_struct            # cannot import name verify
 
-        # The following tests cause issues for tests that are subsequently run
-        test_distutils
-        test_email_codecs
-        test_io
         test_locale
 
         # Should fix these tests so they are not hardcoded for CPython pyc files
         test_compileall
-        test_pydoc
+        test_longexp           # Requires Python bytecode compilation support
 
-        # Requires Python bytecode compilation support
-        test_longexp
-
-        # Nonreliable tests
-        test_asynchat
-        test_asyncore
-        test_select_new
-
-        # Command line testing is hard for Jython to do, but revisit
-        test_cmd_line_script
-
-        # Tests that should work with socket-reboot, but currently hang
-        test_ftplib
-        test_httplib
-        test_poplib
-        test_smtplib
-        test_socket_ssl
-        test_telnetlib
-
-        test_sys_setprofile  # revisit for GC
-        test_sys_settrace    # revisit for line jumping
-
-        # Not yet Jython 3.x
-        test_lib2to3
+        test_multibytecodec    # No module named _multibytecodec
+        test_ucn               # No module named _testcapi
         """
 }
 _expectations['freebsd5'] = _expectations['freebsd4']
@@ -1325,29 +1299,65 @@ _failures = {
         test_codecencodings_iso2022
         test_codecencodings_jp
         test_codecencodings_kr
-        test_codecencodings_tw
         test_codecmaps_cn
-        test_codecmaps_hk
         test_codecmaps_jp
         test_codecmaps_kr
         test_codecmaps_tw
         test_compiler
         test_dis
-        test_dummy_threading
         test_eof
         test_frozen  # not meaningful for Jython, although it is similar to Clamp singlejar
-        test_gc      # test_gc_jy replaces this
         test_iterlen
-        test_multibytecodec
-        test_multibytecodec_support
         test_peepholer
         test_pyclbr
         test_pyexpat
-        test_stringprep
+        test_stringprep # UnicodeDecodeError
         test_threadsignals
         test_transformer
-        test_ucn
         test_zipimport
+
+        # fails on Windows standalone, probably shouldn't
+        test_netrc             # KeyError: 'foo.domain.com'
+        test_runpy             # OSError: unlink()
+        test_shutil            # Operation not permitted errors
+        test_urllib2           # file not on local host (likely Windows only)
+        test_zipfile
+
+        # fails on Windows standalone too, but more embarassing as java specific
+        test_os_jy             # Locale tests run and fail on Cygwin
+        test_subprocess_jy
+        test_sys_jy            # OSError handling wide-character filename
+
+        test_asyncore 
+        test_compileall
+        test_distutils
+        test_email_codecs
+        test_largefile         # [Errno 9] Bad file descriptor
+        test_locale
+        test_profile
+        test_pydoc             # Hangs with prompt (Windows)
+        test_select            # Unconnected client socket should be selectable
+        test_sundry            # ImportError: No module named audiodev
+
+        test_sys_setprofile    # revisit for GC
+        test_sys_settrace      # revisit for line jumping
+
+        # Unreliable tests 
+        test_asynchat
+        test_gc                # Rare failures depending on timing of Java gc
+        test_logging
+        test_select_new
+        test_socket            # flakey (Windows)
+        test_tarfile           # flakey (Windows)
+        test_threading
+        test_urllib2net        # unexpected output makes this a failure to regrtest.py
+
+        # Tests that should work with socket-reboot, but currently fail/hang
+        test_ftplib            # NoSuchElementException ssl
+        test_httplib
+        test_poplib            # 'NoneType' is not iterable
+        test_smtplib
+
         """,
 }
 
@@ -1378,9 +1388,8 @@ conditional_support = {'test_dbm':'dbm',
 
 for test_module in conditional_support:
     _expectations[_platform] += \
-        skip_conditional_support(test_module,conditional_support[test_module])
+        skip_conditional_support(test_module, conditional_support[test_module])
 
-   
 
 class _ExpectedSkips:
     def __init__(self):
@@ -1494,18 +1503,18 @@ class _ExpectedFailures(_ExpectedSkips):
             self.expected = set(self.split_commented(s))
             self.valid = True
 
-def savememo(memo,good,failures,bad,skips,skipped,allran, resource_denieds):
+def savememo(memo, good, failures, bad, skips, skipped, allran, resource_denieds):
     f = open(memo,'w')
     try:
-        for n,l in [('good',good),('bad',bad),('skipped',skipped)]:
+        for n,l in [('good',good), ('bad',bad), ('skipped',skipped)]:
             print >>f,"%s = [" % n
             for x in l:
                 print >>f,"    %r," % x
             print >>f," ]"
         print >>f, count(len(skipped), "test"), "skipped:"
-        countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds,f)
+        countsurprises(skips, skipped, 'skip', 'ran', allran, resource_denieds, f)
         print >>f, count(len(bad), "test"), "failed:"
-        countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds,f)
+        countsurprises(failures, bad, 'fail', 'passed', allran, resource_denieds, f)
         import platform
         print >>f, "Platform: "
         print >>f, "    %r" % platform.platform()

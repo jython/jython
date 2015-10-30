@@ -44,7 +44,7 @@ Actions for a release
 ---------------------
 See http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
 
-        	
+
 An example ant.properties file:
 -------------------------------
 
@@ -137,7 +137,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="junit.reports" value="${dist.dir}/testreports" />
         <property name="junit.htmlreports" value="${dist.dir}/test-html-reports" />
 
-
         <!-- classpaths -->
         <path id="main.classpath">
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
@@ -222,18 +221,20 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="work.dir" value="${basedir}/../full_build/work" />
         <property name="checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${checkout.dir}/${hg.code.dir}" />
-    	<!-- set has.repositories.connection to false in ant.properties if you want to skip checkout -->
+        <!-- set has.repositories.connection to false in ant.properties if you want to skip checkout -->
         <property name="has.repositories.connection" value="true" />
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
 
     </target>
+
     <target name="full-check" depends="full-preinit, init, dump-env">
         <!-- Require all of the optional jars for a full build -->
         <fail unless="informix.present" message="informix jar not present" />
         <fail unless="oracle.present" message="oracle jar not present" />
     </target>
+
     <target name="dump-env" depends="init">
         <echo>.</echo>
         <echo>Build environment for ${ant.project.name}</echo>
@@ -306,7 +307,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         </delete>
     </target>
 
-
     <!-- clean checkout.dir if we really checkout -->
     <target name="clean-checkout-dir" if="do.checkout">
         <delete includeemptydirs="true" failonerror="false">
@@ -321,7 +321,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
              the tokens defined in Python.g (and cleans make the build slow) -->
         <antcall target="clean"/>
     </target>
-    
+
     <!-- create output directories -->
     <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed">
         <mkdir dir="${compile.dir}" />
@@ -420,7 +420,7 @@ jython.build.hg_version=${build.hg.version}</echo>
 
 This is a snapshot build.
 It reflects the current development status.
-				
+
 The readme text for the next release will be like:
 
             </replacevalue>
@@ -443,8 +443,7 @@ The readme text for the next release will be like:
     <target name="template" depends="checkout, template-init">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
             classpath="${compile.dir}" />
-        <gentempl srcdir="${templates.dir}" verbose="true"
-		  lazy="${templates.lazy}"/>
+        <gentempl srcdir="${templates.dir}" verbose="true" lazy="${templates.lazy}"/>
     </target>
 
     <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
@@ -460,7 +459,7 @@ The readme text for the next release will be like:
             <arg file="${jython.base.dir}/grammar/PythonPartial.g"/>
             <classpath refid="main.classpath"/>
         </java>
-        
+
         <!-- copy the .tokens to /grammar, for usage in ANTLRWorks -->
         <!--
         <copy todir="grammar" preservelastmodified="true">
@@ -469,9 +468,8 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
         -->
-
     </target>
- 
+
     <target name="compile" depends="init,antlr_gen,brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
@@ -535,9 +533,9 @@ The readme text for the next release will be like:
         <!-- grammar must now be up to date -->
         <property name="antlr.notneeded" value="true" />
 
-	<copy todir="${compile.dir}/META-INF/services">
-	    <fileset dir="${source.dir}/META-INF/services" />
-	</copy>
+        <copy todir="${compile.dir}/META-INF/services">
+            <fileset dir="${source.dir}/META-INF/services" />
+        </copy>
     </target>
 
     <!--
@@ -579,12 +577,12 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-5.0.3.jar"/>
             <zipfileset src="extlibs/asm-util-5.0.3.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-	    <zipfileset src="extlibs/bcpkix-jdk15on-150.jar" excludes="META-INF/**"/>
-	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-	    <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/**"/>
-	    <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-	    <zipfileset src="extlibs/commons-compress-1.9.jar"/>
-	    <rule pattern="org.apache.**" result="org.python.apache.@1"/>
+            <zipfileset src="extlibs/bcpkix-jdk15on-150.jar" excludes="META-INF/**"/>
+            <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
+            <zipfileset src="extlibs/bcprov-jdk15on-150.jar" excludes="META-INF/**"/>
+            <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
+            <zipfileset src="extlibs/commons-compress-1.9.jar"/>
+            <rule pattern="org.apache.**" result="org.python.apache.@1"/>
             <zipfileset src="extlibs/guava-18.0.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-54_1_1.jar"/>
@@ -619,8 +617,8 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <zipfileset src="extlibs/jffi-1.2.7.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.0.4.jar"/>
-	    <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.4.jar"/>
-	    <zipfileset src="${extlibs.dir}/jnr-posix-3.0.17.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.4.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.0.17.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-constants-0.8.8.jar"/>
             <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
@@ -649,9 +647,9 @@ The readme text for the next release will be like:
     <target name="jar-standalone" depends="jar-complete">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
         <jar destfile="${dist.dir}/${jython.standalone.jar}">
-	  <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
-	  <fileset dir="${dist.dir}" includes="Lib/**" excludes="Lib/test/**" />
-          <manifest>
+            <zipfileset src="${dist.dir}/${jython.deploy.jar}"/>
+            <fileset dir="${dist.dir}" includes="Lib/**" excludes="Lib/test/**" />
+            <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
@@ -665,7 +663,7 @@ The readme text for the next release will be like:
                     <attribute name="debug" value="${debug}" />
                 </section>
             </manifest>
-	</jar>
+        </jar>
     </target>
 
     <target name="jar" depends="compile,expose">
@@ -713,7 +711,7 @@ The readme text for the next release will be like:
         <javadoc sourcepath="${source.dir}" 
                  destdir="${apidoc.dir}"
                  source="${jdk.source.version}"
-		 maxmemory="1024m"
+                 maxmemory="1024m"
                  public="true"
                  breakiterator="yes"
                  packagenames="org.python.core.*, org.python.util.*, org.python.modules.*, com.ziclix.python.sql, com.xhaus.modjy"
@@ -862,8 +860,8 @@ The readme text for the next release will be like:
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${compile.dir}">
-            	<include name="org/python/util/install/**/*.class" />
-            	<include name="org/apache/commons/cli/*.class" />
+                <include name="org/python/util/install/**/*.class" />
+                <include name="org/apache/commons/cli/*.class" />
             </fileset>
         </copy>
         <copy file="${installer.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
@@ -913,8 +911,11 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest" description="run all the tests"/>
-    <target name="singlejavatest" depends="compile,expose" description="run a single JUnit test (specify with -Dtest=classname)">
+    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest"
+        description="run all the tests"/>
+
+    <target name="singlejavatest" depends="compile,expose"
+        description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
             <sysproperty key="python.cachedir.skip" value="true"/>
@@ -925,13 +926,16 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+
     <target name="prepare-test" depends="init">
         <!-- Clean any old test output -->
         <delete dir="${junit.reports}"/>
     </target>
+
     <target name="javatest" depends="javatest-basepath,importest"
             description="run all the JUnit tests">
     </target>
+
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
@@ -952,6 +956,7 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+
     <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
@@ -969,6 +974,7 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+
     <target name="idxtest" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true" showoutput="true">
@@ -990,6 +996,7 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+
     <!-- XXX: how do I share common stuff with "idxtest" target? -->
     <target name="idxtest-debug" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
@@ -1013,40 +1020,79 @@ The readme text for the next release will be like:
             </batchtest>
         </junit>
     </target>
+
     <target name="modjytest" depends="developer-build">
         <ant dir="tests/modjy">
             <property name="jython_home" value="${dist.dir}"/>
             <property name="mockrunner_home" value="${extlibs.dir}/mockrunner-0.4.1"/>
         </ant>
     </target>
+
     <target name="launchertest" depends="developer-build" if="os.family.unix">
       <exec executable="${test.shell.dir}/test-jython.sh">
         <arg value="${dist.dir}"/>
       </exec>
     </target>
-    <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows" description="run Python tests expected to work on Jython"/>
+
+    <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"
+        description="run Python tests expected to work on Jython"/>
+
     <target name="regrtest-unix" if="os.family.unix">
-      <exec executable="${dist.dir}/bin/jython">
-	<env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
-        <arg value="${dist.dir}/Lib/test/regrtest.py"/>
-        <!-- Only run the tests that are expected to work on Jython -->
-        <arg value="--expected"/>
-        <arg value="-j"/>
-        <arg value="${junit.reports}"/>
-        <arg value="--use"/>
-	<arg value="network,subprocess"/>
-      </exec>
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <!-- Only run the tests that are expected to work on Jython -->
+            <arg value="--expected"/>
+            <arg value="-j"/>
+            <arg value="${junit.reports}"/>
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+        </exec>
     </target>
+
     <target name="regrtest-windows" if="os.family.windows">
-      <exec executable="${dist.dir}/bin/jython.exe">
-        <arg value="${dist.dir}/Lib/test/regrtest.py"/>
-        <!-- Only run the tests that are expected to work on Jython -->
-        <arg value="--expected"/>
-        <arg value="-j"/>
-        <arg value="${junit.reports}"/>
-        <arg value="--use"/>
-	<arg value="network,subprocess"/>
-      </exec>
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <!-- Only run the tests that are expected to work on Jython -->
+            <arg value="--expected"/>
+            <arg value="-j"/>
+            <arg value="${junit.reports}"/>
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+        </exec>
+    </target>
+
+    <target name="regrtest-file"
+        depends="developer-build,regrtest-unix-file,regrtest-windows-file"
+        description="run Python tests specified in file regr.tests"/>
+
+    <target name="regrtest-unix-file" if="os.family.unix">
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <arg value="--junit-xml"/>
+            <arg value="${junit.reports}"/>
+            <!-- <arg value="-v"/> -->
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+            <!-- Only run the tests specified in the named file -->
+            <arg value="--fromfile"/>
+            <arg value="${jython.base.dir}/regr.tests"/>
+        </exec>
+    </target>
+
+    <target name="regrtest-windows-file" if="os.family.windows">
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
+            <arg value="--junit-xml"/>
+            <arg value="${junit.reports}"/>
+            <!-- <arg value="-v"/> -->
+            <arg value="--use"/>
+            <arg value="network,subprocess"/>
+            <!-- Only run the tests specified in the named file -->
+            <arg value="--fromfile"/>
+            <arg value="${jython.base.dir}/regr.tests"/>
+        </exec>
     </target>
 
     <target name="regrtest-html-report" depends="init" description="generates HTML output out of regrtest JUnit XML">
@@ -1061,29 +1107,30 @@ The readme text for the next release will be like:
 
     <!-- run bugtests, create a config if necessary -->
     <target name="bugtest" depends="create-bugtest-config">
-         <java classname="org.python.util.jython" fork="true" dir="${bugtests.dir}">
+        <java classname="org.python.util.jython" fork="true" dir="${bugtests.dir}">
             <classpath>
                 <pathelement location="${dist.dir}/${jython.dev.jar}"/>
                 <fileset dir="${dist.dir}/javalib"/>
             </classpath>
             <jvmarg value="-Dpython.home=${dist.dir}"/>
             <arg value="driver.py"/>
-         	<!-- uncomment if you want to run only one test: -->
-         	<!--
-         	<arg value="386"/>
-         	-->
+            <!-- uncomment if you want to run only one test: -->
+            <!--
+            <arg value="386"/>
+            -->
         </java>
     </target>
 
     <!-- create support_config.py in the bugtset directory only if it doesn't already exist -->
-    <target name="create-bugtest-config" depends="init, check-bugtest-config" unless="have_bugtest_config">
+    <target name="create-bugtest-config" depends="init, check-bugtest-config"
+        unless="have_bugtest_config">
         <!-- doesn't seem to be a direct way to get at the path to javac,
         java.home points to the jre folder. The following assumes a standard
         jdk layout. Alternative is to try something like:
 
             <property environment="env"/>
             <property name="jdk.home" value="${env.JAVA_HOME}" />
-  
+
         or set jdk.home explicitly
         -->
         <echo>creating ${bugtests.dir}/support_config.py</echo>
