@@ -1292,7 +1292,7 @@ _expectations['freebsd7'] = _expectations['freebsd4']
 _expectations['freebsd8'] = _expectations['freebsd4']
 
 _failures = {
-    'java':
+    'java':     # Expected to fail on every OS
         """
         test_codecencodings_cn
         test_codecencodings_hk
@@ -1318,13 +1318,10 @@ _failures = {
 
         # fails on Windows standalone, probably shouldn't
         test_netrc             # KeyError: 'foo.domain.com'
-        test_runpy             # OSError: unlink()
         test_shutil            # Operation not permitted errors
-        test_urllib2           # file not on local host (likely Windows only)
         test_zipfile
 
         # fails on Windows standalone too, but more embarassing as java specific
-        test_os_jy             # Locale tests run and fail on Cygwin
         test_subprocess_jy
         test_sys_jy            # OSError handling wide-character filename
 
@@ -1357,20 +1354,21 @@ _failures = {
         test_httplib
         test_poplib            # 'NoneType' is not iterable
         test_smtplib
+        """,
 
+    'java.nt':     # Expected to fail on Windows
+        """
+        test_mailbox           # fails miserably and ruins other tests
+        test_os_jy             # Locale tests run and fail on Cygwin
+        test_popen             # http://bugs.python.org/issue1559298
+        test_runpy             # OSError: unlink()
+        test_urllib2           # file not on local host (likely Windows only)
         """,
 }
 
 _platform = sys.platform
 if _platform[:4] == 'java':
     _platform = 'java'
-    if os._name == 'nt':
-        # XXX: Omitted for now because it fails so miserably and ruins
-        # other tests
-        _failures['java'] += '\ntest_mailbox'
-        if ' ' in sys.executable:
-            # http://bugs.python.org/issue1559298
-            _failures['java'] += '\ntest_popen'
     if os._name != 'darwin':
         _expectations['java'] += '\ntest__osx_support'
     if os.name != 'posix':
@@ -1501,7 +1499,13 @@ class _ExpectedFailures(_ExpectedSkips):
         if _platform in _failures:
             s = _failures[_platform]
             self.expected = set(self.split_commented(s))
+            if test_support.is_jython:
+                # There may be a key like java.nt with extra entries
+                s = _failures.get('java.' + os._name)
+                if s:
+                    self.expected |= set(self.split_commented(s))
             self.valid = True
+
 
 def savememo(memo, good, failures, bad, skips, skipped, allran, resource_denieds):
     f = open(memo,'w')
