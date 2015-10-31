@@ -15,7 +15,6 @@ import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.sql.Date;
