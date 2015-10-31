@@ -306,7 +306,7 @@ public class PySet extends BaseSet {
         
     	for (PyObject other: args) {
     		if (other instanceof BaseSet) {
-    			__iand__(other);
+    			set___iand__(other);
     		} else {
     			BaseSet set = (BaseSet)baseset_intersection(other);
     			_set = set._set;
@@ -343,7 +343,7 @@ public class PySet extends BaseSet {
     	
     	for (PyObject other: args) {
     		if (other instanceof BaseSet) {
-    			__isub__(other);
+                set___isub__(other);
     		}
     		for (PyObject o : other.asIterable()) {
     			if (__contains__(o)) {
