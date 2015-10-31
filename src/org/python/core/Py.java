@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.sql.Date;
@@ -22,9 +23,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.CharMatcher;
@@ -2503,8 +2502,6 @@ public final class Py {
         }
     }
 
-    protected static Map<PyObject, py2JyClassCacheItem> py2JyClassCache = new HashMap<>();
-
     protected static PyObject ensureInterface(PyObject cls, Class<?> interfce) {
         PyObject pjc = PyType.fromClass(interfce);
         if (Py.isSubClass(cls, pjc)) {
@@ -2523,13 +2520,14 @@ public final class Py {
      *
      * @return a Python-class that extends {@code cls} and {@code interfce}
      */
-    public static PyObject javaPyClass(PyObject cls, Class<?> interfce) {
-        py2JyClassCacheItem cacheItem = py2JyClassCache.get(cls);
+    public static synchronized PyObject javaPyClass(PyObject cls, Class<?> interfce) {
+        py2JyClassCacheItem cacheItem = (py2JyClassCacheItem)
+                JyAttribute.getAttr(cls, JyAttribute.PYCLASS_PY2JY_CACHE_ATTR);
         PyObject result;
         if (cacheItem == null) {
             result = ensureInterface(cls, interfce);
             cacheItem = new py2JyClassCacheItem(interfce, result);
-            py2JyClassCache.put(cls, cacheItem);
+            JyAttribute.setAttr(cls, JyAttribute.PYCLASS_PY2JY_CACHE_ATTR, cacheItem);
         } else {
             result = cacheItem.get(interfce);
             if (result == null) {
@@ -2549,12 +2547,14 @@ public final class Py {
      * class on the fly.<br>
      * It automatically converts {@code args} to {@link org.python.core.PyObject}s.<br>
      * For keyword-support use
-     * {@link #newJavaObject(PyObject, Class, String[], Object...)}.
+     * {@link #newJ(PyObject, Class, String[], Object...)}.
      *
-     * {@see #newJavaObject(PyObject, Class, PyObject[], String[])}
-     * {@see #newJavaObject(PyObject, Class, String[], Object...)}
-     * {@see #newJavaObject(PyModule, Class, Object...)}
-     * {@see #newJavaObject(PyModule, Class, String[], Object...)}
+     * {@see #newJ(PyObject, Class, PyObject[], String[])}
+     * {@see #newJ(PyObject, Class, String[], Object...)}
+     * {@see #newJ(PyModule, Class, Object...)}
+     * {@see #newJ(PyModule, Class, String[], Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2562,7 +2562,7 @@ public final class Py {
      * @return an instance of cls in form of the interface jcls
      */
     @SuppressWarnings("unchecked")
-    public static <T> T newJavaObject(PyObject cls, Class<T> jcls, Object... args) {
+    public static <T> T newJ(PyObject cls, Class<T> jcls, Object... args) {
         PyObject cls2 = javaPyClass(cls, jcls);
         PyObject resultPy = cls2.__call__(Py.javas2pys(args));
         return (T) resultPy.__tojava__(jcls);
@@ -2577,10 +2577,12 @@ public final class Py {
      * class on the fly.<br>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJavaObject(PyObject, Class, Object...)}
-     * {@see #newJavaObject(PyObject, Class, String[], Object...)}
-     * {@see #newJavaObject(PyModule, Class, Object...)}
-     * {@see #newJavaObject(PyModule, Class, String[], Object...)}
+     * {@see #newJ(PyObject, Class, Object...)}
+     * {@see #newJ(PyObject, Class, String[], Object...)}
+     * {@see #newJ(PyModule, Class, Object...)}
+     * {@see #newJ(PyModule, Class, String[], Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2589,7 +2591,7 @@ public final class Py {
      * @return an instance of cls in form of the interface jcls
      */
     @SuppressWarnings("unchecked")
-    public static <T> T newJavaObject(PyObject cls, Class<T> jcls, PyObject[] args, String[] keywords) {
+    public static <T> T newJ(PyObject cls, Class<T> jcls, PyObject[] args, String[] keywords) {
         PyObject cls2 = javaPyClass(cls, jcls);
         PyObject resultPy = cls2.__call__(args, keywords);
         return (T) resultPy.__tojava__(jcls);
@@ -2605,10 +2607,12 @@ public final class Py {
      * It automatically converts {@code args} to {@link org.python.core.PyObject}s.<br>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJavaObject(PyObject, Class, PyObject[], String[])}
-     * {@see #newJavaObject(PyObject, Class, Object...)}
-     * {@see #newJavaObject(PyModule, Class, Object...)}
-     * {@see #newJavaObject(PyModule, Class, String[], Object...)}
+     * {@see #newJ(PyObject, Class, PyObject[], String[])}
+     * {@see #newJ(PyObject, Class, Object...)}
+     * {@see #newJ(PyModule, Class, Object...)}
+     * {@see #newJ(PyModule, Class, String[], Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2617,22 +2621,24 @@ public final class Py {
      * @return an instance of cls in form of the interface jcls
      */
     @SuppressWarnings("unchecked")
-    public static <T> T newJavaObject(PyObject cls, Class<T> jcls, String[] keywords, Object... args) {
+    public static <T> T newJ(PyObject cls, Class<T> jcls, String[] keywords, Object... args) {
         PyObject cls2 = javaPyClass(cls, jcls);
         PyObject resultPy = cls2.__call__(Py.javas2pys(args), keywords);
         return (T) resultPy.__tojava__(jcls);
     }
 
     /**
-     * Works like {@link #newJavaObject(PyObject, Class, Object...)}, but looks
+     * Works like {@link #newJ(PyObject, Class, Object...)}, but looks
      * up the Python-class in the module-dict using the interface-name, i.e.
      * {@code jcls.getSimpleName()}.<br>
-     * For keywords-support use {@link #newJavaObject(PyModule, Class, String[], Object...)}.
+     * For keywords-support use {@link #newJ(PyModule, Class, String[], Object...)}.
      *
-     * {@see #newJavaObject(PyModule, Class, String[], Object...)}
-     * {@see #newJavaObject(PyObject, Class, PyObject[], String[])}
-     * {@see #newJavaObject(PyObject, Class, Object...)}
-     * {@see #newJavaObject(PyObject, Class, String[], Object...)}
+     * {@see #newJ(PyModule, Class, String[], Object...)}
+     * {@see #newJ(PyObject, Class, PyObject[], String[])}
+     * {@see #newJ(PyObject, Class, Object...)}
+     * {@see #newJ(PyObject, Class, String[], Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
      *
      * @param module the module containing the desired class
      * @param jcls Java-type of the desired clas, must have the same name
@@ -2640,21 +2646,23 @@ public final class Py {
      * @return a new instance of the desired class
      */
     @SuppressWarnings("unchecked")
-    public static <T> T newJavaObject(PyModule module, Class<T> jcls, Object... args) {
+    public static <T> T newJ(PyModule module, Class<T> jcls, Object... args) {
         PyObject cls = module.__getattr__(jcls.getSimpleName().intern());
-        return newJavaObject(cls, jcls, args);
+        return newJ(cls, jcls, args);
     }
 
     /**
-     * Works like {@link #newJavaObject(PyObject, Class, String[], Object...)}, but looks
+     * Works like {@link #newJ(PyObject, Class, String[], Object...)}, but looks
      * up the Python-class in the module-dict using the interface-name, i.e.
      * {@code jcls.getSimpleName()}.<br>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJavaObject(PyModule, Class, Object...)}
-     * {@see #newJavaObject(PyObject, Class, PyObject[], String[])}
-     * {@see #newJavaObject(PyObject, Class, Object...)}
-     * {@see #newJavaObject(PyObject, Class, String[], Object...)}
+     * {@see #newJ(PyModule, Class, Object...)}
+     * {@see #newJ(PyObject, Class, PyObject[], String[])}
+     * {@see #newJ(PyObject, Class, Object...)}
+     * {@see #newJ(PyObject, Class, String[], Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, Object...)}
+     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
      *
      * @param module the module containing the desired class
      * @param jcls Java-type of the desired class, must have the same name
@@ -2663,9 +2671,9 @@ public final class Py {
      * @return a new instance of the desired class
      */
     @SuppressWarnings("unchecked")
-    public static <T> T newJavaObject(PyModule module, Class<T> jcls, String[] keywords, Object... args) {
+    public static <T> T newJ(PyModule module, Class<T> jcls, String[] keywords, Object... args) {
         PyObject cls = module.__getattr__(jcls.getSimpleName().intern());
-        return newJavaObject(cls, jcls, keywords, args);
+        return newJ(cls, jcls, keywords, args);
     }
 //----------------end of constructor-section------------------
 }

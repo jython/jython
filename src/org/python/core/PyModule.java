@@ -205,6 +205,48 @@ public class PyModule extends PyObject implements Traverseproc {
         }
     }
 
+    /**
+     * Delegates to {@link #newJ(PyModule, Class, Object...)}, .<br>
+     * For keywords-support use {@link #newJ(Class, String[], Object...)}.
+     *
+     * {@see #newJ(Class, String[], Object...)}
+     * {@see org.python.core.Py#newJ(PyModule, Class, Object...)}
+     * {@see org.python.core.Py#newJ(PyModule, Class, String[], Object...)}
+     * {@see org.python.core.Py#newJ(PyObject, Class, PyObject[], String[])}
+     * {@see org.python.core.Py#newJ(PyObject, Class, Object...)}
+     * {@see org.python.core.Py#newJ(PyObject, Class, String[], Object...)}
+     *
+     * @param module the module containing the desired class
+     * @param jcls Java-type of the desired clas, must have the same name
+     * @param args constructor-arguments
+     * @return a new instance of the desired class
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T newJ(Class<T> jcls, Object... args) {
+        return Py.newJ(this, jcls, args);
+    }
+
+    /**
+     * Delgates to {@link org.python.core.Py#newJ(PyModule, Class, String[], Object...)}.<br>
+     * {@code keywordss} are applied to the last {@code args} in the list.
+     *
+     * {@see #newJ(Class, Object...)}
+     * {@see org.python.core.Py#newJ(PyModule, Class, Object...)}
+     * {@see org.python.core.Py#newJ(PyModule, Class, String[], Object...)}
+     * {@see org.python.core.Py#newJ(PyObject, Class, PyObject[], String[])}
+     * {@see org.python.core.Py#newJ(PyObject, Class, Object...)}
+     * {@see org.python.core.Py#newJ(PyObject, Class, String[], Object...)}
+     *
+     * @param jcls Java-type of the desired class, must have the same name
+     * @param keywords are applied to the last {@code args} in the list
+     * @param args constructor-arguments
+     * @return a new instance of the desired class
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T newJ(Class<T> jcls, String[] keywords, Object... args) {
+        return Py.newJ(this, jcls, keywords, args);
+    }
+
 
     /* Traverseproc implementation */
     @Override

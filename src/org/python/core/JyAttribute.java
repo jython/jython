@@ -69,23 +69,29 @@ public abstract class JyAttribute implements Serializable {
     public static final byte WEAKREF_PENDING_GET_ATTR = 3;
 
     /**
+     * Only used internally by
+     * {@linkorg.python.core.Py#javaPyClass(PyObject, Class<?>)}
+     */
+    public static final byte PYCLASS_PY2JY_CACHE_ATTR = 4;
+
+    /**
      * Used by {@link org.python.modules.gc}-module to mark cyclic
      * trash. Searching for cyclic trash is usually not required
      * by Jython. It is only done if gc-features are enabled that
      * mimic CPython behavior.
      */
-    public static final byte GC_CYCLE_MARK_ATTR = 4;
+    public static final byte GC_CYCLE_MARK_ATTR = 5;
 
     /**
      * Used by {@link org.python.modules.gc}-module to mark
      * finalizable objects that might have been resurrected
      * during a delayed finalization process.
      */
-    public static final byte GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR = 5;
+    public static final byte GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR = 6;
 
     public static final byte FINALIZE_TRIGGER_ATTR = Byte.MAX_VALUE;
     private static byte nonBuiltinAttrTypeOffset = Byte.MIN_VALUE+1;
-    private static byte nonBuiltinTransientAttrTypeOffset = 6;
+    private static byte nonBuiltinTransientAttrTypeOffset = 7;
 
     /**
      * Reserves and returns a new non-transient attr type for custom use. 
