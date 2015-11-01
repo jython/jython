@@ -95,7 +95,7 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
     protected PyException unsupported(String op) {
         String fmt = "%s.%s() not supported";
         String msg = String.format(fmt, getType().fastGetName(), op);
-        return _io.UnsupportedOperation(msg);
+        return _jyio.UnsupportedOperation(msg);
     }
 
     @ExposedMethod(doc = "Internal: raise an exception for unsupported operations.")
@@ -437,7 +437,7 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
      * Return a file descriptor for the stream. A CPython file descriptor is an int, but this is not
      * the natural choice in Jython, since Java has no such convention of using integers. File
      * descriptors should be passed around opaquely, so their actual type is irrelevant, as long as
-     * (say) {@link _io#open(PyObject[], String[])} accepts the type that {@link FileIO#fileno()}
+     * (say) {@link _jyio#open(PyObject[], String[])} accepts the type that {@link FileIO#fileno()}
      * returns.
      *
      * @return a file descriptor (as opaque object)

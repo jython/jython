@@ -16,7 +16,7 @@ import org.python.core.io.IOBase;
 /**
  * The Python _io module implemented in Java.
  */
-public class _io implements ClassDictInit {
+public class _jyio implements ClassDictInit {
 
     /**
      * This method is called when the module is loaded, to populate the namespace (dictionary) of
@@ -26,7 +26,7 @@ public class _io implements ClassDictInit {
      * @param dict namespace of the module
      */
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("__name__", new PyString("_io"));
+        dict.__setitem__("__name__", new PyString("_jyio"));
         dict.__setitem__("__doc__", new PyString(__doc__));
         dict.__setitem__("DEFAULT_BUFFER_SIZE", DEFAULT_BUFFER_SIZE);
 

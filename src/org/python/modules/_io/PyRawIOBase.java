@@ -134,7 +134,7 @@ public class PyRawIOBase extends PyIOBase {
         PyObject readMethod = __getattr__("read");
 
         // Quite often, a single read operation will do the trick
-        PyObject prev = readMethod.__call__(_io.DEFAULT_BUFFER_SIZE);
+        PyObject prev = readMethod.__call__(_jyio.DEFAULT_BUFFER_SIZE);
 
         if (!prev.__nonzero__()) {
             // Nothing on the first read: that means we're done
@@ -142,7 +142,7 @@ public class PyRawIOBase extends PyIOBase {
 
         } else {
             // Try a second read
-            PyObject curr = readMethod.__call__(_io.DEFAULT_BUFFER_SIZE);
+            PyObject curr = readMethod.__call__(_jyio.DEFAULT_BUFFER_SIZE);
             if (!curr.__nonzero__()) {
                 // Nothing on the second read: the result is just the first one
                 return prev;
@@ -155,7 +155,7 @@ public class PyRawIOBase extends PyIOBase {
                 // Accumulate the current read result and get another, until we run out of bytes.
                 do {
                     list.add(curr);
-                    curr = readMethod.__call__(_io.DEFAULT_BUFFER_SIZE);
+                    curr = readMethod.__call__(_jyio.DEFAULT_BUFFER_SIZE);
                 } while (curr.__nonzero__());
 
                 // Stitch it all together

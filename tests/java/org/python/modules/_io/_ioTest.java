@@ -5,15 +5,10 @@ import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -24,7 +19,6 @@ import org.python.core.PyFile;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
-import org.python.core.imp;
 import org.python.core.io.RawIOBase;
 import org.python.util.PythonInterpreter;
 
@@ -78,7 +72,7 @@ public class _ioTest {
         interp.exec("import io");
 
         // There should be a helper function
-        PyException pye = _io.UnsupportedOperation("Message from _ioTest");
+        PyException pye = _jyio.UnsupportedOperation("Message from _ioTest");
         PyObject type = pye.type;
         String repr = type.toString();
         assertEquals("Class name", "<class '_io.UnsupportedOperation'>", repr);
@@ -102,7 +96,7 @@ public class _ioTest {
             interp.exec("raise _io.UnsupportedOperation()");
             fail("_io.UnsupportedOperation not raised when expected");
         } catch (PyException e) {
-            assertEquals(_io.UnsupportedOperation, e.type);
+            assertEquals(_jyio.UnsupportedOperation, e.type);
         }
     }
 
@@ -157,7 +151,7 @@ public class _ioTest {
         RawIOBase fd = (RawIOBase)pyfd.__tojava__(RawIOBase.class);
         PyObject[] args = new PyObject[] {pyfd, Py.newString(mode), Py.False};
         String[] kwds = {"closefd"};
-        PyObject file2 = _io.open(args, kwds);
+        PyObject file2 = _jyio.open(args, kwds);
         file2.invoke("close");
     }
 

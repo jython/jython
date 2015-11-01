@@ -1,14 +1,21 @@
-"""
-This is based on  _pyio.py from CPython 2.7 which is Python implementation of
+"""This is based on  _pyio.py from CPython 2.7 which is Python implementation of
 the io module. The upgrade from a 2.6-ish version accounts for the large
 number of changes made all at once.
 
-It is here to stand in for classes that should be provided by the _io module.
-In CPython 2.7, when client code imports io, that module imports a set of
-classes from _io and re-exports them as its own. In Jython, io.py imports
-those things from _jyio, which in turn imports from _io those so far
-implemented in Java. _jyio implements the rest here using nearly the same
-code as _pyio.
+It is here to stand in for classes that should be provided by the Java
+implementation of the _io module.  In CPython 2.7, when client code
+imports io, that module imports a set of classes from _io and
+re-exports them as its own. In Jython, io.py imports those things from
+_io, which in turn imports from _jyio those so far implemented in
+Java. Consequently _io implements the rest here using nearly the same
+code as _pyio. (Previous to Jython 2.7.1, the import was reversed:
+this specific Python-based module was named _jyio, and it imported
+from org.python.modules.io._io; although reasonable enough for Jython
+itself, we found that extant Python code expected that the _io module
+was the one defining various classes and constants. See
+http://bugs.jython.org/issue2368 for more background. If we ever get
+around to rewriting this module completely to Java, which is doubtful,
+this problem will go away.)
 
 Some classes have gained an underscore to match their _io module names:
 _IOBase, _RawIOBase, _BufferedIOBase, _TextIOBase.
@@ -16,11 +23,10 @@ _IOBase, _RawIOBase, _BufferedIOBase, _TextIOBase.
 As Jython implements more and more of _io in Java, the Python implementations here
 will progressively be replaced with imports from _io. Eventually we should implement
 all this in Java, remove this module and revert io.py to its CPython original.
+
 """
 
 from __future__ import (print_function, unicode_literals)
-
-import _io  # Java implementations to replace this module
 
 import os
 import abc
@@ -41,7 +47,7 @@ from errno import EINTR
 __metaclass__ = type
 
 # open() uses st_blksize whenever we can
-from _io import DEFAULT_BUFFER_SIZE
+from _jyio import DEFAULT_BUFFER_SIZE
 
 # NOTE: Base classes defined here are registered with the "official" ABCs
 # defined in io.py.
@@ -58,7 +64,7 @@ class BlockingIOError(IOError):
         self.characters_written = characters_written
 
 
-from _io import (open, UnsupportedOperation, _IOBase, _RawIOBase, FileIO)
+from _jyio import (open, UnsupportedOperation, _IOBase, _RawIOBase, FileIO)
 
 
 class _BufferedIOBase(_IOBase):
@@ -253,9 +259,9 @@ class _BufferedIOMixin(_BufferedIOBase):
         try:
             name = self.name
         except AttributeError:
-            return "<_jyio.{0}>".format(clsname)
+            return "<_io.{0}>".format(clsname)
         else:
-            return "<_jyio.{0} name={1!r}>".format(clsname, name)
+            return "<_io.{0} name={1!r}>".format(clsname, name)
 
     ### Lower-level APIs ###
 
@@ -1076,9 +1082,9 @@ class TextIOWrapper(_TextIOBase):
         try:
             name = self.name
         except AttributeError:
-            return "<_jyio.TextIOWrapper encoding='{0}'>".format(self.encoding)
+            return "<_io.TextIOWrapper encoding='{0}'>".format(self.encoding)
         else:
-            return "<_jyio.TextIOWrapper name={0!r} encoding='{1}'>".format(
+            return "<_io.TextIOWrapper name={0!r} encoding='{1}'>".format(
                 name, self.encoding)
 
     @property

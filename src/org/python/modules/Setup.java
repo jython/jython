@@ -34,7 +34,7 @@ public class Setup
         "_csv:org.python.modules._csv._csv",
         "_functools:org.python.modules._functools._functools",
         "_hashlib",
-        "_io:org.python.modules._io._io",
+        "_jyio:org.python.modules._io._jyio",
         "_json:org.python.modules._json._json",
         "_jythonlib:org.python.modules._jythonlib._jythonlib",
         "_marshal",
