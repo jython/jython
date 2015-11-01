@@ -1364,6 +1364,25 @@ _failures = {
         test_runpy             # OSError: unlink()
         test_urllib2           # file not on local host (likely Windows only)
         """,
+
+    'java.posix':   # Expected to fail on Linux
+        """
+        test_classpathimporter  # Fails in test_loader_get_code
+        test_codecencodings_tw  # Fails in test_multibytecodec_support.py
+        test_jython_launcher    # /usr/bin/env: python2.7 -E: No such file or directory
+
+        # These leak file handles on a grand scale (observed on Ubuntu 14.04),
+        # causing failures elsewhere, but they don't actually fail.
+        test_docxmlrpc          #  206 leaked handles issue 2320
+        test_httpservers        #  721 leaked handles issue 2320
+        ## test_imaplib            #   92 leaked handles issue 2320 (tolerable)
+        test_socketserver       # 1344 leaked handles issue 2320
+        test_telnetlib          # 1588 leaked handles issue 2320
+        ## test_timeout            #  123 leaked handles issue 2320 (tolerable)
+        test_urllib2_localnet   #  763 leaked handles issue 2320
+        test_xmlrpc             #  453 leaked handles issue 2320
+
+        """
 }
 
 _platform = sys.platform
