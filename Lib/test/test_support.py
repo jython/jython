@@ -52,6 +52,7 @@ __all__ = ["Error", "TestFailed", "ResourceDenied", "import_module",
 # We use these extensively in adapting the regression tests for Jython
 is_jython = sys.platform.startswith('java')
 is_jython_nt = is_jython and (os._name == 'nt')
+is_jython_posix = is_jython and (os._name == 'posix')
 
 class Error(Exception):
     """Base class for regression test exceptions."""
