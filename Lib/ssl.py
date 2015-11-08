@@ -65,6 +65,11 @@ _PROTOCOL_NAMES = {
 
 OP_ALL, OP_NO_SSLv2, OP_NO_SSLv3, OP_NO_TLSv1 = range(4)
 
+
+# https://docs.python.org/2/library/ssl.html#ssl.HAS_ALPN etc...
+HAS_ALPN, HAS_NPN, HAS_ECDH, HAS_SNI = False, False, True, True
+
+
 _rfc2822_date_format = SimpleDateFormat("MMM dd HH:mm:ss yyyy z", Locale.US)
 _rfc2822_date_format.setTimeZone(TimeZone.getTimeZone("GMT"))
 
