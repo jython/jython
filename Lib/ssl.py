@@ -7,6 +7,7 @@ from java.io import BufferedInputStream
 from java.security import KeyStore
 from java.security.cert import CertificateParsingException
 from javax.net.ssl import TrustManagerFactory
+from javax.naming.ldap import LdapName
 import logging
 import os.path
 import textwrap
@@ -38,7 +39,7 @@ from _sslcerts import _get_openssl_key_manager, NoVerifyX509TrustManager
 from _sslcerts import SSLContext as _JavaSSLContext
 
 from java.text import SimpleDateFormat
-from java.util import ArrayList, Locale, TimeZone
+from java.util import ArrayList, Locale, TimeZone, NoSuchElementException
 from java.util.concurrent import CountDownLatch
 from javax.naming.ldap import LdapName
 from javax.security.auth.x500 import X500Principal
@@ -588,11 +589,17 @@ class SSLContext(object):
 
     @classmethod
     def _parse_dn(cls, dn):
-        try:
-            dn_dct = dict([iss.split('=', 1) for iss in unicode(dn).split(',')])
-        except ValueError:
-            # FIXME CN=Starfield Root Certificate Authority - G2, O="Starfield Technologies, Inc.",
-            log.error("Failed to parse {}".format(dn), exc_info=True)
-            return tuple()
+        dn_lst = []
 
-        return tuple((cls._DN_TO_CPY.get(key.strip(), 'unk'), val) for key, val in dn_dct.iteritems())
+        ln = LdapName(unicode(dn))
+        ln_iter = ln.getAll()
+        try:
+            ln_value = ln_iter.nextElement()
+            while ln_value:
+                dn_lst.append(tuple(ln_value.split('=', 1)))
+
+                ln_value = ln_iter.nextElement()
+        except NoSuchElementException:
+            pass
+
+        return tuple(dn_lst)
