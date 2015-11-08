@@ -441,9 +441,6 @@ class Purpose(object):
 
 
 class SSLContext(object):
-    _DN_TO_CPY = {'CN': 'commonName', 'O': 'commonOrganization', 'C': 'countryName', 'DC': 'domainComponent',
-                  'SN': 'surname', 'GN': 'givenName', 'OU': 'organizationalUnitName', 'ST': 'stateOrProvinceName',
-                  'L': 'localityName', 'SERIALNUMBER': 'serialNumber', 'EMAILADDRESS': 'emailAddress'}
 
     def __init__(self, protocol):
         protocol_name = _PROTOCOL_NAMES[protocol]
