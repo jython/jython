@@ -1358,6 +1358,7 @@ _failures = {
 
     'java.nt':     # Expected to fail on Windows
         """
+        test_fileinput         # issue 2320 (because fstat().st_mode is zero)
         test_mailbox           # fails miserably and ruins other tests
         test_os_jy             # Locale tests run and fail on Cygwin
         test_popen             # http://bugs.python.org/issue1559298

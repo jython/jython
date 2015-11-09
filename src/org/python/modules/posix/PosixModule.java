@@ -222,6 +222,8 @@ public class PosixModule implements ClassDictInit {
         if (fdObj.isInteger()) {
             int intFd = fdObj.asInt();
             switch (intFd) {
+                case -1:
+                    break;
                 case 0:
                     return new FDUnion(FileDescriptor.in);
                 case 1:
