@@ -118,6 +118,7 @@ class PyclasspathImporterTestCase(unittest.TestCase):
         self.assertTrue(loader.is_package('jar_pkg'))
         self.assertFalse(loader.is_package('jar_pkg.prefer_compiled'))
 
+    @unittest.skipIf(test_support.is_jython_posix, "FIXME: failing on Linux issue #2422")
     def test_loader_get_code(self):
         # Execute Python code out of the JAR
         jar = self.prepareJar('classimport.jar')

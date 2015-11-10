@@ -15,8 +15,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.NotLinkException;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -34,9 +34,11 @@ import jnr.constants.platform.Sysconf;
 import jnr.posix.FileStat;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
+import jnr.posix.POSIXHandler;
 import jnr.posix.Times;
+import jnr.posix.WindowsRawFileStat;
 import jnr.posix.util.FieldAccess;
-import jnr.posix.util.Platform;
+import jnr.posix.windows.CommonFileInformation;
 
 import org.python.core.BufferProtocol;
 import org.python.core.ClassDictInit;
@@ -53,8 +55,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
-import org.python.core.imp;
 import org.python.core.Untraversable;
+import org.python.core.imp;
 import org.python.core.io.FileIO;
 import org.python.core.io.IOBase;
 import org.python.core.io.RawIOBase;
@@ -75,7 +77,8 @@ public class PosixModule implements ClassDictInit {
     private static final OS os = OS.getOS();
 
     /** Platform specific POSIX services. */
-    private static final POSIX posix = POSIXFactory.getPOSIX(new PythonPOSIXHandler(), true);
+    private static final POSIXHandler posixHandler = new PythonPOSIXHandler();
+    private static final POSIX posix = POSIXFactory.getPOSIX(posixHandler, true);
 
     /** os.open flags. */
     private static final int O_RDONLY = 0x0;
@@ -222,6 +225,8 @@ public class PosixModule implements ClassDictInit {
         if (fdObj.isInteger()) {
             int intFd = fdObj.asInt();
             switch (intFd) {
+                case -1:
+                    break;
                 case 0:
                     return new FDUnion(FileDescriptor.in);
                 case 1:
@@ -352,6 +357,7 @@ public class PosixModule implements ClassDictInit {
         }
     }
 
+    @Hide(OS.NT)
     public static void closerange(PyObject fd_lowObj, PyObject fd_highObj) {
         int fd_low = getFD(fd_lowObj).getIntFD(false);
         int fd_high = getFD(fd_highObj).getIntFD(false);
@@ -1363,10 +1369,18 @@ public class PosixModule implements ClassDictInit {
             try {
                 FDUnion fd = getFD(fdObj);
                 FileStat stat;
-                if (fd.isIntFD()) {
-                    stat = posix.fstat(fd.intFD);
+                if (os != OS.NT) {
+                    if (fd.isIntFD()) {
+                        stat = posix.fstat(fd.intFD);
+                    } else {
+                        stat = posix.fstat(fd.javaFD);
+                    }
                 } else {
-                    stat = posix.fstat(fd.javaFD);
+                    // FIXME: jnr-posix fstat work-around. See issue #2320.
+                    stat = new WindowsRawFileStat2(posix, posixHandler);
+                    if (posix.fstat(fd.javaFD, stat) < 0) {
+                        throw Py.OSError(Errno.EBADF);
+                    }
                 }
                 return PyStatResult.fromFileStat(stat);
             } catch (PyException ex) {
@@ -1374,4 +1388,44 @@ public class PosixModule implements ClassDictInit {
             }
         }
     }
+
+    /*
+     * Extend the Windows stat object defined by jnr.posix, which in jnr-posix 2.0.4 is buggy to the
+     * extent that st_mode is always zero. Remarkably, it is possible to fix this by defining a
+     * cunning replacement.
+     */
+    private static class WindowsRawFileStat2 extends WindowsRawFileStat {
+
+        public WindowsRawFileStat2(POSIX posix, POSIXHandler handler) {
+            super(posix, handler);
+        }
+
+        private int mode; // Replaces st_mode
+
+        @Override
+        public void setup(CommonFileInformation fileInfo) {
+            super.setup(fileInfo);
+            // CommonFileInformation gives us (DOS-style) file attributes, not access rights.
+            int attr = fileInfo.getFileAttributes();
+            int mode = ALL_READ;
+            if ((attr & CommonFileInformation.FILE_ATTRIBUTE_READONLY) == 0) {
+                // Writable: assume by all
+                mode |= ALL_WRITE;
+            }
+            if ((attr & CommonFileInformation.FILE_ATTRIBUTE_DIRECTORY) != 0) {
+                // Directory: assume by all can look things up in it.
+                mode |= S_IFDIR | S_IXUGO;
+            } else {
+                // Regular file
+                mode |= S_IFREG;
+            }
+            this.mode = mode;
+        }
+
+        @Override
+        public int mode() {
+            return mode;
+        }
+    }
+
 }
