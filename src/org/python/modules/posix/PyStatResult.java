@@ -3,7 +3,15 @@ package org.python.modules.posix;
 
 import jnr.posix.FileStat;
 
-import org.python.core.*;
+import org.python.core.ArgParser;
+import org.python.core.Py;
+import org.python.core.PyList;
+import org.python.core.PyNewWrapper;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
+import org.python.core.Visitproc;
 
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -17,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @ExposedType(name = "stat_result", isBaseType = false)
-public class PyStatResult extends PyTupleDerived {
+public class PyStatResult extends PyTuple {
 
     public static final PyType TYPE = PyType.fromClass(PyStatResult.class);
 

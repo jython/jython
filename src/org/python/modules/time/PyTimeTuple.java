@@ -1,7 +1,14 @@
 /* Copyright (c) 2005-2008 Jython Developers */
 package org.python.modules.time;
 
-import org.python.core.*;
+import org.python.core.ArgParser;
+import org.python.core.Py;
+import org.python.core.PyList;
+import org.python.core.PyNewWrapper;
+import org.python.core.PyObject;
+import org.python.core.PyTuple;
+import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -13,7 +20,7 @@ import org.python.expose.MethodType;
  *
  */
 @ExposedType(name = "time.struct_time", isBaseType = false)
-public class PyTimeTuple extends PyTupleDerived {
+public class PyTimeTuple extends PyTuple {
 
     @ExposedGet
     public PyObject tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst;

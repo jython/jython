@@ -79,11 +79,11 @@ public class PyTuple extends PySequenceList implements List {
             if (S == null) {
                 return Py.EmptyTuple;
             }
+            if (S.getType() == PyTuple.TYPE) {
+                return S;
+            }
             if (S instanceof PyTupleDerived) {
                 return new PyTuple(((PyTuple) S).getArray());
-            }
-            if (S instanceof PyTuple) {
-                return S;
             }
             return fromArrayNoCopy(Py.make_array(S));
         } else {
