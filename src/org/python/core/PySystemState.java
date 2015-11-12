@@ -1831,7 +1831,7 @@ class PyAttributeDeleted extends PyObject {
 
 
 @ExposedType(name = "sys.float_info", isBaseType = false)
-class FloatInfo extends PyTuple {
+class FloatInfo extends PyTupleDerived {
 
     @ExposedGet
     public PyObject max, max_exp, max_10_exp, min, min_exp, min_10_exp, dig, mant_dig, epsilon,
@@ -1951,7 +1951,7 @@ class FloatInfo extends PyTuple {
 
 
 @ExposedType(name = "sys.long_info", isBaseType = false)
-class LongInfo extends PyTuple {
+class LongInfo extends PyTupleDerived {
 
     @ExposedGet
     public PyObject bits_per_digit, sizeof_digit;

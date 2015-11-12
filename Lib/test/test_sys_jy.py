@@ -68,6 +68,10 @@ class SysTest(unittest.TestCase):
         reload(sys)
         self.assert_(type(sys.getdefaultencoding) == type(gde))
 
+    def test_get_tuple_from_version_info(self):
+        # sys.version_info is a tuple subclass
+        self.assertEqual(type(tuple(sys.version_info)), tuple)
+
 
 def exec_code_separately(function, sharing=False):
     """Runs code in a separate context: (thread, PySystemState, PythonInterpreter)

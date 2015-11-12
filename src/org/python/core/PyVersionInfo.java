@@ -6,7 +6,7 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "sys.version_info", isBaseType = false)
-public class PyVersionInfo extends PyTuple {
+public class PyVersionInfo extends PyTupleDerived {
     public static final PyType TYPE = PyType.fromClass(PyVersionInfo.class);
 
     @ExposedGet
