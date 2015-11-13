@@ -69,12 +69,18 @@ class SysTest(unittest.TestCase):
         self.assert_(type(sys.getdefaultencoding) == type(gde))
 
     def test_get_tuple_from_version_info(self):
-        # sys.version_info is a tuple subclass
-        pass #self.assertEqual(type(tuple(sys.version_info)), tuple)
+        self.assertEqual(type(tuple(sys.version_info)), tuple)
+
+    def test_float_info_tuple(self):
+        self.assertEqual(tuple(sys.float_info), sys.float_info)
+
+    def test_long_info_tuple(self):
+        self.assertEqual(tuple(sys.long_info), sys.long_info)
 
     def test_version_info_gt_lt(self):
         self.assertTrue(sys.version_info > (0, 0))
         self.assertTrue(sys.version_info < (99, 99))
+
 
 
 def exec_code_separately(function, sharing=False):
