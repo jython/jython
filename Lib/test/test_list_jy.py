@@ -52,7 +52,7 @@ class ListTestCase(unittest.TestCase):
 
     def test_tuple_equality(self):
         self.assertEqual([(1,), [1]].count([1]), 1) # http://bugs.jython.org/issue1317
- 
+
     def test_big_list(self):
         """Verify that fairly large collection literals of primitives can be constructed."""
         # use \n to separate to avoid parser problems
@@ -236,11 +236,32 @@ class JavaListTestCase(test_list.ListTest):
         self.assertEqual(jl, [1,2,3,4])
 
 
+class ListSubclassTestCase(unittest.TestCase):
+
+    def test_subclass_iter_copy(self):
+
+        class MyList(list):
+
+            def __iter__(self):
+                i = 0
+                results = super(MyList, self).__iter__()
+                for result in results:
+                    yield result
+                    i += 1
+
+                # add extra result for validation
+                yield i
+
+        lst = MyList(['a', 'b', 'c'])
+        self.assertEqual(list(lst), ['a', 'b', 'c', 3])
+
+
 def test_main():
-    test_support.run_unittest(ListTestCase,
+    test_support.run_unittest(ListSubclassTestCase,
+                              ListTestCase,
                               ThreadSafetyTestCase,
                               ExtendedSliceTestCase,
                               JavaListTestCase)
-
+    
 if __name__ == "__main__":
     test_main()

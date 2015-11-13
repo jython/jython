@@ -127,7 +127,15 @@ public class PyList extends PySequenceList implements List {
         if (seq == null) {
             return;
         }
-        if (seq instanceof PyList) {
+
+        /* PyListDerived should be iterated over and not plain copied for cases where someone subclasses list
+        and overrides __iter__
+         */
+        if (seq instanceof PyListDerived) {
+            for (PyObject item : seq.asIterable()) {
+                append(item);
+            }
+        } else if (seq instanceof PyList) {
             list.addAll(((PyList) seq).list); // don't convert
         } else if (seq instanceof PyTuple) {
             list.addAll(((PyTuple) seq).getList());
