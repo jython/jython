@@ -97,18 +97,18 @@ def _get_openssl_key_manager(cert_file=None, key_file=None, password=None, _key_
 
 
     if _key_store is None:
-        key_store = KeyStore.getInstance(KeyStore.getDefaultType())
-        key_store.load(None, None)
+        _key_store = KeyStore.getInstance(KeyStore.getDefaultType())
+        _key_store.load(None, None)
 
     if cert_file is not None:
         if not private_key:
             from _socket import SSLError, SSL_ERROR_SSL
             raise SSLError(SSL_ERROR_SSL, "No private key loaded")
 
-        key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)
+        _key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)
 
     kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
-    kmf.init(key_store, [])
+    kmf.init(_key_store, [])
     return kmf
 
 
