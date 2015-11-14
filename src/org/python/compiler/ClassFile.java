@@ -162,7 +162,24 @@ public class ClassFile
     public void addField(String name, String type, int access)
         throws IOException
     {
+        addField(name, type, access, null);
+    }
+
+    public void addField(String name, String type, int access, AnnotationDescr[] annotationDescrs)
+        throws IOException
+    {
         FieldVisitor fv = cw.visitField(access, name, type, null, null);
+
+        if (annotationDescrs != null) {
+            for (AnnotationDescr ad: annotationDescrs) {
+                AnnotationVisitor av = fv.visitAnnotation(ad.getName(), true);
+                if (ad.hasFields()) {
+                    visitAnnotations(av, ad.getFields());
+                }
+                av.visitEnd();
+            }
+        }
+
         fieldVisitors.add(fv);
     }
 
