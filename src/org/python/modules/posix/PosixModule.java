@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.Pipe;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -50,6 +51,7 @@ import org.python.core.PyDictionary;
 import org.python.core.PyException;
 import org.python.core.PyFile;
 import org.python.core.PyFloat;
+import org.python.core.PyJavaType;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -60,6 +62,7 @@ import org.python.core.imp;
 import org.python.core.io.FileIO;
 import org.python.core.io.IOBase;
 import org.python.core.io.RawIOBase;
+import org.python.core.io.StreamIO;
 import org.python.core.util.StringUtil;
 
 /**
@@ -777,6 +780,24 @@ public class PosixModule implements ClassDictInit {
             }
         }
         return new FileIO((PyString) path, fileIOMode);
+    }
+
+    public static PyString __doc__pipe = new PyString(
+        "pipe() -> (read_end, write_end)\n\n" +
+        "Create a pipe.");
+    public static PyTuple pipe() {
+        try {
+            Pipe pipe = Pipe.open();
+
+            StreamIO pipe_read = new StreamIO(pipe.source());
+            StreamIO pipe_write = new StreamIO(pipe.sink());
+
+            return new PyTuple(
+                PyJavaType.wrapJavaObject(pipe_read.fileno()),
+                PyJavaType.wrapJavaObject(pipe_write.fileno()));
+        } catch (IOException ioe) {
+            throw Py.OSError(ioe);
+        }
     }
 
     public static PyString __doc__popen = new PyString(
