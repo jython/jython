@@ -1051,12 +1051,12 @@ class _realsocket(object):
     def shutdown(self, how):
         log.debug("Got request to shutdown socket how=%s", how, extra={"sock": self})
         self._verify_channel()
-        if how & SHUT_RD:
+        if how & SHUT_RD or how & SHUT_RDWR:
             try:
                 self.channel.pipeline().remove(self.python_inbound_handler)
             except NoSuchElementException:
                 pass  # already removed, can safely ignore (presumably)
-        if how & SHUT_WR:
+        if how & SHUT_WR or how & SHUT_RDWR:
             self._can_write = False
 
     def _readable(self):
