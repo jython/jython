@@ -28,7 +28,8 @@ from java.security.cert import CertificateException
 from java.util import NoSuchElementException
 from java.util.concurrent import (
     ArrayBlockingQueue, CopyOnWriteArrayList, CountDownLatch, LinkedBlockingQueue,
-    RejectedExecutionException, ThreadFactory, TimeUnit)
+    ExecutionException, RejectedExecutionException, ThreadFactory,
+    TimeoutException, TimeUnit)
 from java.util.concurrent.atomic import AtomicBoolean, AtomicLong
 from javax.net.ssl import SSLPeerUnverifiedException, SSLException
 
@@ -852,7 +853,7 @@ class _realsocket(object):
 
         if self.bind_addr:
             log.debug("Connect %s to %s", self.bind_addr, addr, extra={"sock": self})
-            bind_future = bootstrap.bind(self.bind_addr)
+            bind_future = bootstrap.bind(self.bind_addr).sync()
             self._handle_channel_future(bind_future, "local bind")
             self.channel = bind_future.channel()
         else:
@@ -888,16 +889,39 @@ class _realsocket(object):
             log.debug("Completed connection to %s", addr, extra={"sock": self})
 
     def connect_ex(self, addr):
+        was_connecting = self.connected  # actually means self.connecting if
+                                         # not blocking
         if not self.connected:
             try:
                 self.connect(addr)
             except error as e:
                 return e.errno
         if not self.connect_future.isDone():
-            return errno.EINPROGRESS
+            if was_connecting:
+                try:
+                    # Timing is based on CPython and was empirically
+                    # guestimated. Of course this means user code is
+                    # polling, so the the best we can do is wait like
+                    # this in supposedly nonblocking mode without
+                    # completely busy waiting!
+                    self.connect_future.get(1500, TimeUnit.MICROSECONDS)
+                except ExecutionException:
+                    # generally raised if closed; pick up the state
+                    # when testing for success
+                    pass
+                except TimeoutException:
+                    # more than 1.5ms, will report EALREADY below
+                    pass
+
+        if not self.connect_future.isDone():
+            if was_connecting:
+                return errno.EALREADY
+            else:
+                return errno.EINPROGRESS
         elif self.connect_future.isSuccess():
             return errno.EISCONN
         else:
+            print self.connect_future.cause()
             return errno.ENOTCONN
 
     # SERVER METHODS
@@ -1241,27 +1265,17 @@ class _realsocket(object):
                 raise error(errno.ENOTCONN, "Socket is not connected")
             else:
                 return _socktuple(self.bind_addr)
-        # Netty 4 currently races between bind to ephemeral port and the availability
-        # of the local address for the channel. Poll to work around this issue.
-        while True:
-            local_addr = self.channel.localAddress()
-            if local_addr:
-                if hasattr(self, "bind_future"):
-                    if self.bind_future.isDone():
-                        break
-                else:
-                    break
-            if time.time() - self.bind_timestamp > 1:
-                # Presumably after a second something is completely wrong,
-                # so punt
-                raise error(errno.ENOTCONN, "Socket is not connected")
-            log.debug("Poll for local address", extra={"sock": self})
-            time.sleep(0.01)  # completely arbitrary
+        if hasattr(self, "bind_future"):
+            self.bind_future.sync()
+        local_addr = self.channel.localAddress()
         if local_addr.getAddress().isAnyLocalAddress():
-            # Netty 4 will default to an IPv6 "any" address from a channel even if it was originally bound to an IPv4 "any" address
-            # so, as a workaround, let's construct a new "any" address using the port information gathered above
+            # Netty 4 will default to an IPv6 "any" address from a
+            # channel even if it was originally bound to an IPv4 "any"
+            # address so, as a workaround, let's construct a new "any"
+            # address using the port information gathered above
             if type(self.bind_addr.getAddress()) != type(local_addr.getAddress()):
-                return _socktuple(java.net.InetSocketAddress(self.bind_addr.getAddress(), local_addr.getPort()))
+                return _socktuple(java.net.InetSocketAddress(
+                    self.bind_addr.getAddress(), local_addr.getPort()))
         return _socktuple(local_addr)
 
     def getpeername(self):
