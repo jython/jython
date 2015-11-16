@@ -1,7 +1,11 @@
 import unittest
 from test import test_support
 
+import io
 import _io
+
+from os import pipe
+
 
 class NameTest(unittest.TestCase):
 
@@ -16,8 +20,18 @@ class NameTest(unittest.TestCase):
               '_BufferedIOBase', '_IOBase', '_RawIOBase', '_TextIOBase'
             })
 
+
+class PipeTestCase(unittest.TestCase):
+
+    def test_pipe_seekable_bool(self):
+        r, _ = pipe()
+
+        self.assertFalse(io.open(r).seekable())
+
+
 def test_main():
-    test_support.run_unittest(NameTest)
+    test_support.run_unittest(NameTest, PipeTestCase)
+
 
 if __name__ == "__main__":
     test_main()
