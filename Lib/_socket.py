@@ -1080,6 +1080,8 @@ class _realsocket(object):
                 self.channel.pipeline().remove(self.python_inbound_handler)
             except NoSuchElementException:
                 pass  # already removed, can safely ignore (presumably)
+            except AttributeError:
+                pass  # inbound handler never set up, also ignore
         if how & SHUT_WR or how & SHUT_RDWR:
             self._can_write = False
 
