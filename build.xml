@@ -177,11 +177,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/jnr-posix-3.0.20.jar"/>
             <pathelement path="${extlibs.dir}/jnr-constants-0.9.0.jar"/>
             <pathelement path="${extlibs.dir}/jline-2.12.1.jar"/>
-            <pathelement path="${extlibs.dir}/netty-buffer-4.0.31.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-codec-4.0.31.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-common-4.0.31.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-handler--4.0.31.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-transport-4.0.31.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-buffer-4.0.33.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-codec-4.0.33.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-common-4.0.33.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-handler--4.0.33.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-transport-4.0.33.Final.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -587,15 +587,15 @@ The readme text for the next release will be like:
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-54_1_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.0.31.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.0.31.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.0.31.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.0.31.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.0.31.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
