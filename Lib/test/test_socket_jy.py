@@ -67,9 +67,6 @@ class SocketConnectTest(unittest.TestCase):
         """Verify connect_ex states go through EINPROGRESS?, EALREADY*, EISCONN"""
         # Tests fix for http://bugs.jython.org/issue2428; based in part on the
         # code showing failure that was submitted with that bug
-
-        #self.httpd, self.server_thread = start_server()
-        #self.address = self.httpd.server_name, self.httpd.server_port
         for result in self.do_workout():
             self.assertIn(result[0], {errno.EINPROGRESS, errno.EISCONN})
             self.assertEqual(result[-1], errno.EISCONN)
