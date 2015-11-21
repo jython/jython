@@ -5,7 +5,7 @@ Python scripts."""
 
 # contributed by Bastian Kleineidam
 
-__revision__ = "$Id: install_scripts.py 68943 2009-01-25 22:09:10Z tarek.ziade $"
+__revision__ = "$Id$"
 
 import os
 from distutils.core import Command
@@ -44,7 +44,7 @@ class install_scripts (Command):
         if not self.skip_build:
             self.run_command('build_scripts')
         self.outfiles = self.copy_tree(self.build_dir, self.install_dir)
-        if hasattr(os, 'chmod'):
+        if os.name == 'posix':
             # Set the executable bits (owner, group, and world) on
             # all the scripts we just installed.
             for file in self.get_outputs():

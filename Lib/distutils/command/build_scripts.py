@@ -2,13 +2,10 @@
 
 Implements the Distutils 'build_scripts' command."""
 
-# This module should be kept compatible with Python 2.1.
+__revision__ = "$Id$"
 
-__revision__ = "$Id: build_scripts.py 59668 2008-01-02 18:59:36Z guido.van.rossum $"
-
-import sys, os, re
+import os, re
 from stat import ST_MODE
-from distutils import sysconfig
 from distutils.core import Command
 from distutils.dep_util import newer
 from distutils.util import convert_path
@@ -59,6 +56,7 @@ class build_scripts (Command):
         ie. starts with "\#!" and contains "python"), then adjust the first
         line to refer to the current Python interpreter as we copy.
         """
+        _sysconfig = __import__('sysconfig')
         self.mkpath(self.build_dir)
         outfiles = []
         for script in self.scripts:
@@ -94,18 +92,23 @@ class build_scripts (Command):
             if adjust:
                 log.info("copying and adjusting %s -> %s", script,
                          self.build_dir)
-                if not sysconfig.python_build:
-                    executable = self.executable
-                else:
-                    executable = os.path.join(
-                        sysconfig.get_config_var("BINDIR"),
-                        "python" + sysconfig.get_config_var("EXE"))
+                print "###############"
+                print executable
                 executable = fix_jython_executable(executable, post_interp)
+                print executable
                 if not self.dry_run:
                     outf = open(outfile, "w")
-                    outf.write("#!%s%s\n" %
-                               (executable,
-                                post_interp))
+                    if not _sysconfig.is_python_build():
+                        outf.write("#!%s%s\n" %
+                                   (self.executable,
+                                    post_interp))
+                    else:
+                        outf.write("#!%s%s\n" %
+                                   (os.path.join(
+                            _sysconfig.get_config_var("BINDIR"),
+                           "python%s%s" % (_sysconfig.get_config_var("VERSION"),
+                                           _sysconfig.get_config_var("EXE"))),
+                                    post_interp))
                     outf.writelines(f.readlines())
                     outf.close()
                 if f:
@@ -115,7 +118,7 @@ class build_scripts (Command):
                     f.close()
                 self.copy_file(script, outfile)
 
-        if hasattr(os, 'chmod'):
+        if os.name == 'posix':
             for file in outfiles:
                 if self.dry_run:
                     log.info("changing mode of %s", file)
@@ -150,9 +153,9 @@ def fix_jython_executable(executable, options):
         if options:
             # Can't apply the workaround, leave it broken
             log.warn("WARNING: Unable to adapt shebang line for Jython,"
-                             " the following script is NOT executable\n"
+                     " the following script is NOT executable\n"
                      "         see http://bugs.jython.org/issue1112 for"
-                             " more information.")
+                     " more information.")
         else:
             return '/usr/bin/env %s' % executable
     return executable

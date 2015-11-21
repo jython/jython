@@ -115,11 +115,7 @@ class build(Command):
                                               'scripts-' + sys.version[0:3])
 
         if self.executable is None:
-            if not sys.executable is None:
-                self.executable = os.path.normpath(sys.executable)
-            else:
-                from org.python.core import Py
-                self.executable = Py.getDefaultExecutableName()
+            self.executable = os.path.normpath(sys.executable)
 
     def run(self):
         # Run all relevant sub-commands.  This will be some subset of:
