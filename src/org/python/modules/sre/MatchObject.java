@@ -15,16 +15,9 @@
 
 package org.python.modules.sre;
 
-import org.python.core.ArgParser;
-import org.python.core.Py;
-import org.python.core.PyDictionary;
-import org.python.core.PyInteger;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.core.PyTuple;
-import org.python.core.Traverseproc;
-import org.python.core.Visitproc;
-import org.python.core.imp;
+import org.python.core.*;
+
+import java.math.BigInteger;
 
 
 public class MatchObject extends PyObject implements Traverseproc {
@@ -155,6 +148,14 @@ public class MatchObject extends PyObject implements Traverseproc {
     private int getindex(PyObject index) {
         if (index instanceof PyInteger)
             return ((PyInteger) index).getValue();
+        if (index instanceof PyLong) {
+            BigInteger idx = ((PyLong) index).getValue();
+            if (idx.compareTo(PyInteger.MAX_INT) == 1) {
+                throw Py.IndexError("no such group");
+            } else {
+                return idx.intValue();
+            }
+        }
 
         int i = -1;
 

@@ -433,6 +433,11 @@ try:
 except NameError:
     have_unicode = False
 
+requires_unicode = unittest.skipUnless(have_unicode, 'no unicode support')
+
+def u(s):
+    return unicode(s, 'unicode-escape')
+
 if is_jython:
     def make_jar_classloader(jar):
         import os

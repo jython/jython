@@ -44,8 +44,8 @@ public class PatternObject extends PyObject implements Traverseproc {
     }
 
     public MatchObject match(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("search", args, kws,
-                                     "pattern", "pos", "endpos");
+        ArgParser ap = new ArgParser("match", args, kws,
+                                     "string", "pos", "endpos");
         PyString string = extractPyString(ap, 0);
         int start = ap.getInt(1, 0);
         int end = ap.getInt(2, string.__len__());
@@ -59,7 +59,7 @@ public class PatternObject extends PyObject implements Traverseproc {
     
     public MatchObject search(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("search", args, kws,
-                                     "pattern", "pos", "endpos");
+                                     "string", "pos", "endpos");
         PyString string = extractPyString(ap, 0);
         int start = ap.getInt(1, 0);
         int end = ap.getInt(2, string.__len__());
@@ -184,7 +184,7 @@ public class PatternObject extends PyObject implements Traverseproc {
 
     public PyObject split(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("split", args, kws,
-                                     "source", "maxsplit");
+                                     "string", "maxsplit");
         PyString string = extractPyString(ap, 0);
         int maxsplit = ap.getInt(1, 0);
 
@@ -240,7 +240,7 @@ public class PatternObject extends PyObject implements Traverseproc {
 
     public PyObject findall(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("findall", args, kws,
-                                     "source", "pos", "endpos");
+                                     "string", "pos", "endpos");
         PyString string = extractPyString(ap, 0);
         int start = ap.getInt(1, 0);
         int end = ap.getInt(2, Integer.MAX_VALUE);

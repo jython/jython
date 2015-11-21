@@ -883,9 +883,6 @@ for line in sys.stdin:
                 /* maximizing repeat */
                 /* <REPEAT> <skip> <1=min> <2=max> item <MAX_UNTIL> tail */
 
-                /* FIXME: we probably need to deal with zero-width
-                   matches in here... */
-
                 SRE_REPEAT rp = this.repeat;
                 if (rp == null)
                     return SRE_ERROR_STATE;
@@ -908,11 +905,14 @@ for line in sys.stdin:
                     return 0;
                 }
 
-                if (count < pattern[rp.pidx+2] ||
-                                            pattern[rp.pidx+2] == 65535) {
+                if ((count < pattern[rp.pidx+2] ||
+                        pattern[rp.pidx+2] == 65535) &&
+                        // see: http://git.io/v4Q0I for zero-width match protection
+                        ptr != rp.last_ptr) {
                     /* we may have enough matches, but if we can
                        match another item, do so */
                     rp.count = count;
+                    rp.last_ptr = ptr;
                     lastmark = this.lastmark;
                     lastindex = this.lastindex;
                     mark_stack_base = mark_save(0, lastmark);
@@ -1215,7 +1215,6 @@ for line in sys.stdin:
 
         return status;
     }
-
 
     /* string pointers */
     int ptr; /* current position (also end of current slice) */
