@@ -135,7 +135,7 @@ IPPROTO_NONE     =  59 # not supported
 IPPROTO_PUP      =  12 # not supported
 IPPROTO_RAW      = 255 # not supported
 IPPROTO_ROUTING  =  43 # not supported
-IPPROTO_TCP      =   6
+SOL_TCP = IPPROTO_TCP = 6
 IPPROTO_UDP      =  17
 
 SO_ACCEPTCONN  = 1

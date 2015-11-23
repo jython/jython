@@ -55,6 +55,7 @@ from _socket import (
     SOCK_SEQPACKET,
     
     SOL_SOCKET,
+    SOL_TCP,
     # not supported, but here for apparent completeness
     IPPROTO_AH,
     IPPROTO_DSTOPTS,

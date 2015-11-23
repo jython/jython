@@ -74,8 +74,16 @@ class SocketConnectTest(unittest.TestCase):
                 self.assertEqual(code, errno.EALREADY)
 
 
+class SocketOptionsTest(unittest.TestCase):
+
+    def test_socket_options_defined(self):
+        # Basic existence test to verify trivial fix for
+        # http://bugs.jython.org/issue2436
+        self.assertEqual(socket.SOL_TCP, socket.IPPROTO_TCP)
+
+
 def test_main():
-    test_support.run_unittest(SocketConnectTest)
+    test_support.run_unittest(SocketConnectTest, SocketOptionsTest)
 
 
 if __name__ == "__main__":
