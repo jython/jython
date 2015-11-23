@@ -156,7 +156,6 @@ SO_TYPE        = 1024
 
 SO_DEBUG            = -1
 SO_DONTROUTE        = -1
-SO_EXCLUSIVEADDRUSE = -8
 SO_RCVLOWAT         = -16
 SO_RCVTIMEO         = -32
 SO_REUSEPORT        = -64

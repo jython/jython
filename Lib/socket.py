@@ -99,7 +99,6 @@ from _socket import (
     SO_OOBINLINE,
     SO_DEBUG,
     SO_DONTROUTE,
-    SO_EXCLUSIVEADDRUSE,
     SO_RCVLOWAT,
     SO_RCVTIMEO,
     SO_REUSEPORT,

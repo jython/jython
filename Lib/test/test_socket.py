@@ -1002,7 +1002,14 @@ class TestUnsupportedOptions(TestSocketOptions):
         # this is an MS specific option that will not be appearing on java
         # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6421091
         # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6402335
-        self.failUnless(hasattr(socket, 'SO_EXCLUSIVEADDRUSE'))
+        # 
+        # As of 2.7.1, we no longer support this option - it is also
+        # not not necessary since Java implements BSD semantics for
+        # address reuse even on Windows. See
+        # http://bugs.jython.org/issue2435 and
+        # http://sourceforge.net/p/jython/mailman/message/34642295/
+        # for discussion
+        self.assertFalse(hasattr(socket, 'SO_EXCLUSIVEADDRUSE'))
 
     def testSO_RCVLOWAT(self):
         self.failUnless(hasattr(socket, 'SO_RCVLOWAT'))
