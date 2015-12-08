@@ -66,6 +66,7 @@ _PROTOCOL_NAMES = {
 
 OP_ALL, OP_NO_SSLv2, OP_NO_SSLv3, OP_NO_TLSv1 = range(4)
 
+CHANNEL_BINDING_TYPES = []
 
 # https://docs.python.org/2/library/ssl.html#ssl.HAS_ALPN etc...
 HAS_ALPN, HAS_NPN, HAS_ECDH, HAS_SNI = False, False, True, True
@@ -492,7 +493,7 @@ class SSLContext(object):
 
     def cert_store_stats(self):
         # TODO not sure if we can even get something similar from Java
-        return {}
+        return {'crl': 0, 'x509': 0, 'x509_ca': 0}
 
     def load_cert_chain(self, certfile, keyfile=None, password=None):
         self._key_managers = _get_openssl_key_manager(certfile, keyfile, password, _key_store=self._key_store)
