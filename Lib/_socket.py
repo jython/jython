@@ -31,7 +31,7 @@ from java.util.concurrent import (
     ExecutionException, RejectedExecutionException, ThreadFactory,
     TimeoutException, TimeUnit)
 from java.util.concurrent.atomic import AtomicBoolean, AtomicLong
-from javax.net.ssl import SSLPeerUnverifiedException, SSLException
+from javax.net.ssl import SSLPeerUnverifiedException, SSLException, SSLHandshakeException
 
 try:
     # jarjar-ed version
@@ -330,6 +330,12 @@ def _map_exception(java_exception):
     if isinstance(java_exception, SSLException) or isinstance(java_exception, CertificateException):
         cause = java_exception.cause
         if cause:
+            # netty is freaking backwards here. The original exception may be CertificateException
+            # but netty wraps it in SSLHandshakeException, we need to unwrap to present the right message
+            if isinstance(cause, SSLHandshakeException):
+                if isinstance(cause.cause, CertificateException):
+                    java_exception = cause.cause
+
             msg = "%s (%s)" % (java_exception.message, cause)
         else:
             msg = java_exception.message
@@ -771,7 +777,6 @@ class _realsocket(object):
             self._handle_timeout(future.await, reason)
             if not future.isSuccess():
                 log.debug("Got this failure %s during %s", future.cause(), reason, extra={"sock": self})
-                print "Got this failure %s during %s (%s)" % (future.cause(), reason, self)
                 raise future.cause()
             return future
         else:
@@ -918,9 +923,12 @@ class _realsocket(object):
             else:
                 return errno.EINPROGRESS
         elif self.connect_future.isSuccess():
-            return errno.EISCONN
+            # from socketmodule.c
+            # if (res == EISCONN)
+            #   res = 0;
+            # and that is what tests expect, so we return 0 to be like CPython
+            return 0
         else:
-            print self.connect_future.cause()
             return errno.ENOTCONN
 
     # SERVER METHODS

@@ -8,10 +8,12 @@ from java.security import KeyStore
 from java.security.cert import CertificateParsingException
 from javax.net.ssl import TrustManagerFactory
 from javax.naming.ldap import LdapName
+from java.lang import IllegalArgumentException, System
 import logging
-import os.path
+import os
 import textwrap
 import time
+import re
 import threading
 
 try:
@@ -34,8 +36,13 @@ from _socket import (
     SSL_ERROR_WANT_CONNECT,
     SSL_ERROR_EOF,
     SSL_ERROR_INVALID_ERROR_CODE,
+    SOL_SOCKET,
+    SO_TYPE,
+    SOCK_STREAM,
     error as socket_error)
-from _sslcerts import _get_openssl_key_manager, NoVerifyX509TrustManager
+
+from _sslcerts import _get_openssl_key_manager, _extract_cert_from_data, _extract_certs_for_paths, \
+    NoVerifyX509TrustManager, _str_hash_key_entry, _get_ecdh_parameter_spec, CompositeX509TrustManager
 from _sslcerts import SSLContext as _JavaSSLContext
 
 from java.text import SimpleDateFormat
@@ -43,6 +50,7 @@ from java.util import ArrayList, Locale, TimeZone, NoSuchElementException
 from java.util.concurrent import CountDownLatch
 from javax.naming.ldap import LdapName
 from javax.security.auth.x500 import X500Principal
+from org.ietf.jgss import Oid
 
 log = logging.getLogger("_socket")
 
@@ -51,6 +59,7 @@ log = logging.getLogger("_socket")
 OPENSSL_VERSION = "OpenSSL 1.0.0 (as emulated by Java SSL)"
 OPENSSL_VERSION_NUMBER = 0x1000000L
 OPENSSL_VERSION_INFO = (1, 0, 0, 0, 0)
+_OPENSSL_API_VERSION = OPENSSL_VERSION_INFO
 
 CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED = range(3)
 
@@ -65,12 +74,48 @@ _PROTOCOL_NAMES = {
 }
 
 OP_ALL, OP_NO_SSLv2, OP_NO_SSLv3, OP_NO_TLSv1 = range(4)
+OP_SINGLE_DH_USE, OP_NO_COMPRESSION, OP_CIPHER_SERVER_PREFERENCE, OP_SINGLE_ECDH_USE = 1048576, 131072, 4194304, 524288
+
+VERIFY_DEFAULT, VERIFY_CRL_CHECK_LEAF, VERIFY_CRL_CHECK_CHAIN, VERIFY_X509_STRICT = 0, 4, 12, 32
 
 CHANNEL_BINDING_TYPES = []
 
 # https://docs.python.org/2/library/ssl.html#ssl.HAS_ALPN etc...
-HAS_ALPN, HAS_NPN, HAS_ECDH, HAS_SNI = False, False, True, True
+HAS_ALPN, HAS_NPN, HAS_ECDH, HAS_SNI = False, False, True, False
 
+# TODO not supported on jython yet
+# Disable weak or insecure ciphers by default
+# (OpenSSL's default setting is 'DEFAULT:!aNULL:!eNULL')
+# Enable a better set of ciphers by default
+# This list has been explicitly chosen to:
+#   * Prefer cipher suites that offer perfect forward secrecy (DHE/ECDHE)
+#   * Prefer ECDHE over DHE for better performance
+#   * Prefer any AES-GCM over any AES-CBC for better performance and security
+#   * Then Use HIGH cipher suites as a fallback
+#   * Then Use 3DES as fallback which is secure but slow
+#   * Disable NULL authentication, NULL encryption, and MD5 MACs for security
+#     reasons
+_DEFAULT_CIPHERS = (
+    'ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:'
+    'DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:'
+    '!eNULL:!MD5'
+)
+
+# TODO not supported on jython yet
+# Restricted and more secure ciphers for the server side
+# This list has been explicitly chosen to:
+#   * Prefer cipher suites that offer perfect forward secrecy (DHE/ECDHE)
+#   * Prefer ECDHE over DHE for better performance
+#   * Prefer any AES-GCM over any AES-CBC for better performance and security
+#   * Then Use HIGH cipher suites as a fallback
+#   * Then Use 3DES as fallback which is secure but slow
+#   * Disable NULL authentication, NULL encryption, MD5 MACs, DSS, and RC4 for
+#     security reasons
+_RESTRICTED_SERVER_CIPHERS = (
+    'ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:'
+    'DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:'
+    '!eNULL:!MD5:!DSS:!RC4'
+)
 
 _rfc2822_date_format = SimpleDateFormat("MMM dd HH:mm:ss yyyy z", Locale.US)
 _rfc2822_date_format.setTimeZone(TimeZone.getTimeZone("GMT"))
@@ -102,6 +147,283 @@ _cert_name_types = [
     "registeredID"]
 
 
+class CertificateError(ValueError):
+    pass
+
+
+# TODO for now create these exceptions here to conform with API
+class SSLZeroReturnError(SSLError):
+    pass
+
+class SSLWantReadError(SSLError):
+    pass
+
+class SSLWantWriteError(SSLError):
+    pass
+
+class SSLSyscallError(SSLError):
+    pass
+
+class SSLEOFError(SSLError):
+    pass
+
+
+def _dnsname_match(dn, hostname, max_wildcards=1):
+    """Matching according to RFC 6125, section 6.4.3
+
+    http://tools.ietf.org/html/rfc6125#section-6.4.3
+    """
+    pats = []
+    if not dn:
+        return False
+
+    pieces = dn.split(r'.')
+    leftmost = pieces[0]
+    remainder = pieces[1:]
+
+    wildcards = leftmost.count('*')
+    if wildcards > max_wildcards:
+        # Issue #17980: avoid denials of service by refusing more
+        # than one wildcard per fragment.  A survery of established
+        # policy among SSL implementations showed it to be a
+        # reasonable choice.
+        raise CertificateError(
+            "too many wildcards in certificate DNS name: " + repr(dn))
+
+    # speed up common case w/o wildcards
+    if not wildcards:
+        return dn.lower() == hostname.lower()
+
+    # RFC 6125, section 6.4.3, subitem 1.
+    # The client SHOULD NOT attempt to match a presented identifier in which
+    # the wildcard character comprises a label other than the left-most label.
+    if leftmost == '*':
+        # When '*' is a fragment by itself, it matches a non-empty dotless
+        # fragment.
+        pats.append('[^.]+')
+    elif leftmost.startswith('xn--') or hostname.startswith('xn--'):
+        # RFC 6125, section 6.4.3, subitem 3.
+        # The client SHOULD NOT attempt to match a presented identifier
+        # where the wildcard character is embedded within an A-label or
+        # U-label of an internationalized domain name.
+        pats.append(re.escape(leftmost))
+    else:
+        # Otherwise, '*' matches any dotless string, e.g. www*
+        pats.append(re.escape(leftmost).replace(r'\*', '[^.]*'))
+
+    # add the remaining fragments, ignore any wildcards
+    for frag in remainder:
+        pats.append(re.escape(frag))
+
+    pat = re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
+    return pat.match(hostname)
+
+
+def match_hostname(cert, hostname):
+    """Verify that *cert* (in decoded format as returned by
+    SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
+    rules are followed, but IP addresses are not accepted for *hostname*.
+
+    CertificateError is raised on failure. On success, the function
+    returns nothing.
+    """
+    if not cert:
+        raise ValueError("empty or no certificate, match_hostname needs a "
+                         "SSL socket or SSL context with either "
+                         "CERT_OPTIONAL or CERT_REQUIRED")
+    dnsnames = []
+    san = cert.get('subjectAltName', ())
+    for key, value in san:
+        if key == 'DNS':
+            if _dnsname_match(value, hostname):
+                return
+            dnsnames.append(value)
+    if not dnsnames:
+        # The subject is only checked when there is no dNSName entry
+        # in subjectAltName
+        for sub in cert.get('subject', ()):
+            for key, value in sub:
+                # XXX according to RFC 2818, the most specific Common Name
+                # must be used.
+                if key == 'commonName':
+                    if _dnsname_match(value, hostname):
+                        return
+                    dnsnames.append(value)
+    if len(dnsnames) > 1:
+        raise CertificateError("hostname %r "
+                               "doesn't match either of %s"
+                               % (hostname, ', '.join(map(repr, dnsnames))))
+    elif len(dnsnames) == 1:
+        raise CertificateError("hostname %r "
+                               "doesn't match %r"
+                               % (hostname, dnsnames[0]))
+    else:
+        raise CertificateError("no appropriate commonName or "
+                               "subjectAltName fields were found")
+
+
+DefaultVerifyPaths = namedtuple("DefaultVerifyPaths",
+                                "cafile capath openssl_cafile_env openssl_cafile openssl_capath_env "
+                                "openssl_capath")
+
+
+def get_default_verify_paths():
+    """Return paths to default cafile and capath.
+    """
+    cafile, capath = None, None
+    default_cert_dir_env = os.environ.get('SSL_CERT_DIR', None)
+    default_cert_file_env = os.environ.get('SSL_CERT_FILE', None)
+
+    java_cert_file = System.getProperty('javax.net.ssl.trustStore')
+
+    if java_cert_file is not None and os.path.isfile(java_cert_file):
+        cafile = java_cert_file
+        capath = os.path.dirname(java_cert_file)
+    else:
+        if default_cert_dir_env is not None:
+            capath = default_cert_dir_env if os.path.isdir(default_cert_dir_env) else None
+        if default_cert_file_env is not None:
+            cafile = default_cert_file_env if os.path.isfile(default_cert_file_env) else None
+
+        if cafile is None:
+            # http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html
+            java_home = System.getProperty('java.home')
+            for _path in ('lib/security/jssecacerts', 'lib/security/cacerts'):
+                java_cert_file = os.path.join(java_home, _path)
+                if os.path.isfile(java_cert_file):
+                    cafile = java_cert_file
+                    capath = os.path.dirname(cafile)
+
+    return DefaultVerifyPaths(cafile if os.path.isfile(cafile) else None,
+                              capath if os.path.isdir(capath) else None,
+                              'SSL_CERT_FILE', default_cert_file_env,
+                              'SSL_CERT_DIR', default_cert_dir_env)
+
+
+class _ASN1Object(namedtuple("_ASN1Object", "nid shortname longname oid")):
+    """ASN.1 object identifier lookup
+    """
+    __slots__ = ()
+
+    def __new__(cls, oid):
+        # TODO, just fake it for now
+        if oid == '1.3.6.1.5.5.7.3.1':
+            return super(_ASN1Object, cls).__new__(cls, 129, 'serverAuth', 'TLS Web Server Authentication', oid)
+        elif oid == '1.3.6.1.5.5.7.3.2':
+            return super(_ASN1Object, cls).__new__(cls, 130, 'clientAuth', 'clientAuth', oid)
+        raise ValueError()
+
+
+class Purpose(_ASN1Object):
+    """SSLContext purpose flags with X509v3 Extended Key Usage objects
+    """
+
+Purpose.SERVER_AUTH = Purpose('1.3.6.1.5.5.7.3.1')
+Purpose.CLIENT_AUTH = Purpose('1.3.6.1.5.5.7.3.2')
+
+
+def create_default_context(purpose=Purpose.SERVER_AUTH, cafile=None,
+                           capath=None, cadata=None):
+    """Create a SSLContext object with default settings.
+
+    NOTE: The protocol and settings may change anytime without prior
+          deprecation. The values represent a fair balance between maximum
+          compatibility and security.
+    """
+    if not isinstance(purpose, _ASN1Object):
+        raise TypeError(purpose)
+
+    context = SSLContext(PROTOCOL_SSLv23)
+
+    # SSLv2 considered harmful.
+    context.options |= OP_NO_SSLv2
+
+    # SSLv3 has problematic security and is only required for really old
+    # clients such as IE6 on Windows XP
+    context.options |= OP_NO_SSLv3
+
+    # disable compression to prevent CRIME attacks (OpenSSL 1.0+)
+    # TODO not supported on Jython
+    # context.options |= getattr(_ssl, "OP_NO_COMPRESSION", 0)
+
+    if purpose == Purpose.SERVER_AUTH:
+        # verify certs and host name in client mode
+        context.verify_mode = CERT_REQUIRED
+        context.check_hostname = True
+    elif purpose == Purpose.CLIENT_AUTH:
+        pass
+        # TODO commeted out by darjus, none of the below is supported :(
+        # # Prefer the server's ciphers by default so that we get stronger
+        # # encryption
+        # context.options |= getattr(_ssl, "OP_CIPHER_SERVER_PREFERENCE", 0)
+        #
+        # # Use single use keys in order to improve forward secrecy
+        # context.options |= getattr(_ssl, "OP_SINGLE_DH_USE", 0)
+        # context.options |= getattr(_ssl, "OP_SINGLE_ECDH_USE", 0)
+        #
+        # # disallow ciphers with known vulnerabilities
+        # context.set_ciphers(_RESTRICTED_SERVER_CIPHERS)
+
+    if cafile or capath or cadata:
+        context.load_verify_locations(cafile, capath, cadata)
+    elif context.verify_mode != CERT_NONE:
+        # no explicit cafile, capath or cadata but the verify mode is
+        # CERT_OPTIONAL or CERT_REQUIRED. Let's try to load default system
+        # root CA certificates for the given purpose. This may fail silently.
+        context.load_default_certs(purpose)
+    return context
+
+
+def _create_unverified_context(protocol=PROTOCOL_SSLv23, cert_reqs=None,
+                               check_hostname=False, purpose=Purpose.SERVER_AUTH,
+                               certfile=None, keyfile=None,
+                               cafile=None, capath=None, cadata=None):
+    """Create a SSLContext object for Python stdlib modules
+
+    All Python stdlib modules shall use this function to create SSLContext
+    objects in order to keep common settings in one place. The configuration
+    is less restrict than create_default_context()'s to increase backward
+    compatibility.
+    """
+    if not isinstance(purpose, _ASN1Object):
+        raise TypeError(purpose)
+
+    context = SSLContext(protocol)
+    # SSLv2 considered harmful.
+    context.options |= OP_NO_SSLv2
+    # SSLv3 has problematic security and is only required for really old
+    # clients such as IE6 on Windows XP
+    context.options |= OP_NO_SSLv3
+
+    if cert_reqs is not None:
+        context.verify_mode = cert_reqs
+    context.check_hostname = check_hostname
+
+    if keyfile and not certfile:
+        raise ValueError("certfile must be specified")
+    if certfile or keyfile:
+        context.load_cert_chain(certfile, keyfile)
+
+    # load CA root certs
+    if cafile or capath or cadata:
+        context.load_verify_locations(cafile, capath, cadata)
+    elif context.verify_mode != CERT_NONE:
+        # no explicit cafile, capath or cadata but the verify mode is
+        # CERT_OPTIONAL or CERT_REQUIRED. Let's try to load default system
+        # root CA certificates for the given purpose. This may fail silently.
+        context.load_default_certs(purpose)
+
+    return context
+
+
+# Used by http.client if no context is explicitly passed.
+_create_default_https_context = create_default_context
+
+
+# Backwards compatibility alias, even though it's not a public name.
+_create_stdlib_context = _create_unverified_context
+
+
 class SSLInitializer(ChannelInitializer):
     def __init__(self, ssl_handler):
         self.ssl_handler = ssl_handler
@@ -115,14 +437,14 @@ class SSLSocket(object):
 
     def __init__(self, sock, keyfile=None, certfile=None, server_side=False, cert_reqs=CERT_NONE,
                  ssl_version=PROTOCOL_SSLv23, ca_certs=None,
-                 do_handshake_on_connect=True, suppress_ragged_eofs=True, ciphers=None, _context=None):
+                 do_handshake_on_connect=True, suppress_ragged_eofs=True, npn_protocols=None, ciphers=None,
+                 server_hostname=None, _context=None):
         # TODO ^^ handle suppress_ragged_eofs
         self.sock = sock
         self.do_handshake_on_connect = do_handshake_on_connect
         self._sock = sock._sock  # the real underlying socket
-        self.context = _context
-        if _context is None:
-            self.context = SSLContext(ssl_version)
+        if _context:
+            self._context = _context
         else:
             if server_side and not certfile:
                 raise ValueError("certfile must be specified for server-side "
@@ -137,12 +459,28 @@ class SSLSocket(object):
                 self._context.load_verify_locations(ca_certs)
             if certfile:
                 self._context.load_cert_chain(certfile, keyfile)
+            if npn_protocols:
+                self._context.set_npn_protocols(npn_protocols)
             if ciphers:
                 self._context.set_ciphers(ciphers)
+            self.keyfile = keyfile
+            self.certfile = certfile
+            self.cert_reqs = cert_reqs
+            self.ssl_version = ssl_version
+            self.ca_certs = ca_certs
+            self.ciphers = ciphers
 
-        self.engine = self.context._createSSLEngine()
+        if sock.getsockopt(SOL_SOCKET, SO_TYPE) != SOCK_STREAM:
+            raise NotImplementedError("only stream sockets are supported")
+
+        if server_side and server_hostname:
+            raise ValueError("server_hostname can only be specified "
+                             "in client mode")
+        if self._context.check_hostname and not server_hostname:
+            raise ValueError("check_hostname requires server_hostname")
         self.server_side = server_side
-        self.engine.setUseClientMode(not server_side)
+        self.server_hostname = server_hostname
+
         self.ssl_handler = None
         # _sslobj is used to follow CPython convention that an object
         # means we have handshaked, as used by existing code that
@@ -150,17 +488,33 @@ class SSLSocket(object):
         self._sslobj = None
         self.handshake_count = 0
 
+        self.engine = self._context._createSSLEngine()
+
         if self.do_handshake_on_connect and self.sock._sock.connected:
             self.do_handshake()
 
     def connect(self, addr):
+        if self.server_side:
+            raise ValueError("can't connect in server-side mode")
+
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
+
+        self.engine = self._context._createSSLEngine(*addr)
+        self.engine.setUseClientMode(not self.server_side)
+
         self._sock._connect(addr)
         if self.do_handshake_on_connect:
             self.do_handshake()
 
     def connect_ex(self, addr):
+        if self.server_side:
+            raise ValueError("can't connect in server-side mode")
+
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
+
+        self.engine = self._context._createSSLEngine(*addr)
+        self.engine.setUseClientMode(not self.server_side)
+
         self._sock._connect(addr)
         if self.do_handshake_on_connect:
             self.do_handshake()
@@ -176,6 +530,7 @@ class SSLSocket(object):
 
         def handshake_step(result):
             log.debug("SSL handshaking completed %s", result, extra={"sock": self._sock})
+
             if not hasattr(self._sock, "active_latch"):
                 log.debug("Post connect step", extra={"sock": self._sock})
                 self._sock._post_connect()
@@ -282,13 +637,20 @@ class SSLSocket(object):
         cert = self.engine.getSession().getPeerCertificates()[0]
         if binary_form:
             return cert.getEncoded()
+
+        if self._context.verify_mode == CERT_NONE:
+            return {}
+
         dn = cert.getSubjectX500Principal().getName()
         ldapDN = LdapName(dn)
         # FIXME given this tuple of a single element tuple structure assumed here, is it possible this is
         # not actually the case, eg because of multi value attributes?
         rdns = tuple((((_ldap_rdn_display_names.get(rdn.type), rdn.value),) for rdn in ldapDN.getRdns()))
         # FIXME is it str? or utf8? or some other encoding? maybe a bug in cpython?
-        alt_names = tuple(((_cert_name_types[type], str(name)) for (type, name) in cert.getSubjectAlternativeNames()))
+        alt_names = tuple()
+        if cert.getSubjectAlternativeNames():
+            alt_names = tuple(((_cert_name_types[type], str(name)) for (type, name) in cert.getSubjectAlternativeNames()))
+
         pycert = {
             "notAfter": _rfc2822_date_format.format(cert.getNotAfter()),
             "subject": rdns,
@@ -311,6 +673,24 @@ class SSLSocket(object):
             strength = None
         return suite, str(session.protocol), strength
 
+    def get_channel_binding(self, cb_type="tls-unique"):
+        """Get channel binding data for current connection.  Raise ValueError
+        if the requested `cb_type` is not supported.  Return bytes of the data
+        or None if the data is not available (e.g. before the handshake).
+        """
+        if cb_type not in CHANNEL_BINDING_TYPES:
+            raise ValueError("Unsupported channel binding type")
+        if cb_type != "tls-unique":
+            raise NotImplementedError(
+                "{0} channel binding type not implemented"
+                    .format(cb_type))
+
+        # TODO support this properly
+        return None
+        # if self._sslobj is None:
+        #     return None
+        # return self._sslobj.tls_unique_cb()
+
 
 # instantiates a SSLEngine, with the following things to keep in mind:
 
@@ -326,20 +706,42 @@ def wrap_socket(sock, keyfile=None, certfile=None, server_side=False, cert_reqs=
 
     return SSLSocket(
         sock,
-        keyfile=keyfile, certfile=certfile, ca_certs=ca_certs,
-        server_side=server_side,
+        keyfile=keyfile, certfile=certfile, cert_reqs=cert_reqs, ca_certs=ca_certs,
+        server_side=server_side, ssl_version=ssl_version, ciphers=ciphers,
         do_handshake_on_connect=do_handshake_on_connect)
 
 
 # some utility functions
 
 def cert_time_to_seconds(cert_time):
-    """Takes a date-time string in standard ASN1_print form
-    ("MON DAY 24HOUR:MINUTE:SEC YEAR TIMEZONE") and return
-    a Python time value in seconds past the epoch."""
+    """Return the time in seconds since the Epoch, given the timestring
+    representing the "notBefore" or "notAfter" date from a certificate
+    in ``"%b %d %H:%M:%S %Y %Z"`` strptime format (C locale).
 
-    import time
-    return time.mktime(time.strptime(cert_time, "%b %d %H:%M:%S %Y GMT"))
+    "notBefore" or "notAfter" dates must use UTC (RFC 5280).
+
+    Month is one of: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+    UTC should be specified as GMT (see ASN1_TIME_print())
+    """
+    from time import strptime
+    from calendar import timegm
+
+    months = (
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec"
+    )
+    time_format = ' %d %H:%M:%S %Y GMT' # NOTE: no month, fixed GMT
+    try:
+        month_number = months.index(cert_time[:3].title()) + 1
+    except ValueError:
+        raise ValueError('time data %r does not match '
+                         'format "%%b%s"' % (cert_time, time_format))
+    else:
+        # found valid month
+        tt = strptime(cert_time[3:], time_format)
+        # return an integer, the previous mktime()-based implementation
+        # returned a float (fractional seconds are always zero here).
+        return timegm((tt[0], month_number) + tt[2:6])
 
 
 PEM_HEADER = "-----BEGIN CERTIFICATE-----"
@@ -387,6 +789,8 @@ def get_server_certificate(addr, ssl_version=PROTOCOL_SSLv3, ca_certs=None):
         cert_reqs = CERT_REQUIRED
     else:
         cert_reqs = CERT_NONE
+
+    from socket import socket
     s = wrap_socket(socket(), ssl_version=ssl_version,
                     cert_reqs=cert_reqs, ca_certs=ca_certs)
     s.connect(addr)
@@ -434,25 +838,26 @@ def RAND_add(bytes, entropy):
     pass
 
 
-class Purpose(object):
-    """SSLContext purpose flags with X509v3 Extended Key Usage objects
-    """
-    SERVER_AUTH = '1.3.6.1.5.5.7.3.1'
-    CLIENT_AUTH = '1.3.6.1.5.5.7.3.2'
-
-
 class SSLContext(object):
 
+    _jsse_keyType_names = ('RSA', 'DSA', 'DH_RSA', 'DH_DSA', 'EC', 'EC_EC', 'EC_RSA')
+
     def __init__(self, protocol):
-        protocol_name = _PROTOCOL_NAMES[protocol]
+        try:
+            protocol_name = _PROTOCOL_NAMES[protocol]
+        except KeyError:
+            raise ValueError("invalid protocol version")
+
         if protocol == PROTOCOL_SSLv23:  # darjus: at least my Java does not let me use v2
             protocol_name = 'SSL'
 
         self.protocol = protocol
-        self.check_hostname = False
-        self.options = OP_ALL
-        self.verify_flags = None
-        self.verify_mode = CERT_NONE
+        self._check_hostname = False
+
+        # defaults from _ssl.c
+        self.options = OP_ALL | OP_NO_SSLv2 | OP_NO_SSLv3
+        self._verify_flags = VERIFY_DEFAULT
+        self._verify_mode = CERT_NONE
         self._ciphers = None
 
         self._trust_store = KeyStore.getInstance(KeyStore.getDefaultType())
@@ -468,23 +873,26 @@ class SSLContext(object):
                     do_handshake_on_connect=True,
                     suppress_ragged_eofs=True,
                     server_hostname=None):
-        # FIXME do something about server_hostname
-        return SSLSocket(sock, keyfile=None, certfile=None, ca_certs=None, suppress_ragged_eofs=suppress_ragged_eofs,
-                         do_handshake_on_connect=do_handshake_on_connect, server_side=server_side, _context=self)
+        return SSLSocket(sock, keyfile=None, certfile=None, ca_certs=None, cert_reqs=self.verify_mode, suppress_ragged_eofs=suppress_ragged_eofs,
+                         do_handshake_on_connect=do_handshake_on_connect, server_side=server_side,
+                         server_hostname=server_hostname, _context=self)
 
-    def _createSSLEngine(self):
+    def _createSSLEngine(self, host=None, port=None):
         trust_managers = [NoVerifyX509TrustManager()]
         if self.verify_mode == CERT_REQUIRED:
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             tmf.init(self._trust_store)
-            trust_managers = tmf.getTrustManagers()
+            trust_managers = [CompositeX509TrustManager(tmf.getTrustManagers())]
 
         if self._key_managers is None:  # get an e
             self._context.init(_get_openssl_key_manager().getKeyManagers(), trust_managers, None)
         else:
             self._context.init(self._key_managers.getKeyManagers(), trust_managers, None)
 
-        engine = self._context.createSSLEngine()
+        if host is not None and port is not None:
+            engine = self._context.createSSLEngine(host, port)
+        else:
+            engine = self._context.createSSLEngine()
 
         if self._ciphers is not None:
             engine.setEnabledCipherSuites(self._ciphers)
@@ -492,11 +900,13 @@ class SSLContext(object):
         return engine
 
     def cert_store_stats(self):
-        # TODO not sure if we can even get something similar from Java
-        return {'crl': 0, 'x509': 0, 'x509_ca': 0}
+        return {'crl': 0, 'x509': self._key_store.size(), 'x509_ca': self._trust_store.size()}
 
     def load_cert_chain(self, certfile, keyfile=None, password=None):
-        self._key_managers = _get_openssl_key_manager(certfile, keyfile, password, _key_store=self._key_store)
+        try:
+            self._key_managers = _get_openssl_key_manager(certfile, keyfile, password, _key_store=self._key_store)
+        except IllegalArgumentException as err:
+            raise SSLError(SSL_ERROR_SSL, "PEM lib ({})".format(err))
 
     def set_ciphers(self, ciphers):
         # TODO conversion from OpenSSL to http://www.iana.org/assignments/tls-parameters/tls-parameters.xml
@@ -505,30 +915,45 @@ class SSLContext(object):
         pass
 
     def load_verify_locations(self, cafile=None, capath=None, cadata=None):
+        if cafile is None and capath is None and cadata is None:
+            raise TypeError("cafile, capath and cadata cannot be all omitted")
+
+        cafiles = []
         if cafile is not None:
-            with open(cafile) as f:
-                self._load_certificates(f)
+            cafiles.append(cafile)
+
         if capath is not None:
             for fname in os.listdir(capath):
-                _, ext = os.path.splitext()
+                _, ext = os.path.splitext(fname)
                 if ext.lower() == 'pem':
+                    cafiles.append(os.path.join(capath, fname))
+                elif fname == 'cacerts':  # java truststore
+                    if os.path.isfile(os.path.join(capath, fname)):
+                        cafiles.append(os.path.join(capath, fname))
+                else:
                     with open(os.path.join(capath, fname)) as f:
-                        self._load_certificates(f)
+                        if PEM_HEADER in f.read():
+                            cafiles.append(os.path.join(capath, fname))
+
+        certs = []
+        private_key = None
         if cadata is not None:
-            self._load_certificates(f)
+            certs, private_key = _extract_cert_from_data(cadata)
 
-    @raises_java_exception
-    def _load_certificates(self, f):
-        cf = CertificateFactory.getInstance("X.509")
-        try:
-            for cert in cf.generateCertificates(BufferedInputStream(f)):
-                self._trust_store.setCertificateEntry(str(uuid.uuid4()), cert)
-        except CertificateParsingException:
-            log.debug("Failed to parse certificate", exc_info=True)
-            raise
+        _certs, private_key = _extract_certs_for_paths(cafiles)
+        certs.extend(_certs)
+        for cert in certs:
+            # FIXME not sure this is correct?
+            if private_key is None:
+                self._trust_store.setCertificateEntry(_str_hash_key_entry(cert), cert)
+            else:
+                self._key_store.setCertificateEntry(_str_hash_key_entry(cert), cert)
 
-    def load_default_certs(self, purpose=None):
+    def load_default_certs(self, purpose=Purpose.SERVER_AUTH):
         # TODO handle/support purpose
+        if not isinstance(purpose, _ASN1Object):
+            raise TypeError(purpose)
+
         self.set_default_verify_paths()
 
     def set_default_verify_paths(self):
@@ -538,8 +963,9 @@ class SSLContext(object):
         returned if no certificates are to be found. When the OpenSSL library is provided as part of the operating
         system, though, it is likely to be configured properly.
         """
-        # TODO not implemented, we want to use some default Java's loading method.
-        return None
+        default_verify_paths = get_default_verify_paths()
+
+        self.load_verify_locations(cafile=default_verify_paths.cafile, capath=default_verify_paths.capath)
 
     def set_alpn_protocols(self, protocols):
         raise NotImplementedError()
@@ -555,8 +981,23 @@ class SSLContext(object):
         pass
 
     def set_ecdh_curve(self, curve_name):
-        # TODO?
-        pass
+        params = _get_ecdh_parameter_spec(curve_name)
+
+    def session_stats(self):
+        # TODO
+        return {
+            'number': 0,
+            'connect': 0,
+            'connect_good': 0,
+            'connect_renegotiate': 0,
+            'accept': 0,
+            'accept_good': 0,
+            'accept_renegotiate': 0,
+            'hits': 0,
+            'misses': 0,
+            'timeouts': 0,
+            'cache_full': 0,
+        }
 
     def get_ca_certs(self, binary_form=False):
         """get_ca_certs(binary_form=False) -> list of loaded certificate
@@ -565,25 +1006,66 @@ class SSLContext(object):
         returns a DER-encoded copy of the CA certificate.
         NOTE: Certificates in a capath directory aren't loaded unless they have been used at least once.
         """
-        if binary_form:
-            raise NotImplementedError()
-
         certs = []
         enumerator = self._trust_store.aliases()
         while enumerator.hasMoreElements():
             alias = enumerator.next()
             if self._trust_store.isCertificateEntry(alias):
                 cert = self._trust_store.getCertificate(alias)
-                issuer_info = self._parse_dn(cert.issuerDN)
-                subject_info = self._parse_dn(cert.subjectDN)
+                if binary_form:
+                    certs.append(cert.getEncoded())
+                else:
+                    issuer_info = self._parse_dn(cert.issuerDN)
+                    subject_info = self._parse_dn(cert.subjectDN)
 
-                cert_info = {'issuer': issuer_info, 'subject': subject_info}
-                for k in ('notBefore', 'serialNumber', 'notAfter', 'version'):
-                    cert_info[k] = getattr(cert, k)
+                    cert_info = {'issuer': issuer_info, 'subject': subject_info}
+                    for k in ('serialNumber', 'version'):
+                        cert_info[k] = getattr(cert, k)
 
-                certs.append(cert_info)
+                    for k in ('notBefore', 'notAfter'):
+                        cert_info[k] = str(getattr(cert, k))
+
+                    certs.append(cert_info)
 
         return certs
+
+    @property
+    def check_hostname(self):
+        return self._check_hostname
+
+    @check_hostname.setter
+    def check_hostname(self, val):
+        if val and self.verify_mode == CERT_NONE:
+            raise ValueError("check_hostname needs a SSL context with either "
+                             "CERT_OPTIONAL or CERT_REQUIRED")
+        self._check_hostname = val
+
+    @property
+    def verify_mode(self):
+        return self._verify_mode
+
+    @verify_mode.setter
+    def verify_mode(self, val):
+        if not isinstance(val, int):
+            raise TypeError("verfy_mode must be one of the ssl.CERT_* modes")
+
+        if val not in (CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED):
+            raise ValueError("verfy_mode must be one of the ssl.CERT_* modes")
+
+        if self.check_hostname and val == CERT_NONE:
+            raise ValueError("Cannot set verify_mode to CERT_NONE when "
+                             "check_hostname is enabled.")
+        self._verify_mode = val
+
+    @property
+    def verify_flags(self):
+        return self._verify_flags
+
+    @verify_flags.setter
+    def verify_flags(self, val):
+        if not isinstance(val, int):
+            raise TypeError("verfy_flags must be one of the ssl.VERIFY_* flags")
+        self._verify_flags = val
 
     @classmethod
     def _parse_dn(cls, dn):
@@ -595,7 +1077,6 @@ class SSLContext(object):
             ln_value = ln_iter.nextElement()
             while ln_value:
                 dn_lst.append(tuple(ln_value.split('=', 1)))
-
                 ln_value = ln_iter.nextElement()
         except NoSuchElementException:
             pass

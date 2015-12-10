@@ -1,37 +1,46 @@
 import logging
-import sys
 import uuid
-from array import array
-from contextlib import closing
+import re
 from StringIO import StringIO
+import types
 
-from java.io import BufferedInputStream, BufferedReader, FileReader, InputStreamReader, ByteArrayInputStream
-from java.security import KeyStore, Security
+from java.lang import RuntimeException
+from java.io import BufferedInputStream, BufferedReader, InputStreamReader, ByteArrayInputStream, IOException
+from java.security import KeyStore, Security, InvalidAlgorithmParameterException
 from java.security.cert import CertificateException, CertificateFactory
+from java.security.interfaces import RSAPrivateCrtKey
+from java.security.interfaces import RSAPublicKey
 from javax.net.ssl import (
-    X509KeyManager, X509TrustManager, KeyManagerFactory, SSLContext, TrustManager, TrustManagerFactory)
-
+    X509KeyManager, X509TrustManager, KeyManagerFactory, TrustManagerFactory)
 try:
     # jarjar-ed version
     from org.python.bouncycastle.asn1.pkcs import PrivateKeyInfo
     from org.python.bouncycastle.cert import X509CertificateHolder
     from org.python.bouncycastle.cert.jcajce import JcaX509CertificateConverter
     from org.python.bouncycastle.jce.provider import BouncyCastleProvider
-    from org.python.bouncycastle.openssl import PEMKeyPair, PEMParser
+    from org.python.bouncycastle.jce import ECNamedCurveTable
+    from org.python.bouncycastle.jce.spec import ECNamedCurveSpec
+    from org.python.bouncycastle.openssl import PEMKeyPair, PEMParser, PEMEncryptedKeyPair, PEMException, \
+        EncryptionException
     from org.python.bouncycastle.openssl.jcajce import JcaPEMKeyConverter
+    from org.python.bouncycastle.openssl.bc import BcPEMDecryptorProvider, JcePEMDecryptorProviderBuilder
 except ImportError:
     # dev version from extlibs
     from org.bouncycastle.asn1.pkcs import PrivateKeyInfo
     from org.bouncycastle.cert import X509CertificateHolder
     from org.bouncycastle.cert.jcajce import JcaX509CertificateConverter
     from org.bouncycastle.jce.provider import BouncyCastleProvider
-    from org.bouncycastle.openssl import PEMKeyPair, PEMParser
-    from org.bouncycastle.openssl.jcajce import JcaPEMKeyConverter
+    from org.bouncycastle.jce import ECNamedCurveTable
+    from org.bouncycastle.jce.spec import ECNamedCurveSpec
+    from org.bouncycastle.openssl import PEMKeyPair, PEMParser, PEMEncryptedKeyPair, PEMException, \
+        EncryptionException
+    from org.bouncycastle.openssl.jcajce import JcaPEMKeyConverter, JcePEMDecryptorProviderBuilder
 
 
 log = logging.getLogger("_socket")
 Security.addProvider(BouncyCastleProvider())
 
+RE_BEGIN_KEY_CERT = re.compile(r'^-----BEGIN.*(PRIVATE KEY|CERTIFICATE)-----$')
 
 
 def _get_ca_certs_trust_manager(ca_certs=None):
@@ -54,62 +63,226 @@ def _stringio_as_reader(s):
     return BufferedReader(InputStreamReader(ByteArrayInputStream(bytearray(s.getvalue()))))
 
 
-def _extract_readers(cert_file):
-    private_key = StringIO()
-    certs = StringIO()
-    output = certs
-    with open(cert_file) as f:
-        for line in f:
-            if line.startswith("-----BEGIN PRIVATE KEY-----"):
-                output = private_key
-            output.write(line)
-            if line.startswith("-----END PRIVATE KEY-----"):
-                output = certs
-    return _stringio_as_reader(private_key), _stringio_as_reader(certs)
+def _extract_readers(f):
+    string_ios = []
+    output = StringIO()
+    key_cert_start_line_found = False
+    for line in f:
+        if RE_BEGIN_KEY_CERT.match(line):
+            key_cert_start_line_found = True
+            if output.getvalue():
+                string_ios.append(output)
+
+            output = StringIO()
+        output.write(line)
+
+    if output.getvalue():
+        string_ios.append(output)
+
+    if not key_cert_start_line_found:
+        from _socket import SSLError, SSL_ERROR_SSL
+        raise SSLError(SSL_ERROR_SSL, "PEM lib (no start line or not enough data)")
+
+    return [_stringio_as_reader(sio) for sio in string_ios]
 
 
 def _get_openssl_key_manager(cert_file=None, key_file=None, password=None, _key_store=None):
-    if password is None:
-        password = []
-
-    paths = [key_file] if key_file else []
-    if cert_file:
-        paths.append(cert_file)
-
-    # Go from Bouncy Castle API to Java's; a bit heavyweight for the Python dev ;)
-    key_converter = JcaPEMKeyConverter().setProvider("BC")
-    cert_converter = JcaX509CertificateConverter().setProvider("BC")
-
-    private_key = None
-    certs = []
-    for path in paths:
-        for br in _extract_readers(path):
-            while True:
-                obj = PEMParser(br).readObject()
-                if obj is None:
-                    break
-                if isinstance(obj, PEMKeyPair):
-                    private_key = key_converter.getKeyPair(obj).getPrivate()
-                elif isinstance(obj, PrivateKeyInfo):
-                    private_key = key_converter.getPrivateKey(obj)
-                elif isinstance(obj, X509CertificateHolder):
-                    certs.append(cert_converter.getCertificate(obj))
-
+    certs, private_key = [], None
 
     if _key_store is None:
         _key_store = KeyStore.getInstance(KeyStore.getDefaultType())
         _key_store.load(None, None)
 
+    if key_file is not None:
+        certs, private_key = _extract_certs_for_paths([key_file], password)
+        if private_key is None:
+            from _socket import SSLError, SSL_ERROR_SSL
+            raise SSLError(SSL_ERROR_SSL, "PEM lib (No private key loaded)")
+
     if cert_file is not None:
+        _certs, _private_key = _extract_certs_for_paths([cert_file], password)
+        private_key = _private_key if _private_key else private_key
+        certs.extend(_certs)
+
         if not private_key:
             from _socket import SSLError, SSL_ERROR_SSL
-            raise SSLError(SSL_ERROR_SSL, "No private key loaded")
+            raise SSLError(SSL_ERROR_SSL, "PEM lib (No private key loaded)")
 
-        _key_store.setKeyEntry(str(uuid.uuid4()), private_key, [], certs)
+        keys_match = False
+        for cert in certs:
+            # TODO works for RSA only for now
+            if not isinstance(cert.publicKey, RSAPublicKey) and isinstance(private_key, RSAPrivateCrtKey):
+                keys_match = True
+                continue
+
+            if cert.publicKey.getModulus() == private_key.getModulus() \
+                    and cert.publicKey.getPublicExponent() == private_key.getPublicExponent():
+                keys_match = True
+            else:
+                keys_match = False
+
+        if key_file is not None and not keys_match:
+            from _socket import SSLError, SSL_ERROR_SSL
+            raise SSLError(SSL_ERROR_SSL, "key values mismatch")
+
+        _key_store.setKeyEntry(_str_hash_key_entry(private_key, *certs), private_key, [], certs)
 
     kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
     kmf.init(_key_store, [])
     return kmf
+
+
+def _str_hash_key_entry(*args):
+    """Very naiive"""
+    _hash = 0
+    for arg in args:
+        if arg:
+            _hash += hash(str(arg))
+
+    return str(_hash)
+
+
+def _parse_password(password):
+    is_password_func = False
+    if isinstance(password, (types.FunctionType, types.MethodType)) or hasattr(password, '__call__'):
+        password = password()
+        is_password_func = True
+    if password is None:
+        password = []
+    elif isinstance(password, (str, bytearray)):
+        password = str(password)
+        if len(password) >= 102400:  # simulate openssl PEM_BUFSIZE limit error
+            raise ValueError("PEM lib (password cannot be longer than 102400 -1)")
+    else:
+        if is_password_func:
+            raise TypeError("PEM lib (must return a string")
+        else:
+            raise TypeError("PEM lib (password should be a string)")
+    return password
+
+
+def _extract_certs_from_keystore_file(f, password):
+    keystore = KeyStore.getInstance(KeyStore.getDefaultType())
+    if password is None:  # default java keystore password is changeit
+        password = 'changeit'
+    elif not isinstance(password, str):
+        password = []
+
+    keystore.load(BufferedInputStream(f), password)
+    certs = []
+
+    alias_iter = keystore.aliases()
+    while alias_iter.hasMoreElements():
+        alias = alias_iter.nextElement()
+        certs.append(keystore.getCertificate(alias))
+
+    return certs
+
+
+def _extract_certs_for_paths(paths, password=None):
+    # Go from Bouncy Castle API to Java's; a bit heavyweight for the Python dev ;)
+    key_converter = JcaPEMKeyConverter().setProvider("BC")
+    cert_converter = JcaX509CertificateConverter().setProvider("BC")
+    certs = []
+    private_key = None
+    for path in paths:
+        with open(path) as f:
+            # try to load the file as keystore file first
+            try:
+                _certs = _extract_certs_from_keystore_file(f, password)
+                certs.extend(_certs)
+            except IOException as err:  # try loading pem version instead
+                f.seek(0)
+                _certs, _private_key = _extract_cert_from_data(f, password, key_converter, cert_converter)
+
+                private_key = _private_key if _private_key else private_key
+                certs.extend(_certs)
+    return certs, private_key
+
+
+def _extract_cert_from_data(f, password=None, key_converter=None, cert_converter=None):
+    certs = []
+    private_key = None
+
+    if isinstance(f, unicode):
+        f = StringIO(str(f))
+    elif isinstance(f, str):
+        f = StringIO(f)
+
+    if not hasattr(f, 'seek'):
+        raise TypeError("PEM lib (data must be a file like object, string or bytes")
+
+    if _is_cert_pem(f):
+        certs, private_key = _read_pem_cert_from_data(f, password, key_converter, cert_converter)
+    else:
+        cf = CertificateFactory.getInstance("X.509")
+        certs = list(cf.generateCertificates(ByteArrayInputStream(f.read())))
+
+    return certs, private_key
+
+
+def _read_pem_cert_from_data(f, password, key_converter, cert_converter):
+    certs = []
+    private_key = None
+
+    if key_converter is None:
+        key_converter = JcaPEMKeyConverter().setProvider("BC")
+    if cert_converter is None:
+        cert_converter = JcaX509CertificateConverter().setProvider("BC")
+    for br in _extract_readers(f):
+        while True:
+            try:
+                obj = PEMParser(br).readObject()
+            except PEMException as err:
+                from _socket import SSLError, SSL_ERROR_SSL
+                raise SSLError(SSL_ERROR_SSL, "PEM lib ({})".format(err))
+
+            if obj is None:
+                break
+
+            if isinstance(obj, PEMKeyPair):
+                private_key = key_converter.getKeyPair(obj).getPrivate()
+            elif isinstance(obj, PrivateKeyInfo):
+                private_key = key_converter.getPrivateKey(obj)
+            elif isinstance(obj, X509CertificateHolder):
+                certs.append(cert_converter.getCertificate(obj))
+            elif isinstance(obj, PEMEncryptedKeyPair):
+                provider = JcePEMDecryptorProviderBuilder().build(_parse_password(password))
+                try:
+                    key_pair = key_converter.getKeyPair(obj.decryptKeyPair(provider))
+                except EncryptionException as err:
+                    from _socket import SSLError, SSL_ERROR_SSL
+                    raise SSLError(SSL_ERROR_SSL, "PEM lib ({})".format(err))
+
+                private_key = key_pair.getPrivate()
+            else:
+                raise NotImplementedError("Jython does not implement PEM object {!r}".format(obj))
+    return certs, private_key
+
+
+def _is_cert_pem(f):
+    try:
+        # check if the data is string specifically to support DER certs
+        f.read().decode('ascii')
+        return True
+    except UnicodeDecodeError:
+        return False
+    finally:
+        f.seek(0)
+
+    assert "Should not reach here"
+
+
+def _get_ecdh_parameter_spec(curve_name):
+    if not isinstance(curve_name, str):
+        raise TypeError("curve_name must be string/bytes")
+
+    spec_param = ECNamedCurveTable.getParameterSpec(curve_name)
+    if spec_param is None:
+        raise ValueError("unknown elliptic curve name {}".format(curve_name))
+
+    return ECNamedCurveSpec(spec_param.getName(), spec_param.getCurve(), spec_param.getG(), spec_param.getN(),
+                            spec_param.getH(), spec_param.getSeed())
 
 
 # CompositeX509KeyManager and CompositeX509TrustManager allow for mixing together Java built-in managers
@@ -181,25 +354,39 @@ class CompositeX509TrustManager(X509TrustManager):
     def checkClientTrusted(self, chain, auth_type):
         for trust_manager in self.trust_managers:
             try:
-                trustManager.checkClientTrusted(chain, auth_type);
+                trust_manager.checkClientTrusted(chain, auth_type)
                 return
             except CertificateException:
-                pass
-        raise CertificateException("None of the TrustManagers trust this certificate chain")
+                continue
+            except RuntimeException as err:
+                # special-case to raise proper CertificateException ;)
+                if isinstance(err.getCause(), InvalidAlgorithmParameterException):
+                    if err.getCause().getMessage() == u'the trustAnchors parameter must be non-empty':
+                        continue
+                raise
+
+        raise CertificateException("certificate verify failed")
 
     def checkServerTrusted(self, chain, auth_type):
         for trust_manager in self.trust_managers:
             try:
-                trustManager.checkServerTrusted(chain, auth_type);
+                trust_manager.checkServerTrusted(chain, auth_type)
                 return
             except CertificateException:
-                pass
-        raise CertificateException("None of the TrustManagers trust this certificate chain")
+                continue
+            except RuntimeException as err:
+                # special-case to raise proper CertificateException ;)
+                if isinstance(err.getCause(), InvalidAlgorithmParameterException):
+                    if err.getCause().getMessage() == u'the trustAnchors parameter must be non-empty':
+                        continue
+                raise
+
+        raise CertificateException("certificate verify failed")
 
     def getAcceptedIssuers(self):
         certs = []
         for trust_manager in self.trust_managers:
-            certs.extend(trustManager.getAcceptedIssuers())
+            certs.extend(trust_manager.getAcceptedIssuers())
         return certs
 
 
