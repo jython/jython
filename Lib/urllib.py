@@ -1205,15 +1205,20 @@ def unquote(s):
     # fastpath
     if len(res) == 1:
         return s
-    s = res[0]
+    buf = [res[0]]
+    is_unicode = isinstance(s, unicode)
     for item in res[1:]:
         try:
-            s += _hextochr[item[:2]] + item[2:]
+            if is_unicode:
+                buf.append(unichr(int(item[:2], 16)))
+                buf.append(item[2:])
+            else:
+                buf.append(_hextochr[item[:2]])
+                buf.append(item[2:])
         except KeyError:
-            s += '%' + item
-        except UnicodeDecodeError:
-            s += unichr(int(item[:2], 16)) + item[2:]
-    return s
+            buf.append('%')
+            buf.append(item)
+    return ''.join(buf)
 
 def unquote_plus(s):
     """unquote('%7e/abc+def') -> '~/abc def'"""
