@@ -152,6 +152,8 @@ def _str_or_unicode(s):
         return s.encode('ascii')
     except UnicodeEncodeError:
         return s
+    except AttributeError:
+        return str(s)
 
 class CertificateError(ValueError):
     pass
@@ -655,7 +657,7 @@ class SSLSocket(object):
             return {}
 
         dn = cert.getSubjectX500Principal().getName()
-        rdns = self._parse_dn(dn)
+        rdns = SSLContext._parse_dn(dn)
         alt_names = tuple()
         if cert.getSubjectAlternativeNames():
             alt_names = tuple(((_cert_name_types[type], str(name)) for (type, name) in cert.getSubjectAlternativeNames()))
