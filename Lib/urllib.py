@@ -28,6 +28,7 @@ import os
 import time
 import sys
 import base64
+import re
 
 from urlparse import urljoin as basejoin
 
@@ -68,15 +69,15 @@ else:
 
 # Shortcut for basic usage
 _urlopener = None
-def urlopen(url, data=None, proxies=None):
+def urlopen(url, data=None, proxies=None, context=None):
     """Create a file-like object for the specified URL to read from."""
     from warnings import warnpy3k
     warnpy3k("urllib.urlopen() has been removed in Python 3.0 in "
              "favor of urllib2.urlopen()", stacklevel=2)
 
     global _urlopener
-    if proxies is not None:
-        opener = FancyURLopener(proxies=proxies)
+    if proxies is not None or context is not None:
+        opener = FancyURLopener(proxies=proxies, context=context)
     elif not _urlopener:
         opener = FancyURLopener()
         _urlopener = opener
@@ -86,11 +87,15 @@ def urlopen(url, data=None, proxies=None):
         return opener.open(url)
     else:
         return opener.open(url, data)
-def urlretrieve(url, filename=None, reporthook=None, data=None):
+def urlretrieve(url, filename=None, reporthook=None, data=None, context=None):
     global _urlopener
-    if not _urlopener:
-        _urlopener = FancyURLopener()
-    return _urlopener.retrieve(url, filename, reporthook, data)
+    if context is not None:
+        opener = FancyURLopener(context=context)
+    elif not _urlopener:
+        _urlopener = opener = FancyURLopener()
+    else:
+        opener = _urlopener
+    return opener.retrieve(url, filename, reporthook, data)
 def urlcleanup():
     if _urlopener:
         _urlopener.cleanup()
@@ -125,13 +130,14 @@ class URLopener:
     version = "Python-urllib/%s" % __version__
 
     # Constructor
-    def __init__(self, proxies=None, **x509):
+    def __init__(self, proxies=None, context=None, **x509):
         if proxies is None:
             proxies = getproxies()
         assert hasattr(proxies, 'has_key'), "proxies must be a mapping"
         self.proxies = proxies
         self.key_file = x509.get('key_file')
         self.cert_file = x509.get('cert_file')
+        self.context = context
         self.addheaders = [('User-Agent', self.version)]
         self.__tempfiles = []
         self.__unlink = os.unlink # See cleanup()
@@ -421,7 +427,8 @@ class URLopener:
                 auth = None
             h = httplib.HTTPS(host, 0,
                               key_file=self.key_file,
-                              cert_file=self.cert_file)
+                              cert_file=self.cert_file,
+                              context=self.context)
             if data is not None:
                 h.putrequest('POST', selector)
                 h.putheader('Content-Type',
@@ -818,7 +825,10 @@ def thishost():
     """Return the IP address of the current host."""
     global _thishost
     if _thishost is None:
-        _thishost = socket.gethostbyname(socket.gethostname())
+        try:
+            _thishost = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            _thishost = socket.gethostbyname('localhost')
     return _thishost
 
 _ftperrors = None
@@ -861,7 +871,11 @@ class ftpwrapper:
         self.timeout = timeout
         self.refcount = 0
         self.keepalive = persistent
-        self.init()
+        try:
+            self.init()
+        except:
+            self.close()
+            raise
 
     def init(self):
         import ftplib
@@ -869,8 +883,8 @@ class ftpwrapper:
         self.ftp = ftplib.FTP()
         self.ftp.connect(self.host, self.port, self.timeout)
         self.ftp.login(self.user, self.passwd)
-        for dir in self.dirs:
-            self.ftp.cwd(dir)
+        _target = '/'.join(self.dirs)
+        self.ftp.cwd(_target)
 
     def retrfile(self, file, type):
         import ftplib
@@ -980,11 +994,16 @@ class addclosehook(addbase):
         self.hookargs = hookargs
 
     def close(self):
-        if self.closehook:
-            self.closehook(*self.hookargs)
-            self.closehook = None
-            self.hookargs = None
-        addbase.close(self)
+        try:
+            closehook = self.closehook
+            hookargs = self.hookargs
+            if closehook:
+                self.closehook = None
+                self.hookargs = None
+                closehook(*hookargs)
+        finally:
+            addbase.close(self)
+
 
 class addinfo(addbase):
     """class to add an info() method to an open file."""
@@ -1121,10 +1140,13 @@ def splitport(host):
     global _portprog
     if _portprog is None:
         import re
-        _portprog = re.compile('^(.*):([0-9]+)$')
+        _portprog = re.compile('^(.*):([0-9]*)$')
 
     match = _portprog.match(host)
-    if match: return match.group(1, 2)
+    if match:
+        host, port = match.groups()
+        if port:
+            return host, port
     return host, None
 
 _nportprog = None
@@ -1141,12 +1163,12 @@ def splitnport(host, defport=-1):
     match = _nportprog.match(host)
     if match:
         host, port = match.group(1, 2)
-        try:
-            if not port: raise ValueError, "no digits"
-            nport = int(port)
-        except ValueError:
-            nport = None
-        return host, nport
+        if port:
+            try:
+                nport = int(port)
+            except ValueError:
+                nport = None
+            return host, nport
     return host, defport
 
 _queryprog = None
@@ -1198,22 +1220,35 @@ def splitvalue(attr):
 _hexdig = '0123456789ABCDEFabcdef'
 _hextochr = dict((a + b, chr(int(a + b, 16)))
                  for a in _hexdig for b in _hexdig)
+_asciire = re.compile('([\x00-\x7f]+)')
 
 def unquote(s):
     """unquote('abc%20def') -> 'abc def'."""
-    res = s.split('%')
+    if _is_unicode(s):
+        if '%' not in s:
+            return s
+        bits = _asciire.split(s)
+        res = [bits[0]]
+        append = res.append
+        for i in range(1, len(bits), 2):
+            append(unquote(str(bits[i])).decode('latin1'))
+            append(bits[i + 1])
+        return ''.join(res)
+
+    bits = s.split('%')
     # fastpath
-    if len(res) == 1:
+    if len(bits) == 1:
         return s
-    s = res[0]
-    for item in res[1:]:
+    res = [bits[0]]
+    append = res.append
+    for item in bits[1:]:
         try:
-            s += _hextochr[item[:2]] + item[2:]
+            append(_hextochr[item[:2]])
+            append(item[2:])
         except KeyError:
-            s += '%' + item
-        except UnicodeDecodeError:
-            s += unichr(int(item[:2], 16)) + item[2:]
-    return s
+            append('%')
+            append(item)
+    return ''.join(res)
 
 def unquote_plus(s):
     """unquote('%7e/abc+def') -> '~/abc def'"""

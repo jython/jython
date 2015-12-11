@@ -1324,7 +1324,6 @@ class NetworkedTests(unittest.TestCase):
             finally:
                 s.close()
 
-    @unittest.skipIf(support.is_jython, "TODO, should raise certificate verify failed but does not")
     def test_connect_with_context(self):
         with support.transient_internet("svn.python.org"):
             # Same as test_connect, but with a separately created context

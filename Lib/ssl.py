@@ -488,19 +488,21 @@ class SSLSocket(object):
         self._sslobj = None
         self.handshake_count = 0
 
-        self.engine = self._context._createSSLEngine()
-
+        self.engine = None
         if self.do_handshake_on_connect and self.sock._sock.connected:
             self.do_handshake()
+
+    def setup_engine(self, addr):
+        if self.engine is None:
+            # http://stackoverflow.com/questions/13390964/java-ssl-fatal-error-80-unwrapping-net-record-after-adding-the-https-en
+            self.engine = self._context._createSSLEngine(addr, self.server_hostname)
+            self.engine.setUseClientMode(not self.server_side)
 
     def connect(self, addr):
         if self.server_side:
             raise ValueError("can't connect in server-side mode")
 
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
-
-        self.engine = self._context._createSSLEngine(*addr)
-        self.engine.setUseClientMode(not self.server_side)
 
         self._sock._connect(addr)
         if self.do_handshake_on_connect:
@@ -512,13 +514,18 @@ class SSLSocket(object):
 
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
 
-        self.engine = self._context._createSSLEngine(*addr)
-        self.engine.setUseClientMode(not self.server_side)
-
         self._sock._connect(addr)
         if self.do_handshake_on_connect:
             self.do_handshake()
-        return self._sock.connect_ex(addr)
+
+        # from socketmodule.c
+        # if (res == EISCONN)
+        #   res = 0;
+        # but http://bugs.jython.org/issue2428
+        res = self._sock.connect_ex(addr)
+        if res == errno.EISCONN:
+            return 0
+        return res
 
     def unwrap(self):
         self._sock.channel.pipeline().remove("ssl")
@@ -527,6 +534,7 @@ class SSLSocket(object):
 
     def do_handshake(self):
         log.debug("SSL handshaking", extra={"sock": self._sock})
+        self.setup_engine(self.sock.getpeername())
 
         def handshake_step(result):
             log.debug("SSL handshaking completed %s", result, extra={"sock": self._sock})
@@ -603,7 +611,6 @@ class SSLSocket(object):
 
     def shutdown(self, how):
         self.sock.shutdown(how)
-
     # Need to work with the real underlying socket as well
 
     def pending(self):
@@ -844,12 +851,12 @@ class SSLContext(object):
 
     def __init__(self, protocol):
         try:
-            protocol_name = _PROTOCOL_NAMES[protocol]
+            self._protocol_name = _PROTOCOL_NAMES[protocol]
         except KeyError:
             raise ValueError("invalid protocol version")
 
         if protocol == PROTOCOL_SSLv23:  # darjus: at least my Java does not let me use v2
-            protocol_name = 'SSL'
+            self._protocol_name = 'SSL'
 
         self.protocol = protocol
         self._check_hostname = False
@@ -866,33 +873,42 @@ class SSLContext(object):
         self._key_store = KeyStore.getInstance(KeyStore.getDefaultType())
         self._key_store.load(None, None)
 
-        self._context = _JavaSSLContext.getInstance(protocol_name)
         self._key_managers = None
 
     def wrap_socket(self, sock, server_side=False,
                     do_handshake_on_connect=True,
                     suppress_ragged_eofs=True,
                     server_hostname=None):
-        return SSLSocket(sock, keyfile=None, certfile=None, ca_certs=None, cert_reqs=self.verify_mode, suppress_ragged_eofs=suppress_ragged_eofs,
-                         do_handshake_on_connect=do_handshake_on_connect, server_side=server_side,
-                         server_hostname=server_hostname, _context=self)
+        return SSLSocket(sock=sock, server_side=server_side,
+                         do_handshake_on_connect=do_handshake_on_connect,
+                         suppress_ragged_eofs=suppress_ragged_eofs,
+                         server_hostname=server_hostname,
+                         _context=self)
 
-    def _createSSLEngine(self, host=None, port=None):
+    def _createSSLEngine(self, addr, hostname=None):
         trust_managers = [NoVerifyX509TrustManager()]
         if self.verify_mode == CERT_REQUIRED:
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             tmf.init(self._trust_store)
             trust_managers = [CompositeX509TrustManager(tmf.getTrustManagers())]
 
-        if self._key_managers is None:  # get an e
-            self._context.init(_get_openssl_key_manager().getKeyManagers(), trust_managers, None)
-        else:
-            self._context.init(self._key_managers.getKeyManagers(), trust_managers, None)
+        context = _JavaSSLContext.getInstance(self._protocol_name)
 
-        if host is not None and port is not None:
-            engine = self._context.createSSLEngine(host, port)
+        if self._key_managers is None:  # get an e
+            context.init(_get_openssl_key_manager().getKeyManagers(), trust_managers, None)
         else:
-            engine = self._context.createSSLEngine()
+            context.init(self._key_managers.getKeyManagers(), trust_managers, None)
+
+        if hostname is not None:
+            engine = context.createSSLEngine(hostname, addr[1])
+        else:
+            engine = context.createSSLEngine(*addr)
+
+        # apparently this can be used to enforce hostname verification
+        if hostname is not None and self._check_hostname:
+            params = engine.getSSLParameters()
+            params.setEndpointIdentificationAlgorithm('HTTPS')
+            engine.setSSLParameters(params)
 
         if self._ciphers is not None:
             engine.setEnabledCipherSuites(self._ciphers)

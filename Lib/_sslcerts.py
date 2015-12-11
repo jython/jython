@@ -5,13 +5,13 @@ from StringIO import StringIO
 import types
 
 from java.lang import RuntimeException
-from java.io import BufferedInputStream, BufferedReader, InputStreamReader, ByteArrayInputStream, IOException
+from java.io import BufferedInputStream, BufferedReader, FileReader, InputStreamReader, ByteArrayInputStream, IOException
 from java.security import KeyStore, Security, InvalidAlgorithmParameterException
 from java.security.cert import CertificateException, CertificateFactory
 from java.security.interfaces import RSAPrivateCrtKey
 from java.security.interfaces import RSAPublicKey
 from javax.net.ssl import (
-    X509KeyManager, X509TrustManager, KeyManagerFactory, TrustManagerFactory)
+    X509KeyManager, X509TrustManager, KeyManagerFactory, SSLContext, TrustManager, TrustManagerFactory)
 try:
     # jarjar-ed version
     from org.python.bouncycastle.asn1.pkcs import PrivateKeyInfo
@@ -137,7 +137,7 @@ def _str_hash_key_entry(*args):
     _hash = 0
     for arg in args:
         if arg:
-            _hash += hash(str(arg))
+            _hash += hash(arg.toString().encode('utf8'))
 
     return str(_hash)
 

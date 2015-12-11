@@ -41,7 +41,7 @@ class SocketConnectTest(unittest.TestCase):
         connect_errno = 0
         connect_attempt = 0
 
-        while connect_errno != errno.EISCONN and connect_attempt < 100:
+        while connect_errno != errno.EISCONN and connect_attempt < 500:
             connect_attempt += 1
             connect_errno = sock.connect_ex(self.address)
             results[index].append(connect_errno)

@@ -926,8 +926,8 @@ class _realsocket(object):
             # from socketmodule.c
             # if (res == EISCONN)
             #   res = 0;
-            # and that is what tests expect, so we return 0 to be like CPython
-            return 0
+            # but http://bugs.jython.org/issue2428
+            return errno.EISCONN
         else:
             return errno.ENOTCONN
 
