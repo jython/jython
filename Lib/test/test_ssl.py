@@ -1033,26 +1033,29 @@ class ContextTests(unittest.TestCase):
         self.assertEqual(ctx.get_ca_certs(), [])
         # but SVN_PYTHON_ORG_ROOT_CERT is a CA cert
         ctx.load_verify_locations(SVN_PYTHON_ORG_ROOT_CERT)
-        self.assertEqual(ctx.get_ca_certs(), [
-            {'version': 3,
-             'serialNumber': 0,
-             'subject': ((u'E', u'support@cacert.org'),
-                         (u'CN', u'CA Cert Signing Authority'),
-                         (u'OU', u'http://www.cacert.org'),
-                         (u'O', u'Root CA')),
-             'notBefore': asn1time('Sun Mar 30 22:29:49 AEST 2003'),
-             'issuer': ((u'E', u'support@cacert.org'),
-                        (u'CN', u'CA Cert Signing Authority'),
-                        (u'OU', u'http://www.cacert.org'),
-                        (u'O', u'Root CA')),
-             'notAfter': asn1time('Tue Mar 29 23:29:49 AEDT 2033')}
-        ])
+        self.assertEqual(ctx.get_ca_certs(),
+            [{'version': 3,
+              'serialNumber': 0L,
+              'subject': ((('emailAddress', 'support@cacert.org'),),
+                          (('commonName', 'CA Cert Signing Authority'),),
+                          (('organizationalUnitName', 'http://www.cacert.org'),),
+                          (('organizationName', 'Root CA'),)),
+              'notBefore': 'Mar 30 12:29:49 2003 GMT',
+              'issuer': ((('emailAddress', 'support@cacert.org'),),
+                         (('commonName', 'CA Cert Signing Authority'),),
+                         (('organizationalUnitName', 'http://www.cacert.org'),),
+                         (('organizationName', 'Root CA'),)), 
+              'notAfter': 'Mar 29 12:29:49 2033 GMT'}])
+            # FIXME not currently collecting this aspect of the certificate
+            # 'crlDistributionPoints': ('https://www.cacert.org/revoke.crl',),
+            #
+            # see this sample code on how we might be able to decode:
+            # https://svn.apache.org/repos/asf/cxf/tags/cxf-2.4.4/distribution/src/main/release/samples/sts_issue_operation/src/main/java/demo/sts/provider/cert/CRLVerifier.java
 
-        return  # TODO jython binary form not supported
-        # with open(SVN_PYTHON_ORG_ROOT_CERT) as f:
-        #     pem = f.read()
-        # der = ssl.PEM_cert_to_DER_cert(pem)
-        # self.assertEqual(ctx.get_ca_certs(True), [der])
+        with open(SVN_PYTHON_ORG_ROOT_CERT) as f:
+            pem = f.read()
+            der = ssl.PEM_cert_to_DER_cert(pem)
+            self.assertEqual(ctx.get_ca_certs(True), [der])
 
     def test_load_default_certs(self):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)

@@ -123,6 +123,7 @@ _rfc2822_date_format.setTimeZone(TimeZone.getTimeZone("GMT"))
 _ldap_rdn_display_names = {
     # list from RFC 2253
     "CN": "commonName",
+    "E": "emailAddress",
     "L": "localityName",
     "ST": "stateOrProvinceName",
     "O": "organizationName",
@@ -146,6 +147,11 @@ _cert_name_types = [
     "ipAddress",
     "registeredID"]
 
+def _str_or_unicode(s):
+    try:
+        return s.encode('ascii')
+    except UnicodeEncodeError:
+        return s
 
 class CertificateError(ValueError):
     pass
@@ -649,17 +655,13 @@ class SSLSocket(object):
             return {}
 
         dn = cert.getSubjectX500Principal().getName()
-        ldapDN = LdapName(dn)
-        # FIXME given this tuple of a single element tuple structure assumed here, is it possible this is
-        # not actually the case, eg because of multi value attributes?
-        rdns = tuple((((_ldap_rdn_display_names.get(rdn.type), rdn.value),) for rdn in ldapDN.getRdns()))
-        # FIXME is it str? or utf8? or some other encoding? maybe a bug in cpython?
+        rdns = self._parse_dn(dn)
         alt_names = tuple()
         if cert.getSubjectAlternativeNames():
             alt_names = tuple(((_cert_name_types[type], str(name)) for (type, name) in cert.getSubjectAlternativeNames()))
 
         pycert = {
-            "notAfter": _rfc2822_date_format.format(cert.getNotAfter()),
+            "notAfter": str(_rfc2822_date_format.format(cert.getNotAfter())),
             "subject": rdns,
             "subjectAltName": alt_names,
         }
@@ -1023,13 +1025,11 @@ class SSLContext(object):
         NOTE: Certificates in a capath directory aren't loaded unless they have been used at least once.
         """
         certs = []
-        enumerator = self._trust_store.aliases()
-        while enumerator.hasMoreElements():
-            alias = enumerator.next()
+        for alias in self._trust_store.aliases():
             if self._trust_store.isCertificateEntry(alias):
                 cert = self._trust_store.getCertificate(alias)
                 if binary_form:
-                    certs.append(cert.getEncoded())
+                    certs.append(cert.getEncoded().tostring())
                 else:
                     issuer_info = self._parse_dn(cert.issuerDN)
                     subject_info = self._parse_dn(cert.subjectDN)
@@ -1039,7 +1039,7 @@ class SSLContext(object):
                         cert_info[k] = getattr(cert, k)
 
                     for k in ('notBefore', 'notAfter'):
-                        cert_info[k] = str(getattr(cert, k))
+                        cert_info[k] = str(_rfc2822_date_format.format(getattr(cert, k)))
 
                     certs.append(cert_info)
 
@@ -1085,16 +1085,7 @@ class SSLContext(object):
 
     @classmethod
     def _parse_dn(cls, dn):
-        dn_lst = []
-
         ln = LdapName(unicode(dn))
-        ln_iter = ln.getAll()
-        try:
-            ln_value = ln_iter.nextElement()
-            while ln_value:
-                dn_lst.append(tuple(ln_value.split('=', 1)))
-                ln_value = ln_iter.nextElement()
-        except NoSuchElementException:
-            pass
-
-        return tuple(dn_lst)
+        # FIXME given this tuple of a single element tuple structure assumed here, is it possible this is
+        # not actually the case, eg because of multi value attributes?
+        return tuple((((_ldap_rdn_display_names.get(rdn.type), _str_or_unicode(rdn.value)),) for rdn in ln.getRdns()))
