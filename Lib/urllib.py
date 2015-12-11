@@ -1224,31 +1224,24 @@ _asciire = re.compile('([\x00-\x7f]+)')
 
 def unquote(s):
     """unquote('abc%20def') -> 'abc def'."""
-    if _is_unicode(s):
-        if '%' not in s:
-            return s
-        bits = _asciire.split(s)
-        res = [bits[0]]
-        append = res.append
-        for i in range(1, len(bits), 2):
-            append(unquote(str(bits[i])).decode('latin1'))
-            append(bits[i + 1])
-        return ''.join(res)
-
-    bits = s.split('%')
+    res = s.split('%')
     # fastpath
-    if len(bits) == 1:
+    if len(res) == 1:
         return s
-    res = [bits[0]]
-    append = res.append
-    for item in bits[1:]:
+    buf = [res[0]]
+    is_unicode = isinstance(s, unicode)
+    for item in res[1:]:
         try:
-            append(_hextochr[item[:2]])
-            append(item[2:])
+            if is_unicode:
+                buf.append(unichr(int(item[:2], 16)))
+                buf.append(item[2:])
+            else:
+                buf.append(_hextochr[item[:2]])
+                buf.append(item[2:])
         except KeyError:
-            append('%')
-            append(item)
-    return ''.join(res)
+            buf.append('%')
+            buf.append(item)
+    return ''.join(buf)
 
 def unquote_plus(s):
     """unquote('%7e/abc+def') -> '~/abc def'"""
