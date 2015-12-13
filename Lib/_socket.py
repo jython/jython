@@ -1403,7 +1403,7 @@ socket = SocketType = _socketobject
 class ChildSocket(_realsocket):
     
     def __init__(self, parent_socket):
-        super(ChildSocket, self).__init__()
+        super(ChildSocket, self).__init__(type=parent_socket.type)
         self.parent_socket = parent_socket
         self.active = AtomicBoolean()
         self.active_latch = CountDownLatch(1)

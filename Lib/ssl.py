@@ -39,6 +39,7 @@ from _socket import (
     SOL_SOCKET,
     SO_TYPE,
     SOCK_STREAM,
+    socket,
     error as socket_error)
 
 from _sslcerts import _get_openssl_key_manager, _extract_cert_from_data, _extract_certs_for_paths, \
@@ -535,6 +536,17 @@ class SSLSocket(object):
             return 0
         return res
 
+    def accept(self):
+        """Accepts a new connection from a remote client, and returns
+        a tuple containing that new connection wrapped with a server-side
+        SSL channel, and the address of the remote client."""
+        newsock, addr = socket.accept(self)
+        newsock = self.context.wrap_socket(newsock,
+                                           do_handshake_on_connect=self.do_handshake_on_connect,
+                                           suppress_ragged_eofs=self.suppress_ragged_eofs,
+                                           server_side=True)
+        return newsock, addr
+
     def unwrap(self):
         self._sock.channel.pipeline().remove("ssl")
         self.ssl_handler.close()
@@ -573,6 +585,10 @@ class SSLSocket(object):
         except socket_error, e:
             raise SSLError(SSL_ERROR_SSL, e.strerror)
 
+    def dup(self):
+        raise NotImplemented("Can't dup() %s instances" %
+                             self.__class__.__name__)
+
     # Various pass through methods to the wrapped socket
 
     def send(self, data):
@@ -586,7 +602,27 @@ class SSLSocket(object):
     def recv(self, bufsize, flags=0):
         return self.sock.recv(bufsize, flags)
 
-    read = recv
+    def read(self, len=0, buffer=None):
+        """Read up to LEN bytes and return them.
+        Return zero-length string on EOF."""
+
+        self._checkClosed()
+        if not self._sslobj:
+            raise ValueError("Read on closed or unwrapped SSL socket.")
+        try:
+            if buffer is not None:
+                v = self.recvfrom_into(buffer, len or 1024)
+            else:
+                v = self.recv(len or 1024)
+            return v
+        except SSLError as x:
+            if x.args[0] == SSL_ERROR_EOF and self.suppress_ragged_eofs:
+                if buffer is not None:
+                    return 0
+                else:
+                    return b''
+            else:
+                raise
 
     def recvfrom(self, bufsize, flags=0):
         return self.sock.recvfrom(bufsize, flags)
@@ -641,8 +677,29 @@ class SSLSocket(object):
     def _notify_selectors(self):
         self._sock._notify_selectors()
 
+    def _checkClosed(self, msg=None):
+        # raise an exception here if you wish to check for spurious closes
+        pass
+
+    def _check_connected(self):
+        if not self._connected:
+            # getpeername() will raise ENOTCONN if the socket is really
+            # not connected; note that we can be connected even without
+            # _connected being set, e.g. if connect() first returned
+            # EAGAIN.
+            self.getpeername()
+
     def getpeername(self):
         return self.sock.getpeername()
+
+    def selected_npn_protocol(self):
+        self._checkClosed()
+        # TODO Jython
+        return None
+
+    def selected_alpn_protocol(self):
+        self._checkClosed()
+        # TODO Jython
 
     def fileno(self):
         return self
@@ -674,7 +731,7 @@ class SSLSocket(object):
         return self.getpeercert().getIssuerDN().toString()
 
     def cipher(self):
-        session = self._sslsocket.session
+        session = self.engine.getSession()
         suite = str(session.cipherSuite)
         if "256" in suite:  # FIXME!!! this test usually works, but there must be a better approach
             strength = 256
@@ -702,6 +759,10 @@ class SSLSocket(object):
         #     return None
         # return self._sslobj.tls_unique_cb()
 
+    def version(self):
+        if self.ssl_handler:
+            return str(self.engine.getSession().getProtocol())
+        return None
 
 # instantiates a SSLEngine, with the following things to keep in mind:
 
@@ -801,7 +862,6 @@ def get_server_certificate(addr, ssl_version=PROTOCOL_SSLv3, ca_certs=None):
     else:
         cert_reqs = CERT_NONE
 
-    from socket import socket
     s = wrap_socket(socket(), ssl_version=ssl_version,
                     cert_reqs=cert_reqs, ca_certs=ca_certs)
     s.connect(addr)
