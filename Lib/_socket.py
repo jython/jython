@@ -1134,6 +1134,8 @@ class _realsocket(object):
     def send(self, data, flags=0):
         # FIXME this almost certainly needs to chunk things
         self._verify_channel()
+        if isinstance(data, memoryview):
+            data = data.tobytes()
         data = str(data)  # FIXME temporary fix if data is of type buffer
         log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
 

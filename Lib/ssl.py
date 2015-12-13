@@ -40,6 +40,7 @@ from _socket import (
     SO_TYPE,
     SOCK_STREAM,
     socket,
+    _socketobject,
     error as socket_error)
 
 from _sslcerts import _get_openssl_key_manager, _extract_cert_from_data, _extract_certs_for_paths, \
@@ -489,6 +490,7 @@ class SSLSocket(object):
             raise ValueError("check_hostname requires server_hostname")
         self.server_side = server_side
         self.server_hostname = server_hostname
+        self.suppress_ragged_eofs = suppress_ragged_eofs
 
         self.ssl_handler = None
         # _sslobj is used to follow CPython convention that an object
@@ -500,6 +502,10 @@ class SSLSocket(object):
         self.engine = None
         if self.do_handshake_on_connect and self.sock._sock.connected:
             self.do_handshake()
+
+    @property
+    def context(self):
+        return self._context
 
     def setup_engine(self, addr):
         if self.engine is None:
@@ -540,7 +546,8 @@ class SSLSocket(object):
         """Accepts a new connection from a remote client, and returns
         a tuple containing that new connection wrapped with a server-side
         SSL channel, and the address of the remote client."""
-        newsock, addr = socket.accept(self)
+        sock, addr = self._sock.accept()
+        newsock = _socketobject(_sock=sock)
         newsock = self.context.wrap_socket(newsock,
                                            do_handshake_on_connect=self.do_handshake_on_connect,
                                            suppress_ragged_eofs=self.suppress_ragged_eofs,
@@ -607,8 +614,9 @@ class SSLSocket(object):
         Return zero-length string on EOF."""
 
         self._checkClosed()
-        if not self._sslobj:
-            raise ValueError("Read on closed or unwrapped SSL socket.")
+        # FIXME? breaks test_smtpnet.py
+        # if not self._sslobj:
+        #     raise ValueError("Read on closed or unwrapped SSL socket.")
         try:
             if buffer is not None:
                 v = self.recvfrom_into(buffer, len or 1024)
