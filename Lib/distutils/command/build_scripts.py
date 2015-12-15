@@ -4,7 +4,9 @@ Implements the Distutils 'build_scripts' command."""
 
 __revision__ = "$Id$"
 
-import os, re
+import os
+import re
+import sys
 from stat import ST_MODE
 from distutils.core import Command
 from distutils.dep_util import newer
@@ -92,10 +94,7 @@ class build_scripts (Command):
             if adjust:
                 log.info("copying and adjusting %s -> %s", script,
                          self.build_dir)
-                print "###############"
-                print executable
-                executable = fix_jython_executable(executable, post_interp)
-                print executable
+                self.executable = fix_jython_executable(self.executable, post_interp)
                 if not self.dry_run:
                     outf = open(outfile, "w")
                     if not _sysconfig.is_python_build():
