@@ -1415,6 +1415,8 @@ class ChildSocket(_realsocket):
     def _ensure_post_connect(self):
         do_post_connect = not self.active.getAndSet(True)
         if do_post_connect:
+            if hasattr(self.parent_socket, "ssl_wrap_child_socket"):
+                self.parent_socket.ssl_wrap_child_socket(self)
             self._post_connect()
             self.active_latch.countDown()
 

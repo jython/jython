@@ -41,6 +41,7 @@ from _socket import (
     SOCK_STREAM,
     socket,
     _socketobject,
+    ChildSocket,
     error as socket_error)
 
 from _sslcerts import _get_openssl_key_manager, _extract_cert_from_data, _extract_certs_for_paths, \
@@ -453,6 +454,7 @@ class SSLSocket(object):
         self.sock = sock
         self.do_handshake_on_connect = do_handshake_on_connect
         self._sock = sock._sock  # the real underlying socket
+        self._connected = False
         if _context:
             self._context = _context
         else:
@@ -493,15 +495,33 @@ class SSLSocket(object):
         self.suppress_ragged_eofs = suppress_ragged_eofs
 
         self.ssl_handler = None
-        # _sslobj is used to follow CPython convention that an object
-        # means we have handshaked, as used by existing code that
-        # looks at this internal
+        # We use _sslobj here to support the CPython convention that
+        # an object means we have handshaked, as used by existing code
+        # in the wild that looks at this ostensibly internal attribute
         self._sslobj = None
         self.handshake_count = 0
 
         self.engine = None
-        if self.do_handshake_on_connect and self.sock._sock.connected:
-            self.do_handshake()
+        
+        if self.do_handshake_on_connect and self._sock.connected:
+            if isinstance(self._sock, ChildSocket):
+                log.debug("Child socket - do not handshake! type=%s parent=%s", type(self._sock), self._sock.parent_socket, 
+                          extra={"sock": self._sock})
+            else:
+                self.do_handshake()
+
+        if hasattr(self._sock, "accepted_children"):
+            def wrap_child(child):
+                log.debug("Wrapping child socket - about to handshake! parent=%s", self._sock, extra={"sock": child})
+                child._wrapper_socket = self.context.wrap_socket(
+                    _socketobject(_sock=child),
+                    do_handshake_on_connect=self.do_handshake_on_connect,
+                    suppress_ragged_eofs=self.suppress_ragged_eofs,
+                    server_side=True)
+
+                if self.do_handshake_on_connect:
+                    child._wrapper_socket.do_handshake()
+            self._sock.ssl_wrap_child_socket = wrap_child
 
     @property
     def context(self):
@@ -514,45 +534,48 @@ class SSLSocket(object):
             self.engine.setUseClientMode(not self.server_side)
 
     def connect(self, addr):
+        """Connects to remote ADDR, and then wraps the connection in
+        an SSL channel."""
         if self.server_side:
             raise ValueError("can't connect in server-side mode")
+        if self._connected:
+            raise ValueError("attempt to connect already-connected SSLSocket!")
 
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
 
-        self._sock._connect(addr)
+        self._sock.connect(addr)
         if self.do_handshake_on_connect:
             self.do_handshake()
 
     def connect_ex(self, addr):
+        """Connects to remote ADDR, and then wraps the connection in
+        an SSL channel."""
         if self.server_side:
             raise ValueError("can't connect in server-side mode")
+        if self._connected:
+            raise ValueError("attempt to connect already-connected SSLSocket!")
 
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
 
-        self._sock._connect(addr)
-        if self.do_handshake_on_connect:
-            self.do_handshake()
-
-        # from socketmodule.c
-        # if (res == EISCONN)
-        #   res = 0;
-        # but http://bugs.jython.org/issue2428
-        res = self._sock.connect_ex(addr)
-        if res == errno.EISCONN:
-            return 0
-        return res
+        rc = self._sock.connect_ex(addr)
+        if not rc:
+            self._connected = True
+            if self.do_handshake_on_connect:
+                self.do_handshake()
+        return rc
 
     def accept(self):
         """Accepts a new connection from a remote client, and returns
         a tuple containing that new connection wrapped with a server-side
         SSL channel, and the address of the remote client."""
-        sock, addr = self._sock.accept()
-        newsock = _socketobject(_sock=sock)
-        newsock = self.context.wrap_socket(newsock,
-                                           do_handshake_on_connect=self.do_handshake_on_connect,
-                                           suppress_ragged_eofs=self.suppress_ragged_eofs,
-                                           server_side=True)
-        return newsock, addr
+        child, addr = self._sock.accept()
+        if self.do_handshake_on_connect:
+            child.active_latch.await()
+
+        log.debug("accepted sock=%s wrapped=%s addr=%s", child, child._wrapper_socket, addr, extra={"sock": self._sock})
+        wrapped_child_socket = child._wrapper_socket
+        del child._wrapper_socket
+        return wrapped_child_socket, addr
 
     def unwrap(self):
         self._sock.channel.pipeline().remove("ssl")
@@ -587,6 +610,11 @@ class SSLSocket(object):
 
         handshake = self.ssl_handler.handshakeFuture()
         time.sleep(0.001)  # Necessary apparently for the handler to get into a good state
+        if isinstance(self._sock, ChildSocket):
+            # see
+            # http://stackoverflow.com/questions/24628271/exception-in-netty-io-netty-util-concurrent-blockingoperationexception
+            # - we are doing this in the handler thread!
+            return
         try:
             self._sock._handle_channel_future(handshake, "SSL handshake")
         except socket_error, e:
