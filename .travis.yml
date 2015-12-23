@@ -1,5 +1,10 @@
 language: java
 
+notifications:
+  email:
+    recipients:
+      - jython-dev@lists.sourceforge.net
+
 install: ant
 
 os:
@@ -29,5 +34,5 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ant; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then jdk_switcher use "$CUSTOM_JDK"; fi
 
-script: ant && ant regrtest
+script: ant && ant regrtest-travis
 
