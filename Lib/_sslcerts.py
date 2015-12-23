@@ -22,8 +22,7 @@ try:
     from org.python.bouncycastle.jce.spec import ECNamedCurveSpec
     from org.python.bouncycastle.openssl import PEMKeyPair, PEMParser, PEMEncryptedKeyPair, PEMException, \
         EncryptionException
-    from org.python.bouncycastle.openssl.jcajce import JcaPEMKeyConverter
-    from org.python.bouncycastle.openssl.bc import BcPEMDecryptorProvider, JcePEMDecryptorProviderBuilder
+    from org.python.bouncycastle.openssl.jcajce import JcaPEMKeyConverter, JcePEMDecryptorProviderBuilder
 except ImportError:
     # dev version from extlibs
     from org.bouncycastle.asn1.pkcs import PrivateKeyInfo
