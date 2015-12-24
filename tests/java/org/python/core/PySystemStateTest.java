@@ -8,6 +8,7 @@ import java.net.URLStreamHandler;
 import junit.framework.TestCase;
 
 import jnr.posix.util.Platform;
+import org.python.util.PythonInterpreter;
 
 public class PySystemStateTest extends TestCase {
 
@@ -68,6 +69,19 @@ public class PySystemStateTest extends TestCase {
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/some+dir/some.jar/org/python/core/PySystemState.class", url.toString());
             assertEquals("/some+dir/some.jar", Py.getJarFileNameFromURL(url));
+        }
+    }
+
+    public void testImport() throws Exception {
+        Options.importSite = false;
+        try {
+            PySystemState pySystemState = new PySystemState();
+            PySystemState.initialize();
+            PythonInterpreter interpreter = new PythonInterpreter(null, pySystemState);
+            interpreter.exec("import os");
+            assertTrue(interpreter.getSystemState().modules.__contains__(new PyString("os")));
+        } finally {
+            Options.importSite = true;
         }
     }
 

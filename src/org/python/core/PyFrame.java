@@ -273,7 +273,7 @@ public class PyFrame extends PyObject implements Traverseproc {
 
         // Set up f_builtins if not already set
         if (f_builtins == null) {
-            f_builtins = Py.getThreadState().systemState.builtins;
+            f_builtins = Py.getThreadState().getSystemState().builtins;
         }
         return f_builtins.__finditem__(index);
     }

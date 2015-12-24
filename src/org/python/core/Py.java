@@ -1019,7 +1019,7 @@ public final class Py {
             }
             JyAttribute.setAttr(instance, JyAttribute.JAVA_PROXY_ATTR, proxy);
             proxy._setPyInstance(instance);
-            proxy._setPySystemState(ts.systemState);
+            proxy._setPySystemState(ts.getSystemState());
             return;
         }
 
@@ -1041,7 +1041,7 @@ public final class Py {
         instance = pyc.__call__(pargs);
         JyAttribute.setAttr(instance, JyAttribute.JAVA_PROXY_ATTR, proxy);
         proxy._setPyInstance(instance);
-        proxy._setPySystemState(ts.systemState);
+        proxy._setPySystemState(ts.getSystemState());
     }
 
     /**
@@ -1144,12 +1144,12 @@ public final class Py {
         setException(exc, f);
 
         ThreadState ts = getThreadState();
+        PySystemState sys = ts.getSystemState();
+        sys.last_value = exc.value;
+        sys.last_type = exc.type;
+        sys.last_traceback = exc.traceback;
 
-        ts.systemState.last_value = exc.value;
-        ts.systemState.last_type = exc.type;
-        ts.systemState.last_traceback = exc.traceback;
-
-        PyObject exceptHook = ts.systemState.__findattr__("excepthook");
+        PyObject exceptHook = sys.__findattr__("excepthook");
         if (exceptHook != null) {
             try {
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
@@ -1457,19 +1457,18 @@ public final class Py {
 
     public static final PySystemState setSystemState(PySystemState newSystemState) {
         ThreadState ts = getThreadState(newSystemState);
-        PySystemState oldSystemState = ts.systemState;
+        PySystemState oldSystemState = ts.getSystemState();
         if (oldSystemState != newSystemState) {
             //XXX: should we make this a real warning?
             //System.err.println("Warning: changing systemState "+
             //                   "for same thread!");
-            ts.systemState = newSystemState;
+            ts.setSystemState(newSystemState);
         }
         return oldSystemState;
     }
 
     public static final PySystemState getSystemState() {
-        return getThreadState().systemState;
-    //defaultSystemState;
+        return getThreadState().getSystemState();
     }
 
     /* Get and set the current frame */
@@ -2051,7 +2050,7 @@ public final class Py {
     }
 
     public static void printResult(PyObject ret) {
-        Py.getThreadState().systemState.invoke("displayhook", ret);
+        Py.getThreadState().getSystemState().invoke("displayhook", ret);
     }
     public static final int ERROR = -1;
     public static final int WARNING = 0;

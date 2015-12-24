@@ -28,8 +28,9 @@ public abstract class PyBaseCode extends PyCode {
 
     public PyObject call(ThreadState ts, PyFrame frame, PyObject closure) {
 //         System.err.println("tablecode call: "+co_name);
-        if (ts.systemState == null) {
-            ts.systemState = Py.defaultSystemState;
+        if (ts.getSystemState() == null) {
+            // Ensure that sys is set up
+            ts.setSystemState(Py.defaultSystemState);
         }
         //System.err.println("got ts: "+ts+", "+ts.systemState);
 
@@ -44,7 +45,7 @@ public abstract class PyBaseCode extends PyCode {
             } else {
                 //System.err.println("ts: "+ts);
                 //System.err.println("ss: "+ts.systemState);
-                frame.f_builtins = ts.systemState.builtins;
+                frame.f_builtins = ts.getSystemState().builtins;
             }
         }
         // nested scopes: setup env with closure
@@ -105,7 +106,7 @@ public abstract class PyBaseCode extends PyCode {
 
         // Check for interruption, which is used for restarting the interpreter
         // on Jython
-        if (ts.systemState._systemRestart && Thread.currentThread().isInterrupted()) {
+        if (ts.getSystemState()._systemRestart && Thread.currentThread().isInterrupted()) {
             throw new PyException(_systemrestart.SystemRestart);
         }
         return ret;

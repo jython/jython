@@ -125,8 +125,8 @@ public class PyTableCode extends PyBaseCode
     @Override
     public PyObject call(ThreadState ts, PyFrame frame, PyObject closure) {
 //         System.err.println("tablecode call: "+co_name);
-        if (ts.systemState == null) {
-            ts.systemState = Py.defaultSystemState;
+        if (ts.getSystemState() == null) {
+            ts.setSystemState(Py.defaultSystemState);
         }
         //System.err.println("got ts: "+ts+", "+ts.systemState);
 
@@ -141,7 +141,7 @@ public class PyTableCode extends PyBaseCode
             } else {
                 //System.err.println("ts: "+ts);
                 //System.err.println("ss: "+ts.systemState);
-                frame.f_builtins = ts.systemState.builtins;;
+                frame.f_builtins = ts.getSystemState().builtins;;
             }
         }
         // nested scopes: setup env with closure
@@ -202,7 +202,7 @@ public class PyTableCode extends PyBaseCode
 
         // Check for interruption, which is used for restarting the interpreter
         // on Jython
-        if (ts.systemState._systemRestart && Thread.currentThread().isInterrupted()) {
+        if (ts.getSystemState()._systemRestart && Thread.currentThread().isInterrupted()) {
             throw new PyException(_systemrestart.SystemRestart);
         }
         return ret;

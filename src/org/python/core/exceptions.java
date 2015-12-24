@@ -27,8 +27,8 @@ public class exceptions extends PyObject implements ClassDictInit {
         dict.__setitem__("__doc__", new PyString(__doc__));
 
         ThreadState ts = Py.getThreadState();
-        if (ts.systemState == null) {
-            ts.systemState = Py.defaultSystemState;
+        if (ts.getSystemState() == null) { // TODO: is this check still useful??
+            ts.setSystemState(Py.defaultSystemState);
         }
         // Push frame
         PyFrame frame = new PyFrame(null, new PyStringMap());
