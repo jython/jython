@@ -13,10 +13,11 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 import jnr.constants.platform.Errno;
 import jnr.posix.util.FieldAccess;
-import jnr.posix.util.Platform;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -281,7 +282,9 @@ public class FileIO extends RawIOBase {
      * Read until EOF with one readinto() call.
      *
      * Takes advantage of the fact that the underlying file's size is
-     * available.
+     * available. However, we have to special case if file size is 0,
+     * as seen in the /proc virtual file system - in this case we cannot
+     * assume the file is truly empty.
      *
      * @return {@inheritDoc}
      */
@@ -301,10 +304,46 @@ public class FileIO extends RawIOBase {
         if (toRead > Integer.MAX_VALUE) {
             throw Py.OverflowError("requested number of bytes is more than a Python string can "
                                    + "hold");
+        } else if (toRead == 0) {
+            // Support files that the underlying OS has labeled with size=0, even though they have content,
+            // eg, /proc files on Linux
+            return readallInChunks();
+        } else {
+            ByteBuffer all = ByteBuffer.allocate((int) toRead);
+            readinto(all);
+            all.flip();
+            return all;
+        }
+    }
+
+    private ByteBuffer readallInChunks() {
+        // assumes checks have been performed
+        final List<ByteBuffer> chunks = new ArrayList<>();
+        final int MAX_CHUNK_SIZE = 8192;
+        int length = 0;
+        while (true) {
+            final ByteBuffer chunk = ByteBuffer.allocate(MAX_CHUNK_SIZE);
+            readinto(chunk);
+            int chunkSize = chunk.position();
+            length += chunkSize;
+            chunk.flip();
+            chunks.add(chunk);
+            if (chunkSize < MAX_CHUNK_SIZE) {
+                break;
+            }
         }
 
-        ByteBuffer all = ByteBuffer.allocate((int)toRead);
-        readinto(all);
+        // given the size of MAX_CHUNK_SIZE, perhaps most or even all files in /proc,
+        // or similar virtual filesystems, if any, might fit into one chunk
+        if (chunks.size() == 1) {
+            return chunks.get(0);
+        }
+
+        // otherwise append together into a single ByteBuffer
+        final ByteBuffer all = ByteBuffer.allocate(length);
+        for (ByteBuffer chunk : chunks) {
+            all.put(chunk);
+        }
         all.flip();
         return all;
     }

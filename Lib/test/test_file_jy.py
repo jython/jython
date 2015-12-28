@@ -2,10 +2,10 @@
 
 Made for Jython.
 """
-from __future__ import with_statement
 import os
 import unittest
 from test import test_support
+from java.lang import System
 
 class FileTestCase(unittest.TestCase):
 
@@ -50,6 +50,19 @@ class FileTestCase(unittest.TestCase):
         os.chmod(test_support.TESTFN, 200)      # write-only
         f = open(test_support.TESTFN, 'w')      # should succeed, raised IOError (permission denied) prior to fix
         f.close()
+
+    # http://bugs.jython.org/issue2358
+    def test_read_empty_file(self):
+        f = open(test_support.TESTFN, 'w')
+        f.close()
+        f = open(test_support.TESTFN)
+        self.assertEqual(f.read(), '')
+
+    # http://bugs.jython.org/issue2358
+    @unittest.skipUnless(System.getProperty('os.name') == u'Linux', 'Linux required')
+    def test_can_read_proc_filesystem(self):
+        with open('/proc/{}/cmdline'.format(os.getpid())) as f:
+            self.assertIn('org.python.util.jython', f.read())
 
 
 def test_main():
