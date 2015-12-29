@@ -54,6 +54,11 @@ is_jython = sys.platform.startswith('java')
 is_jython_nt = is_jython and (os._name == 'nt')
 is_jython_posix = is_jython and (os._name == 'posix')
 
+if is_jython:
+    def get_java_version():
+        # returns (1, 9) for Java 9, etc
+        return tuple((int(x) for x in platform.java_ver()[0].split('.')[0:2]))
+
 class Error(Exception):
     """Base class for regression test exceptions."""
 

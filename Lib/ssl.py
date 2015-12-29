@@ -4,7 +4,7 @@ import errno
 from java.security.cert import CertificateFactory
 import uuid
 from java.io import BufferedInputStream
-from java.security import KeyStore
+from java.security import KeyStore, KeyStoreException
 from java.security.cert import CertificateParsingException
 from javax.net.ssl import TrustManagerFactory
 from javax.naming.ldap import LdapName
@@ -530,7 +530,9 @@ class SSLSocket(object):
     def setup_engine(self, addr):
         if self.engine is None:
             # http://stackoverflow.com/questions/13390964/java-ssl-fatal-error-80-unwrapping-net-record-after-adding-the-https-en
-            self.engine = self._context._createSSLEngine(addr, self.server_hostname)
+            self.engine = self._context._createSSLEngine(
+                addr, self.server_hostname,
+                cert_file=getattr(self, "certfile", None), key_file=getattr(self, "keyfile", None))
             self.engine.setUseClientMode(not self.server_side)
 
     def connect(self, addr):
@@ -985,7 +987,7 @@ class SSLContext(object):
                          server_hostname=server_hostname,
                          _context=self)
 
-    def _createSSLEngine(self, addr, hostname=None):
+    def _createSSLEngine(self, addr, hostname=None, cert_file=None, key_file=None):
         trust_managers = [NoVerifyX509TrustManager()]
         if self.verify_mode == CERT_REQUIRED:
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -994,10 +996,15 @@ class SSLContext(object):
 
         context = _JavaSSLContext.getInstance(self._protocol_name)
 
-        if self._key_managers is None:  # get an e
-            context.init(_get_openssl_key_manager().getKeyManagers(), trust_managers, None)
+        if self._key_managers is None:
+            context.init(
+                _get_openssl_key_manager(
+                    cert_file=cert_file, key_file=key_file).getKeyManagers(),
+                trust_managers, None)
         else:
-            context.init(self._key_managers.getKeyManagers(), trust_managers, None)
+            context.init(
+                self._key_managers.getKeyManagers(),
+                trust_managers, None)
 
         if hostname is not None:
             engine = context.createSSLEngine(hostname, addr[1])
@@ -1041,15 +1048,16 @@ class SSLContext(object):
         if capath is not None:
             for fname in os.listdir(capath):
                 _, ext = os.path.splitext(fname)
+                possible_cafile = os.path.join(capath, fname)
                 if ext.lower() == 'pem':
-                    cafiles.append(os.path.join(capath, fname))
+                    cafiles.append(possible_cafile)
                 elif fname == 'cacerts':  # java truststore
-                    if os.path.isfile(os.path.join(capath, fname)):
-                        cafiles.append(os.path.join(capath, fname))
-                else:
-                    with open(os.path.join(capath, fname)) as f:
+                    if os.path.isfile(possible_cafile):
+                        cafiles.append(possible_cafile)
+                elif os.path.isfile(possible_cafile):
+                    with open(possible_cafile) as f:
                         if PEM_HEADER in f.read():
-                            cafiles.append(os.path.join(capath, fname))
+                            cafiles.append(possible_cafile)
 
         certs = []
         private_key = None
