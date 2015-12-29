@@ -185,15 +185,17 @@ def _extract_certs_for_paths(paths, password=None):
     certs = []
     private_key = None
     for path in paths:
+        err = None
         with open(path) as f:
             # try to load the file as keystore file first
             try:
                 _certs = _extract_certs_from_keystore_file(f, password)
                 certs.extend(_certs)
-            except IOException as err:  # try loading pem version instead
-                f.seek(0)
+            except IOException as err:
+                pass  # reported as 'Invalid keystore format'
+        if err is not None:  # try loading pem version instead
+            with open(path) as f:
                 _certs, _private_key = _extract_cert_from_data(f, password, key_converter, cert_converter)
-
                 private_key = _private_key if _private_key else private_key
                 certs.extend(_certs)
     return certs, private_key
