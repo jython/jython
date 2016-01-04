@@ -2,7 +2,6 @@ package org.python.modules;
 
 import java.util.Set;
 import java.util.List;
-import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.HashSet;
@@ -2572,10 +2571,13 @@ public class gc {
             throw Py.NotImplementedError(
                     "not applicable in Jython if gc module is not monitoring PyObjects");
         }
-        LinkedList<PyObject> resultList = new LinkedList<>();
+        ArrayList<PyObject> resultList = new ArrayList<>();
         synchronized (monitoredObjects) {
             for (WeakReferenceGC src: monitoredObjects) {
-                resultList.add((PyObject) src.get());
+                PyObject obj = src.get();
+                if (obj != null) {
+                    resultList.add(obj);
+                }
             }
         }
         return new PyList(resultList);
