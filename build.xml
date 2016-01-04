@@ -155,6 +155,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/guava-19.0.jar" />
             <pathelement path="${extlibs.dir}/icu4j-56.1.jar" />
             <pathelement path="${extlibs.dir}/jffi-1.2.10.jar"/>
+            <pathelement path="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <pathelement path="${extlibs.dir}/jnr-ffi-2.0.7.jar"/>
             <pathelement path="${extlibs.dir}/jnr-netdb-1.1.5.jar"/>
             <pathelement path="${extlibs.dir}/jnr-posix-3.0.23.jar"/>
@@ -604,6 +605,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
 	    <!-- remainder of JNR, JFFI -->
             <zipfileset src="extlibs/jffi-1.2.10.jar"/>
+            <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.0.7.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.0.23.jar"/>

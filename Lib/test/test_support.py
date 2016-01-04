@@ -1000,7 +1000,7 @@ def gc_collect():
     gc.collect()
 
 
-_header = '2P'
+_header = '1P'
 if hasattr(sys, "gettotalrefcount"):
     _header = '2P' + _header
 _vheader = _header + 'P'

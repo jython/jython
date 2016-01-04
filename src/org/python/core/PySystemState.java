@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import jnr.posix.util.Platform;
+import com.carrotsearch.sizeof.RamUsageEstimator;
 
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -430,6 +430,15 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public int getrecursionlimit() {
         return recursionlimit;
+    }
+
+    @SuppressWarnings("unused")
+    public long getsizeof(Object obj, long defaultVal) {
+        return getsizeof(obj);
+    }
+
+    public long getsizeof(Object obj) {
+        return RamUsageEstimator.shallowSizeOf(obj);
     }
 
     public void setrecursionlimit(int recursionlimit) {

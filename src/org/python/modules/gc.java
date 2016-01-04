@@ -1,10 +1,6 @@
 package org.python.modules;
 
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -2558,13 +2554,26 @@ public class gc {
     }
 
     /**
-     * Not supported by Jython.
+     * Only works reliably if {@code monitorGlobal} is active, as it depends on
+     * monitored objects to search for referrers. It only finds referrers that
+     * properly implement the traverseproc mechanism (unless reflection-based
+     * traversion is activated and works stable).
      * Throws {@link org.python.core.Py#NotImplementedError}.
      *
      * @throws org.python.core.Py.NotImplementedError
      */
     public static PyObject get_objects() {
-        throw Py.NotImplementedError("not applicable to Java GC");
+        if (!isMonitoring()) {
+            throw Py.NotImplementedError(
+                    "not applicable in Jython if gc module is not monitoring PyObjects");
+        }
+        LinkedList<PyObject> resultList = new LinkedList<>();
+        synchronized (monitoredObjects) {
+            for (WeakReferenceGC src: monitoredObjects) {
+                resultList.add((PyObject) src.get());
+            }
+        }
+        return new PyList(resultList);
     }
 
     /**
