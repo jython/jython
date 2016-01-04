@@ -1,6 +1,11 @@
 package org.python.modules;
 
-import java.util.*;
+import java.util.Set;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;

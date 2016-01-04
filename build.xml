@@ -583,8 +583,10 @@ The readme text for the next release will be like:
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/netty-transport-4.0.33.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-	    <!-- these stub jars are pre-built in https://github.com/jnr/jffi/tree/master/archive
-	        and rarely if ever change -->
+            <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
+            <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
+            <!-- these stub jars are pre-built in https://github.com/jnr/jffi/tree/master/archive
+                and rarely if ever change -->
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
             <zipfileset src="extlibs/jffi-i386-FreeBSD.jar"/>
@@ -605,7 +607,6 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
 	    <!-- remainder of JNR, JFFI -->
             <zipfileset src="extlibs/jffi-1.2.10.jar"/>
-            <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.0.7.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.0.23.jar"/>

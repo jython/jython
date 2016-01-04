@@ -35,6 +35,7 @@ Jython links the following libraries:
 * Mock Runner, licensed under the Apache 1.1 license
 * Netty 4, licensed under the Apache 2.0 license from the Netty project
 * PyPy datetime module, licensed under the MIT License from the PyPy project
+* Java sizeof, licensed under the Apache 2.0 License from the Apache Software Foundation
 
 Jython follows closely the Python language and its reference
 implementation CPython, as created by Guido van Rossum.
