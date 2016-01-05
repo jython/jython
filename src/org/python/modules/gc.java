@@ -2571,11 +2571,11 @@ public class gc {
             throw Py.NotImplementedError(
                     "not applicable in Jython if gc module is not monitoring PyObjects");
         }
-        ArrayList<PyObject> resultList = new ArrayList<>();
+        ArrayList<PyObject> resultList = new ArrayList<>(monitoredObjects.size());
         synchronized (monitoredObjects) {
             for (WeakReferenceGC src: monitoredObjects) {
                 PyObject obj = src.get();
-                if (obj != null) {
+                if (isTraversable(obj)) {
                     resultList.add(obj);
                 }
             }
