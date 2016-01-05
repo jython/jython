@@ -2580,6 +2580,7 @@ public class gc {
                 }
             }
         }
+        resultList.trimToSize();
         return new PyList(resultList);
     }
 
