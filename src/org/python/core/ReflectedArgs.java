@@ -111,22 +111,7 @@ public class ReflectedArgs {
         // if that's what they need to do ;)
 
         if (isVarArgs) {
-            if (pyArgs.length == 0 || !(pyArgs[pyArgs.length - 1] instanceof PySequenceList)) {
-                int non_varargs_len = n - 1;
-                if (pyArgs.length >= non_varargs_len) {
-                    PyObject[] boxedPyArgs = new PyObject[n];
-                    for (int i = 0; i < non_varargs_len; i++) {
-                        boxedPyArgs[i] = pyArgs[i];
-                    }
-                    int varargs_len = pyArgs.length - non_varargs_len;
-                    PyObject[] varargs = new PyObject[varargs_len];
-                    for (int i = 0; i < varargs_len; i++) {
-                        varargs[i] = pyArgs[non_varargs_len + i];
-                    }
-                    boxedPyArgs[non_varargs_len] = new PyList(varargs);
-                    pyArgs = boxedPyArgs;
-                }
-            }
+            pyArgs = ensureBoxedVarargs(pyArgs, n);
         }
 
         if (pyArgs.length != n) {
@@ -162,6 +147,33 @@ public class ReflectedArgs {
             }
         }
         return true;
+    }
+
+    /* Boxes argument in the varargs position if not already boxed */
+    private PyObject[] ensureBoxedVarargs(PyObject[] pyArgs, int n) {
+        if (pyArgs.length == 0) {
+            return pyArgs;
+        }
+        PyObject lastArg = pyArgs[pyArgs.length - 1];
+        if (lastArg instanceof PySequenceList || lastArg instanceof PyArray) {
+            // FIXME also check if lastArg is sequence-like
+            return pyArgs; // will be boxed in an array once __tojava__ is called
+        }
+        int non_varargs_len = n - 1;
+        if (pyArgs.length < non_varargs_len) {
+            return pyArgs;
+        }
+        PyObject[] boxedPyArgs = new PyObject[n];
+        for (int i = 0; i < non_varargs_len; i++) {
+            boxedPyArgs[i] = pyArgs[i];
+        }
+        int varargs_len = pyArgs.length - non_varargs_len;
+        PyObject[] varargs = new PyObject[varargs_len];
+        for (int i = 0; i < varargs_len; i++) {
+            varargs[i] = pyArgs[non_varargs_len + i];
+        }
+        boxedPyArgs[non_varargs_len] = new PyList(varargs);
+        return boxedPyArgs;
     }
 
     public static int precedence(Class<?> arg) {

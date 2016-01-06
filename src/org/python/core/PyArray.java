@@ -209,6 +209,16 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         return seq___eq__(o);
     }
 
+    @Override
+    public int hashCode() {
+        return array___hash__();
+    }
+
+    @ExposedMethod
+    final int array___hash__() {
+        throw Py.TypeError(String.format("unhashable type: '%.200s'", getType().fastGetName()));
+    }
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___lt__(PyObject o) {
         return seq___lt__(o);
@@ -450,7 +460,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     @Override
     public Object __tojava__(Class<?> c) {
-        if (c == Object.class || (c.isArray() && c.getComponentType().isAssignableFrom(type))) {
+        boolean isArray = c.isArray();
+        Class componentType = c.getComponentType();
+
+        if (c == Object.class || (isArray && componentType.isAssignableFrom(type))) {
             if (delegate.capacity != delegate.size) {
                 // when unboxing, need to shrink the array first, otherwise incorrect
                 // results to Java
@@ -459,9 +472,20 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 return data;
             }
         }
+
+        // rebox: this array is made of primitives but converting to Object[]
+        if (isArray && componentType == Object.class) {
+            Object[] boxed = new Object[delegate.size];
+            for (int i = 0; i < delegate.size; i++) {
+                boxed[i] = Array.get(data, i);
+            }
+            return boxed;
+        }
+
         if (c.isInstance(this)) {
             return this;
         }
+
         return Py.NoConversion;
     }
 
