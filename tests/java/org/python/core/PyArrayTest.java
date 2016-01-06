@@ -1,6 +1,7 @@
 package org.python.core;
 
 import junit.framework.TestCase;
+import org.python.util.PythonInterpreter;
 
 /**
  * Tests for PyArray.
@@ -49,5 +50,17 @@ public class PyArrayTest extends TestCase {
         arrayToModify.setslice(0, 3, 2, arrayMultipleElements);
         assertEquals(new PyArray(PyString.class, new String[] {"x", "b", "y", "d"}), arrayToModify);
 
+    }
+
+    public void testCompactArray() {
+        // tests http://bugs.jython.org/issue1745
+        PythonInterpreter interp = new PythonInterpreter();
+        interp.set("arr", new double[3]);
+        interp.exec("arr.append(3.0)\n\n");
+        Object o = interp.get("arr", Object.class);
+        double[] a = (double[])o;
+        assertEquals(4, a.length);
+        assertEquals(0.0, a[0]);
+        assertEquals(3.0, a[3]);
     }
 }
