@@ -78,7 +78,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
      * @param dict a Python mapping object (e.g., a dictionary) for use as the default namespace
      */
     public static PythonInterpreter threadLocalStateInterpreter(PyObject dict) {
-        return new PythonInterpreter(dict, null, true);
+        return new PythonInterpreter(dict, new PySystemState(), true);
     }
 
     /**
