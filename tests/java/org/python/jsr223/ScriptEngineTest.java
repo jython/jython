@@ -16,6 +16,7 @@ import javax.script.SimpleScriptContext;
 
 import junit.framework.TestCase;
 
+import org.junit.Assert;
 import org.python.core.Options;
 import org.python.core.PyString;
 
@@ -224,13 +225,18 @@ public class ScriptEngineTest extends TestCase {
         }
     }
 
+    // FIXME PyScriptEngineScope lacks items(), iteritems(), and other dict methods
+    // This should be added in a future release
+
     public void testScope_repr() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
         pythonEngine.eval("a = 4");
         pythonEngine.eval("b = 'hi'");
-        pythonEngine.eval("localrepr = `locals()`");
-        assertEquals("{'b': u'hi', 'a': 4}", pythonEngine.get("localrepr"));
+        String repr = (String)pythonEngine.eval("repr(locals())");
+        // locals() contains builtins as of 2.7.0, so we need to selectively test
+        Assert.assertTrue(repr.contains("'a': 4"));
+        Assert.assertTrue(repr.contains("'b': u'hi'"));
     }
 
     public void testScope_iter() throws ScriptException {
@@ -238,10 +244,9 @@ public class ScriptEngineTest extends TestCase {
         ScriptEngine pythonEngine = manager.getEngineByName("python");
         pythonEngine.eval("a = 4");
         pythonEngine.eval("b = 'hi'");
-        pythonEngine.eval("list = []");
-        pythonEngine.eval("for loc in locals(): list.append(loc)");
-        pythonEngine.eval("listrepr = `list`");
-        assertEquals("[u'a', u'b', u'list']", pythonEngine.get("listrepr"));
+        assertEquals(
+                "['__builtins__', 'a', 'b']",
+                pythonEngine.eval("repr(sorted((item for item in locals())))"));
     }
 
     public void testScope_lookup() throws ScriptException {
@@ -250,7 +255,7 @@ public class ScriptEngineTest extends TestCase {
         pythonEngine.eval("a = 4");
         pythonEngine.eval("b = 'hi'");
         pythonEngine.eval("var_a = locals()['a']");
-        pythonEngine.eval("arepr = `var_a`");
+        pythonEngine.eval("arepr = repr(var_a)");
         assertEquals("4", pythonEngine.get("arepr"));
     }
 

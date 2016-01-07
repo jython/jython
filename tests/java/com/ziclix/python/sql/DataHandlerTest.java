@@ -12,6 +12,7 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
 
+import org.python.core.PyObject;
 import org.python.core.PySystemState;
 
 import junit.framework.TestCase;
@@ -35,24 +36,35 @@ public class DataHandlerTest extends TestCase {
         ResultSet rs = (ResultSet)Proxy.newProxyInstance(getClass().getClassLoader(),
                                                          new Class<?>[] {ResultSet.class},
                                                          new DefaultReturnHandler());
-        List<String> unsupportedTypes = Arrays.asList("ARRAY",
-                                                      "DATALINK",
-                                                      "DISTINCT",
-                                                      "REF",
-                                                      "ROWID", // java 6
-                                                      "STRUCT");
+        List<String> unsupportedTypes = Arrays.asList(
+                "ARRAY",
+                "DATALINK",
+                "DISTINCT",
+                "REF",
+                "REF_CURSOR",
+                "ROWID",
+                "STRUCT",
+                "TIME_WITH_TIMEZONE",
+                "TIMESTAMP_WITH_TIMEZONE"
+        );
         for (Field field : Types.class.getDeclaredFields()) {
             String typeName = field.getName();
             int type = field.getInt(null);
             if (unsupportedTypes.contains(typeName)) {
                 try {
                     _handler.getPyObject(rs, 1, type);
-                    fail("SQLException expected");
+                    fail("SQLException expected: " + typeName);
                 } catch (SQLException sqle) {
                     // expected
                 }
             } else {
-                assertNotNull(typeName + " should return None", _handler.getPyObject(rs, 1, type));
+                try {
+                    PyObject pyobj = _handler.getPyObject(rs, 1, type);
+                    assertNotNull(typeName + " should return None", pyobj);
+                } catch (SQLException sqle) {
+                    // unexpected! but useful for future proofing changes in SQL support
+                    fail("unexpected SQLException: " + typeName);
+                }
             }
         }
     }
