@@ -37,6 +37,23 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             interp.setOut(context.getWriter());
             interp.setErr(context.getErrorWriter());
             interp.setLocals(new PyScriptEngineScope(this, context));
+
+            // set sys.argv if FILENAME, ARGV attributes are defined
+            String filename = (String) context.getAttribute(ScriptEngine.FILENAME);
+            String[] argv = (String[]) context.getAttribute(ScriptEngine.ARGV);
+            if (argv != null || filename != null) {
+                PyList pyargv = new PyList();
+                if (filename != null) {
+                    pyargv.append(Py.java2py(filename));
+                }
+                if (argv != null) {
+                    for (int i = 0; i < argv.length; i++) {
+                        pyargv.append(Py.java2py(argv[i]));
+                    }
+                }
+                interp.getSystemState().argv = pyargv;
+            }
+
             return interp.eval(code).__tojava__(Object.class);
         } catch (PyException pye) {
             throw scriptException(pye);

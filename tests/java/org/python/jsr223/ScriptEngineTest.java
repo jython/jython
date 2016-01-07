@@ -3,6 +3,7 @@ package org.python.jsr223;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -30,6 +31,42 @@ public class ScriptEngineTest extends TestCase {
         assertNull(pythonEngine.eval("x = 5"));
         assertEquals(5, pythonEngine.eval("x"));
         assertEquals("sample.py", pythonEngine.eval("__file__"));
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("sample.py"), pythonEngine.eval("sys.argv"));
+    }
+
+    public void testEvalStringArgv() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.FILENAME, "sample.py", ScriptContext.ENGINE_SCOPE);
+        context.setAttribute(ScriptEngine.ARGV, new String[] {"foo", "bar"}, ScriptContext.ENGINE_SCOPE);
+        assertNull(pythonEngine.eval("x = 5"));
+        assertEquals(5, pythonEngine.eval("x"));
+        assertEquals("sample.py", pythonEngine.eval("__file__"));
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("sample.py", "foo", "bar"), pythonEngine.eval("sys.argv"));
+    }
+
+    public void testEvalStringNoFilenameWithArgv() throws ScriptException {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine pythonEngine = manager.getEngineByName("python");
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.ARGV, new String[] {"foo", "bar"}, ScriptContext.ENGINE_SCOPE);
+        assertNull(pythonEngine.eval("x = 5"));
+        assertEquals(5, pythonEngine.eval("x"));
+        boolean gotExpectedException = false;
+        try {
+            pythonEngine.eval("__file__");
+        } catch (ScriptException e) {
+            assertTrue(e.getMessage().startsWith("NameError: "));
+            gotExpectedException = true;
+        }
+        if (!gotExpectedException) {
+            fail("Excepted __file__ to be undefined");
+        }
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("foo", "bar"), pythonEngine.eval("sys.argv"));
     }
 
     public void testSyntaxError() {
@@ -83,6 +120,8 @@ public class ScriptEngineTest extends TestCase {
         CompiledScript five = ((Compilable)pythonEngine).compile("5");
         assertEquals(5, five.eval());
         assertEquals("sample.py", pythonEngine.eval("__file__"));
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("sample.py"), pythonEngine.eval("sys.argv"));
     }
 
     public void testEvalReader() throws ScriptException {
@@ -93,6 +132,8 @@ public class ScriptEngineTest extends TestCase {
         assertNull(pythonEngine.eval(new StringReader("x = 5")));
         assertEquals(5, pythonEngine.eval(new StringReader("x")));
         assertEquals("sample.py", pythonEngine.eval("__file__"));
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("sample.py"), pythonEngine.eval("sys.argv"));
     }
 
     public void testCompileEvalReader() throws ScriptException {
@@ -103,6 +144,8 @@ public class ScriptEngineTest extends TestCase {
         CompiledScript five = ((Compilable)pythonEngine).compile(new StringReader("5"));
         assertEquals(5, five.eval());
         assertEquals("sample.py", pythonEngine.eval("__file__"));
+        pythonEngine.eval("import sys");
+        assertEquals(Arrays.asList("sample.py"), pythonEngine.eval("sys.argv"));
     }
 
     public void testBindings() throws ScriptException {
