@@ -69,6 +69,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             if (filename == null) {
                 return interp.compile(script);
             } else {
+                interp.getLocals().__setitem__(Py.newString("__file__"), Py.newString(filename));
                 return interp.compile(script, filename);
             }
         } catch (PyException pye) {
@@ -82,6 +83,7 @@ public class PyScriptEngine extends AbstractScriptEngine implements Compilable, 
             if (filename == null) {
                 return interp.compile(reader);
             } else {
+                interp.getLocals().__setitem__(Py.newString("__file__"), Py.newString(filename));
                 return interp.compile(reader, filename);
             }
         } catch (PyException pye) {

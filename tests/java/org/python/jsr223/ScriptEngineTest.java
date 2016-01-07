@@ -25,9 +25,11 @@ public class ScriptEngineTest extends TestCase {
     public void testEvalString() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.FILENAME, "sample.py", ScriptContext.ENGINE_SCOPE);
         assertNull(pythonEngine.eval("x = 5"));
-        assertEquals(Integer.valueOf(5), pythonEngine.eval("x"));
+        assertEquals(5, pythonEngine.eval("x"));
+        assertEquals("sample.py", pythonEngine.eval("__file__"));
     }
 
     public void testSyntaxError() {
@@ -76,25 +78,31 @@ public class ScriptEngineTest extends TestCase {
     public void testCompileEvalString() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.FILENAME, "sample.py", ScriptContext.ENGINE_SCOPE);
         CompiledScript five = ((Compilable)pythonEngine).compile("5");
-        assertEquals(Integer.valueOf(5), five.eval());
+        assertEquals(5, five.eval());
+        assertEquals("sample.py", pythonEngine.eval("__file__"));
     }
 
     public void testEvalReader() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.FILENAME, "sample.py", ScriptContext.ENGINE_SCOPE);
         assertNull(pythonEngine.eval(new StringReader("x = 5")));
-        assertEquals(Integer.valueOf(5), pythonEngine.eval(new StringReader("x")));
+        assertEquals(5, pythonEngine.eval(new StringReader("x")));
+        assertEquals("sample.py", pythonEngine.eval("__file__"));
     }
 
     public void testCompileEvalReader() throws ScriptException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
-
+        ScriptContext context = pythonEngine.getContext();
+        context.setAttribute(ScriptEngine.FILENAME, "sample.py", ScriptContext.ENGINE_SCOPE);
         CompiledScript five = ((Compilable)pythonEngine).compile(new StringReader("5"));
-        assertEquals(Integer.valueOf(5), five.eval());
+        assertEquals(5, five.eval());
+        assertEquals("sample.py", pythonEngine.eval("__file__"));
     }
 
     public void testBindings() throws ScriptException {
@@ -102,9 +110,9 @@ public class ScriptEngineTest extends TestCase {
         ScriptEngine pythonEngine = manager.getEngineByName("python");
 
         pythonEngine.put("a", 42);
-        assertEquals(Integer.valueOf(42), pythonEngine.eval("a"));
+        assertEquals(42, pythonEngine.eval("a"));
         assertNull(pythonEngine.eval("x = 5"));
-        assertEquals(Integer.valueOf(5), pythonEngine.get("x"));
+        assertEquals(5, pythonEngine.get("x"));
         assertNull(pythonEngine.eval("del x"));
         assertNull(pythonEngine.get("x"));
     }
@@ -147,8 +155,8 @@ public class ScriptEngineTest extends TestCase {
         thread.run();
         thread.join();
         assertNull(test.exception);
-        assertEquals(Integer.valueOf(-7), test.x);
-        assertEquals(Integer.valueOf(15), pythonEngine.get("x"));
+        assertEquals(-7, test.x);
+        assertEquals(15, pythonEngine.get("x"));
         assertNull(pythonEngine.eval("del x"));
         assertNull(pythonEngine.get("x"));
     }
@@ -159,7 +167,7 @@ public class ScriptEngineTest extends TestCase {
         Invocable invocableEngine = (Invocable)pythonEngine;
 
         assertNull(pythonEngine.eval("def f(x): return abs(x)"));
-        assertEquals(Integer.valueOf(5), invocableEngine.invokeFunction("f", Integer.valueOf(-5)));
+        assertEquals(5, invocableEngine.invokeFunction("f", -5));
         assertEquals("spam", invocableEngine.invokeMethod(new PyString("  spam  "), "strip"));
         assertEquals("spam", invocableEngine.invokeMethod("  spam  ", "strip"));
     }
