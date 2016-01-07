@@ -210,6 +210,10 @@ public class PyXRange extends PySequence {
             }
             return list;
         }
+        if (c.isArray()) {
+            PyArray array = new PyArray(c.getComponentType(), this);
+            return array.__tojava__(c);
+        }
         return super.__tojava__(c);
     }
 }

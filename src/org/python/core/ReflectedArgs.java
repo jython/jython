@@ -155,7 +155,19 @@ public class ReflectedArgs {
             return pyArgs;
         }
         PyObject lastArg = pyArgs[pyArgs.length - 1];
-        if (lastArg instanceof PySequenceList || lastArg instanceof PyArray) {
+        if (lastArg instanceof PySequenceList ||
+                lastArg instanceof PyArray ||
+                lastArg instanceof PyXRange ||
+                lastArg instanceof PyIterator) {
+            // NOTE that the check is against PySequenceList, not PySequence,
+            // because certain Java <=> Python semantics currently require this
+            // additional strictness. Perhaps this can be relaxed.
+
+            // Empirically this list is exhaustive against the Jython runtime,
+            // excluding only PyBaseString, PyMemoryView, Py2kBuffer, BaseBytes,
+            // and AstList, many/most of which seem likely to be problematic for
+            // varargs usage.
+
             // FIXME also check if lastArg is sequence-like
             return pyArgs; // will be boxed in an array once __tojava__ is called
         }

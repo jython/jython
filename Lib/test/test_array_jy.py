@@ -129,6 +129,16 @@ class ArrayConversionTestCase(unittest.TestCase):
         self.assertAsList(jarray.array([1, 2, 3, 4, 5], "i"), [1, 2, 3, 4, 5])
         self.assertAsList(array("i", [1, 2, 3, 4, 5]), [1, 2, 3, 4, 5])
 
+    def test_auxillary_boxing(self):
+        "PyArray is internally used to support boxing of iterators/iterables"
+        self.assertAsList(xrange(5), [0, 1, 2, 3, 4])
+        self.assertAsList(iter(xrange(5)), [0, 1, 2, 3, 4])
+        self.assertAsList(list(xrange(5)), [0, 1, 2, 3, 4])
+        self.assertAsList((i * 2 for i in xrange(5)), [0, 2, 4, 6, 8])
+        self.assertAsList(iter((i * 2 for i in xrange(5))), [0, 2, 4, 6, 8])
+        self.assertAsList(iter((i * 2 for i in xrange(5))), [0, 2, 4, 6, 8])
+        self.assertAsList(itertools.chain('ABC', 'DEF'), ['A', 'B', 'C', 'D', 'E', 'F'])
+
     def test_object_varargs(self):
         "array.array objects can be used in the varargs position, with primitive boxing"
         a = array('i', range(5, 10))

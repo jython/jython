@@ -1,6 +1,7 @@
 package org.python.core;
 
 import junit.framework.TestCase;
+import org.junit.Assert;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -62,5 +63,16 @@ public class PyArrayTest extends TestCase {
         assertEquals(4, a.length);
         assertEquals(0.0, a[0]);
         assertEquals(3.0, a[3]);
+    }
+
+    public void testToJava() {
+        PythonInterpreter interp = new PythonInterpreter();
+        PyObject pyobj = interp.eval("[i * 2 for i in xrange(5)]");
+        Assert.assertArrayEquals
+                (new int[] {0, 2, 4, 6, 8},
+                (int[])pyobj.__tojava__(int[].class));
+        Assert.assertArrayEquals(
+                new Integer[] { 0, 2, 4, 6, 8},
+                (Object[])pyobj.__tojava__(Object[].class));
     }
 }

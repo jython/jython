@@ -57,6 +57,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         setup(type, data);
     }
 
+    public PyArray(Class<?> type, PyObject initial) {
+        this(TYPE);
+        this.type = type;
+        typecode = class2char(type);
+        data = Array.newInstance(type, 0);
+        delegate = new ArrayDelegate();
+        useInitial(initial);
+    }
+
     public PyArray(Class<?> type, int n) {
         this(type, Array.newInstance(type, n));
     }
@@ -75,6 +84,34 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             this.data = data;
         }
         delegate = new ArrayDelegate();
+    }
+
+    private void useInitial(PyObject initial) {
+        /*
+         * The initialiser may be omitted, or may validly be one of several types in the broad
+         * categories of a byte string (which is treated as a machine representation of the data) or
+         * an iterable yielding values assignable to the elements. There is special treatment for
+         * type 'u' Unicode.
+         */
+        if (initial == null) {
+            // Fall through
+
+        } else if (initial instanceof PyList) {
+            fromlist(initial);
+
+        } else if (initial instanceof PyString && !(initial instanceof PyUnicode)) {
+            fromstring(initial.toString());
+
+        } else if ("u".equals(typecode)) {
+            if (initial instanceof PyUnicode) {
+                extendArray(((PyUnicode)initial).toCodePoints());
+            } else {
+                extendUnicodeIter(initial);
+            }
+
+        } else {
+            extendInternal(initial);
+        }
     }
 
     @ExposedNew
@@ -130,34 +167,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         class2char(type);
         self.setup(type, Array.newInstance(type, 0));
         self.typecode = typecode;
-
-        /*
-         * The initialiser may be omitted, or may validly be one of several types in the broad
-         * categories of a byte string (which is treated as a machine representation of the data) or
-         * an iterable yielding values assignable to the elements. There is special treatment for
-         * type 'u' Unicode.
-         */
-        PyObject initial = ap.getPyObject(1, null);
-        if (initial == null) {
-            // Fall through
-
-        } else if (initial instanceof PyList) {
-            self.fromlist(initial);
-
-        } else if (initial instanceof PyString && !(initial instanceof PyUnicode)) {
-            self.fromstring(initial.toString());
-
-        } else if ("u".equals(typecode)) {
-            if (initial instanceof PyUnicode) {
-                self.extendArray(((PyUnicode)initial).toCodePoints());
-            } else {
-                self.extendUnicodeIter(initial);
-            }
-
-        } else {
-            self.extendInternal(initial);
-        }
-
+        self.useInitial(ap.getPyObject(1, null));
         return self;
     }
 

@@ -81,6 +81,10 @@ public abstract class PyIterator extends PyObject implements Iterable<Object>, T
             }
             return list;
         }
+        if (c.isArray()) {
+            PyArray array = new PyArray(c.getComponentType(), this);
+            return array.__tojava__(c);
+        }
         return super.__tojava__(c);
     }
 
