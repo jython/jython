@@ -253,11 +253,14 @@ public class PyJavaType extends PyType {
                 }
                 visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
             }
-            if (JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) == Object.class) {
+
+            Object javaProxy = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+
+            if (javaProxy == Object.class) {
                 base = PyType.fromClassSkippingInners(PyObject.class, needsInners);
             } else if(baseClass == null) {
                 base = PyType.fromClassSkippingInners(Object.class, needsInners);
-            }else if (JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR) == Class.class) {
+            } else if (javaProxy == Class.class) {
                 base = PyType.fromClassSkippingInners(PyType.class, needsInners);
             } else {
                 base = PyType.fromClassSkippingInners(baseClass, needsInners);

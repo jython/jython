@@ -336,8 +336,9 @@ public class PyObject implements Serializable {
      * @param c the Class to convert this <code>PyObject</code> to.
      **/
     public Object __tojava__(Class<?> c) {
-        if ((c == Object.class || c == Serializable.class) && getJavaProxy() != null) {
-            return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+        Object proxy = getJavaProxy();
+        if ((c == Object.class || c == Serializable.class) && proxy != null) {
+            return proxy;
         }
         if (c.isInstance(this)) {
             return this;
@@ -348,8 +349,8 @@ public class PyObject implements Serializable {
                 c = tmp;
             }
         }
-        if (c.isInstance(getJavaProxy())) {
-            return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+        if (c.isInstance(proxy)) {
+            return proxy;
         }
 
         // convert faux floats
@@ -382,11 +383,15 @@ public class PyObject implements Serializable {
         return Py.NoConversion;
     }
 
-    protected synchronized Object getJavaProxy() {
-        if (!JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR)) {
-            proxyInit();
+    protected Object getJavaProxy() {
+        Object ob = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+        if (ob == null) {
+            synchronized (this) {
+                proxyInit();
+                ob = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+            }
         }
-        return JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+        return ob;
     }
 
     /**

@@ -184,18 +184,8 @@ public abstract class JyAttribute implements Serializable {
      * Checks whether the given {@link org.python.core.PyObject}
      * has an attribute of the given type attached.
      */
-    public static synchronized boolean hasAttr(PyObject ob, byte attr_type) {
-        if (ob.attributes == null) {
-            return false;
-        }
-        if (!(ob.attributes instanceof JyAttribute)) {
-            return attr_type == JAVA_PROXY_ATTR;
-        }
-        JyAttribute att = (JyAttribute) ob.attributes;
-        while (att != null && att.attr_type < attr_type) {
-            att = att.getNext();
-        }
-        return att != null && att.attr_type == attr_type;
+    public static boolean hasAttr(PyObject ob, byte attr_type) {
+        return getAttr(ob, attr_type) != null;
     }
 
     /**
@@ -203,18 +193,17 @@ public abstract class JyAttribute implements Serializable {
      * {@link org.python.core.PyObject}.
      * If no attribute of the given type is attached, null is returned.
      */
-    public static synchronized Object getAttr(PyObject ob, byte attr_type) {
-        if (ob.attributes == null) {
-            return null;
-        }
-        if (!(ob.attributes instanceof JyAttribute)) {
+    public static Object getAttr(PyObject ob, byte attr_type) {
+        synchronized (ob) {
+            if (ob.attributes instanceof JyAttribute) {
+                JyAttribute att = (JyAttribute) ob.attributes;
+                while (att != null && att.attr_type < attr_type) {
+                    att = att.getNext();
+                }
+                return att != null && att.attr_type == attr_type ? att.getValue() : null;
+            }
             return attr_type == JAVA_PROXY_ATTR ? ob.attributes : null;
         }
-        JyAttribute att = (JyAttribute) ob.attributes;
-        while (att != null && att.attr_type < attr_type) {
-            att = att.getNext();
-        }
-        return att != null && att.attr_type == attr_type ? att.getValue() : null;
     }
 
     /**
@@ -222,20 +211,22 @@ public abstract class JyAttribute implements Serializable {
      * given object to the given stream.
      * (Intended for debugging)
      */
-    public static synchronized void debugPrintAttributes(PyObject o, java.io.PrintStream out) {
-        out.println("debugPrintAttributes of "+System.identityHashCode(o)+":");
-        if (o.attributes == null) {
-            out.println("null");
-        } else if (!(o.attributes instanceof JyAttribute)) {
-            out.println("only javaProxy");
-        } else {
-            JyAttribute att = (JyAttribute) o.attributes;
-            while (att != null) {
-                out.println("att type: "+att.attr_type+" value: "+att.getValue());
-                att = att.getNext();
+    public static void debugPrintAttributes(PyObject o, java.io.PrintStream out) {
+        synchronized (o) {
+            out.println("debugPrintAttributes of " + System.identityHashCode(o) + ":");
+            if (o.attributes == null) {
+                out.println("null");
+            } else if (!(o.attributes instanceof JyAttribute)) {
+                out.println("only javaProxy");
+            } else {
+                JyAttribute att = (JyAttribute) o.attributes;
+                while (att != null) {
+                    out.println("att type: " + att.attr_type + " value: " + att.getValue());
+                    att = att.getNext();
+                }
             }
+            out.println("debugPrintAttributes done");
         }
-        out.println("debugPrintAttributes done");
     }
 
     /**
@@ -243,51 +234,53 @@ public abstract class JyAttribute implements Serializable {
      * If no corresponding attribute exists yet, one is created. If {@value == null},
      * the attribute is removed (if it existed at all).
      */
-    public static synchronized void setAttr(PyObject ob, byte attr_type, Object value) {
-        if (value == null) {
-            delAttr(ob, attr_type);
-        } else {
-            if (ob.attributes == null) {
-                if (attr_type == JyAttribute.JAVA_PROXY_ATTR) {
-                    ob.attributes = value;
-                } else {
-                    ob.attributes = attr_type < 0 ?
-                        new AttributeLink(attr_type, value) :
-                        new TransientAttributeLink(attr_type, value);
-                }
-            } else if (!(ob.attributes instanceof JyAttribute)) {
-                if (attr_type == JyAttribute.JAVA_PROXY_ATTR) {
-                    ob.attributes = value;
-                } else {
-                    ob.attributes = new AttributeLink(JyAttribute.JAVA_PROXY_ATTR, ob.attributes);
-                    ((JyAttribute) ob.attributes).setNext(attr_type < 0 ?
-                        new AttributeLink(attr_type, value) :
-                           new TransientAttributeLink(attr_type, value));
-                }
+    public static void setAttr(PyObject ob, byte attr_type, Object value) {
+        synchronized (ob) {
+            if (value == null) {
+                delAttr(ob, attr_type);
             } else {
-                JyAttribute att = (JyAttribute) ob.attributes;
-                if (att.attr_type > attr_type) {
-                    JyAttribute newAtt = attr_type < 0 ?
-                        new AttributeLink(attr_type, value) :
-                        new TransientAttributeLink(attr_type, value);
-                    newAtt.setNext(att);
-                    ob.attributes = newAtt;
-                } else {
-                    while (att.getNext() != null && att.getNext().attr_type <= attr_type) {
-                        att = att.getNext();
-                    }
-                    if (att.attr_type == attr_type) {
-                        att.setValue(value);
-                    } else if (att.getNext() == null) {
-                        att.setNext(attr_type < 0 ?
-                            new AttributeLink(attr_type, value) :
-                            new TransientAttributeLink(attr_type, value));
+                if (ob.attributes == null) {
+                    if (attr_type == JyAttribute.JAVA_PROXY_ATTR) {
+                        ob.attributes = value;
                     } else {
+                        ob.attributes = attr_type < 0 ?
+                                new AttributeLink(attr_type, value) :
+                                new TransientAttributeLink(attr_type, value);
+                    }
+                } else if (!(ob.attributes instanceof JyAttribute)) {
+                    if (attr_type == JyAttribute.JAVA_PROXY_ATTR) {
+                        ob.attributes = value;
+                    } else {
+                        ob.attributes = new AttributeLink(JyAttribute.JAVA_PROXY_ATTR, ob.attributes);
+                        ((JyAttribute) ob.attributes).setNext(attr_type < 0 ?
+                                new AttributeLink(attr_type, value) :
+                                new TransientAttributeLink(attr_type, value));
+                    }
+                } else {
+                    JyAttribute att = (JyAttribute) ob.attributes;
+                    if (att.attr_type > attr_type) {
                         JyAttribute newAtt = attr_type < 0 ?
-                            new AttributeLink(attr_type, value) :
-                            new TransientAttributeLink(attr_type, value);
-                        newAtt.setNext(att.getNext());
-                        att.setNext(newAtt);
+                                new AttributeLink(attr_type, value) :
+                                new TransientAttributeLink(attr_type, value);
+                        newAtt.setNext(att);
+                        ob.attributes = newAtt;
+                    } else {
+                        while (att.getNext() != null && att.getNext().attr_type <= attr_type) {
+                            att = att.getNext();
+                        }
+                        if (att.attr_type == attr_type) {
+                            att.setValue(value);
+                        } else if (att.getNext() == null) {
+                            att.setNext(attr_type < 0 ?
+                                    new AttributeLink(attr_type, value) :
+                                    new TransientAttributeLink(attr_type, value));
+                        } else {
+                            JyAttribute newAtt = attr_type < 0 ?
+                                    new AttributeLink(attr_type, value) :
+                                    new TransientAttributeLink(attr_type, value);
+                            newAtt.setNext(att.getNext());
+                            att.setNext(newAtt);
+                        }
                     }
                 }
             }
@@ -299,27 +292,29 @@ public abstract class JyAttribute implements Serializable {
      * (if it existed at all). This is equivalent to calling
      * {@code setAttr(ob, attr_type, null)}.
      */
-    public static synchronized void delAttr(PyObject ob, byte attr_type) {
-        if (ob.attributes == null) {
-            return;
-        } else if (attr_type == JAVA_PROXY_ATTR && !(ob.attributes instanceof JyAttribute)) {
-            ob.attributes = null;
-        }
-        JyAttribute att = (JyAttribute) ob.attributes;
-        if (att.attr_type == attr_type) {
-            ob.attributes = att.getNext();
-        } else {
-            while (att.getNext() != null && att.getNext().attr_type < attr_type) {
-                att = att.getNext();
+    public static void delAttr(PyObject ob, byte attr_type) {
+        synchronized (ob) {
+            if (ob.attributes == null) {
+                return;
+            } else if (attr_type == JAVA_PROXY_ATTR && !(ob.attributes instanceof JyAttribute)) {
+                ob.attributes = null;
             }
-            if (att.getNext() != null && att.getNext().attr_type == attr_type) {
-                att.setNext(att.getNext().getNext());
+            JyAttribute att = (JyAttribute) ob.attributes;
+            if (att.attr_type == attr_type) {
+                ob.attributes = att.getNext();
+            } else {
+                while (att.getNext() != null && att.getNext().attr_type < attr_type) {
+                    att = att.getNext();
+                }
+                if (att.getNext() != null && att.getNext().attr_type == attr_type) {
+                    att.setNext(att.getNext().getNext());
+                }
             }
-        }
-        if (ob.attributes != null) {
-            att = (JyAttribute) ob.attributes;
-            if (att.getNext() == null && att.attr_type == JyAttribute.JAVA_PROXY_ATTR) {
-                ob.attributes = att.getValue();
+            if (ob.attributes != null) {
+                att = (JyAttribute) ob.attributes;
+                if (att.getNext() == null && att.attr_type == JyAttribute.JAVA_PROXY_ATTR) {
+                    ob.attributes = att.getValue();
+                }
             }
         }
     }
