@@ -1354,6 +1354,9 @@ _failures = {
         test_httplib
         test_poplib            # 'NoneType' is not iterable
         test_smtplib
+
+        # Problems with the latest JSR 223 changes; see http://bugs.jython.org/issue2154
+        test_jsr223
         """,
 
     'java.nt':     # Expected to fail on Windows
