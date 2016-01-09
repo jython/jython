@@ -165,6 +165,8 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     private int recursionlimit = 1000;
 
+    private int checkinterval = 100;
+
     private codecs.CodecState codecState;
 
     /** true when a SystemRestart is triggered. */
@@ -495,6 +497,12 @@ public class PySystemState extends PyObject implements AutoCloseable,
     public PyObject getfilesystemencoding() {
         return Py.None;
     }
+
+
+    /* get and setcheckinterval really do nothing, but it helps when some code tries to use these */
+    public PyInteger getcheckinterval() { return new PyInteger(checkinterval); }
+
+    public void setcheckinterval(int interval) { checkinterval = interval; }
 
     /**
      * Change the current working directory to the specified path.
