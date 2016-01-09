@@ -8,11 +8,12 @@ email/**
 encodings/**
 ensurepip/**
 importlib/*
+json/**
 logging/*
+pydoc_data/**
 test/**
 unittest/**
 xml/etree/**
-json/**
 
 # Lib files, in alphabetical order:
 __future__.py
