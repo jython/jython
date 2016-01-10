@@ -94,8 +94,6 @@ resources to test.  Currently only the following are defined:
     curses -    Tests that use curses and will modify the terminal's
                 state and output modes.
 
-    lib2to3 -   Run the tests for 2to3 (They take a while.)
-
     largefile - It is okay to run some test that may create huge
                 files.  These tests can take a long time and may
                 consume >2GB of disk space temporarily.
@@ -1266,9 +1264,6 @@ _expectations = {
         test_winreg
         test_winsound
         test_zipfile64         # requires bogus resource "extralargefile"
-
-        # Not yet Jython 3.x
-        test_lib2to3
 
         # Could rewrite these tests
         test_descr             # cannot import name verify

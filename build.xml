@@ -786,7 +786,21 @@ The readme text for the next release will be like:
             <classpath path="${dist.dir}/${jython.dev.jar}" />
             <classpath refid="main.classpath" />
         </taskdef>
-        <jycompile srcdir="${dist.dir}/Lib" destdir="${dist.dir}/Lib" excludes="test/**"/>
+	<!-- One might think that the exclusion of lib2to3/tests/** is
+	     recursive, but one would be wrong ;) It's actually only
+	     two levels, so for now the workaround is to also include
+	     data/myfixes/**
+
+             This exclusion for lib2to3/tests/ in general is necessary
+             because data/infinite_recursion.py is not compileable by
+             Jython - it's too large and will exceed Java method
+             limits for the top level script; nor is
+             data/py3_test_grammar.py - it's Python 3. Meanwhile
+             refactor.get_all_fix_names depends on having *.py, not
+             exclusively $py.class, files available in
+             lib2to3/tests/data/myfixes/**. -->
+        <jycompile srcdir="${dist.dir}/Lib" destdir="${dist.dir}/Lib"
+		   excludes="test/**,lib2to3/tests/**,lib2to3/tests/data/myfixes/**"/>
     </target>
 
     <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">

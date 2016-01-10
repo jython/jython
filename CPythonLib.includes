@@ -8,6 +8,7 @@ email/**
 encodings/**
 ensurepip/**
 importlib/*
+lib2to3/**
 json/**
 logging/*
 pydoc_data/**
