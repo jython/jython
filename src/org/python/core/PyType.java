@@ -2036,7 +2036,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         private final AtomicReferenceArray<MethodCacheEntry> table;
 
         /** Size of the cache exponent (2 ** SIZE_EXP). */
-        public static final int SIZE_EXP = 11;
+        private static final int SIZE_EXP = 12;
 
         public MethodCache() {
             table = new AtomicReferenceArray<MethodCacheEntry>(1 << SIZE_EXP);
@@ -2079,7 +2079,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
          * Return the table index for type version/name.
          */
         private static int indexFor(Object version, String name) {
-            return (version.hashCode() * name.hashCode()) >>> (Integer.SIZE - SIZE_EXP);
+            return (version.hashCode() ^ name.hashCode()) & ((1 << SIZE_EXP) - 1);
         }
 
         /**
