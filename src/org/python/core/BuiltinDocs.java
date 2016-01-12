@@ -4727,4 +4727,40 @@ public class BuiltinDocs {
     public final static String traceback_tb_next_doc = 
         "";
 
+    public final static String sre_pattern_doc =
+        "Compiled regular expression objects";
+
+    public final static String sre_pattern_match_doc =
+        "match(string[, pos[, endpos]]) --> match object or None.\n" +
+        "    Matches zero or more characters at the beginning of the string";
+
+    public final static String sre_pattern_findall_doc =
+        "findall(string[, pos[, endpos]]) --> list.\n" +
+        "   Return a list of all non-overlapping matches of pattern in string.";
+
+    public final static String sre_pattern_finditer_doc =
+        "finditer(string[, pos[, endpos]]) --> iterator.\n" +
+        "    Return an iterator over all non-overlapping matches for the \n" +
+        "    RE pattern in string. For each match, the iterator returns a\n" +
+        "    match object.";
+
+    public final static String sre_pattern_search_doc =
+        "search(string[, pos[, endpos]]) --> match object or None.\n" +
+        "    Scan through string looking for a match, and return a corresponding\n" +
+        "    match object instance. Return None if no position in the string matches.";
+
+    public final static String sre_pattern_split_doc =
+        "split(string[, maxsplit = 0])  --> list.\n" +
+        "    Split string by the occurrences of pattern.";
+
+    public final static String sre_pattern_sub_doc =
+        "sub(repl, string[, count = 0]) --> newstring\n" +
+        "    Return the string obtained by replacing the leftmost non-overlapping\n" +
+        "    occurrences of pattern in string by the replacement repl.";
+
+    public final static String sre_pattern_subn_doc =
+        "subn(repl, string[, count = 0]) --> (newstring, number of subs)\n" +
+        "    Return the tuple (new_string, number_of_subs_made) found by replacing\n" +
+        "    the leftmost non-overlapping occurrences of pattern with the\n" +
+        "    replacement repl.";
 }
