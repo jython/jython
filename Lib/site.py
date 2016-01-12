@@ -375,7 +375,7 @@ def setquit():
     if os.sep == ':':
         eof = 'Cmd-Q'
     elif os.sep == '\\':
-        eof = 'Ctrl-Z plus Return'
+        eof = 'Ctrl-D (i.e. EOF)'  # maybe also mention Ctrl-Z if we can support for Windows
     else:
         eof = 'Ctrl-D (i.e. EOF)'
 
