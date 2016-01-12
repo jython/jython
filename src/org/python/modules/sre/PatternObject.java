@@ -18,8 +18,10 @@ package org.python.modules.sre;
 
 import java.util.*;
 import org.python.core.*;
-import org.python.core.util.StringUtil;
+import org.python.expose.ExposedType;
 
+
+@ExposedType(name = "SRE_Pattern")
 public class PatternObject extends PyObject implements Traverseproc {
     int[] code; /* link to the code string object */
     public PyString pattern; /* link to the pattern source (or None) */

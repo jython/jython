@@ -115,6 +115,7 @@ org/python/modules/operator$PyItemGetter.class
 org/python/modules/operator$PyMethodCaller.class
 org/python/modules/posix/PyStatResult.class
 org/python/modules/random/PyRandom.class
+org/python/modules/sre/PatternObject.class
 org/python/modules/thread/PyLocal.class
 org/python/modules/time/PyTimeTuple.class
 org/python/modules/zipimport/zipimporter.class
