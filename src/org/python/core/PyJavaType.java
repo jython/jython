@@ -15,8 +15,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.HashMap;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 
 import org.python.core.util.StringUtil;
 import org.python.util.Generic;
@@ -296,6 +299,9 @@ public class PyJavaType extends PyType {
             }
             methods = allMethods.toArray(new Method[allMethods.size()]);
         }
+
+        /* make sure we "sort" all methods so they resolve in the right order. See #2391 for details */
+        Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
         boolean isInAwt = name.startsWith("java.awt.") && name.indexOf('.', 9) == -1;
         for (Method meth : methods) {
@@ -996,6 +1002,79 @@ public class PyJavaType extends PyType {
         return Collections.unmodifiableMap(postProxies);
     }
 
+    private class ClassComparator implements Comparator<Class<?>>  {
+
+        public int compare(Class<?> c1, Class<?> c2) {
+            if (c1.equals(c2)) {
+                return 0;
+            } else if (c1.isAssignableFrom(c2)) {
+                return -1;
+            } else if (c2.isAssignableFrom(c1)) {
+                return 1;
+            }
+
+            String s1 = hierarchyName(c1);
+            String s2 = hierarchyName(c2);
+            return s1.compareTo(s2);
+        }
+
+        private String hierarchyName(Class<?> c) {
+            Stack<String> nameStack = new Stack<String>();
+            StringBuilder namesBuilder = new StringBuilder();
+            do {
+                nameStack.push(c.getSimpleName());
+                c = c.getSuperclass();
+            } while (c != null);
+
+            for (String name: nameStack) {
+                namesBuilder.append(name);
+            }
+
+            return namesBuilder.toString();
+        }
+    }
+
+    private class MethodComparator implements Comparator<Method> {
+
+        private ClassComparator classComparator;
+
+        public MethodComparator(ClassComparator classComparator) {
+            this.classComparator = classComparator;
+        }
+
+        public int compare(Method m1, Method m2) {
+            int result = m1.getName().compareTo(m2.getName());
+
+            if (result != 0) {
+                return result;
+            }
+
+            Class<?>[] p1 = m1.getParameterTypes();
+            Class<?>[] p2 = m2.getParameterTypes();
+
+            int n1 = p1.length;
+            int n2 = p2.length;
+
+            result = n1 - n2;
+
+            if (result != 0) {
+                return result;
+            }
+
+            result = classComparator.compare(m1.getDeclaringClass(), m2.getDeclaringClass());
+
+            if (result != 0) {
+                return result;
+            }
+
+            if (n1 == 0) {
+                return classComparator.compare(m1.getReturnType(), m2.getReturnType());
+            } else if (n1 == 1) {
+                return classComparator.compare(p1[0], p2[0]);
+            }
+            return result;
+        }
+    }
 
     /* Traverseproc implementation */
     @Override
