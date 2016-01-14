@@ -138,7 +138,7 @@ _ldap_rdn_display_names = {
 }
 
 _cert_name_types = [
-    # Fields documented in 
+    # Fields documented in
     # http://docs.oracle.com/javase/7/docs/api/java/security/cert/X509Certificate.html#getSubjectAlternativeNames()
     "other",
     "rfc822",
@@ -443,6 +443,17 @@ class SSLInitializer(ChannelInitializer):
         pipeline = ch.pipeline()
         pipeline.addFirst("ssl", self.ssl_handler)
 
+class RaceFreeSslHandler(SslHandler):
+    """
+    This is a temporary workaround to solve a race condition that is present in
+    Netty 4.0.33. The race condition causes an NPE because 'this.ctx' isn't set when
+    calling channelActive. Once we upgrade to a version of Netty that fixes the race
+    condition, we should remove this.
+    """
+
+    def channelActive(self, ctx):
+        self.ctx = ctx
+        SslHandler.channelActive(self)
 
 class SSLSocket(object):
 
@@ -502,10 +513,10 @@ class SSLSocket(object):
         self.handshake_count = 0
 
         self.engine = None
-        
+
         if self.do_handshake_on_connect and self._sock.connected:
             if isinstance(self._sock, ChildSocket):
-                log.debug("Child socket - do not handshake! type=%s parent=%s", type(self._sock), self._sock.parent_socket, 
+                log.debug("Child socket - do not handshake! type=%s parent=%s", type(self._sock), self._sock.parent_socket,
                           extra={"sock": self._sock})
             else:
                 self.do_handshake()
@@ -599,7 +610,7 @@ class SSLSocket(object):
             self._notify_selectors()
 
         if self.ssl_handler is None:
-            self.ssl_handler = SslHandler(self.engine)
+            self.ssl_handler = RaceFreeSslHandler(self.engine)
             self.ssl_handler.handshakeFuture().addListener(handshake_step)
 
             if hasattr(self._sock, "connected") and self._sock.connected:
