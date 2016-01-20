@@ -1148,8 +1148,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
     }
 
     /**
-     * Determine the default sys.executable value from the registry. Returns Py.None is no
-     * executable can be found.
+     * Determine the default sys.executable value from the registry.
+     * If registry is not set (as in standalone jython jar), will use sys.prefix + /bin/jython(.exe) and the file may
+     * not exist. Users can create a wrapper in it's place to make it work in embedded environments.
+     * Only if sys.prefix is null, returns Py.None
      *
      * @param props a Properties registry
      * @return a PyObject path string or Py.None
@@ -1157,7 +1159,15 @@ public class PySystemState extends PyObject implements AutoCloseable,
     private static PyObject initExecutable(Properties props) {
         String executable = props.getProperty("python.executable");
         if (executable == null) {
-            return Py.None;
+            if (prefix == null) {
+                return Py.None;
+            } else {
+                if (Platform.IS_WINDOWS) {
+                    executable = prefix.asString() + "/bin/jython.exe";
+                } else {
+                    executable = prefix.asString() + "/bin/jython";
+                }
+            }
         }
 
         File executableFile = new File(executable);
@@ -1165,9 +1175,6 @@ public class PySystemState extends PyObject implements AutoCloseable,
             executableFile = executableFile.getCanonicalFile();
         } catch (IOException ioe) {
             executableFile = executableFile.getAbsoluteFile();
-        }
-        if (!executableFile.isFile()) {
-            return Py.None;
         }
         return new PyString(executableFile.getPath());
     }
