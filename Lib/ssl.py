@@ -628,10 +628,8 @@ class SSLSocket(object):
             # http://stackoverflow.com/questions/24628271/exception-in-netty-io-netty-util-concurrent-blockingoperationexception
             # - we are doing this in the handler thread!
             return
-        try:
-            self._sock._handle_channel_future(handshake, "SSL handshake")
-        except socket_error, e:
-            raise SSLError(SSL_ERROR_SSL, e.strerror)
+
+        self._sock._handle_channel_future(handshake, "SSL handshake")
 
     def dup(self):
         raise NotImplemented("Can't dup() %s instances" %
