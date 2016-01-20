@@ -291,7 +291,7 @@ _exception_map = {
     # javaexception : callable that raises the python equivalent exception, or None to stub out as unmapped
 
     IOException            : lambda x: error(errno.ECONNRESET, 'Software caused connection abort'),
-    InterruptedIOException : lambda x: timeout(None, 'timed out'),
+    InterruptedIOException : lambda x: timeout(errno.ETIMEDOUT, 'timed out'),
     IllegalStateException  : lambda x: error(errno.EPIPE, 'Illegal state exception'),
     
     java.net.BindException            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
@@ -300,7 +300,7 @@ _exception_map = {
     java.net.PortUnreachableException : None,
     java.net.ProtocolException        : None,
     java.net.SocketException          : java_net_socketexception_handler,
-    java.net.SocketTimeoutException   : lambda x: timeout(None, 'timed out'),
+    java.net.SocketTimeoutException   : lambda x: timeout(errno.ETIMEDOUT, 'timed out'),
     java.net.UnknownHostException     : lambda x: gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
 
     java.nio.channels.AlreadyConnectedException       : lambda x: error(errno.EISCONN, 'Socket is already connected'),
@@ -808,7 +808,7 @@ class _realsocket(object):
             if self.timeout == 0:
                 raise error(errno.ETIMEDOUT, "Connection timed out")
             else:
-                raise timeout("timed out")
+                raise timeout(errno.ETIMEDOUT, "timed out")
         return result
 
     def bind(self, address):

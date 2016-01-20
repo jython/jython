@@ -571,7 +571,7 @@ class SSLSocket(object):
         log.debug("Connect SSL with handshaking %s", self.do_handshake_on_connect, extra={"sock": self._sock})
 
         rc = self._sock.connect_ex(addr)
-        if not rc:
+        if rc == errno.EISCONN:
             self._connected = True
             if self.do_handshake_on_connect:
                 self.do_handshake()
