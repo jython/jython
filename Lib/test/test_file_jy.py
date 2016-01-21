@@ -62,7 +62,7 @@ class FileTestCase(unittest.TestCase):
     @unittest.skipUnless(System.getProperty('os.name') == u'Linux', 'Linux required')
     def test_can_read_proc_filesystem(self):
         with open('/proc/{}/cmdline'.format(os.getpid())) as f:
-            self.assertIn('org.python.util.jython', f.read())
+            self.assertIn('jython', f.read())
 
 
 def test_main():
