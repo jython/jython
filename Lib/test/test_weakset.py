@@ -415,6 +415,7 @@ class TestWeakSet(unittest.TestCase):
             finally:
                 it = None           # should commit all removals
 
+        gc.collect()  # final before asserts
         with testcontext() as u:
             self.assertNotIn(u, s)
         with testcontext() as u:
