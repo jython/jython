@@ -485,6 +485,8 @@ if is_jython:
 if is_jython:
     # Jython disallows @ in module names
     TESTFN = '$test'
+    TESTFN_UNICODE = "$test-\xe0\xf2"
+    TESTFN_ENCODING = sys.getfilesystemencoding()
 elif os.name == 'riscos':
     TESTFN = 'testfile'
 else:
