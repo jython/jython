@@ -14,8 +14,9 @@ import re
 from collections import deque
 from test import test_support
 
-from java.lang import (ClassCastException, ExceptionInInitializerError, String, Runnable, System,
-        Runtime, Math, Byte)
+from java.lang import (
+    ClassCastException, ExceptionInInitializerError, UnsupportedOperationException,
+    String, Runnable, System, Runtime, Math, Byte)
 from java.math import BigDecimal, BigInteger
 from java.net import URI
 from java.io import (ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream,
@@ -656,12 +657,29 @@ class SerializationTest(unittest.TestCase):
         self.assertEqual(date_list, roundtrip_serialization(date_list))
 
     def test_java_serialization_pycode(self):
-
         def universal_answer():
             return 42
 
         serialized_code = roundtrip_serialization(universal_answer.func_code)
         self.assertEqual(eval(serialized_code), universal_answer())
+
+    def test_java_serialization_pyfunction(self):
+        # Not directly supported due to lack of general utility
+        # (globals will usually be in the function object in
+        # func_globals), and problems with unserialization
+        # vulnerabilities. Users can always subclass from PyFunction
+        # for specific cases, as seen in PyCascading
+        import new
+        def f():
+            return 6 * 7 + max(0, 1, 2)
+        # However, using the new module, it's possible to create a
+        # function with no globals, which means the globals will come
+        # from the current context
+        g = new.function(f.func_code, {}, "g")
+        # But still forbid Java deserialization of this function
+        # object. Use pickling or other support instead.
+        with self.assertRaises(UnsupportedOperationException):
+            roundtrip_serialization(g)
 
     def test_builtin_names(self):
         import __builtin__
@@ -872,7 +890,7 @@ class SingleMethodInterfaceTest(unittest.TestCase):
         future.get()
         self.assertEqual(x, [42])
 
-    @unittest.skip("FIXME: not working")
+    @unittest.skip("FIXME: not working; see http://bugs.jython.org/issue2115")
     def test_callable_object(self):
         callable_obj = CallableObject()
         future = self.executor.submit(callable_obj)

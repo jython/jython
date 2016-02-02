@@ -66,6 +66,12 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
         debug = defaultDebug;
 
+        if (argcount < 0) {
+            throw Py.ValueError("code: argcount must not be negative");
+        } else if (nlocals < 0) {
+            throw Py.ValueError("code: nlocals must not be negative");
+        }
+
         co_argcount = nargs = argcount;
         co_varnames = varnames;
         co_nlocals = nlocals; // maybe assert = varnames.length;

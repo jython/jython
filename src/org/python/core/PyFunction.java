@@ -545,6 +545,9 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
     @Override
     public boolean isSequenceType() { return false; }
 
+    private Object readResolve() {
+        throw new UnsupportedOperationException();
+    }
 
     /* Traverseproc implementation */
     @Override
