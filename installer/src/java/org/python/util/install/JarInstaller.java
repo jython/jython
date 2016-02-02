@@ -180,9 +180,12 @@ public class JarInstaller {
     private int ensurepip(Path bindir) {
         int errorCode = 0;
         try {
-            String command[] = new String[]{
-                    Paths.get(".", "jython").toString(),
-                    "-m", "ensurepip"};
+            String command[];
+            if (Installation.isWindows()) {
+                command = new String[]{ bindir.resolve("jython.exe").toString(), "-m", "ensurepip" };
+            } else {
+                command = new String[]{ Paths.get(".", "jython").toString(), "-m", "ensurepip"};
+            }
             ChildProcess childProcess = new ChildProcess(command);
             childProcess.setCWD(bindir);
             errorCode = childProcess.run();
