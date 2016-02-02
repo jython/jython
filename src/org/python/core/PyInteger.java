@@ -1056,7 +1056,7 @@ public class PyInteger extends PyObject {
     }
 
     /**
-     * Common code for PyInteger and PyLong to prepare an IntegerFormatter. This object has an
+     * Common code for PyInteger     and PyLong to prepare an IntegerFormatter. This object has an
      * overloaded format method {@link IntegerFormatter#format(int)} and
      * {@link IntegerFormatter#format(BigInteger)} to support the two types.
      *

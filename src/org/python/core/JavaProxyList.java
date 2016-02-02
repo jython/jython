@@ -492,6 +492,12 @@ class JavaProxyList {
                     return Py.None;
                 }
             }
+            if (object.isIndex()) {
+                // this op is still O(n), but with also the extra O(n) above
+                ListIndexDelegate ldel = new ListIndexDelegate(jlist);
+                ldel.checkIdxAndDelItem(object);
+                return Py.None;
+            }
             throw Py.ValueError(object.toString() + " is not in list");
         }
     };
