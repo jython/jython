@@ -3,6 +3,7 @@ package org.python.modules._io;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
@@ -31,6 +32,7 @@ class Closer<C extends PyIOBase> implements Callable<Void> {
 
     /** Interpreter state that will call {@link #call()} on shutdown. */
     protected PySystemState sys;
+    private AtomicBoolean dismissed = new AtomicBoolean(); //Defaults to false
 
     public Closer(C toClose, PySystemState sys) {
         this.client = new WeakReference<C>(toClose);
@@ -42,10 +44,9 @@ class Closer<C extends PyIOBase> implements Callable<Void> {
      * Tell the Closer that its services are no longer required. This unhooks it from the shutdown
      * list. Repeated calls are allowed but only the first has any effect.
      */
-    public synchronized void dismiss() {
-        if (sys != null) {
+    public void dismiss() {
+        if (dismissed.compareAndSet(false, true)) {
             sys.unregisterCloser(this);
-            sys = null;
         }
     }
 
@@ -54,10 +55,9 @@ class Closer<C extends PyIOBase> implements Callable<Void> {
      * "close" method.
      */
     @Override
-    public synchronized Void call() {
-        if (sys != null) {
-            // This will prevent repeated work and dismiss() manipulating the list of closers
-            sys = null;
+    public Void call() {
+    	// This will prevent repeated work and dismiss() manipulating the list of closers
+    	if (dismissed.compareAndSet(false, true)) {
             // Call close on the client (if it still exists)
             C toClose = client.get();
             if (toClose != null) {
