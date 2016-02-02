@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -179,9 +180,9 @@ public class JarInstaller {
     private int ensurepip(Path bindir) {
         int errorCode = 0;
         try {
-            String launcher = bindir.resolve("jython").toString();
             String command[] = new String[]{
-                    launcher, "-m", "ensurepip"};
+                    Paths.get(".", "jython").toString(),
+                    "-m", "ensurepip"};
             ChildProcess childProcess = new ChildProcess(command);
             childProcess.setCWD(bindir);
             errorCode = childProcess.run();
