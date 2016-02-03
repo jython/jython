@@ -33,14 +33,34 @@ except ImportError:
 try:
     from javax.xml.parsers import SAXParserFactory, ParserConfigurationException
     factory = SAXParserFactory.newInstance()
+    # Set this feature false, otherwise will attempt to load DTDs like
+    # DOCTYPE doc PUBLIC 'http://xml.python.org/public which are
+    # purposefully very much nonexistent in tests such as
+    # test_minidom.
+    #
+    # NOTE that this factory is by default nonvalidating anyway, as
+    # needed for Python usage.
+    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", False)
     jaxp = 1
 except ImportError:
     jaxp = 0
 
 from java.lang import String
 
+class SAXUnicodeDecodeError(UnicodeDecodeError):
+    def __init__(self, message):
+        self.message = message
+    def __repr__(self):
+        return "SAXUnicodeDecodeError: caused by %s" % (self.message,)
+    __str__ = __repr__
+
 
 def _wrap_sax_exception(e):
+    # work around issues in how we report exception - note this is an
+    # implementation detail, so it's not guaranteed to always report
+    # this exception. But in the end, it's from Xerces, so should be OK.
+    if "org.apache.xerces.impl.io.MalformedByteSequenceException" in str(e.getException().getClass()):
+        return SAXUnicodeDecodeError(str(e))
     return _exceptions.SAXParseException(e.message,
                                          e.exception,
                                          SimpleLocator(e.columnNumber,
