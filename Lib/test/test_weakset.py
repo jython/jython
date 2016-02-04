@@ -439,13 +439,19 @@ class TestWeakSet(unittest.TestCase):
         items = [RefCycle() for i in range(N)]
         s = WeakSet(items)
         del items
-        gc.collect()
+        # do some gc
+        for _ in xrange(10):
+            gc.collect()
         it = iter(s)
         try:
             next(it)
         except StopIteration:
             pass
-        gc.collect()
+
+        # do some gc
+        for _ in xrange(10):
+            gc.collect()
+
         n1 = len(s)
         del it
         # do some gc
