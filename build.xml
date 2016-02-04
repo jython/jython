@@ -611,7 +611,6 @@ The readme text for the next release will be like:
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.0.23.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-constants-0.9.0.jar"/>
-            <zipfileset src="extlibs/xml-apis-2.11.0.jar" excludes="META-INF/services/*"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>

@@ -45,7 +45,7 @@ try:
 except ImportError:
     jaxp = 0
 
-from java.lang import String
+from java.lang import String, Exception as JException
 
 class SAXUnicodeDecodeError(UnicodeDecodeError):
     def __init__(self, message):
@@ -56,17 +56,21 @@ class SAXUnicodeDecodeError(UnicodeDecodeError):
 
 
 def _wrap_sax_exception(e):
-    # work around issues in how we report exception - note this is an
-    # implementation detail, so it's not guaranteed to always report
-    # this exception. But in the end, it's from Xerces, so should be OK.
-    if "org.apache.xerces.impl.io.MalformedByteSequenceException" in str(e.getException().getClass()):
+    # Work around issues in how we report exceptions to using
+    # code. Note this is an implementation detail, so some assumptions
+    # are required. But if this identification fails, a reasonable exception
+    # will still be thrown.
+    #
+    # Because of some differences in how Oracle packages Xerces, also catch
+    # on the parse method itself.
+    if "MalformedByteSequenceException" in str(e.getException()):
         return SAXUnicodeDecodeError(str(e))
     return _exceptions.SAXParseException(e.message,
                                          e.exception,
                                          SimpleLocator(e.columnNumber,
-                                                              e.lineNumber,
-                                                              e.publicId,
-                                                              e.systemId))
+                                                       e.lineNumber,
+                                                       e.publicId,
+                                                       e.systemId))
 
 class JyErrorHandlerWrapper(javasax.ErrorHandler):
     def __init__(self, err_handler):
@@ -163,7 +167,14 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler)
 
     def parse(self, source):
         "Parse an XML document from a URL or an InputSource."
-        self._parser.parse(JyInputSourceWrapper(source))
+        try:
+            self._parser.parse(JyInputSourceWrapper(source))
+        except JException as e:
+            # Handle the difference in how Oracle packages Xerces...
+            if "MalformedByteSequenceException" in str(e):
+                raise SAXUnicodeDecodeError(str(e))
+            else:
+                raise
 
     def getFeature(self, name):
         return self._parser.getFeature(name)
