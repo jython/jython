@@ -76,25 +76,23 @@ public class FinalizeTrigger {
     }
 
     public static void runFinalizer(PyObject toFinalize, boolean runBuiltinOnly) {
-        synchronized (PySystemState.PySystemStateCloser.class) {
-            if (!runBuiltinOnly) {
-                if (toFinalize instanceof FinalizablePyObjectDerived) {
-                    try {
-                        ((FinalizablePyObjectDerived) toFinalize).__del_derived__();
-                    } catch (Exception e) {
-                    }
-                } else if (toFinalize instanceof FinalizablePyObject) {
-                    try {
-                        ((FinalizablePyObject) toFinalize).__del__();
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            if (toFinalize instanceof FinalizableBuiltin) {
+        if (!runBuiltinOnly) {
+            if (toFinalize instanceof FinalizablePyObjectDerived) {
                 try {
-                    ((FinalizableBuiltin) toFinalize).__del_builtin__();
+                    ((FinalizablePyObjectDerived) toFinalize).__del_derived__();
                 } catch (Exception e) {
                 }
+            } else if (toFinalize instanceof FinalizablePyObject) {
+                try {
+                    ((FinalizablePyObject) toFinalize).__del__();
+                } catch (Exception e) {
+                }
+            }
+        }
+        if (toFinalize instanceof FinalizableBuiltin) {
+            try {
+                ((FinalizableBuiltin) toFinalize).__del_builtin__();
+            } catch (Exception e) {
             }
         }
     }

@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -1507,7 +1508,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public static class PySystemStateCloser {
 
-        private final Set<Callable<Void>> resourceClosers = new LinkedHashSet<Callable<Void>>();
+        private final Set<Callable<Void>> resourceClosers = Collections.synchronizedSet(new LinkedHashSet<Callable<Void>>());
         private volatile boolean isCleanup = false;
         private final Thread shutdownHook;
 
@@ -1528,63 +1529,55 @@ public class PySystemState extends PyObject implements AutoCloseable,
         }
 
         private void registerCloser(Callable<Void> closer) {
-            synchronized (PySystemStateCloser.class) {
-                if (!isCleanup) {
-                    resourceClosers.add(closer);
-                }
+            if (!isCleanup) {
+                resourceClosers.add(closer);
             }
         }
 
         private boolean unregisterCloser(Callable<Void> closer) {
-            synchronized (PySystemStateCloser.class) {
-                return resourceClosers.remove(closer);
-            }
+            return resourceClosers.remove(closer);
         }
 
         private synchronized void cleanup() {
-            synchronized (PySystemStateCloser.class) {
-                if (isCleanup) {
-                    return;
-                }
-                isCleanup = true;
-
-                // close this thread so we can unload any associated classloaders in cycle
-                // with this instance
-                if (shutdownHook != null) {
-                    try {
-                        Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                    } catch (IllegalStateException e) {
-                        // JVM is already shutting down, so we cannot remove this shutdown hook anyway
-                    }
-                }
-
-                // Close the listed resources (and clear the list)
-                runClosers();
-                resourceClosers.clear();
-
-                // XXX Not sure this is ok, but it makes repeat testing possible.
-                // Re-enable the management of resource closers
-                isCleanup = false;
+            if (isCleanup) {
+                return;
             }
-        }
-        private void runClosers() {
-            synchronized (PySystemStateCloser.class) {
-                // resourceClosers can be null in some strange cases
-                if (resourceClosers != null) {
-                    /*
-                     * Although a Set, the container iterates in the order closers were added. Make a Deque
-                     * of it and deal from the top.
-                     */
-                    LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
-                    Iterator<Callable<Void>> iter = rc.descendingIterator();
+            isCleanup = true;
 
-                    while (iter.hasNext()) {
-                        Callable<Void> callable = iter.next();
-                        try {
-                            callable.call();
-                        } catch (Exception e) {
-                            // just continue, nothing we can do
-                        }
+            // close this thread so we can unload any associated classloaders in cycle
+            // with this instance
+            if (shutdownHook != null) {
+                try {
+                    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                } catch (IllegalStateException e) {
+                    // JVM is already shutting down, so we cannot remove this shutdown hook anyway
+                }
+            }
+
+            // Close the listed resources (and clear the list)
+            runClosers();
+            resourceClosers.clear();
+
+            // XXX Not sure this is ok, but it makes repeat testing possible.
+            // Re-enable the management of resource closers
+            isCleanup = false;
+        }
+        private synchronized void runClosers() {
+            // resourceClosers can be null in some strange cases
+            if (resourceClosers != null) {
+                /*
+                    * Although a Set, the container iterates in the order closers were added. Make a Deque
+                    * of it and deal from the top.
+                    */
+                LinkedList<Callable<Void>> rc = new LinkedList<Callable<Void>>(resourceClosers);
+                Iterator<Callable<Void>> iter = rc.descendingIterator();
+
+                while (iter.hasNext()) {
+                    Callable<Void> callable = iter.next();
+                    try {
+                        callable.call();
+                    } catch (Exception e) {
+                        // just continue, nothing we can do
                     }
                 }
             }
@@ -1593,7 +1586,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         // Python scripts expect that files are closed upon an orderly cleanup of the VM.
         private Thread initShutdownCloser() {
             try {
-                Thread shutdownHook = new Thread(new ShutdownCloser(), "Jython Shutdown Closer");
+                Thread shutdownHook = new Thread(new ShutdownCloser(this), "Jython Shutdown Closer");
                 Runtime.getRuntime().addShutdownHook(shutdownHook);
                 return shutdownHook;
             } catch (SecurityException se) {
@@ -1603,10 +1596,16 @@ public class PySystemState extends PyObject implements AutoCloseable,
         }
 
         private class ShutdownCloser implements Runnable {
+            PySystemStateCloser closer = null;
+
+            public ShutdownCloser(PySystemStateCloser closer) {
+                super();
+                this.closer = closer;
+            }
 
             @Override
             public void run() {
-                synchronized (PySystemStateCloser.class) {
+                synchronized (this.closer) {
                     runClosers();
                     resourceClosers.clear();
                 }
