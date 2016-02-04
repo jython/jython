@@ -415,7 +415,9 @@ class TestWeakSet(unittest.TestCase):
             finally:
                 it = None           # should commit all removals
 
-        gc.collect(); gc.collect()  # final before asserts
+        for _ in xrange(10):
+            gc.collect()
+
         with testcontext() as u:
             self.assertNotIn(u, s)
         with testcontext() as u:
@@ -446,8 +448,10 @@ class TestWeakSet(unittest.TestCase):
         gc.collect()
         n1 = len(s)
         del it
-        gc.collect()
-        gc.collect()
+        # do some gc
+        for _ in xrange(10):
+            gc.collect()
+
         n2 = len(s)
         # one item may be kept alive inside the iterator
         self.assertIn(n1, (0, 1))
