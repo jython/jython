@@ -246,7 +246,7 @@ public class PyTuple extends PySequenceList implements List {
 
     @ExposedMethod(doc = BuiltinDocs.tuple___iter___doc)
     public PyObject tuple___iter__() {
-        return new PyFastSequenceIter(this);
+        return new PyTupleIterator(this);
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.tuple___getslice___doc)
