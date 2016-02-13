@@ -1910,6 +1910,7 @@ def _do_pulldom_parse(func, args, kwargs):
     toktype, rootNode = events.getEvent()
     events.expandNode(rootNode)
     events.clear()
+    rootNode.normalize()  # fix for http://bugs.jython.org/issue1614
     return rootNode
 
 def parse(file, parser=None, bufsize=None):
