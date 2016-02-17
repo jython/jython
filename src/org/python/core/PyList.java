@@ -814,7 +814,15 @@ public class PyList extends PySequenceList implements List {
         }
 
         public int compare(PyObject o1, PyObject o2) {
-            int result = o1._cmp(o2);
+            // PEP 207 specifies that sort should only depend on "less-than" (Issue #1767)
+            int result;
+            if (o1._lt(o2).__nonzero__()) {
+                result = -1;
+            } else if (o2._lt(o1).__nonzero__()) {
+                result = 1;
+            } else {
+                result = 0;
+            }
             if (this.list.gListAllocatedStatus >= 0) {
                 throw Py.ValueError("list modified during sort");
             }
@@ -905,7 +913,14 @@ public class PyList extends PySequenceList implements List {
             if (cmp != null && cmp != Py.None) {
                 result = cmp.__call__(o1.key, o2.key).asInt();
             } else {
-                result = o1.key._cmp(o2.key);
+                // PEP 207 specifies that sort should only depend on "less-than" (Issue #1767)
+                if (o1.key._lt(o2.key).__nonzero__()) {
+                    result = -1;
+                } else if (o2.key._lt(o1.key).__nonzero__()) {
+                    result = 1;
+                } else {
+                    result = 0;
+                }
             }
             if (this.list.gListAllocatedStatus >= 0) {
                 throw Py.ValueError("list modified during sort");
