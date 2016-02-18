@@ -4474,8 +4474,11 @@ class TestNamespace(TestCase):
 class TestEncoding(TestCase):
 
     def _test_module_encoding(self, path):
-        path, _ = os.path.splitext(path)
-        path += ".py"
+        if path.endswith('$py.class'):
+            path = '%s.py' % path[:-9]
+        else:
+            path, _ = os.path.splitext(path)
+            path += ".py"
         with codecs.open(path, 'r', 'utf8') as f:
             f.read()
 
