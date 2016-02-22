@@ -462,15 +462,6 @@ public class PyComplex extends PyObject {
     }
 
     private final static PyObject _mul(PyComplex o1, PyComplex o2) {
-//        if (Double.isNaN(o1.real) || Double.isNaN(o1.imag) || Double.isNaN(o2.real)
-//                || Double.isNaN(o2.imag)) {
-//            return NaN;
-//        }
-//        if (Double.isInfinite(o1.real) || Double.isInfinite(o1.imag) || Double.isInfinite(o2.real)
-//                || Double.isInfinite(o2.imag)) {
-//            return Inf;
-//        }
-
         return new PyComplex(o1.real * o2.real - o1.imag * o2.imag, o1.real * o2.imag + o1.imag
                 * o2.real);
     }
