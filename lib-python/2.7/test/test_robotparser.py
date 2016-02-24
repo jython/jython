@@ -2,6 +2,12 @@ import unittest, StringIO, robotparser
 from test import test_support
 from urllib2 import urlopen, HTTPError
 
+HAVE_HTTPS = True
+try:
+    from urllib2 import HTTPSHandler
+except ImportError:
+    HAVE_HTTPS = False
+
 class RobotTestCase(unittest.TestCase):
     def __init__(self, index, parser, url, good, agent):
         unittest.TestCase.__init__(self)
@@ -228,6 +234,18 @@ bad = ['/some/path']
 
 RobotTest(15, doc, good, bad)
 
+# 16. Empty query (issue #17403). Normalizing the url first.
+doc = """
+User-agent: *
+Allow: /some/path?
+Disallow: /another/path?
+"""
+
+good = ['/some/path?']
+bad = ['/another/path?']
+
+RobotTest(16, doc, good, bad)
+
 
 class NetworkTestCase(unittest.TestCase):
 
@@ -257,14 +275,16 @@ class NetworkTestCase(unittest.TestCase):
                 self.skipTest('%s is unavailable' % url)
             self.assertEqual(parser.can_fetch("*", robots_url), False)
 
+    @unittest.skipUnless(HAVE_HTTPS, 'need SSL support to download license')
+    @test_support.system_must_validate_cert
     def testPythonOrg(self):
         test_support.requires('network')
         with test_support.transient_internet('www.python.org'):
             parser = robotparser.RobotFileParser(
-                "http://www.python.org/robots.txt")
+                "https://www.python.org/robots.txt")
             parser.read()
             self.assertTrue(
-                parser.can_fetch("*", "http://www.python.org/robots.txt"))
+                parser.can_fetch("*", "https://www.python.org/robots.txt"))
 
 
 def test_main():
