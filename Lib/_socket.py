@@ -729,6 +729,7 @@ class _realsocket(object):
         self.selectors = CopyOnWriteArrayList()
         self.options = {}  # deferred options until bootstrap
         self.peer_closed = False
+        self.channel_closed = False
 
         # Reference count this underlying socket
         self.open_lock = Lock()
@@ -875,12 +876,13 @@ class _realsocket(object):
         if self.connect_handlers:
             self.channel.pipeline().addLast(self.python_inbound_handler)
         
-        def peer_closed(x):
+        def _peer_closed(x):
             log.debug("Peer closed channel %s", x, extra={"sock": self})
+            self.channel_closed = True
             self.incoming.put(_PEER_CLOSED)
             self._notify_selectors(hangup=True)
 
-        self.channel.closeFuture().addListener(peer_closed)
+        self.channel.closeFuture().addListener(_peer_closed)
 
     def connect(self, addr):
         # Unwrapped sockets can immediately perform the post-connect step
@@ -1054,30 +1056,30 @@ class _realsocket(object):
 
             if self.channel is None:
                 return
+            
+            close_future = self.channel.close()
+            if close_future.isSuccess():
+                close_future.addListener(self._finish_closing)
 
-            try:
-                self.channel.close().sync()
-            except RejectedExecutionException:
-                # Do not care about tasks that attempt to schedule after close
-                pass
-            if self.socket_type == SERVER_SOCKET:
-                log.debug("Shutting down server socket parent group", extra={"sock": self})
-                self.parent_group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
-                self.accepted_children -= 1
-                while True:
-                    child = self.child_queue.poll()
-                    if child is None:
-                        break
-                    log.debug("Closed child socket %s not yet accepted", child, extra={"sock": self})
-                    child.close()
-            else:
-                msgs = []
-                self.incoming.drainTo(msgs)
-                for msg in msgs:
-                    if msg is not _PEER_CLOSED:
-                        msg.release()
+    def _finish_closing(self, _):
+        if self.socket_type == SERVER_SOCKET:
+            log.debug("Shutting down server socket parent group", extra={"sock": self})
+            self.parent_group.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS)
+            self.accepted_children -= 1
+            while True:
+                child = self.child_queue.poll()
+                if child is None:
+                    break
+                log.debug("Closed child socket %s not yet accepted", child, extra={"sock": self})
+                child.close()
+        else:
+            msgs = []
+            self.incoming.drainTo(msgs)
+            for msg in msgs:
+                if msg is not _PEER_CLOSED:
+                    msg.release()
 
-            log.debug("Closed socket", extra={"sock": self})
+        log.debug("Closed socket", extra={"sock": self})
 
     def shutdown(self, how):
         log.debug("Got request to shutdown socket how=%s", how, extra={"sock": self})
@@ -1121,7 +1123,7 @@ class _realsocket(object):
         return 0
 
     def _writable(self):
-        return self.channel and self.channel.isActive() and self.channel.isWritable()
+        return self.channel_closed or (self.channel and self.channel.isActive() and self.channel.isWritable())
 
     can_write = _writable
 
