@@ -939,12 +939,6 @@ public class imp {
         StringBuilder parentNameBuffer = new StringBuilder(pkgMod != null ? pkgName : "");
         PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName, name, fromlist);
         if (topMod == Py.None || topMod == null) {
-            // Add None to sys.modules for submodule or subpackage names that aren't found, but
-            // leave top-level entries out. This allows them to be tried again if another
-            // import attempt is made after they've been added to sys.path.
-            if (topMod == null && pkgMod != null) {
-                modules.__setitem__(parentNameBuffer.toString().intern(), Py.None);
-            }
             parentNameBuffer = new StringBuilder("");
             // could throw ImportError
             if (level > 0) {
