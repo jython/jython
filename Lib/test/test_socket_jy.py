@@ -3,6 +3,7 @@ import os
 import socket
 import ssl
 import threading
+import time
 import unittest
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
@@ -50,10 +51,11 @@ class SocketConnectTest(unittest.TestCase):
         connect_errno = 0
         connect_attempt = 0
 
-        while connect_errno != errno.EISCONN and connect_attempt < 500:
+        while connect_errno != errno.EISCONN and connect_attempt < 5000:
             connect_attempt += 1
             connect_errno = sock.connect_ex(self.address)
             results[index].append(connect_errno)
+            time.sleep(0.001)
         sock.close()
 
     def do_workout(self, num_threads=10):
