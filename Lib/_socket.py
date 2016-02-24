@@ -1058,8 +1058,7 @@ class _realsocket(object):
                 return
             
             close_future = self.channel.close()
-            if close_future.isSuccess():
-                close_future.addListener(self._finish_closing)
+            close_future.addListener(self._finish_closing)
 
     def _finish_closing(self, _):
         if self.socket_type == SERVER_SOCKET:
