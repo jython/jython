@@ -7,8 +7,10 @@ test:
   override:
     - case $CIRCLE_NODE_INDEX in 0) sudo update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java; java -version ;; 1) sudo update-alternatives --set java /usr/lib/jvm/jdk1.7.0/bin/java; java -version ;; esac:
         parallel: true
+        timeout: 2400
     - if [ $CIRCLE_NODE_INDEX -lt 2 ]; then ant developer-build regrtest-travis; elif [ $CIRCLE_NODE_INDEX -eq 2 ]; then ant developer-build; sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java; ant regrtest-travis; fi:
         parallel: true
+        timeout: 2400
 
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/; cp -a dist/testreports/* $CIRCLE_TEST_REPORTS/junit/:
