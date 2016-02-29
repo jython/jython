@@ -32,11 +32,13 @@
 # SUCH DAMAGE.
 #
 
+import os
 import itertools
 import weakref
 import atexit
 import threading        # we want threading to install it's
                         # cleanup function before multiprocessing does
+from subprocess import _args_from_interpreter_flags
 
 from multiprocessing.process import current_process, active_children
 
@@ -183,6 +185,7 @@ class Finalize(object):
         self._args = args
         self._kwargs = kwargs or {}
         self._key = (exitpriority, _finalizer_counter.next())
+        self._pid = os.getpid()
 
         _finalizer_registry[self._key] = self
 
@@ -195,9 +198,13 @@ class Finalize(object):
         except KeyError:
             sub_debug('finalizer no longer registered')
         else:
-            sub_debug('finalizer calling %s with args %s and kwargs %s',
-                     self._callback, self._args, self._kwargs)
-            res = self._callback(*self._args, **self._kwargs)
+            if self._pid != os.getpid():
+                sub_debug('finalizer ignored because different process')
+                res = None
+            else:
+                sub_debug('finalizer calling %s with args %s and kwargs %s',
+                          self._callback, self._args, self._kwargs)
+                res = self._callback(*self._args, **self._kwargs)
             self._weakref = self._callback = self._args = \
                             self._kwargs = self._key = None
             return res
@@ -328,10 +335,13 @@ atexit.register(_exit_function)
 
 class ForkAwareThreadLock(object):
     def __init__(self):
+        self._reset()
+        register_after_fork(self, ForkAwareThreadLock._reset)
+
+    def _reset(self):
         self._lock = threading.Lock()
         self.acquire = self._lock.acquire
         self.release = self._lock.release
-        register_after_fork(self, ForkAwareThreadLock.__init__)
 
 class ForkAwareLocal(threading.local):
     def __init__(self):

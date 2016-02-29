@@ -90,7 +90,7 @@ def arbitrary_address(family):
         return tempfile.mktemp(prefix='listener-', dir=get_temp_dir())
     elif family == 'AF_PIPE':
         return tempfile.mktemp(prefix=r'\\.\pipe\pyc-%d-%d-' %
-                               (os.getpid(), _mmap_counter.next()))
+                               (os.getpid(), _mmap_counter.next()), dir="")
     else:
         raise ValueError('unrecognized family')
 
@@ -270,7 +270,14 @@ class SocketListener(object):
             self._unlink = None
 
     def accept(self):
-        s, self._last_accepted = self._socket.accept()
+        while True:
+            try:
+                s, self._last_accepted = self._socket.accept()
+            except socket.error as e:
+                if e.args[0] != errno.EINTR:
+                    raise
+            else:
+                break
         s.setblocking(True)
         fd = duplicate(s.fileno())
         conn = _multiprocessing.Connection(fd)
@@ -278,24 +285,29 @@ class SocketListener(object):
         return conn
 
     def close(self):
-        self._socket.close()
-        if self._unlink is not None:
-            self._unlink()
+        try:
+            self._socket.close()
+        finally:
+            unlink = self._unlink
+            if unlink is not None:
+                self._unlink = None
+                unlink()
 
 
 def SocketClient(address):
     '''
     Return a connection object connected to the socket given by `address`
     '''
-    family = address_type(address)
-    s = socket.socket( getattr(socket, family) )
-    s.setblocking(True)
+    family = getattr(socket, address_type(address))
     t = _init_timeout()
 
     while 1:
+        s = socket.socket(family)
+        s.setblocking(True)
         try:
             s.connect(address)
         except socket.error, e:
+            s.close()
             if e.args[0] != errno.ECONNREFUSED or _check_timeout(t):
                 debug('failed to connect to address %s', address)
                 raise
@@ -446,10 +458,10 @@ class ConnectionWrapper(object):
         return self._loads(s)
 
 def _xml_dumps(obj):
-    return xmlrpclib.dumps((obj,), None, None, None, 1).encode('utf8')
+    return xmlrpclib.dumps((obj,), None, None, None, 1)
 
 def _xml_loads(s):
-    (obj,), method = xmlrpclib.loads(s.decode('utf8'))
+    (obj,), method = xmlrpclib.loads(s)
     return obj
 
 class XmlListener(Listener):
