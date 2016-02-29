@@ -4,7 +4,7 @@ import re
 from StringIO import StringIO
 import types
 
-from java.lang import RuntimeException
+from java.lang import RuntimeException, System
 from java.io import BufferedInputStream, BufferedReader, FileReader, InputStreamReader, ByteArrayInputStream, IOException
 from java.security import KeyStore, Security, InvalidAlgorithmParameterException
 from java.security.cert import CertificateException, CertificateFactory
@@ -173,8 +173,10 @@ def _parse_password(password):
 
 def _extract_certs_from_keystore_file(f, password):
     keystore = KeyStore.getInstance(KeyStore.getDefaultType())
-    if password is None:  # default java keystore password is changeit
-        password = 'changeit'
+    if password is None:
+        password = System.getProperty('javax.net.ssl.trustStorePassword')
+        if password is None:  # default java keystore password is changeit
+            password = 'changeit'
     elif not isinstance(password, str):
         password = []
 
