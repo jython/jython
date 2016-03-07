@@ -968,10 +968,6 @@ public class imp {
 
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name,
             boolean recursive) {
-        if (mod.__findattr__("__path__") == null) {
-            return;
-        }
-
         // This can happen with imports like "from . import foo"
         if (name.length() == 0) {
             name = mod.__findattr__("__name__").toString();
