@@ -1,8 +1,11 @@
 //Copyright (c) Corporation for National Research Initiatives
 package javatests;
 
+import org.python.core.PyType;
+
 import java.lang.reflect.Field;
 import java.lang.NoSuchFieldException;
+import java.lang.reflect.Method;
 
 /**
  * @author updikca1
@@ -56,6 +59,16 @@ public class TestSupport {
             f.setAccessible(true);
             return f;
         } catch (NoSuchFieldException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public static Object invokePyTypeMethod(Object type, String name, Class<?>... param_types) {
+        try {
+            Method method = PyType.class.getDeclaredMethod(name, param_types);
+            method.setAccessible(true);
+            return method.invoke(type);
+        } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
     }

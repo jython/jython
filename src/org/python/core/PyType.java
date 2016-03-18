@@ -7,8 +7,8 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.python.expose.ExposeAsSuperclass;
@@ -98,13 +98,6 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     /** Global mro cache. */
     private static final MethodCache methodCache = new MethodCache();
-
-    /** Mapping of Java classes to their PyTypes. */
-    private static Map<Class<?>, PyType> class_to_type;
-    private static Set<PyType> exposedTypes;
-
-    /** Mapping of Java classes to their TypeBuilders. */
-    private static Map<Class<?>, TypeBuilder> classToBuilder;
 
     protected PyType(PyType subtype) {
         super(subtype);
@@ -513,7 +506,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } else {
             Class<?> baseClass;
             if (!BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
-                baseClass = classToBuilder.get(underlying_class).getBase();
+                baseClass = getClassToBuilder().get(underlying_class).getBase();
             } else {
                 baseClass = PyObject.class;
             }
@@ -527,7 +520,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             // BOOTSTRAP_TYPES
             return;
         }
-        TypeBuilder builder = classToBuilder.get(underlying_class);
+        TypeBuilder builder = getClassToBuilder().get(underlying_class);
         name = builder.getName();
         dict = builder.getDict(this);
         String doc = builder.getDoc();
@@ -1324,42 +1317,34 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return null;
     }
 
-    public synchronized static void addBuilder(Class<?> forClass, TypeBuilder builder) {
-        if (classToBuilder == null) {
-            classToBuilder = Generic.map();
-        }
-        classToBuilder.put(forClass, builder);
+    public static void addBuilder(Class<?> forClass, TypeBuilder builder) {
+        getClassToBuilder().put(forClass, builder);
 
-        if (class_to_type.containsKey(forClass)) {
+        if (getClassToType().containsKey(forClass)) {
             if (!BootstrapTypesSingleton.getInstance().remove(forClass)) {
-                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
-                                + forClass + "]");
+                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getClassToType()[class="
+                        + forClass + "]");
             }
-            // The types in BootstrapTypesSingleton.getInstance() are initialized before their builders are assigned,
+            // The types in BootstrapTypesSingleton.getClassToType() are initialized before their builders are assigned,
             // so do the work of addFromClass & fillFromClass after the fact
             fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
         }
     }
 
-    private synchronized static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
+    private static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass(), false);
-            class_to_type.put(c, exposedAs);
+            PyType origExposedAs = getClassToType().putIfAbsent(c, exposedAs);
             return exposedAs;
         }
         return createType(c, needsInners);
     }
 
     static boolean hasBuilder(Class<?> c) {
-        return classToBuilder != null && classToBuilder.containsKey(c);
+        return getClassToBuilder().containsKey(c);
     }
     
     private static TypeBuilder getBuilder(Class<?> c) {
-        if (classToBuilder == null) {
-            // PyType itself has yet to be initialized.  This should be a bootstrap type, so it'll
-            // go through the builder process in a second
-            return null;
-        }
         if (c.isPrimitive() || !PyObject.class.isAssignableFrom(c)) {
             // If this isn't a PyObject, don't bother forcing it to be initialized to load its
             // builder
@@ -1380,7 +1365,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } catch (SecurityException e) {
             exc = e;
         }
-        TypeBuilder builder = classToBuilder.get(c);
+        TypeBuilder builder = getClassToBuilder().get(c);
         if (builder == null && exc != null) {
             Py.writeComment("type",
                     "Unable to initialize " + c.getName() + ", a PyObject subclass, due to a " +
@@ -1391,7 +1376,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return builder;
     }
 
-    private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
+    private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
 //        System.out.println("createType c=" + c + ", needsInners=" + needsInners + ", BootstrapTypesSingleton.getInstance()=" + BootstrapTypesSingleton.getInstance());
         PyType newtype;
         if (c == PyType.class) {
@@ -1402,37 +1387,40 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             newtype = new PyJavaType();
         }
 
+        // try to put the type into our cache but if one exists already ignore our new creation and instead return
+        // existing instance. This saves us from locking the whole createType and instead depend on the
+        // atomicity of putIfAbsent and finicky ordering :(
+        PyType type = getClassToType().putIfAbsent(c, newtype);
+        // synchronize on the c here to make sure the compiler does not re-order
+        synchronized (c) {
+            if (type != null) {
+                return type;
+            }
 
-        // If filling in the type above filled the type under creation, use that one
-        PyType type = class_to_type.get(c);
-        if (type != null) {
-            return type;
+            newtype.builtin = true;
+            newtype.init(c, needsInners);
+            newtype.invalidateMethodCache();
+            return newtype;
         }
-
-        class_to_type.put(c, newtype);
-        newtype.builtin = true;
-        newtype.init(c, needsInners);
-        newtype.invalidateMethodCache();
-        return newtype;
     }
 
-    // re the synchronization used here: this result is cached in each type obj,
-    // so we just need to prevent data races. all public methods that access class_to_type
-    // are themselves synchronized. However, if we use Google Collections/Guava,
-    // MapMaker only uses ConcurrentMap anyway
+    /*
+    Instead of using synchronization on the whole method we depend on IOD and putIfAbsent behaviour,
+    essentially letting the first type creation win and throwing away any concurrent ones.
+    This let's us have much more fine-grained locking.
+     */
 
-    public static synchronized PyType fromClass(Class<?> c) {
+    public static PyType fromClass(Class<?> c) {
         return fromClass(c, true);
     }
 
-    public static synchronized PyType fromClass(Class<?> c, boolean hardRef) {
-        if (class_to_type == null) {
-            class_to_type = new MapMaker().weakKeys().weakValues().makeMap();
-            addFromClass(PyType.class, null);
-        }
-        PyType type = class_to_type.get(c);
+    public static PyType fromClass(Class<?> c, boolean hardRef) {
+        PyType type = getClassToType().get(c);
         if (type != null) {
-            return type;
+            // synchronize on the c here to make sure the compiler does not re-order
+            synchronized (c) {
+                return type;
+            }
         }
         // We haven't seen this class before, so its type needs to be created. If it's being
         // exposed as a Java class, defer processing its inner types until it's completely
@@ -1461,17 +1449,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
         }
         if (hardRef && result != null) {
-            if (exposedTypes == null) {
-                exposedTypes = Generic.set();
-            }
-            exposedTypes.add(result) ;
+            getExposedTypes().add(result) ;
         }
 
         return result;
     }
 
     static PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
-        PyType type = class_to_type.get(c);
+        PyType type = getClassToType().get(c);
         if (type != null) {
             return type;
         }
@@ -2129,6 +2114,46 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
     }
 
+    /**
+     *
+     * Using the IOD http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html#dcl
+     * to reduce the risk for race conditions in a few of our fields
+     *
+     */
+
+    /**
+     * Mapping of Java classes to their PyTypes.
+     */
+    private static class LazyClassToTypeHolder {
+        private static ConcurrentMap<Class<?>, PyType> classToType = new MapMaker().weakKeys().weakValues().makeMap();
+
+    }
+
+    private static ConcurrentMap<Class<?>, PyType> getClassToType() {
+        return LazyClassToTypeHolder.classToType;
+    }
+
+    /**
+     * Mapping of Java classes to their TypeBuilders.
+     */
+    private static class LazyClassToBuilderHolder {
+        private static ConcurrentMap<Class<?>, TypeBuilder> classToBuilder = Generic.concurrentMap();
+    }
+
+    private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
+        return LazyClassToBuilderHolder.classToBuilder;
+    }
+
+    /**
+     * Set of exposed types
+     */
+    private static class LazyExposedTypes {
+        private static Set<PyType> exposedTypes = Generic.set();
+    }
+
+    private static Set<PyType> getExposedTypes() {
+        return LazyExposedTypes.exposedTypes;
+    }
 
     /* Traverseproc implementation */
     @Override
