@@ -396,6 +396,7 @@ def bind_port(sock, host=HOST):
         port = tempsock.getsockname()[1]
         tempsock.close()
         del tempsock
+        gc_collect()
         sock.bind((host, port))
         return port
 
