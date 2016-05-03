@@ -47,7 +47,7 @@ Jython 2.7.1b3
     - [ 2416 ] os.system does not use changes to os.environ in subprocesses
     - [ 2401 ] SSL race produces NPE
     - [ 2400 ] Installing pip as part of Jython installation fails
-    - [ 2393 ] Clean running regression tests on windows 	accepted
+    - [ 2393 ] Clean running regression tests on windows
     - [ 2392 ] Intermittent errors from sre_compile.py - 
                ValueError('unsupported operand type', 'subpattern')
     - [ 2391 ] read-only attr wrongly reported
@@ -67,7 +67,7 @@ Jython 2.7.1b3
     - [ 2154 ] When running multiple engines in different threads, the last registered
                writer is in use for all script executions.
     - [ 2124 ] xml.dom.minidom.writexml() changes value of TEXT_NODE
-    - [ 1984 ] os.pipe() missing 	accepted
+    - [ 1984 ] os.pipe() missing
     - [ 1953 ] lib2to3 missing
     - [ 1780 ] jarray not properly converted to list with java.util.Arrays.asList(T... a)
     - [ 1739 ] JSR223: ScriptEngine.FILENAME not honoured
