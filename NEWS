@@ -6,9 +6,9 @@ Jython 2.7.1rc
   Bugs fixed
     - [ 2457 ] Synchronization bug in PySystemStateCloser causes complete deadlock
   New Features
-    - added uname function to posix module. The mostly Java-based implementation even
+    - Added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems. Additional tweaks extend this to full
-      featured uname-functionality on Windows systems.
+      featured uname-functionality on Windows systems (usable via os.uname()).
 
 Jython 2.7.1b3
   Bugs fixed

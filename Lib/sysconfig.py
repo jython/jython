@@ -127,14 +127,15 @@ else:
     # unable to retrieve the real program name
     _PROJECT_BASE = _safe_realpath(os.getcwd())
 
-if os.name == "nt" and "pcbuild" in _PROJECT_BASE[-8:].lower():
-    _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir))
-# PC/VS7.1
-if os.name == "nt" and "\\pc\\v" in _PROJECT_BASE[-10:].lower():
-    _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir, pardir))
-# PC/AMD64
-if os.name == "nt" and "\\pcbuild\\amd64" in _PROJECT_BASE[-14:].lower():
-    _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir, pardir))
+if os.name != 'java': # secures against JyNI-monkeypatching
+    if os.name == "nt" and "pcbuild" in _PROJECT_BASE[-8:].lower():
+        _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir))
+    # PC/VS7.1
+    if os.name == "nt" and "\\pc\\v" in _PROJECT_BASE[-10:].lower():
+        _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir, pardir))
+    # PC/AMD64
+    if os.name == "nt" and "\\pcbuild\\amd64" in _PROJECT_BASE[-14:].lower():
+        _PROJECT_BASE = _safe_realpath(os.path.join(_PROJECT_BASE, pardir, pardir))
 
 def is_python_build():
     for fn in ("Setup.dist", "Setup.local"):
@@ -172,6 +173,8 @@ def _expand_vars(scheme, vars):
     _extend_dict(vars, get_config_vars())
 
     for key, value in _INSTALL_SCHEMES[scheme].items():
+        # not affected by JyNI-monkeypatching, because 'java'
+        # is in the list anyway:
         if os.name in ('posix', 'nt', 'java'):
             try:
                 value = os.path.expanduser(value)
@@ -181,7 +184,8 @@ def _expand_vars(scheme, vars):
     return res
 
 def _get_default_scheme():
-    if os.name == 'posix':
+    # Check for != 'java' to secure against JyNI-monkeypatching.
+    if os.name != 'java' and os.name == 'posix':
         # the default scheme for posix is posix_prefix
         return 'posix_prefix'
     return os.name
@@ -191,15 +195,17 @@ def _getuserbase():
     def joinuser(*args):
         return os.path.expanduser(os.path.join(*args))
 
-    # what about 'os2emx', 'riscos' ?
-    if os.name == "nt" or os._name == "nt":
-        base = os.environ.get("APPDATA") or "~"
-        return env_base if env_base else joinuser(base, "Python")
+    # The additional check for != 'java' secures against JyNI-monkeypatching.
+    if os.name != 'java':
+        # what about 'os2emx', 'riscos' ?
+        if os.name == "nt" or os._name == "nt":
+            base = os.environ.get("APPDATA") or "~"
+            return env_base if env_base else joinuser(base, "Python")
 
-    if sys.platform == "darwin":
-        framework = get_config_var("PYTHONFRAMEWORK")
-        if framework:
-            return env_base if env_base else \
+        if sys.platform == "darwin":
+            framework = get_config_var("PYTHONFRAMEWORK")
+            if framework:
+                return env_base if env_base else \
                                joinuser("~", "Library", framework, "%d.%d"
                                             % (sys.version_info[:2]))
     if env_base:
@@ -379,7 +385,8 @@ def parse_config_h(fp, vars=None):
 def get_config_h_filename():
     """Returns the path of pyconfig.h."""
     if _PYTHON_BUILD:
-        if os.name == "nt":
+    # The additional check for != "java" secures against JyNI-monkeypatching.
+        if os.name == "nt" and os.name != "java":
             inc_dir = os.path.join(_PROJECT_BASE, "PC")
         else:
             inc_dir = _PROJECT_BASE
@@ -441,10 +448,11 @@ def get_config_vars(*args):
         _CONFIG_VARS['platbase'] = _EXEC_PREFIX
         _CONFIG_VARS['projectbase'] = _PROJECT_BASE
 
-        if os.name in ('nt', 'os2'):
-            _init_non_posix(_CONFIG_VARS)
-        if os.name == 'posix':
-            _init_posix(_CONFIG_VARS)
+        if os.name != 'java': # this check secures against JyNI-monkeypatching
+            if os.name in ('nt', 'os2'):
+                _init_non_posix(_CONFIG_VARS)
+            if os.name == 'posix':
+                _init_posix(_CONFIG_VARS)
 
         # Setting 'userbase' is done below the call to the
         # init function to enable using 'get_config_var' in
@@ -458,7 +466,8 @@ def get_config_vars(*args):
         # Normally it is relative to the build directory.  However, during
         # testing, for example, we might be running a non-installed python
         # from a different directory.
-        if _PYTHON_BUILD and os.name == "posix":
+        # The additional check for != "java" secures against JyNI-monkeypatching.
+        if _PYTHON_BUILD and os.name == "posix" and os.name != "java":
             base = _PROJECT_BASE
             try:
                 cwd = os.getcwd()
@@ -472,7 +481,9 @@ def get_config_vars(*args):
                 srcdir = os.path.join(base, _CONFIG_VARS['srcdir'])
                 _CONFIG_VARS['srcdir'] = os.path.normpath(srcdir)
 
-        if sys.platform == 'darwin':
+        # The additional check for not startswith('java') secures against
+        # JyNI-monkeypatching.
+        if sys.platform == 'darwin' and not sys.platform.startswith('java'):
             kernel_version = os.uname()[2] # Kernel version (8.4.3)
             major_version = int(kernel_version.split('.')[0])
 
@@ -573,7 +584,8 @@ def get_platform():
     For other non-POSIX platforms, currently just returns 'sys.platform'.
     """
     import re
-    if os.name == 'nt':
+    # The additional check for != "java" secures against JyNI-monkeypatching.
+    if os.name == 'nt' and os.name != "java":
         # sniff sys.version for architecture.
         prefix = " bit ("
         i = sys.version.find(prefix)
@@ -587,6 +599,7 @@ def get_platform():
             return 'win-ia64'
         return sys.platform
 
+    # Check for != "posix" is not affected by JyNI-monkeypatching.
     if os.name != "posix" or not hasattr(os, 'uname'):
         # XXX what about the architecture? NT is Intel or Alpha,
         # Mac OS is M68k or PPC, etc.
