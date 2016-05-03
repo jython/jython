@@ -4,7 +4,19 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc
   Bugs fixed
-    - [ 2457 ] Synchronization bug in PySystemStateCloser causes complete deadlock
+    - [ 2480 ] Repeating from <javapackage> import <class> results in reload
+    - [ 2472 ] Importing simplejson fails with: 'NoneType' object has no
+               attribute 'encode_basestring_ascii'
+    - [ 2471 ] Jython is using netty channel future incorrectly
+    - [ 2470 ] Jython leaks sockets in select reactor
+    - [ 2469 ] Embedded BouncyCastle provider does not validate properly
+    - [ 2460 ] Wrong result when multiplying complex numbers involving infinity
+    - [ 2454 ] Security Vulnerability in Jython
+    - [ 2442 ] Overriding __len__, __iter__, and __getitem__ in a tuple subclass
+               causes an infinite recursion
+    - [ 2112 ] time.strptime() has different default year in Jython and CPython
+    - [ 1767 ] Rich comparisons
+
   New Features
     - Added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems. Additional tweaks extend this to full
@@ -12,8 +24,55 @@ Jython 2.7.1rc
 
 Jython 2.7.1b3
   Bugs fixed
+    - [ 550200 ] Jython does not work on ebcdic platforms
+    - [ 2457 ] Synchronization bug in PySystemStateCloser causes complete deadlock
+    - [ 2456 ] java.util.List.remove(index) does not dispatch to overloaded method for index remove
+    - [ 2453 ] org.python.modules.sre.PatternObject should be named SRE_Pattern to look like CPython
+    - [ 2452 ] Jython locking threads on Java proxy objects (multithreaded performance degradation)
+    - [ 2451 ] array.array objects should not hash
+    - [ 2441 ] sys.executable is None on standalone install, thus causing a setup()
+               install/build to fail
+    - [ 2439 ] 'SSLSocket' object has no attribute 'accept'
+    - [ 2437 ] no common ciphers SSL handshake error
+    - [ 2436 ] Missing socket.SOL_TCP (= socket.IPPROTO_TCP)
+    - [ 2435 ] Remove unsupported socket options like socket.SO_EXCLUSIVEADDRUSE
+    - [ 2434 ] zlib module has different flush behaviour than CPython and PyPy
+    - [ 2431 ] tox not working because of zero width bug in Jython sre
+    - [ 2428 ] socket.connect_ex does not properly report connection state sequence
+    - [ 2426 ] Support socket shutdown with "how" of _socket.SHUT_RDWR (2)
+    - [ 2423 ] jarray.array() method broken in 2.7
+    - [ 2421 ] UnboundLocalError: local variable 'key_store' referenced before
+               assignment in _sslverify.py
     - [ 2417 ] os.utime fails on UNC network paths
     - [ 2416 ] os.system does not use changes to os.environ in subprocesses
+    - [ 2401 ] SSL race produces NPE
+    - [ 2400 ] Installing pip as part of Jython installation fails
+    - [ 2393 ] Clean running regression tests on windows 	accepted
+    - [ 2392 ] Intermittent errors from sre_compile.py - 
+               ValueError('unsupported operand type', 'subpattern')
+    - [ 2391 ] read-only attr wrongly reported
+    - [ 2390 ] Support SSLContext
+    - [ 2374 ] setsockopt call from pika fails with "Protocol not available"error
+    - [ 2368 ] Problem with _io and BlockingIOError
+    - [ 2360 ] Not installing pip on Jython
+    - [ 2358 ] Using "read all" ops on /proc files on Linux produces empty strings
+    - [ 2357 ] Infinite recursion with set subclass
+    - [ 2338 ] readline.py startup hook
+    - [ 2329 ] Cannot create virtualenv with jython2.7rc2 - breaks tox
+    - [ 2321 ] Py.setSystemState() is a NOOP
+    - [ 2279 ] PyIterator#__tojava__ should support coercion to java array
+    - [ 2350 ] Installer errors on ensurepip
+    - [ 2276 ] Ctrl-Z doesn't exit Jython console on Windows
+    - [ 2223 ] __file__ not defined when running from ScriptEngine
+    - [ 2154 ] When running multiple engines in different threads, the last registered
+               writer is in use for all script executions.
+    - [ 2124 ] xml.dom.minidom.writexml() changes value of TEXT_NODE
+    - [ 1984 ] os.pipe() missing 	accepted
+    - [ 1953 ] lib2to3 missing
+    - [ 1780 ] jarray not properly converted to list with java.util.Arrays.asList(T... a)
+    - [ 1739 ] JSR223: ScriptEngine.FILENAME not honoured
+    - [ 1738 ] JSR223: ScriptEngine.ARGV is not honoured
+
   New Features
     - Use latest upstream bundled wheels for ensurepip: pip (7.1.2), setuptools (18.4),
       replacing wheels patched specifically for Jython
@@ -70,10 +129,12 @@ Jython 2.7rc2
    - [ 2297 ] Updates Jython installer to use jython.exe
    - [ 2298 ] Fix setuptools wheel bundled by ensurepip so it checks for Windows on Jython
    - [ 2300 ] Fix bin/jython.py to not consume subcommand args
+
   New features
    - Installer installs pip, setuptools by default, but custom builds can de-select.
      Does not change standalone usage. (Runs jython -m ensurepip as last install step.)
    - Makes jython.py be the default launcher (as bin/jython) if CPython 2.7 is available.
+
   Removed support
    - Installer no longer supports using an alternative JRE when generating Jython launchers.
      Instead just use JAVA_HOME environment variable to select the desired JRE.
@@ -242,14 +303,12 @@ Jython 2.7b3
     - Fix the struct module so that struct.Struct class can be derived from.
  
   Work on resource cleanup
-
     - RefReaperThread is now a Runnable to avoid ClassLoader resource leaks
     - ShutdownCloser is now a Runnable to avoid subclass audit issues under a SecurityManager
     - Remove shadowing of mutable statics in PySystemState, instead make them instance variables
     - Fix PySystemState such that it supports AutoCloseable, Closeable
 
   Potentially backwards breaking changes
-
     - Fix ThreadState so that Jython runtime can be unloaded, using Object[1] indirection
     - Use weakkey/weakvalue when caching ThreadState for a given thread, instead of using ThreadLocal
     - recursion_count is now more approximate, because not all entry/exit pairs are tracked
@@ -257,7 +316,6 @@ Jython 2.7b3
       Use -Dpython.import.site=false (as of RC1) to not import site at all
 
   New Features
-
     - Added socket reboot work, using Netty 4 to fully support socket, select, and ssl API
 
 Jython 2.7b2
@@ -280,9 +338,11 @@ Jython 2.7b2
     - [ 2082 ] Unexpected (Pdb) prompt during regression tests
     - [ 2083 ] os.unlink() can delete directories
     - [ 2089 ] sys.stdout not flushed after sys.exit
+
   New Features
     - Command line option -E (ignore environment variables)
     - Environment variable PYTHONIOENCODING, and corresponding registry items
+
   Removed support
     - No longer supports Java 6; the minimum version is now Java 7
 
@@ -308,6 +368,7 @@ Jython 2.7b1
     - [ 1913 ] Support short -W options
     - [ 1897 ] 2.7.0ax only has partial ssl support
     - array_class in jarray module returns the "Array of a type" class
+
   New Features
     - bytearray complete
     - a buffer API
@@ -315,6 +376,7 @@ Jython 2.7b1
     - bz2 module
 
 Jython 2.7a2
+  Bugs Fixed
     - [ 1892 ] site-packages is not in sys.path
 
 Jython 2.7a1
