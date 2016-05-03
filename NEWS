@@ -4,6 +4,13 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc
   Bugs fixed
+  New Features
+    - added uname function to posix module. The mostly Java-based implementation even
+      works to some extend on non-posix systems. Additional tweaks extend this to full
+      featured uname-functionality on Windows systems (usable via os.uname()).
+
+Jython 2.7.1b3
+  Bugs fixed
     - [ 2417 ] os.utime fails on UNC network paths
     - [ 2416 ] os.system does not use changes to os.environ in subprocesses
   New Features
