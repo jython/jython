@@ -4,10 +4,11 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc
   Bugs fixed
+    - [ 2457 ] Synchronization bug in PySystemStateCloser causes complete deadlock
   New Features
     - added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems. Additional tweaks extend this to full
-      featured uname-functionality on Windows systems (usable via os.uname()).
+      featured uname-functionality on Windows systems.
 
 Jython 2.7.1b3
   Bugs fixed
@@ -16,6 +17,10 @@ Jython 2.7.1b3
   New Features
     - Use latest upstream bundled wheels for ensurepip: pip (7.1.2), setuptools (18.4),
       replacing wheels patched specifically for Jython
+    - Unified PyDictionary and PyStringMap under a common abstract base class.
+    - Added Py.newJ method family for easier access to Python code from Java. Now you
+      can coerce Python types under Java interfaces without needing to inherit from
+      the Java-interface in Python code. Also see PyModule.newJ.
 
 Jython 2.7.1b2
   Bugs fixed
