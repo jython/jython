@@ -50,8 +50,7 @@ public class SimpleBuffer extends BaseBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
      *             inconsistent with <code>storage.length</code>
      */
-    // XXX: "for sub-class use" = should be protected?
-    public SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
+    protected SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
             ArrayIndexOutOfBoundsException {
         this();
         this.storage = storage;         // Exported data
@@ -230,18 +229,13 @@ public class SimpleBuffer extends BaseBuffer {
         }
     }
 
-    @Override
-    public ByteBuffer getNIOByteBuffer() {
-        // Simplify for one-dimensional contiguous bytes
-        ByteBuffer b = ByteBuffer.wrap(storage, index0, shape[0]);
-        return isReadonly() ? b.asReadOnlyBuffer() : b;
-    }
-
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int index) throws IndexOutOfBoundsException {
         return new Pointer(storage, index0 + index);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int... indices) throws IndexOutOfBoundsException {
         checkDimension(indices.length);

@@ -224,11 +224,13 @@ public class Strided1DBuffer extends BaseBuffer {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int index) {
         return new Pointer(storage, index0 + index * stride);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int... indices) {
         // BaseBuffer implementation can be simplified since if indices.length!=1 we error.

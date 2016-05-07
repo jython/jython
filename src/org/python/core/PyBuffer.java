@@ -244,8 +244,11 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
 
     /**
      * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
-     * exported to the consumer. For a one-dimensional contiguous buffer, assuming the following
-     * client code where <code>obj</code> has type <code>BufferProtocol</code>:
+     * exported to the consumer. The position of the buffer is at the item with zero index, the
+     * limit of the buffer is one beyond the largest valid index, and the mark is undefined.
+     * <p>
+     * For a one-dimensional contiguous buffer, assuming the following client code where
+     * <code>obj</code> has type <code>BufferProtocol</code>:
      *
      * <pre>
      * PyBuffer a = obj.getBuffer(PyBUF.SIMPLE);
@@ -253,11 +256,13 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * ByteBuffer bb = a.getNIOBuffer();
      * </pre>
      *
-     * the item with index <code>bb.pos()+k</code> is in the buffer <code>bb</code> at positions
+     * the item with index <code>k</code> is in <code>bb</code> at positions
      * <code>bb.pos()+k*itemsize</code> to <code>bb.pos()+(k+1)*itemsize - 1</code> inclusive. And
      * if <code>itemsize==1</code>, the item is simply the byte at position <code>bb.pos()+k</code>.
      * The buffer limit is set to the first byte beyond the valid data. A block read or write will
-     * therefore access the contents sequentially.
+     * therefore access the contents sequentially. In a one-dimensional contiguous buffer (only) it
+     * is safe to rely on <code>bb.remaining()</code> to obtain the number of bytes representing the
+     * object state.
      * <p>
      * If the buffer is multidimensional or non-contiguous (strided), the buffer position is still
      * the (first byte of) the item at index <code>[0]</code> or <code>[0,...,0]</code>, and the
@@ -265,11 +270,35 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * using the <code>shape</code>, <code>strides</code> and maybe <code>suboffsets</code> provided
      * by the API.
      *
-     * @return a ByteBuffer equivalent to the exported data contents.
+     * @return a ByteBuffer onto the exported data contents.
      */
     ByteBuffer getNIOByteBuffer();
 
-    // Direct access to actual storage
+    /**
+     * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
+     * exported to the consumer, and positioned at a particular index.
+     * <p>
+     * Essentially this saves the client from computing the byte offset of a particular index. The
+     * client is free to navigate the underlying byte data through the <code>ByteBuffer</code>.
+     *
+     * @param index in the buffer to position the pointer
+     * @return a ByteBuffer onto the exported data contents, positioned at the indexed item.
+     */
+    ByteBuffer getNIOByteBuffer(int index);
+
+    /**
+     * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
+     * exported to the consumer, and positioned at a particular multi-dimensional index.
+     * <p>
+     * Essentially this saves the client from computing the byte offset of a particular index. The
+     * client is free to navigate the underlying byte data through the <code>ByteBuffer</code>.
+     *
+     * @param indices multidimensional index at which to position the pointer
+     * @return a ByteBuffer onto the exported data contents, positioned at the indexed item.
+     */
+    ByteBuffer getNIOByteBuffer(int... indices);
+
+    // Direct access to actual storage (deprecated)
     //
 
     /**
@@ -279,6 +308,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      *
      * @return true if array access is supported, false if it is not.
      */
+    // XXX Pending: @Deprecated
     boolean hasArray();
 
     /**
@@ -288,6 +318,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * this array, and in others not. See {@link PyBuffer#isReadonly()}. It is used by the Jython
      * buffer API roughly where the CPython buffer API uses a C (char *) pointer.
      */
+    @Deprecated
     public static class Pointer {
 
         /** Reference to the array holding the bytes. */

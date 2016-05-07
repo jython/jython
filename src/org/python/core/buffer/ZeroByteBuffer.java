@@ -135,6 +135,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      * <p>
      * The implementation in <code>ZeroByteBuffer</code> efficiently returns an empty buffer.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getBuf() {
         // Has to be new because the client is allowed to manipulate the contents.

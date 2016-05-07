@@ -122,7 +122,7 @@ public interface PyBUF {
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
      * specify that it requires {@link PyBuffer#getFormat()} to return a <code>String</code>
-     * indicating the type of the unit. This exists for compatibility with CPython, as Jython as the
+     * indicating the type of the unit. This exists for compatibility with CPython, as in Jython the
      * format is always provided by <code>getFormat()</code>.
      */
     static final int FORMAT = 0x0004;
@@ -203,13 +203,14 @@ public interface PyBUF {
      * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this in the request if
      * you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>,
      * <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
-     * {@link PyBuffer#getBuf()}.
+     * {@link PyBuffer#getNIOByteBuffer()} or using {@link PyBuffer#Pointer()}.
      */
     static final int FULL = INDIRECT | WRITABLE | FORMAT;
     /**
      * Equivalent to <code>(INDIRECT | FORMAT)</code>. Also use this in the request if you plan only
      * to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.), read
-     * only, without ever calling {@link PyBuffer#getBuf()}.
+     * only, without ever calling {@link PyBuffer#getNIOByteBuffer()} or using
+     * {@link PyBuffer#Pointer()}.
      */
     static final int FULL_RO = INDIRECT | FORMAT;
 
@@ -221,7 +222,8 @@ public interface PyBUF {
      * through the purely abstract part of the API). <code>getBuffer</code> will raise an exception
      * if the exporter cannot expose its storage as Java array.
      */
-    static final int AS_ARRAY = 0x10000000;
+    // XXX Pending: @Deprecated
+     static final int AS_ARRAY = 0x10000000;
 
     /* Constants for readability, not standard for CPython */
 

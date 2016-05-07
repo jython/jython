@@ -8,11 +8,11 @@ import org.python.core.util.StringUtil;
 /**
  * Buffer API that appears to be a one-dimensional array of one-byte items providing read-only API,
  * but which is actually backed by a Java String. Some of the buffer API absolutely needs access to
- * the data as a byte array (those parts that involve a <code>PyBuffer.Pointer</code> result), and
- * therefore this class must create a byte array from the String for them. However, it defers
- * creation of a byte array until that part of the API is actually used. Where possible, this class
- * overrides those methods in SimpleBuffer that would otherwise access the byte array attribute to
- * use the String instead.
+ * the data as a byte array (those parts that involve a {@link java.nio.ByteBuffer} or
+ * {@link PyBuffer.Pointer} result), and therefore this class must create a byte array from the
+ * String for them. However, it defers creation of a byte array until that part of the API is
+ * actually used. Where possible, this class overrides those methods in SimpleBuffer that would
+ * otherwise access the byte array attribute to use the String instead.
  */
 public class SimpleStringBuffer extends SimpleBuffer {
 
@@ -124,7 +124,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
     public ByteBuffer getNIOByteBuffer() {
         // Force creation of the actual byte array from the String.
         ensureHaveBytes();
-        return super.getNIOByteBuffer().asReadOnlyBuffer();
+        return super.getNIOByteBuffer();
     }
 
     /**
@@ -142,6 +142,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getBuf() {
         ensureHaveBytes();
@@ -153,6 +154,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int index) {
         ensureHaveBytes();
@@ -164,6 +166,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int... indices) {
         ensureHaveBytes();

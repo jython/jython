@@ -65,6 +65,7 @@ public abstract class BaseBuffer implements PyBuffer {
      * (contiguous cases) or the index in <code>storage</code> that should be treated as the item
      * with index zero (retrieved say by {@link #byteAt(int)}).
      */
+    // XXX Pending change of implementation to ByteBuffer
     protected byte[] storage;
 
     /**
@@ -600,23 +601,43 @@ public abstract class BaseBuffer implements PyBuffer {
 
     @Override
     public ByteBuffer getNIOByteBuffer() {
-        // Determine the limit of the buffer just beyond the last item.
-        int length = calcGreatestIndex() + getItemsize() - index0;
-        ByteBuffer b = ByteBuffer.wrap(storage, index0, length);
+        // The buffer spans the whole storage, which may include data not in the view
+        ByteBuffer b = ByteBuffer.wrap(storage);
+        b.limit(calcGreatestIndex() + getItemsize()).position(index0);
         // Return as read-only if it is.
         return isReadonly() ? b.asReadOnlyBuffer() : b;
     }
 
     @Override
+    public ByteBuffer getNIOByteBuffer(int index) {
+        // The buffer spans the whole storage but is positioned at index
+        ByteBuffer b = getNIOByteBuffer();
+        b.position(calcIndex(index));
+        return b;
+    }
+
+    @Override
+    public ByteBuffer getNIOByteBuffer(int... indices) {
+        // The buffer spans the whole storage but is positioned at indices[]
+        ByteBuffer b = getNIOByteBuffer();
+        b.position(calcIndex(indices));
+        // Return as read-only if it is.
+        return b;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
     public Pointer getBuf() {
         return new Pointer(storage, index0);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int index) throws IndexOutOfBoundsException {
         return new Pointer(storage, calcIndex(index));
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int... indices) throws IndexOutOfBoundsException {
         return new Pointer(storage, calcIndex(indices));
@@ -664,7 +685,7 @@ public abstract class BaseBuffer implements PyBuffer {
     /**
      * Some <code>PyBuffer</code>s, those created by slicing a <code>PyBuffer</code> are related to
      * a root <code>PyBuffer</code>. During creation of such a slice, we need to supply a value for
-     * this root. If the present object is not itself a slice, this is root is the object itself; if
+     * this root. If the present object is not itself a slice, this root is the object itself; if
      * the buffer is already a slice, it is the root it was given at creation time. Often this is
      * the only difference between a slice-view and a directly-exported buffer. Override this method
      * in slices to return the root buffer of the slice.

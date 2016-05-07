@@ -3,6 +3,7 @@ package org.python.core;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -959,10 +960,108 @@ public class PyBufferTest extends TestCase {
         byte[] result = bytesFromByteAt(sliceView);
         assertBytesEqual("  testGetBufferSliceWithStride failure: ", expected, result);
     }
+    /**
+     * Test method for {@link org.python.core.PyBuffer#getNIOByteBuffer()}.
+     */
+    public void testGetNIOByteBuffer() {
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("getNIOByteBuffer: " + test);
+            }
+            int stride = test.strides[0];
+
+            if (stride == 1) {
+
+                // The client should not have to support navigation with the strides array
+                int flags = test.readonly ? PyBUF.SIMPLE : PyBUF.SIMPLE + PyBUF.WRITABLE;
+                PyBuffer view = test.subject.getBuffer(flags);
+
+                ByteBuffer bp = view.getNIOByteBuffer();
+                assertBytesEqual("buffer does not match reference", test.material.bytes, bp);
+
+            } else {
+
+                // The client will have to navigate with the strides array
+                int flags = test.readonly ? PyBUF.STRIDED_RO : PyBUF.STRIDED;
+                PyBuffer view = test.subject.getBuffer(flags);
+
+                stride = view.getStrides()[0];  // Just possibly != test.strides when length<=1
+                ByteBuffer bp = view.getNIOByteBuffer();
+                assertBytesEqual("buffer does not match reference", test.material.bytes, bp, stride);
+            }
+
+        }
+    }
+
+    /**
+     * Test method for {@link org.python.core.PyBuffer#getNIOByteBuffer(int)}.
+     */
+    public void testGetNIOByteBuffer_int() {
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("getNIOByteBuffer(int): " + test);
+            }
+            PyBuffer view = test.view;
+            int n = test.material.length, itemsize = view.getItemsize();
+            byte[] exp = new byte[itemsize], bytes = test.material.bytes;
+
+            for (int i = 0; i < n; i++) {
+                // Expected result is one item (allow for itemsize)
+                int p = i * itemsize;
+                for (int j = 0; j < itemsize; j++) {
+                    exp[j] = bytes[p + j];
+                }
+
+                // Get buffer and check for correct data at bb.position()
+                ByteBuffer bb = view.getNIOByteBuffer(i);
+                assertBytesEqual("getNIOByteBuffer(int) value", exp, bb);
+            }
+        }
+    }
+
+    /**
+     * Test method for {@link org.python.core.PyBuffer#getNIOByteBuffer(int[])}.
+     */
+    public void testGetNIOByteBuffer_intArray() {
+        int[] index = new int[1];
+        for (BufferTestPair test : buffersToRead) {
+            if (verbosity > 0) {
+                System.out.println("getNIOByteBuffer(int[]): " + test);
+            }
+            PyBuffer view = test.view;
+            int n = test.material.length, itemsize = view.getItemsize();
+            byte[] exp = new byte[itemsize], bytes = test.material.bytes;
+
+            for (int i = 0; i < n; i++) {
+                // Expected result is one item (allow for itemsize)
+                int p = i * itemsize;
+                for (int j = 0; j < itemsize; j++) {
+                    exp[j] = bytes[p + j];
+                }
+
+                // Get buffer and check for correct data at bb.position()
+                index[0] = i;
+                ByteBuffer bb = view.getNIOByteBuffer(index);
+                assertBytesEqual("getNIOByteBuffer(int[]) value", exp, bb);
+            }
+
+            // Check 2D index throws
+            try {
+                view.getNIOByteBuffer(0, 0);
+                fail("Use of 2D index did not raise exception");
+            } catch (PyException pye) {
+                // Expect BufferError
+                assertEquals(Py.BufferError, pye.type);
+            }
+        }
+    }
+
+
 
     /**
      * Test method for {@link org.python.core.PyBuffer#getBuf()}.
      */
+    @SuppressWarnings("deprecation")
     public void testGetBuf() {
         for (BufferTestPair test : buffersToRead) {
             if (verbosity > 0) {
@@ -980,6 +1079,7 @@ public class PyBufferTest extends TestCase {
                 assertBytesEqual("buffer does not match reference", test.material.bytes, bp);
 
             } else {
+
                 // The client will have to navigate with the strides array
                 int flags = test.readonly ? PyBUF.STRIDED_RO : PyBUF.STRIDED;
                 PyBuffer view = test.subject.getBuffer(flags);
@@ -995,6 +1095,7 @@ public class PyBufferTest extends TestCase {
     /**
      * Test method for {@link org.python.core.PyBuffer#getPointer(int)}.
      */
+    @SuppressWarnings("deprecation")
     public void testGetPointer() {
         for (BufferTestPair test : buffersToRead) {
             if (verbosity > 0) {
@@ -1021,6 +1122,7 @@ public class PyBufferTest extends TestCase {
     /**
      * Test method for {@link org.python.core.PyBuffer#getPointer(int[])}.
      */
+    @SuppressWarnings("deprecation")
     public void testGetPointerNdim() {
         int[] index = new int[1];
         for (BufferTestPair test : buffersToRead) {
@@ -1458,49 +1560,121 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Customised assert method comparing a buffer pointer to a byte array, usually the one from
-     * ByteMaterial.
+     * Custom assert method comparing the bytes at a {@link PyBuffer.Pointer} to those in a byte
+     * array, when that <code>Pointer</code> is obtained from a contiguous <code>PyBuffer</code>.
+     * Let <code>bp[i]</code> denote <code>bp.storage[bp.offset+i]</code>, by analogy with a C
+     * pointer. It is required that <code>bp[k] == expected[k]</code>, for every index in
+     * <code>expected</code>. If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
      * @param bp result to test
      */
+    @SuppressWarnings("deprecation")
     static void assertBytesEqual(String message, byte[] expected, PyBuffer.Pointer bp) {
         assertBytesEqual(message, expected, bp, 1);
     }
 
     /**
-     * Customised assert method comparing a buffer pointer to a byte array, usually the one from
-     * ByteMaterial.
+     * Custom assert method comparing the bytes in an NIO {@link ByteBuffer} to those in a byte
+     * array, when that <code>ByteBuffer</code> is obtained from a contiguous <code>PyBuffer</code>.
+     * Let <code>bb[i]</code> denote <code>bb.get(bb.position()+i)</code>, by analogy with a C
+     * pointer. It is required that <code>bb[k] == expected[k]</code>, for every index
+     * <code>k</code> in <code>expected</code>. If not, a <code>fail()</code> is declared.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param bb result to test
+     */
+    static void assertBytesEqual(String message, byte[] expected, ByteBuffer bb) {
+        // Use the position-advancing buffer get()
+        byte[] actual = new byte[expected.length];
+        assertEquals( message + " (size in buffer)", expected.length, bb.remaining());
+        bb.get(actual);
+        assertBytesEqual(message, expected, actual);
+    }
+
+    /**
+     * Custom assert method comparing the bytes at a {@link PyBuffer.Pointer} to those in a byte
+     * array, when that <code>Pointer</code> is obtained from a striding <code>PyBuffer</code>. Let
+     * <code>bp[i]</code> denote <code>bp.storage[bp.offset+i]</code>, by analogy with a C pointer.
+     * It is required that <code>bp[k*stride] == expected[k]</code>, for every index <code>k</code>
+     * in <code>expected</code>. If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
      * @param bp result to test
-     * @param stride in the storage array
+     * @param stride in the <code>bp.storage</code> array
      */
+    @SuppressWarnings("deprecation")
     static void assertBytesEqual(String message, byte[] expected, PyBuffer.Pointer bp, int stride) {
         assertBytesEqual(message, expected, 0, expected.length, bp.storage, bp.offset, stride);
     }
 
     /**
-     * Customised assert method comparing a buffer pointer to a byte array, usually the one from
-     * ByteMaterial.
+     * Custom assert method comparing the bytes in an NIO {@link ByteBuffer} to those in a byte
+     * array, when that <code>ByteBuffer</code> is obtained from a striding <code>PyBuffer</code>.
+     * Let <code>bb[i]</code> denote <code>bb.get(bb.position()+i)</code>, by analogy with a C
+     * pointer. It is required that <code>bb[k*stride] == expected[k]</code>, for every index
+     * <code>k</code> in <code>expected</code>. If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
-     * @param expectedStart where to start the comparison in expected
-     * @param n number of bytes to test
      * @param bb result to test
-     * @param stride in the storage array
+     * @param stride in the buffer <code>bb</code>
      */
+    static void assertBytesEqual(String message, byte[] expected, ByteBuffer bb, int stride) {
+        assertBytesEqual(message, expected, 0, expected.length, bb, stride);
+    }
+
+    /**
+     * Custom assert method comparing the bytes at a {@link PyBuffer.Pointer} to those in a byte
+     * array, when that <code>Pointer</code> is obtained from a striding <code>PyBuffer</code>. Let
+     * <code>bp[i]</code> denote <code>bp.storage[bp.offset+i]</code>, by analogy with a C pointer.
+     * It is required that <code>bp[k*stride] == expected[expectedStart+k]</code>, for
+     * <code>k=0</code> to <code>n-1</code>. If not, a <code>fail()</code> is declared.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param expectedStart where to start the comparison in <code>expected</code>
+     * @param n number of bytes to test
+     * @param bp result to test
+     * @param stride in the <code>bp.storage</code> array
+     */
+    @SuppressWarnings("deprecation")
     static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
             PyBuffer.Pointer bp, int stride) {
         assertBytesEqual(message, expected, expectedStart, n, bp.storage, bp.offset, stride);
     }
 
     /**
-     * Customised assert method comparing a byte arrays: values in the actual value must match all
-     * those in expected[], and they must be the same length.
+     * Custom assert method comparing the bytes in an NIO {@link ByteBuffer} to those in a byte
+     * array, when that <code>ByteBuffer</code> is obtained from a striding <code>PyBuffer</code>.
+     * Let <code>bb[i]</code> denote <code>bb.get(bb.position()+i)</code>, by analogy with a C
+     * pointer. It is required that <code>bb[k*stride] == expected[expectedStart+k]</code>, for
+     * <code>k=0</code> to <code>n-1</code>. If not, a <code>fail()</code> is declared.
+     *
+     * @param message to issue on failure
+     * @param expected expected byte array
+     * @param expectedStart where to start the comparison in <code>expected</code>
+     * @param n number of bytes to test
+     * @param bb result to test
+     * @param stride in the buffer <code>bb</code>
+     */
+    static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
+            ByteBuffer bb, int stride) {
+        // Note that this approach leaves the buffer position unmodified
+        int p = bb.position();
+        byte[] actual = new byte[n];
+        for (int k = 0; k < n; k++, p += stride) {
+            actual[k] = bb.get(p);
+        }
+        assertBytesEqual(message, expected, expectedStart, n, actual, 0);
+    }
+
+    /**
+     * Custom assert method comparing byte arrays: values in <code>actual[]</code> must match all
+     * those in <code>expected[]</code>, and they must be the same length.
      *
      * @param message to issue on failure
      * @param expected expected byte array
@@ -1512,28 +1686,30 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Customised assert method comparing byte arrays: values in the actual value starting at
-     * actual[actualStart] must match all those in expected[], and there must be enough of them.
+     * Custom assert method comparing byte arrays. It is required that
+     * <code>actual[k] == expected[k]</code>, for <code>k=0</code> to <code>expected.length-1</code>
+     * . If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
      * @param actual result to test
-     * @param actualStart where to start the comparison in actual
+     * @param actualStart where to start the comparison in <code>actual</code>
      */
     static void assertBytesEqual(String message, byte[] expected, byte[] actual, int actualStart) {
         assertBytesEqual(message, expected, 0, expected.length, actual, actualStart, 1);
     }
 
     /**
-     * Customised assert method comparing byte arrays: values starting at actual[actualStart] must
-     * those starting at expected[expectedStart], for a distance of n bytes.
+     * Custom assert method comparing byte arrays. It is required that
+     * <code>actual[actualStart+k] == expected[expectedStart+k]</code>, for <code>k=0</code> to
+     * <code>n-1</code>. If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
-     * @param expectedStart where to start the comparison in expected
+     * @param expectedStart where to start the comparison in <code>expected</code>
      * @param n number of bytes to test
      * @param actual result to test
-     * @param actualStart where to start the comparison in actual
+     * @param actualStart where to start the comparison in <code>actual</code>
      */
     static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
             byte[] actual, int actualStart) {
@@ -1541,16 +1717,17 @@ public class PyBufferTest extends TestCase {
     }
 
     /**
-     * Customised assert method comparing byte arrays: values starting at actual[actualStart] must
-     * those starting at expected[expectedStart], for a distance of n bytes.
+     * Custom assert method comparing byte arrays. It is required that
+     * <code>actual[actualStart+k*stride] == expected[expectedStart+k]</code>, for
+     * <code>k=0</code> to <code>n-1</code>. If not, a <code>fail()</code> is declared.
      *
      * @param message to issue on failure
      * @param expected expected byte array
-     * @param expectedStart where to start the comparison in expected
+     * @param expectedStart where to start the comparison in <code>expected</code>
      * @param n number of bytes to test
      * @param actual result to test
-     * @param actualStart where to start the comparison in actual
-     * @param stride spacing of bytes in actual array
+     * @param actualStart where to start the comparison in <code>actual</code>
+     * @param stride spacing of bytes in <code>actual</code> array
      */
     static void assertBytesEqual(String message, byte[] expected, int expectedStart, int n,
             byte[] actual, int actualStart, int stride) {
@@ -1579,13 +1756,10 @@ public class PyBufferTest extends TestCase {
 
             // If we stopped early, diagnose the problem
             if (j < jLimit) {
-                System.out.println("  expected:"
-                        + Arrays.toString(Arrays.copyOfRange(expected, expectedStart, expectedStart
-                                + n)));
-                System.out
-                        .println("    actual:"
-                                + Arrays.toString(Arrays.copyOfRange(actual, actualStart,
-                                        actualStart + n)));
+                byte[] a = Arrays.copyOfRange(actual, actualStart, actualStart + n);
+                byte[] e = Arrays.copyOfRange(expected, expectedStart, expectedStart + n);
+                System.out.println("  expected:" + Arrays.toString(e));
+                System.out.println("    actual:" + Arrays.toString(a));
                 System.out.println("  _actual_:" + Arrays.toString(actual));
                 fail(message + " (byte at " + j + ")");
             }
@@ -1771,7 +1945,9 @@ public class PyBufferTest extends TestCase {
 
         @Override
         public String toString() {
-            int offset = view.getBuf().offset;
+            int offset0 = view.getBuf().offset;     // XXX -> view.getNIOByteBuffer().position() ?
+            int offset = view.getNIOByteBuffer().position();
+            assertEquals(offset0, offset);
             String offsetSpec = offset > 0 ? "[0@(" + offset + "):" : "[:";
             int stride = strides[0];
             String sliceSpec = offsetSpec + shape[0] + (stride != 1 ? "*(" + stride + ")]" : "]");
