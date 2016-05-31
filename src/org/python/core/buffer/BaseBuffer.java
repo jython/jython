@@ -212,13 +212,13 @@ public abstract class BaseBuffer implements PyBuffer {
     @Override
     public boolean isReadonly() {
         // WRITABLE is a non-navigational flag, so is inverted in gFeatureFlags
-        return (gFeatureFlags & WRITABLE) != 0;
+        return (gFeatureFlags & WRITABLE) != 0; // i.e. featureFlags & WRITABLE is false
     }
 
     @Override
     public boolean hasArray() {
         // AS_ARRAY is a non-navigational flag, so is inverted in gFeatureFlags
-        return (gFeatureFlags & AS_ARRAY) != 0;
+        return (gFeatureFlags & AS_ARRAY) == 0; // i.e. featureFlags & AS_ARRAY is true
     }
 
     @Override
