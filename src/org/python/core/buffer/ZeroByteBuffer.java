@@ -91,7 +91,9 @@ public class ZeroByteBuffer extends BaseBuffer {
     @Override
     public void copyFrom(byte[] src, int srcPos, int destIndex, int length)
             throws IndexOutOfBoundsException, PyException {
-        if (length > 0) {
+        if (this.isReadonly()) {
+            throw notWritable();
+        } else if (length > 0) {
             throw new IndexOutOfBoundsException();
         }
     }
@@ -102,7 +104,9 @@ public class ZeroByteBuffer extends BaseBuffer {
      */
     @Override
     public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
-        if (src.getLen() > 0) {
+        if (this.isReadonly()) {
+            throw notWritable();
+        } else if (src.getLen() > 0) {
             throw new IndexOutOfBoundsException();
         }
     }
