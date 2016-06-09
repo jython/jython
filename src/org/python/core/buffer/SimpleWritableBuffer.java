@@ -36,64 +36,28 @@ public class SimpleWritableBuffer extends SimpleBuffer {
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
     public SimpleWritableBuffer(int flags, byte[] storage) throws PyException, NullPointerException {
-        super(storage);                 // Construct SimpleBuffer on whole array
-        addFeatureFlags(WRITABLE);
-        checkRequestFlags(flags);       // Check request is compatible with type
+        this(flags, storage, 0, storage.length);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Declared <code>final</code> returning <code>true</code> in <code>SimpleWritableBuffer</code>
+     * to make checks unnecessary.
+     */
     @Override
-    public boolean isReadonly() {
+    public final boolean isReadonly() {
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * <code>SimpleBuffer</code> provides an implementation optimised for contiguous bytes in
-     * one-dimension.
-     */
+    /** Do nothing: the buffer is writable. */
     @Override
-    public void storeAt(byte value, int index) {
+    protected final void checkWritable() {}
+
+    @Override
+    protected void storeAtImpl(byte value, int byteIndex) {
         // Implement directly and don't ask whether read-only
-        storage[index0 + index] = value;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * <code>SimpleBuffer</code> provides an implementation optimised for contiguous bytes in
-     * one-dimension.
-     */
-    @Override
-    public void storeAt(byte value, int... indices) {
-        checkDimension(indices.length);
-        storeAt(value, indices[0]);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * <code>SimpleBuffer</code> provides an implementation optimised for contiguous bytes in
-     * one-dimension.
-     */
-    @Override
-    public void copyFrom(byte[] src, int srcPos, int destIndex, int length) {
-        System.arraycopy(src, srcPos, storage, index0 + destIndex, length);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * <code>SimpleBuffer</code> provides an implementation optimised for contiguous bytes in
-     * one-dimension.
-     */
-    @Override
-    public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
-        if (src.getLen() != getLen()) {
-            throw differentStructure();
-        }
-        // Get the source to deliver efficiently to our byte storage
-        src.copyTo(storage, index0);
+        storage[byteIndex] = value;
     }
 
     /**
@@ -103,14 +67,14 @@ public class SimpleWritableBuffer extends SimpleBuffer {
      * writable.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length) {
-        if (length > 0) {
+    public PyBuffer getBufferSlice(int flags, int start, int count) {
+        if (count > 0) {
             // Translate relative to underlying buffer
             int compIndex0 = index0 + start;
             // Create the slice from the sub-range of the buffer
-            return new SimpleView(getRoot(), flags, storage, compIndex0, length);
+            return new SimpleView(getRoot(), flags, storage, compIndex0, count);
         } else {
-            // Special case for length==0 where above logic would fail. Efficient too.
+            // Special case for count==0 where above logic would fail. Efficient too.
             return new ZeroByteBuffer.View(getRoot(), flags);
         }
     }
@@ -122,18 +86,18 @@ public class SimpleWritableBuffer extends SimpleBuffer {
      * writable.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
+    public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
 
-        if (stride == 1 || length < 2) {
+        if (stride == 1 || count < 2) {
             // Unstrided slice of simple buffer is itself simple
-            return getBufferSlice(flags, start, length);
+            return getBufferSlice(flags, start, count);
 
         } else {
             // Translate relative to underlying buffer
             int compIndex0 = index0 + start;
             // Construct a view, taking a lock on the root object (this or this.root)
             return new Strided1DWritableBuffer.SlicedView(getRoot(), flags, storage, compIndex0,
-                    length, stride);
+                    count, stride);
         }
     }
 

@@ -30,6 +30,11 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * @param flags consumer requirements
      */
     public SimpleStringBuffer(int flags, String bufString) {
+        /*
+         * Leaving storage=null is ok because we carefully override every method that uses it,
+         * deferring creation of the storage byte array until we absolutely must have one.
+         */
+        super();
         // Save the backing string
         this.bufString = bufString;
         shape[0] = bufString.length();
@@ -54,20 +59,19 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
      */
     @Override
-    public byte byteAt(int index) throws IndexOutOfBoundsException {
-        // Avoid creating buf by using String.charAt
+    public final byte byteAtImpl(int index) {
         return (byte)bufString.charAt(index);
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
+     * In <code>SimpleStringBuffer</code> we can simply return the argument.
      */
     @Override
-    public int intAt(int index) throws IndexOutOfBoundsException {
-        // Avoid creating buf by using String.charAt
-        return bufString.charAt(index);
+    protected final int byteIndex(int index) {
+        // We do not check the index because String will do it for us.
+        return index;
     }
 
     /**
@@ -76,10 +80,10 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
      */
     @Override
-    public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
+    public void copyTo(int srcIndex, byte[] dest, int destPos, int count)
             throws IndexOutOfBoundsException {
         // Avoid creating buf by using String.charAt
-        int endIndex = srcIndex + length, p = destPos;
+        int endIndex = srcIndex + count, p = destPos;
         for (int i = srcIndex; i < endIndex; i++) {
             dest[p++] = (byte)bufString.charAt(i);
         }
@@ -91,13 +95,13 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * The <code>SimpleStringBuffer</code> implementation avoids creation of a byte buffer.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length) {
-        if (length > 0) {
-            // The new string content is just a sub-string. (Non-copy operation in Java.)
+    public PyBuffer getBufferSlice(int flags, int start, int count) {
+        if (count > 0) {
+            // The new string content is just a sub-string.
             return new SimpleStringView(getRoot(), flags,
-                    bufString.substring(start, start + length));
+                    bufString.substring(start, start + count));
         } else {
-            // Special case for length==0 where start out of bounds sometimes raises exception.
+            // Special case for count==0 where start out of bounds sometimes raises exception.
             return new ZeroByteBuffer.View(getRoot(), flags);
         }
     }
@@ -108,23 +112,26 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * The <code>SimpleStringBuffer</code> implementation creates an actual byte buffer.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
+    public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
         if (stride == 1) {
             // Unstrided slice of a SimpleStringBuffer is itself a SimpleStringBuffer.
-            return getBufferSlice(flags, start, length);
+            return getBufferSlice(flags, start, count);
         } else {
             // Force creation of the actual byte array from the String.
             ensureHaveBytes();
             // Now we are effectively a SimpleBuffer, return the strided view.
-            return super.getBufferSlice(flags, start, length, stride);
+            return super.getBufferSlice(flags, start, count, stride);
         }
     }
 
     @Override
-    public ByteBuffer getNIOByteBuffer() {
+    protected ByteBuffer getNIOByteBufferImpl() {
         // Force creation of the actual byte array from the String.
         ensureHaveBytes();
-        return super.getNIOByteBuffer();
+        // The buffer spans the whole storage, which may include data not in the view
+        ByteBuffer b = ByteBuffer.wrap(storage);
+        // Return as read-only.
+        return b.asReadOnlyBuffer();
     }
 
     /**

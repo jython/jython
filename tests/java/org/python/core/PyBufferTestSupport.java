@@ -260,7 +260,7 @@ public class PyBufferTestSupport {
         /** Either {@link PyBUF#FULL_RO} or {@link PyBUF#FULL} according to {@link #readonly}. */
         final int flags;
 
-        /** Allowable basic flag combinations, such as */
+        /** Allowable basic flag combinations, such as {@link PyBUF#STRIDES}. */
         final int[] validFlags;
 
         /** Allowable additional flag combinations, such as {@link PyBUF#FORMAT} */

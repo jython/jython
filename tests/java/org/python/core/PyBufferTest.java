@@ -71,13 +71,13 @@ public class PyBufferTest {
     protected static final int[] sliceSteps = {1, 2, 3, 7};
 
     /** Exception raising requires the Jython interpreter to be initialised **/
-    protected PythonInterpreter interp = new PythonInterpreter();
+    protected static PythonInterpreter interp = new PythonInterpreter();
 
     /** The test material and a buffer created by the test-runner. */
-    private TestSpec spec;
-    ByteMaterial ref;
-    BufferProtocol obj;
-    PyBuffer view;
+    protected TestSpec spec;
+    protected ByteMaterial ref;
+    protected BufferProtocol obj;
+    protected PyBuffer view;
 
     /**
      * Construct an instance to run one test, using one set of test data.
@@ -103,11 +103,11 @@ public class PyBufferTest {
     /*
      * Values for initialising the exporters.
      */
-    private static final ByteMaterial byteMaterial = new ByteMaterial(10, 16, 3);
-    private static final ByteMaterial abcMaterial = new ByteMaterial("abcdefgh");
-    private static final ByteMaterial stringMaterial = new ByteMaterial("Mon côté fâcheux");
-    private static final ByteMaterial emptyMaterial = new ByteMaterial(new byte[0]);
-    private static final ByteMaterial longMaterial = new ByteMaterial(0, LONG, 5);
+    protected static final ByteMaterial byteMaterial = new ByteMaterial(10, 16, 3);
+    protected static final ByteMaterial abcMaterial = new ByteMaterial("abcdefgh");
+    protected static final ByteMaterial stringMaterial = new ByteMaterial("Mon côté fâcheux");
+    protected static final ByteMaterial emptyMaterial = new ByteMaterial(new byte[0]);
+    protected static final ByteMaterial longMaterial = new ByteMaterial(0, LONG, 5);
 
     /**
      * Generate test data to be held in the testing framework and used to construct tests. This
@@ -160,6 +160,19 @@ public class PyBufferTest {
 
         };
         s.add(stringExporter, stringMaterial);
+
+        // Tests with an buffer implementation directly extending BaseBuffer
+
+        ExporterFactory rollYourOwnExporter = new WritableExporterFactory() {
+
+            @Override
+            public BufferProtocol make(ByteMaterial m) {
+                return new RollYourOwnExporter(m.getBytes());
+            }
+
+        };
+        s.add(rollYourOwnExporter, byteMaterial);
+        s.add(rollYourOwnExporter, emptyMaterial);
 
         // Tests with PyByteArray
 
@@ -990,10 +1003,12 @@ public class PyBufferTest {
     @Test
     public void testIsContiguous() {
         announce("isContiguous");
-        // True for all test material and orders (since 1-dimensional)
+        // All test material is 1-dimensional so it's fairly simple and same for all orders
+        int ndim = spec.shape[0], stride = spec.getStride(), itemsize = spec.getItemsize();
+        boolean contig = ndim < 2 || stride == itemsize;
         for (String orderMsg : validOrders) {
             char order = orderMsg.charAt(0);
-            assertTrue(orderMsg, view.isContiguous(order));
+            assertEquals(orderMsg, view.isContiguous(order), contig);
         }
     }
 
@@ -1069,17 +1084,17 @@ public class PyBufferTest {
     }
 
     /*
-     * ------------------------------------------------------------------------------------------- A
-     * series of custom exporters to permit testing abstracted from the Jython interpreter. These
+     * --------------------------------------------------------------------------------------------
+     * A series of custom exporters to permit testing abstracted from the Jython interpreter. These
      * use the implementation classes in org.python.core.buffer in ways very similar to the
      * implementations of bytearray and str.
-     * -------------------------------------------------------------------------------------------
+     * --------------------------------------------------------------------------------------------
      */
     /**
-     * A class to act as an exporter that uses the SimpleReadonlyBuffer. The exporter exports a new
-     * PyBuffer object to each consumer (although each references the same internal storage) and it
-     * does not track their fate. You are most likely to use this approach with an exporting object
-     * that is immutable (or at least fixed in size).
+     * A class to act as an exporter that uses the SimpleBuffer. The exporter exports a new PyBuffer
+     * object to each consumer (although each references the same internal storage) and it does not
+     * track their fate. You are most likely to use this approach with an exporting object that is
+     * immutable (or at least fixed in size).
      */
     static class SimpleExporter implements BufferProtocol {
 
@@ -1109,7 +1124,8 @@ public class PyBufferTest {
         protected Reference<BaseBuffer> export;
 
         /**
-         * Try to re-use existing exported buffer, or return null if can't.
+         * Try to re-use existing exported buffer, or return null if can't: modelled after the
+         * buffer re-use strategy in {@link PyByteArray}.
          */
         protected BaseBuffer getExistingBuffer(int flags) {
             BaseBuffer pybuf = null;
@@ -1191,7 +1207,7 @@ public class PyBufferTest {
      * avoiding the cost of duplicate buffers. This is the case with PyByteArray, which prohibits
      * operations that would resize it, while there are outstanding exports.
      */
-    static class SimpleWritableExporter extends TestableExporter {
+    private static class SimpleWritableExporter extends TestableExporter {
 
         protected byte[] storage;
 
@@ -1226,4 +1242,131 @@ public class PyBufferTest {
 
     }
 
+    /** A class to act as an exporter that uses the RollYourOwnBuffer. */
+    private static class RollYourOwnExporter extends TestableExporter {
+
+        protected byte[] storage;
+
+        public RollYourOwnExporter(byte[] storage) {
+            this.storage = storage;
+        }
+
+        @Override
+        public PyBuffer getBuffer(int flags) {
+            // If we have already exported a buffer it may still be available for re-use
+            BaseBuffer pybuf = getExistingBuffer(flags);
+            if (pybuf == null) {
+                // No existing export we can re-use
+                pybuf = new RollYourOwnArrayBuffer(flags, storage);
+                // Hold a reference for possible re-use
+                export = new WeakReference<BaseBuffer>(pybuf);
+            }
+            return pybuf;
+        }
+
+    }
+
+    /**
+     * Minimal extension of BaseBuffer in order to test the default implementations there. They're
+     * slow, so mostly we override them in the implementations BaseArrayBuffer and BaseNIOBuffer,
+     * but they still have to be correct. The class represents a one-dimensional, strided array of
+     * bytes, so it can represent a slice of itself.
+     */
+    private static class RollYourOwnArrayBuffer extends BaseBuffer {
+
+        final static int FEATURES = PyBUF.WRITABLE | PyBUF.AS_ARRAY;
+
+        final byte[] storage;
+        final PyBuffer root;
+
+        /**
+         * Create a buffer view of the entire array.
+         *
+         * @param flags consumer requirements
+         * @param storage byte array exported in its entirety
+         */
+        public RollYourOwnArrayBuffer(int flags, byte[] storage) {
+            this(null /* =this */, flags, storage, 0, storage.length, 1);
+        }
+
+        /**
+         * Construct a slice of a one-dimensional byte buffer.
+         *
+         * @param root on which release must be called when this is released
+         * @param flags consumer requirements
+         * @param storage raw byte array containing exported data
+         * @param index0 index into storage of item[0]
+         * @param length number of items in the slice
+         * @param stride in between successive elements of the new PyBuffer
+         * @throws PyException (BufferError) when expectations do not correspond with the type
+         */
+        public RollYourOwnArrayBuffer(PyBuffer root, int flags, byte[] storage, int index0,
+                int length, int stride) throws ArrayIndexOutOfBoundsException,
+                NullPointerException, PyException {
+            // Client will need to navigate using shape and strides if this is a slice
+            super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : PyBUF.STRIDES));
+            this.storage = storage;
+            this.index0 = index0;
+            shape = new int[] {length};
+            strides = new int[] {stride};
+            // Check the potential index range
+            if (length > 0) {
+                int end = index0 + (length - 1) * stride;
+                final int END = storage.length - 1;
+                if (index0 < 0 || index0 > END || end < 0 || end > END) {
+                    throw new IndexOutOfBoundsException();
+                }
+            }
+            // Check client is compatible
+            checkRequestFlags(flags);
+            // Get a lease on the root PyBuffer (read-only). Last in case a check above fails.
+            if (root == null) {
+                this.root = this;
+            } else {
+                this.root = root.getBuffer(FULL_RO);
+            }
+        }
+
+        @Override
+        protected PyBuffer getRoot() {
+            return root;
+        }
+
+        @Override
+        public void releaseAction() {
+            // XXX Consider making this automatic within BaseBuffer.release() when getRoot()!=this
+            /*
+             * ... so that {@link #release()} takes care of this: sub-classes should not propagate
+             * the release themselves when overriding {@link #releaseAction()}.
+             */
+            // We have to release the root too if ours was final and we are not that root.
+            if (root != this) {
+                root.release();
+            }
+        }
+
+        @Override
+        public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
+            int newStart = index0 + start * strides[0];
+            int newStride = strides[0] * stride;
+            return new RollYourOwnArrayBuffer(root, flags, storage, newStart, length, newStride);
+        }
+
+        @Override
+        public ByteBuffer getNIOByteBufferImpl() {
+            return ByteBuffer.wrap(storage);
+        }
+
+        @Override
+        protected byte byteAtImpl(int byteIndex) {
+            return storage[byteIndex];
+        }
+
+        @Override
+        protected void storeAtImpl(byte value, int byteIndex) throws IndexOutOfBoundsException,
+                PyException {
+            storage[byteIndex] = value;
+        }
+
+    }
 }

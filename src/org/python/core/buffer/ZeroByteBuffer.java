@@ -12,7 +12,7 @@ import org.python.core.PyException;
  * operations like {@link #copyTo(byte[], int)}) and {@link #toString()} efficiently do nothing,
  * instead of calling complicated logic that finally does nothing.
  */
-public class ZeroByteBuffer extends BaseBuffer {
+public class ZeroByteBuffer extends BaseArrayBuffer {
 
     /** Shared instance of a zero-length storage. */
     private static final byte[] EMPTY = new byte[0];
@@ -22,19 +22,25 @@ public class ZeroByteBuffer extends BaseBuffer {
 
     /**
      * Construct an instance of a zero-length buffer, choosing whether it should report itself to be
-     * read-only through {@link #isReadonly()}. This is moot, as any attempt to write to it produces
-     * an {@link IndexOutOfBoundsException}, but it is less surprising for client code that may ask,
-     * if the readability follows that of the object from which the buffer is derived.
+     * read-only through {@link #isReadonly()} or as having a backing array through
+     * {@link #hasArray()}. These properties are moot, as any attempt to write to the pretended
+     * backing array produces an {@link IndexOutOfBoundsException}, but it is less surprising for
+     * client code that may ask, if the results are customary for the exporting object.
      *
      * @param flags consumer requirements
-     * @param readonly set true if readonly
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @param readonly set true if not to be considered writable
+     * @param hasArray set true if to be considered as backed by an array
+     * @throws PyException (BufferError) when client expectations do not correspond with the type
      */
-    public ZeroByteBuffer(int flags, boolean readonly) throws PyException {
-        super(CONTIGUITY | SIMPLE | (readonly ? 0 : WRITABLE));
+    public ZeroByteBuffer(int flags, boolean readonly, boolean hasArray) throws PyException {
+        super(CONTIGUITY | (readonly ? 0 : WRITABLE));
         this.storage = EMPTY;                       // Empty array
         this.shape = SHAPE;                         // {0}
-        this.strides = SimpleBuffer.SIMPLE_STRIDES; // {1}
+        this.strides = BaseBuffer.CONTIG_STRIDES; // {1}
+        if (!hasArray) {
+            // super() knows we have an array, but this truth is inconvenient here.
+            removeFeatureFlags(AS_ARRAY);
+        }
         checkRequestFlags(flags);
     }
 
@@ -47,7 +53,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      * In a ZeroByteBuffer, the index is always out of bounds.
      */
     @Override
-    protected int calcIndex(int index) throws IndexOutOfBoundsException {
+    protected int byteIndex(int index) throws IndexOutOfBoundsException {
         // This causes all access to the bytes in to throw (since BaseBuffer calls it).
         throw new IndexOutOfBoundsException();
     }
@@ -56,7 +62,7 @@ public class ZeroByteBuffer extends BaseBuffer {
      * In a ZeroByteBuffer, if the dimensions are right, the index is out of bounds anyway.
      */
     @Override
-    protected int calcIndex(int... indices) throws IndexOutOfBoundsException {
+    protected int byteIndex(int... indices) throws IndexOutOfBoundsException {
         // Bootless dimension check takes precedence (for consistency with other buffers)
         checkDimension(indices);
         // This causes all access to the bytes to throw (since BaseBuffer calls it).
@@ -79,28 +85,28 @@ public class ZeroByteBuffer extends BaseBuffer {
      * In a ZeroByteBuffer, there is simply nothing to copy.
      */
     @Override
-    public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
+    public void copyTo(int srcIndex, byte[] dest, int destPos, int count)
             throws IndexOutOfBoundsException, PyException {
         // Nothing to copy
     }
 
     /**
-     * In a ZeroByteBuffer, there is no room for anything, so this throws unless the source length
-     * is zero.
+     * In a ZeroByteBuffer, there is no room for anything, so this throws unless the source count is
+     * zero.
      */
     @Override
-    public void copyFrom(byte[] src, int srcPos, int destIndex, int length)
+    public void copyFrom(byte[] src, int srcPos, int destIndex, int count)
             throws IndexOutOfBoundsException, PyException {
         if (this.isReadonly()) {
             throw notWritable();
-        } else if (length > 0) {
+        } else if (count > 0) {
             throw new IndexOutOfBoundsException();
         }
     }
 
     /**
-     * In a ZeroByteBuffer, there is no room for anything, so this throws unless the source length
-     * is zero.
+     * In a ZeroByteBuffer, there is no room for anything, so this throws unless the source count is
+     * zero.
      */
     @Override
     public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
@@ -116,8 +122,8 @@ public class ZeroByteBuffer extends BaseBuffer {
      * as a result, with the export count incremented.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length) {
-        if (start == 0 && length <= 0) {
+    public PyBuffer getBufferSlice(int flags, int start, int count) {
+        if (start == 0 && count <= 0) {
             return this.getBuffer(flags);
         } else {
             throw new IndexOutOfBoundsException();
@@ -129,9 +135,9 @@ public class ZeroByteBuffer extends BaseBuffer {
      * as a result, with the export count incremented.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
-        // It can't matter what the stride is since length is zero, or there's an error.
-        return getBufferSlice(flags, start, length);
+    public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
+        // It can't matter what the stride is since count is zero, or there's an error.
+        return getBufferSlice(flags, start, count);
     }
 
     /**
@@ -175,7 +181,7 @@ public class ZeroByteBuffer extends BaseBuffer {
          */
         public View(PyBuffer root, int flags) {
             // Create a new ZeroByteBuffer on who-cares-what byte array
-            super(flags, root.isReadonly());
+            super(flags, root.isReadonly(), root.hasArray());
             // But we still have to get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }
