@@ -1242,7 +1242,7 @@ public class PyBufferTest {
 
     }
 
-    /** A class to act as an exporter that uses the RollYourOwnBuffer. */
+    /** A class to act as an exporter that uses the RollYourOwnArrayBuffer class. */
     private static class RollYourOwnExporter extends TestableExporter {
 
         protected byte[] storage;
@@ -1290,28 +1290,28 @@ public class PyBufferTest {
         }
 
         /**
-         * Construct a slice of a one-dimensional byte buffer.
+         * Construct a slice of a one-dimensional byte array.
          *
          * @param root on which release must be called when this is released
          * @param flags consumer requirements
          * @param storage raw byte array containing exported data
          * @param index0 index into storage of item[0]
-         * @param length number of items in the slice
+         * @param count number of items in the slice
          * @param stride in between successive elements of the new PyBuffer
          * @throws PyException (BufferError) when expectations do not correspond with the type
          */
         public RollYourOwnArrayBuffer(PyBuffer root, int flags, byte[] storage, int index0,
-                int length, int stride) throws ArrayIndexOutOfBoundsException,
-                NullPointerException, PyException {
+                int count, int stride) throws IndexOutOfBoundsException, NullPointerException,
+                PyException {
             // Client will need to navigate using shape and strides if this is a slice
             super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : PyBUF.STRIDES));
             this.storage = storage;
             this.index0 = index0;
-            shape = new int[] {length};
+            shape = new int[] {count};
             strides = new int[] {stride};
             // Check the potential index range
-            if (length > 0) {
-                int end = index0 + (length - 1) * stride;
+            if (count > 0) {
+                int end = index0 + (count - 1) * stride;
                 final int END = storage.length - 1;
                 if (index0 < 0 || index0 > END || end < 0 || end > END) {
                     throw new IndexOutOfBoundsException();
@@ -1367,6 +1367,5 @@ public class PyBufferTest {
                 PyException {
             storage[byteIndex] = value;
         }
-
     }
 }

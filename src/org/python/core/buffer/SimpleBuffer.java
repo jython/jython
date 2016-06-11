@@ -131,6 +131,8 @@ public class SimpleBuffer extends BaseArrayBuffer {
         return index0 + index;
     }
 
+    // XXX Consider moving to clauses in getBufferSlice(int, int, int, int)
+    // to avoid delegation loop where that delegates to this but in BaseBuffer the reverse.
     @Override
     public PyBuffer getBufferSlice(int flags, int start, int count) {
         if (count > 0) {

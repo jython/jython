@@ -9,8 +9,7 @@ import org.python.core.PyException;
 /**
  * Base implementation of the Buffer API for when the storage implementation is <code>byte[]</code>.
  * The description of {@link BaseBuffer} mostly applies. Methods provided or overridden here are
- * appropriate to 1-dimensional arrays backed by <code>byte[]</code>.
- *
+ * appropriate to 1-dimensional arrays, of any item size, backed by <code>byte[]</code>.
  */
 public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
 
@@ -275,5 +274,4 @@ public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
             }
         }
     }
-
 }
