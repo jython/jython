@@ -6,7 +6,7 @@ import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
 /**
- * Buffer API over a read-only one-dimensional array of one-byte items.
+ * Buffer API over a read-only one-dimensional <code>java.nio.ByteBuffer</code> of one-byte items.
  */
 
 public class SimpleNIOBuffer extends BaseNIOBuffer {
@@ -40,16 +40,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      */
     protected SimpleNIOBuffer(ByteBuffer storage, int index0, int size) throws PyException,
             ArrayIndexOutOfBoundsException {
-        super(storage, CONTIGUITY | SIMPLE);
-
-        // Initialise navigation
-        shape = new int[] {size};       // Number of items in exported data
-        strides = SIMPLE_STRIDES;
-        // suboffsets is always null for this type.
-
-        this.storage = storage;         // Exported data
-        this.index0 = index0;           // Index to be treated as item[0]
-
+        super(storage, CONTIGUITY | SIMPLE, index0, size, 1);
         // Check arguments using the "all non-negative" trick
         if ((index0 | size | storage.capacity() - (index0 + size)) < 0) {
             throw new ArrayIndexOutOfBoundsException();
@@ -181,11 +172,11 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
          * @param flags the request flags of the consumer that requested the slice
          * @param storage <code>ByteBuffer</code> wrapping exported data (no reference kept)
          * @param offset where the data starts in that buffer (item[0])
-         * @param size the number of bytes occupied
+         * @param count the number of items in the sliced view
          */
-        public SimpleView(PyBuffer root, int flags, ByteBuffer storage, int offset, int size) {
+        public SimpleView(PyBuffer root, int flags, ByteBuffer storage, int offset, int count) {
             // Create a new SimpleNIOBuffer on the buffer passed in (part of the root)
-            super(flags, storage, offset, size);
+            super(flags, storage, offset, count);
             // Get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }

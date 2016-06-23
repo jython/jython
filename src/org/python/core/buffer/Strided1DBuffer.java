@@ -58,12 +58,8 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      */
     protected Strided1DBuffer(byte[] storage, int index0, int count, int stride)
             throws ArrayIndexOutOfBoundsException, NullPointerException {
-        super(STRIDES);
-        this.storage = storage;         // Exported data
-        this.index0 = index0;           // Index to be treated as item[0]
-        this.shape = new int[] {count}; // Number of items in exported data
+        super(storage, STRIDES, index0, count, stride);
         this.stride = stride;           // Between items
-        this.strides = new int[] {stride};
 
         if (count == 0) {
             // Nothing to check as we'll make no accesses
@@ -114,7 +110,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * @param storage raw byte array containing exported data
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
-     * @param stride in between successive elements of the new PyBuffer
+     * @param stride byte-index distance from one element to the next in the new PyBuffer
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
@@ -196,14 +192,14 @@ public class Strided1DBuffer extends BaseArrayBuffer {
          * @param flags consumer requirements
          * @param storage raw byte array containing exported data
          * @param index0 index into storage of item[0]
-         * @param len number of items in the slice
+         * @param count number of items in the sliced view
          * @param stride in between successive elements of the new PyBuffer
          * @throws PyException (BufferError) when expectations do not correspond with the type
          */
-        public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int len, int stride)
-                throws PyException {
+        public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int count,
+                int stride) throws PyException {
             // Create a new on the buffer passed in (part of the root)
-            super(flags, storage, index0, len, stride);
+            super(flags, storage, index0, count, stride);
             // Get a lease on the root PyBuffer (read-only)
             this.root = root.getBuffer(FULL_RO);
         }

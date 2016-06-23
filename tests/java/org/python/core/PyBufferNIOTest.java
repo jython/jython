@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.junit.runners.Parameterized.Parameters;
 import org.python.core.ByteBufferTestSupport.ByteMaterial;
-import org.python.core.PyBufferTest.TestableExporter;
 import org.python.core.PyBufferTestSupport.ExporterFactory;
 import org.python.core.PyBufferTestSupport.TestSpec;
 import org.python.core.PyBufferTestSupport.WritableExporterFactory;
@@ -249,11 +248,10 @@ public class PyBufferNIOTest extends PyBufferTest {
                 int count, int stride) throws IndexOutOfBoundsException, NullPointerException,
                 PyException {
             // Client will need to navigate using shape and strides if this is a slice
-            super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : PyBUF.STRIDES));
+            super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : STRIDES), //
+                    index0, new int[] {count}, new int[] {stride});
             this.storage = storage.duplicate();
-            this.index0 = index0;
-            shape = new int[] {count};
-            strides = new int[] {stride};
+
             // Check the potential index range
             if (count > 0) {
                 int end = index0 + (count - 1) * stride;

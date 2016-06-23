@@ -9,27 +9,14 @@ import org.python.core.util.StringUtil;
  */
 public class SimpleBuffer extends BaseArrayBuffer {
 
-    /**
-     * Provide an instance of <code>SimpleBuffer</code> with navigation variables partly
-     * initialised, for sub-class use. One-dimensional arrays without strides are C- and
-     * F-contiguous. To complete initialisation, the sub-class must normally assign the buffer (
-     * {@link #storage}, {@link #index0}), and the navigation ({@link #shape} array), and then call
-     * {@link #checkRequestFlags(int)} passing the consumer's request flags.
-     */
-    protected SimpleBuffer() {
-        super(CONTIGUITY | SIMPLE);
-        // Initialise navigation
-        shape = new int[1];
-        strides = CONTIG_STRIDES;
-        // suboffsets is always null for this type.
-    }
 
     /**
      * Provide an instance of <code>SimpleBuffer</code> with navigation variables initialised, for
      * sub-class use. The buffer ({@link #storage}, {@link #index0}), and the {@link #shape} array
-     * will be initialised from the arguments (which are checked for range). The {@link #strides} is
-     * set for (one-byte) unit stride. Only the call to {@link #checkRequestFlags(int)}, passing the
-     * consumer's request flags really remains for the sub-class constructor to do.
+     * will be initialised from the arguments (which are not checked for range). The
+     * {@link #strides} is set for a one-byte stride. Only the call to
+     * {@link #checkRequestFlags(int)}, passing the consumer's request flags really remains for the
+     * sub-class constructor to do.
      *
      * <pre>
      * super(storage, index0, size);
@@ -40,21 +27,10 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * @param index0 offset where the data starts in that array (item[0])
      * @param size the number of bytes occupied
      * @throws NullPointerException if <code>storage</code> is null
-     * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
-     *             inconsistent with <code>storage.length</code>
      */
     protected SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
             ArrayIndexOutOfBoundsException {
-        this();
-        this.storage = storage;         // Exported data
-        // Initialise navigation
-        this.index0 = index0;           // Index to be treated as item[0]
-        shape[0] = size;                // Number of items in exported data
-
-        // Check arguments using the "all non-negative" trick
-        if ((index0 | size | storage.length - (index0 + size)) < 0) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+        super(storage, CONTIGUITY | SIMPLE, index0, size, 1);
     }
 
     /**
@@ -75,6 +51,10 @@ public class SimpleBuffer extends BaseArrayBuffer {
             ArrayIndexOutOfBoundsException, NullPointerException {
         this(storage, index0, size);    // Construct checked SimpleBuffer
         checkRequestFlags(flags);       // Check request is compatible with type
+        // Check arguments using the "all non-negative" trick
+        if ((index0 | size | storage.length - (index0 + size)) < 0) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
     }
 
     /**

@@ -11,7 +11,7 @@ import org.python.core.PyException;
  * The description of {@link BaseBuffer} mostly applies. Methods provided or overridden here are
  * appropriate to 1-dimensional arrays, of any item size, backed by <code>byte[]</code>.
  */
-public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
+public abstract class BaseArrayBuffer extends Base1DBuffer {
 
     /**
      * Reference to the underlying <code>byte[]</code> storage that the exporter is sharing with the
@@ -24,29 +24,24 @@ public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
 
     /**
      * Construct an instance of <code>BaseArrayBuffer</code> in support of a sub-class, specifying
-     * the 'feature flags', or at least a starting set to be adjusted later. These are the features
-     * of the buffer exported, not the flags that form the consumer's request. The buffer will be
-     * read-only unless {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} and
-     * {@link PyBUF#AS_ARRAY} are implicitly added to the feature flags. The navigation arrays are
-     * all null, awaiting action by the sub-class constructor. To complete initialisation, the
-     * sub-class normally must assign: the buffer ( {@link #storage}, {@link #index0}), and the
-     * navigation arrays ({@link #shape}, {@link #strides}), and call
-     * {@link #checkRequestFlags(int)} passing the consumer's request flags.
+     * the 'feature flags', or at least a starting set to be adjusted later. Also specify the
+     * navigation ( {@link #index0}, number of elements, and stride. These 'feature flags' are the
+     * features of the buffer exported, not the flags that form the consumer's request. The buffer
+     * will be read-only unless {@link PyBUF#WRITABLE} is set. {@link PyBUF#FORMAT} and
+     * {@link PyBUF#AS_ARRAY} are implicitly added to the feature flags.
+     * <p>
+     * To complete initialisation, the sub-class normally must call {@link #checkRequestFlags(int)}
+     * passing the consumer's request flags.
      *
-     * @param featureFlags bit pattern that specifies the actual features allowed/required
+     * @param storage the array of bytes storing the implementation of the exporting object
+     * @param featureFlags bit pattern that specifies the features allowed
+     * @param index0 index into storage of <code>item[0]</code>
+     * @param size number of elements in the view
+     * @param stride byte-index distance from one element to the next
      */
-    protected BaseArrayBuffer(int featureFlags) {
-        super(featureFlags | AS_ARRAY);
-    }
-
-    @Override
-    protected int getSize() {
-        return shape[0];
-    }
-
-    @Override
-    public int getLen() {
-        return shape[0] * getItemsize();
+    protected BaseArrayBuffer(byte[] storage, int featureFlags, int index0, int size, int stride) {
+        super(featureFlags | AS_ARRAY, index0, size, stride);
+        this.storage = storage;
     }
 
     @Override
@@ -66,38 +61,6 @@ public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
         // BaseBuffer implementation can be simplified since if indices.length!=1 we error.
         checkDimension(indices.length); // throws if != 1
         return byteIndex(indices[0]);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Specialised to one-dimensional, possibly strided buffer.
-     */
-    @Override
-    protected int calcGreatestIndex() {
-        int stride = strides[0];
-        if (stride == 1) {
-            return index0 + shape[0] - 1;
-        } else if (stride > 0) {
-            return index0 + (shape[0] - 1) * stride;
-        } else {
-            return index0 - 1;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Specialised to one-dimensional, possibly strided buffer.
-     */
-    @Override
-    protected int calcLeastIndex() {
-        int stride = strides[0];
-        if (stride < 0) {
-            return index0 + (shape[0] - 1) * stride;
-        } else {
-            return index0;
-        }
     }
 
     /**
@@ -255,23 +218,5 @@ public abstract class BaseArrayBuffer extends BaseBuffer implements PyBuffer {
     @Override
     public Pointer getBuf() {
         return new Pointer(storage, index0);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Specialised in <code>BaseArrayBuffer</code> to one dimension.
-     */
-    @Override
-    public boolean isContiguous(char order) {
-        if ("CFA".indexOf(order) < 0) {
-            return false;
-        } else {
-            if (getShape()[0] < 2) {
-                return true;
-            } else {
-                return getStrides()[0] == getItemsize();
-            }
-        }
     }
 }

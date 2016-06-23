@@ -16,22 +16,22 @@ import org.python.core.PyException;
  * unglamorous common code need only be implemented once.
  * <p>
  * This class leaves undefined the storage mechanism for the bytes (typically <code>byte[]</code> or
- * <code>java.nio.ByteBuffer</code>). A concrete class that extends this one must provide elementary
- * accessors {@link #byteAtImpl(int)}, {@link #storeAtImpl(byte, int)} that abstract this storage, a
- * factory {@link #getNIOByteBufferImpl()} for <code>ByteBuffer</code>s that wrap the storage, and a
- * factory for slices {@link #getBufferSlice(int, int, int, int)}. The constructor must specify the
- * feature flags (see {@link #BaseBuffer(int)}), set {@link #index0}, {@link #shape} and
- * {@link #strides}, and finally check the client capabilities with {@link #checkRequestFlags(int)}.
- * Sub-classes intended to represent slices of exporters that must count their exports as part of a
- * locking protocol, as does <code>bytearray</code>, must override {@link #getRoot()} so that a
- * buffer view {@link #release()} on a slice, propagates to the buffer view that provided it.
+ * <code>java.nio.ByteBuffer</code>), while remaining definite that it is an indexable sequence of
+ * bytes. A concrete class that extends this one must provide elementary accessors
+ * {@link #byteAtImpl(int)}, {@link #storeAtImpl(byte, int)} that abstract this storage, a factory
+ * {@link #getNIOByteBufferImpl()} for <code>ByteBuffer</code>s that wrap the storage, and a factory
+ * for slices {@link #getBufferSlice(int, int, int, int)}.
+ * <p>
+ * The sub-class constructor must specify the feature flags (see {@link #BaseBuffer(int)}), set
+ * {@link #index0}, {@link #shape} and {@link #strides}, and finally check the client capabilities
+ * with {@link #checkRequestFlags(int)}. Sub-classes intended to represent slices of exporters that
+ * must count their exports as part of a locking protocol, as does <code>bytearray</code>, must
+ * override {@link #getRoot()} so that a buffer view {@link #release()} on a slice, propagates to
+ * the buffer view that provided it.
  * <p>
  * Access methods provided here necessarily work with the abstracted {@link #byteAtImpl(int)},
  * {@link #storeAtImpl(byte, int)} interface, but subclasses are able to override them with more
- * efficient versions that employ knowledge of the particular storage type used. The provided buffer
- * access methods may be restricted to 1-dimensional arrays where the units are single bytes, stored
- * contiguously. Sub-classes that deal with N-dimensional arrays, non-contiguous storage and items
- * that are not single bytes must sometimes override the default implementations.
+ * efficient versions that employ knowledge of the particular storage type used.
  * <p>
  * This base implementation is writable only if {@link PyBUF#WRITABLE} is in the feature flags
  * passed to the constructor. Otherwise, all methods for write access raise a <code>TypeError</code>
@@ -58,11 +58,6 @@ public abstract class BaseBuffer implements PyBuffer {
      * CPython). This value is returned by {@link #getStrides()}.
      */
     protected int[] strides;
-
-    /**
-     * The strides array for a contiguous byte buffer..
-     */
-    protected static final int[] CONTIG_STRIDES = {1};
 
     /**
      * Absolute byte-index in the storage of <code>item[0]</code>. In one dimension, for a positive
@@ -124,19 +119,25 @@ public abstract class BaseBuffer implements PyBuffer {
 
     /**
      * Construct an instance of <code>BaseBuffer</code> in support of a sub-class, specifying the
-     * 'feature flags', or at least a starting set to be adjusted later. These are the features of
-     * the buffer exported, not the flags that form the consumer's request. The buffer will be
-     * read-only unless {@link PyBUF#WRITABLE} is set in the feature flags. {@link PyBUF#FORMAT} is
-     * implicitly added to the feature flags. The navigation arrays are all null, awaiting action by
-     * the sub-class constructor. To complete initialisation, the sub-class normally must create its
-     * own wrapped byte-storage, assign {@link #index0}) and the navigation arrays ( {@link #shape},
-     * {@link #strides}), and call {@link #checkRequestFlags(int)} passing the consumer's request
-     * flags.
+     * 'feature flags', or at least a starting set to be adjusted later. Also specify the navigation
+     * ( {@link #index0}, {@link #shape}, and {@link #strides}). These 'feature flags' are the
+     * features of the buffer exported, not the flags that form the consumer's request. The buffer
+     * will be read-only unless {@link PyBUF#WRITABLE} is set. {@link PyBUF#FORMAT} is implicitly
+     * added to the feature flags.
+     * <p>
+     * To complete initialisation, the sub-class normally must create its own wrapped byte-storage,
+     * and call {@link #checkRequestFlags(int)} passing the consumer's request flags.
      *
-     * @param featureFlags bit pattern that specifies the actual features allowed/required
+     * @param featureFlags bit pattern that specifies the features allowed
+     * @param index0 index into storage of <code>item[0,...,0]</code>
+     * @param shape elements in each dimension
+     * @param strides between successive elements in each dimension
      */
-    protected BaseBuffer(int featureFlags) {
+    protected BaseBuffer(int featureFlags, int index0, int[] shape, int[] strides) {
         setFeatureFlags(featureFlags | FORMAT);
+        this.index0 = index0;
+        this.shape = shape;
+        this.strides = strides;
     }
 
     /**
@@ -636,7 +637,7 @@ public abstract class BaseBuffer implements PyBuffer {
         // The buffer spans the whole storage
         ByteBuffer b = getNIOByteBufferImpl();
         // For the one-dimensional contiguous case it makes sense to set the limit:
-        if (shape.length == 1) {
+        if (shape.length == 1 && isContiguous('A')) {
             int stride = strides[0];
             if (getItemsize() == stride) {
                 b.limit(index0 + shape[0] * stride);
@@ -707,8 +708,8 @@ public abstract class BaseBuffer implements PyBuffer {
         /*
          * If we were to compute the strides array for a C-contiguous array, the last stride would
          * equal the item size, and generally stride[k-1] = shape[k]*stride[k]. This is the basis of
-         * the test. However, note that for any k where shape[k]==1 there is no "next sub-array"
-         * and no discontiguity.
+         * the test. However, note that for any k where shape[k]==1 there is no "next sub-array" and
+         * no discontiguity.
          */
         final int N = shape.length;
         /*
@@ -731,16 +732,16 @@ public abstract class BaseBuffer implements PyBuffer {
 
     private boolean isFortranContiguous() {
         /*
-         * If we were to compute the strides array for a Fortran-contiguous array, the first stride would
-         * equal the item size, and generally stride[k+1] = shape[k]*stride[k]. This is the basis of
-         * the test. However, note that for any k where shape[k]==1 there is no "next sub-array"
-         * and no discontiguity.
+         * If we were to compute the strides array for a Fortran-contiguous array, the first stride
+         * would equal the item size, and generally stride[k+1] = shape[k]*stride[k]. This is the
+         * basis of the test. However, note that for any k where shape[k]==1 there is no
+         * "next sub-array" and no discontiguity.
          */
         final int N = shape.length;
         /*
          * size is the stride in bytes-index from item[0,...,0,ik,0,...,0] to
-         * item[0,...,0,ik+1,0,...,0]. Start the iteration at k=0. An increment of one
-         * in the first index makes a stride of the item size.
+         * item[0,...,0,ik+1,0,...,0]. Start the iteration at k=0. An increment of one in the first
+         * index makes a stride of the item size.
          */
         int size = getItemsize();
         for (int k = 0; k < N; k++) {

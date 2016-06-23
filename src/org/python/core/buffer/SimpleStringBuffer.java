@@ -34,10 +34,9 @@ public class SimpleStringBuffer extends SimpleBuffer {
          * Leaving storage=null is ok because we carefully override every method that uses it,
          * deferring creation of the storage byte array until we absolutely must have one.
          */
-        super();
+        super(null, 0, bufString.length());
         // Save the backing string
         this.bufString = bufString;
-        shape[0] = bufString.length();
         // Check request is compatible with type
         checkRequestFlags(flags);
     }

@@ -17,9 +17,6 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
     /** Shared instance of a zero-length storage. */
     private static final byte[] EMPTY = new byte[0];
 
-    /** Array containing a single zero for the length */
-    protected static final int[] SHAPE = {0};
-
     /**
      * Construct an instance of a zero-length buffer, choosing whether it should report itself to be
      * read-only through {@link #isReadonly()} or as having a backing array through
@@ -33,10 +30,7 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
      * @throws PyException (BufferError) when client expectations do not correspond with the type
      */
     public ZeroByteBuffer(int flags, boolean readonly, boolean hasArray) throws PyException {
-        super(CONTIGUITY | (readonly ? 0 : WRITABLE));
-        this.storage = EMPTY;                       // Empty array
-        this.shape = SHAPE;                         // {0}
-        this.strides = BaseBuffer.CONTIG_STRIDES; // {1}
+        super(EMPTY, CONTIGUITY | (readonly ? 0 : WRITABLE), 0, 0, 1);
         if (!hasArray) {
             // super() knows we have an array, but this truth is inconvenient here.
             removeFeatureFlags(AS_ARRAY);
