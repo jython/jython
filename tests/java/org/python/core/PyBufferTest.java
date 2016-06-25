@@ -21,6 +21,7 @@ import org.python.core.PyBufferTestSupport.ExporterFactory;
 import org.python.core.PyBufferTestSupport.ReadonlyExporterFactory;
 import org.python.core.PyBufferTestSupport.SlicedTestSpec;
 import org.python.core.PyBufferTestSupport.TestSpec;
+import org.python.core.PyBufferTestSupport.TestSpec.ObjectAndView;
 import org.python.core.PyBufferTestSupport.WritableExporterFactory;
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleBuffer;
@@ -130,14 +131,7 @@ public class PyBufferTest {
 
         // Tests using local types of exporter
 
-        ExporterFactory simpleExporter = new ReadonlyExporterFactory() {
-
-            @Override
-            public BufferProtocol make(ByteMaterial m) {
-                return new SimpleExporter(m.getBytes());
-            }
-
-        };
+        ExporterFactory simpleExporter = new SimpleExporterFactory();
         s.add(simpleExporter, byteMaterial);
 
         ExporterFactory simpleWritableExporter = new WritableExporterFactory() {
@@ -554,6 +548,134 @@ public class PyBufferTest {
             // Should fail (write operation)
             try {
                 view.copyFrom(src, srcPos, destIndex, length);
+                fail("Write access not prevented: " + spec);
+            } catch (PyException pye) {
+                // Expect TypeError only if the buffer was readonly
+                assertEquals(Py.TypeError, pye.type);
+            }
+        }
+    }
+
+    /** Test method for {@link org.python.core.PyBuffer#copyFrom(byte[], int, int, int)}. */
+    @Test
+    public void testCopyFromPyBuffer() {
+        announce("copyFrom");
+
+        /*
+         * The test material (this time) presents a view that has n items of size i, that are spaced
+         * in the underlying buffer with stride s.
+         */
+        int n = spec.ref.length;
+        int s = spec.getStride();
+        int i = spec.getItemsize(); // = 1 in all test cases at time of writing
+
+        // The material we copy to it should have these strides:
+        int[] srcStrides;
+        if (n < 2) {
+            srcStrides = new int[] {i};
+        } else if (s > 2 * i || s < -2 * i) {
+            srcStrides = new int[] {i, s - i, s, s + i, -s + i, -s, -s - i};
+        } else if (s == 2 * i || s == -2 * i) {
+            srcStrides = new int[] {i, 2 * i, 3 * i, -i, -2 * i, -3 * i};
+        } else { // ( s==i || s==-i )
+            srcStrides = new int[] {i, 2 * i, -i, -2 * i};
+        }
+
+        // Also need the maximum absolute value
+        int maxStride = 0;
+        for (int t : srcStrides) {
+            if (t > maxStride) {
+                maxStride = t;
+            } else if (-t > maxStride) {
+                maxStride = -t;
+            }
+        }
+
+        // And these offsets to the lowest-indexed source item
+        int maxOffset = n + 1;
+        int[] srcOffsets = new int[] {0, (maxOffset + 1) / 3, maxOffset};
+
+        // Make the source material to copy from, big enough to accommodate n strides
+        int srcMaterialSize = n * maxStride + maxOffset;
+        ByteMaterial srcMaterial = new ByteMaterial(48, srcMaterialSize, i);
+
+        /*
+         * Now we need a series of PyBuffer views on the source data, sliced and offset according to
+         * the offset and stride values we have enumerated. We'd like to use the same factory as the
+         * current test view (this.view), because copy from its own type might be optimised, and a
+         * different, bog-standard factory to test the general case.
+         */
+        ExporterFactory[] factories = {spec.factory, new SimpleExporterFactory()};
+
+        for (ExporterFactory factory : factories) {
+
+            /*
+             * We'll use the same apparatus to create the source buffer as we use to make the test
+             * cases. The specifications for them will all be derived from this one:
+             */
+            TestSpec original = new TestSpec(factory, srcMaterial);
+
+            /*
+             * Do this where the pattern of indices constituting src overlaps (or not) the pattern
+             * of view in challenging ways, including greater and smaller strides.
+             */
+
+            for (int stride : srcStrides) {
+                for (int offset : srcOffsets) {
+                    int start = (stride > 0) ? offset : srcMaterialSize - offset - i;
+                    doTestCopyFrom(original, start, n, stride);
+                }
+            }
+        }
+
+    }
+
+    // XXX Separately test where src is a view on is the same object.
+
+
+
+    /** Helper function for {@link #testCopyFromPyBuffer()}
+     */
+    private void doTestCopyFrom(TestSpec original, int start, int n, int stride) {
+
+        // Derive sliced test material from the original
+        TestSpec srcSpec = new SlicedTestSpec(original, 1, start, n, stride);
+        ObjectAndView pair = srcSpec.makePair();
+        PyBuffer src = pair.view;
+        byte[] srcBytes = srcSpec.ref.bytes;
+
+        // And for the test object
+        int s = spec.getStart();
+        int p = spec.getStride();
+        String srcName = pair.obj.getClass().getSimpleName();
+        if (verbosity > 1) {
+            System.out.printf("  copy src[%d:%d:%d] %s(%d) to obj[%d:%d:%d]\n",
+                    start, start+n*stride, stride, srcName,
+                    n, s, s + n * p, p);
+        }
+
+        // Initialise the destination object and view (have to do each time) from spec
+        createObjAndView();
+
+        // Our test is against the underlying object of which the view may be a slice
+        TestSpec underlying = spec.getOriginal();
+        PyBuffer underlyingView = obj.getBuffer(underlying.flags & ~PyBUF.WRITABLE);
+        byte[] before = bytesFromByteAt(underlyingView);
+
+        if (!spec.readonly) {
+            // This is the call we are testing (a write operation).
+            view.copyFrom(src);
+
+            // Our test is against the underlying object of which the view may be a slice
+            byte[] after = bytesFromByteAt(underlyingView);
+
+            // Test that the corresponding bytes of the underlying object match data copied in
+            ByteBufferTestSupport.checkWriteCorrect(before, after, srcBytes, 0, n, 1, s, p);
+
+        } else {
+            // Should fail (write operation)
+            try {
+                view.copyFrom(src);
                 fail("Write access not prevented: " + spec);
             } catch (PyException pye) {
                 // Expect TypeError only if the buffer was readonly
@@ -1112,6 +1234,16 @@ public class PyBufferTest {
         @Override
         public PyBuffer getBuffer(int flags) {
             return new SimpleBuffer(flags, storage);
+        }
+
+    }
+
+    /** A factory for SimpleBuffer objects used in genTestSpects and some tests. */
+    private static class SimpleExporterFactory extends ReadonlyExporterFactory {
+
+        @Override
+        public BufferProtocol make(ByteMaterial m) {
+            return new SimpleExporter(m.getBytes());
         }
 
     }

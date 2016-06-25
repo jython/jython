@@ -467,19 +467,19 @@ public class PyBufferTestSupport {
          * specification.
          *
          * @param parent specification of byte buffer to slice
-         * @param size number of consecutive bytes forming one item
+         * @param itemsize number of consecutive bytes forming one item
          * @param first byte-index in the parent of byte 0 of item 0 the result
          * @param count number of items in the slice
          * @param step byte-index increment in the parent between items
          */
-        SlicedTestSpec(TestSpec parent, int size, int first, int count, int step) {
-            super(parent, parent.ref.slice(size, first, count, step), new int[] {count},
+        SlicedTestSpec(TestSpec parent, int itemsize, int first, int count, int step) {
+            super(parent, parent.ref.slice(itemsize, first, count, step), new int[] {count},
                     new int[1], strided1DFlags, strided1DTassles);
             // It only seems to make sense for byte-array parent (or does all scale?)
             if (parent.getItemsize() != 1) {
                 throw new IllegalArgumentException("Only byte-array parent supported");
             }
-            this.itemsize = size;
+            this.itemsize = itemsize;
             // Write these down verbatim for subsequent call to getBufferSlice
             this.first = first;
             this.count = count;

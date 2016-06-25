@@ -531,6 +531,7 @@ public abstract class BaseBuffer implements PyBuffer {
     @Override
     public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
 
+        checkDimension(1);
         checkWritable();
 
         int itemsize = getItemsize();
