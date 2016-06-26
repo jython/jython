@@ -556,38 +556,37 @@ public class PyBufferTest {
         }
     }
 
-    /** Test method for {@link org.python.core.PyBuffer#copyFrom(byte[], int, int, int)}. */
+    /** Test method for {@link org.python.core.PyBuffer#copyFrom(PyBuffer)}. */
     @Test
     public void testCopyFromPyBuffer() {
-        announce("copyFrom");
+        announce("copyFrom (PyBuffer)");
 
         /*
          * The test material (this time) presents a view that has n items of size i, that are spaced
          * in the underlying buffer with stride s.
          */
-        int n = spec.ref.length;
-        int s = spec.getStride();
-        int i = spec.getItemsize(); // = 1 in all test cases at time of writing
+        final int n = spec.ref.length;
+        final int p = spec.getStride();
 
         // The material we copy to it should have these strides:
         int[] srcStrides;
         if (n < 2) {
-            srcStrides = new int[] {i};
-        } else if (s > 2 * i || s < -2 * i) {
-            srcStrides = new int[] {i, s - i, s, s + i, -s + i, -s, -s - i};
-        } else if (s == 2 * i || s == -2 * i) {
-            srcStrides = new int[] {i, 2 * i, 3 * i, -i, -2 * i, -3 * i};
-        } else { // ( s==i || s==-i )
-            srcStrides = new int[] {i, 2 * i, -i, -2 * i};
+            srcStrides = new int[] {1};
+        } else if (p > 2 || p < -2) {
+            srcStrides = new int[] {1, p - 1, p, p + 1, -p + 1, -p, -p - 1};
+        } else if (p == 2 || p == -2) {
+            srcStrides = new int[] {1, 2, 3, -1, -2, -3};
+        } else { // ( s==1 || s==-1 )
+            srcStrides = new int[] {1, 2, -1, -2};
         }
 
         // Also need the maximum absolute value
         int maxStride = 0;
-        for (int t : srcStrides) {
-            if (t > maxStride) {
-                maxStride = t;
-            } else if (-t > maxStride) {
-                maxStride = -t;
+        for (int stride : srcStrides) {
+            if (stride > maxStride) {
+                maxStride = stride;
+            } else if (-stride > maxStride) {
+                maxStride = -stride;
             }
         }
 
@@ -597,7 +596,7 @@ public class PyBufferTest {
 
         // Make the source material to copy from, big enough to accommodate n strides
         int srcMaterialSize = n * maxStride + maxOffset;
-        ByteMaterial srcMaterial = new ByteMaterial(48, srcMaterialSize, i);
+        ByteMaterial srcMaterial = new ByteMaterial(48, srcMaterialSize, 1);
 
         /*
          * Now we need a series of PyBuffer views on the source data, sliced and offset according to
@@ -608,21 +607,18 @@ public class PyBufferTest {
         ExporterFactory[] factories = {spec.factory, new SimpleExporterFactory()};
 
         for (ExporterFactory factory : factories) {
-
             /*
              * We'll use the same apparatus to create the source buffer as we use to make the test
              * cases. The specifications for them will all be derived from this one:
              */
             TestSpec original = new TestSpec(factory, srcMaterial);
-
             /*
              * Do this where the pattern of indices constituting src overlaps (or not) the pattern
              * of view in challenging ways, including greater and smaller strides.
              */
-
             for (int stride : srcStrides) {
                 for (int offset : srcOffsets) {
-                    int start = (stride > 0) ? offset : srcMaterialSize - offset - i;
+                    int start = (stride > 0) ? offset : srcMaterialSize - offset - 1;
                     doTestCopyFrom(original, start, n, stride);
                 }
             }
@@ -630,12 +626,7 @@ public class PyBufferTest {
 
     }
 
-    // XXX Separately test where src is a view on is the same object.
-
-
-
-    /** Helper function for {@link #testCopyFromPyBuffer()}
-     */
+    /** Helper function for {@link #testCopyFromPyBuffer()} */
     private void doTestCopyFrom(TestSpec original, int start, int n, int stride) {
 
         // Derive sliced test material from the original
@@ -649,9 +640,11 @@ public class PyBufferTest {
         int p = spec.getStride();
         String srcName = pair.obj.getClass().getSimpleName();
         if (verbosity > 1) {
-            System.out.printf("  copy src[%d:%d:%d] %s(%d) to obj[%d:%d:%d]\n",
-                    start, start+n*stride, stride, srcName,
-                    n, s, s + n * p, p);
+            int end = start + (n - 1) * stride + (stride > 0 ? 1 : -1);
+            int e = s + (n - 1) * p + (p > 0 ? 1 : -1);
+            System.out.printf("  copy from src[%d:%d:%d] %s(%d) to obj[%d:%d:%d]\n", //
+                    start, end, stride, srcName, n, //
+                    s, e, p);
         }
 
         // Initialise the destination object and view (have to do each time) from spec
@@ -681,6 +674,112 @@ public class PyBufferTest {
                 // Expect TypeError only if the buffer was readonly
                 assertEquals(Py.TypeError, pye.type);
             }
+        }
+    }
+
+    /** Test method for {@link org.python.core.PyBuffer#copyFrom(PyBuffer)} when source is same. */
+    @Test
+    public void testCopyFromSelf() {
+        announce("copyFrom (self)");
+
+        // The test material (this time) presents a view of n bytes from a buffer of L bytes.
+        final int n = ref.length;
+        TestSpec original = spec.getOriginal();
+        if (spec.readonly || spec == original || n < 1) {
+            // We're only testing with sliced writable views
+            return;
+        }
+        final int p = spec.getStride();
+        final int L = original.ref.length;
+
+        /*
+         * We want to make another sliced view on the same test object, with the same number of
+         * items n, but different stride and/or offset. Strides above, equal to and below (if
+         * possible) the destination stride are of interest.
+         */
+        int[] srcStrides;
+        if (n < 2) {
+            srcStrides = new int[] {1};
+        } else if (p > 2 || p < -2) {
+            srcStrides = new int[] {1, p - 1, p, p + 1, -p + 1, -p, -p - 1};
+        } else if (p == 2 || p == -2) {
+            srcStrides = new int[] {1, 2, 3, -1, -2, -3};
+        } else { // ( p==1 || p==-1 )
+            srcStrides = new int[] {1, 2, -1, -2};
+        }
+
+        for (int srcStride : srcStrides) {
+            int absStride;
+            if (srcStride > 0) {
+                absStride = srcStride;
+                /*
+                 * Compute the highest start index such that we can fit n items spaced at absStride
+                 * into the buffer before reaching the end.
+                 */
+                int maxOffset = L - 1 - absStride * (n - 1);
+                // There might not be such an start. If there is, we can do one or more tests.
+                if (maxOffset >= 0) {
+                    // A positive-stepping slice could fit, for some start positions
+                    int incOffset = 1 + maxOffset / 4;
+                    for (int srcOffset = 0; srcOffset <= maxOffset; srcOffset += incOffset) {
+                        doTestCopyFromSelf(srcOffset, srcStride, n);
+                    }
+                }
+            } else {// srcStride < 0
+                absStride = -srcStride;
+                /*
+                 * Compute the lowest start index such that we can fit n items spaced at absStride
+                 * into the buffer before reaching the beginning.
+                 */
+                int minOffset = absStride * (n - 1) + 1;
+                // There might not be such an start. If there is, we can do one or more tests.
+                if (minOffset < L) {
+                    // A negative-stepping slice could fit, for some start positions
+                    int incOffset = 1 + (L - 1 - minOffset) / 4;
+                    for (int srcOffset = L - 1; srcOffset > minOffset; srcOffset -= incOffset) {
+                        doTestCopyFromSelf(srcOffset, srcStride, n);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Helper function for {@link #testCopyFromPyBuffer()} */
+    private void doTestCopyFromSelf(int srcStart, int srcStride, int n) {
+
+        // Initialise the destination object and view (have to do each time) from spec
+        createObjAndView();
+
+        // Report the slice of the test object we are writing
+        int dstStart = spec.getStart();
+        int dstStride = spec.getStride();
+        String srcName = obj.getClass().getSimpleName();
+        if (verbosity > 1) {
+            int srcEnd = srcStart + (n - 1) * srcStride + (srcStride > 0 ? 1 : -1);
+            int dstEnd = dstStart + (n - 1) * dstStride + (dstStride > 0 ? 1 : -1);
+            System.out.printf("  copy from obj[%d:%d:%d] %s(%d) to obj[%d:%d:%d]\n", //
+                    srcStart, srcEnd, srcStride, srcName, n, //
+                    dstStart, dstEnd, dstStride);
+        }
+        assert !spec.readonly;  // Test is only called if writable
+
+        // Our test is against the underlying object of which the view may be a slice
+        try (PyBuffer underlying = obj.getBuffer(PyBUF.FULL_RO)) {
+
+            // Take a snapshot before the call
+            byte[] before = bytesFromByteAt(underlying);
+
+            // Take the required slice-view to use as the source.
+            PyBuffer src = underlying.getBufferSlice(PyBUF.FULL_RO, srcStart, n, srcStride);
+            byte[] srcBytes = bytesFromByteAt(src);
+
+            // This is the call we are testing (a write operation).
+            view.copyFrom(src);
+
+            // Test that the corresponding bytes of the underlying object match data copied in
+            byte[] after = bytesFromByteAt(underlying);
+            ByteBufferTestSupport.checkWriteCorrect(before, after, srcBytes, 0, n, 1, dstStart,
+                    dstStride);
         }
     }
 

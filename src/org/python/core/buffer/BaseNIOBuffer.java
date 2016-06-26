@@ -221,61 +221,6 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * The default implementation in <code>BaseNIOBuffer</code> deals with the general
-     * one-dimensional case.
-     */
-    @Override
-    public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
-
-        int length = getLen();
-        int itemsize = getItemsize();
-
-        // Valid operation only if writable and same length and itemsize
-        checkWritable();
-        if (src.getLen() != length || src.getItemsize() != itemsize) {
-            throw differentStructure();
-        }
-
-        if (length > 0) {
-            // Pick up attributes necessary to choose an efficient copy strategy
-            int stride = getStrides()[0];
-            int skip = stride - itemsize;
-
-            ByteBuffer dst = getNIOByteBuffer();
-
-            // Strategy depends on whether destination items are laid end-to-end or there are gaps
-            if (skip == 0) {
-                // Straight copy to contiguous bytes
-                for (int i = 0; i < length; i++) {
-                    dst.put(src.byteAt(i));
-                }
-
-            } else if (itemsize == 1) {
-                // Non-contiguous copy: single byte items
-                int pos = dst.position();
-                for (int i = 0; i < length; i++) {
-                    dst.put(pos, src.byteAt(i));
-                    pos += stride;
-                }
-
-            } else {
-                // Non-contiguous copy: each time, and itemsize > 1
-                int pos = dst.position();
-                int s = 0;
-                for (int i = 0; i < length; i++) {
-                    for (int j = 0; j < itemsize; j++) {
-                        dst.put(pos++, src.byteAt(s++));
-                    }
-                    pos += skip;
-                }
-            }
-        }
-
-    }
-
     @Override
     protected ByteBuffer getNIOByteBufferImpl() {
         return storage.duplicate();

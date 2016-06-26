@@ -536,18 +536,21 @@ public abstract class BaseBuffer implements PyBuffer {
 
         int itemsize = getItemsize();
         int count = getSize();
+        int byteLen = src.getLen();
 
         // Block operation if different item or overall size (permit reshape)
-        if (src.getItemsize() != itemsize || src.getLen() != count * itemsize) {
+        if (src.getItemsize() != itemsize || byteLen != count * itemsize) {
             throw differentStructure();
         }
 
-        // XXX Re-think this using ByteBuffer when the API provides a byteIndex() method
-        assert itemsize == 1;
-        // XXX This only moves the first byte of each item
-        for (int i = 0; i < count; i++) {
-            storeAt(src.byteAt(i), i);
-        }
+        /*
+         * It is not possible in general to know that this and src do not share storage. There is
+         * always a risk of incorrect results if we do not go via an intermediate byte array.
+         * Sub-classes may be able to avoid this.
+         */
+        byte[] t = new byte[byteLen];
+        src.copyTo(t, 0);
+        this.copyFrom(t, 0, 0, count);
     }
 
     @Override

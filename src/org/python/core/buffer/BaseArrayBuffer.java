@@ -113,6 +113,23 @@ public abstract class BaseArrayBuffer extends Base1DBuffer {
     @Override
     public void copyFrom(byte[] src, int srcPos, int destIndex, int count)
             throws IndexOutOfBoundsException, PyException {
+        copyFrom(src, srcPos, 1, destIndex, count);
+    }
+
+    /**
+     * Generalisation of {@link PyBuffer#copyFrom(byte[], int, int, int)} to allow a stride within
+     * the source array.
+     *
+     * @param src source byte array
+     * @param srcPos byte-index location in source of first byte to copy
+     * @param srcStride byte-index increment from one item to the next
+     * @param destIndex starting item-index in the destination (i.e. <code>this</code>)
+     * @param count number of items to copy in
+     * @throws IndexOutOfBoundsException if access out of bounds in source or destination
+     * @throws PyException (TypeError) if read-only buffer
+     */
+    protected void copyFrom(byte[] src, int srcPos, int srcStride, int destIndex, int count)
+            throws IndexOutOfBoundsException, PyException {
 
         checkWritable();
 
@@ -123,16 +140,19 @@ public abstract class BaseArrayBuffer extends Base1DBuffer {
             int skip = stride - itemsize;
             int d = byteIndex(destIndex);
 
+            int srcSkip = srcStride - itemsize;
+
             // Strategy depends on whether items are laid end-to-end or there are gaps
-            if (skip == 0) {
+            if (skip == 0 && srcSkip == 0) {
                 // Straight copy of contiguous bytes
                 System.arraycopy(src, srcPos, storage, d, count * itemsize);
             } else {
-                // Non-contiguous copy: single byte items
                 int limit = d + count * stride, s = srcPos;
                 if (itemsize == 1) {
+                    // Non-contiguous copy: single byte items
                     for (; d != limit; d += stride) {
-                        storage[d] = src[s++];
+                        storage[d] = src[s];
+                        s += srcStride;
                     }
                 } else {
                     // Non-contiguous copy: itemsize bytes then skip to next item
@@ -141,6 +161,7 @@ public abstract class BaseArrayBuffer extends Base1DBuffer {
                         while (d < t) {
                             storage[d++] = src[s++];
                         }
+                        s += srcSkip;
                     }
                 }
             }
@@ -149,55 +170,40 @@ public abstract class BaseArrayBuffer extends Base1DBuffer {
 
     @Override
     public void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException {
-        if (src instanceof BaseArrayBuffer) {
+        if (src instanceof BaseArrayBuffer && !this.overlaps((BaseArrayBuffer)src)) {
+            // We can do this efficiently, copying between arrays.
             copyFromArrayBuffer((BaseArrayBuffer)src);
         } else {
             super.copyFrom(src);
         }
     }
 
+    private boolean overlaps(BaseArrayBuffer src) {
+        if (src.storage != this.storage) {
+            return false;
+        } else {
+            int low = calcLeastIndex(), high = calcGreatestIndex();
+            int srcLow = src.calcLeastIndex(), srcHigh = src.calcGreatestIndex();
+            return (srcHigh >= low && high >= srcLow);
+        }
+    }
+
     private void copyFromArrayBuffer(BaseArrayBuffer src) throws IndexOutOfBoundsException,
             PyException {
 
-        checkWritable();
         src.checkDimension(1);
 
         int itemsize = getItemsize();
         int count = getSize();
 
-        // Block operation if different item or overall size (permit reshape)
+        // Block operation if different item or overall size
         if (src.getItemsize() != itemsize || src.getSize() != count) {
             throw differentStructure();
         }
 
-        for (int i = 0; i < count; i++) {
-            int s = src.byteIndex(i), d = byteIndex(i);
-            for (int j = 0; j < itemsize; j++) {
-                storage[d++] = src.byteAtImpl(s++);
-            }
-        }
+        // We depend on the striding copyFrom() acting directly on the source storage
+        copyFrom(src.storage, src.index0, src.strides[0], 0, count);
     }
-
-    /**
-     * Copy blocks of bytes, equally spaced in the source array, to locations equally spaced in the
-     * destination array, which may be the same array. The byte at
-     * <code>src[srcPos+k*srcStride+j]</code> will be copied to
-     * <code>dst[dstPos+k*dstStride+j]</code> for <code>0&le;k&lt;count</code> and
-     * <code>0&le;j&lt;size</code>. When the source and destination are the same array, the method
-     * deals correctly with the risk that a byte gets written under the alias <code>dst[x]</code>
-     * before it should have been copied referenced as <code>src[y]</code>.
-     *
-     * @param size of the blocks of bytes
-     * @param src the source array
-     * @param srcPos the position of the first block in the source
-     * @param srcStride the interval between the start of each block in the source
-     * @param dst the destination array
-     * @param dstPos the position of the first block in the destination
-     * @param dstStride the interval between the start of each block in the destination
-     * @param count the number of blocks to copy
-     */
-    private static void slicedArrayCopy(int size, byte[] src, int srcPos, int srcStride,
-            byte[] dst, int dstPos, int dstStride, int count) {}
 
     @Override
     protected ByteBuffer getNIOByteBufferImpl() {

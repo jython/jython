@@ -77,7 +77,7 @@ public abstract class Base1DBuffer extends BaseBuffer {
         } else if (stride > 0) {
             return index0 + (shape[0] - 1) * stride;
         } else {
-            return index0 - 1;
+            return index0;
         }
     }
 
