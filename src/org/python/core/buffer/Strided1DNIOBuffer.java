@@ -200,12 +200,5 @@ public class Strided1DNIOBuffer extends BaseNIOBuffer {
         protected PyBuffer getRoot() {
             return root;
         }
-
-        @Override
-        public void releaseAction() {
-            // We have to release the root too if ours was final.
-            root.release();
-        }
-
     }
 }

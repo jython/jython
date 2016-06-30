@@ -9,7 +9,6 @@ import org.python.core.util.StringUtil;
  */
 public class SimpleBuffer extends BaseArrayBuffer {
 
-
     /**
      * Provide an instance of <code>SimpleBuffer</code> with navigation variables initialised, for
      * sub-class use. The buffer ({@link #storage}, {@link #index0}), and the {@link #shape} array
@@ -199,13 +198,5 @@ public class SimpleBuffer extends BaseArrayBuffer {
         protected PyBuffer getRoot() {
             return root;
         }
-
-        @Override
-        public void releaseAction() {
-            // We have to release the root too if ours was final.
-            root.release();
-        }
-
     }
-
 }

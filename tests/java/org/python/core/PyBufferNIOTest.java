@@ -276,19 +276,6 @@ public class PyBufferNIOTest extends PyBufferTest {
         }
 
         @Override
-        public void releaseAction() {
-            // XXX Consider making this automatic within BaseBuffer.release() when getRoot()!=this
-            /*
-             * ... so that {@link #release()} takes care of this: sub-classes should not propagate
-             * the release themselves when overriding {@link #releaseAction()}.
-             */
-            // We have to release the root too if ours was final and we are not that root.
-            if (root != this) {
-                root.release();
-            }
-        }
-
-        @Override
         public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
             int newStart = index0 + start * strides[0];
             int newStride = strides[0] * stride;

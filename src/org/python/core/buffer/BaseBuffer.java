@@ -580,13 +580,22 @@ public abstract class BaseBuffer implements PyBuffer {
      * equals the number of <code>getBuffer</code> calls), the implementation here calls
      * {@link #releaseAction()}, which the implementer of a specific buffer type should override if
      * it needs specific actions to take place.
+     * <p>
+     * Note that, when this is a sliced view obtained from another <code>PyBuffer</code> the
+     * implementation in <code>BaseBuffer</code> automatically sends one <code>release()</code>
+     * Sub-classes should not propagate the release themselves when overriding
+     * {@link #releaseAction()}.
      */
     @Override
     public void release() {
         if (--exports == 0) {
             // This is a final release.
             releaseAction();
-            // XXX Consider adding release of root if root!=this so sliced need not
+            // We have to release the root too if we are not a root.
+            PyBuffer root = getRoot();
+            if (root != this) {
+                root.release();
+            }
         } else if (exports < 0) {
             // Buffer already had 0 exports. (Put this right, in passing.)
             exports = 0;

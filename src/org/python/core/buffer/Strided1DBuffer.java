@@ -208,14 +208,5 @@ public class Strided1DBuffer extends BaseArrayBuffer {
         protected PyBuffer getRoot() {
             return root;
         }
-
-        @Override
-        public void releaseAction() {
-            // XXX Consider making this automatic within BaseBuffer.release() when getRoot()!=this
-            // We have to release the root too if ours was final.
-            root.release();
-        }
-
     }
-
 }

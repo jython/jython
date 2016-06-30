@@ -945,8 +945,8 @@ public class PyBufferTest {
         } else if (subject instanceof PyByteArray) {
             // Size-changing access should fail
             try {
-                ((PyByteArray)subject).bytearray_extend(Py.One); // Appends one zero byte
-                fail("bytearray_extend with exports should fail");
+                ((PyByteArray)subject).bytearray_append(Py.One); // Appends one zero byte
+                fail("bytearray_append with exports should fail");
             } catch (Exception e) {
                 // Success
             }
@@ -1506,19 +1506,6 @@ public class PyBufferTest {
         @Override
         protected PyBuffer getRoot() {
             return root;
-        }
-
-        @Override
-        public void releaseAction() {
-            // XXX Consider making this automatic within BaseBuffer.release() when getRoot()!=this
-            /*
-             * ... so that {@link #release()} takes care of this: sub-classes should not propagate
-             * the release themselves when overriding {@link #releaseAction()}.
-             */
-            // We have to release the root too if ours was final and we are not that root.
-            if (root != this) {
-                root.release();
-            }
         }
 
         @Override
