@@ -129,7 +129,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
     }
 
     @Override
-    protected final int byteIndex(int index) throws IndexOutOfBoundsException {
+    public final int byteIndex(int index) throws IndexOutOfBoundsException {
         if (index < 0 || index >= shape[0]) {
             throw new IndexOutOfBoundsException();
         }

@@ -112,7 +112,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
     }
 
     @Override
-    protected int byteIndex(int index) throws IndexOutOfBoundsException {
+    public final int byteIndex(int index) throws IndexOutOfBoundsException {
         return index0 + index;
     }
 

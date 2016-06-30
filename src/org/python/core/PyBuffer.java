@@ -238,8 +238,37 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      */
     public PyBuffer getBufferSlice(int flags, int start, int count, int stride);
 
-    // java.nio access to actual storage
+    // Access to underlying byte-oriented storage
     //
+
+    /**
+     * Convert an item index (for a one-dimensional buffer) to an absolute byte index in the storage
+     * shared by the exporter. The storage exported as a <code>PyBuffer</code> is a linearly-indexed
+     * sequence of bytes, although it may not actually be a heap-allocated Java <code>byte[]</code>
+     * object. The purpose of this method is to allow the exporter to define the relationship
+     * between the item index (as used in {@link #byteAt(int)}) and the byte-index (as used with the
+     * <code>ByteBuffer</code> returned by {@link #getNIOByteBuffer()}). See
+     * {@link #byteIndex(int[])} for discussion of the multi-dimensional case.
+     *
+     * @param index item-index from consumer
+     * @return corresponding byte-index in actual storage
+     */
+    // Should it throw IndexOutOfBoundsException if the index &lt;0 or &ge;<code>shape[0]</code?
+    int byteIndex(int index) throws IndexOutOfBoundsException;
+
+    /**
+     * Convert a multi-dimensional item index to an absolute byte index in the storage shared by the
+     * exporter. The storage exported as a <code>PyBuffer</code> is a linearly-indexed sequence of
+     * bytes, although it may not actually be a heap-allocated Java <code>byte[]</code> object. The
+     * purpose of this method is to allow the exporter to define the relationship between the item
+     * index (as used in {@link #byteAt(int...)} and the byte-index (as used with the
+     * <code>ByteBuffer</code> returned by {@link #getNIOByteBuffer()}).
+     *
+     * @param indices n-dimensional item-index from consumer
+     * @return corresponding byte-index in actual storage
+     */
+    // Should it throw IndexOutOfBoundsException if any index &lt;0 or &ge;<code>shape[i]</code>?
+    int byteIndex(int... indices);
 
     /**
      * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
@@ -269,30 +298,6 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * @return a <code>ByteBuffer</code> onto the exported data contents.
      */
     ByteBuffer getNIOByteBuffer();
-
-    /**
-     * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
-     * exported to the consumer, and positioned at a particular index.
-     * <p>
-     * Essentially this saves the client from computing the byte offset of a particular index. The
-     * client is free to navigate the underlying byte data through the <code>ByteBuffer</code>.
-     *
-     * @param index in the buffer to position the pointer
-     * @return a ByteBuffer onto the exported data contents, positioned at the indexed item.
-     */
-    ByteBuffer getNIOByteBuffer(int index);
-
-    /**
-     * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
-     * exported to the consumer, and positioned at a particular multi-dimensional index.
-     * <p>
-     * Essentially this saves the client from computing the byte offset of a particular index. The
-     * client is free to navigate the underlying byte data through the <code>ByteBuffer</code>.
-     *
-     * @param indices multidimensional index at which to position the pointer
-     * @return a ByteBuffer onto the exported data contents, positioned at the indexed item.
-     */
-    ByteBuffer getNIOByteBuffer(int... indices);
 
     /**
      * Report whether the exporter is able to offer direct access to the exported storage as a Java

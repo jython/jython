@@ -47,7 +47,7 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
      * In a ZeroByteBuffer, the index is always out of bounds.
      */
     @Override
-    protected int byteIndex(int index) throws IndexOutOfBoundsException {
+    public int byteIndex(int index) throws IndexOutOfBoundsException {
         // This causes all access to the bytes in to throw (since BaseBuffer calls it).
         throw new IndexOutOfBoundsException();
     }
@@ -56,7 +56,7 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
      * In a ZeroByteBuffer, if the dimensions are right, the index is out of bounds anyway.
      */
     @Override
-    protected int byteIndex(int... indices) throws IndexOutOfBoundsException {
+    public int byteIndex(int... indices) throws IndexOutOfBoundsException {
         // Bootless dimension check takes precedence (for consistency with other buffers)
         checkDimension(indices);
         // This causes all access to the bytes to throw (since BaseBuffer calls it).

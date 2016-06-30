@@ -104,7 +104,7 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * and an item size of 1.
      */
     @Override
-    protected int byteIndex(int index) throws IndexOutOfBoundsException {
+    public int byteIndex(int index) throws IndexOutOfBoundsException {
         if (index < 0 || index >= shape[0]) {
             throw new IndexOutOfBoundsException();
         }

@@ -78,7 +78,7 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
     }
 
     @Override
-    protected int byteIndex(int... indices) throws IndexOutOfBoundsException {
+    public int byteIndex(int... indices) throws IndexOutOfBoundsException {
         // BaseBuffer implementation can be simplified since if indices.length!=1 we error.
         checkDimension(indices.length); // throws if != 1
         return byteIndex(indices[0]);
@@ -123,7 +123,8 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
 
         if (count > 0) {
 
-            ByteBuffer src = getNIOByteBuffer(srcIndex);
+            ByteBuffer src = getNIOByteBuffer();
+            int pos = byteIndex(srcIndex);
 
             // Pick up attributes necessary to choose an efficient copy strategy
             int itemsize = getItemsize();
@@ -132,12 +133,11 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
             // Strategy depends on whether items are laid end-to-end contiguously or there are gaps
             if (stride == itemsize) {
                 // stride == itemsize: straight copy of contiguous bytes
-                src.limit(src.position() + count * itemsize);
+                src.limit(pos + count * itemsize).position(pos);
                 dest.put(src);
 
             } else if (itemsize == 1) {
                 // Non-contiguous copy: single byte items
-                int pos = src.position();
                 for (int i = 0; i < count; i++) {
                     src.position(pos);
                     dest.put(src.get());
@@ -146,7 +146,6 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
 
             } else {
                 // Non-contiguous copy: each time, copy itemsize bytes then skip
-                int pos = src.position();
                 for (int i = 0; i < count; i++) {
                     src.limit(pos + itemsize).position(pos);
                     dest.put(src);
@@ -184,7 +183,8 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
 
         if (count > 0) {
 
-            ByteBuffer dst = getNIOByteBuffer(dstIndex);
+            ByteBuffer dst = getNIOByteBuffer();
+            int pos = byteIndex(dstIndex);
 
             // Pick up attributes necessary to choose an efficient copy strategy
             int itemsize = getItemsize();
@@ -194,11 +194,11 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
             // Strategy depends on whether items are laid end-to-end or there are gaps
             if (skip == 0) {
                 // Straight copy of contiguous bytes
+                dst.position(pos);
                 dst.put(src);
 
             } else if (itemsize == 1) {
                 // Non-contiguous copy: single byte items
-                int pos = dst.position();
                 for (int i = 0; i < count; i++) {
                     dst.position(pos);
                     dst.put(src.get());
@@ -208,7 +208,6 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
 
             } else {
                 // Non-contiguous copy: each time, copy itemsize bytes at a time
-                int pos = dst.position();
                 for (int i = 0; i < count; i++) {
                     dst.position(pos);
                     // Delineate the next itemsize bytes in the src

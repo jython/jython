@@ -68,7 +68,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * In <code>SimpleStringBuffer</code> we can simply return the argument.
      */
     @Override
-    protected final int byteIndex(int index) {
+    public final int byteIndex(int index) {
         // We do not check the index because String will do it for us.
         return index;
     }
@@ -97,8 +97,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
     public PyBuffer getBufferSlice(int flags, int start, int count) {
         if (count > 0) {
             // The new string content is just a sub-string.
-            return new SimpleStringView(getRoot(), flags,
-                    bufString.substring(start, start + count));
+            return new SimpleStringView(getRoot(), flags, bufString.substring(start, start + count));
         } else {
             // Special case for count==0 where start out of bounds sometimes raises exception.
             return new ZeroByteBuffer.View(getRoot(), flags);

@@ -351,16 +351,13 @@ public abstract class BaseBuffer implements PyBuffer {
         storeAtImpl(value, byteIndex(indices));
     }
 
-    /**
-     * Convert an item index (for a one-dimensional buffer) to a checked absolute byte index in the
-     * actual storage being shared by the exporter. See {@link #byteIndex(int[])} for discussion.
-     *
-     * @param index item-index from consumer
-     * @return corresponding byte-index in actual storage
-     * @throws IndexOutOfBoundsException if the index &lt;0 or &ge;<code>shape[0]</code>
+    /*
+     * In this implementation, we throw IndexOutOfBoundsException if index < 0 or > shape[0], but we
+     * could rely on the array or ByteBuffer checks when indexing, especially the latter since
+     * position is checked against limit.
      */
-    // XXX Consider making this part of the PyBuffer interface
-    protected int byteIndex(int index) throws IndexOutOfBoundsException {
+    @Override
+    public int byteIndex(int index) throws IndexOutOfBoundsException {
         // Treat as one-dimensional
         if (index < 0 || index >= shape[0]) {
             throw new IndexOutOfBoundsException();
@@ -368,25 +365,11 @@ public abstract class BaseBuffer implements PyBuffer {
         return index0 + index * strides[0];
     }
 
-    /**
-     * Convert a multi-dimensional item index (if we are not using indirection) to an absolute byte
-     * index in the actual storage array being shared by the exporter. The purpose of this method is
-     * to allow a sub-class to define, in one place, an indexing calculation that maps the index as
-     * provided by the consumer into an index in the storage known to the buffer.
-     * <p>
-     * In the usual case where the storage is referenced via a <code>storage</code> member and
-     * {@link #index0} member, the buffer implementation may use <code>storage[byteIndex(i)]</code>
-     * to reference the (first byte of) the item x[i]. This is what the default implementation of
-     * accessors in <code>BaseArrayBuffer</code> will do. In the simplest cases, calling
-     * <code>byteIndex</code> may be an overhead to avoid, and an implementation will specialise the
-     * accessors. The default implementation here is suited to N-dimensional arrays.
-     *
-     * @param indices n-dimensional item-index from consumer
-     * @return corresponding byte-index in actual storage
-     * @throws IndexOutOfBoundsException if any index &lt;0 or &ge;<code>shape[i]</code>
+    /*
+     * In this implementation, we throw IndexOutOfBoundsException if any index[i] < 0 or > shape[i].
      */
-    // XXX Consider making this part of the PyBuffer interface
-    protected int byteIndex(int... indices) throws IndexOutOfBoundsException {
+    @Override
+    public int byteIndex(int... indices) throws IndexOutOfBoundsException {
         final int N = checkDimension(indices);
         // In general: index0 + sum(k=0,N-1) indices[k]*strides[k]
         int index = index0;
@@ -649,22 +632,6 @@ public abstract class BaseBuffer implements PyBuffer {
         }
         // The buffer is positioned at item[0]
         b.position(index0);
-        return b;
-    }
-
-    @Override
-    public ByteBuffer getNIOByteBuffer(int index) {
-        // The buffer spans the whole storage but is positioned at index
-        ByteBuffer b = getNIOByteBufferImpl();
-        b.position(byteIndex(index));
-        return b;
-    }
-
-    @Override
-    public ByteBuffer getNIOByteBuffer(int... indices) {
-        // The buffer spans the whole storage but is positioned at indices[]
-        ByteBuffer b = getNIOByteBufferImpl();
-        b.position(byteIndex(indices));
         return b;
     }
 

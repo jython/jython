@@ -1061,59 +1061,6 @@ public class PyBufferTest {
 
     }
 
-    /** Test method for {@link org.python.core.PyBuffer#getNIOByteBuffer(int)}. */
-    @Test
-    public void testGetNIOByteBufferInt() {
-        announce("getNIOByteBuffer (int)");
-
-        int n = ref.length, itemsize = view.getItemsize();
-        byte[] exp = new byte[itemsize], bytes = ref.bytes;
-
-        for (int i = 0; i < n; i++) {
-            // Expected result is one item (allow for itemsize)
-            int p = i * itemsize;
-            for (int j = 0; j < itemsize; j++) {
-                exp[j] = bytes[p + j];
-            }
-            // Get buffer and check for correct data at bb.position()
-            ByteBuffer bb = view.getNIOByteBuffer(i);
-            ByteBufferTestSupport.assertBytesEqual("getNIOByteBuffer(int) value", exp, bb);
-        }
-    }
-
-    /** Test method for {@link org.python.core.PyBuffer#getNIOByteBuffer(int[])}. */
-    @Test
-    public void testGetNIOByteBufferIntArray() {
-        int[] index = new int[1];
-        announce("getNIOByteBuffer (n-dim)");
-
-        int n = ref.length, itemsize = view.getItemsize();
-        byte[] exp = new byte[itemsize], bytes = ref.bytes;
-
-        for (int i = 0; i < n; i++) {
-            // Expected result is one item (allow for itemsize)
-            int p = i * itemsize;
-            for (int j = 0; j < itemsize; j++) {
-                exp[j] = bytes[p + j];
-            }
-
-            // Get buffer and check for correct data at bb.position()
-            index[0] = i;
-            ByteBuffer bb = view.getNIOByteBuffer(index);
-            ByteBufferTestSupport.assertBytesEqual("getNIOByteBuffer(int[]) value", exp, bb);
-        }
-
-        // Check 2D index throws
-        try {
-            view.getNIOByteBuffer(0, 0);
-            fail("Use of 2D index did not raise exception");
-        } catch (PyException pye) {
-            // Expect BufferError
-            // XXX ... but should it be TypeError here?
-            assertEquals(Py.BufferError, pye.type);
-        }
-    }
-
     /** Test method for {@link org.python.core.PyBuffer#hasArray()}. */
     @Test
     public void testHasArray() {

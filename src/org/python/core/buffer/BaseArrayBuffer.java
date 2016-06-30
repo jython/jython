@@ -57,7 +57,7 @@ public abstract class BaseArrayBuffer extends Base1DBuffer {
     }
 
     @Override
-    protected int byteIndex(int... indices) throws IndexOutOfBoundsException {
+    public int byteIndex(int... indices) throws IndexOutOfBoundsException {
         // BaseBuffer implementation can be simplified since if indices.length!=1 we error.
         checkDimension(indices.length); // throws if != 1
         return byteIndex(indices[0]);
