@@ -203,6 +203,7 @@ public class BaseBytesTest extends TestCase {
      *
      * @see junit.framework.TestCase#setUp()
      */
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         random = new Random(20120310L);
@@ -595,7 +596,7 @@ public class BaseBytesTest extends TestCase {
          */
         public MyBytes(BufferProtocol value) {
             super(TYPE);
-            init((BufferProtocol)value.getBuffer(PyBUF.SIMPLE));
+            init(value.getBuffer(PyBUF.SIMPLE));
         }
 
         /**
@@ -787,7 +788,7 @@ public class BaseBytesTest extends TestCase {
 
         @Override
         public PyBuffer getBuffer(int flags) {
-            return new SimpleBuffer(flags, store);
+            return new SimpleBuffer(flags, this, store);
         }
 
     }
@@ -824,7 +825,7 @@ public class BaseBytesTest extends TestCase {
                 return;
             }
             for (int i = 0; i < n; i++) {
-                int c = 0xff & ((int)s[pos + i]);
+                int c = 0xff & (s[pos + i]);
                 if (c == 0) {
                     c = '.';
                 } else if (Character.isISOControl(c)) {

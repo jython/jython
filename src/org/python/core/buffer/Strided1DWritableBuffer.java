@@ -1,5 +1,6 @@
 package org.python.core.buffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -25,6 +26,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
      * the sub-range the caller is allowed to use.
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage raw byte array containing exported data
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
@@ -34,9 +36,10 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public Strided1DWritableBuffer(int flags, byte[] storage, int index0, int count, int stride)
-            throws ArrayIndexOutOfBoundsException, NullPointerException, PyException {
-        super(storage, index0, count, stride);
+    public Strided1DWritableBuffer(int flags, BufferProtocol obj, byte[] storage, int index0,
+            int count, int stride) throws ArrayIndexOutOfBoundsException, NullPointerException,
+            PyException {
+        super(obj, storage, index0, count, stride);
         addFeatureFlags(WRITABLE);
         checkRequestFlags(flags);   // Check request is compatible with type
     }
@@ -107,7 +110,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
         public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int count,
                 int stride) throws PyException {
             // Create a new on the buffer passed in (part of the root)
-            super(flags, storage, index0, count, stride);
+            super(flags, root.getObj(), storage, index0, count, stride);
             // Get a lease on the root PyBuffer (writable)
             this.root = root.getBuffer(FULL);
         }

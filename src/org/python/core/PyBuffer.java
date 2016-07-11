@@ -30,6 +30,14 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
     // int getLen();
 
     /**
+     * Return the underlying exporting object (or <code>null</code> if no object implementing the
+     * {@link BufferProtocol} is in that role). This will often be a <code>PyObject</code>.
+     *
+     * @return exporting object (or <code>null</code>)
+     */
+    BufferProtocol getObj();
+
+    /**
      * Return the byte indexed from a one-dimensional buffer with item size one. This is part of the
      * fully-encapsulated API: the buffer implementation exported takes care of navigating the
      * structure of the buffer. Results are undefined where the number of dimensions is not one or

@@ -75,6 +75,13 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
         }
     }
 
+    // @ExposedGet(doc = obj_doc) // Not exposed in Python 2.7
+    public PyObject obj() {
+        checkNotReleased();
+        BufferProtocol obj = backing.getObj();
+        return (obj instanceof PyObject) ? (PyObject)obj : Py.None;
+    }
+
     @ExposedGet(doc = format_doc)
     public String format() {
         checkNotReleased();
@@ -843,19 +850,18 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
         }
     }
 
-
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
         int retVal;
         if (backing != null) {
             if (backing instanceof PyObject) {
-                retVal = visit.visit((PyObject) backing, arg);
+                retVal = visit.visit((PyObject)backing, arg);
                 if (retVal != 0) {
                     return retVal;
                 }
             } else if (backing instanceof Traverseproc) {
-                retVal = ((Traverseproc) backing).traverse(visit, arg);
+                retVal = ((Traverseproc)backing).traverse(visit, arg);
                 if (retVal != 0) {
                     return retVal;
                 }
@@ -878,11 +884,10 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
 
     @Override
     public boolean refersDirectlyTo(PyObject ob) {
-        if (ob != null && (ob == backing || ob == shape || ob == strides
-            || ob == suboffsets)) {
+        if (ob != null && (ob == backing || ob == shape || ob == strides || ob == suboffsets)) {
             return true;
         } else if (suboffsets instanceof Traverseproc) {
-            return ((Traverseproc) suboffsets).refersDirectlyTo(ob);
+            return ((Traverseproc)suboffsets).refersDirectlyTo(ob);
         } else {
             return false;
         }

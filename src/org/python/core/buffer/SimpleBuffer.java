@@ -1,5 +1,6 @@
 package org.python.core.buffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 import org.python.core.util.StringUtil;
@@ -22,14 +23,16 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * checkRequestFlags(flags);        // Check request is compatible with type
      * </pre>
      *
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
      * @param index0 offset where the data starts in that array (item[0])
      * @param size the number of bytes occupied
      * @throws NullPointerException if <code>storage</code> is null
      */
-    protected SimpleBuffer(byte[] storage, int index0, int size) throws PyException,
-            ArrayIndexOutOfBoundsException {
+    protected SimpleBuffer(BufferProtocol obj, byte[] storage, int index0, int size)
+            throws PyException, ArrayIndexOutOfBoundsException {
         super(storage, CONTIGUITY | SIMPLE, index0, size, 1);
+        this.obj = obj;
     }
 
     /**
@@ -38,6 +41,7 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * against the capabilities of the buffer type.
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
      * @param index0 offset where the data starts in that array (item[0])
      * @param size the number of bytes occupied
@@ -46,10 +50,10 @@ public class SimpleBuffer extends BaseArrayBuffer {
      *             inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleBuffer(int flags, byte[] storage, int index0, int size) throws PyException,
-            ArrayIndexOutOfBoundsException, NullPointerException {
-        this(storage, index0, size);    // Construct checked SimpleBuffer
-        checkRequestFlags(flags);       // Check request is compatible with type
+    public SimpleBuffer(int flags, BufferProtocol obj, byte[] storage, int index0, int size)
+            throws PyException, ArrayIndexOutOfBoundsException, NullPointerException {
+        this(obj, storage, index0, size);   // Construct checked SimpleBuffer
+        checkRequestFlags(flags);           // Check request is compatible with type
         // Check arguments using the "all non-negative" trick
         if ((index0 | size | storage.length - (index0 + size)) < 0) {
             throw new ArrayIndexOutOfBoundsException();
@@ -62,11 +66,12 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * {@link #index0}), and the navigation ({@link #shape} array) will be initialised from the
      * array argument.
      *
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
      * @throws NullPointerException if <code>storage</code> is null
      */
-    protected SimpleBuffer(byte[] storage) throws NullPointerException {
-        this(storage, 0, storage.length);
+    protected SimpleBuffer(BufferProtocol obj, byte[] storage) throws NullPointerException {
+        this(obj, storage, 0, storage.length);
     }
 
     /**
@@ -75,12 +80,14 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * against the capabilities of the buffer type.
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
      * @throws NullPointerException if <code>storage</code> is null
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleBuffer(int flags, byte[] storage) throws PyException, NullPointerException {
-        this(storage);                  // Construct SimpleBuffer on whole array
+    public SimpleBuffer(int flags, BufferProtocol obj, byte[] storage) throws PyException,
+            NullPointerException {
+        this(obj, storage);             // Construct SimpleBuffer on whole array
         checkRequestFlags(flags);       // Check request is compatible with type
     }
 
@@ -189,7 +196,7 @@ public class SimpleBuffer extends BaseArrayBuffer {
          */
         public SimpleView(PyBuffer root, int flags, byte[] storage, int offset, int size) {
             // Create a new SimpleBuffer on the buffer passed in (part of the root)
-            super(flags, storage, offset, size);
+            super(flags, root.getObj(), storage, offset, size);
             // Get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }

@@ -1,5 +1,6 @@
 package org.python.core.buffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -25,12 +26,15 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
      * client code that may ask, if the results are customary for the exporting object.
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param readonly set true if not to be considered writable
      * @param hasArray set true if to be considered as backed by an array
      * @throws PyException (BufferError) when client expectations do not correspond with the type
      */
-    public ZeroByteBuffer(int flags, boolean readonly, boolean hasArray) throws PyException {
+    public ZeroByteBuffer(int flags, BufferProtocol obj, boolean readonly, boolean hasArray)
+            throws PyException {
         super(EMPTY, CONTIGUITY | (readonly ? 0 : WRITABLE), 0, 0, 1);
+        this.obj = obj;
         if (!hasArray) {
             // super() knows we have an array, but this truth is inconvenient here.
             removeFeatureFlags(AS_ARRAY);
@@ -175,7 +179,7 @@ public class ZeroByteBuffer extends BaseArrayBuffer {
          */
         public View(PyBuffer root, int flags) {
             // Create a new ZeroByteBuffer on who-cares-what byte array
-            super(flags, root.isReadonly(), root.hasArray());
+            super(flags, root.getObj(), root.isReadonly(), root.hasArray());
             // But we still have to get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }

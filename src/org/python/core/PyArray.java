@@ -2081,10 +2081,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 // This is byte data, so we are within the state of the art
                 byte[] storage = (byte[])data;
                 int size = delegate.getSize();
-                pybuf = new SimpleWritableBuffer(flags, storage, 0, size);
+                pybuf = new SimpleWritableBuffer(flags, this, storage, 0, size);
             } else if ((flags & PyBUF.WRITABLE) == 0) {
                 // As the client only intends to read, fake the answer with a String
-                pybuf = new SimpleStringBuffer(flags, tostring());
+                pybuf = new SimpleStringBuffer(flags, this, tostring());
             } else {
                 // For the time being ...
                 throw Py.NotImplementedError("only array('b') can export a writable buffer");
@@ -2163,7 +2163,6 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             return buf.remaining();
         }
 
-
         @Override
         public int read() {
             return buf.hasRemaining() ? buf.get() & 0xff : -1;
@@ -2187,7 +2186,6 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
     }
 
-
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
@@ -2198,8 +2196,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     @Override
-    public boolean refersDirectlyTo(PyObject ob)
-            throws UnsupportedOperationException {
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
         if (data == null || !gc.canLinkToPyObject(data.getClass(), true)) {
             return false;
         }

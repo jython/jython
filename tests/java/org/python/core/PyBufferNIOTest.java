@@ -119,7 +119,7 @@ public class PyBufferNIOTest extends PyBufferTest {
             BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new SimpleNIOBuffer(flags, storage) {
+                pybuf = new SimpleNIOBuffer(flags, this, storage) {
 
                     @Override
                     protected void releaseAction() {
@@ -200,7 +200,7 @@ public class PyBufferNIOTest extends PyBufferTest {
             BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new RollYourOwnNIOBuffer(flags, storage);
+                pybuf = new RollYourOwnNIOBuffer(flags, this, storage);
                 // Hold a reference for possible re-use
                 export = new WeakReference<BaseBuffer>(pybuf);
             }
@@ -227,26 +227,28 @@ public class PyBufferNIOTest extends PyBufferTest {
          * contiguous sequence of bytes from the position to the limit.
          *
          * @param flags consumer requirements
+         * @param obj exporting object (or <code>null</code>)
          * @param storage buffer exported (from the position to the limit)
          */
-        public RollYourOwnNIOBuffer(int flags, ByteBuffer storage) {
-            this(null /* =this */, flags, storage, storage.position(), storage.remaining(), 1);
+        public RollYourOwnNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage) {
+            this(flags, null /* =this */, obj, storage, storage.position(), storage.remaining(), 1);
         }
 
         /**
          * Construct a slice of a one-dimensional byte buffer.
          *
-         * @param root on which release must be called when this is released
          * @param flags consumer requirements
+         * @param obj exporting object (or <code>null</code>)
+         * @param root on which release must be called when this is released
          * @param storage buffer containing exported data
          * @param index0 index into storage of item[0]
          * @param count number of items in the slice
          * @param stride in between successive elements of the new PyBuffer
          * @throws PyException (BufferError) when expectations do not correspond with the type
          */
-        public RollYourOwnNIOBuffer(PyBuffer root, int flags, ByteBuffer storage, int index0,
-                int count, int stride) throws IndexOutOfBoundsException, NullPointerException,
-                PyException {
+        public RollYourOwnNIOBuffer(int flags, PyBuffer root, BufferProtocol obj,
+                ByteBuffer storage, int index0, int count, int stride)
+                throws IndexOutOfBoundsException, NullPointerException, PyException {
             // Client will need to navigate using shape and strides if this is a slice
             super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : STRIDES), //
                     index0, new int[] {count}, new int[] {stride});
@@ -265,8 +267,10 @@ public class PyBufferNIOTest extends PyBufferTest {
             // Get a lease on the root PyBuffer (read-only). Last in case a check above fails.
             if (root == null) {
                 this.root = this;
+                this.obj = obj;
             } else {
                 this.root = root.getBuffer(FULL_RO);
+                this.obj = root.getObj();
             }
         }
 
@@ -279,7 +283,7 @@ public class PyBufferNIOTest extends PyBufferTest {
         public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
             int newStart = index0 + start * strides[0];
             int newStride = strides[0] * stride;
-            return new RollYourOwnNIOBuffer(root, flags, storage, newStart, count, newStride);
+            return new RollYourOwnNIOBuffer(flags, root, null, storage, newStart, count, newStride);
         }
 
         @Override

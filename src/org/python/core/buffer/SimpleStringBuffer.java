@@ -2,6 +2,7 @@ package org.python.core.buffer;
 
 import java.nio.ByteBuffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.util.StringUtil;
 
@@ -26,15 +27,16 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * Provide an instance of SimpleStringBuffer meeting the consumer's expectations as expressed in
      * the flags argument.
      *
-     * @param bufString storing the implementation of the object
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
+     * @param bufString storing the implementation of the object
      */
-    public SimpleStringBuffer(int flags, String bufString) {
+    public SimpleStringBuffer(int flags, BufferProtocol obj, String bufString) {
         /*
          * Leaving storage=null is ok because we carefully override every method that uses it,
          * deferring creation of the storage byte array until we absolutely must have one.
          */
-        super(null, 0, bufString.length());
+        super(obj, null, 0, bufString.length());
         // Save the backing string
         this.bufString = bufString;
         // Check request is compatible with type
@@ -205,7 +207,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
          */
         public SimpleStringView(PyBuffer root, int flags, String bufString) {
             // Create a new SimpleStringBuffer on the string passed in
-            super(flags, bufString);
+            super(flags, root.getObj(), bufString);
             // Get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }

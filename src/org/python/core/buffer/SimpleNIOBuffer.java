@@ -2,6 +2,7 @@ package org.python.core.buffer;
 
 import java.nio.ByteBuffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -29,6 +30,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * checkRequestFlags(flags);        // Check request is compatible with type
      * </pre>
      *
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state. NOTE: this
      *            <code>PyBuffer</code> keeps a reference and may manipulate the position, mark and
      *            limit hereafter. Use {@link ByteBuffer#duplicate()} to give it an isolated copy.
@@ -38,9 +40,10 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
      *             inconsistent with <code>storage.capacity()</code>
      */
-    protected SimpleNIOBuffer(ByteBuffer storage, int index0, int size) throws PyException,
-            ArrayIndexOutOfBoundsException {
+    protected SimpleNIOBuffer(BufferProtocol obj, ByteBuffer storage, int index0, int size)
+            throws PyException, ArrayIndexOutOfBoundsException {
         super(storage, CONTIGUITY | SIMPLE, index0, size, 1);
+        this.obj = obj;
         // Check arguments using the "all non-negative" trick
         if ((index0 | size | storage.capacity() - (index0 + size)) < 0) {
             throw new ArrayIndexOutOfBoundsException();
@@ -54,6 +57,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * <code>ByteBuffer</code> passed in. (It is duplicated.)
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state
      * @param index0 offset where the data starts in that buffer (item[0])
      * @param size the number of bytes occupied
@@ -62,10 +66,10 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      *             inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleNIOBuffer(int flags, ByteBuffer storage, int index0, int size) throws PyException,
-            ArrayIndexOutOfBoundsException, NullPointerException {
-        this(storage.duplicate(), index0, size);    // Construct checked SimpleNIOBuffer
-        checkRequestFlags(flags);                   // Check request is compatible with type
+    public SimpleNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage, int index0, int size)
+            throws PyException, ArrayIndexOutOfBoundsException, NullPointerException {
+        this(obj, storage.duplicate(), index0, size);   // Construct checked SimpleNIOBuffer
+        checkRequestFlags(flags);                       // Check request is compatible with type
     }
 
     /**
@@ -74,13 +78,14 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * {@link #index0}), and the navigation ({@link #shape} array) will be initialised from the
      * argument.
      *
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state. NOTE: this
      *            <code>PyBuffer</code> keeps a reference and may manipulate the position, mark and
      *            limit hereafter. Use {@link ByteBuffer#duplicate()} to give it an isolated copy.
      * @throws NullPointerException if <code>storage</code> is null
      */
-    protected SimpleNIOBuffer(ByteBuffer storage) throws NullPointerException {
-        this(storage, 0, storage.capacity());
+    protected SimpleNIOBuffer(BufferProtocol obj, ByteBuffer storage) throws NullPointerException {
+        this(obj, storage, 0, storage.capacity());
     }
 
     /**
@@ -90,12 +95,14 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * <code>ByteBuffer</code> passed in. (It is duplicated.)
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state
      * @throws NullPointerException if <code>storage</code> is null
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public SimpleNIOBuffer(int flags, ByteBuffer storage) throws PyException, NullPointerException {
-        this(storage.duplicate());      // Construct SimpleNIOBuffer on whole ByteBuffer
+    public SimpleNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage) throws PyException,
+            NullPointerException {
+        this(obj, storage.duplicate()); // Construct SimpleNIOBuffer on whole ByteBuffer
         checkRequestFlags(flags);       // Check request is compatible with type
     }
 
@@ -176,7 +183,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
          */
         public SimpleView(PyBuffer root, int flags, ByteBuffer storage, int offset, int count) {
             // Create a new SimpleNIOBuffer on the buffer passed in (part of the root)
-            super(flags, storage, offset, count);
+            super(flags, root.getObj(), storage, offset, count);
             // Get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }

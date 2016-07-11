@@ -273,6 +273,13 @@ public class PyBufferTest {
         assertEquals("unexpected length", ref.length, view.getLen());
     }
 
+    /** Test method for {@link org.python.core.PyBUF#getObj()}. */
+    @Test
+    public void testGetObj() {
+        announce("getObj");
+        assertEquals("unexpected exporting object", obj, view.getObj());
+    }
+
     /** Test method for {@link org.python.core.PyBuffer#byteAt(int)}. */
     @Test
     public void testByteAt() {
@@ -1279,7 +1286,7 @@ public class PyBufferTest {
 
         @Override
         public PyBuffer getBuffer(int flags) {
-            return new SimpleBuffer(flags, storage);
+            return new SimpleBuffer(flags, this, storage);
         }
 
     }
@@ -1368,7 +1375,7 @@ public class PyBufferTest {
             BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new SimpleStringBuffer(flags, storage);
+                pybuf = new SimpleStringBuffer(flags, this, storage);
                 // Hold a reference for possible re-use
                 export = new SoftReference<BaseBuffer>(pybuf);
             }
@@ -1404,7 +1411,7 @@ public class PyBufferTest {
             BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new SimpleWritableBuffer(flags, storage) {
+                pybuf = new SimpleWritableBuffer(flags, this, storage) {
 
                     @Override
                     protected void releaseAction() {
@@ -1435,7 +1442,7 @@ public class PyBufferTest {
             BaseBuffer pybuf = getExistingBuffer(flags);
             if (pybuf == null) {
                 // No existing export we can re-use
-                pybuf = new RollYourOwnArrayBuffer(flags, storage);
+                pybuf = new RollYourOwnArrayBuffer(flags, this, storage);
                 // Hold a reference for possible re-use
                 export = new WeakReference<BaseBuffer>(pybuf);
             }
@@ -1461,26 +1468,28 @@ public class PyBufferTest {
          * Create a buffer view of the entire array.
          *
          * @param flags consumer requirements
+         * @param obj exporting object (or <code>null</code>)
          * @param storage byte array exported in its entirety
          */
-        public RollYourOwnArrayBuffer(int flags, byte[] storage) {
-            this(null /* =this */, flags, storage, 0, storage.length, 1);
+        public RollYourOwnArrayBuffer(int flags, BufferProtocol obj, byte[] storage) {
+            this(flags, null /* =this */, obj, storage, 0, storage.length, 1);
         }
 
         /**
          * Construct a slice of a one-dimensional byte array.
          *
-         * @param root on which release must be called when this is released
          * @param flags consumer requirements
+         * @param root on which release must be called when this is released
+         * @param obj exporting object (or <code>null</code>)
          * @param storage raw byte array containing exported data
          * @param index0 index into storage of item[0]
          * @param count number of items in the slice
          * @param stride in between successive elements of the new PyBuffer
          * @throws PyException (BufferError) when expectations do not correspond with the type
          */
-        public RollYourOwnArrayBuffer(PyBuffer root, int flags, byte[] storage, int index0,
-                int count, int stride) throws IndexOutOfBoundsException, NullPointerException,
-                PyException {
+        public RollYourOwnArrayBuffer(int flags, PyBuffer root, BufferProtocol obj, byte[] storage,
+                int index0, int count, int stride) throws IndexOutOfBoundsException,
+                NullPointerException, PyException {
             // Client will need to navigate using shape and strides if this is a slice
             super(FEATURES | ((index0 == 0 && stride == 1) ? 0 : STRIDES), //
                     index0, new int[] {count}, new int[] {stride});
@@ -1498,8 +1507,10 @@ public class PyBufferTest {
             // Get a lease on the root PyBuffer (read-only). Last in case a check above fails.
             if (root == null) {
                 this.root = this;
+                this.obj = obj;
             } else {
                 this.root = root.getBuffer(FULL_RO);
+                this.obj = root.getObj();
             }
         }
 
@@ -1512,7 +1523,8 @@ public class PyBufferTest {
         public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
             int newStart = index0 + start * strides[0];
             int newStride = strides[0] * stride;
-            return new RollYourOwnArrayBuffer(root, flags, storage, newStart, length, newStride);
+            return new RollYourOwnArrayBuffer(flags, root, null, storage, newStart, length,
+                    newStride);
         }
 
         @Override

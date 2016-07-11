@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 
 import org.python.core.PyBUF;
-import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
 /**
@@ -50,7 +49,6 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
      * @param size number of elements in the view
      * @param stride byte-index step between successive elements
      */
-
     protected BaseNIOBuffer(ByteBuffer storage, int featureFlags, int index0, int size, int stride) {
         super(featureFlags & ~(WRITABLE | AS_ARRAY), index0, size, stride);
         this.storage = storage;

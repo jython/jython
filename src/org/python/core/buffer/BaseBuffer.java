@@ -45,6 +45,12 @@ import org.python.core.PyException;
 public abstract class BaseBuffer implements PyBuffer {
 
     /**
+     * The object that exported this buffer (or <code>null</code> if the subclass or exporter
+     * chooses not to supply a reference).
+     */
+    protected BufferProtocol obj;
+
+    /**
      * The dimensions of the array represented by the buffer. The length of the <code>shape</code>
      * array is the number of dimensions. The <code>shape</code> array should always be created and
      * filled (difference from CPython). This value is returned by {@link #getShape()}.
@@ -253,6 +259,11 @@ public abstract class BaseBuffer implements PyBuffer {
             len *= shape[k];
         }
         return len;
+    }
+
+    @Override
+    public final BufferProtocol getObj() {
+        return obj;
     }
 
     /**

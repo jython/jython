@@ -1,5 +1,6 @@
 package org.python.core.buffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
@@ -48,6 +49,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, byte[], int, int, int)} for an
      * example of this use.)
      *
+     * @param obj exporting object (or <code>null</code>)
      * @param storage raw byte array containing exported data
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
@@ -56,9 +58,10 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      */
-    protected Strided1DBuffer(byte[] storage, int index0, int count, int stride)
+    protected Strided1DBuffer(BufferProtocol obj, byte[] storage, int index0, int count, int stride)
             throws ArrayIndexOutOfBoundsException, NullPointerException {
         super(storage, STRIDES, index0, count, stride);
+        this.obj = obj;
         this.stride = stride;           // Between items
 
         if (count == 0) {
@@ -107,6 +110,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * <code>storage</code> array (unless <code>count=0</code>).
      *
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
      * @param storage raw byte array containing exported data
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
@@ -116,9 +120,9 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public Strided1DBuffer(int flags, byte[] storage, int index0, int count, int stride)
+    public Strided1DBuffer(int flags, BufferProtocol obj, byte[] storage, int index0, int count, int stride)
             throws ArrayIndexOutOfBoundsException, NullPointerException, PyException {
-        this(storage, index0, count, stride);
+        this(obj, storage, index0, count, stride);
         checkRequestFlags(flags);   // Check request is compatible with type
 
     }
@@ -199,7 +203,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
         public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int count,
                 int stride) throws PyException {
             // Create a new on the buffer passed in (part of the root)
-            super(flags, storage, index0, count, stride);
+            super(flags, root.getObj(), storage, index0, count, stride);
             // Get a lease on the root PyBuffer (read-only)
             this.root = root.getBuffer(FULL_RO);
         }
