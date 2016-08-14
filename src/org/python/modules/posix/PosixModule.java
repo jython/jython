@@ -991,13 +991,19 @@ public class PosixModule implements ClassDictInit {
      * This version (non-Windows):<br>
      * (property os.name, InetAddress.getLocalHost().getHostName(), property os.version, uname -v, uname -m)<br>
      * <br>
+     * Adjustments on OSX:<br>
+     * Normalize "Mac OS X" to "Darwin",<br>
+     * uname -r instead of property os.version<br>
+     * <br>
      * Fallbacks:<br>
      * nodename/uname -n: exec uname -n<br>
      * version/uname -v: ""<br>
      * machine/uname -m: property os.arch<br>
      * <br>
      * This version (Windows):<br>
-     * (property os.name, InetAddress.getLocalHost().getHostName(), property os.version, cmd.exe /C ver, env PROCESSOR_ARCHITECTURE)<br>
+     * (reproduces platform.uname behavior on Windows)<br>
+     * ("Windows", InetAddress.getLocalHost().getHostName(), property os.name: part after "Windows",
+     * cmd.exe /C ver: part after "Version", env PROCESSOR_ARCHITECTURE)<br>
      * <br>
      * Fallback for nodename/uname -n on Windows:<br>
      * - env USERDOMAIN<br>
@@ -1006,10 +1012,9 @@ public class PosixModule implements ClassDictInit {
      * For machine-entry on Windows this is a simplified description.
      * It is actually mapped to typical uname -m values as follows (pseudo-code):<br>
      * <br>
-     * PROCESSOR_ARCHITECTURE = x86 and PROCESSOR_ARCHITEW6432 undefined: "i686"<br>
-     * PROCESSOR_ARCHITECTURE = AMD64 or PROCESSOR_ARCHITECTURE = EM64T: "x86_64"<br>
-     * PROCESSOR_ARCHITECTURE = IA64: "ia64"<br>
-     * else: PROCESSOR_ARCHITECTURE.toLowerCase()<br>
+     * PROCESSOR_ARCHITECTURE = x86 and PROCESSOR_ARCHITEW6432 undefined: "x86"<br>
+     * else if PROCESSOR_ARCHITECTURE = x86: PROCESSOR_ARCHITEW6432
+     * else: PROCESSOR_ARCHITECTURE<br>
      * <br>
      * Potential flaws:<br>
      * - could be a 32-bit machine, but actually not i686<br>
@@ -1024,10 +1029,38 @@ public class PosixModule implements ClassDictInit {
         if (uname_cache != null) {
             return uname_cache;
         }
-
+// todo: Giving os.uname a windows-implementation might break platform.uname. Check this!
         String sysname = System.getProperty("os.name");
-        String sysrelease = System.getProperty("os.version");
-        boolean win = sysname.startsWith("Windows");
+        String sysrelease;
+        boolean win;
+        if (sysname.equals("Mac OS X")) {
+            sysname = "Darwin";
+            win = false;
+            try {
+                Process p = Runtime.getRuntime().exec("uname -r");
+                java.io.BufferedReader br = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(p.getInputStream()));
+                sysrelease = br.readLine();
+                // to end the process sanely in case we deal with some
+                // implementation that emits additional new-lines:
+                while (br.readLine() != null);
+                br.close();
+                if (p.waitFor() != 0) {
+                    sysrelease = "";
+                }
+            } catch (Exception e) {
+                sysrelease = "";
+            }
+        } else {
+            win = sysname.startsWith("Windows");
+            if (win) {
+                sysrelease = sysname.length() > 7 ? sysname.substring(8) :
+                        System.getProperty("os.version");
+                sysname = "Windows";
+            } else {
+                sysrelease = System.getProperty("os.version");
+            }
+        }
 
         String uname_nodename;
         try {
@@ -1076,6 +1109,17 @@ public class PosixModule implements ClassDictInit {
                 // No fallback for sysver available
                 uname_sysver = "";
             }
+            if (win && uname_sysver.length() > 0) {
+                int start = uname_sysver.toLowerCase().indexOf("version ");
+                if (start != -1) {
+                    start += 8;
+                    int end = uname_sysver.length();
+                    if (uname_sysver.endsWith("]")) {
+                        --end;
+                    }
+                    uname_sysver = uname_sysver.substring(start, end);
+                }
+            }
         } catch (Exception e) {
             uname_sysver = "";
         }
@@ -1088,8 +1132,10 @@ public class PosixModule implements ClassDictInit {
                     // maybe 32-bit process running on 64 bit machine
                     machine = System.getenv("PROCESSOR_ARCHITEW6432");
                 }
-                if (machine == null) {
-                    // if machine == null it's actually a 32-bit machine
+                // if machine == null it's actually a 32-bit machine
+                uname_machine = machine == null ? "x86" : machine;
+// We refrain from this normalization in order to match platform.uname behavior on Windows:
+/*              if (machine == null) {
                     uname_machine = "i686";
                 } else if (machine.equals("AMD64") || machine.equals("EM64T")) {
                     uname_machine = "x86_64";
@@ -1097,7 +1143,7 @@ public class PosixModule implements ClassDictInit {
                     uname_machine = "ia64";
                 } else {
                     uname_machine = machine.toLowerCase();
-                }
+                } */
             } else {
                 Process p = Runtime.getRuntime().exec("uname -m");
                 java.io.BufferedReader br = new java.io.BufferedReader(

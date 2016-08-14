@@ -820,6 +820,10 @@ def mac_ver(release='',versioninfo=('','',''),machine=''):
     if info is not None:
         return info
 
+    if sys.platform.startswith("java") and _java_getprop("os.name", '') == 'Mac OS X':
+        res_release = _java_getprop("os.version", release)
+        return res_release, versioninfo, os.uname()[-1]
+
     # If that also doesn't work return the default values
     return release,versioninfo,machine
 
@@ -827,6 +831,15 @@ def _java_getprop(name,default):
 
     try:
         value = System.getProperty(name)
+        if value is None:
+            return default
+        return newString(value)
+    except AttributeError:
+        return default
+
+def _java_getenv(name,default):
+    try:
+        value = System.getenv(name)
         if value is None:
             return default
         return newString(value)
@@ -1298,6 +1311,9 @@ def uname():
     if system == 'Microsoft' and release == 'Windows':
         system = 'Windows'
         release = 'Vista'
+
+    if system == 'Windows' and processor == '':
+        processor = _java_getenv('PROCESSOR_IDENTIFIER',processor)
 
     _uname_cache = system,node,release,version,machine,processor
     return _uname_cache
