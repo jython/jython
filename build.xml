@@ -33,7 +33,7 @@ attribute.  Use ant -p to display these targets.  All other targets
 may behave unpredictably if called directly.
 
 
-Where ant looks for ant.properties 
+Where ant looks for ant.properties
 ----------------------------------
   1. in user.home
   2. in the same directory as this build.xml file
@@ -161,11 +161,12 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/jnr-posix-3.0.23.jar"/>
             <pathelement path="${extlibs.dir}/jnr-constants-0.9.0.jar"/>
             <pathelement path="${extlibs.dir}/jline-2.13.jar"/>
-            <pathelement path="${extlibs.dir}/netty-buffer-4.0.33.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-codec-4.0.33.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-common-4.0.33.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-handler--4.0.33.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-transport-4.0.33.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-buffer-4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-codec-4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-common-4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-handler--4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-resolver-4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-transport-4.1.4.Final.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -200,7 +201,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="hg.code.dir" value="jython" />
         <!-- predefined revision for checkout (this works for both trunk and release branches -->
 
-        <!-- properties work.dir and jython.base.dir are also definied in init, 
+        <!-- properties work.dir and jython.base.dir are also definied in init,
              so full-preinit must run first to work -->
         <property name="work.dir" value="${basedir}/../full_build/work" />
         <property name="checkout.dir" value="${work.dir}/checkout" />
@@ -501,7 +502,7 @@ The readme text for the next release will be like:
             source="${jdk.source.version}"
             debug="${debug}"
             deprecation="${deprecation}"
-            nowarn="${nowarn}"> 
+            nowarn="${nowarn}">
             <compilerarg line="${javac.Xlint}"/>
             <classpath refid="test.classpath" />
         </javac>
@@ -547,7 +548,7 @@ The readme text for the next release will be like:
             </classpath>
         </taskdef>
         <expose srcdir="${compile.dir}"
-            destdir="${exposed.dir}" 
+            destdir="${exposed.dir}"
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
 
@@ -573,15 +574,17 @@ The readme text for the next release will be like:
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-56.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.0.33.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.4.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.0.33.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.4.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.0.33.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.4.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.0.33.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.4.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.0.33.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.4.Final.jar" excludes="META-INF/**"/>
+            <rule pattern="io.netty.**" result="org.python.netty.@1"/>
+            <zipfileset src="extlibs/netty-transport-4.1.4.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
@@ -673,7 +676,7 @@ The readme text for the next release will be like:
           <nameunion>
              <fileset dir="${exposed.dir}"/>
              <fileset dir="${compile.dir}"
-                 excludes="org/python/expose/generate/**,org/python/version.properties"/>   
+                 excludes="org/python/expose/generate/**,org/python/version.properties"/>
           </nameunion>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
@@ -697,8 +700,8 @@ The readme text for the next release will be like:
             <pathelement path="${java.class.path}" />
             <pathelement path="${compile.dir}" />
             <path refid="main.classpath" />
-        </path> 
-        <javadoc sourcepath="${source.dir}" 
+        </path>
+        <javadoc sourcepath="${source.dir}"
                  destdir="${apidoc.dir}"
                  source="${jdk.source.version}"
                  maxmemory="1024m"
@@ -805,7 +808,7 @@ The readme text for the next release will be like:
     <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${jython.base.dir}/Lib">
-	       <exclude name="**/*.class"/>   
+	       <exclude name="**/*.class"/>
             </fileset>
         </copy>
 
@@ -1173,7 +1176,7 @@ The readme text for the next release will be like:
 # this configuration was auto-generated by ant build script,
 # safe to edit by hand (won't be overwritten)
 java_home="${jdk.home}"
-jython_home="${dist.dir}" 
+jython_home="${dist.dir}"
 classpath="${dist.dir}/${jython.dev.jar}${path.separator}classes"
         </echo>
     </target>
