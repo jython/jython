@@ -23,7 +23,7 @@ import java.lang.reflect.Array;
 import java.util.Map;
 
 @ExposedType(name = "list", base = PyObject.class, doc = BuiltinDocs.list_doc)
-public class PyList extends PySequenceList implements List {
+public class PyList extends PySequenceList {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
     {

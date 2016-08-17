@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public abstract class PySequenceList extends PySequence implements Traverseproc {
+public abstract class PySequenceList extends PySequence implements List, Traverseproc {
 
     protected PySequenceList(PyType type) {
         super(type);
