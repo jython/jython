@@ -1313,7 +1313,6 @@ _failures = {
 
         # fails on Windows standalone, probably shouldn't
         test_netrc             # KeyError: 'foo.domain.com'
-        test_shutil            # Operation not permitted errors
         test_zipfile
 
         # fails on Windows standalone too, but more embarassing as java specific
@@ -1336,18 +1335,16 @@ _failures = {
 
         # Unreliable tests 
         test_asynchat
-        test_gc                # Rare failures depending on timing of Java gc
-        test_logging
-        test_select_new
-        test_socket            # flakey (Windows)
+        # test_gc                # Rare failures depending on timing of Java gc
+        # test_logging
         test_tarfile           # flakey (Windows)
-        test_threading
-        test_urllib2net        # unexpected output makes this a failure to regrtest.py
+        # test_urllib2net        # unexpected output makes this a failure to regrtest.py
 
-        # Tests that should work with socket-reboot, but currently fail/hang
-        test_ftplib            # NoSuchElementException ssl
+        # Failing tests here are because of lack of STARTTLS; see http://bugs.jython.org/issue2447
+        # (which produces "'NoneType' is not iterable" in the server accept loop)
+        test_ftplib
         test_httplib
-        test_poplib            # 'NoneType' is not iterable
+        test_poplib
         test_smtplib
 
         # Problems with the latest JSR 223 changes; see http://bugs.jython.org/issue2154

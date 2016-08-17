@@ -51,11 +51,11 @@ class SocketConnectTest(unittest.TestCase):
         connect_errno = 0
         connect_attempt = 0
 
-        while connect_errno != errno.EISCONN and connect_attempt < 5000:
+        while connect_errno != errno.EISCONN and connect_attempt < 10000:
             connect_attempt += 1
             connect_errno = sock.connect_ex(self.address)
             results[index].append(connect_errno)
-            time.sleep(0.001)
+            time.sleep(0.01)
         sock.close()
 
     def do_workout(self, num_threads=10):
@@ -108,10 +108,11 @@ class SSLSocketConnectTest(unittest.TestCase):
         connect_attempt = 0
         sock = ssl.wrap_socket(sock, certfile=CERTFILE, do_handshake_on_connect=True)
 
-        while connect_errno != errno.EISCONN and connect_attempt < 500:
+        while connect_errno != errno.EISCONN and connect_attempt < 10000:
             connect_attempt += 1
             connect_errno = sock.connect_ex(self.address)
             results[index].append(connect_errno)
+            time.sleep(0.01)
         sock.close()
 
     def do_workout(self, num_threads=10):

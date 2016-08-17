@@ -24,8 +24,9 @@ try:
     # http://bugs.jython.org/issue2469, due to the fact that jarjar-ed
     # jars - like other shading - lose their signatures. For most jars
     # this is not an issue, and we have been removing signature files
-    # since 2.7.0, but it causes conflicts Java's security provider
-    # model.
+    # since 2.7.0. But in this specific case, removing signatures then
+    # causes conflicts with Java's security provider model, because it
+    # requires signing.
     from org.bouncycastle.asn1.pkcs import PrivateKeyInfo
     from org.bouncycastle.cert import X509CertificateHolder
     from org.bouncycastle.cert.jcajce import JcaX509CertificateConverter
