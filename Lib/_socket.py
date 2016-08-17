@@ -277,7 +277,7 @@ def _unmapped_exception(exc):
 def java_net_socketexception_handler(exc):
     if exc.message.startswith("Address family not supported by protocol family"):
         return _add_exception_attrs(
-            error(errno.EAFNOSUPPORT, 
+            error(errno.EAFNOSUPPORT,
                   'Address family not supported by protocol family: See http://wiki.python.org/jython/NewSocketModule#IPV6_address_support'))
     if exc.message.startswith('Address already in use'):
         return error(errno.EADDRINUSE, 'Address already in use')
@@ -296,7 +296,7 @@ _exception_map = {
     IOException            : lambda x: error(errno.ECONNRESET, 'Software caused connection abort'),
     InterruptedIOException : lambda x: timeout(errno.ETIMEDOUT, 'timed out'),
     IllegalStateException  : lambda x: error(errno.EPIPE, 'Illegal state exception'),
-    
+
     java.net.BindException            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
     java.net.ConnectException         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
     java.net.NoRouteToHostException   : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
@@ -363,7 +363,7 @@ def raises_java_exception(method_or_function):
     """Maps java socket exceptions to the equivalent python exception.
     Also sets _last_error on socket objects so as to support SO_ERROR.
     """
-    
+
     @wraps(method_or_function)
     def handle_exception(*args, **kwargs):
         is_socket = len(args) > 0 and isinstance(args[0], _realsocket)
@@ -457,7 +457,7 @@ _PollNotification = namedtuple(
 
 
 class poll(object):
-    
+
     def __init__(self):
         self.queue = LinkedBlockingQueue()
         self.registered = dict()  # fd -> eventmask
@@ -504,7 +504,7 @@ class poll(object):
         if notification is None:
             return None, 0
         mask = self.registered.get(notification.fd, 0)   # handle if concurrently removed, by simply ignoring
-        log.debug("Testing notification=%s mask=%s", notification, mask, extra={"sock": "*"}) 
+        log.debug("Testing notification=%s mask=%s", notification, mask, extra={"sock": "*"})
         event = 0
         if mask & POLLIN and notification.sock._readable():
             event |= POLLIN
@@ -516,14 +516,14 @@ class poll(object):
             event |= POLLHUP
         if mask & POLLNVAL and not notification.sock.peer_closed:
             event |= POLLNVAL
-        log.debug("Tested notification=%s event=%s", notification, event, extra={"sock": "*"}) 
+        log.debug("Tested notification=%s event=%s", notification, event, extra={"sock": "*"})
         return notification.fd, event
 
     def _handle_poll(self, poller):
         notification = poller()
         if notification is None:
             return []
-            
+
         # Pull as many outstanding notifications as possible out
         # of the queue
         notifications = [notification]
@@ -677,7 +677,7 @@ class ChildSocketHandler(ChannelInitializer):
 UNKNOWN_SOCKET, CLIENT_SOCKET, SERVER_SOCKET, DATAGRAM_SOCKET = range(4)
 _socket_types = {
     UNKNOWN_SOCKET:  "unknown",
-    CLIENT_SOCKET:   "client", 
+    CLIENT_SOCKET:   "client",
     SERVER_SOCKET:   "server",
     DATAGRAM_SOCKET: "datagram"
 }
@@ -855,7 +855,7 @@ class _realsocket(object):
     # in turn use _connect, which uses Bootstrap, not ServerBootstrap
 
     def _init_client_mode(self, channel=None):
-        # this is client socket specific 
+        # this is client socket specific
         self.socket_type = CLIENT_SOCKET
         self.incoming = LinkedBlockingQueue()  # list of read buffers
         self.incoming_head = None  # allows msg buffers to be broken up
@@ -906,7 +906,7 @@ class _realsocket(object):
         # messages from the peer
         if self.connect_handlers:
             self.channel.pipeline().addLast(self.python_inbound_handler)
-        
+
         def _peer_closed(x):
             log.debug("Peer closed channel %s", x, extra={"sock": self})
             self.channel_closed = True
@@ -1016,7 +1016,7 @@ class _realsocket(object):
         return child, peername
 
     # DATAGRAM METHODS
-    
+
     def _datagram_connect(self, addr=None):
         # FIXME raise exception if not of the right family
         if addr is not None:
@@ -1077,7 +1077,7 @@ class _realsocket(object):
         return len(data)
 
     # GENERAL METHODS
-                                             
+
     def close(self):
         with self.open_lock:
             self.open_count -= 1
@@ -1087,7 +1087,7 @@ class _realsocket(object):
 
             if self.channel is None:
                 return
-            
+
             close_future = self.channel.close()
             close_future.addListener(self._finish_closing)
 
@@ -1179,12 +1179,19 @@ class _realsocket(object):
 
         if not self._can_write:
             raise error(errno.ENOTCONN, 'Socket not connected')
-        future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(data))
+
+        bytes_writable = self.channel.bytesBeforeUnwritable()
+        if bytes_writable > len(data):
+            bytes_writable = len(data)
+
+        sent_data = data[:bytes_writable]
+
+        future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(sent_data))
         self._handle_channel_future(future, "send")
-        log.debug("Sent data <<<{!r:.20}>>>".format(data), extra={"sock": self})
-        # FIXME are we sure we are going to be able to send this much data, especially async?
-        return len(data)
-    
+        log.debug("Sent data <<<{!r:.20}>>>".format(sent_data), extra={"sock": self})
+
+        return len(sent_data)
+
     sendall = send   # FIXME see note above!
 
     def _get_incoming_msg(self, reason):
@@ -1253,7 +1260,7 @@ class _realsocket(object):
         data, _ = self._get_message(bufsize, "recv")
         log.debug("Received <<<{!r:.20}>>>".format(data), extra={"sock": self})
         return data
-        
+
     def recvfrom(self, bufsize, flags=0):
         self._verify_channel()
         data, sender = self._get_message(bufsize, "recvfrom")
@@ -1438,7 +1445,7 @@ socket = SocketType = _socketobject
 # FIXME handshake_future - gates all requests. should be cheap (comparable to the old self.active)
 
 class ChildSocket(_realsocket):
-    
+
     def __init__(self, parent_socket):
         super(ChildSocket, self).__init__(type=parent_socket.type)
         self.parent_socket = parent_socket
@@ -1621,7 +1628,7 @@ def _get_jsockaddr(address_object, family, sock_type, proto, flags):
 def _get_jsockaddr2(address_object, family, sock_type, proto, flags):
     # Is this an object that was returned from getaddrinfo? If so, it already contains an InetAddress
     if isinstance(address_object, _ip_address_t):
-        return java.net.InetSocketAddress(address_object.jaddress, address_object[1]) 
+        return java.net.InetSocketAddress(address_object.jaddress, address_object[1])
     # The user passed an address tuple, not an object returned from getaddrinfo
     # So we must call getaddrinfo, after some translations and checking
     if address_object is None:
