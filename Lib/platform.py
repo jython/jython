@@ -1191,12 +1191,72 @@ def uname():
 
         Entries which cannot be determined are set to ''.
 
+
+        Jython-note:
+        platform.uname returns JVM-info.
+        For native platform info use os.uname or platform._uname.
     """
     global _uname_cache
-    no_os_uname = 0
 
     if _uname_cache is not None:
         return _uname_cache
+
+    processor = ''
+
+    node = _node()
+    machine = os.uname()[4]
+
+    # Get JVM-Info:
+    release,vendor,vminfo,osinfo = java_ver()
+    system = 'Java'
+    version = string.join(vminfo,', ')
+    if not version:
+        version = vendor
+
+    if not processor:
+        # Get processor information from the uname system command
+        processor = _syscmd_uname('-p','')
+
+    #If any unknowns still exist, replace them with ''s, which are more portable
+    if system == 'unknown':
+        system = ''
+    if node == 'unknown':
+        node = ''
+    if release == 'unknown':
+        release = ''
+    if version == 'unknown':
+        version = ''
+    if machine == 'unknown':
+        machine = ''
+    if processor == 'unknown':
+        processor = ''
+
+    _uname_cache = system,node,release,version,machine,processor
+    return _uname_cache
+
+
+# We preserve original uname (more or less) here as _uname:
+__uname_cache = None
+
+def _uname():
+
+    """ Fairly portable uname interface. Returns a tuple
+        of strings (system,node,release,version,machine,processor)
+        identifying the underlying platform.
+
+        Note that unlike the os.uname function this also returns
+        possible processor information as an additional tuple entry.
+
+        Entries which cannot be determined are set to ''.
+
+        Jython-note:
+        _uname resembles CPython behavior for debugging purposes etc.
+    """
+    global __uname_cache
+    no_os_uname = 0
+
+    if __uname_cache is not None:
+        return __uname_cache
 
     processor = ''
 
@@ -1315,8 +1375,8 @@ def uname():
     if system == 'Windows' and processor == '':
         processor = _java_getenv('PROCESSOR_IDENTIFIER',processor)
 
-    _uname_cache = system,node,release,version,machine,processor
-    return _uname_cache
+    __uname_cache = system,node,release,version,machine,processor
+    return __uname_cache
 
 ### Direct interfaces to some of the uname() return values
 
