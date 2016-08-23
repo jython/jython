@@ -1215,7 +1215,7 @@ def uname():
 
     if not processor:
         # Get processor information from the uname system command
-        processor = _syscmd_uname('-p','')
+        processor = _uname()[-1]
 
     #If any unknowns still exist, replace them with ''s, which are more portable
     if system == 'unknown':
@@ -1236,7 +1236,7 @@ def uname():
 
 
 # We preserve original uname (more or less) here as _uname:
-__uname_cache = None
+_uname_cache2 = None
 
 def _uname():
 
@@ -1252,11 +1252,11 @@ def _uname():
         Jython-note:
         _uname resembles CPython behavior for debugging purposes etc.
     """
-    global __uname_cache
+    global _uname_cache2
     no_os_uname = 0
 
-    if __uname_cache is not None:
-        return __uname_cache
+    if _uname_cache2 is not None:
+        return _uname_cache2
 
     processor = ''
 
@@ -1375,8 +1375,8 @@ def _uname():
     if system == 'Windows' and processor == '':
         processor = _java_getenv('PROCESSOR_IDENTIFIER',processor)
 
-    __uname_cache = system,node,release,version,machine,processor
-    return __uname_cache
+    _uname_cache2 = system,node,release,version,machine,processor
+    return _uname_cache2
 
 ### Direct interfaces to some of the uname() return values
 
