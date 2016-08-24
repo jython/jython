@@ -1426,13 +1426,13 @@ class Popen(object):
             attribute."""
             if self.returncode is None:
                 self.returncode = self._process.waitFor()
-                for coupler in (self._stdout_thread, self._stderr_thread):
-                    if coupler:
-                        coupler.join()
-                if self._stdin_thread:
-                    # The stdin thread may be blocked forever, forcibly
-                    # stop it
-                    self._stdin_thread.interrupt()
+            for coupler in (self._stdout_thread, self._stderr_thread):
+                if coupler:
+                    coupler.join()
+            if self._stdin_thread:
+                # The stdin thread may be blocked forever, forcibly
+                # stop it
+                self._stdin_thread.interrupt()
             return self.returncode
 
         def terminate(self):
