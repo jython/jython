@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc
   Bugs fixed
+    - [ 2488 ] Always join on subprocess coupler threads
     - [ 2480 ] Repeating from <javapackage> import <class> results in reload
     - [ 2472 ] Importing simplejson fails with: 'NoneType' object has no
                attribute 'encode_basestring_ascii'
