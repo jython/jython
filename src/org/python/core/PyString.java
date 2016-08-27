@@ -204,7 +204,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
              * No existing export we can re-use. Return a buffer, but specialised to defer
              * construction of the buf object, and cache a soft reference to it.
              */
-            pybuf = new SimpleStringBuffer(flags, getString());
+            pybuf = new SimpleStringBuffer(flags, this, getString());
             export = new SoftReference<BaseBuffer>(pybuf);
         }
         return pybuf;

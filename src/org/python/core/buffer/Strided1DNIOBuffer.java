@@ -1,20 +1,22 @@
 package org.python.core.buffer;
 
+import java.nio.ByteBuffer;
+
 import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.PyException;
 
 /**
- * Read-only buffer API over a one-dimensional array of one-byte items, that are evenly-spaced in a
- * storage array. The buffer has <code>storage</code>, <code>index0</code> and <code>count</code>
- * properties in the usual way, designating a slice (or all) of a byte array, but also a
- * <code>stride</code> property (equal to <code>getStrides()[0]</code>).
+ * Read-only buffer API over a one-dimensional <code>java.nio.ByteBuffer</code> of one-byte items,
+ * that are evenly-spaced in that store. The buffer has <code>storage</code>, <code>index0</code>
+ * and <code>length</code> properties in the usual way, designating a slice (or all) of a byte
+ * array, but also a <code>stride</code> property (equal to <code>getStrides()[0]</code>).
  * <p>
- * Let the underlying buffer be the byte array <i>u(i)</i> for <i>i=0..N-1</i>, let <i>x</i> be the
- * <code>Strided1DBuffer</code>, and let the stride be <i>p</i>. The storage works as follows.
- * Designate by <i>x(j)</i>, for <i>j=0..L-1</i>, the byte at index <i>j</i>, that is, the byte
- * retrieved by <code>x.byteAt(j)</code>. Thus, we store <i>x(j)</i> at <i>u(a+pj)</i>, that is,
- * <i>x(0) = u(a)</i>. When we construct such a buffer, we have to supply <i>a</i> =
+ * Let the underlying buffer be the byte sequence <i>u(i)</i> for <i>i=0..N-1</i>, let <i>x</i> be
+ * the <code>Strided1DNIOBuffer</code>, and let the stride be <i>p</i>. The storage works as
+ * follows. Designate by <i>x(j)</i>, for <i>j=0..L-1</i>, the byte at index <i>j</i>, that is, the
+ * byte retrieved by <code>x.byteAt(j)</code>. Thus, we store <i>x(j)</i> at <i>u(a+pj)</i>, that
+ * is, <i>x(0) = u(a)</i>. When we construct such a buffer, we have to supply <i>a</i> =
  * <code>index0</code>, <i>L</i> = <code>count</code>, and <i>p</i> = <code>stride</code> as the
  * constructor arguments. The last item in the slice <i>x(L-1)</i> is stored at <i>u(a+p(L-1))</i>.
  * For the simple case of positive stride, constructor argument <code>index0</code> is the low index
@@ -29,7 +31,7 @@ import org.python.core.PyException;
  * create the <code>memoryview</code> that is returned as an extended slice of a
  * <code>memoryview</code>.
  */
-public class Strided1DBuffer extends BaseArrayBuffer {
+public class Strided1DNIOBuffer extends BaseNIOBuffer {
 
     /**
      * Step size in the underlying buffer essential to correct translation of an index (or indices)
@@ -39,18 +41,20 @@ public class Strided1DBuffer extends BaseArrayBuffer {
     protected int stride;
 
     /**
-     * Provide an instance of <code>Strided1DBuffer</code> with navigation variables initialised,
+     * Provide an instance of <code>Strided1DNIOBuffer</code> with navigation variables initialised,
      * for sub-class use. The buffer ({@link #storage}, {@link #index0}), and the navigation (
      * {@link #shape} array and {@link #stride}) will be initialised from the arguments (which are
      * checked for range).
      * <p>
      * The sub-class constructor should check that the intended access is compatible with this
      * object by calling {@link #checkRequestFlags(int)}. (See the source of
-     * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, byte[], int, int, int)} for an
-     * example of this use.)
+     * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, ByteBuffer, int, int, int)} for
+     * an example of this use.)
      *
      * @param obj exporting object (or <code>null</code>)
-     * @param storage raw byte array containing exported data
+     * @param storage the <code>ByteBuffer</code> wrapping the exported object state. NOTE: this
+     *            <code>PyBuffer</code> keeps a reference and may manipulate the position, mark and
+     *            limit hereafter. Use {@link ByteBuffer#duplicate()} to give it an isolated copy.
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
      * @param stride in between successive elements of the new PyBuffer
@@ -58,8 +62,8 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      */
-    protected Strided1DBuffer(BufferProtocol obj, byte[] storage, int index0, int count, int stride)
-            throws ArrayIndexOutOfBoundsException, NullPointerException {
+    protected Strided1DNIOBuffer(BufferProtocol obj, ByteBuffer storage, int index0, int count,
+            int stride) throws ArrayIndexOutOfBoundsException, NullPointerException {
         super(storage, STRIDES, index0, count, stride);
         this.obj = obj;
         this.stride = stride;           // Between items
@@ -87,19 +91,29 @@ public class Strided1DBuffer extends BaseArrayBuffer {
             }
 
             // Check indices using "all non-negative" trick
-            if ((count | lo | (storage.length - lo) | hi | (storage.length - hi)) < 0) {
+            int cap = storage.capacity();
+            if ((count | lo | (cap - lo) | hi | (cap - hi)) < 0) {
                 throw new ArrayIndexOutOfBoundsException();
             }
+        }
+
+        // Deduce feature flags from the client's ByteBuffer
+        if (!storage.isReadOnly()) {
+            addFeatureFlags(WRITABLE);
+        }
+        if (storage.hasArray()) {
+            addFeatureFlags(AS_ARRAY);
         }
     }
 
     /**
-     * Provide an instance of <code>Strided1DBuffer</code> on a particular array of bytes specifying
-     * a starting index, the number of items in the result, and a byte-indexing stride. The result
-     * of <code>byteAt(i)</code> will be equal to <code>storage[index0+stride*i]</code> (whatever
-     * the sign of <code>stride</code>), valid for <code>0&lt;=i&lt;count</code>. The constructor
-     * checks that all these indices lie within the <code>storage</code> array (unless
-     * <code>count=0</code>).
+     * Provide an instance of <code>Strided1DNIOBuffer</code> on a particular {@link ByteBuffer}
+     * specifying a starting index, the number of items in the result, and a byte-indexing stride.
+     * The result of <code>byteAt(i)</code> will be equal to
+     * <code>storage.get(index0+stride*i)</code> (whatever the sign of <code>stride</code>), valid
+     * for <code>0&lt;=i&lt;count</code>. The constructor checks that all these indices lie within
+     * the <code>storage</code> (unless <code>count=0</code>). No reference will be kept to the
+     * <code>ByteBuffer</code> passed in. (It is duplicated.)
      * <p>
      * The constructed <code>PyBuffer</code> meets the consumer's expectations as expressed in the
      * <code>flags</code> argument, or an exception will be thrown if these are incompatible with
@@ -111,40 +125,33 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      *
      * @param flags consumer requirements
      * @param obj exporting object (or <code>null</code>)
-     * @param storage raw byte array containing exported data
+     * @param storage <code>ByteBuffer</code> wrapping exported data
      * @param index0 index into storage of item[0]
      * @param count number of items in the slice
-     * @param stride byte-index distance from one element to the next in the new PyBuffer
+     * @param stride in between successive elements of the new PyBuffer
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
      * @throws PyException (BufferError) when expectations do not correspond with the type
      */
-    public Strided1DBuffer(int flags, BufferProtocol obj, byte[] storage, int index0, int count, int stride)
-            throws ArrayIndexOutOfBoundsException, NullPointerException, PyException {
-        this(obj, storage, index0, count, stride);
+    public Strided1DNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage, int index0,
+            int count, int stride) throws ArrayIndexOutOfBoundsException, NullPointerException,
+            PyException {
+        this(obj, storage.duplicate(), index0, count, stride);
         checkRequestFlags(flags);   // Check request is compatible with type
 
     }
 
     @Override
-    public boolean isReadonly() {
-        return true;
-    }
-
-    @Override
     public final int byteIndex(int index) throws IndexOutOfBoundsException {
-        if (index < 0 || index >= shape[0]) {
-            throw new IndexOutOfBoundsException();
-        }
         return index0 + index * stride;
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * <code>Strided1DBuffer</code> provides an implementation for slicing already-strided bytes in
-     * one dimension. In that case, <i>x(i) = u(r+ip)</i> for <i>i = 0..L-1</i> where u is the
+     * <code>Strided1DNIOBuffer</code> provides an implementation for slicing already-strided bytes
+     * in one dimension. In that case, <i>x(i) = u(r+ip)</i> for <i>i = 0..L-1</i> where u is the
      * underlying buffer, and <i>r</i>, <i>p</i> and <i>L</i> are the start, stride and count with
      * which <i>x</i> was created from <i>u</i>. Thus <i>y(k) = u(r+sp+kmp)</i>, that is, the
      * composite <code>index0</code> is <i>r+sp</i> and the composite <code>stride</code> is
@@ -166,25 +173,11 @@ public class Strided1DBuffer extends BaseArrayBuffer {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public Pointer getPointer(int index) {
-        return new Pointer(storage, index0 + index * stride);
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public Pointer getPointer(int... indices) {
-        // BaseBuffer implementation can be simplified since if indices.length!=1 we error.
-        checkDimension(indices.length);
-        return getPointer(indices[0]);
-    }
-
     /**
-     * A <code>Strided1DBuffer.SlicedView</code> represents a non-contiguous subsequence of a simple
-     * buffer.
+     * A <code>Strided1DNIOBuffer.SlicedView</code> represents a non-contiguous subsequence of a
+     * simple buffer.
      */
-    static class SlicedView extends Strided1DBuffer {
+    static class SlicedView extends Strided1DNIOBuffer {
 
         /** The buffer on which this is a slice view */
         PyBuffer root;
@@ -194,15 +187,15 @@ public class Strided1DBuffer extends BaseArrayBuffer {
          *
          * @param root on which release must be called when this is released
          * @param flags consumer requirements
-         * @param storage raw byte array containing exported data
+         * @param storage <code>ByteBuffer</code> wrapping exported data (no reference kept)
          * @param index0 index into storage of item[0]
-         * @param count number of items in the sliced view
+         * @param count the number of items in the sliced view
          * @param stride in between successive elements of the new PyBuffer
          * @throws PyException (BufferError) when expectations do not correspond with the type
          */
-        public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int count,
+        public SlicedView(PyBuffer root, int flags, ByteBuffer storage, int index0, int count,
                 int stride) throws PyException {
-            // Create a new on the buffer passed in (part of the root)
+            // Create a new slice on the buffer passed in (part of the root)
             super(flags, root.getObj(), storage, index0, count, stride);
             // Get a lease on the root PyBuffer (read-only)
             this.root = root.getBuffer(FULL_RO);

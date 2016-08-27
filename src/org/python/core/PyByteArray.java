@@ -228,7 +228,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
         if (pybuf == null) {
             // No existing export we can re-use: create a new one
-            pybuf = new SimpleWritableBuffer(flags, storage, offset, size);
+            pybuf = new SimpleWritableBuffer(flags, this, storage, offset, size);
             // Hold a reference for possible re-use
             export = new WeakReference<BaseBuffer>(pybuf);
         }

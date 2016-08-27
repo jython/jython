@@ -2,17 +2,18 @@ package org.python.core.buffer;
 
 import java.nio.ByteBuffer;
 
+import org.python.core.BufferProtocol;
 import org.python.core.PyBuffer;
 import org.python.core.util.StringUtil;
 
 /**
  * Buffer API that appears to be a one-dimensional array of one-byte items providing read-only API,
  * but which is actually backed by a Java String. Some of the buffer API absolutely needs access to
- * the data as a byte array (those parts that involve a <code>PyBuffer.Pointer</code> result), and
- * therefore this class must create a byte array from the String for them. However, it defers
- * creation of a byte array until that part of the API is actually used. Where possible, this class
- * overrides those methods in SimpleBuffer that would otherwise access the byte array attribute to
- * use the String instead.
+ * the data as a byte array (those parts that involve a {@link java.nio.ByteBuffer} or
+ * {@link PyBuffer.Pointer} result), and therefore this class must create a byte array from the
+ * String for them. However, it defers creation of a byte array until that part of the API is
+ * actually used. Where possible, this class overrides those methods in SimpleBuffer that would
+ * otherwise access the byte array attribute to use the String instead.
  */
 public class SimpleStringBuffer extends SimpleBuffer {
 
@@ -26,13 +27,18 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * Provide an instance of SimpleStringBuffer meeting the consumer's expectations as expressed in
      * the flags argument.
      *
-     * @param bufString storing the implementation of the object
      * @param flags consumer requirements
+     * @param obj exporting object (or <code>null</code>)
+     * @param bufString storing the implementation of the object
      */
-    public SimpleStringBuffer(int flags, String bufString) {
+    public SimpleStringBuffer(int flags, BufferProtocol obj, String bufString) {
+        /*
+         * Leaving storage=null is ok because we carefully override every method that uses it,
+         * deferring creation of the storage byte array until we absolutely must have one.
+         */
+        super(obj, null, 0, bufString.length());
         // Save the backing string
         this.bufString = bufString;
-        shape[0] = bufString.length();
         // Check request is compatible with type
         checkRequestFlags(flags);
     }
@@ -54,20 +60,19 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
      */
     @Override
-    public byte byteAt(int index) throws IndexOutOfBoundsException {
-        // Avoid creating buf by using String.charAt
+    public final byte byteAtImpl(int index) {
         return (byte)bufString.charAt(index);
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
+     * In <code>SimpleStringBuffer</code> we can simply return the argument.
      */
     @Override
-    public int intAt(int index) throws IndexOutOfBoundsException {
-        // Avoid creating buf by using String.charAt
-        return bufString.charAt(index);
+    public final int byteIndex(int index) {
+        // We do not check the index because String will do it for us.
+        return index;
     }
 
     /**
@@ -76,10 +81,10 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * This method uses {@link String#charAt(int)} rather than create an actual byte buffer.
      */
     @Override
-    public void copyTo(int srcIndex, byte[] dest, int destPos, int length)
+    public void copyTo(int srcIndex, byte[] dest, int destPos, int count)
             throws IndexOutOfBoundsException {
         // Avoid creating buf by using String.charAt
-        int endIndex = srcIndex + length, p = destPos;
+        int endIndex = srcIndex + count, p = destPos;
         for (int i = srcIndex; i < endIndex; i++) {
             dest[p++] = (byte)bufString.charAt(i);
         }
@@ -91,13 +96,12 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * The <code>SimpleStringBuffer</code> implementation avoids creation of a byte buffer.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length) {
-        if (length > 0) {
-            // The new string content is just a sub-string. (Non-copy operation in Java.)
-            return new SimpleStringView(getRoot(), flags,
-                    bufString.substring(start, start + length));
+    public PyBuffer getBufferSlice(int flags, int start, int count) {
+        if (count > 0) {
+            // The new string content is just a sub-string.
+            return new SimpleStringView(getRoot(), flags, bufString.substring(start, start + count));
         } else {
-            // Special case for length==0 where start out of bounds sometimes raises exception.
+            // Special case for count==0 where start out of bounds sometimes raises exception.
             return new ZeroByteBuffer.View(getRoot(), flags);
         }
     }
@@ -108,23 +112,26 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * The <code>SimpleStringBuffer</code> implementation creates an actual byte buffer.
      */
     @Override
-    public PyBuffer getBufferSlice(int flags, int start, int length, int stride) {
+    public PyBuffer getBufferSlice(int flags, int start, int count, int stride) {
         if (stride == 1) {
             // Unstrided slice of a SimpleStringBuffer is itself a SimpleStringBuffer.
-            return getBufferSlice(flags, start, length);
+            return getBufferSlice(flags, start, count);
         } else {
             // Force creation of the actual byte array from the String.
             ensureHaveBytes();
             // Now we are effectively a SimpleBuffer, return the strided view.
-            return super.getBufferSlice(flags, start, length, stride);
+            return super.getBufferSlice(flags, start, count, stride);
         }
     }
 
     @Override
-    public ByteBuffer getNIOByteBuffer() {
+    protected ByteBuffer getNIOByteBufferImpl() {
         // Force creation of the actual byte array from the String.
         ensureHaveBytes();
-        return super.getNIOByteBuffer().asReadOnlyBuffer();
+        // The buffer spans the whole storage, which may include data not in the view
+        ByteBuffer b = ByteBuffer.wrap(storage);
+        // Return as read-only.
+        return b.asReadOnlyBuffer();
     }
 
     /**
@@ -142,6 +149,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getBuf() {
         ensureHaveBytes();
@@ -153,6 +161,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int index) {
         ensureHaveBytes();
@@ -164,6 +173,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
      * <p>
      * This method creates an actual byte array from the underlying String if none yet exists.
      */
+    @SuppressWarnings("deprecation")
     @Override
     public Pointer getPointer(int... indices) {
         ensureHaveBytes();
@@ -197,7 +207,7 @@ public class SimpleStringBuffer extends SimpleBuffer {
          */
         public SimpleStringView(PyBuffer root, int flags, String bufString) {
             // Create a new SimpleStringBuffer on the string passed in
-            super(flags, bufString);
+            super(flags, root.getObj(), bufString);
             // Get a lease on the root PyBuffer
             this.root = root.getBuffer(FULL_RO);
         }
@@ -206,12 +216,5 @@ public class SimpleStringBuffer extends SimpleBuffer {
         protected PyBuffer getRoot() {
             return root;
         }
-
-        @Override
-        public void releaseAction() {
-            // We have to release the root too if ours was final.
-            root.release();
-        }
-
     }
 }

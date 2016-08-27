@@ -51,17 +51,17 @@ public interface PyBUF {
     int[] getShape();
 
     /**
-     * The number of units (bytes) stored in each indexable item.
+     * The number of bytes stored in each indexable item.
      *
-     * @return the number of units (bytes) comprising each item.
+     * @return the number of bytes comprising each item.
      */
     int getItemsize();
 
     /**
-     * The total number of units (bytes) stored, which will be the product of the elements of the
-     * <code>shape</code> array, and the item size in units.
+     * The total number of bytes represented by the view, which will be the product of the elements of the
+     * <code>shape</code> array, and the item size in bytes.
      *
-     * @return the total number of units stored.
+     * @return the total number of bytes represented.
      */
     int getLen();
 
@@ -122,7 +122,7 @@ public interface PyBUF {
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
      * specify that it requires {@link PyBuffer#getFormat()} to return a <code>String</code>
-     * indicating the type of the unit. This exists for compatibility with CPython, as Jython as the
+     * indicating the type of the unit. This exists for compatibility with CPython, as in Jython the
      * format is always provided by <code>getFormat()</code>.
      */
     static final int FORMAT = 0x0004;
@@ -143,7 +143,7 @@ public interface PyBUF {
     static final int STRIDES = 0x0010 | ND;
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
-     * specify that it will assume C-order organisation of the units. <code>getBuffer</code> will
+     * specify that it will assume C-order organisation of the items. <code>getBuffer</code> will
      * raise an exception if the exporter's buffer is not C-ordered. <code>C_CONTIGUOUS</code>
      * implies <code>STRIDES</code>.
      */
@@ -152,14 +152,14 @@ public interface PyBUF {
     static final int C_CONTIGUOUS = 0x0020 | STRIDES;
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
-     * specify that it will assume Fortran-order organisation of the units. <code>getBuffer</code>
+     * specify that it will assume Fortran-order organisation of the items. <code>getBuffer</code>
      * will raise an exception if the exporter's buffer is not Fortran-ordered.
      * <code>F_CONTIGUOUS</code> implies <code>STRIDES</code>.
      */
     static final int F_CONTIGUOUS = 0x0040 | STRIDES;
     /**
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
-     * specify that it will assume a contiguous organisation of the units, but will enquire which
+     * specify that it will assume a contiguous organisation of the items, but will enquire which
      * organisation it actually is.
      *
      * <code>getBuffer</code> will raise an exception if the exporter's buffer is not contiguous.
@@ -203,13 +203,14 @@ public interface PyBUF {
      * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this in the request if
      * you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>,
      * <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
-     * {@link PyBuffer#getBuf()}.
+     * {@link PyBuffer#getNIOByteBuffer()} or using {@link PyBuffer#Pointer()}.
      */
     static final int FULL = INDIRECT | WRITABLE | FORMAT;
     /**
      * Equivalent to <code>(INDIRECT | FORMAT)</code>. Also use this in the request if you plan only
      * to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.), read
-     * only, without ever calling {@link PyBuffer#getBuf()}.
+     * only, without ever calling {@link PyBuffer#getNIOByteBuffer()} or using
+     * {@link PyBuffer#Pointer()}.
      */
     static final int FULL_RO = INDIRECT | FORMAT;
 
@@ -221,7 +222,8 @@ public interface PyBUF {
      * through the purely abstract part of the API). <code>getBuffer</code> will raise an exception
      * if the exporter cannot expose its storage as Java array.
      */
-    static final int AS_ARRAY = 0x10000000;
+    // XXX Pending: @Deprecated
+     static final int AS_ARRAY = 0x10000000;
 
     /* Constants for readability, not standard for CPython */
 
@@ -242,13 +244,13 @@ public interface PyBUF {
     static final int NAVIGATION = SIMPLE | ND | STRIDES | INDIRECT;
     /**
      * A constant used by the exporter in processing {@link BufferProtocol#getBuffer(int)} to check
-     * for assumed C-order organisation of the units.
+     * for assumed C-order organisation of the items.
      * <code>C_CONTIGUOUS = IS_C_CONTIGUOUS | STRIDES</code>.
      */
     static final int IS_C_CONTIGUOUS = C_CONTIGUOUS & ~STRIDES;
     /**
      * A constant used by the exporter in processing {@link BufferProtocol#getBuffer(int)} to check
-     * for assumed C-order Fortran-order organisation of the units.
+     * for assumed C-order Fortran-order organisation of the items.
      * <code>F_CONTIGUOUS = IS_F_CONTIGUOUS | STRIDES</code>.
      */
     static final int IS_F_CONTIGUOUS = F_CONTIGUOUS & ~STRIDES;

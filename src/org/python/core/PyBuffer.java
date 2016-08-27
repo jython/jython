@@ -30,6 +30,14 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
     // int getLen();
 
     /**
+     * Return the underlying exporting object (or <code>null</code> if no object implementing the
+     * {@link BufferProtocol} is in that role). This will often be a <code>PyObject</code>.
+     *
+     * @return exporting object (or <code>null</code>)
+     */
+    BufferProtocol getObj();
+
+    /**
      * Return the byte indexed from a one-dimensional buffer with item size one. This is part of the
      * fully-encapsulated API: the buffer implementation exported takes care of navigating the
      * structure of the buffer. Results are undefined where the number of dimensions is not one or
@@ -106,47 +114,46 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * further study.)
      *
      * @param dest destination byte array
-     * @param destPos index in the destination array of the byte [0]
+     * @param destPos byte-index in the destination array of the byte [0]
      * @throws IndexOutOfBoundsException if the destination cannot hold it
      */
     void copyTo(byte[] dest, int destPos) throws IndexOutOfBoundsException, PyException;
 
     /**
-     * Copy a simple slice of the buffer to the destination byte array, defined by a starting index
-     * and length in the source buffer. This may validly be done only for a one-dimensional buffer,
-     * as the meaning of the starting index is otherwise not defined. The length (like the source
-     * index) is in source buffer <b>items</b>: <code>length*itemsize</code> bytes will be occupied
-     * in the destination.
+     * Copy a simple slice of the buffer-view to the destination byte array, defined by a starting
+     * item-index in the source buffer and the <code>count</code> of items to copy. This may validly
+     * be done only for a one-dimensional buffer, as the meaning of the starting item-index is
+     * otherwise not defined. <code>count*itemsize</code> bytes will be occupied in the destination.
      *
-     * @param srcIndex starting index in the source buffer
+     * @param srcIndex starting item-index in the source buffer
      * @param dest destination byte array
-     * @param destPos index in the destination array of the item [0,...]
-     * @param length number of items to copy
+     * @param destPos byte-index in the destination array of the source item [0,...]
+     * @param count number of items to copy
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
      */
-    void copyTo(int srcIndex, byte[] dest, int destPos, int length)     // mimic arraycopy args
+    void copyTo(int srcIndex, byte[] dest, int destPos, int count)     // mimic arraycopy args
             throws IndexOutOfBoundsException, PyException;
 
     /**
-     * Copy bytes from a slice of a (Java) byte array into the buffer. This may validly be done only
-     * for a one-dimensional buffer, as the meaning of the starting index is not otherwise defined.
-     * The length (like the destination index) is in buffer <b>items</b>:
-     * <code>length*itemsize</code> bytes will be read from the source.
+     * Copy from a slice of a (Java) byte array into the buffer starting at a given destination
+     * item-index. This may validly be done only for a one-dimensional buffer, as the meaning of the
+     * destination index is not otherwise defined. <code>count*itemsize</code> bytes will be read
+     * from the source.
      *
      * @param src source byte array
      * @param srcPos location in source of first byte to copy
-     * @param destIndex starting index in the destination (i.e. <code>this</code>)
-     * @param length number of bytes to copy in
+     * @param destIndex starting item-index in the destination (i.e. <code>this</code>)
+     * @param count number of items to copy in
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
      * @throws PyException (TypeError) if read-only buffer
      */
-    void copyFrom(byte[] src, int srcPos, int destIndex, int length)    // mimic arraycopy args
+    void copyFrom(byte[] src, int srcPos, int destIndex, int count)    // mimic arraycopy args
             throws IndexOutOfBoundsException, PyException;
 
     /**
-     * Copy the whole of another PyBuffer into this buffer. This may validly be done only for
-     * buffers that are consistent in their dimensions. When it is necessary to copy partial
-     * buffers, this may be achieved using a buffer slice on the source or destination.
+     * Copy the whole of another <code>PyBuffer</code> into this buffer. This may validly be done
+     * only for buffers that are consistent in their dimensions. When it is necessary to copy
+     * partial buffers, this may be achieved using a buffer slice on the source or destination.
      *
      * @param src source buffer
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
@@ -202,10 +209,10 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      *
      * @param flags specifying features demanded and the navigational capabilities of the consumer
      * @param start index in the current buffer
-     * @param length number of items in the required slice
+     * @param count number of items in the required slice
      * @return a buffer representing the slice
      */
-    public PyBuffer getBufferSlice(int flags, int start, int length);
+    public PyBuffer getBufferSlice(int flags, int start, int count);
 
     /**
      * Get a <code>PyBuffer</code> that represents a slice of the current one described in terms of
@@ -217,7 +224,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Suppose that <i>x(i)</i> denotes the <i>i</i>th element of the current buffer, that is, the
      * byte retrieved by <code>this.byteAt(i)</code> or the unit indicated by
      * <code>this.getPointer(i)</code>. A request for a slice where <code>start</code> <i>= s</i>,
-     * <code>length</code> <i>= N</i> and <code>stride</code> <i>= m</i>, results in a buffer
+     * <code>count</code> <i>= N</i> and <code>stride</code> <i>= m</i>, results in a buffer
      * <i>y</i> such that <i>y(k) = x(s+km)</i> where <i>k=0..(N-1)</i>. In Python terms, this is
      * the slice <i>x[s : s+(N-1)m+1 : m]</i> (if <i>m&gt;0</i>) or the slice <i>x[s : s+(N-1)m-1 :
      * m]</i> (if <i>m&lt;0</i>). Implementations should check that this range is entirely within
@@ -226,26 +233,60 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * In a simple buffer backed by a contiguous byte array, the result is a strided PyBuffer on the
      * same storage but where the offset is adjusted by <i>s</i> and the stride is as supplied. If
      * the current buffer is already strided and/or has an item size larger than single bytes, the
-     * new <code>start</code> index, <code>length</code> and <code>stride</code> will be translated
+     * new <code>start</code> index, <code>count</code> and <code>stride</code> will be translated
      * from the arguments given, through this buffer's stride and item size. The caller always
      * expresses <code>start</code> and <code>strides</code> in terms of the abstract view of this
      * buffer.
      *
      * @param flags specifying features demanded and the navigational capabilities of the consumer
      * @param start index in the current buffer
-     * @param length number of items in the required slice
+     * @param count number of items in the required slice
      * @param stride index-distance in the current buffer between consecutive items in the slice
      * @return a buffer representing the slice
      */
-    public PyBuffer getBufferSlice(int flags, int start, int length, int stride);
+    public PyBuffer getBufferSlice(int flags, int start, int count, int stride);
 
-    // java.nio access to actual storage
+    // Access to underlying byte-oriented storage
     //
 
     /**
+     * Convert an item index (for a one-dimensional buffer) to an absolute byte index in the storage
+     * shared by the exporter. The storage exported as a <code>PyBuffer</code> is a linearly-indexed
+     * sequence of bytes, although it may not actually be a heap-allocated Java <code>byte[]</code>
+     * object. The purpose of this method is to allow the exporter to define the relationship
+     * between the item index (as used in {@link #byteAt(int)}) and the byte-index (as used with the
+     * <code>ByteBuffer</code> returned by {@link #getNIOByteBuffer()}). See
+     * {@link #byteIndex(int[])} for discussion of the multi-dimensional case.
+     *
+     * @param index item-index from consumer
+     * @return corresponding byte-index in actual storage
+     */
+    // Should it throw IndexOutOfBoundsException if the index &lt;0 or &ge;<code>shape[0]</code?
+    int byteIndex(int index) throws IndexOutOfBoundsException;
+
+    /**
+     * Convert a multi-dimensional item index to an absolute byte index in the storage shared by the
+     * exporter. The storage exported as a <code>PyBuffer</code> is a linearly-indexed sequence of
+     * bytes, although it may not actually be a heap-allocated Java <code>byte[]</code> object. The
+     * purpose of this method is to allow the exporter to define the relationship between the item
+     * index (as used in {@link #byteAt(int...)} and the byte-index (as used with the
+     * <code>ByteBuffer</code> returned by {@link #getNIOByteBuffer()}).
+     *
+     * @param indices n-dimensional item-index from consumer
+     * @return corresponding byte-index in actual storage
+     */
+    // Should it throw IndexOutOfBoundsException if any index &lt;0 or &ge;<code>shape[i]</code>?
+    int byteIndex(int... indices);
+
+    /**
      * Obtain a {@link java.nio.ByteBuffer} giving access to the bytes that hold the data being
-     * exported to the consumer. For a one-dimensional contiguous buffer, assuming the following
-     * client code where <code>obj</code> has type <code>BufferProtocol</code>:
+     * exported by the original object. The position of the buffer is at the first byte of the item
+     * with zero index (quite possibly not the lowest valid byte-index), the limit of the buffer is
+     * beyond the largest valid byte index, and the mark is undefined.
+     * <p>
+     * For a one-dimensional contiguous buffer, the limit is one byte beyond the last item, so that
+     * consecutive reads from the <code>ByteBuffer</code> return the data in order. Assuming the
+     * following client code where <code>obj</code> has type <code>BufferProtocol</code>:
      *
      * <pre>
      * PyBuffer a = obj.getBuffer(PyBUF.SIMPLE);
@@ -253,33 +294,30 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * ByteBuffer bb = a.getNIOBuffer();
      * </pre>
      *
-     * the item with index <code>bb.pos()+k</code> is in the buffer <code>bb</code> at positions
+     * the item with index <code>k</code> is in <code>bb</code> at positions
      * <code>bb.pos()+k*itemsize</code> to <code>bb.pos()+(k+1)*itemsize - 1</code> inclusive. And
      * if <code>itemsize==1</code>, the item is simply the byte at position <code>bb.pos()+k</code>.
-     * The buffer limit is set to the first byte beyond the valid data. A block read or write will
-     * therefore access the contents sequentially.
      * <p>
      * If the buffer is multidimensional or non-contiguous (strided), the buffer position is still
-     * the (first byte of) the item at index <code>[0]</code> or <code>[0,...,0]</code>, and the
-     * limit is one item beyond the valid data. However, it is necessary to navigate <code>bb</code>
-     * using the <code>shape</code>, <code>strides</code> and maybe <code>suboffsets</code> provided
-     * by the API.
+     * the (first byte of) the item at index <code>[0]</code> or <code>[0,...,0]</code>. However, it
+     * is necessary to navigate <code>bb</code> using the <code>shape</code>, <code>strides</code>
+     * and maybe <code>suboffsets</code> provided by the API.
      *
-     * @return a ByteBuffer equivalent to the exported data contents.
+     * @return a <code>ByteBuffer</code> onto the exported data contents.
      */
     ByteBuffer getNIOByteBuffer();
 
-    // Direct access to actual storage
-    //
-
     /**
-     * Determine whether the exporter is able to offer direct access to the exported storage as a
-     * Java byte array (through the API that involves class {@link Pointer}), or only supports the
+     * Report whether the exporter is able to offer direct access to the exported storage as a Java
+     * byte array (through the API that involves class {@link Pointer}), or only supports the
      * abstract API. See also {@link PyBUF#AS_ARRAY}.
      *
      * @return true if array access is supported, false if it is not.
      */
     boolean hasArray();
+
+    // Direct access to actual storage (deprecated)
+    //
 
     /**
      * A class that references a <code>byte[]</code> array and a particular offset within it, as the
@@ -288,6 +326,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * this array, and in others not. See {@link PyBuffer#isReadonly()}. It is used by the Jython
      * buffer API roughly where the CPython buffer API uses a C (char *) pointer.
      */
+    @Deprecated
     public static class Pointer {
 
         /** Reference to the array holding the bytes. */
@@ -379,7 +418,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * free to navigate the underlying buffer <code>b.storage</code> without respecting these
      * boundaries. If the buffer is non-contiguous, the above description is still valid (since a
      * multi-byte item must itself be contiguously stored), but in any additional navigation of
-     * <code>b.storage[]</code> to other units, the client must use the shape, strides and
+     * <code>b.storage[]</code> to other items, the client must use the shape, strides and
      * sub-offsets provided by the API. Normally one starts <code>b = a.getBuf()</code> in order to
      * establish the offset of index [0,...,0].
      *

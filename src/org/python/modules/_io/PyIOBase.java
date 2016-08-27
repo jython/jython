@@ -778,7 +778,7 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
                 // None of the above: complain
                 throw tailoredTypeError("read-write buffer", obj);
             }
-            return new SimpleStringBuffer(PyBUF.SIMPLE, s);
+            return new SimpleStringBuffer(PyBUF.SIMPLE, null, s);
         }
     }
 
@@ -910,18 +910,17 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
             + "fp is closed after the suite of the with statement is complete:\n" + "\n"
             + "with open('spam.txt', 'r') as fp:\n" + "    fp.write('Spam and eggs!')\n";
 
-
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
-    	//closer cannot be null
+        // closer cannot be null
         if (closer.sys != null) {
-        	int retVal = visit.visit(closer.sys, arg);
+            int retVal = visit.visit(closer.sys, arg);
             if (retVal != 0) {
                 return retVal;
             }
         }
-        //__dict__ cannot be null
+        // __dict__ cannot be null
         return visit.visit(__dict__, arg);
     }
 
