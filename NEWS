@@ -17,6 +17,7 @@ Jython 2.7.1rc
                causes an infinite recursion
     - [ 2112 ] time.strptime() has different default year in Jython and CPython
     - [ 1767 ] Rich comparisons
+    - [ 2314 ] Failures in test_shutil on Windows
 
   New Features
     - Added uname function to posix module. The mostly Java-based implementation even

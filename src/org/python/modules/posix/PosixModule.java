@@ -326,7 +326,8 @@ public class PosixModule implements ClassDictInit {
                 File f = absolutePath(path).toFile();
                 if (!f.exists()) {
                     throw Py.OSError(Errno.ENOENT, path);
-                } else if (!f.setWritable(writable)) {
+                } else if (!f.isDirectory() && !f.setWritable(writable)) {
+                    // The read-only flag of directories means "don't delete" not "you can't write"
                     throw Py.OSError(Errno.EPERM, path);
                 }
             } catch (SecurityException ex) {
@@ -1043,7 +1044,9 @@ public class PosixModule implements ClassDictInit {
                 sysrelease = br.readLine();
                 // to end the process sanely in case we deal with some
                 // implementation that emits additional new-lines:
-                while (br.readLine() != null);
+                while (br.readLine() != null) {
+                    ;
+                }
                 br.close();
                 if (p.waitFor() != 0) {
                     sysrelease = "";
@@ -1081,7 +1084,9 @@ public class PosixModule implements ClassDictInit {
                 uname_nodename = br.readLine();
                 // to end the process sanely in case we deal with some
                 // implementation that emits additional new-lines:
-                while (br.readLine() != null);
+                while (br.readLine() != null) {
+                    ;
+                }
                 br.close();
                 if (p.waitFor() != 0) {
                     uname_nodename = "";
@@ -1103,7 +1108,9 @@ public class PosixModule implements ClassDictInit {
             }
             // to end the process sanely in case we deal with some
             // implementation that emits additional new-lines:
-            while (br.readLine() != null);
+            while (br.readLine() != null) {
+                ;
+            }
             br.close();
             if (p.waitFor() != 0) {
                 // No fallback for sysver available
@@ -1151,7 +1158,9 @@ public class PosixModule implements ClassDictInit {
                 uname_machine = br.readLine();
                 // to end the process sanely in case we deal with some
                 // implementation that emits additional new-lines:
-                while (br.readLine() != null);
+                while (br.readLine() != null) {
+                    ;
+                }
                 br.close();
                 if (p.waitFor() != 0) {
                     // To leverage os.arch-fallback:
