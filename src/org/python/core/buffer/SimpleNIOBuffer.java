@@ -9,13 +9,7 @@ import org.python.core.PyException;
 /**
  * Buffer API over a read-only one-dimensional <code>java.nio.ByteBuffer</code> of one-byte items.
  */
-
 public class SimpleNIOBuffer extends BaseNIOBuffer {
-
-    /**
-     * The strides array for this type is always a single element array with a 1 in it.
-     */
-    protected static final int[] SIMPLE_STRIDES = {1}; // XXX Push up?
 
     /**
      * Provide an instance of <code>SimpleNIOBuffer</code> with navigation variables initialised,

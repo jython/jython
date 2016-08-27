@@ -151,9 +151,9 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
             throws IndexOutOfBoundsException, PyException;
 
     /**
-     * Copy the whole of another PyBuffer into this buffer. This may validly be done only for
-     * buffers that are consistent in their dimensions. When it is necessary to copy partial
-     * buffers, this may be achieved using a buffer slice on the source or destination.
+     * Copy the whole of another <code>PyBuffer</code> into this buffer. This may validly be done
+     * only for buffers that are consistent in their dimensions. When it is necessary to copy
+     * partial buffers, this may be achieved using a buffer slice on the source or destination.
      *
      * @param src source buffer
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination

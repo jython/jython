@@ -425,6 +425,7 @@ public class PyBufferTestSupport {
             while (sb.length() < 30) {
                 sb.append(' ');
             }
+            sb.append(view.isReadonly()?"R ":"W ");
             sb.append("ref = ").append(ref.toString());
 
             return sb.toString();

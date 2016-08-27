@@ -9,6 +9,12 @@ Jython 2.7.1rc
   New Features
     - Use latest upstream bundled wheels for ensurepip: pip (7.1.2), setuptools (18.4),
       replacing wheels patched specifically for Jython
+    - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer
+      is exported. This is to support CPython extensions via JyNI, but has other uses too
+      (including access to direct memory buffers from Python). There is no change at the
+      Python level or for client code using PyBuffer via the "fully encapsulated" API. It
+      risks breaking code that makes direct access to a byte array via PyBuffer, implements
+      the PyBuffer interface, or extends implementation classes in org.python.core.buffer.
 
 Jython 2.7.1b2
   Bugs fixed

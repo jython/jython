@@ -68,11 +68,12 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
     }
 
     @Override
-    protected void storeAtImpl(byte value, int byteIndex) throws IndexOutOfBoundsException,
-            PyException {
-        // XXX consider catching ReadonlyBufferException instead of checking (and others: index?)
-        checkWritable();
-        storage.put(byteIndex, value);
+    protected void storeAtImpl(byte value, int byteIndex) throws PyException {
+        try {
+            storage.put(byteIndex, value);
+        } catch (ReadOnlyBufferException rbe) {
+            throw notWritable();
+        }
     }
 
     @Override
@@ -97,27 +98,33 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * The default implementation in <code>BaseBuffer</code> deals with the general one-dimensional
-     * case of arbitrary item size and stride.
+     * Copy all items in this buffer into a <code>ByteBuffer</code>, starting at its current
+     * position.
+     *
+     * @param dest destination buffer
+     * @throws BufferOverflowException
+     * @throws ReadOnlyBufferException
      */
     // XXX Should this become part of the PyBUffer interface?
-    public void copyTo(ByteBuffer dest) throws BufferOverflowException, ReadOnlyBufferException,
-            PyException {
+    public void copyTo(ByteBuffer dest) throws BufferOverflowException, ReadOnlyBufferException {
         // Note shape[0] is the number of items in the buffer
         copyTo(0, dest, shape[0]);
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * The default implementation in <code>BaseNIOBuffer</code> deals with the general
-     * one-dimensional case of arbitrary item size and stride.
+     * Copy a specified number of items from a particular location in this buffer into a
+     * <code>ByteBuffer</code>, starting at its current position. .
+     *
+     * @param srcIndex index of the first item to copy
+     * @param dest destination buffer
+     * @param count number of items to copy
+     * @throws BufferOverflowException
+     * @throws ReadOnlyBufferException
+     * @throws IndexOutOfBoundsException
      */
     // XXX Should this become part of the PyBuffer interface?
     protected void copyTo(int srcIndex, ByteBuffer dest, int count) throws BufferOverflowException,
-            ReadOnlyBufferException, IndexOutOfBoundsException, PyException {
+            ReadOnlyBufferException, IndexOutOfBoundsException {
 
         if (count > 0) {
 
@@ -168,38 +175,48 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * The default implementation in <code>BaseNIOBuffer</code> deals with the general
-     * one-dimensional case of arbitrary item size and stride.
+     * Copy a specified number of items from a <code>ByteBuffer</code> into this buffer at a
+     * particular location.
+     *
+     * @param src source <code>ByteBuffer</code>
+     * @param destIndex starting item-index in the destination (i.e. <code>this</code>)
+     * @param count number of items to copy in
+     * @throws IndexOutOfBoundsException if access out of bounds in source or destination
+     * @throws PyException (TypeError) if read-only buffer
      */
     // XXX Should this become part of the PyBUffer interface?
-    protected void copyFrom(ByteBuffer src, int dstIndex, int count)
+    protected void copyFrom(ByteBuffer src, int destIndex, int count)
             throws IndexOutOfBoundsException, PyException {
 
         checkWritable();
 
         if (count > 0) {
 
-            ByteBuffer dst = getNIOByteBuffer();
-            int pos = byteIndex(dstIndex);
+            ByteBuffer dest = getNIOByteBuffer();
+            int pos = byteIndex(destIndex);
 
             // Pick up attributes necessary to choose an efficient copy strategy
             int itemsize = getItemsize();
             int stride = getStrides()[0];
             int skip = stride - itemsize;
+            int size = getSize();
+
+            // Check indexes in destination (this) using the "all non-negative" trick
+            if ((destIndex | count | size - (destIndex + count)) < 0) {
+                throw new IndexOutOfBoundsException();
+            }
 
             // Strategy depends on whether items are laid end-to-end or there are gaps
             if (skip == 0) {
                 // Straight copy of contiguous bytes
-                dst.position(pos);
-                dst.put(src);
+                dest.position(pos);
+                dest.put(src);
 
             } else if (itemsize == 1) {
                 // Non-contiguous copy: single byte items
                 for (int i = 0; i < count; i++) {
-                    dst.position(pos);
-                    dst.put(src.get());
+                    dest.position(pos);
+                    dest.put(src.get());
                     // Next byte written will be here
                     pos += stride;
                 }
@@ -207,10 +224,10 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
             } else {
                 // Non-contiguous copy: each time, copy itemsize bytes at a time
                 for (int i = 0; i < count; i++) {
-                    dst.position(pos);
+                    dest.position(pos);
                     // Delineate the next itemsize bytes in the src
                     src.limit(src.position() + itemsize);
-                    dst.put(src);
+                    dest.put(src);
                     // Next byte written will be here
                     pos += stride;
                 }
