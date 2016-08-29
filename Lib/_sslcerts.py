@@ -119,20 +119,19 @@ def _get_openssl_key_manager(cert_file=None, key_file=None, password=None, _key_
             from _socket import SSLError, SSL_ERROR_SSL
             raise SSLError(SSL_ERROR_SSL, "PEM lib (No private key loaded)")
 
-        keys_match = False
+        keys_match, validateable_keys_found = False, False
         for cert in certs:
             # TODO works for RSA only for now
-            if not isinstance(cert.publicKey, RSAPublicKey) and isinstance(private_key, RSAPrivateCrtKey):
-                keys_match = True
-                continue
+            if isinstance(cert.publicKey, RSAPublicKey) and isinstance(private_key, RSAPrivateCrtKey):
+                validateable_keys_found = True
 
-            if cert.publicKey.getModulus() == private_key.getModulus() \
-                    and cert.publicKey.getPublicExponent() == private_key.getPublicExponent():
-                keys_match = True
-            else:
-                keys_match = False
+            if validateable_keys_found:
+                if cert.publicKey.getModulus() == private_key.getModulus() \
+                        and cert.publicKey.getPublicExponent() == private_key.getPublicExponent():
+                    keys_match = True
+                    break
 
-        if key_file is not None and not keys_match:
+        if key_file is not None and validateable_keys_found and not keys_match:
             from _socket import SSLError, SSL_ERROR_SSL
             raise SSLError(SSL_ERROR_SSL, "key values mismatch")
 
