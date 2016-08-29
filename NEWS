@@ -2,9 +2,17 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-Jython 2.7.1rc
+Jython 2.7.1rc1
   Bugs fixed
-    - [ 2488 ] Always join on subprocess coupler threads
+    - [ 2516 ] _get_open_ssl_key_manager tries to validate that the private and
+               public keys match, and is throwing an SSLError:
+               "key values mismatch" when provided with multiple certs (Root/CA/Cert)
+    - [ 2314 ] Failures in test_shutil on Windows
+    - [ 2488 ] Subprocess should always join corresponding coupler threads
+    - [ 2461 ] SSL Handshake fails for peers connected via IPV6
+    - [ 2508 ] Jython non-blocking socket send() does not conform to Python's behavior.
+    - [ 2462 ] SSL Handshake never happens even if do_handshake_on_connect=True for serv
+    - [ 2487 ] PyType.fromClass deadlocks on slow systems (circleci for example)
     - [ 2480 ] Repeating from <javapackage> import <class> results in reload
     - [ 2472 ] Importing simplejson fails with: 'NoneType' object has no
                attribute 'encode_basestring_ascii'
@@ -17,18 +25,18 @@ Jython 2.7.1rc
                causes an infinite recursion
     - [ 2112 ] time.strptime() has different default year in Jython and CPython
     - [ 1767 ] Rich comparisons
-    - [ 2314 ] Failures in test_shutil on Windows
 
   New Features
-    - Added uname function to posix module. The mostly Java-based implementation even
-      works to some extend on non-posix systems. Additional tweaks extend this to full
-      featured uname-functionality on Windows systems (usable via os.uname()).
     - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer
       is exported. This is to support CPython extensions via JyNI, but has other uses too
       (including access to direct memory buffers from Python). There is no change at the
       Python level or for client code using PyBuffer via the "fully encapsulated" API. It
       risks breaking code that makes direct access to a byte array via PyBuffer, implements
       the PyBuffer interface, or extends implementation classes in org.python.core.buffer.
+    - Updated Netty to 4.1.4
+    - Fixed platform.mac_ver to provide actual info on Mac OS similar to CPython behavior.
+    - Added uname function to posix module. The mostly Java-based implementation even
+      works to some extend on non-posix systems (e.g. Windows).
 
 Jython 2.7.1b3
   Bugs fixed
