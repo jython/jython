@@ -18,6 +18,7 @@ Jython 2.7.1rc
     - [ 2112 ] time.strptime() has different default year in Jython and CPython
     - [ 1767 ] Rich comparisons
     - [ 2314 ] Failures in test_shutil on Windows
+    - [ 2443 ] java.util.Map derived classes lack iterkeys, itervalues methods
 
   New Features
     - Added uname function to posix module. The mostly Java-based implementation even
