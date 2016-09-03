@@ -800,26 +800,28 @@ class ElementTree(object):
             file = file_or_filename
         else:
             file = open(file_or_filename, "wb")
-        write = file.write
-        if not encoding:
-            if method == "c14n":
-                encoding = "utf-8"
+        try:
+            write = file.write
+            if not encoding:
+                if method == "c14n":
+                    encoding = "utf-8"
+                else:
+                    encoding = "us-ascii"
+            elif xml_declaration or (xml_declaration is None and
+                                     encoding not in ("utf-8", "us-ascii")):
+                if method == "xml":
+                    write("<?xml version='1.0' encoding='%s'?>\n" % encoding)
+            if method == "text":
+                _serialize_text(write, self._root, encoding)
             else:
-                encoding = "us-ascii"
-        elif xml_declaration or (xml_declaration is None and
-                                 encoding not in ("utf-8", "us-ascii")):
-            if method == "xml":
-                write("<?xml version='1.0' encoding='%s'?>\n" % encoding)
-        if method == "text":
-            _serialize_text(write, self._root, encoding)
-        else:
-            qnames, namespaces = _namespaces(
-                self._root, encoding, default_namespace
-                )
-            serialize = _serialize[method]
-            serialize(write, self._root, encoding, qnames, namespaces)
-        if file_or_filename is not file:
-            file.close()
+                qnames, namespaces = _namespaces(
+                    self._root, encoding, default_namespace
+                    )
+                serialize = _serialize[method]
+                serialize(write, self._root, encoding, qnames, namespaces)
+        finally:
+            if file_or_filename is not file:
+                file.close()
 
     def write_c14n(self, file):
         # lxml.etree compatibility.  use output method instead

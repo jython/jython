@@ -750,7 +750,7 @@ def test_resolveEntity():
     Entity name: entity
     """
 
-def test_close_files():
+def test_close_file_iss1479():
     # http://bugs.jython.org/issue1479
     """
     >>> import os
@@ -764,6 +764,20 @@ def test_close_files():
     >>> fp.write('<test/>')
     >>> fp.close()
     >>> tree = ET.parse(test_support.TESTFN)
+    >>> os.remove(test_support.TESTFN)
+    """
+
+def test_close_file_iss2413():
+    # http://bugs.jython.org/issue2413
+    """
+    >>> import os
+    >>> from test import test_support
+    >>> from xml.etree import ElementTree as ET
+
+    >>> tree = ET.ElementTree(ET.XML('<test/>'))
+    >>> tree.write(test_support.TESTFN, encoding='an_unknown_encoding')
+    Traceback (most recent call last):
+    LookupError: unknown encoding 'an_unknown_encoding'
     >>> os.remove(test_support.TESTFN)
     """
 
