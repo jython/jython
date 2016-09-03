@@ -4,6 +4,7 @@ import sys
 JYTHON = sys.platform.startswith("java")
 
 import doctest
+from test import test_support
 
 import xml.parsers.expat as expat
 from xml.etree.ElementTree import *
@@ -780,6 +781,10 @@ def test_close_file_iss2413():
     LookupError: unknown encoding 'an_unknown_encoding'
     >>> os.remove(test_support.TESTFN)
     """
+
+def test_main():
+    from test import test_xml_etree_jy
+    test_support.run_doctest(test_xml_etree_jy)
 
 if __name__ == "__main__":
     doctest.testmod()

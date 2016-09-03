@@ -1,4 +1,5 @@
 import unittest
+from test import test_support
 import SocketServer
 
 class TestSocketServer(unittest.TestCase):
@@ -12,5 +13,10 @@ class TestSocketServer(unittest.TestCase):
         server_host, server_port = server.server_address
         self.failIfEqual(server_port, 0, "System assigned ephemeral port should not be zero")
 
+
+def test_main():
+    test_support.run_unittest(TestSocketServer)
+
+
 if __name__ == "__main__":
-    unittest.main()
+    test_main()
