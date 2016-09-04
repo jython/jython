@@ -782,6 +782,7 @@ class GCTests_Jy_Raw_Forced_Delayed_Finalization(unittest.TestCase):
         gc.removeJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS)
 
 
+@unittest.skipIf(__name__ != "__main__", 'Hangs under regrtest')
 class GCTests_Jy_Monitoring(unittest.TestCase):
 
     @classmethod
@@ -1157,59 +1158,20 @@ class GCTests_Misc(unittest.TestCase):
         self.assertTrue(ref == ref)
 
 
+def test_main():
+    tests = (
+        GCTests_Jy_CyclicGarbage,
+        GCTests_Jy_preprocess_and_postprocess,
+        GCTests_Jy_Delayed_Finalization,
+        GCTests_Jy_Forced_Delayed_Finalization,
+        GCTests_Jy_Raw_Forced_Delayed_Finalization,
+        GCTests_Jy_Monitoring,
+        GCTests_Jy_Weakref,
+        GCTests_Jy_TraverseByReflection,
+        GCTests_Misc,
+        )
+    test_support.run_unittest(*tests)
+
 if __name__ == "__main__":
     unittest.main()
-#     comments = []
-#     resurrected = []
-#      
-#     class Test_JavaResurrectFinalizable(Object):
-#         def __init__(self, name, toResurrect):
-#             self.name = name
-#             self.toResurrect = toResurrect
-#      
-#         def __repr__(self):
-#             return "<"+self.name+">"
-#      
-#         #def __del__(self):
-#         def finalize(self):
-#             gc.notifyPreFinalization()
-#             comments.append("del "+self.name)
-#             #gc.abortDelayedFinalization(self.toAbort)
-#             resurrected.append(self.toResurrect)
-#             print "finalize "+self.name
-#             # We manually restore weak references:
-#             gc.restoreWeakReferences(self.toResurrect)
-#             gc.notifyPostFinalization()
-# 
-#     class Test_Finalizable(object):
-#         def __init__(self, name):
-#             self.name = name
-# 
-#         def __repr__(self):
-#             return "<"+self.name+">"
-# 
-#         def __del__(self):
-#             comments.append("del "+self.name)
-# 
-#     def callback(obj):
-#         comments.append("callback")#+str(obj))
-#         print "callback: "+str(obj)
-# 
-#     a = Test_Finalizable("a")
-#     b = Test_JavaResurrectFinalizable("b", a)
-#     wa = weakref.ref(a, callback)
-#     print ("wref: ")+str(wa())
-#     gc.addJythonGCFlags(gc.VERBOSE_DELAYED)
-#     #gc.addJythonGCFlags(gc.FORCE_DELAYED_FINALIZATION)
-#     #gc.addJythonGCFlags(gc.FORCE_DELAYED_WEAKREF_CALLBACKS)
-#     print "delayed finalization? "+str(gc.delayedFinalizationEnabled())
-#     print "delayed callbacks? "+str(gc.delayedWeakrefCallbacksEnabled())
-#     print comments
-#     del a
-#     del b
-#     System.gc()
-#     time.sleep(1)
-#     print comments
-#     print resurrected
-#     print ("wref: ")+str(wa())
-    
+

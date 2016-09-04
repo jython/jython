@@ -1309,6 +1309,7 @@ _failures = {
         test_stringprep # UnicodeDecodeError
         test_threadsignals
         test_transformer
+        test_xml_etree_jy
         test_zipimport
 
         # fails on Windows standalone, probably shouldn't

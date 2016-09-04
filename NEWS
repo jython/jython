@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2413 ] ElementTree.write doesn't close files if used with invalid encoding
     - [ 2516 ] _get_open_ssl_key_manager tries to validate that the private and
                public keys match, and is throwing an SSLError:
                "key values mismatch" when provided with multiple certs (Root/CA/Cert)
@@ -25,6 +26,7 @@ Jython 2.7.1rc1
                causes an infinite recursion
     - [ 2112 ] time.strptime() has different default year in Jython and CPython
     - [ 1767 ] Rich comparisons
+    - [ 2443 ] java.util.Map derived classes lack iterkeys, itervalues methods
 
   New Features
     - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer

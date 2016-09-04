@@ -223,6 +223,40 @@ class JavaProxyMap {
             };
         }
     };
+    private static final PyBuiltinMethodNarrow mapIterKeysProxy = new MapMethod("iterkeys", 0) {
+        @Override
+        public PyObject __call__() {
+            final Iterator<Object> keyIterator = asMap().keySet().iterator();
+            return new PyIterator() {
+                @Override
+                public PyObject __iternext__() {
+                    if (keyIterator.hasNext()) {
+                        Object nextKey = keyIterator.next();
+                        // yield a Python key
+                        return Py.java2py(nextKey);
+                    }
+                    return null;
+                }
+            };
+        }
+    };
+    private static final PyBuiltinMethodNarrow mapIterValuesProxy = new MapMethod("itervalues", 0) {
+        @Override
+        public PyObject __call__() {
+            final Iterator<Object> valueIterator = asMap().values().iterator();
+            return new PyIterator() {
+                @Override
+                public PyObject __iternext__() {
+                    if (valueIterator.hasNext()) {
+                        Object nextValue = valueIterator.next();
+                        // yield a Python value
+                        return Py.java2py(nextValue);
+                    }
+                    return null;
+                }
+            };
+        }
+    };
     private static final PyBuiltinMethodNarrow mapHasKeyProxy = new MapMethod("has_key", 1) {
         @Override
         public PyObject __call__(PyObject key) {
@@ -456,6 +490,8 @@ class JavaProxyMap {
                 mapPutProxy,
                 mapRemoveProxy,
                 mapIterItemsProxy,
+                mapIterKeysProxy,
+                mapIterValuesProxy,
                 mapHasKeyProxy,
                 mapKeysProxy,
                 mapSetDefaultProxy,
