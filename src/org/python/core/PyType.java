@@ -94,7 +94,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private int numSlots;
 
     private transient ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
-    private Set<WeakReference<PyType>> subclasses = Generic.set();
+    private Set<WeakReference<PyType>> subclasses = Generic.linkedHashSet();
 
     /** Global mro cache. */
     private static final MethodCache methodCache = new MethodCache();
