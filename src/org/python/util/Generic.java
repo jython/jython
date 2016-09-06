@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +68,13 @@ public class Generic {
      */
     public static <E> Set<E> set() {
         return new HashSet<E>();
+    }
+
+    /**
+     * Makes a LinkedHashSet using the generic type inferred from whatever this is being assigned to.
+     */
+    public static <E> Set<E> linkedHashSet() {
+        return new LinkedHashSet<E>();
     }
 
     /**
