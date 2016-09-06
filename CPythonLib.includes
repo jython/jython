@@ -167,6 +167,7 @@ trace.py
 traceback.py
 tty.py
 tzparse.py
+urllib.py
 urllib2.py
 urlparse.py
 user.py
