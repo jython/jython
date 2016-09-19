@@ -2242,7 +2242,7 @@ class TestJythonExceptionsShared:
         try:
             self.s.connect( ('non.existent.server', PORT) )
         except socket.gaierror, gaix:
-            self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
+            self.failUnlessEqual(gaix[0], errno.ENOEXEC)
         except Exception, x:
             self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
         else:

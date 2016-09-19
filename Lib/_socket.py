@@ -1754,7 +1754,12 @@ def getaddrinfo(host, port, family=AF_UNSPEC, socktype=0, proto=0, flags=0):
         hosts = [host]
     results = []
     for h in hosts:
-        for a in java.net.InetAddress.getAllByName(h):
+        try:
+            all_by_name = java.net.InetAddress.getAllByName(h)
+        except java.net.UnknownHostException:
+            raise gaierror(errno.ENOEXEC, 'nodename nor servname provided, or not known')
+
+        for a in all_by_name:
             if len([f for f in filter_fns if f(a)]):
                 family = {java.net.Inet4Address: AF_INET, java.net.Inet6Address: AF_INET6}[a.getClass()]
                 if flags & AI_CANONNAME:
