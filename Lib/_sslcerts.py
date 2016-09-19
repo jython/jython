@@ -10,8 +10,15 @@ from java.security import KeyStore, Security, InvalidAlgorithmParameterException
 from java.security.cert import CertificateException, CertificateFactory
 from java.security.interfaces import RSAPrivateCrtKey
 from java.security.interfaces import RSAPublicKey
-from javax.net.ssl import (
-    X509KeyManager, X509TrustManager, KeyManagerFactory, SSLContext, TrustManager, TrustManagerFactory)
+from javax.net.ssl import X509KeyManager, X509TrustManager, KeyManagerFactory, SSLContext
+
+try:
+    # jarjar-ed version
+    from org.python.netty.handler.ssl.util import SimpleTrustManagerFactory
+
+except ImportError:
+    # dev version from extlibs
+    from io.netty.handler.ssl.util import SimpleTrustManagerFactory
 
 try:
     # dev version from extlibs OR if in classpath.
@@ -64,7 +71,7 @@ def _get_ca_certs_trust_manager(ca_certs=None):
             for cert in cf.generateCertificates(BufferedInputStream(f)):
                 trust_store.setCertificateEntry(str(uuid.uuid4()), cert)
                 num_certs_installed += 1
-    tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+    tmf = SimpleTrustManagerFactory.getInstance(SimpleTrustManagerFactory.getDefaultAlgorithm())
     tmf.init(trust_store)
     log.debug("Installed %s certificates", num_certs_installed, extra={"sock": "*"})
     return tmf
@@ -329,7 +336,7 @@ class CompositeX509KeyManager(X509KeyManager):
     
     def getPrivateKey(self, alias):
         for key_manager in self.key_managers:
-            private_key = keyManager.getPrivateKey(alias)
+            private_key = key_manager.getPrivateKey(alias)
             if private_key:
                 return private_key
         return None
@@ -404,14 +411,13 @@ class CompositeX509TrustManager(X509TrustManager):
         return certs
 
 
-# To use with CERT_NONE
-class NoVerifyX509TrustManager(X509TrustManager):
+class CompositeX509TrustManagerFactory(SimpleTrustManagerFactory):
 
-    def checkClientTrusted(self, chain, auth_type):
+    def __init__(self, trust_managers):
+        self._trust_manager = CompositeX509TrustManager(trust_managers)
+
+    def engineInit(self, arg):
         pass
 
-    def checkServerTrusted(self, chain, auth_type):
-        pass
-
-    def getAcceptedIssuers(self):
-        return None
+    def engineGetTrustManagers(self):
+        return [self._trust_manager]

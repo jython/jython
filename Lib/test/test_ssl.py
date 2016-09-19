@@ -1521,7 +1521,7 @@ class NetworkedTests(unittest.TestCase):
         if ssl.OPENSSL_VERSION_INFO < (0, 9, 8, 0, 15):
             self.skipTest("SHA256 not available on %r" % ssl.OPENSSL_VERSION)
         # sha256.tbs-internet.com needs SNI to use the correct certificate
-        if not ssl.HAS_SNI:
+        if not ssl.HAS_SNI or support.is_jython:  # sha256.tbs-internet.com is no longer alive
             self.skipTest("SNI needed for this test")
         # https://sha2.hboeck.de/ was used until 2011-01-08 (no route to host)
         remote = ("sha256.tbs-internet.com", 443)

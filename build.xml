@@ -164,7 +164,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/netty-buffer-4.1.4.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-codec-4.1.4.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-common-4.1.4.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-handler--4.1.4.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-handler-4.1.4.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-resolver-4.1.4.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-transport-4.1.4.Final.jar"/>
         </path>
