@@ -4,7 +4,14 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
+    - [ 2446 ] Support SNI for SSL/TLS client sockets
+    - [ 2455 ] Java classes in packages with __init__.py not found
+    - [ 2481 ] Update urllib2.py from 2.7.11
+    - [ 2514 ] Jython Class.__subclasses__() does not match Python output
+               (not in load order)
     - [ 2413 ] ElementTree.write doesn't close files if used with invalid encoding
+    - [ 2443 ] java.util.Map derived classes lack iterkeys, itervalues methods
     - [ 2516 ] _get_open_ssl_key_manager tries to validate that the private and
                public keys match, and is throwing an SSLError:
                "key values mismatch" when provided with multiple certs (Root/CA/Cert)
@@ -26,7 +33,6 @@ Jython 2.7.1rc1
                causes an infinite recursion
     - [ 2112 ] time.strptime() has different default year in Jython and CPython
     - [ 1767 ] Rich comparisons
-    - [ 2443 ] java.util.Map derived classes lack iterkeys, itervalues methods
 
   New Features
     - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer
