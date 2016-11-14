@@ -2289,7 +2289,6 @@ class TestJythonTCPExceptions(TestJythonExceptionsShared, unittest.TestCase):
             # This port should not be open at this time
             self.s.connect( (HOST, PORT) )
         except socket.error, se:
-            import sys; print >> sys.stderr, se
             self.failUnlessEqual(se[0], errno.ECONNREFUSED)
         except Exception, x:
             self.fail("Connection to non-existent host/port raised wrong exception: %s" % x)
