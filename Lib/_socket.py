@@ -350,7 +350,13 @@ def _map_exception(java_exception):
             msg = java_exception.message
         py_exception = SSLError(SSL_ERROR_SSL, msg)
     else:
-        mapped_exception = _exception_map.get(java_exception.__class__)
+        # Netty 4.1.6 or higher wraps the connection exception in a
+        # private static class that inherits from ConnectException, so
+        # need to work around.
+        if isinstance(java_exception, java.net.ConnectException):
+            mapped_exception = _exception_map.get(java.net.ConnectException)
+        else:
+            mapped_exception = _exception_map.get(java_exception.__class__)
         if mapped_exception:
             py_exception = mapped_exception(java_exception)
         else:
