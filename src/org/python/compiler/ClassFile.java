@@ -42,19 +42,18 @@ public class ClassFile
         }
         return new String(c);
     }
-    
 
     public static void visitAnnotations(AnnotationVisitor av, Map<String, Object> fields) {
         for (Entry<String, Object>field: fields.entrySet()) {
             visitAnnotation(av, field.getKey(), field.getValue());
         }
     }
-    
+
     // See org.objectweb.asm.AnnotationVisitor for details
     // TODO Support annotation annotations and annotation array annotations
     public static void visitAnnotation(AnnotationVisitor av, String fieldName, Object fieldValue) {
         Class<?> fieldValueClass = fieldValue.getClass();
-        
+
         if (fieldValue instanceof Class) {
             av.visit(fieldName, Type.getType((Class<?>)fieldValue));
         } else if (fieldValueClass.isEnum()) {
@@ -79,13 +78,14 @@ public class ClassFile
     public ClassFile(String name, String superclass, int access) {
         this(name, superclass, access, org.python.core.imp.NO_MTIME);
     }
+
     public ClassFile(String name, String superclass, int access, long mtime) {
         this.name = fixName(name);
         this.superclass = fixName(superclass);
         this.interfaces = new String[0];
         this.access = access;
         this.mtime = mtime;
-        
+
         cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         methodVisitors = Collections.synchronizedList(new ArrayList<MethodVisitor>());
         fieldVisitors = Collections.synchronizedList(new ArrayList<FieldVisitor>());
@@ -96,7 +96,9 @@ public class ClassFile
         sfilename = name;
     }
 
-    public void addInterface(String name) throws IOException {
+    public void addInterface(String name)
+        throws IOException
+    {
         String[] new_interfaces = new String[interfaces.length+1];
         System.arraycopy(interfaces, 0, new_interfaces, 0, interfaces.length);
         new_interfaces[interfaces.length] = name;
@@ -111,15 +113,16 @@ public class ClassFile
         methodVisitors.add(pmv);
         return pmv;
     }
+
     public Code addMethod(String name, String type, int access, String[] exceptions)
-            throws IOException
-        {
-            MethodVisitor mv = cw.visitMethod(access, name, type, null, exceptions);
-            Code pmv = new Code(mv, type, access);
-            methodVisitors.add(pmv);
-            return pmv;
-        }
-    
+        throws IOException
+    {
+        MethodVisitor mv = cw.visitMethod(access, name, type, null, exceptions);
+        Code pmv = new Code(mv, type, access);
+        methodVisitors.add(pmv);
+        return pmv;
+    }
+
     public Code addMethod(String name, String type, int access, String[] exceptions,
             AnnotationDescr[]methodAnnotationDescrs, AnnotationDescr[][] parameterAnnotationDescrs)
         throws IOException
@@ -134,7 +137,7 @@ public class ClassFile
             }
             av.visitEnd();
         }
-        
+
         // parameter annotations
         for (int i = 0; i < parameterAnnotationDescrs.length; i++) {
             for (AnnotationDescr ad: parameterAnnotationDescrs[i]) {
@@ -145,12 +148,12 @@ public class ClassFile
                 av.visitEnd();
             }
         }
-        
+
         Code pmv = new Code(mv, type, access);
         methodVisitors.add(pmv);
         return pmv;
     }
-    
+
     public void addClassAnnotation(AnnotationDescr annotationDescr) {
         AnnotationVisitor av = cw.visitAnnotation(annotationDescr.getName(), true);
         if (annotationDescr.hasFields()) {
@@ -158,7 +161,7 @@ public class ClassFile
         }
         annotationVisitors.add(av);
     }
-    
+
     public void addField(String name, String type, int access)
         throws IOException
     {
@@ -190,7 +193,7 @@ public class ClassFile
             fv.visitEnd();
         }
     }
-    
+
     public void endMethods()
         throws IOException
     {
@@ -204,10 +207,12 @@ public class ClassFile
     public void endClassAnnotations() {
         for (AnnotationVisitor av: annotationVisitors) {
             av.visitEnd();
-        } 
+        }
     }
 
-    public void write(OutputStream stream) throws IOException {
+    public void write(OutputStream stream)
+        throws IOException
+    {
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
         AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
         // XXX: should imp.java really house this value or should imp.java point into

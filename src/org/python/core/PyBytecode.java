@@ -3,14 +3,17 @@ package org.python.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import static org.python.core.Opcode.*;
 
 public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     // for debugging
+    public static boolean defaultDebug = false;
+    private static boolean debug;
+    private static PyObject dis, opname;
+
     private int count = 0; // total number of opcodes run so far in this code obj
     private int maxCount = -1; // if -1, no cap on number of opcodes than can be run
-    public static boolean defaultDebug = false;
-    private static PyObject dis;
 
     private static synchronized PyObject get_dis() {
         if (dis == null) {
@@ -18,7 +21,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         }
         return dis;
     }
-    private static PyObject opname;
 
     private static synchronized PyObject get_opname() {
         if (opname == null) {
@@ -26,7 +28,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         }
         return opname;
     }
-    private boolean debug;
 
     public static void _allDebug(boolean setting) {
         defaultDebug = setting;
@@ -37,8 +38,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         this.maxCount = maxCount;
         return Py.None;
     }
-
     // end debugging
+
     public final static int CO_MAXBLOCKS = 20; // same as in CPython
     public final byte[] co_code; // widened to char to avoid signed byte issues
     public final PyObject[] co_consts;
@@ -56,7 +57,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                 constants, names, varnames, filename, name, firstlineno, lnotab,
                 null, null);
     }
-
 
     // XXX - intern names HERE instead of in marshal
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
@@ -90,6 +90,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         co_code = getBytes(codestring);
         co_lnotab = getBytes(lnotab);
     }
+
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
@@ -169,7 +170,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     enum Why {
-
         NOT,       /* No error */
         EXCEPTION, /* Exception occurred */
         RERAISE,   /* Exception re-raised by 'finally' */
@@ -183,7 +183,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     // to enable why's to be stored on a PyStack
     @Untraversable
     private static class PyStackWhy extends PyObject {
-
         Why why;
 
         PyStackWhy(Why why) {
@@ -197,7 +196,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     private static class PyStackException extends PyObject implements Traverseproc {
-
         PyException exception;
 
         PyStackException(PyException exception) {
@@ -227,10 +225,9 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
             return "[]";
         }
         StringBuilder buf = new StringBuilder("[");
-        int len = f.f_lineno;
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < f.f_exits.length; i++) {
             buf.append(f.f_exits[i].toString());
-            if (i < len - 1) {
+            if (i < f.f_exits.length - 1) {
                 buf.append(", ");
             }
         }
@@ -241,9 +238,9 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     private void print_debug(int count, int next_instr, int line, int opcode, int oparg, PyStack stack, PyFrame f) {
         if (debug) {
             System.err.println(co_name + " " + line + ":" +
-                    count + "," + f.f_lasti + "> " +
+                    count + "," + f.f_lasti + "> " + opcode+" "+
                     get_opname().__getitem__(Py.newInteger(opcode)) +
-                    (opcode >= Opcode.HAVE_ARGUMENT ? " " + oparg : "") +
+                    (opcode >= HAVE_ARGUMENT ? " " + oparg : "") +
                     ", stack: " + stack.toString() +
                     ", blocks: " + stringify_blocks(f));
         }
@@ -287,7 +284,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         // XXX - optimization opportunities
         // 1. consider detaching the setting/getting of frame fields to improve performance, instead do this
         // in a shadow version of the frame that we copy back to on entry/exit and downcalls
-
         if (debug) {
             System.err.println(co_name + ":" + f.f_lasti + "/" + co_code.length +
                     ", cells:" + Arrays.toString(co_cellvars) + ", free:" + Arrays.toString(co_freevars));
@@ -345,7 +341,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                 }
 
                 opcode = getUnsigned(co_code, next_instr);
-                if (opcode >= Opcode.HAVE_ARGUMENT) {
+                if (opcode >= HAVE_ARGUMENT) {
                     next_instr += 2;
                     oparg = (getUnsigned(co_code, next_instr) << 8) + getUnsigned(co_code, next_instr - 1);
                 }
@@ -356,42 +352,42 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                 f.f_lasti = next_instr;
 
                 switch (opcode) {
-                    case Opcode.NOP:
+                    case NOP:
                         break;
 
-                    case Opcode.LOAD_FAST:
+                    case LOAD_FAST:
                         stack.push(f.getlocal(oparg));
                         break;
 
-                    case Opcode.LOAD_CONST:
+                    case LOAD_CONST:
                         stack.push(co_consts[oparg]);
                         break;
 
-                    case Opcode.STORE_FAST:
+                    case STORE_FAST:
                         f.setlocal(oparg, stack.pop());
                         break;
 
-                    case Opcode.POP_TOP:
+                    case POP_TOP:
                         stack.pop();
                         break;
 
-                    case Opcode.ROT_TWO:
+                    case ROT_TWO:
                         stack.rot2();
                         break;
 
-                    case Opcode.ROT_THREE:
+                    case ROT_THREE:
                         stack.rot3();
                         break;
 
-                    case Opcode.ROT_FOUR:
+                    case ROT_FOUR:
                         stack.rot4();
                         break;
 
-                    case Opcode.DUP_TOP:
+                    case DUP_TOP:
                         stack.dup();
                         break;
 
-                    case Opcode.DUP_TOPX: {
+                    case DUP_TOPX: {
                         if (oparg == 2 || oparg == 3) {
                             stack.dup(oparg);
                         } else {
@@ -401,41 +397,41 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.UNARY_POSITIVE:
+                    case UNARY_POSITIVE:
                         stack.push(stack.pop().__pos__());
                         break;
 
-                    case Opcode.UNARY_NEGATIVE:
+                    case UNARY_NEGATIVE:
                         stack.push(stack.pop().__neg__());
                         break;
 
-                    case Opcode.UNARY_NOT:
+                    case UNARY_NOT:
                         stack.push(stack.pop().__not__());
                         break;
 
-                    case Opcode.UNARY_CONVERT:
+                    case UNARY_CONVERT:
                         stack.push(stack.pop().__repr__());
                         break;
 
-                    case Opcode.UNARY_INVERT:
+                    case UNARY_INVERT:
                         stack.push(stack.pop().__invert__());
                         break;
 
-                    case Opcode.BINARY_POWER: {
+                    case BINARY_POWER: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._pow(b));
                         break;
                     }
 
-                    case Opcode.BINARY_MULTIPLY: {
+                    case BINARY_MULTIPLY: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._mul(b));
                         break;
                     }
 
-                    case Opcode.BINARY_DIVIDE: {
+                    case BINARY_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
 
@@ -447,63 +443,63 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.BINARY_TRUE_DIVIDE: {
+                    case BINARY_TRUE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._truediv(b));
                         break;
                     }
 
-                    case Opcode.BINARY_FLOOR_DIVIDE: {
+                    case BINARY_FLOOR_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._floordiv(b));
                         break;
                     }
 
-                    case Opcode.BINARY_MODULO: {
+                    case BINARY_MODULO: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._mod(b));
                         break;
                     }
 
-                    case Opcode.BINARY_ADD: {
+                    case BINARY_ADD: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._add(b));
                         break;
                     }
 
-                    case Opcode.BINARY_SUBTRACT: {
+                    case BINARY_SUBTRACT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._sub(b));
                         break;
                     }
 
-                    case Opcode.BINARY_SUBSCR: {
+                    case BINARY_SUBSCR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a.__getitem__(b));
                         break;
                     }
 
-                    case Opcode.BINARY_LSHIFT: {
+                    case BINARY_LSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._lshift(b));
                         break;
                     }
 
-                    case Opcode.BINARY_RSHIFT: {
+                    case BINARY_RSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._rshift(b));
                         break;
                     }
 
-                    case Opcode.BINARY_AND: {
+                    case BINARY_AND: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._and(b));
@@ -511,42 +507,49 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                     }
 
 
-                    case Opcode.BINARY_XOR: {
+                    case BINARY_XOR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._xor(b));
                         break;
                     }
 
-                    case Opcode.BINARY_OR: {
+                    case BINARY_OR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._or(b));
                         break;
                     }
 
-                    case Opcode.LIST_APPEND: {
+                    case LIST_APPEND: {
                         PyObject b = stack.pop();
-                        PyList a = (PyList) (stack.pop());
+                        PyList a = (PyList) stack.top(oparg);
                         a.append(b);
                         break;
                     }
 
-                    case Opcode.INPLACE_POWER: {
+                    case SET_ADD: {
+                        PyObject b = stack.pop();
+                        PySet a = (PySet) stack.top(oparg);
+                        a.add(b);
+                        break;
+                    }
+
+                    case INPLACE_POWER: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._ipow(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_MULTIPLY: {
+                    case INPLACE_MULTIPLY: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._imul(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_DIVIDE: {
+                    case INPLACE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         if (!co_flags.isFlagSet(CodeFlag.CO_FUTURE_DIVISION)) {
@@ -557,111 +560,111 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.INPLACE_TRUE_DIVIDE: {
+                    case INPLACE_TRUE_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._itruediv(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_FLOOR_DIVIDE: {
+                    case INPLACE_FLOOR_DIVIDE: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._ifloordiv(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_MODULO: {
+                    case INPLACE_MODULO: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._imod(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_ADD: {
+                    case INPLACE_ADD: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._iadd(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_SUBTRACT: {
+                    case INPLACE_SUBTRACT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._isub(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_LSHIFT: {
+                    case INPLACE_LSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._ilshift(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_RSHIFT: {
+                    case INPLACE_RSHIFT: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._irshift(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_AND: {
+                    case INPLACE_AND: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._iand(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_XOR: {
+                    case INPLACE_XOR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._ixor(b));
                         break;
                     }
 
-                    case Opcode.INPLACE_OR: {
+                    case INPLACE_OR: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
                         stack.push(a._ior(b));
                         break;
                     }
 
-                    case Opcode.SLICE + 0:
-                    case Opcode.SLICE + 1:
-                    case Opcode.SLICE + 2:
-                    case Opcode.SLICE + 3: {
-                        PyObject stop = (((opcode - Opcode.SLICE) & 2) != 0) ? stack.pop() : null;
-                        PyObject start = (((opcode - Opcode.SLICE) & 1) != 0) ? stack.pop() : null;
+                    case SLICE:
+                    case SLICE_1:
+                    case SLICE_2:
+                    case SLICE_3: {
+                        PyObject stop = (((opcode - SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - SLICE) & 1) != 0) ? stack.pop() : null;
                         PyObject obj = stack.pop();
                         stack.push(obj.__getslice__(start, stop));
                         break;
                     }
 
-                    case Opcode.STORE_SLICE + 0:
-                    case Opcode.STORE_SLICE + 1:
-                    case Opcode.STORE_SLICE + 2:
-                    case Opcode.STORE_SLICE + 3: {
-                        PyObject stop = (((opcode - Opcode.STORE_SLICE) & 2) != 0) ? stack.pop() : null;
-                        PyObject start = (((opcode - Opcode.STORE_SLICE) & 1) != 0) ? stack.pop() : null;
+                    case STORE_SLICE:
+                    case STORE_SLICE_1:
+                    case STORE_SLICE_2:
+                    case STORE_SLICE_3: {
+                        PyObject stop = (((opcode - STORE_SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - STORE_SLICE) & 1) != 0) ? stack.pop() : null;
                         PyObject obj = stack.pop();
                         PyObject value = stack.pop();
                         obj.__setslice__(start, stop, value);
                         break;
                     }
 
-                    case Opcode.DELETE_SLICE + 0:
-                    case Opcode.DELETE_SLICE + 1:
-                    case Opcode.DELETE_SLICE + 2:
-                    case Opcode.DELETE_SLICE + 3: {
-                        PyObject stop = (((opcode - Opcode.DELETE_SLICE) & 2) != 0) ? stack.pop() : null;
-                        PyObject start = (((opcode - Opcode.DELETE_SLICE) & 1) != 0) ? stack.pop() : null;
+                    case DELETE_SLICE:
+                    case DELETE_SLICE_1:
+                    case DELETE_SLICE_2:
+                    case DELETE_SLICE_3: {
+                        PyObject stop = (((opcode - DELETE_SLICE) & 2) != 0) ? stack.pop() : null;
+                        PyObject start = (((opcode - DELETE_SLICE) & 1) != 0) ? stack.pop() : null;
                         PyObject obj = stack.pop();
                         obj.__delslice__(start, stop);
                         break;
                     }
 
-                    case Opcode.STORE_SUBSCR: {
+                    case STORE_SUBSCR: {
                         PyObject key = stack.pop();
                         PyObject obj = stack.pop();
                         PyObject value = stack.pop();
@@ -669,34 +672,34 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.DELETE_SUBSCR: {
+                    case DELETE_SUBSCR: {
                         PyObject key = stack.pop();
                         PyObject obj = stack.pop();
                         obj.__delitem__(key);
                         break;
                     }
 
-                    case Opcode.PRINT_EXPR:
+                    case PRINT_EXPR:
                         PySystemState.displayhook(stack.pop());
                         break;
 
-                    case Opcode.PRINT_ITEM_TO:
+                    case PRINT_ITEM_TO:
                         Py.printComma(stack.pop(), stack.pop());
                         break;
 
-                    case Opcode.PRINT_ITEM:
+                    case PRINT_ITEM:
                         Py.printComma(stack.pop());
                         break;
 
-                    case Opcode.PRINT_NEWLINE_TO:
+                    case PRINT_NEWLINE_TO:
                         Py.printlnv(stack.pop());
                         break;
 
-                    case Opcode.PRINT_NEWLINE:
+                    case PRINT_NEWLINE:
                         Py.println();
                         break;
 
-                    case Opcode.RAISE_VARARGS:
+                    case RAISE_VARARGS:
 
                         switch (oparg) {
                             case 3: {
@@ -720,29 +723,31 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                                 throw Py.SystemError("bad RAISE_VARARGS oparg");
                         }
 
-                    case Opcode.LOAD_LOCALS:
+                    case LOAD_LOCALS:
                         stack.push(f.f_locals);
                         break;
 
-                    case Opcode.RETURN_VALUE:
+                    case RETURN_VALUE:
                         retval = stack.pop();
                         why = Why.RETURN;
                         break;
 
-                    case Opcode.YIELD_VALUE:
+                    case YIELD_VALUE:
                         retval = stack.pop();
+                        // Note: CPython calls f->f_stacktop = stack_pointer; here
                         why = Why.YIELD;
                         break;
 
-                    case Opcode.EXEC_STMT: {
+                    case EXEC_STMT: {
                         PyObject locals = stack.pop();
                         PyObject globals = stack.pop();
                         PyObject code = stack.pop();
+                        //Todo: Better make it possible to use PyFrame f here:
                         Py.exec(code, globals == Py.None ? null : globals, locals == Py.None ? null : locals);
                         break;
                     }
 
-                    case Opcode.POP_BLOCK: {
+                    case POP_BLOCK: {
                         PyTryBlock b = popBlock(f);
                         while (stack.size() > b.b_level) {
                             stack.pop();
@@ -750,7 +755,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.END_FINALLY: {
+                    case END_FINALLY: {
+                        // Todo: Review this regarding Python 2.7-update
                         PyObject v = stack.pop();
                         if (v instanceof PyStackWhy) {
                             why = ((PyStackWhy) v).why;
@@ -759,10 +765,16 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                                 retval = stack.pop();
                             }
                         } else if (v instanceof PyStackException) {
+                            stack.top -= 2; // to pop value, traceback
                             ts.exception = ((PyStackException) v).exception;
                             why = Why.RERAISE;
-
                         } else if (v instanceof PyString) {
+                            // This shouldn't happen, because Jython always pushes
+                            // exception type as PyException-object.
+                            // Todo: Test, if it can be removed.
+                            PyObject value = stack.pop();
+                            PyObject traceback = stack.pop();
+                            ts.exception = new PyException(v, value, (PyTraceback) traceback);
                             why = Why.RERAISE;
                         } else if (v != Py.None) {
                             throw Py.SystemError("'finally' pops bad exception");
@@ -770,7 +782,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.BUILD_CLASS: {
+                    case BUILD_CLASS: {
                         PyObject methods = stack.pop();
                         PyObject bases[] = ((PySequenceList) (stack.pop())).getArray();
                         String name = stack.pop().toString();
@@ -778,50 +790,51 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.STORE_NAME:
+                    case STORE_NAME:
                         f.setlocal(co_names[oparg], stack.pop());
                         break;
 
-                    case Opcode.DELETE_NAME:
+                    case DELETE_NAME:
                         f.dellocal(co_names[oparg]);
                         break;
 
-                    case Opcode.UNPACK_SEQUENCE:
+                    case UNPACK_SEQUENCE:
                         unpack_iterable(oparg, stack);
                         break;
 
-                    case Opcode.STORE_ATTR: {
+                    case STORE_ATTR: {
                         PyObject obj = stack.pop();
                         PyObject v = stack.pop();
                         obj.__setattr__(co_names[oparg], v);
                         break;
                     }
 
-                    case Opcode.DELETE_ATTR:
+                    case DELETE_ATTR:
                         stack.pop().__delattr__(co_names[oparg]);
                         break;
 
-                    case Opcode.STORE_GLOBAL:
+                    case STORE_GLOBAL:
                         f.setglobal(co_names[oparg], stack.pop());
                         break;
 
-                    case Opcode.DELETE_GLOBAL:
+                    case DELETE_GLOBAL:
                         f.delglobal(co_names[oparg]);
                         break;
 
-                    case Opcode.LOAD_NAME:
+                    case LOAD_NAME:
                         stack.push(f.getname(co_names[oparg]));
                         break;
 
-                    case Opcode.LOAD_GLOBAL:
+                    case LOAD_GLOBAL:
                         stack.push(f.getglobal(co_names[oparg]));
                         break;
 
-                    case Opcode.DELETE_FAST:
+                    case DELETE_FAST:
                         f.dellocal(oparg);
                         break;
 
-                    case Opcode.LOAD_CLOSURE: {
+                    case LOAD_CLOSURE: {
+                        // Todo: Review this regarding Python 2.7-update
                         PyCell cell = (PyCell) (f.getclosure(oparg));
                         if (cell.ob_ref == null) {
                             String name;
@@ -854,7 +867,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.LOAD_DEREF: {
+                    case LOAD_DEREF: {
+                        // Todo: Review this regarding Python 2.7-update
                         // common code from LOAD_CLOSURE
                         PyCell cell = (PyCell) (f.getclosure(oparg));
                         if (cell.ob_ref == null) {
@@ -888,65 +902,85 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.STORE_DEREF:
+                    case STORE_DEREF:
                         f.setderef(oparg, stack.pop());
                         break;
 
-                    case Opcode.BUILD_TUPLE:
+                    case BUILD_TUPLE:
                         stack.push(new PyTuple(stack.popN(oparg)));
                         break;
 
-                    case Opcode.BUILD_LIST:
+                    case BUILD_LIST:
                         stack.push(new PyList(stack.popN(oparg)));
                         break;
 
-                    case Opcode.BUILD_MAP:
-                        stack.push(new PyDictionary());
+                    case BUILD_SET:
+                        stack.push(new PySet(stack.popN(oparg)));
                         break;
 
-                    case Opcode.LOAD_ATTR: {
+                    case BUILD_MAP:
+                        // oparg contains initial capacity:
+                        stack.push(new PyDictionary(PyDictionary.TYPE, oparg));
+                        break;
+
+                    case STORE_MAP: {
+                        PyObject key = stack.pop();
+                        PyObject val = stack.pop();
+                        stack.top().__setitem__(key, val);
+                        break;
+                    }
+
+                    case MAP_ADD: {
+                        PyObject key = stack.pop();
+                        PyObject val = stack.pop();
+                        stack.top(oparg).__setitem__(key, val);
+                        break;
+                    }
+
+                    case LOAD_ATTR: {
                         String name = co_names[oparg];
                         stack.push(stack.pop().__getattr__(name));
                         break;
                     }
 
-                    case Opcode.COMPARE_OP: {
+                    case COMPARE_OP: {
                         PyObject b = stack.pop();
                         PyObject a = stack.pop();
 
                         switch (oparg) {
 
-                            case Opcode.PyCmp_LT:
+                            case PyCmp_LT:
                                 stack.push(a._lt(b));
                                 break;
-                            case Opcode.PyCmp_LE:
+                            case PyCmp_LE:
                                 stack.push(a._le(b));
                                 break;
-                            case Opcode.PyCmp_EQ:
+                            case PyCmp_EQ:
                                 stack.push(a._eq(b));
                                 break;
-                            case Opcode.PyCmp_NE:
+                            case PyCmp_NE:
                                 stack.push(a._ne(b));
                                 break;
-                            case Opcode.PyCmp_GT:
+                            case PyCmp_GT:
                                 stack.push(a._gt(b));
                                 break;
-                            case Opcode.PyCmp_GE:
+                            case PyCmp_GE:
                                 stack.push(a._ge(b));
                                 break;
-                            case Opcode.PyCmp_IN:
+                            case PyCmp_IN:
                                 stack.push(a._in(b));
                                 break;
-                            case Opcode.PyCmp_NOT_IN:
+                            case PyCmp_NOT_IN:
                                 stack.push(a._notin(b));
                                 break;
-                            case Opcode.PyCmp_IS:
+                            case PyCmp_IS:
                                 stack.push(a._is(b));
                                 break;
-                            case Opcode.PyCmp_IS_NOT:
+                            case PyCmp_IS_NOT:
                                 stack.push(a._isnot(b));
                                 break;
-                            case Opcode.PyCmp_EXC_MATCH:
+                            case PyCmp_EXC_MATCH:
+                                // Todo: Review this regarding Python 2.7-update
                                 if (a instanceof PyStackException) {
                                     PyException pye = ((PyStackException) a).exception;
                                     stack.push(Py.newBoolean(pye.match(b)));
@@ -959,7 +993,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.IMPORT_NAME: {
+                    case IMPORT_NAME: {
+                        // Todo: Review this regarding Python 2.7-update
                         PyObject __import__ = f.f_builtins.__finditem__("__import__");
                         if (__import__ == null) {
                             throw Py.ImportError("__import__ not found");
@@ -976,13 +1011,14 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.IMPORT_STAR: {
+                    case IMPORT_STAR: {
+                        // Todo: Review this regarding Python 2.7-update
                         PyObject module = stack.pop();
                         imp.importAll(module, f);
                         break;
                     }
 
-                    case Opcode.IMPORT_FROM:
+                    case IMPORT_FROM:
                         String name = co_names[oparg];
                         try {
                             stack.push(stack.top().__getattr__(name));
@@ -996,27 +1032,43 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         }
                         break;
 
-                    case Opcode.JUMP_FORWARD:
+                    case JUMP_FORWARD:
                         next_instr += oparg;
                         break;
 
-                    case Opcode.JUMP_IF_FALSE:
-                        if (!stack.top().__nonzero__()) {
-                            next_instr += oparg;
+                    case POP_JUMP_IF_FALSE:
+                        if (!stack.pop().__nonzero__()) {
+                            next_instr = oparg;
                         }
                         break;
 
-                    case Opcode.JUMP_IF_TRUE:
+                    case POP_JUMP_IF_TRUE:
+                        if (stack.pop().__nonzero__()) {
+                            next_instr = oparg;
+                        }
+                        break;
+
+                    case JUMP_IF_FALSE_OR_POP:
                         if (stack.top().__nonzero__()) {
-                            next_instr += oparg;
+                            --stack.top;
+                        } else {
+                            next_instr = oparg;
                         }
                         break;
 
-                    case Opcode.JUMP_ABSOLUTE:
+                    case JUMP_IF_TRUE_OR_POP:
+                        if (!stack.top().__nonzero__()) {
+                            --stack.top;
+                        } else {
+                            next_instr = oparg;
+                        }
+                        break;
+
+                    case JUMP_ABSOLUTE:
                         next_instr = oparg;
                         break;
 
-                    case Opcode.GET_ITER: {
+                    case GET_ITER: {
                         PyObject it = stack.top().__iter__();
                         if (it != null) {
                             stack.set_top(it);
@@ -1024,7 +1076,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.FOR_ITER: {
+                    case FOR_ITER: {
                         PyObject it = stack.pop();
                         try {
                             PyObject x = it.__iternext__();
@@ -1042,52 +1094,95 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.BREAK_LOOP:
+                    case BREAK_LOOP:
                         why = Why.BREAK;
                         break;
 
-                    case Opcode.CONTINUE_LOOP:
+                    case CONTINUE_LOOP:
                         retval = Py.newInteger(oparg);
                         if (retval.__nonzero__()) {
                             why = Why.CONTINUE;
                         }
                         break;
 
-                    case Opcode.SETUP_LOOP:
-                    case Opcode.SETUP_EXCEPT:
-                    case Opcode.SETUP_FINALLY:
+                    case SETUP_LOOP:
+                    case SETUP_EXCEPT:
+                    case SETUP_FINALLY:
                         pushBlock(f, new PyTryBlock(opcode, next_instr + oparg, stack.size()));
                         break;
 
-                    case Opcode.WITH_CLEANUP: {
-                        /*
-                        TOP is the context.__exit__ bound method.
-                        Below that are 1-3 values indicating how/why
-                        we entered the finally clause:
-                        - SECOND = None
-                        - (SECOND, THIRD) = (WHY_{RETURN,CONTINUE}), retval
-                        - SECOND = WHY_*; no retval below it
-                        - (SECOND, THIRD, FOURTH) = exc_info()
+                    case SETUP_WITH: {
+                        PyObject w = stack.top();
+                        PyObject exit = w.__getattr__("__exit__");
+                        if (exit == null) {
+                            break;
+                        }
+                        stack.set_top(exit);
+                        PyObject enter = w.__getattr__("__enter__");
+                        if (enter == null) {
+                            break;
+                        }
+                        w = enter.__call__();
+                        if (w == null) {
+                            break;
+                        }
+                        /* Setup a finally block (SETUP_WITH as a block is
+                        equivalent to SETUP_FINALLY except it normalizes
+                        the exception) before pushing the result of
+                        __enter__ on the stack. */
+                        pushBlock(f, new PyTryBlock(opcode, next_instr + oparg, stack.size()));
+                        stack.push(w);
+                        break;
+                    }
+
+                    case WITH_CLEANUP: {
+                     /* At the top of the stack are 1-3 values indicating
+                        how/why we entered the finally clause:
+                        - TOP = None
+                        - (TOP, SECOND) = (WHY_{RETURN,CONTINUE}), retval
+                        - TOP = WHY_*; no retval below it
+                        - (TOP, SECOND, THIRD) = exc_info()
+                        Below them is EXIT, the context.__exit__ bound method.
                         In the last case, we must call
-                        TOP(SECOND, THIRD, FOURTH)
+                          EXIT(TOP, SECOND, THIRD)
                         otherwise we must call
-                        TOP(None, None, None)
+                          EXIT(None, None, None)
+
+                        In all cases, we remove EXIT from the stack, leaving
+                        the rest in the same order.
 
                         In addition, if the stack represents an exception,
-                         *and* the function call returns a 'true' value, we
+                        *and* the function call returns a 'true' value, we
                         "zap" this information, to prevent END_FINALLY from
                         re-raising the exception.  (But non-local gotos
                         should still be resumed.)
-                         */
-                        PyObject exit = stack.top();
-                        PyObject u = stack.top(2);
-                        PyObject v;
-                        PyObject w;
-                        if (u == Py.None || u instanceof PyStackWhy) {
+                     */    
+                        PyObject exit;
+                        PyObject u = stack.pop(), v, w;
+                        if (u == Py.None) {
+                            exit = stack.top();
+                            stack.set_top(u);
+                            v = w = Py.None;
+                        } else if (u instanceof PyStackWhy) {
+                            switch (((PyStackWhy) u).why) {
+                            case RETURN:
+                            case CONTINUE:
+                                exit = stack.top(2);
+                                stack.set_top(2, stack.top());
+                                stack.set_top(u);
+                                break;
+                            default:
+                                exit = stack.top();
+                                stack.set_top(u);
+                            }
                             u = v = w = Py.None;
                         } else {
-                            v = stack.top(3);
-                            w = stack.top(4);
+                            v = stack.top();
+                            w = stack.top(2);
+                            exit = stack.top(3);
+                            stack.set_top(u);
+                            stack.set_top(2, v);
+                            stack.set_top(3, w);
                         }
                         PyObject x = null;
                         if (u instanceof PyStackException) {
@@ -1098,15 +1193,14 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         }
 
                         if (u != Py.None && x != null && x.__nonzero__()) {
-                            stack.popN(4); // XXX - consider stack.stackadj op
-                            stack.push(Py.None);
-                        } else {
-                            stack.pop(); // this should be popping off a block
+                            stack.top -= 2; // XXX - consider stack.stackadj op
+                            stack.set_top(Py.None);
                         }
                         break;
                     }
 
-                    case Opcode.CALL_FUNCTION: {
+                    case CALL_FUNCTION: {
+                        // Todo: Review this regarding Python 2.7-update
                         int na = oparg & 0xff;
                         int nk = (oparg >> 8) & 0xff;
 
@@ -1118,12 +1212,13 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.CALL_FUNCTION_VAR:
-                    case Opcode.CALL_FUNCTION_KW:
-                    case Opcode.CALL_FUNCTION_VAR_KW: {
+                    case CALL_FUNCTION_VAR:
+                    case CALL_FUNCTION_KW:
+                    case CALL_FUNCTION_VAR_KW: {
+                        // Todo: Review this regarding Python 2.7-update
                         int na = oparg & 0xff;
                         int nk = (oparg >> 8) & 0xff;
-                        int flags = (opcode - Opcode.CALL_FUNCTION) & 3;
+                        int flags = (opcode - CALL_FUNCTION) & 3;
                         call_function(na, nk,
                                 (flags & CALL_FLAG_VAR) != 0,
                                 (flags & CALL_FLAG_KW) != 0,
@@ -1131,7 +1226,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.MAKE_FUNCTION: {
+                    case MAKE_FUNCTION: {
+                        // Todo: Review this regarding Python 2.7-update
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] defaults = stack.popN(oparg);
                         PyObject doc = null;
@@ -1143,7 +1239,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.MAKE_CLOSURE: {
+                    case MAKE_CLOSURE: {
                         PyCode code = (PyCode) stack.pop();
                         PyObject[] closure_cells = ((PySequenceList) (stack.pop())).getArray();
                         PyObject[] defaults = stack.popN(oparg);
@@ -1156,7 +1252,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.BUILD_SLICE: {
+                    case BUILD_SLICE: {
                         PyObject step = oparg == 3 ? stack.pop() : null;
                         PyObject stop = stack.pop();
                         PyObject start = stack.pop();
@@ -1164,10 +1260,12 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         break;
                     }
 
-                    case Opcode.EXTENDED_ARG:
+                    case EXTENDED_ARG:
+                        // Todo: Review this regarding Python 2.7-update
                         opcode = getUnsigned(co_code, next_instr++);
                         next_instr += 2;
-                        oparg = oparg << 16 | ((getUnsigned(co_code, next_instr) << 8) + getUnsigned(co_code, next_instr - 1));
+                        oparg = oparg << 16 | ((getUnsigned(co_code, next_instr) << 8) +
+                                getUnsigned(co_code, next_instr - 1));
                         break;
 
                     default:
@@ -1203,7 +1301,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                     System.err.println("Processing block: " + b);
                 }
                 assert (why != Why.YIELD);
-                if (b.b_type == Opcode.SETUP_LOOP && why == Why.CONTINUE) {
+                if (b.b_type == SETUP_LOOP && why == Why.CONTINUE) {
                     pushBlock(f, b);
                     why = Why.NOT;
                     next_instr = retval.asInt();
@@ -1212,15 +1310,16 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                 while (stack.size() > b.b_level) {
                     stack.pop();
                 }
-                if (b.b_type == Opcode.SETUP_LOOP && why == Why.BREAK) {
+                if (b.b_type == SETUP_LOOP && why == Why.BREAK) {
                     why = Why.NOT;
                     next_instr = b.b_handler;
                     break;
                 }
-                if (b.b_type == Opcode.SETUP_FINALLY || (b.b_type == Opcode.SETUP_EXCEPT && why == Why.EXCEPTION)) {
+                if (b.b_type == SETUP_FINALLY || (b.b_type == SETUP_EXCEPT && why == Why.EXCEPTION)
+                        || b.b_type == SETUP_WITH) {
                     if (why == Why.EXCEPTION) {
                         PyException exc = ts.exception;
-                        if (b.b_type == Opcode.SETUP_EXCEPT) {
+                        if (b.b_type == SETUP_EXCEPT || b.b_type == SETUP_WITH) {
                             exc.normalize();
                         }
                         stack.push(exc.traceback);
@@ -1251,7 +1350,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
             if (why != Why.RETURN) {
                 retval = Py.None;
             }
-        } else {
+        } else { 
             // store the stack in the frame for reentry from the yield;
             f.f_savedlocals = stack.popN(stack.size());
         }
@@ -1264,7 +1363,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                     ", blocks: " + stringify_blocks(f));
         }
 
-        if (why == why.EXCEPTION) {
+        if (why == Why.EXCEPTION) {
             throw ts.exception;
         }
 
@@ -1380,7 +1479,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     private static class PyStack {
-
         final PyObject[] stack;
         int top = -1;
 
@@ -1406,6 +1504,10 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
         void set_top(PyObject v) {
             stack[top] = v;
+        }
+
+        void set_top(int n, PyObject v) {
+            stack[top - n + 1] = v;
         }
 
         void dup() {
@@ -1500,14 +1602,11 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     @Untraversable
-    private static class PyTryBlock extends PyObject { // purely to sit on top of the existing PyFrame in f_exits!!!
-
+    private static class PyTryBlock extends PyObject {
+        // purely to sit on top of the existing PyFrame in f_exits!!!
         int b_type;         /* what kind of block this is */
-
         int b_handler;      /* where to jump to find handler */
-
         int b_level;        /* value stack level to pop to */
-
 
         PyTryBlock(int type, int handler, int level) {
             b_type = type;
@@ -1540,26 +1639,10 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     private class LineCache {
-
-        private class Pair {
-
-            private final int addr;
-            private final int line;
-
-            private Pair(int a, int b) {
-                this.addr = a;
-                this.line = b;
-            }
-
-            public String toString() {
-                return "(" + addr + "," + line + ")";
-            }
-        }
         List<Integer> addr_breakpoints = new ArrayList<Integer>();
         List<Integer> lines = new ArrayList<Integer>(); // length should be one more than addr_breakpoints
 
         private LineCache() { // based on dis.findlinestarts
-
             int size = co_lnotab.length / 2;
             int p = 0;
             int lastline = -1;
@@ -1584,7 +1667,6 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         }
 
         private int getline(int addrq) { // bisect_right to the lineno
-
             int lo = 0;
             int hi = addr_breakpoints.size();
             while (lo < hi) {

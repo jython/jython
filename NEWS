@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2533 ] Opcode.java is outdated -> breaks PyBytecode.interpret
     - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
     - [ 2446 ] Support SNI for SSL/TLS client sockets
     - [ 2455 ] Java classes in packages with __init__.py not found
@@ -35,6 +36,7 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
+    - Support for CPython bytecode (.pyc-files) was updated to Python 2.7 bytecode (from 2.5).
     - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer
       is exported. This is to support CPython extensions via JyNI, but has other uses too
       (including access to direct memory buffers from Python). There is no change at the

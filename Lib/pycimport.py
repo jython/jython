@@ -5,6 +5,9 @@ from marshal import Unmarshaller
 
 __debugging__ = False
 
+# Todo: This should be stored in a central place.
+supported_magic = 62211 # CPython 2.7
+
 def __readPycHeader(file):
     def read():
         return ord(file.read(1))
@@ -26,6 +29,7 @@ class __Importer(object):
     def __init__(self, path):
         if __debugging__: print "Importer invoked"
         self.__path = path
+
     def find_module(self, fullname, path=None):
         if __debugging__:
             print "Importer.find_module(fullname=%s, path=%s)" % (
@@ -42,6 +46,9 @@ class __Importer(object):
             except:
                 return None # abort! not a valid pyc-file
             f.close()
+            # Todo: This check should also be in Unmarshaller
+            if magic != supported_magic:
+                return None # bytecode version mismatch
             if os.path.exists(pyfile):
                 pytime = os.stat(pyfile).st_mtime
                 if pytime > mtime:
@@ -49,12 +56,16 @@ class __Importer(object):
             return self
         else:
             return None # abort! pyc-file does not exist
+
     def load_module(self, fullname):
         path = fullname.split('.')
         path[-1] += '.pyc'
         filename = os.path.join(self.__path, *path)
         f = open(filename, 'rb')
         magic, mtime = __readPycHeader(f)
+        if magic != supported_magic:
+            if __debugging__: print "Unsupported bytecode version:", fullname
+            return None
         #code = Unmarshaller(f, magic=magic).load()
         code = Unmarshaller(f).load()
         if __debugging__: print "Successfully loaded:", fullname
@@ -63,6 +74,7 @@ class __Importer(object):
 class __MetaImporter(object):
     def __init__(self):
         self.__importers = {}
+
     def find_module(self, fullname, path):
         if __debugging__: print "MetaImporter.find_module(%s, %s)" % (
             repr(fullname), repr(path))
