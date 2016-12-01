@@ -4,6 +4,8 @@ package org.python.compiler;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -213,6 +215,22 @@ public class ClassFile
     public void write(OutputStream stream)
         throws IOException
     {
+        String sfilenameShort = sfilename;
+        if (sfilename != null) {
+            try {
+                Path pth = new File("dist/Lib").toPath().normalize().toAbsolutePath();
+                Path pth2 = new File(sfilename).toPath().normalize().toAbsolutePath();
+                sfilenameShort = pth.relativize(pth2).toString();
+                if (sfilenameShort.startsWith("..")) {
+                    // prefer absolute path in this case
+                    sfilenameShort = sfilename;
+                }
+                if (File.separatorChar != '/') {
+                    // Make the path uniform on all platforms. We use POSIX- and URL-notation here.
+                    sfilenameShort = sfilenameShort.replace(File.separatorChar, '/');
+                }
+            } catch (Exception fe) {}
+        }
         cw.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.name, null, this.superclass, interfaces);
         AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
         // XXX: should imp.java really house this value or should imp.java point into
@@ -224,11 +242,11 @@ public class ClassFile
         av.visit("value", new Long(mtime));
         av.visitEnd();
 
-        if (sfilename != null) {
+        if (sfilenameShort != null) {
             av = cw.visitAnnotation("Lorg/python/compiler/Filename;", true);
-            av.visit("value", sfilename);
+            av.visit("value", sfilenameShort);
             av.visitEnd();
-            cw.visitSource(sfilename, null);
+            cw.visitSource(sfilenameShort, null);
         }
         endClassAnnotations();
         endFields();
