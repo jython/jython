@@ -617,8 +617,6 @@ def find_jython_jars():
     return jars
 
 
-
-
 class JavaSource(SimpleJavaFileObject):
 
     def __init__(self, name, source):
@@ -687,7 +685,8 @@ class SerializationTest(unittest.TestCase):
         self.assertEqual(names, roundtrip_serialization(names))
 
     def test_proxy_serialization(self):
-        """Proxies can be deserializable in a fresh JVM, including being able to "findPython" to get a PySystemState"""
+        # Proxies can be deserializable in a fresh JVM, including being able
+        # to "findPython" to get a PySystemState.
         tempdir = tempfile.mkdtemp()
         old_proxy_debug_dir = org.python.core.Options.proxyDebugDirectory
         try:
@@ -719,8 +718,10 @@ class SerializationTest(unittest.TestCase):
             classpath = os.pathsep.join(jars)
             env = dict(os.environ)
             env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
-            cmd = [os.path.join(System.getProperty("java.home"), "bin/java"),
-                   "-classpath", classpath, "ProxyDeserialization", cat_path]
+            cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
+                    "-classpath", classpath,
+                    "javatests.ProxyDeserialization",
+                    cat_path]
             self.assertEqual(subprocess.check_output(cmd, env=env, universal_newlines=True),
                              "meow\n")
         finally:
@@ -728,7 +729,7 @@ class SerializationTest(unittest.TestCase):
             shutil.rmtree(tempdir)
 
     def test_custom_proxymaker(self):
-        """Verify custom proxymaker supports direct usage of Python code in Java"""
+        # Verify custom proxymaker supports direct usage of Python code in Java
         tempdir = tempfile.mkdtemp()
         try:
             SerializableProxies.serialized_path = tempdir
@@ -828,7 +829,7 @@ class CopyTest(unittest.TestCase):
         abc = String("abc")
         abc_copy = copy.copy(abc)
         self.assertEqual(id(abc), id(abc_copy))
-        
+
         fruits = ArrayList([String("apple"), String("banana")])
         fruits_copy = copy.copy(fruits)
         self.assertEqual(fruits, fruits_copy)
@@ -939,7 +940,8 @@ def test_main():
         SysIntegrationTest,
         TreePathTest,
         UnicodeTest,
-        SingleMethodInterfaceTest)
+        SingleMethodInterfaceTest,
+        )
 
 if __name__ == "__main__":
     test_main()

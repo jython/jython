@@ -1,8 +1,8 @@
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.concurrent.Callable;
+package javatests;
+
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
+import java.util.concurrent.Callable;
 
 
 public class ProxyDeserialization {
