@@ -90,7 +90,7 @@ public class PyModule extends PyObject implements Traverseproc {
 
     @Override
     protected PyObject impAttr(String name) {
-        if (__dict__ == null) {
+        if (__dict__ == null || name.length() == 0) {
             return null;
         }
         PyObject path = __dict__.__finditem__("__path__");
