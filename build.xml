@@ -144,11 +144,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${oracle.jar}" />
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
-	    <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
+            <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
             <pathelement path="${extlibs.dir}/antlr-3.1.3.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.1.jar" />
             <pathelement path="${extlibs.dir}/commons-compress-1.12.jar"/>
-	    <!-- pin to ASM 5.0.3 until we upgrade compilation -->
+            <!-- pin to ASM 5.0.3 until we upgrade compilation -->
             <pathelement path="${extlibs.dir}/asm-5.0.4.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-5.0.4.jar" />
             <pathelement path="${extlibs.dir}/asm-util-5.0.4.jar" />
@@ -556,10 +556,10 @@ The readme text for the next release will be like:
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
         <jarjar destfile="${dist.dir}/${jython.deploy.jar}">
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
-	    <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
+            <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-	    <!-- pin to ASM 5.0.3 until we upgrade compilation -->
+            <!-- pin to ASM 5.0.3 until we upgrade compilation -->
             <zipfileset src="extlibs/asm-5.0.4.jar"/>
             <zipfileset src="extlibs/asm-commons-5.0.4.jar"/>
             <zipfileset src="extlibs/asm-util-5.0.4.jar"/>
@@ -608,7 +608,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-OpenBSD.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
-	    <!-- remainder of JNR, JFFI -->
+            <!-- remainder of JNR, JFFI -->
             <zipfileset src="extlibs/jffi-1.2.13.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.0.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
@@ -788,10 +788,10 @@ The readme text for the next release will be like:
             <classpath path="${dist.dir}/${jython.dev.jar}" />
             <classpath refid="main.classpath" />
         </taskdef>
-	<!-- One might think that the exclusion of lib2to3/tests/** is
-	     recursive, but one would be wrong ;) It's actually only
-	     two levels, so for now the workaround is to also include
-	     data/myfixes/**
+        <!-- One might think that the exclusion of lib2to3/tests/** is
+             recursive, but one would be wrong ;) It's actually only
+             two levels, so for now the workaround is to also include
+             data/myfixes/**
 
              This exclusion for lib2to3/tests/ in general is necessary
              because data/infinite_recursion.py is not compileable by
@@ -802,13 +802,13 @@ The readme text for the next release will be like:
              exclusively $py.class, files available in
              lib2to3/tests/data/myfixes/**. -->
         <jycompile srcdir="${dist.dir}/Lib" destdir="${dist.dir}/Lib"
-		   excludes="test/**,lib2to3/tests/**,lib2to3/tests/data/myfixes/**"/>
+                   excludes="test/**,lib2to3/tests/**,lib2to3/tests/data/myfixes/**"/>
     </target>
 
     <target name="copy-lib" depends="init, copy-javalib, copy-cpythonlib">
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${jython.base.dir}/Lib">
-	       <exclude name="**/*.class"/>
+                <exclude name="**/*.class"/>
             </fileset>
         </copy>
 
