@@ -159,9 +159,6 @@ class TestParserIdempotency(support.TestCase):
     """A cut-down version of pytree_idempotency.py."""
 
     def test_all_project_files(self):
-        if sys.platform.startswith("win"):
-            # XXX something with newlines goes wrong on Windows.
-            return
         for filepath in support.all_project_files():
             with open(filepath, "rb") as fp:
                 encoding = tokenize.detect_encoding(fp.readline)[0]
@@ -180,6 +177,7 @@ class TestParserIdempotency(support.TestCase):
         driver.parse_string("[*a, b] = x\n")
         driver.parse_string("(z, *y, w) = m\n")
         driver.parse_string("for *z, m in d: pass\n")
+
 
 class TestLiterals(GrammarTest):
 
@@ -215,13 +213,11 @@ class TestLiterals(GrammarTest):
 
 
 def diff(fn, result, encoding):
-    f = open("@", "w")
-    try:
-        f.write(result.encode(encoding))
-    finally:
-        f.close()
-    try:
-        fn = fn.replace('"', '\\"')
-        return os.system('diff -u "%s" @' % fn)
-    finally:
-        os.remove("@")
+    "A diff the result and original file content independent of OS."
+    r = iter(result.encode(encoding).splitlines(True))
+    with open(fn, "rb") as f:
+        for line in f:
+            rline = next(r)
+            if rline != line:
+                return True
+    return False
