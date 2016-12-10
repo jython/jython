@@ -13,6 +13,10 @@ import tempfile
 from test import test_support
 from base64 import b64encode
 
+# Work out this is Windows, even for Jython.
+WINDOWS = sys.platform == 'win32' or (
+    sys.platform[:4] == 'java' and os._name == 'nt')
+
 
 def hexescape(char):
     """Escape char as RFC 2396 specifies"""
@@ -841,7 +845,7 @@ class Pathname_Tests(unittest.TestCase):
                          "url2pathname() failed; %s != %s" %
                          (expect, result))
 
-    @unittest.skipUnless(sys.platform == 'win32',
+    @unittest.skipUnless(WINDOWS,
                          'test specific to the nturl2path library')
     def test_ntpath(self):
         given = ('/C:/', '///C:/', '/C|//')

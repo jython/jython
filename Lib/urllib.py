@@ -44,8 +44,12 @@ __version__ = '1.17'    # XXX This version is not always updated :-(
 
 MAXFTPCACHE = 10        # Trim the ftp cache beyond this size
 
+# Work out this is Windows, even for Jython.
+WINDOWS = sys.platform == 'win32' or (
+    sys.platform[:4] == 'java' and os._name == 'nt')
+
 # Helper for non-unix systems
-if os.name == 'nt':
+if WINDOWS:
     from nturl2path import url2pathname, pathname2url
 elif os.name == 'riscos':
     from rourl2path import url2pathname, pathname2url
