@@ -4,6 +4,12 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2538 ] Test failures in test_unittest
+    - [ 2293 ] "java.lang.IllegalArgumentException: java.lang.IllegalArgumentException:
+               Cannot create PyString with non-byte value" triggered after adding
+               unicode element with non-ASCII character to sys.path
+    - [ 2535 ] Building jython standalone manually results in local filesystem paths
+               showing up in Jython stacktraces
     - [ 2533 ] Opcode.java is outdated -> breaks PyBytecode.interpret
     - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
     - [ 2446 ] Support SNI for SSL/TLS client sockets

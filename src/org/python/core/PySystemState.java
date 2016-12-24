@@ -1163,7 +1163,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
             if (prefix == null) {
                 return Py.None;
             } else {
-                executable = prefix.asString() + File.pathSeparator + "bin" + File.pathSeparator;
+                executable = prefix.asString() + File.separator + "bin" + File.separator;
                 if (Platform.IS_WINDOWS) {
                     executable += "jython.exe";
                 } else {
