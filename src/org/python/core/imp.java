@@ -412,9 +412,9 @@ public class imp {
         PyUnicode.checkEncoding(name);
         PyModule module = addModule(name);
 
-        PyTableCode code = null;
-        if (c instanceof PyTableCode) {
-            code = (PyTableCode)c;
+        PyBaseCode code = null;
+        if (c instanceof PyBaseCode) {
+            code = (PyBaseCode)c;
         }
 
         if (moduleLocation != null) {
@@ -439,10 +439,22 @@ public class imp {
         }
     }
 
+    @SuppressWarnings("unchecked")
     static PyObject createFromClass(String name, Class<?> c) {
         // Two choices. c implements PyRunnable or c is Java package
         if (PyRunnable.class.isAssignableFrom(c)) {
             try {
+                if (ContainsPyBytecode.class.isAssignableFrom(c)) {
+                    try {
+                        BytecodeLoader.fixPyBytecode((Class<? extends ContainsPyBytecode>) c);
+                    } catch (NoSuchFieldException e) {
+                        throw Py.JavaError(e);
+                    } catch (java.io.IOException e) {
+                        throw Py.JavaError(e);
+                    } catch (ClassNotFoundException e) {
+                        throw Py.JavaError(e);
+                    }
+                }
                 return createFromCode(name, ((PyRunnable)c.newInstance()).getMain());
             } catch (InstantiationException e) {
                 throw Py.JavaError(e);
@@ -554,7 +566,7 @@ public class imp {
         }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
-            Class c = Py.findClassEx(mod, "builtin modules");
+            Class<?> c = Py.findClassEx(mod, "builtin modules");
             if (c != null) {
                 Py.writeComment(IMPORT_LOG, "'" + name + "' as " + mod + " in builtin modules");
                 try {

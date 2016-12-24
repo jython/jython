@@ -12,6 +12,19 @@ public class PyRunnableBootstrap implements CodeBootstrap {
     }
 
     public PyCode loadCode(CodeLoader loader) {
+        if (runnable instanceof ContainsPyBytecode) {
+            try {
+                BytecodeLoader.fixPyBytecode(((ContainsPyBytecode) runnable).getClass());
+            } catch (NoSuchFieldException e) {
+                throw Py.JavaError(e);
+            } catch (java.io.IOException e) {
+                throw Py.JavaError(e);
+            } catch (ClassNotFoundException e) {
+                throw Py.JavaError(e);
+            }  catch (IllegalAccessException e) {
+                throw Py.JavaError(e);
+            }
+        }
         return runnable.getMain();
     }
 
@@ -29,15 +42,27 @@ public class PyRunnableBootstrap implements CodeBootstrap {
 
             public PyCode loadCode(CodeLoader loader) {
                 try {
-                    return constructor.newInstance(loader.filename).getMain();
+                    PyRunnable result = constructor.newInstance(loader.filename);
+                    if (result instanceof ContainsPyBytecode) {
+                        try {
+                            BytecodeLoader.fixPyBytecode(((ContainsPyBytecode) result).getClass());
+                        } catch (NoSuchFieldException e) {
+                            throw Py.JavaError(e);
+                        } catch (java.io.IOException e) {
+                            throw Py.JavaError(e);
+                        } catch (ClassNotFoundException e) {
+                            throw Py.JavaError(e);
+                        }  catch (IllegalAccessException e) {
+                            throw Py.JavaError(e);
+                        }
+                    }
+                    return result.getMain();
                 } catch (Exception e) {
                     throw new IllegalArgumentException(
                             "PyRunnable class constructor does not support instantiation protocol.",
                             e);
                 }
             }
-
         };
     }
-
 }

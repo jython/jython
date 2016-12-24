@@ -42,6 +42,15 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
+    - Provided a painless way to deal with long-standing Issue 527524 - "Cannot compile to use
+      methods exceeding JVM size restrictions": If a CPython 2.7 bytecode-file (.pyc) exists,
+      Jython automatically uses that bytecode to represent oversized functions and methods,
+      while methods with proper size are still compiled to JVM bytecode.
+      The crucial bytecode sections from the pyc-file are embedded seamlessly into the created
+      class-file, so you wouldn't have to distribute the pyc-file at all.
+      Current implementation of this feature is provisional and might change in future versions.
+      Issue 527524 was still not listed as solved, because Jython cannot yet create the pyc-file
+      by itself.
     - Support for CPython bytecode (.pyc-files) was updated to Python 2.7 bytecode (from 2.5).
     - Buffer API changes allow java.nio.ByteBuffer to provide the storage when a PyBuffer
       is exported. This is to support CPython extensions via JyNI, but has other uses too

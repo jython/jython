@@ -156,6 +156,14 @@ public class ClassFile
         return pmv;
     }
 
+    public void addFinalStringLiteral(String name, String value)
+        throws IOException
+    {
+        FieldVisitor fv = cw.visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL +
+                Opcodes.ACC_STATIC, name, ClassConstants.$str, null, value);
+        fieldVisitors.add(fv);
+    }
+
     public void addClassAnnotation(AnnotationDescr annotationDescr) {
         AnnotationVisitor av = cw.visitAnnotation(annotationDescr.getName(), true);
         if (annotationDescr.hasFields()) {
