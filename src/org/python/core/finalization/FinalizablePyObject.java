@@ -7,7 +7,7 @@ package org.python.core.finalization;
  * {@link org.python.core.finalization.FinalizableBuiltin}.
  * </p>
  * <p>
- * The difference is that {@link #__del__()} can be overwritten by a
+ * The difference is that {@link #__del__()} can be overridden by a
  * new-style subclass's {@code __del__}-method on Python-side, while
  * {@link FinalizableBuiltin#__del_builtin__()} is always called.
  * If a Python-side finalizer exists,
@@ -20,7 +20,7 @@ package org.python.core.finalization;
  * call {@link #__del__()} first and then
  * {@link FinalizableBuiltin#__del_builtin__()}. If a
  * new-style subclass has an own, Python-side {@code __del__}-method, this
- * overwrites the Java-implemented {@link #__del__()}, but not
+ * overrides the Java-implemented {@link #__del__()}, but not
  * {@link FinalizableBuiltin#__del_builtin__()}, which will be called after
  * the Python-side finalizer.
  * </p>
@@ -76,9 +76,9 @@ package org.python.core.finalization;
  * implementations.
  * </p>
  * <p>
- * Note that it is not possible to overwrite {@code __ensure_finalizer__} on Python side.
- * If one overwrites {@code __ensure_finalizer__} on Python side, Jython will ignore the
- * overwrite-implementation and still call the original one.
+ * Note that it is not possible to override {@code __ensure_finalizer__} on Python side.
+ * If one overrides {@code __ensure_finalizer__} on Python side, Jython will ignore the
+ * override-implementation and still call the original one.
  * </p>
  * <p>
  * It is possible to switch finalization on and off at any desired time for a certain object.

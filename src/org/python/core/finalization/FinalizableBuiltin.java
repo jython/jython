@@ -12,7 +12,7 @@ public interface FinalizableBuiltin {
      * A FinalizeTrigger calls {@link FinalizablePyObjectDerived#__del_derived__()}
      * first and - if existent - {@link #__del_builtin__()} after that. A plain
      * {@link FinalizablePyObject#__del__()}
-     * would behave as overwritten by
+     * would behave as overridden by
      * {@link FinalizablePyObjectDerived#__del_derived__()}, i.e. won't be called
      * if the type implements {@link FinalizablePyObjectDerived}, while
      * {@link #__del_builtin__()} is called in any case.
