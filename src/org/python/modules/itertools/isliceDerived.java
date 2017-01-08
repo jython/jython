@@ -47,19 +47,19 @@ public class isliceDerived extends islice implements Slotted,FinalizablePyObject
 
     /* end of TraverseprocDerived implementation */
 
-    private PyObject dict;
+    private AbstractDict dict;
 
-    public PyObject fastGetDict() {
+    public AbstractDict fastGetDict() {
         return dict;
     }
 
-    public PyObject getDict() {
+    public AbstractDict getDict() {
         return dict;
     }
 
     public void setDict(PyObject newDict) {
-        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
-            dict=newDict;
+        if (newDict instanceof AbstractDict) {
+            dict=(AbstractDict)newDict;
             if (dict.__finditem__(PyString.fromInterned("__del__"))!=null&&!JyAttribute.hasAttr(this,JyAttribute.FINALIZE_TRIGGER_ATTR)) {
                 FinalizeTrigger.ensureFinalizer(this);
             }
