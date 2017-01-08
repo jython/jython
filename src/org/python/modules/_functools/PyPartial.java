@@ -8,6 +8,7 @@ import org.python.core.PyDictionary;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
+import org.python.core.AbstractDict;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.Traverseproc;
@@ -35,7 +36,7 @@ public class PyPartial extends PyObject implements Traverseproc {
     private String[] keywords;
 
     /** Lazily created dict for extra attributes. */
-    private PyObject __dict__;
+    private AbstractDict __dict__;
 
     public PyPartial() {
         super(TYPE);
@@ -162,7 +163,7 @@ public class PyPartial extends PyObject implements Traverseproc {
     }
 
     @Override
-    public PyObject fastGetDict() {
+    public AbstractDict fastGetDict() {
         return __dict__;
     }
 
@@ -176,10 +177,10 @@ public class PyPartial extends PyObject implements Traverseproc {
     @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject val) {
-        if (!(val instanceof PyStringMap) && !(val instanceof PyDictionary)) {
+        if (!(val instanceof AbstractDict)) {
             throw Py.TypeError("setting partial object's dictionary to a non-dict");
         }
-        __dict__ = val;
+        __dict__ = (AbstractDict) val;
     }
 
     private void ensureDict() {

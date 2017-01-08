@@ -199,8 +199,7 @@ public class PyModule extends PyObject implements Traverseproc {
             d = __dict__;
         }
         if (d == null ||
-                !(d instanceof PyDictionary ||
-                  d instanceof PyStringMap ||
+                !(d instanceof AbstractDict ||
                   d instanceof PyDictProxy)) {
             throw Py.TypeError(String.format("%.200s.__dict__ is not a dictionary",
                     getType().fastGetName().toLowerCase()));

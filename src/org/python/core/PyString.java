@@ -4508,7 +4508,7 @@ final class StringFormatter {
         } else {
             // Not a tuple, but possibly still some kind of container: use special argIndex values.
             argIndex = -1;
-            if (args instanceof PyDictionary || args instanceof PyStringMap
+            if (args instanceof AbstractDict
                     || (!(args instanceof PySequence) && args.__findattr__("__getitem__") != null)) {
                 dict = args;
                 argIndex = -3;

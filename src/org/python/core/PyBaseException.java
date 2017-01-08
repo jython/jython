@@ -96,7 +96,7 @@ public class PyBaseException extends PyObject implements Traverseproc {
     @ExposedMethod(doc = BuiltinDocs.BaseException___setstate___doc)
     final PyObject BaseException___setstate__(PyObject state) {
         if (state != Py.None) {
-            if (!(state instanceof PyStringMap) && !(state instanceof PyDictionary)) {
+            if (!(state instanceof AbstractDict)) {
                 throw Py.TypeError("state is not a dictionary");
             }
             for (PyObject key : state.asIterable()) {

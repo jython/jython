@@ -47,7 +47,7 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
      * A function's lazily created __dict__; allows arbitrary
      * attributes to be tacked on. Read only.
      */
-    public PyObject __dict__;
+    public AbstractDict __dict__;
 
     /** A read only closure tuple for nested scopes. */
     @ExposedGet
@@ -269,7 +269,7 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
     }
 
     @Override
-    public PyObject fastGetDict() {
+    public AbstractDict fastGetDict() {
         return __dict__;
     }
 
@@ -281,10 +281,10 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
 
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject value) {
-        if (!(value instanceof PyDictionary) && !(value instanceof PyStringMap)) {
+        if (!(value instanceof AbstractDict)) {
             throw Py.TypeError("setting function's dictionary to a non-dict");
         }
-        __dict__ = value;
+        __dict__ = (AbstractDict) value;
     }
 
     @ExposedDelete(name = "__dict__")

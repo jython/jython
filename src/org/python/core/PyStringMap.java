@@ -266,7 +266,7 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
 
     @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.dict___cmp___doc)
     final int stringmap___cmp__(PyObject other) {
-        if (!(other instanceof PyStringMap || other instanceof PyDictionary)) {
+        if (!(other instanceof AbstractDict)) {
             return -2;
         }
         int an = __len__();
@@ -278,12 +278,7 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
             return 1;
         }
         PyList akeys = keys();
-        PyList bkeys = null;
-        if (other instanceof PyStringMap) {
-            bkeys = ((PyStringMap)other).keys();
-        } else {
-            bkeys = ((PyDictionary)other).keys();
-        }
+        PyList bkeys = ((AbstractDict) other).keys();
         akeys.sort();
         bkeys.sort();
         for (int i = 0; i < bn; i++) {

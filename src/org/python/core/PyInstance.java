@@ -52,7 +52,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
         PyObject dict = ap.getPyObject(1, Py.None);
         if (dict == Py.None) {
             dict = null;
-        } else if (!(dict instanceof PyStringMap || dict instanceof PyDictionary)) {
+        } else if (!(dict instanceof AbstractDict)) {
             throw Py.TypeError("instance() second arg must be dictionary or None");
         }
         return new PyInstance(klass, dict);

@@ -1120,8 +1120,7 @@ public class PyObject implements Serializable {
         if (obj == null) {
             return;
         }
-        if (obj instanceof PyDictionary || obj instanceof PyStringMap
-            || obj instanceof PyDictProxy) {
+        if (obj instanceof AbstractDict || obj instanceof PyDictProxy) {
             accum.update(obj);
         }
     }

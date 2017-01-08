@@ -14,7 +14,7 @@ public class PyClass extends PyObject implements Traverseproc {
     public static final PyType TYPE = PyType.fromClass(PyClass.class);
 
     /** Holds the namespace for this class */
-    public PyObject __dict__;
+    public AbstractDict __dict__;
 
     /** The base classes of this class */
     public PyTuple __bases__;
@@ -46,7 +46,7 @@ public class PyClass extends PyObject implements Traverseproc {
         if (!name.getType().isSubType(PyString.TYPE)) {
             throw Py.TypeError("PyClass_New: name must be a string");
         }
-        if (!(dict instanceof PyStringMap || dict instanceof PyDictionary)) {
+        if (!(dict instanceof AbstractDict)) {
             throw Py.TypeError("PyClass_New: dict must be a dictionary");
         }
         PyType.ensureDoc(dict);
@@ -69,7 +69,7 @@ public class PyClass extends PyObject implements Traverseproc {
         PyClass klass = new PyClass();
         klass.__name__ = name.toString();
         klass.__bases__ = basesTuple;
-        klass.__dict__ = dict;
+        klass.__dict__ = (AbstractDict) dict;
         klass.cacheDescriptors();
         return klass;
     }
@@ -100,7 +100,7 @@ public class PyClass extends PyObject implements Traverseproc {
     }
 
     @Override
-    public PyObject fastGetDict() {
+    public AbstractDict fastGetDict() {
         return __dict__;
     }
 
@@ -248,10 +248,10 @@ public class PyClass extends PyObject implements Traverseproc {
     }
 
     public void setDict(PyObject value) {
-        if (value == null || !(value instanceof PyStringMap || value instanceof PyDictionary)) {
+        if (value == null || !(value instanceof AbstractDict)) {
             throw Py.TypeError("__dict__ must be a dictionary object");
         }
-        __dict__ = value;
+        __dict__ = (AbstractDict) value;
     }
 
     public void setBases(PyObject value) {
