@@ -1243,7 +1243,12 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @return found object or null
      */
     public PyObject lookup_where(String name, PyObject[] where) {
-    	if (methodCache == null) System.out.println("method cache is null");
+        /* Can we even switch to an assert here?
+         * assert methodCache != null;
+         */
+        if (methodCache == null) {
+            Py.warning(Py.RuntimeWarning, "PyType: methodCache is null");
+        }
         return methodCache.lookup_where(this, name, where);
     }
 
