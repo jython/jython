@@ -2714,9 +2714,14 @@ class JavaCode extends PyCode implements Traverseproc {
 
     @Override
     public PyObject call(ThreadState state, PyFrame frame, PyObject closure) {
-        //XXX: what the heck is this?  Looks like debug code, but it's
-        //     been here a long time...
-        System.out.println("call #1");
+        /* This should actually
+         *     throw new UnsupportedOperationException(
+         *             "JavaCode doesn't support call with signature "+
+         *             "(ThreadState state, PyFrame frame, PyObject closure).");
+         * However since this would be an API-change, for 2.7 series we just warn.
+         */
+        Py.warning(Py.RuntimeWarning, "JavaCode doesn't support call with signature "+
+                "(ThreadState state, PyFrame frame, PyObject closure).");
         return Py.None;
     }
 
