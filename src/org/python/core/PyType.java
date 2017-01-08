@@ -47,7 +47,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     protected PyObject[] bases = new PyObject[0];
 
     /** The real, internal __dict__. */
-    protected PyObject dict;
+    protected AbstractDict dict;
 
     /** __mro__, the method resolution. order */
     protected PyObject[] mro;
@@ -137,9 +137,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
         ArgParser ap = new ArgParser("type()", args, keywords, "name", "bases", "dict");
         String name = ap.getString(0);
-        PyTuple bases = (PyTuple)ap.getPyObjectByType(1, PyTuple.TYPE);
+        PyTuple bases = (PyTuple) ap.getPyObjectByType(1, PyTuple.TYPE);
         PyObject dict = ap.getPyObject(2);
-        if (!(dict instanceof PyDictionary || dict instanceof PyStringMap)) {
+        if (!(dict instanceof AbstractDict)) {
             throw Py.TypeError("type(): argument 3 must be dict, not " + dict.getType());
         }
         return newType(new_, subtype, name, bases, dict);
@@ -186,15 +186,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             type = new PyTypeDerived(metatype);
         }
 
-        if (dict instanceof PyStringMap) {
-            dict = ((PyStringMap)dict).copy();
-        } else {
-            dict = ((PyDictionary)dict).copy();
-        }
-
+        dict = ((AbstractDict) dict).copy();
         type.name = name;
         type.bases = tmpBases.length == 0 ? new PyObject[] {PyObject.TYPE} : tmpBases;
-        type.dict = dict;
+        type.dict = (AbstractDict) dict;
         type.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
         // Enable defining a custom __dict__ via a property, method, or other descriptor
         boolean defines_dict = dict.__finditem__("__dict__") != null;
@@ -896,7 +891,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
     }
 
-    public PyObject instDict() {
+    public PyStringMap instDict() {
         if (needs_userdict) {
             return new PyStringMap();
         }
@@ -1758,11 +1753,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * Returns the actual dict underlying this type instance. Changes to Java types should go
      * through {@link #addMethod} and {@link #removeMethod}, or unexpected mro errors can occur.
      */
-    public PyObject fastGetDict() {
+    @Override
+    public AbstractDict fastGetDict() {
         return dict;
     }
 
     @ExposedGet(name = "__dict__")
+    @Override
     public PyObject getDict() {
         return new PyDictProxy(dict);
     }

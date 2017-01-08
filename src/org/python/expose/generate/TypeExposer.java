@@ -88,7 +88,7 @@ public class TypeExposer extends Exposer {
         for(MethodExposer me : methods) {
             me.load(l);
         }
-        Class descriptor = load(l);
+        Class<?> descriptor = load(l);
         try {
             return (TypeBuilder)descriptor.newInstance();
         } catch(Exception e) {

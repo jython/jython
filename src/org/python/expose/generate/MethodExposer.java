@@ -25,7 +25,7 @@ public abstract class MethodExposer extends Exposer {
                          String typeName,
                          String[] asNames,
                          String[] defaults,
-                         Class superClass,
+                         Class<?> superClass,
                          String doc) {
         super(superClass, onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;

@@ -53,7 +53,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
      * @param generatedName -
      *            the name of the class to generate
      */
-    public Exposer(Class superClass, String generatedName, Type...interfacesImplemented) {
+    public Exposer(Class<?> superClass, String generatedName, Type...interfacesImplemented) {
         superType = Type.getType(superClass);
         thisType = Type.getType("L" + generatedName.replace('.', '/') + ";");
         this.interfacesImplemented = interfacesImplemented;

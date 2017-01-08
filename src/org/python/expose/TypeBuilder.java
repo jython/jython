@@ -1,6 +1,7 @@
 package org.python.expose;
 
 import org.python.core.PyObject;
+import org.python.core.AbstractDict;
 import org.python.core.PyType;
 
 /**
@@ -10,11 +11,11 @@ public interface TypeBuilder {
 
     public String getName();
 
-    public PyObject getDict(PyType type);
+    public AbstractDict getDict(PyType type);
 
-    public Class getTypeClass();
+    public Class<? extends PyObject> getTypeClass();
 
-    public Class getBase();
+    public Class<?> getBase();
 
     public boolean getIsBaseType();
 
