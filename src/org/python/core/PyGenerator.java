@@ -33,6 +33,11 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
         FinalizeTrigger.ensureFinalizer(this);
     }
 
+    @ExposedGet(name = "__name__")
+    public String getName() {
+        return gi_code.co_name;
+    }
+
     public PyObject send(PyObject value) {
         return generator_send(value);
     }
