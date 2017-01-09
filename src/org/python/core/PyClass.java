@@ -14,7 +14,7 @@ public class PyClass extends PyObject implements Traverseproc {
     public static final PyType TYPE = PyType.fromClass(PyClass.class);
 
     /** Holds the namespace for this class */
-    public AbstractDict __dict__;
+    public PyObject __dict__;
 
     /** The base classes of this class */
     public PyTuple __bases__;
@@ -69,7 +69,7 @@ public class PyClass extends PyObject implements Traverseproc {
         PyClass klass = new PyClass();
         klass.__name__ = name.toString();
         klass.__bases__ = basesTuple;
-        klass.__dict__ = (AbstractDict) dict;
+        klass.__dict__ = dict;
         klass.cacheDescriptors();
         return klass;
     }
@@ -100,7 +100,7 @@ public class PyClass extends PyObject implements Traverseproc {
     }
 
     @Override
-    public AbstractDict fastGetDict() {
+    public PyObject fastGetDict() {
         return __dict__;
     }
 
@@ -251,7 +251,7 @@ public class PyClass extends PyObject implements Traverseproc {
         if (value == null || !(value instanceof AbstractDict)) {
             throw Py.TypeError("__dict__ must be a dictionary object");
         }
-        __dict__ = (AbstractDict) value;
+        __dict__ = value;
     }
 
     public void setBases(PyObject value) {

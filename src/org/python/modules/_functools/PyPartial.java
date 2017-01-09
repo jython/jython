@@ -36,7 +36,7 @@ public class PyPartial extends PyObject implements Traverseproc {
     private String[] keywords;
 
     /** Lazily created dict for extra attributes. */
-    private AbstractDict __dict__;
+    private PyObject __dict__;
 
     public PyPartial() {
         super(TYPE);
@@ -163,7 +163,7 @@ public class PyPartial extends PyObject implements Traverseproc {
     }
 
     @Override
-    public AbstractDict fastGetDict() {
+    public PyObject fastGetDict() {
         return __dict__;
     }
 
@@ -180,7 +180,7 @@ public class PyPartial extends PyObject implements Traverseproc {
         if (!(val instanceof AbstractDict)) {
             throw Py.TypeError("setting partial object's dictionary to a non-dict");
         }
-        __dict__ = (AbstractDict) val;
+        __dict__ = val;
     }
 
     private void ensureDict() {

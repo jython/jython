@@ -6,7 +6,6 @@ import org.python.core.PyMethodDescr;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
-import org.python.core.AbstractDict;
 import org.python.core.PyType;
 
 public class BaseTypeBuilder implements TypeBuilder {
@@ -46,7 +45,7 @@ public class BaseTypeBuilder implements TypeBuilder {
     }
 
     @Override
-    public PyStringMap getDict(PyType type) {
+    public PyObject getDict(PyType type) {
         PyStringMap dict = new PyStringMap();
         for(PyBuiltinMethod func : meths) {
             PyMethodDescr pmd = func.makeDescriptor(type);

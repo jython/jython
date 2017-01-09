@@ -47,7 +47,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     protected PyObject[] bases = new PyObject[0];
 
     /** The real, internal __dict__. */
-    protected AbstractDict dict;
+    protected PyObject dict;
 
     /** __mro__, the method resolution. order */
     protected PyObject[] mro;
@@ -189,7 +189,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         dict = ((AbstractDict) dict).copy();
         type.name = name;
         type.bases = tmpBases.length == 0 ? new PyObject[] {PyObject.TYPE} : tmpBases;
-        type.dict = (AbstractDict) dict;
+        type.dict = dict;
         type.tp_flags = Py.TPFLAGS_HEAPTYPE | Py.TPFLAGS_BASETYPE;
         // Enable defining a custom __dict__ via a property, method, or other descriptor
         boolean defines_dict = dict.__finditem__("__dict__") != null;
@@ -891,7 +891,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
     }
 
-    public PyStringMap instDict() {
+    public PyObject instDict() {
         if (needs_userdict) {
             return new PyStringMap();
         }
@@ -1754,7 +1754,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * through {@link #addMethod} and {@link #removeMethod}, or unexpected mro errors can occur.
      */
     @Override
-    public AbstractDict fastGetDict() {
+    public PyObject fastGetDict() {
         return dict;
     }
 

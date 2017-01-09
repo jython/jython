@@ -47,19 +47,19 @@ public class NotInDerived extends NotIn implements Slotted,FinalizablePyObjectDe
 
     /* end of TraverseprocDerived implementation */
 
-    private AbstractDict dict;
+    private PyObject dict;
 
-    public AbstractDict fastGetDict() {
+    public PyObject fastGetDict() {
         return dict;
     }
 
-    public AbstractDict getDict() {
+    public PyObject getDict() {
         return dict;
     }
 
     public void setDict(PyObject newDict) {
         if (newDict instanceof AbstractDict) {
-            dict=(AbstractDict)newDict;
+            dict=newDict;
             if (dict.__finditem__(PyString.fromInterned("__del__"))!=null&&!JyAttribute.hasAttr(this,JyAttribute.FINALIZE_TRIGGER_ATTR)) {
                 FinalizeTrigger.ensureFinalizer(this);
             }
