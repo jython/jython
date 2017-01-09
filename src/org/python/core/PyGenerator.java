@@ -177,6 +177,16 @@ public class PyGenerator extends PyIterator implements FinalizableBuiltin {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return generator_toString();
+    }
+
+    @ExposedMethod(names = "__repr__")
+    final String generator_toString() {
+        return String.format("<generator object %s at %s>", getName(), Py.idstr(this));
+    }
+
 
     /* Traverseproc implementation */
     @Override
