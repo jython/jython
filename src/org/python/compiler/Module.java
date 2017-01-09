@@ -859,13 +859,12 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                             // Probably this cannot yield cycles, so cycle-proof stuff
                             // is out-commented for now. (everything regarding 'allCodes')
                             PyBytecode bcode = buffer.pop();
-                            //System.out.println("PyBytecode: "+bcode.co_name+" of size "+bcode.co_code.length);
                             if (bcode.co_code.length > thresh) {
                                 largest_m_codes.add(bcode);
                             } else {
-                                // If a function needs to be done as bytecode, we create all inner
-                                // PyCode-items (classes, functions, methods) also as bytecode
-                                // implicitly, so no need so look at them individually.
+                                // If a function needs to be represented as CPython bytecode, we create
+                                // all inner PyCode-items (classes, functions, methods) also as CPython
+                                // bytecode implicitly, so no need so look at them individually.
                                 // Maybe we can later optimize this such that inner methods can be
                                 // JVM-bytecode as well (if not oversized themselves).
                                 for (PyObject item: bcode.co_consts) {

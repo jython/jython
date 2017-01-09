@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2515 ] typing module doesn't import
     - [ 2538 ] Test failures in test_unittest
     - [ 2293 ] "java.lang.IllegalArgumentException: java.lang.IllegalArgumentException:
                Cannot create PyString with non-byte value" triggered after adding
