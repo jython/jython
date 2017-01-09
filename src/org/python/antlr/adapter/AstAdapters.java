@@ -20,7 +20,7 @@ public class AstAdapters {
     public final static SliceAdapter sliceAdapter = new SliceAdapter();
     public final static StmtAdapter stmtAdapter = new StmtAdapter();
 
-	public static java.util.List<alias> py2aliasList(PyObject o) {
+    public static java.util.List<alias> py2aliasList(PyObject o) {
         return (java.util.List<alias>)aliasAdapter.iter2ast(o);
     }
 
