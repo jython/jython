@@ -1,27 +1,13 @@
 // Hand copied from stmt.
 // XXX: autogenerate this.
 package org.python.antlr.base;
-import org.antlr.runtime.CommonToken;
+
 import org.antlr.runtime.Token;
 import org.python.antlr.AST;
 import org.python.antlr.PythonTree;
-import org.python.antlr.adapter.AstAdapters;
-import org.python.antlr.base.excepthandler;
-import org.python.antlr.base.expr;
-import org.python.antlr.base.mod;
-import org.python.antlr.base.slice;
-import org.python.antlr.base.stmt;
-import org.python.core.ArgParser;
-import org.python.core.AstList;
-import org.python.core.Py;
-import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyStringMap;
 import org.python.core.PyType;
 import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "_ast.expr_context", base = AST.class)

@@ -1,8 +1,8 @@
 package org.python.antlr.adapter;
 
 import org.python.core.PyObject;
-
 import java.util.List;
+
 /**
  * AstAdapters turn Objects into Ast nodes.
  */

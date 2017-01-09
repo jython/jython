@@ -3,7 +3,6 @@ package org.python.antlr;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
 import org.python.antlr.base.mod;
 
 public class BaseParser {

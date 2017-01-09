@@ -1,10 +1,7 @@
 package org.python.antlr.ast;
+
 import org.python.antlr.PythonTree;
 import org.python.antlr.base.stmt;
-import org.antlr.runtime.CommonToken;
-import org.antlr.runtime.Token;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 public class ErrorStmt extends stmt {
 

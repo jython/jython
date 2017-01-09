@@ -5,15 +5,11 @@ import org.python.antlr.op.*;
 import org.python.core.AstList;
 import org.python.core.ClassDictInit;
 import org.python.core.CompilerFlags;
-import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyType;
-
 import org.python.antlr.AST;
-import org.python.core.exceptions;
 
 public class AstModule implements ClassDictInit {
 

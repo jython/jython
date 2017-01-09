@@ -5,10 +5,10 @@ import org.python.antlr.base.*;
 import org.python.antlr.op.*;
 import org.python.core.*;
 
-import java.util.ArrayList;
 /**
  * AstAdapter turns Python and Java objects into ast nodes.
  */
+@SuppressWarnings("unchecked")
 public class AstAdapters {
     public final static AliasAdapter aliasAdapter = new AliasAdapter();
     public final static CmpopAdapter cmpopAdapter = new CmpopAdapter();
@@ -20,7 +20,7 @@ public class AstAdapters {
     public final static SliceAdapter sliceAdapter = new SliceAdapter();
     public final static StmtAdapter stmtAdapter = new StmtAdapter();
 
-    public static java.util.List<alias> py2aliasList(PyObject o) {
+	public static java.util.List<alias> py2aliasList(PyObject o) {
         return (java.util.List<alias>)aliasAdapter.iter2ast(o);
     }
 
