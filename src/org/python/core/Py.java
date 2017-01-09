@@ -2259,18 +2259,20 @@ public final class Py {
      * checker
      */
     private static PyObject dispatchToChecker(PyObject checkerArg, PyObject cls,
-                                              String checkerName) {
+            String checkerName) {
         //Ignore old style classes.
         if (cls instanceof PyClass) {
             return null;
         }
-
-        PyObject checker = cls.__findattr__(checkerName);
+        PyObject meta = cls.__findattr__("__metaclass__");
+        if (meta == null) {
+            return null;
+        }
+        PyObject checker = meta.__findattr__(checkerName);
         if (checker == null) {
             return null;
         }
-
-        return checker.__call__(checkerArg);
+        return checker.__call__(cls, checkerArg);
     }
 
     /**
