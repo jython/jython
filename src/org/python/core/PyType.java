@@ -930,7 +930,11 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.type___subclasscheck___doc)
     public synchronized final boolean type___subclasscheck__(PyObject inst) {
-        return Py.isSubClass(inst, this);
+        /* We cannot directly call Py.isSubClass(inst, this), because that
+         * would yield endless recursion under some circumstances (e.g. in
+         * test_collections).
+         */
+        return Py.recursiveIsSubClass(inst, this);
     }
 
     @ExposedMethod(doc = BuiltinDocs.type___instancecheck___doc)
