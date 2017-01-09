@@ -928,6 +928,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return result;
     }
 
+    @ExposedMethod(doc = BuiltinDocs.type___subclasscheck___doc)
+    public synchronized final boolean type___subclasscheck__(PyObject inst) {
+        return Py.isSubClass(inst, this);
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.type___instancecheck___doc)
+    public synchronized final boolean type___instancecheck__(PyObject inst) {
+        /* We cannot directly call Py.isInstance(inst, this), because that
+         * would yield endless recursion. So we inline the essential parts
+         * from there, excluding checker-delegation and PyTuple special case.
+         */
+        if (inst.getType() == this) {
+            return true;
+        }
+        return Py.recursiveIsInstance(inst, this);
+    }
+
     /**
      * Returns the Java Class that this type inherits from, or null if this type is Python-only.
      */
