@@ -1824,7 +1824,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     @ExposedGet(name = "__abstractmethods__")
     public PyObject getAbstractmethods() {
         PyObject result = dict.__finditem__("__abstractmethods__");
-        if (result == null) {
+        if (result == null || result instanceof PyDataDescr) {
             noAttributeError("__abstractmethods__");
         }
         return result;
