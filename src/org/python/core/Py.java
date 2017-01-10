@@ -2264,12 +2264,17 @@ public final class Py {
         if (cls instanceof PyClass) {
             return null;
         }
-        PyObject meta = cls.__findattr__("__metaclass__");
-        if (meta == null) {
-            return null;
-        }
-        PyObject checker = meta.__findattr__(checkerName);
-        if (checker == null) {
+        /* Here we would actually like to call cls.__findattr__("__metaclass__")
+         * rather than cls.getType(). However there are circumstances where the
+         * metaclass doesn't show up as __metaclass__. On the other hand we need 
+         * to avoid that checker refers to builtin type___subclasscheck__ or
+         * type___instancecheck__. Filtering out checker-instances of
+         * PyBuiltinMethodNarrow does the trick. We also filter out PyMethodDescr
+         * to shortcut some unnecessary looping.
+         */
+        PyObject checker = cls.getType().__findattr__(checkerName);
+        if (checker == null || checker instanceof PyMethodDescr ||
+                checker instanceof PyBuiltinMethodNarrow) {
             return null;
         }
         return checker.__call__(cls, checkerArg);
