@@ -24,7 +24,7 @@ import org.python.util.Generic;
  */
 @Untraversable
 @ExposedType(name = "unicode", base = PyBaseString.class, doc = BuiltinDocs.unicode_doc)
-public class PyUnicode extends PyString implements Iterable {
+public class PyUnicode extends PyString implements Iterable<Integer> {
 
     /**
      * Nearly every significant method comes in two versions: one applicable when the string
@@ -822,7 +822,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private static class SteppedIterator<T> implements Iterator {
+    private static class SteppedIterator<T> implements Iterator<T> {
 
         private final Iterator<T> iter;
         private final int step;
@@ -885,14 +885,14 @@ public class PyUnicode extends PyString implements Iterable {
     public Iterator<Integer> newSubsequenceIterator(int start, int stop, int step) {
         if (isBasicPlane()) {
             if (step < 0) {
-                return new SteppedIterator(step * -1, new ReversedIterator(
+                return new SteppedIterator<Integer>(step * -1, new ReversedIterator<Integer>(
                         new SubsequenceIteratorBasic(stop + 1, start + 1, 1)));
             } else {
                 return new SubsequenceIteratorBasic(start, stop, step);
             }
         } else {
             if (step < 0) {
-                return new SteppedIterator(step * -1, new ReversedIterator(
+                return new SteppedIterator<Integer>(step * -1, new ReversedIterator<Integer>(
                         new SubsequenceIteratorImpl(stop + 1, start + 1, 1)));
             } else {
                 return new SubsequenceIteratorImpl(start, stop, step);
@@ -1026,7 +1026,7 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyUnicode(buffer);
     }
 
-    private static class StripIterator implements Iterator {
+    private static class StripIterator implements Iterator<Integer> {
 
         private final Iterator<Integer> iter;
         private int lookahead = -1;
@@ -1062,7 +1062,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         @Override
-        public Object next() {
+        public Integer next() {
             int old = lookahead;
             if (iter.hasNext()) {
                 lookahead = iter.next();
@@ -1121,7 +1121,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator(new StripIterator(sep, new ReversedIterator(
+        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep, new ReversedIterator<>(
                 new StripIterator(sep, newSubsequenceIterator())))));
     }
 
@@ -1162,8 +1162,8 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator(new StripIterator(sep, new ReversedIterator(
-                newSubsequenceIterator()))));
+        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep,
+                new ReversedIterator<>(newSubsequenceIterator()))));
     }
 
     @Override
@@ -1176,7 +1176,7 @@ public class PyUnicode extends PyString implements Iterable {
         return unicodePartition(coerceToUnicode(sep));
     }
 
-    private abstract class SplitIterator implements Iterator {
+    private abstract class SplitIterator implements Iterator<PyUnicode> {
 
         protected final int maxsplit;
         protected final Iterator<Integer> iter = newSubsequenceIterator();
@@ -1254,7 +1254,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private static class PeekIterator<T> implements Iterator {
+    private static class PeekIterator<T> implements Iterator<T> {
 
         private T lookahead = null;
         private final Iterator<T> iter;
@@ -1286,7 +1286,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private static class ReversedIterator<T> implements Iterator {
+    private static class ReversedIterator<T> implements Iterator<T> {
 
         private final List<T> reversed = Generic.list();
         private final Iterator<T> iter;
@@ -1315,9 +1315,9 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    private class LineSplitIterator implements Iterator {
+    private class LineSplitIterator implements Iterator<PyObject> {
 
-        private final PeekIterator<Integer> iter = new PeekIterator(newSubsequenceIterator());
+        private final PeekIterator<Integer> iter = new PeekIterator<>(newSubsequenceIterator());
         private final boolean keepends;
 
         LineSplitIterator(boolean keepends) {
@@ -1330,7 +1330,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         @Override
-        public Object next() {
+        public PyObject next() {
             StringBuilder buffer = new StringBuilder();
             while (iter.hasNext()) {
                 int codepoint = iter.next();
