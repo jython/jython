@@ -101,6 +101,7 @@ class ThreadSafetyTestCase(unittest.TestCase):
 
 
 class UnhashableKeyRaiseTypeErrorTestCase(unittest.TestCase):
+    # http://bugs.jython.org/issue2522
 
     def test_setitem_raises_typeerror(self):
         self.assertRaises(TypeError, defaultdict(int).__setitem__, {}, 1)
@@ -110,8 +111,7 @@ class UnhashableKeyRaiseTypeErrorTestCase(unittest.TestCase):
 
 
 class GetVariantsTestCase(unittest.TestCase):
-
-    #http://bugs.jython.org/issue2133
+    # http://bugs.jython.org/issue2133
 
     def test_get_does_not_vivify(self):
         d = defaultdict(list)
@@ -127,6 +127,34 @@ class GetVariantsTestCase(unittest.TestCase):
         d = defaultdict(list)
         self.assertEquals(d["vivify"], [])
         self.assertEquals(d.items(), [("vivify", [])]) 
+
+
+class GetItemPropagateWhateverMissingRaisedTestCase(unittest.TestCase):
+    # http://bugs.jython.org/issue2523
+
+    def test_getitem_propagate_default_factory_raises(self):
+
+        class FooError(Exception):
+            pass
+
+        def defaultfactory():
+            raise FooError()
+
+        d = defaultdict(defaultfactory)
+        self.assertRaises(FooError, d.__getitem__, 'bar')
+
+    def test_getitem_propagate_overridden_missing_raises(self):
+
+        class FooError(Exception):
+            pass
+
+        class DefaultDict(defaultdict):
+
+            def __missing__(self, key):
+                raise FooError()
+
+        d = DefaultDict(int)
+        self.assertRaises(FooError, d.__getitem__, 'bar')
 
 
 class OverrideMissingTestCase(unittest.TestCase):
@@ -163,7 +191,8 @@ class OverrideMissingTestCase(unittest.TestCase):
 def test_main():
     test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase,
             UnhashableKeyRaiseTypeErrorTestCase,
-            GetVariantsTestCase, OverrideMissingTestCase)
+            GetVariantsTestCase, OverrideMissingTestCase,
+            GetItemPropagateWhateverMissingRaisedTestCase)
 
 
 if __name__ == '__main__':
