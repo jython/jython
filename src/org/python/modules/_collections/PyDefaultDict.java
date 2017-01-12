@@ -7,8 +7,10 @@ import java.util.concurrent.ConcurrentMap;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.python.core.BuiltinDocs;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
+import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
@@ -20,11 +22,6 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
-
-import com.google.common.collect.MapMaker;
-import com.google.common.collect.ComputationException;
-import com.google.common.base.Function;
-import org.python.core.BuiltinDocs;
 
 /**
  * PyDefaultDict - This is a subclass of the builtin dict(PyDictionary) class. It supports
@@ -165,6 +162,13 @@ public class PyDefaultDict extends PyDictionary implements Traverseproc {
     protected final PyObject defaultdict___getitem__(PyObject key) {
         try {
             return backingMap.get(key);
+        } catch (PyException pe) {
+            /* LoadingCache#get() don't throw any PyException itself and it
+             * prevents those raised in CacheLoader#load() to get through
+             * without being wrapped in UncheckedExecutionException, so this
+             * PyException must be from key#hashCode(). We can propagated it to
+             * caller as it is. */
+            throw pe;
         } catch (Exception ex) {
             throw Py.KeyError(key);
         }

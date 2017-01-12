@@ -99,6 +99,16 @@ class ThreadSafetyTestCase(unittest.TestCase):
         for i in xrange(size):
             self.assertEqual(counters[i].get(), i, counters)
 
+
+class UnhashableKeyRaiseTypeErrorTestCase(unittest.TestCase):
+
+    def test_setitem_raises_typeerror(self):
+        self.assertRaises(TypeError, defaultdict(int).__setitem__, {}, 1)
+
+    def test_getitem_raises_typeerror(self):
+        self.assertRaises(TypeError, defaultdict(int).__getitem__, {})
+
+
 class GetVariantsTestCase(unittest.TestCase):
 
     #http://bugs.jython.org/issue2133
@@ -119,7 +129,6 @@ class GetVariantsTestCase(unittest.TestCase):
         self.assertEquals(d.items(), [("vivify", [])]) 
 
 
-
 class OverrideMissingTestCase(unittest.TestCase):
     class KeyDefaultDict(defaultdict):
         """defaultdict to pass the requested key to factory function."""
@@ -137,7 +146,8 @@ class OverrideMissingTestCase(unittest.TestCase):
             return k + k
 
     def setUp(self):
-        self.kdd = OverrideMissingTestCase.KeyDefaultDict(OverrideMissingTestCase.KeyDefaultDict.double)
+        self.kdd = OverrideMissingTestCase.KeyDefaultDict(
+                OverrideMissingTestCase.KeyDefaultDict.double)
 
     def test_dont_call_derived_missing(self):
         self.kdd[3] = 5
@@ -151,7 +161,9 @@ class OverrideMissingTestCase(unittest.TestCase):
 
 
 def test_main():
-    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase, GetVariantsTestCase, OverrideMissingTestCase)
+    test_support.run_unittest(PickleTestCase, ThreadSafetyTestCase,
+            UnhashableKeyRaiseTypeErrorTestCase,
+            GetVariantsTestCase, OverrideMissingTestCase)
 
 
 if __name__ == '__main__':

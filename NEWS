@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2522 ] defaultdict.__getitem__(unhashable) raises KeyError instead of TypeError
     - [ 2515 ] typing module doesn't import
     - [ 2538 ] Test failures in test_unittest
     - [ 2293 ] "java.lang.IllegalArgumentException: java.lang.IllegalArgumentException:
