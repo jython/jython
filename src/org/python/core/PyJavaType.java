@@ -178,7 +178,7 @@ public class PyJavaType extends PyType {
             for (String method : type.modified) {
                 if (!allModified.add(method)) { // Another type in conflict has this method, possibly fail
                     PyList types = new PyList();
-                    Set<Class> proxySet = Generic.set();
+                    Set<Class<?>> proxySet = Generic.set();
                     for (PyJavaType othertype : conflictedAttributes) {
                         if (othertype.modified != null && othertype.modified.contains(method)) {
                             types.add(othertype);
@@ -283,7 +283,7 @@ public class PyJavaType extends PyType {
 
         // Add methods and determine bean properties declared on this class
         Map<String, PyBeanProperty> props = Generic.map();
-        Map<String, PyBeanEvent> events = Generic.map();
+        Map<String, PyBeanEvent<?>> events = Generic.map();
         Method[] methods;
         if (Options.respectJavaAccessibility) {
             // returns just the public methods
@@ -344,7 +344,7 @@ public class PyJavaType extends PyType {
                     ename = ename.substring(idot + 1);
                 }
                 ename = normalize(StringUtil.decapitalize(ename));
-                events.put(ename, new PyBeanEvent(ename, eventClass, meth));
+                events.put(ename, new PyBeanEvent<>(ename, eventClass, meth));
                 continue;
             }
 
@@ -378,7 +378,7 @@ public class PyJavaType extends PyType {
                     // XXX: should we issue a warning if setX and getX have different
                     // types?
                     if (prop.myType == null) {
-                        Class[] params = meth.getParameterTypes();
+                        Class<?>[] params = meth.getParameterTypes();
                         if (params.length == 1) {
                             prop.myType = params[0];
                         }
@@ -423,17 +423,18 @@ public class PyJavaType extends PyType {
             String fldname = field.getName();
             if (Modifier.isStatic(field.getModifiers())) {
                 if (fldname.startsWith("__doc__") && fldname.length() > 7
-                        && field.getType() == PyString.class) {
+                        && CharSequence.class.isAssignableFrom(field.getType())) {
                     String fname = fldname.substring(7).intern();
                     PyObject memb = dict.__finditem__(fname);
                     if (memb != null && memb instanceof PyReflectedFunction) {
-                        PyString doc = null;
+                        CharSequence doc = null;
                         try {
-                            doc = (PyString)field.get(null);
+                            doc = (CharSequence) field.get(null);
                         } catch (IllegalAccessException e) {
                             throw Py.JavaError(e);
                         }
-                        ((PyReflectedFunction)memb).__doc__ = doc;
+                        ((PyReflectedFunction)memb).__doc__ = doc instanceof PyString ?
+                                (PyString) doc : new PyString(doc.toString());
                     }
                 }
             }
@@ -442,7 +443,7 @@ public class PyJavaType extends PyType {
             }
         }
 
-        for (PyBeanEvent ev : events.values()) {
+        for (PyBeanEvent<?> ev : events.values()) {
             if (dict.__finditem__(ev.__name__) == null) {
                 dict.__setitem__(ev.__name__, ev);
             }
@@ -726,6 +727,7 @@ public class PyJavaType extends PyType {
 
         @SuppressWarnings("unchecked")  // thanks to Bas de Bakker for the tip!
         T clone = (T) cin.readObject();
+        cin.close();
         return clone;
     }
 
@@ -887,6 +889,7 @@ public class PyJavaType extends PyType {
             super(name, numArgs);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public PyObject __call__(PyObject arg) {
             Object asjava = arg.__tojava__(Object.class);
@@ -938,9 +941,10 @@ public class PyJavaType extends PyType {
         final Map<Class<?>, PyBuiltinMethod[]> proxies = new HashMap<>();
 
         PyBuiltinMethodNarrow iterableProxy = new PyBuiltinMethodNarrow("__iter__") {
+            @SuppressWarnings("unchecked")
             @Override
             public PyObject __call__() {
-                return new JavaIterator(((Iterable) self.getJavaProxy()));
+                return new JavaIterator(((Iterable<Object>) self.getJavaProxy()));
             }
         };
         proxies.put(Iterable.class, new PyBuiltinMethod[]{iterableProxy});
@@ -974,17 +978,19 @@ public class PyJavaType extends PyType {
         proxies.put(Collection.class, new PyBuiltinMethod[]{lenProxy, containsProxy});
 
         PyBuiltinMethodNarrow iteratorProxy = new PyBuiltinMethodNarrow("__iter__") {
+            @SuppressWarnings("unchecked")
             @Override
             public PyObject __call__() {
-                return new JavaIterator(((Iterator) self.getJavaProxy()));
+                return new JavaIterator(((Iterator<Object>) self.getJavaProxy()));
             }
         };
         proxies.put(Iterator.class, new PyBuiltinMethod[]{iteratorProxy});
 
         PyBuiltinMethodNarrow enumerationProxy = new PyBuiltinMethodNarrow("__iter__") {
+            @SuppressWarnings("unchecked")
             @Override
             public PyObject __call__() {
-                return new EnumerationIter(((Enumeration) self.getJavaProxy()));
+                return new EnumerationIter(((Enumeration<Object>) self.getJavaProxy()));
             }
         };
         proxies.put(Enumeration.class, new PyBuiltinMethod[]{enumerationProxy});

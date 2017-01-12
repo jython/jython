@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 608632 ] __doc__foo should accept java String
     - [ 2523 ] defaultdict.__getitem__() does not propagate exceptions raised by calling
                default_factory
     - [ 2522 ] defaultdict.__getitem__(unhashable) raises KeyError instead of TypeError
@@ -46,6 +47,9 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
+    - Jython doc-entries in Java-code (__doc__foo) now accept anything that implements
+      java.lang.CharSequence (PyString implements CharSequence now as well).
+      This allows Jython-friendly Java-code without PyString-induced dependency on Jython.
     - Provided a painless way to deal with long-standing Issue 527524 - "Cannot compile to use
       methods exceeding JVM size restrictions": If a CPython 2.7 bytecode-file (.pyc) exists,
       Jython automatically uses that bytecode to represent oversized functions and methods,
