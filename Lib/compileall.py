@@ -86,7 +86,7 @@ def compile_file(fullname, ddir=None, force=0, rx=None, quiet=0):
                 try:
                     mtime = int(os.stat(fullname).st_mtime)
                     expect = struct.pack('<4sl', imp.get_magic(), mtime)
-                    cfile = fullname.replace('.py', '$py.class')
+                    cfile = imp._makeCompiledFilename(fullname)
                     with open(cfile, 'rb') as chandle:
                         actual = chandle.read(8)
                     if expect == actual:

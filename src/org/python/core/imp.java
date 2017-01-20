@@ -602,7 +602,7 @@ public class imp {
     static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
         String dirName = sys.getPath(entry);
         String sourceName = "__init__.py";
-        String compiledName = "__init__$py.class";
+        String compiledName = makeCompiledFilename(sourceName);
         // display names are for identification purposes (e.g. __file__): when entry is
         // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
         // /tmp/foo/bar.py)
@@ -633,7 +633,7 @@ public class imp {
         if (!pkg) {
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
-            compiledName = name + "$py.class";
+            compiledName = makeCompiledFilename(sourceName);
             displaySourceName = new File(displayDirName, sourceName).getPath();
             displayCompiledName = new File(displayDirName, compiledName).getPath();
             sourceFile = new File(dirName, sourceName);

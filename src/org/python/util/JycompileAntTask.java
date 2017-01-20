@@ -33,9 +33,13 @@ public class JycompileAntTask extends GlobMatchingTask {
                 String name = _py_compile.getModuleName(src);
                 String compiledFilePath = name.replace('.', '/');
                 if (src.getName().endsWith("__init__.py")) {
-                    compiledFilePath += "/__init__";
+                    compiledFilePath += "/__init__.py";
+                } else {
+                    compiledFilePath += ".py";
+                    // so we can apply imp.makeCompiledFilename
                 }
-                File compiled = new File(destDir, compiledFilePath + "$py.class");
+                File compiled = new File(destDir,
+                        imp.makeCompiledFilename(compiledFilePath));
                 compile(src, compiled, name);
             } catch (RuntimeException e) {
                 log("Could not compile " + src);
@@ -69,6 +73,6 @@ public class JycompileAntTask extends GlobMatchingTask {
     }
 
     protected String getTo() {
-        return "*$py.class";
+        return imp.makeCompiledFilename(getFrom());
     }
 }

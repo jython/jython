@@ -80,10 +80,11 @@ public abstract class importer<T> extends PyObject {
     protected abstract Bundle makeBundle(String filenameAndSuffix, T entry);
 
     private SearchOrderEntry[] makeSearchOrder(){
+        String initName = "__init__.py";
         return new SearchOrderEntry[] {
-            new SearchOrderEntry(getSeparator() + "__init__$py.class",
+            new SearchOrderEntry(getSeparator() + imp.makeCompiledFilename(initName),
                                  EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_BYTECODE)),
-            new SearchOrderEntry(getSeparator() + "__init__.py",
+            new SearchOrderEntry(getSeparator() + initName,
                                  EnumSet.of(EntryType.IS_PACKAGE, EntryType.IS_SOURCE)),
             new SearchOrderEntry("$py.class", EnumSet.of(EntryType.IS_BYTECODE)),
             new SearchOrderEntry(".py", EnumSet.of(EntryType.IS_SOURCE)),};

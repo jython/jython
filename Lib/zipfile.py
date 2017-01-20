@@ -1425,7 +1425,11 @@ class PyZipFile(ZipFile):
         /python/lib/string, return (/python/lib/string.pyc, string).
         """
         file_py  = pathname + ".py"
-        file_pyc = pathname + (".pyc" if not _is_jython else "$py.class")
+        if _is_jython:
+            import imp
+            file_pyc = imp._makeCompiledFilename(file_py)
+        else:
+            file_pyc = pathname + ".pyc"
         file_pyo = pathname + ".pyo"
         if os.path.isfile(file_pyo) and \
                             os.stat(file_pyo).st_mtime >= os.stat(file_py).st_mtime:

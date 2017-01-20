@@ -2,6 +2,7 @@
 package org.python.modules;
 
 import org.python.core.__builtin__;
+import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyFile;
 import org.python.core.PyList;
@@ -60,7 +61,7 @@ public class _imp {
     }
 
     private static boolean caseok(File file, String filename) {
-        return org.python.core.imp.caseok(file, filename);
+        return imp.caseok(file, filename);
     }
 
     /**
@@ -74,7 +75,7 @@ public class _imp {
     static ModuleInfo findFromSource(String name, String entry, boolean findingPackage,
                                      boolean preferSource) {
         String sourceName = "__init__.py";
-        String compiledName = "__init__$py.class";
+        String compiledName = makeCompiledFilename(sourceName);
         String directoryName = PySystemState.getPathLazy(entry);
         // displayDirName is for identification purposes: when null it
         // forces java.io.File to be a relative path (e.g. foo/bar.py
@@ -96,7 +97,7 @@ public class _imp {
             } else {
                 Py.writeDebug("import", "trying source " + dir.getPath());
                 sourceName = name + ".py";
-                compiledName = name + "$py.class";
+                compiledName = makeCompiledFilename(sourceName);
                 sourceFile = new File(directoryName, sourceName);
                 compiledFile = new File(directoryName, compiledName);
             }
@@ -152,8 +153,8 @@ public class _imp {
         }
         PySystemState sys = Py.getSystemState();
         String compiledFilename =
-                org.python.core.imp.makeCompiledFilename(sys.getPath(filename));
-        mod = org.python.core.imp.createFromSource(modname.intern(), (InputStream)o,
+                makeCompiledFilename(sys.getPath(filename));
+        mod = imp.createFromSource(modname.intern(), (InputStream)o,
                                                    filename, compiledFilename);
         PyObject modules = sys.modules;
         modules.__setitem__(modname.intern(), mod);
@@ -180,7 +181,7 @@ public class _imp {
         if (sourceName.endsWith("$py.class")) {
             sourceName = sourceName.substring(0, sourceName.length() - 9) + ".py";
         }
-        return org.python.core.imp.loadFromCompiled(name.intern(), stream, sourceName, pathname);
+        return imp.loadFromCompiled(name.intern(), stream, sourceName, pathname);
     }
 
     public static PyObject find_module(String name) {
@@ -226,7 +227,7 @@ public class _imp {
 
                     // XXX: This should load the accompanying byte code file instead, if it exists
                     String resolvedFilename = sys.getPath(filename.toString());
-                    compiledName = org.python.core.imp.makeCompiledFilename(resolvedFilename);
+                    compiledName = makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
                         name = name.substring(0, name.length() - ".__init__".length());
                     } else if (name.equals("__init__")) {
@@ -239,17 +240,14 @@ public class _imp {
                         mtime = fp.lastModified();
                     }
 
-                    mod = org.python.core.imp.createFromSource(name.intern(),
-                                                               (InputStream)o,
-                                                               filename.toString(),
-                                                               compiledName,
-                                                               mtime);
+                    mod = imp.createFromSource(name.intern(), (InputStream)o,
+                            filename.toString(), compiledName, mtime);
                     break;
                 case PY_COMPILED:
                     mod = load_compiled(name, filename.toString(), file);
                     break;
                 case PKG_DIRECTORY:
-                    PyModule m = org.python.core.imp.addModule(name);
+                    PyModule m = imp.addModule(name);
                     m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
                     m.__dict__.__setitem__("__file__", filename);
                     ModuleInfo mi = findFromSource(name, filename.toString(), true, true);
@@ -266,10 +264,14 @@ public class _imp {
         return mod;
     }
 
-    public static PyObject get_magic() {
-	return new PyString("\u0003\u00f3\r\n");
+    public static String makeCompiledFilename(String filename) {
+        return imp.makeCompiledFilename(filename);
     }
-    
+
+    public static PyObject get_magic() {
+        return new PyString("\u0003\u00f3\r\n");
+    }
+
     public static PyObject get_suffixes() {
         return new PyList(new PyObject[] {new PyTuple(new PyString(".py"),
                                                       new PyString("r"),
