@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ PR28 ] zipimporter supports multi-byte characters in pathnames
     - [ 2228 ] Re-use "makeCompiledFilename" function where possible
     - [ 608632 ] __doc__foo should accept java String
     - [ 2523 ] defaultdict.__getitem__() does not propagate exceptions raised by calling

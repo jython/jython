@@ -34,7 +34,7 @@ import org.python.expose.ExposedType;
  * Import Python modules and packages from ZIP-format archives.
  *
  * @author Philip Jenvey
- */    
+ */
 @ExposedType(name = "zipimport.zipimporter", base = PyObject.class)
 public class zipimporter extends importer<PyObject> implements Traverseproc {
 
