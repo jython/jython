@@ -34,7 +34,7 @@ import org.python.expose.ExposedType;
  * Import Python modules and packages from ZIP-format archives.
  *
  * @author Philip Jenvey
- */
+ */    
 @ExposedType(name = "zipimport.zipimporter", base = PyObject.class)
 public class zipimporter extends importer<PyObject> implements Traverseproc {
 
@@ -246,7 +246,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     final PyObject zipimporter_get_filename(String fullname) {
         ModuleCodeData moduleCodeData = getModuleCode(fullname);
         if (moduleCodeData != null) {
-            return new PyString(moduleCodeData.path);
+            return Py.newStringOrUnicode(moduleCodeData.path);
         }
         return Py.None;
     }
@@ -397,7 +397,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
             ZipEntry zipEntry = zipEntries.nextElement();
             String name = zipEntry.getName().replace('/', File.separatorChar);
 
-            PyObject __file__ = new PyString(archive + File.separator + name);
+            PyObject __file__ = Py.newStringOrUnicode(archive + File.separator + name);
             PyObject compress = Py.newInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());
@@ -411,7 +411,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
 
             PyTuple entry = new PyTuple(__file__, compress, data_size, file_size, file_offset,
                                         time, date, crc);
-            files.__setitem__(new PyString(name), entry);
+            files.__setitem__(Py.newStringOrUnicode(name), entry);
         }
     }
 
@@ -550,12 +550,12 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
-    	if (files != null) {
-    		int retVal = visit.visit(files, arg);
-    		if (retVal != 0) {
-    			return retVal;
-    		}
-    	}
+        if (files != null) {
+            int retVal = visit.visit(files, arg);
+            if (retVal != 0) {
+                return retVal;
+            }
+        }
         return sys == null ? 0 : visit.visit(sys, arg);
     }
 
