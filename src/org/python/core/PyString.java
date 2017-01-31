@@ -4524,7 +4524,11 @@ final class StringFormatter {
             // Not a tuple, but possibly still some kind of container: use special argIndex values.
             argIndex = -1;
             if (args instanceof AbstractDict
-                    || (!(args instanceof PySequence) && args.__findattr__("__getitem__") != null)) {
+                    || (!(args instanceof PySequence) &&
+                    // See issue 2511: __getitem__ should be looked up directly in the dict, rather
+                    // than going through another __getattr__-call, so we use object___findattr__
+                    // instead of generic __findattr__.
+                    args.object___findattr__("__getitem__") != null)) {
                 dict = args;
                 argIndex = -3;
             }
