@@ -28,6 +28,36 @@ import org.python.core.PyType;
  * @version cStringIO.java,v 1.10 1999/05/20 18:03:20 fb Exp
  */
 public class cStringIO {
+    public static final String __doc__ =
+            "A simple fast partial StringIO replacement.\n" +
+            "\n" +
+            "This module provides a simple useful replacement for\n" +
+            "the StringIO module that is written in Java.  It does not provide the\n" +
+            "full generality of StringIO, but it provides enough for most\n" +
+            "applications and is especially useful in conjunction with the\n" +
+            "pickle module.\n" +
+            "\n" +
+            "Usage:\n" +
+            "\n" +
+            "  from cStringIO import StringIO\n" +
+            "\n" +
+            "  an_output_stream=StringIO()\n" +
+            "  an_output_stream.write(some_stuff)\n" +
+            "  ...\n" +
+            "  value=an_output_stream.getvalue()\n" +
+            "\n" +
+            "  an_input_stream=StringIO(a_string)\n" +
+            "  spam=an_input_stream.readline()\n" +
+            "  spam=an_input_stream.read(5)\n" +
+            "  an_input_stream.seek(0)           # OK, start over\n" +
+            "  spam=an_input_stream.read()       # and read it all\n" +
+            "  \n" +
+            "If someone else wants to provide a more complete implementation,\n" +
+            "go for it. :-)  \n" +
+            "\n" +
+            "cStringIO.java,v 1.10 1999/05/20 18:03:20 fb Exp\n" +
+            "Python-level doc was inserted on 2017/02/01, copied from\n" +
+            "cStringIO.c,v 1.29 1999/06/15 14:10:27 jim Exp\n";
 
     // would be nicer if we directly imported from os, but crazy to do so
     // since in python code itself
@@ -39,6 +69,9 @@ public class cStringIO {
 
     public static PyType InputType = PyType.fromClass(StringIO.class);
     public static PyType OutputType = PyType.fromClass(StringIO.class);
+
+    public static final String __doc__StringIO =
+            "StringIO([s]) -- Return a StringIO-like stream for reading or writing";
 
     public static StringIO StringIO() {
         return new StringIO();
@@ -118,6 +151,7 @@ public class cStringIO {
             return r;
         }
 
+        public static final String __doc__close = "close(): explicitly release resources held.";
         /**
          * Free the memory buffer.
          */
@@ -130,6 +164,7 @@ public class cStringIO {
             // buf = null;
         }
 
+        public static final String __doc__isatty = "isatty(): always returns 0";
         /**
          * Return false.
          * @return      false.
@@ -139,6 +174,9 @@ public class cStringIO {
             return false;
         }
 
+        public static final String __doc__seek =
+                "seek(position)       -- set the current position\n" +
+                "seek(position, mode) -- mode 0: absolute; 1: relative; 2: relative to EOF";
         /**
          * Position the file pointer to the absolute position.
          * @param       pos the position in the file.
@@ -171,6 +209,8 @@ public class cStringIO {
             }
         }
 
+        public static final String __doc__reset =
+                "reset() -- Reset the file position to the beginning";
         /**
          * Reset the file position to the beginning of the file.
          */
@@ -178,6 +218,7 @@ public class cStringIO {
             pos = 0;
         }
 
+        public static final String __doc__tell = "tell() -- get the current position.";
         /**
          * Return the file position.
          * @return     the position in the file.
@@ -187,6 +228,8 @@ public class cStringIO {
             return pos;
         }
 
+        public static final String __doc__read =
+                "read([s]) -- Read s characters, or the rest of the string";
         /**
          * Read all data until EOF is reached.
          * An empty string is returned when EOF is encountered immediately.
@@ -221,6 +264,7 @@ public class cStringIO {
             return new PyString(substr);
         }
 
+        public static final String __doc__readline = "readline() -- Read one line";
         /**
          * Read one entire line from the file. A trailing newline character
          * is kept in the string (but may be absent when a file ends with
@@ -274,6 +318,7 @@ public class cStringIO {
             return new PyString(r);
         }
 
+        public static final String __doc__readlines = "readlines() -- Read all lines";
         /**
          * Read until EOF using readline() and return a list containing
          * the lines thus read.
@@ -305,6 +350,8 @@ public class cStringIO {
             return lines;
         }
 
+        public static final String __doc__truncate =
+                "truncate(): truncate the file at the current position.";
         /**
          * truncate the file at the current position.
          */
@@ -326,6 +373,9 @@ public class cStringIO {
             this.pos = pos_int;
         }
 
+        public static final String __doc__write =
+                "write(s) -- Write a string to the file" +
+                "\n\nNote (hack:) writing None resets the buffer";
         /**
          * Write a string to the file.
          * @param obj     The data to write.
@@ -389,6 +439,11 @@ public class cStringIO {
             buf.setCharAt(pos++, ch);
         }
 
+        public static final String __doc__writelines =
+                "writelines(sequence_of_strings) -> None.  Write the strings to the file.\n" +
+                "\n" +
+                "Note that newlines are not added.  The sequence can be any iterable object\n" +
+                "producing strings. This is equivalent to calling write() for each string.";
         /**
          * Write a list of strings to the file.
          */
@@ -398,6 +453,7 @@ public class cStringIO {
             }
         }
 
+        public static final String  __doc__flush = "flush(): does nothing.";
         /**
          * Flush the internal buffer. Does nothing.
          */
@@ -405,6 +461,11 @@ public class cStringIO {
             _complain_ifclosed();
         }
 
+        public static final String __doc__getvalue =
+                "getvalue([use_pos]) -- Get the string value." +
+                "\n" +
+                "If use_pos is specified and is a true value, then the string returned\n" +
+                "will include only the text up to the current file position.\n";
         /**
          * Retrieve the entire contents of the ``file'' at any time
          * before the StringIO object's close() method is called.
