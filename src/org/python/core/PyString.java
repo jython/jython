@@ -707,7 +707,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
     @Override
     public Object __tojava__(Class<?> c) {
         if (c.isAssignableFrom(String.class)) {
-            return getString();
+            /* If c is a CharSequence we assume the caller is prepared
+             * to get maybe not an actual String. In that case we avoid
+             * conversion so the caller can do special stuff with the
+             * returned PyString or PyUnicode or whatever.
+             * (If c is Object.class, the caller usually expects to get
+             * actually a String)
+             */
+            return c == CharSequence.class ? this : getString();
         }
 
         if (c == Character.TYPE || c == Character.class) {
@@ -4526,9 +4533,9 @@ final class StringFormatter {
             if (args instanceof AbstractDict
                     || (!(args instanceof PySequence) &&
                     // See issue 2511: __getitem__ should be looked up directly in the dict, rather
-                    // than going through another __getattr__-call, so we use object___findattr__
-                    // instead of generic __findattr__.
-                    args.object___findattr__("__getitem__") != null)) {
+                    // than going through another __getattr__ call. We achieve this by using
+                    // object___findattr__ instead of generic __findattr__.
+                    args.object___findattr__("__getitem__".intern()) != null)) {
                 dict = args;
                 argIndex = -3;
             }

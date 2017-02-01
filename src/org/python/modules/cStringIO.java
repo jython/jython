@@ -17,6 +17,7 @@ import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyUnicode;
 import org.python.core.PyType;
 
 /**
@@ -48,7 +49,7 @@ public class cStringIO {
      * @param buffer       The initial value.
      * @return          a new StringIO object.
      */
-    public static StringIO StringIO(String buffer) {
+    public static StringIO StringIO(CharSequence buffer) {
         return new StringIO(buffer);
     }
 
@@ -78,9 +79,9 @@ public class cStringIO {
             buf = new StringBuilder();
         }
 
-
-        public StringIO(String buffer) {
-            buf = new StringBuilder(buffer);
+        public StringIO(CharSequence buffer) {
+            buf = new StringBuilder(buffer instanceof PyUnicode ?
+                    ((PyUnicode) buffer).encode() : buffer);
         }
 
         public StringIO(PyArray array) {
@@ -99,6 +100,7 @@ public class cStringIO {
             return (int)val;
         }
 
+        @Override
         public void __setattr__(String name, PyObject value) {
             if (name == "softspace") {
                 softspace = value.__nonzero__();
@@ -107,6 +109,7 @@ public class cStringIO {
             super.__setattr__(name, value);
         }
 
+        @Override
         public PyObject __iternext__() {
             _complain_ifclosed();
             PyString r = readline();
@@ -127,7 +130,6 @@ public class cStringIO {
             // buf = null;
         }
 
-
         /**
          * Return false.
          * @return      false.
@@ -137,7 +139,6 @@ public class cStringIO {
             return false;
         }
 
-
         /**
          * Position the file pointer to the absolute position.
          * @param       pos the position in the file.
@@ -145,7 +146,6 @@ public class cStringIO {
         public void seek(long pos) {
             seek(pos, os.SEEK_SET);
         }
-
 
         /**
          * Position the file pointer to the position in the .
@@ -187,8 +187,6 @@ public class cStringIO {
             return pos;
         }
 
-
-
         /**
          * Read all data until EOF is reached.
          * An empty string is returned when EOF is encountered immediately.
@@ -198,7 +196,6 @@ public class cStringIO {
             return read(-1);
         }
 
-
         /**
          * Read at most size bytes from the file (less if the read hits EOF).
          * If the size argument is negative, read all data until EOF is
@@ -207,7 +204,6 @@ public class cStringIO {
          * @param size  the number of characters to read.
          * @return     A string containing the data read.
          */
-
         public synchronized PyString read(long size) {
             _complain_ifclosed();
             _convert_to_int(size);
@@ -236,7 +232,6 @@ public class cStringIO {
             return readline(-1);
         }
 
-
         /**
          * Read one entire line from the file. A trailing newline character
          * is kept in the string (but may be absent when a file ends with an
@@ -263,7 +258,6 @@ public class cStringIO {
             return new PyString(r);
         }
 
-
         /**
          * Read and return a line without the trailing newline.
          * Usind by cPickle as an optimization.
@@ -280,8 +274,6 @@ public class cStringIO {
             return new PyString(r);
         }
 
-
-
         /**
          * Read until EOF using readline() and return a list containing
          * the lines thus read.
@@ -290,7 +282,6 @@ public class cStringIO {
         public PyObject readlines() {
             return readlines(0);
         }
-
 
         /**
          * Read until EOF using readline() and return a list containing
@@ -398,7 +389,6 @@ public class cStringIO {
             buf.setCharAt(pos++, ch);
         }
 
-
         /**
          * Write a list of strings to the file.
          */
@@ -408,14 +398,12 @@ public class cStringIO {
             }
         }
 
-
         /**
          * Flush the internal buffer. Does nothing.
          */
         public void flush() {
             _complain_ifclosed();
         }
-
 
         /**
          * Retrieve the entire contents of the ``file'' at any time
@@ -428,6 +416,7 @@ public class cStringIO {
         }
 
     }
+
 
     private static String[] strings = new String[256];
     static String getString(char ch) {
@@ -443,5 +432,5 @@ public class cStringIO {
       }
       return s;
    }
-
 }
+
