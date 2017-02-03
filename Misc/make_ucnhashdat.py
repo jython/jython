@@ -1,9 +1,10 @@
 # Copyright Finn Bock
+# Updated 2017 by Stefan Richthofer to support Unicode 9.0
 #
 # Generate a ucnhash.dat file with mapping from unicode
 # names to codepoints.
 #
-# python mkucnhashdat.py UnicodeData-3.0.0.txt
+# python make_ucnhashdata.py UnicodeData.txt mph.exe
 #
 # The "mph" program must be available on the path.
 # This program is used to create the minimum perfect 
@@ -16,6 +17,7 @@
 
 import fileinput, re, os, sys, struct, cStringIO
 
+mph_exec = 'mph' # Formerly: 'mph.exe'
 
 def debug(str):
     print >>debugFile, str
@@ -32,17 +34,13 @@ def splitIntoWords(name):
         elif i == l-1:
             n = name[wordstart:i+1]
         if n:
-            #print "  ", i, c, n
             wordstart = i
             if c == '-' and n != '':
                 n += '-'
             if c == ' ' or c == '-':
                 wordstart = i+1
-            #print "  ", n
             wordlist.append(n)
-
     return wordlist
-
 
 def readUnicodeDict(file):
     d = {}
@@ -62,21 +60,16 @@ def readUnicodeDict(file):
             continue
 
         wordlist = splitIntoWords(name)
-        #print name, wordlist
 
         d[name] = (int(v, 16), wordlist, [])
 
     return d
-
-#readUnicodeDict("nametest.txt")
-#sys.exit()
 
 def count(dict, index):
     c = dict.get(index)
     if c is None: c = 0
     c += 1
     dict[index] = c
-
 
 def dumpUnicodeDict(title, dict):
     lst = []
@@ -90,8 +83,6 @@ def dumpUnicodeDict(title, dict):
     print "=======", title
     for v,k,p in lst:
         print "%.4X %s %s" % (v, k, p)
-
-
 
 
 class MphEmitter:
@@ -155,17 +146,20 @@ class MphEmitter:
         self.inf = inf
 
         self.readconst();
-        outf.write(struct.pack("!hhhhhh", self.n, 
-                                           self.m, 
-                                           self.minchar, 
-                                           self.maxchar, 
-                                           self.alphasz, 
-                                           self.maxlen))
-        self.readg().writeto(outf)
+        outf.write(struct.pack("!hhhhh", self.n,
+                                         self.m,
+                                         self.minchar,
+                                         self.alphasz,
+                                         self.maxlen))
+        G = self.readg()
+        debug("G len: %d" % (G.size()/2))
+        G.writeto(outf)
 
         outf.write(struct.pack("!h", self.d))
         for t in range(self.d):
-            self.readT(t).writeto(outf)
+            T = self.readT(t)
+            debug("T%d len: %d" % (t, T.size()/2))
+            T.writeto(outf)
 
 
 class Table:
@@ -181,9 +175,15 @@ class Table:
     def write_UShort(self, v):
         self.buf.write(struct.pack("!H", v))
 
+    def write_Int32(self, v):
+        self.buf.write(struct.pack("!i", v))
+
+    def write_UInt32(self, v):
+        self.buf.write(struct.pack("!I", v))
+
     def writeto(self, file):
         file.write('t')
-        file.write(struct.pack("!H", self.size()))
+        file.write(struct.pack("!I", self.size()))
         file.write(self.buf.getvalue())
 
     def size(self):
@@ -196,21 +196,16 @@ def calculateSize(dict):
         cnt += len(name)
     return cnt
 
-
-
 def calculateWords(unicodeDict):
     words = {}
     for key, (value, wordlist, rawlist) in unicodeDict.items():
         for name in wordlist:
             wordlist = words.setdefault(name, [])
             wordlist.append(key)
-
     return words
-
 
 def replaceWord(word, index, charlist):
     replaced = 0
-
     for char in charlist:
         (v, wordlist, rawlist) = unicodeDict[char]
         try:
@@ -224,11 +219,9 @@ def replaceWord(word, index, charlist):
 def compress():
     #dumpUnicodeDict("UnicodeDict before", unicodeDict)
     words = calculateWords(unicodeDict)
-
     lenp = [(len(v), k, v) for k, v in words.items()]
     lenp.sort()
     lenp.reverse()
-
     wordidx = len(chars)
     for (length, word, value) in lenp:
         # Do not lookup single char words or words only used once
@@ -238,19 +231,12 @@ def compress():
         # be just as big.
         if len(word) == 2 and wordidx >= 238:
             continue
-
-        #print length, word, len(value)
-
         replaceWord(word, wordidx, value)
         wordmap[wordidx] = word
-
         wordidx += 1
-
     #dumpUnicodeDict("UnicodeDict after", unicodeDict)
 
-
 def writeUcnhashDat():
-
     cutoff = 255 - ((len(chars) + len(wordmap)) >> 8)
 
     debug("wordmap entries: %d" % len(wordmap))
@@ -259,20 +245,17 @@ def writeUcnhashDat():
     worddata = Table()
     wordoffs = Table()
     wordfile = open("words.in", "wt");
-
     size = 0
     l = [(k,v) for k,v in wordmap.items()]
     l.sort()
     for k,v in l:
         print >>wordfile, v
         wordoffs.write_UShort(worddata.size())
-
         mapv = ''.join(map(lambda x: chr(chardict.get(x)), v))
         worddata.write_Str(mapv)
-
     wordfile.close()
 
-    os.system("mph.exe -d3 -S1 -m4  -a < words.in > words.hash")
+    os.system(mph_exec+" -d3 -S1 -m4  -a < words.in > words.hash")
 
     outf = open("ucnhash.dat", "wb+")
 
@@ -280,8 +263,8 @@ def writeUcnhashDat():
     m.writeFile(open("words.hash"), outf)
 
     debug("wordhash size %d" % outf.tell())
-    debug("wordoffs size %d" % wordoffs.size())
-    debug("worddata size %d" % worddata.size())
+    debug("wordoffs size %d" % (wordoffs.size()/2))
+    debug("worddata size %d" % (worddata.size()))
 
     wordoffs.writeto(outf)
     worddata.writeto(outf)
@@ -292,7 +275,7 @@ def writeUcnhashDat():
         savewordlist = wordlist[:]
 
         # Map remaining strings to a list of bytes in chardict
-        # range: range(0,37)
+        # range: range(0, 40)
         l = len(wordlist)
         for i in range(l-1, -1, -1):
             part = wordlist[i]
@@ -301,7 +284,6 @@ def writeUcnhashDat():
                 if i > 0 and type(wordlist[i-1]) == type(""):
                     ipart[0:0] = [0] # index of space
                 wordlist[i:i+1] = ipart
-
         # Encode high values as two bytes
         for v in wordlist:
             if v <= cutoff:
@@ -316,7 +298,6 @@ def writeUcnhashDat():
         lst.append((rawlist, wordlist, key, value))
         maxklen = max(maxklen, len(key))
     lst.sort()
-
     outf.write(struct.pack("!hhh", len(chars), cutoff, maxklen));
 
     raw = Table()
@@ -326,7 +307,7 @@ def writeUcnhashDat():
         for r in rawlist:
             raw.write_Str(chr(r))
         datasize.append((len(rawlist), value))
-        debug("%d %s %r" % (i, key, rawlist))
+        #debug("%d %s %r" % (i, key, rawlist))
         i += 1
     debug("Raw size = %d" % raw.size())
     raw.writeto(outf)
@@ -336,25 +317,45 @@ def writeUcnhashDat():
 
     offset = 0
     maxlen = 0
+    maxvl = 0 # for debugging
+    # Formerly it was sufficient for rawindex and codepoint
+    # to be 16 bit.
+    # We leave the old 16 bit write instructions here as
+    # comments in case future debugging is necessary.
+    # Note that rawindex blocksize therefore shrunk from
+    # 5 to 3, which was adjusted in ucnhash.java accordingly.
+    # In line 'v = v | (long(size) << (j*5))' the '5' seemingly
+    # refers to blocksize, but for some reason it must not be
+    # adjusted to 3.
+    # (3 would break things, while it works well with 5)
     for i in range(0, len(datasize), 12):
         saveoffset = offset
-        rawindex.write_UShort(offset) 
+        #rawindex.write_UShort(offset)
+        rawindex.write_UInt32(offset)
         v = 0L
         j = 0
         for (size, value) in datasize[i:i+12]:
+            # we keep track of max value to confirm
+            # that 32 bit  codepoint table is needed
+            if value > maxvl:
+                maxvl = value
             offset += size
             v = v | (long(size) << (j*5))
 
             maxlen = max(maxlen, size)
-            codepoint.write_UShort(value)
+            #codepoint.write_UShort(value)
+            codepoint.write_UInt32(value)
             j += 1
-        debug("%d %d %x" % (i/ 12, saveoffset, v))
-        rawindex.write_UShort((v >> 48) & 0xFFFF)
-        rawindex.write_UShort((v >> 32) & 0xFFFF)
-        rawindex.write_UShort((v >> 16) & 0xFFFF)
-        rawindex.write_UShort(v & 0xFFFF)
-
-    debug("rawindex size % d" % rawindex.size())
+        #debug("%d %d %x" % (i/ 12, saveoffset, v))
+        #rawindex.write_UShort((v >> 48) & 0xFFFF)
+        #rawindex.write_UShort((v >> 32) & 0xFFFF)
+        #rawindex.write_UShort((v >> 16) & 0xFFFF)
+        #rawindex.write_UShort(v & 0xFFFF)
+        rawindex.write_UInt32((v >> 32) & 0xFFFFFFFF)
+        rawindex.write_UInt32(v & 0xFFFFFFFF)
+    debug("maxval % d" % maxvl)
+    debug("rawindex size % d" % (rawindex.size()/4))
+    debug("codepoint size % d" % (codepoint.size()/4))
     rawindex.writeto(outf)
     codepoint.writeto(outf)
 
@@ -362,9 +363,8 @@ def writeUcnhashDat():
     outf.close();
 
 
-
 if __name__ == "__main__":
-    chars = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+    chars = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-()"
     chardict = {}
     for c in chars:
        chardict[c] = chars.index(c)
@@ -372,12 +372,16 @@ if __name__ == "__main__":
     debugChars = [] # [0x41, 0x20AC]
 
     debugFile = open("ucnhash.lst", "wt")
+    #debugFile = sys.stdout
 
     wordmap = {}
 
-    unicodeDataFile = "UnicodeData-3.0.0.txt"
+    # Called 2017 with UnicodeData.txt for Unicode 9.0
+    unicodeDataFile = "UnicodeData.txt"
     if len(sys.argv) > 1:
         unicodeDataFile = sys.argv[1]
+    if len(sys.argv) > 2:
+        mph_exec = sys.argv[2]
     unicodeDict = readUnicodeDict(unicodeDataFile)
     print "Size:", calculateSize(unicodeDict)
 
@@ -389,7 +393,63 @@ if __name__ == "__main__":
         
     sys.exit(0)
 
+# Debugging-hints:
+#-----------------
+# (with debugFile = sys.stdout, omitting mph-output)
+
+# Output for "UnicodeData-3.0.0.txt":
+# Size: 259126
+# compressed
+# wordmap entries: 1384
+# wordmap cutoffs: 250
+#  * d=3
+#  * n=1703
+#  * m=1384
+#  * c=1.23
+#  * maxlen=4
+#  * minklen=2
+#  * maxklen=18
+#  * minchar=45
+#  * maxchar=90
+# G len: 1703
+# T0 len: 184
+# T1 len: 184
+# T2 len: 184
+# wordhash size 4542
+# wordoffs size 1384
+# worddata size 7375
+# Raw size = 58531
+# maxval  65533
+# rawindex size  2577
+# codepoint size  10298
+# raw entries 10298
+# done
 
 
-
-
+# Output for "UnicodeData.txt", Unicode 9.0:
+# Size: 755323
+# compressed
+# wordmap entries: 3708
+# wordmap cutoffs: 241
+#  * d=3
+#  * n=4561
+#  * m=3708
+#  * c=1.23
+#  * maxlen=4
+#  * minklen=2
+#  * maxklen=18
+#  * minchar=32
+#  * maxchar=90
+# G len: 4561
+# T0 len: 236
+# T1 len: 236
+# T2 len: 236
+# wordhash size 10570
+# wordoffs size 3708
+# worddata size 19399
+# Raw size = 184818
+# maxval  917999
+# rawindex size  7389
+# codepoint size  29545
+# raw entries 29545
+# done
