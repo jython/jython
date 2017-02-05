@@ -464,7 +464,6 @@ lfor:       for (i = start; i < end; i++) {
     // From the ucnhashAPI interface
     public int getValue(String s, int start, int end) {
         if (!initialized()) {
-            System.out.println(349+" ucnhash Not initialized!");
             return -1;
         }
 
@@ -474,7 +473,6 @@ lfor:       for (i = start; i < end; i++) {
                 int v = Integer.parseInt(hex, 16);
                 return v;
             } catch (NumberFormatException exc) {
-                System.out.println(359+" exc");
                 return -1; // Maybe fall through to the main algorithm.
             }
         }

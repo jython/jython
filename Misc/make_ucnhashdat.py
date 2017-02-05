@@ -4,7 +4,7 @@
 # Generate a ucnhash.dat file with mapping from unicode
 # names to codepoints.
 #
-# python make_ucnhashdata.py UnicodeData.txt mph.exe
+# python make_ucnhashdat.py UnicodeData.txt mph.exe
 #
 # The "mph" program must be available on the path.
 # This program is used to create the minimum perfect 
