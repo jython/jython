@@ -22,7 +22,13 @@ import org.python.core.__builtin__;
 // Based on CPython-1.5.2's code module
 public class InteractiveConsole extends InteractiveInterpreter {
 
-    public static final String CONSOLE_FILENAME = "<stdin>";
+    /**
+     * Note: This field is actually final; don't modify.
+     * <p>
+     * To work around an issue in javadoc with Java 8 we cannot have it final for now, see
+     * <a href="http://bugs.jython.org/issue2539" target="_blank"> issue 2539</a> for details.
+     */
+    public static String CONSOLE_FILENAME = "<stdin>";
 
     public String filename;
 
