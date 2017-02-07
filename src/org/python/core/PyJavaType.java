@@ -395,7 +395,7 @@ public class PyJavaType extends PyType {
         // Add superclass methods
         for (Method meth : methods) {
             String nmethname = normalize(meth.getName());
-            reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
+            reflfunc = (PyReflectedFunction) dict.__finditem__(nmethname);
             if (reflfunc != null) {
                 // The superclass method has the same name as one declared on this class, so add
                 // the superclass version's arguments
