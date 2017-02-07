@@ -24,6 +24,7 @@ import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -304,6 +305,8 @@ public class PyJavaType extends PyType {
         Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
         boolean isInAwt = name.startsWith("java.awt.") && name.indexOf('.', 9) == -1;
+        ArrayList<PyReflectedFunction> reflectedFuncs = new ArrayList<>(methods.length);
+        PyReflectedFunction reflfunc;
         for (Method meth : methods) {
             if (!declaredOnMember(baseClass, meth) || ignore(meth)) {
                 continue;
@@ -319,9 +322,11 @@ public class PyJavaType extends PyType {
             }
 
             String nmethname = normalize(methname);
-            PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
+            reflfunc = (PyReflectedFunction) dict.__finditem__(nmethname);
             if (reflfunc == null) {
-                dict.__setitem__(nmethname, new PyReflectedFunction(meth));
+                reflfunc = new PyReflectedFunction(meth);
+                reflectedFuncs.add(reflfunc);
+                dict.__setitem__(nmethname, reflfunc);
             } else {
                 reflfunc.addMethod(meth);
             }
@@ -390,7 +395,7 @@ public class PyJavaType extends PyType {
         // Add superclass methods
         for (Method meth : methods) {
             String nmethname = normalize(meth.getName());
-            PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
+            reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
             if (reflfunc != null) {
                 // The superclass method has the same name as one declared on this class, so add
                 // the superclass version's arguments
@@ -401,7 +406,9 @@ public class PyJavaType extends PyType {
                 // visible from Java on this class, so do the same for Python here.  This is the
                 // flipside of what handleSuperMethodArgCollisions does for inherited public methods
                 // on package protected classes.
-                dict.__setitem__(nmethname, new PyReflectedFunction(meth));
+                reflfunc = new PyReflectedFunction(meth);
+                reflectedFuncs.add(reflfunc);
+                dict.__setitem__(nmethname, reflfunc);
             }
         }
 
@@ -557,17 +564,28 @@ public class PyJavaType extends PyType {
             }
         }
 
+        PyObject nameSpecified = null;
         if (ClassDictInit.class.isAssignableFrom(forClass) && forClass != ClassDictInit.class) {
             try {
                 Method m = forClass.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, dict);
                 // allow the class to override its name after it is loaded
-                PyObject nameSpecified = dict.__finditem__("__name__");
+                nameSpecified = dict.__finditem__("__name__");
                 if (nameSpecified != null) {
                     name = nameSpecified.toString();
                 }
             } catch (Exception exc) {
                 throw Py.JavaError(exc);
+            }
+        }
+
+        // Fill __module__ attribute of PyReflectedFunctions...
+        if (reflectedFuncs.size() > 0) {
+            if (nameSpecified == null) {
+                nameSpecified = Py.newString(name);
+            }
+            for (PyReflectedFunction func: reflectedFuncs) {
+                func.__module__ = nameSpecified;
             }
         }
 
