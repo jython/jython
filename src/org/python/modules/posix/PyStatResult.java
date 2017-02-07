@@ -83,10 +83,10 @@ public class PyStatResult extends PyTuple {
             }
             // tuples are immutable, so we can just use its underlying array
             if (obj instanceof PyStatResult) {
-                return new PyStatResult(((PyTuple) obj).getArray());
-            } else {
                 return new PyStatResult(((PyTuple) obj).getArray(), ((PyStatResult) obj).st_atime,
                         ((PyStatResult) obj).st_mtime, ((PyStatResult) obj).st_ctime);
+            } else {
+                return new PyStatResult(((PyTuple) obj).getArray());
             }
         }
         else {
