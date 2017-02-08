@@ -184,6 +184,21 @@ class ClassGeneralTestCase(unittest.TestCase):
         class D(B, C):
             pass
 
+    def test_slotted_diamond_problem_bug_v2(self):
+        # see http://bugs.jython.org/issue2551
+        class A(object):
+            __slots__ = 'foo'
+        class B(A):
+            __slots__ = 'bar'
+            pass
+        class C(A):
+            __slots__ = ()
+            pass
+        # used to raise TypeError: multiple bases have instance lay-out
+        # conflict
+        class D(B, C):
+            pass
+
     def test_getitem_exceptions(self):
         class A:
             def __getitem__(self, key):

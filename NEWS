@@ -4,6 +4,9 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 1777 ] Help getting SymPy working with Jython
+    - [ 2475 ] Backported python 3 pathlib and pathlib2 do not work b/c of meta class issues
+    - [ 2551 ] __slots__ in diamond-style causes lay-out conflict (breaks pathlib and sympy)
     - [ 2550 ] test_list_jy fails on Java 8
     - [ 2549 ] test_posix fails on Linux
     - [ 2548 ] Unicode u'\N{name}' frequently broken, because ucnhash.dat outdated
@@ -54,9 +57,8 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
-    - SymPy is supported for versions that incorporate https://github.com/sympy/sympy/pull/12120.
+    - SymPy is now workable. (However it runs somewhat slow; some profiling will be required.)
     - Updated ucnhash to support name lookup for Unicode 9.0 (like in u'\N{name}').
-      This is a crucial step to allow SymPy support.
     - Jython doc-entries in Java-code (__doc__foo) now accept anything that implements
       java.lang.CharSequence (PyString implements CharSequence now as well).
       This allows Jython-friendly Java-code without PyString-induced dependency on Jython.

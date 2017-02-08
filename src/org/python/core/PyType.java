@@ -1127,7 +1127,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     private static boolean isSolidBase(PyType type) {
-        return type.underlying_class != null || (type.numSlots != 0 && !type.needs_userdict);
+        return type.underlying_class != null ||
+                (type.numSlots - (type.base != null ? type.base.numSlots : 0) != 0 &&
+                !type.needs_userdict);
     }
 
     /**
