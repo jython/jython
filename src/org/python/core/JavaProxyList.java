@@ -630,13 +630,13 @@ class JavaProxyList {
                 listIAddProxy,
                 new ListMulProxyClass("__mul__", 1),
                 new ListMulProxyClass("__rmul__", 1),
-                listIMulProxy,
-                listSortProxy,
+                listIMulProxy
         };
     }
 
     static PyBuiltinMethod[] getPostProxyMethods() {
         return new PyBuiltinMethod[]{
+                listSortProxy,
                 listRemoveOverrideProxy
         };
     }
