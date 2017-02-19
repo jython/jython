@@ -256,7 +256,7 @@ public abstract class PyBaseCode extends PyCode {
                                 co_name,
                                 Py.newUnicode(keyword).encode("ascii", "replace")));
                     }
-                    if (CharMatcher.ASCII.matchesAllOf(keyword)) {
+                    if (CharMatcher.ascii().matchesAllOf(keyword)) {
                         kwdict.__setitem__(keyword, value);
                     } else {
                         kwdict.__setitem__(Py.newUnicode(keyword), value);

@@ -583,7 +583,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     public static String checkEncoding(String s) {
-        if (s == null || CharMatcher.ASCII.matchesAllOf(s)) {
+        if (s == null || CharMatcher.ascii().matchesAllOf(s)) {
             return s;
         }
         return codecs.PyUnicode_EncodeASCII(s, s.length(), null);

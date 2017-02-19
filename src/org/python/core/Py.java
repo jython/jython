@@ -667,7 +667,7 @@ public final class Py {
      *         <code>s</code>.
      */
     public static PyString newStringOrUnicode(PyObject precedent, String s) {
-        if (!(precedent instanceof PyUnicode) && CharMatcher.ASCII.matchesAllOf(s)) {
+        if (!(precedent instanceof PyUnicode) && CharMatcher.ascii().matchesAllOf(s)) {
             return Py.newString(s);
         } else {
             return Py.newUnicode(s);
@@ -675,7 +675,7 @@ public final class Py {
     }
 
     public static PyString newStringUTF8(String s) {
-        if (CharMatcher.ASCII.matchesAllOf(s)) {
+        if (CharMatcher.ascii().matchesAllOf(s)) {
             // ascii of course is a subset of UTF-8
             return Py.newString(s);
         } else {

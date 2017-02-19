@@ -190,10 +190,8 @@ class ClassGeneralTestCase(unittest.TestCase):
             __slots__ = 'foo'
         class B(A):
             __slots__ = 'bar'
-            pass
         class C(A):
             __slots__ = ()
-            pass
         # used to raise TypeError: multiple bases have instance lay-out
         # conflict
         class D(B, C):
