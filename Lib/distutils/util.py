@@ -12,6 +12,8 @@ from distutils.dep_util import newer
 from distutils.spawn import spawn
 from distutils import log
 from distutils.errors import DistutilsByteCompileError
+if sys.platform.startswith('java'):
+    from imp import _makeCompiledFilename
 
 def get_platform ():
     """Return a string that identifies the current platform.  This is used
@@ -546,7 +548,7 @@ byte_compile(files, optimize=%r, force=%r,
             #   cfile - byte-compiled file
             #   dfile - purported source filename (same as 'file' by default)
             if sys.platform.startswith('java'):
-                cfile = py_compile.imp._makeCompiledFilename(file)
+                cfile = _makeCompiledFilename(file)
             else:
                 cfile = file + (__debug__ and "c" or "o")
             dfile = file
