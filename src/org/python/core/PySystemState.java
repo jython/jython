@@ -1895,6 +1895,14 @@ class FloatInfo extends PyTuple {
         );
     }
 
+    @Override
+    public PyString __repr__() {
+        return (PyString) Py.newString(
+                TYPE.fastGetName() + "(" +
+                "max=%r, max_exp=%r, max_10_exp=%r, min=%r, min_exp=%r, min_10_exp=%r, "+
+                "dig=%r, mant_dig=%r, epsilon=%r, radix=%r, rounds=%r)").__mod__(this);
+    }
+
 
     /* Traverseproc implementation */
     @Override
@@ -1991,6 +1999,13 @@ class LongInfo extends PyTuple {
     // local Ubuntu system. I'm not sure that they are correct.
     static public LongInfo getInfo() {
         return new LongInfo(Py.newLong(30), Py.newLong(4));
+    }
+
+    @Override
+    public PyString __repr__() {
+        return (PyString) Py.newString(
+                TYPE.fastGetName() + "(" +
+                "bits_per_digit=%r, sizeof_digit=%r)").__mod__(this);
     }
 
 
