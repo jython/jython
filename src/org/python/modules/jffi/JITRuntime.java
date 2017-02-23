@@ -5,9 +5,6 @@ import org.python.core.PyObject;
 
 import java.math.BigInteger;
 
-/**
- * 
- */
 public final class JITRuntime {
     private static final com.kenai.jffi.MemoryIO IO = com.kenai.jffi.MemoryIO.getInstance();
 

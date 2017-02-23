@@ -2,9 +2,6 @@ package org.python.modules.jffi;
 
 import org.python.core.PyObject;
 
-/**
- * 
- */
 abstract public class JITInvoker5 extends JITInvoker {
     public JITInvoker5(com.kenai.jffi.Function function, Invoker fallbackInvoker) {
         super(5, function, fallbackInvoker);

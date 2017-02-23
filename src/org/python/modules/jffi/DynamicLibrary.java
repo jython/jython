@@ -57,6 +57,7 @@ public class DynamicLibrary extends PyObject {
         return new DataSymbol(this, name.asString(), findSymbol(name));
     }
 
+    @Untraversable
     @ExposedType(name = "jffi.DynamicLibrary.Symbol", base = PyObject.class)
     public static class Symbol extends BasePointer {
         public static final PyType TYPE = PyType.fromClass(Symbol.class);
@@ -78,13 +79,15 @@ public class DynamicLibrary extends PyObject {
             return memory;
         }
     }
-    
+
+    @Untraversable
     public static final class TextSymbol extends Symbol implements ExposeAsSuperclass {
         public TextSymbol(DynamicLibrary lib, String name, long address) {
             super(lib, name, new SymbolMemory(lib, address));
         }
     }
 
+    @Untraversable
     public static final class DataSymbol extends Symbol implements ExposeAsSuperclass {
         public DataSymbol(DynamicLibrary lib, String name, long address) {
             super(lib, name, new SymbolMemory(lib, address));

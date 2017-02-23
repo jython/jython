@@ -1,4 +1,3 @@
-
 package org.python.modules.jffi;
 
 import org.python.core.Py;
@@ -52,7 +51,6 @@ public class StringCData extends AbstractMemoryCData {
                 : Py.None;
     }
 
-
     @ExposedSet(name = "value")
     public void setValue(PyObject value) {
         byte[] str = value.asString().getBytes();
@@ -76,6 +74,4 @@ public class StringCData extends AbstractMemoryCData {
                 ? new String(m.getZeroTerminatedByteArray(0))
                 : null;
     }
-
-
 }

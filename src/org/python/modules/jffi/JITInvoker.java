@@ -1,12 +1,8 @@
 package org.python.modules.jffi;
 
-import com.kenai.jffi.*;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
-/**
- *
- */
 abstract public class JITInvoker extends Invoker {
     protected static final com.kenai.jffi.Invoker jffiInvoker = com.kenai.jffi.Invoker.getInstance();
     protected final com.kenai.jffi.Function jffiFunction;

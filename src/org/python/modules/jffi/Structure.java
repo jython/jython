@@ -1,4 +1,3 @@
-
 package org.python.modules.jffi;
 
 import java.util.List;
@@ -6,12 +5,14 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Structure", base = CData.class)
-public class Structure extends CData implements Pointer {
+public class Structure extends CData implements Pointer, Traverseproc {
     public static final PyType TYPE = PyType.fromClass(Structure.class);
 
     private final StructLayout layout;
@@ -100,4 +101,23 @@ public class Structure extends CData implements Pointer {
         return getReferenceMemory();
     }
 
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (layout != null) {
+            int res = visit.visit(layout, arg);
+            if (res != 0) {
+                return res;
+            }
+        }
+        return super.traverse(visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob != null && layout == ob) {
+            return true;
+        }
+        return super.refersDirectlyTo(ob);
+    }
 }

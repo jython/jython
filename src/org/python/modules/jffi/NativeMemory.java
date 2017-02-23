@@ -1,4 +1,3 @@
-
 package org.python.modules.jffi;
 
 import com.kenai.jffi.Platform;

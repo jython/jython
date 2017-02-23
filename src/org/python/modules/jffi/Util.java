@@ -1,4 +1,3 @@
-
 package org.python.modules.jffi;
 
 import java.math.BigInteger;

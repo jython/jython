@@ -1,12 +1,8 @@
 package org.python.modules.jffi;
 
 import com.kenai.jffi.CallingConvention;
-
 import java.util.Arrays;
 
-/**
- *
- */
 public final class JITSignature {
     private final NativeType resultType;
     private final NativeType[] parameterTypes;

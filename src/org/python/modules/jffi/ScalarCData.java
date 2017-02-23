@@ -1,14 +1,11 @@
-
 package org.python.modules.jffi;
 
 import org.python.core.Py;
 import org.python.core.PyFloat;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
-import org.python.core.PyObject.ConversionException;
 import org.python.core.PyType;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -19,9 +16,9 @@ import org.python.expose.ExposedType;
 @ExposedType(name = "jffi.ScalarCData", base = CData.class)
 public class ScalarCData extends CData {
     public static final PyType TYPE = PyType.fromClass(ScalarCData.class);
-    static {
+//    static {
 //        TYPE.fastGetDict().__setitem__("in_dll", new InDll());
-    }
+//    }
     private PyObject value;
 
     @ExposedNew
@@ -120,5 +117,26 @@ public class ScalarCData extends CData {
     @Override
     public final String toString() {
         return getType().getName() + "(" + getValue().toString() + ")";
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        if (value != null) {
+            int res = visit.visit(value, arg);
+            if (res != 0) {
+                return res;
+            }
+        }
+        return super.traverse(visit, arg);
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) {
+        if (ob != null && ob == value) {
+            return true;
+        }
+        return super.refersDirectlyTo(ob);
     }
 }

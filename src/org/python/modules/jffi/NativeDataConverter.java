@@ -1,11 +1,7 @@
 package org.python.modules.jffi;
 
-
 import org.python.core.PyObject;
 
-/**
- *
- */
 abstract public class NativeDataConverter {
     private final boolean referenceRequired;
     private final boolean postInvokeRequired;

@@ -10,6 +10,7 @@ public abstract class AbstractMemoryCData extends CData implements Pointer {
         super(subtype, type);
         this.memory = memory;
     }
+
     @Override
     public boolean __nonzero__() {
         return !getMemory().isNull();

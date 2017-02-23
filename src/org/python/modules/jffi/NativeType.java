@@ -1,6 +1,4 @@
-
 package org.python.modules.jffi;
-
 
 public enum NativeType {
     VOID,

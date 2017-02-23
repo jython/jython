@@ -1,8 +1,5 @@
 package org.python.modules.jffi;
 
-/**
- * 
- */
 public interface JITMethodGenerator {
 
     public boolean isSupported(JITSignature signature);

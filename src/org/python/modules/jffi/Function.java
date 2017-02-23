@@ -9,13 +9,15 @@ import org.python.core.PyObject;
 import org.python.core.PySequenceList;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
 @ExposedType(name = "jffi.Function", base = PyObject.class)
-public class Function extends BasePointer implements Pointer {
+public class Function extends BasePointer implements Traverseproc {
     public static final PyType TYPE = PyType.fromClass(Function.class);
 
     private final Pointer pointer;
@@ -261,5 +263,55 @@ public class Function extends BasePointer implements Pointer {
         public PyObject invoke(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4, PyObject arg5, PyObject arg6) {
             return errcheck.__call__(invoker.invoke(arg1, arg2, arg3, arg4, arg5, arg6));
         }
+    }
+
+
+    /* Traverseproc implementation */
+    @Override
+    public int traverse(Visitproc visit, Object arg) {
+        int res = 0;
+        if (pointer != null && pointer instanceof PyObject) {
+            res = visit.visit((PyObject) pointer, arg);
+            if (res != 0) {
+                return res;
+            }
+        }
+        if (dict != null) {
+            res = visit.visit(dict, arg);
+            if (res != 0) {
+                return res;
+            }
+        }
+        if (restype != null) {
+            res = visit.visit(restype, arg);
+            if (res != 0) {
+                return res;
+            }
+        }
+        if (argtypes != null) {
+            for (PyObject obj: argtypes) {
+                res = visit.visit(obj, arg);
+                if (res != 0) {
+                    return res;
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean refersDirectlyTo(PyObject ob) throws UnsupportedOperationException {
+        if (ob != null && (pointer == ob || dict == ob || restype == ob)) {
+            return true;
+        };
+        if (argtypes != null)
+        {
+            for (PyObject obj: argtypes) {
+                if (obj == ob) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

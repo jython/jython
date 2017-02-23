@@ -8,6 +8,8 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.core.Untraversable;
+import org.python.core.Traverseproc;
+import org.python.core.Visitproc;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -98,6 +100,7 @@ public abstract class CType extends PyObject {
         }
     }
 
+    @Untraversable
     @ExposedType(name = "jffi.Type.Custom", base = CType.class)
     static class Custom extends CType {
         final com.kenai.jffi.Type jffiType;
@@ -127,7 +130,7 @@ public abstract class CType extends PyObject {
     }
 
     @ExposedType(name = "jffi.Type.Array", base = CType.class)
-    static final class Array extends CType.Custom {
+    static final class Array extends CType.Custom implements Traverseproc {
         public static final PyType TYPE = PyType.fromClass(Array.class);
         final CType componentType;
         final PyType pyComponentType;
@@ -178,16 +181,33 @@ public abstract class CType extends PyObject {
                 throw Py.TypeError("only scalar and struct types supported");
             }
         }
+
+
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (componentType != null) {
+                int res = visit.visit(componentType, arg);
+                if (res != 0) {
+                    return res;
+                }
+            }
+            return pyComponentType != null ? visit.visit(pyComponentType, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == componentType || ob == pyComponentType);
+        }
     }
 
-    
 
     @ExposedType(name = "jffi.Type.Pointer", base = CType.class)
-    final static class Pointer extends Custom {
+    final static class Pointer extends Custom implements Traverseproc {
         public static final PyType TYPE = PyType.fromClass(Pointer.class);
         private static final ConcurrentMap<PyObject, Pointer> typeCache
                 = new ConcurrentHashMap<PyObject, Pointer>();
-        
+
         final CType componentType;
         final PyType pyComponentType;
         final MemoryOp componentMemoryOp;
@@ -234,7 +254,7 @@ public abstract class CType extends PyObject {
         public final String toString() {
             return String.format("<jffi.Type.Pointer component_type=%s>", componentType.toString());
         }
-    
+
         private static final class ScalarOp extends MemoryOp {
             private final MemoryOp op;
             private final PyType type;
@@ -262,5 +282,21 @@ public abstract class CType extends PyObject {
         }
 
 
+        /* Traverseproc implementation */
+        @Override
+        public int traverse(Visitproc visit, Object arg) {
+            if (componentType != null) {
+                int res = visit.visit(componentType, arg);
+                if (res != 0) {
+                    return res;
+                }
+            }
+            return pyComponentType != null ? visit.visit(pyComponentType, arg) : 0;
+        }
+
+        @Override
+        public boolean refersDirectlyTo(PyObject ob) {
+            return ob != null && (ob == componentType || ob == pyComponentType);
+        }
     }
 }
