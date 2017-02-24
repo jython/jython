@@ -1904,79 +1904,10 @@ class FloatInfo extends PyTuple {
     }
 
 
-    /* Traverseproc implementation */
-    @Override
-    public int traverse(Visitproc visit, Object arg) {
-        int retVal = super.traverse(visit, arg);
-        if (max != null) {
-            retVal = visit.visit(max, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (max_exp != null) {
-            retVal = visit.visit(max_exp, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (max_10_exp != null) {
-            retVal = visit.visit(max_10_exp, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (min != null) {
-            retVal = visit.visit(min, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (min_exp != null) {
-            retVal = visit.visit(min_exp, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (min_10_exp != null) {
-            retVal = visit.visit(min_10_exp, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (dig != null) {
-            retVal = visit.visit(dig, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (mant_dig != null) {
-            retVal = visit.visit(mant_dig, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (epsilon != null) {
-            retVal = visit.visit(epsilon, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (radix != null) {
-            retVal = visit.visit(radix, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        return rounds == null ? 0 : visit.visit(rounds, arg);
-    }
-
-    @Override
-    public boolean refersDirectlyTo(PyObject ob) {
-        return ob != null && (ob == max || ob == max_exp || ob == max_10_exp || ob == min
-            || ob == min_exp || ob == min_10_exp || ob == dig
-            || ob == mant_dig || ob == epsilon || ob == radix || ob == rounds);
-    }
+    /* Note for Traverseproc implementation:
+     * We needn't visit the fields, because they are also represented as tuple elements
+     * in the parent class. So deferring to super-implementation is sufficient.
+     */
 }
 
 
@@ -2009,21 +1940,8 @@ class LongInfo extends PyTuple {
     }
 
 
-    /* Traverseproc implementation */
-    @Override
-    public int traverse(Visitproc visit, Object arg) {
-        int retVal = super.traverse(visit, arg);
-        if (bits_per_digit != null) {
-            retVal = visit.visit(bits_per_digit, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        return sizeof_digit == null ? 0 : visit.visit(sizeof_digit, arg);
-    }
-
-    @Override
-    public boolean refersDirectlyTo(PyObject ob) {
-        return ob != null && (ob == bits_per_digit || ob == sizeof_digit);
-    }
+    /* Note for Traverseproc implementation:
+     * We needn't visit the fields, because they are also represented as tuple elements
+     * in the parent class. So deferring to super-implementation is sufficient.
+     */
 }

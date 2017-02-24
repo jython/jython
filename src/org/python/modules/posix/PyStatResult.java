@@ -239,54 +239,15 @@ public class PyStatResult extends PyTuple {
     }
 
 
-    /* Traverseproc implementation */
+    /* Traverseproc implementation
+     * Note that there are more fields to traverse. However traverse in PyTuple handles those.
+     * Here we only traverse values that are not exactly referenced in PyTuple entries.
+     */
     @Override
     public int traverse(Visitproc visit, Object arg) {
         int retVal = super.traverse(visit, arg);
         if (retVal != 0) {
             return retVal;
-        }
-        if (st_mode != null) {
-            retVal = visit.visit(st_mode, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_ino != null) {
-            retVal = visit.visit(st_ino, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_dev != null) {
-            retVal = visit.visit(st_dev, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_nlink != null) {
-            retVal = visit.visit(st_nlink, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_uid != null) {
-            retVal = visit.visit(st_uid, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_gid != null) {
-            retVal = visit.visit(st_gid, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
-        }
-        if (st_size != null) {
-            retVal = visit.visit(st_size, arg);
-            if (retVal != 0) {
-                return retVal;
-            }
         }
         if (st_atime != null) {
             retVal = visit.visit(st_atime, arg);
@@ -305,8 +266,7 @@ public class PyStatResult extends PyTuple {
 
     @Override
     public boolean refersDirectlyTo(PyObject ob) {
-        return ob != null && (ob == st_mode || ob == st_ino || ob == st_dev || ob == st_nlink
-            || ob == st_uid || ob == st_gid || ob == st_size || ob == st_atime
-            || ob == st_mtime || ob == st_ctime || super.refersDirectlyTo(ob));
+        return ob != null && (ob == st_atime || ob == st_mtime
+            || ob == st_ctime || super.refersDirectlyTo(ob));
     }
 }
