@@ -527,6 +527,7 @@ public class PosixModule implements ClassDictInit {
     public static PyObject getlogin() {
         String login = posix.getlogin();
         if (login == null) {
+            // recommend according to https://docs.python.org/2/library/os.html#os.getlogin
             throw Py.OSError(
                     "getlogin OS call failed. Preferentially use os.getenv('LOGNAME') instead.");
         }

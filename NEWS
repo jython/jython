@@ -4,6 +4,8 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
+    - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
     - [ PR55 ] Replace deprecated use of ASCII constant with ascii()
     - [ 1777 ] Help getting SymPy working with Jython
     - [ 2475 ] Backported python 3 pathlib and pathlib2 do not work b/c of meta class issues
