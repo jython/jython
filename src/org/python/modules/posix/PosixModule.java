@@ -525,7 +525,12 @@ public class PosixModule implements ClassDictInit {
         "Return the actual login name.");
     @Hide(value=OS.NT, posixImpl = PosixImpl.JAVA)
     public static PyObject getlogin() {
-        return new PyString(posix.getlogin());
+        String login = posix.getlogin();
+        if (login == null) {
+            throw Py.OSError(
+                    "getlogin OS call failed. Preferentially use os.getenv('LOGNAME') instead.");
+        }
+        return new PyString(login);
     }
 
     public static PyString __doc__getppid = new PyString(
