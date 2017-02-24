@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2552 ] installing scandir via pip fails (breaks e.g. installing pathlib2 via pip)
     - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
     - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
     - [ PR55 ] Replace deprecated use of ASCII constant with ascii()

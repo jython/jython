@@ -6,6 +6,7 @@ raises CCompiler exceptions.
 
 from distutils.ccompiler import CCompiler
 from distutils.errors import CCompilerError
+import warnings
 
 class JythonCompiler(CCompiler):
 
@@ -16,6 +17,7 @@ class JythonCompiler(CCompiler):
 
     def refuse_compilation(self, *args, **kwargs):
         """Refuse compilation"""
-        raise CCompilerError('Compiling extensions is not supported on Jython')
+        warnings.warn('Compiling extensions is not supported on Jython')
+        return []
 
     preprocess = compile = create_static_lib = link = refuse_compilation
