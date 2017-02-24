@@ -49,6 +49,16 @@ public class PyString extends PyBaseString implements BufferProtocol {
         this("", true);
     }
 
+    protected PyString(PyType subType, String string, boolean isBytes) {
+        super(subType);
+        if (string == null) {
+            throw new IllegalArgumentException("Cannot create PyString from null");
+        } else if (!isBytes && !isBytes(string)) {
+            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
+        }
+        this.string = string;
+    }
+
     /**
      * Fundamental constructor for <code>PyString</code> objects when the client provides a Java
      * <code>String</code>, necessitating that we range check the characters.
@@ -57,13 +67,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param string a Java String to be wrapped
      */
     public PyString(PyType subType, String string) {
-        super(subType);
-        if (string == null) {
-            throw new IllegalArgumentException("Cannot create PyString from null");
-        } else if (!isBytes(string)) {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
-        }
-        this.string = string;
+        this(subType, string, false);
     }
 
     public PyString(String string) {
@@ -597,6 +601,9 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @Override
     public PyObject __eq__(PyObject other) {
+        if (other instanceof PyShadowString) {
+            return other.__eq__(this);
+        }
         return str___eq__(other);
     }
 
@@ -894,7 +901,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return coerced value
      * @throws PyException if the coercion fails
      */
-    private static String asUTF16StringOrError(PyObject obj) {
+    protected static String asUTF16StringOrError(PyObject obj) {
         // PyUnicode accepted here. Care required in the client if obj is not basic plane.
         String ret = asUTF16StringOrNull(obj);
         if (ret != null) {

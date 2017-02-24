@@ -24,6 +24,7 @@ and opendir), and leave all pathname manipulation to os.path
 #'
 
 import sys, errno
+from org.python.core import PyShadowString
 
 _names = sys.builtin_module_names
 
@@ -38,7 +39,6 @@ def _get_exports_list(module):
     except AttributeError:
         return [n for n in dir(module) if n[0] != '_']
 
-name = 'java'
 if 'posix' in _names:
     _name = 'posix'
     linesep = '\n'
@@ -130,6 +130,8 @@ elif 'ibmi' in _names:
 
 else:
     raise ImportError, 'no os specific module found'
+
+name = PyShadowString('java', _name)
 
 sys.modules['os.path'] = path
 from os.path import (curdir, pardir, sep, pathsep, defpath, extsep, altsep,

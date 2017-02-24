@@ -42,6 +42,7 @@ org/python/core/PyNone.class
 org/python/core/PyObject.class
 org/python/core/PyProperty.class
 org/python/core/PySet.class
+org/python/core/PyShadowString.class
 org/python/core/PySlice.class
 org/python/core/PySlot.class
 org/python/core/PyStaticMethod.class

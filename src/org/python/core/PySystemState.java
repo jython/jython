@@ -134,7 +134,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public PyList warnoptions = new PyList();
     public PyObject builtins;
-    private static PyObject defaultPlatform = new PyString("java");
+    private static PyObject defaultPlatform = new PyShadowString("java", getNativePlatform());
     public PyObject platform = defaultPlatform;
 
     public PyList meta_path;
@@ -787,7 +787,31 @@ public class PySystemState extends PyObject implements AutoCloseable,
         if (version.equals("12")) {
             version = "1.2";
         }
-        defaultPlatform = new PyString("java" + version);
+        defaultPlatform = new PyShadowString("java" + version, getNativePlatform());
+    }
+
+    /**
+     * Emulates CPython's way to name sys.platform.
+     */
+    public static String getNativePlatform() {
+        /* Works according to this table:
+            System              Value
+            --------------------------
+            Linux (2.x and 3.x) linux2
+            Windows             win32
+            Windows/Cygwin      cygwin
+            Mac OS X            darwin
+            OS/2                os2
+            OS/2 EMX            os2emx
+            RiscOS              riscos
+            AtheOS              atheos
+        */
+        String osname = System.getProperty("os.name");
+        if (osname.equals("Linux")) return "linux2";
+        if (osname.equals("Mac OS X")) return "darwin";
+        if (osname.toLowerCase().contains("cygwin")) return "cygwin";
+        if (osname.startsWith("Windows")) return "win32";
+        return osname.replaceAll("[\\s/]", "").toLowerCase();
     }
 
     private static void initRegistry(Properties preProperties, Properties postProperties,
