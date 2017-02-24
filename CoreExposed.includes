@@ -55,6 +55,7 @@ org/python/core/PyType.class
 org/python/core/PyUnicode.class
 org/python/core/PyVersionInfo.class
 org/python/core/PyXRange.class
+org/python/core/WinVersion.class
 org/python/core/stringlib/MarkupIterator.class
 org/python/core/stringlib/FieldNameIterator.class
 org/python/modules/PyStruct.class

@@ -242,6 +242,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
         // XXX: Remove bean accessors for settrace/profile that we don't want
         dict.__setitem__("trace", null);
         dict.__setitem__("profile", null);
+        dict.__setitem__("windowsversion", null);
+        if (!System.getProperty("os.name").startsWith("Windows")) {
+            dict.__setitem__("getwindowsversion", null);
+        }
     }
 
     void reload() throws PyIgnoreMethodTag {
@@ -327,6 +331,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public void setPlatform(PyObject value) {
         platform = value;
+    }
+
+    public WinVersion getwindowsversion() {
+        return WinVersion.getWinVersion();
     }
 
     public synchronized codecs.CodecState getCodecState() {
@@ -1614,6 +1622,50 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     }
 
+    /**
+     * Backed as follows:
+     * Windows: cmd.exe /C ver (part after "Windows")
+     * Other:   uname -v
+     */
+    public static String getSystemVersionString() {
+        try {
+            String uname_sysver;
+            boolean win = System.getProperty("os.name").startsWith("Windows");
+            Process p = Runtime.getRuntime().exec(
+                    win ? "cmd.exe /C ver" : "uname -v");
+            java.io.BufferedReader br = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(p.getInputStream()));
+            uname_sysver = br.readLine();
+            while (uname_sysver != null && uname_sysver.length() == 0) {
+                uname_sysver = br.readLine();
+            }
+            // to end the process sanely in case we deal with some
+            // implementation that emits additional new-lines:
+            while (br.readLine() != null) {
+                ;
+            }
+            br.close();
+            if (p.waitFor() != 0) {
+                // No fallback for sysver available
+                uname_sysver = "";
+            }
+            if (win && uname_sysver.length() > 0) {
+                int start = uname_sysver.toLowerCase().indexOf("version ");
+                if (start != -1) {
+                    start += 8;
+                    int end = uname_sysver.length();
+                    if (uname_sysver.endsWith("]")) {
+                        --end;
+                    }
+                    uname_sysver = uname_sysver.substring(start, end);
+                }
+            }
+            return uname_sysver;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
 
     /* Traverseproc implementation */
     @Override
@@ -1945,3 +1997,66 @@ class LongInfo extends PyTuple {
      * in the parent class. So deferring to super-implementation is sufficient.
      */
 }
+
+
+@ExposedType(name = "sys.getwindowsversion", isBaseType = false)
+class WinVersion extends PyTuple {
+
+    @ExposedGet
+    public PyObject major, minor, build, platform, service_pack;
+
+    public static final PyType TYPE = PyType.fromClass(WinVersion.class);
+
+    private WinVersion(PyObject... vals) {
+        super(TYPE, vals);
+
+        major = vals[0];
+        minor = vals[1];
+        build = vals[2];
+        platform = vals[3];
+        service_pack = vals[4];
+    }
+
+    public static WinVersion getWinVersion() {
+        try {
+            String sysver = PySystemState.getSystemVersionString();
+            String[] sys_ver = sysver.split("\\.");
+            int major = Integer.parseInt(sys_ver[0]);
+            int minor = Integer.parseInt(sys_ver[1]);
+            int build = Integer.parseInt(sys_ver[2]);
+            if (major > 6) {
+                major = 6; minor = 2; build = 9200;
+            } else if (major == 6 && minor > 2) {
+                minor = 2; build = 9200;
+            }
+            // emulate deprecation behavior of GetVersionEx:
+            return new WinVersion(
+                    Py.newInteger(major), // major
+                    Py.newInteger(minor), // minor
+                    Py.newInteger(build), // build
+                    Py.newInteger(2), // platform
+                    Py.EmptyString); // service_pack
+        } catch (Exception e) {
+            return new WinVersion(Py.EmptyString, Py.EmptyString,
+                    Py.EmptyString, Py.EmptyString, Py.EmptyString);
+        }
+    }
+
+    @Override
+    public PyString __repr__() {
+        return (PyString) Py.newString(
+                TYPE.fastGetName() + "(major=%r, minor=%r, build=%r, " +
+                "platform=%r, service_pack=%r)").__mod__(this);
+    }
+
+
+    /* Note for traverseproc implementation:
+     * We needn't visit the fields, because they are also represented as tuple elements
+     * in the parent class. So deferring to super-implementation is sufficient.
+     *
+     * (In CPython sys.getwindowsversion can have some keyword-only elements. So far
+     * we don't support these here. If that changes, an actual traverseproc implementation
+     * might be required.
+     */
+}
+

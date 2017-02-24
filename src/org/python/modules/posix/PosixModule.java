@@ -1030,7 +1030,6 @@ public class PosixModule implements ClassDictInit {
         if (uname_cache != null) {
             return uname_cache;
         }
-// todo: Giving os.uname a windows-implementation might break platform.uname. Check this!
         String sysname = System.getProperty("os.name");
         String sysrelease;
         boolean win;
@@ -1096,40 +1095,7 @@ public class PosixModule implements ClassDictInit {
             }
         }
 
-        String uname_sysver;
-        try {
-            Process p = Runtime.getRuntime().exec(
-                    win ? "cmd.exe /C ver" : "uname -v");
-            java.io.BufferedReader br = new java.io.BufferedReader(
-                    new java.io.InputStreamReader(p.getInputStream()));
-            uname_sysver = br.readLine();
-            while (uname_sysver != null && uname_sysver.length() == 0) {
-                uname_sysver = br.readLine();
-            }
-            // to end the process sanely in case we deal with some
-            // implementation that emits additional new-lines:
-            while (br.readLine() != null) {
-                ;
-            }
-            br.close();
-            if (p.waitFor() != 0) {
-                // No fallback for sysver available
-                uname_sysver = "";
-            }
-            if (win && uname_sysver.length() > 0) {
-                int start = uname_sysver.toLowerCase().indexOf("version ");
-                if (start != -1) {
-                    start += 8;
-                    int end = uname_sysver.length();
-                    if (uname_sysver.endsWith("]")) {
-                        --end;
-                    }
-                    uname_sysver = uname_sysver.substring(start, end);
-                }
-            }
-        } catch (Exception e) {
-            uname_sysver = "";
-        }
+        String uname_sysver = PySystemState.getSystemVersionString();
 
         String uname_machine;
         try {
