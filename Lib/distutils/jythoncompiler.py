@@ -5,7 +5,6 @@ raises CCompiler exceptions.
 """
 
 from distutils.ccompiler import CCompiler
-from distutils.errors import CCompilerError
 import warnings
 
 class JythonCompiler(CCompiler):
