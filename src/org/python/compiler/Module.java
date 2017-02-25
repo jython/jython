@@ -717,7 +717,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         String pyc_filename = filename+"c";
         File pyc_file = new File(pyc_filename);
         if (pyc_file.exists()) {
-            PyFile f = new PyFile(pyc_filename, "r", 4096);
+            PyFile f = new PyFile(pyc_filename, "rb", 4096);
             byte[] bts = f.read(8).toBytes();
             int magic = (bts[1]<< 8) & 0x0000FF00 |
                         (bts[0]<< 0) & 0x000000FF;
