@@ -682,6 +682,28 @@ class CommandLineOptions {
         }
 
         int n = args.length - index + 1;
+
+        /* Exceptionally we allow -J-Dcpython_cmd=... also postpone the filename.
+         * E.g. the Linux launcher allows this already on launcher level for all
+         * -J flags, while the Windows launcher does not.
+         *
+         * Todo: Resolve this discrepancy!
+         *
+         * This is required to use cpython_cmd property in context of pip, e.g.
+         * pip install --global-option="-J-Dcpython_cmd=python" <package>
+         * For details about the cpython_cmd property, look into
+         * org.python.compiler.Module.loadPyBytecode source.
+         */
+        int cpython_cmd_pos = -1;
+        for (int i = index; i < args.length; i++) {
+            if (args[i].startsWith("-J-Dcpython_cmd=")) {
+                cpython_cmd_pos = i;
+                System.setProperty("cpython_cmd", args[i].substring(16));
+                n--;
+                break;
+            }
+        }
+
         argv = new String[n];
         if (filename != null) {
             argv[0] = filename;
@@ -691,8 +713,17 @@ class CommandLineOptions {
             argv[0] = "";
         }
 
-        for (int i = 1; i < n; i++, index++) {
-            argv[i] = args[index];
+        if (cpython_cmd_pos == -1) {
+            for (int i = 1; i < n; i++, index++) {
+                argv[i] = args[index];
+            }
+        } else {
+            for (int i = 1; i < n; i++, index++) {
+                if (index == cpython_cmd_pos) {
+                    index++;
+                }
+                argv[i] = args[index];
+            }
         }
 
         return true;

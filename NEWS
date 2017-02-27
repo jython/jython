@@ -61,6 +61,10 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
+    - Recognize cpython_cmd property to automatically build CPython bytecode for oversized
+      functions (e.g. jython -J-Dcpython_cmd=python). This is especially convenient when
+      installing things like SymPy via pip; it would frequently prompt you to provide yet
+      another pyc-file. Now just run: pip install --global-option="-J-Dcpython_cmd=python" sympy
     - SymPy is now workable. (However it runs somewhat slow; some profiling will be required.)
     - Updated ucnhash to support name lookup for Unicode 9.0 (like in u'\N{name}').
     - Jython doc-entries in Java-code (__doc__foo) now accept anything that implements
