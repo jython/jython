@@ -1,8 +1,8 @@
 Jython: Python for the Java Platform
 
-Welcome to Jython 2.7.1 beta 3!
+Welcome to Jython 2.7.1 release candidate 1!
 
-This is the third beta release of the 2.7.1 version of Jython. Along with
+This is the first release candidate of the 2.7.1 version of Jython. Along with
 language and runtime compatibility with CPython 2.7.1, Jython 2.7 provides
 substantial support of the Python ecosystem. This includes built-in support of
 pip/setuptools (you can use with bin/pip) and a native launcher for Windows
