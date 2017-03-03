@@ -34,6 +34,7 @@ Jython 2.7.1rc1
     - [ 2533 ] Opcode.java is outdated -> breaks PyBytecode.interpret
     - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
     - [ 2446 ] Support SNI for SSL/TLS client sockets
+    - [ PR50 ] Calling Java vararg methods with no arguments fails
     - [ 2455 ] Java classes in packages with __init__.py not found
     - [ 2481 ] Update urllib2.py from 2.7.11
     - [ 2514 ] Jython Class.__subclasses__() does not match Python output (not in load order)
