@@ -8,6 +8,9 @@ import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.IdentityHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -90,8 +93,11 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     /** MethodCacheEntry version tag. */
     private volatile Object versionTag = new Object();
 
-    /** The number of __slots__ defined. */
+    /** The number of __slots__ defined by this type + bases. */
     private int numSlots;
+
+    /** The number of __slots__ defined by this type itself. */
+    private int ownSlots = 0;
 
     private transient ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private Set<WeakReference<PyType>> subclasses = Generic.linkedHashSet();
@@ -218,25 +224,105 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
+     * Used internally by {@link #createAllSlots()}.
+     * Builds a naive pseudo mro used to collect all slot names relevant for this type.
+     * 
+     * @param tp type to be investigated
+     * @param dest list collecting all ancestors
+     * @param slotsMap map linking each type to its slots
+     * @return position of first ancestor that is not equal to or ancestor of primary base
+     */
+    private static int findSlottedAncestors(PyType tp, List<PyType> dest,
+            IdentityHashMap<PyType, PyObject> slotsMap) {
+        int baseEnd = 0;
+        if (tp.base != null && tp.base.numSlots > 0 && !slotsMap.containsKey(tp.base)) {
+            findSlottedAncestors(tp.base, dest, slotsMap);
+        }
+        baseEnd = dest.size();
+        PyObject slots = tp.dict.__finditem__("__slots__");
+        if (slots != null) {
+            dest.add(tp); // to keep track of order
+            slotsMap.put(tp, slots);
+        }
+        if (tp.bases.length > 1) {
+            for (PyObject base: tp.bases) {
+                if (base == tp.base || !(base instanceof PyType) || ((PyType) base).numSlots == 0
+                        || slotsMap.containsKey((PyType) base)) {
+                    continue;
+                }
+                findSlottedAncestors((PyType) base, dest, slotsMap);
+            }
+        }
+        return baseEnd;
+    }
+
+    /**
+     * Used internally by {@link #createAllSlots()}.
+     * Adds all names in {@code slots} to {@code dest}.
+     *
+     * @param slots names to be added as slots
+     * @param dest set collecting all slots
+     */
+    private static void insertSlots(PyObject slots, Set<String> dest) {
+        if (slots instanceof PyString) {
+            slots = new PyTuple(slots);
+        }
+        // Check for valid slot names and create them.
+        for (PyObject slot: slots.asIterable()) {
+            String slotName = confirmIdentifier(slot);
+            if (slotName.equals("__dict__") || slotName.equals("__weakref__")) {
+                continue;
+            }
+            dest.add(slotName);
+        }
+    }
+
+    /**
      * Create all slots and related descriptors.
      *
      * @param mayAddDict whether a __dict__ descriptor is allowed on this type
      * @param mayAddWeak whether a __weakref__ descriptor is allowed on this type
      */
     private void createAllSlots(boolean mayAddDict, boolean mayAddWeak) {
-        numSlots = base.numSlots;
+        List<PyType> slottedAncestors = new ArrayList<>(base.mro.length+(bases.length-1)*3+1);
+        IdentityHashMap<PyType, PyObject> slotsMap =
+                new IdentityHashMap<>(slottedAncestors.size());
+        /* Here we would need the mro to search for slots (also in secondary bases) properly,
+           but mro hasn't been set up yet. So we quickly (?) build a pseudo mro sufficient to
+           find all slots. */
+        int baseEnd = findSlottedAncestors(this, slottedAncestors, slotsMap);
+        // baseEnd is the first position of an ancestor not equal to or ancestor of primary base
+        int slots_tmp = 0; // used for various purpose, first to accumulate maximal slot count
+        for (PyType anc: slottedAncestors) {
+            slots_tmp += anc.numSlots;
+        }
+        /* In allSlots we collect slots of primary base first, then of this type,
+           then of secondary bases.
+           At any time we prevent it from containing __dict__ or __weakref__. */
+        
+        // we know the required capacity, so the set likely won't be resized
+        LinkedHashSet<String> allSlots = new LinkedHashSet<>(2*slots_tmp);
+        if (baseEnd > 0) {
+            for (int i = 0; i < baseEnd; ++i) {
+                insertSlots(slotsMap.get(slottedAncestors.get(i)), allSlots);
+            }
+        }
+        assert allSlots.size() == base.numSlots;
+
         boolean wantDict = false;
         boolean wantWeak = false;
         PyObject slots = dict.__finditem__("__slots__");
-
+        ownSlots = 0; // to keep track of slots defined by this type itself for isSolidBase
+        /* from now on, slots_tmp stores position where other ancestors than primary base
+           begin (points to this type if it defines own slots) */
         if (slots == null) {
             wantDict = mayAddDict;
             wantWeak = mayAddWeak;
+            slots_tmp = baseEnd;
         } else {
             if (slots instanceof PyString) {
                 slots = new PyTuple(slots);
             }
-
             // Check for valid slot names and create them. Handle two special cases
             for (PyObject slot : slots.asIterable()) {
                 String slotName = confirmIdentifier(slot);
@@ -264,16 +350,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                         continue;
                     }
                 }
-
-                slotName = mangleName(name, slotName);
-                if (dict.__finditem__(slotName) == null) {
-                    dict.__setitem__(slotName, new PySlot(this, slotName, numSlots++));
+                if (allSlots.add(slotName)) {
+                    ++ownSlots;
                 }
             }
-
-            // Secondary bases may provide weakrefs or dict
-            if (bases.length > 1
-                && ((mayAddDict && !wantDict) || (mayAddWeak && !wantWeak))) {
+            if (bases.length > 1 &&
+                    ((mayAddDict && !wantDict) || (mayAddWeak && !wantWeak))) {
+                // Secondary bases may provide weakrefs or dict
                 for (PyObject base : bases) {
                     if (base == this.base) {
                         // Skip primary base
@@ -291,7 +374,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                         break;
                     }
 
-                    PyType baseType = (PyType)base;
+                    PyType baseType = (PyType) base;
                     if (mayAddDict && !wantDict && baseType.needs_userdict) {
                         wantDict = true;
                     }
@@ -304,7 +387,28 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                     }
                 }
             }
+            slots_tmp = baseEnd + 1;
         }
+        for (int i = slots_tmp; i < slottedAncestors.size(); ++i) {
+            insertSlots(slotsMap.get(slottedAncestors.get(i)), allSlots);
+        }
+        numSlots = allSlots.size();
+        int slotPos = 0;
+        Iterator<String> slotIter = allSlots.iterator();
+        // skip slot names belonging to primary base (i.e. first base.numSlots ones)
+        for (; slotPos < base.numSlots; ++slotPos) {
+            slotIter.next();
+        }
+        while (slotIter.hasNext()) {
+            String slotName = slotIter.next();
+            slotName = mangleName(name, slotName);
+            if (dict.__finditem__(slotName) == null) {
+                dict.__setitem__(slotName, new PySlot(this, slotName, slotPos++));
+            } else {
+                --numSlots;
+            }
+        }
+        assert slotPos == numSlots;
 
         if (wantDict) {
             createDictSlot();
@@ -1127,9 +1231,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     private static boolean isSolidBase(PyType type) {
-        return type.underlying_class != null ||
-                (type.numSlots - (type.base != null ? type.base.numSlots : 0) != 0 &&
-                !type.needs_userdict);
+        return type.underlying_class != null || (type.ownSlots != 0 && !type.needs_userdict);
     }
 
     /**

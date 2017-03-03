@@ -4,6 +4,8 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 1996 ] Core slots array out of bounds with multiple inheritance
+    - [ 2101 ] Diamond-style multiple inheritance fails when using __slots__ on the second branch
     - [ 2552 ] installing scandir via pip fails (breaks e.g. installing pathlib2 via pip)
     - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
     - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
@@ -34,8 +36,7 @@ Jython 2.7.1rc1
     - [ 2446 ] Support SNI for SSL/TLS client sockets
     - [ 2455 ] Java classes in packages with __init__.py not found
     - [ 2481 ] Update urllib2.py from 2.7.11
-    - [ 2514 ] Jython Class.__subclasses__() does not match Python output
-               (not in load order)
+    - [ 2514 ] Jython Class.__subclasses__() does not match Python output (not in load order)
     - [ 2413 ] ElementTree.write doesn't close files if used with invalid encoding
     - [ 2443 ] java.util.Map derived classes lack iterkeys, itervalues methods
     - [ 2516 ] _get_open_ssl_key_manager tries to validate that the private and
