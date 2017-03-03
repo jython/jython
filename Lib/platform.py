@@ -588,6 +588,12 @@ def win32_ver(release='',version='',csd='',ptype=''):
         from win32con import HKEY_LOCAL_MACHINE, VER_PLATFORM_WIN32_NT, \
              VER_PLATFORM_WIN32_WINDOWS, VER_NT_WORKSTATION
     except ImportError:
+        if sys.platform.startswith("java"):
+            if os._name == 'nt':
+                unm = os.uname()
+                return unm[2], unm[3], csd, ptype
+            else:
+                return release, version, csd, ptype
         # Emulate the win32api module using Python APIs
         try:
             sys.getwindowsversion
