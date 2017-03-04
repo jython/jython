@@ -9,8 +9,10 @@ import java.util.Map;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyArray;
+import org.python.core.PyFrozenSet;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.Untraversable;
@@ -36,6 +38,11 @@ public class _hashlib implements ClassDictInit {
             put("sha384", "sha-384");
             put("sha512", "sha-512");
     }};
+
+    public static final PyFrozenSet openssl_md_meth_names =
+            new PyFrozenSet(new PyTuple(Py.newString("md5"), Py.newString("sha1"),
+            Py.newString("sha224"), Py.newString("sha256"), Py.newString("sha384"),
+            Py.newString("sha512")));
 
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", Py.newString("_hashlib"));
