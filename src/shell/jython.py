@@ -208,7 +208,7 @@ setting {envvar_specifier}JYTHON_HOME.""".format(
         if hasattr(self.args, "stack"):
             return self.args.stack
         else:
-            return os.environ.get("JAVA_STACK", "-Xss1024k")
+            return os.environ.get("JAVA_STACK", "-Xss2560k")
 
     @property
     def java_opts(self):

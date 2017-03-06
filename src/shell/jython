@@ -109,10 +109,8 @@ if [ -z "$JAVA_MEM" ] ; then
 fi
 
 if [ -z "$JAVA_STACK" ]; then
-   # 32 bit Java 6 needs the stack increased to at least 512k for
-   # test_cpickle to pass, but we don't want to shrink 64 bit Java's
-   # default of 1024k
-  JAVA_STACK=-Xss1024k
+   # test_marshal.py needs a Xss of 2560k to pass
+  JAVA_STACK=-Xss2560k
 fi
 
 JAVA_ENCODING=""
