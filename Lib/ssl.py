@@ -306,7 +306,6 @@ def get_default_verify_paths():
 
     if java_cert_file is not None and os.path.isfile(java_cert_file):
         cafile = java_cert_file
-        capath = os.path.dirname(java_cert_file)
     else:
         if default_cert_dir_env is not None:
             capath = default_cert_dir_env if os.path.isdir(default_cert_dir_env) else None
@@ -323,7 +322,7 @@ def get_default_verify_paths():
                     capath = os.path.dirname(cafile)
 
     return DefaultVerifyPaths(cafile if os.path.isfile(cafile) else None,
-                              capath if os.path.isdir(capath) else None,
+                              capath if capath and os.path.isdir(capath) else None,
                               'SSL_CERT_FILE', default_cert_file_env,
                               'SSL_CERT_DIR', default_cert_dir_env)
 
@@ -689,7 +688,7 @@ class SSLSocket(object):
             # http://stackoverflow.com/questions/24628271/exception-in-netty-io-netty-util-concurrent-blockingoperationexception
             # - handshake in the child thread pool
         else:
-            self._sock._handle_channel_future(self._handshake_future, "SSL handshake")
+            self._sock._handle_channel_future(self._handshake_future, "SSL handshake", wait=True)
 
     def dup(self):
         raise NotImplemented("Can't dup() %s instances" %
@@ -1154,9 +1153,13 @@ class SSLContext(object):
                     if os.path.isfile(possible_cafile):
                         cafiles.append(possible_cafile)
                 elif os.path.isfile(possible_cafile):
-                    with open(possible_cafile) as f:
-                        if PEM_HEADER in f.read():
-                            cafiles.append(possible_cafile)
+                    try:
+                        with open(possible_cafile) as f:
+                            if PEM_HEADER in f.read():
+                                cafiles.append(possible_cafile)
+                    except IOError:
+                        log.debug("Not including %s file as a possible cafile due to permissions error" % possible_cafile)
+                        pass  # Probably permissions related...ignore
 
         certs = []
         private_key = None
