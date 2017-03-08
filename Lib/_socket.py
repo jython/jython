@@ -803,13 +803,13 @@ class _realsocket(object):
             selector.notify(self, exception=exception, hangup=hangup)
 
     @raises_java_exception
-    def _handle_channel_future(self, future, reason, wait=False):
+    def _handle_channel_future(self, future, reason):
         # All differences between nonblocking vs blocking with optional timeouts
         # is managed by this method.
         #
         # All sockets can be selected on, regardless of blocking/nonblocking state.
         future.addListener(self._notify_selectors)
-        if self.timeout is None or wait:
+        if self.timeout is None:
             log.debug("Syncing on future %s for %s", future, reason, extra={"sock": self})
             return future.sync()
         elif self.timeout:
