@@ -1498,8 +1498,16 @@ class time(object):
             calendar = _make_java_calendar(self)
             if calendar == Py.NoConversion:
                 return Py.NoConversion
-            epoch_ms = (self.hour * 3600 + self.minute * 60 + self.second) * 1000 + self.microsecond // 1000
-            calendar.setTimeInMillis(epoch_ms)
+
+            #initialize to epoch time - effectively clear out the current date from the calendar.
+            calendar.setTimeInMillis(0);
+
+            #now setup the calendar to have the details populated from this time.
+            calendar.set(Calendar.HOUR_OF_DAY, self.hour)
+            calendar.set(Calendar.MINUTE, self.minute)
+            calendar.set(Calendar.SECOND, self.second)
+            calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
+
             if java_class == Calendar:
                 return calendar
             else:
