@@ -40,9 +40,7 @@ public class _jyio implements ClassDictInit {
         PyObject ValueError = exceptions.__getattr__("ValueError");
         PyObject IOError = exceptions.__getattr__("IOError");
         // Equivalent to class UnsupportedOperation(ValueError, IOError) : pass
-        // UnsupportedOperation = makeException(dict, "UnsupportedOperation", ValueError, IOError);
-        // XXX Work-around: slots not properly initialised unless IOError comes first
-        UnsupportedOperation = makeException(dict, "UnsupportedOperation", IOError, ValueError);
+        UnsupportedOperation = makeException(dict, "UnsupportedOperation", ValueError, IOError);
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);
