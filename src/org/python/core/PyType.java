@@ -8,9 +8,7 @@ import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -233,7 +231,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @return position of first ancestor that is not equal to or ancestor of primary base
      */
     private static int findSlottedAncestors(PyType tp, List<PyType> dest,
-            IdentityHashMap<PyType, PyObject> slotsMap) {
+            Map<PyType, PyObject> slotsMap) {
         int baseEnd = 0;
         if (tp.base != null && tp.base.numSlots > 0 && !slotsMap.containsKey(tp.base)) {
             findSlottedAncestors(tp.base, dest, slotsMap);
@@ -284,9 +282,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @param mayAddWeak whether a __weakref__ descriptor is allowed on this type
      */
     private void createAllSlots(boolean mayAddDict, boolean mayAddWeak) {
-        List<PyType> slottedAncestors = new ArrayList<>(base.mro.length+(bases.length-1)*3+1);
-        IdentityHashMap<PyType, PyObject> slotsMap =
-                new IdentityHashMap<>(slottedAncestors.size());
+        List<PyType> slottedAncestors = Generic.list(base.mro.length+(bases.length-1)*3+1);
+        Map<PyType, PyObject> slotsMap = Generic.identityHashMap(slottedAncestors.size());
         /* Here we would need the mro to search for slots (also in secondary bases) properly,
            but mro hasn't been set up yet. So we quickly (?) build a pseudo mro sufficient to
            find all slots. */
@@ -301,7 +298,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
            At any time we prevent it from containing __dict__ or __weakref__. */
         
         // we know the required capacity, so the set likely won't be resized
-        LinkedHashSet<String> allSlots = new LinkedHashSet<>(2*slots_tmp);
+        Set<String> allSlots = Generic.linkedHashSet(2*slots_tmp);
         if (baseEnd > 0) {
             for (int i = 0; i < baseEnd; ++i) {
                 insertSlots(slotsMap.get(slottedAncestors.get(i)), allSlots);

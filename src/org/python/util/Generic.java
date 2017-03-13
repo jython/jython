@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,14 @@ public class Generic {
     }
 
     /**
+     * Makes a List with its generic type inferred from whatever it's being assigned to.
+     * Sets initial capacity accordingly.
+     */
+    public static <T> List<T> list(int capacity) {
+        return new ArrayList<T>(capacity);
+    }
+
+    /**
      * Makes a List with its generic type inferred from whatever it's being assigned to filled with
      * the items in <code>contents</code>.
      */
@@ -52,6 +61,23 @@ public class Generic {
      */
     public static <K, V> Map<K, V> map() {
         return new HashMap<K, V>();
+    }
+
+    /**
+     * Makes an IdentityHashMap using generic types inferred from whatever this is being
+     * assigned to.
+     */
+    public static <K, V> Map<K, V> identityHashMap() {
+        return new IdentityHashMap<K, V>();
+    }
+
+    /**
+     * Makes an IdentityHashMap using generic types inferred from whatever this is being
+     * assigned to.
+     * Sets initial capacity accordingly.
+     */
+    public static <K, V> Map<K, V> identityHashMap(int capacity) {
+        return new IdentityHashMap<K, V>(capacity);
     }
 
     /**
@@ -75,6 +101,14 @@ public class Generic {
      */
     public static <E> Set<E> linkedHashSet() {
         return new LinkedHashSet<E>();
+    }
+
+    /**
+     * Makes a LinkedHashSet using the generic type inferred from whatever this is being assigned to.
+     * Sets initial capacity accordingly.
+     */
+    public static <E> Set<E> linkedHashSet(int capacity) {
+        return new LinkedHashSet<E>(capacity);
     }
 
     /**
