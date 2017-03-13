@@ -235,8 +235,10 @@ def find_executable(executable, path=None):
     paths = path.split(os.pathsep)
     base, ext = os.path.splitext(executable)
 
-    if (sys.platform == 'win32' or os.name == 'os2') and (ext != '.exe'):
-        executable = executable + '.exe'
+    if (sys.platform == 'win32' or os.name == 'os2' or
+            sys.platform.startswith('java') and os._name == 'nt'):
+        if ext != '.exe':
+            executable = executable + '.exe'
 
     if not os.path.isfile(executable):
         for p in paths:
