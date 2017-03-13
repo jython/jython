@@ -111,7 +111,10 @@ class TestSQL(unittest.TestCase):
         self.assertIsInstance(y, Date)
         # Note that java.sql.Date operates regarding to default timezone, so adjust offset
         off = TimeZone.getDefault().getRawOffset()
-        self.assertEqual(y.getTime()+off, (x - date(1970, 1, 1)).total_seconds() * 1000)
+        # It's sufficient for the date to fit; we modulo away the time, so this test
+        # won't run into TimeZone issues.
+        self.assertEqual((y.getTime()+off)//(1000*60*60*24),
+                (x - date(1970, 1, 1)).total_seconds()//(60*60*24))
 
     def test_time(self):
         self.assertTrue(hasattr(time, "__tojava__"))
