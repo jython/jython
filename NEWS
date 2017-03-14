@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2571 ] Error handling in test_codecencodings_tw fails on Java 8
     - [ 2524 ] datetime <-> time conversion incorrect in non UTC times
     - [ 2504 ] datetime.date.__tojava__ returns incorrect dates in non-UTC timezones with
                negative offset (Jython 2.7.0)

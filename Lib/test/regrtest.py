@@ -1294,7 +1294,6 @@ _failures = {
         test_codecencodings_iso2022
         test_codecencodings_jp
         test_codecencodings_kr
-        test_codecencodings_tw  # Fails in Java 8 not 7
         test_codecmaps_cn
         test_codecmaps_jp
         test_codecmaps_kr
