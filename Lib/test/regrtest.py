@@ -1358,6 +1358,7 @@ _failures = {
         # test_popen             # Passes, but see http://bugs.python.org/issue1559298
         test_runpy             # OSError: unlink()
         test_select_new        # Hangs (Windows), though ok run singly
+        test_tarfile           # flakey (Windows)
         test_urllib2           # file not on local host (likely Windows only)
         """,
 
