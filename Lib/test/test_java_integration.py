@@ -13,6 +13,7 @@ import re
 
 from collections import deque
 from test import test_support
+from distutils.spawn import find_executable
 
 from java.lang import (
     ClassCastException, ExceptionInInitializerError, UnsupportedOperationException,
@@ -605,11 +606,13 @@ class CloneInput(ObjectInputStream):
 
 def find_jython_jars():
     # Uses the same classpath resolution as bin/jython
-    jython_jar_path = os.path.normpath(os.path.join(sys.executable, "../../jython.jar"))
-    jython_jar_dev_path = os.path.normpath(os.path.join(sys.executable, "../../jython-dev.jar"))
+    jython_bin = os.path.normpath(os.path.dirname(sys.executable))
+    jython_top = os.path.dirname(jython_bin)
+    jython_jar_path = os.path.join(jython_top, 'jython.jar')
+    jython_jar_dev_path = os.path.join(jython_top, 'jython-dev.jar')
     if os.path.exists(jython_jar_dev_path):
         jars = [jython_jar_dev_path]
-        jars.extend(glob.glob(os.path.normpath(os.path.join(jython_jar_dev_path, "../javalib/*.jar"))))
+        jars.extend(glob.glob(os.path.join(jython_top, 'javalib', '*.jar')))
     elif os.path.exists(jython_jar_path):
         jars = [jython_jar_path]
     else:
@@ -684,6 +687,7 @@ class SerializationTest(unittest.TestCase):
         names = [x for x in dir(__builtin__)]
         self.assertEqual(names, roundtrip_serialization(names))
 
+    @unittest.skipUnless(find_executable('jar'), 'Need the jar command to run')
     def test_proxy_serialization(self):
         # Proxies can be deserializable in a fresh JVM, including being able
         # to "findPython" to get a PySystemState.
@@ -698,7 +702,8 @@ class SerializationTest(unittest.TestCase):
 
             # Create a jar file containing the Cat proxy; could use Java to do this; do it the easy way for now
             proxies_jar_path = os.path.join(tempdir, "proxies.jar")
-            subprocess.check_call(["jar", "cf", proxies_jar_path, "-C", tempdir, "org/"])
+            subprocess.check_call(["jar", "cf", proxies_jar_path, "-C", tempdir,
+                                    "org" + os.path.sep])
 
             # Serialize our cat
             output = ByteArrayOutputStream()
@@ -717,7 +722,7 @@ class SerializationTest(unittest.TestCase):
             jars.append(proxies_jar_path)
             classpath = os.pathsep.join(jars)
             env = dict(os.environ)
-            env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
+            env.update(JYTHONPATH=os.path.dirname(__file__))
             cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
                     "-classpath", classpath,
                     "javatests.ProxyDeserialization",
@@ -728,6 +733,7 @@ class SerializationTest(unittest.TestCase):
             org.python.core.Options.proxyDebugDirectory = old_proxy_debug_dir
             shutil.rmtree(tempdir)
 
+    @unittest.skipUnless(find_executable('jar'), 'Need the jar command to run')
     def test_custom_proxymaker(self):
         # Verify custom proxymaker supports direct usage of Python code in Java
         tempdir = tempfile.mkdtemp()
@@ -741,7 +747,8 @@ class SerializationTest(unittest.TestCase):
 
             # Create a jar file containing the org.python.test.Dog proxy
             proxies_jar_path = os.path.join(tempdir, "proxies.jar")
-            subprocess.check_call(["jar", "cf", proxies_jar_path, "-C", tempdir, "org/"])
+            subprocess.check_call(["jar", "cf", proxies_jar_path, "-C", tempdir,
+                                    "org" + os.path.sep])
 
             # Build a Java class importing Dog
             source = """
@@ -775,10 +782,10 @@ public class BarkTheDog {
             # PySystemState (and Jython runtime) is initialized for
             # the proxy
             classpath += os.pathsep + tempdir
-            cmd = [os.path.join(System.getProperty("java.home"), "bin/java"),
+            cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
                    "-classpath", classpath, "BarkTheDog"]
             env = dict(os.environ)
-            env.update(JYTHONPATH=os.path.normpath(os.path.join(__file__, "..")))
+            env.update(JYTHONPATH=os.path.dirname(__file__))
             self.assertRegexpMatches(
                 subprocess.check_output(cmd, env=env, universal_newlines=True,
                                         stderr=subprocess.STDOUT),

@@ -5,6 +5,7 @@ For more details, please see https://hg.python.org/jython
 Jython 2.7.1rc1
   Bugs fixed
     - [ 2318 ] test_zipimport_jy failure on Windows
+    - [ 2571 ] Error handling in test_codecencodings_tw fails on Java 8
     - [ 2568 ] test_threading intermittent failure
     - [ 2559 ] test_marshal fails
     - [ 2564 ] test_socket_jy fails on Linux
