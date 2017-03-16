@@ -26,13 +26,15 @@ class ClasspathImporterTestCase(unittest.TestCase):
     # with sys.path.append where not getting scanned if they start with a top
     # level package we already have, like the "org" in org.python.*
     def test_bug1239(self):
-        with test_support.DirsOnSysPath("Lib/test/bug1239.jar"):
+        jar = test_support.findfile("bug1239.jar")
+        with test_support.DirsOnSysPath(jar):
             import org.test403javapackage.test403
 
     # different from test_bug1239 in that only a Java package is imported, not
     # a Java class.  I'd also like to get rid of this checked in test jar.
     def test_bug1126(self):
-        with test_support.DirsOnSysPath("Lib/test/bug1126/bug1126.jar"):
+        jar = test_support.findfile("bug1126.jar", subdir="bug1126")
+        with test_support.DirsOnSysPath(jar):
             import org.subpackage
 
 
