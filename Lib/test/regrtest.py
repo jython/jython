@@ -398,6 +398,22 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     failures.keep_only(tests)
     skips.keep_only(tests)
 
+    # Output some platform information. Loosely based on CPython 3.6 regrtest.
+    if (verbose or len(tests)>1) and not (quiet or single):
+        # Print basic platform information
+        for t in sys.version.splitlines():
+            print "==", t
+        print "== platform:", sys.platform
+        print "== encodings: stdin=%s, stdout=%s, FS=%s" % (
+            sys.stdin.encoding, sys.stdout.encoding,
+            sys.getfilesystemencoding())
+        try:
+            import locale
+            print "== locale: default=%s, actual=%s" % (
+                locale.getdefaultlocale(), locale.getlocale())
+        except ImportError:
+            pass
+
     for test in tests:
         if not quiet:
             print test

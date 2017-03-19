@@ -1116,11 +1116,18 @@ The readme text for the next release will be like:
             <arg value="${junit.reports}"/>
             <arg value="--use"/>
             <arg value="network,subprocess"/>
+            <!-- Exclude particular tests troublesome on the build bots -->
+            <arg value="--exclude"/>
+            <arg value="test_select_new"/>
+            <arg value="test_socket"/>
+            <arg value="test_ssl"/>
         </exec>
     </target>
 
     <target name="regrtest-windows-travis" if="os.family.windows">
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="-w"/> <!-- re-run failed tests in verbose mode -->
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
@@ -1128,6 +1135,11 @@ The readme text for the next release will be like:
             <arg value="${junit.reports}"/>
             <arg value="--use"/>
             <arg value="network,subprocess"/>
+            <!-- Exclude particular tests troublesome on the build bots -->
+            <arg value="--exclude"/>
+            <arg value="test_select_new"/>
+            <arg value="test_socket"/>
+            <arg value="test_ssl"/>
         </exec>
     </target>
 

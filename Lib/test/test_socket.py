@@ -31,6 +31,10 @@ if test_support.is_jython:
     import _socket
     _socket._NUM_THREADS = 5
 
+    import java.util.logging
+    def _set_java_logging(name, level):
+        java.util.logging.Logger.getLogger(name).setLevel(level)
+
 
 class SocketTCPTest(unittest.TestCase):
 
@@ -2620,6 +2624,16 @@ class SocketClassCanBeSubclassed(ConfigurableClientSocketTest):
 
 
 def test_main():
+
+    if test_support.is_jython:
+        # Netty logs stack dumps when we destroy sockets after their parent
+        # group, see http://bugs.jython.org/issue2517 . Is this a real bug?
+        # For now, treat as inconvenient artifact of test.
+        _set_java_logging("io.netty.channel.ChannelInitializer",
+                          java.util.logging.Level.SEVERE)
+        _set_java_logging("io.netty.util.concurrent.DefaultPromise",
+                          java.util.logging.Level.OFF)
+
     tests = [
         GeneralModuleTests,
         IPAddressTests,
@@ -2671,6 +2685,7 @@ def test_main():
         tests.append(UDPBroadcastTest)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     test_support._run_suite(unittest.TestSuite(suites))
+
 
 if __name__ == "__main__":
     test_main()
