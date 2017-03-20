@@ -9,11 +9,15 @@ from test import test_multibytecodec_support
 import unittest
 import sys
 
-# Codecs re-synchronise sooner after illegal byte in Java 8+ than in Java 7
-# (and in CPython 3.3+ than in CPython 2.7-3.2). Either is correct, but we
-# need to know which one to expect.
-RESYNC_FASTER = sys.platform.startswith('java') and \
-                    sys.platform[4:7] > "1.7"
+# Codecs re-synchronise faster after illegal byte in Java 8+ than in Java 7 to
+# update 60 (and in CPython 3.3+ faster than in CPython 2.7-3.2). Either is
+# correct, but we need to know which one to expect.
+RESYNC_FASTER = False # True for CPython 3.3 and later
+
+if sys.platform.startswith('java'):
+    if test_support.get_java_version() > (1, 7, 0, 60):
+        RESYNC_FASTER = True
+
 
 class Test_Big5(test_multibytecodec_support.TestBase, unittest.TestCase):
     encoding = 'big5'

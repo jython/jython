@@ -55,9 +55,19 @@ is_jython_nt = is_jython and (os._name == 'nt')
 is_jython_posix = is_jython and (os._name == 'posix')
 
 if is_jython:
-    def get_java_version():
-        # returns (1, 9) for Java 9, etc
-        return tuple((int(x) for x in platform.java_ver()[0].split('.')[0:2]))
+    def get_java_version(version=None):
+        # returns (1, 8, 0, 121) for version = "1.8.0_121", meaning
+        # Java 8 update 121, etc.. Conforms to:
+        # http://www.oracle.com/technetwork/java/javase/versioning-naming-139433.html
+        # and not yet http://openjdk.java.net/jeps/223 .
+        if version is None:
+            version = platform.java_ver()[0]
+        parse = re.match("(\d+)\.(\d+)\.(\d+)_(\d+)", version)
+        if parse:
+            return tuple((int(x) for x in parse.groups()))
+        else:
+            return ()
+
 
 class Error(Exception):
     """Base class for regression test exceptions."""
