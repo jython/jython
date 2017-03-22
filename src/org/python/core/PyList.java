@@ -802,7 +802,11 @@ public class PyList extends PySequenceList {
         if (reverse) {
             Collections.reverse(list); // maintain stability of sort by reversing first
         }
-        Collections.sort(list, new PyObjectDefaultComparator(this));
+        final PyObjectDefaultComparator comparator = new PyObjectDefaultComparator(this);
+        Collections.sort(list, comparator);
+        if (comparator.raisedException()) {
+            throw comparator.getRaisedException();
+        }
         if (reverse) {
             Collections.reverse(list); // maintain stability of sort by reversing first
         }
@@ -812,20 +816,33 @@ public class PyList extends PySequenceList {
     private static class PyObjectDefaultComparator implements Comparator<PyObject> {
 
         private final PyList list;
+        private PyException comparatorException;
 
         PyObjectDefaultComparator(PyList list) {
             this.list = list;
         }
 
+        public PyException getRaisedException() {
+            return comparatorException;
+        }
+
+        public boolean raisedException() {
+            return comparatorException != null;
+        }
+
+        @Override
         public int compare(PyObject o1, PyObject o2) {
             // PEP 207 specifies that sort should only depend on "less-than" (Issue #1767)
-            int result;
-            if (o1._lt(o2).__nonzero__()) {
-                result = -1;
-            } else if (o2._lt(o1).__nonzero__()) {
-                result = 1;
-            } else {
-                result = 0;
+            int result = 0; // If exception is raised return objects are equal
+            try {
+                if (o1._lt(o2).__nonzero__()) {
+                    result = -1;
+                } else if (o2._lt(o1).__nonzero__()) {
+                    result = 1;
+                }
+            } catch (PyException pye) {
+                // #2399 Stash the exception so we can rethrow it later, and allow the sort to continue
+                comparatorException = pye;
             }
             if (this.list.gListAllocatedStatus >= 0) {
                 throw Py.ValueError("list modified during sort");
@@ -833,6 +850,7 @@ public class PyList extends PySequenceList {
             return result;
         }
 
+        @Override
         public boolean equals(Object o) {
             if (o == this) {
                 return true;
@@ -853,8 +871,11 @@ public class PyList extends PySequenceList {
         if (reverse) {
             Collections.reverse(list); // maintain stability of sort by reversing first
         }
-        PyObjectComparator c = new PyObjectComparator(this, compare);
-        Collections.sort(list, c);
+        final PyObjectComparator comparator = new PyObjectComparator(this, compare);
+        Collections.sort(list, comparator);
+        if (comparator.raisedException()) {
+            throw comparator.getRaisedException();
+        }
         if (reverse) {
             Collections.reverse(list);
         }
@@ -865,20 +886,37 @@ public class PyList extends PySequenceList {
 
         private final PyList list;
         private final PyObject cmp;
+        private PyException comparatorException;
 
         PyObjectComparator(PyList list, PyObject cmp) {
             this.list = list;
             this.cmp = cmp;
         }
 
+        public PyException getRaisedException() {
+            return comparatorException;
+        }
+
+        public boolean raisedException() {
+            return comparatorException != null;
+        }
+
+        @Override
         public int compare(PyObject o1, PyObject o2) {
-            int result = cmp.__call__(o1, o2).asInt();
+            int result = 0; // If exception is raised return objects are equal
+            try {
+                result = cmp.__call__(o1, o2).asInt();
+            } catch (PyException pye) {
+                // #2399 Stash the exception so we can rethrow it later, and allow the sort to continue
+                comparatorException = pye;
+            }
             if (this.list.gListAllocatedStatus >= 0) {
                 throw Py.ValueError("list modified during sort");
             }
             return result;
         }
 
+        @Override
         public boolean equals(Object o) {
             if (o == this) {
                 return true;
