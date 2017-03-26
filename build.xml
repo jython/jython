@@ -236,6 +236,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>output.dir         = '${output.dir}'</echo>
         <echo>compile.dir        = '${compile.dir}'</echo>
         <echo>exposed.dir        = '${exposed.dir}'</echo>
+        <echo>gensrc.dir         = '${gensrc.dir}'</echo>
         <echo>dist.dir           = '${dist.dir}'</echo>
         <echo>apidoc.dir         = '${apidoc.dir}'</echo>
         <echo>templates.dir      = '${templates.dir}'</echo>
@@ -434,6 +435,7 @@ The readme text for the next release will be like:
     <target name="antlr_gen" depends="prepare-output" unless="antlr.notneeded">
         <java classname="org.antlr.Tool" failonerror="false" fork="true" dir="${jython.base.dir}">
             <jvmarg value="-Xmx512m"/>
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
             <arg value="-Xconversiontimeout"/>
             <arg value="2000"/>
             <arg value="-fo"/>
@@ -704,6 +706,7 @@ The readme text for the next release will be like:
         <javadoc sourcepath="${source.dir}"
                  destdir="${apidoc.dir}"
                  source="${jdk.source.version}"
+                 encoding="UTF-8"
                  maxmemory="1024m"
                  public="true"
                  breakiterator="yes"
