@@ -1352,8 +1352,8 @@ _failures = {
         # Unreliable tests 
         test_asynchat
         # test_gc                # Rare failures depending on timing of Java gc
-        test_logging           # Hangs, though ok run singly
-        # test_tarfile           # warning on irremovable directory (Windows)
+        test_logging           # Hangs, though ok run singly. Issue #2536
+        test_tarfile           # flakey everywhere. Issue #2574
         # test_urllib2net        # unexpected output makes this a failure to regrtest.py
 
         # Failing tests here are because of lack of STARTTLS; see http://bugs.jython.org/issue2447
@@ -1374,7 +1374,6 @@ _failures = {
         # test_popen             # Passes, but see http://bugs.python.org/issue1559298
         test_runpy             # OSError: unlink()
         test_select_new        # Hangs (Windows), though ok run singly
-        test_tarfile           # flakey (Windows)
         test_urllib2           # file not on local host (likely Windows only)
         """,
 
