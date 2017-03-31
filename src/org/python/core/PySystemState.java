@@ -1524,6 +1524,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
         return f;
     }
 
+    public static PyDictionary _current_frames() {
+        return ThreadStateMapping._current_frames();
+    }
+
     public void registerCloser(Callable<Void> resourceCloser) {
         closer.registerCloser(resourceCloser);
     }

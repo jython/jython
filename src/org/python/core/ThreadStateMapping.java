@@ -88,4 +88,25 @@ class ThreadStateMapping {
             scoped[1] = null; // allow corresponding PySystemState to be GCed
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private static Map.Entry<Thread, ThreadState>[] entriesPrototype = new Map.Entry[0];
+    public static PyDictionary _current_frames() {
+        Map.Entry<Thread, ThreadState>[] entries = globalThreadStates.entrySet().toArray(entriesPrototype);
+        int i = 0;
+        for (Map.Entry<Thread, ThreadState> entry: entries) {
+            if (entry.getValue().frame != null) {
+                ++i;
+            }
+        }
+        PyObject elements[] = new PyObject[i*2];
+        i = 0;
+        for (Map.Entry<Thread, ThreadState> entry: entries) {
+            if (entry.getValue().frame != null) {
+                elements[i++] = Py.newInteger(entry.getKey().getId());
+                elements[i++] = entry.getValue().frame;
+            }
+        }
+        return new PyDictionary(elements);
+    }
 }
