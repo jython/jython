@@ -637,6 +637,8 @@ class JavaSource(SimpleJavaFileObject):
         return self._source
 
 
+@unittest.skipIf(ToolProvider.getSystemJavaCompiler() is None,
+        "No Java compiler available. Is JAVA_HOME pointing to a JDK?")
 def compile_java_source(options, class_name, source):
     """Compiles a single java source "file" contained in the string source
     
