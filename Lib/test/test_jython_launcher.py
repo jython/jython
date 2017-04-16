@@ -31,7 +31,6 @@ def get_launcher(executable):
         # by the installer
         return executable
 
-
 def get_uname():
     _uname = None
     try:
@@ -49,9 +48,8 @@ def classpath_delimiter():
 
 
 class TestLauncher(unittest.TestCase):
-    
-    def get_cmdline(self, cmd, env):
 
+    def get_cmdline(self, cmd, env):
         output = subprocess.check_output(cmd, env=env).rstrip()
         if is_windows:
             return subprocess._cmdline2list(output)
@@ -76,7 +74,7 @@ class TestLauncher(unittest.TestCase):
                 k, v = arg[2:].split("=")
                 props[k] = v
         return props
-            
+
     def test_classpath_env(self):
         env = self.get_newenv()
         env["CLASSPATH"] = some_jar
@@ -207,7 +205,7 @@ class TestLauncher(unittest.TestCase):
 
     def test_file(self):
         self.assertCommand(['test.py'])
-    
+
     def test_dash(self):
         self.assertCommand(['-i'])
 

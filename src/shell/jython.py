@@ -20,19 +20,68 @@ from collections import OrderedDict
 
 is_windows = os.name == "nt" or (os.name == "java" and os._name == "nt")
 
+# A note about encoding:
+#
+# A major motivation for this program is to launch Jython on Windows, where
+# console and file encoding may be different. Command-line arguments and
+# environment variables are presented in Python 2.7 as byte-data, encoded
+# "somehow". It becomes important to know which decoding to use as soon as
+# paths may contain non-ascii characters. It is not the console encoding.
+# Experiment shows that sys.getfilesystemencoding() is generally applicable
+# to arguments, environment variables and spawning a subprocess.
+#
+# On a Windows 10 box, this comes up with pseudo-codec 'mbcs'. This supports
+# European accented characters pretty well.
+#
+# When localised to Chinese(simplified) the FS encoding mbcs includes many
+# more points than cp936 (the console encoding), although it still struggles
+# with European accented characters.
+
+ENCODING = sys.getfilesystemencoding() or "utf-8"
+
+
+def get_env(envvar, default=None):
+    """ Return the named environment variable, decoded to Unicode."""
+    v = os.environ.get(envvar, default)
+    # Tolerate default given as bytes, as we're bound to forget sometimes
+    if isinstance(v, bytes):
+        v = v.decode(ENCODING)
+    # Remove quotes sometimes necessary around the value
+    if v is not None and v.startswith('"') and v.endswith('"'):
+        v = v[1:-1]
+    return v
+
+def encode_list(args, encoding=ENCODING):
+    """ Convert list of Unicode strings to list of encoded byte strings."""
+    r = []
+    for a in args:
+        if not isinstance(a, bytes): a = a.encode(encoding)
+        r.append(a)
+    return r
+
+def decode_list(args, encoding=ENCODING):
+    """ Convert list of byte strings to list of Unicode strings."""
+    r = []
+    for a in args:
+        if not isinstance(a, unicode): a = a.decode(encoding)
+        r.append(a)
+    return r
 
 def parse_launcher_args(args):
+    """ Process the given argument list into two objects, the first part being
+        a namespace of checked arguments to the interpreter itself, and the rest
+        being the Python program it will run and its arguments.
+    """
     class Namespace(object):
         pass
     parsed = Namespace()
-    parsed.java = []
-    parsed.properties = OrderedDict()
-    parsed.boot = False
-    parsed.jdb = False
-    parsed.help = False
-    parsed.print_requested = False
-    parsed.profile = False
-    parsed.jdb = None
+    parsed.boot = False # --boot flag given
+    parsed.jdb = False # --jdb flag given
+    parsed.help = False # --help or -h flag given
+    parsed.print_requested = False # --print flag given
+    parsed.profile = False # --profile flag given
+    parsed.properties = OrderedDict() # properties to give the JVM
+    parsed.java = [] # any other arguments to give the JVM
 
     it = iter(args)
     next(it)  # ignore sys.argv[0]
@@ -42,11 +91,11 @@ def parse_launcher_args(args):
             arg = next(it)
         except StopIteration:
             break
-        if arg.startswith("-D"):
-            k, v = arg[2:].split("=")
+        if arg.startswith(u"-D"):
+            k, v = arg[2:].split(u"=")
             parsed.properties[k] = v
             i += 1
-        elif arg in ("-J-classpath", "-J-cp"):
+        elif arg in (u"-J-classpath", u"-J-cp"):
             try:
                 next_arg = next(it)
             except StopIteration:
@@ -55,24 +104,24 @@ def parse_launcher_args(args):
                 bad_option("Bad option for -J-classpath")
             parsed.classpath = next_arg
             i += 2
-        elif arg.startswith("-J-Xmx"):
+        elif arg.startswith(u"-J-Xmx"):
             parsed.mem = arg[2:]
             i += 1
-        elif arg.startswith("-J-Xss"):
+        elif arg.startswith(u"-J-Xss"):
             parsed.stack = arg[2:]
             i += 1
-        elif arg.startswith("-J"):
+        elif arg.startswith(u"-J"):
             parsed.java.append(arg[2:])
             i += 1
-        elif arg == "--print":
+        elif arg == u"--print":
             parsed.print_requested = True
             i += 1
-        elif arg in ("-h", "--help"):
+        elif arg in (u"-h", u"--help"):
             parsed.help = True
-        elif arg in ("--boot", "--jdb", "--profile"):
+        elif arg in (u"--boot", u"--jdb", u"--profile"):
             setattr(parsed, arg[2:], True)
             i += 1
-        elif arg == "--":
+        elif arg == u"--":
             i += 1
             break
         else:
@@ -92,13 +141,13 @@ class JythonCommand(object):
         if hasattr(self, "_uname"):
             return self._uname
         if is_windows:
-            self._uname = "windows"
+            self._uname = u"windows"
         else:
             uname = subprocess.check_output(["uname"]).strip().lower()
             if uname.startswith("cygwin"):
-                self._uname = "cygwin"
+                self._uname = u"cygwin"
             else:
-                self._uname = uname
+                self._uname = uname.decode(ENCODING)
         return self._uname
 
     @property
@@ -114,22 +163,23 @@ class JythonCommand(object):
         return self._java_command
 
     def setup_java_command(self):
+        """ Sets java_home and java_command according to environment and parsed
+            launcher arguments --jdb and --help.
+        """
         if self.args.help:
             self._java_home = None
-            self._java_command = "java"
+            self._java_command = u"java"
             return
-            
-        if "JAVA_HOME" not in os.environ:
-            self._java_home = None
-            self._java_command = "jdb" if self.args.jdb else "java"
+
+        command = u"jdb" if self.args.jdb else u"java"
+
+        self._java_home = get_env("JAVA_HOME")
+        if self._java_home is None or self.uname == u"cygwin":
+            # Assume java or jdb on the path
+            self._java_command = command
         else:
-            self._java_home = os.environ["JAVA_HOME"]
-            if self.uname == "cygwin":
-                self._java_command = "jdb" if self.args.jdb else "java"
-            else:
-                self._java_command = os.path.join(
-                    self.java_home, "bin",
-                    "jdb" if self.args.jdb else "java")
+            # Assume java or jdb in JAVA_HOME/bin
+            self._java_command = os.path.join(self._java_home, u"bin", command)
 
     @property
     def executable(self):
@@ -139,28 +189,37 @@ class JythonCommand(object):
         # Modified from
         # http://stackoverflow.com/questions/3718657/how-to-properly-determine-current-script-directory-in-python/22881871#22881871
         if getattr(sys, "frozen", False): # py2exe, PyInstaller, cx_Freeze
-            path = os.path.abspath(sys.executable)
+            # Frozen. Let it go with the executable path.
+            bytes_path = sys.executable
         else:
-            def inspect_this(): pass
-            path = inspect.getabsfile(inspect_this)
-        self._executable = os.path.realpath(path)
+            # Not frozen. Any object defined in this file will do. 
+            bytes_path = inspect.getfile(JythonCommand)
+        # Python 2 thinks in bytes. Carefully normalise in Unicode.
+        path = os.path.realpath(bytes_path.decode(ENCODING))
+        try:
+            # If possible, make this relative to the CWD.
+            # This helps manage multi-byte names in installation location.
+            path = os.path.relpath(path, os.getcwdu())
+        except ValueError:
+            # Many reasons why this might be impossible: use an absolute path.
+            path = os.path.abspath(path)
+        self._executable = path
         return self._executable
 
     @property
     def jython_home(self):
         if hasattr(self, "_jython_home"):
             return self._jython_home
-        if "JYTHON_HOME" in os.environ:
-            self._jython_home = os.environ["JYTHON_HOME"]
-        else:
-            self._jython_home = os.path.dirname(os.path.dirname(self.executable))
-        if self.uname == "cygwin":
-            self._jython_home = subprocess.check_output(["cygpath", "--windows", self._jython_home]).strip()
+        self._jython_home = get_env("JYTHON_HOME") or os.path.dirname(
+                    os.path.dirname(self.executable))
+        if self.uname == u"cygwin":
+            # Even on Cygwin, we need a Windows-style path for this
+            home = unicode_subprocess(["cygpath", "--windows", home])
         return self._jython_home
 
     @property
     def jython_opts():
-        return os.environ.get("JYTHON_OPTS", "")
+        return get_env("JYTHON_OPTS", "")
 
     @property
     def classpath_delimiter(self):
@@ -179,11 +238,9 @@ class JythonCommand(object):
             else:
                 jars.append(os.path.join(self.jython_home, "javalib", "*"))
         elif not os.path.exists(os.path.join(self.jython_home, "jython.jar")): 
-            bad_option("""{jython_home} contains neither jython-dev.jar nor jython.jar.
+            bad_option(u"""{} contains neither jython-dev.jar nor jython.jar.
 Try running this script from the 'bin' directory of an installed Jython or 
-setting {envvar_specifier}JYTHON_HOME.""".format(
-                    jython_home=self.jython_home,
-                    envvar_specifier="%" if self.uname == "windows" else "$"))
+setting JYTHON_HOME.""".format(self.jython_home))
         else:
             jars = [os.path.join(self.jython_home, "jython.jar")]
         self._jython_jars = jars
@@ -194,14 +251,14 @@ setting {envvar_specifier}JYTHON_HOME.""".format(
         if hasattr(self.args, "classpath"):
             return self.args.classpath
         else:
-            return os.environ.get("CLASSPATH", ".")
+            return get_env("CLASSPATH", ".")
 
     @property
     def java_mem(self):
         if hasattr(self.args, "mem"):
             return self.args.mem
         else:
-            return os.environ.get("JAVA_MEM", "-Xmx512m")
+            return get_env("JAVA_MEM", "-Xmx512m")
 
     @property
     def java_stack(self):
@@ -213,7 +270,7 @@ setting {envvar_specifier}JYTHON_HOME.""".format(
     @property
     def java_opts(self):
         return [self.java_mem, self.java_stack]
-        
+
     @property
     def java_profile_agent(self):
         return os.path.join(self.jython_home, "javalib", "profile.jar")
@@ -222,68 +279,84 @@ setting {envvar_specifier}JYTHON_HOME.""".format(
         if "JAVA_ENCODING" not in os.environ and self.uname == "darwin" and "file.encoding" not in self.args.properties:
             self.args.properties["file.encoding"] = "UTF-8"
 
-    def convert(self, arg):
-        if sys.stdout.encoding:
-            return arg.encode(sys.stdout.encoding)
-        else:
-            return arg
-
     def make_classpath(self, jars):
         return self.classpath_delimiter.join(jars)
 
     def convert_path(self, arg):
-        if self.uname == "cygwin":
-            if not arg.startswith("/cygdrive/"):
-                new_path = self.convert(arg).replace("/", "\\")
+        if self.uname == u"cygwin":
+            if not arg.startswith(u"/cygdrive/"):
+                return arg.replace(u"/", u"\\")
             else:
-                new_path = subprocess.check_output(["cygpath", "-pw", self.convert(arg)]).strip()
-            return new_path
+                arg = arg.replace('*', r'\*') # prevent globbing
+                return unicode_subprocess(["cygpath", "-pw", arg])
         else:
-            return self.convert(arg)
+            return arg
+
+    def unicode_subprocess(self, unicode_command):
+        """ Launch a command with subprocess.check_output() and read the
+            output, except everything is expected to be in Unicode.
+        """
+        cmd = []
+        for c in unicode_command:
+            if isinstance(c, bytes):
+                cmd.append(c)
+            else:
+                cmd.append(c.encode(ENCODING))
+        return subprocess.check_output(cmd).strip().decode(ENCODING)
 
     @property
     def command(self):
+        # Set default file encoding for just for Darwin (?)
         self.set_encoding()
+
+        # Begin to build the Java part of the ultimate command
         args = [self.java_command]
         args.extend(self.java_opts)
         args.extend(self.args.java)
 
+        # Get the class path right (depends on --boot)
         classpath = self.java_classpath
         jython_jars = self.jython_jars
         if self.args.boot:
-            args.append("-Xbootclasspath/a:%s" % self.convert_path(self.make_classpath(jython_jars)))
+            args.append(u"-Xbootclasspath/a:%s" % self.convert_path(self.make_classpath(jython_jars)))
         else:
             classpath = self.make_classpath(jython_jars) + self.classpath_delimiter + classpath
-        args.extend(["-classpath", self.convert_path(classpath)])
+        args.extend([u"-classpath", self.convert_path(classpath)])
 
         if "python.home" not in self.args.properties:
-            args.append("-Dpython.home=%s" % self.convert_path(self.jython_home))
+            args.append(u"-Dpython.home=%s" % self.convert_path(self.jython_home))
         if "python.executable" not in self.args.properties:
-            args.append("-Dpython.executable=%s" % self.convert_path(self.executable))
+            args.append(u"-Dpython.executable=%s" % self.convert_path(self.executable))
         if "python.launcher.uname" not in self.args.properties:
-            args.append("-Dpython.launcher.uname=%s" % self.uname)
-        # Determines whether running on a tty for the benefit of
+            args.append(u"-Dpython.launcher.uname=%s" % self.uname)
+
+        # Determine whether running on a tty for the benefit of
         # running on Cygwin. This step is needed because the Mintty
         # terminal emulator doesn't behave like a standard Microsoft
         # Windows tty, and so JNR Posix doesn't detect it properly.
         if "python.launcher.tty" not in self.args.properties:
-            args.append("-Dpython.launcher.tty=%s" % str(os.isatty(sys.stdin.fileno())).lower())
-        if self.uname == "cygwin" and "python.console" not in self.args.properties:
-            args.append("-Dpython.console=org.python.core.PlainConsole")
+            args.append(u"-Dpython.launcher.tty=%s" % str(os.isatty(sys.stdin.fileno())).lower())
+        if self.uname == u"cygwin" and "python.console" not in self.args.properties:
+            args.append(u"-Dpython.console=org.python.core.PlainConsole")
+
         if self.args.profile:
-            args.append("-XX:-UseSplitVerifier")
-            args.append("-javaagent:%s" % self.convert_path(self.java_profile_agent))
+            args.append(u"-XX:-UseSplitVerifier")
+            args.append(u"-javaagent:%s" % self.convert_path(self.java_profile_agent))
+
         for k, v in self.args.properties.iteritems():
-            args.append("-D%s=%s" % (self.convert(k), self.convert(v)))
-        args.append("org.python.util.jython")
+            args.append(u"-D%s=%s" % (k, v))
+
+        args.append(u"org.python.util.jython")
+
         if self.args.help:
-            args.append("--help")
+            args.append(u"--help")
+
         args.extend(self.jython_args)
         return args
 
 
 def bad_option(msg):
-    print >> sys.stderr, """
+    print >> sys.stderr, u"""
 {msg}
 usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...
 Try `jython -h' for more information.
@@ -312,19 +385,24 @@ JYTHON_OPTS: default command line arguments
 """
 
 def support_java_opts(args):
+    """ Generator from options intended for the JVM. Options beginning -D go
+        through unchanged, others are prefixed with -J.
+    """
+    # Input is expected to be Unicode, but just in case ...
+    if isinstance(args, bytes): args = args.decode(ENCODING)
     it = iter(args)
     while it:
         arg = next(it)
-        if arg.startswith("-D"):
+        if arg.startswith(u"-D"):
             yield arg
-        elif arg in ("-classpath", "-cp"):
-            yield "-J" + arg
+        elif arg in (u"-classpath", u"-cp"):
+            yield u"-J" + arg
             try:
                 yield next(it)
             except StopIteration:
                 bad_option("Argument expected for -classpath option in JAVA_OPTS")
         else:
-            yield "-J" + arg
+            yield u"-J" + arg
 
 
 # copied from subprocess module in Jython; see
@@ -378,37 +456,36 @@ def cmdline2list(cmdline):
 
     return argv
 
-
-def decode_args(sys_args):
-    args = [sys_args[0]]
-
-    def get_env_opts(envvar):
-        opts = os.environ.get(envvar, "")
-        if is_windows:
-            return cmdline2list(opts)
-        else:
-            return shlex.split(opts)
-
-    java_opts = get_env_opts("JAVA_OPTS")
-    jython_opts = get_env_opts("JYTHON_OPTS")
-
-    args.extend(support_java_opts(java_opts))
-    args.extend(sys_args[1:])
-
-    if sys.stdout.encoding:
-        if sys.stdout.encoding.lower() == "cp65001":
-            sys.exit("""Jython does not support code page 65001 (CP_UTF8).
-Please try another code page by setting it with the chcp command.""")
-        args = [arg.decode(sys.stdout.encoding) for arg in args]
-        jython_opts = [arg.decode(sys.stdout.encoding) for arg in jython_opts]
-
-    return args, jython_opts
-
+def get_env_opts(envvar):
+    """ Return a list of the values in the named environment variable,
+        split according to shell conventions, and decoded to Unicode.
+    """
+    opts = os.environ.get(envvar, "") # bytes at this point
+    if is_windows:
+        opts = cmdline2list(opts)
+    else:
+        opts = shlex.split(opts)
+    return decode_list(opts)
 
 def main(sys_args):
-    sys_args, jython_opts = decode_args(sys_args)
+    # The entire program must work in Unicode
+    sys_args = decode_list(sys_args)
+
+    # sys_args[0] is this script (which we'll replace with 'java' eventually).
+    # Insert options for the java command from the environment.
+    sys_args[1:1] = support_java_opts(get_env_opts("JAVA_OPTS"))
+
+    # Parse the composite arguments (yes, even the ones from JAVA_OPTS),
+    # and return the "unparsed" tail considered arguments for Jython itself.
     args, jython_args = parse_launcher_args(sys_args)
+
+    # Build the data from which we can generate the command ultimately.
+    # Jython options supplied from the environment stand in front of the
+    # unparsed tail from the command line. 
+    jython_opts = get_env_opts("JYTHON_OPTS")
     jython_command = JythonCommand(args, jython_opts + jython_args)
+
+    # This is the "fully adjusted" command to launch, but still as Unicode.
     command = jython_command.command
 
     if args.profile and not args.help:
@@ -416,23 +493,32 @@ def main(sys_args):
             os.unlink("profile.txt")
         except OSError:
             pass
+
     if args.print_requested and not args.help:
-        if jython_command.uname == "windows":
-            print subprocess.list2cmdline(jython_command.command)
+        if jython_command.uname == u"windows":
+            # Add escapes and quotes necessary to Windows.
+            # Normally used for a byte strings but Python is tolerant :)
+            command_line = subprocess.list2cmdline(command)
         else:
-            print " ".join(pipes.quote(arg) for arg in jython_command.command)
+            # Just concatenate with spaces
+            command_line = u" ".join(command)
+        # It is possible the Unicode cannot be encoded for the console
+        enc = sys.stdout.encoding or 'ascii'
+        sys.stdout.write(command_line.encode(enc, 'replace'))
     else:
-        if not (is_windows or not hasattr(os, "execvp") or args.help or jython_command.uname == "cygwin"):
+        if not (is_windows or not hasattr(os, "execvp") or args.help or 
+                jython_command.uname == u"cygwin"):
             # Replace this process with the java process.
             #
             # NB such replacements actually do not work under Windows,
             # but if tried, they also fail very badly by hanging.
             # So don't even try!
+            command = encode_list(command)
             os.execvp(command[0], command[1:])
         else:
             result = 1
             try:
-                result = subprocess.call(command)
+                result = subprocess.call(encode_list(command))
                 if args.help:
                     print_help()
             except KeyboardInterrupt:
