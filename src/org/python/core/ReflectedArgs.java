@@ -152,7 +152,7 @@ public class ReflectedArgs {
     /* Boxes argument in the varargs position if not already boxed */
     private PyObject[] ensureBoxedVarargs(PyObject[] pyArgs, int n) {
         if (pyArgs.length == 0) {
-        	// If there are no args return an empty list
+            // If there are no args return an empty list
             return new PyObject[]{new PyList()};
         }
         PyObject lastArg = pyArgs[pyArgs.length - 1];
