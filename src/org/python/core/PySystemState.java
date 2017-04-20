@@ -82,6 +82,9 @@ public class PySystemState extends PyObject implements AutoCloseable,
 
     public final static PyString float_repr_style = Py.newString("short");
 
+    /** Nominal Jython file system encoding (as <code>sys.getfilesystemencoding()</code>) */
+    static final PyString FILE_SYSTEM_ENCODING = Py.newString("utf-8");
+
     public static boolean py3kwarning = false;
 
     public final static Class flags = Options.class;
@@ -109,13 +112,13 @@ public class PySystemState extends PyObject implements AutoCloseable,
     public static PackageManager packageManager;
     private static File cachedir;
 
-    private static PyList defaultPath;
-    private static PyList defaultArgv;
-    private static PyObject defaultExecutable;
+    private static PyList defaultPath; // list of bytes or unicode
+    private static PyList defaultArgv; // list of bytes or unicode
+    private static PyObject defaultExecutable; // bytes or unicode or None
 
     public static Properties registry; // = init_registry();
-    public static PyObject prefix;
-    public static PyObject exec_prefix = Py.EmptyString;
+    public static PyObject prefix; // bytes or unicode
+    public static PyObject exec_prefix = Py.EmptyString; // bytes or unicode
 
     public static final PyString byteorder = new PyString("big");
     public static final int maxint = Integer.MAX_VALUE;
@@ -504,7 +507,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
     }
 
     public PyObject getfilesystemencoding() {
-        return Py.None;
+        return FILE_SYSTEM_ENCODING;
     }
 
 
@@ -840,10 +843,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
             }
         }
         if (prefix != null) {
-            PySystemState.prefix = Py.newString(prefix);
+            PySystemState.prefix = Py.newStringOrUnicode(prefix);
         }
         if (exec_prefix != null) {
-            PySystemState.exec_prefix = Py.newString(exec_prefix);
+            PySystemState.exec_prefix = Py.newStringOrUnicode(exec_prefix);
         }
         try {
             String jythonpath = System.getenv("JYTHONPATH");
@@ -1174,16 +1177,16 @@ public class PySystemState extends PyObject implements AutoCloseable,
         PyList argv = new PyList();
         if (args != null) {
             for (String arg : args) {
-                argv.append(Py.newStringOrUnicode(arg));
+                argv.append(Py.newStringOrUnicode(arg)); // XXX or always newUnicode?
             }
         }
         return argv;
     }
 
     /**
-     * Determine the default sys.executable value from the registry.
-     * If registry is not set (as in standalone jython jar), will use sys.prefix + /bin/jython(.exe) and the file may
-     * not exist. Users can create a wrapper in it's place to make it work in embedded environments.
+     * Determine the default sys.executable value from the registry. If registry is not set (as in
+     * standalone jython jar), we will use sys.prefix + /bin/jython(.exe) and the file may not
+     * exist. Users can create a wrapper in it's place to make it work in embedded environments.
      * Only if sys.prefix is null, returns Py.None
      *
      * @param props a Properties registry
@@ -1191,26 +1194,26 @@ public class PySystemState extends PyObject implements AutoCloseable,
      */
     private static PyObject initExecutable(Properties props) {
         String executable = props.getProperty("python.executable");
-        if (executable == null) {
+        File executableFile;
+        if (executable != null) {
+            // The executable from the registry is a Unicode String path
+            executableFile = new File(executable);
+        } else {
             if (prefix == null) {
                 return Py.None;
             } else {
-                executable = prefix.asString() + File.separator + "bin" + File.separator;
-                if (Platform.IS_WINDOWS) {
-                    executable += "jython.exe";
-                } else {
-                    executable += "jython";
-                }
+                // The prefix is a unicode or encoded bytes object
+                executableFile = new File(Py.fileSystemDecode(prefix),
+                        Platform.IS_WINDOWS ? "bin\\jython.exe" : "bin/jython");
             }
         }
 
-        File executableFile = new File(executable);
         try {
             executableFile = executableFile.getCanonicalFile();
         } catch (IOException ioe) {
             executableFile = executableFile.getAbsoluteFile();
         }
-        return new PyString(executableFile.getPath());
+        return Py.newStringOrUnicode(executableFile.getPath()); // XXX always bytes in CPython
     }
 
     /**
@@ -1353,8 +1356,8 @@ public class PySystemState extends PyObject implements AutoCloseable,
         PyList path = new PyList();
         addPaths(path, props.getProperty("python.path", ""));
         if (prefix != null) {
-            String libpath = new File(prefix.toString(), "Lib").toString();
-            path.append(new PyString(libpath));
+            String libpath = new File(Py.fileSystemDecode(prefix), "Lib").toString();
+            path.append(Py.fileSystemEncode(libpath)); // XXX or newStringOrUnicode or newUnicode?
         }
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
@@ -1397,7 +1400,8 @@ public class PySystemState extends PyObject implements AutoCloseable,
     private static void addPaths(PyList path, String pypath) {
         StringTokenizer tok = new StringTokenizer(pypath, java.io.File.pathSeparator);
         while (tok.hasMoreTokens()) {
-            path.append(new PyString(tok.nextToken().trim()));
+            // Use unicode object if necessary to represent the element
+            path.append(Py.newStringOrUnicode(tok.nextToken().trim()));
         }
     }
 
@@ -1540,6 +1544,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         closer.cleanup();
     }
 
+    @Override
     public void close() { cleanup(); }
 
     public static class PySystemStateCloser {

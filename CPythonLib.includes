@@ -110,6 +110,7 @@ mutex.py
 netrc.py
 nntplib.py
 numbers.py
+ntpath.py
 nturl2path.py
 opcode.py
 optparse.py

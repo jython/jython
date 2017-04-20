@@ -105,7 +105,8 @@ public class StdoutWrapper extends OutputStream {
         String s;
         if (o instanceof PyUnicode) {
             // Use the encoding and policy defined for the stream. (Each may be null.)
-            s = ((PyUnicode)o).encode(file.encoding, file.errors);
+            s = ((PyUnicode)o).encode(file.encoding, "replace"); //FIXME: back to ...
+            // s = ((PyUnicode)o).encode(file.encoding, file.errors);
         } else {
             s = o.__str__().toString();
         }

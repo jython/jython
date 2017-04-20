@@ -68,7 +68,7 @@ public class _imp {
      * This needs to be consolidated with the code in (@see org.python.core.imp).
      *
      * @param name module name
-     * @param entry a path String
+     * @param entry a path String (Unicode file or directory name)
      * @param findingPackage if looking for a package only try to locate __init__
      * @return null if no module found otherwise module information
      */
@@ -190,8 +190,10 @@ public class _imp {
 
     public static PyObject find_module(String name, PyObject path) {
         if (path == Py.None && PySystemState.getBuiltin(name) != null) {
-            return new PyTuple(Py.None, Py.newString(name),
-                               new PyTuple(Py.EmptyString, Py.EmptyString,
+            return new PyTuple(Py.None,
+                               Py.newString(name),
+                               new PyTuple(Py.EmptyString,
+                                           Py.EmptyString,
                                            Py.newInteger(C_BUILTIN)));
         }
 
@@ -199,14 +201,14 @@ public class _imp {
             path = Py.getSystemState().path;
         }
         for (PyObject p : path.asIterable()) {
-            ModuleInfo mi = findFromSource(name, p.toString(), false, true);
+            ModuleInfo mi = findFromSource(name, Py.fileSystemDecode(p), false, true);
             if(mi == null) {
                 continue;
             }
             return new PyTuple(mi.file,
-                               new PyString(mi.filename),
-                               new PyTuple(new PyString(mi.suffix),
-                                           new PyString(mi.mode),
+                               Py.newStringOrUnicode(mi.filename),
+                               new PyTuple(Py.newString(mi.suffix),
+                                           Py.newString(mi.mode),
                                            Py.newInteger(mi.type)));
         }
         throw Py.ImportError("No module named " + name);
@@ -216,7 +218,8 @@ public class _imp {
         PyObject mod = Py.None;
         PySystemState sys = Py.getSystemState();
         int type = data.__getitem__(2).asInt();
-        while(mod == Py.None) {
+        String filenameString = Py.fileSystemDecode(filename);
+        while (mod == Py.None) {
             String compiledName;
             switch (type) {
                 case PY_SOURCE:
@@ -226,7 +229,7 @@ public class _imp {
                     }
 
                     // XXX: This should load the accompanying byte code file instead, if it exists
-                    String resolvedFilename = sys.getPath(filename.toString());
+                    String resolvedFilename = sys.getPath(filenameString);
                     compiledName = makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
                         name = name.substring(0, name.length() - ".__init__".length());
@@ -241,19 +244,20 @@ public class _imp {
                     }
 
                     mod = imp.createFromSource(name.intern(), (InputStream)o,
-                            filename.toString(), compiledName, mtime);
+                            filenameString, compiledName, mtime);
                     break;
                 case PY_COMPILED:
-                    mod = load_compiled(name, filename.toString(), file);
+                    mod = load_compiled(name, filenameString, file);
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = imp.addModule(name);
                     m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
                     m.__dict__.__setitem__("__file__", filename);
-                    ModuleInfo mi = findFromSource(name, filename.toString(), true, true);
+                    ModuleInfo mi = findFromSource(name, filenameString, true, true);
                     type = mi.type;
                     file = mi.file;
-                    filename = new PyString(mi.filename);
+                    filenameString = mi.filename;
+                    filename = Py.newStringOrUnicode(filenameString);
                     break;
                 default:
                     throw Py.ImportError("No module named " + name);

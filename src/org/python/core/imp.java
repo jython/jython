@@ -418,7 +418,8 @@ public class imp {
         }
 
         if (moduleLocation != null) {
-            module.__setattr__("__file__", new PyString(moduleLocation));
+            // Standard library expects __file__ to be encoded bytes
+            module.__setattr__("__file__", Py.fileSystemEncode(moduleLocation));
         } else if (module.__findattr__("__file__") == null) {
             // Should probably never happen (but maybe with an odd custom builtins, or
             // Java Integration)
@@ -543,10 +544,8 @@ public class imp {
                     return loadFromLoader(loader, moduleName);
                 }
             }
-            if (!(p instanceof PyUnicode)) {
-                p = p.__str__();
-            }
-            ret = loadFromSource(sys, name, moduleName, p.toString());
+            // p could be unicode or bytes (in the file system encoding)
+            ret = loadFromSource(sys, name, moduleName, Py.fileSystemDecode(p));
             if (ret != null) {
                 return ret;
             }
@@ -606,7 +605,7 @@ public class imp {
         // display names are for identification purposes (e.g. __file__): when entry is
         // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
         // /tmp/foo/bar.py)
-        String displayDirName = entry.equals("") ? null : entry.toString();
+        String displayDirName = entry.equals("") ? null : entry;
         String displaySourceName = new File(new File(displayDirName, name), sourceName).getPath();
         String displayCompiledName =
                 new File(new File(displayDirName, name), compiledName).getPath();
@@ -640,7 +639,7 @@ public class imp {
             compiledFile = new File(dirName, compiledName);
         } else {
             PyModule m = addModule(modName);
-            PyObject filename = new PyString(new File(displayDirName, name).getPath());
+            PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());  // XXX fileSystemEncode?
             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 

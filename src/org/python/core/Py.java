@@ -84,6 +84,7 @@ public final class Py {
             throw new StreamCorruptedException("unknown singleton: " + which);
         }
     }
+
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
     public final static PyObject None = new PyNone();
@@ -220,6 +221,10 @@ public final class Py {
         int value = errno.intValue();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.IOError, args);
+    }
+
+    public static PyException IOError(Constant errno, String filename) {
+        return new PyException(Py.IOError, Py.fileSystemEncode(filename)); // XXX newStringOrUnicode?
     }
 
     public static PyException IOError(Constant errno, PyObject filename) {
@@ -681,6 +686,103 @@ public final class Py {
         } else {
             return Py.newString(codecs.PyUnicode_EncodeUTF8(s, null));
         }
+    }
+
+    /**
+     * Return a file name or path as Unicode (Java UTF-16 <code>String</code>), decoded if necessary
+     * from a Python <code>bytes</code> object, using the file system encoding. In Jython, this
+     * encoding is UTF-8, irrespective of the OS platform. This method is comparable with Python 3
+     * <code>os.fsdecode</code>, but for Java use, in places such as the <code>os</code> module. If
+     * the argument is not a <code>PyUnicode</code>, it will be decoded using the nominal Jython
+     * file system encoding. If the argument <i>is</i> a <code>PyUnicode</code>, its
+     * <code>String</code> is returned.
+     *
+     * @param filename as <code>bytes</code> to decode, or already as <code>unicode</code>
+     * @return unicode version of path
+     */
+    public static String fileSystemDecode(PyString filename) {
+        String s = filename.getString();
+        if (filename instanceof PyUnicode || CharMatcher.ascii().matchesAllOf(s)) {
+            // Already encoded or usable as ASCII
+            return s;
+        } else {
+            // It's bytes, so must decode properly
+            assert "utf-8".equals(PySystemState.FILE_SYSTEM_ENCODING.toString());
+            return codecs.PyUnicode_DecodeUTF8(s, null);
+        }
+    }
+
+    /**
+     * As {@link #fileSystemDecode(PyString)} but raising <code>ValueError</code> if not a
+     * <code>str</code> or <code>unicode</code>.
+     *
+     * @param filename as <code>bytes</code> to decode, or already as <code>unicode</code>
+     * @return unicode version of the file name
+     */
+    public static String fileSystemDecode(PyObject filename) {
+        if (filename instanceof PyString) {
+            return fileSystemDecode((PyString)filename);
+        } else
+            throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
+                    filename.getType().fastGetName()));
+    }
+
+    /**
+     * Return a PyString object we can use as a file name or file path in places where Python
+     * expects a <code>bytes</code> (that is a <code>str</code>) object in the file system encoding.
+     * In Jython, this encoding is UTF-8, irrespective of the OS platform.
+     * <p>
+     * This is subtly different from CPython's use of "file system encoding", which tracks the
+     * platform's choice so that OS services may be called that have a bytes interface. Jython's
+     * interaction with the OS occurs via Java using String arguments representing Unicode values,
+     * so we have no need to match the encoding actually chosen by the platform (e.g. 'mbcs' on
+     * Windows). Rather we need a nominal Jython file system encoding, for use where the standard
+     * library forces byte paths on us (in Python 2). There is no reason for this choice to vary
+     * with OS platform. Methods receiving paths as <code>bytes</code> will
+     * {@link #fileSystemDecode(PyString)} them again for Java.
+     *
+     * @param filename as <code>unicode</code> to encode, or already as <code>bytes</code>
+     * @return encoded bytes version of path
+     */
+    public static PyString fileSystemEncode(String filename) {
+        if (CharMatcher.ascii().matchesAllOf(filename)) {
+            // Just wrap it as US-ASCII is a subset of the file system encoding
+            return Py.newString(filename);
+        } else {
+            // It's non just US-ASCII, so must encode properly
+            assert "utf-8".equals(PySystemState.FILE_SYSTEM_ENCODING.toString());
+            return Py.newString(codecs.PyUnicode_EncodeUTF8(filename, null));
+        }
+    }
+
+    /**
+     * Return a PyString object we can use as a file name or file path in places where Python
+     * expects a <code>bytes</code> (that is, <code>str</code>) object in the file system encoding.
+     * In Jython, this encoding is UTF-8, irrespective of the OS platform. This method is comparable
+     * with Python 3 <code>os.fsencode</code>. If the argument is a PyString, it is returned
+     * unchanged. If the argument is a PyUnicode, it is converted to a <code>bytes</code> using the
+     * nominal Jython file system encoding.
+     *
+     * @param filename as <code>unicode</code> to encode, or already as <code>bytes</code>
+     * @return encoded bytes version of path
+     */
+    public static PyString fileSystemEncode(PyString filename) {
+        return (filename instanceof PyUnicode) ? fileSystemEncode(filename.getString()) : filename;
+    }
+
+    /**
+     * Convert a <code>PyList</code> path to a list of Java <code>String</code> objects decoded from
+     * the path elements to strings guaranteed usable in the Java API.
+     *
+     * @param path a Python search path
+     * @return equivalent Java list
+     */
+    private static List<String> fileSystemDecode(PyList path) {
+        List<String> list = new ArrayList<>(path.__len__());
+        for (PyObject filename : path.getList()) {
+            list.add(fileSystemDecode(filename));
+        }
+        return list;
     }
 
     public static PyStringMap newStringMap() {
@@ -1282,7 +1384,7 @@ public final class Py {
             if (moduleName == null) {
                 buf.append("<unknown>");
             } else {
-                String moduleStr = moduleName.toString();
+                String moduleStr = Py.fileSystemDecode(moduleName);
                 if (!moduleStr.equals("exceptions")) {
                     buf.append(moduleStr);
                     buf.append(".");
@@ -1294,7 +1396,7 @@ public final class Py {
         }
         if (value != null && value != Py.None) {
             // only print colon if the str() of the object is not the empty string
-            PyObject s = useRepr ? value.__repr__() : value.__str__();
+            PyObject s = useRepr ? value.__repr__() : value;
             if (!(s instanceof PyString) || s.__len__() != 0) {
                 buf.append(": ");
             }
@@ -1565,6 +1667,16 @@ public final class Py {
         }
     }
 
+    private static final String IMPORT_SITE_ERROR = ""
+            + "Cannot import site module and its dependencies: %s\n"
+            + "Determine if the following attributes are correct:\n" //
+            + "  * sys.path: %s\n"
+            + "    This attribute might be including the wrong directories, such as from CPython\n"
+            + "  * sys.prefix: %s\n"
+            + "    This attribute is set by the system property python.home, although it can\n"
+            + "    be often automatically determined by the location of the Jython jar file\n\n"
+            + "You can use the -S option or python.import.site=false to not import the site module";
+
     public static boolean importSiteIfSelected() {
         if (Options.importSite) {
             try {
@@ -1574,18 +1686,10 @@ public final class Py {
             } catch (PyException pye) {
                 if (pye.match(Py.ImportError)) {
                     PySystemState sys = Py.getSystemState();
-                    throw Py.ImportError(String.format(""
-                                    + "Cannot import site module and its dependencies: %s\n"
-                                    + "Determine if the following attributes are correct:\n"
-                                    + "  * sys.path: %s\n"
-                                    + "    This attribute might be including the wrong directories, such as from CPython\n"
-                                    + "  * sys.prefix: %s\n"
-                                    + "    This attribute is set by the system property python.home, although it can\n"
-                                    + "    be often automatically determined by the location of the Jython jar file\n\n"
-                                    + "You can use the -S option or python.import.site=false to not import the site module",
-                            pye.value.__getattr__("args").__getitem__(0),
-                            sys.path,
-                            sys.prefix));
+                    String value = pye.value.__getattr__("args").__getitem__(0).toString();
+                    List<String> path = fileSystemDecode(sys.path);
+                    throw Py.ImportError(
+                            String.format(IMPORT_SITE_ERROR, value, path, PySystemState.prefix));
                 } else {
                     throw pye;
                 }
@@ -2266,7 +2370,7 @@ public final class Py {
         }
         /* Here we would actually like to call cls.__findattr__("__metaclass__")
          * rather than cls.getType(). However there are circumstances where the
-         * metaclass doesn't show up as __metaclass__. On the other hand we need 
+         * metaclass doesn't show up as __metaclass__. On the other hand we need
          * to avoid that checker refers to builtin type___subclasscheck__ or
          * type___instancecheck__. Filtering out checker-instances of
          * PyBuiltinMethodNarrow does the trick. We also filter out PyMethodDescr

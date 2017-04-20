@@ -20,7 +20,7 @@ public class PyNullImporter extends PyObject {
 
     public PyNullImporter(PyObject pathObj) {
         super();
-        String pathStr = asPath(pathObj);
+        String pathStr = Py.fileSystemDecode(pathObj);
         if (pathStr.equals("")) {
             throw Py.ImportError("empty pathname");
         }
@@ -40,17 +40,6 @@ public class PyNullImporter extends PyObject {
     @ExposedMethod(defaults = "null")
     final PyObject NullImporter_find_module(String fullname, String path) {
         return Py.None;
-    }
-
-    // FIXME Refactoring move helper function to a central util library
-    // FIXME Also can take in account working in zip file systems
-
-    private static String asPath(PyObject pathObj) {
-        if (!(pathObj instanceof PyString)) {
-            throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
-                    pathObj.getType().fastGetName()));
-        }
-        return pathObj.toString();
     }
 
     private static boolean isDir(String pathStr) {
