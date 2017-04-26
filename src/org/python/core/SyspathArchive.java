@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.zip.*;
 
 @Untraversable
-public class SyspathArchive extends PyString {
+public class SyspathArchive extends PyUnicode {
     private ZipFile zipFile;
 
     public SyspathArchive(String archiveName) throws IOException {

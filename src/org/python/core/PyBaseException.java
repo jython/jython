@@ -169,12 +169,17 @@ public class PyBaseException extends PyObject implements Traverseproc {
     @ExposedMethod(doc = BuiltinDocs.BaseException___str___doc)
     final PyString BaseException___str__() {
         switch (args.__len__()) {
-        case 0:
-            return Py.EmptyString;
-        case 1:
-            return args.__getitem__(0).__str__();
-        default:
-            return args.__str__();
+            case 0:
+                return Py.EmptyString;
+            case 1:
+                PyObject arg = args.__getitem__(0);
+                if (arg instanceof PyString) {
+                    return (PyString)arg;
+                } else {
+                    return arg.__str__();
+                }
+            default:
+                return args.__str__();
         }
     }
 

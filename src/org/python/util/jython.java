@@ -341,8 +341,8 @@ public class jython {
             } else {
                 try {
                     interp.globals.__setitem__(new PyString("__file__"),
-                            new PyString(opts.filename));
-
+                            // Note that __file__ is widely expected to be encoded bytes
+                            Py.fileSystemEncode(opts.filename));
                     FileInputStream file;
                     try {
                         file = new FileInputStream(new RelativeFile(opts.filename));
