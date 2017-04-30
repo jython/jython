@@ -79,7 +79,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     PyString(StringBuilder buffer) {
-        this(TYPE, new String(buffer));
+        this(TYPE, buffer.toString());
     }
 
     /**
@@ -3998,9 +3998,9 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * Implements PEP-3101 {}-formatting methods <code>str.format()</code> and
      * <code>unicode.format()</code>. When called with <code>enclosingIterator == null</code>, this
      * method takes this object as its formatting string. The method is also called (calls itself)
-     * to deal with nested formatting sepecifications. In that case, <code>enclosingIterator</code>
+     * to deal with nested formatting specifications. In that case, <code>enclosingIterator</code>
      * is a {@link MarkupIterator} on this object and <code>value</code> is a substring of this
-     * object needing recursive transaltion.
+     * object needing recursive translation.
      *
      * @param args to be interpolated into the string
      * @param keywords for the trailing args

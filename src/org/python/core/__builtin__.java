@@ -85,7 +85,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 18:
                 return __builtin__.eval(arg1);
             case 19:
-                __builtin__.execfile(arg1.asString());
+                __builtin__.execfile(Py.fileSystemDecode(arg1));
                 return Py.None;
             case 23:
                 return __builtin__.hex(arg1);
@@ -141,7 +141,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 18:
                 return __builtin__.eval(arg1, arg2);
             case 19:
-                __builtin__.execfile(arg1.asString(), arg2);
+                __builtin__.execfile(Py.fileSystemDecode(arg1), arg2);
                 return Py.None;
             case 20:
                 return __builtin__.filter(arg1, arg2);
@@ -191,7 +191,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 18:
                 return __builtin__.eval(arg1, arg2, arg3);
             case 19:
-                __builtin__.execfile(arg1.asString(), arg2, arg3);
+                __builtin__.execfile(Py.fileSystemDecode(arg1), arg2, arg3);
                 return Py.None;
             case 21:
                 return __builtin__.getattr(arg1, arg2, arg3);
@@ -1629,7 +1629,7 @@ class CompileFunction extends PyBuiltinFunction {
                                                    "dont_inherit"},
                                      3);
         PyObject source = ap.getPyObject(0);
-        String filename = ap.getString(1);
+        String filename = Py.fileSystemDecode(ap.getPyObject(1));
         String mode = ap.getString(2);
         int flags = ap.getInt(3, 0);
         boolean dont_inherit = ap.getPyObject(4, Py.False).__nonzero__();

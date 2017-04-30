@@ -89,7 +89,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     PyUnicode(StringBuilder buffer) {
-        this(TYPE, new String(buffer));
+        this(TYPE, buffer.toString());
     }
 
     private static StringBuilder fromCodePoints(Iterator<Integer> iter) {
@@ -713,7 +713,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         for (Iterator<Integer> iter = newSubsequenceIterator(start, stop, step); iter.hasNext();) {
             buffer.appendCodePoint(iter.next());
         }
-        return createInstance(new String(buffer));
+        return createInstance(buffer.toString());
     }
 
     @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.unicode___getslice___doc)

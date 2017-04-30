@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.ByteArrayOutputStream;
+import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
@@ -10,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamException;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
@@ -25,21 +26,20 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
+import org.python.antlr.base.mod;
+import org.python.core.adapter.ClassicPyObjectAdapter;
+import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.modules.posix.PosixModule;
+import org.python.util.Generic;
+
 import com.google.common.base.CharMatcher;
+
 import jline.console.UserInterruptException;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.util.Platform;
-
-import org.python.antlr.base.mod;
-import org.python.core.adapter.ClassicPyObjectAdapter;
-import org.python.core.adapter.ExtensiblePyObjectAdapter;
-import org.python.core.Traverseproc;
-import org.python.core.Visitproc;
-import org.python.modules.posix.PosixModule;
-import org.python.util.Generic;
 
 /** Builtin types that are used to setup PyObject.
  *
@@ -84,6 +84,7 @@ public final class Py {
             throw new StreamCorruptedException("unknown singleton: " + which);
         }
     }
+
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
     public final static PyObject None = new PyNone();
@@ -127,7 +128,6 @@ public final class Py {
     public final static long TPFLAGS_BASETYPE = 1L << 10;
     /** Type is abstract and cannot be instantiated */
     public final static long TPFLAGS_IS_ABSTRACT = 1L << 20;
-
 
 
     /** A unique object to indicate no conversion is possible
@@ -220,6 +220,10 @@ public final class Py {
         int value = errno.intValue();
         PyObject args = new PyTuple(Py.newInteger(value), PosixModule.strerror(value));
         return new PyException(Py.IOError, args);
+    }
+
+    public static PyException IOError(Constant errno, String filename) {
+        return IOError(errno, Py.fileSystemEncode(filename));
     }
 
     public static PyException IOError(Constant errno, PyObject filename) {
@@ -683,6 +687,103 @@ public final class Py {
         }
     }
 
+    /**
+     * Return a file name or path as Unicode (Java UTF-16 <code>String</code>), decoded if necessary
+     * from a Python <code>bytes</code> object, using the file system encoding. In Jython, this
+     * encoding is UTF-8, irrespective of the OS platform. This method is comparable with Python 3
+     * <code>os.fsdecode</code>, but for Java use, in places such as the <code>os</code> module. If
+     * the argument is not a <code>PyUnicode</code>, it will be decoded using the nominal Jython
+     * file system encoding. If the argument <i>is</i> a <code>PyUnicode</code>, its
+     * <code>String</code> is returned.
+     *
+     * @param filename as <code>bytes</code> to decode, or already as <code>unicode</code>
+     * @return unicode version of path
+     */
+    public static String fileSystemDecode(PyString filename) {
+        String s = filename.getString();
+        if (filename instanceof PyUnicode || CharMatcher.ascii().matchesAllOf(s)) {
+            // Already encoded or usable as ASCII
+            return s;
+        } else {
+            // It's bytes, so must decode properly
+            assert "utf-8".equals(PySystemState.FILE_SYSTEM_ENCODING.toString());
+            return codecs.PyUnicode_DecodeUTF8(s, null);
+        }
+    }
+
+    /**
+     * As {@link #fileSystemDecode(PyString)} but raising <code>ValueError</code> if not a
+     * <code>str</code> or <code>unicode</code>.
+     *
+     * @param filename as <code>bytes</code> to decode, or already as <code>unicode</code>
+     * @return unicode version of the file name
+     */
+    public static String fileSystemDecode(PyObject filename) {
+        if (filename instanceof PyString) {
+            return fileSystemDecode((PyString)filename);
+        } else
+            throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
+                    filename.getType().fastGetName()));
+    }
+
+    /**
+     * Return a PyString object we can use as a file name or file path in places where Python
+     * expects a <code>bytes</code> (that is a <code>str</code>) object in the file system encoding.
+     * In Jython, this encoding is UTF-8, irrespective of the OS platform.
+     * <p>
+     * This is subtly different from CPython's use of "file system encoding", which tracks the
+     * platform's choice so that OS services may be called that have a bytes interface. Jython's
+     * interaction with the OS occurs via Java using String arguments representing Unicode values,
+     * so we have no need to match the encoding actually chosen by the platform (e.g. 'mbcs' on
+     * Windows). Rather we need a nominal Jython file system encoding, for use where the standard
+     * library forces byte paths on us (in Python 2). There is no reason for this choice to vary
+     * with OS platform. Methods receiving paths as <code>bytes</code> will
+     * {@link #fileSystemDecode(PyString)} them again for Java.
+     *
+     * @param filename as <code>unicode</code> to encode, or already as <code>bytes</code>
+     * @return encoded bytes version of path
+     */
+    public static PyString fileSystemEncode(String filename) {
+        if (CharMatcher.ascii().matchesAllOf(filename)) {
+            // Just wrap it as US-ASCII is a subset of the file system encoding
+            return Py.newString(filename);
+        } else {
+            // It's non just US-ASCII, so must encode properly
+            assert "utf-8".equals(PySystemState.FILE_SYSTEM_ENCODING.toString());
+            return Py.newString(codecs.PyUnicode_EncodeUTF8(filename, null));
+        }
+    }
+
+    /**
+     * Return a PyString object we can use as a file name or file path in places where Python
+     * expects a <code>bytes</code> (that is, <code>str</code>) object in the file system encoding.
+     * In Jython, this encoding is UTF-8, irrespective of the OS platform. This method is comparable
+     * with Python 3 <code>os.fsencode</code>. If the argument is a PyString, it is returned
+     * unchanged. If the argument is a PyUnicode, it is converted to a <code>bytes</code> using the
+     * nominal Jython file system encoding.
+     *
+     * @param filename as <code>unicode</code> to encode, or already as <code>bytes</code>
+     * @return encoded bytes version of path
+     */
+    public static PyString fileSystemEncode(PyString filename) {
+        return (filename instanceof PyUnicode) ? fileSystemEncode(filename.getString()) : filename;
+    }
+
+    /**
+     * Convert a <code>PyList</code> path to a list of Java <code>String</code> objects decoded from
+     * the path elements to strings guaranteed usable in the Java API.
+     *
+     * @param path a Python search path
+     * @return equivalent Java list
+     */
+    private static List<String> fileSystemDecode(PyList path) {
+        List<String> list = new ArrayList<>(path.__len__());
+        for (PyObject filename : path.getList()) {
+            list.add(fileSystemDecode(filename));
+        }
+        return list;
+    }
+
     public static PyStringMap newStringMap() {
         // enable lazy bootstrapping (see issue #1671)
         if (!PyType.hasBuilder(PyStringMap.class)) {
@@ -1073,11 +1174,11 @@ public final class Py {
         }
         Py.getSystemState().callExitFunc();
     }
-    //XXX: this needs review to make sure we are cutting out all of the Java
-    //     exceptions.
+
+    //XXX: this needs review to make sure we are cutting out all of the Java exceptions.
     private static String getStackTrace(Throwable javaError) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        javaError.printStackTrace(new PrintStream(buf));
+        CharArrayWriter buf = new CharArrayWriter();
+        javaError.printStackTrace(new PrintWriter(buf));
 
         String str = buf.toString();
         int index = -1;
@@ -1170,31 +1271,55 @@ public final class Py {
         ts.exception = null;
     }
 
-    public static void displayException(PyObject type, PyObject value, PyObject tb,
-                                        PyObject file) {
+    /**
+     * Print the description of an exception as a big string. The arguments are closely equivalent
+     * to the tuple returned by Python <code>sys.exc_info</code>, on standard error or a given
+     * byte-oriented file. Compare with Python <code>traceback.print_exception</code>.
+     *
+     * @param type of exception
+     * @param value the exception parameter (second argument to <code>raise</code>)
+     * @param tb traceback of the call stack where the exception originally occurred
+     * @param file to print encoded string to, or null meaning standard error
+     */
+    public static void displayException(PyObject type, PyObject value, PyObject tb, PyObject file) {
+
+        // Output is to standard error, unless a file object has been given.
         StdoutWrapper stderr = Py.stderr;
         if (file != null) {
             stderr = new FixedFileWrapper(file);
         }
         flushLine();
 
+        // The creation of the report operates entirely in Java String (to support Unicode).
+        String formattedException = exceptionToString(type, value, tb);
+        stderr.print(formattedException);
+    }
+
+    /**
+     * Format the description of an exception as a big string. The arguments are closely equivalent
+     * to the tuple returned by Python <code>sys.exc_info</code>. Compare with Python
+     * <code>traceback.format_exception</code>.
+     *
+     * @param type of exception
+     * @param value the exception parameter (second argument to <code>raise</code>)
+     * @param tb traceback of the call stack where the exception originally occurred
+     * @return string representation of the traceback and exception
+     */
+    static String exceptionToString(PyObject type, PyObject value, PyObject tb) {
+
+        // Compose the stack dump, syntax error, and actual exception in this buffer:
+        StringBuilder buf;
+
         if (tb instanceof PyTraceback) {
-            stderr.print(((PyTraceback) tb).dumpStack());
+            buf = new StringBuilder(((PyTraceback)tb).dumpStack());
+        } else {
+            buf = new StringBuilder();
         }
+
         if (__builtin__.isinstance(value, Py.SyntaxError)) {
-            PyObject filename = value.__findattr__("filename");
-            PyObject text = value.__findattr__("text");
-            PyObject lineno = value.__findattr__("lineno");
-            stderr.print("  File \"");
-            stderr.print(filename == Py.None || filename == null ?
-                         "<string>" : filename.toString());
-            stderr.print("\", line ");
-            stderr.print(lineno == null ? Py.newString("0") : lineno);
-            stderr.print("\n");
-            if (text != Py.None && text != null && text.__len__() != 0) {
-                printSyntaxErrorText(stderr, value.__findattr__("offset").asInt(),
-                                     text.toString());
-            }
+            // The value part of the exception is a syntax error: first emit that.
+            appendSyntaxError(buf, value);
+            // Now supersede it with just the syntax error message for the next phase.
             value = value.__findattr__("msg");
             if (value == null) {
                 value = Py.None;
@@ -1203,26 +1328,53 @@ public final class Py {
 
         if (value.getJavaProxy() != null) {
             Object javaError = value.__tojava__(Throwable.class);
-
             if (javaError != null && javaError != Py.NoConversion) {
-                stderr.println(getStackTrace((Throwable) javaError));
+                // The value is some Java Throwable: append that too
+                buf.append(getStackTrace((Throwable)javaError));
             }
         }
+
+        // Be prepared for formatting the value part to fail (fall back to just the type)
         try {
-            stderr.println(formatException(type, value));
+            buf.append(formatException(type, value));
         } catch (Exception ex) {
-            stderr.println(formatException(type, Py.None));
+            buf.append(formatException(type, Py.None));
         }
+        buf.append('\n');
+
+        return buf.toString();
     }
 
     /**
-     * Print the two lines showing where a SyntaxError was caused.
-     *
-     * @param out StdoutWrapper to print to
-     * @param offset the offset into text
-     * @param text a source code String line
+     * Helper to {@link #tracebackToString(PyObject, PyObject)} when the value in an exception turns
+     * out to be a syntax error.
      */
-    private static void printSyntaxErrorText(StdoutWrapper out, int offset, String text) {
+    private static void appendSyntaxError(StringBuilder buf, PyObject value) {
+
+        PyObject filename = value.__findattr__("filename");
+        PyObject text = value.__findattr__("text");
+        PyObject lineno = value.__findattr__("lineno");
+
+        buf.append("  File \"");
+        buf.append(filename == Py.None || filename == null ? "<string>" : filename.toString());
+        buf.append("\", line ");
+        buf.append(lineno == null ? Py.newString('0') : lineno);
+        buf.append('\n');
+
+        if (text != Py.None && text != null && text.__len__() != 0) {
+            appendSyntaxErrorText(buf, value.__findattr__("offset").asInt(), text.toString());
+        }
+    }
+
+
+    /**
+     * Generate two lines showing where a SyntaxError was caused.
+     *
+     * @param buf to append with generated message text
+     * @param offset the offset into text
+     * @param text a source code line
+     */
+    private static void appendSyntaxErrorText(StringBuilder buf, int offset, String text) {
         if (offset >= 0) {
             if (offset > 0 && offset == text.length()) {
                 offset--;
@@ -1250,19 +1402,21 @@ public final class Py {
             text = text.substring(i, text.length());
         }
 
-        out.print("    ");
-        out.print(text);
+        buf.append("    ");
+        buf.append(text);
         if (text.length() == 0 || !text.endsWith("\n")) {
-            out.print("\n");
+            buf.append('\n');
         }
         if (offset == -1) {
             return;
         }
-        out.print("    ");
+
+        // The indicator line "        ^"
+        buf.append("    ");
         for (offset--; offset > 0; offset--) {
-            out.print(" ");
+            buf.append(' ');
         }
-        out.print("^\n");
+        buf.append("^\n");
     }
 
     public static String formatException(PyObject type, PyObject value) {
@@ -1290,17 +1444,32 @@ public final class Py {
             }
             buf.append(className);
         } else {
-            buf.append(useRepr ? type.__repr__() : type.__str__());
+            // Never happens since Python 2.7? Do something sensible anyway.
+            buf.append(asMessageString(type, useRepr));
         }
+
         if (value != null && value != Py.None) {
-            // only print colon if the str() of the object is not the empty string
-            PyObject s = useRepr ? value.__repr__() : value.__str__();
-            if (!(s instanceof PyString) || s.__len__() != 0) {
-                buf.append(": ");
+            String s = asMessageString(value, useRepr);
+            // Print colon and object (unless it renders as "")
+            if (s.length() > 0) {
+                buf.append(": ").append(s);
             }
-            buf.append(s);
         }
+
         return buf.toString();
+    }
+
+    /** Defensive method to avoid exceptions from decoding (or import encodings) */
+    private static String asMessageString(PyObject value, boolean useRepr) {
+        if (useRepr)
+            value = value.__repr__();
+        if (value instanceof PyUnicode) {
+            return value.asString();
+        } else {
+            // Carefully avoid decoding errors that would swallow the intended message
+            String s = value.__str__().getString();
+            return PyString.encode_UnicodeEscape(s, false);
+        }
     }
 
     public static void writeUnraisable(Throwable unraisable, PyObject obj) {
@@ -1565,6 +1734,16 @@ public final class Py {
         }
     }
 
+    private static final String IMPORT_SITE_ERROR = ""
+            + "Cannot import site module and its dependencies: %s\n"
+            + "Determine if the following attributes are correct:\n" //
+            + "  * sys.path: %s\n"
+            + "    This attribute might be including the wrong directories, such as from CPython\n"
+            + "  * sys.prefix: %s\n"
+            + "    This attribute is set by the system property python.home, although it can\n"
+            + "    be often automatically determined by the location of the Jython jar file\n\n"
+            + "You can use the -S option or python.import.site=false to not import the site module";
+
     public static boolean importSiteIfSelected() {
         if (Options.importSite) {
             try {
@@ -1574,18 +1753,10 @@ public final class Py {
             } catch (PyException pye) {
                 if (pye.match(Py.ImportError)) {
                     PySystemState sys = Py.getSystemState();
-                    throw Py.ImportError(String.format(""
-                                    + "Cannot import site module and its dependencies: %s\n"
-                                    + "Determine if the following attributes are correct:\n"
-                                    + "  * sys.path: %s\n"
-                                    + "    This attribute might be including the wrong directories, such as from CPython\n"
-                                    + "  * sys.prefix: %s\n"
-                                    + "    This attribute is set by the system property python.home, although it can\n"
-                                    + "    be often automatically determined by the location of the Jython jar file\n\n"
-                                    + "You can use the -S option or python.import.site=false to not import the site module",
-                            pye.value.__getattr__("args").__getitem__(0),
-                            sys.path,
-                            sys.prefix));
+                    String value = pye.value.__getattr__("args").__getitem__(0).toString();
+                    List<String> path = fileSystemDecode(sys.path);
+                    throw Py.ImportError(
+                            String.format(IMPORT_SITE_ERROR, value, path, PySystemState.prefix));
                 } else {
                     throw pye;
                 }
@@ -2266,7 +2437,7 @@ public final class Py {
         }
         /* Here we would actually like to call cls.__findattr__("__metaclass__")
          * rather than cls.getType(). However there are circumstances where the
-         * metaclass doesn't show up as __metaclass__. On the other hand we need 
+         * metaclass doesn't show up as __metaclass__. On the other hand we need
          * to avoid that checker refers to builtin type___subclasscheck__ or
          * type___instancecheck__. Filtering out checker-instances of
          * PyBuiltinMethodNarrow does the trick. We also filter out PyMethodDescr

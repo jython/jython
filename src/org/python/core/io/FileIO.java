@@ -67,7 +67,7 @@ public class FileIO extends RawIOBase {
      * @see #FileIO(PyString name, String mode)
      */
     public FileIO(String name, String mode) {
-        this(Py.newString(name), mode);
+        this(Py.newUnicode(name), mode);
     }
 
     /**
@@ -82,7 +82,7 @@ public class FileIO extends RawIOBase {
      */
     public FileIO(PyString name, String mode) {
         parseMode(mode);
-        File absPath = new RelativeFile(name.toString());
+        File absPath = new RelativeFile(Py.fileSystemDecode(name));
 
         try {
             if ((appending && !(reading || plus)) || (writing && !reading && !plus)) {

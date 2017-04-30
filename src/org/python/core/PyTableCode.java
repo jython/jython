@@ -66,6 +66,7 @@ public class PyTableCode extends PyBaseCode
         // co_lnotab, co_stacksize
     };
 
+    @Override
     public PyObject __dir__() {
         PyString members[] = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++)
@@ -80,11 +81,13 @@ public class PyTableCode extends PyBaseCode
         throw Py.AttributeError(name);
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
         // no writable attributes
         throwReadonly(name);
     }
 
+    @Override
     public void __delattr__(String name) {
         throwReadonly(name);
     }
@@ -99,6 +102,7 @@ public class PyTableCode extends PyBaseCode
         return new PyTuple(pystr);
     }
 
+    @Override
     public PyObject __findattr_ex__(String name) {
         // have to craft co_varnames specially
         if (name == "co_varnames") {
@@ -111,7 +115,7 @@ public class PyTableCode extends PyBaseCode
             return toPyStringTuple(co_freevars);
         }
         if (name == "co_filename") {
-            return new PyString(co_filename);
+            return Py.fileSystemEncode(co_filename); // bytes object expected by clients
         }
         if (name == "co_name") {
             return new PyString(co_name);

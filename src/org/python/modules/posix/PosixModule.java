@@ -486,7 +486,8 @@ public class PosixModule implements ClassDictInit {
         "getcwd() -> path\n\n" +
         "Return a string representing the current working directory.");
     public static PyObject getcwd() {
-        return Py.newStringOrUnicode(Py.getSystemState().getCurrentWorkingDir());
+        // The return value is bytes in the file system encoding
+        return Py.fileSystemEncode(Py.getSystemState().getCurrentWorkingDir());
     }
 
     public static PyString __doc__getcwdu = new PyString(
@@ -1343,25 +1344,24 @@ public class PosixModule implements ClassDictInit {
             return environ;
         }
         for (Map.Entry<String, String> entry : env.entrySet()) {
+            // The shell restricts names to a subset of ASCII and values are encoded byte strings.
             environ.__setitem__(
-                    Py.newStringOrUnicode(entry.getKey()),
-                    Py.newStringOrUnicode(entry.getValue()));
+                    Py.newString(entry.getKey()),
+                    Py.fileSystemEncode(entry.getValue()));
         }
         return environ;
     }
 
     /**
-     * Return a path as a String from a PyObject
+     * Return a path as a String from a PyObject, which must be <code>str</code> or
+     * <code>unicode</code>. If the path is a <code>str</code> (that is, <code>bytes</code>), it is
+     * interpreted into Unicode using the file system encoding.
      *
      * @param path a PyObject, raising a TypeError if an invalid path type
      * @return a String path
      */
     private static String asPath(PyObject path) {
-        if (path instanceof PyString) {
-            return path.toString();
-        }
-        throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
-                                         path.getType().fastGetName()));
+        return Py.fileSystemDecode(path);
     }
 
     /**
