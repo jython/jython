@@ -509,7 +509,7 @@ if is_jython:
 if is_jython:
     # Jython disallows @ in module names
     TESTFN = '$test'
-    TESTFN_UNICODE = "$test-\xe0\xf2"
+    TESTFN_UNICODE = u"$test-\u87d2\u86c7" # = test python (Chinese)
     TESTFN_ENCODING = sys.getfilesystemencoding()
 elif os.name == 'riscos':
     TESTFN = 'testfile'

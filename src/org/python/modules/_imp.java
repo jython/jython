@@ -75,7 +75,7 @@ public class _imp {
     static ModuleInfo findFromSource(String name, String entry, boolean findingPackage,
                                      boolean preferSource) {
         String sourceName = "__init__.py";
-        String compiledName = makeCompiledFilename(sourceName);
+        String compiledName = imp.makeCompiledFilename(sourceName);
         String directoryName = PySystemState.getPathLazy(entry);
         // displayDirName is for identification purposes: when null it
         // forces java.io.File to be a relative path (e.g. foo/bar.py
@@ -97,7 +97,7 @@ public class _imp {
             } else {
                 Py.writeDebug("import", "trying source " + dir.getPath());
                 sourceName = name + ".py";
-                compiledName = makeCompiledFilename(sourceName);
+                compiledName = imp.makeCompiledFilename(sourceName);
                 sourceFile = new File(directoryName, sourceName);
                 compiledFile = new File(directoryName, compiledName);
             }
@@ -152,8 +152,7 @@ public class _imp {
             throw Py.TypeError("must be a file-like object");
         }
         PySystemState sys = Py.getSystemState();
-        String compiledFilename =
-                makeCompiledFilename(sys.getPath(filename));
+        String compiledFilename = imp.makeCompiledFilename(sys.getPath(filename));
         mod = imp.createFromSource(modname.intern(), (InputStream)o,
                                                    filename, compiledFilename);
         PyObject modules = sys.modules;
@@ -161,15 +160,38 @@ public class _imp {
         return mod;
     }
 
-    public static PyObject load_compiled(String name, String pathname) {
-        return load_compiled(name, pathname, new PyFile(pathname, "rb", -1));
-    }
-
     public static PyObject reload(PyObject module) {
         return __builtin__.reload(module);
     }
 
-    public static PyObject load_compiled(String name, String pathname, PyObject file) {
+    /**
+     * Return a module with the given <code>name</code>, the result of executing the compiled code
+     * at the given <code>pathname</code>. If this path is a <code>PyUnicode</code>, it is used
+     * exactly; if it is a <code>PyString</code> it is taken to be file-system encoded.
+     *
+     * @param name the module name
+     * @param pathname to the compiled module (becomes <code>__file__</code>)
+     * @return the module called <code>name</code>
+     */
+    public static PyObject load_compiled(String name, PyString pathname) {
+        String _pathname = Py.fileSystemDecode(pathname);
+        return _load_compiled(name, _pathname, new PyFile(_pathname, "rb", -1));
+    }
+
+    /**
+     * Return a module with the given <code>name</code>, the result of executing the compiled code
+     * in the given <code>file</code> stream.
+     *
+     * @param name the module name
+     * @param pathname a file path that is not null (becomes <code>__file__</code>)
+     * @param file stream from which the compiled code is taken
+     * @return the module called <code>name</code>
+     */
+    public static PyObject load_compiled(String name, PyString pathname, PyObject file) {
+        return _load_compiled(name, Py.fileSystemDecode(pathname), file);
+    }
+
+    private static PyObject _load_compiled(String name, String pathname, PyObject file) {
         InputStream stream = (InputStream) file.__tojava__(InputStream.class);
         if (stream == Py.NoConversion) {
             throw Py.TypeError("must be a file-like object");
@@ -230,7 +252,7 @@ public class _imp {
 
                     // XXX: This should load the accompanying byte code file instead, if it exists
                     String resolvedFilename = sys.getPath(filenameString);
-                    compiledName = makeCompiledFilename(resolvedFilename);
+                    compiledName = imp.makeCompiledFilename(resolvedFilename);
                     if (name.endsWith(".__init__")) {
                         name = name.substring(0, name.length() - ".__init__".length());
                     } else if (name.equals("__init__")) {
@@ -247,7 +269,7 @@ public class _imp {
                             filenameString, compiledName, mtime);
                     break;
                 case PY_COMPILED:
-                    mod = load_compiled(name, filenameString, file);
+                    mod = _load_compiled(name, filenameString, file);
                     break;
                 case PKG_DIRECTORY:
                     PyModule m = imp.addModule(name);
@@ -268,8 +290,13 @@ public class _imp {
         return mod;
     }
 
-    public static String makeCompiledFilename(String filename) {
-        return imp.makeCompiledFilename(filename);
+    /**
+     * Variant of {@link imp#makeCompiledFilename(String)} dealing with encoded bytes. In the context
+     * where this is used from Python, a result in encoded bytes is preferable.
+     */
+    public static PyString makeCompiledFilename(PyString filename) {
+        filename = Py.fileSystemEncode(filename);
+        return Py.newString(imp.makeCompiledFilename(filename.getString()));
     }
 
     public static PyObject get_magic() {

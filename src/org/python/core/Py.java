@@ -223,7 +223,7 @@ public final class Py {
     }
 
     public static PyException IOError(Constant errno, String filename) {
-        return new PyException(Py.IOError, Py.fileSystemEncode(filename)); // XXX newStringOrUnicode?
+        return IOError(errno, Py.fileSystemEncode(filename));
     }
 
     public static PyException IOError(Constant errno, PyObject filename) {

@@ -12,22 +12,30 @@ import org.python.core.PySystemState;
 public class _py_compile {
     public static PyList __all__ = new PyList(new PyString[] { new PyString("compile") });
 
-    public static boolean compile(String filename, String cfile, String dfile) {
-        // Resolve relative path names. dfile is only used for error messages and should not be
-        // resolved
+    /**
+     * Java wrapper on the module compiler in support of of py_compile.compile. Filenames here will
+     * be interpreted as Unicode if they are PyUnicode, and as byte-encoded names if they only
+     * PyString.
+     *
+     * @param fileName actual source file name
+     * @param compiledName compiled filename
+     * @param displayName displayed source filename, only used for error messages (and not resolved)
+     * @return true if successful
+     */
+    public static boolean compile(PyString fileName, PyString compiledName, PyString displayName) {
+        // Resolve source path and check it exists
         PySystemState sys = Py.getSystemState();
-        filename = sys.getPath(filename);
-        cfile = sys.getPath(cfile);
-
-        File file = new File(filename);
-        if (!file.exists()) {
-            throw Py.IOError(Errno.ENOENT, Py.newString(filename));
+        String file = sys.getPath(Py.fileSystemDecode(fileName));
+        File f = new File(file);
+        if (!f.exists()) {
+            throw Py.IOError(Errno.ENOENT, file);
         }
-        String name = getModuleName(file);
 
-        byte[] bytes = org.python.core.imp.compileSource(name, file, dfile, cfile);
-        org.python.core.imp.cacheCompiledSource(filename, cfile, bytes);
-
+        // Convert file in which to put the byte code and display name (each may be null)
+        String c = (compiledName == null) ? null : sys.getPath(Py.fileSystemDecode(compiledName));
+        String d = (displayName == null) ? null : Py.fileSystemDecode(displayName);
+        byte[] bytes = org.python.core.imp.compileSource(getModuleName(f), f, d, c);
+        org.python.core.imp.cacheCompiledSource(file, c, bytes);
         return bytes.length > 0;
     }
 

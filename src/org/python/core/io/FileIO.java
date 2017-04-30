@@ -64,10 +64,10 @@ public class FileIO extends RawIOBase {
     private boolean emulateAppend;
 
     /**
-     * @see #FileIO(String name, String mode)
+     * @see #FileIO(PyString name, String mode)
      */
-    public FileIO(PyString name, String mode) {
-        this(Py.fileSystemDecode(name), mode);
+    public FileIO(String name, String mode) {
+        this(Py.newUnicode(name), mode);
     }
 
     /**
@@ -80,9 +80,9 @@ public class FileIO extends RawIOBase {
      * @param name the name of the file
      * @param mode a raw io file mode String
      */
-    public FileIO(String name, String mode) {
+    public FileIO(PyString name, String mode) {
         parseMode(mode);
-        File absPath = new RelativeFile(name);
+        File absPath = new RelativeFile(Py.fileSystemDecode(name));
 
         try {
             if ((appending && !(reading || plus)) || (writing && !reading && !plus)) {

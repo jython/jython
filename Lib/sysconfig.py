@@ -5,6 +5,11 @@ import sys
 import os
 from os.path import pardir, realpath
 
+def fileSystemEncode(path):
+    if isinstance(path, unicode):
+        return path.encode(sys.getfilesystemencoding())
+    return path
+
 _INSTALL_SCHEMES = {
     'posix_prefix': {
         'stdlib': '{base}/lib/python{py_version_short}',
@@ -116,6 +121,7 @@ _USER_BASE = None
 
 def _safe_realpath(path):
     try:
+        path = fileSystemEncode(path)
         return realpath(path)
     except OSError:
         return path

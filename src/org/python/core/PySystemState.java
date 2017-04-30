@@ -117,8 +117,21 @@ public class PySystemState extends PyObject implements AutoCloseable,
     private static PyObject defaultExecutable; // bytes or unicode or None
 
     public static Properties registry; // = init_registry();
-    public static PyObject prefix; // bytes or unicode
-    public static PyObject exec_prefix = Py.EmptyString; // bytes or unicode
+    /**
+     * A string giving the site-specific directory prefix where the platform independent Python
+     * files are installed; by default, this is based on the property <code>python.home</code> or
+     * the location of the Jython JAR. The main collection of Python library modules is installed in
+     * the directory <code>prefix/Lib</code>. This object should contain bytes in the file system
+     * encoding for consistency with use in the standard library (see <code>sysconfig.py</code>).
+     */
+    public static PyObject prefix;
+    /**
+     * A string giving the site-specific directory prefix where the platform-dependent Python files
+     * are installed; by default, this is the same as {@link #exec_prefix}. This object should
+     * contain bytes in the file system encoding for consistency with use in the standard library
+     * (see <code>sysconfig.py</code>).
+     */
+    public static PyObject exec_prefix = Py.EmptyString;
 
     public static final PyString byteorder = new PyString("big");
     public static final int maxint = Integer.MAX_VALUE;
@@ -843,10 +856,10 @@ public class PySystemState extends PyObject implements AutoCloseable,
             }
         }
         if (prefix != null) {
-            PySystemState.prefix = Py.newStringOrUnicode(prefix);
+            PySystemState.prefix = Py.fileSystemEncode(prefix);
         }
         if (exec_prefix != null) {
-            PySystemState.exec_prefix = Py.newStringOrUnicode(exec_prefix);
+            PySystemState.exec_prefix = Py.fileSystemEncode(exec_prefix);
         }
         try {
             String jythonpath = System.getenv("JYTHONPATH");
@@ -1158,7 +1171,8 @@ public class PySystemState extends PyObject implements AutoCloseable,
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            cachedir = new File(prefix == null ? null : prefix.toString(), cachedir.getPath());
+            String prefixString = prefix == null ? null : Py.fileSystemDecode(prefix);
+            cachedir = new File(prefixString, cachedir.getPath());
         }
     }
 
@@ -1357,7 +1371,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         addPaths(path, props.getProperty("python.path", ""));
         if (prefix != null) {
             String libpath = new File(Py.fileSystemDecode(prefix), "Lib").toString();
-            path.append(Py.fileSystemEncode(libpath)); // XXX or newStringOrUnicode or newUnicode?
+            path.append(Py.fileSystemEncode(libpath)); // XXX or newUnicode?
         }
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
@@ -1401,7 +1415,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
         StringTokenizer tok = new StringTokenizer(pypath, java.io.File.pathSeparator);
         while (tok.hasMoreTokens()) {
             // Use unicode object if necessary to represent the element
-            path.append(Py.newStringOrUnicode(tok.nextToken().trim()));
+            path.append(Py.newStringOrUnicode(tok.nextToken().trim())); // XXX or newUnicode?
         }
     }
 

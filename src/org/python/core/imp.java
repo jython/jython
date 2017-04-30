@@ -294,6 +294,7 @@ public class imp {
         return compileSource(name, makeStream(file), sourceFilename, mtime);
     }
 
+    /** Remove the last three characters of a file name and add the compiled suffix "$py.class". */
     public static String makeCompiledFilename(String filename) {
         return filename.substring(0, filename.length() - 3) + "$py.class";
     }
@@ -639,7 +640,7 @@ public class imp {
             compiledFile = new File(dirName, compiledName);
         } else {
             PyModule m = addModule(modName);
-            PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());  // XXX fileSystemEncode?
+            PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());
             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 
@@ -927,9 +928,6 @@ public class imp {
                 }
             }
         }
-        if (name.indexOf(File.separatorChar) != -1) {
-            throw Py.ImportError("Import by filename is not supported.");
-        }
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
@@ -971,6 +969,13 @@ public class imp {
             ensureFromList(mod, fromlist, name);
         }
         return mod;
+    }
+
+    /** Defend against attempt to import by filename (withdrawn feature). */
+    private static void checkNotFile(String name){
+        if (name.indexOf(File.separatorChar) != -1) {
+            throw Py.ImportError("Import by filename is not supported.");
+        }
     }
 
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name) {
@@ -1015,6 +1020,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
+        checkNotFile(name);
         PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
@@ -1035,6 +1041,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top, PyObject modDict,
             PyObject fromlist, int level) {
+        checkNotFile(name);
         PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();

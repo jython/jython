@@ -20,6 +20,7 @@ import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.core.Traverseproc;
 import org.python.core.Visitproc;
 import org.python.core.util.FileUtil;
@@ -80,7 +81,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     @ExposedMethod
     final void zipimporter___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("__init__", args, kwds, new String[] {"path"});
-        String path = ap.getString(0);
+        String path = Py.fileSystemDecode(ap.getPyObject(0));
         zipimporter___init__(path);
     }
 
@@ -113,10 +114,11 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
             pathFile = parentFile;
         }
         if (archive != null) {
-            files = zipimport._zip_directory_cache.__finditem__(archive);
+            PyUnicode archivePath = Py.newUnicode(archive);
+            files = zipimport._zip_directory_cache.__finditem__(archivePath);
             if (files == null) {
                 files = readDirectory(archive);
-                zipimport._zip_directory_cache.__setitem__(archive, files);
+                zipimport._zip_directory_cache.__setitem__(archivePath, files);
             }
         } else {
             throw zipimport.ZipImportError("not a Zip file: " + path);

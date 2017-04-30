@@ -51,8 +51,10 @@ class ZipImporterDictTest(unittest.TestCase):
         A(path).somevar = 1
 
 def test_main():
-    test_support.run_unittest(SyspathZipimportTest)
-    test_support.run_unittest(ZipImporterDictTest)
+    test_support.run_unittest(
+        SyspathZipimportTest,
+        ZipImporterDictTest
+    )
 
 if __name__ == "__main__":
     test_main()
