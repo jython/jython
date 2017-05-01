@@ -95,7 +95,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
      */
 
     public static final PyObject copyright = Py.newString(
-            "Copyright (c) 2000-2016 Jython Developers.\n" + "All rights reserved.\n\n" +
+            "Copyright (c) 2000-2017 Jython Developers.\n" + "All rights reserved.\n\n" +
             "Copyright (c) 2000 BeOpen.com.\n" + "All Rights Reserved.\n\n" +
             "Copyright (c) 2000 The Apache Software Foundation.\n" + "All rights reserved.\n\n" +
             "Copyright (c) 1995-2000 Corporation for National Research Initiatives.\n"
