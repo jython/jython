@@ -355,6 +355,10 @@ def _map_exception(java_exception):
         # need to work around.
         if isinstance(java_exception, java.net.ConnectException):
             mapped_exception = _exception_map.get(java.net.ConnectException)
+        # Netty AnnotatedNoRouteToHostException extends NoRouteToHostException
+        # so also needs work around.
+        elif isinstance(java_exception, java.net.NoRouteToHostException):
+            mapped_exception = _exception_map.get(java.net.NoRouteToHostException)
         else:
             mapped_exception = _exception_map.get(java_exception.__class__)
         if mapped_exception:

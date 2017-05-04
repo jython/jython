@@ -1110,7 +1110,6 @@ The readme text for the next release will be like:
             <arg value="--exclude"/>
             <arg value="test_select_new"/>
             <arg value="test_socket"/>
-            <arg value="test_ssl"/>
         </exec>
     </target>
 
@@ -1129,7 +1128,6 @@ The readme text for the next release will be like:
             <arg value="--exclude"/>
             <arg value="test_select_new"/>
             <arg value="test_socket"/>
-            <arg value="test_ssl"/>
         </exec>
     </target>
 

@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2585 ] test_ssl failure due to Netty exception mapping
     - [ 2313 ] test_jython_initializer failure on Windows
     - [ 2399 ] test_sort failure on Java 8
     - [ 2309 ] test_classpathimporter fails on Windows.
