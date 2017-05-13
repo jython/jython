@@ -295,6 +295,9 @@ public class PyLong extends PyObject {
     @Override
     public Object __tojava__(Class<?> c) {
         try {
+            if (c == Boolean.TYPE || c == Boolean.class) {
+                return new Boolean(!getValue().equals(BigInteger.ZERO));
+            }
             if (c == Byte.TYPE || c == Byte.class) {
                 return new Byte((byte)getLong(Byte.MIN_VALUE, Byte.MAX_VALUE));
             }
