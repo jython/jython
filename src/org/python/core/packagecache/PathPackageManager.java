@@ -216,10 +216,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
      * true if path refers to a jar.
      */
     public void addClassPath(String path) {
-        PyList paths = new PyString(path).split(java.io.File.pathSeparator);
-
-        for (int i = 0; i < paths.__len__(); i++) {
-            String entry = paths.pyget(i).toString();
+        String[] paths = path.split(java.io.File.pathSeparator);
+        for (String entry: paths) {
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
                 addJarToPackages(new File(entry), true);
             } else {

@@ -1191,7 +1191,8 @@ public class PySystemState extends PyObject implements AutoCloseable,
         PyList argv = new PyList();
         if (args != null) {
             for (String arg : args) {
-                argv.append(Py.newStringOrUnicode(arg)); // XXX or always newUnicode?
+                // For consistency with CPython and the standard library, sys.argv is FS-encoded.
+                argv.append(Py.fileSystemEncode(arg));
             }
         }
         return argv;

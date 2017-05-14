@@ -71,11 +71,12 @@ public class FileIO extends RawIOBase {
     }
 
     /**
-     * Construct a FileIO instance for the specified file name.
+     * Construct a FileIO instance for the specified file name, which will be decoded using the
+     * nominal Jython file system encoding if it is a <code>str/bytes</code> rather than a
+     * <code>unicode</code>.
      *
-     * The mode can be 'r', 'w' or 'a' for reading (default), writing
-     * or appending. Add a '+' to the mode to allow simultaneous
-     * reading and writing.
+     * The mode can be 'r', 'w' or 'a' for reading (default), writing or appending. Add a '+' to the
+     * mode to allow simultaneous reading and writing.
      *
      * @param name the name of the file
      * @param mode a raw io file mode String

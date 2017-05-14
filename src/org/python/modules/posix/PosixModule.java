@@ -57,6 +57,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
+import org.python.core.PyUnicode;
 import org.python.core.Untraversable;
 import org.python.core.imp;
 import org.python.core.io.FileIO;
@@ -677,9 +678,16 @@ public class PosixModule implements ClassDictInit {
             throw Py.OSError("listdir(): an unknown error occurred: " + path);
         }
 
+        // Return names as bytes or unicode according to the type of the original argument
         PyList list = new PyList();
-        for (String name : names) {
-            list.append(Py.newStringOrUnicode(path, name));
+        if (path instanceof PyUnicode) {
+            for (String name : names) {
+                list.append(Py.newUnicode(name));
+            }
+        } else {
+            for (String name : names) {
+                list.append(Py.fileSystemEncode(name));
+            }
         }
         return list;
     }

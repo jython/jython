@@ -16,17 +16,15 @@ public class PySyntaxError extends PyException {
     String filename;
 
 
-    public PySyntaxError(String s, int line, int column, String text,
-                         String filename)
+    public PySyntaxError(String s, int line, int column, String text, String filename)
     {
         super(Py.SyntaxError);
-        //XXX: null text causes Java error, though I bet I'm not supposed to
-        //     get null text.
+        //XXX: null text causes Java error, though I bet I'm not supposed to get null text.
         if (text == null) {
             text = "";
         }
         PyObject[] tmp = new PyObject[] {
-            new PyString(filename), new PyInteger(line),
+            Py.fileSystemEncode(filename), new PyInteger(line),
             new PyInteger(column), new PyString(text)
         };
 

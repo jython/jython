@@ -175,7 +175,7 @@ public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc
     }
 
     private void file___init__(RawIOBase raw, String name, String mode, int bufsize) {
-        file___init__(raw, new PyString(name), mode, bufsize);
+        file___init__(raw, Py.newStringOrUnicode(name), mode, bufsize);
     }
 
     private void file___init__(RawIOBase raw, PyObject name, String mode, int bufsize) {

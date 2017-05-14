@@ -239,7 +239,7 @@ public final class Py {
         }
         if (ioe instanceof FileNotFoundException) {
             PyTuple args = new PyTuple(Py.newInteger(Errno.ENOENT.intValue()),
-                                       Py.newString("File not found - " + message));
+                                       Py.newStringOrUnicode("File not found - " + message));
             return new PyException(err, args);
         }
         return new PyException(err, message);
@@ -721,9 +721,10 @@ public final class Py {
     public static String fileSystemDecode(PyObject filename) {
         if (filename instanceof PyString) {
             return fileSystemDecode((PyString)filename);
-        } else
+        } else {
             throw Py.TypeError(String.format("coercing to Unicode: need string, %s type found",
                     filename.getType().fastGetName()));
+        }
     }
 
     /**
@@ -1285,14 +1286,66 @@ public final class Py {
 
         // Output is to standard error, unless a file object has been given.
         StdoutWrapper stderr = Py.stderr;
+
+        // As we format the exception in Unicode, we deal with encoding in this method
+        String encoding, errors = codecs.REPLACE;
+
         if (file != null) {
+            // Ostensibly writing to a file: assume file content encoding (file.encoding)
             stderr = new FixedFileWrapper(file);
+            encoding = codecs.getDefaultEncoding();
+        } else {
+            // Not a file, assume we should encode for the console
+            encoding = getAttr(Py.getSystemState().__stderr__, "encoding", null);
         }
+
+        // But if the stream can tell us directly, of course we use that answer.
+        encoding = getAttr(stderr.myFile(), "encoding", encoding);
+        errors = getAttr(stderr.myFile(), "errors", errors);
+
         flushLine();
 
         // The creation of the report operates entirely in Java String (to support Unicode).
-        String formattedException = exceptionToString(type, value, tb);
-        stderr.print(formattedException);
+        try {
+            // Be prepared for formatting or printing to fail
+            PyString bytes = exceptionToBytes(type, value, tb, encoding, errors);
+            stderr.print(bytes);
+        } catch (Exception ex) {
+            // Looks like that exception just won't convert or print
+            value = Py.newString("<exception str() failed>");
+            PyString bytes = exceptionToBytes(type, value, tb, encoding, errors);
+            stderr.print(bytes);
+        }
+    }
+
+    /** Get a String attribute from an object or a return a default. */
+    private static String getAttr(PyObject target, String internedName, String def) {
+        PyObject attr = target.__findattr__(internedName);
+        if (attr == null) {
+            return def;
+        } else if (attr instanceof PyUnicode) {
+            return ((PyUnicode)attr).getString();
+        } else {
+            return attr.__str__().getString();
+        }
+    }
+
+    /**
+     * Helper for {@link #displayException(PyObject, PyObject, PyObject, PyObject)}, falling back to
+     * US-ASCII as the last resort encoding.
+     */
+    private static PyString exceptionToBytes(PyObject type, PyObject value, PyObject tb,
+            String encoding, String errors) {
+        String string = exceptionToString(type, value, tb);
+        String bytes; // not UTF-16
+        try {
+            // Format the exception and stack-trace in all its glory
+            bytes = codecs.encode(Py.newUnicode(string), encoding, errors);
+        } catch (Exception ex) {
+            // Sometimes a working codec is just too much to ask
+            bytes = codecs.PyUnicode_EncodeASCII(string, string.length(), codecs.REPLACE);
+        }
+        return Py.newString(bytes);
     }
 
     /**
@@ -1334,14 +1387,8 @@ public final class Py {
             }
         }
 
-        // Be prepared for formatting the value part to fail (fall back to just the type)
-        try {
-            buf.append(formatException(type, value));
-        } catch (Exception ex) {
-            buf.append(formatException(type, Py.None));
-        }
-        buf.append('\n');
-
+        // Formatting the value may raise UnicodeEncodeError: client must deal
+        buf.append(formatException(type, value)).append('\n');
         return buf.toString();
     }
 
@@ -1365,7 +1412,6 @@ public final class Py {
             appendSyntaxErrorText(buf, value.__findattr__("offset").asInt(), text.toString());
         }
     }
-
 
     /**
      * Generate two lines showing where a SyntaxError was caused.
@@ -1477,7 +1523,6 @@ public final class Py {
         stderr.println(String.format("Exception %s in %s ignored",
                                      formatException(pye.type, pye.value, true), obj));
     }
-
 
     /* Equivalent to Python's assert statement */
     public static void assert_(PyObject test, PyObject message) {
@@ -1755,8 +1800,8 @@ public final class Py {
                     PySystemState sys = Py.getSystemState();
                     String value = pye.value.__getattr__("args").__getitem__(0).toString();
                     List<String> path = fileSystemDecode(sys.path);
-                    throw Py.ImportError(
-                            String.format(IMPORT_SITE_ERROR, value, path, PySystemState.prefix));
+                    String prefix = fileSystemDecode(PySystemState.prefix);
+                    throw Py.ImportError(String.format(IMPORT_SITE_ERROR, value, path, prefix));
                 } else {
                     throw pye;
                 }

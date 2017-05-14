@@ -302,19 +302,51 @@ public class PyString extends PyBaseString implements BufferProtocol {
     private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
     public static String encode_UnicodeEscape(String str, boolean use_quotes) {
-        int size = str.length();
-        StringBuilder v = new StringBuilder(str.length());
+        char quote = use_quotes ? '?' : 0;
+        return encode_UnicodeEscape(str, quote);
+    }
 
-        char quote = 0;
+    /**
+     * The inner logic of the string __repr__ producing an ASCII representation of the target
+     * string, optionally in quotations. The caller can determine whether the returned string will
+     * be wrapped in quotation marks, and whether Python rules are used to choose them through
+     * <code>quote</code>.
+     *
+     * @param str
+     * @param quoteChar '"' or '\'' use that, '?' = let Python choose, 0 or anything = no quotes
+     * @return encoded string (possibly the same string if unchanged)
+     */
+    public static String encode_UnicodeEscape(String str, char quote) {
+
+        // Choose whether to quote and the actual quote character
+        boolean use_quotes;
+        switch (quote) {
+            case '?':
+                use_quotes = true;
+                // Python rules
+                quote = str.indexOf('\'') >= 0 && str.indexOf('"') == -1 ? '"' : '\'';
+                break;
+            case '"':
+            case '\'':
+                use_quotes = true;
+                break;
+            default:
+                use_quotes = false;
+                break;
+        }
+
+        // Allocate a buffer for the result (25% bigger and room for quotes)
+        int size = str.length();
+        StringBuilder v = new StringBuilder(size + (size >> 2) + 2);
 
         if (use_quotes) {
-            quote = str.indexOf('\'') >= 0 && str.indexOf('"') == -1 ? '"' : '\'';
             v.append(quote);
         }
 
+        // Now chunter through the original string a character at a time
         for (int i = 0; size-- > 0;) {
             int ch = str.charAt(i++);
-            /* Escape quotes */
+            // Escape quotes and backslash
             if ((use_quotes && ch == quote) || ch == '\\') {
                 v.append('\\');
                 v.append((char)ch);
@@ -368,10 +400,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
                 v.append((char)ch);
             }
         }
+
         if (use_quotes) {
             v.append(quote);
         }
-        return v.toString();
+
+        // Return the original string if we didn't quote or escape anything
+        return v.length() > size ? v.toString() : str;
     }
 
     private static ucnhashAPI pucnHash = null;

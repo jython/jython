@@ -622,8 +622,9 @@ public class imp {
                 if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
                     pkg = true;
                 } else {
+                    String printDirName = PyString.encode_UnicodeEscape(displayDirName, '\'');
                     Py.warning(Py.ImportWarning, String.format(
-                            "Not importing directory '%s': missing __init__.py", dirName));
+                            "Not importing directory %s: missing __init__.py", printDirName));
                 }
             }
         } catch (SecurityException e) {

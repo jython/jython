@@ -228,7 +228,8 @@ public class _imp {
                 continue;
             }
             return new PyTuple(mi.file,
-                               Py.newStringOrUnicode(mi.filename),
+                               // File names generally expected in the FS encoding
+                               Py.fileSystemEncode(mi.filename),
                                new PyTuple(Py.newString(mi.suffix),
                                            Py.newString(mi.mode),
                                            Py.newInteger(mi.type)));

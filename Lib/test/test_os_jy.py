@@ -198,14 +198,41 @@ class UnicodeTestCase(unittest.TestCase):
 
     def test_env(self):
         with test_support.temp_cwd(name=u"tempcwd-中文"):
+            # os.environ is constructed with FS-encoded values (as in CPython),
+            # but it will accept unicode additions.
             newenv = os.environ.copy()
-            newenv["TEST_HOME"] = u"首页"
-            p = subprocess.Popen([sys.executable, "-c",
-                                  'import sys,os;' \
-                                  'sys.stdout.write(os.getenv("TEST_HOME").encode("utf-8"))'],
-                                 stdout=subprocess.PIPE,
-                                 env=newenv)
-            self.assertEqual(p.stdout.read().decode("utf-8"), u"首页")
+            newenv["TEST_HOME"] = expected = u"首页"
+            # Environment passed as UTF-16 String[] by Java, arrives FS-encoded.
+            for encoding in ('utf-8', 'gbk'):
+                # Emit the value of TEST_HOME explicitly encoded.
+                p = subprocess.Popen(
+                        [sys.executable, "-c",
+                                'import sys, os;' \
+                                'sys.stdout.write(os.getenv("TEST_HOME")' \
+                                '.decode(sys.getfilesystemencoding())' \
+                                '.encode("%s"))' \
+                                % encoding],
+                        stdout=subprocess.PIPE,
+                        env=newenv)
+                # Decode with chosen encoding 
+                self.assertEqual(p.stdout.read().decode(encoding), u"首页")
+
+    def test_env_naively(self):
+        with test_support.temp_cwd(name=u"tempcwd-中文"):
+            # os.environ is constructed with FS-encoded values (as in CPython),
+            # but it will accept unicode additions.
+            newenv = os.environ.copy()
+            newenv["TEST_HOME"] = expected = u"首页"
+            # Environment passed as UTF-16 String[] by Java, arrives FS-encoded.
+            # However, emit TEST_HOME without thinking about the encoding.
+            p = subprocess.Popen(
+                    [sys.executable, "-c",
+                            'import sys, os;' \
+                            'sys.stdout.write(os.getenv("TEST_HOME"))'],
+                    stdout=subprocess.PIPE,
+                    env=newenv)
+            # Decode with default encoding utf-8 (because ... ?)
+            self.assertEqual(p.stdout.read().decode('utf-8'), expected)
 
     def test_getcwd(self):
         with test_support.temp_cwd(name=u"tempcwd-中文") as temp_cwd:
@@ -216,38 +243,46 @@ class UnicodeTestCase(unittest.TestCase):
             self.assertEqual(p.stdout.read().decode("utf-8"), temp_cwd)
 
     def test_listdir(self):
-        # It is hard to avoid Unicode paths on systems like OS X. Use
-        # relative paths from a temp CWD to work around this
+        # It is hard to avoid Unicode paths on systems like OS X. Use relative
+        # paths from a temp CWD to work around this. But when you don't,
+        # it behaves like this ...
         with test_support.temp_cwd() as new_cwd:
-            unicode_path = os.path.join(".", "unicode")
-            self.assertIs(type(unicode_path), str)
-            chinese_path = os.path.join(unicode_path, u"中文")
+
+            basedir = os.path.join(".", "unicode")
+            self.assertIs(type(basedir), bytes)
+            chinese_path = os.path.join(basedir, u"中文")
             self.assertIs(type(chinese_path), unicode)
             home_path = os.path.join(chinese_path, u"首页")
             os.makedirs(home_path)
 
+            FS = sys.getfilesystemencoding()
+
             with open(os.path.join(home_path, "test.txt"), "w") as test_file:
                 test_file.write("42\n")
 
-            # Verify works with str paths, returning Unicode as necessary
-            entries = os.listdir(unicode_path)
-            self.assertIn(u"中文", entries)
+            # listdir(bytes) includes encoded form of 中文
+            entries = os.listdir(basedir)
+            self.assertIn(u"中文".encode(FS), entries)
+            for entry in entries:
+                self.assertIs(type(entry), bytes)
 
-            # Verify works with Unicode paths
+            # listdir(unicode) includes unicode form of 首页
             entries = os.listdir(chinese_path)
             self.assertIn(u"首页", entries)
+            for entry in entries:
+                self.assertIs(type(entry), unicode)
 
             # glob.glob builds on os.listdir; note that we don't use
-            # Unicode paths in the arg to glob
+            # Unicode paths in the arg to glob so the result is bytes
             self.assertEqual(
                 glob.glob(os.path.join("unicode", "*")),
-                [os.path.join(u"unicode", u"中文")])
+                [os.path.join(u"unicode", u"中文").encode(FS)])
             self.assertEqual(
                 glob.glob(os.path.join("unicode", "*", "*")),
-                [os.path.join(u"unicode", u"中文", u"首页")])
+                [os.path.join(u"unicode", u"中文", u"首页").encode(FS)])
             self.assertEqual(
                 glob.glob(os.path.join("unicode", "*", "*", "*")),
-                [os.path.join(u"unicode", u"中文", u"首页", "test.txt")])
+                [os.path.join(u"unicode", u"中文", u"首页", "test.txt").encode(FS)])
 
             # Now use a Unicode path as well as in the glob arg
             self.assertEqual(
@@ -263,11 +298,15 @@ class UnicodeTestCase(unittest.TestCase):
             # Verify Java integration. But we will need to construct
             # an absolute path since chdir doesn't work with Java
             # (except for subprocesses, like below in test_env)
-            for entry in entries:
+            for entry in entries: # list(unicode)
+                # new_cwd is bytes while chinese_path is unicode.
+                # But new_cwd is not guaranteed to be just ascii, so decode it.
+                new_cwd = new_cwd.decode(FS)
                 entry_path = os.path.join(new_cwd, chinese_path, entry)
                 f = File(entry_path)
-                self.assertTrue(f.exists(), "File %r (%r) should be testable for existence" % (
-                    f, entry_path))
+                self.assertTrue(f.exists(),
+                    "File %r (%r) should be testable for existence" %
+                    (f, entry_path))
 
 class LocaleTestCase(unittest.TestCase):
 
