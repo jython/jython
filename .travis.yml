@@ -16,6 +16,7 @@ env:
     - CUSTOM_JDK="default"
     - CUSTOM_JDK="oraclejdk7"
     - CUSTOM_JDK="openjdk7"
+    - CUSTOM_JDK="oraclejdk8"
 
 matrix:
   exclude:
@@ -24,6 +25,8 @@ matrix:
        env: CUSTOM_JDK="oraclejdk7"
      - os: osx
        env: CUSTOM_JDK="openjdk7"
+     - os: osx
+       env: CUSTOM_JDK="oraclejdk8"
      # On Linux, run with specific JDKs only.
      - os: linux
        env: CUSTOM_JDK="default"
