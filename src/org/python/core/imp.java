@@ -36,6 +36,8 @@ public class imp {
     // imports unless `from __future__ import absolute_import`
     public static final int DEFAULT_LEVEL = -1;
 
+    private static final boolean IS_OSX = PySystemState.getNativePlatform().equals("darwin");
+
     public static class CodeData {
 
         private final byte[] bytes;
@@ -846,6 +848,11 @@ public class imp {
             modules.__setitem__(fullName, ret);
         } else {
             ret = modules.__finditem__(fullName);
+        }
+        if (IS_OSX && fullName.equals("setuptools.command")) {
+            // On OSX we currently have to monkeypatch setuptools.command.easy_install.
+            // See http://bugs.jython.org/issue2570
+            load("_fix_jython_setuptools_osx");
         }
         return ret;
     }
