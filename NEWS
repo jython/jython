@@ -4,6 +4,8 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2579 ] Pyc files are not loading for too large modules if path contains __pyclasspath__
+    - [ 2570 ] Wrong shebang set for OS X installation of Jython
     - [ 2585 ] test_ssl failure due to Netty exception mapping
     - [ 2313 ] test_jython_initializer failure on Windows
     - [ 2399 ] test_sort failure on Java 8

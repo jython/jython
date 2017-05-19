@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -28,10 +29,12 @@ import org.python.antlr.ast.Num;
 import org.python.antlr.ast.Str;
 import org.python.antlr.ast.Suite;
 import org.python.antlr.base.mod;
+import org.python.core.ClasspathPyImporter;
 import org.python.core.CodeBootstrap;
 import org.python.core.CodeFlag;
 import org.python.core.CodeLoader;
 import org.python.core.CompilerFlags;
+import org.python.core.imp;
 import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyBytecode;
@@ -717,6 +720,23 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     private static PyBytecode loadPyBytecode(String filename, boolean try_cpython)
             throws RuntimeException
     {
+        if (filename.startsWith(ClasspathPyImporter.PYCLASSPATH_PREFIX)) {
+            ClassLoader cld = Py.getSystemState().getClassLoader();
+            if (cld == null) {
+                cld = imp.getParentClassLoader();
+            }
+            URL py_url = cld.getResource(filename.replace(
+                    ClasspathPyImporter.PYCLASSPATH_PREFIX, ""));
+            if (py_url != null) {
+                filename = py_url.getPath();
+            } else {
+                // Should never happen, but let's play it safe and treat this case.
+                throw new RuntimeException(
+                        "\nEncountered too large method code in \n"+filename+",\n"+
+                        "but couldn't resolve that filename within classpath.\n"+
+                        "Make sure the source file is at a proper location.");
+            }
+        }
         String cpython_cmd_msg =
                 "\n\nAlternatively provide proper CPython 2.7 execute command via"+
                 "\ncpython_cmd property, e.g. call "+
@@ -875,7 +895,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
      *
      * Note that this approach is provisional. In future, Jython might contain
      * the bytecode directly as bytecode-objects. The current approach was
-     * feasible with much less complicated JVM bytecode-manipulation, but needs
+     * feasible with far less complicated JVM bytecode-manipulation, but needs
      * special treatment after class-loading.
      */
     private static void insert_code_str_to_classfile(String name, String code_str, Module module)
@@ -935,7 +955,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                             } else {
                                 // If a function needs to be represented as CPython bytecode, we create
                                 // all inner PyCode-items (classes, functions, methods) also as CPython
-                                // bytecode implicitly, so no need so look at them individually.
+                                // bytecode implicitly, so no need to look at them individually.
                                 // Maybe we can later optimize this such that inner methods can be
                                 // JVM-bytecode as well (if not oversized themselves).
                                 for (PyObject item: bcode.co_consts) {
