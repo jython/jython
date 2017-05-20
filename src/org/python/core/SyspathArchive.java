@@ -1,14 +1,14 @@
-
 package org.python.core;
 import java.io.*;
 import java.util.zip.*;
 
 @Untraversable
-public class SyspathArchive extends PyUnicode {
+public class SyspathArchive extends PyString {
     private ZipFile zipFile;
 
     public SyspathArchive(String archiveName) throws IOException {
-        super(archiveName);
+        // As a string-like object (on sys.path) an FS-encoded bytes object is expected
+        super(Py.fileSystemEncode(archiveName).getString());
         archiveName = getArchiveName(archiveName);
         if(archiveName == null) {
             throw new IOException("path '" + archiveName + "' not an archive");
@@ -20,7 +20,8 @@ public class SyspathArchive extends PyUnicode {
     }
 
     SyspathArchive(ZipFile zipFile, String archiveName) {
-        super(archiveName);
+        // As a string-like object (on sys.path) an FS-encoded bytes object is expected
+        super(Py.fileSystemEncode(archiveName).getString());
         this.zipFile = zipFile;
     }
 
