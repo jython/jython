@@ -55,7 +55,7 @@ class _ShellEnv:
 
         env = self._formatEnvironment( self.environment )
         try:
-            p = Runtime.getRuntime().exec( shellCmd, env, File(os.getcwd()) )
+            p = Runtime.getRuntime().exec( shellCmd, env, File(os.getcwdu()) )
             return p
         except IOException, ex:
             raise OSError(

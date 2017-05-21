@@ -26,20 +26,20 @@ public class SyspathJavaLoader extends ClassLoader {
     public SyspathJavaLoader(ClassLoader parent) {
     	super(parent);
     }
-    
 
-    /** 
+
+    /**
      * Returns a byte[] with the contents read from an InputStream.
-     * 
+     *
      * The stream is closed after reading the bytes.
-     *  
-     * @param input The input stream 
+     *
+     * @param input The input stream
      * @param size The number of bytes to read
-     *   
+     *
      * @return an array of byte[size] with the contents read
      * */
     private byte[] getBytesFromInputStream(InputStream input, int size) {
-    	try { 
+    	try {
 	    	byte[] buffer = new byte[size];
 	        int nread = 0;
 	        while(nread < size) {
@@ -56,9 +56,9 @@ public class SyspathJavaLoader extends ClassLoader {
             }
     	}
     }
-     
+
     private byte[] getBytesFromDir(String dir, String name) {
-    	try { 
+    	try {
     		File file = getFile(dir, name);
 	        if (file == null) {
 	            return null;
@@ -71,7 +71,7 @@ public class SyspathJavaLoader extends ClassLoader {
         }
 
     }
-    
+
     private byte[] getBytesFromArchive(SyspathArchive archive, String name) {
         String entryname = name.replace('.', SLASH_CHAR) + ".class";
         ZipEntry ze = archive.getEntry(entryname);
@@ -79,7 +79,7 @@ public class SyspathJavaLoader extends ClassLoader {
             return null;
         }
         try {
-			return getBytesFromInputStream(archive.getInputStream(ze), 
+			return getBytesFromInputStream(archive.getInputStream(ze),
 					                       (int)ze.getSize());
 		} catch (IOException e) {
 			return null;
@@ -98,11 +98,11 @@ public class SyspathJavaLoader extends ClassLoader {
         }
         return pkg;
     }
-    
+
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
     	PySystemState sys = Py.getSystemState();
-    	ClassLoader sysClassLoader = sys.getClassLoader(); 
+    	ClassLoader sysClassLoader = sys.getClassLoader();
     	if (sysClassLoader != null) {
     		// sys.classLoader overrides this class loader!
     		return sysClassLoader.loadClass(name);
@@ -114,13 +114,10 @@ public class SyspathJavaLoader extends ClassLoader {
             PyObject entry = replacePathItem(sys, i, path);
             if (entry instanceof SyspathArchive) {
                 SyspathArchive archive = (SyspathArchive)entry;
-                buffer = getBytesFromArchive(archive, name);                
+                buffer = getBytesFromArchive(archive, name);
             } else {
-                if (!(entry instanceof PyUnicode)) {
-                    entry = entry.__str__();
-                }
-                String dir = entry.toString();
-            	buffer = getBytesFromDir(dir, name);
+                String dir = Py.fileSystemDecode(entry);
+                buffer = getBytesFromDir(dir, name);
             }
             if (buffer != null) {
             	definePackageForClass(name);
@@ -130,7 +127,7 @@ public class SyspathJavaLoader extends ClassLoader {
         // couldn't find the .class file on sys.path
         throw new ClassNotFoundException(name);
     }
-       
+
     @Override
     protected URL findResource(String res) {
     	PySystemState sys = Py.getSystemState();
@@ -157,10 +154,7 @@ public class SyspathJavaLoader extends ClassLoader {
                 }
                 continue;
             }
-            if (!(entry instanceof PyUnicode)) {
-                entry = entry.__str__();
-            }
-            String dir = sys.getPath(entry.toString());
+            String dir = sys.getPath(Py.fileSystemDecode(entry));
             try {
 				File resource = new File(dir, res);
 				if (!resource.exists()) {
@@ -179,7 +173,7 @@ public class SyspathJavaLoader extends ClassLoader {
         throws IOException
     {
         List<URL> resources = new ArrayList<URL>();
-        
+
         PySystemState sys = Py.getSystemState();
 
         res = deslashResource(res);
@@ -204,10 +198,7 @@ public class SyspathJavaLoader extends ClassLoader {
                 }
                 continue;
             }
-            if (!(entry instanceof PyUnicode)) {
-                entry = entry.__str__();
-            }
-            String dir = sys.getPath(entry.toString());
+            String dir = sys.getPath(Py.fileSystemDecode(entry));
             try {
                 File resource = new File(dir, res);
                 if (!resource.exists()) {
@@ -220,7 +211,7 @@ public class SyspathJavaLoader extends ClassLoader {
         }
         return Collections.enumeration(resources);
     }
-    
+
     static PyObject replacePathItem(PySystemState sys, int idx, PyList paths) {
         PyObject path = paths.__getitem__(idx);
         if (path instanceof SyspathArchive) {
@@ -229,9 +220,9 @@ public class SyspathJavaLoader extends ClassLoader {
         }
 
         try {
-            // this has the side affect of adding the jar to the PackageManager during the
+            // this has the side effect of adding the jar to the PackageManager during the
             // initialization of the SyspathArchive
-            path = new SyspathArchive(sys.getPath(path.toString()));
+            path = new SyspathArchive(sys.getPath(Py.fileSystemDecode(path)));
         } catch (Exception e) {
             return path;
         }

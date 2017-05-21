@@ -168,10 +168,6 @@ public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc
         ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "buffering"},
                                      1);
         PyObject name = ap.getPyObject(0);
-        if (!(name instanceof PyString)) {
-            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().fastGetName()
-                               + "' type found");
-        }
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
         file___init__(new FileIO((PyString) name, parseMode(mode)), name, mode, bufsize);
@@ -179,7 +175,7 @@ public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc
     }
 
     private void file___init__(RawIOBase raw, String name, String mode, int bufsize) {
-        file___init__(raw, new PyString(name), mode, bufsize);
+        file___init__(raw, Py.newStringOrUnicode(name), mode, bufsize);
     }
 
     private void file___init__(RawIOBase raw, PyObject name, String mode, int bufsize) {

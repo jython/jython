@@ -162,12 +162,16 @@ class IncrementalDecoder(codecs.IncrementalDecoder):
 
     def reset(self):
         self.buffer = ""
+        self.decoder.reset()
 
     def getstate(self):
-        return self.buffer or 0
+        # No way to extract the internal state of a Java decoder.
+        return self.buffer or "", 0
 
     def setstate(self, state):
-        self.buffer = state or ""
+        self.buffer, _ = state or ("", 0)
+        # No way to restore: reset possible EOF state.
+        self.decoder.reset()
 
 
 class StreamWriter(NonfinalCodec, codecs.StreamWriter):

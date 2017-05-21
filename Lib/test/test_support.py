@@ -490,8 +490,13 @@ if is_jython:
     def make_jar_classloader(jar):
         import os
         from java.net import URL, URLClassLoader
+        from java.io import File
 
-        url = URL('jar:file:%s!/' % jar)
+        if isinstance(jar, bytes): # Java will expect a unicode file name
+            jar = jar.decode(sys.getfilesystemencoding())
+        jar_url = File(jar).toURI().toURL().toString()
+        url = URL(u'jar:%s!/' % jar_url)
+
         if is_jython_nt:
             # URLJarFiles keep a cached open file handle to the jar even
             # after this ClassLoader is GC'ed, disallowing Windows tests
@@ -509,7 +514,7 @@ if is_jython:
 if is_jython:
     # Jython disallows @ in module names
     TESTFN = '$test'
-    TESTFN_UNICODE = "$test-\xe0\xf2"
+    TESTFN_UNICODE = u"$test-\u87d2\u86c7" # = test python (Chinese)
     TESTFN_ENCODING = sys.getfilesystemencoding()
 elif os.name == 'riscos':
     TESTFN = 'testfile'

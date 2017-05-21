@@ -138,9 +138,8 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
         if (name == "__dict__") return __dict__;
         if (name == "__mgr__") return Py.java2py(__mgr__);
         if (name == "__file__") {
-            if (__file__ != null) return new PyString(__file__);
-
-            return Py.None;
+            // Stored as UTF-16 for Java but expected as bytes in Python
+            return __file__ == null ? Py.None : Py.fileSystemEncode(__file__);
         }
 
         return null;
@@ -157,7 +156,8 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
             return;
         }
         if (attr == "__file__") {
-            __file__ = value.__str__().toString();
+            // Stored as UTF-16 for Java but presented as bytes from Python
+            __file__ = Py.fileSystemDecode(value);
             return;
         }
 

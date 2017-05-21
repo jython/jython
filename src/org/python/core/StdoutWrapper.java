@@ -102,28 +102,33 @@ public class StdoutWrapper extends OutputStream {
     }
 
     private String printToFile(PyFile file, PyObject o) {
-        String s;
+        // We must ensure o is a byte string before we write it to the stream
+        String bytes;
+        if (!(o instanceof PyUnicode)) {
+            o = o.__str__();
+        }
+        // o is now a PyString, but it might be unicode or bytes
         if (o instanceof PyUnicode) {
             // Use the encoding and policy defined for the stream. (Each may be null.)
-            s = ((PyUnicode)o).encode(file.encoding, file.errors);
+            bytes = ((PyUnicode)o).encode(file.encoding, file.errors);
         } else {
-            s = o.__str__().toString();
+            bytes = ((PyString)o).getString();
         }
-        file.write(s);
-        return s;
+        file.write(bytes);
+        return bytes;
     }
 
     private String printToFileWriter(PyFileWriter file, PyObject o) {
-        // since we are outputting directly to a character stream,
-        // avoid doing an encoding
-        String s;
-        if (o instanceof PyString) {
-            s = ((PyString) o).getString();
+        // since we are outputting directly to a character stream, avoid encoding
+        String chars;
+        if (o instanceof PyUnicode) {
+            chars = ((PyString) o).getString();
         } else {
-            s = o.__str__().toString();
+            // Bytes here are assumed to be code points, as in PyFileWriter.write()
+            chars = o.__str__().getString();
         }
-        file.write(s);
-        return s;
+        file.write(chars);
+        return chars;
     }
 
     private void printToFileObject(PyObject file, PyObject o) {
@@ -248,11 +253,11 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void print(String s) {
-        print(Py.newStringOrUnicode(s), false, false);
+        print(Py.newUnicode(s), false, false);
     }
 
     public void println(String s) {
-        print(Py.newStringOrUnicode(s), false, true);
+        print(Py.newUnicode(s), false, true);
     }
 
     public void print(PyObject o) {

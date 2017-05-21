@@ -40,12 +40,9 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 + name;
 
         for (int i = 0; i < path.__len__(); i++) {
+            // Each entry in the path may be byte-encoded or unicode
             PyObject entry = path.pyget(i);
-            if (!(entry instanceof PyUnicode)) {
-                entry = entry.__str__();
-            }
-            String dir = entry.toString();
-
+            String dir = Py.fileSystemDecode(entry);
             File f = new RelativeFile(dir, child);
             try {
                 if (f.isDirectory() && imp.caseok(f, name)) {
@@ -103,11 +100,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         String child = jpkg.__name__.replace('.', File.separatorChar);
 
         for (int i = 0; i < path.__len__(); i++) {
-            PyObject entry = path.pyget(i);
-            if (!(entry instanceof PyUnicode)) {
-                entry = entry.__str__();
-            }
-            String dir = entry.toString();
+            // Each entry in the path may be byte-encoded or unicode
+            String dir = Py.fileSystemDecode(path.pyget(i));
 
             if (dir.length() == 0) {
                 dir = null;
@@ -222,10 +216,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
      * true if path refers to a jar.
      */
     public void addClassPath(String path) {
-        PyList paths = new PyString(path).split(java.io.File.pathSeparator);
-
-        for (int i = 0; i < paths.__len__(); i++) {
-            String entry = paths.pyget(i).toString();
+        String[] paths = path.split(java.io.File.pathSeparator);
+        for (String entry: paths) {
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
                 addJarToPackages(new File(entry), true);
             } else {

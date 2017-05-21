@@ -116,11 +116,13 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         throw Py.AttributeError(name);
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
         // no writable attributes
         throwReadonly(name);
     }
 
+    @Override
     public void __delattr__(String name) {
         throwReadonly(name);
     }
@@ -137,6 +139,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         return new PyTuple(pystr);
     }
 
+    @Override
     public PyObject __findattr_ex__(String name) {
         // have to craft co_varnames specially
         if (name == "co_varnames") {
@@ -149,7 +152,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
             return toPyStringTuple(co_freevars);
         }
         if (name == "co_filename") {
-            return new PyString(co_filename);
+            return Py.fileSystemEncode(co_filename); // bytes object expected by clients
         }
         if (name == "co_name") {
             return new PyString(co_name);
@@ -1156,7 +1159,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                         "zap" this information, to prevent END_FINALLY from
                         re-raising the exception.  (But non-local gotos
                         should still be resumed.)
-                     */    
+                     */
                         PyObject exit;
                         PyObject u = stack.pop(), v, w;
                         if (u == Py.None) {
@@ -1350,7 +1353,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
             if (why != Why.RETURN) {
                 retval = Py.None;
             }
-        } else { 
+        } else {
             // store the stack in the frame for reentry from the yield;
             f.f_savedlocals = stack.popN(stack.size());
         }

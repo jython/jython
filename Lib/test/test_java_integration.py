@@ -485,8 +485,11 @@ class SecurityManagerTest(unittest.TestCase):
             # script must lie within python.home for this test to work
             return
         policy = test_support.findfile("python_home.policy")
-        self.assertEquals(subprocess.call([sys.executable,  "-J-Dpython.cachedir.skip=true",
-            "-J-Djava.security.manager", "-J-Djava.security.policy=%s" % policy, script]),
+        self.assertEquals(
+            subprocess.call([sys.executable,
+                             "-J-Dpython.cachedir.skip=true",
+                             "-J-Djava.security.manager",
+                             "-J-Djava.security.policy=%s" % policy, script]),
             0)
 
     def test_import_signal_fails_with_import_error_using_security(self):
@@ -693,7 +696,9 @@ class SerializationTest(unittest.TestCase):
     def test_proxy_serialization(self):
         # Proxies can be deserializable in a fresh JVM, including being able
         # to "findPython" to get a PySystemState.
-        tempdir = tempfile.mkdtemp()
+        # tempdir gets combined with unicode paths derived from class names,
+        # so make it a unicode object.
+        tempdir = tempfile.mkdtemp().decode(sys.getfilesystemencoding())
         old_proxy_debug_dir = org.python.core.Options.proxyDebugDirectory
         try:
             # Generate a proxy for Cat class;
@@ -738,7 +743,9 @@ class SerializationTest(unittest.TestCase):
     @unittest.skipUnless(find_executable('jar'), 'Need the jar command to run')
     def test_custom_proxymaker(self):
         # Verify custom proxymaker supports direct usage of Python code in Java
-        tempdir = tempfile.mkdtemp()
+        # tempdir gets combined with unicode paths derived from class names,
+        # so make it a unicode object.
+        tempdir = tempfile.mkdtemp().decode(sys.getfilesystemencoding())
         try:
             SerializableProxies.serialized_path = tempdir
             import bark

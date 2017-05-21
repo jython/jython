@@ -2438,6 +2438,7 @@ class TextIOWrapperTest(unittest.TestCase):
             self.assertEqual(f.errors, "replace")
 
     @unittest.skipUnless(threading, 'Threading required for this test.')
+    @unittest.skipIf(support.is_jython, "Not thread-safe: Jython issue 2588.")
     def test_threads_write(self):
         # Issue6750: concurrent writes could duplicate data
         event = threading.Event()

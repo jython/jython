@@ -296,6 +296,7 @@ public class imp {
         return compileSource(name, makeStream(file), sourceFilename, mtime);
     }
 
+    /** Remove the last three characters of a file name and add the compiled suffix "$py.class". */
     public static String makeCompiledFilename(String filename) {
         return filename.substring(0, filename.length() - 3) + "$py.class";
     }
@@ -420,7 +421,8 @@ public class imp {
         }
 
         if (moduleLocation != null) {
-            module.__setattr__("__file__", new PyString(moduleLocation));
+            // Standard library expects __file__ to be encoded bytes
+            module.__setattr__("__file__", Py.fileSystemEncode(moduleLocation));
         } else if (module.__findattr__("__file__") == null) {
             // Should probably never happen (but maybe with an odd custom builtins, or
             // Java Integration)
@@ -545,10 +547,8 @@ public class imp {
                     return loadFromLoader(loader, moduleName);
                 }
             }
-            if (!(p instanceof PyUnicode)) {
-                p = p.__str__();
-            }
-            ret = loadFromSource(sys, name, moduleName, p.toString());
+            // p could be unicode or bytes (in the file system encoding)
+            ret = loadFromSource(sys, name, moduleName, Py.fileSystemDecode(p));
             if (ret != null) {
                 return ret;
             }
@@ -608,7 +608,7 @@ public class imp {
         // display names are for identification purposes (e.g. __file__): when entry is
         // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
         // /tmp/foo/bar.py)
-        String displayDirName = entry.equals("") ? null : entry.toString();
+        String displayDirName = entry.equals("") ? null : entry;
         String displaySourceName = new File(new File(displayDirName, name), sourceName).getPath();
         String displayCompiledName =
                 new File(new File(displayDirName, name), compiledName).getPath();
@@ -624,8 +624,9 @@ public class imp {
                 if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
                     pkg = true;
                 } else {
+                    String printDirName = PyString.encode_UnicodeEscape(displayDirName, '\'');
                     Py.warning(Py.ImportWarning, String.format(
-                            "Not importing directory '%s': missing __init__.py", dirName));
+                            "Not importing directory %s: missing __init__.py", printDirName));
                 }
             }
         } catch (SecurityException e) {
@@ -642,7 +643,7 @@ public class imp {
             compiledFile = new File(dirName, compiledName);
         } else {
             PyModule m = addModule(modName);
-            PyObject filename = new PyString(new File(displayDirName, name).getPath());
+            PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());
             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 
@@ -935,9 +936,6 @@ public class imp {
                 }
             }
         }
-        if (name.indexOf(File.separatorChar) != -1) {
-            throw Py.ImportError("Import by filename is not supported.");
-        }
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
@@ -979,6 +977,13 @@ public class imp {
             ensureFromList(mod, fromlist, name);
         }
         return mod;
+    }
+
+    /** Defend against attempt to import by filename (withdrawn feature). */
+    private static void checkNotFile(String name){
+        if (name.indexOf(File.separatorChar) != -1) {
+            throw Py.ImportError("Import by filename is not supported.");
+        }
     }
 
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name) {
@@ -1023,6 +1028,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
+        checkNotFile(name);
         PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
@@ -1043,6 +1049,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top, PyObject modDict,
             PyObject fromlist, int level) {
+        checkNotFile(name);
         PyUnicode.checkEncoding(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();

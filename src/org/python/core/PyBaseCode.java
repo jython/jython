@@ -170,7 +170,7 @@ public abstract class PyBaseCode extends PyCode {
         }
         return call(state, frame, closure);
     }
-    
+
     @Override
     public PyObject call(ThreadState state, PyObject arg1, PyObject arg2,
             PyObject arg3, PyObject arg4, PyObject globals,
@@ -309,8 +309,10 @@ public abstract class PyBaseCode extends PyCode {
     }
 
     public String toString() {
-        return String.format("<code object %.100s at %s, file \"%.300s\", line %d>",
-                             co_name, Py.idstr(this), co_filename, co_firstlineno);
+        // Result must be convertible to a str (for __repr__()), but let's make it fully printable.
+        String filename = PyString.encode_UnicodeEscape(co_filename, '"');
+        return String.format("<code object %.100s at %s, file %.300s, line %d>",
+                             co_name, Py.idstr(this), filename, co_firstlineno);
     }
 
     protected abstract PyObject interpret(PyFrame f, ThreadState ts);

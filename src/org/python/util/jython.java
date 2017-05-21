@@ -196,7 +196,7 @@ public class jython {
         try {
             PyObject runpy = imp.importName("runpy", true);
             PyObject runmodule = runpy.__findattr__("_run_module_as_main");
-            runmodule.__call__(Py.newStringOrUnicode(moduleName), Py.newBoolean(set_argv0));
+            runmodule.__call__(Py.fileSystemEncode(moduleName), Py.newBoolean(set_argv0));
         } catch (Throwable t) {
             Py.printException(t);
             interp.cleanup();
@@ -206,7 +206,7 @@ public class jython {
 
     private static boolean runMainFromImporter(InteractiveConsole interp, String filename) {
         // Support http://bugs.python.org/issue1739468 - Allow interpreter to execute a zip file or directory
-        PyString argv0 = Py.newStringOrUnicode(filename);
+        PyString argv0 = Py.fileSystemEncode(filename);
         PyObject importer = imp.getImporter(argv0);
         if (!(importer instanceof PyNullImporter)) {
              /* argv0 is usable as an import source, so
@@ -323,7 +323,7 @@ public class jython {
             if (path == null) {
                 path = "";
             }
-            Py.getSystemState().path.insert(0, Py.newStringOrUnicode(path));
+            Py.getSystemState().path.insert(0, Py.fileSystemEncode(path));
             if (opts.jar) {
                 try {
                     runJar(opts.filename);
@@ -341,8 +341,8 @@ public class jython {
             } else {
                 try {
                     interp.globals.__setitem__(new PyString("__file__"),
-                            new PyString(opts.filename));
-
+                            // Note that __file__ is widely expected to be encoded bytes
+                            Py.fileSystemEncode(opts.filename));
                     FileInputStream file;
                     try {
                         file = new FileInputStream(new RelativeFile(opts.filename));

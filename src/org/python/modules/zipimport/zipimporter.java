@@ -20,6 +20,7 @@ import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.core.Traverseproc;
 import org.python.core.Visitproc;
 import org.python.core.util.FileUtil;
@@ -80,7 +81,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     @ExposedMethod
     final void zipimporter___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("__init__", args, kwds, new String[] {"path"});
-        String path = ap.getString(0);
+        String path = Py.fileSystemDecode(ap.getPyObject(0));
         zipimporter___init__(path);
     }
 
@@ -113,10 +114,11 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
             pathFile = parentFile;
         }
         if (archive != null) {
-            files = zipimport._zip_directory_cache.__finditem__(archive);
+            PyUnicode archivePath = Py.newUnicode(archive);
+            files = zipimport._zip_directory_cache.__finditem__(archivePath);
             if (files == null) {
                 files = readDirectory(archive);
-                zipimport._zip_directory_cache.__setitem__(archive, files);
+                zipimport._zip_directory_cache.__setitem__(archivePath, files);
             }
         } else {
             throw zipimport.ZipImportError("not a Zip file: " + path);
@@ -172,11 +174,12 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
      */
     @Override
     public String get_data(String path) {
-        return zipimporter_get_data(path);
+        return zipimporter_get_data(Py.newUnicode(path));
     }
 
     @ExposedMethod
-    final String zipimporter_get_data(String path) {
+    final String zipimporter_get_data(PyObject opath) {
+        String path = Py.fileSystemDecode(opath);
         int len = archive.length();
         if (len < path.length() && path.startsWith(archive + File.separator)) {
             path = path.substring(len + 1);
@@ -246,7 +249,8 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     final PyObject zipimporter_get_filename(String fullname) {
         ModuleCodeData moduleCodeData = getModuleCode(fullname);
         if (moduleCodeData != null) {
-            return Py.newStringOrUnicode(moduleCodeData.path);
+            // File names generally expected in the FS encoding at the Python level
+            return Py.fileSystemEncode(moduleCodeData.path);
         }
         return Py.None;
     }
@@ -397,7 +401,8 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
             ZipEntry zipEntry = zipEntries.nextElement();
             String name = zipEntry.getName().replace('/', File.separatorChar);
 
-            PyObject __file__ = Py.newStringOrUnicode(archive + File.separator + name);
+            // File names generally expected in the FS encoding at the Python level
+            PyObject __file__ = Py.fileSystemEncode(archive + File.separator + name);
             PyObject compress = Py.newInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());

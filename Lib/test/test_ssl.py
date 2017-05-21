@@ -27,7 +27,13 @@ PROTOCOLS = sorted(ssl._PROTOCOL_NAMES)
 HOST = support.HOST
 
 def data_file(*name):
-    return os.path.join(os.path.dirname(__file__), *name)
+    file = os.path.join(os.path.dirname(__file__), *name)
+    # Ensure we return unicode path. This tweak is not a divergence:
+    # CPython 2.7.13 fails the same way for a non-ascii location.
+    if isinstance(file, unicode):
+        return file
+    else:
+        return file.decode(sys.getfilesystemencoding())
 
 # The custom key and certificate files used in test_ssl are generated
 # using Lib/test/make_ssl_certs.py.
