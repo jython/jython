@@ -4,6 +4,8 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2356 ] java.lang.IllegalArgumentException on startup on Windows if username not ASCII
+    - [ 1839 ] sys.getfilesystemencoding() is None (now utf-8)
     - [ 2579 ] Pyc files are not loading for too large modules if path contains __pyclasspath__
     - [ 2570 ] Wrong shebang set for OS X installation of Jython
     - [ 2585 ] test_ssl failure due to Netty exception mapping
@@ -111,6 +113,12 @@ Jython 2.7.1rc1
     - Fixed platform.mac_ver to provide actual info on Mac OS similar to CPython behavior.
     - Added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems (e.g. Windows).
+    - There is now support for non-ascii paths in all (home, installation, temporary)
+      directories, which previously caused failures. sys.getplatformencoding() returns
+      'utf-8' as the nominal file-system encoding, irrespective of localization. This may
+      differ from what CPython reports on the same OS. In Jython a file path presented
+      as bytes is the UTF-8 encoding of the unicode file path as Java sees it. (See issues
+      #1839 and #2356.) This matter is unrelated to file.encoding or the console.
 
 Jython 2.7.1b3
   Bugs fixed
