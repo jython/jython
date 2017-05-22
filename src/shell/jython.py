@@ -210,11 +210,16 @@ class JythonCommand(object):
     def jython_home(self):
         if hasattr(self, "_jython_home"):
             return self._jython_home
-        self._jython_home = get_env("JYTHON_HOME") or os.path.dirname(
-                    os.path.dirname(self.executable))
+        home = get_env("JYTHON_HOME")
+        if home is None:
+            # Not just dirname twice in case dirname(executable) == ''
+            home = os.path.join(os.path.dirname(self.executable), u'..')
+        # This could be a relative path like .\..
+        home = os.path.normpath(home)
         if self.uname == u"cygwin":
             # Even on Cygwin, we need a Windows-style path for this
             home = unicode_subprocess(["cygpath", "--windows", home])
+        self._jython_home = home
         return self._jython_home
 
     @property
