@@ -171,6 +171,12 @@ public class PyTableCode extends PyBaseCode
             ret = funcs.call_function(func_id, frame, ts);
         } catch (Throwable t) {
             // Convert exceptions that occurred in Java code to PyExceptions
+            if (!(t instanceof Exception)) {
+                Py.warning(Py.RuntimeWarning, "PyTableCode.call caught a Throwable that is "
+                        + "not an Exception:\n"+t+"\nJython internals might be in a bad state now "
+                        + "that can cause deadlocks later on."
+                        + "\nSee http://bugs.jython.org/issue2536 for details.");
+            }
             PyException pye = Py.JavaError(t);
             pye.tracebackHere(frame);
 

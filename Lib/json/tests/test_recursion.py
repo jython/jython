@@ -1,4 +1,6 @@
 from json.tests import PyTest, CTest
+import unittest
+from test import test_support
 
 
 class JSONTestObject:
@@ -65,6 +67,7 @@ class TestRecursion(object):
             self.fail("didn't raise ValueError on default recursion")
 
 
+    @unittest.skipIf(test_support.is_jython, "See http://bugs.jython.org/issue2536.")
     def test_highly_nested_objects_decoding(self):
         # test that loading highly-nested objects doesn't segfault when C
         # accelerations are used. See #12017
@@ -83,6 +86,7 @@ class TestRecursion(object):
         with self.assertRaises(RuntimeError):
             self.loads(u'[' * 100000 + u'1' + u']' * 100000)
 
+    @unittest.skipIf(test_support.is_jython, "See http://bugs.jython.org/issue2536.")
     def test_highly_nested_objects_encoding(self):
         # See #12051
         l, d = [], {}
@@ -93,6 +97,7 @@ class TestRecursion(object):
         with self.assertRaises(RuntimeError):
             self.dumps(d)
 
+    @unittest.skipIf(test_support.is_jython, "See http://bugs.jython.org/issue2536.")
     def test_endless_recursion(self):
         # See #12051
         class EndlessJSONEncoder(self.json.JSONEncoder):

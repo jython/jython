@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc1
   Bugs fixed
+    - [ 2536 ] deadlocks in regrtests due to StackOverflowError in finally block (workaround, still open)
     - [ 2356 ] java.lang.IllegalArgumentException on startup on Windows if username not ASCII
     - [ 1839 ] sys.getfilesystemencoding() is None (now utf-8)
     - [ 2579 ] Pyc files are not loading for too large modules if path contains __pyclasspath__
