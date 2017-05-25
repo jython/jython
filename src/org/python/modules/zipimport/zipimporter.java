@@ -49,9 +49,14 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
         "a zipfile. ZipImportError is raised if 'archivepath' doesn't point to\n" +
         "a valid Zip archive.");
 
-    /** Pathname of the Zip archive */
-    @ExposedGet
+    /** Path to the Zip archive */
     public String archive;
+
+    /** Path to the Zip archive as FS-encoded <code>str</code>. */
+    @ExposedGet(name = "archive")
+    public PyString getArchive() {
+        return Py.fileSystemEncode(archive);
+    }
 
     /** File prefix: "a/sub/directory/" */
     @ExposedGet
@@ -516,12 +521,13 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
 
     @ExposedMethod(names = "__repr__")
     final String zipimporter_toString() {
-        String displayArchive = archive != null ? archive : "???";
+        // __repr__ has to return bytes not unicode
+        String bytesName = archive != null ? Py.fileSystemEncode(archive).getString() : "???";
         if (prefix != null && !"".equals(prefix)) {
-            return String.format("<zipimporter object \"%.300s%c%.150s\">",
-                                 displayArchive, File.separatorChar, prefix);
+            return String.format("<zipimporter object \"%.300s%c%.150s\">", bytesName,
+                    File.separatorChar, prefix);
         }
-        return String.format("<zipimporter object \"%.300s\">", displayArchive);
+        return String.format("<zipimporter object \"%.300s\">", bytesName);
     }
 
     /**
