@@ -142,31 +142,31 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
-            <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
-            <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
+            <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.42-bin.jar" />
+            <pathelement path="${extlibs.dir}/postgresql-42.1.1.jre7.jar" />
             <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
             <pathelement path="${extlibs.dir}/antlr-3.1.3.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.1.jar" />
-            <pathelement path="${extlibs.dir}/commons-compress-1.12.jar"/>
-            <!-- pin to ASM 5.0.3 until we upgrade compilation -->
-            <pathelement path="${extlibs.dir}/asm-5.0.4.jar" />
-            <pathelement path="${extlibs.dir}/asm-commons-5.0.4.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-5.0.4.jar" />
-            <pathelement path="${extlibs.dir}/guava-20.0.jar" />
-            <pathelement path="${extlibs.dir}/icu4j-58.1.jar" />
-            <pathelement path="${extlibs.dir}/jffi-1.2.13.jar"/>
+            <pathelement path="${extlibs.dir}/commons-compress-1.14.jar"/>
+            <!-- pin to ASM 5.2 until we upgrade compilation -->
+            <pathelement path="${extlibs.dir}/asm-5.2.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-5.2.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-5.2.jar" />
+            <pathelement path="${extlibs.dir}/guava-22.0-android.jar" />
+            <pathelement path="${extlibs.dir}/icu4j-59_1.jar" />
+            <pathelement path="${extlibs.dir}/jffi-1.2.15.jar"/>
             <pathelement path="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-ffi-2.1.0.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-ffi-2.1.5.jar"/>
             <pathelement path="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-posix-3.0.31.jar"/>
-            <pathelement path="${extlibs.dir}/jnr-constants-0.9.5.jar"/>
-            <pathelement path="${extlibs.dir}/jline-2.14.2.jar"/>
-            <pathelement path="${extlibs.dir}/netty-buffer-4.1.6.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-codec-4.1.6.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-common-4.1.6.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-handler-4.1.6.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-resolver-4.1.6.Final.jar"/>
-            <pathelement path="${extlibs.dir}/netty-transport-4.1.6.Final.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-posix-3.0.41.jar"/>
+            <pathelement path="${extlibs.dir}/jnr-constants-0.9.9.jar"/>
+            <pathelement path="${extlibs.dir}/jline-2.14.3.jar"/>
+            <pathelement path="${extlibs.dir}/netty-buffer-4.1.11.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-codec-4.1.11.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-common-4.1.11.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-handler-4.1.11.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-resolver-4.1.11.Final.jar"/>
+            <pathelement path="${extlibs.dir}/netty-transport-4.1.11.Final.jar"/>
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -174,8 +174,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
-            <pathelement path="${extlibs.dir}/asm-commons-4.0.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-4.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-5.2.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-5.2.jar" />
             <pathelement path="${extlibs.dir}/junit-4.10.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
@@ -552,36 +552,37 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
             <!-- pin to ASM 5.0.3 until we upgrade compilation -->
-            <zipfileset src="extlibs/asm-5.0.4.jar"/>
-            <zipfileset src="extlibs/asm-commons-5.0.4.jar"/>
-            <zipfileset src="extlibs/asm-util-5.0.4.jar"/>
+            <zipfileset src="extlibs/asm-5.2.jar"/>
+            <zipfileset src="extlibs/asm-commons-5.2.jar"/>
+            <zipfileset src="extlibs/asm-util-5.2.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.54.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk15on-1.57.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.54.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk15on-1.57.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.12.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.14.jar"/>
             <rule pattern="org.apache.**" result="org.python.apache.@1"/>
-            <zipfileset src="extlibs/guava-20.0.jar"/>
+            <zipfileset src="extlibs/guava-22.0-android.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
-            <zipfileset src="extlibs/icu4j-58.1.jar"/>
+            <zipfileset src="extlibs/icu4j-59_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-resolver-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.1.6.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.1.11.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
             <!-- these stub jars are pre-built in https://github.com/jnr/jffi/tree/master/archive
                 and rarely if ever change -->
+            <zipfileset src="extlibs/jffi-aarch64-Linux.jar"/>
             <zipfileset src="extlibs/jffi-arm-Linux.jar"/>
             <zipfileset src="extlibs/jffi-Darwin.jar"/>
             <zipfileset src="extlibs/jffi-i386-FreeBSD.jar"/>
@@ -589,6 +590,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-i386-OpenBSD.jar"/>
             <zipfileset src="extlibs/jffi-i386-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-i386-Windows.jar"/>
+            <zipfileset src="extlibs/jffi-ppc64le-Linux.jar"/>
             <zipfileset src="extlibs/jffi-ppc-AIX.jar"/>
             <zipfileset src="extlibs/jffi-ppc-Linux.jar"/>
             <zipfileset src="extlibs/jffi-ppc64-Linux.jar"/>
@@ -601,17 +603,17 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.2.13.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.0.jar"/>
+            <zipfileset src="extlibs/jffi-1.2.15.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.5.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-posix-3.0.31.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-constants-0.9.5.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.0.41.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.9.9.jar"/>
             <zipfileset src="extlibs/xercesImpl-2.11.0.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
             <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
-            <zipfileset src="extlibs/jline-2.14.2.jar"/>
+            <zipfileset src="extlibs/jline-2.14.3.jar"/>
             <rule pattern="jline.**" result="org.python.jline.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
@@ -752,8 +754,8 @@ The readme text for the next release will be like:
               <include name="extlibs/**/*.jar" />
 
               <!-- don't distribute jdbc jars -->
-              <exclude name="extlibs/mysql-connector-java-5.1.6.jar" />
-              <exclude name="extlibs/postgresql-8.3-603.jdbc4.jar" />
+              <exclude name="extlibs/mysql-connector-java-5.1.42-bin.jar" />
+              <exclude name="extlibs/postgresql-42.1.1.jre7.jar" />
               <exclude name="extlibs/ifxjdbc.jar" />
               <exclude name="extlibs/ojdbc14.jar" />
 

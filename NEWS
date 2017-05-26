@@ -85,6 +85,13 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
+    - Updated Netty to 4.1.11, ASM to 5.2, BouncyCastle to 1.57, Commons Compress to 1.14,
+      Guava to 22.0, ICU4J to 59.1, JFFI to 1.2.15, JNR-JFFI to 2.1.5, JNR-POSIX to 3.0.41,
+      JNR-Constants 0.9.9, JLine to 2.14.3, MySQL Connector to 5.1.42, PostgreSQL to 42.1.1
+      Note:
+      You might find it strange that Jython bundles guava-22.0-android.jar rather than guava-22.0.jar.
+      This is the official way to support Java 7 with Guava > 20.0, also on non-Android platforms.
+      See https://github.com/google/guava/wiki/Release22#guava-release-220-release-notes.
     - Recognize cpython_cmd property to automatically build CPython bytecode for oversized
       functions (e.g. jython -J-Dcpython_cmd=python). This is especially convenient when
       installing things like SymPy via pip; it would frequently prompt you to provide yet
@@ -110,7 +117,6 @@ Jython 2.7.1rc1
       Python level or for client code using PyBuffer via the "fully encapsulated" API. It
       risks breaking code that makes direct access to a byte array via PyBuffer, implements
       the PyBuffer interface, or extends implementation classes in org.python.core.buffer.
-    - Updated Netty to 4.1.4
     - Fixed platform.mac_ver to provide actual info on Mac OS similar to CPython behavior.
     - Added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems (e.g. Windows).
