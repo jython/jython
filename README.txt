@@ -4,7 +4,7 @@ Welcome to Jython 2.7.1 release candidate 2!
 
 This is the second release candidate of the 2.7.1 version of
 Jython. Along with language and runtime compatibility with CPython
-2.7.1, Jython 2.7 provides substantial support of the Python
+2.7, Jython 2.7 provides substantial support of the Python
 ecosystem. This includes built-in support of pip/setuptools (you can
 use with bin/pip) and a native launcher for Windows (bin/jython.exe),
 with the implication that you can finally install Jython scripts on
