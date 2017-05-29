@@ -2,7 +2,7 @@ Jython: Python for the Java Platform
 
 Welcome to Jython 2.7.1 release candidate 2!
 
-This is the first release candidate of the 2.7.1 version of
+This is the second release candidate of the 2.7.1 version of
 Jython. Along with language and runtime compatibility with CPython
 2.7.1, Jython 2.7 provides substantial support of the Python
 ecosystem. This includes built-in support of pip/setuptools (you can
