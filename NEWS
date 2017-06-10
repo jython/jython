@@ -2,7 +2,12 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-Jython 2.7.1rc1
+Jython 2.7.1rc3
+  Bugs fixed
+    - [ 2593 ] file.write(obj) raises NullPointerException on type error.
+    - [ 2592 ] Line breaks in exceptions are wrong (characters being backslash-escaped).
+
+Jython 2.7.1rc2
   Bugs fixed
     - [ 2536 ] deadlocks in regrtests due to StackOverflowError in finally block (workaround, still open)
     - [ 2356 ] java.lang.IllegalArgumentException on startup on Windows if username not ASCII
@@ -28,6 +33,9 @@ Jython 2.7.1rc1
     - [ 2557 ] ongoing pain with platform detection via os.name and sys.platform
     - [ 1996 ] Core slots array out of bounds with multiple inheritance
     - [ 2101 ] Diamond-style multiple inheritance fails when using __slots__ on the second branch
+
+Jython 2.7.1rc1
+  Bugs fixed
     - [ 2552 ] installing scandir via pip fails (breaks e.g. installing pathlib2 via pip)
     - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
     - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
