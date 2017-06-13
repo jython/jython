@@ -4,9 +4,9 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.1rc3
   Bugs fixed
-    - [ 2597 ] Possible memory leak in Jython 2.7.1 RC2
-    - [ 2593 ] file.write(obj) raises NullPointerException on type error.
-    - [ 2592 ] Line breaks in exceptions are wrong (characters being backslash-escaped).
+    - [ 2597 ] PySystemState.sysClosers requires cleanup to prevent memory leak
+    - [ 2593 ] file.write(obj) raises NullPointerException on type error
+    - [ 2592 ] Line breaks in exceptions are wrong (characters being backslash-escaped)
 
 Jython 2.7.1rc2
   Bugs fixed
