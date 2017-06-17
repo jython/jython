@@ -506,8 +506,8 @@ public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc
 
         if (message == null) {
             // Messages differ for text or binary streams (CPython) but we always add the type
-            String.format("%s buffer, not %.200s", (binary ? "must be string or"
-                    : "expected a character"), obj.getType().fastGetName());
+            String fmt = "expected a string or%s buffer, not %.200s";
+            message = String.format(fmt, (binary ? "" : " character"), obj.getType().fastGetName());
         }
         throw Py.TypeError(message);
     }

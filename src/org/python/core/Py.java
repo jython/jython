@@ -1507,14 +1507,13 @@ public final class Py {
 
     /** Defensive method to avoid exceptions from decoding (or import encodings) */
     private static String asMessageString(PyObject value, boolean useRepr) {
-        if (useRepr)
+        if (useRepr) {
             value = value.__repr__();
+        }
         if (value instanceof PyUnicode) {
             return value.asString();
         } else {
-            // Carefully avoid decoding errors that would swallow the intended message
-            String s = value.__str__().getString();
-            return PyString.encode_UnicodeEscape(s, false);
+            return value.__str__().getString();
         }
     }
 

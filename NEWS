@@ -2,7 +2,13 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-Jython 2.7.1rc1
+Jython 2.7.1rc3
+  Bugs fixed
+    - [ 2597 ] PySystemState.sysClosers requires cleanup to prevent memory leak
+    - [ 2593 ] file.write(obj) raises NullPointerException on type error
+    - [ 2592 ] Line breaks in exceptions are wrong (characters being backslash-escaped)
+
+Jython 2.7.1rc2
   Bugs fixed
     - [ 2536 ] deadlocks in regrtests due to StackOverflowError in finally block (workaround, still open)
     - [ 2356 ] java.lang.IllegalArgumentException on startup on Windows if username not ASCII
@@ -28,6 +34,24 @@ Jython 2.7.1rc1
     - [ 2557 ] ongoing pain with platform detection via os.name and sys.platform
     - [ 1996 ] Core slots array out of bounds with multiple inheritance
     - [ 2101 ] Diamond-style multiple inheritance fails when using __slots__ on the second branch
+
+  New Features
+    - Updated Netty to 4.1.11, ASM to 5.2, BouncyCastle to 1.57, Commons Compress to 1.14,
+      Guava to 22.0, ICU4J to 59.1, JFFI to 1.2.15, JNR-JFFI to 2.1.5, JNR-POSIX to 3.0.41,
+      JNR-Constants 0.9.9, JLine to 2.14.3, MySQL Connector to 5.1.42, PostgreSQL to 42.1.1
+      Note:
+      You might find it strange that Jython bundles guava-22.0-android.jar rather than guava-22.0.jar.
+      This is the official way to support Java 7 with Guava > 20.0, also on non-Android platforms.
+      See https://github.com/google/guava/wiki/Release22#guava-release-220-release-notes.
+    - There is now support for non-ascii paths in all (home, installation, temporary)
+      directories, which previously caused failures. sys.getplatformencoding() returns
+      'utf-8' as the nominal file-system encoding, irrespective of localization. This may
+      differ from what CPython reports on the same OS. In Jython a file path presented
+      as bytes is the UTF-8 encoding of the unicode file path as Java sees it. (See issues
+      #1839 and #2356.) This matter is unrelated to file.encoding or the console.
+
+Jython 2.7.1rc1
+  Bugs fixed
     - [ 2552 ] installing scandir via pip fails (breaks e.g. installing pathlib2 via pip)
     - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
     - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
@@ -85,13 +109,6 @@ Jython 2.7.1rc1
     - [ 1767 ] Rich comparisons
 
   New Features
-    - Updated Netty to 4.1.11, ASM to 5.2, BouncyCastle to 1.57, Commons Compress to 1.14,
-      Guava to 22.0, ICU4J to 59.1, JFFI to 1.2.15, JNR-JFFI to 2.1.5, JNR-POSIX to 3.0.41,
-      JNR-Constants 0.9.9, JLine to 2.14.3, MySQL Connector to 5.1.42, PostgreSQL to 42.1.1
-      Note:
-      You might find it strange that Jython bundles guava-22.0-android.jar rather than guava-22.0.jar.
-      This is the official way to support Java 7 with Guava > 20.0, also on non-Android platforms.
-      See https://github.com/google/guava/wiki/Release22#guava-release-220-release-notes.
     - Recognize cpython_cmd property to automatically build CPython bytecode for oversized
       functions (e.g. jython -J-Dcpython_cmd=python). This is especially convenient when
       installing things like SymPy via pip; it would frequently prompt you to provide yet
@@ -117,15 +134,10 @@ Jython 2.7.1rc1
       Python level or for client code using PyBuffer via the "fully encapsulated" API. It
       risks breaking code that makes direct access to a byte array via PyBuffer, implements
       the PyBuffer interface, or extends implementation classes in org.python.core.buffer.
+    - Updated Netty to 4.1.4
     - Fixed platform.mac_ver to provide actual info on Mac OS similar to CPython behavior.
     - Added uname function to posix module. The mostly Java-based implementation even
       works to some extend on non-posix systems (e.g. Windows).
-    - There is now support for non-ascii paths in all (home, installation, temporary)
-      directories, which previously caused failures. sys.getplatformencoding() returns
-      'utf-8' as the nominal file-system encoding, irrespective of localization. This may
-      differ from what CPython reports on the same OS. In Jython a file path presented
-      as bytes is the UTF-8 encoding of the unicode file path as Java sees it. (See issues
-      #1839 and #2356.) This matter is unrelated to file.encoding or the console.
 
 Jython 2.7.1b3
   Bugs fixed

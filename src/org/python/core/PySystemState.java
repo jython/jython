@@ -1580,6 +1580,7 @@ public class PySystemState extends PyObject implements AutoCloseable,
             Reference<? extends PySystemState> ref;
             while ((ref = systemStateQueue.poll()) != null) {
                 PySystemStateCloser closer = sysClosers.get(ref);
+                sysClosers.remove(ref);
                 closer.cleanup();
             }
         }
