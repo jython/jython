@@ -160,7 +160,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
             <pathelement path="${extlibs.dir}/jnr-posix-3.0.41.jar"/>
             <pathelement path="${extlibs.dir}/jnr-constants-0.9.9.jar"/>
-            <pathelement path="${extlibs.dir}/jline-2.14.3.jar"/>
+            <pathelement path="${extlibs.dir}/jline-2.14.5.jar"/>
             <pathelement path="${extlibs.dir}/netty-buffer-4.1.11.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-codec-4.1.11.Final.jar"/>
             <pathelement path="${extlibs.dir}/netty-common-4.1.11.Final.jar"/>
@@ -613,7 +613,7 @@ The readme text for the next release will be like:
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
             <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
-            <zipfileset src="extlibs/jline-2.14.3.jar"/>
+            <zipfileset src="extlibs/jline-2.14.5.jar"/>
             <rule pattern="jline.**" result="org.python.jline.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
