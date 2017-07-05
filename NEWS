@@ -2,6 +2,16 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
+Jython 2.7.2b1
+  Bugs fixed
+    - [ 2602 ] NumberFormatException in terminal on OSX 10.12.5 (ncurses related)
+
+  New Features
+    - Updated JLine to 2.14.5
+
+Jython 2.7.1
+  same as 2.7.1rc3
+
 Jython 2.7.1rc3
   Bugs fixed
     - [ 2597 ] PySystemState.sysClosers requires cleanup to prevent memory leak
