@@ -2645,7 +2645,8 @@ public final class Py {
                 if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
                     // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
                     int start = JAR_URL_PREFIX.length();
-                    if (Platform.IS_WINDOWS) {
+                    if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
+                        // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
                         start++;
                     }
                     jarFileName = urlString.substring(start, jarSeparatorIndex);
@@ -2656,7 +2657,8 @@ public final class Py {
                     if (jarIndex > 0) {
                         jarIndex += 4;
                         int start = VFSZIP_PREFIX.length();
-                        if (Platform.IS_WINDOWS) {
+                        if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
+                            // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
                             // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
                             start++;
                         }
@@ -2669,7 +2671,8 @@ public final class Py {
                     if (jarIndex > 0) {
                         jarIndex += 4;
                         int start = VFS_PREFIX.length();
-                        if (Platform.IS_WINDOWS) {
+                        if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
+                            // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
                             // vfs:/C:/some/path/jython.jar/org/python/core/PySystemState.class
                             start++;
                         }

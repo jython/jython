@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Jython 2.7.2b1
   Bugs fixed
+    - [ 2599 ] Cannot handle network paths under Windows
     - [ 2600 ] subprocess doesn't have _args_from_interpreter_flags (blocks support for multiprocessing)
     - [ 2602 ] NumberFormatException in terminal on OSX 10.12.5 (ncurses related)
 
