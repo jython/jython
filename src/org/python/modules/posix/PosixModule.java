@@ -1168,7 +1168,7 @@ public class PosixModule implements ClassDictInit {
 
         PyObject[] vals = {
                 Py.newString(sysname),
-                Py.newString(uname_nodename),
+                Py.fileSystemEncode(uname_nodename),
                 Py.newString(sysrelease),
                 Py.newString(uname_sysver),
                 Py.newString(uname_machine)
