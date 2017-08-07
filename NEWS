@@ -2,8 +2,9 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-Jython 2.7.2b1
+Development tip
   Bugs fixed
+    - [ 2609 ] PyType.fromClass publication race (discovered in strptime and re)
     - [ 2608 ] Encoding problems with non-ascii host name
     - [ 2599 ] Cannot handle network paths under Windows
     - [ 2600 ] subprocess doesn't have _args_from_interpreter_flags (blocks support for multiprocessing)

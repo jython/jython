@@ -46,14 +46,6 @@ public class Deriveds {
                 // pass through to __getattr__
             } else {
                 PyObject getattribute = type.lookup("__getattribute__");
-                // This is a horrible hack for eventual consistency of the cache. We hope that the cached version
-                // becomes available, but don't wait forever.
-                for (int i = 0; i < 100000; i++) {
-                    if (getattribute != null) {
-                        break;
-                    }
-                    getattribute = type.lookup("__getattribute__");
-                }
                 if (getattribute == null) {
                     // This shouldn't happen
                     throw Py.SystemError(String.format(

@@ -28,7 +28,11 @@ import org.python.util.Generic;
 import com.google.common.collect.MapMaker;
 
 /**
- * The Python Type object implementation.
+ * The Python type object implementation.
+ * <p>
+ * The class <code>PyType</code> contains static data that describes Python types that is consulted
+ * and modified through its static API (notably {@link #fromClass(Class)}). The data structures are
+ * guarded against modification (or consultation while being modified) by concurrent threads.
  */
 @ExposedType(name = "type", doc = BuiltinDocs.type_doc)
 public class PyType extends PyObject implements Serializable, Traverseproc {
@@ -100,8 +104,57 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private transient ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private Set<WeakReference<PyType>> subclasses = Generic.linkedHashSet();
 
-    /** Global mro cache. */
-    private static final MethodCache methodCache = new MethodCache();
+    /**
+     * The class <code>PyType</code> contains static data that describes Python types though a
+     * system of indexes and <code>PyType</code> objects. Each <code>PyObject</code> calls
+     * {@link PyType#fromClass(Class)}, which adds to this data, as it is being initialised. The
+     * <code>PyType</code> static data must be valid (consistent) ready to handle that call.
+     * <p>
+     * <code>PyType</code> itself is a <code>PyObject</code> calls {@link PyType#fromClass(Class)}
+     * during initialisation. In order to guarantee that the static state of <code>PyType</code> is
+     * valid at that point, it has to be in a separate class, here privately nested. See the classic
+     * "<a href = "http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html#dcl">The
+     * double-checked locking problem</a>", which we use here to be prompt rather than lazy.
+     * <p>
+     * A further consequence is that the data structures must be guarded against concurrent
+     * modification (or modification and access).
+     */
+    /*
+     * We aspire to a design in which a PyType for a Class could be got and used, in a thread-safe
+     * way, without synchronisation on the static state as a whole. This would let us have
+     * fine-grained locking (maybe only on PyType). The semantics of ClassValue are probably what we
+     * need: the PyType exists until the Java class is unloaded. ClassValue might not be sufficient
+     * if we wished to permit collection of PyTypes we won't use again, for Java classes that remain
+     * in use, and we can identify them.
+     */
+    private static final class StaticMaps {
+
+        /** Mapping of Java classes to their PyTypes. */
+        private static final ConcurrentMap<Class<?>, PyType> classToType =
+                new MapMaker().weakKeys().weakValues().makeMap();
+
+        /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
+        private static final Set<PyType> exposedTypes = Generic.set();
+
+        /** Mapping of Java classes to their TypeBuilders. */
+        private static final ConcurrentMap<Class<?>, TypeBuilder> classToBuilder =
+                Generic.concurrentMap();
+    }
+
+    /** Mapping of Java classes to their PyTypes. */
+   private static ConcurrentMap<Class<?>, PyType> getClassToType() {
+       return StaticMaps.classToType;
+   }
+
+   /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
+   private static Set<PyType> getExposedTypes() {
+       return StaticMaps.exposedTypes;
+   }
+
+   /** Mapping of Java classes to their TypeBuilders. */
+   private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
+       return StaticMaps.classToBuilder;
+   }
 
     protected PyType(PyType subtype) {
         super(subtype);
@@ -1360,13 +1413,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @return found object or null
      */
     public PyObject lookup_where(String name, PyObject[] where) {
-        /* Can we even switch to an assert here?
-         * assert methodCache != null;
-         */
-        if (methodCache == null) {
-            Py.warning(Py.RuntimeWarning, "PyType: methodCache is null");
-        }
-        return methodCache.lookup_where(this, name, where);
+        return MethodCache.methodCache.lookup_where(this, name, where);
     }
 
     /**
@@ -1439,12 +1486,11 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return null;
     }
 
-    public static void addBuilder(Class<?> forClass, TypeBuilder builder) {
+    public static synchronized void addBuilder(Class<?> forClass, TypeBuilder builder) {
         getClassToBuilder().put(forClass, builder);
-
         if (getClassToType().containsKey(forClass)) {
             if (!BootstrapTypesSingleton.getInstance().remove(forClass)) {
-                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getClassToType()[class="
+                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
                         + forClass + "]");
             }
             // The types in BootstrapTypesSingleton.getClassToType() are initialized before their builders are assigned,
@@ -1453,7 +1499,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
     }
 
-    private static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
+    private synchronized static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
         if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass(), false);
             PyType origExposedAs = getClassToType().putIfAbsent(c, exposedAs);
@@ -1498,8 +1544,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return builder;
     }
 
-    private static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
-//        System.out.println("createType c=" + c + ", needsInners=" + needsInners + ", BootstrapTypesSingleton.getInstance()=" + BootstrapTypesSingleton.getInstance());
+    private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
+        // System.out.println("createType c=" + c + ", needsInners=" + needsInners + ", BootstrapTypesSingleton.getInstance()=" + BootstrapTypesSingleton.getInstance());
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -1509,40 +1555,52 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             newtype = new PyJavaType();
         }
 
-        // try to put the type into our cache but if one exists already ignore our new creation and instead return
-        // existing instance. This saves us from locking the whole createType and instead depend on the
-        // atomicity of putIfAbsent and finicky ordering :(
+        /*
+         * Try to register the type (so far incomplete), but if one has already been registered, use
+         * that. This is more subtle than it looks: the one we've found may be complete or
+         * incomplete. If it is incomplete, then because of the lock this thread holds on
+         * PyType.class, we arrived here by recursion (the Python version of c requires a Python
+         * version of c), and as long as all intervening calls complete normally, the PyType will be
+         * properly formed before the lock is released.
+         */
         PyType type = getClassToType().putIfAbsent(c, newtype);
-        // synchronize on the c here to make sure the compiler does not re-order
-        synchronized (c) {
-            if (type != null) {
-                return type;
-            }
-
-            newtype.builtin = true;
-            newtype.init(c, needsInners);
-            newtype.invalidateMethodCache();
-            return newtype;
+        if (type != null) {
+            return type;
         }
+
+        // This really is a new creation. We need to finish filling it in.
+        newtype.builtin = true;
+        newtype.init(c, needsInners);
+        newtype.invalidateMethodCache();
+        return newtype;
     }
 
-    /*
-    Instead of using synchronization on the whole method we depend on IOD and putIfAbsent behaviour,
-    essentially letting the first type creation win and throwing away any concurrent ones.
-    This let's us have much more fine-grained locking.
+    /**
+     * Return a <code>PyType</code> (or subclass) for the given Java class, creating one if
+     * necessary. Equivalent to <code>fromClass(c, true)</code>. See
+     * {@link #fromClass(Class, boolean)}.
+     *
+     * @param c for which the corresponding <code>PyType</code> is to be found
+     * @return the <code>PyType</code> found or created
      */
-
-    public static PyType fromClass(Class<?> c) {
+    public static synchronized PyType fromClass(Class<?> c) {
         return fromClass(c, true);
     }
 
-    public static PyType fromClass(Class<?> c, boolean hardRef) {
+    /**
+     * Return a <code>PyType</code> (or sub-class) for the given Java class, creating one if
+     * necessary. Creating the <code>PyType</code> also creates any types this depends upon, and
+     * updates all this in the state internal to <code>PyType</code> that supports future resolution
+     * of names.
+     *
+     * @param c for which the corresponding <code>PyType</code> is to be found
+     * @param hardRef the <code>PyType</code> will not be unloaded when unreachable
+     * @return the <code>PyType</code> found or created
+     */
+    public static synchronized PyType fromClass(Class<?> c, boolean hardRef) {
         PyType type = getClassToType().get(c);
         if (type != null) {
-            // synchronize on the c here to make sure the compiler does not re-order
-            synchronized (c) {
-                return type;
-            }
+            return type;
         }
         // We haven't seen this class before, so its type needs to be created. If it's being
         // exposed as a Java class, defer processing its inner types until it's completely
@@ -1577,7 +1635,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return result;
     }
 
-    static PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
+    static synchronized PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
         PyType type = getClassToType().get(c);
         if (type != null) {
             return type;
@@ -2141,6 +2199,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      */
     static class MethodCache {
 
+        /** Global mro cache. See {@link PyType#lookup_where(String, PyObject[])}.*/
+        private static final MethodCache methodCache = new MethodCache();
+
         /** The fixed size cache. */
         private final AtomicReferenceArray<MethodCacheEntry> table;
 
@@ -2236,47 +2297,6 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 return get();
             }
         }
-    }
-
-    /**
-     *
-     * Using the IOD http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html#dcl
-     * to reduce the risk for race conditions in a few of our fields
-     *
-     */
-
-    /**
-     * Mapping of Java classes to their PyTypes.
-     */
-    private static class LazyClassToTypeHolder {
-        private static ConcurrentMap<Class<?>, PyType> classToType = new MapMaker().weakKeys().weakValues().makeMap();
-
-    }
-
-    private static ConcurrentMap<Class<?>, PyType> getClassToType() {
-        return LazyClassToTypeHolder.classToType;
-    }
-
-    /**
-     * Mapping of Java classes to their TypeBuilders.
-     */
-    private static class LazyClassToBuilderHolder {
-        private static ConcurrentMap<Class<?>, TypeBuilder> classToBuilder = Generic.concurrentMap();
-    }
-
-    private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
-        return LazyClassToBuilderHolder.classToBuilder;
-    }
-
-    /**
-     * Set of exposed types
-     */
-    private static class LazyExposedTypes {
-        private static Set<PyType> exposedTypes = Generic.set();
-    }
-
-    private static Set<PyType> getExposedTypes() {
-        return LazyExposedTypes.exposedTypes;
     }
 
     /* Traverseproc implementation */
