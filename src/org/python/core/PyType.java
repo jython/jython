@@ -7,11 +7,12 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import org.python.antlr.ast.cmpopType;
 import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -22,7 +23,6 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.expose.TypeBuilder;
 import org.python.modules._weakref.WeakrefModule;
-import org.python.antlr.ast.cmpopType;
 import org.python.util.Generic;
 
 import com.google.common.collect.MapMaker;
@@ -40,8 +40,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     public static final PyType TYPE = fromClass(PyType.class);
 
     /**
-     * The type's name. builtin types include their fully qualified name, e.g.:
-     * time.struct_time.
+     * The type's name. builtin types include their fully qualified name, e.g.: time.struct_time.
      */
     protected String name;
 
@@ -61,8 +60,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private long tp_flags;
 
     /**
-     * The Java Class instances of this type will be represented as, or null if it's
-     * determined by a base type.
+     * The Java Class instances of this type will be represented as, or null if it's determined by a
+     * base type.
      */
     protected Class<?> underlying_class;
 
@@ -142,26 +141,25 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /** Mapping of Java classes to their PyTypes. */
-   private static ConcurrentMap<Class<?>, PyType> getClassToType() {
-       return StaticMaps.classToType;
-   }
+    private static ConcurrentMap<Class<?>, PyType> getClassToType() {
+        return StaticMaps.classToType;
+    }
 
-   /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
-   private static Set<PyType> getExposedTypes() {
-       return StaticMaps.exposedTypes;
-   }
+    /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
+    private static Set<PyType> getExposedTypes() {
+        return StaticMaps.exposedTypes;
+    }
 
-   /** Mapping of Java classes to their TypeBuilders. */
-   private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
-       return StaticMaps.classToBuilder;
-   }
+    /** Mapping of Java classes to their TypeBuilders. */
+    private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
+        return StaticMaps.classToBuilder;
+    }
 
     protected PyType(PyType subtype) {
         super(subtype);
     }
 
-    private PyType() {
-    }
+    private PyType() {}
 
     /**
      * Creates the PyType instance for type itself. The argument just exists to make the constructor
@@ -173,7 +171,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     @ExposedNew
     static final PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
-                                        PyObject[] args, String[] keywords) {
+            PyObject[] args, String[] keywords) {
         // Special case: type(x) should return x.getType()
         if (args.length == 1 && keywords.length == 0) {
             PyObject obj = args[0];
@@ -186,8 +184,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
             return objType;
         }
-        // If that didn't trigger, we need 3 arguments. but ArgParser below may give a msg
-        // saying type() needs exactly 3.
+        /*
+         * If that didn't trigger, we need 3 arguments. but ArgParser below may give a msg saying
+         * type() needs exactly 3.
+         */
         if (args.length + keywords.length != 3) {
             throw Py.TypeError("type() takes 1 or 3 arguments");
         }
@@ -215,7 +215,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     public static PyObject newType(PyNewWrapper new_, PyType metatype, String name, PyTuple bases,
-                                   PyObject dict) {
+            PyObject dict) {
         PyObject[] tmpBases = bases.getArray();
         PyType winner = findMostDerivedMetatype(tmpBases, metatype);
 
@@ -223,14 +223,15 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             PyObject winnerNew = winner.lookup("__new__");
             if (winnerNew != null && winnerNew != new_) {
                 return invokeNew(winnerNew, winner, false,
-                                 new PyObject[] {new PyString(name), bases, dict}, Py.NoKeywords);
+                        new PyObject[] {new PyString(name), bases, dict}, Py.NoKeywords);
             }
             metatype = winner;
         }
-
-        // Use PyType as the metaclass for Python subclasses of Java classes rather than
-        // PyJavaType.  Using PyJavaType as metaclass exposes the java.lang.Object methods
-        // on the type, which doesn't make sense for python subclasses.
+        /*
+         * Use PyType as the metaclass for Python subclasses of Java classes rather than PyJavaType.
+         * Using PyJavaType as metaclass exposes the java.lang.Object methods on the type, which
+         * doesn't make sense for python subclasses.
+         */
         if (metatype == PyType.fromClass(Class.class)) {
             metatype = TYPE;
         }
@@ -258,8 +259,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
         PyType base = type.base = best_base(type.bases);
         if (!base.isBaseType) {
-            throw Py.TypeError(String.format("type '%.100s' is not an acceptable base type",
-                                             base.name));
+            throw Py.TypeError(
+                    String.format("type '%.100s' is not an acceptable base type", base.name));
         }
 
         type.createAllSlots(!(base.needs_userdict || defines_dict), !base.needs_weakref);
@@ -267,17 +268,18 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         type.invalidateMethodCache();
 
         for (PyObject cur : type.bases) {
-            if (cur instanceof PyType)
-                ((PyType)cur).attachSubclass(type);
+            if (cur instanceof PyType) {
+                ((PyType) cur).attachSubclass(type);
+            }
         }
 
         return type;
     }
 
     /**
-     * Used internally by {@link #createAllSlots()}.
-     * Builds a naive pseudo mro used to collect all slot names relevant for this type.
-     * 
+     * Used internally by {@link #createAllSlots()}. Builds a naive pseudo mro used to collect all
+     * slot names relevant for this type.
+     *
      * @param tp type to be investigated
      * @param dest list collecting all ancestors
      * @param slotsMap map linking each type to its slots
@@ -296,7 +298,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             slotsMap.put(tp, slots);
         }
         if (tp.bases.length > 1) {
-            for (PyObject base: tp.bases) {
+            for (PyObject base : tp.bases) {
                 if (base == tp.base || !(base instanceof PyType) || ((PyType) base).numSlots == 0
                         || slotsMap.containsKey((PyType) base)) {
                     continue;
@@ -308,8 +310,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Used internally by {@link #createAllSlots()}.
-     * Adds all names in {@code slots} to {@code dest}.
+     * Used internally by {@link #createAllSlots()}. Adds all names in {@code slots} to
+     * {@code dest}.
      *
      * @param slots names to be added as slots
      * @param dest set collecting all slots
@@ -319,7 +321,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             slots = new PyTuple(slots);
         }
         // Check for valid slot names and create them.
-        for (PyObject slot: slots.asIterable()) {
+        for (PyObject slot : slots.asIterable()) {
             String slotName = confirmIdentifier(slot);
             if (slotName.equals("__dict__") || slotName.equals("__weakref__")) {
                 continue;
@@ -335,23 +337,25 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @param mayAddWeak whether a __weakref__ descriptor is allowed on this type
      */
     private void createAllSlots(boolean mayAddDict, boolean mayAddWeak) {
-        List<PyType> slottedAncestors = Generic.list(base.mro.length+(bases.length-1)*3+1);
+        List<PyType> slottedAncestors = Generic.list(base.mro.length + (bases.length - 1) * 3 + 1);
         Map<PyType, PyObject> slotsMap = Generic.identityHashMap(slottedAncestors.size());
-        /* Here we would need the mro to search for slots (also in secondary bases) properly,
-           but mro hasn't been set up yet. So we quickly (?) build a pseudo mro sufficient to
-           find all slots. */
+        /*
+         * Here we would need the mro to search for slots (also in secondary bases) properly, but
+         * mro hasn't been set up yet. So we quickly (?) build a pseudo mro sufficient to find all
+         * slots.
+         */
         int baseEnd = findSlottedAncestors(this, slottedAncestors, slotsMap);
         // baseEnd is the first position of an ancestor not equal to or ancestor of primary base
         int slots_tmp = 0; // used for various purpose, first to accumulate maximal slot count
-        for (PyType anc: slottedAncestors) {
+        for (PyType anc : slottedAncestors) {
             slots_tmp += anc.numSlots;
         }
-        /* In allSlots we collect slots of primary base first, then of this type,
-           then of secondary bases.
-           At any time we prevent it from containing __dict__ or __weakref__. */
-        
-        // we know the required capacity, so the set likely won't be resized
-        Set<String> allSlots = Generic.linkedHashSet(2*slots_tmp);
+        /*
+         * In allSlots we collect slots of primary base first, then of this type, then of secondary
+         * bases. At any time we prevent it from containing __dict__ or __weakref__. we know the
+         * required capacity, so the set likely won't be resized.
+         */
+        Set<String> allSlots = Generic.linkedHashSet(2 * slots_tmp);
         if (baseEnd > 0) {
             for (int i = 0; i < baseEnd; ++i) {
                 insertSlots(slotsMap.get(slottedAncestors.get(i)), allSlots);
@@ -363,8 +367,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         boolean wantWeak = false;
         PyObject slots = dict.__finditem__("__slots__");
         ownSlots = 0; // to keep track of slots defined by this type itself for isSolidBase
-        /* from now on, slots_tmp stores position where other ancestors than primary base
-           begin (points to this type if it defines own slots) */
+        /*
+         * from now on, slots_tmp stores position where other ancestors than primary base begin
+         * (points to this type if it defines own slots)
+         */
         if (slots == null) {
             wantDict = mayAddDict;
             wantWeak = mayAddWeak;
@@ -379,10 +385,12 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
                 if (slotName.equals("__dict__")) {
                     if (!mayAddDict || wantDict) {
-                        // CPython is stricter here, but this seems arbitrary. To reproduce CPython
-                        // behavior
+                        /*
+                         * CPython is stricter here, but this seems arbitrary. To reproduce CPython
+                         * behavior:
+                         */
                         // if (base != PyObject.TYPE) {
-                        //     throw Py.TypeError("__dict__ slot disallowed: we already got one");
+                        // throw Py.TypeError("__dict__ slot disallowed: we already got one");
                         // }
                     } else {
                         wantDict = true;
@@ -390,10 +398,12 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                     }
                 } else if (slotName.equals("__weakref__")) {
                     if ((!mayAddWeak || wantWeak) && base != PyObject.TYPE) {
-                        // CPython is stricter here, but this seems arbitrary. To reproduce CPython
-                        // behavior
+                        /*
+                         * CPython is stricter here, but this seems arbitrary. To reproduce CPython
+                         * behavior:
+                         */
                         // if (base != PyObject.TYPE) {
-                        //     throw Py.TypeError("__weakref__ slot disallowed: we already got one");
+                        // throw Py.TypeError("__weakref__ slot disallowed: we already got one");
                         // }
                     } else {
                         wantWeak = true;
@@ -404,8 +414,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                     ++ownSlots;
                 }
             }
-            if (bases.length > 1 &&
-                    ((mayAddDict && !wantDict) || (mayAddWeak && !wantWeak))) {
+            if (bases.length > 1 && ((mayAddDict && !wantDict) || (mayAddWeak && !wantWeak))) {
                 // Secondary bases may provide weakrefs or dict
                 for (PyObject base : bases) {
                     if (base == this.base) {
@@ -475,36 +484,37 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private void createDictSlot() {
         String doc = "dictionary for instance variables (if defined)";
         dict.__setitem__("__dict__", new PyDataDescr(this, "__dict__", PyObject.class, doc) {
-                @Override
-                public boolean implementsDescrGet() {
-                    return true;
-                }
 
-                @Override
-                public Object invokeGet(PyObject obj) {
-                    return obj.getDict();
-                }
+            @Override
+            public boolean implementsDescrGet() {
+                return true;
+            }
 
-                @Override
-                public boolean implementsDescrSet() {
-                    return true;
-                }
+            @Override
+            public Object invokeGet(PyObject obj) {
+                return obj.getDict();
+            }
 
-                @Override
-                public void invokeSet(PyObject obj, Object value) {
-                    obj.setDict((PyObject)value);
-                }
+            @Override
+            public boolean implementsDescrSet() {
+                return true;
+            }
 
-                @Override
-                public boolean implementsDescrDelete() {
-                    return true;
-                }
+            @Override
+            public void invokeSet(PyObject obj, Object value) {
+                obj.setDict((PyObject) value);
+            }
 
-                @Override
-                public void invokeDelete(PyObject obj) {
-                    obj.delDict();
-                }
-            });
+            @Override
+            public boolean implementsDescrDelete() {
+                return true;
+            }
+
+            @Override
+            public void invokeDelete(PyObject obj) {
+                obj.delDict();
+            }
+        });
         needs_userdict = true;
     }
 
@@ -514,23 +524,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private void createWeakrefSlot() {
         String doc = "list of weak references to the object (if defined)";
         dict.__setitem__("__weakref__", new PyDataDescr(this, "__weakref__", PyObject.class, doc) {
-                private static final String writeMsg =
-                        "attribute '%s' of '%s' objects is not writable";
 
-                private void notWritable(PyObject obj) {
-                    throw Py.AttributeError(String.format(writeMsg, "__weakref__",
-                                                          obj.getType().fastGetName()));
-                }
+            private static final String writeMsg = "attribute '%s' of '%s' objects is not writable";
 
-                @Override
-                public boolean implementsDescrGet() {
-                    return true;
-                }
+            private void notWritable(PyObject obj) {
+                throw Py.AttributeError(
+                        String.format(writeMsg, "__weakref__", obj.getType().fastGetName()));
+            }
 
-                @Override
-                public Object invokeGet(PyObject obj) {
-                    PyList weakrefs = WeakrefModule.getweakrefs(obj);
-                    switch (weakrefs.size()) {
+            @Override
+            public boolean implementsDescrGet() {
+                return true;
+            }
+
+            @Override
+            public Object invokeGet(PyObject obj) {
+                PyList weakrefs = WeakrefModule.getweakrefs(obj);
+                switch (weakrefs.size()) {
                     case 0:
                         return Py.None;
                     case 1:
@@ -538,30 +548,30 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                     default:
                         return weakrefs;
 
-                    }
                 }
+            }
 
-                @Override
-                public boolean implementsDescrSet() {
-                    return true;
-                }
+            @Override
+            public boolean implementsDescrSet() {
+                return true;
+            }
 
-                @Override
-                public void invokeSet(PyObject obj, Object value) {
-                    // XXX: Maybe have PyDataDescr do notWritable() for us
-                    notWritable(obj);
-                }
+            @Override
+            public void invokeSet(PyObject obj, Object value) {
+                // XXX: Maybe have PyDataDescr do notWritable() for us
+                notWritable(obj);
+            }
 
-                @Override
-                public boolean implementsDescrDelete() {
-                    return true;
-                }
+            @Override
+            public boolean implementsDescrDelete() {
+                return true;
+            }
 
-                @Override
-                public void invokeDelete(PyObject obj) {
-                    notWritable(obj);
-                }
-            });
+            @Override
+            public void invokeDelete(PyObject obj) {
+                notWritable(obj);
+            }
+        });
         needs_weakref = true;
     }
 
@@ -610,8 +620,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Ensure dict contains a __module__, retrieving it from the current frame if it
-     * doesn't exist.
+     * Ensure dict contains a __module__, retrieving it from the current frame if it doesn't exist.
      *
      * @param dict a PyObject mapping
      */
@@ -630,10 +639,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     private static PyObject invokeNew(PyObject new_, PyType type, boolean init, PyObject[] args,
-                                      String[] keywords) {
+            String[] keywords) {
         PyObject obj;
         if (new_ instanceof PyNewWrapper) {
-            obj = ((PyNewWrapper)new_).new_impl(init, type, args, keywords);
+            obj = ((PyNewWrapper) new_).new_impl(init, type, args, keywords);
         } else {
             int n = args.length;
             PyObject[] typePrepended = new PyObject[n + 1];
@@ -665,24 +674,27 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             computeLinearMro(baseClass);
         }
         if (BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
-            // init will be called again from addBuilder which also removes underlying_class from
-            // BOOTSTRAP_TYPES
+            /*
+             * init will be called again from addBuilder which also removes underlying_class from
+             * BOOTSTRAP_TYPES.
+             */
             return;
         }
         TypeBuilder builder = getClassToBuilder().get(underlying_class);
         name = builder.getName();
         dict = builder.getDict(this);
         String doc = builder.getDoc();
-        // XXX: Can't create a __doc__ str until the PyBaseString/PyString types are
-        // created
+        // XXX: Can't create a __doc__ str until the PyBaseString/PyString types are created
         if (dict.__finditem__("__doc__") == null && forClass != PyBaseString.class
-            && forClass != PyString.class) {
+                && forClass != PyString.class) {
             PyObject docObj;
             if (doc != null) {
                 docObj = new PyString(doc);
             } else {
-                // XXX: Hack: Py.None may be null during bootstrapping. Most types
-                // encountered then should have docstrings anyway
+                /*
+                 * XXX: Hack: Py.None may be null during bootstrapping. Most types encountered then
+                 * should have docstrings anyway.
+                 */
                 docObj = Py.None == null ? new PyString() : Py.None;
             }
             dict.__setitem__("__doc__", docObj);
@@ -705,7 +717,6 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         bases = new PyObject[] {base};
     }
 
-    
     /**
      * Determine if this type is a descriptor, and if so what kind.
      */
@@ -730,11 +741,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      */
     public final boolean needsFinalizer() {
         /*
-         * It might be sluggish to assume that if a finalizer was needed
-         * once, this would never change. However since an expensive
-         * FinalizeTrigger was created anyway, it won't hurt to keep it.
-         * Whether there actually is a __del__ in the dict, will be checked
-         * again when the finalizer runs.
+         * It might be sluggish to assume that if a finalizer was needed once, this would never
+         * change. However since an expensive FinalizeTrigger was created anyway, it won't hurt to
+         * keep it. Whether there actually is a __del__ in the dict, will be checked again when the
+         * finalizer runs.
          */
         if (needs_finalizer) {
             return true;
@@ -750,9 +760,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      */
     public void compatibleForAssignment(PyType other, String attribute) {
         if (!getLayout().equals(other.getLayout()) || needs_userdict != other.needs_userdict
-            || needs_finalizer != other.needs_finalizer) {
+                || needs_finalizer != other.needs_finalizer) {
             throw Py.TypeError(String.format("%s assignment: '%s' object layout differs from '%s'",
-                                             attribute, other.fastGetName(), fastGetName()));
+                    attribute, other.fastGetName(), fastGetName()));
         }
     }
 
@@ -770,8 +780,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Get the most parent Java proxy Class from bases, tallying any encountered Java
-     * interfaces.
+     * Get the most parent Java proxy Class from bases, tallying any encountered Java interfaces.
      *
      * @param bases array of base Jython classes
      * @param interfaces List for collecting interfaces to
@@ -785,7 +794,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             if (!(base instanceof PyType)) {
                 continue;
             }
-            Class<?> proxy = ((PyType)base).getProxyType();
+            Class<?> proxy = ((PyType) base).getProxyType();
             if (proxy == null) {
                 continue;
             }
@@ -820,9 +829,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (module != null) {
             proxyName = module.toString() + "$" + proxyName;
         }
-        Class<?> proxyClass = MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName,
-                                                    dict);
-        JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, proxyClass); 
+        Class<?> proxyClass =
+                MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName, dict);
+        JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, proxyClass);
 
         PyType proxyType = PyType.fromClass(proxyClass, false);
         List<PyObject> cleanedBases = Generic.list();
@@ -832,19 +841,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 cleanedBases.add(base);
                 continue;
             }
-            Class<?> proxy = ((PyType)base).getProxyType();
+            Class<?> proxy = ((PyType) base).getProxyType();
             if (proxy == null) {
                 // non-proxy types go straight into our lookup
                 cleanedBases.add(base);
             } else {
 
                 if (!(base instanceof PyJavaType)) {
-                    // python subclasses of proxy types need to be added as a base so their
-                    // version of methods will show up
+                    /*
+                     * python subclasses of proxy types need to be added as a base so their version
+                     * of methods will show up.
+                     */
                     cleanedBases.add(base);
                 } else if (!addedProxyType) {
-                    // Only add a single Java type, since everything's going to go through the
-                    // proxy type
+                    /*
+                     * Only add a single Java type, since everything's going to go through the proxy
+                     * type.
+                     */
                     cleanedBases.add(proxyType);
                     addedProxyType = true;
                 }
@@ -859,12 +872,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             return null;
         }
 
-        // If there is a __cmp__ method defined, let it be called instead
-        // of our dumb function designed merely to warn. See CPython bug #7491.
-        if (__findattr__("__cmp__") != null || ((PyType)other).__findattr__("__cmp__") != null) {
+        /*
+         * If there is a __cmp__ method defined, let it be called instead of our dumb function
+         * designed merely to warn. See CPython bug #7491.
+         */
+        if (__findattr__("__cmp__") != null || ((PyType) other).__findattr__("__cmp__") != null) {
             return null;
         }
-        
+
         // Py3K warning if comparison isn't == or !=
         if (Options.py3k_warning && op != cmpopType.Eq && op != cmpopType.NotEq) {
             Py.warnPy3k("type inequality comparisons not supported in 3.x");
@@ -875,16 +890,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         int hash1 = object___hash__();
         int hash2 = other.object___hash__();
         switch (op) {
-        case Lt: return hash1 < hash2 ? Py.True : Py.False;
-        case LtE: return hash1 <= hash2 ? Py.True : Py.False;
-        case Eq: return hash1 == hash2 ? Py.True : Py.False;
-        case NotEq: return hash1 != hash2 ? Py.True : Py.False;
-        case Gt: return hash1 > hash2 ? Py.True : Py.False;
-        case GtE: return hash1 >= hash2 ? Py.True : Py.False;
-        default: return null;
+            case Lt:
+                return hash1 < hash2 ? Py.True : Py.False;
+            case LtE:
+                return hash1 <= hash2 ? Py.True : Py.False;
+            case Eq:
+                return hash1 == hash2 ? Py.True : Py.False;
+            case NotEq:
+                return hash1 != hash2 ? Py.True : Py.False;
+            case Gt:
+                return hash1 > hash2 ? Py.True : Py.False;
+            case GtE:
+                return hash1 >= hash2 ? Py.True : Py.False;
+            default:
+                return null;
         }
     }
-    
+
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.type___eq___doc)
     public PyObject type___eq__(PyObject other) {
         return richCompare(other, cmpopType.Eq);
@@ -914,11 +936,12 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     public PyObject type___gt__(PyObject other) {
         return richCompare(other, cmpopType.Gt);
     }
-    
+
     @ExposedGet(name = "__base__")
     public PyObject getBase() {
-        if (base == null)
+        if (base == null) {
             return Py.None;
+        }
         return base;
     }
 
@@ -937,19 +960,19 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (!(newBasesTuple instanceof PyTuple)) {
             throw Py.TypeError("bases must be a tuple");
         }
-        PyObject[] newBases = ((PyTuple)newBasesTuple).getArray();
+        PyObject[] newBases = ((PyTuple) newBasesTuple).getArray();
         if (newBases.length == 0) {
-            throw Py.TypeError("can only assign non-empty tuple to __bases__, not "
-                               + newBasesTuple);
+            throw Py.TypeError(
+                    "can only assign non-empty tuple to __bases__, not " + newBasesTuple);
         }
         for (int i = 0; i < newBases.length; i++) {
             if (!(newBases[i] instanceof PyType)) {
                 if (!(newBases[i] instanceof PyClass)) {
                     throw Py.TypeError(name + ".__bases__ must be a tuple of old- or new-style "
-                                       + "classes, not " + newBases[i]);
+                            + "classes, not " + newBases[i]);
                 }
             } else {
-                if (((PyType)newBases[i]).isSubType(this)) {
+                if (((PyType) newBases[i]).isSubType(this)) {
                     throw Py.TypeError("a __bases__ item causes an inheritance cycle");
                 }
             }
@@ -967,18 +990,18 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             mro_subclasses(savedSubMros);
             for (PyObject saved : savedBases) {
                 if (saved instanceof PyType) {
-                    ((PyType)saved).detachSubclass(this);
+                    ((PyType) saved).detachSubclass(this);
                 }
             }
             for (PyObject newb : newBases) {
                 if (newb instanceof PyType) {
-                    ((PyType)newb).attachSubclass(this);
+                    ((PyType) newb).attachSubclass(this);
                 }
             }
         } catch (PyException t) {
             for (Iterator<Object> it = savedSubMros.iterator(); it.hasNext();) {
-                PyType subtype = (PyType)it.next();
-                PyObject[] subtypeSavedMro = (PyObject[])it.next();
+                PyType subtype = (PyType) it.next();
+                PyObject[] subtypeSavedMro = (PyObject[]) it.next();
                 subtype.mro = subtypeSavedMro;
             }
             bases = savedBases;
@@ -1015,12 +1038,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 }
                 if (!(cls instanceof PyType)) {
                     throw Py.TypeError(String.format("mro() returned a non-class ('%.500s')",
-                                                     cls.getType().fastGetName()));
+                            cls.getType().fastGetName()));
                 }
-                PyType t = (PyType)cls;
+                PyType t = (PyType) cls;
                 if (!solid.isSubType(solid_base(t))) {
-                    throw Py.TypeError(String.format("mro() returned base with unsuitable layout "
-                                                     + "('%.500s')", t.fastGetName()));
+                    throw Py.TypeError(String.format(
+                            "mro() returned base with unsuitable layout " + "('%.500s')",
+                            t.fastGetName()));
                 }
             }
             mro = result;
@@ -1075,8 +1099,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         cleanup_subclasses();
         for (WeakReference<PyType> ref : subclasses) {
             PyType subtype = ref.get();
-            if (subtype == null)
+            if (subtype == null) {
                 continue;
+            }
             result.append(subtype);
         }
         return result;
@@ -1084,18 +1109,19 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.type___subclasscheck___doc)
     public synchronized final boolean type___subclasscheck__(PyObject inst) {
-        /* We cannot directly call Py.isSubClass(inst, this), because that
-         * would yield endless recursion under some circumstances (e.g. in
-         * test_collections).
+        /*
+         * We cannot directly call Py.isSubClass(inst, this), because that would yield endless
+         * recursion under some circumstances (e.g. in test_collections).
          */
         return Py.recursiveIsSubClass(inst, this);
     }
 
     @ExposedMethod(doc = BuiltinDocs.type___instancecheck___doc)
     public synchronized final boolean type___instancecheck__(PyObject inst) {
-        /* We cannot directly call Py.isInstance(inst, this), because that
-         * would yield endless recursion. So we inline the essential parts
-         * from there, excluding checker-delegation and PyTuple special case.
+        /*
+         * We cannot directly call Py.isInstance(inst, this), because that would yield endless
+         * recursion. So we inline the essential parts from there, excluding checker-delegation and
+         * PyTuple special case.
          */
         if (inst.getType() == this) {
             return true;
@@ -1148,7 +1174,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
         PyObject[] bases = classic_cl.__bases__.getArray();
         for (PyObject base : bases) {
-            fill_classic_mro(acc,(PyClass)base);
+            fill_classic_mro(acc, (PyClass) base);
         }
     }
 
@@ -1163,7 +1189,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (o == null) {
             return new PyList(computeMro());
         }
-        return new PyList(((PyType)o).computeMro());
+        return new PyList(((PyType) o).computeMro());
     }
 
     PyObject[] computeMro() {
@@ -1172,8 +1198,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             for (int j = i + 1; j < bases.length; j++) {
                 if (bases[j] == cur) {
                     PyObject name = cur.__findattr__("__name__");
-                    throw Py.TypeError("duplicate base class " +
-                                       (name == null ? "?" : name.toString()));
+                    throw Py.TypeError(
+                            "duplicate base class " + (name == null ? "?" : name.toString()));
                 }
             }
         }
@@ -1182,9 +1208,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         for (int i = 0; i < bases.length; i++) {
             toMerge[i] = new MROMergeState();
             if (bases[i] instanceof PyType) {
-                toMerge[i].mro = ((PyType)bases[i]).mro;
+                toMerge[i].mro = ((PyType) bases[i]).mro;
             } else if (bases[i] instanceof PyClass) {
-                toMerge[i].mro = classic_mro((PyClass)bases[i]);
+                toMerge[i].mro = classic_mro((PyClass) bases[i]);
             }
         }
         toMerge[bases.length] = new MROMergeState();
@@ -1197,8 +1223,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
         boolean addedProxy = false;
-        PyType proxyAsType = !JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) ?
-            null : PyType.fromClass(((Class<?>)JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR)), false);
+        PyType proxyAsType =
+                !JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) ? null : PyType.fromClass(
+                        ((Class<?>) JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR)), false);
         scan : for (int i = 0; i < toMerge.length; i++) {
             if (toMerge[i].isMerged()) {
                 continue scan;
@@ -1212,15 +1239,17 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
             if (!addedProxy && !(this instanceof PyJavaType) && candidate instanceof PyJavaType
                     && JyAttribute.hasAttr(candidate, JyAttribute.JAVA_PROXY_ATTR)
-                    && PyProxy.class.isAssignableFrom(
-                        ((Class<?>)JyAttribute.getAttr(candidate, JyAttribute.JAVA_PROXY_ATTR)))
-                    && JyAttribute.getAttr(candidate, JyAttribute.JAVA_PROXY_ATTR) !=
-                        JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR)) {
-                // If this is a subclass of a Python class that subclasses a Java class, slip the
-                // proxy for this class in before the proxy class in the superclass' mro.
-                // This exposes the methods from the proxy generated for this class in addition to
-                // those generated for the superclass while allowing methods from the superclass to
-                // remain visible from the proxies.
+                    && PyProxy.class.isAssignableFrom(((Class<?>) JyAttribute.getAttr(candidate,
+                            JyAttribute.JAVA_PROXY_ATTR)))
+                    && JyAttribute.getAttr(candidate, JyAttribute.JAVA_PROXY_ATTR) != JyAttribute
+                            .getAttr(this, JyAttribute.JAVA_PROXY_ATTR)) {
+                /*
+                 * If this is a subclass of a Python class that subclasses a Java class, slip the
+                 * proxy for this class in before the proxy class in the superclass' mro. This
+                 * exposes the methods from the proxy generated for this class in addition to those
+                 * generated for the superclass while allowing methods from the superclass to remain
+                 * visible from the proxies.
+                 */
                 mro.add(proxyAsType);
                 addedProxy = true;
             }
@@ -1245,11 +1274,11 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * finishing filling in <code>mro</code>.
      */
     void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
-        StringBuilder msg = new StringBuilder("Cannot create a consistent method resolution\n"
-                + "order (MRO) for bases ");
+        StringBuilder msg = new StringBuilder(
+                "Cannot create a consistent method resolution\n" + "order (MRO) for bases ");
         Set<PyObject> set = Generic.set();
         for (MROMergeState mergee : toMerge) {
-            if(!mergee.isMerged()) {
+            if (!mergee.isMerged()) {
                 set.add(mergee.mro[0]);
             }
         }
@@ -1261,14 +1290,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             } else {
                 msg.append(", ");
             }
-            msg.append(name == null ? "?" : name.toString() + new PyList(((PyType)unmerged).bases));
+            msg.append(
+                    name == null ? "?" : name.toString() + new PyList(((PyType) unmerged).bases));
         }
         throw Py.TypeError(msg.toString());
     }
 
     /**
-     * Finds the parent of type with an underlying_class or with slots sans a __dict__
-     * slot.
+     * Finds the parent of type with an underlying_class or with slots sans a __dict__ slot.
      */
     private static PyType solid_base(PyType type) {
         do {
@@ -1301,15 +1330,15 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             if (!(base instanceof PyType)) {
                 throw Py.TypeError("bases must be types");
             }
-            candidate = solid_base((PyType)base);
+            candidate = solid_base((PyType) base);
             if (winner == null) {
                 winner = candidate;
-                best = (PyType)base;
+                best = (PyType) base;
             } else if (winner.isSubType(candidate)) {
                 ;
             } else if (candidate.isSubType(winner)) {
                 winner = candidate;
-                best = (PyType)base;
+                best = (PyType) base;
             } else {
                 throw Py.TypeError("multiple bases have instance lay-out conflict");
             }
@@ -1325,17 +1354,16 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Finds the most derived subtype of initialMetatype in the types
-     * of bases, or initialMetatype if it is already the most derived.
+     * Finds the most derived subtype of initialMetatype in the types of bases, or initialMetatype
+     * if it is already the most derived.
      *
-     * @raises Py.TypeError if the all the metaclasses don't descend
-     * from the same base
-     * @raises Py.TypeError if one of the bases is a PyJavaClass or a
-     * PyClass with no proxyClass
+     * @raises Py.TypeError if the all the metaclasses don't descend from the same base
+     * @raises Py.TypeError if one of the bases is a PyJavaClass or a PyClass with no proxyClass
      */
     private static PyType findMostDerivedMetatype(PyObject[] bases_list, PyType initialMetatype) {
         PyType winner = initialMetatype;
-        if (isJavaRootClass(winner)) {  // consider this root class to be equivalent to type
+        if (isJavaRootClass(winner)) {
+            // consider this root class to be equivalent to type
             winner = PyType.TYPE;
         }
 
@@ -1356,7 +1384,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 continue;
             }
             throw Py.TypeError("metaclass conflict: the metaclass of a derived class must be a "
-                               + "(non-strict) subclass of the metaclasses of all its bases");
+                    + "(non-strict) subclass of the metaclasses of all its bases");
         }
         return winner;
     }
@@ -1393,8 +1421,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Attribute lookup for name directly through mro objects' dicts. This isn't cached,
-     * and should generally only be used during the bootstrapping of a type.
+     * Attribute lookup for name directly through mro objects' dicts. This isn't cached, and should
+     * generally only be used during the bootstrapping of a type.
      *
      * @param name attribute name (must be interned)
      * @return found object or null
@@ -1417,8 +1445,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Attribute lookup for name through mro objects' dicts. This isn't cached, and should
-     * generally only be used during the bootstrapping of a type.
+     * Attribute lookup for name through mro objects' dicts. This isn't cached, and should generally
+     * only be used during the bootstrapping of a type.
      *
      * Returns where in the mro the attribute was found at where[0].
      *
@@ -1454,21 +1482,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
         int i;
         for (i = 0; i < mro.length; i++) {
-            if (mro[i] == ref)
+            if (mro[i] == ref) {
                 break;
+            }
         }
         i++;
         for (; i < mro.length; i++) {
             if (mro[i] instanceof PyJavaType) {
-                // The MRO contains this proxy for classes extending a Java class and/or
-                // interfaces, but the proxy points back to this starting Python class.
-                // So break out of this infinite loop by ignoring this entry for super purposes.
-                // The use of super__ parallels the workaround seen in PyReflectedFunction
-                // Fixes http://bugs.jython.org/issue1540
-                // Also ignore this if we're doing super during __init__ as we want it to behave
-                // Fixes http://bugs.jython.org/issue2375
-                if(name != "__init__" && !name.startsWith("super__")) {
-                     lookupName = "super__" + name;
+                /*
+                 * The MRO contains this proxy for classes extending a Java class and/or interfaces,
+                 * but the proxy points back to this starting Python class. So break out of this
+                 * infinite loop by ignoring this entry for super purposes. The use of super__
+                 * parallels the workaround seen in PyReflectedFunction Fixes
+                 * http://bugs.jython.org/issue1540 Also ignore this if we're doing super during
+                 * __init__ as we want it to behave Fixes http://bugs.jython.org/issue2375
+                 */
+                if (name != "__init__" && !name.startsWith("super__")) {
+                    lookupName = "super__" + name;
                 } else {
                     lookupName = name;
                 }
@@ -1490,11 +1520,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         getClassToBuilder().put(forClass, builder);
         if (getClassToType().containsKey(forClass)) {
             if (!BootstrapTypesSingleton.getInstance().remove(forClass)) {
-                Py.writeWarning("init", "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
-                        + forClass + "]");
+                Py.writeWarning("init",
+                        "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
+                                + forClass + "]");
             }
-            // The types in BootstrapTypesSingleton.getClassToType() are initialized before their builders are assigned,
-            // so do the work of addFromClass & fillFromClass after the fact
+            /*
+             * The types in BootstrapTypesSingleton.getClassToType() are initialized before their
+             * builders are assigned, so do the work of addFromClass & fillFromClass after the fact.
+             */
             fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
         }
     }
@@ -1511,41 +1544,48 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     static boolean hasBuilder(Class<?> c) {
         return getClassToBuilder().containsKey(c);
     }
-    
+
     private static TypeBuilder getBuilder(Class<?> c) {
         if (c.isPrimitive() || !PyObject.class.isAssignableFrom(c)) {
-            // If this isn't a PyObject, don't bother forcing it to be initialized to load its
-            // builder
+            /*
+             * If this isn't a PyObject, don't bother forcing it to be initialized to load its
+             * builder
+             */
             return null;
+        } else {
+            /*
+             * This is a PyObject, call forName to force static initialization on the class so if it
+             * has a builder, it'll be filled in.
+             */
+            SecurityException exc = null;
+            try {
+                Class.forName(c.getName(), true, c.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                // Well, this is certainly surprising.
+                throw new RuntimeException(
+                        "Got ClassNotFound calling Class.forName on an already " + " found class.",
+                        e);
+            } catch (ExceptionInInitializerError e) {
+                throw Py.JavaError(e);
+            } catch (SecurityException e) {
+                exc = e;
+            }
+            TypeBuilder builder = getClassToBuilder().get(c);
+            if (builder == null && exc != null) {
+                Py.writeComment("type",
+                        "Unable to initialize " + c.getName() + ", a PyObject subclass, due to a "
+                                + "security exception, and no type builder could be found for it. "
+                                + "If it's an exposed type, it may not work properly. "
+                                + "Security exception: " + exc.getMessage());
+            }
+            return builder;
         }
-
-        // This is a PyObject, call forName to force static initialization on the class so if it has
-        // a builder, it'll be filled in
-        SecurityException exc = null;
-        try {
-            Class.forName(c.getName(), true, c.getClassLoader());
-        } catch (ClassNotFoundException e) {
-            // Well, this is certainly surprising.
-            throw new RuntimeException("Got ClassNotFound calling Class.forName on an already "
-                + " found class.", e);
-        } catch (ExceptionInInitializerError e) {
-            throw Py.JavaError(e);
-        } catch (SecurityException e) {
-            exc = e;
-        }
-        TypeBuilder builder = getClassToBuilder().get(c);
-        if (builder == null && exc != null) {
-            Py.writeComment("type",
-                    "Unable to initialize " + c.getName() + ", a PyObject subclass, due to a " +
-                    "security exception, and no type builder could be found for it. If it's an " +
-                    "exposed type, it may not work properly.  Security exception: " +
-                    exc.getMessage());
-        }
-        return builder;
     }
 
     private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
-        // System.out.println("createType c=" + c + ", needsInners=" + needsInners + ", BootstrapTypesSingleton.getInstance()=" + BootstrapTypesSingleton.getInstance());
+        // System.out.println("createType c=" + c + ", needsInners=" + needsInners
+        // + ", BootstrapTypesSingleton.getInstance()="
+        // + BootstrapTypesSingleton.getInstance());
         PyType newtype;
         if (c == PyType.class) {
             newtype = new PyType(false);
@@ -1602,9 +1642,11 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (type != null) {
             return type;
         }
-        // We haven't seen this class before, so its type needs to be created. If it's being
-        // exposed as a Java class, defer processing its inner types until it's completely
-        // created in case the inner class references a class that references this class.
+        /*
+         * We haven't seen this class before, so its type needs to be created. If it's being exposed
+         * as a Java class, defer processing its inner types until it's completely created in case
+         * the inner class references a class that references this class.
+         */
         Set<PyJavaType> needsInners = Generic.set();
         PyType result = addFromClass(c, needsInners);
         for (PyJavaType javaType : needsInners) {
@@ -1613,23 +1655,28 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 continue;
             }
             for (Class<?> inner : forClass.getClasses()) {
-                // Only add the class if there isn't something else with that name and it came from this
-                // class
-                if (inner.getDeclaringClass() == forClass &&
-                        javaType.dict.__finditem__(inner.getSimpleName()) == null) {
-                    // If this class is currently being loaded, any exposed types it contains won't have
-                    // set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so they're
-                    // created as PyType instead of PyJavaType
+                /*
+                 * Only add the class if there isn't something else with that name and it came from
+                 * this class
+                 */
+                if (inner.getDeclaringClass() == forClass
+                        && javaType.dict.__finditem__(inner.getSimpleName()) == null) {
+                    /*
+                     * If this class is currently being loaded, any exposed types it contains won't
+                     * have set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so
+                     * they're created as PyType instead of PyJavaType
+                     */
                     if (inner.getAnnotation(ExposedType.class) != null
                             || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
                         BootstrapTypesSingleton.getInstance().add(inner);
                     }
-                    javaType.dict.__setitem__(inner.getSimpleName(), PyType.fromClass(inner, hardRef));
+                    javaType.dict.__setitem__(inner.getSimpleName(),
+                            PyType.fromClass(inner, hardRef));
                 }
             }
         }
         if (hardRef && result != null) {
-            getExposedTypes().add(result) ;
+            getExposedTypes().add(result);
         }
 
         return result;
@@ -1653,6 +1700,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return ret;
     }
 
+    @Override
     public PyObject __findattr_ex__(String name) {
         return type___findattr_ex__(name);
     }
@@ -1667,8 +1715,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             get = metaattr.implementsDescrGet();
             if (useMetatypeFirst(metaattr) && get && metaattr.isDataDescr()) {
                 PyObject res = metaattr.__get__(this, metatype);
-                if (res != null)
+                if (res != null) {
                     return res;
+                }
             }
         }
 
@@ -1705,8 +1754,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         type___setattr__(asName(name), value);
     }
 
+    @Override
     public void __setattr__(String name, PyObject value) {
-         type___setattr__(name, value);
+        type___setattr__(name, value);
     }
 
     /**
@@ -1727,8 +1777,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     void type___setattr__(String name, PyObject value) {
         if (builtin) {
-            throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
-                    + "'%s'", this.name));
+            throw Py.TypeError(String.format(
+                    "can't set attributes of built-in/extension type " + "'%s'", this.name));
         }
         super.__setattr__(name, value);
         postSetattr(name);
@@ -1739,6 +1789,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (name == "__get__") {
             if (!hasGet && lookup("__get__") != null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean old = type.hasGet;
                         type.hasGet = true;
@@ -1749,6 +1801,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } else if (name == "__set__") {
             if (!hasSet && lookup("__set__") != null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean old = type.hasSet;
                         type.hasSet = true;
@@ -1759,6 +1813,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } else if (name == "__delete__") {
             if (!hasDelete && lookup("__delete__") != null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean old = type.hasDelete;
                         type.hasDelete = true;
@@ -1768,13 +1824,16 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
         } else if (name == "__getattribute__") {
             traverse_hierarchy(false, new OnType() {
-                    public boolean onType(PyType type) {
-                        return (type.usesObjectGetattribute = false);
-                    }
-                });
+
+                @Override
+                public boolean onType(PyType type) {
+                    return (type.usesObjectGetattribute = false);
+                }
+            });
         }
     }
 
+    @Override
     public void __delattr__(String name) {
         type___delattr__(name);
     }
@@ -1784,13 +1843,12 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         type___delattr__(asName(name));
     }
 
-    protected void checkDelattr() {
-    }
+    protected void checkDelattr() {}
 
     void type___delattr__(String name) {
         if (builtin) {
-            throw Py.TypeError(String.format("can't set attributes of built-in/extension type "
-                    + "'%s'", this.name));
+            throw Py.TypeError(String.format(
+                    "can't set attributes of built-in/extension type " + "'%s'", this.name));
         }
         super.__delattr__(name);
         postDelattr(name);
@@ -1801,6 +1859,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (name == "__get__") {
             if (hasGet && lookup("__get__") == null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__get__") == null;
                         if (absent) {
@@ -1814,6 +1874,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } else if (name == "__set__") {
             if (hasSet && lookup("__set__") == null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__set__") == null;
                         if (absent) {
@@ -1827,6 +1889,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         } else if (name == "__delete__") {
             if (hasDelete && lookup("__delete__") == null) {
                 traverse_hierarchy(false, new OnType() {
+
+                    @Override
                     public boolean onType(PyType type) {
                         boolean absent = type.getDict().__finditem__("__delete__") == null;
                         if (absent) {
@@ -1839,26 +1903,31 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
         } else if (name == "__getattribute__") {
             traverse_hierarchy(false, new OnType() {
-                    public boolean onType(PyType type) {
-                        return (type.usesObjectGetattribute = false);
-                    }
-                });
+
+                @Override
+                public boolean onType(PyType type) {
+                    return (type.usesObjectGetattribute = false);
+                }
+            });
         }
     }
 
     /**
-     * Invalidate this type's MethodCache entries. *Must* be called after any modification
-     * to __dict__ (or anything else affecting attribute lookups).
+     * Invalidate this type's MethodCache entries. *Must* be called after any modification to
+     * __dict__ (or anything else affecting attribute lookups).
      */
     protected void invalidateMethodCache() {
         traverse_hierarchy(false, new OnType() {
-                public boolean onType(PyType type) {
-                    type.versionTag = new Object();
-                    return false;
-                }
-            });
+
+            @Override
+            public boolean onType(PyType type) {
+                type.versionTag = new Object();
+                return false;
+            }
+        });
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return type___call__(args, keywords);
     }
@@ -1871,16 +1940,19 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
 
         PyObject obj = invokeNew(new_, this, true, args, keywords);
-        // When the call was type(something) or the returned object is not an instance of
-        // type, it won't be initialized
+        /*
+         * When the call was type(something) or the returned object is not an instance of type, it
+         * won't be initialized
+         */
         if ((this == TYPE && args.length == 1 && keywords.length == 0)
-            || !obj.getType().isSubType(this)) {
+                || !obj.getType().isSubType(this)) {
             return obj;
         }
         obj.dispatch__init__(args, keywords);
         return obj;
     }
 
+    @Override
     protected void __rawdir__(PyDictionary accum) {
         mergeClassDict(accum, this);
     }
@@ -1910,10 +1982,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         // guarded by __setattr__ to prevent modification of builtins
         if (!(name instanceof PyString)) {
             throw Py.TypeError(String.format("can only assign string to %s.__name__, not '%s'",
-                                             this.name, name.getType().fastGetName()));
+                    this.name, name.getType().fastGetName()));
         }
         String nameStr = name.toString();
-        if (nameStr.indexOf((char)0) > -1) {
+        if (nameStr.indexOf((char) 0) > -1) {
             throw Py.ValueError("__name__ must not contain null bytes");
         }
         setName(nameStr);
@@ -1944,13 +2016,16 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return new PyDictProxy(dict);
     }
 
+    @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         // Analogous to CPython's descrobject:getset_set
-        throw Py.AttributeError(String.format("attribute '__dict__' of '%s' objects is not "
-                                              + "writable", getType().fastGetName()));
+        throw Py.AttributeError(
+                String.format("attribute '__dict__' of '%s' objects is not " + "writable",
+                        getType().fastGetName()));
     }
 
+    @Override
     @ExposedDelete(name = "__dict__")
     public void delDict() {
         setDict(null);
@@ -1976,9 +2051,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         this.usesObjectGetattribute = usesObjectGetattribute;
     }
 
+    @Override
     public Object __tojava__(Class<?> c) {
-        if (underlying_class != null && (c == Object.class || c == Class.class ||
-                                         c == Serializable.class)) {
+        if (underlying_class != null
+                && (c == Object.class || c == Class.class || c == Serializable.class)) {
             return underlying_class;
         }
         return super.__tojava__(c);
@@ -2012,15 +2088,16 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     @ExposedSet(name = "__abstractmethods__")
     public void setAbstractmethods(PyObject value) {
-        // __abstractmethods__ should only be set once on a type, in abc.ABCMeta.__new__,
-        // so this function doesn't do anything special to update subclasses
+        /*
+         * __abstractmethods__ should only be set once on a type, in abc.ABCMeta.__new__, so this
+         * function doesn't do anything special to update subclasses
+         */
         dict.__setitem__("__abstractmethods__", value);
         postSetattr("__abstractmethods__");
-        tp_flags = value.__nonzero__()
-                ? tp_flags | Py.TPFLAGS_IS_ABSTRACT
+        tp_flags = value.__nonzero__() ? tp_flags | Py.TPFLAGS_IS_ABSTRACT
                 : tp_flags & ~Py.TPFLAGS_IS_ABSTRACT;
     }
-    
+
     public int getNumSlots() {
         return numSlots;
     }
@@ -2040,35 +2117,39 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return String.format("<%s '%s'>", kind, getName());
     }
 
+    @Override
     public String toString() {
         return type_toString();
     }
 
     /**
-     * Raises AttributeError on type objects. The message differs from
-     * PyObject#noAttributeError, to mimic CPython behaviour.
+     * Raises AttributeError on type objects. The message differs from PyObject#noAttributeError, to
+     * mimic CPython behaviour.
      */
+    @Override
     public void noAttributeError(String name) {
         throw Py.AttributeError(String.format("type object '%.50s' has no attribute '%.400s'",
-                                              fastGetName(), name));
+                fastGetName(), name));
     }
 
-    //XXX: consider pulling this out into a generally accessible place
-    //     I bet this is duplicated more or less in other places.
+    /*
+     * XXX: consider pulling this out into a generally accessible place. I bet this is duplicated
+     * more or less in other places.
+     */
     private static String confirmIdentifier(PyObject obj) {
         String identifier;
         if (!(obj instanceof PyString)) {
             throw Py.TypeError(String.format("__slots__ items must be strings, not '%.200s'",
-                                             obj.getType().fastGetName()));
+                    obj.getType().fastGetName()));
         } else if (obj instanceof PyUnicode) {
-            identifier = ((PyUnicode)obj).encode();
+            identifier = ((PyUnicode) obj).encode();
         } else {
             identifier = obj.toString();
         }
 
         String msg = "__slots__ must be identifiers";
         if (identifier.length() == 0
-            || (!Character.isLetter(identifier.charAt(0)) && identifier.charAt(0) != '_')) {
+                || (!Character.isLetter(identifier.charAt(0)) && identifier.charAt(0) != '_')) {
             throw Py.TypeError(msg);
         }
         for (char c : identifier.toCharArray()) {
@@ -2079,11 +2160,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return identifier;
     }
 
-    //XXX: copied from CodeCompiler.java and changed variable names.
-    //       Maybe this should go someplace for all classes to use.
+    /*
+     * XXX: copied from CodeCompiler.java and changed variable names. Maybe this should go someplace
+     * for all classes to use.
+     */
     private static String mangleName(String classname, String methodname) {
         if (classname != null && methodname.startsWith("__") && !methodname.endsWith("__")) {
-            //remove leading '_' from classname
+            // remove leading '_' from classname
             int i = 0;
             while (classname.charAt(i) == '_') {
                 i++;
@@ -2112,8 +2195,10 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         private String name;
 
         TypeResolver(Class<?> underlying_class, String module, String name) {
-            // Don't store the underlying_class for PyProxies as the proxy type needs to fill in
-            // based on the class, not be the class
+            /*
+             * Don't store the underlying_class for PyProxies as the proxy type needs to fill in
+             * based on the class, not be the class
+             */
             if (underlying_class != null && !PyProxy.class.isAssignableFrom(underlying_class)) {
                 this.underlying_class = underlying_class;
             }
@@ -2199,7 +2284,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      */
     static class MethodCache {
 
-        /** Global mro cache. See {@link PyType#lookup_where(String, PyObject[])}.*/
+        /** Global mro cache. See {@link PyType#lookup_where(String, PyObject[])}. */
         private static final MethodCache methodCache = new MethodCache();
 
         /** The fixed size cache. */
@@ -2235,12 +2320,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
             PyObject value = type.lookup_where_mro(name, where);
             if (isCacheableName(name)) {
-                // CAS isn't totally necessary here but is possibly more correct. Cache by
-                // the original version before the lookup, if it's changed since then
-                // we'll cache a bad entry. Bad entries and CAS failures aren't a concern
-                // as subsequent lookups will sort themselves out
-                table.compareAndSet(index, entry, new MethodCacheEntry(versionTag, name, where[0],
-                                                                       value));
+                /*
+                 * CAS isn't totally necessary here but is possibly more correct. Cache by the
+                 * original version before the lookup, if it's changed since then we'll cache a bad
+                 * entry. Bad entries and CAS failures aren't a concern as subsequent lookups will
+                 * sort themselves out.
+                 */
+                table.compareAndSet(index, entry,
+                        new MethodCacheEntry(versionTag, name, where[0], value));
             }
             return value;
         }
@@ -2255,8 +2342,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         /**
          * Determine if name is cacheable.
          *
-         * Since the cache can keep references to names alive longer than usual, it avoids
-         * caching unusually large strings.
+         * Since the cache can keep references to names alive longer than usual, it avoids caching
+         * unusually large strings.
          */
         private static boolean isCacheableName(String name) {
             return name.length() <= 100;
@@ -2309,8 +2396,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 return retVal;
             }
         }
-        //bases cannot be null
-        for (PyObject ob: bases) {
+        // bases cannot be null
+        for (PyObject ob : bases) {
             if (ob != null) {
                 retVal = visit.visit(ob, arg);
                 if (retVal != 0) {
@@ -2325,16 +2412,16 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
         }
         if (mro != null) {
-            for (PyObject ob: mro) {
+            for (PyObject ob : mro) {
                 retVal = visit.visit(ob, arg);
                 if (retVal != 0) {
                     return retVal;
                 }
             }
         }
-        //don't traverse subclasses since they are weak refs.
-        //ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
-        //Set<WeakReference<PyType>> subclasses = Generic.set();
+        // Don't traverse subclasses since they are weak refs.
+        // ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
+        // Set<WeakReference<PyType>> subclasses = Generic.set();
         return 0;
     }
 
@@ -2343,14 +2430,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         if (ob == null) {
             return false;
         }
-        //bases cannot be null
-        for (PyObject obj: bases) {
+        // bases cannot be null
+        for (PyObject obj : bases) {
             if (obj == ob) {
                 return true;
             }
         }
         if (mro != null) {
-            for (PyObject obj: mro) {
+            for (PyObject obj : mro) {
                 if (obj == ob) {
                     return true;
                 }
