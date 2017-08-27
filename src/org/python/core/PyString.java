@@ -316,7 +316,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param quoteChar '"' or '\'' use that, '?' = let Python choose, 0 or anything = no quotes
      * @return encoded string (possibly the same string if unchanged)
      */
-    public static String encode_UnicodeEscape(String str, char quote) {
+    static String encode_UnicodeEscape(String str, char quote) {
 
         // Choose whether to quote and the actual quote character
         boolean use_quotes;

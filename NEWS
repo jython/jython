@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Development tip
   Bugs fixed
+    - [ 2612 ] NPE while trying to load class
     - [ 2609 ] PyType.fromClass publication race (discovered in strptime and re)
     - [ 2608 ] Encoding problems with non-ascii host name
     - [ 2599 ] Cannot handle network paths under Windows

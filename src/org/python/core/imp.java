@@ -624,7 +624,7 @@ public class imp {
                 if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
                     pkg = true;
                 } else {
-                    String printDirName = PyString.encode_UnicodeEscape(displayDirName, '\'');
+                    String printDirName = PyString.encode_UnicodeEscape(dir.getPath(), '\'');
                     Py.warning(Py.ImportWarning, String.format(
                             "Not importing directory %s: missing __init__.py", printDirName));
                 }
