@@ -9,6 +9,7 @@ import org.python.core.PyLong;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
@@ -117,6 +118,12 @@ public class Encoder extends PyObject implements Traverseproc {
             encode_list(rval, obj, indent_level);
         } else if (obj instanceof PyDictionary) {
             encode_dict(rval, (PyDictionary) obj, indent_level);
+        } else if (obj instanceof PyStringMap) {
+            // Rewrap __dict__ as a regular dict, which incurs some extra overhead of course
+            // Fixes http://bugs.jython.org/issue2622
+            PyDictionary d = new PyDictionary();
+            d.update(obj);
+            encode_dict(rval, d, indent_level);
         } else {
             PyObject ident = checkCircularReference(obj);
             if (defaultfn == Py.None) {
