@@ -1,5 +1,6 @@
 package org.python.modules._json;
 
+import org.python.core.AbstractDict;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
@@ -9,7 +10,6 @@ import org.python.core.PyLong;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.PyUnicode;
@@ -118,12 +118,10 @@ public class Encoder extends PyObject implements Traverseproc {
             encode_list(rval, obj, indent_level);
         } else if (obj instanceof PyDictionary) {
             encode_dict(rval, (PyDictionary) obj, indent_level);
-        } else if (obj instanceof PyStringMap) {
+        } else if (obj instanceof AbstractDict) {
             // Rewrap __dict__ as a regular dict, which incurs some extra overhead of course
             // Fixes http://bugs.jython.org/issue2622
-            PyDictionary d = new PyDictionary();
-            d.update(obj);
-            encode_dict(rval, d, indent_level);
+            encode_dict(rval, (AbstractDict)obj, indent_level);
         } else {
             PyObject ident = checkCircularReference(obj);
             if (defaultfn == Py.None) {
@@ -138,7 +136,7 @@ public class Encoder extends PyObject implements Traverseproc {
         }
     }
 
-    private void encode_dict(PyList rval, PyDictionary dct, int indent_level) {
+    private void encode_dict(PyList rval, AbstractDict dct, int indent_level) {
         /* Encode Python dict dct a JSON term */
         if (dct.__len__() == 0) {
             rval.append(new PyString("{}"));
