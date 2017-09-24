@@ -1,7 +1,5 @@
-/*
- * Copyright (c) Corporation for National Research Initiatives
- * Copyright (c) Jython Developers
- */
+// Copyright (c) Corporation for National Research Initiatives
+// Copyright (c) Jython Developers
 package org.python.core;
 
 import java.io.Serializable;
