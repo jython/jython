@@ -6,6 +6,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public abstract class AbstractDict extends PyObject {
@@ -65,15 +66,71 @@ public abstract class AbstractDict extends PyObject {
         return val == null ? null : ((PyObject)val).__tojava__(Object.class);
     }
 
-    static class ValuesIter extends PyIterator {
+    /**
+     * Only valid for T=PyObject.
+     * Subclasses can use a different T, but then have to
+     * override __iternext__() accordingly.
+     */
+    static abstract class AbstractDictIter<T> extends PyIterator {
 
-        private final Iterator<PyObject> iterator;
+        protected final Iterator<T> iterator;
+        protected final int size;
 
-        private final int size;
-
-        public ValuesIter(Collection<PyObject> values) {
+        public AbstractDictIter(Collection<T> values) {
             iterator = values.iterator();
             size = values.size();
+        }
+
+        /**
+         * For use by subclasses.
+         */
+        protected void check(int size) {
+            if (size != this.size) {
+                throw Py.RuntimeError("dictionary changed size during iteration");
+            }
+        }
+
+        /**
+         * Warning: This default implementation is only
+         * valid for T=PyObject.
+         */
+        @Override
+        public PyObject __iternext__() {
+            if (!iterator.hasNext()) {
+                return null;
+            }
+            return (PyObject) iterator.next();
+        }
+    }
+
+    static class ValuesIter extends AbstractDictIter<PyObject>
+    {
+        public ValuesIter(Collection<PyObject> values) {
+            super(values);
+        }
+    }
+
+    /**
+     * Only valid for T=PyObject.
+     * Subclasses can use a different T, but then have to
+     * override __iternext__() accordingly.
+     */
+    static class KeysIter<T> extends AbstractDictIter<T>
+    {
+        public KeysIter(Collection<T> keys) {
+            super(keys);
+        }
+    }
+
+    /**
+     * Only valid for T=PyObject.
+     * Subclasses can use a different T, but then have to
+     * override __iternext__() accordingly.
+     */
+    static class ItemsIter<T> extends AbstractDictIter<Entry<T, PyObject>> {
+
+        public ItemsIter(Set<Entry<T, PyObject>> items) {
+            super(items);
         }
 
         @Override
@@ -81,7 +138,8 @@ public abstract class AbstractDict extends PyObject {
             if (!iterator.hasNext()) {
                 return null;
             }
-            return iterator.next();
+            Entry<T, PyObject> entry = iterator.next();
+            return new PyTuple((PyObject) entry.getKey(), entry.getValue());
         }
     }
 }

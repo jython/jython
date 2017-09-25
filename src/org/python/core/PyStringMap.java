@@ -13,6 +13,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.python.core.AbstractDict.ValuesIter;
+import org.python.core.AbstractDict.KeysIter;
+import org.python.core.AbstractDict.ItemsIter;
 import org.python.core.PyMapSet.PySetIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
@@ -663,7 +666,7 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.dict_iteritems_doc)
     final PyObject stringmap_iteritems() {
-        return new ItemsIter(table.entrySet());
+        return new StringMapItemsIter(table.entrySet());
     }
 
     /**
@@ -677,7 +680,7 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
     final PyObject stringmap_iterkeys() {
         /* Python allows one to change the dict while iterating over it, including
            deletion. Java does not. Can we resolve with CHM? */
-        return new KeysIter(table.keySet());
+        return new StringMapKeysIter(table.keySet());
     }
 
     /**
@@ -712,63 +715,50 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
         return false;
     }
 
-    private abstract class StringMapIter<T> extends PyIterator {
-
-        protected final Iterator<T> iterator;
-
-        private final int size;
-
-        public StringMapIter(Collection<T> c) {
-            iterator = c.iterator();
-            size = c.size();
-        }
-
-        @Override
-        public PyObject __iternext__() {
-            if (table.size() != size) {
-                throw Py.RuntimeError("dictionary changed size during iteration");
-            }
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            return stringMapNext();
-        }
-
-        protected abstract PyObject stringMapNext();
-    }
-
-    private class StringMapValuesIter extends StringMapIter<PyObject> {
+    private class StringMapValuesIter extends ValuesIter {
 
         public StringMapValuesIter(Collection<PyObject> c) {
             super(c);
         }
 
         @Override
-        public PyObject stringMapNext() {
+        public PyObject __iternext__() {
+            check(table.size());
+            if (!iterator.hasNext()) {
+                return null;
+            }
             return iterator.next();
         }
     }
 
-    private class KeysIter extends StringMapIter<Object> {
+    private class StringMapKeysIter extends KeysIter<Object> {
 
-        public KeysIter(Set<Object> s) {
+        public StringMapKeysIter(Set<Object> s) {
             super(s);
         }
 
         @Override
-        protected PyObject stringMapNext() {
+        public PyObject __iternext__() {
+            check(table.size());
+            if (!iterator.hasNext()) {
+                return null;
+            }
             return keyToPy(iterator.next());
         }
     }
 
-    private class ItemsIter extends StringMapIter<Entry<Object, PyObject>> {
+    private class StringMapItemsIter extends ItemsIter<Object> {
 
-        public ItemsIter(Set<Entry<Object, PyObject>> s) {
+        public StringMapItemsIter(Set<Entry<Object, PyObject>> s) {
             super(s);
         }
 
         @Override
-        public PyObject stringMapNext() {
+        public PyObject __iternext__() {
+            check(table.size());
+            if (!iterator.hasNext()) {
+                return null;
+            }
             return itemTuple(iterator.next());
         }
     }
