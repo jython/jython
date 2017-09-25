@@ -3,7 +3,6 @@ package org.python.modules._json;
 import org.python.core.AbstractDict;
 import org.python.core.ArgParser;
 import org.python.core.Py;
-import org.python.core.PyDictionary;
 import org.python.core.PyFloat;
 import org.python.core.PyInteger;
 import org.python.core.PyLong;
@@ -28,7 +27,7 @@ public class Encoder extends PyObject implements Traverseproc {
     @ExposedGet
     public final String __module__ = "_json";
 
-    final PyDictionary markers;
+    final AbstractDict markers;
     final PyObject defaultfn;
     final PyObject encoder;
     final PyObject indent;
@@ -49,7 +48,7 @@ public class Encoder extends PyObject implements Traverseproc {
                         "key_separator", "item_separator", "sort_keys", "skipkeys", "allow_nan"});
         ap.noKeywords();
         PyObject m = ap.getPyObject(0);
-        markers = m == Py.None ? null : (PyDictionary) m;
+        markers = m == Py.None ? null : (AbstractDict) m;
         defaultfn = ap.getPyObject(1);
         encoder = ap.getPyObject(2);
         indent = ap.getPyObject(3);
@@ -132,12 +131,9 @@ public class Encoder extends PyObject implements Traverseproc {
             rval.append(encode_float(obj));
         } else if (obj instanceof PyList || obj instanceof PyTuple) {
             encode_list(rval, obj, indent_level);
-        } else if (obj instanceof PyDictionary) {
-            encode_dict(rval, (PyDictionary) obj, indent_level);
         } else if (obj instanceof AbstractDict) {
-            // Rewrap __dict__ as a regular dict, which incurs some extra overhead of course
-            // Fixes http://bugs.jython.org/issue2622
-            encode_dict(rval, (AbstractDict)obj, indent_level);
+            /* Using AbstractDict instead of PyDictionary fixes http://bugs.jython.org/issue2622 */
+            encode_dict(rval, (AbstractDict) obj, indent_level);
         } else {
             PyObject ident = checkCircularReference(obj);
             if (defaultfn == Py.None) {
