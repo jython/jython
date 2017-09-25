@@ -27,8 +27,8 @@ import org.python.core.finalization.FinalizeTrigger;
 import org.python.modules._weakref.GlobalRef;
 import org.python.modules._weakref.ReferenceBackend;
 
-//These imports belong to the out-commented section on MXBean-based
-//gc-sync far below. That section is kept to document this failed
+//These imports belong to the out commented section on MXBean-based
+//gc sync far below. That section is kept to document this failed
 //approach and allow easy reproduction of this failure.
 //import java.lang.management.*;
 //import javax.management.*;
@@ -36,14 +36,14 @@ import org.python.modules._weakref.ReferenceBackend;
 
 /**
  * <p>
- * In Jython, the gc-module notably differs from that in CPython.
+ * In Jython, the gc module notably differs from that in CPython.
  * This comes from the different ways Jython and CPython perform
- * garbage-collection. While CPython's garbage collection is based on
+ * garbage collection. While CPython's garbage collection is based on
  * <a href="http://en.wikipedia.org/wiki/Reference_counting" target="_blank">
- * reference-counting</a>, Jython is backed by Java's gc, which is
+ * reference counting</a>, Jython is backed by Java's gc, which is
  * based on a
  * <a href="http://en.wikipedia.org/wiki/Tracing_garbage_collection" target="_blank">
- * mark-and-sweep-approach</a>.
+ * mark-and-sweep approach</a>.
  * </p>
  * <p>
  * This difference becomes most notable if finalizers are involved that perform resurrection.
@@ -60,29 +60,29 @@ import org.python.modules._weakref.ReferenceBackend;
  * break, while these persist in CPython.
  * </p>
  * <p>
- * As of Jython 2.7, the gc-module offers some options to emulate CPython-behavior.
+ * As of Jython 2.7, the gc module offers some options to emulate CPython behavior.
  * Especially see the flags {@link #PRESERVE_WEAKREFS_ON_RESURRECTION},
  * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} and {@link #DONT_FINALIZE_CYCLIC_GARBAGE}
  * for this.
  * </p>
  * <p>
- * Another difference is that CPython's gc-module offers some debug-features like counting
+ * Another difference is that CPython's gc module offers some debug features like counting
  * of collected cyclic trash, which are hard to support by Jython. As of Jython 2.7 the
- * introduction of a traverseproc-mechanism (c.f. {@link org.python.core.Traverseproc})
+ * introduction of a traverseproc mechanism (c.f. {@link org.python.core.Traverseproc})
  * made support of these features feasible. As support of these features comes
- * with a significant emulation-cost, one must explicitly tell gc to perform this.
- * To make objects subject to cyclic trash-counting, these objects must be gc-monitored in
+ * with a significant emulation cost, one must explicitly tell gc to perform this.
+ * To make objects subject to cyclic trash counting, these objects must be gc-monitored in
  * Jython. See {@link #monitorObject(PyObject)}, {@link #unmonitorObject(PyObject)},
  * {@link #MONITOR_GLOBAL} and {@link #stopMonitoring()} for this.<br>
  * If at least one object is gc-monitored, {@link #collect()} works synchronously in the
  * sense that it blocks until all gc-monitored objects that are garbage actually have been
  * collected and had their finalizers called and completed. {@link #collect()} will report
  * the number of collected objects in the same manner as in CPython, i.e. counts only those
- * that participate in reference cycles. This allows a unified test-implementation across
+ * that participate in reference cycles. This allows a unified test implementation across
  * Jython and CPython (which applies to most tests in test_gc.py). If not any object is
  * gc-monitored, {@link #collect()} just delegates to {@link java.lang.System.gc()}, runs
  * asynchronously (i.e. non-blocking) and returns {@link #UNKNOWN_COUNT}.
- * See also {@link #DEBUG_SAVEALL} for a useful gc-debugging feature that is supported by
+ * See also {@link #DEBUG_SAVEALL} for a useful gc debugging feature that is supported by
  * Jython from version 2.7 onwards.
  * </p>
  * <p>
@@ -92,40 +92,40 @@ import org.python.modules._weakref.ReferenceBackend;
  * this was not entirely feasible.<br>
  * The aspects that were only feasible using a timeout are waiting for gc to enqueue all
  * collected objects (i.e. weak references to monitored objects that were gc'ed) to the
- * reference queue and waiting for gc to run all PyObject-finalizers.
+ * reference queue and waiting for gc to run all PyObject finalizers.
  * </p>
  * <p>
  * Waiting for trash could in theory be strictly synchronized by using {@code MXBean}s, i.e.
  * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
  * target="_blank">GarbageCollectionNotificationInfo</a> and related API.
- * However, experiments showed that the arising gc-notifications do not reliably indicate
- * when enqueuing was done for a specific gc-run. We kept the experimental implementation
- * in source-code comments to allow easy reproducibility of this issue. (Note that out-commented
- * code contradicts Jython-styleguide, but this one - however - is needed to document this
+ * However, experiments showed that the arising gc notifications do not reliably indicate
+ * when enqueuing was done for a specific gc run. We kept the experimental implementation
+ * in source code comments to allow easy reproducibility of this issue. (Note that out commented
+ * code contradicts Jython styleguide, but this one - however - is needed to document this
  * infeasible approach and is explicitly declared accordingly).<br>
  * But how <b>is</b> sync done now?
  * We insert a sentinel before running gc and wait until this sentinel was collected.
- * Timestamps are taken to give us an idea at which time-scales the gc of the current JVM
+ * Timestamps are taken to give us an idea at which time scales the gc of the current JVM
  * performs. We then wait until twice the measured time (i.e. duration from call to
  * {@link java.lang.System#gc()} until the sentinel reference was enqueued) has passed after
  * the last reference was enqueued by gc. While this approach is not entirely safe in theory,
  * it passes all tests on various systems and machines we had available for testing so far.
  * We consider it more robust than a fixed-length timeout and regard it the best known feasible
- * compromise to emulate synchronous gc-runs in Java.
+ * compromise to emulate synchronous gc runs in Java.
  * </p>
  * <p>
  * The other timing-based synchronization issue - waiting for finalizers to run - is solved as
- * follows. Since PyObject-finalizers are based on
+ * follows. Since PyObject finalizers are based on
  * {@link org.python.core.finalization.FinalizeTrigger}s, Jython has full control about
  * these finalization process from a central point. Before such a finalizer runs, it calls
  * {@link #notifyPreFinalization()} and when it is done, it calls
  * {@link #notifyPostFinalization()}. While processing of a finalizer can be of arbitrary
- * duration, it widely holds that Java's gc-thread calls the next finalizer almost
+ * duration, it widely holds that Java's gc thread calls the next finalizer almost
  * instantaneously after the former. That means that a timestamp taken in
  * {@link #notifyPreFinalization()} is usually delayed only few milliseconds
  * - often even reported as 0 milliseconds - after the last taken timestamp in
  * {@link #notifyPostFinalization()} (i.e. that was called by the previous finalizer).
- * Jython's gc-module assumes the end of Java's finalization process if
+ * Jython's gc module assumes the end of Java's finalization process if
  * {@link #postFinalizationTimeOut} milliseconds passed after a call of
  * {@link #notifyPostFinalization()} without another call to
  * {@link #notifyPreFinalization()} in that time. The default value of
@@ -135,7 +135,7 @@ import org.python.modules._weakref.ReferenceBackend;
  * into the process by external libraries. If these finalizers are of short duration
  * (which applies to typical finalizers), one can deal with this by adjusting
  * {@link #postFinalizationTimeOut}, which was declared {@code public} for exactly this
- * purpose. However if the external framework causing the issue is Jython-aware, a
+ * purpose. However if the external framework causing the issue is Jython aware, a
  * cleaner solution would be to let its finalizers call {@link #notifyPreFinalization()}
  * and {@link #notifyPostFinalization()} appropriately. In that case these finalizers
  * must not terminate by throwing an exception before {@link #notifyPostFinalization()}
@@ -145,17 +145,17 @@ import org.python.modules._weakref.ReferenceBackend;
  * (c.f.
  * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html
  * target="_blank">com.sun.management.GarbageCollectionNotificationInfo</a>) does not emit any
- * notifications that allow to detect the end of the finalization-phase. So this API
+ * notifications that allow to detect the end of the finalization phase. So this API
  * provides no alternative to the described technique.
  * </p>
  * <p>
- * Usually Java's gc provides hardly any guarantee about its collection-  and finalization-
+ * Usually Java's gc provides hardly any guarantee about its collection and finalization
  * process. It not even guarantees that finalizers are called at all (c.f.
  * <a href="http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java"
  * target="_blank">http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java</a>).
  * While at least the most common JVM implementations usually <b>do</b> call finalizers
- * reliably under normal conditions, there still is no specific finalization-order guaranteed
- * (one might reasonably expect that this would be related to reference-connection graph
+ * reliably under normal conditions, there still is no specific finalization order guaranteed
+ * (one might reasonably expect that this would be related to reference connection graph
  * topology, but this appears not to be the case).
  * However Jython now offers some functionality to compensate this
  * situation. Via {@link #registerPreFinalizationProcess(Runnable)} and
@@ -164,7 +164,7 @@ import org.python.modules._weakref.ReferenceBackend;
  * relies on the technique described in the former paragraph (i.e. based on calls to
  * {@link #notifyPreFinalization()} and {@link #notifyPostFinalization()}) and thus
  * underlies its unsafety, if third-party finalizers are involved. Such finalizers can
- * cause false-positive runs of registered (pre/post)-finalization-processes, so this
+ * cause false-positive runs of registered (pre/post) finalization processes, so this
  * feature should be used with some care. It is recommended to use it only in such a way
  * that false-positive runs would not cause serious harm, but only some loss in
  * performance or so.
@@ -179,10 +179,10 @@ public class gc {
      */
     public static final int UNKNOWN_COUNT = -2;
     
-    /* Jython-specific gc-flags: */
+    /* Jython-specific gc flags: */
     /**
      * This flag tells every newly created PyObject to register for
-     * gc-monitoring. This allows {@link #collect()} to report the
+     * gc monitoring. This allows {@link #collect()} to report the
      * number of collected objects.
      *
      * @see #setJythonGCFlags(short)
@@ -238,7 +238,7 @@ public class gc {
      * and in unpredictable order). This flag emulates CPython
      * behavior in Jython. Note that this emulation comes with a
      * significant cost as it can delay collection of many objects
-     * for several gc-cycles. Its main intention is for debugging
+     * for several gc cycles. Its main intention is for debugging
      * resurrection-sensitive code.
      *
      * @see #setJythonGCFlags(short)
@@ -253,12 +253,12 @@ public class gc {
 
     /**
      * <p>
-     * Reflection-based traversion is an inefficient fallback-method to
-     * traverse PyObject-subtypes that don't implement
+     * Reflection-based traversion is an inefficient fallback method to
+     * traverse PyObject subtypes that don't implement
      * {@link org.python.core.Traverseproc} and
      * are not marked as {@link org.python.core.Untraversable}.
      * Such a situation indicates that the programmer was not aware of
-     * Jython's traverseproc-mechanism and reflection is used to
+     * Jython's traverseproc mechanism and reflection is used to
      * compensate this.
      * </p>
      * <p>
@@ -270,14 +270,14 @@ public class gc {
      * </p>
      * <p>
      * Note that reflection-based traversion fallback is performed by
-     * default. Further note that Jython emits warning-messages if
+     * default. Further note that Jython emits warning messages if
      * reflection-based traversion occurs or if an object is encountered
      * that neither implements {@link org.python.core.Traverseproc}
      * nor is marked as {@link org.python.core.Untraversable} (even if
      * reflection-based traversion is inhibited). See
      * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} and
      * {@link #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING} to control
-     * these warning-messages.
+     * these warning messages.
      * </p>
      *
      * @see #setJythonGCFlags(short)
@@ -295,13 +295,13 @@ public class gc {
      * reflection-based traversion.
      * Note that if this flag is not set, the warning will occur even if
      * reflection-based traversion is not active. The purpose of this behavior is
-     * to identify objects that don't properly support the traverseproc-mechanism,
-     * i.e. instances of PyObject-subclasses that neither implement
+     * to identify objects that don't properly support the traverseproc mechanism,
+     * i.e. instances of PyObject subclasses that neither implement
      * {@link org.python.core.Traverseproc},
-     * nor are annotated with the {@link org.python.core.Untraversable}-annotation.
+     * nor are annotated with the {@link org.python.core.Untraversable} annotation.
      * </p>
      * <p>
-     * A SUPPRESS-flag was chosen rather than a WARN-flag, so that warning is the
+     * A SUPPRESS flag was chosen rather than a WARN flag, so that warning is the
      * default behavior - the user must actively set this flag in order to not to
      * be warned.
      * This is because in an ideal implementation reflection-based traversion never
@@ -321,7 +321,7 @@ public class gc {
      * object instead of only once per class.
      * A potential reflection-based traversion occurs whenever an object is
      * traversed that neither implements {@link org.python.core.Traverseproc},
-     * nor is annotated with the {@link org.python.core.Untraversable}-annotation.
+     * nor is annotated with the {@link org.python.core.Untraversable} annotation.
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -333,12 +333,12 @@ public class gc {
 
     /**
      * In Jython one usually uses {@code Py.writeDebug} for debugging output.
-     * However that method is only verbose if an appropriate verbose-level
-     * was set. In CPython it is enough to set gc-{@code DEBUG} flags to get
-     * gc-messages, no matter what overall verbose level is selected.
+     * However that method is only verbose if an appropriate verbose level
+     * was set. In CPython it is enough to set gc {@code DEBUG} flags to get
+     * gc messages, no matter what overall verbose level is selected.
      * This flag tells Jython to use {@code Py.writeDebug} for debugging output.
-     * If it is not set (default-case), gc-debugging output (if gc-{@code VERBOSE}
-     * or -{@code DEBUG} flags are set) is directly written to {@code System.err}.
+     * If it is not set (default case), gc debugging output (if gc {@code VERBOSE}
+     * or {@code DEBUG} flags are set) is directly written to {@code System.err}.
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -348,7 +348,7 @@ public class gc {
     public static final short USE_PY_WRITE_DEBUG = (1<<9);
 
     /**
-     * Enables collection-related verbose-output.
+     * Enables collection-related verbose output.
      * 
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -358,7 +358,7 @@ public class gc {
     public static final short VERBOSE_COLLECT =  (1<<10);
 
     /**
-     * Enables weakref-related verbose-output.
+     * Enables weakref-related verbose output.
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -368,7 +368,7 @@ public class gc {
     public static final short VERBOSE_WEAKREF =  (1<<11);
 
     /**
-     * Enables delayed finalization related verbose-output.
+     * Enables delayed finalization related verbose output.
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -378,7 +378,7 @@ public class gc {
     public static final short VERBOSE_DELAYED =  (1<<12);
 
     /**
-     * Enables finalization-related verbose-output.
+     * Enables finalization-related verbose output.
      *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
@@ -388,7 +388,7 @@ public class gc {
     public static final short VERBOSE_FINALIZE = (1<<13);
 
     /**
-     * Bit-combination of the flags {@link #VERBOSE_COLLECT},
+     * Bit combination of the flags {@link #VERBOSE_COLLECT},
      * {@link #VERBOSE_WEAKREF}, {@link #VERBOSE_DELAYED},
      * {@link #VERBOSE_FINALIZE}.
      *
@@ -456,7 +456,7 @@ public class gc {
     public static final int DEBUG_SAVEALL       = (1<<5);
 
     /**
-     * Bit-combination of the flags {@link #DEBUG_COLLECTABLE},
+     * Bit combination of the flags {@link #DEBUG_COLLECTABLE},
      * {@link #DEBUG_UNCOLLECTABLE}, {@link #DEBUG_INSTANCES},
      * {@link #DEBUG_OBJECTS}, {@link #DEBUG_SAVEALL}.
      *
@@ -716,13 +716,13 @@ public class gc {
                 Object otherReferent = ((WeakReferenceGC) ob).get();
                 if (ownReferent == null || otherReferent == null) {
                     return ownReferent == otherReferent &&
-                /* We compare the cached hash-codes in order to get an idea
+                /* We compare the cached hash codes in order to get an idea
                  * whether in the both-null-case the referent was equal once.
                  */
                             hashCode == ((WeakReferenceGC) ob).hashCode;
                 } else {
                     return otherReferent.equals(ownReferent)
-                /* Here the hash-codes are only compared as a consistency check. */
+                /* Here the hash codes are only compared as a consistency check. */
                             && ((WeakReferenceGC) ob).hashCode == hashCode;
                 }
             } else if (ob instanceof WeakrefGCCompareDummy) {
@@ -730,13 +730,13 @@ public class gc {
                         ((WeakrefGCCompareDummy) ob).compare == null) {
                     return ownReferent ==
                             ((WeakrefGCCompareDummy) ob).compare &&
-                /* We compare the cached hash-codes in order to get an idea
+                /* We compare the cached hash codes in order to get an idea
                  * whether in the both-null-case the referent was equal once.
                  */
                             hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
                 } else {
                     return ownReferent.equals(((WeakrefGCCompareDummy) ob).compare)
-                /* Here the hash-codes are only compared as a consistency check. */
+                /* Here the hash codes are only compared as a consistency check. */
                             && hashCode == ((WeakrefGCCompareDummy) ob).hashCode;
                 }
             } else {
@@ -893,9 +893,9 @@ public class gc {
      * this does not prevent callbacks, unless it is called during
      * finalization phase (e.g. by a finalizer) and
      * {@link #delayedWeakrefCallbacksEnabled()} returns {@code true}.
-     * In a manual fashion, one can enforce this by using the gc-flag
+     * In a manual fashion, one can enforce this by using the gc flag
      * {@link #FORCE_DELAYED_WEAKREF_CALLBACKS}. Alternatively, one can
-     * use the automatic way via the gc-flag
+     * use the automatic way via the gc flag
      * {@link #PRESERVE_WEAKREFS_ON_RESURRECTION}, but then one would
      * not need to call this method anyway. The manual way has better
      * performance, but also brings more responsibilies.
@@ -1040,7 +1040,7 @@ public class gc {
             }
             if (delayedFinalizationMode == MARK_REACHABLE_CRITICALS &&
                     !criticals.isEmpty() && !criticalReachables.isEmpty()) {
-                /* This means some critical-reachables might be not critical-reachable any more.
+                /* This means some critical reachables might be not critical-reachable any more.
                  * In a synchronized gc collection approach System.gc should run again while
                  * something like this is found. (Yes, not exactly a cheap task, but since this
                  * is for debugging, correctness counts.)
@@ -1115,7 +1115,7 @@ public class gc {
         if (resurrectionCriticals == null) {
             resurrectionCriticals = new IdentityHashMap<>();
         }
-        /* add post-finalization process (and cancel pending suspension process if any) */
+        /* add post finalization process (and cancel pending suspension process if any) */
         synchronized (postFinalizationProcessRemove) {
             postFinalizationProcessRemove.remove(DelayedFinalizationProcess.defaultInstance);
         }
@@ -1195,8 +1195,8 @@ public class gc {
 
     /**
      * <p>
-     * Registers a process that will be called before any finalization during gc-run
-     * takes place ("finalization" refers to Jython-style finalizers ran by
+     * Registers a process that will be called before any finalization during gc run
+     * takes place ("finalization" refers to Jython style finalizers ran by
      * {@link org.python.core.finalization.FinalizeTrigger}s;
      * to care for other finalizers these must call
      * {@code gc.notifyPreFinalization()} before anything else is done and
@@ -1212,10 +1212,10 @@ public class gc {
      * </p>
      * <p>
      * The only guarantee is that {@link java.lang.ref.PhantomReference}s are enqueued
-     * after finalization of their referents, but this happens in another gc-cycle then.
+     * after finalization of their referents, but this happens in another gc cycle then.
      * </p>
      * <p>
-     * Actually there are still situations that can cause pre-finalization process to
+     * Actually there are still situations that can cause pre finalization process to
      * run again during finalization phase. This can happen if external frameworks use
      * their own finalizers. This can be cured by letting these finalizers call
      * {@code gc.notifyPreFinalization()} before anything else is done and
@@ -1258,8 +1258,8 @@ public class gc {
 
     /**
      * Useful if a process wants to remove another one or itself during its execution.
-     * This asynchronous unregister method circumvents the synchronized-state on
-     * pre-finalization process list.
+     * This asynchronous unregister method circumvents the synchronized state on
+     * pre finalization process list.
      */
     public static void unregisterPreFinalizationProcessAfterNextRun(Runnable process) {
         synchronized (preFinalizationProcessRemove) {
@@ -1270,8 +1270,8 @@ public class gc {
 
     /**
      * <p>
-     * Registers a process that will be called after all finalization during gc-run
-     * is done ("finalization" refers to Jython-style finalizers ran by
+     * Registers a process that will be called after all finalization during gc run
+     * is done ("finalization" refers to Jython style finalizers ran by
      * {@link org.python.core.finalization.FinalizeTrigger}s;
      * to care for other finalizers these must call
      * {@code gc.notifyPreFinalization()} before anything else is done and
@@ -1288,7 +1288,7 @@ public class gc {
      * <p>
      * The only guarantee is that {@link java.lang.ref.PhantomReference}s are
      * enqueued after finalization of the referents, but this
-     * happens - however - in another gc-cycle then.
+     * happens - however - in another gc cycle then.
      * </p>
      * <p>
      * There are situations that can cause post finalization process to run
@@ -1331,8 +1331,8 @@ public class gc {
 
     /**
      * Useful if a process wants to remove another one or itself during its execution.
-     * This asynchronous unregister method circumvents the synchronized-state on
-     * post-finalization process list.
+     * This asynchronous unregister method circumvents the synchronized state on
+     * post finalization process list.
      */
     public static void unregisterPostFinalizationProcessAfterNextRun(Runnable process) {
         synchronized (postFinalizationProcessRemove) {
@@ -1344,13 +1344,13 @@ public class gc {
         long callTime = System.currentTimeMillis();
 /*
  * This section is experimental and kept for further investigation. In theory, it can
- * prevent potential problems in JyNI-gc, if a gc-run overlaps the previous run's
- * post-finalization phase. However it currently breaks gc-tests, so is out-commented
- * so far. In practical sense, JyNI's gc-support also works fine without it so far.
+ * prevent potential problems in JyNI gc, if a gc run overlaps the previous run's
+ * post finalization phase. However it currently breaks gc tests, so is out commented
+ * so far. In practical sense, JyNI's gc support also works fine without it so far.
  */
 //        if (postFinalizationPending) {
 //            if ((gcFlags & VERBOSE_COLLECT) != 0) {
-//                writeDebug("gc", "waiting for pending post-finalization process.");
+//                writeDebug("gc", "waiting for pending post finalization process.");
 //            }
 //            /* It is important to have the while (which is actually an "if" since the
 //             * InterruptedException is very unlikely to occur) *inside* the synchronized
@@ -1366,12 +1366,12 @@ public class gc {
 //                }
 //            }
 //            if ((gcFlags & VERBOSE_COLLECT) != 0) {
-//                writeDebug("gc", "post-finalization finished.");
+//                writeDebug("gc", "post finalization finished.");
 //            }
 //        }
 //        /*
 //         * Increment of openFinalizeCount must not happen before waiting for pending
-//         * post-finalization process is done. Otherwise PostFinalizationProcessor can
+//         * post finalization process is done. Otherwise PostFinalizationProcessor can
 //         * be waiting for a neutral openFinalizeCount, causing a deadlock.
 //         */
         ++openFinalizeCount;
@@ -1569,7 +1569,7 @@ public class gc {
 
 
     /**
-     * Gets the current Jython-specific gc-flags.
+     * Gets the current Jython specific gc flags.
      *
      * @see #MONITOR_GLOBAL
      * @see #DONT_FINALIZE_CYCLIC_GARBAGE
@@ -1600,7 +1600,7 @@ public class gc {
     }
 
     /**
-     * Sets the current Jython-specific gc-flags.
+     * Sets the current Jython specific gc flags.
      * <br>
      * {@code flags} is a {@code short} and can have the following bits turned on:<br>
      * <br>
@@ -1721,7 +1721,7 @@ public class gc {
     }
 
     /**
-     * Does nothing in Jython as Java-gc is always enabled.
+     * Does nothing in Jython as Java gc is always enabled.
      */
     public static void enable() {}
 
@@ -1744,7 +1744,7 @@ public class gc {
      * The generation parameter is only for compatibility with
      * CPython {@link gc.collect()} and is ignored.
      * @param generation (ignored)
-     * @return Collected monitored cyclic trash-objects or
+     * @return Collected monitored cyclic trash objects or
      * {@code gc.UNKNOWN_COUNT} if nothing is monitored or -1 if
      * an error occurred and collection did not complete.
      * @see #collect()
@@ -1768,10 +1768,10 @@ public class gc {
      * If no objects are monitored, this just delegates to
      * {@code System.gc()} and returns {@link #UNKNOWN_COUNT} as a
      * non-erroneous default value. If objects are monitored,
-     * it emulates a synchronous gc-run in the sense that it waits
+     * it emulates a synchronous gc run in the sense that it waits
      * until all collected monitored objects were finalized.
      * 
-     * @return Number of collected monitored cyclic trash-objects
+     * @return Number of collected monitored cyclic trash objects
      * or {@link #UNKNOWN_COUNT} if nothing is monitored or -1
      * if an error occurred and collection did not complete.
      * @see #UNKNOWN_COUNT
@@ -1945,7 +1945,7 @@ public class gc {
                 }
             }
 
-            /* Typically this line causes a gc-run: */
+            /* Typically this line causes a gc run: */
             cyclicLookup = removeNonCyclicWeakRefs(monitoredObjects);
             cyclic = new HashSet<>(cyclicLookup.values());
             if (debugStat) {
@@ -1977,7 +1977,7 @@ public class gc {
         }
         
         /* We tidy up a bit... (Because it is not unlikely that
-         * the preparation-stuff done so far has caused a gc-run.)
+         * the preparation stuff done so far has caused a gc run.)
          * This is not entirely safe as gc could interfere with
          * this process at any time again. Since this is intended
          * for debugging, this solution is sufficient in practice.
@@ -1988,7 +1988,7 @@ public class gc {
         try {
             trash = gcTrash.remove(initWaitTime);
             if (trash != null && (gcFlags & VERBOSE_COLLECT) != 0) {
-                writeDebug("gc", "monitored objects from interferring gc-run found.");
+                writeDebug("gc", "monitored objects from interferring gc run found.");
             }
         } catch (InterruptedException ie) {
             trash = null;
@@ -2017,7 +2017,7 @@ public class gc {
         cyclicLookup = null;
         List<WeakReferenceGC> collectBuffer;
         
-        /* The following out-commented block is a nice idea to sync gc in a more
+        /* The following out commented block is a nice idea to sync gc in a more
          * elegant way. Unfortunately it proved infeasible because MXBean appears
          * to be no reliable measurement for gc to have finished enqueueing trash.
          * We leave it here to document this failed approach for future generations,
@@ -2028,7 +2028,7 @@ public class gc {
         // reason for it.
         // collectSyncViaMXBean uses inofficial API, i.e. classes from com.sun.management.
         // In case that a JVM does not provide this API, we have a less elegant fallback
-        // at hand, which is based on a sentinel- and timeout-technique.
+        // at hand, which is based on a sentinel and timeout technique.
         try {
             collectBuffer = collectSyncViaMXBean(stat, cyclic);
         } catch (NoClassDefFoundError ncdfe) {
@@ -2041,10 +2041,10 @@ public class gc {
 
         collectBuffer = collectSyncViaSentinel(stat, cyclic);
         //lockPostFinalization assures that postFinalization process
-        //only runs once per syncCollect-call.
+        //only runs once per syncCollect call.
         lockPostFinalization = false;
         if (postFinalizationProcessor != null) {
-            //abort the remaining wait-time if a postFinalizationProcessor is waiting
+            //abort the remaining wait time if a postFinalizationProcessor is waiting
             postFinalizationProcessor.interrupt();
         }
         waitingForFinalizers = true;
@@ -2077,7 +2077,7 @@ public class gc {
              * are stored in gc.garbage, but it actually stores only
              * those uncollectable objects that have finalizers.
              * In contrast to that the uncollectable counting and
-             * listing related to DEBUG_X-flags also counts/lists
+             * listing related to DEBUG_X flags also counts/lists
              * objects that participate in a cycle with uncollectable
              * finalizable objects.
              * 
@@ -2088,7 +2088,7 @@ public class gc {
              * CPython
              * 
              * - counts and prints the whole uncollectable cycle in context
-             * of DEBUG_X-flags.
+             * of DEBUG_X flags.
              * 
              * - stores only those objects from the cycle that actually have
              * finalizers in gc.garbage.
@@ -2147,8 +2147,8 @@ public class gc {
     }
 
     /*
-     * The following out-commented section belongs to the out-commented
-     * block on MXBean-based GC sync somewhere above.
+     * The following out commented section belongs to the out commented
+     * block on MXBean based GC sync somewhere above.
      * We keep it here to document this failed approach and to enable
      * future developers to quickly reproduce and analyse this failure.
 
@@ -2223,7 +2223,7 @@ public class gc {
                             currentGCBeans.get(i).getCollectionCount() > initialGCCounts[i];
                     ++outstandingNotifications;
                     if (waitForGCNotification[i]) {
-                        // at least one counter should change if a gc-run occurred.
+                        // at least one counter should change if a gc run occurred.
                         gcRunDetected = true;
                     }
                 }
@@ -2248,7 +2248,7 @@ public class gc {
                 synchronized(monitoredObjects) {
                     monitoredObjects.remove(trash);
                 }
-                //We avoid counting jython-specific objects in order to
+                //We avoid counting Jython-specific objects in order to
                 //obtain CPython-comparable results.
                 if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
                     ++stat[0];
@@ -2323,7 +2323,7 @@ public class gc {
                         synchronized(monitoredObjects) {
                             monitoredObjects.remove(trash);
                         }
-                        /* We avoid counting jython-specific objects in order to
+                        /* We avoid counting Jython-specific objects in order to
                          * obtain CPython-comparable results.
                          */
                         if (cyclic.contains(trash) && !((WeakReferenceGC) trash).cls.contains("Java")) {
@@ -2401,7 +2401,7 @@ public class gc {
     }
 
     /**
-     * Copied from CPython-doc:<br>
+     * Copied from CPython doc:<br>
      * <br>
      * Set the garbage collection debugging flags. Debugging information is
      * written to {@code System.err}.<br>
@@ -2429,7 +2429,7 @@ public class gc {
     }
 
     /**
-     * Copied from CPython-doc:<br>
+     * Copied from CPython doc:<br>
      * <br>
      * Get the garbage collection debugging flags.
      */
@@ -2561,13 +2561,13 @@ public class gc {
 
     /**
      * Returns all objects from {@code pool} that are part of reference cycles as a new set.
-     * If a reference-cycle is not entirely contained in {@code pool}, it will be entirely
+     * If a reference cycle is not entirely contained in {@code pool}, it will be entirely
      * contained in the resulting set, i.e. missing participants will be added.
      * This method completely operates on weak references to ensure that the returned
-     * set does not manipulate gc-behavior.
+     * set does not manipulate gc behavior.
      * 
-     * Note that this method is not thread-safe. Within the gc-module it is only used
-     * by the collect-method which ensures thread-safety by a synchronized block.
+     * Note that this method is not threadsafe. Within the gc module it is only used
+     * by the collect method, which ensures threadsafety by a synchronized block.
      */
     private static IdentityHashMap<PyObject, WeakReferenceGC>
             removeNonCyclicWeakRefs(Iterable<WeakReferenceGC> pool) {
@@ -2689,14 +2689,14 @@ public class gc {
     }
 
     /**
-     * Returns all objects from {@code pool} that are part of reference-cycles as a new set.
-     * If a reference-cycle is not entirely contained in {@code pool}, it will be entirely
+     * Returns all objects from {@code pool} that are part of reference cycles as a new set.
+     * If a reference cycle is not entirely contained in {@code pool}, it will be entirely
      * contained in the resulting set, i.e. missing participants will be added.
      * This method completely operates on weak references to ensure that the returned
-     * set does not manipulate gc-behavior.
+     * set does not manipulate gc behavior.
      * 
-     * Note that this method is not thread-safe. Within the gc-module it is only used
-     * by the collect-method which ensures thread-safety by a synchronized block.
+     * Note that this method is not threadsafe. Within the gc module it is only used
+     * by the collect method which ensures threadsafety by a synchronized block.
      */
     private static Set<PyObject> removeNonCyclic(Iterable<PyObject> pool) {
         @SuppressWarnings("unchecked")
@@ -2902,7 +2902,7 @@ public class gc {
                         reflectionWarnedClasses.add(ob.getClass());
                         justAddedWarning = true;
                     }
-                    Py.writeWarning("gc", "The PyObject-subclass "+ob.getClass().getName()+"\n" +
+                    Py.writeWarning("gc", "The PyObject subclass "+ob.getClass().getName()+"\n" +
                             "should either implement Traverseproc or be marked with the\n" +
                             "@Untraversable annotation. See instructions in\n" +
                             "javadoc of org.python.core.Traverseproc.java.");
@@ -2943,7 +2943,7 @@ public class gc {
      * If a field is a PyObject, it is passed to {@code visit}.
      * and recursion ends in that branch.
      * If a field is an array, the elements are checked whether
-     * they are PyObjects. {@code PyObject}-elements are passed to
+     * they are PyObjects. {@code PyObject} elements are passed to
      * {@code visit}. Elements that are arrays themselves are again
      * processed elementwise and so on.
      * </p>
@@ -3031,7 +3031,7 @@ public class gc {
      * This method checks via type-checking-only, whether an object
      * of the given class can in principle hold a ref to a {@code PyObject}.
      * Especially if arrays are involved, this can safe a lot performance.
-     * For now, no generic type-info is exploited.
+     * For now, no generic type info is exploited.
      * </p>
      * <p>
      * If {@code actual} is true, the answer will hold for an object
@@ -3043,11 +3043,11 @@ public class gc {
      * <p>
      * One should call with {@code actual == true}, if cls was obtained
      * by {@code ob.getClass()} and with {@code actual == false}, if cls
-     * was obtained as a field-type or component-type of an array.
+     * was obtained as a field type or component type of an array.
      * </p>
      */
     public static boolean canLinkToPyObject(Class<?> cls, boolean actual) {
-        /* At first some quick (fail-fast/succeed-fast)-checks: */
+        /* At first some quick (fail fast/succeed fast) checks: */
         if (quickCheckCannotLinkToPyObject(cls)) {
             return false;
         }
@@ -3251,7 +3251,7 @@ public class gc {
 
     /**
      * Like {@code RefInListFinder} this visitproc looks whether the traversed object
-     * refers to one of the objects in a given set. Here we perform fail-fast
+     * refers to one of the objects in a given set. Here we perform fail fast
      * behavior. This method is useful if one is not interested in the referrers,
      * but only wants to know (quickly) whether a connection exists or not.
      */
@@ -3267,7 +3267,7 @@ public class gc {
     /**
      * This visitproc looks whether an object refers to one of the objects in
      * a given set.<br>
-     * {@code arg} must be a 2-component-array of
+     * {@code arg} must be a 2-component array of
      * {@code HashMap<Object, WeakReferenceGC>}.
      * These maps are actually used as sets, but resolve the strongref/weakref
      * views to the objects.<br>
