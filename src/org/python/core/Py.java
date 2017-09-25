@@ -41,28 +41,6 @@ import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 import jnr.posix.util.Platform;
 
-/** Builtin types that are used to setup PyObject.
- *
- * Resolve circular dependency with some laziness. */
-class BootstrapTypesSingleton {
-    private final Set<Class<?>> BOOTSTRAP_TYPES;
-    private BootstrapTypesSingleton() {
-        BOOTSTRAP_TYPES = Generic.set();
-        BOOTSTRAP_TYPES.add(PyObject.class);
-        BOOTSTRAP_TYPES.add(PyType.class);
-        BOOTSTRAP_TYPES.add(PyBuiltinCallable.class);
-        BOOTSTRAP_TYPES.add(PyDataDescr.class);
-    }
-
-    private static class LazyHolder {
-        private static final BootstrapTypesSingleton INSTANCE = new BootstrapTypesSingleton();
-    }
-
-    public static Set<Class<?>> getInstance() {
-        return LazyHolder.INSTANCE.BOOTSTRAP_TYPES;
-    }
-}
-
 public final class Py {
 
     static class SingletonResolver implements Serializable {
@@ -87,7 +65,7 @@ public final class Py {
 
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
-    public final static PyObject None = new PyNone();
+    public final static PyObject None = PyNone.getInstance();
     /** The singleton Ellipsis Python object - written as ... when indexing */
     public final static PyObject Ellipsis = new PyEllipsis();
     /** The singleton NotImplemented Python object. Used in rich comparison */
@@ -566,6 +544,7 @@ public final class Py {
     @param o the <code>PyObject</code> to convert.
     @param c the class to convert it to.
      **/
+    @SuppressWarnings("unchecked")
     public static <T> T tojava(PyObject o, Class<T> c) {
         Object obj = o.__tojava__(c);
         if (obj == Py.NoConversion) {
@@ -786,10 +765,6 @@ public final class Py {
     }
 
     public static PyStringMap newStringMap() {
-        // enable lazy bootstrapping (see issue #1671)
-        if (!PyType.hasBuilder(PyStringMap.class)) {
-            BootstrapTypesSingleton.getInstance().add(PyStringMap.class);
-        }
         return new PyStringMap();
     }
 

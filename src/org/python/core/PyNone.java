@@ -16,8 +16,16 @@ public class PyNone extends PyObject implements Serializable {
 
     public static final PyType TYPE = PyType.fromClass(PyNone.class);
 
-    PyNone() {
-        super(TYPE);
+    private PyNone() {/* Not super(TYPE): TYPE is null until too late in bootstrapping. */}
+
+    private static class Holder {
+
+        /** The unique instance of PyNone. */
+        static final PyNone INSTANCE = new PyNone();
+    }
+
+    static PyNone getInstance() {
+        return Holder.INSTANCE;
     }
 
     @Override

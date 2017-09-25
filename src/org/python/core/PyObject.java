@@ -67,10 +67,7 @@ public class PyObject implements Serializable {
         primitiveMap.put(Float.TYPE, Float.class);
         primitiveMap.put(Double.TYPE, Double.class);
 
-        if (BootstrapTypesSingleton.getInstance().size() > 0) {
-            Py.writeWarning("init", "Bootstrap types weren't encountered in bootstrapping: "
-                            + BootstrapTypesSingleton.getInstance());
-        }
+        PyType.ensureBootstrapped();
     }
 
     public PyObject(PyType objtype) {
@@ -85,7 +82,7 @@ public class PyObject implements Serializable {
      * field to correspond to the specific subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        objtype = PyType.fromClass(getClass(), false);
+        objtype = PyType.fromClass(getClass());
         if (gcMonitorGlobal) {
             gc.monitorObject(this);
         }

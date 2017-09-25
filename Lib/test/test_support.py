@@ -487,7 +487,7 @@ def u(s):
     return unicode(s, 'unicode-escape')
 
 if is_jython:
-    def make_jar_classloader(jar):
+    def make_jar_classloader(jar, parent=False):
         import os
         from java.net import URL, URLClassLoader
         from java.io import File
@@ -508,7 +508,10 @@ if is_jython:
                 # better fix
                 conn.setDefaultUseCaches(False)
 
-        return URLClassLoader([url])
+        if parent is False:
+            return URLClassLoader([url])
+        else:
+            return URLClassLoader([url], parent)
 
 # Filename used for testing
 if is_jython:
