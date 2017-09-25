@@ -1,0 +1,4 @@
+base_class: Scanner
+want_dict: true
+ctr: PyObject context
+incl: object

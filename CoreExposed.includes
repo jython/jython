@@ -39,6 +39,7 @@ org/python/core/PyMethod.class
 org/python/core/PyMethodDescr.class
 org/python/core/PyModule.class
 org/python/core/PyNone.class
+org/python/core/PyNullImporter.class
 org/python/core/PyObject.class
 org/python/core/PyProperty.class
 org/python/core/PySet.class
@@ -56,6 +57,7 @@ org/python/core/PyType.class
 org/python/core/PyUnicode.class
 org/python/core/PyVersionInfo.class
 org/python/core/PyXRange.class
+org/python/core/PyXRangeIter.class
 org/python/core/WinVersion.class
 org/python/core/stringlib/MarkupIterator.class
 org/python/core/stringlib/FieldNameIterator.class
@@ -72,6 +74,8 @@ org/python/modules/_io/PyRawIOBase.class
 org/python/modules/_io/PyFileIO.class
 org/python/modules/_functools/PyPartial.class
 org/python/modules/_hashlib$Hash.class
+org/python/modules/_json/Encoder.class
+org/python/modules/_json/Scanner.class
 org/python/modules/bz2/PyBZ2File.class
 org/python/modules/bz2/PyBZ2Compressor.class
 org/python/modules/bz2/PyBZ2Decompressor.class
@@ -85,6 +89,7 @@ org/python/modules/itertools/dropwhile.class
 org/python/modules/itertools/groupby.class
 org/python/modules/itertools/ifilterfalse.class
 org/python/modules/itertools/ifilter.class
+org/python/modules/itertools/imap.class
 org/python/modules/itertools/islice.class
 org/python/modules/itertools/izip.class
 org/python/modules/itertools/izipLongest.class
@@ -99,6 +104,7 @@ org/python/modules/jffi/ByReference.class
 org/python/modules/jffi/CData.class
 org/python/modules/jffi/CType.class
 org/python/modules/jffi/CType$Array.class
+org/python/modules/jffi/CType$Custom.class
 org/python/modules/jffi/CType$Pointer.class
 org/python/modules/jffi/DynamicLibrary.class
 org/python/modules/jffi/DynamicLibrary$Symbol.class
@@ -170,6 +176,8 @@ org/python/antlr/ast/Print.class
 org/python/antlr/ast/Raise.class
 org/python/antlr/ast/Repr.class
 org/python/antlr/ast/Return.class
+org/python/antlr/ast/Set.class
+org/python/antlr/ast/SetComp.class
 org/python/antlr/ast/Slice.class
 org/python/antlr/ast/Str.class
 org/python/antlr/ast/Subscript.class

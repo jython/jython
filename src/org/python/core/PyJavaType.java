@@ -76,6 +76,23 @@ public class PyJavaType extends PyType {
     // @formatter:on
 
     /**
+     * Constant <code>PyJavaType</code>s used frequently. The inner class pattern ensures they can
+     * be constructed before <code>PyJavaType</code> is initialised, and a unique instance of
+     * type(Class) exists for {@link PyJavaType#PyJavaType(Class, boolean)} to use.
+     */
+    static class Constant extends PyType.Constant {
+
+        // Note that constructing type(Class.class) does not register it in the type system.
+        static final PyType CLASS = new PyJavaType(false);
+        static final PyType OBJECT = fromClass(Object.class);
+    }
+
+    static {
+        // Ensure that type(Class.class) is registered in the type system
+        fromClass(Class.class);
+    }
+
+    /**
      * Other Java classes this type has MRO conflicts with. This doesn't matter for Java method
      * resolution, but if Python methods are added to the type, the added methods can't overlap with
      * methods added to any of the types in this set. If this type doesn't have any known conflicts,
@@ -89,13 +106,62 @@ public class PyJavaType extends PyType {
     private Set<String> modified;
 
     public static PyObject wrapJavaObject(Object o) {
-        PyObject obj = new PyObjectDerived(PyType.fromClass(o.getClass(), false));
-        JyAttribute.setAttr(obj, JyAttribute.JAVA_PROXY_ATTR, o);
+        PyObject obj = new PyObjectDerived(fromClass(o.getClass()));
+        setProxyAttr(obj, o);
         return obj;
     }
 
+    /**
+     * Create a Python type for a Java class that does not descend from PyObject. (This will be
+     * indicated by a null {@link PyType#underlying_class}.)
+     */
     public PyJavaType() {
-        super(TYPE == null ? fromClass(PyType.class) : TYPE);
+        super(Constant.PYTYPE);
+    }
+
+    /**
+     * Create a Python type for a Java class that is not exposed, but may descend from
+     * <code>PyObject</code>. This ancestry, implicit in the argument, makes a big difference when a
+     * subsequent {@link #init(Set)} is called.
+     * <p>
+     * If the class descends from <code>PyObject</code>, it records the class it represents in
+     * {@link PyType#underlying_class}. Otherwise, it records the class it represents in the
+     * attribute {@link JyAttribute#JAVA_PROXY_ATTR}, and is said to be a proxy for it. In either
+     * case {@link PyType#builtin} is <code>true</code>.
+     *
+     * @param c Java class for which this is a Python type.
+     */
+    PyJavaType(Class<?> c) {
+        this(c, PyObject.class.isAssignableFrom(c));
+    }
+
+    /**
+     * Create a Python <code>type</code> object for a given Java class that is not an exposed type,
+     * but may still be a <code>PyObject</code>. This implements {@link #PyJavaType(Class)}, which
+     * works it out from the class, but may be called directly when you already know which case
+     * you're in.
+     *
+     * @param c Java class for which this is a Python type.
+     * @param isPyObject true iff the class descends from PyObject
+     */
+    PyJavaType(Class<?> c, boolean isPyObject) {
+        // A little messy as the super call must come first.
+        super(isPyObject ? Constant.PYTYPE : Constant.CLASS, isPyObject ? c : null);
+        // And if this is not for a PyObject :
+        if (!isPyObject) {
+            setProxyAttr(this, c);
+        }
+    }
+
+    /**
+     * Create the <code>PyJavaType</code> instance (proxy) for <code>java.lang.Class</code> itself.
+     * The argument just exists to give the constructor a distinct signature. The
+     * {@link #underlying_class} is <code>null</code>, and it is a built-in.
+     */
+    PyJavaType(boolean ignored) {
+        // Use the special super constructor.
+        super(true);
+        setProxyAttr(this, Class.class);
     }
 
     @Override
@@ -233,30 +299,48 @@ public class PyJavaType extends PyType {
         computeMro(toMerge, mro);
     }
 
+    /**
+     * Complete the initialisation of the <code>PyType</code> for non-exposed <code>PyObject</code>
+     * or any other Java class for which we need a Python <code>type</code> object. This call will
+     * fill {@link #dict}, {@link #name} and all other descriptive state using characteristics of
+     * the class obtained by reflection.
+     * <p>
+     * Where the class is not a <code>PyObject</code> at all, the method registers all the "visible
+     * bases" (according to Java) of the class represented, which will result in further calls to
+     * register their visible bases in turn. In the process, this method, recursively, saves this
+     * and the <code>PyJavaType</code>s of further non-PyObject bases into into
+     * <code>needsInners</code>, so that these may be processed later.
+     *
+     * @param needsInners collects <code>PyJavaType</code>s that need further processing
+     */
     @Override
-    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
+    protected void init(Set<PyJavaType> needsInners) {
+
+        // Get the class for which the type is to be initialised.
+        Class<?> forClass = underlying_class != null ? underlying_class : getProxyType();
         name = forClass.getName();
+
         // Strip the java fully qualified class name from Py classes in core
         if (name.startsWith("org.python.core.Py")) {
             name = name.substring("org.python.core.Py".length()).toLowerCase();
         }
         dict = new PyStringMap();
+
         Class<?> baseClass = forClass.getSuperclass();
-        if (PyObject.class.isAssignableFrom(forClass)) {
+
+        if (underlying_class != null) {
             /*
-             * Non-exposed subclasses of PyObject use a simple linear mro to PyObject that ignores
-             * their interfaces.
+             * Although not exposed, this is a subclass of PyObject, so it uses a simple linear mro
+             * to PyObject that ignores interfaces.
              */
-            underlying_class = forClass;
             computeLinearMro(baseClass);
+
         } else {
-            needsInners.add(this);
-            JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, forClass);
-            objtype = PyType.fromClassSkippingInners(Class.class, needsInners);
             /*
-             * Wrapped Java types fill in their mro first using all of their interfaces then their
-             * super class.
+             * This is a wrapped Java type: fill in the mro first with the interfaces then the
+             * superclass.
              */
+            needsInners.add(this);
             List<PyObject> visibleBases = Generic.list();
             for (Class<?> iface : forClass.getInterfaces()) {
                 if (iface == PyProxy.class || iface == ClassDictInit.class) {
@@ -275,19 +359,17 @@ public class PyJavaType extends PyType {
                      */
                     continue;
                 }
-                visibleBases.add(PyType.fromClassSkippingInners(iface, needsInners));
+                visibleBases.add(fromClass(iface));
             }
 
-            Object javaProxy = JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
-
-            if (javaProxy == Object.class) {
-                base = PyType.fromClassSkippingInners(PyObject.class, needsInners);
+            if (forClass == Object.class) {
+                base = Constant.PYOBJECT;
             } else if (baseClass == null) {
-                base = PyType.fromClassSkippingInners(Object.class, needsInners);
-            } else if (javaProxy == Class.class) {
-                base = PyType.fromClassSkippingInners(PyType.class, needsInners);
+                base = Constant.OBJECT;
+            } else if (forClass == Class.class) {
+                base = Constant.PYTYPE;
             } else {
-                base = PyType.fromClassSkippingInners(baseClass, needsInners);
+                base = fromClass(baseClass);
             }
             visibleBases.add(base);
             this.bases = visibleBases.toArray(new PyObject[visibleBases.size()]);
