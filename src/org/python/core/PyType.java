@@ -5,11 +5,17 @@ import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.python.antlr.ast.cmpopType;
@@ -25,18 +31,67 @@ import org.python.expose.TypeBuilder;
 import org.python.modules._weakref.WeakrefModule;
 import org.python.util.Generic;
 
-import com.google.common.collect.MapMaker;
-
 /**
- * The Python type object implementation.
+ * This class implements the Python <code>type</code> object and the static methods and data
+ * structures that support the Python type system in Jython (the type registry).
  * <p>
- * The class <code>PyType</code> contains static data that describes Python types that is consulted
- * and modified through its static API (notably {@link #fromClass(Class)}). The data structures are
- * guarded against modification (or consultation while being modified) by concurrent threads.
+ * The class <code>PyType</code> contains static data that describes Python types, that are
+ * consulted and modified through its static API (notably {@link #fromClass(Class)}). The data
+ * structures are guarded against modification by concurrent threads (or consultation while being
+ * modified). They support construction of <code>type</code> objects that are visible to Python.
+ * <p>
+ * <b>Bootstrapping of the type system:</b> The first attempt to construct or get a
+ * <code>PyObject</code> (or instance of a subclass of <code>PyObject</code>), to use the {@link Py}
+ * class utilities, or to call {@link PyType#fromClass(Class)}, causes the Jython type system to be
+ * initialised. By the time that call returns, the type system will be in working order: any
+ * <code>PyType</code>s the application sees will be fully valid. Also, provided that the static
+ * initialisation of the <code>PyObject</code> subclass in question is not obstructed for any other
+ * reason, the instance returned will also be fully functional. Note that it is possible to refer to
+ * <code>C.class</code>, and (if it is not an exposed type) to produce a <code>PyType</code> for it,
+ * without causing the static initialisation of <code>C</code>.
+ * <p>
+ * This may be no less than the reader expected, but we mention it because, for classes encountered
+ * during the bootstrapping of the type system, this guarantee is not offered. The (static)
+ * initialisation of the type system is highly reentrant. Classes that are used by the type system
+ * itself, and their instances, <b>do</b> encounter defective <code>PyType</code> objects. Instances
+ * of these classes, which include mundane classes like <code>PyNone</code> and
+ * <code>PyString</code>, may exist before their class is statically initialised in the JVM sense.
+ * The type system has been implemented with this fact constantly in mind. The <code>PyType</code>
+ * encountered is always the "right" one &mdash; the unique instance representing the Python type of
+ * that class &mdash; but it may not be completely filled in. Debugging that enters these classes
+ * during bootstrapping will take surprising turns. Changes to these classes should also take this
+ * into account.
+ */
+/*
+ * As a Java object, PyType and its intimate subclass PyJavaType are not strongly encapsulated,
+ * internal structures are, on the whole, open to package access. A set of constructors is provided
+ * for different types of target class that allow us to set builtin, underlying_class and the Java
+ * proxy at construction time. PyType.fromClass, uses these constructors, and then calls init() to
+ * build the rest of the PyType state. After these steps, the PyType should be effectively
+ * immutable.
+ *
+ * type___new__ and PyType.newType use "blank" PyType constructors and do their own initialisation
+ * of the instance data.
  */
 @ExposedType(name = "type", doc = BuiltinDocs.type_doc)
 public class PyType extends PyObject implements Serializable, Traverseproc {
 
+    /**
+     * Constants (singletons) for <code>PyType</code>s that we use repeatedly in the logic of
+     * <code>PyType</code> and <code>PyJavaType</code>. This avoids repeated calls to
+     * {@link PyType#fromClass(Class)}. The inner class pattern ensures they can be constructed
+     * before <code>PyType</code> is initialised, and a unique instance of <code>type(type)</code>
+     * exists for {@link PyType#PyType(Class)} to use.
+     */
+    protected static class Constant {
+
+        // Identify an object to be type(type). Warning: not initialised until fromClass is called.
+        static final PyType PYTYPE = new PyType(false);
+        static final PyType PYOBJECT = fromClass(PyObject.class);
+        static final PyType PYSTRING = fromClass(PyString.class);
+    }
+
+    /** The <code>PyType</code> of <code>PyType</code> (or <code>type(type)</code>). */
     public static final PyType TYPE = fromClass(PyType.class);
 
     /**
@@ -48,7 +103,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     protected PyType base;
 
     /** __bases__, the base classes. */
-    protected PyObject[] bases = new PyObject[0];
+    protected PyObject[] bases = Registry.EMPTY_PYOBJECT_ARRAY;
 
     /** The real, internal __dict__. */
     protected PyObject dict;
@@ -60,12 +115,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private long tp_flags;
 
     /**
-     * The Java Class instances of this type will be represented as, or null if it's determined by a
-     * base type.
+     * The Java Class that instances of this type represent (when that is a <code>PyObject</code>),
+     * or <code>null</code> if the type is not a <code>PyObject</code>, in which case the class is
+     * indicated through a {@link JyAttribute#JAVA_PROXY_ATTR}.
      */
     protected Class<?> underlying_class;
 
-    /** Whether it's a builtin type. */
+    /** Whether this is a builtin type. */
     protected boolean builtin;
 
     /** Whether new instances of this type can be instantiated */
@@ -103,70 +159,407 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     private transient ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
     private Set<WeakReference<PyType>> subclasses = Generic.linkedHashSet();
 
+    /** Brevity for <code>JyAttribute.hasAttr(obj, JyAttribute.JAVA_PROXY_ATTR)</code>. */
+    static boolean hasProxyAttr(PyObject obj) {
+        return JyAttribute.hasAttr(obj, JyAttribute.JAVA_PROXY_ATTR);
+    }
+
+    /** Brevity for <code>JyAttribute.getAttr(obj, JyAttribute.JAVA_PROXY_ATTR)</code>. */
+    static Object getProxyAttr(PyObject obj) {
+        return JyAttribute.getAttr(obj, JyAttribute.JAVA_PROXY_ATTR);
+    }
+
+    /** Brevity for <code>JyAttribute.setAttr(obj, JyAttribute.JAVA_PROXY_ATTR, value)</code>. */
+    static void setProxyAttr(PyObject obj, Object value) {
+        JyAttribute.setAttr(obj, JyAttribute.JAVA_PROXY_ATTR, value);
+    }
+
     /**
-     * The class <code>PyType</code> contains static data that describes Python types though a
+     * The class <code>PyType</code> contains a registry that describes Python types through a
      * system of indexes and <code>PyType</code> objects. Each <code>PyObject</code> calls
-     * {@link PyType#fromClass(Class)}, which adds to this data, as it is being initialised. The
-     * <code>PyType</code> static data must be valid (consistent) ready to handle that call.
+     * {@link PyType#fromClass(Class)}, which adds to this data, as it is being initialised. When
+     * the first descriptor is created, as the first exposed type is initialised, the registry has
+     * to be in a consistent, working state.
      * <p>
-     * <code>PyType</code> itself is a <code>PyObject</code> calls {@link PyType#fromClass(Class)}
-     * during initialisation. In order to guarantee that the static state of <code>PyType</code> is
-     * valid at that point, it has to be in a separate class, here privately nested. See the classic
+     * <code>PyType</code> itself is a <code>PyObject</code>. In order to guarantee that the
+     * registry exists when we need it, we use a separate class whose initialisation is not hostage
+     * to the type system itself, as it would be it it were static data in <code>PyType</code>. See
+     * the classic
      * "<a href = "http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html#dcl">The
-     * double-checked locking problem</a>", which we use here to be prompt rather than lazy.
+     * double-checked locking problem</a>", which we use here to be ready rather than lazy.
      * <p>
-     * A further consequence is that the data structures must be guarded against concurrent
-     * modification (or modification and access).
+     * A further requirement is that the registry data structures be guarded against concurrent
+     * access. This class also contains the methods that manipulate the state, and they synchronise
+     * access to it on behalf of <code>PyType</code>.
      */
-    /*
-     * We aspire to a design in which a PyType for a Class could be got and used, in a thread-safe
-     * way, without synchronisation on the static state as a whole. This would let us have
-     * fine-grained locking (maybe only on PyType). The semantics of ClassValue are probably what we
-     * need: the PyType exists until the Java class is unloaded. ClassValue might not be sufficient
-     * if we wished to permit collection of PyTypes we won't use again, for Java classes that remain
-     * in use, and we can identify them.
+    private static final class Registry {
+
+        /** Mapping of Java classes to their PyTypes, not yet in {@link #classToType}. */
+        private static final Map<Class<?>, PyType> classToNewType = new IdentityHashMap<>();
+
+        /** Mapping of Java classes to their TypeBuilders, until these are used. */
+        private static final Map<Class<?>, TypeBuilder> classToBuilder = new HashMap<>();
+
+        /** Acts as a non-blocking cache for PyType look-up. */
+        static ClassValue<PyType> classToType = new ClassValue<PyType>() {
+
+            @Override
+            protected PyType computeValue(Class<?> c) {
+                synchronized (Registry.class) {
+                    // Competing threads will block and this thread will win the return.
+                    resolveType(c);
+                    return classToNewType.remove(c);
+                }
+            }
+        };
+
+        /**
+         * A list of <code>PyObject</code> sub-classes, instances of which are used in the type
+         * system itself. We require to reference their <code>PyType</code>s before Java static
+         * initialisation can produce a builder, because that initialisation itself depends on
+         * <code>PyType</code>s of classes in this list, circularly. These classes must, however, be
+         * Java initialised and have complete <code>PyType</code>s by the time the static
+         * initialisation of <code>PyObject</code> completes.
+         */
+        // @formatter:off
+        private static final Class<?>[] BOOTSTRAP_TYPES = {
+                    PyObject.class,
+                    PyType.class,
+                    PyBuiltinCallable.class,
+                    PyDataDescr.class,
+                    PyString.class,
+                };
+        // @formatter:on
+
+        /**
+         * The set of classes that we should not, at the time we create their <code>PyType</code>,
+         * try to Java-initialise if they do not have a builder. The PyType for such a class is
+         * partially initialised, and needs to be completed when a builder appears. Classes come off
+         * this list when fully initialised, and for bootstrap types, we'll check that in the static
+         * initialisation of PyObject.
+         */
+        static final Set<Class<?>> deferredInit = new HashSet<>(Arrays.asList(BOOTSTRAP_TYPES));
+
+        /**
+         * True if the current {@link #resolveType(Class)} call is a top-level call; false if
+         * {@link #resolveType(Class)} is called reentrantly, while attempting to type some other
+         * class.
+         */
+        private static boolean topLevel = true;
+
+        /** Java types awaiting processing of their inner classes. */
+        private static Set<PyJavaType> needsInners = new HashSet<>();
+
+        /** Handy constant: zero-length array. */
+        static final PyObject[] EMPTY_PYOBJECT_ARRAY = {};
+
+        /**
+         * Test whether a given class is an exposed <code>PyObject</code>. Amongst other things,
+         * this may be used to decide that <code>type(c)</code> should be created as a
+         * <code>PyType</code> instead of a <code>PyJavaType</code>.
+         *
+         * @param c class to test
+         * @return whether an exposed type
+         */
+        private static boolean isExposed(Class<?> c) {
+            if (c.getAnnotation(ExposedType.class) != null) {
+                return true;
+            } else {
+                return ExposeAsSuperclass.class.isAssignableFrom(c);
+            }
+        }
+
+        /**
+         * Place the <code>PyType</code> for the given target Java class in {@link #classToNewType}
+         * if it is not there already. This supports {@link PyType#fromClass(Class)} in the case
+         * where a <code>PyType</code> has not already been published. See there for caveats. If the
+         * making of a type (it will be a <code>PyJavaType</code>) might require the processing of
+         * inner classes, {@link PyType#fromClass(Class)} is called recursively for each.
+         * <p>
+         * The caller guarantees that this thread holds the lock on the registry.
+         *
+         * @param c for which a PyType is to be created
+         */
+        static void resolveType(Class<?> c) {
+
+            PyType type = classToNewType.get(c);
+
+            if (type != null) {
+                // The type for c was "waiting" in classToNewType (some reentrant calls land here).
+                return;
+
+            } else if (!topLevel) {
+                /*
+                 * This is a nested call about a class c we haven't seen before. Create (or choose
+                 * an existing) type for c.
+                 */
+                addFromClass(c);
+
+            } else {
+                /*
+                 * This is a top-level call about a class c we haven't seen before. Create (or
+                 * choose an existing) type for c. (In rare circumstances a thread that saw the
+                 * cache miss will arrive here after some other thread populates classToNewType. The
+                 * duplicate will be discarded and this must be harmless.
+                 */
+                assert needsInners.isEmpty();
+
+                try {
+                    // Signal to further invocations that they are nested.
+                    topLevel = false;
+
+                    // Create (or choose an existing) type for c, accumulating classes in
+                    // needsInners.
+                    addFromClass(c);
+
+                    // Process inner classes too, if necessary. (This invalidates needsIners.)
+                    if (!needsInners.isEmpty()) {
+                        processInners();
+                    }
+                } finally {
+                    // Guarantee subsequent calls are top-level and needsInners is empty.
+                    topLevel = true;
+                    needsInners.clear();
+                }
+            }
+        }
+
+        /**
+         * Make the <code>PyType</code> of each inner class of the classes in {@link #needsInners}
+         * into an attribute of its Python representation (except where shadowed). This will
+         * normally mean creating a <code>PyType</code> for each inner class.
+         * <p>
+         * Calling this method sets {@link #topLevel} <code> = true</code> and may replace the
+         * contents of {@link #needsInners}.
+         */
+        private static void processInners() {
+
+            // Take a copy for iteration since needsInners gets modified in the loop.
+            PyJavaType[] ni = needsInners.toArray(new PyJavaType[needsInners.size()]);
+
+            // Ensure calls to fromClass are top-level.
+            topLevel = true;
+            needsInners.clear();
+
+            for (PyJavaType javaType : ni) {
+
+                Class<?> forClass = javaType.getProxyType();
+
+                for (Class<?> inner : forClass.getClasses()) {
+                    /*
+                     * Only add the class if there isn't something else with that name and it came
+                     * from this class.
+                     */
+                    if (inner.getDeclaringClass() == forClass
+                            && javaType.dict.__finditem__(inner.getSimpleName()) == null) {
+                        // This call is a top-level fromClass and destroys needsInners.
+                        PyType innerType = fromClass(inner);
+                        javaType.dict.__setitem__(inner.getSimpleName(), innerType);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Add a new <code>PyType</code> or {@link PyJavaType} entry for the given class to
+         * {@link #classToNewType}, respecting the {@link ExposeAsSuperclass} marker interface. It
+         * is known at the point this method is called that the class is not already registered.
+         * <p>
+         * The caller guarantees that this thread holds the lock on the registry.
+         *
+         * @param c for which a PyType is to be created in {@link #classToNewType}
+         */
+        private static void addFromClass(Class<?> c) {
+            if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
+                // Expose c with the Python type of its superclass, recursively as necessary.
+                PyType exposedAs = fromClass(c.getSuperclass());
+                classToNewType.put(c, exposedAs);
+            } else {
+                // Create and add a new Python type for this Java class
+                createType(c);
+            }
+        }
+
+        /**
+         * Create a new <code>PyType</code> or {@link PyJavaType} for the given class in
+         * {@link #classToNewType}. It is known at the point this method is called that the class is
+         * not already registered.
+         * <p>
+         * The caller guarantees that this thread holds the lock on the registry.
+         *
+         * @param c for which a PyType is to be added to {@link #classToNewType}
+         */
+        private static void createType(Class<?> c) {
+
+            PyType newtype;
+
+            if (PyObject.class.isAssignableFrom(c)) {
+                // c is a PyObject
+                if (isExposed(c)) {
+                    // c is an exposed type (therefore should be a PyObject of some kind).
+                    if (c != PyType.class) {
+                        newtype = new PyType(c);
+                    } else {
+                        // The one PyType that PyType(Class) can't make.
+                        newtype = Constant.PYTYPE;
+                    }
+                } else {
+                    // c is a non-exposed PyObject: expose reflectively.
+                    newtype = new PyJavaType(c, true);
+                }
+
+            } else {
+                // c is not a PyObject: expose reflectively via a proxy.
+                if (c != Class.class) {
+                    newtype = new PyJavaType(c, false);
+                } else {
+                    // The proxy that PyJavaType(Class, boolean) can't make.
+                    newtype = PyJavaType.Constant.CLASS;
+                }
+            }
+
+            // Enter the new PyType in the registry
+            classToNewType.put(c, newtype);
+
+            /*
+             * This is new to the registry, and we must initialise it. Note that the if c is a
+             * bootstrap type init() is called, but cut short, filling only the MRO. The work will
+             * be completed later as a side effect of addBuilder(). Until bootstrap types are all
+             * fully initialised, the type system demands care in use.
+             */
+            newtype.init(needsInners);
+            newtype.invalidateMethodCache();
+        }
+
+        /**
+         * Register the {@link TypeBuilder} for the given class. This only really makes sense for a
+         * <code>PyObject</code>. Initialising a properly-formed PyObject will usually result in a
+         * call to <code>addBuilder</code>, thanks to code inserted by the Jython type exposer.
+         *
+         * @param c class for which this is the builder
+         * @param builder to register
+         */
+        static synchronized void addBuilder(Class<?> c, TypeBuilder builder) {
+            /*
+             * If c is not registered in the type system (e.g. c is being JVM-init'd by a "use" of
+             * c), the next fromClass will create, register, and fully init() type(c), because we're
+             * giving it a builder. In that case, we'll be done.
+             */
+            classToBuilder.put(c, builder);
+            PyType type = fromClass(c);
+            /*
+             * The PyTypes of bootstrap classes may be registered "half-initialised", until a
+             * builder is available. They end up on the deferred list.
+             */
+            if (deferredInit.remove(c)) {
+                /*
+                 * c was on the deferred list, so it was registered without a builder, and type(c)
+                 * was "half-initialised". We need to complete the initialisation.
+                 */
+                type.init(null);
+            }
+        }
+
+        /**
+         * Force static initialisation of the given sub-class of <code>PyObject</code> in order to
+         * supply a builder (via {@link #addBuilder(Class, TypeBuilder)}, if the class wants to. If
+         * this is a class we haven't seen before, many reentrant calls to
+         * {@link PyType#fromClass(Class)} are produced here, for the descriptor classes that expose
+         * methods and attributes.
+         *
+         * @param c target class
+         */
+        static synchronized void staticJavaInit(Class<?> c) throws SecurityException {
+            try {
+                // Call Class.forName to force static initialisation.
+                Class.forName(c.getName(), true, c.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                // Well, this is certainly surprising.
+                String msg = "Got ClassNotFound calling Class.forName on a class already found ";
+                throw new RuntimeException(msg, e);
+            } catch (ExceptionInInitializerError e) {
+                throw Py.JavaError(e);
+            }
+        }
+
+        /**
+         * For each class listed as a bootstrap type, try to make sure it fully initialised a
+         * <code>PyType</code>.
+         *
+         * @return classes that did not completely initialise
+         */
+        static synchronized Set<Class<?>> bootstrap() {
+            Set<Class<?>> missing = new HashSet<>();
+            for (Class<?> c : BOOTSTRAP_TYPES) {
+                // Look-up should force at least first-stage initialisation (if not done before).
+                PyType type = fromClass(c);
+                if (deferredInit.contains(c)) {
+                    // Only the first stage happened: encourage the rest to happen.
+                    staticJavaInit(c);
+                }
+                // Check various symptoms
+                if (type.name == null || deferredInit.contains(c)) {
+                    missing.add(c);
+                }
+            }
+            return missing;
+        }
+    }
+
+    /**
+     * Create a "blank" <code>PyType</code> instance, for a Python subclass of <code>type</code>,
+     * that is, for a Python metatype. The {@link #underlying_class} is <code>null</code> and
+     * {@link #builtin} is <code>false</code>. This form is used by <code>PyTypeDerived</code>.
+     *
+     * @param subtype Python subclass of this object
      */
-    private static final class StaticMaps {
-
-        /** Mapping of Java classes to their PyTypes. */
-        private static final ConcurrentMap<Class<?>, PyType> classToType =
-                new MapMaker().weakKeys().weakValues().makeMap();
-
-        /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
-        private static final Set<PyType> exposedTypes = Generic.set();
-
-        /** Mapping of Java classes to their TypeBuilders. */
-        private static final ConcurrentMap<Class<?>, TypeBuilder> classToBuilder =
-                Generic.concurrentMap();
-    }
-
-    /** Mapping of Java classes to their PyTypes. */
-    private static ConcurrentMap<Class<?>, PyType> getClassToType() {
-        return StaticMaps.classToType;
-    }
-
-    /** Types that should not be garbage-collected (see {@link #fromClass(Class, boolean)} */
-    private static Set<PyType> getExposedTypes() {
-        return StaticMaps.exposedTypes;
-    }
-
-    /** Mapping of Java classes to their TypeBuilders. */
-    private static ConcurrentMap<Class<?>, TypeBuilder> getClassToBuilder() {
-        return StaticMaps.classToBuilder;
-    }
-
     protected PyType(PyType subtype) {
         super(subtype);
     }
 
+    /**
+     * Create a "blank" <code>PyType</code> instance. The {@link #underlying_class} is
+     * <code>null</code> and it is a {@link #builtin} is <code>false</code>. This form is used in
+     * {@link #newType(PyNewWrapper, PyType, String, PyTuple, PyObject)}, which takes responsibility
+     * for filling in the other fields.
+     */
     private PyType() {}
 
     /**
-     * Creates the PyType instance for type itself. The argument just exists to make the constructor
-     * distinct.
+     * Create the <code>PyType</code> instance for <code>type</code> itself, or for a subclass of
+     * it. Depending upon the argument, the {@link #underlying_class} is either this class, or
+     * <code>null</code>, indicating a proxy. Either way, {@link #builtin} is <code>true</code>. In
+     * practice this is used to create the <code>PyType</code>s for <code>PyType</code> itself and
+     * for <code>java.lang.Class</code>.
+     *
+     * @param isProxy if true, this is a proxy
      */
-    private PyType(boolean ignored) {
-        super(ignored);
+    protected PyType(boolean isProxy) {
+        super(false);
+        builtin = true;
+        underlying_class = isProxy ? null : this.getClass();
+    }
+
+    /**
+     * As {@link #PyType(Class)}, but also specifying the sub-type of Python type for which it is
+     * created.
+     */
+    protected PyType(PyType subtype, Class<?> c) {
+        super(subtype);
+        builtin = true;
+        underlying_class = c;
+    }
+
+    /**
+     * Create a built-in type for the given Java class. This is the class to be returned by
+     * <code>__tojava__(Object.class)</code> (see {@link #__tojava__(Class)}), and by name in the
+     * string representation of the type.
+     *
+     * @param c the underlying class or <code>null</code>.
+     */
+    protected PyType(Class<?> c) {
+        // PyType.TYPE is the object type, but that may still be null so use the "advance copy".
+        this(Constant.PYTYPE, c);
     }
 
     @ExposedNew
@@ -178,7 +571,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             PyType objType = obj.getType();
 
             // special case for PyStringMap so that it types as a dict
-            PyType psmType = PyType.fromClass(PyStringMap.class);
+            PyType psmType = fromClass(PyStringMap.class);
             if (objType == psmType) {
                 return PyDictionary.TYPE;
             }
@@ -232,7 +625,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
          * Using PyJavaType as metaclass exposes the java.lang.Object methods on the type, which
          * doesn't make sense for python subclasses.
          */
-        if (metatype == PyType.fromClass(Class.class)) {
+        if (metatype == PyJavaType.Constant.CLASS) {
             metatype = TYPE;
         }
 
@@ -654,55 +1047,76 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Called on builtin types for a particular class. Should fill in dict, name, mro, base and
-     * bases from the class.
+     * Complete the initialisation of the <code>PyType</code> for an exposed <code>PyObject</code>.
+     * If the type is one of the deferred types (types used in bootstrapping the type system,
+     * predominantly), this will only fill in {@link #mro}, {@link #base} and {@link #bases}, and
+     * only provisionally. In that case, a second call is made as soon as
+     * {@link #addBuilder(Class, TypeBuilder)} is called by the initialisation of the type. In most
+     * cases, and on the second visit for deferred types, this call will fill {@link #dict},
+     * {@link #name} and all other descriptive state using the exposed characteristics.
+     * <p>
+     * The caller guarantees that this thread holds the lock on the registry.
+     *
+     * @param needsInners ignored in the base implementation (see {@link PyJavaType#init(Set)}
      */
-    protected void init(Class<?> forClass, Set<PyJavaType> needsInners) {
-        underlying_class = forClass;
-        if (underlying_class == PyObject.class) {
-            mro = new PyType[] {this};
-        } else {
-            Class<?> baseClass;
-            if (!BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
-                baseClass = getClassToBuilder().get(underlying_class).getBase();
-            } else {
-                baseClass = PyObject.class;
+    protected void init(Set<PyJavaType> needsInners) {
+
+        Class<?> forClass = underlying_class;
+
+        /*
+         * We will have a builder already if the class has Java-initialised. We remove builder from
+         * list as we don't need it anymore, and it holds a reference to the class c.
+         */
+        TypeBuilder builder = Registry.classToBuilder.remove(forClass);
+        if (builder == null) {
+            // Consider forcing static initialisation in order to get a builder.
+            if (!Registry.deferredInit.contains(forClass)) {
+                Registry.staticJavaInit(forClass);
+                builder = Registry.classToBuilder.remove(forClass);
             }
+        }
+
+        if (builder == null) {
+            /*
+             * No builder has been supplied yet. Be content with partial initialisation of the
+             * PyType. When we have a builder, we'll init this again.
+             */
+            Registry.deferredInit.add(forClass);
+            computeLinearMro(PyObject.class);
+
+        } else {
+            /* We have a builder so we can go the whole way. Signal c is no longer deferred. */
+            Registry.deferredInit.remove(forClass);
+            Class<?> baseClass = builder.getBase();
             if (baseClass == Object.class) {
+                // Base was not explicitly declared: default is Java super-class.
                 baseClass = underlying_class.getSuperclass();
             }
             computeLinearMro(baseClass);
-        }
-        if (BootstrapTypesSingleton.getInstance().contains(underlying_class)) {
-            /*
-             * init will be called again from addBuilder which also removes underlying_class from
-             * BOOTSTRAP_TYPES.
-             */
-            return;
-        }
-        TypeBuilder builder = getClassToBuilder().get(underlying_class);
-        name = builder.getName();
-        dict = builder.getDict(this);
-        String doc = builder.getDoc();
-        // XXX: Can't create a __doc__ str until the PyBaseString/PyString types are created
-        if (dict.__finditem__("__doc__") == null && forClass != PyBaseString.class
-                && forClass != PyString.class) {
-            PyObject docObj;
-            if (doc != null) {
-                docObj = new PyString(doc);
-            } else {
-                /*
-                 * XXX: Hack: Py.None may be null during bootstrapping. Most types encountered then
-                 * should have docstrings anyway.
-                 */
-                docObj = Py.None == null ? new PyString() : Py.None;
+
+            // The builder supplies the name and collection of exposed methods and properties
+            name = builder.getName();
+            dict = builder.getDict(this);
+            String doc = builder.getDoc();
+
+            // Create a doc string if we don't have one already.
+            if (dict.__finditem__("__doc__") == null) {
+                PyObject docObj;
+                if (doc != null) {
+                    // Not PyString(doc) as PyString.TYPE may be null during bootstrapping.
+                    docObj = new PyString(Constant.PYSTRING, doc);
+                } else {
+                    // Not Py.None to avoid load & init of Py module and all its constants.
+                    docObj = PyNone.getInstance();
+                }
+                dict.__setitem__("__doc__", docObj);
             }
-            dict.__setitem__("__doc__", docObj);
+
+            setIsBaseType(builder.getIsBaseType());
+            needs_userdict = dict.__finditem__("__dict__") != null;
+            instantiable = dict.__finditem__("__new__") != null;
+            cacheDescrBinds();
         }
-        setIsBaseType(builder.getIsBaseType());
-        needs_userdict = dict.__finditem__("__dict__") != null;
-        instantiable = dict.__finditem__("__new__") != null;
-        cacheDescrBinds();
     }
 
     /**
@@ -710,11 +1124,17 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * followed by the mro of baseClass.
      */
     protected void computeLinearMro(Class<?> baseClass) {
-        base = PyType.fromClass(baseClass, false);
-        mro = new PyType[base.mro.length + 1];
-        System.arraycopy(base.mro, 0, mro, 1, base.mro.length);
+        if (underlying_class == PyObject.class) {
+            // Special case PyObject: there is no ancestor base: MRO is just {this}.
+            mro = new PyType[1];
+        } else {
+            // MRO of base, with this PyType at the front.
+            base = fromClass(baseClass);
+            mro = new PyType[base.mro.length + 1];
+            System.arraycopy(base.mro, 0, mro, 1, base.mro.length);
+            bases = new PyObject[] {base};
+        }
         mro[0] = this;
-        bases = new PyObject[] {base};
     }
 
     /**
@@ -831,9 +1251,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
         Class<?> proxyClass =
                 MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName, dict);
-        JyAttribute.setAttr(this, JyAttribute.JAVA_PROXY_ATTR, proxyClass);
+        setProxyAttr(this, proxyClass);
 
-        PyType proxyType = PyType.fromClass(proxyClass, false);
+        PyType proxyType = fromClass(proxyClass);
         List<PyObject> cleanedBases = Generic.list();
         boolean addedProxyType = false;
         for (PyObject base : bases) {
@@ -1133,7 +1553,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * Returns the Java Class that this type inherits from, or null if this type is Python-only.
      */
     public Class<?> getProxyType() {
-        return (Class<?>) JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR);
+        return (Class<?>) getProxyAttr(this);
     }
 
     private synchronized void attachSubclass(PyType subtype) {
@@ -1223,9 +1643,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
         boolean addedProxy = false;
-        PyType proxyAsType =
-                !JyAttribute.hasAttr(this, JyAttribute.JAVA_PROXY_ATTR) ? null : PyType.fromClass(
-                        ((Class<?>) JyAttribute.getAttr(this, JyAttribute.JAVA_PROXY_ATTR)), false);
+        Class<?> thisProxyAttr = this.getProxyType();
+        PyType proxyAsType = thisProxyAttr == null ? null : fromClass(thisProxyAttr);
+
         scan : for (int i = 0; i < toMerge.length; i++) {
             if (toMerge[i].isMerged()) {
                 continue scan;
@@ -1237,22 +1657,23 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                     continue scan;
                 }
             }
-            if (!addedProxy && !(this instanceof PyJavaType) && candidate instanceof PyJavaType
-                    && JyAttribute.hasAttr(candidate, JyAttribute.JAVA_PROXY_ATTR)
-                    && PyProxy.class.isAssignableFrom(((Class<?>) JyAttribute.getAttr(candidate,
-                            JyAttribute.JAVA_PROXY_ATTR)))
-                    && JyAttribute.getAttr(candidate, JyAttribute.JAVA_PROXY_ATTR) != JyAttribute
-                            .getAttr(this, JyAttribute.JAVA_PROXY_ATTR)) {
-                /*
-                 * If this is a subclass of a Python class that subclasses a Java class, slip the
-                 * proxy for this class in before the proxy class in the superclass' mro. This
-                 * exposes the methods from the proxy generated for this class in addition to those
-                 * generated for the superclass while allowing methods from the superclass to remain
-                 * visible from the proxies.
-                 */
-                mro.add(proxyAsType);
-                addedProxy = true;
+
+            if (!addedProxy && !(this instanceof PyJavaType) && candidate instanceof PyJavaType) {
+                Class<?> candidateProxyAttr = ((PyJavaType) candidate).getProxyType();
+                if (candidateProxyAttr != null && PyProxy.class.isAssignableFrom(candidateProxyAttr)
+                        && candidateProxyAttr != thisProxyAttr) {
+                    /*
+                     * If this is a subclass of a Python class that subclasses a Java class, slip
+                     * the proxy for this class in before the proxy class in the superclass' mro.
+                     * This exposes the methods from the proxy generated for this class in addition
+                     * to those generated for the superclass while allowing methods from the
+                     * superclass to remain visible from the proxies.
+                     */
+                    mro.add(proxyAsType);
+                    addedProxy = true;
+                }
             }
+
             mro.add(candidate);
             // Was that our own proxy?
             addedProxy |= candidate == proxyAsType;
@@ -1261,11 +1682,13 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
             i = -1; // restart scan
         }
+
         for (MROMergeState mergee : toMerge) {
             if (!mergee.isMerged()) {
                 handleMroError(toMerge, mro);
             }
         }
+
         return mro.toArray(new PyObject[mro.size()]);
     }
 
@@ -1516,178 +1939,75 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return null;
     }
 
-    public static synchronized void addBuilder(Class<?> forClass, TypeBuilder builder) {
-        getClassToBuilder().put(forClass, builder);
-        if (getClassToType().containsKey(forClass)) {
-            if (!BootstrapTypesSingleton.getInstance().remove(forClass)) {
-                Py.writeWarning("init",
-                        "Bootstrapping class not in BootstrapTypesSingleton.getInstance()[class="
-                                + forClass + "]");
-            }
-            /*
-             * The types in BootstrapTypesSingleton.getClassToType() are initialized before their
-             * builders are assigned, so do the work of addFromClass & fillFromClass after the fact.
-             */
-            fromClass(builder.getTypeClass()).init(builder.getTypeClass(), null);
-        }
-    }
-
-    private synchronized static PyType addFromClass(Class<?> c, Set<PyJavaType> needsInners) {
-        if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
-            PyType exposedAs = fromClass(c.getSuperclass(), false);
-            PyType origExposedAs = getClassToType().putIfAbsent(c, exposedAs);
-            return exposedAs;
-        }
-        return createType(c, needsInners);
-    }
-
-    static boolean hasBuilder(Class<?> c) {
-        return getClassToBuilder().containsKey(c);
-    }
-
-    private static TypeBuilder getBuilder(Class<?> c) {
-        if (c.isPrimitive() || !PyObject.class.isAssignableFrom(c)) {
-            /*
-             * If this isn't a PyObject, don't bother forcing it to be initialized to load its
-             * builder
-             */
-            return null;
-        } else {
-            /*
-             * This is a PyObject, call forName to force static initialization on the class so if it
-             * has a builder, it'll be filled in.
-             */
-            SecurityException exc = null;
-            try {
-                Class.forName(c.getName(), true, c.getClassLoader());
-            } catch (ClassNotFoundException e) {
-                // Well, this is certainly surprising.
-                throw new RuntimeException(
-                        "Got ClassNotFound calling Class.forName on an already " + " found class.",
-                        e);
-            } catch (ExceptionInInitializerError e) {
-                throw Py.JavaError(e);
-            } catch (SecurityException e) {
-                exc = e;
-            }
-            TypeBuilder builder = getClassToBuilder().get(c);
-            if (builder == null && exc != null) {
-                Py.writeComment("type",
-                        "Unable to initialize " + c.getName() + ", a PyObject subclass, due to a "
-                                + "security exception, and no type builder could be found for it. "
-                                + "If it's an exposed type, it may not work properly. "
-                                + "Security exception: " + exc.getMessage());
-            }
-            return builder;
-        }
-    }
-
-    private synchronized static PyType createType(Class<?> c, Set<PyJavaType> needsInners) {
-        // System.out.println("createType c=" + c + ", needsInners=" + needsInners
-        // + ", BootstrapTypesSingleton.getInstance()="
-        // + BootstrapTypesSingleton.getInstance());
-        PyType newtype;
-        if (c == PyType.class) {
-            newtype = new PyType(false);
-        } else if (BootstrapTypesSingleton.getInstance().contains(c) || getBuilder(c) != null) {
-            newtype = new PyType();
-        } else {
-            newtype = new PyJavaType();
-        }
-
-        /*
-         * Try to register the type (so far incomplete), but if one has already been registered, use
-         * that. This is more subtle than it looks: the one we've found may be complete or
-         * incomplete. If it is incomplete, then because of the lock this thread holds on
-         * PyType.class, we arrived here by recursion (the Python version of c requires a Python
-         * version of c), and as long as all intervening calls complete normally, the PyType will be
-         * properly formed before the lock is released.
-         */
-        PyType type = getClassToType().putIfAbsent(c, newtype);
-        if (type != null) {
-            return type;
-        }
-
-        // This really is a new creation. We need to finish filling it in.
-        newtype.builtin = true;
-        newtype.init(c, needsInners);
-        newtype.invalidateMethodCache();
-        return newtype;
+    /**
+     * Register the {@link TypeBuilder} for the given class. This only really makes sense for a
+     * <code>PyObject</code>. Initialising a properly-formed PyObject will usually result in a call
+     * to <code>addBuilder</code>, thanks to code inserted by the Jython type-exposer.
+     *
+     * @param c class for which this is the builder
+     * @param builder to register
+     */
+    public static void addBuilder(Class<?> c, TypeBuilder builder) {
+        Registry.addBuilder(c, builder);
     }
 
     /**
-     * Return a <code>PyType</code> (or subclass) for the given Java class, creating one if
-     * necessary. Equivalent to <code>fromClass(c, true)</code>. See
-     * {@link #fromClass(Class, boolean)}.
+     * Attempt to ensure that the that the type system has fully constructed the types necessary to
+     * build a fully-working, exposed, <code>PyObject</code> (the "bootstrap types"). Produce a
+     * warning message if it does not seem to have worked. This is called at the end of the static
+     * initialisation of <code>PyObject</code>.
+     *
+     * @return whether bootstrapping was successful
+     */
+    public static synchronized boolean ensureBootstrapped() {
+        // Force bootstrap and collect any debris
+        Set<Class<?>> missing = Registry.bootstrap();
+        if (!missing.isEmpty()) {
+            Py.writeWarning("init",
+                    "Bootstrap types weren't encountered in bootstrapping: " + missing
+                            + "\nThis may be caused by compiled core classes preceding "
+                            + "their exposed equivalents on the class path.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Equivalent to {@link #fromClass(Class)}, which is to be preferred.
+     * <p>
+     * The boolean argument is ignored. Previously it controlled whether the returned
+     * <code>PyType</code> remained strongly-reachable through a reference the type registry would
+     * keep. The returned object is now reachable as long as the class <code>c</code> remains
+     * loaded.
+     *
+     * @param c for which the corresponding <code>PyType</code> is to be found
+     * @param hardRef ignored
+     * @return the <code>PyType</code> found or created
+     */
+    public static PyType fromClass(Class<?> c, boolean hardRef) {
+        return fromClass(c);
+    }
+
+    /**
+     * Look up (create if necessary) the <code>PyType</code> for the given target Java class. If the
+     * target's <code>PyType</code> already exists, this is returned quickly. When a
+     * <code>PyType</code> must be created, the method updates the registry of type information
+     * internal to Jython, caching the answer for next time.
+     * <p>
+     * Creating the <code>PyType</code> also looks up or creates any <code>PyType</code>s that the
+     * target depends upon, which results in re-entrant calls to <code>fromClass</code> for these
+     * classes and (if <code>PyType</code>s are created for <code>PyObject</code>s) calls to
+     * {@link PyType#addBuilder(Class, TypeBuilder)}.
+     * <p>
+     * Look-up of existing types is non-blocking in the majority of cases.
      *
      * @param c for which the corresponding <code>PyType</code> is to be found
      * @return the <code>PyType</code> found or created
      */
-    public static synchronized PyType fromClass(Class<?> c) {
-        return fromClass(c, true);
-    }
-
-    /**
-     * Return a <code>PyType</code> (or sub-class) for the given Java class, creating one if
-     * necessary. Creating the <code>PyType</code> also creates any types this depends upon, and
-     * updates all this in the state internal to <code>PyType</code> that supports future resolution
-     * of names.
-     *
-     * @param c for which the corresponding <code>PyType</code> is to be found
-     * @param hardRef the <code>PyType</code> will not be unloaded when unreachable
-     * @return the <code>PyType</code> found or created
-     */
-    public static synchronized PyType fromClass(Class<?> c, boolean hardRef) {
-        PyType type = getClassToType().get(c);
-        if (type != null) {
-            return type;
-        }
-        /*
-         * We haven't seen this class before, so its type needs to be created. If it's being exposed
-         * as a Java class, defer processing its inner types until it's completely created in case
-         * the inner class references a class that references this class.
-         */
-        Set<PyJavaType> needsInners = Generic.set();
-        PyType result = addFromClass(c, needsInners);
-        for (PyJavaType javaType : needsInners) {
-            Class<?> forClass = javaType.getProxyType();
-            if (forClass == null) {
-                continue;
-            }
-            for (Class<?> inner : forClass.getClasses()) {
-                /*
-                 * Only add the class if there isn't something else with that name and it came from
-                 * this class
-                 */
-                if (inner.getDeclaringClass() == forClass
-                        && javaType.dict.__finditem__(inner.getSimpleName()) == null) {
-                    /*
-                     * If this class is currently being loaded, any exposed types it contains won't
-                     * have set their builder in PyType yet, so add them to BOOTSTRAP_TYPES so
-                     * they're created as PyType instead of PyJavaType
-                     */
-                    if (inner.getAnnotation(ExposedType.class) != null
-                            || ExposeAsSuperclass.class.isAssignableFrom(inner)) {
-                        BootstrapTypesSingleton.getInstance().add(inner);
-                    }
-                    javaType.dict.__setitem__(inner.getSimpleName(),
-                            PyType.fromClass(inner, hardRef));
-                }
-            }
-        }
-        if (hardRef && result != null) {
-            getExposedTypes().add(result);
-        }
-
-        return result;
-    }
-
-    static synchronized PyType fromClassSkippingInners(Class<?> c, Set<PyJavaType> needsInners) {
-        PyType type = getClassToType().get(c);
-        if (type != null) {
-            return type;
-        }
-        return addFromClass(c, needsInners);
+    // It would be nice to give a less complicated guarantee about when the PyType is complete.
+    public static PyType fromClass(Class<?> c) {
+        // Look up or create a Python type for c in the registry.
+        return Registry.classToType.get(c);
     }
 
     @ExposedMethod(doc = BuiltinDocs.type___getattribute___doc)
@@ -1829,6 +2149,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 public boolean onType(PyType type) {
                     return (type.usesObjectGetattribute = false);
                 }
+
             });
         }
     }
@@ -1908,6 +2229,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 public boolean onType(PyType type) {
                     return (type.usesObjectGetattribute = false);
                 }
+
             });
         }
     }
@@ -2067,9 +2389,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
         int lastDot = name.lastIndexOf('.');
         if (lastDot != -1) {
-            return Py.newString(name.substring(0, lastDot));
+            return new PyString(name.substring(0, lastDot));
         }
-        return Py.newString("__builtin__");
+        return new PyString("__builtin__");
     }
 
     @ExposedDelete(name = "__module__")
@@ -2104,17 +2426,21 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     @ExposedMethod(names = "__repr__", doc = BuiltinDocs.type___repr___doc)
     final String type_toString() {
-        String kind;
-        if (!builtin) {
-            kind = "class";
+        String kind = builtin ? "type" : "class";
+        if (name == null || (!builtin && dict == null)) {
+            // Type not sufficiently ready to show as module.name (useful in debugging)
+            return String.format("<%s '%s'>", this.getClass().getSimpleName(), underlying_class);
+        } else if (Registry.deferredInit.contains(PyString.class)) {
+            // PyString not sufficiently ready to call this.getModule to show module.name
+            return String.format("<%s ... '%s'>", kind, name);
         } else {
-            kind = "type";
+            // Normal path
+            PyObject module = getModule();
+            if (module instanceof PyString && !module.toString().equals("__builtin__")) {
+                return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
+            }
+            return String.format("<%s '%s'>", kind, getName());
         }
-        PyObject module = getModule();
-        if (module instanceof PyString && !module.toString().equals("__builtin__")) {
-            return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
-        }
-        return String.format("<%s '%s'>", kind, getName());
     }
 
     @Override
@@ -2208,7 +2534,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
         private Object readResolve() {
             if (underlying_class != null) {
-                return PyType.fromClass(underlying_class, false);
+                return fromClass(underlying_class);
             }
             PyObject mod = imp.importName(module.intern(), false);
             PyObject pytyp = mod.__getattr__(name.intern());

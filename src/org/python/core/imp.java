@@ -466,7 +466,7 @@ public class imp {
                 throw Py.JavaError(e);
             }
         }
-        return PyType.fromClass(c, false); // xxx?
+        return PyType.fromClass(c);
     }
 
     public static PyObject getImporter(PyObject p) {

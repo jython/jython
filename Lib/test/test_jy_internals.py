@@ -2,33 +2,24 @@
  test some jython internals
 """
 import unittest
-import time
 from test import test_support
 
+import datetime
 import java
 import jarray
+import os
+import sys
+import time
+import weakref
 
 from org.python.core import Py
 from org.python.util import PythonInterpreter
 from javatests.TestSupport import invokePyTypeMethod
 from java.sql import Date, Time, Timestamp
-import datetime
 
 
-class MemoryLeakTests(unittest.TestCase):
-
-    def test_class_to_test_weakness(self):
-        # regrtest for bug 1522, adapted from test code submitted by Matt Brinkley
-
-        # work around the fact that we can't look at PyType directly
-        # by using this helper function that reflects on PyType (and
-        # demonstrates here that it's the same as the builtin function
-        # `type`!)
-        class_to_type_map = invokePyTypeMethod(type, 'getClassToType')
-
-        def create_proxies():
-            pi = PythonInterpreter()
-            pi.exec("""
+# Script for MemoryLeakTests.test_class_to_test_weakness
+DOG = """
 from java.lang import Comparable
 
 class Dog(Comparable):
@@ -37,22 +28,83 @@ class Dog(Comparable):
     def bark(self):
         return 'woof woof'
 
-Dog().bark()
-""")
-        # get to steady state first, then verify we don't create new proxies
-        for i in xrange(2):
-            create_proxies()
-        # Ensure the reaper thread can run and clear out weak refs, so
-        # use this supporting function
+dog = Dog()
+dog.bark()
+breed = dog.getClass()
+"""
+
+def run_script(script, names):
+    """Run the script and return a weak list of the values named"""
+    pi = PythonInterpreter()
+    pi.exec(script)
+    if isinstance(names, str):
+        names = (names, )
+    result = []
+    for n in names:
+        obj = pi.getLocals()[n]
+        result.append(weakref.ref(obj))
+    return result
+
+def survivors(weak_list):
+    """Set of all objects on the weak list that are still live."""
+    s = {ref() for ref in weak_list}
+    s.discard(None)
+    return s
+
+
+class MemoryLeakTests(unittest.TestCase):
+
+    def test_class_to_test_weakness(self):
+        # regrtest for bug 1522, adapted from test code submitted by Matt Brinkley
+
+        # We wish to demonstrate that the proxy created by a Python class and
+        # its PyType are GC'd when no longer in use, and therefore that the
+        # Jython type system does not keep a PyType alive gratuitously. We do
+        # this by holding weak references, then checking they're dead.
+
+        # Get to steady state by creating >1 Dog and then GC-ing homeless ones.
+        battersea = []
+        for i in range(2):
+            battersea.extend(run_script(DOG, ('Dog', 'dog', 'breed')))
         test_support.gc_collect()
-        # Given that taking the len (or size()) of Guava weak maps is
-        # eventually consistent, we should instead take a len of its
-        # keys.
-        start_size = len(list(class_to_type_map))
-        for i in xrange(5):
-            create_proxies()
+
+        # This is the steady-state, GC number of Dog objects alive after GC:
+        start_size = len(survivors(battersea)) # probably = 1
+
+        # Add more Dogs and GC the homeless ones again.
+        for i in range(5):
+            battersea.extend(run_script(DOG, ('Dog', 'dog', 'breed')))
         test_support.gc_collect()
-        self.assertEqual(start_size, len(list(class_to_type_map)))
+        #print "\nDogs home  =", battersea
+        #print "\nDogs alive =", survivors(battersea)
+
+        # Post-GC number of Dogs should be as before
+        self.assertEqual(start_size, len(survivors(battersea)))
+
+    def test_loading_classes_weakness(self):
+        # Show that classes loaded via a class loader are collectible once the
+        # class loader is not strongly reachable.
+
+        # Reference all species of object on a weak list:
+        zoo = []
+
+        def activity():
+            # Look for the Callbacker class ONLY in the special JAR
+            jar = os.path.join(sys.prefix, "callbacker_test.jar")
+            cldr = test_support.make_jar_classloader(jar, None)
+            CB = cldr.loadClass("org.python.tests.Callbacker")
+            cb = CB()
+            # Save locals as weak references (that we hope will go dead)
+            for obj in (cb, type(cb), cldr):
+                zoo.append(weakref.ref(obj))
+
+        # Load and use a class: objects created in zoo.
+        activity()
+
+        #print "\nzoo        =", zoo
+        test_support.gc_collect()
+        #print "\nsurvivors  =", survivors(zoo)
+        self.assertEqual(0, len(survivors(zoo)))
 
 
 class WeakIdentityMapTests(unittest.TestCase):
@@ -92,6 +144,7 @@ class WeakIdentityMapTests(unittest.TestCase):
 
         assert widmap.get(i) == 'i' # triggers stale weak refs cleanup
         assert widmap._internal_map_size() == 1
+
 
 class LongAsScaledDoubleValueTests(unittest.TestCase):
 
@@ -143,6 +196,7 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
                 assert float((v+d)*256+y) == sdv(((v+d)*256+y)*256, e)
                 assert e[0] == 1
 
+
 class ExtraMathTests(unittest.TestCase):
     def test_epsilon(self):
         from org.python.core.util import ExtraMath
@@ -161,6 +215,7 @@ class ExtraMathTests(unittest.TestCase):
         self.assertEquals(
           ExtraMath.closeFloor(3.0 - 3.0 * ExtraMath.CLOSE), 2.0)
         self.assertEquals(ExtraMath.closeFloor(math.log10(10**3)), 3.0)
+
 
 class DatetimeTypeMappingTest(unittest.TestCase):
     def test_date(self):
@@ -183,6 +238,7 @@ class DatetimeTypeMappingTest(unittest.TestCase):
         self.assertEquals(datetime.datetime(2008, 5, 29, 16, 50, 1, 1),
                           Py.newDatetime(Timestamp(108, 4, 29, 16, 50, 1, 1000)))
 
+
 class IdTest(unittest.TestCase):
     def test_unique_ids(self):
         d = {}
@@ -196,6 +252,7 @@ class IdTest(unittest.TestCase):
             d[j] = s
 
         self.assertEquals(cnt, 0)
+
 
 class FrameTest(unittest.TestCase):
     def test_stack_frame_locals(self):
@@ -268,6 +325,7 @@ class FrameTest(unittest.TestCase):
         foo()
         Bar().baz()
 
+
 class ModuleTest(unittest.TestCase):
     def test_create_module(self):
         from org.python.core import PyModule, PyInstance
@@ -278,6 +336,7 @@ class ModuleTest(unittest.TestCase):
         #test = PyInstance.__tojava__(test, PyModule)
         exec "b = 3" in test.__dict__
         self.assertEquals(len(test.__dict__), 5)
+
 
 def test_main():
     test_support.run_unittest(__name__)

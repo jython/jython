@@ -1,8 +1,10 @@
 package org.python.modules._json;
 
+import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyDictionary;
 import org.python.core.PyList;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
@@ -11,10 +13,14 @@ import org.python.core.codecs;
 import org.python.core.Traverseproc;
 import org.python.core.Visitproc;
 import org.python.expose.ExposedGet;
+import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
+import org.python.modules._io.OpenMode;
+import org.python.modules._io.PyFileIO;
+import org.python.modules._io.PyFileIODerived;
 
 
-@ExposedType(name = "_json.Scanner", base = PyObject.class)
+@ExposedType(name = "_json.scanner", base = PyObject.class)
 public class Scanner extends PyObject implements Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(Scanner.class);
@@ -31,7 +37,11 @@ public class Scanner extends PyObject implements Traverseproc {
     final PyObject parse_constant;
 
     public Scanner(PyObject context) {
-        super();
+       this(TYPE, context); 
+    }
+
+    public Scanner(PyType subtype, PyObject context) {
+        super(subtype);
         encoding = _castString(context.__getattr__("encoding"), "utf-8");
         strict = context.__getattr__("strict").__nonzero__();
         object_hook = context.__getattr__("object_hook");
@@ -43,6 +53,22 @@ public class Scanner extends PyObject implements Traverseproc {
 
     public PyObject __call__(PyObject string, PyObject idx) {
         return _scan_once((PyString)string, idx.asInt());
+    }
+
+    private static final String[] newArgs = {"context"};
+
+    @ExposedNew
+    static PyObject Scanner___new__(PyNewWrapper new_, boolean init, PyType subtype,
+            PyObject[] args, String[] keywords) {
+
+        ArgParser ap = new ArgParser("scanner", args, keywords, newArgs, 1);
+        PyObject context = ap.getPyObject(0);
+
+        if (subtype == TYPE) {
+            return new Scanner(context);
+        } else {
+            return new ScannerDerived(subtype, context);
+        }
     }
 
     private static boolean IS_WHITESPACE(int c) {

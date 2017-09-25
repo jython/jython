@@ -1,4 +1,5 @@
 import array
+import os
 import unittest
 import subprocess
 import sys
@@ -260,7 +261,9 @@ class RespectJavaAccessibilityTest(unittest.TestCase):
 class ClassloaderTest(unittest.TestCase):
 
     def test_loading_classes_without_import(self):
-        cl = test_support.make_jar_classloader("../callbacker_test.jar")
+        # Look for the Callbacker class ONLY in the special JAR
+        jar = os.path.join(sys.prefix, "callbacker_test.jar")
+        cl = test_support.make_jar_classloader(jar, None)
         X = cl.loadClass("org.python.tests.Callbacker")
         called = []
         class Blah(X.Callback):

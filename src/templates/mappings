@@ -25,6 +25,7 @@ dropwhile.derived:org.python.modules.itertools.dropwhileDerived
 groupby.derived:org.python.modules.itertools.groupbyDerived
 ifilter.derived:org.python.modules.itertools.ifilterDerived
 ifilterfalse.derived:org.python.modules.itertools.ifilterfalseDerived
+imap.derived:org.python.modules.itertools.imapDerived
 islice.derived:org.python.modules.itertools.isliceDerived
 izip.derived:org.python.modules.itertools.izipDerived
 izipLongest.derived:org.python.modules.itertools.izipLongestDerived
@@ -61,6 +62,7 @@ type.derived:org.python.core.PyTypeDerived
 unicode.derived:org.python.core.PyUnicodeDerived
 weakref.derived:org.python.modules._weakref.ReferenceTypeDerived
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived
+antlr.AST.derived:org.python.antlr.ASTDerived
 ast_Assert.derived:org.python.antlr.ast.AssertDerived
 ast_Assign.derived:org.python.antlr.ast.AssignDerived
 ast_Attribute.derived:org.python.antlr.ast.AttributeDerived
@@ -101,6 +103,8 @@ ast_Print.derived:org.python.antlr.ast.PrintDerived
 ast_Raise.derived:org.python.antlr.ast.RaiseDerived
 ast_Repr.derived:org.python.antlr.ast.ReprDerived
 ast_Return.derived:org.python.antlr.ast.ReturnDerived
+ast_Set.derived:org.python.antlr.ast.SetDerived
+ast_SetComp.derived:org.python.antlr.ast.SetCompDerived
 ast_Slice.derived:org.python.antlr.ast.SliceDerived
 ast_Str.derived:org.python.antlr.ast.StrDerived
 ast_Subscript.derived:org.python.antlr.ast.SubscriptDerived
@@ -153,3 +157,5 @@ op_USub.derived:org.python.antlr.op.USubDerived
 _io._IOBase.derived:org.python.modules._io.PyIOBaseDerived
 _io._RawIOBase.derived:org.python.modules._io.PyRawIOBaseDerived
 _io.FileIO.derived:org.python.modules._io.PyFileIODerived
+_json.Encoder.derived:org.python.modules._json.EncoderDerived
+_json.Scanner.derived:org.python.modules._json.ScannerDerived
