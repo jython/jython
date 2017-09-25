@@ -473,8 +473,8 @@ public class gc {
     private static int debugFlags = 0;
     private static boolean monitorNonTraversable = false;
     private static boolean waitingForFinalizers = false;
-    private static AtomicBoolean gcRunning = new AtomicBoolean(false);
-    private static HashSet<WeakReferenceGC> monitoredObjects;
+    private static final AtomicBoolean gcRunning = new AtomicBoolean(false);
+    private static final Set<WeakReferenceGC> monitoredObjects = new HashSet<>();
     private static HashSet<Class<? extends PyObject>> reflectionWarnedClasses;
     private static ReferenceQueue<Object> gcTrash;
     private static int finalizeWaitCount = 0;
@@ -489,8 +489,10 @@ public class gc {
     public static PyList garbage = new PyList();
 
     /* Finalization preprocess/postprocess-related declarations: */
-    private static List<Runnable> preFinalizationProcess, postFinalizationProcess;
-    private static List<Runnable> preFinalizationProcessRemove, postFinalizationProcessRemove;
+    private static final List<Runnable> preFinalizationProcess = new ArrayList<>();
+    private static final List<Runnable> postFinalizationProcess = new ArrayList<>();
+    private static final List<Runnable> preFinalizationProcessRemove = new ArrayList<>();
+    private static final List<Runnable> postFinalizationProcessRemove = new ArrayList<>();
     private static Thread postFinalizationProcessor;
     public static long postFinalizationTimeOut = 100;
     private static long postFinalizationTimestamp = System.currentTimeMillis()-2*postFinalizationTimeOut;
@@ -1114,15 +1116,9 @@ public class gc {
             resurrectionCriticals = new IdentityHashMap<>();
         }
         /* add post-finalization process (and cancel pending suspension process if any) */
-        try {
-            synchronized(postFinalizationProcessRemove) {
-                postFinalizationProcessRemove.remove(
-                        DelayedFinalizationProcess.defaultInstance);
-                if (postFinalizationProcessRemove.isEmpty()) {
-                    postFinalizationProcessRemove = null;
-                }
-            }
-        } catch (NullPointerException npe) {}
+        synchronized (postFinalizationProcessRemove) {
+            postFinalizationProcessRemove.remove(DelayedFinalizationProcess.defaultInstance);
+        }
         if (indexOfPostFinalizationProcess(
                 DelayedFinalizationProcess.defaultInstance) == -1) {
             registerPostFinalizationProcess(
@@ -1241,39 +1237,22 @@ public class gc {
      */
     public static void registerPreFinalizationProcess(Runnable process, int index) {
         while (true) {
-            try {
-                synchronized (preFinalizationProcess) {
-                    preFinalizationProcess.add(index < 0 ?
-                            index+preFinalizationProcess.size()+1 : index, process);
-                }
-                return;
-            } catch (NullPointerException npe) {
-                preFinalizationProcess = new ArrayList<>(1);
+            synchronized (preFinalizationProcess) {
+                preFinalizationProcess.add(index < 0 ? index + preFinalizationProcess.size() + 1 : index, process);
             }
+            return;
         }
     }
 
     public static int indexOfPreFinalizationProcess(Runnable process) {
-        try {
-            synchronized (preFinalizationProcess) {
-                return preFinalizationProcess.indexOf(process);
-            }
-        } catch (NullPointerException npe) {
-            return -1;
+        synchronized (preFinalizationProcess) {
+            return preFinalizationProcess.indexOf(process);
         }
     }
 
     public static boolean unregisterPreFinalizationProcess(Runnable process) {
-        try {
-            synchronized (preFinalizationProcess) {
-                boolean result = preFinalizationProcess.remove(process);
-                if (result && preFinalizationProcess.isEmpty()) {
-                    preFinalizationProcess = null;
-                }
-                return result;
-            }
-        } catch (NullPointerException npe) {
-            return false;
+        synchronized (preFinalizationProcess) {
+            return preFinalizationProcess.remove(process);
         }
     }
 
@@ -1283,16 +1262,10 @@ public class gc {
      * pre-finalization process list.
      */
     public static void unregisterPreFinalizationProcessAfterNextRun(Runnable process) {
-        while (true) {
-            try {
-                synchronized (preFinalizationProcessRemove) {
-                    preFinalizationProcessRemove.add(process);
-                }
-                return;
-            } catch (NullPointerException npe) {
-                preFinalizationProcessRemove = new ArrayList<>(1);
-            }
+        synchronized (preFinalizationProcessRemove) {
+            preFinalizationProcessRemove.add(process);
         }
+        return;
     }
 
     /**
@@ -1339,40 +1312,20 @@ public class gc {
      * See doc of {@link #registerPostFinalizationProcess(Runnable)}.
      */
     public static void registerPostFinalizationProcess(Runnable process, int index) {
-        while (true) {
-            try {
-                synchronized (postFinalizationProcess) {
-                    postFinalizationProcess.add(index < 0 ?
-                            index+postFinalizationProcess.size()+1 : index, process);
-                }
-                return;
-            } catch (NullPointerException npe) {
-                postFinalizationProcess = new ArrayList<>(1);
-            }
+        synchronized (postFinalizationProcess) {
+            postFinalizationProcess.add(index < 0 ? index + postFinalizationProcess.size() + 1 : index, process);
         }
     }
 
     public static int indexOfPostFinalizationProcess(Runnable process) {
-        try {
-            synchronized (postFinalizationProcess) {
-                return postFinalizationProcess.indexOf(process);
-            }
-        } catch (NullPointerException npe) {
-            return -1;
+        synchronized (postFinalizationProcess) {
+            return postFinalizationProcess.indexOf(process);
         }
     }
 
     public static boolean unregisterPostFinalizationProcess(Runnable process) {
-        try {
-            synchronized (postFinalizationProcess) {
-                boolean result = postFinalizationProcess.remove(process);
-                if (result && postFinalizationProcess.isEmpty()) {
-                    postFinalizationProcess = null;
-                }
-                return result;
-            }
-        } catch (NullPointerException npe) {
-            return false;
+        synchronized (postFinalizationProcess) {
+            return postFinalizationProcess.remove(process);
         }
     }
 
@@ -1382,15 +1335,8 @@ public class gc {
      * post-finalization process list.
      */
     public static void unregisterPostFinalizationProcessAfterNextRun(Runnable process) {
-        while (true) {
-            try {
-                synchronized (postFinalizationProcessRemove) {
-                    postFinalizationProcessRemove.add(process);
-                }
-                return;
-            } catch (NullPointerException npe) {
-                postFinalizationProcessRemove = new ArrayList<>(1);
-            }
+        synchronized (postFinalizationProcessRemove) {
+            postFinalizationProcessRemove.add(process);
         }
     }
 
@@ -1433,7 +1379,6 @@ public class gc {
                 < postFinalizationTimeOut) {
             return;
         }
-        try {
             synchronized(preFinalizationProcess) {
                 for (Runnable r: preFinalizationProcess) {
                     try {
@@ -1443,21 +1388,12 @@ public class gc {
                                 +preProcessError);
                     }
                 }
-                try {
                     synchronized (preFinalizationProcessRemove) {
                         preFinalizationProcess.removeAll(preFinalizationProcessRemove);
-                        preFinalizationProcessRemove = null;
+                        preFinalizationProcessRemove.clear();
                     }
-                    if (preFinalizationProcess.isEmpty()) {
-                        preFinalizationProcess = null;
-                    }
-                } catch (NullPointerException npe0) {}
             }
-        } catch (NullPointerException npe) {
-            preFinalizationProcessRemove = null;
-        }
 
-        try {
             synchronized(postFinalizationProcess) {
                 if (!postFinalizationProcess.isEmpty() &&
                         postFinalizationProcessor == null) {
@@ -1467,7 +1403,6 @@ public class gc {
                     postFinalizationProcessor.start();
                 }
             }
-        } catch (NullPointerException npe) {}
     }
 
     public static void notifyPostFinalization() {
@@ -1479,28 +1414,19 @@ public class gc {
     }
 
     protected static void postFinalizationProcess() {
-        try {
-            synchronized(postFinalizationProcess) {
-                for (Runnable r: postFinalizationProcess) {
-                    try {
-                        r.run();
-                    } catch (Exception postProcessError) {
-                        System.err.println("Finalization postprocess "+r+" caused error:");
-                        System.err.println(postProcessError);
-                    }
-                }
+        synchronized (postFinalizationProcess) {
+            for (Runnable r : postFinalizationProcess) {
                 try {
-                    synchronized (postFinalizationProcessRemove) {
-                        postFinalizationProcess.removeAll(postFinalizationProcessRemove);
-                        postFinalizationProcessRemove = null;
-                    }
-                    if (postFinalizationProcess.isEmpty()) {
-                        postFinalizationProcess = null;
-                    }
-                } catch (NullPointerException npe0) {}
+                    r.run();
+                } catch (Exception postProcessError) {
+                    System.err.println("Finalization postprocess " + r + " caused error:");
+                    System.err.println(postProcessError);
+                }
             }
-        } catch (NullPointerException npe) {
-            postFinalizationProcessRemove = null;
+            synchronized (postFinalizationProcessRemove) {
+                postFinalizationProcess.removeAll(postFinalizationProcessRemove);
+                postFinalizationProcessRemove.clear();
+            }
         }
     }
 //--------------end of Finalization preprocess/postprocess section-------------
@@ -1537,23 +1463,19 @@ public class gc {
             gcTrash = new ReferenceQueue<>();
         }
         while (true) {
-            try {
-                synchronized(monitoredObjects) {
-                    if (!isMonitored(ob)) {
-                        CycleMarkAttr cm = new CycleMarkAttr();
-                        JyAttribute.setAttr(ob, JyAttribute.GC_CYCLE_MARK_ATTR, cm);
-                        WeakReferenceGC refPut = new WeakReferenceGC(ob, gcTrash);
-                        if (initString) {
-                            refPut.initStr(ob);
-                        }
-                        monitoredObjects.add(refPut);
-                        cm.monitored = true;
+            synchronized (monitoredObjects) {
+                if (!isMonitored(ob)) {
+                    CycleMarkAttr cm = new CycleMarkAttr();
+                    JyAttribute.setAttr(ob, JyAttribute.GC_CYCLE_MARK_ATTR, cm);
+                    WeakReferenceGC refPut = new WeakReferenceGC(ob, gcTrash);
+                    if (initString) {
+                        refPut.initStr(ob);
                     }
+                    monitoredObjects.add(refPut);
+                    cm.monitored = true;
                 }
-                return;
-            } catch (NullPointerException npe) {
-                monitoredObjects = new HashSet<WeakReferenceGC>();
             }
+            return;
         }
     }
 
@@ -1563,44 +1485,32 @@ public class gc {
      * exists for bare debugging purposes.
      */
     public static WeakReferenceGC getMonitorReference(PyObject ob) {
-        try {
-            synchronized(monitoredObjects) {
-                for (WeakReferenceGC ref: monitoredObjects) {
-                    if (ref.equals(ob)) {
-                        return ref;
-                    }
+        synchronized (monitoredObjects) {
+            for (WeakReferenceGC ref : monitoredObjects) {
+                if (ref.equals(ob)) {
+                    return ref;
                 }
             }
-        } catch (NullPointerException npe) {}
+        }
         return null;
     }
 
     public static boolean isMonitoring() {
-        try {
-            synchronized(monitoredObjects) {
-                return !monitoredObjects.isEmpty();
-            }
-        } catch (NullPointerException npe) {
-            return false;
+        synchronized (monitoredObjects) {
+            return !monitoredObjects.isEmpty();
         }
     }
 
     public static boolean isMonitored(PyObject ob) {
-        try {
-            synchronized(monitoredObjects) {
-                WeakrefGCCompareDummy.defaultInstance.setCompare(ob);
-                boolean result = monitoredObjects.contains(
-                    WeakrefGCCompareDummy.defaultInstance);
-                WeakrefGCCompareDummy.defaultInstance.clearCompare();
-                return result;
-            }
-        } catch (NullPointerException npe) {
-            return false;
+        synchronized (monitoredObjects) {
+            WeakrefGCCompareDummy.defaultInstance.setCompare(ob);
+            boolean result = monitoredObjects.contains(WeakrefGCCompareDummy.defaultInstance);
+            WeakrefGCCompareDummy.defaultInstance.clearCompare();
+            return result;
         }
     }
 
     public static boolean unmonitorObject(PyObject ob) {
-        try {
             synchronized(monitoredObjects) {
                 WeakrefGCCompareDummy.defaultInstance.setCompare(ob);
                 WeakReferenceGC rem = getMonitorReference(ob);
@@ -1618,39 +1528,29 @@ public class gc {
                 }
                 return result;
             }
-        } catch (NullPointerException npe) {
-            return false;
-        }
     }
 
     public static void unmonitorAll() {
-        try {
-            synchronized(monitoredObjects) {
-                FinalizeTrigger ft;
-                for (WeakReferenceGC mo: monitoredObjects) {
-                    PyObject rfrt = mo.get();
-                    if (rfrt != null) {
-                        JyAttribute.delAttr(rfrt, JyAttribute.GC_CYCLE_MARK_ATTR);
-                        ft = (FinalizeTrigger)
-                                JyAttribute.getAttr(rfrt, JyAttribute.FINALIZE_TRIGGER_ATTR);
-                        if (ft != null) {
-                            ft.flags &= ~FinalizeTrigger.NOTIFY_GC_FLAG;
-                        }
+        synchronized (monitoredObjects) {
+            FinalizeTrigger ft;
+            for (WeakReferenceGC mo : monitoredObjects) {
+                PyObject rfrt = mo.get();
+                if (rfrt != null) {
+                    JyAttribute.delAttr(rfrt, JyAttribute.GC_CYCLE_MARK_ATTR);
+                    ft = (FinalizeTrigger) JyAttribute.getAttr(rfrt, JyAttribute.FINALIZE_TRIGGER_ATTR);
+                    if (ft != null) {
+                        ft.flags &= ~FinalizeTrigger.NOTIFY_GC_FLAG;
                     }
-                    mo.clear();
                 }
-                monitoredObjects.clear();
+                mo.clear();
             }
-        } catch (NullPointerException npe) {
+            monitoredObjects.clear();
         }
     }
 
     public static void stopMonitoring() {
         setMonitorGlobal(false);
-        if (monitoredObjects != null) {
-            unmonitorAll();
-            monitoredObjects = null;
-        }
+        unmonitorAll();
     }
 
     public static boolean getMonitorGlobal() {
