@@ -1,11 +1,16 @@
 #!/usr/bin/env python2.7 -E
 # -*- coding: utf-8 -*-
 
-# Launch script for Jython. It may be wrapped as an executable with
-# tools like PyInstaller, creating jython.exe, or run directly. The
-# installer will make this the default launcher under the name
-# bin/jython if CPython 2.7 is available with the above shebang
-# invocation.
+# Launch script for Jython. It may be run directly (note the shebang line), but
+# importantly it supplies python.exe, the launcher we use on Windows.
+#
+# Each time this file changes, we must regenerate an executable with
+# PyInstaller, using the command:
+#
+#    pyinstaller --onefile jython.py
+#
+# This is best done in a virtual environment (more about this in the Jython
+# Developers' Guide).
 
 import glob
 import inspect
