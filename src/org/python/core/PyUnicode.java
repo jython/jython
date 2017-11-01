@@ -8,8 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.base.CharMatcher;
-
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.MarkupIterator;
 import org.python.expose.ExposedMethod;
@@ -18,6 +16,8 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 import org.python.modules._codecs;
 import org.python.util.Generic;
+
+import com.google.common.base.CharMatcher;
 
 /**
  * a builtin python unicode string.
@@ -592,9 +592,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @ExposedNew
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        ArgParser ap =
-                new ArgParser("unicode", args, keywords, new String[] {"string", "encoding",
-                        "errors"}, 0);
+        ArgParser ap = new ArgParser("unicode", args, keywords,
+                new String[] {"string", "encoding", "errors"}, 0);
         PyObject S = ap.getPyObject(0, null);
         String encoding = checkEncoding(ap.getString(1, null));
         String errors = checkEncoding(ap.getString(2, null));
@@ -603,15 +602,15 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 return new PyUnicode("");
             }
             if (S instanceof PyUnicode) {
-                return new PyUnicode(((PyUnicode)S).getString());
+                return new PyUnicode(((PyUnicode) S).getString());
             }
             if (S instanceof PyString) {
                 if (S.getType() != PyString.TYPE && encoding == null && errors == null) {
                     return S.__unicode__();
                 }
-                PyObject decoded = codecs.decode((PyString)S, encoding, errors);
+                PyObject decoded = codecs.decode((PyString) S, encoding, errors);
                 if (decoded instanceof PyUnicode) {
-                    return new PyUnicode((PyUnicode)decoded);
+                    return new PyUnicode((PyUnicode) decoded);
                 } else {
                     throw Py.TypeError("decoder did not return an unicode object (type="
                             + decoded.getType().fastGetName() + ")");
@@ -623,7 +622,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 return new PyUnicodeDerived(subtype, Py.EmptyString);
             }
             if (S instanceof PyUnicode) {
-                return new PyUnicodeDerived(subtype, (PyUnicode)S);
+                return new PyUnicodeDerived(subtype, (PyUnicode) S);
             } else {
                 return new PyUnicodeDerived(subtype, S.__str__());
             }
@@ -910,12 +909,12 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      */
     private PyUnicode coerceToUnicode(PyObject o) {
         if (o instanceof PyUnicode) {
-            return (PyUnicode)o;
+            return (PyUnicode) o;
         } else if (o instanceof PyString) {
-            return new PyUnicode(((PyString)o).getString(), true);
+            return new PyUnicode(((PyString) o).getString(), true);
         } else if (o instanceof BufferProtocol) {
             // PyByteArray, PyMemoryView, Py2kBuffer ...
-            try (PyBuffer buf = ((BufferProtocol)o).getBuffer(PyBUF.FULL_RO)) {
+            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
                 return new PyUnicode(buf.toString(), true);
             }
         } else {
@@ -969,9 +968,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     final PyObject unicode___add__(PyObject other) {
         PyUnicode otherUnicode;
         if (other instanceof PyUnicode) {
-            otherUnicode = (PyUnicode)other;
+            otherUnicode = (PyUnicode) other;
         } else if (other instanceof PyString) {
-            otherUnicode = (PyUnicode)((PyString)other).decode();
+            otherUnicode = (PyUnicode) ((PyString) other).decode();
         } else {
             return null;
         }
@@ -1094,9 +1093,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         if (o == null) {
             return null;
         } else if (o instanceof PyUnicode) {
-            return (PyUnicode)o;
+            return (PyUnicode) o;
         } else if (o instanceof PyString) {
-            return new PyUnicode(((PyString)o).decode().toString());
+            return new PyUnicode(((PyString) o).decode().toString());
         } else if (o == Py.None) {
             return null;
         } else {
@@ -1121,8 +1120,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
 
         // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep, new ReversedIterator<>(
-                new StripIterator(sep, newSubsequenceIterator())))));
+        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep,
+                new ReversedIterator<>(new StripIterator(sep, newSubsequenceIterator())))));
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
@@ -1162,8 +1161,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
 
         // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep,
-                new ReversedIterator<>(newSubsequenceIterator()))));
+        return new PyUnicode(new ReversedIterator<Integer>(
+                new StripIterator(sep, new ReversedIterator<>(newSubsequenceIterator()))));
     }
 
     @Override
@@ -1484,8 +1483,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
         int[] indices = super.translateIndices(start, end); // do not convert to utf-16 indices.
         int count = 0;
-        for (Iterator<Integer> mainIter = newSubsequenceIterator(indices[0], indices[1], 1); mainIter
-                .hasNext();) {
+        for (Iterator<Integer> mainIter =
+                newSubsequenceIterator(indices[0], indices[1], 1); mainIter.hasNext();) {
             int matched = sub.getCodePointCount();
             for (Iterator<Integer> subIter = sub.newSubsequenceIterator(); mainIter.hasNext()
                     && subIter.hasNext();) {
@@ -1661,7 +1660,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 SplitIterator iter = newSplitIterator(oldPiece, count);
                 int numSplits = 0;
                 while (iter.hasNext()) {
-                    buffer.append(((PyUnicode)iter.next()).getString());
+                    buffer.append(((PyUnicode) iter.next()).getString());
                     if (iter.hasNext()) {
                         buffer.append(newPiece.getString());
                     }
@@ -1750,7 +1749,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codePoint = iter.next();
             if (!(Character.isLetterOrDigit(codePoint) || //
-            Character.getType(codePoint) == Character.LETTER_NUMBER)) {
+                    Character.getType(codePoint) == Character.LETTER_NUMBER)) {
                 return false;
             }
         }
