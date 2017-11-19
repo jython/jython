@@ -715,19 +715,48 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return createInstance(buffer.toString());
     }
 
-    @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
+        // XXX needs proper coercion like __eq__, then UCS-32 code point order :(
         return str___cmp__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
-    final PyObject unicode___eq__(PyObject other) {
-        return str___eq__(other);
+    @Override
+    public PyObject __eq__(PyObject other) {
+        return unicode___eq__(other);
     }
 
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___eq___doc)
+    final PyObject unicode___eq__(PyObject other) {
+        try {
+            String s = coerceForComparison(other);
+            if (s == null) {
+                return null;
+            }
+            return getString().equals(s) ? Py.True : Py.False;
+        } catch (PyException e) {
+            // Decoding failed: treat as unequal
+            return Py.False;
+        }
+    }
+
+    @Override
+    public PyObject __ne__(PyObject other) {
+        return unicode___ne__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___ne___doc)
     final PyObject unicode___ne__(PyObject other) {
-        return str___ne__(other);
+        try {
+            String s = coerceForComparison(other);
+            if (s == null) {
+                return null;
+            }
+            return getString().equals(s) ? Py.False : Py.True;
+        } catch (PyException e) {
+            // Decoding failed: treat as unequal
+            return Py.True;
+        }
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode___hash___doc)
@@ -900,53 +929,156 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     /**
-     * Helper used many times to "coerce" a method argument into a <code>PyUnicode</code> (which it
-     * may already be). A <code>null</code> or incoercible argument will raise a
-     * <code>TypeError</code>.
+     * Interpret the object as a Java <code>String</code> representing characters as UTF-16, or
+     * return <code>null</code> if the type does not admit this conversion. From a
+     * <code>PyUnicode</code> we return its internal string. A byte argument is decoded with the
+     * default encoding.
      *
      * @param o the object to coerce
-     * @return an equivalent <code>PyUnicode</code> (or o itself)
+     * @return an equivalent <code>String</code>
      */
-    private PyUnicode coerceToUnicode(PyObject o) {
+    private static String coerceToStringOrNull(PyObject o) {
         if (o instanceof PyUnicode) {
-            return (PyUnicode) o;
+            return ((PyUnicode) o).getString();
         } else if (o instanceof PyString) {
-            return new PyUnicode(((PyString) o).getString(), true);
+            return ((PyString) o).decode().toString();
         } else if (o instanceof BufferProtocol) {
             // PyByteArray, PyMemoryView, Py2kBuffer ...
+            // We ought to be able to call codecs.decode on o but see Issue #2164
             try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
-                return new PyUnicode(buf.toString(), true);
+                PyString s = new PyString(buf);
+                // For any sensible codec, the return is unicode and toString() is getString().
+                return s.decode().toString();
             }
         } else {
             // o is some type not allowed:
-            if (o == null) {
-                // Do something safe and approximately right
-                o = Py.None;
-            }
-            throw Py.TypeError("coercing to Unicode: need string or buffer, "
-                    + o.getType().fastGetName() + " found");
+            return null;
         }
     }
 
     /**
-     * Helper used many times to "coerce" a method argument into a <code>PyUnicode</code> (which it
-     * may already be). A <code>null</code> argument or a <code>PyNone</code> causes
-     * <code>null</code> to be returned.
+     * Interpret the object as a Java <code>String</code> for use in comparison. The return
+     * represents characters as UTF-16. From a <code>PyUnicode</code> we return its internal string.
+     * A <code>str</code> and <code>buffer</code> argument is decoded with the default encoding.
+     * Equivalent to {@link #coerceToStringOrNull(PyObject)} allowing only the types supported in
+     * (C)Python <code>unicode.__eq__</code>.
      *
      * @param o the object to coerce
-     * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
+     * @return an equivalent <code>String</code>
      */
-    private PyUnicode coerceToUnicodeOrNull(PyObject o) {
-        if (o == null || o == Py.None) {
+    private static String coerceForComparison(PyObject o) {
+        if (o instanceof PyUnicode) {
+            return ((PyUnicode) o).getString();
+        } else if (o instanceof PyString) {
+            return ((PyString) o).decode().toString();
+        } else if (o instanceof Py2kBuffer) {
+            // We ought to be able to call codecs.decode on o but see Issue #2164
+            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
+                PyString s = new PyString(buf);
+                // For any sensible codec, the return is unicode and toString() is getString().
+                return s.decode().toString();
+            }
+        } else {
+            // o is some type not allowed:
+            return null;
+        }
+    }
+
+    /**
+     * Interpret the object as a Java <code>String</code> representing characters as UTF-16, or
+     * raise an error if the type does not admit this conversion. A byte argument is decoded with
+     * the default encoding.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>String</code> (and never <code>null</code>)
+     */
+    private static String coerceToString(PyObject o) {
+        String s = coerceToStringOrNull(o);
+        if (s == null) {
+            throw errorCoercingToUnicode(o);
+        }
+        return s;
+    }
+
+    /**
+     * Interpret the object as a Java <code>String</code> representing characters as UTF-16, or
+     * optionally as <code>null</code> (for a <code>null</code> or <code>None</code> argument if the
+     * second argument is <code>true</code>). Raise an error if the type does not admit this
+     * conversion.
+     *
+     * @param o the object to coerce
+     * @param allowNullArgument iff <code>true</code> allow a null or <code>none</code> argument
+     * @return an equivalent <code>String</code> or <code>null</code>
+     */
+    private static String coerceToString(PyObject o, boolean allowNullArgument) {
+        if (allowNullArgument && (o == null || o == Py.None)) {
             return null;
         } else {
-            return coerceToUnicode(o);
+            return coerceToString(o);
         }
+    }
+
+    /** Construct exception "coercing to Unicode: ..." */
+    private static PyException errorCoercingToUnicode(PyObject o) {
+        return Py.TypeError("coercing to Unicode: need string or buffer, "
+                + (o == null ? Py.None : o).getType().fastGetName() + " found");
+    }
+
+    /**
+     * Interpret the object as a <code>PyUnicode</code>, or return <code>null</code> if the type
+     * does not admit this conversion. From a <code>PyUnicode</code> we return itself. A byte
+     * argument is decoded with the default encoding.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>PyUnicode</code> (or o itself)
+     */
+    private static PyUnicode coerceToUnicodeOrNull(PyObject o) {
+        if (o instanceof PyUnicode) {
+            return (PyUnicode) o;
+        } else if (o instanceof PyString) {
+            // For any sensible codec, the return here is unicode.
+            PyObject u = ((PyString) o).decode();
+            return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(o.toString());
+        } else if (o instanceof BufferProtocol) {
+            // PyByteArray, PyMemoryView, Py2kBuffer ...
+            // We ought to be able to call codecs.decode on o but see Issue #2164
+            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
+                PyString s = new PyString(buf);
+                // For any sensible codec, the return is unicode and toString() is getString().
+                PyObject u = s.decode();
+                return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(o.toString());
+            }
+        } else {
+            // o is some type not allowed:
+            return null;
+        }
+    }
+
+    /**
+     * Interpret the object as a <code>PyUnicode</code>, or raise a <code>TypeError</code> if the
+     * type does not admit this conversion. From a <code>PyUnicode</code> we return itself. A byte
+     * argument is decoded with the default encoding.
+     *
+     * @param o the object to coerce
+     * @return an equivalent <code>PyUnicode</code> (or o itself)
+     */
+    private static PyUnicode coerceToUnicode(PyObject o) {
+        PyUnicode u = coerceToUnicodeOrNull(o);
+        if (u == null) {
+            throw errorCoercingToUnicode(o);
+        }
+        return u;
+    }
+
+    @Override
+    public boolean __contains__(PyObject o) {
+        return unicode___contains__(o);
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode___contains___doc)
     final boolean unicode___contains__(PyObject o) {
-        return str___contains__(o);
+        String other = coerceToString(o);
+        return getString().indexOf(other) >= 0;
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
@@ -966,15 +1098,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
     final PyObject unicode___add__(PyObject other) {
-        PyUnicode otherUnicode;
-        if (other instanceof PyUnicode) {
-            otherUnicode = (PyUnicode) other;
-        } else if (other instanceof PyString) {
-            otherUnicode = (PyUnicode) ((PyString) other).decode();
-        } else {
-            return null;
-        }
-        return new PyUnicode(getString().concat(otherUnicode.getString()));
+        // Interpret other as a Java String
+        String s = coerceToStringOrNull(other);
+        return s == null ? null : new PyUnicode(getString().concat(s));
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode_lower_doc)
@@ -1077,25 +1203,25 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
-    // compliance requires that we need to support a bit of inconsistency
-    // compared to other coercion used
+    // Compliance requires a bit of inconsistency with other coercions used.
     /**
      * Helper used in <code>.strip()</code> to "coerce" a method argument into a
      * <code>PyUnicode</code> (which it may already be). A <code>null</code> argument or a
      * <code>PyNone</code> causes <code>null</code> to be returned. A buffer type is not acceptable
      * to (Unicode) <code>.strip()</code>. This is the difference from
-     * {@link #coerceToUnicodeOrNull(PyObject)}.
+     * {@link #coerceToUnicode(PyObject, boolean)}.
      *
      * @param o the object to coerce
      * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
      */
-    private PyUnicode coerceStripSepToUnicode(PyObject o) {
+    private static PyUnicode coerceStripSepToUnicode(PyObject o) {
         if (o == null) {
             return null;
         } else if (o instanceof PyUnicode) {
             return (PyUnicode) o;
         } else if (o instanceof PyString) {
-            return new PyUnicode(((PyString) o).decode().toString());
+            PyObject u = ((PyString) o).decode();
+            return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(u.toString());
         } else if (o == Py.None) {
             return null;
         } else {
@@ -1431,9 +1557,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_split_doc)
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
-        PyUnicode sep = coerceToUnicodeOrNull(sepObj);
+        String sep = coerceToString(sepObj, true);
         if (sep != null) {
-            return _split(sep.getString(), maxsplit);
+            return _split(sep, maxsplit);
         } else {
             return _split(null, maxsplit);
         }
@@ -1441,9 +1567,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_rsplit_doc)
     final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
-        PyUnicode sep = coerceToUnicodeOrNull(sepObj);
+        String sep = coerceToString(sepObj, true);
         if (sep != null) {
-            return _rsplit(sep.getString(), maxsplit);
+            return _rsplit(sep, maxsplit);
         } else {
             return _rsplit(null, maxsplit);
         }
@@ -1452,7 +1578,6 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @ExposedMethod(defaults = "false", doc = BuiltinDocs.unicode___getslice___doc)
     final PyList unicode_splitlines(boolean keepends) {
         return new PyList(new LineSplitIterator(keepends));
-
     }
 
     @Override
@@ -1463,16 +1588,16 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
     final int unicode_index(PyObject subObj, PyObject start, PyObject end) {
-        final PyUnicode sub = coerceToUnicode(subObj);
-        // Now use the mechanics of the PyString on the UTF-16 of the PyUnicode.
-        return checkIndex(_find(sub.getString(), start, end));
+        final String sub = coerceToString(subObj);
+        // Now use the mechanics of the PyString on the UTF-16.
+        return checkIndex(_find(sub, start, end));
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
     final int unicode_rindex(PyObject subObj, PyObject start, PyObject end) {
-        final PyUnicode sub = coerceToUnicode(subObj);
-        // Now use the mechanics of the PyString on the UTF-16 of the PyUnicode.
-        return checkIndex(_rfind(sub.getString(), start, end));
+        final String sub = coerceToString(subObj);
+        // Now use the mechanics of the PyString on the UTF-16.
+        return checkIndex(_rfind(sub, start, end));
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_count_doc)
@@ -1492,7 +1617,6 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                     break;
                 }
                 matched--;
-
             }
             if (matched == 0) {
                 count++;
@@ -1503,13 +1627,13 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
     final int unicode_find(PyObject subObj, PyObject start, PyObject end) {
-        int found = _find(coerceToUnicode(subObj).getString(), start, end);
+        int found = _find(coerceToString(subObj), start, end);
         return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_rfind_doc)
     final int unicode_rfind(PyObject subObj, PyObject start, PyObject end) {
-        int found = _rfind(coerceToUnicode(subObj).getString(), start, end);
+        int found = _rfind(coerceToString(subObj), start, end);
         return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
@@ -1685,14 +1809,89 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicodeJoin(seq);
     }
 
+    /**
+     * Equivalent to the Python <code>unicode.startswith</code> method, testing whether a string
+     * starts with a specified prefix, where a sub-range is specified by <code>[start:end]</code>.
+     * Arguments <code>start</code> and <code>end</code> are interpreted as in slice notation, with
+     * null or {@link Py#None} representing "missing". <code>prefix</code> can also be a tuple of
+     * prefixes to look for.
+     *
+     * @param prefix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return <code>true</code> if this string slice starts with a specified prefix, otherwise
+     *         <code>false</code>.
+     */
+    @Override
+    public boolean startswith(PyObject prefix, PyObject start, PyObject end) {
+        return unicode_startswith(prefix, start, end);
+    }
+
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_startswith_doc)
-    final boolean unicode_startswith(PyObject prefix, PyObject start, PyObject end) {
-        return str_startswith(prefix, start, end);
+    final boolean unicode_startswith(PyObject prefix, PyObject startObj, PyObject endObj) {
+        int[] indices = translateIndices(startObj, endObj);
+        int start = indices[0];
+        int sliceLen = indices[1] - start;
+
+        if (!(prefix instanceof PyTuple)) {
+            // It ought to be PyUnicode or some kind of bytes with the buffer API to decode.
+            String s = coerceToString(prefix);
+            return sliceLen >= s.length() && getString().startsWith(s, start);
+
+        } else {
+            // Loop will return true if this slice starts with any prefix in the tuple
+            for (PyObject prefixObj : ((PyTuple) prefix).getArray()) {
+                // It ought to be PyUnicode or some kind of bytes with the buffer API.
+                String s = coerceToString(prefixObj);
+                if (sliceLen >= s.length() && getString().startsWith(s, start)) {
+                    return true;
+                }
+            }
+            // None matched
+            return false;
+        }
+    }
+
+    /**
+     * Equivalent to the Python <code>unicode.endswith</code> method, testing whether a string ends
+     * with a specified suffix, where a sub-range is specified by <code>[start:end]</code>.
+     * Arguments <code>start</code> and <code>end</code> are interpreted as in slice notation, with
+     * null or {@link Py#None} representing "missing". <code>suffix</code> can also be a tuple of
+     * suffixes to look for.
+     *
+     * @param suffix string to check for (or a <code>PyTuple</code> of them).
+     * @param start start of slice.
+     * @param end end of slice.
+     * @return <code>true</code> if this string slice ends with a specified suffix, otherwise
+     *         <code>false</code>.
+     */
+    @Override
+    public boolean endswith(PyObject suffix, PyObject start, PyObject end) {
+        return unicode_endswith(suffix, start, end);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_endswith_doc)
-    final boolean unicode_endswith(PyObject suffix, PyObject start, PyObject end) {
-        return str_endswith(suffix, start, end);
+    final boolean unicode_endswith(PyObject suffix, PyObject startObj, PyObject endObj) {
+        int[] indices = translateIndices(startObj, endObj);
+        String substr = getString().substring(indices[0], indices[1]);
+
+        if (!(suffix instanceof PyTuple)) {
+            // It ought to be PyUnicode or some kind of bytes with the buffer API.
+            String s = coerceToString(suffix);
+            return substr.endsWith(s);
+
+        } else {
+            // Loop will return true if this slice ends with any suffix in the tuple
+            for (PyObject suffixObj : ((PyTuple) suffix).getArray()) {
+                // It ought to be PyUnicode or some kind of bytes with the buffer API.
+                String s = coerceToString(suffixObj);
+                if (substr.endsWith(s)) {
+                    return true;
+                }
+            }
+            // None matched
+            return false;
+        }
     }
 
     @ExposedMethod(doc = BuiltinDocs.unicode_translate_doc)

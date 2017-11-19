@@ -412,7 +412,7 @@ public class imp {
      * moduleLocation should be the full uri for c.
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
-        PyUnicode.checkEncoding(name);
+        checkName(name);
         PyModule module = addModule(name);
 
         PyBaseCode code = null;
@@ -585,7 +585,7 @@ public class imp {
     }
 
     static PyObject loadFromLoader(PyObject importer, String name) {
-        PyUnicode.checkEncoding(name);
+        checkName(name);
         PyObject load_module = importer.__getattr__("load_module");
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
@@ -714,7 +714,7 @@ public class imp {
      * @return the loaded module
      */
     public static PyObject load(String name) {
-        PyUnicode.checkEncoding(name);
+        checkName(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
@@ -986,6 +986,18 @@ public class imp {
         }
     }
 
+    /**
+     * Enforce ASCII module name, as a guard on module names supplied as an argument. The parser
+     * guarantees the name from an actual import statement is a valid identifier.
+     */
+    private static void checkName(String name) {
+        for (int i = name.length(); i > 0;) {
+            if (name.charAt(--i) > 255) {
+                throw Py.ImportError("No module named " + name);
+            }
+        }
+    }
+
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name) {
         ensureFromList(mod, fromlist, name, false);
     }
@@ -1029,7 +1041,7 @@ public class imp {
      */
     public static PyObject importName(String name, boolean top) {
         checkNotFile(name);
-        PyUnicode.checkEncoding(name);
+        checkName(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {
@@ -1050,7 +1062,7 @@ public class imp {
     public static PyObject importName(String name, boolean top, PyObject modDict,
             PyObject fromlist, int level) {
         checkNotFile(name);
-        PyUnicode.checkEncoding(name);
+        checkName(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
         importLock.lock();
         try {

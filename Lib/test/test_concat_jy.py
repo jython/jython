@@ -23,11 +23,10 @@ class StrUnicodeConcatTestCase(unittest.TestCase):
                     resType = unicode
                 res = a.__add__(b)
                 self.assertEquals(type(res), resType,
-                                  '%r is a %s, not a %s' % (res, type(res),
-                                                            resType))
+                    '%r + %r -> %r is a %s, not a %s' % 
+                        (type(a), type(b), res, type(res), resType))
                 self.assertEquals(res, 'ab',
-                                  '%r (%s) != %r (%s)' % (res, type(res), 'ab',
-                                                 str))
+                    '%r (%s) != %r (%s)' % (res, type(res), 'ab', str))
 
 
 class StrUnicodeConcatOverridesTestCase(unittest.TestCase):

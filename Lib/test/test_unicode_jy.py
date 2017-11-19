@@ -900,6 +900,277 @@ class UnicodeSpaceTest(unittest.TestCase):
             self.assertEqual(2, len(s.split()), "no split made in " + repr(s))
             self.assertEqual(2, len(s.rsplit()), "no rsplit made in " + repr(s))
 
+class EncodingContext(object):
+    """Context manager to save and restore the encoding.
+
+    Use like this:
+
+        with EncodingContext("utf-8"):
+            self.assertEqual("'caf\xc3\xa9'", u"'caf\xe9'")
+    """
+
+    def __init__(self, encoding):
+        if not hasattr(sys, "setdefaultencoding"):
+            reload(sys)
+        self.original_encoding = sys.getdefaultencoding()
+        sys.setdefaultencoding(encoding)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *ignore_exc):
+        sys.setdefaultencoding(self.original_encoding)
+
+
+class DefaultDecodingTestCase(unittest.TestCase):
+    # Test use of default encoding to coerce str to unicode
+
+    def test_add(self):
+        ref = u'café crème'
+        s1 = ref[:4].encode(self.encoding)
+        s2 = ref[4:].encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual( s1 + ref[4:], ref)
+            self.assertEqual( ref[:4] + s2, ref)
+
+    def test_in(self):
+        ref = u'café crème'
+        with EncodingContext(self.encoding):
+            self.assertTrue(u'é'.encode(self.encoding) in ref)
+            self.assertTrue(u'fé'.encode(self.encoding) in ref)
+            # Fails if the string is interpreted as code points.
+            if self.encoding !=  'latin-1':
+                self.assertFalse('\xc3\xa9' in u'caf\xc3\xa9')
+
+    def test_eq(self):
+        ref = u'café crème'
+        b = ref.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertTrue(ref == b)
+            self.assertTrue(b == ref)
+
+    def test_ne(self):
+        with EncodingContext(self.encoding):
+            # Fails if the string is interpreted as code points.
+            if self.encoding !=  'latin-1':
+                self.assertFalse(u'caf\xc3\xa9'== 'caf\xc3\xa9')
+                self.assertFalse('caf\xc3\xa9' == u'caf\xc3\xa9')
+
+    def test_count(self):
+        ref = u'Le café des fées égarées'
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.count(u'é'.encode(self.encoding)), 4)
+            self.assertEqual(ref.count(u'fé'.encode(self.encoding)), 2)
+
+    def test_endswith(self):
+        # Set up the test using unicode values and indices
+        ref = u'café crème'
+        s, u, v = ref[-4:], u'èm£', u'èµe'
+        # Encode all this
+        enc = ref.encode(self.encoding)
+        u1, v1 = u.encode(self.encoding), v.encode(self.encoding)
+        s1 = s.encode(self.encoding)
+
+        with EncodingContext(self.encoding):
+            # Test with single argument
+            self.assertFalse(ref.endswith(v1))
+            self.assertTrue(ref.endswith(s1))
+            # Test with a mixed tuple as the argument
+            self.assertFalse(ref.endswith((u1, u, v1, v)))
+            self.assertTrue(ref.endswith((u1, s1, v1)))
+            self.assertTrue(ref.endswith((u1, u, s1, v1, v)))
+            self.assertFalse(enc.endswith((u1, v1, u, v)))
+            self.assertTrue(enc.endswith((u, s, v)))
+            self.assertTrue(enc.endswith((u1, u, s, v1, v)))
+
+    def test_endswith_slice(self):
+        # Set up the test using unicode values and indices
+        ref = u'«Un café crème?»'
+        if len(u'«»'.encode(self.encoding))!=2 and not test_support.is_jython:
+            # CPython fails on str.startswith(unicode, int, int) as it passes
+            # byte indices to unicode.startswith(unicode, int, int) unchanged.
+            # It only works if « and » encode to single bytes. Easier test:
+            ref = u'"Un café crème?"'
+        a, b = 4, -2
+        s, u, v = ref[b-4:b], u'èm£', u'èµe'
+        # Encode all this, including the indices
+        enc = ref.encode(self.encoding)
+        u1, v1 = u.encode(self.encoding), v.encode(self.encoding)
+        a1 = len(ref[:a].encode(self.encoding))
+        b1 = - len(ref[b:].encode(self.encoding))
+        s1 = s.encode(self.encoding)
+
+        with EncodingContext(self.encoding):
+            # Test the assumption on which the test is based
+            self.assertEqual(ref[a:b], enc[a1:b1])
+            # Test slice with single argument
+            self.assertFalse(ref.endswith(v1, a, b))
+            self.assertTrue(ref.endswith(s1, a, b))
+            self.assertFalse(enc.endswith(v1, a1, b1))
+            self.assertTrue(enc.endswith(s, a1, b1))
+            # CPython would pass:
+            #self.assertTrue(enc.endswith(s, a, b))
+            # Test slice with a mixed tuple as the argument
+            self.assertFalse(ref.endswith((u1, u, v1, v), a, b))
+            self.assertTrue(ref.endswith((u1, s1, v1), a, b))
+            self.assertTrue(ref.endswith((u1, u, s1, v1, v), a, b))
+            self.assertFalse(enc.endswith((u1, v1, u, v), a1, b1))
+            self.assertTrue(enc.endswith((u, s, v), a1, b1))
+            self.assertTrue(enc.endswith((u1, u, s, v1, v), a1, b1))
+            # CPython would pass:
+            #self.assertTrue(enc.endswith((u, s, v), a, b))
+            #self.assertTrue(enc.endswith((u1, u, s, v1, v), a, b))
+
+    def test_find(self):
+        ref = u'café crème'
+        sub = u'è'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.find(sub), 7)
+
+    def test_index(self):
+        ref = u'café crème'
+        sub = u'è'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.index(sub), 7)
+
+    def test_lstrip(self):
+        ref = u"¤£¥¥£¤du blé £"
+        sep = u'¥£¤'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.lstrip(sep), u"du blé £")
+
+    def test_partition(self):
+        ref = u"Des fées hébétées."
+        sep1 = u'é'.encode(self.encoding)
+        sep2 = u'ées'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.partition(sep1), (u"Des f", u"é", u"es hébétées."))
+            self.assertEqual(ref.partition(sep2), (u"Des f", u"ées", u" hébétées."))
+
+    def test_replace(self):
+        ref = u"Été."
+        a = u'É'.encode(self.encoding)
+        b = u'é'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.replace(a, b), u"été.")
+            self.assertEqual(ref.replace(b, a), u"ÉtÉ.")
+
+    def test_rfind(self):
+        ref = u'café crème'
+        sub = u'é'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.rfind(sub), 3)
+
+    def test_rindex(self):
+        ref = u'café crème'
+        sub = u'é'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.index(sub), 3)
+
+    def test_rpartition(self):
+        ref = u"Des fées hébétées."
+        sep1 = u'é'.encode(self.encoding)
+        sep2 = u'ées'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.rpartition(sep1), (u"Des fées hébét", u"é", u"es."))
+            self.assertEqual(ref.rpartition(sep2), (u"Des fées hébét", u"ées", u"."))
+
+    def test_rsplit(self):
+        ref = u"Des fées hébétées."
+        sep1 = u'é'.encode(self.encoding)
+        sep2 = u'ées'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.rsplit(sep1, 3), [u"Des fées h", u"b", u"t", u"es."])
+            self.assertEqual(ref.rsplit(sep2), [u"Des f", u" hébét", u"."])
+
+    def test_rstrip(self):
+        ref = u"£ du blé¥£¤¤£¥"
+        sep = u'¥£¤'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.rstrip(sep), u"£ du blé")
+
+    def test_split(self):
+        ref = u"Des fées hébétées."
+        sep1 = u'é'.encode(self.encoding)
+        sep2 = u'ées'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.split(sep1, 3), [u"Des f", u"es h", u"b", u"tées."])
+            self.assertEqual(ref.split(sep2), [u"Des f", u" hébét", u"."])
+
+    def test_startsswith(self):
+        # Set up the test using unicode values and indices
+        ref = u'café crème'
+        s, u, v = ref[:4], u'©af', u'caf£'
+        # Encode all this
+        enc = ref.encode(self.encoding)
+        u1, v1 = u.encode(self.encoding), v.encode(self.encoding)
+        s1 = s.encode(self.encoding)
+
+        with EncodingContext(self.encoding):
+            self.assertFalse(ref.startswith(v1))
+            self.assertTrue(ref.startswith(enc[:5]))
+            # Test with a mixed tuple as the argument
+            self.assertFalse(ref.startswith((u1, u, v1, v)))
+            self.assertTrue(ref.startswith((u1, enc[:5], v1)))
+            self.assertTrue(ref.startswith((u1, u, enc[:5], v1, v)))
+            self.assertFalse(enc.startswith((u1, v1, u, v)))
+            self.assertTrue(enc.startswith((u, ref[:4], v)))
+            self.assertTrue(enc.startswith((u1, u, ref[:4], v1, v)))
+
+    def test_startsswith_slice(self):
+        # Set up the test using unicode values and indices
+        ref = u'«Un café crème?»'
+        if len(u'«»'.encode(self.encoding))!=2 and not test_support.is_jython:
+            # CPython fails on str.startswith(unicode, int, int) as it passes
+            # byte indices to unicode.startswith(unicode, int, int) unchanged.
+            # It only works if « and » encode to single bytes. Easier test:
+            ref = u'"Un café crème?"'
+        a, b = 4, -2
+        s, u, v = ref[a:a+4], u'©af', u'caf£'
+        # Encode all this, including the indices
+        enc = ref.encode(self.encoding)
+        u1, v1 = u.encode(self.encoding), v.encode(self.encoding)
+        a1 = len(ref[:a].encode(self.encoding))
+        b1 = - len(ref[b:].encode(self.encoding))
+        s1 = s.encode(self.encoding)
+
+        with EncodingContext(self.encoding):
+            # Test the assumption on which the test is based
+            self.assertEqual(ref[a:b], enc[a1:b1])
+            # Test slice with single argument
+            self.assertFalse(ref.startswith(v, a, b))
+            self.assertTrue(ref.startswith(s1, a, b))
+            self.assertFalse(enc.startswith(v1, a1, b1))
+            self.assertTrue(enc.startswith(s, a1, b1))
+            # CPython would pass:
+            #self.assertTrue(enc.startswith(s, a, b))
+            # Test slice with a mixed tuple as the argument
+            self.assertFalse(ref.startswith((u1, u, v1, v), a, b))
+            self.assertTrue(ref.startswith((u1, s1, v1), a, b))
+            self.assertTrue(ref.startswith((u1, u, s1, v1, v), a, b))
+            self.assertFalse(enc.startswith((u1, v1, u, v), a1, b1))
+            self.assertTrue(enc.startswith((u, s, v), a1, b1))
+            self.assertTrue(enc.startswith((u1, u, s, v1, v), a1, b1))
+            # CPython would pass:
+            #self.assertTrue(enc.startswith((u, s, v), a, b))
+            #self.assertTrue(enc.startswith((u1, u, s, v1, v), a, b))
+
+    def test_strip(self):
+        ref = u"¤£¥¥£¤du blé¥£¤¤£¥"
+        sep = u'¥£¤'.encode(self.encoding)
+        with EncodingContext(self.encoding):
+            self.assertEqual(ref.strip(sep), u"du blé")
+
+
+class DefaultDecodingLatin1(DefaultDecodingTestCase):
+    encoding = "latin-1"
+
+class DefaultDecodingUTF8(DefaultDecodingTestCase):
+    encoding = "utf-8"
+
+class DefaultDecodingCp850(DefaultDecodingTestCase):
+    encoding = "cp850"
+
 
 def test_main():
     test_support.run_unittest(
@@ -910,6 +1181,9 @@ def test_main():
                 UnicodeFormatStrTest,
                 StringModuleUnicodeTest,
                 UnicodeSpaceTest,
+                DefaultDecodingLatin1,
+                DefaultDecodingUTF8,
+                DefaultDecodingCp850,
             )
 
 

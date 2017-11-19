@@ -219,11 +219,17 @@ class ImpTestCase(unittest.TestCase):
 
 class UnicodeNamesTestCase(unittest.TestCase):
 
+    def test_import_non_ascii_module(self):
+        module = "mødülé"
+        with self.assertRaises(ImportError) as cm:
+            __import__(module)
+
     def test_import_unicode_module(self):
+        module = u"mødülé"
         with self.assertRaises(UnicodeEncodeError) as cm:
-            __import__("mødülé")
+            __import__(module)
         self.assertEqual(cm.exception.encoding, "ascii")
-        self.assertEqual(cm.exception.object, "mødülé")
+        self.assertEqual(cm.exception.object, module)
         self.assertEqual(cm.exception.reason, "ordinal not in range(128)")
 
 

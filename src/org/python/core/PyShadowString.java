@@ -251,7 +251,7 @@ public class PyShadowString extends PyString {
 
         if (!(prefix instanceof PyTuple)) {
             // It ought to be PyUnicode or some kind of bytes with the buffer API.
-            String s = asUTF16StringOrError(prefix);
+            String s = asU16BytesOrError(prefix);
             // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
             return sliceLen >= s.length() &&
                     (getString().startsWith(s, start) || shadow.startsWith(s, start));
@@ -259,7 +259,7 @@ public class PyShadowString extends PyString {
             // Loop will return true if this slice starts with any prefix in the tuple
             for (PyObject prefixObj : ((PyTuple)prefix).getArray()) {
                 // It ought to be PyUnicode or some kind of bytes with the buffer API.
-                String s = asUTF16StringOrError(prefixObj);
+                String s = asU16BytesOrError(prefixObj);
                 // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
                 if (sliceLen >= s.length() &&
                         (getString().startsWith(s, start) || shadow.startsWith(s, start))) {

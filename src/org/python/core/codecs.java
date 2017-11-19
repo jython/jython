@@ -126,7 +126,7 @@ public class codecs {
     }
 
     private static PyUnicode wrapDecodeResult(String result) {
-        return new PyUnicode(result, true);
+        return new PyUnicode(result);
     }
 
     /**
