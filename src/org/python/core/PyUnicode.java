@@ -759,6 +759,62 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    @Override
+    public PyObject __lt__(PyObject other) {
+        return unicode___lt__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___lt___doc)
+    final PyObject unicode___lt__(PyObject other) {
+        String s = coerceForComparison(other);
+        if (s == null) {
+            return null;
+        }
+        return getString().compareTo(s) < 0 ? Py.True : Py.False;
+    }
+
+    @Override
+    public PyObject __le__(PyObject other) {
+        return unicode___le__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___le___doc)
+    final PyObject unicode___le__(PyObject other) {
+        String s = coerceForComparison(other);
+        if (s == null) {
+            return null;
+        }
+        return getString().compareTo(s) <= 0 ? Py.True : Py.False;
+    }
+
+    @Override
+    public PyObject __gt__(PyObject other) {
+        return unicode___gt__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___gt___doc)
+    final PyObject unicode___gt__(PyObject other) {
+        String s = coerceForComparison(other);
+        if (s == null) {
+            return null;
+        }
+        return getString().compareTo(s) > 0 ? Py.True : Py.False;
+    }
+
+    @Override
+    public PyObject __ge__(PyObject other) {
+        return unicode___ge__(other);
+    }
+
+    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___ge___doc)
+    final PyObject unicode___ge__(PyObject other) {
+        String s = coerceForComparison(other);
+        if (s == null) {
+            return null;
+        }
+        return getString().compareTo(s) >= 0 ? Py.True : Py.False;
+    }
+
     @ExposedMethod(doc = BuiltinDocs.unicode___hash___doc)
     final int unicode___hash__() {
         return str___hash__();
@@ -960,8 +1016,10 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      * Interpret the object as a Java <code>String</code> for use in comparison. The return
      * represents characters as UTF-16. From a <code>PyUnicode</code> we return its internal string.
      * A <code>str</code> and <code>buffer</code> argument is decoded with the default encoding.
-     * Equivalent to {@link #coerceToStringOrNull(PyObject)} allowing only the types supported in
-     * (C)Python <code>unicode.__eq__</code>.
+     * <p>
+     * This method could be replaced by {@link #coerceToStringOrNull(PyObject)} if we were content
+     * to allowing a wider range of types to be supported in comparison operations than (C)Python
+     * <code>unicode.__eq__</code>.
      *
      * @param o the object to coerce
      * @return an equivalent <code>String</code>
@@ -1212,9 +1270,10 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      * {@link #coerceToUnicode(PyObject, boolean)}.
      *
      * @param o the object to coerce
+     * @param name of method
      * @return an equivalent <code>PyUnicode</code> (or o itself, or <code>null</code>)
      */
-    private static PyUnicode coerceStripSepToUnicode(PyObject o) {
+    private static PyUnicode coerceStripSepToUnicode(PyObject o, String name) {
         if (o == null) {
             return null;
         } else if (o instanceof PyUnicode) {
@@ -1225,14 +1284,14 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         } else if (o == Py.None) {
             return null;
         } else {
-            throw Py.TypeError("strip arg must be None, unicode or str");
+            throw Py.TypeError(name + " arg must be None, unicode or str");
         }
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
     final PyObject unicode_strip(PyObject sepObj) {
 
-        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        PyUnicode sep = coerceStripSepToUnicode(sepObj, "strip");
 
         if (isBasicPlane()) {
             // this contains only basic plane characters
@@ -1253,7 +1312,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
     final PyObject unicode_lstrip(PyObject sepObj) {
 
-        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        PyUnicode sep = coerceStripSepToUnicode(sepObj, "lstrip");
 
         if (isBasicPlane()) {
             // this contains only basic plane characters
@@ -1273,7 +1332,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
     final PyObject unicode_rstrip(PyObject sepObj) {
 
-        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        PyUnicode sep = coerceStripSepToUnicode(sepObj, "rstrip");
 
         if (isBasicPlane()) {
             // this contains only basic plane characters
