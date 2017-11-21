@@ -1341,7 +1341,10 @@ class DefaultDecodingCp850(DefaultDecodingTestCase):
 
 
 def test_main():
-    test_support.run_unittest(
+    # We'll be enabling sys.setdefaultencoding so remember to disable
+    had_set = hasattr(sys, "setdefaultencoding")
+    try:
+        test_support.run_unittest(
                 UnicodeTestCase,
                 UnicodeIndexMixTest,
                 UnicodeFormatTestCase,
@@ -1353,6 +1356,9 @@ def test_main():
                 DefaultDecodingUTF8,
                 DefaultDecodingCp850,
             )
+    finally:
+        if not had_set:
+            delattr(sys, "setdefaultencoding")
 
 
 if __name__ == "__main__":

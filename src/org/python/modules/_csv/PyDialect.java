@@ -1,4 +1,4 @@
-/* Copyright (c) Jython Developers */
+/* Copyright (c)2017 Jython Developers */
 package org.python.modules._csv;
 
 import org.python.core.ArgParser;
@@ -9,6 +9,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.core.Untraversable;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -153,17 +154,21 @@ public class PyDialect extends PyObject {
     private static char toChar(String name, PyObject src, char dflt) {
         if (src == null) {
             return dflt;
-        }
-        boolean isStr = Py.isInstance(src, PyString.TYPE);
-        if (src == Py.None || isStr && src.__len__() == 0) {
+        } else if (src == Py.None) {
             return '\0';
-        } else if (!isStr || src.__len__() != 1) {
-            throw Py.TypeError(String.format("\"%s\" must be an 1-character string", name));
+        } else if (src instanceof PyString) {
+            String s = (src instanceof PyUnicode) ? ((PyUnicode) src).encode() : src.toString();
+            if (s.length() == 0) {
+                return '\0';
+            } else if (s.length() == 1) {
+                return s.charAt(0);
+            }
         }
-        return src.toString().charAt(0);
+        // This is only going to work for BMP strings because of the char return type
+        throw Py.TypeError(String.format("\"%s\" must be a 1-character string", name));
     }
 
-    private static int toInt(String name, PyObject src, int dflt) {
+       private static int toInt(String name, PyObject src, int dflt) {
         if (src == null) {
             return dflt;
         }
@@ -176,14 +181,14 @@ public class PyDialect extends PyObject {
     private static String toStr(String name, PyObject src, String dflt) {
         if (src == null) {
             return dflt;
-        }
-        if (src == Py.None) {
+        } else if (src == Py.None) {
             return null;
+        } else if (src instanceof PyUnicode) {
+            return ((PyUnicode) src).encode().toString();
+        } else if (src instanceof PyString) {
+            return src.toString();
         }
-        if (!(src instanceof PyBaseString)) {
-            throw Py.TypeError(String.format("\"%s\" must be an string", name));
-        }
-        return src.toString();
+        throw Py.TypeError(String.format("\"%s\" must be a string", name));
     }
 
     @ExposedGet(name = "escapechar")

@@ -1,4 +1,4 @@
-/* Copyright (c) Jython Developers */
+/* Copyright (c)2017 Jython Developers */
 package org.python.modules._csv;
 
 import org.python.core.Py;
@@ -7,6 +7,7 @@ import org.python.core.PyFloat;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.core.PyUnicode;
 import org.python.core.Traverseproc;
 import org.python.core.Visitproc;
 import org.python.expose.ExposedType;
@@ -21,11 +22,9 @@ import org.python.expose.ExposedGet;
 @ExposedType(name = "_csv.writer", doc = PyWriter.writer_doc)
 public class PyWriter extends PyObject implements Traverseproc {
 
-    public static final String writer_doc =
-    "CSV writer\n" +
-    "\n" +
-    "Writer objects are responsible for generating tabular data\n" +
-    "in CSV format from sequence input.\n";
+    public static final String writer_doc = "CSV writer\n\n"//
+            + "Writer objects are responsible for generating tabular data\n"
+            + "in CSV format from sequence input.\n";
 
     public static final PyType TYPE = PyType.fromClass(PyWriter.class);
 
@@ -53,11 +52,10 @@ public class PyWriter extends PyObject implements Traverseproc {
         this.dialect = dialect;
     }
 
-    public static PyString __doc__writerows = Py.newString(
-            "writerows(sequence of sequences)\n" +
-            "\n" +
-            "Construct and write a series of sequences to a csv file.  Non-string\n" +
-            "elements will be converted to string.");
+    public static PyString __doc__writerows = Py.newString(//
+            "writerows(sequence of sequences)\n\n"
+            + "Construct and write a series of sequences to a csv file.  Non-string\n"
+            + "elements will be converted to string.");
 
     public void writerows(PyObject seqseq) {
         writer_writerows(seqseq);
@@ -82,12 +80,10 @@ public class PyWriter extends PyObject implements Traverseproc {
         }
     }
 
-    public static PyString __doc__writerow = Py.newString(
-            "writerow(sequence)\n" +
-            "\n" +
-            "Construct and write a CSV record from a sequence of fields.  Non-string\n" +
-            "elements will be converted to string."
-            );
+    public static PyString __doc__writerow = Py.newString(//
+            "writerow(sequence)\n\n"
+            + "Construct and write a CSV record from a sequence of fields.  Non-string\n"
+            + "elements will be converted to string.");
 
     public boolean writerow(PyObject seq) {
         return writer_writerow(seq);
@@ -134,14 +130,17 @@ public class PyWriter extends PyObject implements Traverseproc {
                     quoted = false;
             }
 
-            if (field instanceof PyString) {
+            if (field instanceof PyUnicode) {
+                // Unicode fields get the default encoding (must yield U16 bytes).
+                append_ok = join_append(((PyString) field).encode(), len == 1);
+            } else if (field instanceof PyString) {
+                // Not unicode, so must be U16 bytes.
                 append_ok = join_append(field.toString(), len == 1);
             } else if (field == Py.None) {
                 append_ok = join_append("", len == 1);
             } else {
                 PyObject str;
-                //XXX: in 3.x this check can go away and we can just always use
-                //     __str__
+                // XXX: in 3.x this check can go away and we can just always use __str__
                 if (field.getClass() == PyFloat.class) {
                     str = field.__repr__();
                 } else {
@@ -195,9 +194,9 @@ public class PyWriter extends PyObject implements Traverseproc {
     }
 
     /**
-     * This method behaves differently depending on the value of copy_phase: if copy_phase
-     * is false, then the method determines the new record length. If copy_phase is true
-     * then the new field is appended to the record.
+     * This method behaves differently depending on the value of copy_phase: if copy_phase is false,
+     * then the method determines the new record length. If copy_phase is true then the new field is
+     * appended to the record.
      */
     private int join_append_data(String field, boolean quote_empty, boolean copy_phase) {
         int i;
@@ -225,7 +224,7 @@ public class PyWriter extends PyObject implements Traverseproc {
                 break;
             }
             if (c == dialect.delimiter || c == dialect.escapechar || c == dialect.quotechar
-                || dialect.lineterminator.indexOf(c) > -1) {
+                    || dialect.lineterminator.indexOf(c) > -1) {
                 if (dialect.quoting == QuoteStyle.QUOTE_NONE) {
                     want_escape = true;
                 } else {
@@ -281,7 +280,6 @@ public class PyWriter extends PyObject implements Traverseproc {
         }
         rec_len++;
     }
-
 
     /* Traverseproc implementation */
     @Override
