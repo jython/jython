@@ -2,8 +2,11 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-Development tip
+Jython 2.7.2a1
   Bugs fixed
+    - [ 2632 ] Handle unicode data appropriately in csv module
+    - [ 2638 ] str not default-decoded in str-unicode operations
+    - [ 2622 ] json dumps error (use of AbstractDict)
     - [ 2607, 2620 ] Error loading Python DLL (error code 14001)
     - [ 2612 ] NPE while trying to load class
     - [ 2609 ] PyType.fromClass publication race (discovered in strptime and re)

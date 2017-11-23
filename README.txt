@@ -1,8 +1,8 @@
 Jython: Python for the Java Platform
 
-Welcome to Jython 2.7.1!
+Welcome to Jython 2.7.2a1.
 
-This is the final release of the 2.7.1 version of Jython. Along with
+This is an alpha release of the 2.7.2 version of Jython. Along with
 language and runtime compatibility with CPython 2.7, Jython 2.7
 provides substantial support of the Python ecosystem. This includes
 built-in support of pip/setuptools (you can use with bin/pip) and a
@@ -31,13 +31,8 @@ about half an hour.
 
 See ACKNOWLEDGMENTS for details about Jython's copyright, license,
 contributors, and mailing lists; and NEWS for detailed release notes,
-including bugs fixed, backwards breaking changes, and new
-features. Thanks go to Google for sponsoring Stefan Richthofer for the
-Google Summer of Code; there are so many others to thank, but Stefan's
-work proved instrumental for getting 2.7.1 out, all in preparation for
-his actual work on JyNI for the summer of 2017
-(http://jyni.org/). Motivation helps! We also deeply thank all who
-contribute to Jython, including - but not limited to - bug reports,
-patches, pull requests, documentation changes, support emails, and
-fantastic conversation on Freenode at #jython. Join us there for your
-questions and answers!
+including bugs fixed, backwards breaking changes, and new features. We
+sincerely thank all who contribute to Jython, including - but not
+limited to - bug reports, patches, pull requests, documentation
+changes, support emails, and fantastic conversation on Freenode at
+#jython. Join us there for your questions and answers!
