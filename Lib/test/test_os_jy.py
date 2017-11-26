@@ -231,16 +231,30 @@ class UnicodeTestCase(unittest.TestCase):
                             'sys.stdout.write(os.getenv("TEST_HOME"))'],
                     stdout=subprocess.PIPE,
                     env=newenv)
-            # Decode with default encoding utf-8 (because ... ?)
+            # Decode with FS encoding used by subprocess communication
             self.assertEqual(p.stdout.read().decode('utf-8'), expected)
 
     def test_getcwd(self):
         with test_support.temp_cwd(name=u"tempcwd-中文") as temp_cwd:
-            p = subprocess.Popen([sys.executable, "-c",
-                                  'import sys,os;' \
-                                  'sys.stdout.write(os.getcwd().encode("utf-8"))'],
-                                 stdout=subprocess.PIPE)
-            self.assertEqual(p.stdout.read().decode("utf-8"), temp_cwd)
+            # os.getcwd reports the working directory as an FS-encoded str,
+            # which is also the encoding used in subprocess communication.
+            p = subprocess.Popen([
+                    sys.executable, "-c",
+                    'import sys,os;' \
+                    'sys.stdout.write(os.getcwd())'],
+                stdout=subprocess.PIPE)
+            self.assertEqual(p.stdout.read(), temp_cwd)
+
+    def test_getcwdu(self):
+        with test_support.temp_cwd(name=u"tempcwd-中文") as temp_cwd:
+            # os.getcwdu reports the working directory as unicode,
+            # which must be encoded for subprocess communication.
+            p = subprocess.Popen([
+                    sys.executable, "-c",
+                    'import sys,os;' \
+                    'sys.stdout.write(os.getcwdu().encode(sys.getfilesystemencoding()))'],
+                stdout=subprocess.PIPE)
+            self.assertEqual(p.stdout.read(), temp_cwd)
 
     def test_listdir(self):
         # It is hard to avoid Unicode paths on systems like OS X. Use relative
