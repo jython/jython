@@ -12,21 +12,25 @@ import unittest
 from org.python.core import PyShadowString
 
 # Ideally we would test shadowstr is a str but the tests need to sub-class it
-#
-# class StrTestCase( # Should pass all tests for str
-#     string_tests.CommonTest,
-#     string_tests.MixinStrUnicodeUserStringTest,
-#     string_tests.MixinStrUserStringTest,
-#     string_tests.MixinStrUnicodeTest,
-#     ):
-#
-#     type2test = PyShadowString
+
+class StrTestCase(
+    string_tests.CommonTest,
+    string_tests.MixinStrUnicodeUserStringTest,
+    string_tests.MixinStrUserStringTest,
+    ):
+    # A PyShadowString should pass the tests for str too.
+    type2test = PyShadowString
 
 
 class ShadowStrTestCase(unittest.TestCase):
 
     def setUp(self):
         self.ss = PyShadowString("hello", "bonjour")
+
+    # The Java class of a python module may be <module>$py
+    CCLASS = r"test\.test_shadowstr_jy\$py"     # compiled (e.g. regrtest)
+    # Or it may be org.python.pycode._pyx<n>
+    PCLASS = r"org\.python\.pycode\._pyx\d+"    # .py at the prompt
 
     def check_first_eq(self):
         self.assertTrue(self.ss == "hello")
@@ -45,10 +49,8 @@ class ShadowStrTestCase(unittest.TestCase):
     def test_eq_class(self):
         # Test recognition of class context only
         self.check_first_eq()
-        # The Java class of a python module may be <module>$py
-        self.ss.addtarget(r"test\.test_shadowstr_jy\$py") # class only
-        # Or it may be org.python.pycode._pyx<n>
-        self.ss.addtarget(r"org\.python\.pycode\._pyx\d+") # class only
+        self.ss.addtarget(self.CCLASS)
+        self.ss.addtarget(self.PCLASS)
         self.check_both_eq()
 
     def test_eq_method(self):
@@ -62,10 +64,9 @@ class ShadowStrTestCase(unittest.TestCase):
         # Test recognition of class and method context
         self.check_first_eq()
         # Match this method in this module
-        self.ss.addtarget(r"test\.test_shadowstr_jy\$py", # class
-                          r"test_eq_class_method\$\d+") # method
-        self.ss.addtarget(r"org\.python\.pycode\._pyx\d+", # class
-                          r"test_eq_class_method\$\d+") # method
+        method = r"test_eq_class_method\$\d+"
+        self.ss.addtarget(self.CCLASS, method)
+        self.ss.addtarget(self.PCLASS, method)
         self.check_both_eq()
 
     def check_first_startswith(self):
@@ -85,16 +86,13 @@ class ShadowStrTestCase(unittest.TestCase):
     def test_startswith_class(self):
         # Test recognition of class context only
         self.check_first_startswith()
-        # The Java class of a python module may be <module>$py
-        self.ss.addtarget(r"test\.test_shadowstr_jy\$py") # class only
-        # Or it may be org.python.pycode._pyx<n>
-        self.ss.addtarget(r"org\.python\.pycode\._pyx\d+") # class only
+        self.ss.addtarget(self.CCLASS) # class only
+        self.ss.addtarget(self.PCLASS) # class only
         self.check_both_startswith()
 
     def test_startswith_method(self):
         # Test recognition of method context only
         self.check_first_startswith()
-        # The Java method name of a python function is name$<n>
         self.ss.addtarget(None, r"test_startswith_method\$\d+") # method only
         self.check_both_startswith()
 
@@ -102,16 +100,32 @@ class ShadowStrTestCase(unittest.TestCase):
         # Test recognition of class and method context
         self.check_first_startswith()
         # Match this method in this module
-        self.ss.addtarget(r"test\.test_shadowstr_jy\$py", # class
-                          r"test_startswith_class_method\$\d+") # method
-        self.ss.addtarget(r"org\.python\.pycode\._pyx\d+", # class
-                          r"test_startswith_class_method\$\d+") # method
+        method = r"test_startswith_class_method\$\d+"
+        self.ss.addtarget(self.CCLASS, method)
+        self.ss.addtarget(self.PCLASS, method)
         self.check_both_startswith()
 
+    def test_slice(self):
+        # Test slicing goes through to the constituent strings consistently
+        def check(m, n):
+            tt = self.ss[m:n]
+            self.assertEqual(tt, "hello"[m:n])
+            self.assertEqual(tt, "bonjour"[m:n])
+            self.assertEqual(self.ss.gettargets(), tt.gettargets())
+
+        # Match this method in this module
+        method = r"test_slice\$\d+"
+        self.ss.addtarget(self.CCLASS, method)
+        self.ss.addtarget(self.PCLASS, method)
+        check(None, 3)
+        check(1, 5)
+        # Doesn't currently do this:
+        ##check(-3, None)
+        ##check(None, None)
 
 def test_main():
     run_unittest(
-            #StrTestCase,
+            StrTestCase,
             ShadowStrTestCase,
         )
 

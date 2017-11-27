@@ -6,20 +6,20 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 @Untraversable
-@ExposedType(name = "shadowstr", base = PyString.class, isBaseType = false)
+@ExposedType(name = "shadowstr", base = PyString.class, isBaseType = true)
 public class PyShadowString extends PyString {
+
     public static final PyType TYPE = PyType.fromClass(PyShadowString.class);
 
     protected PyList targets;
 
     /**
-     * The shadow string is additionally used for some comparisons, especially for __eq__.
-     * __eq__ will evaluate positive if the other string equals the actual value
-     * *or* the shadow. The shadow persists slicing (is sliced accordingly)
-     * and is taken into account by startswith.
+     * The shadow string is additionally used for some comparisons, especially for __eq__. __eq__
+     * will evaluate positive if the other string equals the actual value *or* the shadow. The
+     * shadow persists slicing (is sliced accordingly) and is taken into account by startswith.
      */
     protected String shadow;
-    
+
     // for PyJavaClass.init()
     public PyShadowString() {
         this(TYPE, "", "");
@@ -37,7 +37,7 @@ public class PyShadowString extends PyString {
         this.shadow = shadow;
         targets = new PyList();
     }
-    
+
     public PyShadowString(String str, String shadow, boolean isBytes, PyList targets) {
         super(TYPE, str, isBytes);
         this.shadow = shadow;
@@ -63,10 +63,10 @@ public class PyShadowString extends PyString {
     }
 
     @ExposedNew
-    static PyObject shadowstr_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("shadowstr", args, keywords,
-                new String[] {"string", "shadow"}, 0);
+    static PyObject shadowstr_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args,
+            String[] keywords) {
+        ArgParser ap =
+                new ArgParser("shadowstr", args, keywords, new String[] {"string", "shadow"}, 0);
         PyObject S = ap.getPyObject(0, null);
         PyObject Sh = ap.getPyObject(1, null);
         // Get the textual representation of the object into str/bytes form
@@ -78,7 +78,7 @@ public class PyShadowString extends PyString {
             S = S.__str__();
             if (S instanceof PyUnicode) {
                 // Encoding will raise UnicodeEncodeError if not 7-bit clean.
-                str = codecs.encode((PyUnicode)S, null, null);
+                str = codecs.encode((PyUnicode) S, null, null);
             } else {
                 // Must be str/bytes, and should be 8-bit clean already.
                 str = S.toString();
@@ -91,7 +91,7 @@ public class PyShadowString extends PyString {
             Sh = Sh.__str__();
             if (Sh instanceof PyUnicode) {
                 // Encoding will raise UnicodeEncodeError if not 7-bit clean.
-                shd = codecs.encode((PyUnicode)Sh, null, null);
+                shd = codecs.encode((PyUnicode) Sh, null, null);
             } else {
                 // Must be str/bytes, and should be 8-bit clean already.
                 shd = Sh.toString();
@@ -104,8 +104,8 @@ public class PyShadowString extends PyString {
         Exception exc = new Exception();
         PyObject obj;
         boolean result;
-        for (StackTraceElement ste: exc.getStackTrace()) {
-            for (PyObject itm: targets.getList()) {
+        for (StackTraceElement ste : exc.getStackTrace()) {
+            for (PyObject itm : targets.getList()) {
                 result = true;
                 obj = ((PyTuple) itm).__finditem__(0);
                 if (obj != null && obj != Py.None) {
@@ -151,9 +151,9 @@ public class PyShadowString extends PyString {
 
     @ExposedMethod(defaults = {"null"})
     public final void shadowstr_addtarget(PyObject classname, PyObject methodname) {
-        targets.add(methodname != null ?
-                new PyTuple(classname == null ? Py.None : classname, methodname) :
-                new PyTuple(classname == null ? Py.None : classname));
+        targets.add(methodname != null
+                ? new PyTuple(classname == null ? Py.None : classname, methodname)
+                : new PyTuple(classname == null ? Py.None : classname));
     }
 
     public PyList getTargets() {
@@ -176,7 +176,9 @@ public class PyShadowString extends PyString {
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject shadowstr___eq__(PyObject other) {
         String s = other.toString();
-        if (s != null && s.equals(shadow)) return Py.True;
+        if (s != null && s.equals(shadow)) {
+            return Py.True;
+        }
         return str___eq__(other);
     }
 
@@ -215,13 +217,12 @@ public class PyShadowString extends PyString {
                     new_chars[j] = shadow.charAt(i);
                     j++; // separate line, so in exception case j is clearly before increment
                 }
-            } catch (IndexOutOfBoundsException ioobe)
-            {
-                return new PyShadowString(new String(new_chars),
-                        new String(new_shadow_chars, 0, j), true, targets);
+            } catch (IndexOutOfBoundsException ioobe) {
+                return new PyShadowString(new String(new_chars), new String(new_shadow_chars, 0, j),
+                        true, targets);
             }
-            return new PyShadowString(new String(new_chars),
-                    new String(new_shadow_chars), true, targets);
+            return new PyShadowString(new String(new_chars), new String(new_shadow_chars), true,
+                    targets);
         }
     }
 
@@ -253,16 +254,16 @@ public class PyShadowString extends PyString {
             // It ought to be PyUnicode or some kind of bytes with the buffer API.
             String s = asU16BytesOrError(prefix);
             // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
-            return sliceLen >= s.length() &&
-                    (getString().startsWith(s, start) || shadow.startsWith(s, start));
+            return sliceLen >= s.length()
+                    && (getString().startsWith(s, start) || shadow.startsWith(s, start));
         } else {
             // Loop will return true if this slice starts with any prefix in the tuple
-            for (PyObject prefixObj : ((PyTuple)prefix).getArray()) {
+            for (PyObject prefixObj : ((PyTuple) prefix).getArray()) {
                 // It ought to be PyUnicode or some kind of bytes with the buffer API.
                 String s = asU16BytesOrError(prefixObj);
                 // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
-                if (sliceLen >= s.length() &&
-                        (getString().startsWith(s, start) || shadow.startsWith(s, start))) {
+                if (sliceLen >= s.length()
+                        && (getString().startsWith(s, start) || shadow.startsWith(s, start))) {
                     return true;
                 }
             }
@@ -278,6 +279,7 @@ public class PyShadowString extends PyString {
 
     @ExposedMethod
     final PyString shadowstr___repr__() {
-        return new PyString(encode_UnicodeEscape(getString()+" ( =="+shadow+" for targets )", true));
+        return new PyString(
+                encode_UnicodeEscape(getString() + " ( ==" + shadow + " for targets )", true));
     }
 }

@@ -55,6 +55,7 @@ partial.derived:org.python.modules._functools.PyPartialDerived
 property.derived:org.python.core.PyPropertyDerived
 random.derived:org.python.modules.random.PyRandomDerived
 set.derived:org.python.core.PySetDerived
+shadowstr.derived:org.python.core.PyShadowStringDerived
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived
 tuple.derived:org.python.core.PyTupleDerived
