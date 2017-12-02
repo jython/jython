@@ -72,7 +72,7 @@ public class PyShadowStringDerived extends PyShadowString implements Slotted,Fin
         dict=new PyStringMap();
     }
 
-    public PyShadowStringDerived(PyType subtype,String str,String shadow) {
+    public PyShadowStringDerived(PyType subtype,PyObject str,PyObject shadow) {
         super(subtype,str,shadow);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();

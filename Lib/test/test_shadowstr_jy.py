@@ -35,10 +35,33 @@ class ShadowStrTestCase(unittest.TestCase):
     def check_first_eq(self):
         self.assertTrue(self.ss == "hello")
         self.assertFalse(self.ss == "bonjour")
+        self.assertTrue("hello" == self.ss)
+        self.assertFalse("bonjour" == self.ss)
+        # shadowstring-shadowstring comparisons
+        tt = PyShadowString("hello", "goodbye")
+        self.assertTrue(self.ss == tt) # primary==primary
+        tt = PyShadowString("adieu", "hello")
+        self.assertFalse(self.ss == tt) # primary==shadow
+        self.assertFalse(tt == self.ss) # shadow==primary
+        tt = PyShadowString("adieu", "bonjour")
+        self.assertFalse(self.ss == tt) # shadow==shadow
 
     def check_both_eq(self):
         self.assertTrue(self.ss == "hello")
         self.assertTrue(self.ss == "bonjour")
+        self.assertTrue("hello" == self.ss)
+        self.assertTrue("bonjour" == self.ss)
+        # shadowstring-shadowstring comparisons
+        tt = PyShadowString("hello", "goodbye")
+        for c, m in self.ss.gettargets(): tt.addtarget(c, m)
+        self.assertTrue(self.ss == tt) # primary==primary
+        tt = PyShadowString("goodbye", "hello")
+        for c, m in self.ss.gettargets(): tt.addtarget(c, m)
+        self.assertTrue(self.ss == tt) # primary==shadow
+        self.assertTrue(tt == self.ss) # shadow==primary
+        tt = PyShadowString("adieu", "bonjour")
+        for c, m in self.ss.gettargets(): tt.addtarget(c, m)
+        self.assertTrue(self.ss == tt) # shadow==shadow
 
     def test_eq(self):
         # Test recognition unconditionally
@@ -119,9 +142,8 @@ class ShadowStrTestCase(unittest.TestCase):
         self.ss.addtarget(self.PCLASS, method)
         check(None, 3)
         check(1, 5)
-        # Doesn't currently do this:
-        ##check(-3, None)
-        ##check(None, None)
+        check(-3, None)
+        check(None, None)
 
 def test_main():
     run_unittest(

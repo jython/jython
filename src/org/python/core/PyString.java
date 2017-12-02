@@ -640,9 +640,6 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     @Override
     public PyObject __eq__(PyObject other) {
-        if (other instanceof PyShadowString) {
-            return other.__eq__(this);
-        }
         return str___eq__(other);
     }
 

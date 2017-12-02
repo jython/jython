@@ -1,161 +1,189 @@
 package org.python.core;
 
+import java.util.regex.Pattern;
+
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+/**
+ * This class provides a string that sometimes seems to change value, as far as equality tests and
+ * <code>startswith</code> are concerned. This solves a problem that Jython users sometimes
+ * experience with libraries that are sensitive to platform.
+ * <p>
+ * A library may test for a particular platform in order to adjust to local file name conventions or
+ * to decide which operating system commands are available. In Jython, <code>os.name</code> and
+ * <code>sys.platform</code> indicate that Java is the platform, which is necessary information in
+ * some parts of the standard library, but other libraries assuming CPython then draw incorrect
+ * conclusions.
+ * <p>
+ * With hindsight, a better choice could be made, where <code>sys.platform</code> etc. indicated
+ * Windows or Posix, and something else indicates the implementation. A change in Jython 2 would
+ * cause more problems than it solved, but we expect Jython 3 to work that way. In the Python
+ * Standard Library, the Jython project can make all necessary changes. It can't do anything about
+ * third-party libraries. But it would be a big help if users could cause <code>sys.platform</code>
+ * or <code>os.name</code> to appear to have the OS-dependent value as far as those troublesome
+ * libraries were concerned.
+ * <p>
+ * This is what this class achieves. <code>os.name</code> and <code>sys.platform</code> regular
+ * strings for most purposes, but each has a "shadow" value that is used in contexts the user may
+ * specify.
+ */
 @Untraversable
 @ExposedType(name = "shadowstr", base = PyString.class, isBaseType = true)
 public class PyShadowString extends PyString {
 
     public static final PyType TYPE = PyType.fromClass(PyShadowString.class);
 
+    /**
+     * Contexts (expressed as a {@link PyTuple} of class name and method name) where {@link #shadow}
+     * is allowed to match as well as the primary value.
+     */
     protected PyList targets;
 
     /**
      * The shadow string is additionally used for some comparisons, especially for __eq__. __eq__
-     * will evaluate positive if the other string equals the actual value *or* the shadow. The
+     * will evaluate positive if the other string equals the primary value *or* the shadow. The
      * shadow persists slicing (is sliced accordingly) and is taken into account by startswith.
      */
-    protected String shadow;
+    protected PyString shadow;
 
-    // for PyJavaClass.init()
+    /** Empty string (not very useful but needed for technical reasons). */
     public PyShadowString() {
-        this(TYPE, "", "");
-        targets = new PyList();
+        this(Py.EmptyString, Py.EmptyString);
     }
 
-    public PyShadowString(String str, String shadow) {
-        super(TYPE, str);
-        this.shadow = shadow;
-        targets = new PyList();
+    /** Construct an instance specifying primary and shadow values. */
+    public PyShadowString(String primary, String shadow) {
+        this(TYPE, Py.newString(primary), Py.newString(shadow), new PyList());
     }
 
-    public PyShadowString(String str, String shadow, boolean isBytes) {
-        super(TYPE, str, isBytes);
-        this.shadow = shadow;
-        targets = new PyList();
+    /** Construct an instance specifying primary and shadow values (bytes objects expected). */
+    private PyShadowString(PyObject primary, PyObject shadow) {
+        this(TYPE, primary, shadow, new PyList());
     }
 
-    public PyShadowString(String str, String shadow, boolean isBytes, PyList targets) {
-        super(TYPE, str, isBytes);
-        this.shadow = shadow;
+    private PyShadowString(PyObject primary, PyObject shadow, PyList targets) {
+        this(TYPE, primary, shadow, targets);
+    }
+
+    public PyShadowString(PyType subtype, PyObject primary, PyObject shadow) {
+        this(subtype, primary, shadow, new PyList());
+    }
+
+    private PyShadowString(PyType subtype, PyObject primary, PyObject shadow, PyList targets) {
+        super(subtype, primary.__str__().getString());
+        this.shadow = shadow.__str__();
         this.targets = targets;
-    }
-
-    public PyShadowString(PyObject str, String shadow) {
-        super(str.toString());
-        this.shadow = shadow;
-        targets = new PyList();
-    }
-
-    public PyShadowString(PyType subtype, String str, String shadow) {
-        super(subtype, str);
-        this.shadow = shadow;
-        targets = new PyList();
-    }
-
-    public PyShadowString(PyType subtype, PyObject str, String shadow) {
-        super(subtype, str.toString());
-        this.shadow = shadow;
-        targets = new PyList();
     }
 
     @ExposedNew
     static PyObject shadowstr_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args,
             String[] keywords) {
         ArgParser ap =
-                new ArgParser("shadowstr", args, keywords, new String[] {"string", "shadow"}, 0);
-        PyObject S = ap.getPyObject(0, null);
-        PyObject Sh = ap.getPyObject(1, null);
-        // Get the textual representation of the object into str/bytes form
-        String str, shd;
-        if (S == null) {
-            str = "";
+                new ArgParser("shadowstr", args, keywords, new String[] {"primary", "shadow"}, 0);
+
+        PyObject valueObj = ap.getPyObject(0, Py.EmptyString);
+        PyObject shadowObj = ap.getPyObject(1, Py.EmptyString);
+
+        if (valueObj instanceof PyString && shadowObj instanceof PyString) {
+            return new PyShadowString(valueObj, shadowObj);
         } else {
-            // Let the object tell us its representation: this may be str or unicode.
-            S = S.__str__();
-            if (S instanceof PyUnicode) {
-                // Encoding will raise UnicodeEncodeError if not 7-bit clean.
-                str = codecs.encode((PyUnicode) S, null, null);
-            } else {
-                // Must be str/bytes, and should be 8-bit clean already.
-                str = S.toString();
-            }
+            String message = String.format("arguments must be strings not (%.200s, %.200s)",
+                    valueObj.getType(), shadowObj.getType());
+            throw Py.TypeError(message);
         }
-        if (Sh == null) {
-            shd = "";
-        } else {
-            // Let the object tell us its representation: this may be str or unicode.
-            Sh = Sh.__str__();
-            if (Sh instanceof PyUnicode) {
-                // Encoding will raise UnicodeEncodeError if not 7-bit clean.
-                shd = codecs.encode((PyUnicode) Sh, null, null);
-            } else {
-                // Must be str/bytes, and should be 8-bit clean already.
-                shd = Sh.toString();
-            }
-        }
-        return new PyShadowString(str, shd);
     }
 
+    /** Convert a PyObject (specifying a regex) to a compiled pattern or null. */
+    private static Pattern getPattern(PyObject o) {
+        if (o instanceof PyString) {
+            return Pattern.compile(o.toString());
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Test whether the current code is executing in of one of the target contexts, by searching up
+     * the stack for a class and method pait that match.
+     *
+     * @return true iff in one of the named contexts
+     */
     private boolean isTarget() {
+        // Get a stack trace by constructing an exception here
         Exception exc = new Exception();
-        PyObject obj;
-        boolean result;
-        for (StackTraceElement ste : exc.getStackTrace()) {
-            for (PyObject itm : targets.getList()) {
-                result = true;
-                obj = ((PyTuple) itm).__finditem__(0);
-                if (obj != null && obj != Py.None) {
-                    if (!ste.getClassName().matches(obj.toString())) {
-                        result = false;
-                    }
-                }
-                if (result) {
-                    obj = ((PyTuple) itm).__finditem__(1);
-                    if (obj != null && obj != Py.None) {
-                        if (!ste.getMethodName().matches(obj.toString())) {
-                            result = false;
+
+        for (PyObject obj : targets.getList()) {
+            // Only process proper tuple entries
+            if (obj instanceof PyTuple && ((PyTuple) obj).__len__() >= 2) {
+
+                // Compile the target specification
+                PyTuple target = (PyTuple) obj;
+                Pattern clazz = getPattern(target.__finditem__(0));
+                Pattern method = getPattern(target.__finditem__(1));
+
+                // Now scan the stack using this pair of patterns
+                for (StackTraceElement ste : exc.getStackTrace()) {
+                    if (clazz == null || clazz.matcher(ste.getClassName()).matches()) {
+                        // Either we don't care about the class it matches, and ...
+                        if ((method == null || method.matcher(ste.getMethodName()).matches())) {
+                            // Either we don't care about the method name or it matches
+                            return true;
                         }
                     }
                 }
-                if (result) {
-                    // we have a match
-                    return true;
-                }
             }
         }
+
+        // Nothing matched
         return false;
     }
 
-    public String getShadow() {
-        return shadow;
-    }
-
+    /** Get the shadow value. */
     public PyString getshadow() {
-        return (PyString) shadowstr_getshadow();
+        return shadowstr_getshadow();
     }
 
     @ExposedMethod
-    public final PyObject shadowstr_getshadow() {
-        return Py.newString(shadow);
+    public final PyString shadowstr_getshadow() {
+        return shadow;
     }
 
+    /**
+     * Specify a context (class, method) in which the shadow string is allowed to match.
+     *
+     * @param className class name to match or null to match anything.
+     * @param methodName method name to match or null to match anything.
+     */
     public void addTarget(String className, String methodName) {
-        PyString classname = className == null ? null : Py.newString(className);
-        PyString methodname = methodName == null ? null : Py.newString(methodName);
-        shadowstr_addtarget(classname, methodname);
+        shadowstr_addtarget( //
+                className == null ? Py.None : Py.newUnicode(className),
+                methodName == null ? Py.None : Py.newUnicode(methodName));
     }
 
     @ExposedMethod(defaults = {"null"})
     public final void shadowstr_addtarget(PyObject classname, PyObject methodname) {
-        targets.add(methodname != null
-                ? new PyTuple(classname == null ? Py.None : classname, methodname)
-                : new PyTuple(classname == null ? Py.None : classname));
+        // In principle these could be unicode strings
+        PyTuple entry = new PyTuple(asUnicode(classname), asUnicode(methodname));
+        targets.add(entry);
     }
 
+    /** Prepare argument for addtarget, allowing string-like values or None. */
+    private static PyObject asUnicode(PyObject o) {
+        if (o == null || o == Py.None) {
+            return Py.None;
+        } else if (o instanceof PyString) {
+            return o.__unicode__();
+        }
+        throw Py.TypeError(String.format("string or None required, not %.200s", o.getType()));
+    }
+
+    /**
+     * Return a list of the tuples specifying the contexts in which the shadow value will be
+     * consulted during matching.
+     */
     public PyList getTargets() {
         return (PyList) shadowstr_gettargets();
     }
@@ -165,65 +193,64 @@ public class PyShadowString extends PyString {
         return targets;
     }
 
+    /**
+     * Compare this <code>PyShadowString</code> with another <code>PyObject</code> for equality. A
+     * <code>PyShadowString</code> is equal to the other object if its primary value is equal to it,
+     * or if its shadow value is equal to the other object and the test is made in one of its target
+     * contexts. (Two <code>PyShadowString</code> are equal if the primary values are equal, the
+     * primary of one matches the shadow of the other in the shadow's context, or their shadows
+     * match and both are in context.
+     *
+     * @param other to compare
+     * @return <code>PyBoolean</code> result (or <code>null</code> if not implemented)
+     */
     @Override
     public PyObject __eq__(PyObject other) {
-        if (!isTarget()) {
-            return str___eq__(other);
-        }
         return shadowstr___eq__(other);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject shadowstr___eq__(PyObject other) {
-        String s = other.toString();
-        if (s != null && s.equals(shadow)) {
-            return Py.True;
-        }
-        return str___eq__(other);
-    }
+        // Re-wrap the primary value as a PyString to invoke the right kind of equality test.
+        PyObject result = testEqual(new PyString(getString()), other);
+        if (result != Py.False) {
+            // True, or null if str does not know how to compare with other (so we don't either).
+            return result;
 
-    @Override
-    protected PyShadowString fromSubstring(int begin, int end) {
-        // Method is overridden in PyUnicode, so definitely a PyString
-        int shadowBegin = begin, shadowEnd = end;
-        if (begin > shadow.length()) {
-            shadowBegin = shadow.length();
-        }
-        if (end > shadow.length()) {
-            shadowEnd = shadow.length();
-        }
-        return new PyShadowString(getString().substring(begin, end),
-                shadow.substring(shadowBegin, shadowEnd), true, targets);
-    }
+        } else if (targets.isEmpty()) {
+            // We aren't going to be using our shadow string
+            return Py.False;
 
-    @Override
-    protected PyObject getslice(int start, int stop, int step) {
-        if (step > 0 && stop < start) {
-            stop = start;
-        }
-        if (step == 1) {
-            return fromSubstring(start, stop);
         } else {
-            int n = sliceLength(start, stop, step);
-            char new_chars[] = new char[n];
-            int j = 0;
-            for (int i = start; j < n; i += step) {
-                new_chars[j++] = getString().charAt(i);
+            // Since we have targets, compare the shadow string with the other object.
+            result = testEqual(shadow, other);
+            if (result == Py.True) {
+                // It matches, so the result is true iff we are in a target context
+                return Py.newBoolean(isTarget());
+            } else {
+                return result;
             }
-            char new_shadow_chars[] = new char[n];
-            j = 0;
-            try {
-                for (int i = start; j < n; i += step) {
-                    new_chars[j] = shadow.charAt(i);
-                    j++; // separate line, so in exception case j is clearly before increment
-                }
-            } catch (IndexOutOfBoundsException ioobe) {
-                return new PyShadowString(new String(new_chars), new String(new_shadow_chars, 0, j),
-                        true, targets);
-            }
-            return new PyShadowString(new String(new_chars), new String(new_shadow_chars), true,
-                    targets);
         }
+    }
+
+    /**
+     * Test for equality, used as a helper to <code>shadowstr___eq__</code>, dealing with the
+     * possibility that <code>other</code> is another <code>PyShadowString</code>.
+     */
+    private static final PyObject testEqual(PyString string, PyObject other) {
+        if (other instanceof PyShadowString) {
+            return ((PyShadowString) other).shadowstr___eq__(string);
+        } else {
+            return string.__eq__(other);
+        }
+    }
+
+    @Override
+    public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
+        PyObject primary = super.__getslice__(start, stop, step);
+        PyObject shadow = this.shadow.__getslice__(start, stop, step);
+
+        return new PyShadowString(primary, shadow, targets);
     }
 
     @Override
@@ -243,33 +270,9 @@ public class PyShadowString extends PyString {
 
     @ExposedMethod(defaults = {"null", "null"})
     final boolean shadowstr_startswith(PyObject prefix, PyObject startObj, PyObject endObj) {
-        if (!isTarget()) {
-            return str_startswith(prefix, startObj, endObj);
-        }
-        int[] indices = translateIndices(startObj, endObj);
-        int start = indices[0];
-        int sliceLen = indices[1] - start;
-
-        if (!(prefix instanceof PyTuple)) {
-            // It ought to be PyUnicode or some kind of bytes with the buffer API.
-            String s = asU16BytesOrError(prefix);
-            // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
-            return sliceLen >= s.length()
-                    && (getString().startsWith(s, start) || shadow.startsWith(s, start));
-        } else {
-            // Loop will return true if this slice starts with any prefix in the tuple
-            for (PyObject prefixObj : ((PyTuple) prefix).getArray()) {
-                // It ought to be PyUnicode or some kind of bytes with the buffer API.
-                String s = asU16BytesOrError(prefixObj);
-                // If s is non-BMP, and this is a PyString (bytes), result will correctly be false.
-                if (sliceLen >= s.length()
-                        && (getString().startsWith(s, start) || shadow.startsWith(s, start))) {
-                    return true;
-                }
-            }
-            // None matched
-            return false;
-        }
+        return super.startswith(prefix, startObj, endObj) //
+                || (!targets.isEmpty() && shadow.startswith(prefix, startObj, endObj)
+                        && isTarget());
     }
 
     @Override
@@ -279,7 +282,8 @@ public class PyShadowString extends PyString {
 
     @ExposedMethod
     final PyString shadowstr___repr__() {
-        return new PyString(
-                encode_UnicodeEscape(getString() + " ( ==" + shadow + " for targets )", true));
+        // What you'd type to get this instance (without targets).
+        String fmt = "PyShadowString(%.200s, %.200s)";
+        return Py.newString(String.format(fmt, super.__repr__(), shadow.__repr__()));
     }
 }
