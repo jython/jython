@@ -73,6 +73,12 @@ public class PyException extends RuntimeException implements Traverseproc
     }
 
     @Override
+    public String getMessage() {
+        normalize();
+        return Py.formatException(type, value);
+    }
+
+    @Override
     public synchronized void printStackTrace(PrintStream s) {
         if (printingStackTrace) {
             super.printStackTrace(s);

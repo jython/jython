@@ -3,6 +3,7 @@ Jython NEWS
 For more details, please see https://hg.python.org/jython
 
   Developement tip
+    - [ 2650 ] Detail message is not set on PyException from PythonInterpreter
     - [ 2403 ] VerifyError when implementing interfaces containing default methods (Java 8)
 
 Jython 2.7.2a1
