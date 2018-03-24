@@ -2,7 +2,15 @@ Jython NEWS
 
 For more details, please see https://hg.python.org/jython
 
-  Developement tip
+Developement tip
+  Bugs fixed
+    - [ 1866 ] Parser does not have mismatch token error messages caught by BaseRecognizer
+    - [ 1930 ] traceback raises exception in os.py
+    - [ 2419 ] List expected failures by OS platform in regrtest.py
+    - [ 2611 ] mkdir() operation in /Lib/os.py has different behavior when running in Docker container
+    - [ 2655 ] __findattr__ is final (update documentation)
+    - [ 2646 ] Test failure in test_os_jy after utf-8 decode
+    - [ 2469 ] jython launcher fails on Windows if JAVA_HOME is set
     - [ 2650 ] Detail message is not set on PyException from PythonInterpreter
     - [ 2403 ] VerifyError when implementing interfaces containing default methods (Java 8)
 
@@ -34,6 +42,7 @@ Jython 2.7.1rc3
 Jython 2.7.1rc2
   Bugs fixed
     - [ 2536 ] deadlocks in regrtests due to StackOverflowError in finally block (workaround, still open)
+    - [ 2348 ] site module does not import if usernames contain non-ascii characters
     - [ 2356 ] java.lang.IllegalArgumentException on startup on Windows if username not ASCII
     - [ 1839 ] sys.getfilesystemencoding() is None (now utf-8)
     - [ 2579 ] Pyc files are not loading for too large modules if path contains __pyclasspath__
