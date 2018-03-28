@@ -104,6 +104,7 @@ def parse_launcher_args(args):
     parsed.profile = False # --profile flag given
     parsed.properties = OrderedDict() # properties to give the JVM
     parsed.java = [] # any other arguments to give the JVM
+    unparsed = list()
 
     it = iter(args)
     next(it)  # ignore sys.argv[0]
@@ -143,13 +144,17 @@ def parse_launcher_args(args):
         elif arg in (u"--boot", u"--jdb", u"--profile"):
             setattr(parsed, arg[2:], True)
             i += 1
+        elif len(arg) >= 2 and arg[0] == u'-' and arg[1] in u"BEisSuvV3":
+            unparsed.append(arg)
+            i += 1
         elif arg == u"--":
             i += 1
             break
         else:
             break
 
-    return parsed, args[i:]
+    unparsed.extend(args[i:])
+    return parsed, unparsed
 
 
 class JythonCommand(object):
