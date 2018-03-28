@@ -202,9 +202,9 @@ class JythonCommand(object):
         # Python 2 thinks in bytes. Carefully normalise in Unicode.
         path = os.path.realpath(bytes_path.decode(ENCODING))
         try:
-            # If possible, make this relative to the CWD.
-            # This helps manage multi-byte names in installation location.
-            path = os.path.relpath(path, os.getcwdu())
+            # If shorter, make this relative to the CWD.
+            relpath = os.path.relpath(path, os.getcwdu())
+            if len(relpath) < len(path): path = relpath
         except ValueError:
             # Many reasons why this might be impossible: use an absolute path.
             path = os.path.abspath(path)
