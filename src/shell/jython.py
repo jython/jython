@@ -48,12 +48,29 @@ ENCODING = sys.getfilesystemencoding() or "utf-8"
 def get_env(envvar, default=None):
     """ Return the named environment variable, decoded to Unicode."""
     v = os.environ.get(envvar, default)
-    # Tolerate default given as bytes, as we're bound to forget sometimes
+    # Result may be bytes but we want unicode for the command
     if isinstance(v, bytes):
         v = v.decode(ENCODING)
     # Remove quotes sometimes necessary around the value
     if v is not None and v.startswith('"') and v.endswith('"'):
         v = v[1:-1]
+    return v
+
+def get_env_mem(envvar, default):
+    """ Return the named memory environment variable, decoded to Unicode.
+        The default should begin with -Xmx or -Xss as in the java command,
+        but this part will be added to the environmental value if missing.
+    """
+    # Tolerate default given as bytes, as we're bound to forget sometimes
+    if isinstance(default, bytes):
+        default = default.decode(ENCODING)
+    v = os.environ.get(envvar, default)
+    # Result may be bytes but we want unicode for the command
+    if isinstance(v, bytes):
+        v = v.decode(ENCODING)
+    # Accept either a form like 16m or one like -Xmx16m
+    if not v.startswith(u"-X"):
+        v = default[:4] + v
     return v
 
 def encode_list(args, encoding=ENCODING):
@@ -268,14 +285,14 @@ setting JYTHON_HOME.""".format(self.jython_home))
         if hasattr(self.args, "mem"):
             return self.args.mem
         else:
-            return get_env("JAVA_MEM", "-Xmx512m")
+            return get_env_mem("JAVA_MEM", "-Xmx512m")
 
     @property
     def java_stack(self):
         if hasattr(self.args, "stack"):
             return self.args.stack
         else:
-            return os.environ.get("JAVA_STACK", "-Xss2560k")
+            return get_env_mem("JAVA_STACK", "-Xss2560k")
 
     @property
     def java_opts(self):
@@ -386,9 +403,9 @@ Jython launcher-specific options:
 --profile: run with the Java Interactive Profiler (http://jiprof.sf.net)
 --       : pass remaining arguments through to Jython
 Jython launcher environment variables:
-JAVA_MEM   : Java memory (sets via -Xmx)
+JAVA_MEM   : Java memory size as a java option e.g. -Xmx600m or just 600m
+JAVA_STACK : Java stack size as a java option e.g. -Xss5120k or just 5120k
 JAVA_OPTS  : options to pass directly to Java
-JAVA_STACK : Java stack size (sets via -Xss)
 JAVA_HOME  : Java installation directory
 JYTHON_HOME: Jython installation directory
 JYTHON_OPTS: default command line arguments
