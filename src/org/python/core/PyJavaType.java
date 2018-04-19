@@ -410,8 +410,6 @@ public class PyJavaType extends PyType {
                 }
             }
             methods = allMethods.toArray(new Method[allMethods.size()]);
-            // Methods must be in resolution order. See issue #2391 for detail.
-            Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
             // All the fields on just this class
             fields = forClass.getDeclaredFields();
@@ -430,6 +428,8 @@ public class PyJavaType extends PyType {
                 }
             }
         }
+        // Methods must be in resolution order. See issue #2391 for detail.
+        Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
         // Add methods, also accumulating them in reflectedFuncs, and spotting Java Bean members.
         ArrayList<PyReflectedFunction> reflectedFuncs = new ArrayList<>(methods.length);
