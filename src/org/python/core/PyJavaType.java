@@ -10,6 +10,10 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -380,10 +384,9 @@ public class PyJavaType extends PyType {
          * PyReflected* can't call or access anything from non-public classes that aren't in
          * org.python.core
          */
-        if (!Modifier.isPublic(forClass.getModifiers()) && !name.startsWith("org.python.core")
-                && Options.respectJavaAccessibility) {
+        if (!isAccessibleClass(forClass) && !name.startsWith("org.python.core")) {
             handleSuperMethodArgCollisions(forClass);
-            return;  // XXX Why is it ok to skip the rest in this case?
+            return;
         }
 
         /*
@@ -509,6 +512,81 @@ public class PyJavaType extends PyType {
                     return self;
                 }
             });
+        }
+    }
+
+    /**
+     * A class containing a test that a given class is accessible to Jython, in the Modular Java
+     * sense. It is in its own class simply to contain the state we need and its messy
+     * initialisation.
+     */
+    private static class Modular {
+
+        private static final Lookup LOOKUP = MethodHandles.lookup();
+
+        /**
+         * Test we need is constructed as a method handle, reflectively (so it works on Java less
+         * than 9).
+         */
+        private static final MethodHandle accessibleMH;
+        static {
+            MethodHandle acc;
+            try {
+                Class<?> moduleClass = Class.forName("java.lang.Module");
+                // mod = λ(c) c.getModule() : Class → Module
+                MethodHandle mod = LOOKUP.findVirtual(Class.class, "getModule",
+                        MethodType.methodType(moduleClass));
+                // pkg = λ(c) c.getPackageName() : Class → String
+                MethodHandle pkg = LOOKUP.findVirtual(Class.class, "getPackageName",
+                        MethodType.methodType(String.class));
+                // exps = λ(m, pn) m.isExported(pn) : Module, String → boolean
+                MethodHandle exps = LOOKUP.findVirtual(moduleClass, "isExported",
+                        MethodType.methodType(boolean.class, String.class));
+                // expc = λ(m, c) exps(m, pkg(c)) : Module, Class → boolean
+                MethodHandle expc = MethodHandles.filterArguments(exps, 1, pkg);
+                // acc = λ(c) expc(mod(c), c) : Class → boolean
+                acc = MethodHandles.foldArguments(expc, mod);
+            } catch (ReflectiveOperationException | SecurityException e) {
+                // Assume not a modular Java platform: acc = λ(c) true : Class → boolean
+                acc = MethodHandles.dropArguments(MethodHandles.constant(boolean.class, true), 0,
+                        Class.class);
+            }
+            accessibleMH = acc;
+        }
+
+        /**
+         * Test whether a given class is in a package exported (accessible) to Jython, in the
+         * Modular Java sense. Jython code is all in the unnamed module, so in fact we are testing
+         * accessibility to the package of the class.
+         *
+         * If this means nothing on this platform (if the classes and methods needed are not found),
+         * decide that we are not on a modular platform, in which case all invocations return
+         * <code>true</code>.
+         *
+         * @param c the class
+         * @return true iff accessible to Jython
+         */
+        static boolean accessible(Class<?> c) {
+            try {
+                return (boolean) accessibleMH.invokeExact(c);
+            } catch (Throwable e) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Test whether a given class is accessible, meaning it is in a package exported to Jython and
+     * public (or we are ignoring accessibility).
+     *
+     * @param c the class
+     * @return true iff accessible to Jython
+     */
+    static boolean isAccessibleClass(Class<?> c) {
+        if (!Modular.accessible(c)) {
+            return false;
+        } else {
+            return !Options.respectJavaAccessibility || Modifier.isPublic(c.getModifiers());
         }
     }
 
@@ -1063,32 +1141,39 @@ public class PyJavaType extends PyType {
     }
 
     /**
-     * Private, protected or package protected classes that implement public interfaces or extend
-     * public classes can't have their implementations of the methods of their supertypes called
-     * through reflection due to Sun VM bug 4071957(http://tinyurl.com/le9vo). They can be called
-     * through the supertype version of the method though. Unfortunately we can't just let normal
-     * mro lookup of those methods handle routing the call to the correct version as a class can
-     * implement interfaces or classes that each have methods with the same name that takes
-     * different number or types of arguments. Instead this method goes through all interfaces
-     * implemented by this class, and combines same-named methods into a single PyReflectedFunction.
+     * Methods implemented in private, protected or package protected classes, and classes not
+     * exported by their module, may not be called directly through reflection. This is discussed in
+     * JDK issue <a href=https://bugs.java.com/bugdatabase/view_bug.do?bug_id=4283544>4283544</a>,
+     * and is not likely to change. They may however be called through the Method object of the
+     * accessible class or interface that they implement. In non-reflective code, the Java compiler
+     * would generate such a call, based on the type <em>declared</em> for the target, which must
+     * therefore be accessible.
+     * <p>
+     * An MRO lookup on the actual class will find a <code>PyReflectedFunction</code> that defines
+     * the method to Python. The normal process for creating that object will add the
+     * <em>inaccessible</em> implementation method(s) to the list, not those of the public API. (A
+     * class can of course have several methods with the same name and different signatures and the
+     * <code>PyReflectedFunction</code> lists them all.) We must therefore take care to enter the
+     * corresponding accessible API methods instead.
+     * <p>
+     * Prior to Jython 2.5, this was handled by setting methods in package protected classes
+     * accessible which made them callable through reflection. That had the drawback of failing when
+     * running in a security environment that didn't allow setting accessibility, and will fail on
+     * the modular Java platform, so this method replaced it.
      *
-     * Prior to Jython 2.5, this was handled in PyJavaClass.setMethods by setting methods in package
-     * protected classes accessible which made them callable through reflection. That had the
-     * drawback of failing when running in a security environment that didn't allow setting
-     * accessibility, so this method replaced it.
+     * @param forClass of which the methods are currently being defined
      */
     private void handleSuperMethodArgCollisions(Class<?> forClass) {
         for (Class<?> iface : forClass.getInterfaces()) {
             mergeMethods(iface);
         }
-        if (forClass.getSuperclass() != null) {
-            mergeMethods(forClass.getSuperclass());
-            if (!Modifier.isPublic(forClass.getSuperclass().getModifiers())) {
-                /*
-                 * If the superclass is also not public, it needs to get the same treatment as we
-                 * can't call its methods either.
-                 */
-                handleSuperMethodArgCollisions(forClass.getSuperclass());
+        Class<?> parent = forClass.getSuperclass();
+        if (parent != null) {
+            if (isAccessibleClass(parent)) {
+                mergeMethods(parent);
+            } else {
+                // The parent class is also not public: go up one more in the ancestry.
+                handleSuperMethodArgCollisions(parent);
             }
         }
     }

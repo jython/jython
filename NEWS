@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Developement tip
   Bugs fixed
+    - [ 2662 ] IllegalAccessException accessing public abstract method via PyReflectedFunction
     - [ 2501 ] JAVA_STACK doesn't work (fixed for Windows launcher only)
     - [ 1866 ] Parser does not have mismatch token error messages caught by BaseRecognizer
     - [ 1930 ] traceback raises exception in os.py
