@@ -13,7 +13,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.security.AccessControlException;
@@ -32,6 +31,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -923,10 +924,7 @@ public class PySystemState extends PyObject
          * python.io.encoding is dubious.
          */
         if (!registry.containsKey(PYTHON_CONSOLE_ENCODING)) {
-            String encoding = getPlatformEncoding();
-            if (encoding != null) {
-                registry.put(PYTHON_CONSOLE_ENCODING, encoding);
-            }
+                registry.put(PYTHON_CONSOLE_ENCODING, getConsoleEncoding());
         }
 
         // Set up options from registry
@@ -934,37 +932,43 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Return the encoding of the underlying platform, if we can work it out by any means at all.
+     * Try to determine the console encoding from the platform, if necessary using a sub-process to
+     * enquire. If everything fails, assume UTF-8.
      *
-     * @return the encoding of the underlying platform
-     */
-    private static String getPlatformEncoding() {
-        // first try to grab the Console encoding
-        String encoding = getConsoleEncoding();
-        if (encoding == null) {
-            try {
-                // Not quite the console encoding (differs on Windows)
-                encoding = System.getProperty("file.encoding");
-            } catch (SecurityException se) {
-                // ignore, can't do anything about it
-            }
-        }
-        return encoding;
-    }
-
-    /**
-     * @return the console encoding; can be <code>null</code>
+     * @return the console encoding (and never {@code null})
      */
     private static String getConsoleEncoding() {
-        String encoding = null;
-        try {
-            Method encodingMethod = java.io.Console.class.getDeclaredMethod("encoding");
-            encodingMethod.setAccessible(true); // private static method
-            encoding = (String) encodingMethod.invoke(Console.class);
-        } catch (Exception e) {
-            // ignore any exception
+
+        // From Java 8 onwards, the answer may already be to hand in the registry:
+        String encoding = System.getProperty("sun.stdout.encoding");
+
+        if (encoding != null) {
+            return encoding;
+
+        } else if (System.getProperty("os.name").startsWith("Windows")) {
+            // Go via the Windows code page built-in command "chcp".
+            String output = getCommandResult("cmd", "/c", "chcp");
+            /*
+             * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
+             * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
+             */
+            final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
+            Matcher matcher = DIGITS_PATTERN.matcher(output);
+            if (matcher.find()) {
+                return "cp".concat(output.substring(matcher.start(), matcher.end()));
+            }
+
+        } else {
+            // Try a Unix-like "locale charmap".
+            String output = getCommandResult("locale", "charmap");
+            // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
+            if (output.length() > 0) {
+                return output;
+            }
         }
-        return encoding;
+
+        // If we land here it is because we found no answer, and we will assume UTF-8.
+        return "utf-8";
     }
 
     /**
@@ -1717,46 +1721,59 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Attempt to find the OS version. The mechanism on Windows is to extract it from
-     * the result of <code>cmd.exe /C ver</code>, and otherwise (assumed Unix-like OS)
-     * to use <code>uname -v</code>.
+     * Attempt to find the OS version. The mechanism on Windows is to extract it from the result of
+     * <code>cmd.exe /C ver</code>, and otherwise (assumed Unix-like OS) to use
+     * <code>uname -v</code>.
      */
     public static String getSystemVersionString() {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            String ver = getCommandResult("cmd.exe", "/c", "ver");
+            int start = ver.toLowerCase().indexOf("version ");
+            if (start != -1) {
+                start += 8;
+                int end = ver.length();
+                if (ver.endsWith("]")) {
+                    --end;
+                }
+                ver = ver.substring(start, end);
+            }
+            return ver;
+        } else {
+            return getCommandResult("uname", "-v");
+        }
+    }
+
+    /**
+     * Run a command as a sub-process and return as the result the first line of output that consist
+     * of more than white space. It returns "" on any kind of error.
+     *
+     * @param command as strings (as for <code>ProcessBuilder</code>)
+     * @return the first line with content, or ""
+     */
+    private static String getCommandResult(String... command) {
+        String result = "", line = null;
+        ProcessBuilder pb = new ProcessBuilder(command);
         try {
-            String uname_sysver;
-            boolean win = System.getProperty("os.name").startsWith("Windows");
-            Process p = Runtime.getRuntime().exec(win ? "cmd.exe /C ver" : "uname -v");
+            Process p = pb.start();
             java.io.BufferedReader br =
                     new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()));
-            uname_sysver = br.readLine();
-            while (uname_sysver != null && uname_sysver.length() == 0) {
-                uname_sysver = br.readLine();
-            }
-            // to end the process sanely in case we deal with some
-            // implementation that emits additional new-lines:
-            while (br.readLine() != null) {
-                ;
-            }
-            br.close();
-            if (p.waitFor() != 0) {
-                // No fallback for sysver available
-                uname_sysver = "";
-            }
-            if (win && uname_sysver.length() > 0) {
-                int start = uname_sysver.toLowerCase().indexOf("version ");
-                if (start != -1) {
-                    start += 8;
-                    int end = uname_sysver.length();
-                    if (uname_sysver.endsWith("]")) {
-                        --end;
-                    }
-                    uname_sysver = uname_sysver.substring(start, end);
+            // We read to the end-of-stream in case the sub-process cannot end cleanly without.
+            while ((line = br.readLine()) != null) {
+                if (line.length() > 0 && result.length() == 0) {
+                    // This is the first line with content (maybe).
+                    result = line.trim();
                 }
             }
-            return uname_sysver;
-        } catch (Exception e) {
-            return "";
+            br.close();
+            // Now we wait for the sub-process to terminate nicely.
+            if (p.waitFor() != 0) {
+                // Bad exit status: don't take the result.
+                result = "";
+            }
+        } catch (IOException | InterruptedException | SecurityException e) {
+            result = "";
         }
+        return result;
     }
 
     /* Traverseproc implementation */
