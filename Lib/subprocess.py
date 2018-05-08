@@ -432,6 +432,7 @@ elif jython:
     import java.io.FileNotFoundException
     import java.lang.IllegalArgumentException
     import java.lang.IllegalThreadStateException
+    import java.lang.Process
     import java.lang.ProcessBuilder
     import java.lang.System
     import java.lang.Thread
@@ -1417,7 +1418,12 @@ class Popen(object):
             else:
                 return field
 
-        if os._name not in _win_oses:
+        if hasattr(java.lang.Process, "pid"): # Java 9 onwards
+
+            def _get_pid(self, pid_field=None):
+                return self._process.pid()
+
+        elif os._name not in _win_oses:
 
             def _get_pid(self, pid_field='pid'):
                 field = self._get_private_field(self._process, pid_field)
