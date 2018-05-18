@@ -1726,31 +1726,37 @@ public final class Py {
     }
 
     /**
-     * Check (using the {@link POSIX} library and <code>jnr-posix</code> library) whether we are in
-     * an interactive environment. Amongst other things, this affects the type of console that may
-     * be legitimately installed during system initialisation. Note that the result may vary
-     * according to whether a <code>jnr-posix</code> native library is found along
-     * <code>java.library.path</code>, or the pure Java fall-back is used.
+     * Determine whether <b>standard input</b> is an interactive stream. This is not the same as
+     * deciding whether the interpreter is or should be in interactive mode. Amongst other things,
+     * this affects the type of console that may be legitimately installed during system
+     * initialisation.
+     * <p>
+     * If the Java system property {@code python.launcher.tty} is defined and equal to {@code true}
+     * or {@code false}, then that provides the result. This property is normally supplied by the
+     * launcher. In the absence of this certainty, we try to find outusing {@code isatty()} in the
+     * Posix emulation library. Note that the result may vary according to whether a
+     * <code>jnr-posix</code> native library is found along <code>java.library.path</code>, or the
+     * pure Java fall-back is used.
      *
-     * @return true if (we think) we are in an interactive environment
+     * @return true if (we think) standard input is an interactive stream
      */
     public static boolean isInteractive() {
-        // python.launcher.tty is authoratative; see http://bugs.jython.org/issue2325
-        String isTTY = System.getProperty("python.launcher.tty");
-        if (isTTY != null && isTTY.equals("true")) {
-            return true;
+        String tty = System.getProperty("python.launcher.tty");
+        if (tty != null) {
+            // python.launcher.tty is authoritative; see http://bugs.jython.org/issue2325
+            tty = tty.toLowerCase();
+            if (tty.equals("true")) {
+                return true;
+            } else if (tty.equals("false")) {
+                return false;
+            }
         }
-        if (isTTY != null && isTTY.equals("false")) {
-            return false;
-        }
-        // Decide if System.in is interactive
+        // Base decision on whether System.in is interactive according to OS
         try {
             POSIX posix = POSIXFactory.getPOSIX();
-            FileDescriptor in = FileDescriptor.in;
-            return posix.isatty(in);
-        } catch (SecurityException ex) {
-            return false;
-        }
+            return posix.isatty(FileDescriptor.in);
+        } catch (SecurityException ex) {}
+        return false;
     }
 
     private static final String IMPORT_SITE_ERROR = ""

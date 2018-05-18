@@ -219,6 +219,7 @@ public class jython {
     }
 
     public static void run(String[] args) {
+
         // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
@@ -249,10 +250,13 @@ public class jython {
             addDefault(preProperties, PySystemState.PYTHON_IO_ERRORS, spec[1]);
         }
 
+        // If/when we interact with standard input, will we use a line-editing console?
+        boolean stdinIsInteractive = Py.isInteractive();
+
         // Decide if System.in is interactive
         if (!opts.fixInteractive || opts.interactive) {
             // The options suggest System.in is interactive: but only if isatty() agrees
-            opts.interactive = Py.isInteractive();
+            opts.interactive = stdinIsInteractive;
             if (opts.interactive) {
                 // Set the default console type if nothing else has
                 addDefault(preProperties, "python.console", PYTHON_CONSOLE_CLASS);
@@ -517,9 +521,12 @@ public class jython {
 class CommandLineOptions {
 
     public String filename;
-    public boolean jar, interactive, notice;
+    public boolean jar, notice;
     public boolean runCommand, runModule;
-    public boolean fixInteractive;
+    /** True unless a file, module, jar, or command argument awaits execution. */
+    public boolean interactive = true;
+    /** Eventually go interactive: reflects the -i ("inspect") flag. */
+    public boolean fixInteractive = false;
     public boolean help, version;
     public String[] argv;
     public Properties properties;
@@ -531,8 +538,8 @@ class CommandLineOptions {
 
     public CommandLineOptions() {
         filename = null;
-        jar = fixInteractive = false;
-        interactive = notice = true;
+        jar = false;
+        notice = true;
         runModule = false;
         properties = new Properties();
         help = version = false;
