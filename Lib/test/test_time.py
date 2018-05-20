@@ -1,4 +1,7 @@
+# A version of the CPython stdlib test/test_time.py modified for Jython
+#
 from test import test_support
+import os
 import time
 import unittest
 
@@ -237,6 +240,27 @@ class TimeTestCase(unittest.TestCase):
     def test_gmtime_tmetuple(self):
         t = time.gmtime()
         self.assertEqual(tuple(t), t)
+
+    EXAMPLES = {
+            1526823094 : (2018, 5, 20, 13, 31, 34, 6, 140, 0), # recently
+            1442224245.0 : (2015, 9, 14, 9, 50, 45, 0, 257, 0), # gravity
+            768232800 : (1994, 5, 6, 14, 0, 0, 4, 126, 0), # tunnel
+    }
+
+    if os.name=='posix' or os.name=='java':
+        # Times before 1970 are supported.
+        EXAMPLES.update({
+            -14182940.0 : (1969, 7, 20, 20, 17, 40, 6, 201, 0), # moon
+            -6857222400 : (1752, 9, 14, 0, 0, 0, 3, 258, 0), # Gregorian (UK/US)
+            -6857222400 - 1 : (1752, 9, 13, 23, 59, 59, 2, 257, 0),
+            -12219292800 : (1582, 10, 15, 0, 0, 0, 4, 288, 0), # Gregorian (first adopters)
+            -12219292800 - 1 : (1582, 10, 14, 23, 59, 59, 3, 287, 0),
+        })
+
+    def test_gmtime_examples(self):
+        for seconds, ref in TimeTestCase.EXAMPLES.iteritems():
+            t = time.gmtime(seconds)
+            self.assertEqual(tuple(t), ref)
 
     def test_localtime_without_arg(self):
         lt0 = time.localtime()
