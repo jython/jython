@@ -226,12 +226,15 @@ public class Time implements ClassDictInit
     }
 
     private static GregorianCalendar _tupletocal(PyTuple tup) {
-        return new GregorianCalendar(item(tup, 0),
-                                     item(tup, 1),
-                                     item(tup, 2),
-                                     item(tup, 3),
-                                     item(tup, 4),
-                                     item(tup, 5));
+        GregorianCalendar gc = new GregorianCalendar(item(tup, 0),
+                                                     item(tup, 1),
+                                                     item(tup, 2),
+                                                     item(tup, 3),
+                                                     item(tup, 4),
+                                                     item(tup, 5));
+                                                     
+        gc.setGregorianChange(new Date(Long.MIN_VALUE));
+        return gc;
     }
 
     public static double mktime(PyTuple tup) {
@@ -254,6 +257,8 @@ public class Time implements ClassDictInit
     protected static PyTimeTuple _timefields(double secs, TimeZone tz) {
         GregorianCalendar cal = new GregorianCalendar(tz);
         cal.clear();
+        cal.setGregorianChange(new Date(Long.MIN_VALUE));
+
         secs = secs * 1000;
         if (secs < Long.MIN_VALUE || secs > Long.MAX_VALUE) {
             throw Py.ValueError("timestamp out of range for platform time_t");
