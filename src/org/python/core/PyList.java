@@ -43,10 +43,10 @@ public class PyList extends PySequenceList {
         list = Generic.list();
     }
 
-    private PyList(List list, boolean convert) {
+    private PyList(List<?> list, boolean convert) {
         super(TYPE);
         if (!convert) {
-            this.list = list;
+            this.list = (List<PyObject>) list;
         } else {
             this.list = Generic.list();
             for (Object o : list) {
@@ -72,7 +72,7 @@ public class PyList extends PySequenceList {
         this(TYPE, elements);
     }
 
-    public PyList(Collection c) {
+    public PyList(Collection<?> c) {
         this(TYPE, c);
     }
 
@@ -392,10 +392,10 @@ public class PyList extends PySequenceList {
             Object oList = o.__tojava__(List.class);
             if (oList != Py.NoConversion && oList != null) {
                 @SuppressWarnings("unchecked")
-                List<PyObject> otherList = (List<PyObject>) oList;
+                List<Object> otherList = (List<Object>) oList;
                 sum = new PyList();
                 sum.list_extend(this);
-                for (PyObject ob: otherList) {
+                for (Object ob: otherList) {
                     sum.add(ob);
                 }
             }

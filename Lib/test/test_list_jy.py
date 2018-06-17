@@ -256,6 +256,13 @@ class JavaListTestCase(test_list.ListTest):
             jl.remove(i)
         self.assertEqual(jl, b_to_z_by_2)
 
+    def test_concat(self):
+    	# See http://bugs.jython.org/issue2688
+        lst = ArrayList([1, 2, 3])
+        lst2 = [4, 5, 6]
+        self.assertEquals(lst+lst2, [1, 2, 3, 4, 5, 6])
+        self.assertEquals(lst2+lst, [4, 5, 6, 1, 2, 3])
+
 
 class ListSubclassTestCase(unittest.TestCase):
 
