@@ -327,7 +327,10 @@ public class IntegerFormatter extends InternalFormat.Formatter {
         if (value < 0) {
             // Negative value: deal with sign and base, and convert magnitude.
             negativeSign(null);
-            number = Integer.toString(-value);
+            // Here there is a special case for int min value due to wrapping, to avoid a double
+            // negative sign being added see http://bugs.jython.org/issue2672
+            // The string constant here is -Integer.MIN_VALUE
+            number = value == Integer.MIN_VALUE ? "2147483648" : Integer.toString(-value);
         } else {
             // Positive value: deal with sign, base and magnitude.
             positiveSign(null);
