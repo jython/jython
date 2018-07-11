@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Development tip
   Bugs fixed
+    - [ 2639 ] Incorrect result when using != comparison against Java {List, Set, Map}
     - [ 2672 ] Integer formatting emits two minus signs with -2^31
     - [ 2688 ] ClassCastException when adding list of non-PyObjects
     - [ 2659 ] Determine console encoding without access violation (Java 9)

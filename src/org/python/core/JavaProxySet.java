@@ -40,29 +40,45 @@ class JavaProxySet {
             return newPySet;
         }
 
-        public boolean isEqual(PyObject other) {
-            Set<Object> selfSet = asSet();
-            Object oj = other.getJavaProxy();
-            if (oj != null && oj instanceof Set) {
-                @SuppressWarnings("unchecked")
-                Set<Object> otherSet = (Set<Object>) oj;
-                if (selfSet.size() != otherSet.size()) {
-                    return false;
-                }
-                return selfSet.containsAll(otherSet);
-            } else if (isPySet(other)) {
-                Set<PyObject> otherPySet = ((BaseSet) other).getSet();
+        /**
+         * Compares this object with other to check for equality. Used to implement __eq __ and
+         * __ne__. May return null if the other object cannot be compared i.e. is not a Python or
+         * Java set.
+         *
+         * @param other The object to compare to this
+         * @return true is equal, false if not equal and null if we can't compare
+         */
+        protected PyBoolean isEqual(PyObject other) {
+            if (isPySet(other)) {
+                // Being compared to a Python set
+                final Set<PyObject> otherPySet = ((BaseSet) other).getSet();
+                final Set<Object> selfSet = asSet();
                 if (selfSet.size() != otherPySet.size()) {
-                    return false;
+                    // Sets are different sizes therefore not equal
+                    return Py.False;
                 }
-                for (PyObject pyobj : otherPySet) {
-                    if (!selfSet.contains(pyobj.__tojava__(Object.class))) {
-                        return false;
+                // Do element by element comparison, if any elements are not contained return false
+                for (Object obj : selfSet) {
+                    if (!otherPySet.contains(Py.java2py(obj))) {
+                        return Py.False;
                     }
                 }
-                return true;
+                // All elements are equal so the sets are equal
+                return Py.True;
             }
-            return false;
+            else {
+                // Being compared to something that is not a Python set
+                final Object oj = other.getJavaProxy();
+                if (oj instanceof Set) {
+                    // Being compared to Java Set convert to Python set and call recursively
+                    final PySet otherPySet = new PySet(Py.javas2pys(((Set) oj).toArray()));
+                    return isEqual(otherPySet);
+                } else {
+                    // other is not a Python or Java set, so we don't know if
+                    // were equal therefore return null
+                    return null;
+                }
+            }
         }
 
         public boolean isSuperset(PyObject other) {
@@ -164,22 +180,27 @@ class JavaProxySet {
             super(name, 0, -1);
         }
 
+        @Override
         public PyObject __call__() {
             return __call__(Py.EmptyObjects);
         }
 
+        @Override
         public PyObject __call__(PyObject obj) {
             return __call__(new PyObject[]{obj});
         }
 
+        @Override
         public PyObject __call__(PyObject obj1, PyObject obj2) {
             return __call__(new PyObject[]{obj1, obj2});
         }
 
+        @Override
         public PyObject __call__(PyObject obj1, PyObject obj2, PyObject obj3) {
             return __call__(new PyObject[]{obj1, obj2, obj3});
         }
 
+        @Override
         public PyObject __call__(PyObject obj1, PyObject obj2, PyObject obj3, PyObject obj4) {
             return __call__(new PyObject[]{obj1, obj2, obj3, obj4});
         }
@@ -286,13 +307,25 @@ class JavaProxySet {
     private static final SetMethod eqProxy = new SetMethod("__eq__", 1) {
         @Override
         public PyObject __call__(PyObject other) {
-            return Py.newBoolean(isEqual(other));
+            return isEqual(other);
+        }
+    };
+    private static final SetMethod neProxy = new SetMethod("__ne__", 1) {
+        @Override
+        public PyObject __call__(PyObject other) {
+            // isEqual may return null if we don't know how to compare to other.
+            PyBoolean equal = isEqual(other);
+            if (equal != null) {
+                // implement NOT equal by the inverse of equal
+                return isEqual(other).__not__();
+            }
+            return null;
         }
     };
     private static final SetMethod ltProxy = new SetMethod("__lt__", 1) {
         @Override
         public PyObject __call__(PyObject other) {
-            return Py.newBoolean(!isEqual(other) && isSubset(other));
+            return isEqual(other).__not__().__and__(Py.newBoolean(isSubset(other)));
         }
     };
 
@@ -327,7 +360,7 @@ class JavaProxySet {
     private static final SetMethod gtProxy = new SetMethod("__gt__", 1) {
         @Override
         public PyObject __call__(PyObject other) {
-            return Py.newBoolean(!isEqual(other) && isSuperset(other));
+            return isEqual(other).__not__().__and__(Py.newBoolean(isSuperset(other)));
         }
     };
 
@@ -549,6 +582,7 @@ class JavaProxySet {
         return new PyBuiltinMethod[]{
                 cmpProxy,
                 eqProxy,
+                neProxy,
                 ltProxy,
                 new IsSubsetMethod("__le__"),
                 new IsSubsetMethod("issubset"),

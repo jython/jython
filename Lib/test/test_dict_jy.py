@@ -1,10 +1,14 @@
 from test import test_support
-from java.util import HashMap, Hashtable
 import unittest
 from collections import defaultdict
 import test_dict
 
+from java.util import HashMap, LinkedHashMap, Hashtable
+from java.util.concurrent import ConcurrentHashMap
+
+
 class DictInitTest(unittest.TestCase):
+
     def testInternalSetitemInInit(self):
         """Test for http://jython.org/bugs/1816134
 
@@ -41,14 +45,17 @@ class DictInitTest(unittest.TestCase):
         else:
             self.fail("dict as dict key should raise TypeError")
 
+
 class DictCmpTest(unittest.TestCase):
     "Test for http://bugs.jython.org/issue1031"
+
     def testDictCmp(self):
         # 'Implicit' comparision of dicts against other types instances
         # shouldn't raise exception:
         self.assertNotEqual({}, '')
         # The same, but explicitly calling __cmp__ should raise TypeError:
         self.assertRaises(TypeError, {}.__cmp__, '')
+
     def testDictDerivedCmp(self):
         # With derived classes that doesn't override __cmp__, the behaviour
         # should be the same that with dicts:
@@ -86,7 +93,9 @@ class DictCmpTest(unittest.TestCase):
         self.assertEqual(derived_dict_with_custom_cmp(), '')
         self.assertEqual(yet_another_dict(), '')
 
+
 class DictMiscTest(unittest.TestCase):
+
     def test_pop_key_error(self):
         # tests http://bugs.jython.org/issue2247
         with self.assertRaisesRegexp(KeyError, r"^1$"):
@@ -96,8 +105,10 @@ class DictMiscTest(unittest.TestCase):
         with self.assertRaisesRegexp(KeyError, r"^frozenset\(\[\]\)$"):
             {}.pop(frozenset())
 
+
 class DerivedDictTest(unittest.TestCase):
     "Tests for derived dict behaviour"
+
     def test_raising_custom_key_error(self):
         class CustomKeyError(KeyError):
             pass
@@ -105,7 +116,7 @@ class DerivedDictTest(unittest.TestCase):
             def __getitem__(self, key):
                 raise CustomKeyError("custom message")
         self.assertRaises(CustomKeyError, lambda: DerivedDict()['foo'])
-    
+
     def test_issue1676(self):
         #See http://bugs.jython.org/issue1676
         x=defaultdict()
@@ -123,8 +134,11 @@ class DerivedDictTest(unittest.TestCase):
 
 class JavaIntegrationTest(unittest.TestCase):
     "Tests for instantiating dicts from Java maps and hashtables"
-    def test_hashmap(self):
-        x = HashMap()
+
+    type2test = HashMap
+
+    def test_map(self):
+        x = self.type2test()
         x.put('a', 1)
         x.put('b', 2)
         x.put('c', 3)
@@ -132,8 +146,8 @@ class JavaIntegrationTest(unittest.TestCase):
         y = dict(x)
         self.assertEqual(set(y.items()), set([('a', 1), ('b', 2), ('c', 3), ((1,2), "xyz")]))
 
-    def test_hashmap_builtin_pymethods(self):
-        x = HashMap()
+    def test_map_builtin_pymethods(self):
+        x = self.type2test()
         x['a'] = 1
         x[(1, 2)] = 'xyz'
         self.assertEqual({tup for tup in x.iteritems()}, {('a', 1), ((1, 2), 'xyz')})
@@ -142,26 +156,96 @@ class JavaIntegrationTest(unittest.TestCase):
         self.assertEqual(str(x), repr(x))
         self.assertEqual(type(str(x)), type(repr(x)))
 
-    def test_hashtable_equal(self):
+    def test_equal(self):
         for d in ({}, {1:2}):
-            x = Hashtable(d)
+            x = self.type2test(d)
             self.assertEqual(x, d)
             self.assertEqual(d, x)
             self.assertEqual(x, HashMap(d))
 
-    def test_hashtable_remove(self):
-        x = Hashtable({})
+    def test_remove(self):
+        x = self.type2test({'a': 1})
+        del x['a']
+        self.assertEqual(x, {})
+
+        x = self.type2test({})
         with self.assertRaises(KeyError):
             del x[0]
 
-    def test_hashtable(self):
-        x = Hashtable()
-        x.put('a', 1)
-        x.put('b', 2)
-        x.put('c', 3)
-        x.put((1,2), "xyz")
-        y = dict(x)
-        self.assertEqual(set(y.items()), set([('a', 1), ('b', 2), ('c', 3), ((1,2), "xyz")]))
+    def test_equality_empty_dict(self):
+        jmap = self.type2test()
+        self.assertTrue(jmap == {})
+        self.assertTrue({} == jmap)
+
+    def test_equality_simple_dict(self):
+        jmap = self.type2test()
+        self.assertFalse({'a': 1} == jmap)
+        self.assertFalse(jmap == {'a': 1})
+
+    def test_equality_mixed_types_dict(self):
+        ref = {False:0, 'a':1, u'b':2L, 3:"3"}
+        alt = {0:False, u'a':True, 'b':2, 3:"3"}
+        self.assertEqual(ref, alt) # test assumption
+        jref = self.type2test(ref)
+        for v in [ref, alt, jref]:
+            self.assertTrue(jref == v)
+            self.assertTrue(v == jref)
+            self.assertTrue(jref == self.type2test(v))
+            self.assertTrue(self.type2test(v) == jref)
+
+        alt1 = ref.copy(); alt1['a'] = 2;
+        alt2 = ref.copy(); del alt2['a'];
+        alt3 = ref.copy(); alt3['c'] = [];
+        for v in [alt1, alt2, alt3, {}]:
+            self.assertFalse(jref == v)
+            self.assertFalse(v == jref)
+            self.assertFalse(jref == self.type2test(v))
+            self.assertFalse(self.type2test(v) == jref)
+
+    # Test for http://bugs.jython.org/issue2639
+    # This is to test the != comparisons between Java and Python maps/dict
+    def test_inequality_empty_dict(self):
+        jmap = self.type2test()
+        self.assertFalse(jmap != {})
+        self.assertFalse({} != jmap)
+
+    def test_inequality_simple_dict(self):
+        jmap = self.type2test()
+        self.assertTrue(jmap != {'a': 1})
+        self.assertTrue({'a': 1} != jmap)
+
+    def test_inequality_mixed_types_dict(self):
+        ref = {False:0, 'a':1, u'b':2L, 3:"3"}
+        alt = {0:False, u'a':True, 'b':2, 3:"3"}
+        self.assertEqual(ref, alt) # test assumption
+        jref = self.type2test(ref)
+        for v in [ref, alt, jref]:
+            self.assertFalse(jref != v)
+            self.assertFalse(v != jref)
+            self.assertFalse(jref != self.type2test(v))
+            self.assertFalse(self.type2test(v) != jref)
+
+        alt1 = ref.copy(); alt1['a'] = 2;
+        alt2 = ref.copy(); del alt2['a'];
+        alt3 = ref.copy(); alt3['c'] = [];
+        for v in [alt1, alt2, alt3, {}]:
+            self.assertTrue(jref != v)
+            self.assertTrue(v != jref)
+            self.assertTrue(jref != self.type2test(v))
+            self.assertTrue(self.type2test(v) != jref)
+
+
+class JavaHashMapTest(JavaIntegrationTest):
+    type2test = HashMap
+
+class JavaLinkedHashMapTest(JavaIntegrationTest):
+    type2test = LinkedHashMap
+
+class JavaHashtableTest(JavaIntegrationTest):
+    type2test = Hashtable
+
+class JavaConcurrentHashMapTest(JavaIntegrationTest):
+    type2test = HashMap
 
 
 class JavaDictTest(test_dict.DictTest):
@@ -265,7 +349,10 @@ def test_main():
         DictCmpTest,
         DictMiscTest,
         DerivedDictTest,
-        JavaIntegrationTest,
+        JavaHashMapTest,
+        JavaLinkedHashMapTest,
+        JavaConcurrentHashMapTest,
+        JavaHashtableTest,
         JavaDictTest,
         PyStringMapTest)
 

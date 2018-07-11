@@ -31,7 +31,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
     protected void _update(PyObject [] args) {
         _update(_set, args);
     }
-    
+
     /**
      * Update the underlying set with the contents of the iterable.
      */
@@ -70,6 +70,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      * @param other A <code>BaseSet</code> instance.
      * @return The union of the two sets as a new set.
      */
+    @Override
     public PyObject __or__(PyObject other) {
         return baseset___or__(other);
     }
@@ -90,6 +91,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      * @param other A <code>BaseSet</code> instance.
      * @return The intersection of the two sets as a new set.
      */
+    @Override
     public PyObject __and__(PyObject other) {
         return baseset___and__(other);
     }
@@ -110,6 +112,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      * @param other A <code>BaseSet</code> instance.
      * @return The difference of the two sets as a new set.
      */
+    @Override
     public PyObject __sub__(PyObject other) {
         return baseset___sub__(other);
     }
@@ -124,16 +127,16 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
     public PyObject difference(PyObject other) {
         return baseset_difference(other);
     }
-    
+
     final PyObject baseset_difference(PyObject other) {
         return baseset_difference(new PyObject[] {other});
     }
-    
+
     final PyObject baseset_difference(PyObject [] args) {
         if (args.length == 0) {
             return BaseSet.makeNewSet(getType(), this);
         }
-        
+
         BaseSet o = BaseSet.makeNewSet(getType(), this);
         for (PyObject item: args) {
             BaseSet bs = args[0] instanceof BaseSet ? (BaseSet)item : new PySet(item);
@@ -157,6 +160,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      * @param other A <code>BaseSet</code> instance.
      * @return The symmetric difference of the two sets as a new set.
      */
+    @Override
     public PyObject __xor__(PyObject other) {
         return baseset___xor__(other);
     }
@@ -193,6 +197,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      *
      * @return The hashCode of the set.
      */
+    @Override
     public abstract int hashCode();
 
     /**
@@ -200,6 +205,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      *
      * @return The length of the set.
      */
+    @Override
     public int __len__() {
         return baseset___len__();
     }
@@ -214,6 +220,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      *
      * @return <code>true</code> if the set is not empty, <code>false</code> otherwise
      */
+    @Override
     public boolean __nonzero__() {
         return !_set.isEmpty();
     }
@@ -223,6 +230,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      *
      * @return An iteration of the set.
      */
+    @Override
     public PyObject __iter__() {
         return baseset___iter__();
     }
@@ -243,6 +251,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         };
     }
 
+    @Override
     public boolean __contains__(PyObject other) {
         return baseset___contains__(other);
     }
@@ -256,6 +265,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         }
     }
 
+    @Override
     public int __cmp__(PyObject other) {
         return baseset___cmp__(other);
     }
@@ -264,28 +274,61 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         throw Py.TypeError("cannot compare sets using cmp()");
     }
 
+    @Override
     public PyObject __eq__(PyObject other) {
         return baseset___eq__(other);
     }
 
     final PyObject baseset___eq__(PyObject other) {
-        if (other instanceof BaseSet) {
-            return Py.newBoolean(_set.equals(((BaseSet)other)._set));
+        // jobj might be Py.NoConversion if other is not a Set
+        Object jobj = other.__tojava__(Set.class);
+        if (jobj instanceof Set) {
+            final Set jSet = (Set) jobj;
+            // If the sizes differ must be not equal
+            if (jSet.size() != size()) {
+                return Py.False;
+            }
+            // Now need to perform element comparison
+            for (Object otherItem : jSet) {
+                if (!contains(otherItem)) {
+                    return Py.False; // If any item is not contained then they are not equal
+                }
+            }
+            // All items are contained and the lentgh is the same so we are equal
+            return Py.True;
         }
+        // other wasn't a set so not equal
         return Py.False;
     }
 
+    @Override
     public PyObject __ne__(PyObject other) {
         return baseset___ne__(other);
     }
 
     final PyObject baseset___ne__(PyObject other) {
-        if (other instanceof BaseSet) {
-            return Py.newBoolean(!_set.equals(((BaseSet)other)._set));
+        // jobj might be Py.NoConversion if other is not a Set
+        Object jobj = other.__tojava__(Set.class);
+        if (jobj instanceof Set) {
+            final Set jSet = (Set) jobj;
+            // If the sizes differ must be not equal
+            if (jSet.size() != size()) {
+                return Py.True;
+            }
+            // Now need to perform element comparison
+            for (Object otherItem : jSet) {
+                if (!contains(otherItem)) {
+                    return Py.True; // If any item is not contained then they are not equal
+                }
+            }
+            // All items are contained and the lentgh is the same so we are equal
+            return Py.False;
         }
+        // other wasn't a set so not equal
         return Py.True;
     }
 
+    @Override
     public PyObject __le__(PyObject other) {
         return baseset___le__(other);
     }
@@ -294,6 +337,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return baseset_issubset(asBaseSet(other));
     }
 
+    @Override
     public PyObject __ge__(PyObject other) {
         return baseset___ge__(other);
     }
@@ -302,6 +346,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return baseset_issuperset(asBaseSet(other));
     }
 
+    @Override
     public PyObject __lt__(PyObject other) {
         return baseset___lt__(other);
     }
@@ -311,6 +356,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return Py.newBoolean(size() < bs.size() && baseset_issubset(other).__nonzero__());
     }
 
+    @Override
     public PyObject __gt__(PyObject other) {
         return baseset___gt__(other);
     }
@@ -326,6 +372,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
      *
      * @return a tuple of (constructor, (elements))
      */
+    @Override
     public PyObject __reduce__() {
         return baseset___reduce__();
     }
@@ -344,7 +391,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         result._update(other);
         return result;
     }
-    
+
     final PyObject baseset_union(PyObject [] args) {
         BaseSet result = BaseSet.makeNewSet(getType(), this);
         for (PyObject item: args) {
@@ -370,13 +417,13 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         PyObject common = __builtin__.filter(big.__getattr__("__contains__"), little);
         return BaseSet.makeNewSet(getType(), common);
     }
-    
+
     final PyObject baseset_intersection(PyObject [] args) {
         BaseSet result = BaseSet.makeNewSet(getType(), this);
         if (args.length == 0) {
             return result;
         }
-        
+
         for (PyObject other: args) {
             result = (BaseSet)result.baseset_intersection(other);
         }
@@ -405,12 +452,13 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
         return bs.baseset_issubset(this);
     }
-    
+
     final PyObject baseset_isdisjoint(PyObject other) {
         BaseSet bs = other instanceof BaseSet ? (BaseSet)other : new PySet(other);
         return Collections.disjoint(_set, bs._set) ? Py.True : Py.False;
     }
 
+    @Override
     public String toString() {
         return baseset_toString();
     }
@@ -502,30 +550,37 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return so;
     }
 
+    @Override
     public int size() {
         return _set.size();
     }
 
+    @Override
     public void clear() {
         _set.clear();
     }
 
+    @Override
     public boolean isEmpty() {
         return _set.isEmpty();
     }
 
+    @Override
     public boolean add(Object o) {
         return _set.add(Py.java2py(o));
     }
 
+    @Override
     public boolean contains(Object o) {
         return _set.contains(Py.java2py(o));
     }
 
+    @Override
     public boolean remove(Object o) {
         return _set.remove(Py.java2py(o));
     }
 
+    @Override
     public boolean addAll(Collection c) {
         boolean added = false;
         for (Object object : c) {
@@ -534,6 +589,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return added;
     }
 
+    @Override
     public boolean containsAll(Collection c) {
         for (Object object : c) {
             if (!_set.contains(Py.java2py(object))) {
@@ -543,6 +599,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return true;
     }
 
+    @Override
     public boolean removeAll(Collection c) {
         boolean removed = false;
         for (Object object : c) {
@@ -551,6 +608,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return removed;
     }
 
+    @Override
     public boolean retainAll(Collection c) {
         boolean modified = false;
         Iterator e = iterator();
@@ -563,28 +621,34 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
         return modified;
     }
 
+    @Override
     public Iterator iterator() {
         return new Iterator() {
             Iterator<PyObject> real = _set.iterator();
 
+            @Override
             public boolean hasNext() {
                 return real.hasNext();
             }
 
+            @Override
             public Object next() {
                 return Py.tojava(real.next(), Object.class);
             }
 
+            @Override
             public void remove() {
                 real.remove();
             }
         };
     }
 
+    @Override
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
+    @Override
     public Object[] toArray(Object a[]) {
         int size = size();
         if (a.length < size) {
