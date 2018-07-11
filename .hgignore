@@ -8,6 +8,9 @@ syntax: glob
 *.swp
 \#*
 *~
+
+.gradle
+
 # IntelliJ files
 *.eml
 *.ipr
@@ -27,8 +30,11 @@ syntax: glob
 __pycache__
 ant.properties
 bin
+
 build
+build2
 cachedir
 dist
+
 profile.txt
 out

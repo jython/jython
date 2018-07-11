@@ -217,7 +217,7 @@ public class BaseBytesTest extends TestCase {
         // Local constructor from byte[]
         int[] aRef = toInts("Chaque coquillage incrusté");
         BaseBytes a = getInstance(aRef);
-        System.out.println(toString(a));
+        // System.out.println(toString(a));
         assertEquals(aRef.length, a.size());
 
         // init(int) at various sizes
@@ -237,7 +237,7 @@ public class BaseBytesTest extends TestCase {
         BaseBytes a = getInstance(aRef);
         // Copy constructor b = bytes(a)
         BaseBytes b = getInstance(a);
-        System.out.println(toString(b));
+        // System.out.println(toString(b));
         assertEquals(a.size(), b.size());
         // assertEquals(a.storage, b.storage); // Supposed to share?
         // Check we got the same bytes
@@ -254,7 +254,7 @@ public class BaseBytesTest extends TestCase {
         // Make an Iterable<? extends PyObject> of that
         Iterable<? extends PyObject> ia = iterableBytes(aRef);
         BaseBytes a = getInstance(ia);
-        System.out.println(toString(a));
+        // System.out.println(toString(a));
         assertEquals(aRef.length, a.size());
         checkInts(aRef, a);
 
@@ -319,7 +319,7 @@ public class BaseBytesTest extends TestCase {
             PyObject aRef = boobyPrize[dip];
             try {
                 BaseBytes a = getInstance(brantub[dip]);
-                System.out.println(toString(a));
+                // System.out.println(toString(a));
                 fail("Exception not thrown for " + brantub[dip]);
             } catch (PyException pye) {
                 // System.out.println(pye);
@@ -452,7 +452,7 @@ public class BaseBytesTest extends TestCase {
 
         try {
             a.pyset(start, x);
-            System.out.println(toString(a));
+            // System.out.println(toString(a));
             fail(String.format("Exception not thrown for pyset(%d,%s)", start, x));
         } catch (PyException pye) {
             // System.out.println(pye);
@@ -476,7 +476,7 @@ public class BaseBytesTest extends TestCase {
 
         try {
             a.setslice(start, stop, step, x);
-            System.out.println(toString(a));
+            // System.out.println(toString(a));
             fail(String.format("Exception not thrown for setslice(%d,%d,%d,%s)", start, stop, step,
                     x));
         } catch (PyException pye) {

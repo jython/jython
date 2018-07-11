@@ -60,7 +60,7 @@ public class PyBufferTest {
     protected int verbosity = 0;
 
     /** Print a list of the test material. (From JUnit 4.12 use Parameters(name)). */
-    protected static final boolean PRINT_KEY = true;
+    protected static final boolean PRINT_KEY = false;
 
     /** Size of some large arrays. */
     static final int LONG = 1000;
