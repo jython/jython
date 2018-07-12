@@ -9,11 +9,12 @@ from math import sqrt
 
 p = awt.Panel()
 for name in dir(colors):
-	color = getattr(colors, name)
-	if isinstance(color, awt.Color):
-		l = awt.Label(name, awt.Label.CENTER, background=color)
-		intensity = sqrt(color.red**2 + color.green**2 + color.blue**2)/3		
-		if intensity < 90: l.foreground = colors.white
-		p.add(l)
+    color = getattr(colors, name)
+    if isinstance(color, awt.Color):
+        l = awt.Label(name, awt.Label.CENTER, background=color)
+        intensity = sqrt(color.red**2 + color.green**2 + color.blue**2)/3
+        if intensity < 90:
+            l.foreground = colors.white
+        p.add(l)
 
-test(p, size=(700,500))
+test(p, size=(700, 500))

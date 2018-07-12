@@ -9,8 +9,7 @@ from types import *
 import java
 
 leaves = (None, TypeType, IntType, StringType, FloatType, NoneType,
-	  BuiltinFunctionType, BuiltinMethodType)
-
+          BuiltinFunctionType, BuiltinMethodType)
 
 
 class PyEnumeration(java.util.Enumeration):
@@ -26,12 +25,12 @@ class PyEnumeration(java.util.Enumeration):
         return self.seq[self.index-1]
 
 
-
 def classattrs(c, attrs):
     for base in c.__bases__:
         classattrs(base, attrs)
     for name in c.__dict__.keys():
         attrs[name] = 1
+
 
 def mydir(obj):
     attrs = {}
@@ -44,12 +43,12 @@ def mydir(obj):
     ret.sort()
     return ret
 
+
 def shortrepr(obj):
     r = repr(obj)
     if len(r) > 80:
         r = r[:77]+"..."
     return r
-
 
 
 class ObjectNode(swing.tree.TreeNode):
@@ -60,7 +59,7 @@ class ObjectNode(swing.tree.TreeNode):
 
     def getChildren(self):
         if hasattr(self, 'mychildren'):
-	    return self.mychildren
+            return self.mychildren
 
         if self.isLeaf():
             self.mychildren = None
@@ -69,10 +68,10 @@ class ObjectNode(swing.tree.TreeNode):
         children = []
         for name in mydir(self.object):
             if name[:2] == '__':
-		continue
+                continue
             try:
                 children.append(ObjectNode(self, name,
-					   getattr(self.object, name)))
+                                           getattr(self.object, name)))
             except TypeError:
                 print 'type error on', name, self.object
         self.mychildren = children
@@ -102,7 +101,7 @@ class ObjectNode(swing.tree.TreeNode):
         index = 0
         for child in self.getChildren():
             if child == node:
-		return index
+                return index
             index = index+1
         return -1
 
@@ -113,13 +112,13 @@ class ObjectNode(swing.tree.TreeNode):
         return self.name+' = '+shortrepr(self.object)
 
 
-
 if __name__ == '__main__':
     class foo:
-        bar=99
-        eggs='hello'
+        bar = 99
+        eggs = 'hello'
+
         class baz:
-            x,y,z=1,2,3
+            x, y, z = 1, 2, 3
         func = range
 
     import __main__
