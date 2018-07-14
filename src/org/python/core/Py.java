@@ -16,7 +16,11 @@ import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.sql.Date;
 import java.sql.Time;
@@ -24,13 +28,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Set;
 
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.posix.PosixModule;
-import org.python.util.Generic;
 
 import com.google.common.base.CharMatcher;
 
@@ -2520,48 +2522,36 @@ public final class Py {
     }
 
     /**
-     * Infers the usual Jython executable name from the position of the
-     * jar-file returned by {@link #getJarFileName()} by replacing the
-     * file name with "bin/jython". This is intended as an easy fallback
-     * for cases where {@code sys.executable} is {@code None} due to
-     * direct launching via the java executable.<br>
-     * Note that this does not necessarily return the actual executable,
-     * but instead infers the place where it is usually expected to be.
-     * Use {@code sys.executable} to get the actual executable (may be
-     * {@code None}.
-     *
-     * In contrast to {@link #getJarFileName()} and
-     * {@link #getJarFileNameFromURL(java.net.URL)} this method returns
-     * the path using system-specific separator characters.
+     * Infers the usual Jython executable name from the position of the jar-file returned by
+     * {@link #getJarFileName()} by replacing the file name with "bin/jython". This is intended as
+     * an easy fallback for cases where {@code sys.executable} is {@code None} due to direct
+     * launching via the java executable.
+     * <p>
+     * Note that this does not necessarily return the actual executable, but instead infers the
+     * place where it is usually expected to be. Use {@code sys.executable} to get the actual
+     * executable (may be {@code None}.
      *
      * @return usual Jython-executable as absolute path
      */
     public static String getDefaultExecutableName() {
-        return getDefaultBinDir()+File.separator+(
-                Platform.IS_WINDOWS ? "jython.exe" : "jython");
+        return getDefaultBinDir() + File.separator
+                + (Platform.IS_WINDOWS ? "jython.exe" : "jython");
     }
 
     /**
-     * Infers the usual Jython bin-dir from the position of the jar-file
-     * returned by {@link #getJarFileName()} byr replacing the file name
-     * with "bin". This is intended as an easy fallback for cases where
-     * {@code sys.executable} is {@code null} due to direct launching via
-     * the java executable.<br>
-     * Note that this does not necessarily return the actual bin-directory,
-     * but instead infers the place where it is usually expected to be.
-     *
-     * In contrast to {@link #getJarFileName()} and
-     * {@link #getJarFileNameFromURL(java.net.URL)} this method returns
-     * the path using system-specific separator characters.
+     * Infers the usual Jython bin-dir from the position of the jar-file returned by
+     * {@link #getJarFileName()} byr replacing the file name with "bin". This is intended as an easy
+     * fallback for cases where {@code sys.executable} is {@code null} due to direct launching via
+     * the java executable.
+     * <p>
+     * Note that this does not necessarily return the actual bin-directory, but instead infers the
+     * place where it is usually expected to be.
      *
      * @return usual Jython bin-dir as absolute path
      */
     public static String getDefaultBinDir() {
         String jar = _getJarFileName();
-        if (File.separatorChar != '/') {
-            jar = jar.replace('/', File.separatorChar);
-        }
-        return jar.substring(0, jar.lastIndexOf(File.separatorChar)+1)+"bin";
+        return jar.substring(0, jar.lastIndexOf(File.separatorChar) + 1) + "bin";
     }
 
     /**
@@ -2569,14 +2559,11 @@ public final class Py {
      * jython-jar-file. Usually this is jython.jar, but can also be jython-dev.jar or
      * jython-standalone.jar or something custom.
      *
-     * @return the full name of the jar file containing this class, <code>null</code>
-     *         if not available.
+     * @return the full name of the jar file containing this class, <code>null</code> if not
+     *         available.
      */
     public static String getJarFileName() {
         String jar = _getJarFileName();
-        if (File.separatorChar != '/') {
-            jar = jar.replace('/', File.separatorChar);
-        }
         return jar;
     }
 
@@ -2585,10 +2572,8 @@ public final class Py {
      * jython-jar-file. Usually this is jython.jar, but can also be jython-dev.jar or
      * jython-standalone.jar or something custom.
      *
-     * Note that it does not use system-specific seperator-chars, but always '/'.
-     *
-     * @return the full name of the jar file containing this class, <code>null</code>
-     *         if not available.
+     * @return the full name of the jar file containing this class, <code>null</code> if not
+     *         available.
      */
     public static String _getJarFileName() {
         Class<Py> thisClass = Py.class;
@@ -2598,71 +2583,58 @@ public final class Py {
         return getJarFileNameFromURL(url);
     }
 
-    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
-    private static final String JAR_URL_PREFIX = "jar:file:";
-    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
-    private static final String JAR_SEPARATOR = "!";
-    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
-    private static final String VFSZIP_PREFIX = "vfszip:";
-    /**exclusively used by {@link #getJarFileNameFromURL(java.net.URL)}.*/
-    private static final String VFS_PREFIX = "vfs:";
-
     /**
-     * Converts a url that points to a jar-file to the actual jar-file name.
-     * Note that it does not use system-specific seperator-chars, but always '/'.
+     * Return the path in the file system (as a string) of a JAR located by a URL. Three protocols
+     * are supported, Java JAR-file protocol, and two JBoss protocols "vfs" and "vfszip".
+     * <p>
+     * The JAR-file protocol URL, which must be a {@code jar:file:} reference to a contained element
+     * (that is, it has a "!/" part) is able to identify an actual JAR in a file system that may
+     * then be opened using {@code jarFile = new JarFile(jarFileName)}. The path to the JAR is
+     * returned. If the JAR is accessed by another mechanism ({@code http:} say) this will fail.
+     * <p>
+     * The JBoss URL must be a reference to exactly
+     * {@code vfs:<JAR>/org/python/core/PySystemState.class}, or the same thing using the
+     * {@code vfszip:} protocol, where &lt;JAR&gt; stands for the absolute path to the Jython JAR in
+     * VFS. There is no "!/" marker: in JBoss VFS a JAR is treated just like a directory and can no
+     * longer be opened as a JAR. The method essentially just swaps a VFS protocol for the Java
+     * {@code file:} protocol. The path returned will be correct only if this naive swap is valid.
+     *
+     * @param url into the JAR
+     * @return the file path or {@code null} in the event of a detectable error
      */
     public static String getJarFileNameFromURL(URL url) {
-        String jarFileName = null;
-        if (url != null) {
-            try {
-                // escape plus signs, since the URLDecoder would turn them into spaces
-                final String plus = "\\+";
-                final String escapedPlus = "__ppluss__";
-                String rawUrl = url.toString();
-                rawUrl = rawUrl.replaceAll(plus, escapedPlus);
-                String urlString = URLDecoder.decode(rawUrl, "UTF-8");
-                urlString = urlString.replaceAll(escapedPlus, plus);
-                int jarSeparatorIndex = urlString.lastIndexOf(JAR_SEPARATOR);
-                if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
-                    // jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
-                    int start = JAR_URL_PREFIX.length();
-                    if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
-                        // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
-                        start++;
-                    }
-                    jarFileName = urlString.substring(start, jarSeparatorIndex);
-                } else if (urlString.startsWith(VFSZIP_PREFIX)) {
-                    // vfszip:/some/path/jython.jar/org/python/core/PySystemState.class
-                    final String path = Py.class.getName().replace('.', '/');
-                    int jarIndex = urlString.indexOf(".jar/".concat(path));
+        URI fileURI = null;
+        try {
+            switch (url == null ? "" : url.getProtocol()) {
+
+                case "jar":
+                    // url is jar:file:/some/path/some.jar!/package/with/A.class
+                    URLConnection c = url.openConnection();
+                    fileURI = ((JarURLConnection) c).getJarFileURL().toURI();
+                    break;
+
+                case "vfs":
+                case "vfszip":
+                    // path is /some/path/some-jython.jar/org/python/core/PySystemState.class
+                    String path = url.getPath();
+                    final String target = ".jar/" + Py.class.getName().replace('.', '/');
+                    int jarIndex = path.indexOf(target);
                     if (jarIndex > 0) {
-                        jarIndex += 4;
-                        int start = VFSZIP_PREFIX.length();
-                        if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
-                            // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
-                            // vfszip:/C:/some/path/jython.jar/org/python/core/PySystemState.class
-                            start++;
-                        }
-                        jarFileName = urlString.substring(start, jarIndex);
+                        // path contains the target class in a JAR, so make a file URL for it
+                        fileURI = new URL("file:" + path.substring(0, jarIndex + 4)).toURI();
                     }
-                } else if (urlString.startsWith(VFS_PREFIX)) {
-                    // vfs:/some/path/jython.jar/org/python/core/PySystemState.class
-                    final String path = Py.class.getName().replace('.', '/');
-                    int jarIndex = urlString.indexOf(".jar/".concat(path));
-                    if (jarIndex > 0) {
-                        jarIndex += 4;
-                        int start = VFS_PREFIX.length();
-                        if (Platform.IS_WINDOWS && urlString.charAt(start+1) != '/') {
-                            // The check for urlString.charAt(start+1) != '/' is done to preserve network paths.
-                            // vfs:/C:/some/path/jython.jar/org/python/core/PySystemState.class
-                            start++;
-                        }
-                        jarFileName = urlString.substring(start, jarIndex);
-                    }
-                }
-            } catch (Exception e) {}
+                    break;
+
+                default:
+                    // Unknown protocol or url==null: fileURI = null
+                    break;
+            }
+        } catch (IOException | URISyntaxException e) {
+            // Handler cannot open connection or URL is malformed some way: fileURI = null
         }
-        return jarFileName;
+
+        // The JAR file is now identified in fileURI but needs decoding to a file
+        return fileURI == null ? null : new File(fileURI).toString();
     }
 
 //------------------------contructor-section---------------------------
