@@ -17,11 +17,11 @@ import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -2609,6 +2609,11 @@ public final class Py {
 
                 case "jar":
                     // url is jar:file:/some/path/some.jar!/package/with/A.class
+                    if (Platform.IS_WINDOWS) {
+                        // ... or jar:file://host/some/path/some.jar!/package/with/A.class
+                        // ... or jar:file:////host/some/path/some.jar!/package/with/A.class
+                        url = tweakWindowsFileURL(url);
+                    }
                     URLConnection c = url.openConnection();
                     fileURI = ((JarURLConnection) c).getJarFileURL().toURI();
                     break;
@@ -2629,12 +2634,40 @@ public final class Py {
                     // Unknown protocol or url==null: fileURI = null
                     break;
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException | URISyntaxException | IllegalArgumentException e) {
             // Handler cannot open connection or URL is malformed some way: fileURI = null
         }
 
         // The JAR file is now identified in fileURI but needs decoding to a file
         return fileURI == null ? null : new File(fileURI).toString();
+    }
+
+    /**
+     * If the argument is a {@code jar:file:} or {@code file:} URL, compensate for a bug in Java's
+     * construction of URLs affecting {@code java.io.File} and {@code java.net.URLConnection} on
+     * Windows. This is a helper for {@link #getJarFileNameFromURL(URL)}.
+     * <p>
+     * This bug bites when a JAR file is at a (Windows) UNC location, and a {@code jar:file:} URL is
+     * derived from {@code Class.getResource()} as it is in {@link #_getJarFileName()}. When URL is
+     * supplied to {@link #getJarFileNameFromURL(URL)}, the bug leads to a URI that falsely treats a
+     * server as an "authority". It subsequently causes an {@code IllegalArgumentException} with the
+     * message "URI has an authority component" when we try to construct a File. See
+     * {@link https://bugs.java.com/view_bug.do?bug_id=6360233} ("won't fix").
+     *
+     * @param url Possibly malformed URL
+     * @return corrected URL
+     */
+    private static URL tweakWindowsFileURL(URL url) throws MalformedURLException {
+        String urlstr = url.toString();
+        int fileIndex = urlstr.indexOf("file://"); // 7 chars
+        if (fileIndex >= 0) {
+            // Intended UNC path. If there is no slash following these two, insert "/" here:
+            int insert = fileIndex + 7;
+            if (urlstr.length() > insert && urlstr.charAt(insert) != '/') {
+                url = new URL(urlstr.substring(0, insert) + "//" + urlstr.substring(insert));
+            }
+        }
+        return url;
     }
 
 //------------------------contructor-section---------------------------

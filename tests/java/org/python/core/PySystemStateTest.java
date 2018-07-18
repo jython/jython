@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.python.util.PythonInterpreter;
 
@@ -23,14 +26,17 @@ public class PySystemStateTest extends TestCase {
         final String urlClassPath;
         final String filePath;
 
+        /** This constructor adapts unixPath to Windows when on Windows. */
         JarExample(String urlJarPath, String urlClassPath, String unixPath) {
+            this(urlJarPath, urlClassPath,
+                    Platform.IS_WINDOWS ? new File(unixPath).toString() : unixPath, true);
+        }
+
+        /** This constructor accepts filePath exactly as given. */
+        JarExample(String urlJarPath, String urlClassPath, String filePath, boolean ignored) {
             this.urlJarPath = urlJarPath;
             this.urlClassPath = urlClassPath;
-            if (Platform.IS_WINDOWS) {
-                this.filePath = new File(unixPath).toString();
-            } else {
-                this.filePath = unixPath;
-            }
+            this.filePath = filePath;
         }
     }
 
@@ -38,7 +44,7 @@ public class PySystemStateTest extends TestCase {
      * Examples of URLs (just the path and class noise) and the reference answer. Provide the
      * reference answer like a Un*x path (forward slash).
      */
-    private static JarExample[] jarExamples = { //
+    private static List<JarExample> jarExamples = Arrays.asList(//
             // simple jar-file url
             new JarExample("/some_dir/some.jar", "a/package/with/A.class", "/some_dir/some.jar"),
             // jar-file url to decode
@@ -48,7 +54,38 @@ public class PySystemStateTest extends TestCase {
             // Some characters should be encoded in the URL, but emerge as themselves in the path.
             new JarExample("/n%c3%a5gon/katalog/r%c3%a4tt.jar", "en/f%c3%b6rpackning/med/En.class",
                     "/någon/katalog/rätt.jar") //
-    };
+    );
+
+    /* Check drive-letter  and UNC path handling if on Windows. */
+    static {
+        if (Platform.IS_WINDOWS) {
+            // Add some examples to the list (must be made mutable for that).
+            jarExamples = new ArrayList<JarExample>(jarExamples);
+
+            // Drive-letter examples
+            jarExamples.add(new JarExample("/C:/some_dir/some.jar", "a/package/with/A.class",
+                    "C:\\some_dir\\some.jar", true));
+            jarExamples.add(new JarExample("/E:/n%c3%a5gon/katalog/r%c3%a4tt.jar", "med/En.class",
+                    "E:\\någon\\katalog\\rätt.jar", true));
+
+            // Simple network file path (UNC path without controversial characters)
+            String p = "/org/python/version.properies";
+            String r = "\\\\localhost\\shared\\jython-dev.jar";
+            // JAR UNC file resource URL as produced by File.getURL or getURI
+            jarExamples.add(new JarExample("////localhost/shared/jython-dev.jar", p, r, true));
+            // JAR UNC file resource URL as produced by URLClassLoader.getResource
+            jarExamples.add(new JarExample("//localhost/shared/jython-dev.jar", p, r, true));
+
+            // Network file path (UNC path with a controversial characters)
+            r = "\\\\localhost\\shared\\jy thon%dev.jar";
+            // JAR UNC file resource URL based on (deprecated) File.getURL is invalid
+            // jarExamples.add(new JarExample("//localhost/shared/jy thon%dev.jar", p, r, true));
+            // JAR UNC file resource URL based on File.getURI
+            jarExamples.add(new JarExample("////localhost/shared/jy%20thon%25dev.jar", p, r, true));
+            // JAR UNC file resource URL as produced by URLClassLoader.getResource
+            jarExamples.add(new JarExample("//localhost/shared/jy%20thon%25dev.jar", p, r, true));
+        }
+    }
 
     /**
      * Test case for finding the path in the local file system of the file located by a JAR-file
