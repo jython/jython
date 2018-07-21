@@ -24,7 +24,7 @@
 plugins {
     id 'java-library'
     id 'antlr'
-    // XXX Add maven and use it.
+    id 'maven-publish'
 }
 
 import java.text.SimpleDateFormat
@@ -46,6 +46,8 @@ version = '2.7.2a1+'
 //version = '2.7.2b1'
 //version = '2.7.2rc1'
 //version = '2.7.2'
+
+group = 'org.python'
 
 
 // ---------------- Miscellaneous configuration --------------------------------
@@ -365,7 +367,7 @@ processResources.dependsOn(generateVersionInfo)
  * configuration files and the Python library.
  *
  * These copies include the tests, so we can test things :), but a subsequent
- * JarTask of the build should exclude them as necessary.
+ * JarTask of the build should exclude them as necessary. (Not yet implemented.)
  */
 
 ext {
@@ -521,7 +523,6 @@ task pycompile(
  * Much of the assembly has taken place already in selective copying to the
  * build directory by tasks processResources and copyLib.
  */
-
 task jar(type: Jar, overwrite: true) {
 
     dependsOn pycompile
@@ -533,26 +534,26 @@ task jar(type: Jar, overwrite: true) {
      */
     exclude 'org/python/expose/generate/**' // The expose tool itself
 
-    // Add the exposed classes to the JAR first
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    preserveFileTimestamps = true
+
+    // Add the exposed classes to the JAR
     from expose
 
-    // Add other compiled classes but without overwriting the exposed ones
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // Add other compiled classes
     from compileJava
 
-    // Add the resources
+    // Add the resources (includes merged Python library)
     from processResources
 
-    // Add Python library
-    preserveFileTimestamps = true
-    from file(project.ext.buildLibDir).parent
+    // Add compiled Python library
     from file(project.ext.compiledLibDir).parent
 
     manifest {
         // These attribute values are based on inspecting the ant build
         attributes ([
             'Main-Class': 'org.python.util.jython',
-            'Built-By': 'Mistake',
+            'Built-By': 'build.gradle',
         ])
 
         attributes( [ // Build-Info section
@@ -563,6 +564,70 @@ task jar(type: Jar, overwrite: true) {
         ], 'Build-Info' )
     }
 
+}
+
+
+// ---------------- Documentation ----------------------------------------------
+
+/*
+ * JavaDoc, anyway.
+ */
+
+javadoc {
+    options.encoding = 'UTF-8'
+}
+
+// ---------------- Publication ------------------------------------------------
+
+/*
+ * Post the JAR we built to a public repository. We provide secondary -source
+ * and -javadoc JARs too (supporting 'main').
+ *
+ * How do we test the artifact actually published is correct? The 'test' task
+ * tests Jython laid out in the build directory, not the JAR we propose to
+ * distribute.
+ *
+ * Maybe have a second JAR that contains the additional material necessary to
+ * run integration tests (regression tests and others). Python tests are
+ * (incorrectly) in the main JAR at present.
+ */
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+
+    publications {
+        // The production JAR we expect to be cited as a dependency by users
+        main(MavenPublication) {
+            
+            // Correctly-constructed jar but a .pom without dependencies:
+            artifact jar
+
+            // Nice .pom but the jar is the default built by the Java plugin:
+            //from components.java
+            
+            // Also provide the source.
+            artifact sourcesJar
+            // Also provide the docs. (Some javadoc errors currntly.)
+            artifact javadocJar
+        }
+    }
+
+    repositories {
+        // Dummy one for test: need sonatype here and credentials from user
+        maven {
+            name = 'myRepo'
+            url = "file://${buildDir}/repo"
+        }
+    }
 }
 
 
@@ -675,6 +740,7 @@ test {
     */
 }
 
+
 // ---------------- Miscellaneous fettling of the prepare phase ----------------
 
 // Source is globally UTF-8 (well, nearly).
@@ -700,8 +766,31 @@ task dumpCP {
     }
 }
 
+task dumpCompo {
+    doLast {
+        println('components:')
+        components.each { println it }
+        println('components.java:')
+        components.java.each { println it }
+    }
+}
+
+task dumpArt {
+    doLast {
+        println('artifacts:')
+        artifacts.each { println it }
+    }
+}
+
+task dumpArch {
+    doLast {
+        println('archives:')
+        configurations.archives.each { println it }
+    }
+}
 
 task dumpex {
+    // Legacy approach to obtaining files to JAR
     doLast {
         int n = project.ext.exposedDir.length()
         Set<String> exposedClasses = new TreeSet()
@@ -742,7 +831,7 @@ task dumpex {
 }
 
 
-task dump {
+task dumpSS {
     doLast {
         // Debug
         println '*** source sets ***'
