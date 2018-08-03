@@ -43,6 +43,7 @@ version = '2.7.2a1+'
 
 // Valid examples (please preserve in comments):
 //version = '2.7.2a2'
+//version = '2.7.2b1-SNAPSHOT'
 //version = '2.7.2b1'
 //version = '2.7.2rc1'
 //version = '2.7.2'
@@ -55,6 +56,9 @@ group = 'org.python'
 // Support Java 7 onwards
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
+
+project.compileJava.options.debug = true
+
 
 // Separate the Gradle build from that of Ant
 buildDir = file('build2')
@@ -70,8 +74,11 @@ ext {
     unexposedDir = "$buildDir/unexposed"
     exposedDir = "$buildDir/exposed"
     // The standard library may safely be assembled in-place as a resource
+    pythonLibDir = "$buildDir/python/Lib/"
     buildLibDir = "$buildDir/resources/main/Lib/"
+    buildTestLibDir = "$buildDir/resources/test/Lib/"
     compiledLibDir = "$buildDir/resources/main/Lib/"
+    compiledTestLibDir = "$buildDir/resources/test/Lib/"
 }
 
 
@@ -191,15 +198,14 @@ processResources {
 
 generateGrammarSource {
     maxHeapSize = "512m"
-    outputDirectory = file(project.ext.antlrGenDir)
+    outputDirectory = file(antlrGenDir)
 }
 
-// ---------------- compleJava Task -------------------------------------------------
+// ---------------- compleJava Task --------------------------------------------
 
 compileJava {
     // Divert compiled classes to intermediate location pre-exposure.
-    destinationDir = file(project.ext.unexposedDir)
-    println "compileJava.destinationDir = $destinationDir}"
+    destinationDir = file(unexposedDir)
 }
 
 // ---------------- Expose Task ------------------------------------------------
@@ -216,7 +222,7 @@ configurations {
 
 dependencies {
     // The expose (Ant) task depends on classes compiled to here:
-    expose files(project.ext.unexposedDir)
+    expose files(unexposedDir)
 }
 
 // A (Gradle) task to run the Ant task 'expose'.
@@ -314,14 +320,6 @@ task generateVersionInfo(
         // In principle it could match more than once: take the leftmost
         def versionResult = versionMatcher[0]
 
-
-        // Useful debug
-        /*
-        for (int i=0; i < versionResult.size(); i++) {
-            String part = versionResult[i]
-            println "versionResult[$i] = $part"
-        } */
-
         // <major>.<minor> means <major>.<minor>.0
         String major = versionResult[1]
         String minor = versionResult[2]
@@ -404,6 +402,14 @@ processResources.dependsOn(generateVersionInfo)
 ext {
     libPython = 'lib-python/2.7'
     libJython = 'Lib'
+    libTestSpecs = [
+        'distutils/tests/',
+        'email/test/',
+        'json/tests/',
+        'lib2to3/tests/',
+        'unittest/test/',
+        'test/'
+    ]
 }
 
 /*
@@ -413,23 +419,22 @@ ext {
  * Files from the Jython library having the same name (relative path) as one
  * in CPythonLib.includes thereby take precedence.
  */
-task copyLib(
+task mergePythonLib(
         type: Copy,
-        description: 'Merge lib-python and Jython Lib during assembly') {
+        description: 'Merge lib-python and Jython Lib') {
 
-    into "${project.ext.buildLibDir}"
+    // There might be a way using a collection of File rather than actual copy.
+    into pythonLibDir
 
     // Copy Jython Lib, with precedence over CPython files of the same name
-    from file(project.ext.libJython)
-    exclude 'test/'
-    exclude '**/*.class'
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from libJython
+    exclude '**/*.class'
 
     // Allow Gradle to infer the need to regenerate the outputs
-    inputs.dir project.ext.libJython
-    inputs.dir project.ext.libPython
+    inputs.dir libJython
+    inputs.dir libPython
     inputs.file file('CPythonLib.includes')
-    outputs.dir project.ext.buildLibDir
 
     doFirst {
         // Select the CPython stdlib files by making a list.
@@ -443,17 +448,50 @@ task copyLib(
         }
         // Copy the subset as specified by the list
         project.copy {
-            into project.ext.buildLibDir
-            from file(project.ext.libPython)
+            into pythonLibDir
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            from libPython
             include cPythonLibIncludes
             exclude '**/*.pyc', '**/*.pyd'
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
     }
 }
 
+/*
+ * Copy from the merge location into the main resources, excluding material
+ * only needed for tests.
+ */
+task copyLib(
+        type: Copy,
+        dependsOn: mergePythonLib,
+        description: 'Copy merged Python library (main excluding tests)') {
+    into buildLibDir
+    from pythonLibDir
+    exclude '**/*.pyc', '**/*.pyd', '**/*.class'
+    // Exclude tests and test material
+    exclude libTestSpecs
+}
+
 // Attach this task to processResources
 processResources.dependsOn(copyLib)
+
+/*
+ * Copy from the merge location into the test resopurces, including only
+ * that extra material needed for tests.
+ */
+task copyTestLib(
+        type: Copy,
+        dependsOn: mergePythonLib,
+        description: 'Copy merged Python library (tests only)') {
+    into buildTestLibDir
+    from pythonLibDir
+    exclude '**/*.pyd', '**/*.class' // test material includes .pyc files
+    // Include only tests and test material
+    include libTestSpecs
+}
+
+// Attach this task to processResources
+processTestResources.dependsOn(copyTestLib)
 
 
 // ---------------- Jython-Compile Python --------------------------------------
@@ -528,11 +566,10 @@ task pycompile(
             excludes: exclusions.join(',')    // Yes, it's that way round :o
         )
     }
-
 }
 
 
-// ---------------- Building the JAR -------------------------------------------
+// ---------------- Building the JARs ------------------------------------------
 
 /*
  * The default behaviour of the Java plug-in is to make a JAR of the classes in
@@ -552,15 +589,6 @@ jar {
     // We don't JAR the expose tool itself
     exclude 'org/python/expose/generate/**'
 
-    // Exclude tests and test material from the main JAR
-    exclude 'Lib/distutils/tests/'
-    exclude 'Lib/email/test/'
-    exclude 'Lib/json/tests/'
-    exclude 'Lib/lib2to3/tests/'
-    exclude 'Lib/unittest/tests/'
-    exclude 'Lib/test/'
-    // XXX is this not more naturally done by having separate test resources?
-
     // Build a custom manifest
     manifest {
         // These attribute values are based on inspecting the ant build
@@ -573,14 +601,38 @@ jar {
             'version': project.version,
             'build-compiler': 'modern',
             'jdk-target-version': project.targetCompatibility,
-            'debug': true,
+            'debug': compileJava.options.debug
         ], 'Build-Info' )
     }
+}
+
+/*
+ * This is a task complementary to the jar task, taking just the test material.
+ * This is not published via the main repositories because it counts as a
+ * distinct needs a distinct artefact with its own POM.
+ */
+task testJar(type: Jar) {
+    classifier = 'tests'
     
-    doFirst {
-        println "jar: for ${archiveName}"
+    from sourceSets.test.output
+    // We don't JAR the expose tool, so we don't JAR the tests
+    exclude 'org/python/expose/generate/**'
+
+    // Build a custom manifest
+    manifest {
+        // These attribute values are based on inspecting the ant build
+        attributes ([
+            //'Main-Class': 'org.python.util.jython',
+            'Built-By': 'build.gradle',
+        ])
+
+        attributes( [ // Build-Info section
+            'version': project.version,
+            'build-compiler': 'modern',
+            'jdk-target-version': project.targetCompatibility,
+            'debug': compileTestJava.options.debug
+        ], 'Build-Info' )
     }
-    
 }
 
 
@@ -666,6 +718,7 @@ sourceSets.test {
 
 compileTestJava {
     dependsOn expose
+    options.debug = project.compileJava.options.debug
 }
 
 test {
