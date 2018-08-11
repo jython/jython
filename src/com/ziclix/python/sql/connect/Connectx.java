@@ -113,11 +113,6 @@ public class Connectx extends PyObject {
         return pc;
     }
 
-    /**
-     * Method toString
-     *
-     * @return String
-     */
     @Override
     public String toString() {
         return String.format("<connectx object at %s>", Py.id(this));
@@ -126,9 +121,9 @@ public class Connectx extends PyObject {
     /**
      * Method invoke
      *
-     * @param Object src
-     * @param String methodName
-     * @param Object value
+     * @param src
+     * @param methodName
+     * @param value
      */
     protected void invoke(Object src, String methodName, Object value) {
         Method method = null;

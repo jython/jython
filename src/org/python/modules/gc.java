@@ -80,7 +80,7 @@ import org.python.modules._weakref.ReferenceBackend;
  * the number of collected objects in the same manner as in CPython, i.e. counts only those
  * that participate in reference cycles. This allows a unified test implementation across
  * Jython and CPython (which applies to most tests in test_gc.py). If not any object is
- * gc-monitored, {@link #collect()} just delegates to {@link java.lang.System.gc()}, runs
+ * gc-monitored, {@link #collect()} just delegates to {@link java.lang.System#gc()}, runs
  * asynchronously (i.e. non-blocking) and returns {@link #UNKNOWN_COUNT}.
  * See also {@link #DEBUG_SAVEALL} for a useful gc debugging feature that is supported by
  * Jython from version 2.7 onwards.
@@ -178,7 +178,7 @@ public class gc {
      * reserved to indicate an error.
      */
     public static final int UNKNOWN_COUNT = -2;
-    
+
     /* Jython-specific gc flags: */
     /**
      * This flag tells every newly created PyObject to register for
@@ -349,7 +349,7 @@ public class gc {
 
     /**
      * Enables collection-related verbose output.
-     * 
+     *
      * @see #setJythonGCFlags(short)
      * @see #getJythonGCFlags()
      * @see #addJythonGCFlags(short)
@@ -702,14 +702,17 @@ public class gc {
             }
         }
 
+        @Override
         public String toString() {
             return str;
         }
 
+        @Override
         public int hashCode() {
             return hashCode;
         }
 
+        @Override
         public boolean equals(Object ob) {
             Object ownReferent = get();
             if (ob instanceof WeakReferenceGC) {
@@ -750,7 +753,7 @@ public class gc {
                 new WeakrefGCCompareDummy();
         protected PyObject compare;
         int hashCode = 0;
-        
+
         public void setCompare(PyObject compare) {
             this.compare = compare;
             hashCode = System.identityHashCode(compare);
@@ -761,10 +764,12 @@ public class gc {
             hashCode = 0;
         }
 
+        @Override
         public int hashCode() {
             return hashCode;
         }
-        
+
+        @Override
         @SuppressWarnings("rawtypes")
         public boolean equals(Object ob) {
             if (ob instanceof Reference) {
@@ -779,11 +784,12 @@ public class gc {
 
     private static class GCSentinel {
         Thread waiting;
-        
+
         public GCSentinel(Thread notifyOnFinalize) {
             waiting = notifyOnFinalize;
         }
 
+        @Override
         protected void finalize() throws Throwable {
             notifyPreFinalization();
             if ((gcFlags & VERBOSE_COLLECT) != 0) {
@@ -880,7 +886,7 @@ public class gc {
                 cm = (CycleMarkAttr) JyAttribute.getAttr(obj, JyAttribute.GC_CYCLE_MARK_ATTR);
                 cyclic = cm != null && cm.isUncollectable();
             }
-            
+
             if ((gcFlags & VERBOSE_DELAYED) != 0 || (gcFlags & VERBOSE_FINALIZE) != 0) {
                 writeDebug("gc", "notify finalizer abort;  cyclic? "+cyclic);
             }
@@ -929,6 +935,7 @@ public class gc {
             }
         }
 
+        @Override
         public void run() {
             if ((gcFlags & VERBOSE_DELAYED) != 0) {
                 writeDebug("gc", "run delayed finalization. Index: "+
@@ -1100,6 +1107,7 @@ public class gc {
             // If delayed callbacks were turned off, we process remaining
             // queued callbacks immediately (but in a new thread though):
             Thread dlcProcess = new Thread() {
+                @Override
                 public void run() {
                     GlobalRef.processDelayedCallbacks();
                 }
@@ -1163,6 +1171,7 @@ public class gc {
         protected static PostFinalizationProcessor defaultInstance =
                 new PostFinalizationProcessor();
 
+        @Override
         public void run() {
             /* We wait until last postFinalizationTimestamp is at least timeOut ago.
              * This should only be measured when openFinalizeCount is zero.
@@ -1435,7 +1444,7 @@ public class gc {
 
 
 //--------------Monitoring section---------------------------------------------
-    
+
     public static void monitorObject(PyObject ob) {
         monitorObject(ob, false);
     }
@@ -1607,10 +1616,10 @@ public class gc {
      * {@link #MONITOR_GLOBAL} - Automatically monitors all PyObjects created from now on.<br>
      * {@link #DONT_FINALIZE_CYCLIC_GARBAGE} - Adds cyclic finalizable PyObjects to {@link #garbage}.<br>
      * {@link #PRESERVE_WEAKREFS_ON_RESURRECTION} - Keeps weak references alive if the referent is resurrected.<br>
-     * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} - 
+     * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} -
      * Emulates CPython behavior regarding resurrected objects and finalization.<br>
      * {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversion.<br>
-     * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} - 
+     * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} -
      * Suppress warnings for PyObjects that neither implement {@link org.python.core.Traverseproc} nor
      * are marked as {@link org.python.core.Untraversable}.<br>
      * {@link #USE_PY_WRITE_DEBUG} - uses {@link org.python.core.Py#writeDebug(String, String)} for
@@ -1742,7 +1751,7 @@ public class gc {
 
     /**
      * The generation parameter is only for compatibility with
-     * CPython {@link gc.collect()} and is ignored.
+     * CPython {@link #collect()} and is ignored.
      * @param generation (ignored)
      * @return Collected monitored cyclic trash objects or
      * {@code gc.UNKNOWN_COUNT} if nothing is monitored or -1 if
@@ -1752,7 +1761,7 @@ public class gc {
     public static int collect(int generation) {
         return collect();
     }
- 
+
     private static boolean needsTrashPrinting() {
         return ((debugFlags & DEBUG_COLLECTABLE) != 0 ||
                 (debugFlags & DEBUG_UNCOLLECTABLE) != 0) &&
@@ -1770,7 +1779,7 @@ public class gc {
      * non-erroneous default value. If objects are monitored,
      * it emulates a synchronous gc run in the sense that it waits
      * until all collected monitored objects were finalized.
-     * 
+     *
      * @return Number of collected monitored cyclic trash objects
      * or {@link #UNKNOWN_COUNT} if nothing is monitored or -1
      * if an error occurred and collection did not complete.
@@ -1784,7 +1793,7 @@ public class gc {
             cme.printStackTrace();
         } catch (NullPointerException npe) {
             npe.printStackTrace();
-        } 
+        }
         return -1;
     }
 
@@ -1811,7 +1820,7 @@ public class gc {
                 }
                 /* We must fail fast in this case to avoid deadlocks.
                  * Deadlock would for instance occur if a finalizer calls
-                 * gc.collect (like is done in some tests in test_gc). 
+                 * gc.collect (like is done in some tests in test_gc).
                  * Former version: throw new IllegalStateException("GC is already running.");
                  */
                 return -1; /* better not throw exception here, as calling code
@@ -1847,9 +1856,9 @@ public class gc {
             ++gcMonitoredRunCount;
             delayedFinalizationMode = MARK_REACHABLE_CRITICALS;
             notifyRerun = false;
-            
+
             int[] stat = {0, 0};
-            
+
             syncCollect(stat, (debugFlags & DEBUG_STATS) != 0);
             delayedFinalizationMode = NOTIFY_FOR_RERUN;
 
@@ -1975,7 +1984,7 @@ public class gc {
             System.err.println("Finalize wait count should be initially 0!");
             finalizeWaitCount = 0;
         }
-        
+
         /* We tidy up a bit... (Because it is not unlikely that
          * the preparation stuff done so far has caused a gc run.)
          * This is not entirely safe as gc could interfere with
@@ -1984,7 +1993,7 @@ public class gc {
          * Maybe we will include more mechanisms to ensure safety
          * in the future.
          */
-        
+
         try {
             trash = gcTrash.remove(initWaitTime);
             if (trash != null && (gcFlags & VERBOSE_COLLECT) != 0) {
@@ -2016,7 +2025,7 @@ public class gc {
         }
         cyclicLookup = null;
         List<WeakReferenceGC> collectBuffer;
-        
+
         /* The following out commented block is a nice idea to sync gc in a more
          * elegant way. Unfortunately it proved infeasible because MXBean appears
          * to be no reliable measurement for gc to have finished enqueueing trash.
@@ -2080,19 +2089,19 @@ public class gc {
              * listing related to DEBUG_X flags also counts/lists
              * objects that participate in a cycle with uncollectable
              * finalizable objects.
-             * 
+             *
              * Comprehension:
              * An object is uncollectable if it is in a ref cycle and
              * has a finalizer.
-             * 
+             *
              * CPython
-             * 
+             *
              * - counts and prints the whole uncollectable cycle in context
              * of DEBUG_X flags.
-             * 
+             *
              * - stores only those objects from the cycle that actually have
              * finalizers in gc.garbage.
-             * 
+             *
              * While slightly contradictory to the doc, we reproduce this
              * behavior here.
              */
@@ -2406,7 +2415,7 @@ public class gc {
      * Set the garbage collection debugging flags. Debugging information is
      * written to {@code System.err}.<br>
      * <br>
-     * {@flags} flags is an {@code int}eger and can have the following bits turned on:<br>
+     * {@code flags} flags is an {@code int}eger and can have the following bits turned on:<br>
      * <br>
      * {@link #DEBUG_STATS} - Print statistics during collection.<br>
      * {@link #DEBUG_COLLECTABLE} - Print collectable objects found.<br>
@@ -2565,7 +2574,7 @@ public class gc {
      * contained in the resulting set, i.e. missing participants will be added.
      * This method completely operates on weak references to ensure that the returned
      * set does not manipulate gc behavior.
-     * 
+     *
      * Note that this method is not threadsafe. Within the gc module it is only used
      * by the collect method, which ensures threadsafety by a synchronized block.
      */
@@ -2573,7 +2582,7 @@ public class gc {
             removeNonCyclicWeakRefs(Iterable<WeakReferenceGC> pool) {
         @SuppressWarnings("unchecked")
         IdentityHashMap<PyObject, WeakReferenceGC>[] pools = new IdentityHashMap[2];
-        
+
         pools[0] = new IdentityHashMap<PyObject, WeakReferenceGC>();
         pools[1] = new IdentityHashMap<PyObject, WeakReferenceGC>();
         PyObject referent;
@@ -2591,8 +2600,9 @@ public class gc {
             /* this means the pool is already entirely traversable */
             for (WeakReferenceGC ref: pool) {
                 referent = ref.get();
-                if (referent != null)
-                pools[0].put(referent, ref);
+                if (referent != null) {
+                    pools[0].put(referent, ref);
+                }
             }
         }
         IdentityHashMap<PyObject, WeakReferenceGC> tmp;
@@ -2660,7 +2670,7 @@ public class gc {
         pools[1] = new IdentityHashMap<PyObject, PyObject>();
         IdentityHashMap<PyObject, PyObject> tmp;
         IdentityHashMap<PyObject, PyObject> toProcess = new IdentityHashMap<>();
-        
+
         /* We complete pools[0] with all reachable objects.
          * Note the difference to the implementation in removeNonCyclic.
          * There pools[0] was initialized with the contents of pool and
@@ -2694,14 +2704,14 @@ public class gc {
      * contained in the resulting set, i.e. missing participants will be added.
      * This method completely operates on weak references to ensure that the returned
      * set does not manipulate gc behavior.
-     * 
+     *
      * Note that this method is not threadsafe. Within the gc module it is only used
      * by the collect method which ensures threadsafety by a synchronized block.
      */
     private static Set<PyObject> removeNonCyclic(Iterable<PyObject> pool) {
         @SuppressWarnings("unchecked")
         IdentityHashMap<PyObject, PyObject>[] pools = new IdentityHashMap[2];
-        
+
         pools[0] = new IdentityHashMap<PyObject, PyObject>();
         pools[1] = new IdentityHashMap<PyObject, PyObject>();
         if (monitorNonTraversable) {
@@ -2721,7 +2731,7 @@ public class gc {
         }
         IdentityHashMap<PyObject, PyObject> tmp;
         IdentityHashMap<PyObject, PyObject> toProcess = new IdentityHashMap<>();
-        
+
         /* We complete pools[0] with all reachable objects. */
         for (PyObject obj: pools[0].keySet()) {
             traverse(obj, ReachableFinder.defaultInstance, pools);
@@ -2780,7 +2790,7 @@ public class gc {
             return;
         }
         /* Search contains the cyclic objects that participate in a cycle with start,
-         * i.e. which are reachable from start AND can reach start. 
+         * i.e. which are reachable from start AND can reach start.
          * Mark these...
          */
         CycleMarkAttr cm;
@@ -2880,12 +2890,16 @@ public class gc {
         if (ob instanceof Traverseproc) {
             retVal = ((Traverseproc) ob).traverse(visit, arg);
             traversed = true;
-            if (retVal != 0) return retVal;
+            if (retVal != 0) {
+                return retVal;
+            }
         }
         if (ob instanceof TraverseprocDerived) {
             retVal = ((TraverseprocDerived) ob).traverseDerived(visit, arg);
             traversed = true;
-            if (retVal != 0) return retVal;
+            if (retVal != 0) {
+                return retVal;
+            }
         }
         boolean justAddedWarning = false;
         if ((gcFlags & SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING) == 0) {
@@ -3064,7 +3078,7 @@ public class gc {
             return canLinkToPyObject(cls.getComponentType(), false);
         }
         Class<?> cls2 = cls;
-        
+
         /* Fail fast if no fields exist in cls: */
         int fieldCount = cls2.getDeclaredFields().length;
         while (fieldCount == 0 && cls2 != Object.class) {
@@ -3179,6 +3193,7 @@ public class gc {
          * Expects arg to be a list-like {@code PyObject} where the
          * referents will be inserted.
          */
+        @Override
         public int visit(PyObject object, Object arg) {
             ((org.python.core.PySequenceList) arg).pyadd(object);
             return 0;
@@ -3202,6 +3217,7 @@ public class gc {
          * Expects arg to be a list-like {@code PyObject} where the
          * referents will be inserted.
          */
+        @Override
         @SuppressWarnings("unchecked")
         public int visit(PyObject object, Object arg) {
             IdentityHashMap<PyObject, PyObject>[] reachSearch =
@@ -3217,10 +3233,11 @@ public class gc {
     private static class ReachableFinderWeakRefs implements Visitproc {
         public static ReachableFinderWeakRefs defaultInstance = new ReachableFinderWeakRefs();
 
+        @Override
         @SuppressWarnings("unchecked")
         public int visit(PyObject object, Object arg) {
             if (isTraversable(object)) {
-                IdentityHashMap<PyObject, WeakReferenceGC>[] pools = 
+                IdentityHashMap<PyObject, WeakReferenceGC>[] pools =
                         (IdentityHashMap<PyObject, WeakReferenceGC>[]) arg;
                 WeakReferenceGC ref = pools[0].get(object);
                 if (ref == null) {
@@ -3241,6 +3258,7 @@ public class gc {
          * {@code arg[0]} and the destination list (a list-like {@code PyObject}
          * where the referrers will be inserted) at {@code arg[1]}.
          */
+        @Override
         public int visit(PyObject object, Object arg) {
             if (((PyObject[]) arg)[0].__eq__(object).__nonzero__()) {
                 ((org.python.core.PySequenceList) ((PyObject[]) arg)[1]).pyadd(object);
@@ -3258,6 +3276,7 @@ public class gc {
     private static class RefersToSetFinder implements Visitproc {
         public static RefersToSetFinder defaultInstance = new RefersToSetFinder();
 
+        @Override
         @SuppressWarnings("unchecked")
         public int visit(PyObject object, Object arg) {
             return ((Set<PyObject>) arg).contains(object) ? 1 : 0;
@@ -3287,6 +3306,7 @@ public class gc {
          * Expects {@code arg} to be a 2-component array of
          * {@link java.util.Map}s.
          */
+        @Override
         public int visit(PyObject object, Object arg) {
             @SuppressWarnings("unchecked")
             IdentityHashMap<PyObject, WeakReferenceGC>[] pools =
@@ -3308,6 +3328,7 @@ public class gc {
          * Expects {@code arg} to be a 2-component array of
          * {@link java.util.Map}s.
          */
+        @Override
         public int visit(PyObject object, Object arg) {
             @SuppressWarnings("unchecked")
             IdentityHashMap<PyObject, PyObject>[] pools =

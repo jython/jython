@@ -101,7 +101,9 @@ sourceSets {
 
         java {
             srcDirs = ['src', project.ext.antlrGenDir]
-            exclude 'com/**'    // for now
+            // Reference to proprietary libraries not supplied
+            exclude 'com/ziclix/python/sql/handler/InformixDataHandler.java'
+            exclude 'com/ziclix/python/sql/handler/OracleDataHandler.java'
         }
 
         resources {
@@ -116,22 +118,29 @@ sourceSets {
 
         java {
             srcDirs = ['tests/java']
-            exclude 'com/**'    // XXX for now
+            // Reference to proprietary libraries not supplied
+            exclude 'com/ziclix/python/sql/**'
         }
     }
 }
 
 dependencies {
     /*
-     * These must correspond fairly exactly with the external libraries (JARs)
-     * mentioned in the Ant build.xml.
+     * Must these correspond exactly with the external libraries (JARs)
+     * mentioned in the Ant build.xml, or is it better to allow "at least"
+     * matching of versions, to grant this freedom to user applications?
      */
 
     // Using a version available from repo (not 'extlibs/servlet-api-2.5' as in build.xml)
     implementation group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
 
-    // implementation 'mysql-connector-java-5.1.42-bin'
-    // implementation 'postgresql-42.1.1.jre7'
+    /*
+     * These seem to be unnecessary while the proprietary database support is
+     * not bundled with Jython. Applications needing them can cite thse or a
+     * version they prefer.
+     */
+    //implementation group: 'mysql', name: 'mysql-connector-java', version: '5.1.42'
+    //implementation group: 'org.postgresql', name: 'postgresql', version: '42.1.1.jre7'
 
     // pin to Antlr 3.1.3 until we upgrade parsing
     antlr 'org.antlr:antlr:3.1.3' // use ANTLR version 3
@@ -601,7 +610,9 @@ jar {
             'version': project.version,
             'build-compiler': 'modern',
             'jdk-target-version': project.targetCompatibility,
-            'debug': compileJava.options.debug
+            'debug': compileJava.options.debug,
+            'informix': false,
+            'oracle': false
         ], 'Build-Info' )
     }
 }
@@ -682,7 +693,7 @@ publishing {
             // Also provide the source.
             artifact sourcesJar
             // Also provide the docs. (Some javadoc errors currently.)
-            //artifact javadocJar
+            artifact javadocJar
         }
     }
 
@@ -735,8 +746,9 @@ test {
     // Place cache outside the targets for jar task
     systemProperty 'python.cachedir', "${project.buildDir}/cachedir"
 
-    // Include/exclude based on Ant target javatest-basepath
     include '**/*Test*'
+    
+    // Exclude based on Ant target javatest-basepath
     exclude '**/InterpTestCase'
     exclude '**/jythonTest*'            // Must run interactively
     exclude 'org/python/antlr/**'

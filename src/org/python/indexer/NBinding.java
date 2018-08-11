@@ -8,6 +8,7 @@ import org.python.indexer.ast.NNode;
 import org.python.indexer.ast.NUrl;
 import org.python.indexer.types.NModuleType;
 import org.python.indexer.types.NType;
+import org.python.indexer.types.NUnionType;
 import org.python.indexer.types.NUnknownType;
 
 import java.util.ArrayList;
@@ -17,15 +18,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An {@code NBinding} collects information about a fully qualified name (qname)
- * in the code graph.<p>
- *
- * Each qname has an associated {@link NType}.  When a particular qname is
- * assigned values of different types at different locations, its type is
- * represented as a {@link NUnionType}. <p>
- *
- * Each qname has a set of one or more definitions, and a set of zero or
- * more references.  Definitions and references correspond to code locations. <p>
+ * An {@code NBinding} collects information about a fully qualified name (qname) in the code graph.
+ * <p>
+ * Each qname has an associated {@link NType}. When a particular qname is assigned values of
+ * different types at different locations, its type is represented as a {@link NUnionType}.
+ * <p>
+ * Each qname has a set of one or more definitions, and a set of zero or more references.
+ * Definitions and references correspond to code locations.
  */
 public class NBinding implements Comparable<Object> {
 
@@ -256,6 +255,7 @@ public class NBinding implements Comparable<Object> {
     /**
      * Bindings can be sorted by their location for outlining purposes.
      */
+    @Override
     public int compareTo(Object o) {
         return getSignatureNode().start() - ((NBinding)o).getSignatureNode().start();
     }

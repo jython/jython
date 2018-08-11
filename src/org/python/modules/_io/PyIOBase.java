@@ -33,7 +33,7 @@ import org.python.expose.ExposedType;
  * <b>Implementation note:</b> The code is based heavily on the Jython 2.6-ish
  * <code>_fileio.PyFileIO</code>, the purely Java-accessible {@link org.python.core.io.IOBase} (both
  * Philip Jenvey's work), and the Python implementation in <code>Lib/_pyio</code>. We do not simply
- * delegate to the implementation in {@link org.python.core.io} because of the need to override
+ * delegate to the implementation in {@code org.python.core.io} because of the need to override
  * parts of the implementation in Python subclasses. A call to {@link #close()}, for example, is
  * required to call {@link #flush()}, but if delegated to the pure Java implementation would not
  * call the version of <code>flush()</code> overridden in a Python sub-class of

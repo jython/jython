@@ -68,10 +68,7 @@ public abstract class JyAttribute implements Serializable {
      */
     public static final byte WEAKREF_PENDING_GET_ATTR = 3;
 
-    /**
-     * Only used internally by
-     * {@linkorg.python.core.Py#javaPyClass(PyObject, Class<?>)}
-     */
+    /** Only used internally by {@link Py#javaPyClass(PyObject, Class)} */
     public static final byte PYCLASS_PY2JY_CACHE_ATTR = 4;
 
     /**
@@ -94,8 +91,8 @@ public abstract class JyAttribute implements Serializable {
     private static byte nonBuiltinTransientAttrTypeOffset = 7;
 
     /**
-     * Reserves and returns a new non-transient attr type for custom use. 
-     * 
+     * Reserves and returns a new non-transient attr type for custom use.
+     *
      * @return a non-transient attr type for custom use
      */
     public static byte reserveCustomAttrType() {
@@ -106,8 +103,8 @@ public abstract class JyAttribute implements Serializable {
     }
 
     /**
-     * Reserves and returns a new transient attr type for custom use. 
-     * 
+     * Reserves and returns a new transient attr type for custom use.
+     *
      * @return a transient attr type for custom use
      */
     public static byte reserveTransientCustomAttrType() {
@@ -128,18 +125,22 @@ public abstract class JyAttribute implements Serializable {
             this.value = value;
         }
 
+        @Override
         protected JyAttribute getNext() {
             return next;
         }
 
+        @Override
         protected void setNext(JyAttribute next) {
             this.next = next;
         }
 
+        @Override
         protected Object getValue() {
             return value;
         }
 
+        @Override
         protected void setValue(Object value) {
             this.value = value;
         }
@@ -154,18 +155,22 @@ public abstract class JyAttribute implements Serializable {
             this.value = value;
         }
 
+        @Override
         protected JyAttribute getNext() {
             return next;
         }
 
+        @Override
         protected void setNext(JyAttribute next) {
             this.next = next;
         }
 
+        @Override
         protected Object getValue() {
             return value;
         }
 
+        @Override
         protected void setValue(Object value) {
             this.value = value;
         }
@@ -230,9 +235,9 @@ public abstract class JyAttribute implements Serializable {
     }
 
     /**
-     * Sets the attribute of type {@code attr_type} in {@code ob} to {@code value}.
-     * If no corresponding attribute exists yet, one is created. If {@value == null},
-     * the attribute is removed (if it existed at all).
+     * Sets the attribute of type {@code attr_type} in {@code ob} to {@code value}. If no
+     * corresponding attribute exists yet, one is created. If {@code value == null}, the attribute
+     * is removed (if it existed at all).
      */
     public static void setAttr(PyObject ob, byte attr_type, Object value) {
         synchronized (ob) {

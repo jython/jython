@@ -7,8 +7,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
- * @Deprecated Not used.  Delete in 2.6.
+ * @deprecated Not used.  Delete in 2.6.
  */
+@Deprecated
 public class LineNumberTable {
     int attName;
     Vector<Short> lines;

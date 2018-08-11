@@ -475,9 +475,8 @@ public class cmath {
      * Helper to compute either cos <i>z</i> or cosh <i>z</i>.
      *
      * @param z
-     * @param h <code>true</code> to compute cosh <i>z</i>, <code>false</code> to compute cos
-     *            <i>z</i>.
-     * @return
+     * @param h <code>true</code> for cosh, <code>false</code> for cos.
+     * @return cos <i>z</i> or cosh <i>z</i>
      */
     private static PyComplex cosOrCosh(PyComplex z, boolean h) {
         double x, y, u, v;
@@ -631,7 +630,7 @@ public class cmath {
      *
      * @param r radius
      * @param phi angle
-     * @return
+     * @return <i>r</i>e<sup><i>i&phi;</i></sup>
      */
     public static PyComplex rect(double r, double phi) {
         double x, y;
@@ -828,9 +827,8 @@ public class cmath {
      * Helper to compute either sin <i>z</i> or sinh <i>z</i>.
      *
      * @param z
-     * @param h <code>true</code> to compute sinh <i>z</i>, <code>false</code> to compute sin
-     *            <i>z</i>.
-     * @return
+     * @param h <code>true</code> for sinh, <code>false</code> for sin.
+     * @return sinh <i>z</i> or sin <i>z</i>.
      */
     private static PyComplex sinOrSinh(PyComplex z, boolean h) {
         double x, y, u, v;

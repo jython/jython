@@ -7,6 +7,7 @@ package org.python.indexer;
 import org.python.indexer.ast.NNode;
 import org.python.indexer.ast.NModule;
 import org.python.indexer.ast.NName;
+import org.python.indexer.ast.NStr;
 import org.python.indexer.ast.NUrl;
 import org.python.indexer.types.NModuleType;
 import org.python.indexer.types.NType;
@@ -159,7 +160,7 @@ public class Indexer {
     }
 
     /**
-     * If aggressive assertions are enabled, propages the passed
+     * If aggressive assertions are enabled, propagates the passed
      * {@link Throwable}, wrapped in an {@link IndexingException}.
      * @param msg descriptive message; ok to be {@code null}
      * @throws IndexingException
@@ -193,7 +194,7 @@ public class Indexer {
      * If aggressive assertions are enabled, throws an {@code IndexingException}.
      * Otherwise the message is logged as a warning, and indexing continues.
      * @param msg a descriptive message about the problem
-     * @see enableAggressiveAssertions
+     * @see #enableAggressiveAssertions(boolean)
      * @throws IndexingException
      */
     public void reportFailedAssertion(String msg) {
@@ -233,7 +234,7 @@ public class Indexer {
 
     /**
      * Returns the module search path -- the project directory followed by any
-     * paths that were added by {@link addPath}.
+     * paths that were added by {@link #addPath(String)}.
      */
     public List<String> getLoadPath() {
         List<String> loadPath = new ArrayList<String>();
@@ -321,8 +322,8 @@ public class Indexer {
      * @return a list of entries constituting the file outline.
      * Returns an empty list if the indexer hasn't indexed that path.
      */
-    public List<Outliner.Entry> generateOutline(String file) throws Exception {
-        return new Outliner().generate(this, file);
+    public List<Outliner.Entry> generateOutline(String path) throws Exception {
+        return new Outliner().generate(this, path);
     }
 
     /**
@@ -508,7 +509,7 @@ public class Indexer {
      *        If it is a directory, it is suffixed with "__init__.py", and
      *        only that file is loaded from the directory.
      *
-     * @param noparents {@code true} to skip loading ancestor packages
+     * @param skipChain {@code true} to skip loading ancestor packages
      *
      * @return {@code null} if {@code path} could not be loaded
      */
@@ -650,18 +651,19 @@ public class Indexer {
     }
 
     /**
-     * This method searches the module path for the module {@code modname}.
-     * If found, it is passed to {@link #loadFile}.
+     * This method searches the module path for the module {@code modname}. If found, it is passed
+     * to {@link #loadFile}.
      *
-     * <p>The mechanisms for importing modules are in general statically
-     * undecidable.  We make a reasonable effort to follow the most common
-     * lookup rules.
+     * <p>
+     * The mechanisms for importing modules are in general statically undecidable. We make a
+     * reasonable effort to follow the most common lookup rules.
      *
-     * @param modname a module name.   Can be a relative path to a directory
-     *        or a file (without the extension) or a possibly-qualified
-     *        module name.  If it is a module name, cannot contain leading dots.
+     * @param modname a module name. Can be a relative path to a directory or a file (without the
+     *            extension) or a possibly-qualified module name. If it is a module name, cannot
+     *            contain leading dots.
      *
-     * @see http://docs.python.org/reference/simple_stmts.html#the-import-statement
+     * @see <a href="http://docs.python.org/reference/simple_stmts.html#the-import-statement">The
+     *      Import Statement</a>
      */
     public NModuleType loadModule(String modname) throws Exception {
         if (failedModules.contains(modname)) {

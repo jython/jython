@@ -824,7 +824,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * This is to be overridden in a subclass to return its own type.
      *
      * @param str to wrap
-     * @return
+     * @return instance wrapping {@code str}
      */
     public PyString createInstance(String str) {
         return new PyString(str);
@@ -834,9 +834,9 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * Create an instance of the same type as this object, from the Java String given as argument.
      * This is to be overridden in a subclass to return its own type.
      *
-     * @param string UTF-16 string encoding the characters (as Java).
+     * @param str Java string representing the characters (as Java UTF-16).
      * @param isBasic is ignored in <code>PyString</code> (effectively true).
-     * @return
+     * @return instance wrapping {@code str}
      */
     protected PyString createInstance(String str, boolean isBasic) {
         // ignore isBasic, doesn't apply to PyString, just PyUnicode

@@ -44,17 +44,16 @@ public class CSVString {
     }
 
     /**
-     * Returns a new string resulting from replacing the first occurrence, or all occurrences,
-     * of search string in this string with replace string.
-     * If the string search does not occur in the character sequence represented by this object,
-     * then this string is returned.
+     * Returns a new string resulting from replacing the first occurrence, or all occurrences, of
+     * search string in this string with replace string. If the string search does not occur in the
+     * character sequence represented by this object, then this string is returned.
      *
-     * @param search    the old string
-     * @param replace   the new string
-     * @param all=true  all occurrences of the search string are replaced
-     * @param all=false only the first occurrence of the search string is replaced
-     * @return a string derived from this string by replacing the first occurrence,
-     *         or every occurrence of search with replace.
+     * @param search the old string
+     * @param replace the new string
+     * @param all if {@code true} all occurrences of the search string are replaced; if
+     *            {@code false} only the first occurrence
+     * @return a string derived from this string by replacing the first occurrence, or every
+     *         occurrence, of {@code search} with {@code replace}.
      */
     public static String replace(String original, String search, String replace, boolean all) {
 

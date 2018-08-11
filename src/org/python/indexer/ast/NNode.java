@@ -85,7 +85,7 @@ public abstract class NNode implements java.io.Serializable {
     /**
      * Returns the type for this node.  It is never {@code null}.
      * If the node has not been resolved, the type will default to
-     * {@link Indexer.idx.builtins.None}.
+     * {@code Indexer.idx.builtins.None}.
      */
     public NType getType() {
         if (type == null) {
@@ -122,11 +122,11 @@ public abstract class NNode implements java.io.Serializable {
     }
 
     /**
-     * Returns {@code true} if this is a name-binding node.
-     * Includes functions/lambdas, function/lambda params, classes,
-     * assignments, imports, and implicit assignment via for statements
-     * and except clauses.
-     * @see http://www.python.org/dev/peps/pep-0227
+     * Returns {@code true} if this is a name-binding node. Includes functions/lambdas,
+     * function/lambda params, classes, assignments, imports, and implicit assignment via for
+     * statements and except clauses.
+     *
+     * @see <a href="http://www.python.org/dev/peps/pep-0227">PEP 227</a>
      */
     public boolean bindsName() {
         return false;
@@ -350,6 +350,7 @@ public abstract class NNode implements java.io.Serializable {
             return deepest;
         }
 
+        @Override
         public boolean dispatch(NNode node) {
             // This node ends before the offset, so don't look inside it.
             if (offset > node.end) {

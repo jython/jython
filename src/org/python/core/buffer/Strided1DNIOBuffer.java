@@ -48,8 +48,7 @@ public class Strided1DNIOBuffer extends BaseNIOBuffer {
      * <p>
      * The sub-class constructor should check that the intended access is compatible with this
      * object by calling {@link #checkRequestFlags(int)}. (See the source of
-     * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, ByteBuffer, int, int, int)} for
-     * an example of this use.)
+     * {@link Strided1DWritableBuffer} for an example of this use.)
      *
      * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state. NOTE: this

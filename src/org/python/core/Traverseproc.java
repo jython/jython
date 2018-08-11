@@ -45,7 +45,7 @@ import org.python.modules.gc;
  * </p>
  * <p>
  * Note that the slots-array and - if existent - the user-dict of {@code fooDerived}
- * classes is traversed by {@link org.python.core.TraverseProcDerived}.
+ * classes is traversed by {@link org.python.core.TraverseprocDerived}.
  * The gc-module takes care of exploiting both traverse methods in its static traverse
  * method. So for manual traversion one should always use
  * {@link org.python.modules.gc#traverse(PyObject, Visitproc, Object)} rather
@@ -469,7 +469,7 @@ import org.python.modules.gc;
  *     EncodeBasestringAsciiFunction - no refs, untraversable<br>
  * <br>
  * org.python.modules._jythonlib:<br>
- *   dict_builder                    - Traverseproc<br>     
+ *   dict_builder                    - Traverseproc<br>
  * <br>
  * org.python.modules._threading:<br>
  *   Condition                       - Traverseproc<br>
@@ -653,7 +653,7 @@ public interface Traverseproc {
      * If {@link Visitproc#visit(PyObject, Object)} returns
      * nonzero, this return value
      * must be returned immediately by traverse.
-     * 
+     *
      * {@link Visitproc#visit(PyObject, Object)} must not be
      * called with a {@code null} PyObject-argument.
      */

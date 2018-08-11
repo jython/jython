@@ -121,18 +121,23 @@ public class Outliner {
         public Branch(String qname, int start, NBinding.Kind kind) {
             super(qname, start, kind);
         }
+        @Override
         public boolean isLeaf() {
             return false;
         }
+        @Override
         public boolean isBranch() {
             return true;
         }
+        @Override
         public boolean hasChildren() {
             return children != null && !children.isEmpty();
         }
+        @Override
         public List<Entry> getChildren() {
             return children;
         }
+        @Override
         public void setChildren(List<Entry> children) {
             this.children = children;
         }
@@ -142,9 +147,11 @@ public class Outliner {
      * An entry with no children.
      */
     public static class Leaf extends Entry {
+        @Override
         public boolean isLeaf() {
             return true;
         }
+        @Override
         public boolean isBranch() {
             return false;
         }
@@ -155,12 +162,15 @@ public class Outliner {
         public Leaf(String qname, int start, NBinding.Kind kind) {
             super(qname, start, kind);
         }
+        @Override
         public boolean hasChildren() {
             return false;
         }
+        @Override
         public List<Entry> getChildren() {
             return new ArrayList<Entry>();
         }
+        @Override
         public void setChildren(List<Entry> children) {
             throw new UnsupportedOperationException("Leaf nodes cannot have children.");
         }
@@ -168,8 +178,8 @@ public class Outliner {
 
     /**
      * Create an outline for a file in the index.
-     * @param scope the file scope
-     * @param path the file for which to build the outline
+     * @param idx index holding the file scope
+     * @param abspath the file for which to build the outline
      * @return a list of entries constituting the file outline.
      * Returns an empty list if the indexer hasn't indexed that path.
      */

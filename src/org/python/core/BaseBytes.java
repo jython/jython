@@ -175,11 +175,9 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from
      * PyObject in subclasses.
      *
-     * @see org.python.core.ByteArray#bytearray___init__(PyObject[], String[])
-     * @see org.python.core.ByteArray#ByteArray(PyObject)
+     * @see org.python.core.PyByteArray#bytearray___init__(PyObject[], String[])
+     * @see org.python.core.PyByteArray#PyByteArray(PyObject)
      * @param arg primary argument from which value is taken
-     * @param encoding name of optional encoding (must be a string type)
-     * @param errors name of optional errors policy (must be a string type)
      */
     protected void init(PyObject arg) {
 
@@ -229,7 +227,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from a
      * text string with the specified encoding in subclasses.
      *
-     * @see #bytearray___init__(PyObject[], String[])
+     * @see PyByteArray#bytearray___init__(PyObject[], String[])
      * @see PyByteArray#PyByteArray(PyString, String, String)
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding (must be a string type)
@@ -245,7 +243,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * Helper for <code>__new__</code> and <code>__init__</code> and the Java API constructor from a
      * text string with the specified encoding in subclasses.
      *
-     * @see #bytearray___init__(PyObject[], String[])
+     * @see PyByteArray#bytearray___init__(PyObject[], String[])
      * @see PyByteArray#PyByteArray(PyString, String, String)
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding
@@ -264,7 +262,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * encoding in subclasses. This method thinly wraps a call to the codecs module and deals with
      * checking for PyUnicode (where the encoding argument is mandatory).
      *
-     * @see #ByteArray(PyString, String, String)
+     * @see PyByteArray#PyByteArray(PyString, String, String)
      * @param arg primary argument from which value is taken
      * @param encoding name of optional encoding
      * @param errors name of optional errors policy
@@ -1170,7 +1168,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param args Python argument list
      * @param keywords Assocaited keywords
-     * @return
+     * @return object containing the decoded characters
      */
     protected final PyObject basebytes_decode(PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("decode", args, keywords, "encoding", "errors");
@@ -2905,13 +2903,13 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     //
 
     /**
-     * Helper to check the fill byte for {@link #rjust(String)}, {@link #ljust(String)} and
-     * {@link #center(String)}, which is required to be a single character string, treated as a
-     * byte.
+     * Helper to check the fill byte for {@link #basebytes_rjust(int, String)},
+     * {@link #basebytes_ljust(int, String)} and {@link #basebytes_center(int, String)}, which is
+     * required to be a single character string, treated as a byte.
      *
      * @param function name
      * @param fillchar or <code>null</code>
-     * @return
+     * @return the (checked) single fill byte
      */
     protected static byte fillByteCheck(String function, String fillchar) {
         if (fillchar == null) {

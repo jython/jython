@@ -419,7 +419,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      *
      * @param classname
      * @param superclass
-     * @param classCodeName
      * @return PyObject
      */
     protected static PyObject buildClass(String classname, PyObject superclass) {

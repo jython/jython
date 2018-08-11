@@ -37,7 +37,7 @@ public abstract class RowIdHandler extends FilterDataHandler {
    * Return the name of the method that returns the last row id.  The
    * method can take no arguments but the return type is flexible and
    * will be figured out by the Jython runtime system.
-   * @return
+   * @return name of the method that returns the last row id
    */
   protected abstract String getRowIdMethodName();
 
@@ -47,7 +47,8 @@ public abstract class RowIdHandler extends FilterDataHandler {
    * @return an object representing the last row id
    * @throws SQLException
    */
-  public PyObject getRowId(Statement stmt) throws SQLException {
+  @Override
+public PyObject getRowId(Statement stmt) throws SQLException {
 
     Class<?> c = stmt.getClass();
     Object o = ROWIDS.get(c);

@@ -63,15 +63,13 @@ public class codecs {
     }
 
     /**
-     * Decode the bytes <code>v</code> using the codec registered for the <code>encoding</code>.
-     * The <code>encoding</code> defaults to the system default encoding
-     * (see {@link codecs#getDefaultEncoding()}).
-     * The string <code>errors</code> may name a different error handling
-     * policy (built-in or registered with {@link #register_error(String, PyObject)}).
-     * The default error policy is 'strict' meaning that encoding errors raise a
-     * <code>ValueError</code>.
-     * This method is exposed through the _codecs module as
-     * {@link _codecs#decode(PyString, String, String)}.
+     * Decode the bytes <code>v</code> using the codec registered for the <code>encoding</code>. The
+     * <code>encoding</code> defaults to the system default encoding (see
+     * {@link codecs#getDefaultEncoding()}). The string <code>errors</code> may name a different
+     * error handling policy (built-in or registered with
+     * {@link #register_error(String, PyObject)}). The default error policy is 'strict' meaning that
+     * encoding errors raise a <code>ValueError</code>. This method is exposed through the _codecs
+     * module as {@link _codecs#decode(PyString, PyString, PyString)}
      *
      * @param v bytes to be decoded
      * @param encoding name of encoding (to look up in codec registry)
@@ -400,15 +398,15 @@ public class codecs {
     };//@formatter:on
 
     /**
-     * Determine whether this character should be encoded as itself. The answer depends on whether
-     * we are encoding set O (optional special characters) as itself, and also on whether we are
-     * encoding whitespace as itself. RFC2152 makes it clear that the answers to these questions
-     * vary between applications, so this code needs to be flexible.
+     * Determine whether, in the UTF-7 encoder, this character should be encoded as itself. The
+     * answer depends on whether we are encoding set O (optional special characters) as itself, and
+     * also on whether we are encoding whitespace as itself. RFC2152 makes it clear that the answers
+     * to these questions vary between applications, so this code needs to be flexible.
      *
      * @param c code point of the character
      * @param directO true if characters in "set O" may be encoded as themselves
      * @param directWS true if whitespace characters may be encoded as themselves
-     * @return
+     * @return {@code true} if {@code c} should be encoded as itself
      */
     private static boolean ENCODE_DIRECT(int c, boolean directO, boolean directWS) {
 
@@ -418,7 +416,7 @@ public class codecs {
             switch (utf7_category[c]) {
                 case 0:     // This is a regular character
                     return true;
-                case 1:     // This is a whilespace character
+                case 1:     // This is a white space character
                     return directWS;
                 case 2:     // This is an optional special character
                     return directO;
@@ -870,7 +868,7 @@ public class codecs {
                 // Currently we are in Base64 encoding: should we switch out?
                 if (ENCODE_DIRECT(ch, !base64SetO, !base64WhiteSpace)) {
                     /*
-                     * The next character is one for which we do not neeed to be in Base64, so pad
+                     * The next character is one for which we do not need to be in Base64, so pad
                      * out to 6n the Base64 bits we currently have buffered and emit them. Then
                      * switch to US-ASCII.
                      */
@@ -891,7 +889,7 @@ public class codecs {
                     ch = '-'; // Comes out as +-
                 } else if (!ENCODE_DIRECT(ch, !base64SetO, !base64WhiteSpace)) {
                     /*
-                     * The next character is one for which we neeed to be in Base64, so switch to it
+                     * The next character is one for which we need to be in Base64, so switch to it
                      * and emit the Base64 start marker and initialise the coder.
                      */
                     v.append('+');

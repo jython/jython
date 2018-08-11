@@ -2721,17 +2721,16 @@ public final class Py {
     }
 
     /**
-     * Returns a Python-class that extends {@code cls} and {@code interfce}.
-     * If {@code cls} already extends {@code interfce}, simply {@code cls}
-     * is returned. Otherwise a new class is created (if not yet cached).
-     * It caches such classes and only creates a new one if no appropriate
+     * Returns a Python-class that extends {@code cls} and {@code interfce}. If {@code cls} already
+     * extends {@code interfce}, simply {@code cls} is returned. Otherwise a new class is created
+     * (if not yet cached). It caches such classes and only creates a new one if no appropriate
      * class was cached yet.
      *
      * @return a Python-class that extends {@code cls} and {@code interfce}
      */
     public static synchronized PyObject javaPyClass(PyObject cls, Class<?> interfce) {
-        py2JyClassCacheItem cacheItem = (py2JyClassCacheItem)
-                JyAttribute.getAttr(cls, JyAttribute.PYCLASS_PY2JY_CACHE_ATTR);
+        py2JyClassCacheItem cacheItem = (py2JyClassCacheItem) JyAttribute.getAttr(cls,
+                JyAttribute.PYCLASS_PY2JY_CACHE_ATTR);
         PyObject result;
         if (cacheItem == null) {
             result = ensureInterface(cls, interfce);
@@ -2748,22 +2747,21 @@ public final class Py {
     }
 
     /**
-     * This method is a compact helper to access Python-constructors from Java.
-     * It creates an instance of {@code cls} and retruns it in form of
-     * {@code jcls}, which must be an interface. This method even works if
-     * {@code cls} does not extend {@code jcls} in Python-code. In that case,
-     * it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate
-     * class on the fly.<br>
+     * This method is a compact helper to access Python-constructors from Java. It creates an
+     * instance of {@code cls} and retruns it in form of {@code jcls}, which must be an interface.
+     * This method even works if {@code cls} does not extend {@code jcls} in Python-code. In that
+     * case, it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate class on the
+     * fly.
+     * <p>
      * It automatically converts {@code args} to {@link org.python.core.PyObject}s.<br>
-     * For keyword-support use
-     * {@link #newJ(PyObject, Class, String[], Object...)}.
+     * For keyword-support use {@link #newJ(PyObject, Class, String[], Object...)}.
      *
-     * {@see #newJ(PyObject, Class, PyObject[], String[])}
-     * {@see #newJ(PyObject, Class, String[], Object...)}
-     * {@see #newJ(PyModule, Class, Object...)}
-     * {@see #newJ(PyModule, Class, String[], Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
+     * @see #newJ(PyObject, Class, PyObject[], String[])
+     * @see #newJ(PyObject, Class, String[], Object...)
+     * @see #newJ(PyModule, Class, Object...)
+     * @see #newJ(PyModule, Class, String[], Object...)
+     * @see PyModule#newJ(Class, Object...)
+     * @see PyModule#newJ(Class, String[], Object...)
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2778,20 +2776,20 @@ public final class Py {
     }
 
     /**
-     * This method is a compact helper to access Python-constructors from Java.
-     * It creates an instance of {@code cls} and retruns it in form of
-     * {@code jcls}, which must be an interface. This method even works if
-     * {@code cls} does not extend {@code jcls} in Python-code. In that case,
-     * it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate
-     * class on the fly.<br>
+     * This method is a compact helper to access Python-constructors from Java. It creates an
+     * instance of {@code cls} and retruns it in form of {@code jcls}, which must be an interface.
+     * This method even works if {@code cls} does not extend {@code jcls} in Python-code. In that
+     * case, it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate class on the
+     * fly.
+     * <p>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJ(PyObject, Class, Object...)}
-     * {@see #newJ(PyObject, Class, String[], Object...)}
-     * {@see #newJ(PyModule, Class, Object...)}
-     * {@see #newJ(PyModule, Class, String[], Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
+     * @see #newJ(PyObject, Class, Object...)
+     * @see #newJ(PyObject, Class, String[], Object...)
+     * @see #newJ(PyModule, Class, Object...)
+     * @see #newJ(PyModule, Class, String[], Object...)
+     * @see PyModule#newJ(Class, Object...)
+     * @see PyModule#newJ(Class, String[], Object...)
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2807,21 +2805,21 @@ public final class Py {
     }
 
     /**
-     * This method is a compact helper to access Python-constructors from Java.
-     * It creates an instance of {@code cls} and retruns it in form of
-     * {@code jcls}, which must be an interface. This method even works if
-     * {@code cls} does not extend {@code jcls} in Python-code. In that case,
-     * it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate
-     * class on the fly.<br>
+     * This method is a compact helper to access Python-constructors from Java. It creates an
+     * instance of {@code cls} and retruns it in form of {@code jcls}, which must be an interface.
+     * This method even works if {@code cls} does not extend {@code jcls} in Python-code. In that
+     * case, it uses {@link #javaPyClass(PyObject, Class)} to create an appropriate class on the
+     * fly.
+     * <p>
      * It automatically converts {@code args} to {@link org.python.core.PyObject}s.<br>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJ(PyObject, Class, PyObject[], String[])}
-     * {@see #newJ(PyObject, Class, Object...)}
-     * {@see #newJ(PyModule, Class, Object...)}
-     * {@see #newJ(PyModule, Class, String[], Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
+     * @see #newJ(PyObject, Class, PyObject[], String[])
+     * @see #newJ(PyObject, Class, Object...)
+     * @see #newJ(PyModule, Class, Object...)
+     * @see #newJ(PyModule, Class, String[], Object...)
+     * @see PyModule#newJ(Class, Object...)
+     * @see PyModule#newJ(Class, String[], Object...)
      *
      * @param cls - the class to be instanciated
      * @param jcls - the Java-type to be returned
@@ -2837,17 +2835,17 @@ public final class Py {
     }
 
     /**
-     * Works like {@link #newJ(PyObject, Class, Object...)}, but looks
-     * up the Python-class in the module-dict using the interface-name, i.e.
-     * {@code jcls.getSimpleName()}.<br>
+     * Works like {@link #newJ(PyObject, Class, Object...)}, but looks up the Python-class in the
+     * module-dict using the interface-name, i.e. {@code jcls.getSimpleName()}.
+     * <p>
      * For keywords-support use {@link #newJ(PyModule, Class, String[], Object...)}.
      *
-     * {@see #newJ(PyModule, Class, String[], Object...)}
-     * {@see #newJ(PyObject, Class, PyObject[], String[])}
-     * {@see #newJ(PyObject, Class, Object...)}
-     * {@see #newJ(PyObject, Class, String[], Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
+     * @see #newJ(PyModule, Class, String[], Object...)
+     * @see #newJ(PyObject, Class, PyObject[], String[])
+     * @see #newJ(PyObject, Class, Object...)
+     * @see #newJ(PyObject, Class, String[], Object...)
+     * @see PyModule#newJ(Class, Object...)
+     * @see PyModule#newJ(Class, String[], Object...)
      *
      * @param module the module containing the desired class
      * @param jcls Java-type of the desired clas, must have the same name
@@ -2861,17 +2859,17 @@ public final class Py {
     }
 
     /**
-     * Works like {@link #newJ(PyObject, Class, String[], Object...)}, but looks
-     * up the Python-class in the module-dict using the interface-name, i.e.
-     * {@code jcls.getSimpleName()}.<br>
+     * Works like {@link #newJ(PyObject, Class, String[], Object...)}, but looks up the Python-class
+     * in the module-dict using the interface-name, i.e. {@code jcls.getSimpleName()}.
+     * <p>
      * {@code keywordss} are applied to the last {@code args} in the list.
      *
-     * {@see #newJ(PyModule, Class, Object...)}
-     * {@see #newJ(PyObject, Class, PyObject[], String[])}
-     * {@see #newJ(PyObject, Class, Object...)}
-     * {@see #newJ(PyObject, Class, String[], Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, Object...)}
-     * {@see org.python.core.PyModule#newJ(Class, String[], Object...)}
+     * @see #newJ(PyModule, Class, Object...)
+     * @see #newJ(PyObject, Class, PyObject[], String[])
+     * @see #newJ(PyObject, Class, Object...)
+     * @see #newJ(PyObject, Class, String[], Object...)
+     * @see PyModule#newJ(Class, Object...)
+     * @see PyModule#newJ(Class, String[], Object...)
      *
      * @param module the module containing the desired class
      * @param jcls Java-type of the desired class, must have the same name

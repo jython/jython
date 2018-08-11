@@ -198,8 +198,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Sets a {@link Writer} to use for the standard output stream, <code>sys.stdout</code>. The
-     * behaviour as implemented is to output each object <code>o</code> by calling
+     * Sets a {@link java.io.Writer} to use for the standard output stream, <code>sys.stdout</code>.
+     * The behaviour as implemented is to output each object <code>o</code> by calling
      * <code>o.toString()</code> and writing this as UTF-16.
      *
      * @param outStream to use as the output stream
@@ -229,8 +229,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
     }
 
     /**
-     * Sets a {@link Writer} to use for the standard output stream, <code>sys.stdout</code>. The
-     * behaviour as implemented is to output each object <code>o</code> by calling
+     * Sets a {@link java.io.Writer} to use for the standard output stream, <code>sys.stdout</code>.
+     * The behaviour as implemented is to output each object <code>o</code> by calling
      * <code>o.toString()</code> and writing this as UTF-16.
      *
      * @param outStream to use as the error output stream

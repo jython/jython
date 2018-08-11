@@ -203,14 +203,14 @@ public interface PyBUF {
      * Equivalent to <code>(INDIRECT | WRITABLE | FORMAT)</code>. Also use this in the request if
      * you plan only to use the fully-encapsulated API (<code>byteAt</code>, <code>storeAt</code>,
      * <code>copyTo</code>, <code>copyFrom</code>, etc.), without ever calling
-     * {@link PyBuffer#getNIOByteBuffer()} or using {@link PyBuffer#Pointer()}.
+     * {@link PyBuffer#getNIOByteBuffer()} or using {@link PyBuffer.Pointer}.
      */
     static final int FULL = INDIRECT | WRITABLE | FORMAT;
     /**
      * Equivalent to <code>(INDIRECT | FORMAT)</code>. Also use this in the request if you plan only
      * to use the fully-encapsulated API (<code>byteAt</code>, <code>copyTo</code>, etc.), read
      * only, without ever calling {@link PyBuffer#getNIOByteBuffer()} or using
-     * {@link PyBuffer#Pointer()}.
+     * {@link PyBuffer.Pointer}.
      */
     static final int FULL_RO = INDIRECT | FORMAT;
 

@@ -156,7 +156,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     /**
      * The instance of index translation in use in this string. It will be set to either
-     * {@link #BASIC} or and instance of {@link #Supplementary}.
+     * {@link #BASIC} or an instance of {@link PyUnicode.Supplementary}.
      */
     private final IndexTranslator translator;
 

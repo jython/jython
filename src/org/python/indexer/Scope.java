@@ -148,10 +148,10 @@ public class Scope {
     /**
      * Directly assigns a binding to a name in this table.  Does not add a new
      * definition or reference to the binding.  This form of {@code put} is
-     * often followed by a call to {@link putLocation} to create a reference to
+     * often followed by a call to {@link Indexer#putLocation} to create a reference to
      * the binding.  When there is no code location associated with {@code id},
      * or it is otherwise undesirable to create a reference, the
-     * {@link putLocation} call is omitted.
+     * {@link Indexer#putLocation} call is omitted.
      */
     public void put(String id, NBinding b) {
         putBinding(id, b);
@@ -482,7 +482,7 @@ public class Scope {
 
     /**
      * Look up an attribute in the local scope and superclass scopes.
-     * @see lookupAttr(String,boolean)
+     * @see #lookupAttr(String,boolean)
      */
     public NBinding lookupAttr(String name) {
         return lookupAttr(name, false);

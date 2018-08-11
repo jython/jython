@@ -428,7 +428,7 @@ public class InternalFormat {
         }
 
         /**
-         * Fix-up the zero-padding of the last formatted number in {@link #result()} in the special
+         * Fix-up the zero-padding of the last formatted number in {@link #result} in the special
          * case where a sign-aware padding (<code>{@link #spec}.align='='</code>) was requested, the
          * fill character is <code>'0'</code>, and the digits are to be grouped. In these exact
          * circumstances, the grouping, which must already have been applied to the (whole part)

@@ -22,12 +22,12 @@ import org.python.core.PyException;
  * {@link #getNIOByteBufferImpl()} for <code>ByteBuffer</code>s that wrap the storage, and a factory
  * for slices {@link #getBufferSlice(int, int, int, int)}.
  * <p>
- * The sub-class constructor must specify the feature flags (see {@link #BaseBuffer(int)}), set
- * {@link #index0}, {@link #shape} and {@link #strides}, and finally check the client capabilities
- * with {@link #checkRequestFlags(int)}. Sub-classes intended to represent slices of exporters that
- * must count their exports as part of a locking protocol, as does <code>bytearray</code>, must
- * override {@link #getRoot()} so that a buffer view {@link #release()} on a slice, propagates to
- * the buffer view that provided it.
+ * The sub-class constructor must specify the feature flags (see
+ * {@link #BaseBuffer(int, int, int[], int[])}), set {@link #index0}, {@link #shape} and
+ * {@link #strides}, and finally check the client capabilities with {@link #checkRequestFlags(int)}.
+ * A sub-class intended to represent slices of an exporter that counts its exports, as part of a
+ * locking protocol like <code>bytearray</code>'s, must override {@link #getRoot()} so that a call
+ * to {@link #release()} on a view of slice, propagates to the buffer view that provided the slice.
  * <p>
  * Access methods provided here necessarily work with the abstracted {@link #byteAtImpl(int)},
  * {@link #storeAtImpl(byte, int)} interface, but subclasses are able to override them with more

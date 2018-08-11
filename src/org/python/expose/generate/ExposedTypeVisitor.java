@@ -57,9 +57,9 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
 
     /**
      * @param name the name the type should be exposed as from the annotation
-     * @param name the specified base type
-     * @param name the value of the isBaseType flag
-     * @param name the type's docstring
+     * @param base the specified base type
+     * @param isBaseType the value of the isBaseType flag
+     * @param doc the type's docstring
      */
     public abstract void handleResult(String name, Type base, boolean isBaseType, String doc);
 }

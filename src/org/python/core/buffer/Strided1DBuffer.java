@@ -46,8 +46,7 @@ public class Strided1DBuffer extends BaseArrayBuffer {
      * <p>
      * The sub-class constructor should check that the intended access is compatible with this
      * object by calling {@link #checkRequestFlags(int)}. (See the source of
-     * {@link Strided1DWritableBuffer#Strided1DWritableBuffer(int, byte[], int, int, int)} for an
-     * example of this use.)
+     * {@link Strided1DWritableBuffer} for an example of this use.)
      *
      * @param obj exporting object (or <code>null</code>)
      * @param storage raw byte array containing exported data

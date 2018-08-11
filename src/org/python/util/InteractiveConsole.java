@@ -34,7 +34,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     /**
      * Construct an interactive console, which will "run" when {@link #interact()} is called. The
-     * name of the console (e.g. in error messages) will be {@value #CONSOLE_FILENAME}.
+     * name of the console (e.g. in error messages) will be {@link #CONSOLE_FILENAME}.
      */
     public InteractiveConsole() {
         this(null, CONSOLE_FILENAME);
@@ -42,7 +42,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     /**
      * Construct an interactive console, which will "run" when {@link #interact()} is called. The
-     * name of the console (e.g. in error messages) will be {@value #CONSOLE_FILENAME}.
+     * name of the console (e.g. in error messages) will be {@link #CONSOLE_FILENAME}.
      *
      * @param locals dictionary to use, or if <code>null</code>, a new empty one will be created
      */

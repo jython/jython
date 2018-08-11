@@ -142,7 +142,7 @@ public class MarkupIterator extends PyObject {
     /**
      * Return the next {@link Chunk} from the iterator, which is a structure containing parsed
      * elements of the replacement field (if any), and its preceding text. This is the Java
-     * equivalent of the tuple returned by {@link __iternext__()}. This finds use in the
+     * equivalent of the tuple returned by {@link #__iternext__()}. This finds use in the
      * implementation of <code>str.format</code> and <code>unicode.format</code>.
      *
      * @return the chunk

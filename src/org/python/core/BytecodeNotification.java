@@ -1,17 +1,16 @@
 package org.python.core;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.Collections;
-import java.io.ByteArrayOutputStream;
 
 /**
  * Notifies registered callbacks if new bytecode is loaded.
  */
 public class BytecodeNotification {
     /**
-     * Interface for callbacks. 
-     * Notifies the name of the loaded class, raw bytes of the class, 
+     * Interface for callbacks.
+     * Notifies the name of the loaded class, raw bytes of the class,
      * and the Java class object.
      */
     public interface Callback {
@@ -19,8 +18,8 @@ public class BytecodeNotification {
     }
 
     /**
-     * The following list stores register callback objects. 
-     * The list is shared among the PySystemState objects 
+     * The following list stores register callback objects.
+     * The list is shared among the PySystemState objects
      * if there are multiple instances.
      */
     private static List<Callback> callbacks = new CopyOnWriteArrayList();
@@ -28,6 +27,7 @@ public class BytecodeNotification {
     static {
         // Maintain legacy behavior
         register(new Callback() {
+            @Override
             public void notify(String name, byte[] bytes, Class c) {
                 if (Options.proxyDebugDirectory == null ||
                         (!name.startsWith("org.python.pycode.") &&
@@ -52,11 +52,11 @@ public class BytecodeNotification {
      * Unregisters the callback object
      *
      * @param n the callback object
-     * @return true if successfully removed and 
+     * @return true if successfully removed and
      *         false if the callback object was not registered
      */
     public static boolean unregister(Callback n) { return callbacks.remove(n); }
-    
+
     /**
      * Clears all the registered callbacks
      */
@@ -67,14 +67,14 @@ public class BytecodeNotification {
      *
      * @param name the name of the class of the new bytecode
      * @param data raw byte data of the class
-     * @param class Java class object of the new bytecode
+     * @param klass Java class object of the new bytecode
      */
     public static void notify(String name, byte[] data, Class klass) {
-        for (Callback c:callbacks) {
+        for (Callback c : callbacks) {
             try {
                 c.notify(name, data, klass);
             } catch (Exception e) {
-                Py.writeWarning("BytecodeNotification", "Exception from callback:"+e); 
+                Py.writeWarning("BytecodeNotification", "Exception from callback:" + e);
             }
         }
     }
