@@ -188,9 +188,6 @@ public class PySystemState extends PyObject
 
     private codecs.CodecState codecState;
 
-    /** true when a SystemRestart is triggered. */
-    public boolean _systemRestart = false;
-
     /** Whether bytecode should be written to disk on import. */
     public boolean dont_write_bytecode = false;
 
@@ -1242,18 +1239,6 @@ public class PySystemState extends PyObject
         Py.defaultSystemState.__setattr__("_jy_console", Py.java2py(Py.getConsole()));
 
         return Py.defaultSystemState;
-    }
-
-    /**
-     * Reset the global static {@code PySytemState} so that a subsequent call to
-     * {@link #initialize()} will re-create the state. This is only really necessary in the context
-     * of a system restart, but is harmless when shutting down. Using Python after this call is
-     * likely to result in an implicit full static initialisation, or fail badly.
-     */
-    public static void undoInitialize() {
-        Py.defaultSystemState = null;
-        registry = null;
-        initialized = false;
     }
 
     private static PyVersionInfo getVersionInfo() {

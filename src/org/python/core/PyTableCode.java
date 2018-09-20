@@ -5,9 +5,6 @@ package org.python.core;
  * An implementation of PyCode where the actual executable content
  * is stored as a PyFunctionTable instance and an integer index.
  */
-
-import org.python.modules._systemrestart;
-
 @Untraversable
 public class PyTableCode extends PyBaseCode
 {
@@ -69,15 +66,18 @@ public class PyTableCode extends PyBaseCode
     @Override
     public PyObject __dir__() {
         PyString members[] = new PyString[__members__.length];
-        for (int i = 0; i < __members__.length; i++)
+        for (int i = 0; i < __members__.length; i++) {
             members[i] = new PyString(__members__[i]);
+        }
         return new PyList(members);
     }
 
     private void throwReadonly(String name) {
-        for (int i = 0; i < __members__.length; i++)
-            if (__members__[i] == name)
+        for (int i = 0; i < __members__.length; i++) {
+            if (__members__[i] == name) {
                 throw Py.TypeError("readonly attribute");
+            }
+        }
         throw Py.AttributeError(name);
     }
 
@@ -93,7 +93,9 @@ public class PyTableCode extends PyBaseCode
     }
 
     private static PyTuple toPyStringTuple(String[] ar) {
-        if (ar == null) return Py.EmptyTuple;
+        if (ar == null) {
+            return Py.EmptyTuple;
+        }
         int sz = ar.length;
         PyString[] pystr = new PyString[sz];
         for (int i = 0; i < sz; i++) {
@@ -207,14 +209,7 @@ public class PyTableCode extends PyBaseCode
 
         // Restore previously defined exception
         ts.exception = previous_exception;
-
         ts.frame = ts.frame.f_back;
-
-        // Check for interruption, which is used for restarting the interpreter
-        // on Jython
-        if (ts.getSystemState()._systemRestart && Thread.currentThread().isInterrupted()) {
-            throw new PyException(_systemrestart.SystemRestart);
-        }
         return ret;
     }
 

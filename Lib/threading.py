@@ -222,10 +222,6 @@ class Thread(JavaThread):
                 self.run()
             except SystemExit:
                 pass
-            except InterruptedException:
-                # Quiet InterruptedExceptions if they're caused by system restart
-                if not _sys._shouldRestart:
-                    raise
             except:
                 # If sys.stderr is no more (most likely from interpreter
                 # shutdown) use self.__stderr.  Otherwise still use sys (as in

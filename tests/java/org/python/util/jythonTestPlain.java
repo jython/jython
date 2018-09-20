@@ -39,7 +39,7 @@ public class jythonTestPlain {
     public void testFallbackConsole() {
         System.out.println("testFallbackConsole");
         System.getProperties().setProperty(PYTHON_CONSOLE, "org.python.util.InteractiveConsole");
-        jython.run(commands);
+        jython.main(commands);
         Console console = Py.getConsole();
         assertEquals(PlainConsole.class, console.getClass());
     }
@@ -55,7 +55,7 @@ public class jythonTestPlain {
         PythonInterpreter interp = new PythonInterpreter();
         // Now replace it
         Py.installConsole(new JLineConsole(null));
-        jython.run(commands);
+        jython.main(commands);
         Console console = Py.getConsole();
         assertEquals(JLineConsole.class, console.getClass());
         interp.cleanup();

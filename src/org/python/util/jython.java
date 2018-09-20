@@ -30,14 +30,13 @@ import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
-import org.python.modules._systemrestart;
 import org.python.modules.thread.thread;
 
 public class jython {
 
     /** Exit status: must have {@code OK.ordinal()==0} */
     private enum Status {
-        OK, ERROR, NOT_RUN, SHOULD_RESTART, NO_FILE
+        OK, ERROR, NOT_RUN, NO_FILE
     }
 
     // An instance of this class will provide the console (python.console) by default.
@@ -163,11 +162,14 @@ public class jython {
         return Status.OK.ordinal();
     }
 
-    public static void main(String[] args) {
-        Status status;
-        do {
-            status = run(args);
-        } while (status == Status.SHOULD_RESTART);
+    /** Now equivalent to {@link #main(String[])}, which is to be preferred. */
+    @Deprecated
+    public static void run(String[] args) {
+        main(args);
+    }
+
+    /** Exit Jython with status (converted to an integer). */
+    private static void exit(Status status) {
         System.exit(status.ordinal());
     }
 
@@ -379,20 +381,19 @@ public class jython {
      * {@code (args)} are arguments to the program.
      *
      * @param args arguments to the program.
-     * @return status indicating outcome.
      */
-    public static Status run(String[] args) {
+    public static void main(String[] args) {
         // Parse the command line options
         CommandLineOptions opts = CommandLineOptions.parse(args);
         switch (opts.action) {
             case VERSION:
                 System.err.printf("Jython %s\n", Version.PY_VERSION);
-                return Status.OK;
+                exit(Status.OK);
             case HELP:
-                return usage(Status.OK);
+                exit(usage(Status.OK));
             case ERROR:
                 System.err.println(opts.message);
-                return usage(Status.ERROR);
+                exit(usage(Status.ERROR));
             case RUN:
                 // Let's run some Python! ...
         }
@@ -543,15 +544,10 @@ public class jython {
 
         } catch (PyException pye) {
             // Whatever the mode of execution an uncaught PyException lands here.
-            if (pye.match(_systemrestart.SystemRestart)) {
-                // Leave ourselves a note to restart.
-                sts = Status.SHOULD_RESTART;
-            } else {
-                // If pye was SystemExit *and* Options.inspect==false, this will exit the JVM:
-                Py.printException(pye);
-                // It was an exception other than SystemExit or Options.inspect==true.
-                sts = Status.ERROR;
-            }
+            // If pye was SystemExit *and* Options.inspect==false, this will exit the JVM:
+            Py.printException(pye);
+            // It was an exception other than SystemExit or Options.inspect==true.
+            sts = Status.ERROR;
         }
 
         /*
@@ -581,41 +577,9 @@ public class jython {
             }
         }
 
-        if (sts == Status.SHOULD_RESTART) {
-            // Shut down *all* threads and sockets
-            shutdownInterpreter();
-            // ..reset the state...
-            // XXX seems unnecessary given we will call PySystemState.initialize()
-            // Py.setSystemState(new PySystemState());
-            // ...and start again
-        }
-
         // Shut down in a tidy way
         interp.cleanup();
-        PySystemState.undoInitialize();
-
-        return sts;
-    }
-
-    /**
-     * Run any finalizations on the current interpreter in preparation for a SytemRestart.
-     */
-    public static void shutdownInterpreter() {
-        PySystemState sys = Py.getSystemState();
-        // Signal to threading.py to modify response to InterruptedException:
-        sys._systemRestart = true;
-        // Interrupt (stop?) all the active threads in the jython-threads group.
-        thread.interruptAllThreads();
-        // Close all sockets not already covered by Thread.interrupt (e.g. pre-nio sockets)
-        try {
-            PyObject socket = sys.modules.__finditem__("socket");
-            if (socket != null) {
-                // XXX Fossil code. Raises AttributeError as _closeActiveSockets has been deleted.
-                socket.__getattr__("_closeActiveSockets").__call__();
-            }
-        } catch (PyException pye) {
-            // don't worry about errors: we're shutting down
-        }
+        exit(sts);
     }
 
     /**

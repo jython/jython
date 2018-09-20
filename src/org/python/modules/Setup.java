@@ -41,7 +41,6 @@ public class Setup
         "_py_compile",
         "_random:org.python.modules.random.RandomModule",
         "_sre",
-        "_systemrestart",
         "_threading:org.python.modules._threading._threading",
         "_weakref:org.python.modules._weakref.WeakrefModule",
         "array:org.python.modules.ArrayModule",

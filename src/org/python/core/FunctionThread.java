@@ -2,8 +2,6 @@ package org.python.core;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.python.modules._systemrestart;
-
 public class FunctionThread extends Thread
 {
     private final PyObject func;
@@ -24,7 +22,7 @@ public class FunctionThread extends Thread
         try {
             func.__call__(args);
         } catch (PyException exc) {
-            if (exc.match(Py.SystemExit) || exc.match(_systemrestart.SystemRestart)) {
+            if (exc.match(Py.SystemExit)) {
                 return;
             }
             Py.stderr.println("Unhandled exception in thread started by " + func);
