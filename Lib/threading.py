@@ -223,9 +223,8 @@ class Thread(JavaThread):
             except SystemExit:
                 pass
             except InterruptedException:
-                # Quiet InterruptedExceptions if they're caused by
-                # _systemrestart
-                if not jython.shouldRestart:
+                # Quiet InterruptedExceptions if they're caused by system restart
+                if not _sys._shouldRestart:
                     raise
             except:
                 # If sys.stderr is no more (most likely from interpreter

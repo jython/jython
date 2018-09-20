@@ -41,10 +41,27 @@ public class Options {
     public static boolean respectJavaAccessibility = true;
 
     /**
-     * When false the <code>site.py</code> will not be imported. This is only
-     * honored by the command line main class.
+     * When {@code false} the <code>site.py</code> will not be imported. This may be set by the
+     * command line main class ({@code -S} option) or from the registry and is checked in
+     * {@link org.python.util.PythonInterpreter}.
+     *
+     * @see #no_site
      */
     public static boolean importSite = true;
+
+    /**
+     * When {@code true} the {@code site.py} was not imported. This is may be set by the command
+     * line main class ({@code -S} option) or from the registry. However, in Jython 2,
+     * {@code no_site} is simply the opposite of {@link #importSite}, as the interpreter starts up,
+     * provided for compatibility with the standard Python {@code sys.flags}. Actual control over
+     * the import of the site module in Jython 2, when necessary from Java, is accomplished through
+     * {@link #importSite}.
+     */
+    /*
+     * This should be the standard Python way to control import of the site module. Unfortunately,
+     * importSite is quite old and we cannot rule out use by applications. Correct in Jython 3.
+     */
+    public static boolean no_site = false;
 
     /**
      * Set verbosity to Py.ERROR, Py.WARNING, Py.MESSAGE, Py.COMMENT, or
@@ -52,6 +69,21 @@ public class Options {
      * this option is set from the command line.
      */
     public static int verbose = Py.MESSAGE;
+
+    /**
+     * Set by the {@code -i} option to the interpreter command, to ask for an interactive session to
+     * start after the script ends. It also allows certain streams to be considered interactive when
+     * {@code isatty} is not available.
+     */
+    public static boolean interactive = false;
+
+    /**
+     * When a script given on the command line finishes, start an interactive interpreter. It is set
+     * {@code true} by the {@code -i} option on the command-line, or programmatically from the
+     * script, and reset to {@code false} just before the interactive session starts. (This session
+     * only actually starts if the console is interactive.)
+     */
+    public static boolean inspect = false;
 
     /**
      * A directory where the dynamically generated classes are written. Nothing is
@@ -78,25 +110,27 @@ public class Options {
 
     /** Whether -3 (py3k warnings) was enabled via the command line. */
     public static boolean py3k_warning = false;
-    
+
     /** Whether -B (don't write bytecode on import) was enabled via the command line. */
     public static boolean dont_write_bytecode = false;
 
     /** Whether -E (ignore environment) was enabled via the command line. */
     public static boolean ignore_environment = false;
 
-    //XXX: place holder, not implemented yet.
+    /**
+     * Whether -s (don't add user site directory to {@code sys.path}) was on the command line. The
+     * implementation is mostly in the {@code site} module.
+     */
     public static boolean no_user_site = false;
-
-    //XXX: place holder, not implemented yet.
-    public static boolean no_site = false;
 
     //XXX: place holder
     public static int bytes_warning = 0;
 
-    // Corresponds to -O (Python bytecode optimization), -OO (remove docstrings)
-    // flags in CPython; it's not clear how Jython should expose its optimization,
-    // but this is user visible as of 2.7.
+    /**
+     * Corresponds to -O (Python bytecode optimization), -OO (remove docstrings) flags in CPython.
+     * Jython processes the option and makes it visible as of 2.7, but there is no change of
+     * behaviour in the current version.
+     */
     public static int optimize = 0;
 
     /**
@@ -201,7 +235,8 @@ public class Options {
         }
 
         Options.sreCacheSpec = getStringOption("sre.cachespec", Options.sreCacheSpec);
-
+        Options.inspect |= getStringOption("inspect", "").length() > 0;
         Options.importSite = getBooleanOption("import.site", Options.importSite);
+        Options.no_site = !Options.importSite;
     }
 }

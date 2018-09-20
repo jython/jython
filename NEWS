@@ -21,6 +21,12 @@ Development tip
     - [ 2650 ] Detail message is not set on PyException from PythonInterpreter
     - [ 2403 ] VerifyError when implementing interfaces containing default methods (Java 8)
 
+  New Features
+    - The main program behaves more like CPython in many small ways, including a more correct
+      treatment of the -i option. This simplifies support, and may also make it unnecessary for
+      users to work around differences from CPython.
+    - python.startup registry property (and JYTHONSTARTUP environment variable) added.
+
 Jython 2.7.2a1
   Bugs fixed
     - [ 2632 ] Handle unicode data appropriately in csv module

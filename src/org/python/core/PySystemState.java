@@ -233,7 +233,7 @@ public class PySystemState extends PyObject
         currentWorkingDir = new File("").getAbsolutePath();
 
         dont_write_bytecode = Options.dont_write_bytecode;
-        py3kwarning = Options.py3k_warning;
+        py3kwarning = Options.py3k_warning; // XXX why here if static?
         // Set up the initial standard ins and outs
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;
@@ -746,6 +746,15 @@ public class PySystemState extends PyObject
         this.classLoader = classLoader;
     }
 
+    /**
+     * Work out the root directory of the installation of Jython. Sources for this information are
+     * quite diverse. {@code python.home} will take precedence if set in either
+     * {@code postProperties} or {@code preProperties}, {@code install.root} in
+     * {@code preProperties}, in that order. After this, we search the class path for a JAR, or
+     * nagigate from the JAR deduced by from the class path, or finally {@code jarFileName}.
+     * <p>
+     * We also set by side-effect: {@link #defaultPlatform} from {@code java.version}.
+     */
     private static String findRoot(Properties preProperties, Properties postProperties,
             String jarFileName) {
         String root = null;
@@ -793,6 +802,7 @@ public class PySystemState extends PyObject
         }
     }
 
+    /** Set {@link #defaultPlatform} by examination of the {@code java.version} JVM property. */
     private static void determinePlatform(Properties props) {
         String version = props.getProperty("java.version");
         if (version == null) {
@@ -869,6 +879,54 @@ public class PySystemState extends PyObject
         }
     }
 
+    /**
+     * Install the first argument as the application-wide {@link #registry} (a
+     * {@code java.util.Properties} object), merge values from system and local (or user) properties
+     * files, and finally allow values from {@code postProperties} to override. Usually the first
+     * argument is the {@code System.getProperties()}, if were allowed to access it, and therefore
+     * represents definitions made on the command-line. The net precedence order is:
+     * <table>
+     * <tr>
+     * <th>Source</th>
+     * <th>Filled by</th>
+     * </tr>
+     * <tr>
+     * <td>postProperties</td>
+     * <td>Custom {@link JythonInitializer}</td>
+     * </tr>
+     * <tr>
+     * <td>preProperties</td>
+     * <td>Command-line definitions {@code -Dkey=value})</td>
+     * </tr>
+     * <tr>
+     * <td>... preProperties also contain ...</td>
+     * <td>Environment variables via {@link org.python.util.jython}</td>
+     * </tr>
+     * <tr>
+     * <td>[user.home]/.jython</td>
+     * <td>User-specific registry file</td>
+     * </tr>
+     * <tr>
+     * <td>[python.home]/registry</td>
+     * <td>Installation-wide registry file</td>
+     * </tr>
+     * <tr>
+     * <td>Environmental inference</td>
+     * <td>e.g. {@code locale} command for console encoding</td>
+     * </tr>
+     * </table>
+     * <p>
+     * We call {@link Options#setFromRegistry()} to translate certain final values to
+     * application-wide controls. By side-effect, set {@link #prefix} and {@link #exec_prefix} from
+     * {@link #findRoot(Properties, Properties, String)}. If it has not been set otherwise, a
+     * default value for python.console.encoding is derived from the OS environment, via
+     * {@link #getConsoleEncoding(Properties)}.
+     *
+     * @param preProperties initial registry
+     * @param postProperties overriding values
+     * @param standalone default {@code python.cachedir.skip} to true (if not otherwise defined)
+     * @param jarFileName as a clue to the location of the installation
+     */
     private static void initRegistry(Properties preProperties, Properties postProperties,
             boolean standalone, String jarFileName) {
         if (registry != null) {
@@ -901,6 +959,7 @@ public class PySystemState extends PyObject
             PySystemState.exec_prefix = Py.fileSystemEncode(exec_prefix);
         }
         try {
+            // XXX: Respect or ignore Options.ignore_environment?
             String jythonpath = System.getenv("JYTHONPATH");
             if (jythonpath != null) {
                 registry.setProperty("python.path", jythonpath);
@@ -924,7 +983,7 @@ public class PySystemState extends PyObject
          * python.io.encoding is dubious.
          */
         if (!registry.containsKey(PYTHON_CONSOLE_ENCODING)) {
-                registry.put(PYTHON_CONSOLE_ENCODING, getConsoleEncoding());
+            registry.put(PYTHON_CONSOLE_ENCODING, getConsoleEncoding(registry));
         }
 
         // Set up options from registry
@@ -935,17 +994,19 @@ public class PySystemState extends PyObject
      * Try to determine the console encoding from the platform, if necessary using a sub-process to
      * enquire. If everything fails, assume UTF-8.
      *
+     * @param props in which to look for clues (normally the Jython registry)
      * @return the console encoding (and never {@code null})
      */
-    private static String getConsoleEncoding() {
+    private static String getConsoleEncoding(Properties props) {
 
         // From Java 8 onwards, the answer may already be to hand in the registry:
-        String encoding = System.getProperty("sun.stdout.encoding");
+        String encoding = props.getProperty("sun.stdout.encoding");
+        String os = props.getProperty("os.name");
 
         if (encoding != null) {
             return encoding;
 
-        } else if (System.getProperty("os.name").startsWith("Windows")) {
+        } else if (os != null && os.startsWith("Windows")) {
             // Go via the Windows code page built-in command "chcp".
             String output = getCommandResult("cmd", "/c", "chcp");
             /*
@@ -972,8 +1033,8 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Merge the contents of a property file into the registry without overriding any values already
-     * set there.
+     * Merge the contents of a property file into the registry, but existing entries with the same
+     * key take precedence.
      *
      * @param file
      */
@@ -1162,12 +1223,16 @@ public class PySystemState extends PyObject
         // Condition the console
         initConsole(registry);
 
-        // Finish up standard Python initialization...
+        /*
+         * Create the first interpreter (which is also the first instance of the sys module) and
+         * cache it as the default state.
+         */
         Py.defaultSystemState = new PySystemState();
         Py.setSystemState(Py.defaultSystemState);
         if (classLoader != null) {
             Py.defaultSystemState.setClassLoader(classLoader);
         }
+
         Py.initClassExceptions(getDefaultBuiltins());
 
         // Make sure that Exception classes have been loaded
@@ -1177,6 +1242,18 @@ public class PySystemState extends PyObject
         Py.defaultSystemState.__setattr__("_jy_console", Py.java2py(Py.getConsole()));
 
         return Py.defaultSystemState;
+    }
+
+    /**
+     * Reset the global static {@code PySytemState} so that a subsequent call to
+     * {@link #initialize()} will re-create the state. This is only really necessary in the context
+     * of a system restart, but is harmless when shutting down. Using Python after this call is
+     * likely to result in an implicit full static initialisation, or fail badly.
+     */
+    public static void undoInitialize() {
+        Py.defaultSystemState = null;
+        registry = null;
+        initialized = false;
     }
 
     private static PyVersionInfo getVersionInfo() {

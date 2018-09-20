@@ -58,6 +58,14 @@ python.security.respectJavaAccessibility = true
 # behaviour.
 python.options.caseok = false
 
+# Setting this non-empty will drop the interpreter into an interactive session at the end of
+# execution, like adding the -i flag (roughly) or setting the environment variable PYTHONINSPECT
+# during execution.
+#python.inspect = true
+
+# Setting this to a file name will cause that file to be run at the start of each interactive
+# session (but not when dropping in with the -i flag in after a script has run).
+#python.startup = jython-startup.py
 
 # Use this registry entry to control the list of builtin modules; you
 # can add, remove, or override builtin modules.  The value for this

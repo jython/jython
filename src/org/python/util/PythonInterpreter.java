@@ -6,6 +6,7 @@ import java.io.StringReader;
 import java.util.Properties;
 
 import org.python.antlr.base.mod;
+import org.python.core.CodeFlag;
 import org.python.core.CompileMode;
 import org.python.core.CompilerFlags;
 import org.python.core.imp;
@@ -96,21 +97,19 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
 
     protected PythonInterpreter(PyObject dict, PySystemState systemState,
             boolean useThreadLocalState) {
-        if (dict == null) {
-            dict = Py.newStringMap();
-        }
-        globals = dict;
 
-        if (systemState == null) {
-            systemState = Py.getSystemState();
-        }
-        this.systemState = systemState;
+        globals = dict != null ? dict : Py.newStringMap();
+        this.systemState = systemState != null ? systemState : Py.getSystemState();
         setSystemState();
 
         this.useThreadLocalState = useThreadLocalState;
         if (!useThreadLocalState) {
-            PyModule module = new PyModule("__main__", dict);
-            systemState.modules.__setitem__("__main__", module);
+            PyModule module = new PyModule("__main__", globals);
+            this.systemState.modules.__setitem__("__main__", module);
+        }
+
+        if (Options.Qnew) {
+            cflags.setFlag(CodeFlag.CO_FUTURE_DIVISION);
         }
 
         Py.importSiteIfSelected();

@@ -278,26 +278,50 @@ public final class Py {
 
     static void maybeSystemExit(PyException exc) {
         if (exc.match(Py.SystemExit)) {
+            // No actual exit here if Options.interactive (-i flag) is in force.
+            handleSystemExit(exc);
+        }
+    }
+
+    /**
+     * Exit the process, if {@value Options#inspect}{@code ==false}, cleaning up the system state.
+     * This exception (normally SystemExit) determines the message, if any, and the
+     * {@code System.exit} status.
+     *
+     * @param exc supplies the message or exit status
+     */
+    static void handleSystemExit(PyException exc) {
+        if (!Options.inspect) {
             PyObject value = exc.value;
             if (PyException.isExceptionInstance(exc.value)) {
                 value = value.__findattr__("code");
             }
-            Py.getSystemState().callExitFunc();
+
+            // Decide exit status and produce message while Jython still works
+            int exitStatus;
             if (value instanceof PyInteger) {
-                System.exit(((PyInteger) value).getValue());
+                exitStatus = ((PyInteger) value).getValue();
             } else {
                 if (value != Py.None) {
                     try {
                         Py.println(value);
-                        System.exit(1);
+                        exitStatus = 1;
                     } catch (Throwable t) {
-                        // continue
+                        exitStatus = 0;
                     }
+                } else {
+                    exitStatus = 0;
                 }
-                System.exit(0);
             }
+
+            // Shut down Jython
+            PySystemState sys = Py.getSystemState();
+            sys.callExitFunc();
+            sys.close();
+            System.exit(exitStatus);
         }
     }
+
     public static PyObject StopIteration;
 
     public static PyException StopIteration(String message) {
@@ -1188,15 +1212,35 @@ public final class Py {
         return str;
     }
 
-    /* Display a PyException and stack trace */
+    /**
+     * Display an exception and stack trace through
+     * {@link #printException(Throwable, PyFrame, PyObject)}.
+     *
+     * @param t to display
+     */
     public static void printException(Throwable t) {
         printException(t, null, null);
     }
 
+    /**
+     * Display an exception and stack trace through
+     * {@link #printException(Throwable, PyFrame, PyObject)}.
+     *
+     * @param t to display
+     * @param f frame at which to start the stack trace
+     */
     public static void printException(Throwable t, PyFrame f) {
         printException(t, f, null);
     }
 
+    /**
+     * Display an exception and stack trace. If the exception was {@link Py#SystemExit} <b>and</b>
+     * {@link Options#inspect}{@code ==false}, this will exit the JVM.
+     *
+     * @param t to display
+     * @param f frame at which to start the stack trace
+     * @param file output onto this stream or {@link Py#stderr} if {@code null}
+     */
     public static synchronized void printException(Throwable t, PyFrame f,
             PyObject file) {
         StdoutWrapper stderr = Py.stderr;
@@ -1218,6 +1262,7 @@ public final class Py {
 
         PyException exc = Py.JavaError(t);
 
+        // Act on SystemExit here.
         maybeSystemExit(exc);
 
         setException(exc, f);
@@ -1772,6 +1817,8 @@ public final class Py {
             + "You can use the -S option or python.import.site=false to not import the site module";
 
     public static boolean importSiteIfSelected() {
+        // Ensure sys.flags.no_site actually reflects what happened. (See docs of these two.)
+        Options.no_site = !Options.importSite;
         if (Options.importSite) {
             try {
                 // Ensure site-packages are available
@@ -2670,7 +2717,7 @@ public final class Py {
         return url;
     }
 
-//------------------------contructor-section---------------------------
+//------------------------constructor-section---------------------------
     static class py2JyClassCacheItem {
         List<Class<?>> interfaces;
         List<PyObject> pyClasses;
