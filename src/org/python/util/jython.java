@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.security.AccessControlException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -19,6 +18,7 @@ import org.python.core.BytecodeLoader;
 import org.python.core.CompileMode;
 import org.python.core.CompilerFlags;
 import org.python.core.Options;
+import org.python.core.PrePy;
 import org.python.core.Py;
 import org.python.core.PyCode;
 import org.python.core.PyException;
@@ -30,7 +30,6 @@ import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.imp;
-import org.python.modules.thread.thread;
 
 public class jython {
 
@@ -297,7 +296,7 @@ public class jython {
         // Following CPython PyRun_AnyFileExFlags here, blindly, concerning null name.
         filename = filename != null ? filename : "???";
         // Run the contents in the interpreter
-        if (isInteractive(fp, filename)) {
+        if (PrePy.isInteractive(fp, filename)) {
             // __file__ not defined
             interp.interact(null, new PyFile(fp));
         } else {
@@ -399,7 +398,7 @@ public class jython {
         }
 
         // Get system properties (or empty set if we're prevented from accessing them)
-        Properties preProperties = getSystemProperties();
+        Properties preProperties = PrePy.getSystemProperties();
         addDefaultsFromEnvironment(preProperties);
 
         // Treat the apparent filename "-" as no filename
@@ -409,14 +408,14 @@ public class jython {
         }
 
         // Sense whether the console is interactive, or we have been told to consider it so.
-        boolean stdinIsInteractive = isInteractive(System.in, null);
+        boolean stdinIsInteractive = PrePy.isInteractive(System.in, null);
 
         // Shorthand
         boolean haveScript = opts.command != null || opts.filename != null || opts.module != null;
 
         if (Options.inspect || !haveScript) {
             // We'll be going interactive eventually. condition an interactive console.
-            if (haveConsole()) {
+            if (PrePy.haveConsole()) {
                 // Set the default console type if nothing else has
                 addDefault(preProperties, "python.console", PYTHON_CONSOLE_CLASS);
             }
@@ -554,9 +553,9 @@ public class jython {
          * Check this environment variable at the end, to give programs the opportunity to set it
          * from Python.
          */
-        // XXX: Java does not let us set environment variables but we could have our own os.environ.
         if (!Options.inspect) {
-            Options.inspect = getenv("PYTHONINSPECT") != null;
+            // If set from Python, the value will be in os.environ, not Java System.getenv.
+            Options.inspect = Py.getenv("PYTHONINSPECT", "").length() > 0;
         }
 
         if (Options.inspect && stdinIsInteractive && haveScript) {
@@ -627,20 +626,22 @@ public class jython {
         }
     }
 
-    /** The same as {@code getenv(name, null)} */
+    /** The same as {@code getenv(name, null)}. */
     private static String getenv(String name) {
         return getenv(name, null);
     }
 
     /**
-     * Get the value of an environment variable, if we are allowed to and it is defined; otherwise,
-     * return the chosen default value. An empty string value is treated as undefined. We are
-     * allowed to access the environment variable if if the JVM security environment permits and if
-     * {@link Options#ignore_environment} is {@code false}, which it is by default. It may be set by
-     * the -E flag given to the launcher, or by program action, or once it turns out we do not have
-     * permission (saving further work).
+     * Get the value of an environment variable, respecting {@link Options#ignore_environment} (the
+     * -E option), or return the given default if the variable is undefined or the security
+     * environment prevents access. An empty string value from the environment is treated as
+     * undefined.
+     * <p>
+     * This accesses the read-only Java copy of the system environment directly, not
+     * {@code os.environ} so that it is safe to use before Python types are available.
      *
-     * @param name to access in the environment.
+     * @param name to access in the environment (if allowed by
+     *            {@link Options#ignore_environment}=={@code false}).
      * @param defaultValue to return if {@code name} is not defined or "" or access is forbidden.
      * @return the corresponding value or <code>defaultValue</code>.
      */
@@ -669,55 +670,6 @@ public class jython {
      */
     private static void printError(String format, Object... args) {
         System.err.println(String.format("jython: " + format, args));
-    }
-
-    /**
-     * Check whether an input stream is interactive. This emulates CPython
-     * {@code Py_FdIsInteractive} within the constraints of pure Java.
-     *
-     * The input stream is considered ``interactive'' if either
-     * <ol type="a">
-     * <li>it is {@code System.in} and {@code System.console()} is not {@code null}, or</li>
-     * <li>the {@code -i} flag was given ({@link Options#interactive}={@code true}), and the
-     * filename associated with it is {@code null} or {@code"<stdin>"} or {@code "???"}.</li>
-     * </ol>
-     *
-     * @param fp stream (tested only for {@code System.in})
-     * @param filename
-     * @return true iff thought to be interactive
-     */
-    private static boolean isInteractive(InputStream fp, String filename) {
-        if (fp == System.in && haveConsole()) {
-            return true;
-        } else if (!Options.interactive) {
-            return false;
-        } else {
-            return filename == null || filename.equals("<stdin>") || filename.equals("???");
-        }
-    }
-
-    /** Return {@code true} iff the console is accessible through System.console(). */
-    private static boolean haveConsole() {
-        try {
-            return System.console() != null;
-        } catch (SecurityException se) {
-            return false;
-        }
-    }
-
-    /**
-     * Get the System properties if we are allowed to. Configuration values set via
-     * {@code -Dprop=value} to the java command will be found here. If a security manager prevents
-     * access, we will return a new (empty) object instead.
-     *
-     * @return {@code System} properties or a new {@code Properties} object
-     */
-    private static Properties getSystemProperties() {
-        try {
-            return System.getProperties();
-        } catch (AccessControlException ace) {
-            return new Properties();
-        }
     }
 
     /**

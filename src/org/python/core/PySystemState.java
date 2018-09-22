@@ -896,7 +896,7 @@ public class PySystemState extends PyObject
      * <td>Command-line definitions {@code -Dkey=value})</td>
      * </tr>
      * <tr>
-     * <td>... preProperties also contain ...</td>
+     * <td>... preProperties also contains ...</td>
      * <td>Environment variables via {@link org.python.util.jython}</td>
      * </tr>
      * <tr>

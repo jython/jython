@@ -146,8 +146,9 @@ class CmdLineTest(unittest.TestCase):
         self.assertEqual(err.splitlines().count(b'Unknown option: -a'), 1)
         self.assertEqual(b'', out)
 
-    def test_jython_startup(self):
-        # Test that the file designated by JYTHONSTARTUP is executed when interactive
+    def test_python_startup(self):
+        # Test that the file designated by [PJ]YTHONSTARTUP is executed when interactive.
+        # Note: this test depends on the -i option forcing Python to treat stdin as interactive.
         filename = test.test_support.TESTFN
         self.addCleanup(test.test_support.unlink, filename)
         with open(filename, "w") as script:
@@ -166,6 +167,24 @@ class CmdLineTest(unittest.TestCase):
             check('-i', JYTHONSTARTUP=filename)
         else:
             check('-i', PYTHONSTARTUP=filename)
+
+    @unittest.skipUnless(test.test_support.is_jython, "Requires write to sys.flags.inspect")
+    def test_python_inspect(self):
+        # Test that PYTHONINSPECT set during a script causes an interactive session to start.
+        # Note: this test depends on the -i option forcing Python to treat stdin as interactive,
+        # and on Jython permitting manipulation of sys.flags.inspect (which CPython won't)
+        # so that PYTHONINSPECT can have some effect.
+        filename = test.test_support.TESTFN
+        self.addCleanup(test.test_support.unlink, filename)
+        with open(filename, "w") as script:
+            print >>script, "import sys, os"
+            print >>script, "sys.flags.inspect = False"
+            print >>script, "os.environ['PYTHONINSPECT'] = 'whatever'"
+            print >>script, "print os.environ['PYTHONINSPECT']"
+        expected = ['whatever', '>>> ']
+        result = assert_python_ok('-i', filename)
+        self.assertListEqual(expected, result[1].splitlines())
+
 
 def test_main():
     test.test_support.run_unittest(CmdLineTest)
