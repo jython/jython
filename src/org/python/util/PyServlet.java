@@ -15,6 +15,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.python.core.PrePy;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
@@ -98,7 +99,7 @@ public class PyServlet extends HttpServlet {
     protected static void init(Properties props, ServletContext context) {
         String rootPath = getRootPath(context);
         context.setAttribute(INIT_ATTR, true);
-        Properties baseProps = PySystemState.getBaseProperties();
+        Properties baseProps = PrePy.getSystemProperties();
         // Context parameters
         Enumeration<?> e = context.getInitParameterNames();
         while (e.hasMoreElements()) {

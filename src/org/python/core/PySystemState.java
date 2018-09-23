@@ -1064,11 +1064,8 @@ public class PySystemState extends PyObject
     }
 
     public static Properties getBaseProperties() {
-        try {
-            return System.getProperties();
-        } catch (AccessControlException ace) {
-            return new Properties();
-        }
+        // Moved to PrePy since does not depend on PyObject). Retain in 2.7.x for compatibility.
+        return PrePy.getSystemProperties();
     }
 
     public static synchronized void initialize() {
@@ -1096,7 +1093,7 @@ public class PySystemState extends PyObject
             return;
         }
         if (preProperties == null) {
-            preProperties = getBaseProperties();
+            preProperties = PrePy.getSystemProperties();
         }
         if (postProperties == null) {
             postProperties = new Properties();
@@ -1197,7 +1194,7 @@ public class PySystemState extends PyObject
         initialized = true;
         Py.setAdapter(adapter);
         boolean standalone = false;
-        String jarFileName = Py._getJarFileName();
+        String jarFileName = Py.getJarFileName();
         if (jarFileName != null) {
             standalone = isStandalone(jarFileName);
         }

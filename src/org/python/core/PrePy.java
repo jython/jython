@@ -45,6 +45,44 @@ public class PrePy {
         }
     }
 
+    /**
+     * Get a System property if it is defined, not null, and we are allowed to access it, otherwise
+     * return the given default.
+     *
+     * @param key of the entry to return
+     * @param defaultValue to return if null or disallowed
+     * @return property value or given default
+     */
+    public static String getSystemProperty(String key, String defaultValue) {
+        try {
+            String value = System.getProperty(key, null);
+            return value != null ? value : defaultValue;
+        } catch (AccessControlException ace) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Determine whether <b>standard input</b> is an interactive stream. If the Java system property
+     * {@code python.launcher.tty} is defined and equal to {@code true} or {@code false}, then that
+     * provides the result. This property is normally supplied by the launcher. In the absence of
+     * this certainty, we use {@link #haveConsole()}.
+     *
+     * @return true if (we think) standard input is an interactive stream
+     */
+    public static boolean isInteractive() {
+        // python.launcher.tty is authoritative; see http://bugs.jython.org/issue2325
+        String tty = getSystemProperty("python.launcher.tty", "");
+        if (tty.equalsIgnoreCase("true")) {
+            return true;
+        } else if (tty.equalsIgnoreCase("false")) {
+            return false;
+        } else {
+            // See if we have access to System.console()
+            return haveConsole();
+        }
+    }
+
     /** Return {@code true} iff the console is accessible through System.console(). */
     public static boolean haveConsole() {
         try {
@@ -56,11 +94,10 @@ public class PrePy {
 
     /**
      * Check whether an input stream is interactive. This emulates CPython
-     * {@code Py_FdIsInteractive} within the constraints of pure Java.
-     *
-     * The input stream is considered ``interactive'' if either
+     * {@code Py_FdIsInteractive} within the constraints of pure Java. The input stream is
+     * considered ``interactive'' if either
      * <ol type="a">
-     * <li>it is {@code System.in} and {@code System.console()} is not {@code null}, or</li>
+     * <li>it is {@code System.in} and {@link #isInteractive()} is {@code true}, or</li>
      * <li>the {@code -i} flag was given ({@link Options#interactive}={@code true}), and the
      * filename associated with it is {@code null} or {@code"<stdin>"} or {@code "???"}.</li>
      * </ol>
@@ -70,7 +107,7 @@ public class PrePy {
      * @return true iff thought to be interactive
      */
     public static boolean isInteractive(InputStream fp, String filename) {
-        if (fp == System.in && haveConsole()) {
+        if (fp == System.in && isInteractive()) {
             return true;
         } else if (!Options.interactive) {
             return false;
@@ -133,8 +170,8 @@ public class PrePy {
      * @return the full name of the jar file containing this class, <code>null</code> if not
      *         available.
      */
-    public static String _getJarFileName() {
-        Class<Py> thisClass = Py.class;
+    private static String _getJarFileName() {
+        Class<PrePy> thisClass = PrePy.class;
         String fullClassName = thisClass.getName();
         String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
         URL url = thisClass.getResource(className + ".class");
