@@ -178,6 +178,7 @@ class OptionScanner {
      * returned. This advances the internal state to the next argument.
      */
     String getWholeArgument() {
+        optIndex = 0;
         return args[argIndex++];
     }
 

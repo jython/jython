@@ -725,8 +725,8 @@ public class jython {
         List<String> warnoptions = new LinkedList<String>();
 
         /** Valid single character options. ':' means expect an argument following. */
-        // XJD are extra to CPython. X and J are sanctioned while D is potentially a clash.
-        static final String PROGRAM_OPTS = "3bBc:dEhim:OQ:RsStuUvVW:x?" + "XJD";
+        // XJD are extra to CPython. X and J are sanctioned while D may one day clash.
+        static final String PROGRAM_OPTS = "3bBc:dEhim:OQ:RsStuUvVW:x?" + "XJD:";
 
         /** Valid long-name options. */
         static final char JAR_OPTION = '\u2615';
@@ -953,11 +953,12 @@ public class jython {
         }
 
         /**
-         * Helper for option {@code -Dprop=v}. This is potentially a clash with Python: work around
-         * for launcher misplacement of -J-D...?
+         * Helper for option {@code -Dprop=v}, adding to the "post-properties". (This is a
+         * clash-in-waiting with Python.) The effect is slightly different from {@code -J-Dprop=v},
+         * which contributes to the "pre-properties".
          */
         private void optionD(OptionScanner scanner) throws SecurityException {
-            String[] kv = scanner.getWholeArgument().split("=", 2);
+            String[] kv = scanner.getOptionArgument().split("=", 2);
             String prop = kv[0].trim();
             if (kv.length > 1) {
                 properties.put(prop, kv[1]);
