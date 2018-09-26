@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7 -E
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 # Launch script for Jython. It may be run directly (note the shebang line), but
@@ -13,10 +13,8 @@
 # Developers' Guide).
 
 import glob
-import inspect
 import os
 import os.path
-import pipes
 import shlex
 import subprocess
 import sys
@@ -219,8 +217,8 @@ class JythonCommand(object):
             # Frozen. Let it go with the executable path.
             bytes_path = sys.executable
         else:
-            # Not frozen. Any object defined in this file will do. 
-            bytes_path = inspect.getfile(JythonCommand)
+            # Not frozen. Use the __file__ of this module.. 
+            bytes_path = __file__
         # Python 2 thinks in bytes. Carefully normalise in Unicode.
         path = os.path.realpath(bytes_path.decode(ENCODING))
         try:
@@ -499,6 +497,33 @@ def get_env_opts(envvar):
         opts = shlex.split(opts)
     return decode_list(opts)
 
+def maybe_quote(s):
+    """ Enclose the string argument in single quotes if it looks like it needs it.
+        Spaces and quotes will trigger; single quotes in the argument are escaped.
+        This is only used to compose the --print output so need only satisfy shlex.
+    """
+    NEED_QUOTE = u" \t\"\\'"
+    clean = True
+    for c in s:
+        if c in NEED_QUOTE:
+            clean = False
+            break
+    if clean: return s
+    # Something needs quoting or escaping.
+    QUOTE = u"'"
+    ESC = u"\\"
+    arg = [QUOTE]
+    for c in s:
+        if c == QUOTE:
+            arg.append(QUOTE)
+            arg.append(ESC)
+            arg.append(QUOTE)
+        elif c == ESC:
+            arg.append(ESC)
+        arg.append(c)
+    arg.append(QUOTE)
+    return ''.join(arg)
+
 def main(sys_args):
     # The entire program must work in Unicode
     sys_args = decode_list(sys_args)
@@ -532,7 +557,9 @@ def main(sys_args):
             # Normally used for a byte strings but Python is tolerant :)
             command_line = subprocess.list2cmdline(command)
         else:
-            # Just concatenate with spaces
+            # Transform any element that seems to need quotes
+            command = map(maybe_quote, command)
+            # Now concatenate with spaces
             command_line = u" ".join(command)
         # It is possible the Unicode cannot be encoded for the console
         enc = sys.stdout.encoding or 'ascii'
