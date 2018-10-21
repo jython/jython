@@ -56,16 +56,24 @@ is_jython_posix = is_jython and (os._name == 'posix')
 
 if is_jython:
     def get_java_version(version=None):
-        # returns (1, 8, 0, 121) for version = "1.8.0_121", meaning
-        # Java 8 update 121, etc.. Conforms to:
-        # http://www.oracle.com/technetwork/java/javase/versioning-naming-139433.html
-        # and not yet http://openjdk.java.net/jeps/223 .
+        """return a tuple of int encoding the Java version (as in java.version).
+
+        "1.8.0_121" -> (1, 8, 0, 121)
+        "9.0.4" -> (9, 0, 4)
+        "11" -> (11,)
+        "12-ea" -> (12,)
+        This parses strings (java.version properties) that conform to:
+        http://www.oracle.com/technetwork/java/javase/versioning-naming-139433.html
+        and http://openjdk.java.net/jeps/223 (but doesn't validate them).
+        """
         if version is None:
             version = platform.java_ver()[0]
-        parse = re.match("(\d+)\.(\d+)\.(\d+)_(\d+)", version)
-        if parse:
-            return tuple((int(x) for x in parse.groups()))
-        else:
+        version = version.split('-')[0]     # discard optional pre-release indicator
+        parts = version.split('_')          # pre-JEP-223 format like 1.8.0_121
+        parts[0:1] = parts[0].split('.')
+        try:
+            return tuple(int(x) for x in parts)
+        except:
             return ()
 
 
