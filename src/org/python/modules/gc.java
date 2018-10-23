@@ -469,7 +469,7 @@ public class gc {
                                          DEBUG_OBJECTS |
                                          DEBUG_SAVEALL;
 
-    private static short gcFlags = 0;
+    private static short gcFlags = DONT_TRAVERSE_BY_REFLECTION;
     private static int debugFlags = 0;
     private static boolean monitorNonTraversable = false;
     private static boolean waitingForFinalizers = false;

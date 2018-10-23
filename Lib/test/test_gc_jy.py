@@ -33,7 +33,7 @@ class GCTests_Jy_CyclicGarbage(unittest.TestCase):
             gc.stopMonitoring()
         except Exception:
             pass
-     
+
     @classmethod
     def tearDownClass(cls):
         try:
@@ -371,7 +371,7 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -385,7 +385,7 @@ class GCTests_Jy_Delayed_Finalization(unittest.TestCase):
         c = Test_Resurrection("c")
         c.a = a
         c.toResurrect = Test_Finalizable("d")
-         
+
         del a
         del c
         self.assertNotEqual(gc.collect(), 0)
@@ -552,7 +552,7 @@ class GCTests_Jy_Forced_Delayed_Finalization(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -566,7 +566,7 @@ class GCTests_Jy_Forced_Delayed_Finalization(unittest.TestCase):
         c = Test_Resurrection("c")
         c.a = a
         c.toResurrect = Test_Finalizable("d")
-         
+
         del a
         del c
         self.assertNotEqual(gc.collect(), 0)
@@ -616,31 +616,31 @@ class GCTests_Jy_Raw_Forced_Delayed_Finalization(unittest.TestCase):
     def test_raw_forced_delayedFinalization(self):
         #print "test_raw_forced_delayedFinalization"
         comments = []
-    
+
         class Test_JavaAbortFinalizable(Object):
             def __init__(self, name, toAbort):
                 self.name = name
                 self.toAbort = toAbort
-    
+
             def __repr__(self):
                 return "<"+self.name+">"
-    
+
             def finalize(self):
                 gc.notifyPreFinalization()
                 comments.append("del "+self.name)
                 gc.abortDelayedFinalization(self.toAbort)
                 gc.notifyPostFinalization()
-    
+
         class Test_Finalizable(object):
             def __init__(self, name):
                 self.name = name
-    
+
             def __repr__(self):
                 return "<"+self.name+">"
-    
+
             def __del__(self):
                 comments.append("del "+self.name)
-        
+
         def callback(obj):
             comments.append("callback0")
 
@@ -666,12 +666,12 @@ class GCTests_Jy_Raw_Forced_Delayed_Finalization(unittest.TestCase):
     def test_raw_forced_delayedWeakrefCallback(self):
         comments = []
         resurrected = []
-         
+
         class Test_JavaResurrectFinalizable(Object):
             def __init__(self, name, toResurrect):
                 self.name = name
                 self.toResurrect = toResurrect
-         
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -684,20 +684,20 @@ class GCTests_Jy_Raw_Forced_Delayed_Finalization(unittest.TestCase):
                 # We manually restore weak references:
                 gc.restoreWeakReferences(self.toResurrect)
                 gc.notifyPostFinalization()
-    
+
         class Test_Finalizable(object):
             def __init__(self, name):
                 self.name = name
-    
+
             def __repr__(self):
                 return "<"+self.name+">"
-    
+
             def __del__(self):
                 comments.append("del "+self.name)
-    
+
         def callback(obj):
             comments.append("callback")
-    
+
         a = Test_Finalizable("a")
         b = Test_JavaResurrectFinalizable("b", a)
         wa = weakref.ref(a, callback)
@@ -723,15 +723,15 @@ class GCTests_Jy_Raw_Forced_Delayed_Finalization(unittest.TestCase):
 
     def test_raw_forced_delayed(self):
         comments = []
-    
+
         class Test_JavaAbortFinalizable(Object):
             def __init__(self, name, toAbort):
                 self.name = name
                 self.toAbort = toAbort
-    
+
             def __repr__(self):
                 return "<"+self.name+">"
-    
+
             def finalize(self):
                 gc.notifyPreFinalization()
                 comments.append("del "+self.name)
@@ -826,7 +826,7 @@ class GCTests_Jy_Monitoring(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -926,7 +926,7 @@ class GCTests_Jy_Weakref(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -976,7 +976,7 @@ class GCTests_Jy_Weakref(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -1035,7 +1035,7 @@ class GCTests_Jy_Weakref(unittest.TestCase):
         class Test_Resurrection(object):
             def __init__(self, name):
                 self.name = name
-            
+
             def __repr__(self):
                 return "<"+self.name+">"
 
@@ -1071,11 +1071,10 @@ class GCTests_Jy_Weakref(unittest.TestCase):
         self.assertEqual(wc(), None)
 
 
-@unittest.skipUnless(test_support.is_jython,
-        '''
-        The test involves Java-classes and is thus not supported by
-        non-Jython interpreters.
-        ''')
+@unittest.skipUnless(test_support.is_jython and test_support.get_java_version() < (9,),
+        "Test is specific to Java versions <9")
+        # From Java 9 onwards we get ugly warnings.
+        # See discussion in http://bugs.jython.org/issue2656
 class GCTests_Jy_TraverseByReflection(unittest.TestCase):
 
     @classmethod
@@ -1083,6 +1082,7 @@ class GCTests_Jy_TraverseByReflection(unittest.TestCase):
         #Jython-specific block:
         try:
             cls.savedJythonGCFlags = gc.getJythonGCFlags()
+            gc.removeJythonGCFlags(gc.DONT_TRAVERSE_BY_REFLECTION)  # i.e. enable ...
             gc.addJythonGCFlags(gc.SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING)
             gc.setMonitorGlobal(True)
         except Exception:
@@ -1096,25 +1096,32 @@ class GCTests_Jy_TraverseByReflection(unittest.TestCase):
         except Exception:
             pass
 
-    def test_TraverseByReflection(self):
+    def test_Field(self):
         gc.collect()
-
         prt = GCTestHelper.reflectionTraverseTestField()
         del prt
         self.assertEqual(gc.collect(), 1)
 
+    def test_List(self):
+        gc.collect()
         prt = GCTestHelper.reflectionTraverseTestList()
         del prt
         self.assertEqual(gc.collect(), 1)
 
+    def test_Array(self):
+        gc.collect()
         prt = GCTestHelper.reflectionTraverseTestArray()
         del prt
         self.assertEqual(gc.collect(), 1)
 
+    def test_PyList(self):
+        gc.collect()
         prt = GCTestHelper.reflectionTraverseTestPyList()
         del prt
         self.assertEqual(gc.collect(), 2)
 
+    def test_Cycle(self):
+        gc.collect()
         prt = GCTestHelper.reflectionTraverseTestCycle()
         del prt
         self.assertEqual(gc.collect(), 0)
