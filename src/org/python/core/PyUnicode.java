@@ -1209,6 +1209,15 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(buffer);
     }
 
+    /** Define what characters are to be treated as a space according to Python 2. */
+    private static boolean isPythonSpace(int ch) {
+        // Use the Java built-in methods as far as possible
+        return Character.isWhitespace(ch)    // catches the ASCII spaces and some others
+                || Character.isSpaceChar(ch) // catches remaining Unicode spaces
+                || ch == 0x0085  // NEXT LINE (not a space in Java)
+                || ch == 0x180e; // MONGOLIAN VOWEL SEPARATOR (not a space in Java 9+ or Python 3)
+    }
+
     private static class StripIterator implements Iterator<Integer> {
 
         private final Iterator<Integer> iter;
@@ -1231,7 +1240,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
             } else {
                 while (iter.hasNext()) {
                     int codePoint = iter.next();
-                    if (!Character.isWhitespace(codePoint)) {
+                    if (!isPythonSpace(codePoint)) {
                         lookahead = codePoint;
                         return;
                     }
@@ -1350,6 +1359,30 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 new StripIterator(sep, new ReversedIterator<>(newSubsequenceIterator()))));
     }
 
+    /** {@inheritDoc} */
+    @Override
+    protected int _findLeft(int right) {
+        String s = getString();
+        for (int left = 0; left < right; left++) {
+            if (!isPythonSpace(s.charAt(left))) {
+                return left;
+            }
+        }
+        return right;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected int _findRight() {
+        String s = getString();
+        for (int right = s.length(); --right >= 0;) {
+            if (!isPythonSpace(s.charAt(right))) {
+                return right;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public PyTuple partition(PyObject sep) {
         return unicode_partition(sep);
@@ -1418,7 +1451,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
             while (iter.hasNext()) {
                 int codepoint = iter.next();
-                if (Character.isWhitespace(codepoint)) {
+                if (isPythonSpace(codepoint)) {
                     completeSeparator = true;
                     if (!atBeginning) {
                         inSeparator = true;
@@ -1624,6 +1657,67 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    /**
+     * {@inheritDoc} The split sections will be {@link PyUnicode} and use the Python
+     * <code>unicode</code> definition of "space".
+     */
+    @Override
+    protected PyList splitfields(int maxsplit) {
+        /*
+         * Result built here is a list of split parts, exactly as required for s.split(None,
+         * maxsplit). If there are to be n splits, there will be n+1 elements in L.
+         */
+        PyList list = new PyList();
+
+        String s = getString();
+        int length = s.length(), start = 0, splits = 0, index;
+
+        if (maxsplit < 0) {
+            // Make all possible splits: there can't be more than:
+            maxsplit = length;
+        }
+
+        // start is always the first character not consumed into a piece on the list
+        while (start < length) {
+
+            // Find the next occurrence of non-whitespace
+            while (start < length) {
+                if (!isPythonSpace(s.charAt(start))) {
+                    // Break leaving start pointing at non-whitespace
+                    break;
+                }
+                start++;
+            }
+
+            if (start >= length) {
+                // Only found whitespace so there is no next segment
+                break;
+
+            } else if (splits >= maxsplit) {
+                // The next segment is the last and contains all characters up to the end
+                index = length;
+
+            } else {
+                // The next segment runs up to the next next whitespace or end
+                for (index = start; index < length; index++) {
+                    if (isPythonSpace(s.charAt(index))) {
+                        // Break leaving index pointing at whitespace
+                        break;
+                    }
+                }
+            }
+
+            // Make a piece from start up to index
+            list.append(fromSubstring(start, index));
+            splits++;
+
+            // Start next segment search at that point
+            start = index;
+        }
+
+        return list;
+    }
+
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_rsplit_doc)
     final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
         String sep = coerceToString(sepObj, true);
@@ -1632,6 +1726,68 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         } else {
             return _rsplit(null, maxsplit);
         }
+    }
+
+    /**
+     * {@inheritDoc} The split sections will be {@link PyUnicode} and use the Python
+     * <code>unicode</code> definition of "space".
+     */
+    @Override
+    protected PyList rsplitfields(int maxsplit) {
+        /*
+         * Result built here (in reverse) is a list of split parts, exactly as required for
+         * s.rsplit(None, maxsplit). If there are to be n splits, there will be n+1 elements.
+         */
+        PyList list = new PyList();
+
+        String s = getString();
+        int length = s.length(), end = length - 1, splits = 0, index;
+
+        if (maxsplit < 0) {
+            // Make all possible splits: there can't be more than:
+            maxsplit = length;
+        }
+
+        // end is always the rightmost character not consumed into a piece on the list
+        while (end >= 0) {
+
+            // Find the next occurrence of non-whitespace (working leftwards)
+            while (end >= 0) {
+                if (!isPythonSpace(s.charAt(end))) {
+                    // Break leaving end pointing at non-whitespace
+                    break;
+                }
+                --end;
+            }
+
+            if (end < 0) {
+                // Only found whitespace so there is no next segment
+                break;
+
+            } else if (splits >= maxsplit) {
+                // The next segment is the last and contains all characters back to the beginning
+                index = -1;
+
+            } else {
+                // The next segment runs back to the next next whitespace or beginning
+                for (index = end; index >= 0; --index) {
+                    if (isPythonSpace(s.charAt(index))) {
+                        // Break leaving index pointing at whitespace
+                        break;
+                    }
+                }
+            }
+
+            // Make a piece from index+1 start up to end+1
+            list.append(fromSubstring(index + 1, end + 1));
+            splits++;
+
+            // Start next segment search at that point
+            end = index;
+        }
+
+        list.reverse();
+        return list;
     }
 
     @ExposedMethod(defaults = "false", doc = BuiltinDocs.unicode___getslice___doc)
@@ -2089,7 +2245,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
             return false;
         }
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
-            if (!Character.isWhitespace(iter.next())) {
+            if (!isPythonSpace(iter.next())) {
                 return false;
             }
         }
@@ -2190,7 +2346,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         int i = 0;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext(); i++) {
             int codePoint = iter.next();
-            if (Character.isWhitespace(codePoint)) {
+            if (isPythonSpace(codePoint)) {
                 sb.append(' ');
                 continue;
             }
@@ -2221,7 +2377,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < getString().length(); i++) {
             char ch = getString().charAt(i);
-            if (Character.isWhitespace(ch)) {
+            if (isPythonSpace(ch)) {
                 sb.append(' ');
                 continue;
             }

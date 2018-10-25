@@ -25,16 +25,16 @@ import org.python.core.Py;
 import org.python.core.PyString;
 
 public class SRE_STATE {
-    
+
     /*
      * Generated from Python-2.4.5 like 'python headerToJava.py < Modules/sre_constants.h'
-     * where headerToJava.py contains the following code 
+     * where headerToJava.py contains the following code
 import sys
 for line in sys.stdin:
    if line.startswith('#define'):
        line = line.replace('#define', 'public static final int').strip()
        segs = line.split(' ')
-       print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])                                                          
+       print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])
      */
     //BEGIN generated code
     public static final int SRE_MAGIC = 20031017;
@@ -114,7 +114,7 @@ for line in sys.stdin:
 
     //From here we're including things from _sre.c in the order they're defined there
     public static final int USE_RECURSION_LIMIT = 5000;
-    
+
     /* error codes */
     public static final int SRE_ERROR_ILLEGAL = -1;
     public static final int SRE_ERROR_STATE   = -2;
@@ -194,7 +194,7 @@ for line in sys.stdin:
             return false;
         }
     }
-    
+
     final boolean sre_category(int category, int ch) {
         switch (category) {
 
@@ -230,9 +230,11 @@ for line in sys.stdin:
             return !Character.isDigit(ch);
 
         case SRE_CATEGORY_UNI_SPACE:
-            return Character.isSpaceChar(ch) || Character.isWhitespace(ch) || ch == 0x0085;
+            return Character.isSpaceChar(ch) || Character.isWhitespace(ch) ||
+                    ch == 0x0085 || ch == 0x180e;
         case SRE_CATEGORY_UNI_NOT_SPACE:
-            return !(Character.isSpaceChar(ch) || Character.isWhitespace(ch) || ch == 0x0085);
+            return !(Character.isSpaceChar(ch) || Character.isWhitespace(ch) ||
+                    ch == 0x0085 || ch == 0x180e);
 
         case SRE_CATEGORY_UNI_WORD:
             return Character.isLetterOrDigit(ch) || ch == '_';
@@ -293,7 +295,7 @@ for line in sys.stdin:
     }
 
     private void mark_restore(int lo, int hi, int mark_stack_base) {
-        
+
         if (hi <= lo)
             return;
 
@@ -305,7 +307,7 @@ for line in sys.stdin:
 
         System.arraycopy(mark_stack, this.mark_stack_base, mark, lo, size);
     }
-    
+
     final boolean SRE_AT(int ptr, int at) {
         /* check if pointer is at given position. */
 
@@ -376,7 +378,7 @@ for line in sys.stdin:
             case SRE_OP_FAILURE:
 //                TRACE(setidx, ch, "CHARSET FAILURE");
                 return !ok;
-                
+
             case SRE_OP_LITERAL:
 //                TRACE(setidx, ch, "CHARSET LITERAL " + set[setidx]);
                 /* <LITERAL> <code> */
@@ -384,7 +386,7 @@ for line in sys.stdin:
                     return ok;
                 setidx++;
                 break;
-                
+
             case SRE_OP_CATEGORY:
                 /* <CATEGORY> <code> */
 //                TRACE(setidx, ch, "CHARSET CHARSET " + set[setidx]);
@@ -400,13 +402,13 @@ for line in sys.stdin:
 //                            (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
 //                    return ok;
 //                setidx += 16;
-                
+
                 /* <CHARSET> <bitmap> (32 bits per code word) */
                 if (ch < 256 && (set[setidx + (ch >> 5)] & (1 << (ch & 31))) != 0)
                     return ok;
                 setidx += 8;
                 break;
-                
+
             case SRE_OP_RANGE:
                 /* <RANGE> <lower> <upper> */
 //                TRACE(setidx, ch, "CHARSET RANGE " + set[setidx] + " " + set[setidx+1]);
@@ -419,11 +421,11 @@ for line in sys.stdin:
 //                TRACE(setidx, ch, "CHARSET NEGATE");
                 ok = !ok;
                 break;
-                
+
             case SRE_OP_BIGCHARSET:
                 /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
 //                TRACE(setidx, ch, "CHARSET BIGCHARSET ");
-                
+
 //                count = *(set++);
 //                if (!(ch & ~65535))
 //                    block = ((unsigned char*)set)[ch >> 8];
@@ -434,7 +436,7 @@ for line in sys.stdin:
 //                    (set[block*8 + ((ch & 255)>>5)] & (1 << (ch & 31))))
 //                    return ok;
 //                set += count*8;
-  
+
                 int count = set[setidx++];
                 int block;
                 if (ch < 65536)
@@ -444,7 +446,7 @@ for line in sys.stdin:
                 setidx += 64;
                 if (block >= 0 && (set[setidx + block*8 + ((ch & 255)>>5)] & (1 << (ch & 31))) != 0)
                     return ok;
-                setidx += count * 8; 
+                setidx += count * 8;
                 break;
 
             default:
@@ -455,7 +457,7 @@ for line in sys.stdin:
             }
         }
     }
-    
+
     private int SRE_COUNT(int[] pattern, int pidx, int maxcount, int level) {
         int chr;
         int ptr = this.ptr;
@@ -474,7 +476,7 @@ for line in sys.stdin:
             while (ptr < end && SRE_CHARSET(pattern, pidx + 2, str[ptr]))
                 ptr++;
             break;
-            
+
         case SRE_OP_ANY:
             /* repeated dot wildcard. */
 //            TRACE(pidx, ptr, "COUNT ANY");
@@ -600,7 +602,7 @@ for line in sys.stdin:
                 pidx++;
                 ptr++;
                 break;
-               
+
             case SRE_OP_SUCCESS:
                 /* end of pattern */
 //                TRACE(pidx, ptr, "SUCCESS");
@@ -758,7 +760,7 @@ for line in sys.stdin:
                 }
                 lastmark = this.lastmark;
                 lastindex = this.lastindex;
-                
+
                 if (pattern[pidx + pattern[pidx]] == SRE_OP_LITERAL) {
                     /* tail starts with a literal. skip positions where
                        the rest of the pattern cannot possibly match */
@@ -796,7 +798,7 @@ for line in sys.stdin:
                     }
                 }
                 return 0;
-                
+
             case SRE_OP_MIN_REPEAT_ONE:
                 /* match repeated sequence (minimizing regexp) */
 
@@ -962,7 +964,7 @@ for line in sys.stdin:
                     this.ptr = ptr;
                     return 0;
                 }
-                
+
                 lastmark = this.lastmark;
                 lastindex = this.lastindex;
 
@@ -989,7 +991,7 @@ for line in sys.stdin:
                 this.ptr = ptr;
                 return 0;
 
-                
+
             case SRE_OP_GROUPREF:
                 /* match backreference */
                 i = pattern[pidx];
@@ -1023,7 +1025,7 @@ for line in sys.stdin:
                 }
                 pidx++;
                 break;
-                
+
             case SRE_OP_GROUPREF_EXISTS:
                 i = pattern[pidx];
 //                TRACE(pidx, ptr, "GROUPREF_EXISTS " + i);
@@ -1035,7 +1037,7 @@ for line in sys.stdin:
                 }
                 pidx += 2;
                 break;
-                
+
             case SRE_OP_ASSERT:
                 /* assert subpattern */
                 /* args: <skip> <back> <pattern> */
@@ -1064,7 +1066,7 @@ for line in sys.stdin:
                 }
                 pidx += pattern[pidx];
                 break;
-                
+
             case SRE_OP_FAILURE:
                 /* immediate failure */
 //                TRACE(pidx, ptr, "FAILURE");
@@ -1087,7 +1089,7 @@ for line in sys.stdin:
             this.lastindex = lastindex;
         }
     }
-    
+
     int SRE_SEARCH(int[] pattern, int pidx) {
         int ptr = this.start;
         int end = this.end;
@@ -1328,7 +1330,7 @@ for line in sys.stdin:
     }
 
     // XXX - this is not UTF-16 compliant; also depends on whether from PyString or PyUnicode
-    
+
     String getslice(int index, String string, boolean empty) {
         int i, j;
 

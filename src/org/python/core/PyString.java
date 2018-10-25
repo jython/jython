@@ -762,7 +762,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
         if (c == Character.TYPE || c == Character.class) {
             if (getString().length() == 1) {
-                return new Character(getString().charAt(0));
+                return getString().charAt(0);
             }
         }
 
@@ -1233,16 +1233,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return a new String, stripped of the whitespace characters/bytes
      */
     protected final String _strip() {
-        String s = getString();
         // Rightmost non-whitespace
-        int right = _stripRight(s);
+        int right = _findRight();
         if (right < 0) {
             // They're all whitespace
             return "";
         } else {
             // Leftmost non-whitespace character: right known not to be a whitespace
-            int left = _stripLeft(s, right);
-            return s.substring(left, right + 1);
+            int left = _findLeft(right);
+            return getString().substring(left, right + 1);
         }
     }
 
@@ -1264,16 +1263,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Divert to the whitespace version
             return _strip();
         } else {
-            String s = getString();
             // Rightmost non-matching character
-            int right = _stripRight(s, stripChars);
+            int right = _findRight(stripChars);
             if (right < 0) {
                 // They all match
                 return "";
             } else {
                 // Leftmost non-matching character: right is known not to match
-                int left = _stripLeft(s, stripChars, right);
-                return s.substring(left, right + 1);
+                int left = _findLeft(stripChars, right);
+                return getString().substring(left, right + 1);
             }
         }
     }
@@ -1281,13 +1279,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
     /**
      * Helper for <code>strip</code>, <code>lstrip</code> implementation, when stripping whitespace.
      *
-     * @param s string to search (only <code>s[0:right]</code> is searched).
      * @param right rightmost extent of string search
-     * @return index of lefttmost non-whitespace character or <code>right</code> if they all are.
+     * @return index of leftmost non-whitespace character or <code>right</code> if they all are.
      */
-    private static final int _stripLeft(String s, int right) {
+    protected int _findLeft(int right) {
+        String s = getString();
         for (int left = 0; left < right; left++) {
-            if (!Character.isWhitespace(s.charAt(left))) {
+            if (!BaseBytes.isspace((byte) s.charAt(left))) {
                 return left;
             }
         }
@@ -1298,13 +1296,13 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * Helper for <code>strip</code>, <code>lstrip</code> implementation, when stripping specified
      * characters.
      *
-     * @param s string to search (only <code>s[0:right]</code> is searched).
      * @param stripChars specifies set of characters to strip
      * @param right rightmost extent of string search
      * @return index of leftmost character not in <code>stripChars</code> or <code>right</code> if
      *         they all are.
      */
-    private static final int _stripLeft(String s, String stripChars, int right) {
+    private int _findLeft(String stripChars, int right) {
+        String s = getString();
         for (int left = 0; left < right; left++) {
             if (stripChars.indexOf(s.charAt(left)) < 0) {
                 return left;
@@ -1316,12 +1314,12 @@ public class PyString extends PyBaseString implements BufferProtocol {
     /**
      * Helper for <code>strip</code>, <code>rstrip</code> implementation, when stripping whitespace.
      *
-     * @param s string to search.
      * @return index of rightmost non-whitespace character or -1 if they all are.
      */
-    private static final int _stripRight(String s) {
+    protected int _findRight() {
+        String s = getString();
         for (int right = s.length(); --right >= 0;) {
-            if (!Character.isWhitespace(s.charAt(right))) {
+            if (!BaseBytes.isspace((byte) s.charAt(right))) {
                 return right;
             }
         }
@@ -1332,11 +1330,11 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * Helper for <code>strip</code>, <code>rstrip</code> implementation, when stripping specified
      * characters.
      *
-     * @param s string to search.
      * @param stripChars specifies set of characters to strip
      * @return index of rightmost character not in <code>stripChars</code> or -1 if they all are.
      */
-    private static final int _stripRight(String s, String stripChars) {
+    private int _findRight(String stripChars) {
+        String s = getString();
         for (int right = s.length(); --right >= 0;) {
             if (stripChars.indexOf(s.charAt(right)) < 0) {
                 return right;
@@ -1405,7 +1403,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     protected final String _lstrip() {
         String s = getString();
         // Leftmost non-whitespace character: cannot exceed length
-        int left = _stripLeft(s, s.length());
+        int left = _findLeft(s.length());
         return s.substring(left);
     }
 
@@ -1429,7 +1427,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
         } else {
             String s = getString();
             // Leftmost matching character: cannot exceed length
-            int left = _stripLeft(s, stripChars, s.length());
+            int left = _findLeft(stripChars, s.length());
             return s.substring(left);
         }
     }
@@ -1492,15 +1490,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @return a new String, stripped of the whitespace characters/bytes
      */
     protected final String _rstrip() {
-        String s = getString();
         // Rightmost non-whitespace
-        int right = _stripRight(s);
+        int right = _findRight();
         if (right < 0) {
             // They're all whitespace
             return "";
         } else {
             // Substring up to and including this rightmost non-whitespace
-            return s.substring(0, right + 1);
+            return getString().substring(0, right + 1);
         }
     }
 
@@ -1522,11 +1519,10 @@ public class PyString extends PyBaseString implements BufferProtocol {
             // Divert to the whitespace version
             return _rstrip();
         } else {
-            String s = getString();
             // Rightmost non-matching character
-            int right = _stripRight(s, stripChars);
+            int right = _findRight(stripChars);
             // Substring up to and including this rightmost non-matching character (or "")
-            return s.substring(0, right + 1);
+            return getString().substring(0, right + 1);
         }
     }
 
@@ -1631,16 +1627,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     /**
-     * Helper function for <code>.split</code>, in <code>str</code> and <code>unicode</code>,
-     * splitting on white space and returning a list of the separated parts. If there are more than
-     * <code>maxsplit</code> feasible the last element of the list is the remainder of the original
-     * (this) string. The split sections will be {@link PyUnicode} if this object is a
-     * <code>PyUnicode</code>.
+     * Helper function for <code>.split</code>, in <code>str</code> and (when overridden) in
+     * <code>unicode</code>, splitting on white space and returning a list of the separated parts.
+     * If there are more than <code>maxsplit</code> feasible splits the last element of the list is
+     * the remainder of the original (this) string.
      *
      * @param maxsplit limit on the number of splits (if &gt;=0)
      * @return <code>PyList</code> of split sections
      */
-    private PyList splitfields(int maxsplit) {
+    protected PyList splitfields(int maxsplit) {
         /*
          * Result built here is a list of split parts, exactly as required for s.split(None,
          * maxsplit). If there are to be n splits, there will be n+1 elements in L.
@@ -1660,7 +1655,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
             // Find the next occurrence of non-whitespace
             while (start < length) {
-                if (!Character.isWhitespace(s.charAt(start))) {
+                if (!BaseBytes.isspace((byte) s.charAt(start))) {
                     // Break leaving start pointing at non-whitespace
                     break;
                 }
@@ -1678,7 +1673,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             } else {
                 // The next segment runs up to the next next whitespace or end
                 for (index = start; index < length; index++) {
-                    if (Character.isWhitespace(s.charAt(index))) {
+                    if (BaseBytes.isspace((byte) s.charAt(index))) {
                         // Break leaving index pointing at whitespace
                         break;
                     }
@@ -1883,16 +1878,15 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     /**
-     * Helper function for <code>.rsplit</code>, in <code>str</code> and <code>unicode</code>,
-     * splitting on white space and returning a list of the separated parts. If there are more than
-     * <code>maxsplit</code> feasible the first element of the list is the remainder of the original
-     * (this) string. The split sections will be {@link PyUnicode} if this object is a
-     * <code>PyUnicode</code>.
+     * Helper function for <code>.rsplit</code>, in <code>str</code> and (when overridden) in
+     * <code>unicode</code>, splitting on white space and returning a list of the separated parts.
+     * If there are more than <code>maxsplit</code> feasible splits the first element of the list is
+     * the remainder of the original (this) string.
      *
      * @param maxsplit limit on the number of splits (if &gt;=0)
      * @return <code>PyList</code> of split sections
      */
-    private PyList rsplitfields(int maxsplit) {
+    protected PyList rsplitfields(int maxsplit) {
         /*
          * Result built here (in reverse) is a list of split parts, exactly as required for
          * s.rsplit(None, maxsplit). If there are to be n splits, there will be n+1 elements.
@@ -1912,7 +1906,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
             // Find the next occurrence of non-whitespace (working leftwards)
             while (end >= 0) {
-                if (!Character.isWhitespace(s.charAt(end))) {
+                if (!BaseBytes.isspace((byte) s.charAt(end))) {
                     // Break leaving end pointing at non-whitespace
                     break;
                 }
@@ -1930,7 +1924,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
             } else {
                 // The next segment runs back to the next next whitespace or beginning
                 for (index = end; index >= 0; --index) {
-                    if (Character.isWhitespace(s.charAt(index))) {
+                    if (BaseBytes.isspace((byte) s.charAt(index))) {
                         // Break leaving index pointing at whitespace
                         break;
                     }

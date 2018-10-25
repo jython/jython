@@ -854,7 +854,7 @@ class StringModuleUnicodeTest(unittest.TestCase):
 
 
 class UnicodeSpaceTest(unittest.TestCase):
-    # Test classification of characters as whitespace (some Jython divergence)
+    # Test classification of characters as whitespace (strictly as observed in CPython)
 
     def checkequal(self, expected, obj, methodname, *args):
         "check that object.method() returns expected result"
@@ -863,15 +863,10 @@ class UnicodeSpaceTest(unittest.TestCase):
         self.assertEqual(expected, realresult, grumble)
         # print grumble, 'x' if realresult != expected else '.'
 
-    # The set of Unicode characters that are spaces according to CPython 2.7.8
-    SPACE = u'\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f\x20\x85\xa0\u1680\u180e' + \
-            u'\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a' + \
+    # The set of Unicode characters that are spaces according to CPython 2.7.15
+    SPACE = u'\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f\x20\x85\xa0\u1680\u180e' \
+            u'\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a' \
             u'\u2028\u2029\u202f\u205f\u3000'
-    if test_support.is_jython:
-        # Not whitespace in Jython based on java.lang.Character.isWhitespace.
-        # This test documents the divergence, until we decide to remove it.
-        for c in u'\x85\xa0\u2007\u202f':
-            SPACE = SPACE.replace(c, u'')
 
     def test_isspace(self):
         for c in self.SPACE:

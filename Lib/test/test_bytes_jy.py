@@ -70,7 +70,7 @@ class SimpleOperationsTest(unittest.TestCase):
     LOWER = b'\xe0\xe7\xe9\xff' # Uppercase in Latin-1 but not ascii
     UPPER = b'\xc0\xc7\xc9\xdd' # Lowercase in Latin-1 but not ascii
     DIGIT = b'\xb9\xb2\xb3'     # sup 1, 2, 3: numeric in Python (not Java)
-    SPACE = b'\x85\xa0'         # NEXT LINE, NBSP: space in Python (not Java)
+    SPACE = b'\x85\xa0'         # NEXT LINE, NBSP: space in unicode (not in str/bytes)
 
     def test_isalpha(self):
         for c in self.UPPER + self.LOWER:
