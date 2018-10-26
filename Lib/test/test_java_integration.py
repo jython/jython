@@ -728,14 +728,12 @@ class SerializationTest(unittest.TestCase):
             jars = find_jython_jars()
             jars.append(proxies_jar_path)
             classpath = os.pathsep.join(jars)
-            env = dict(os.environ)
-            env.update(JYTHONPATH=os.path.dirname(__file__))
             cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
+                   "-Dpython.path=" + os.path.dirname(__file__),
                     "-classpath", classpath,
                     "javatests.ProxyDeserialization",
                     cat_path]
-            self.assertEqual(subprocess.check_output(cmd, env=env, universal_newlines=True),
-                             "meow\n")
+            self.assertEqual(subprocess.check_output(cmd, universal_newlines=True), "meow\n")
         finally:
             org.python.core.Options.proxyDebugDirectory = old_proxy_debug_dir
             shutil.rmtree(tempdir)
@@ -792,11 +790,10 @@ public class BarkTheDog {
             # the proxy
             classpath += os.pathsep + tempdir
             cmd = [os.path.join(System.getProperty("java.home"), "bin", "java"),
+                   "-Dpython.path=" + os.path.dirname(__file__),
                    "-classpath", classpath, "BarkTheDog"]
-            env = dict(os.environ)
-            env.update(JYTHONPATH=os.path.dirname(__file__))
             self.assertRegexpMatches(
-                subprocess.check_output(cmd, env=env, universal_newlines=True,
+                subprocess.check_output(cmd, universal_newlines=True,
                                         stderr=subprocess.STDOUT),
                 r"^Class defined on CLASSPATH <type 'org.python.test.bark.Dog'>\n"
                                         "Rover barks 42 times$")

@@ -608,6 +608,10 @@ public class jython {
      * @param registry to be (possibly) updated
      */
     private static void addDefaultsFromEnvironment(Properties registry) {
+
+        // Pick up the path from the environment
+        addDefault(registry, "python.path", getenv("JYTHONPATH"));
+
         // Runs at the start of each (wholly) interactive session.
         addDefault(registry, "python.startup", getenv("JYTHONSTARTUP"));
         // Go interactive after script. (PYTHONINSPECT because Python scripts may set it.)

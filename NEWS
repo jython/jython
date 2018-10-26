@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Development tip
   Bugs fixed
+    - [ 2706 ] Use python.path instead of JYTHONPATH
     - [ 2410 ] Regression in PySystemStateTest (leading slash)
     - [ 2639 ] Incorrect result when using != comparison against Java {List, Set, Map}
     - [ 2672 ] Integer formatting emits two minus signs with -2^31
@@ -26,6 +27,11 @@ Development tip
       treatment of the -i option. This simplifies support, and may also make it unnecessary for
       users to work around differences from CPython.
     - python.startup registry property (and JYTHONSTARTUP environment variable) added.
+    - Only the Jython command (class org.python.util.jython) now reads the environment variable
+      JYTHONPATH, not the core runtime, abd it respects the -E option (ignore environment). This
+      change is for consistency with CPython and with our handling of other environment variables.
+      A pure Java application that creates its own interpreter may use the system or registry
+      key "python.path" to add to sys.path, as documented.
 
 Jython 2.7.2a1
   Bugs fixed

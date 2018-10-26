@@ -955,15 +955,6 @@ public class PySystemState extends PyObject
         if (exec_prefix != null) {
             PySystemState.exec_prefix = Py.fileSystemEncode(exec_prefix);
         }
-        try {
-            // XXX: Respect or ignore Options.ignore_environment?
-            String jythonpath = System.getenv("JYTHONPATH");
-            if (jythonpath != null) {
-                registry.setProperty("python.path", jythonpath);
-            }
-        } catch (SecurityException e) {
-            // Continue
-        }
 
         // Now the post properties (possibly set by custom JythonInitializer).
         registry.putAll(postProperties);
