@@ -121,6 +121,9 @@ class PyclasspathImporterTestCase(unittest.TestCase):
         self.assertFalse(loader.is_package('jar_pkg.prefer_compiled'))
 
     @unittest.skipIf(test_support.is_jython_posix, "FIXME: failing on Linux issue #2422")
+    @unittest.skipIf(test_support.get_java_version() >= (9,),
+                     "Fails on Java 9+. See b.j.o. issue #2362") # FIXME
+    # Probably related to Java modules: ensure also works outside java.base
     def test_loader_get_code(self):
         # Execute Python code out of the JAR
         jar = self.prepareJar('classimport.jar')

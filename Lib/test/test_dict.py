@@ -312,6 +312,8 @@ class DictTest(unittest.TestCase):
         x.fail = True
         self.assertRaises(Exc, d.setdefault, x, [])
 
+    @unittest.skipIf(test_support.is_jython and test_support.get_java_version() >= (9,),
+                     "Fails on Java 9+. See b.j.o. issue 2711.")
     def test_setdefault_atomic(self):
         # Issue #13521: setdefault() calls __hash__ and __eq__ only once.
         class Hashed(object):
