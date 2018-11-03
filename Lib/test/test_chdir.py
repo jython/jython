@@ -185,13 +185,46 @@ class WindowsChdirTestCase(BaseChdirTestCase):
 
     def setUp(self):
         super(WindowsChdirTestCase, self).setUp()
-        self.subdir = os.path.join(self.dir1, 'Program Files')
+        self.windowsTestDir = 'Program Files'
+        self.subdir = os.path.join(self.dir1, self.windowsTestDir)
         os.makedirs(self.subdir)
 
+    def shortname(self,path):
+        # From later versions of Windows (post-Vista), not all files and 
+        # directories have short names
+        # This is set at the filesystem level and seems intended to phase
+        # out short (DOS) names
+        # https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
+        # shortname.bat returns the short name if available, else the full name
+        shortnameLoc = test_support.findfile('shortname.bat')
+        output = subprocess.check_output(['cmd','/c',shortnameLoc,path])
+        return output.strip()
+
     def test_windows_chdir_dos_path(self):
+        output = self.shortname(self.subdir)
+        if output.strip().endswith(self.windowsTestDir):
+            self.skipTest('no dos path to test on this filesystem')
         dos_name = os.path.join(self.dir1, 'progra~1')
         os.chdir(dos_name)
         self.assertEqual(os.getcwd(), os.path.realpath(dos_name))
+
+    def test_windows_chdir_dos_path_program_files(self):
+        # Prove that we can navigate to a commonly existing system directory
+        # with a shortname alias. Program Files commonly has 8dot3 (short) alias
+        # for script back-compatibility. Unlike other tests in the class, don't 
+        # create a temp directory
+        pfileName = os.environ['PROGRAMFILES'] 
+        shortPfileName = self.shortname( pfileName )
+        if not os.path.exists(shortPfileName):
+            self.skipTest('Windows PROGRAMFILES short directory not found on this system')
+        if pfileName == shortPfileName:
+            self.skipTest('Windows system with PROGRAMFILES on non 8dot3 filesystem')
+        cwd = os.getcwd()
+        try:
+            os.chdir(pfileName)
+            self.assertEqual(os.getcwd(), os.path.realpath(pfileName))
+        finally:
+            os.chdir(cwd)
 
     def test_windows_getcwd_ensures_drive_letter(self):
         # subdir is in the TEMP directory, usually on C:, while the

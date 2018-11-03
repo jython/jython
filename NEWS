@@ -4,6 +4,7 @@ For more details, please see https://hg.python.org/jython
 
 Development tip
   Bugs fixed
+    - [ 2709 ] test_chdir tolerates absent DOS 8.3 filename
     - [ 2706 ] Use python.path instead of JYTHONPATH
     - [ 2410 ] Regression in PySystemStateTest (leading slash)
     - [ 2639 ] Incorrect result when using != comparison against Java {List, Set, Map}
