@@ -217,7 +217,7 @@ class JythonCommand(object):
             # Frozen. Let it go with the executable path.
             bytes_path = sys.executable
         else:
-            # Not frozen. Use the __file__ of this module.. 
+            # Not frozen. Use the __file__ of this module.
             bytes_path = __file__
         # Python 2 thinks in bytes. Carefully normalise in Unicode.
         path = os.path.realpath(bytes_path.decode(ENCODING))
@@ -565,24 +565,36 @@ def main(sys_args):
         enc = sys.stdout.encoding or 'ascii'
         sys.stdout.write(command_line.encode(enc, 'replace'))
     else:
-        if not (is_windows or not hasattr(os, "execvp") or args.help or 
-                jython_command.uname == u"cygwin"):
-            # Replace this process with the java process.
-            #
-            # NB such replacements actually do not work under Windows,
-            # but if tried, they also fail very badly by hanging.
-            # So don't even try!
-            command = encode_list(command)
-            os.execvp(command[0], command[1:])
-        else:
-            result = 1
-            try:
-                result = subprocess.call(encode_list(command))
-                if args.help:
-                    print_help()
-            except KeyboardInterrupt:
-                pass
-            sys.exit(result)
+        try:
+            if not (is_windows or not hasattr(os, "execvp") or args.help or 
+                    jython_command.uname == u"cygwin"):
+                # Replace this process with the java process.
+                #
+                # NB such replacements actually do not work under Windows,
+                # but if tried, they also fail very badly by hanging.
+                # So don't even try!
+                command = encode_list(command)
+                os.execvp(command[0], command[1:])
+            else:
+                result = 1
+                try:
+                    result = subprocess.call(encode_list(command))
+                    if args.help:
+                        print_help()
+                except KeyboardInterrupt:
+                    pass
+                sys.exit(result)
+        except OSError as e:
+            print >> sys.stderr, "Failed to launch Jython using command:",\
+                    command[0], "...\n", \
+                    "    Use the --print option to see the command in full."
+            if jython_command.java_home:
+                print >> sys.stderr, "    Launcher used JAVA_HOME =",\
+                    jython_command.java_home
+            else:
+                print >> sys.stderr, "    Check PATH for java/jdb command."
+            print >> sys.stderr, e
+            sys.exit(1)
 
 
 if __name__ == "__main__":
