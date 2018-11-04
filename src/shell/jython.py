@@ -563,7 +563,7 @@ def main(sys_args):
             command_line = u" ".join(command)
         # It is possible the Unicode cannot be encoded for the console
         enc = sys.stdout.encoding or 'ascii'
-        sys.stdout.write(command_line.encode(enc, 'replace'))
+        sys.stdout.write(command_line.encode(enc, 'replace') + "\n")
     else:
         try:
             if not (is_windows or not hasattr(os, "execvp") or args.help or 
