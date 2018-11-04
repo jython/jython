@@ -4,6 +4,15 @@ For more details, please see https://hg.python.org/jython
 
 Development tip
   Bugs fixed
+    - [ 2231 ] __doc__ of PyString objects is always "The most base type"
+    - [ 2230 ] Jython evaluation blocks under heavy load with high multi-core systems
+    - [ 2506 ] ensurepip is reporting an error
+    - [ 1609 ] Partial parsing does not work with function decorators
+    - [ 2494 ] Support for pydoc_data
+    - [ 2492 ] NPE for PythonInterpreter after new PyInteger
+    - [ 2707 ] jython.py shebang line invalid on Linux
+    - [ 1748 ] subprocess and os.system don't show output
+    - [ 2343 ] PYTHONPATH is overwritten on Windows
     - [ 2346 ] Launcher not resilient to bad environment variable settings
     - [ 2709 ] test_chdir tolerates absent DOS 8.3 filename
     - [ 2706 ] Use python.path instead of JYTHONPATH
@@ -30,7 +39,7 @@ Development tip
       users to work around differences from CPython.
     - python.startup registry property (and JYTHONSTARTUP environment variable) added.
     - Only the Jython command (class org.python.util.jython) now reads the environment variable
-      JYTHONPATH, not the core runtime, abd it respects the -E option (ignore environment). This
+      JYTHONPATH, not the core runtime, and it respects the -E option (ignore environment). This
       change is for consistency with CPython and with our handling of other environment variables.
       A pure Java application that creates its own interpreter may use the system or registry
       key "python.path" to add to sys.path, as documented.
