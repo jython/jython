@@ -11,10 +11,8 @@ import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
-import org.python.core.util.FileUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Abstract package manager.
@@ -33,12 +31,11 @@ public abstract class PackageManager extends Object {
         return findClass(pkg, name, "java class");
     }
 
-    public void notifyPackageImport(String pkg, String name) {
-    }
+    public void notifyPackageImport(String pkg, String name) {}
 
     /**
-     * Dynamically check if pkg.name exists as java pkg in the controlled
-     * hierarchy. Should be overriden.
+     * Dynamically check if pkg.name exists as java pkg in the controlled hierarchy. Should be
+     * overridden.
      *
      * @param pkg parent pkg name
      * @param name candidate name
@@ -47,7 +44,7 @@ public abstract class PackageManager extends Object {
     public abstract boolean packageExists(String pkg, String name);
 
     /**
-     * Reports the specified package content names. Should be overriden. Used by
+     * Reports the specified package content names. Should be overridden. Used by
      * {@link PyJavaPackage#__dir__} and {@link PyJavaPackage#fillDir}.
      *
      * @return resulting list of names (PyList of PyString)
@@ -55,39 +52,34 @@ public abstract class PackageManager extends Object {
      * @param instantiate if true then instatiate reported names in package dict
      * @param exclpkgs exclude packages (just when instantiate is false)
      */
-    public abstract PyList doDir(PyJavaPackage jpkg, boolean instantiate,
-            boolean exclpkgs);
+    public abstract PyList doDir(PyJavaPackage jpkg, boolean instantiate, boolean exclpkgs);
 
     /**
-     * Append a directory to the list of directories searched for java packages
-     * and java classes.
+     * Append a directory to the list of directories searched for java packages and java classes.
      *
      * @param dir A directory.
      */
     public abstract void addDirectory(java.io.File dir);
 
     /**
-     * Append a directory to the list of directories searched for java packages
-     * and java classes.
+     * Append a directory to the list of directories searched for java packages and java classes.
      *
      * @param dir A directory name.
      */
     public abstract void addJarDir(String dir, boolean cache);
 
     /**
-     * Append a jar file to the list of locations searched for java packages and
-     * java classes.
+     * Append a jar file to the list of locations searched for java packages and java classes.
      *
      * @param jarfile A directory name.
      */
     public abstract void addJar(String jarfile, boolean cache);
 
     /**
-     * Basic helper implementation of {@link #doDir}. It merges information
-     * from jpkg {@link PyJavaPackage#clsSet} and {@link PyJavaPackage#__dict__}.
+     * Basic helper implementation of {@link #doDir}. It merges information from jpkg
+     * {@link PyJavaPackage#clsSet} and {@link PyJavaPackage#__dict__}.
      */
-    protected PyList basicDoDir(PyJavaPackage jpkg, boolean instantiate,
-            boolean exclpkgs) {
+    protected PyList basicDoDir(PyJavaPackage jpkg, boolean instantiate, boolean exclpkgs) {
         PyStringMap dict = jpkg.__dict__;
         PyStringMap cls = jpkg.clsSet;
 
@@ -117,14 +109,11 @@ public abstract class PackageManager extends Object {
         return dict.keys();
     }
 
-    /**
-     * Helper merging list2 into list1. Returns list1.
-     */
+    /** Helper merging list2 into list1. Returns list1. */
     protected PyList merge(PyList list1, PyList list2) {
         for (PyObject name : list2.asIterable()) {
             list1.append(name);
         }
-
         return list1;
     }
 
@@ -159,8 +148,7 @@ public abstract class PackageManager extends Object {
      * @param jarfile involved jarfile; can be null
      * @return created/updated package
      */
-    public PyJavaPackage makeJavaPackage(String name, String classes,
-            String jarfile) {
+    public PyJavaPackage makeJavaPackage(String name, String classes, String jarfile) {
         PyJavaPackage p = this.topLevelPackage;
         if (name.length() != 0) {
             p = p.addPackage(name, jarfile);
@@ -173,7 +161,6 @@ public abstract class PackageManager extends Object {
         return p;
     }
 
-
     private static class AccessVisitor extends ClassVisitor {
 
         private int class_access;
@@ -183,8 +170,8 @@ public abstract class PackageManager extends Object {
         }
 
         @Override
-        public void visit(int version, int access, String name,
-                          String signature, String superName, String[] interfaces) {
+        public void visit(int version, int access, String name, String signature, String superName,
+                String[] interfaces) {
             class_access = access;
         }
 
@@ -194,11 +181,10 @@ public abstract class PackageManager extends Object {
     }
 
     /**
-     * Check that a given stream is a valid Java .class file. And return its
-     * access permissions as an int.
+     * Check that a given stream is a valid Java .class file. And return its access permissions as
+     * an int.
      */
-    static protected int checkAccess(java.io.InputStream cstream)
-            throws IOException {
+    static protected int checkAccess(java.io.InputStream cstream) throws IOException {
         try {
             ClassReader reader = new ClassReader(cstream);
             AccessVisitor visitor = new AccessVisitor();

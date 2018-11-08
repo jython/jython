@@ -4,50 +4,41 @@
 package org.python.core;
 
 import org.python.core.packagecache.PackageManager;
+
 import java.util.StringTokenizer;
 
-/**
- * A representation of java package.
- */
+/** A representation of java package. */
 public class PyJavaPackage extends PyObject implements Traverseproc {
-    public String __name__;
 
+    public String __name__;
 
     public PyStringMap __dict__;
 
-    /** Its keys are the names of statically known classes.
-     * E.g. from jars pre-scan.
-     */
+    /** Its keys are the names of statically known classes. E.g. from jars pre-scan. */
     public PyStringMap clsSet;
     public String __file__;
 
-    /** (Control) package manager whose hierarchy contains this java pkg.
-     */
+    /** (Control) package manager whose hierarchy contains this java pkg */
     public PackageManager __mgr__;
 
     public PyJavaPackage(String name) {
         this(name, null, null);
     }
 
-    public PyJavaPackage(String name,String jarfile) {
+    public PyJavaPackage(String name, String jarfile) {
         this(name, null, jarfile);
     }
 
-    public PyJavaPackage(String name,PackageManager mgr) {
+    public PyJavaPackage(String name, PackageManager mgr) {
         this(name, mgr, null);
     }
 
-
-    public PyJavaPackage(String name,PackageManager mgr,String jarfile) {
+    public PyJavaPackage(String name, PackageManager mgr, String jarfile) {
         __file__ = jarfile;
         __name__ = name;
+        __mgr__ = (mgr != null) ? mgr : PySystemState.packageManager;
 
-        if( mgr == null )
-           __mgr__ = PySystemState.packageManager; // default
-        else
-           __mgr__ = mgr;
-
-        clsSet= new PyStringMap();
+        clsSet = new PyStringMap();
 
         __dict__ = new PyStringMap();
         __dict__.__setitem__("__name__", new PyString(__name__));
@@ -59,27 +50,26 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
 
     public PyJavaPackage addPackage(String name, String jarfile) {
         int dot = name.indexOf('.');
-        String firstName=name;
-        String lastName=null;
+        String firstName = name;
+        String lastName = null;
         if (dot != -1) {
-            firstName = name.substring(0,dot);
-            lastName = name.substring(dot+1, name.length());
+            firstName = name.substring(0, dot);
+            lastName = name.substring(dot + 1, name.length());
         }
         firstName = firstName.intern();
-        PyJavaPackage p = (PyJavaPackage)__dict__.__finditem__(firstName);
+        PyJavaPackage p = (PyJavaPackage) __dict__.__finditem__(firstName);
         if (p == null) {
-            String pname = __name__.length() == 0 ?
-                           firstName : __name__+'.'+firstName;
+            String pname = __name__.length() == 0 ? firstName : __name__ + '.' + firstName;
             p = new PyJavaPackage(pname, __mgr__, jarfile);
             __dict__.__setitem__(firstName, p);
         } else {
             // this code is ok here, because this is not needed for
             // a top level package
-            if (jarfile == null || !jarfile.equals(p.__file__))
+            if (jarfile == null || !jarfile.equals(p.__file__)) {
                 p.__file__ = null;
+            }
         }
-        if (lastName != null) return p.addPackage(lastName, jarfile);
-        else return p;
+        return lastName != null ? p.addPackage(lastName, jarfile) : p;
     }
 
     public PyObject addClass(String name, Class<?> c) {
@@ -91,21 +81,22 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
     /**
      * Add statically known classes.
      *
-     * @param classes
-     *            their names as comma-separated string
+     * @param classes their names as comma-separated string
      */
     public void addPlaceholders(String classes) {
         StringTokenizer tok = new StringTokenizer(classes, ",@");
-        while  (tok.hasMoreTokens())  {
+        while (tok.hasMoreTokens()) {
             String p = tok.nextToken();
             String name = p.trim().intern();
-            if (clsSet.__finditem__(name) == null)
+            if (clsSet.__finditem__(name) == null) {
                 clsSet.__setitem__(name, Py.One);
+            }
         }
     }
 
+    @Override
     public PyObject __dir__() {
-        return __mgr__.doDir(this,false,false);
+        return __mgr__.doDir(this, false, false);
     }
 
     /**
@@ -117,74 +108,78 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
      * @return list of member names
      */
     public PyObject fillDir() {
-        return __mgr__.doDir(this,true,false);
+        return __mgr__.doDir(this, true, false);
     }
 
-
+    @Override
     public PyObject __findattr_ex__(String name) {
 
         PyObject ret = __dict__.__finditem__(name);
-        if (ret != null) return ret;
 
-        if (__mgr__.packageExists(__name__,name)) {
-            __mgr__.notifyPackageImport(__name__,name);
+        if (ret != null) {
+            return ret;
+
+        } else if (__mgr__.packageExists(__name__, name)) {
+            __mgr__.notifyPackageImport(__name__, name);
             return addPackage(name);
+
+        } else {
+            Class<?> c = __mgr__.findClass(__name__, name);
+            if (c != null) {
+                return addClass(name, c);
+            } else if (name == "__name__") {
+                return new PyString(__name__);
+            } else if (name == "__dict__") {
+                return __dict__;
+            } else if (name == "__mgr__") {
+                return Py.java2py(__mgr__);
+            } else if (name == "__file__") {
+                // Stored as UTF-16 for Java but expected as bytes in Python
+                return __file__ == null ? Py.None : Py.fileSystemEncode(__file__);
+            } else {
+                return null;
+            }
         }
-
-        Class<?> c = __mgr__.findClass(__name__,name);
-        if (c != null) return addClass(name,c);
-
-        if (name == "__name__") return new PyString(__name__);
-        if (name == "__dict__") return __dict__;
-        if (name == "__mgr__") return Py.java2py(__mgr__);
-        if (name == "__file__") {
-            // Stored as UTF-16 for Java but expected as bytes in Python
-            return __file__ == null ? Py.None : Py.fileSystemEncode(__file__);
-        }
-
-        return null;
     }
 
+    @Override
     public void __setattr__(String attr, PyObject value) {
         if (attr == "__mgr__") {
-            PackageManager newMgr = Py.tojava(value,
-                                                       PackageManager.class);
+            PackageManager newMgr = Py.tojava(value, PackageManager.class);
             if (newMgr == null) {
                 throw Py.TypeError("cannot set java package __mgr__ to None");
             }
             __mgr__ = newMgr;
-            return;
-        }
-        if (attr == "__file__") {
+        } else if (attr == "__file__") {
             // Stored as UTF-16 for Java but presented as bytes from Python
             __file__ = Py.fileSystemDecode(value);
-            return;
+        } else {
+            super.__setattr__(attr, value);
         }
-
-        super.__setattr__(attr,value);
     }
 
-    public String toString()  {
-        return "<java package "+__name__+" "+Py.idstr(this)+">";
+    @Override
+    public String toString() {
+        return "<java package " + __name__ + " " + Py.idstr(this) + ">";
     }
-
 
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
-        //__dict__ cannot be null
+        // __dict__ cannot be null
         int retVal = visit.visit(__dict__, arg);
         if (retVal != 0) {
             return retVal;
+        } else {
+            // clsSet cannot be null
+            retVal = visit.visit(clsSet, arg);
+            if (retVal != 0) {
+                return retVal;
+            } else {
+                // __mgr__ and __mgr__.topLevelPackage cannot be null
+                return visit.visit(__mgr__.topLevelPackage, arg);
+            }
         }
-
-        //clsSet cannot be null
-        retVal = visit.visit(clsSet, arg);
-        if (retVal != 0) {
-            return retVal;
-        }
-        //__mgr__ and __mgr__.topLevelPackage cannot be null
-        return visit.visit(__mgr__.topLevelPackage, arg);
     }
 
     @Override

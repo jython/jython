@@ -21,9 +21,11 @@ python.cachedir = cachedir
 #python.cachedir.skip = false
 
 # Properties to check for initializing and updating the package cache
-# Hopefully you won't have any need to change these
-python.packages.paths = java.class.path, sun.boot.class.path
-python.packages.directories = java.ext.dirs
+# Values shown here are those hard-coded in Jython's cache manager.
+#   Treat JARs on the classpath and (before Java 9) in the JRE as a source of Python packages.
+#python.packages.paths = java.class.path, sun.boot.class.path
+#   Treat installed optional (Java) packages as source of Python packages (before Java 9)
+#python.packages.directories = java.ext.dirs
 
 # Set verbosity to error, warning, message, comment, or debug
 # for varying levels of informative messages from Jython. Normally
