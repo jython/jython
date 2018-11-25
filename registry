@@ -23,9 +23,14 @@ python.cachedir = cachedir
 # Properties to check for initializing and updating the package cache
 # Values shown here are those hard-coded in Jython's cache manager.
 #   Treat JARs on the classpath and (before Java 9) in the JRE as a source of Python packages.
-#python.packages.paths = java.class.path, sun.boot.class.path
+#python.packages.paths = java.class.path, sun.boot.class.path   # before Java 9
+#python.packages.paths = java.class.path                        # from Java 9
 #   Treat installed optional (Java) packages as source of Python packages (before Java 9)
-#python.packages.directories = java.ext.dirs
+#python.packages.directories = java.ext.dirs    # before Java 9
+#python.packages.directories                    # undefined from Java 9
+#   Treat the following Java modules as sources of of Python packages (from Java 9)
+#python.packages.modules = java.base, java.desktop, java.logging, java.se, java.sql, java.xml
+
 
 # Set verbosity to error, warning, message, comment, or debug
 # for varying levels of informative messages from Jython. Normally

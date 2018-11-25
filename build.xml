@@ -148,10 +148,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/antlr-3.1.3.jar" />
             <pathelement path="${extlibs.dir}/stringtemplate-3.2.1.jar" />
             <pathelement path="${extlibs.dir}/commons-compress-1.14.jar"/>
-            <!-- pin to ASM 5.2 until we upgrade compilation -->
-            <pathelement path="${extlibs.dir}/asm-5.2.jar" />
-            <pathelement path="${extlibs.dir}/asm-commons-5.2.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-5.2.jar" />
+            <pathelement path="${extlibs.dir}/asm-7.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-7.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-7.0.jar" />
             <pathelement path="${extlibs.dir}/guava-22.0-android.jar" />
             <pathelement path="${extlibs.dir}/icu4j-59_1.jar" />
             <pathelement path="${extlibs.dir}/jffi-1.2.16.jar"/>
@@ -174,8 +173,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <path id="test.classpath">
             <path refid="main.classpath"/>
-            <pathelement path="${extlibs.dir}/asm-commons-5.2.jar" />
-            <pathelement path="${extlibs.dir}/asm-util-5.2.jar" />
+            <pathelement path="${extlibs.dir}/asm-commons-7.0.jar" />
+            <pathelement path="${extlibs.dir}/asm-util-7.0.jar" />
             <pathelement path="${extlibs.dir}/junit-4.10.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
@@ -551,10 +550,9 @@ The readme text for the next release will be like:
             <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <!-- pin to ASM 5.0.3 until we upgrade compilation -->
-            <zipfileset src="extlibs/asm-5.2.jar"/>
-            <zipfileset src="extlibs/asm-commons-5.2.jar"/>
-            <zipfileset src="extlibs/asm-util-5.2.jar"/>
+            <zipfileset src="extlibs/asm-7.0.jar"/>
+            <zipfileset src="extlibs/asm-commons-7.0.jar"/>
+            <zipfileset src="extlibs/asm-util-7.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk15on-1.57.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>

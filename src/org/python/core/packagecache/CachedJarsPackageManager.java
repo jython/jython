@@ -4,6 +4,7 @@
 package org.python.core.packagecache;
 
 import org.python.core.Options;
+import org.python.core.PyJavaPackage;
 import org.python.util.Generic;
 
 import java.io.BufferedInputStream;
@@ -19,7 +20,15 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.AccessControlException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -69,7 +78,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      *
      * @param name class/pkg name
      * @param pkg if true, name refers to a pkg
-     * @return true if name must be filtered out
+     * @return {@code true} if name should be filtered out
      */
     protected boolean filterByName(String name, boolean pkg) {
         return name.indexOf('$') != -1;
@@ -78,101 +87,138 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /**
      * Filter class by access perms helper method - hook. The default implementation is used by
      * {@link #addJarToPackages} in order to filter out non-public classes. Should be used or
-     * overridden by derived classes too. Also to be used in {@link #doDir}. Access perms can be
-     * read with {@link #checkAccess}.
+     * overridden by derived classes too. Also to be used in {@link #doDir}. Access permissions can
+     * be read with {@link #checkAccess}.
      *
      * @param name class name
      * @param acc class access permissions as int
-     * @return true if name must be filtered out
+     * @return {@code true} if name should be filtered out
      */
     protected boolean filterByAccess(String name, int acc) {
         return (acc & Modifier.PUBLIC) != Modifier.PUBLIC;
     }
 
+    /**
+     * Set {@code true} whenever the cache index is modified (needs ultimately to be re-written).
+     */
     private boolean indexModified;
 
-    private Map<String, JarXEntry> jarfiles;
+    /**
+     * Map from some source of class definitions to the name of a file used to cache lists of
+     * classes in that source. {@code null} if cache is not operating. (This source must have a time
+     * last modified so we may check that the cache is valid).
+     */
+    private Map<String, JarXEntry> index;
 
-    private static String listToString(List<String> list) {
-        int n = list.size();
-        StringBuilder ret = new StringBuilder();
-        for (int i = 0; i < n; i++) {
-            ret.append(list.get(i));
-            if (i < n - 1) {
-                ret.append(",");
-            }
-        }
-        return ret.toString();
-    }
+    /**
+     * Process one entry from a JAR/ZIP, and if the entry is a (qualifying) Java class, add its name
+     * to that package's entry in the map passed in. A class is added only if
+     * {@link #filterByName(String, boolean)} returns {@code true}. We add it to the accessible or
+     * inaccessible list according to whether {@link #filterByAccess(String, int)} returns
+     * {@code true} for the name and permissions of that class.
+     *
+     * @param zipPackages map (to update) from package name to class names by accessibility
+     * @param entry possibly representing a class
+     * @param zip the JAR or ZIP to which the entry belongs
+     * @throws IOException
+     */
+    private void addZipEntry(Map<String, ClassList> zipPackages, ZipEntry entry, ZipInputStream zip)
+            throws IOException {
 
-    /** Add a single class from zipFile to zipPackages. Only add valid, public classes. */
-    private void addZipEntry(Map<String, List<String>[]> zipPackages, ZipEntry entry,
-            ZipInputStream zip) throws IOException {
         String name = entry.getName();
         // System.err.println("entry: "+name);
-        if (!name.endsWith(".class")) {
-            return;
-        }
+        if (name.endsWith(".class")) {
 
-        char sep = '/';
-        int breakPoint = name.lastIndexOf(sep);
-        if (breakPoint == -1) {
-            breakPoint = name.lastIndexOf('\\');
-            sep = '\\';
-        }
+            // Split off the bare class name
+            char sep = '/';
+            int slash = name.lastIndexOf(sep);
+            if (slash == -1) {
+                if ((slash = name.lastIndexOf('\\')) >= 0) {
+                    sep = '\\'; // Shouldn't be necessary according to standards, but is.
+                }
+            }
+            String className = name.substring(slash + 1, name.length() - 6);
 
-        String packageName;
-        if (breakPoint == -1) {
-            packageName = "";
-        } else {
-            packageName = name.substring(0, breakPoint).replace(sep, '.');
-        }
+            // Check acceptable name: in practice, this is used to ignore inner classes.
+            if (!filterByName(className, false)) {
+                // File this class by name against the package
+                String packageName = slash == -1 ? "" : name.substring(0, slash).replace(sep, '.');
+                ClassList classes = zipPackages.get(packageName);
 
-        String className = name.substring(breakPoint + 1, name.length() - 6);
+                if (classes == null) {
+                    // It wasn't in the map so add it
+                    classes = new ClassList();
+                    zipPackages.put(packageName, classes);
+                }
 
-        if (filterByName(className, false)) {
-            return;
-        }
-
-        List<String>[] vec = zipPackages.get(packageName);
-        if (vec == null) {
-            vec = createGenericStringListArray();
-            zipPackages.put(packageName, vec);
-        }
-        int access = checkAccess(zip);
-        if ((access != -1) && !filterByAccess(name, access)) {
-            vec[0].add(className);
-        } else {
-            vec[1].add(className);
+                // Put the class on the right list
+                int access = checkAccess(zip);
+                if ((access != -1) && !filterByAccess(name, access)) {
+                    classes.accessible.add(className);
+                } else {
+                    classes.inaccessible.add(className);
+                }
+            }
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String>[] createGenericStringListArray() {
-        return new List[] {Generic.list(), Generic.list()};
+    /** Used when representing the classes in a particular package. */
+    private static class ClassList {
+
+        /** Class names of accessible classes */
+        List<String> accessible = new ArrayList<String>();
+        /** Class names of inaccessible classes */
+        List<String> inaccessible = new ArrayList<String>();
+
+        /** Retrieve the two lists in "cache file" format {@code A,B,C[@D,E]}. */
+        @Override
+        public String toString() {
+            StringBuilder buf = new StringBuilder();
+            appendList(buf, accessible);
+            if (inaccessible.size() > 0) {
+                buf.append('@');
+                appendList(buf, inaccessible);
+            }
+            return buf.toString();
+        }
+
+        private static void appendList(StringBuilder buf, List<String> names) {
+            if (names.size() > 0) {
+                for (String n : names) {
+                    buf.append(n).append(',');
+                }
+                // Deal with surplus comma
+                buf.deleteCharAt(buf.length() - 1);
+            }
+        }
     }
 
-    /** Extract all of the packages in a single jar file */
+    /**
+     * Detect all of the packages in an open JAR/ZIP file, that contain any classes for which
+     * {@link #filterByName(String, boolean)} returns {@code true}. For each such package, list the
+     * (surviving) classes in two lists: accessible and inaccessible, which is judged according to
+     * {@link #filterByAccess(String, int)}. The returned map is from package to these two lists,
+     * now comma-separated lists, with an '@' between them.
+     *
+     * @param jarin an open JAR/ZIP file
+     * @return map from package name to comma/@-separated list of class names
+     * @throws IOException
+     */
     private Map<String, String> getZipPackages(InputStream jarin) throws IOException {
-        Map<String, List<String>[]> zipPackages = Generic.map();
 
+        Map<String, ClassList> zipPackages = Generic.map();
         ZipInputStream zip = new ZipInputStream(jarin);
-
         ZipEntry entry;
+
         while ((entry = zip.getNextEntry()) != null) {
             addZipEntry(zipPackages, entry, zip);
             zip.closeEntry();
         }
 
-        // Turn each vector into a comma-separated String
+        // Turn each ClassList into a comma/@-separated String
         Map<String, String> transformed = Generic.map();
-        for (Entry<String, List<String>[]> kv : zipPackages.entrySet()) {
-            List<String>[] vec = kv.getValue();
-            String classes = listToString(vec[0]);
-            if (vec[1].size() > 0) {
-                classes += '@' + listToString(vec[1]);
-            }
-            transformed.put(kv.getKey(), classes);
+        for (Entry<String, ClassList> kv : zipPackages.entrySet()) {
+            transformed.put(kv.getKey(), kv.getValue().toString());
         }
 
         return transformed;
@@ -206,30 +252,46 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Gathers classes info from jar specified by File jarfile. Eventually just using previously
-     * cached info. Eventually updated info is (re-)cached if param cache is true. Persistent cache
-     * storage access goes through inOpenCacheFile() and outCreateCacheFile().
+     * Gathers package and class lists from a jar specified by a {@code File}. Eventually just using
+     * previously cached info. Eventually updated info is (re-)cached if param cache is true.
+     * Persistent cache storage access goes through inOpenCacheFile() and outCreateCacheFile().
      */
     public void addJarToPackages(File jarfile, boolean cache) {
         addJarToPackages(null, jarfile, cache);
     }
 
-    private void addJarToPackages(URL jarurl, File jarfile, boolean cache) {
+    /**
+     * Create (or ensure we have) a {@link PyJavaPackage}, for each package in a jar specified by a
+     * file or URL, descending from {@link PackageManager#topLevelPackage} in this
+     * {@link PackageManager} instance. Ensure that the class list in each package is updated with
+     * the classes this JAR supplies to it. This information may be from a previously cached account
+     * of the JAR, if the last-modified time of the JAR matches a cached value. Otherwise, it will
+     * be obtained by inspecting the JAR, and a new cache will be written (if requested). Eventually
+     * updated info is (re-)cached if param cache is true. Persistent cache storage access goes
+     * through {@link #inOpenCacheFile(String)} and {@link #outCreateCacheFile(JarXEntry, boolean)}.
+     *
+     * @param jarurl identifying the JAR if {@code jarfile} is {@code null}
+     * @param jarfile identifying the JAR
+     * @param writeCache re-write the cache if it was out of date (and caching is active).
+     */
+    private void addJarToPackages(URL jarurl, File jarfile, boolean writeCache) {
         try {
-            boolean caching = this.jarfiles != null;
-
+            boolean readCache = this.index != null;
+            writeCache &= readCache;
             URLConnection jarconn = null;
             boolean localfile = true;
 
             if (jarfile == null) {
+                // We were not given a File, so the URL must be reliable (but maybe not a file)
                 jarconn = jarurl.openConnection();
+                // The following comment may be out of date. Also 2 reasons or just the bug?
                 /*
                  * This is necessary because 'file:' url-connections always return 0 through
                  * getLastModified (bug?). And in order to handle localfiles (from urls too)
                  * uniformly.
                  */
                 if (jarconn.getURL().getProtocol().equals("file")) {
-                    // ??pending: need to use java2 URLDecoder.decode?
+                    // Although given as a URL, this *is* a file.
                     String jarfilename = jarurl.getFile();
                     jarfilename = jarfilename.replace('/', File.separatorChar);
                     jarfile = new File(jarfilename);
@@ -238,10 +300,12 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 }
             }
 
+            // Claimed JAR does not exist. Silently ignore.
             if (localfile && !jarfile.exists()) {
                 return;
             }
 
+            // The classes to discover are in a local JAR file. They go in this map:
             Map<String, String> zipPackages = null;
 
             long mtime = 0;
@@ -249,8 +313,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             JarXEntry entry = null;
             boolean brandNew = false;
 
-            if (caching) {
+            if (readCache) {
 
+                // Get the name and last modified time of the actual JAR on disk.
                 if (localfile) {
                     mtime = jarfile.lastModified();
                     jarcanon = jarfile.getCanonicalPath();
@@ -259,11 +324,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     jarcanon = jarurl.toString();
                 }
 
-                entry = this.jarfiles.get(jarcanon);
+                // The canonical name is our key in the (in memory) index to the cache file.
+                entry = this.index.get(jarcanon);
 
-                if ((entry == null || !(new File(entry.cachefile).exists())) && cache) {
+                if (writeCache && (entry == null || !(new File(entry.cachefile).exists()))) {
+                    // We intend to use a cache but there is no valid existing file.
                     comment("processing new jar, '" + jarcanon + "'");
 
+                    // Create a base-name for the cache file
                     String jarname;
                     if (localfile) {
                         jarname = jarfile.getName();
@@ -276,22 +344,28 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     }
                     jarname = jarname.substring(0, jarname.length() - 4);
 
+                    // Create a new (or replacement) index entry. Remember to create the file.
                     entry = new JarXEntry(jarname);
-                    this.jarfiles.put(jarcanon, entry);
-
+                    this.index.put(jarcanon, entry);
                     brandNew = true;
                 }
 
-                if (mtime != 0 && entry != null && entry.mtime == mtime) {
+                // If the source has a date and the cache matches, create the map we need from it.
+                if (entry != null && mtime != 0 && entry.mtime == mtime) {
                     zipPackages = readCacheFile(entry, jarcanon);
                 }
-
             }
 
-            if (zipPackages == null) {
-                caching = caching && cache;
+            /*
+             * At this point, we will have the package map from the cache if it was valid, and a
+             * cache is in use generally in this package manager.
+             */
 
-                if (caching) {
+            if (zipPackages == null) {
+                // We'll have to read the actual JAR file
+
+                if (writeCache) {
+                    // Update the index entry for the cache file we shall eventually write.
                     this.indexModified = true;
                     if (entry.mtime != 0) {
                         comment("processing modified jar, '" + jarcanon + "'");
@@ -299,37 +373,53 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     entry.mtime = mtime;
                 }
 
+                // Create the package-to-class mapping from whatever stream.
                 InputStream jarin = null;
                 try {
                     if (jarconn == null) {
                         jarin = new BufferedInputStream(new FileInputStream(jarfile));
                     } else {
+                        // We were given a URL originally so use that.
                         jarin = jarconn.getInputStream();
                     }
 
                     zipPackages = getZipPackages(jarin);
+
                 } finally {
                     if (jarin != null) {
                         jarin.close();
                     }
                 }
 
-                if (caching) {
+                if (writeCache) {
+                    // Write what we created out to a cache file (new or updated)
                     writeCacheFile(entry, jarcanon, zipPackages, brandNew);
                 }
             }
 
+            /*
+             * We now have the package map we need (from a cache or by construction). Now create or
+             * update corresponding package objects with the discovered classes (named, but not as
+             * PyObjects).
+             */
             addPackages(zipPackages, jarcanon);
+
         } catch (IOException ioe) {
-            // silently skip any bad directories
+            // Skip the bad JAR with a message
             warning("skipping bad jar, '"
                     + (jarfile != null ? jarfile.toString() : jarurl.toString()) + "'");
         }
-
     }
 
-    private void addPackages(Map<String, String> zipPackages, String jarfile) {
-        for (Entry<String, String> entry : zipPackages.entrySet()) {
+    /**
+     * From a map of package name to comma/@-separated list of classes therein, relating to a
+     * particular JAR file, create a {@link PyJavaPackage} for each package.
+     *
+     * @param packageToClasses source of mappings
+     * @param jarfile becomes the __file__ attribute of the {@link PyJavaPackage}
+     */
+    private void addPackages(Map<String, String> packageToClasses, String jarfile) {
+        for (Entry<String, String> entry : packageToClasses.entrySet()) {
             String pkg = entry.getKey();
             String classes = entry.getValue();
 
@@ -343,8 +433,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Read in cache file storing package info for a single jar. Return null and delete this
-     * cachefile if it is invalid.
+     * Read in cache file storing package info for a single jar. Return null and delete this cache
+     * file if it is invalid.
      */
     @SuppressWarnings("empty-statement")
     private Map<String, String> readCacheFile(JarXEntry entry, String jarcanon) {
@@ -398,7 +488,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
     }
 
-    /** Write a cache file storing package info for a single jar. */
+    /**
+     * Write a cache file storing package info for a single JAR. *
+     *
+     * @param entry in {@link #index} corresponding to the JAR
+     * @param jarcanon canonical name of the JAR (used as key into {@link #index})
+     * @param zipPackages a map from package name to class names for that pacjkage in the JAR
+     * @param brandNew if the cache file must be created (vs. being re-written)
+     */
     private void writeCacheFile(JarXEntry entry, String jarcanon, Map<String, String> zipPackages,
             boolean brandNew) {
         DataOutputStream ostream = null;
@@ -430,6 +527,80 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
     }
 
+    /** Scan a module from the modular JVM, creating package objects. */
+    protected void addModule(Path modulePath) {
+        try {
+            Map<String, String> packages = getModularPackages(modulePath);
+            addPackages(packages, modulePath.toUri().toString());
+        } catch (IOException ioe) {
+            warning("skipping bad module, '" + modulePath + "'" + ioe);
+        }
+    }
+
+    /**
+     * Detect all of the packages in a single module, that contain any classes for which
+     * {@link #filterByName(String, boolean)} returns {@code true}. For each such package, list the
+     * (surviving) classes in two lists: accessible and inaccessible, which is judged according to
+     * {@link #filterByAccess(String, int)}. The returned map is from package to these two lists,
+     * now comma-separated lists, with an '@' between them.
+     */
+    private Map<String, String> getModularPackages(Path modulePath) throws IOException {
+
+        final Map<String, ClassList> modPackages = Generic.map();
+
+        FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                //System.out.println("    visitFile:" + file);
+
+                // file has at least 4 parts /modules/[module]/ ... /[name].class
+                int n = file.getNameCount();
+                // Apply name and access tests and conditionally add to modPackages
+                String fileName = file.getFileName().toString();
+                if (fileName.endsWith(".class") && n > 3) {
+                    // Split off the bare class name
+                    String className = fileName.substring(0, fileName.length() - 6);
+
+                    // Check acceptable name: in practice, this is used to ignore inner classes.
+                    if (!filterByName(className, false)) {
+                        // File this class by name against the package
+                        String packageName = file.subpath(2, n - 1).toString().replace('/', '.');
+                        ClassList classes = modPackages.get(packageName);
+
+                        if (classes == null) {
+                            // It wasn't in the map so add it
+                            classes = new ClassList();
+                            modPackages.put(packageName, classes);
+                        }
+
+                        // Put the class on the right list
+                        try (InputStream c = Files.newInputStream(file, StandardOpenOption.READ)) {
+                            int access = checkAccess(c);
+                            if ((access != -1) && !filterByAccess(fileName, access)) {
+                                classes.accessible.add(className);
+                            } else {
+                                classes.inaccessible.add(className);
+                            }
+                        }
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        };
+
+        Files.walkFileTree(modulePath, visitor);
+
+        // Turn each ClassList into a comma/@-separated String
+        Map<String, String> transformed = Generic.map();
+        for (Entry<String, ClassList> kv : modPackages.entrySet()) {
+            transformed.put(kv.getKey(), kv.getValue().toString());
+        }
+
+        return transformed;
+    }
+
     /**
      * Split up a string into several chunks based on a certain size
      *
@@ -459,12 +630,12 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Initializes cache. Eventually reads back cache index. Index persistent storage is accessed
-     * through inOpenIndex().
+     * Initialise the cache by reading the index from storage, through {@link #inOpenIndex()}, or by
+     * creating a new empty one.
      */
     protected void initCache() {
         this.indexModified = false;
-        this.jarfiles = Generic.map();
+        this.index = Generic.map();
 
         DataInputStream istream = null;
         try {
@@ -478,7 +649,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     String jarcanon = istream.readUTF();
                     String cachefile = istream.readUTF();
                     long mtime = istream.readLong();
-                    this.jarfiles.put(jarcanon, new JarXEntry(cachefile, mtime));
+                    this.index.put(jarcanon, new JarXEntry(cachefile, mtime));
                 }
             } catch (EOFException eof) {
                 // ignore
@@ -496,9 +667,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
     }
 
-    /** Write back cache index. Index persistent storage is accessed through outOpenIndex(). */
+    /**
+     * Write back cache <b>index</b>. The index is a mapping from each source of class definitions
+     * to the file where the cache for that source is held. This list is accessed through
+     * outOpenIndex().
+     */
     public void saveCache() {
-        if (jarfiles == null || !indexModified) {
+
+        if (index == null || !indexModified) {
             return;
         }
 
@@ -509,7 +685,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         DataOutputStream ostream = null;
         try {
             ostream = outOpenIndex();
-            for (Entry<String, JarXEntry> entry : jarfiles.entrySet()) {
+            for (Entry<String, JarXEntry> entry : index.entrySet()) {
                 String jarcanon = entry.getKey();
                 JarXEntry xentry = entry.getValue();
                 ostream.writeUTF(jarcanon);
@@ -531,10 +707,15 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // hooks for changing cache storage
 
-    /** To pass a cachefile id by ref. And for internal use. See outCreateCacheFile. */
+    /**
+     * Class of object used to represent a cache file and last modification time, internally and to
+     * {@link CachedJarsPackageManager#outCreateCacheFile}. When caching, a {@code JarXEntry} is
+     * created for each JAR processed for classes, and corresponds to a file in the package cache
+     * directory. The name is based on the name of the JAR.
+     */
     public static class JarXEntry extends Object {
 
-        /** cachefile id */
+        /** Specifies the actual cache file once that is created or opened. */
         public String cachefile;
 
         public long mtime;
@@ -551,8 +732,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Open cache index for reading from persistent storage - hook. Must Return null if this is
-     * absent. This default implementation is part of the off-the-shelf local file-system cache
+     * Open cache index for reading from persistent storage &ndash; hook. Must Return null if this
+     * is absent. This default implementation is part of the off-the-shelf local file-system cache
      * implementation. Can be overridden.
      */
     protected DataInputStream inOpenIndex() throws IOException {
@@ -566,8 +747,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Open cache index for writing back to persistent storage - hook. This default implementation
-     * is part of the off-the-shelf local file-system cache implementation. Can be overridden.
+     * Open cache index for writing back to persistent storage &ndash; hook. This default
+     * implementation is part of the off-the-shelf local file-system cache implementation. Can be
+     * overridden.
      */
     protected DataOutputStream outOpenIndex() throws IOException {
         File indexFile = new File(this.cachedir, "packages.idx");
@@ -576,8 +758,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Open cache file for reading from persistent storage - hook. This default implementation is
-     * part of the off-the-shelf local file-system cache implementation. Can be overridden.
+     * Open a particular cache file for reading from persistent storage. This default implementation
+     * is part of the off-the-shelf local file-system cache implementation. Can be overridden.
      */
     protected DataInputStream inOpenCacheFile(String cachefile) throws IOException {
         return new DataInputStream(new BufferedInputStream(new FileInputStream(cachefile)));
@@ -592,40 +774,43 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Create/open cache file for rewriting back to persistent storage - hook. If create is false,
-     * cache file is supposed to exist and must be opened for rewriting, entry.cachefile is a valid
-     * cachefile id. If create is true, cache file must be created. entry.cachefile is a flat
-     * jarname to be used to produce a valid cachefile id (to be put back in entry.cachefile on
-     * exit). This default implementation is part of the off-the-shelf local file-system cache
-     * implementation. Can be overridden.
+     * Create/open cache file for rewriting back to persistent storage &ndash; hook. If
+     * {@code create} is {@code false}, the cache file is supposed to exist at
+     * {@code entry.cachefile} and will be opened for rewriting. If {@code create} is {@code true},
+     * {@code entry.cachefile} is the base name (e.g. JAR or module name) for a cache to be created,
+     * and the full name will be put in {@code entry.cachefile} on exit. This default implementation
+     * is part of the off-the-shelf local file-system cache implementation. It may be overridden to
+     * provide a different cache medium and use of {@code entry.cachefile}.
+     *
+     * @param entry cache file description
+     * @param create new or use existing file named in {@code entry.cachefile}
+     * @return stream on which to represent the package to class-list textually
+     * @throws IOException
      */
     protected DataOutputStream outCreateCacheFile(JarXEntry entry, boolean create)
             throws IOException {
 
-        File cachefile = null;
+        File file;
 
         if (create) {
-            int index = 1;
-            String suffix = "";
+            // Create a new cache file with a name based on the initial value
             String jarname = entry.cachefile;
-            while (true) {
-                cachefile = new File(this.cachedir, jarname + suffix + ".pkc");
-                // System.err.println("try cachefile: "+cachefile);
-                if (!cachefile.exists()) {
-                    break;
-                }
-                suffix = "$" + index;
-                index += 1;
+            file = new File(this.cachedir, jarname + ".pkc");
+            for (int index = 1; file.exists(); index++) {
+                // That name is in use: make up another one.
+                file = new File(this.cachedir, jarname + "$" + index + ".pkc");
             }
-            entry.cachefile = cachefile.getCanonicalPath();
+            entry.cachefile = file.getCanonicalPath();
+
         } else {
-            cachefile = new File(entry.cachefile);
+            // Use an existing cache file named in the entry
+            file = new File(entry.cachefile);
         }
 
-        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cachefile)));
+        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
     }
 
-    /** for default cache (local fs based) implementation */
+    /** Directory in which cache files are stored. */
     private File cachedir;
 
     /**

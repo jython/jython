@@ -5,7 +5,7 @@ package org.python.core;
 
 import org.python.core.packagecache.PackageManager;
 
-import java.util.StringTokenizer;
+import java.util.Collection;
 
 /** A representation of java package. */
 public class PyJavaPackage extends PyObject implements Traverseproc {
@@ -48,13 +48,25 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
         return addPackage(name, null);
     }
 
+    /**
+     * From a dotted package name {@code a.b.c} interpreted relative to this package {@code t},
+     * ensure that {@code a} is in the dictionary of {@code t} and then recursively process the
+     * remainder {@code b.c} relative to {@code a}, finally returning the {@link #PyJavaPackage} of
+     * {@code t.a.b.c}. In the case where the initial package name is just {@code a}, no dots, the
+     * method simply ensures {@code a} is entered in {@code t}, and returns the
+     * {@link PyJavaPackage} of {@code t.a}.
+     *
+     * @param name a package name
+     * @param jarfile becomes the {@code __file__} attribute
+     * @return the {@link PyJavaPackage} of the package named
+     */
     public PyJavaPackage addPackage(String name, String jarfile) {
         int dot = name.indexOf('.');
         String firstName = name;
-        String lastName = null;
+        String remainder = null;
         if (dot != -1) {
             firstName = name.substring(0, dot);
-            lastName = name.substring(dot + 1, name.length());
+            remainder = name.substring(dot + 1, name.length());
         }
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage) __dict__.__finditem__(firstName);
@@ -63,13 +75,12 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
             p = new PyJavaPackage(pname, __mgr__, jarfile);
             __dict__.__setitem__(firstName, p);
         } else {
-            // this code is ok here, because this is not needed for
-            // a top level package
+            // this code is ok here, because this is not needed for a top level package
             if (jarfile == null || !jarfile.equals(p.__file__)) {
                 p.__file__ = null;
             }
         }
-        return lastName != null ? p.addPackage(lastName, jarfile) : p;
+        return remainder != null ? p.addPackage(remainder, jarfile) : p;
     }
 
     public PyObject addClass(String name, Class<?> c) {
@@ -79,15 +90,14 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
     }
 
     /**
-     * Add statically known classes.
+     * Add the classes named to this package, but with only a placeholder value. These names are
+     * statically known, typically from processing JAR files on the class path.
      *
-     * @param classes their names as comma-separated string
+     * @param classes the names as strings
      */
-    public void addPlaceholders(String classes) {
-        StringTokenizer tok = new StringTokenizer(classes, ",@");
-        while (tok.hasMoreTokens()) {
-            String p = tok.nextToken();
-            String name = p.trim().intern();
+    public void addPlaceholders(Collection<String> classes) {
+        for (String name : classes) {
+            name = name.intern();
             if (clsSet.__finditem__(name) == null) {
                 clsSet.__setitem__(name, Py.One);
             }

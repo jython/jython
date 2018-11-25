@@ -9,7 +9,13 @@ import org.python.core.PyList;
 import org.python.core.PySystemState;
 
 import java.io.File;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
@@ -58,7 +64,13 @@ public class SysPackageManager extends PathPackageManager {
         addJarDir(jdir, cache, cache);
     }
 
-    /** Index the contents of every JAR or ZIP in a directory. */
+    /**
+     * Index the contents of every JAR or ZIP in a directory.
+     *
+     * @param jdir direcory containing some JAR or ZIP files
+     * @param cache
+     * @param saveCache
+     */
     private void addJarDir(String jdir, boolean cache, boolean saveCache) {
 
         File file = new File(jdir);
@@ -89,6 +101,7 @@ public class SysPackageManager extends PathPackageManager {
         while (tok.hasMoreTokens()) {
             // ??pending: do jvms trim? how is interpreted entry=""?
             String entry = tok.nextToken();
+            // Use the extra flag to defer writing out the cache.
             addJarDir(entry, true, false);
         }
     }
@@ -100,23 +113,40 @@ public class SysPackageManager extends PathPackageManager {
      * @param registry
      */
     private void findAllPackages(Properties registry) {
-        /*
-         * python.packages.directories defines a sequence of property names. Each property name is a
-         * path string. The default setting causes directories and JARs on the classpath and in the
-         * JRE (before Java 9) to be sources of Python packages.
-         */
-        String defaultPaths = "java.class.path,sun.boot.class.path";
-        String paths = registry.getProperty("python.packages.paths", defaultPaths);
-        StringTokenizer tok = new StringTokenizer(paths, ",");
-        while (tok.hasMoreTokens()) {
-            // Each property name is a path string containing directories
-            String entry = tok.nextToken().trim();
-            String tmp = registry.getProperty(entry);
-            if (tmp == null) {
-                continue;
+
+        String defaultPaths = "java.class.path";
+        String defaultDirectories = "";
+        String defaultModules = "java.base,java.desktop,java.logging,java.se,java.sql,java.xml";
+
+        try {
+            // Support for the modular JVM (particular packages).
+            // XXX This may not be our final approach: maybe enumerate all the packages instead?
+            Set<String> modules =
+                    split(registry.getProperty("python.packages.modules", defaultModules));
+            FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
+            for (String moduleName : modules) {
+                Path modulePath = jrtfs.getPath("/modules/" + moduleName);
+                addModule(modulePath);
             }
-            // Each path may be a mixture of directory and JAR specifiers (source of packages)
-            addClassPath(tmp);
+        } catch (ProviderNotFoundException e) {
+            // Running on a JVM before Java 9: add boot class path and optional extensions.
+            defaultPaths = "java.class.path,sun.boot.class.path";
+            defaultDirectories = "java.ext.dirs";
+        }
+
+        /*
+         * python.packages.paths defines a sequence of property names. Each property is a path
+         * string. The default setting causes directories and JARs on the classpath and in the JRE
+         * (before Java 9) to be sources of Python packages.
+         */
+        Set<String> paths = split(registry.getProperty("python.packages.paths", defaultPaths));
+        for (String name : paths) {
+            // Each property is a path string containing directories
+            String path = registry.getProperty(name);
+            if (path != null) {
+                // Each path may be a mixture of directory and JAR specifiers (source of packages)
+                addClassPath(path);
+            }
         }
 
         /*
@@ -125,17 +155,15 @@ public class SysPackageManager extends PathPackageManager {
          * that are to be a source of Python packages. By default, these directories are those where
          * the JVM stores its optional packages as JARs (a mechanism withdrawn in Java 9).
          */
-        String directories = registry.getProperty("python.packages.directories", "java.ext.dirs");
-        tok = new StringTokenizer(directories, ",");
-        while (tok.hasMoreTokens()) {
-            // Each property name is a path string containing directories
-            String entry = tok.nextToken().trim();
-            String tmp = registry.getProperty(entry);
-            if (tmp == null) {
-                continue;
+        Set<String> directories =
+                split(registry.getProperty("python.packages.directories", defaultDirectories));
+        for (String name : directories) {
+            // Each property defines a path string containing directories
+            String path = registry.getProperty(name);
+            if (path != null) {
+                // Add the JAR/ZIP archives in those directories to the search path for packages
+                addJarPath(path);
             }
-            // Add the JAR/ZIP archives found in those directories to the search path for packages
-            addJarPath(tmp);
         }
 
         /*
@@ -194,8 +222,8 @@ public class SysPackageManager extends PathPackageManager {
             return true;
         }
 
-        PySystemState system = Py.getSystemState();
-        if (system.getClassLoader() == null && packageExists(Py.getSystemState().path, pkg, name)) {
+        PySystemState sys = Py.getSystemState();
+        if (sys.getClassLoader() == null && packageExists(sys.path, pkg, name)) {
             return true;
         } else {
             return false;

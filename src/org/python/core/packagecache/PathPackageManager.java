@@ -30,10 +30,12 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     }
 
     /**
-     * Helper for {@link #packageExists(java.lang.String,java.lang.String)}. Scans for package
-     * pkg.name the directories in path.
+     * Helper for {@link #packageExists(String,String)}. Scans the directories in the given path for
+     * package pkg.name. A directory with a matching name is considered to define a package if it
+     * contains no Python (source or compiled), or contains a Java .class file (not compiled from
+     * Python).
      */
-    protected boolean packageExists(PyList path, String pkg, String name) {
+    protected static boolean packageExists(PyList path, String pkg, String name) {
         String child = pkg.replace('.', File.separatorChar) + File.separator + name;
 
         for (int i = 0; i < path.__len__(); i++) {
@@ -46,9 +48,9 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             try {
                 if (f.isDirectory() && imp.caseok(f, name)) {
                     /*
-                     * Figure out if we have a directory a mixture of python and java or just an
-                     * empty directory (which means Java) or a directory with only Python source
-                     * (which means Python).
+                     * f is a directory matching the package name. This directory is considered to
+                     * define a package if it contains no Python (source or compiled), or contains a
+                     * Java .class file (not compiled from Python).
                      */
                     PackageExistsFileFilter m = new PackageExistsFileFilter();
                     f.listFiles(m);

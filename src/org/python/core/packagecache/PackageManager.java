@@ -13,12 +13,17 @@ import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Abstract package manager.
  */
 public abstract class PackageManager extends Object {
 
+    /** Nominal top-level package of all (Java) packages, containing "java", "com", "org", etc.. */
     public PyJavaPackage topLevelPackage;
 
     public PackageManager() {
@@ -117,6 +122,16 @@ public abstract class PackageManager extends Object {
         return list1;
     }
 
+    /**
+     * Given the (dotted) name of a package, find the {@link PyJavaPackage} corresponding, by
+     * navigating from the {@link #topLevelPackage}, successively applying
+     * {@link PyObject#__findattr__(String)}. This in fact drives the creation of
+     * {@link PyJavaPackage} objects since it indirectly calls
+     * {@link #packageExists(String, String)}.
+     *
+     * @param name (dotted) package name
+     * @return the package named
+     */
     public PyObject lookupName(String name) {
         PyObject top = this.topLevelPackage;
         do {
@@ -139,13 +154,15 @@ public abstract class PackageManager extends Object {
     }
 
     /**
-     * Creates package/updates statically known classes info. Uses
-     * {@link PyJavaPackage#addPackage(java.lang.String, java.lang.String) },
+     * Create (or ensure we have) a {@link PyJavaPackage} for the named package and add to it the
+     * names of classes mentioned here. These classes are added as "place holders" only, so they
+     * become members of it, without being instantiated. This method relies on
+     * {@link PyJavaPackage#addPackage(java.lang.String, java.lang.String)} and
      * {@link PyJavaPackage#addPlaceholders}.
      *
      * @param name package name
-     * @param classes comma-separated string
-     * @param jarfile involved jarfile; can be null
+     * @param classes comma or @-sign separated string
+     * @param jarfile involved; can be null
      * @return created/updated package
      */
     public PyJavaPackage makeJavaPackage(String name, String classes, String jarfile) {
@@ -153,14 +170,11 @@ public abstract class PackageManager extends Object {
         if (name.length() != 0) {
             p = p.addPackage(name, jarfile);
         }
-
-        if (classes != null) {
-            p.addPlaceholders(classes);
-        }
-
+        p.addPlaceholders(split(classes, ",@"));
         return p;
     }
 
+    /** ASM visitor class supporting {@link #checkAccess(InputStream)}. */
     private static class AccessVisitor extends ClassVisitor {
 
         private int class_access;
@@ -181,10 +195,10 @@ public abstract class PackageManager extends Object {
     }
 
     /**
-     * Check that a given stream is a valid Java .class file. And return its access permissions as
+     * Check that a given stream is a valid Java .class file, and return its access permissions as
      * an int.
      */
-    static protected int checkAccess(java.io.InputStream cstream) throws IOException {
+    static protected int checkAccess(InputStream cstream) throws IOException {
         try {
             ClassReader reader = new ClassReader(cstream);
             AccessVisitor visitor = new AccessVisitor();
@@ -195,4 +209,30 @@ public abstract class PackageManager extends Object {
         }
     }
 
+    /**
+     * Helper to split a textual list into a list. The semantics are basically those of
+     * {@code StringTokenizer}, followed by {@code String.trim()} and duplicate removal.
+     *
+     * @param target compound string to split into tokens ({@code null} treated as "".
+     * @param sep characters, any of which will be treated as a token separator
+     * @return set of tokens trimmed of white space
+     */
+    protected static Set<String> split(String target, String sep) {
+        Set<String> result = new LinkedHashSet<>();
+        if (target != null) {
+            StringTokenizer tok = new StringTokenizer(target, sep);
+            while (tok.hasMoreTokens()) {
+                String entry = tok.nextToken().trim();
+                if (entry.length() > 0) {
+                    result.add(entry);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Equivalent to {@code split(target, ",")}. See {@link #split(String, String)}. */
+    protected static Set<String> split(String target) {
+        return split(target, ",");
+    }
 }

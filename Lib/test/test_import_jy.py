@@ -172,9 +172,6 @@ class ImpTestCase(unittest.TestCase):
         # causes a stack overflow if the bug occurs
         self.assertRaises(Exception, getattr, anygui, 'abc')
 
-    @unittest.skipIf(test_support.get_java_version() >= (9,),
-                     "Fails on Java 9+. See b.j.o. issue #2362") # FIXME
-    # Probably related to Java modules: ensure also works outside java.base
     def test_import_star(self):
         self.assertEquals(0, subprocess.call(
                 [sys.executable, test_support.findfile("import_star_from_java.py")]))

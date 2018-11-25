@@ -149,10 +149,9 @@ dependencies {
 
     implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
 
-    // pin to ASM 5.2 until we upgrade compilation
-    implementation group: 'org.ow2.asm', name: 'asm', version: '5.2'
-    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '5.2'
-    implementation group: 'org.ow2.asm', name: 'asm-util', version: '5.2'
+    implementation group: 'org.ow2.asm', name: 'asm', version: '7.0'
+    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: '7.0'
 
     api group: 'com.google.guava', name: 'guava', version: '22.0-android'
     implementation group: 'com.ibm.icu', name: 'icu4j', version: '59.1'
