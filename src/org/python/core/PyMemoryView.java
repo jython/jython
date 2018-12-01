@@ -43,8 +43,9 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
      * new lease on it. The buffer so obtained will be writable if the underlying object permits it.
      *
      * @param pybuf buffer exported by some underlying object
+     * @throws ClassCastException in cases where {@code pybuf.getBuffer} does so.
      */
-    public PyMemoryView(BufferProtocol pybuf) {
+    public PyMemoryView(BufferProtocol pybuf) throws ClassCastException {
         super(TYPE);
         /*
          * Ask for the full set of facilities (strides, indirect, etc.) from the object in case they
@@ -68,11 +69,13 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
         PyObject obj = ap.getPyObject(0);
 
         if (obj instanceof BufferProtocol) {
-            return new PyMemoryView((BufferProtocol)obj);
-        } else {
-            throw Py.TypeError("cannot make memory view because object does not have "
-                    + "the buffer interface");
+            // Certain types that implement BufferProtocol do not implement the buffer protocol
+            try {
+                return new PyMemoryView((BufferProtocol) obj);
+            } catch (ClassCastException e) { /* fall through to message */ }
         }
+        throw Py.TypeError(
+                "cannot make memory view because object does not have the buffer interface");
     }
 
     // @ExposedGet(doc = obj_doc) // Not exposed in Python 2.7

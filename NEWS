@@ -32,6 +32,7 @@ Development tip
     - [ 2469 ] jython launcher fails on Windows if JAVA_HOME is set
     - [ 2650 ] Detail message is not set on PyException from PythonInterpreter
     - [ 2403 ] VerifyError when implementing interfaces containing default methods (Java 8)
+    - [ 2715 ] Restrict array.array support for buffer protocol
 
   New Features
     - The main program behaves more like CPython in many small ways, including a more correct

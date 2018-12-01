@@ -482,12 +482,8 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
              */
             setslice(start, stop, step, (BaseBytes)value);
 
-        } else if (value instanceof BufferProtocol) {
-            /*
-             * Value supports Jython implementation of PEP 3118, and can be can be inserted without
-             * making a copy.
-             */
-            setslice(start, stop, step, (BufferProtocol)value);
+        } else if (setsliceFromBuffer(start, stop, step, value)) {
+            // Value supports Jython buffer API. (We're done.)
 
         } else {
             /*
@@ -573,9 +569,9 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @param value an object supporting the buffer API consistent with the slice assignment
      * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
-    private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException {
+    private void setslice(int start, int stop, int step, BufferProtocol value) throws PyException, ClassCastException {
 
-        try (PyBuffer view = value.getBuffer(PyBUF.FULL_RO)) {
+        try (PyBuffer view = value.getBuffer(PyBUF.SIMPLE)) {
 
             int len = view.getLen();
 
@@ -597,6 +593,28 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
             }
         }
     }
+
+    /**
+     * Sets the given range of elements according to Python slice assignment semantics from an
+     * object that <b>might</b> support the Jython Buffer API.
+     *
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @param step the step size.
+     * @param value an object possibly bearing the Buffer API
+     * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
+     */
+    private boolean setsliceFromBuffer(int start, int stop, int step, PyObject value)
+            throws PyException {
+        if (value instanceof BufferProtocol) {
+            try {
+                setslice(start, stop, step, (BufferProtocol) value);
+                return true;
+            } catch (ClassCastException e) { /* fall through to false */ }
+        }
+        return false;
+    }
+
 
     /**
      * Sets the given range of elements according to Python slice assignment semantics from a

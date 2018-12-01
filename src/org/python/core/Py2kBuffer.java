@@ -77,9 +77,9 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      */
     private PyBuffer getBuffer() {
         /*
-         * Ask for a simple one-dimensional byte view (not requiring strides, indirect, etc.) from
-         * the object, as we cannot deal with other navigation. Ask for read access. If the object
-         * is writable, the PyBuffer will be writable, but we won't write to it.
+         * Ask for a simple one-dimensional byte view from the object, as we cannot deal with more
+         * complex navigation. Ask for read access. If the object is writable, the PyBuffer will be
+         * writable, but we won't write to it.
          */
         final int flags = PyBUF.SIMPLE;
         PyBuffer buf = object.getBuffer(flags);

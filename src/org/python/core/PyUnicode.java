@@ -134,6 +134,18 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return codePoints;
     }
 
+    /**
+     * {@code PyUnicode} implements the interface {@link BufferProtocol} technically by inheritance from {@link PyString},
+     * but does not provide a buffer (in CPython). We therefore arrange that all calls to {@code getBuffer}
+     * raise an error.
+     *
+     * @return always throws a {@code ClassCastException}
+     */
+    @Override
+    public synchronized PyBuffer getBuffer(int flags) throws ClassCastException {
+        throw new ClassCastException("'unicode' does not support the buffer protocol");
+    }
+
     // ------------------------------------------------------------------------------------------
     // Index translation for Unicode beyond the BMP
     // ------------------------------------------------------------------------------------------

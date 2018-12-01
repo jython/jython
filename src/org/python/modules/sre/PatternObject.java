@@ -404,20 +404,18 @@ public class PatternObject extends PyObject implements Traverseproc {
 
         if (obj instanceof PyString) {
             // Easy case
-            return (PyString)obj;
+            return (PyString) obj;
 
-        } else if (obj instanceof BufferProtocol) {
+        } else {
             // Try to get a byte-oriented buffer
-            try (PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO)){
-                // ... and treat those bytes as a PyString
+            try (PyBuffer buf = ((BufferProtocol) obj).getBuffer(PyBUF.SIMPLE)) {
+                // ... and wrap those bytes as a PyString
                 return new PyString(buf.toString());
+            } catch (ClassCastException e) {
+                throw Py.TypeError("expected string or buffer, but got " + obj.getType());
             }
         }
-
-        // Neither of those things worked
-        throw Py.TypeError("expected string or buffer, but got " + obj.getType());
     }
-
 
     /* Traverseproc implementation */
     @Override

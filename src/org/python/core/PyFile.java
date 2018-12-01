@@ -496,11 +496,13 @@ public class PyFile extends PyObject implements FinalizableBuiltin, Traverseproc
         } else if (obj instanceof PyArray && !binary) {
             // Fall through to TypeError. (If binary, BufferProtocol takes care of PyArray.)
 
-        } else if (obj instanceof BufferProtocol) {
-            // Try to get a byte-oriented buffer
-            try (PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.FULL_RO)) {
+        } else {
+            // Try to get a simple byte-oriented buffer
+            try (PyBuffer buf = ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE)) {
                 // ... and treat those bytes as a String
                 return buf.toString();
+            } catch (ClassCastException e) {
+                // Does not implement BufferProtocol (in reality). Fall through to message.
             }
         }
 

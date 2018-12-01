@@ -21,6 +21,8 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
+import org.python.core.PyUnicode;
+import org.python.core.buffer.SimpleStringBuffer;
 import org.python.core.util.StringUtil;
 
 /**
@@ -280,11 +282,10 @@ public class binascii {
         int leftchar = 0;
 
         StringBuilder bin_data = new StringBuilder();
-        PyBuffer ascii_data = bp.getBuffer(PyBUF.SIMPLE);
-        try {
+
+        try (PyBuffer ascii_data = getTextBuffer(bp)) {
             if (ascii_data.getLen() == 0)
                 return new PyString("");
-
 
             char this_ch;
             int i;
@@ -331,18 +332,17 @@ public class binascii {
                     throw new PyException(Error, "Trailing garbage");
                 }
             }
-        
+
             // finally, if we haven't decoded enough stuff, fill it up with zeros
-            for (; i<bin_len; i++)
-                    bin_data.append((char)0);
-        } finally {
-            ascii_data.release();
+            for (; i < bin_len; i++)
+                bin_data.append((char) 0);
+
+            return new PyString(bin_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("a2b_uu", bp);
         }
-        
-        return new PyString(bin_data.toString());
     }
-
-
 
     public static PyString __doc__b2a_uu = new PyString(
         "(bin) -> ascii. Uuencode line of data"
@@ -436,23 +436,21 @@ public class binascii {
         int leftchar = 0;
         int quad_pos = 0;
 
-        PyBuffer ascii_data = bp.getBuffer(PyBUF.SIMPLE);
-        int ascii_len = ascii_data.getLen();
+        try (PyBuffer ascii_data = getTextBuffer(bp)) {
+            int ascii_len = ascii_data.getLen();
 
-        int bin_len = 0;
-        StringBuilder bin_data = new StringBuilder();
+            int bin_len = 0;
+            StringBuilder bin_data = new StringBuilder();
 
-        try {
-            for(int i = 0; ascii_len > 0 ; ascii_len--, i++) {
+            for (int i = 0; ascii_len > 0; ascii_len--, i++) {
                 // Skip some punctuation
                 this_ch = (char) ascii_data.intAt(i);
-                if (this_ch > 0x7F || this_ch == '\r' ||
-                          this_ch == '\n' || this_ch == ' ')
+                if (this_ch > 0x7F || this_ch == '\r' || this_ch == '\n' || this_ch == ' ')
                     continue;
 
                 if (this_ch == BASE64_PAD) {
-                    if (quad_pos < 2 || (quad_pos == 2 &&
-                             binascii_find_valid(ascii_data, i, 1) != BASE64_PAD))
+                    if (quad_pos < 2 || (quad_pos == 2
+                            && binascii_find_valid(ascii_data, i, 1) != BASE64_PAD))
                         continue;
                     else {
                         // A pad sequence means no more input.
@@ -474,21 +472,22 @@ public class binascii {
                 leftbits += 6;
                 if (leftbits >= 8) {
                     leftbits -= 8;
-                    bin_data.append((char)((leftchar >> leftbits) & 0xff));
+                    bin_data.append((char) ((leftchar >> leftbits) & 0xff));
                     bin_len++;
                     leftchar &= ((1 << leftbits) - 1);
                 }
             }
-        } finally {
-            ascii_data.release();
-        }
-        // Check that no bits are left
-        if (leftbits != 0) {
-            throw new PyException(Error, "Incorrect padding");
-        }
-        return new PyString(bin_data.toString());
-    }
+            // Check that no bits are left
+            if (leftbits != 0) {
+                throw new PyException(Error, "Incorrect padding");
+            }
 
+            return new PyString(bin_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("a2b_base64", bp);
+        }
+    }
 
 
     public static PyString __doc__b2a_base64 = new PyString(
@@ -507,41 +506,41 @@ public class binascii {
 
         StringBuilder ascii_data = new StringBuilder();
 
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
-        try {
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
             int bin_len = bin_data.getLen();
             if (bin_len > BASE64_MAXBIN) {
-                throw new PyException(Error,"Too much data for base64 line");
+                throw new PyException(Error, "Too much data for base64 line");
             }
 
-            for (int i = 0; bin_len > 0 ; bin_len--, i++) {
+            for (int i = 0; bin_len > 0; bin_len--, i++) {
                 // Shift the data into our buffer
-                leftchar = (leftchar << 8) | (char) bin_data.intAt(i); //charAt(i);
+                leftchar = (leftchar << 8) | (char) bin_data.intAt(i); // charAt(i);
                 leftbits += 8;
 
                 // See if there are 6-bit groups ready
                 while (leftbits >= 6) {
-                    this_ch = (char)((leftchar >> (leftbits-6)) & 0x3f);
+                    this_ch = (char) ((leftchar >> (leftbits - 6)) & 0x3f);
                     leftbits -= 6;
-                    ascii_data.append((char)table_b2a_base64[this_ch]);
+                    ascii_data.append((char) table_b2a_base64[this_ch]);
                 }
             }
-        } finally {
-            bin_data.release();
-        }
-        if (leftbits == 2) {
-            ascii_data.append((char)table_b2a_base64[(leftchar&3) << 4]);
-            ascii_data.append(BASE64_PAD);
-            ascii_data.append(BASE64_PAD);
-        } else if (leftbits == 4) {
-            ascii_data.append((char)table_b2a_base64[(leftchar&0xf) << 2]);
-            ascii_data.append(BASE64_PAD);
-        }
-        ascii_data.append('\n');  // Append a courtesy newline
 
-        return new PyString(ascii_data.toString());
+            if (leftbits == 2) {
+                ascii_data.append((char) table_b2a_base64[(leftchar & 3) << 4]);
+                ascii_data.append(BASE64_PAD);
+                ascii_data.append(BASE64_PAD);
+            } else if (leftbits == 4) {
+                ascii_data.append((char) table_b2a_base64[(leftchar & 0xf) << 2]);
+                ascii_data.append(BASE64_PAD);
+            }
+            ascii_data.append('\n');  // Append a courtesy newline
+
+            return new PyString(ascii_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("b2a_base64", bp);
+        }
     }
-
 
     public static PyString __doc__a2b_hqx = new PyString(
          "ascii -> bin, done. Decode .hqx coding"
@@ -557,15 +556,14 @@ public class binascii {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
-
         boolean done = false;
-        PyBuffer ascii_data = bp.getBuffer(PyBUF.SIMPLE);
-        int len = ascii_data.getLen();
 
-        StringBuilder bin_data = new StringBuilder();
+        try (PyBuffer ascii_data = getTextBuffer(bp)) {
 
-        try {
-            for(int i = 0; len > 0 ; len--, i++) {
+            int len = ascii_data.getLen();
+            StringBuilder bin_data = new StringBuilder();
+
+            for (int i = 0; len > 0; len--, i++) {
                 // Get the byte and look it up
                 this_ch = (char) table_a2b_hqx[ascii_data.intAt(i)];
                 if (this_ch == SKIP)
@@ -584,22 +582,21 @@ public class binascii {
                 leftbits += 6;
                 if (leftbits >= 8) {
                     leftbits -= 8;
-                    bin_data.append((char)((leftchar >> leftbits) & 0xff));
+                    bin_data.append((char) ((leftchar >> leftbits) & 0xff));
                     leftchar &= ((1 << leftbits) - 1);
                 }
             }
-        } finally {
-            ascii_data.release();
-        }
 
-        if (leftbits != 0 && !done) {
-            throw new PyException(Incomplete,
-                                  "String has incomplete number of bytes");
-        }
+            if (leftbits != 0 && !done) {
+                throw new PyException(Incomplete, "String has incomplete number of bytes");
+            }
 
-        return new PyTuple(new PyString(bin_data.toString()), Py.newInteger(done ? 1 : 0));
+            return new PyTuple(new PyString(bin_data.toString()), Py.newInteger(done ? 1 : 0));
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("a2b_hqx", bp);
+        }
     }
-
 
     public static PyString __doc__rlecode_hqx = new PyString(
          "Binhex RLE-code binary data"
@@ -662,35 +659,34 @@ public class binascii {
         char this_ch;
         int leftchar = 0;
 
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
-        int len = bin_data.getLen();
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
 
-        StringBuilder ascii_data = new StringBuilder();
+            int len = bin_data.getLen();
+            StringBuilder ascii_data = new StringBuilder();
 
-        try {
-            for(int i = 0; len > 0; len--, i++) {
+            for (int i = 0; len > 0; len--, i++) {
                 // Shift into our buffer, and output any 6bits ready
                 leftchar = (leftchar << 8) | (char) bin_data.intAt(i);
                 leftbits += 8;
                 while (leftbits >= 6) {
-                    this_ch = (char) ((leftchar >> (leftbits-6)) & 0x3f);
+                    this_ch = (char) ((leftchar >> (leftbits - 6)) & 0x3f);
                     leftbits -= 6;
                     ascii_data.append((char) table_b2a_hqx[this_ch]);
                 }
             }
-        } finally {
-            bin_data.release();
-        }
 
-        // Output a possible runt byte
-        if (leftbits != 0) {
-            leftchar <<= (6-leftbits);
-            ascii_data.append((char) table_b2a_hqx[leftchar & 0x3f]);
+            // Output a possible runt byte
+            if (leftbits != 0) {
+                leftchar <<= (6 - leftbits);
+                ascii_data.append((char) table_b2a_hqx[leftchar & 0x3f]);
+            }
+
+            return new PyString(ascii_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("b2a_hqx", bp);
         }
-        return new PyString(ascii_data.toString());
     }
-
-
 
     public static PyString __doc__rledecode_hqx = new PyString(
         "Decode hexbin RLE-coded string"
@@ -707,11 +703,11 @@ public class binascii {
      */
     static public PyString rledecode_hqx(BufferProtocol bp) {
         char in_byte, in_repeat;
-        
+
         PyBuffer in_data = bp.getBuffer(PyBUF.SIMPLE);
         int in_len = in_data.getLen();
         int i = 0;
-        
+
         StringBuilder out_data = new StringBuilder();
         try {
             // Empty string is a special case
@@ -888,24 +884,25 @@ static long[] crc_32_tab = new long[] {
     );
 
     public static PyString b2a_hex(BufferProtocol bp) {
-        PyBuffer argbuf = bp.getBuffer(PyBUF.SIMPLE);
-        int arglen = argbuf.getLen();
 
-        StringBuilder retbuf = new StringBuilder(arglen*2);
+        try (PyBuffer argbuf = getTextBuffer(bp)) {
 
-        try {
+            int arglen = argbuf.getLen();
+            StringBuilder retbuf = new StringBuilder(arglen * 2);
+
             /* make hex version of string, taken from shamodule.c */
             for (int i = 0; i < arglen; i++) {
                 char ch = (char) argbuf.intAt(i);
                 retbuf.append(hexdigit[(ch >>> 4) & 0xF]);
                 retbuf.append(hexdigit[ch & 0xF]);
             }
-        } finally {
-            argbuf.release();
-        }
-        return new PyString(retbuf.toString());
-    }
 
+            return new PyString(retbuf.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("b2a_hex", bp);
+        }
+    }
 
     public static PyString hexlify(BufferProtocol argbuf) {
         return b2a_hex(argbuf);
@@ -920,40 +917,40 @@ static long[] crc_32_tab = new long[] {
         "This function is also available as \"unhexlify()\""
     );
 
-
     public static PyString a2b_hex(BufferProtocol bp) {
-        PyBuffer argbuf = bp.getBuffer(PyBUF.SIMPLE);
-        int arglen = argbuf.getLen();
 
-        StringBuilder retbuf = new StringBuilder(arglen/2);
-        /* XXX What should we do about strings with an odd length?  Should
-         * we add an implicit leading zero, or a trailing zero?  For now,
-         * raise an exception.
-         */
-        try {
+        try (PyBuffer argbuf = bp.getBuffer(PyBUF.SIMPLE)) {
+
+            int arglen = argbuf.getLen();
+            StringBuilder retbuf = new StringBuilder(arglen / 2);
+            /*
+             * XXX What should we do about strings with an odd length? Should we add an implicit
+             * leading zero, or a trailing zero? For now, raise an exception.
+             */
             if (arglen % 2 != 0)
                 throw Py.TypeError("Odd-length string");
 
             for (int i = 0; i < arglen; i += 2) {
                 int top = Character.digit(argbuf.intAt(i), 16);
-                int bot = Character.digit(argbuf.intAt(i+1), 16);
+                int bot = Character.digit(argbuf.intAt(i + 1), 16);
                 if (top == -1 || bot == -1)
                     throw Py.TypeError("Non-hexadecimal digit found");
                 retbuf.append((char) ((top << 4) + bot));
             }
-        } finally {
-            argbuf.release();
-        }
-        return new PyString(retbuf.toString());
-    }
 
+            return new PyString(retbuf.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("a2b_hex", bp);
+        }
+    }
 
     public static PyString unhexlify(BufferProtocol argbuf) {
         return a2b_hex(argbuf);
     }
 
     final private static char[] upper_hexdigit = "0123456789ABCDEF".toCharArray();
-    
+
     private static StringBuilder qpEscape(StringBuilder sb, char c)
     {
     	sb.append('=');
@@ -1143,20 +1140,44 @@ static long[] crc_32_tab = new long[] {
 
         return new PyString(sb.toString());
     }
-    
-/*
-    public static void main(String[] args) {
-        String l = b2a_uu("Hello");
-        System.out.println(l);
-        System.out.println(a2b_uu(l));
 
-        l = b2a_base64("Hello");
-        System.out.println(l);
-        System.out.println(a2b_base64(l));
-
-        l = b2a_hqx("Hello-");
-        System.out.println(l);
-        System.out.println(a2b_hqx(l));
+    /**
+     * We use this when the argument given to a conversion method is to be interpreted as text. If
+     * it is byte-like, the bytes are used unchanged, assumed in the "intended" character set. It
+     * may be a {@code PyUnicode}, in which case the it will be decoded to bytes using the default
+     * encoding ({@code sys.getdefaultencoding()}.
+     * 
+     * @param text an object with the buffer protocol
+     * @return a byte-buffer view of the ASCII text
+     * @throws ClassCastException where the text object does not implement the buffer protocol
+     */
+    private static PyBuffer getTextBuffer(BufferProtocol text)
+            throws ClassCastException {
+        if (text instanceof PyUnicode) {
+            String s = ((PyUnicode) text).encode();
+            return new SimpleStringBuffer(PyBUF.SIMPLE, null, s);
+        } else {
+            return text.getBuffer(PyBUF.SIMPLE);
+        }
     }
-*/
+
+    /**
+     * Convenience method providing the exception when an argument is not the expected type, in the
+     * format "<b>f</b>() argument 1 must bytes or unicode, not <code>type(arg)</code>."
+     *
+     * @param f name of function of error (or could be any text)
+     * @param arg argument provided from which actual type will be reported
+     * @return TypeError to throw
+     */
+    private static PyException argMustBeBytes(String f, BufferProtocol arg) {
+        String fmt = "%s() argument 1 must bytes or unicode, not %s";
+        String type = "null";
+        if (arg instanceof PyObject) {
+            type = ((PyObject) arg).getType().fastGetName();
+        } else if (arg != null) {
+            type = arg.getClass().getName();
+        }
+        return Py.TypeError(String.format(fmt, f, type));
+    }
+
 }

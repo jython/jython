@@ -116,7 +116,7 @@ public interface PyBUF {
      * A constant used by the consumer in its call to {@link BufferProtocol#getBuffer(int)} to
      * specify that it assumes a simple one-dimensional organisation of the exported storage with
      * item size of one. <code>getBuffer</code> will raise an exception if the consumer sets this
-     * flag and the exporter's buffer cannot be navigated that simply.
+     * flag and the exporter cannot represent itself as byte array data.
      */
     static final int SIMPLE = 0;
     /**

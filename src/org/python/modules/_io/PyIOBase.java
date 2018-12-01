@@ -543,9 +543,7 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
                 if (peekResult.__nonzero__()) {
 
                     // Get a look at the bytes themselves
-                    PyBuffer peekBuffer = readablePyBuffer(peekResult);
-
-                    try {
+                    try (PyBuffer peekBuffer = readablePyBuffer(peekResult)) {
                         /*
                          * Scan forwards in the peek buffer to see if there is an end-of-line. Most
                          * frequently this succeeds. The number of bytes to scan is limited to the
@@ -569,10 +567,6 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
                          */
                         curr = readMethod.__call__(Py.newInteger(p));
                         remainingLimit -= p;
-
-                    } finally {
-                        // We must let go of the buffer we were given
-                        peekBuffer.release();
                     }
 
                 } else {
@@ -756,9 +750,15 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
      * @throws PyException (TypeError) if object not convertible to a byte array
      */
     protected static PyBuffer readablePyBuffer(PyObject obj) throws PyException {
-        if (obj instanceof BufferProtocol) {
+
+        // First consider special cases we can view as a String
+        if (obj instanceof PyUnicode) {
+            String s = ((PyUnicode) obj).encode();
+            return new SimpleStringBuffer(PyBUF.SIMPLE, null, s);
+
+        } else {
             try {
-                return ((BufferProtocol)obj).getBuffer(PyBUF.SIMPLE);
+                return ((BufferProtocol) obj).getBuffer(PyBUF.SIMPLE);
             } catch (PyException pye) {
                 if (pye.match(Py.BufferError)) {
                     // If we can't get a buffer on the object, say it's the wrong type
@@ -766,20 +766,13 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
                 } else {
                     throw pye;
                 }
+            } catch (ClassCastException pye) {
+                // fall through to message
             }
-        } else {
-            // Something else we can view as a String?
-            String s;
-            if (obj instanceof PyUnicode) {
-                s = ((PyUnicode)obj).encode();
-            } else if (obj instanceof PyArray) {
-                s = ((PyArray)obj).tostring();
-            } else {
-                // None of the above: complain
-                throw tailoredTypeError("read-write buffer", obj);
-            }
-            return new SimpleStringBuffer(PyBUF.SIMPLE, null, s);
         }
+
+        // None of the above: complain
+        throw tailoredTypeError("read-write buffer", obj);
     }
 
     /**
@@ -792,21 +785,20 @@ public class PyIOBase extends PyObject implements FinalizableBuiltin, Traversepr
      * @throws PyException (TypeError) if object not convertible to a byte array
      */
     protected static PyBuffer writablePyBuffer(PyObject obj) throws PyException {
-        if (obj instanceof BufferProtocol) {
-            try {
-                return ((BufferProtocol)obj).getBuffer(PyBUF.WRITABLE);
-            } catch (PyException pye) {
-                if (pye.match(Py.BufferError)) {
-                    // If we can't get a buffer on the object, say it's the wrong type
-                    throw Py.TypeError(String.format("(BufferError) %s", pye.getMessage()));
-                } else {
-                    throw pye;
-                }
+        try {
+            return ((BufferProtocol) obj).getBuffer(PyBUF.WRITABLE);
+        } catch (PyException pye) {
+            if (pye.match(Py.BufferError)) {
+                // If we can't get a buffer on the object, say it's the wrong type
+                throw Py.TypeError(String.format("(BufferError) %s", pye.getMessage()));
+            } else {
+                throw pye;
             }
-        } else {
-            // Can't be a buffer: complain
-            throw tailoredTypeError("read-write buffer", obj);
+        } catch (ClassCastException pye) {
+            // fall through to message
         }
+        // Can't be a buffer: complain
+        throw tailoredTypeError("read-write buffer", obj);
     }
 
     /**

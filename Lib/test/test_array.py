@@ -63,6 +63,7 @@ class BaseTest(unittest.TestCase):
         a = array.array(self.typecode, self.example)
         self.assertEqual(len(a), len(self.example))
 
+    @unittest.skipIf(test_support.is_jython, "Specific to CPython (memory address)")
     def test_buffer_info(self):
         a = array.array(self.typecode, self.example)
         self.assertRaises(TypeError, a.buffer_info, 42)
@@ -75,9 +76,7 @@ class BaseTest(unittest.TestCase):
 
     def test_byteswap(self):
         if test_support.is_jython and self.typecode == 'u':
-            # Jython unicodes are already decoded from utf16,
-            # so this doesn't make sense
-            return
+            self.skipTest("Jython unicode byteswap not implemented")
         a = array.array(self.typecode, self.example)
         self.assertRaises(TypeError, a.byteswap, 42)
         if a.itemsize in (1, 2, 4, 8):
@@ -279,25 +278,6 @@ class BaseTest(unittest.TestCase):
         checkSlice(None, None, -3)
         checkSlice(None, D-R-1, -1)
         checkSlice(R-1, None, -1)
-
-    def test_filewrite(self):
-        a = array.array(self.typecode, 2*self.example)
-        f = open(test_support.TESTFN, 'wb')
-        try:
-            f.write(a)
-            f.close()
-            b = array.array(self.typecode)
-            f = open(test_support.TESTFN, 'rb')
-            b.fromfile(f, len(self.example))
-            self.assertEqual(b, array.array(self.typecode, self.example))
-            self.assertNotEqual(a, b)
-            b.fromfile(f, len(self.example))
-            self.assertEqual(a, b)
-            f.close()
-        finally:
-            if not f.closed:
-                f.close()
-            test_support.unlink(test_support.TESTFN)
 
     def test_repr(self):
         a = array.array(self.typecode, 2*self.example)
@@ -836,6 +816,11 @@ class BaseTest(unittest.TestCase):
             b = buffer(a)
         self.assertEqual(b[0], a.tostring()[0])
 
+    def test_not_memoryview(self):
+        # In Jython we are careful *not* to support memoryview
+        a = array.array(self.typecode, self.example)
+        self.assertRaises(TypeError, memoryview, a)
+
     def test_weakref(self):
         s = array.array(self.typecode, self.example)
         p = proxy(s)
@@ -858,66 +843,6 @@ class BaseTest(unittest.TestCase):
     def test_subclass_with_kwargs(self):
         # SF bug #1486663 -- this used to erroneously raise a TypeError
         ArraySubclassWithKwargs('b', newarg=1)
-
-    @unittest.skipUnless(test_support.is_jython, "array supports buffer interface in Jython")
-    def test_resize_forbidden(self):
-        # Test that array resizing is forbidden with buffer exports (Jython addition).
-        # Test adapted from corresponding one in test_bytes.
-        # We can't resize an array when there are buffer exports, even
-        # if it wouldn't reallocate the underlying array.
-        # Furthermore, no destructive changes to the buffer may be applied
-        # before raising the error.
-        a = array.array(self.typecode, self.example)
-        def resize(n):
-            "n = -1 -> Smaller, 0 -> the same, or 1 -> larger."
-            a[1:-1] = array.array(self.typecode, self.example[1-n:-1])
-
-        v = memoryview(a)
-        orig = a[:]
-
-        self.assertRaises(BufferError, resize, -1)
-        self.assertEqual(a, orig)
-        #self.assertRaises(BufferError, resize, 0)
-        #self.assertEqual(a, orig)
-        self.assertRaises(BufferError, resize, 1)
-        self.assertEqual(a, orig)
-
-        # Other operations implying resize
-        self.assertRaises(BufferError, a.pop, 0)
-        self.assertEqual(a, orig)
-        self.assertRaises(BufferError, a.remove, a[1])
-        self.assertEqual(a, orig)
-        self.assertRaises(BufferError, a.append, self.outside)
-        self.assertEqual(a, orig)
-        self.assertRaises(BufferError, a.insert, 1, self.outside)
-        self.assertEqual(a, orig)
-        self.assertRaises(BufferError, a.extend, self.example)
-        self.assertEqual(a, orig)
-
-        def iadd(x):
-            x += array.array(self.typecode, self.biggerexample)
-        self.assertRaises(BufferError, iadd, a)
-        self.assertEqual(a, orig)
-
-        def imul(x):
-            x *= 3
-        self.assertRaises(BufferError, imul, a)
-        self.assertEqual(a, orig)
-
-        def delitem():
-            del a[1]
-        self.assertRaises(BufferError, delitem)
-        self.assertEqual(a, orig)
-
-        # deleting a non-contiguous slice
-        def delslice():
-            del a[1:-1:2]
-        self.assertRaises(BufferError, delslice)
-        self.assertEqual(a, orig)
-
-        # Show that releasing v releases the array for size change
-        v.release()
-        a.pop()
 
 
 class StringTest(BaseTest):
@@ -1220,10 +1145,6 @@ tests.append(DoubleTest)
 
 def test_main(verbose=None):
     import sys
-
-    if test_support.is_jython:
-        # CPython specific; returns a memory address
-        del BaseTest.test_buffer_info
 
     test_support.run_unittest(*tests)
 

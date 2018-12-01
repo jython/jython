@@ -182,44 +182,31 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     protected void init(PyObject arg) {
 
         if (arg == null) {
-            /*
-             * bytearray() Construct a zero-length bytearray.
-             */
+            // bytearray() Construct a zero-length bytearray.
             setStorage(emptyStorage);
 
-        } else if (arg instanceof PyString) {
+        } else if (arg instanceof PyString) { // or PyUnicode
             /*
              * bytearray(string) Construct from a text string by default encoding and error policy.
              * Cases where encoding and error policy are specified explicitly are dealt with
              * elsewhere.
              */
-            init((PyString)arg, (String)null, (String)null); // Casts select right init()
+            init((PyString) arg, (String) null, (String) null); // Casts select right init()
 
         } else if (arg.isIndex()) {
-            /*
-             * bytearray(int) Construct a zero-initialised bytearray of the given length.
-             */
+            // bytearray(int) Construct a zero-initialised bytearray of the given length.
             init(arg.asIndex(Py.OverflowError)); // overflow if too big to be Java int
 
         } else if (arg instanceof BaseBytes) {
-            /*
-             * bytearray copy of bytearray (or bytes) -- do efficiently
-             */
-            init((BaseBytes)arg);
+            // bytearray copy of bytearray (or bytes) -- do efficiently
+            init((BaseBytes) arg);
 
-        } else if (arg instanceof BufferProtocol) {
-            /*
-             * bytearray copy of object supporting Jython implementation of PEP 3118
-             */
-            init((BufferProtocol)arg);
+        } else if (initFromBuffer(arg)) {
+            // arg supports Jython implementation of PEP 3118. (We're done.)
 
         } else {
-            /*
-             * The remaining alternative is an iterable returning (hopefully) right-sized ints. If
-             * it isn't one, we get an exception about not being iterable, or about the values.
-             */
+            // The remaining alternative is an iterable returning (we hope) right-sized ints.
             init(arg.asIterable());
-
         }
     }
 
@@ -342,13 +329,30 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param value an object bearing the Buffer API and consistent with the slice assignment
      */
-    protected void init(BufferProtocol value) throws PyException {
+    protected void init(BufferProtocol value) throws PyException, ClassCastException {
         // Get the buffer view
-        try (PyBuffer view = value.getBuffer(PyBUF.FULL_RO)) {
+        try (PyBuffer view = value.getBuffer(PyBUF.SIMPLE)) {
             // Create storage for the bytes and have the view drop them in
             newStorage(view.getLen());
             view.copyTo(storage, offset);
         }
+    }
+
+    /**
+     * Helper for <code>__new__</code> and <code>__init__</code> from objects that <b>might</b>
+     * support the Jython Buffer API.
+     *
+     * @param value an object possibly bearing the Buffer API
+     * @return {@code true} iff {@code value} allows the {@code getBuffer}
+     */
+    private boolean initFromBuffer(PyObject value) throws PyException {
+        if (value instanceof BufferProtocol) {
+            try {
+                init((BufferProtocol) value);
+                return true;
+            } catch (ClassCastException e) { /* fall through to false */ }
+        }
+        return false;
     }
 
     /**
