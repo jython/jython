@@ -16,8 +16,8 @@ class ByteArraySubclassTest(unittest.TestCase):
         self.assertEqual(len(s), 6)
 
 
-class SimpleOperationsTest(unittest.TestCase):
-    # Things the CPython library did not test throughly enough
+class BytesOperationsTest(unittest.TestCase):
+    # Tests additional to the CPython library, on bytes/str
 
     def test_irepeat(self) :
 
@@ -178,10 +178,31 @@ class SimpleOperationsTest(unittest.TestCase):
             self.assertEqual(1, len(s.rsplit()), "rsplit made in " + repr(s))
 
 
+class BufferOperationsTest(unittest.TestCase):
+    # Tests additional to the CPython library, on buffer
+
+    def test_repr(self):
+        # Exact form of buffer.__repr__
+        text = u"Le dîner à Étretat".encode('latin-1')
+        buf = buffer(text)
+        expected = r"<read-only buffer for 0x[0-9a-fA-F]+, size -1, offset 0 at 0x[0-9a-fA-F]+>"
+        self.assertRegexpMatches(repr(buf), expected)
+        self.assertRegexpMatches(buf.__repr__(), expected)
+
+    def test_str(self):
+        # Exact form of buffer.__str__
+        text = u"Le dîner à Étretat".encode('latin-1')
+        buf = buffer(text)
+        expected = text
+        self.assertEqual(str(buf), expected)
+        self.assertEqual(buf.__str__(), expected)
+
+
 def test_main():
     test.test_support.run_unittest(
             ByteArraySubclassTest,
-            SimpleOperationsTest,
+            BytesOperationsTest,
+            BufferOperationsTest,
         )
 
 

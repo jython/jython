@@ -216,15 +216,21 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Equivalent to the standard Python __repr__ method. This method should not typically need to
-     * be overrriden. The easiest way to configure the string representation of a
-     * <code>PyObject</code> is to override the standard Java <code>toString</code> method.
+     * Equivalent to the standard Python <code>__repr__</code> method. Each sub-class of
+     * <code>PyObject</code> is likely to re-define this method to provide for its own reproduction.
      **/
     /*
-     * counter-intuitively exposing this as __str__, otherwise stack overflow occurs during
-     * regression testing.
+     * The effect of exposing __repr__ as __str__ is that a Python call to o.__str__() will land
+     * here. (A Java call to o.__str__() lands here too because __str__ is defined to call
+     * __repr__.) This will continue to be true in any sub-class that does not expose a __str__ of
+     * its own. (Such a class should override Java __str__ to call the method exposed as Python
+     * __str__.) Note that we expose a non-final method, therefore in a class that (Java-)overrides
+     * __repr__, Python (and Java) calls like o.__str__() will land on the overridden __repr__.
+     *
+     * This design, though long-standing, has caused confusion to the implementors of types, and
+     * seems to make *Derived.java classes more complicated. We should seek a more transparent
+     * design.
      */
-    // XXX: more detail for this comment is needed.
     @ExposedMethod(names = "__str__", doc = BuiltinDocs.object___str___doc)
     public PyString __repr__() {
         return new PyString(toString());
@@ -254,9 +260,12 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Equivalent to the standard Python __str__ method. This method should not typically need to be
-     * overridden. The easiest way to configure the string representation of a <code>PyObject</code>
-     * is to override the standard Java <code>toString</code> method.
+     * Equivalent to the standard Python __str__ method. The default implementation (in
+     * <code>PyObject</code>) calls {@link #__repr__()}, making it unnecessary to override
+     * <code>__str__</code> in sub-classes of <code>PyObject</code> where both forms are the same. A
+     * common choice is to provide the same implementation to <code>__str__</code> and
+     * <code>toString</code>, for consistency in the printed form of objects between Python and
+     * Java.
      **/
     public PyString __str__() {
         return __repr__();
@@ -533,8 +542,8 @@ public class PyObject implements Serializable {
             }
             for (String keyword : keywords) {
                 if (kwargs.__finditem__(keyword) != null) {
-                    throw Py.TypeError(name + "got multiple values for keyword argument '"
-                            + keyword + "'");
+                    throw Py.TypeError(
+                            name + "got multiple values for keyword argument '" + keyword + "'");
                 }
             }
             argslen += kwargs.__len__();

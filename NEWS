@@ -1,10 +1,13 @@
 Jython NEWS
 
-For more details, please see https://hg.python.org/jython
+For more details of issue [ n ], please see https://hg.python.org/jython, or for tags [ GH-n ] see
+https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
-    - [ PR111 ] Proper processing of gzip trailer without resubmission
+    - [ 2719 ] Divergence of __str__ and __repr__ from CPython
+    - [ 2714 ] Locale and java version failures in test_os_jy
+    - [ GH-111 ] Proper processing of gzip trailer without resubmission
     - [ 2231 ] __doc__ of PyString objects is always "The most base type"
     - [ 2230 ] Jython evaluation blocks under heavy load with high multi-core systems
     - [ 2506 ] ensurepip is reporting an error
@@ -45,6 +48,9 @@ Development tip
       change is for consistency with CPython and with our handling of other environment variables.
       A pure Java application that creates its own interpreter may use the system or registry
       key "python.path" to add to sys.path, as documented.
+    - We no longer recommend overriding toString in PyObject sub-classes as a way of defining
+      string forms. Override __repr__, and if necessary __str__, as is usual in Python. We
+      recommend toString should return the same as __str__ (or __unicode__).
 
 Jython 2.7.2a1
   Bugs fixed
@@ -144,7 +150,7 @@ Jython 2.7.1rc1
     - [ 2533 ] Opcode.java is outdated -> breaks PyBytecode.interpret
     - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
     - [ 2446 ] Support SNI for SSL/TLS client sockets
-    - [ PR50 ] Calling Java vararg methods with no arguments fails
+    - [ GH-50 ] Calling Java vararg methods with no arguments fails
     - [ 2455 ] Java classes in packages with __init__.py not found
     - [ 2481 ] Update urllib2.py from 2.7.11
     - [ 2514 ] Jython Class.__subclasses__() does not match Python output (not in load order)

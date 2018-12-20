@@ -41,7 +41,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * action performed obtains a new one and releases it. (Major difference from
      * <code>memoryview</code>.) Note that when <code>size=-1</code> is given, the buffer reflects
      * the changing size of the underlying object.
-     * 
+     *
      * @param object the object on which this is to be a buffer.
      * @param offset into the array exposed by the object (0 for start).
      * @param size of the slice or -1 for all of the object.
@@ -72,7 +72,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     /**
      * Every action on the <code>buffer</code> must obtain a new {@link PyBuffer} reflecting (this
      * buffer's slice of) the contents of the backing object.
-     * 
+     *
      * @return a <code>PyBuffer</code> onto the specified slice.
      */
     private PyBuffer getBuffer() {
@@ -120,7 +120,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * except in the case of a {@link PyUnicode}, which will be converted to a {@link PyString}
      * according to Py2k semantics, equivalent to a UTF16BE encoding to bytes (for Py2k
      * compatibility).
-     * 
+     *
      * @param obj the object to access.
      * @return <code>PyObject</code> supporting {@link BufferProtocol}, if not <code>null</code>.
      */
@@ -186,25 +186,25 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
 
     @Override
     public PyString __repr__() {
-        String fmt = "<read-only buffer for %s, size %d, offset %d at 0x%s>";
-        String ret = String.format(fmt, Py.idstr((PyObject)object), size, offset, Py.idstr(this));
+        return buffer___repr__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.buffer___repr___doc)
+    final PyString buffer___repr__() {
+        String fmt = "<read-only buffer for %s, size %d, offset %d at %s>";
+        String ret = String.format(fmt, Py.idstr((PyObject) object), size, offset, Py.idstr(this));
         return new PyString(ret);
     }
 
     @Override
     public PyString __str__() {
-        PyBuffer buf = getBuffer();
-        try {
-            if (buf instanceof BaseBuffer) {
-                // In practice, it always is
-                return new PyString(buf.toString());
-            } else {
-                // But just in case ...
-                String s = StringUtil.fromBytes(buf);
-                return new PyString(s);
-            }
-        } finally {
-            buf.release();
+        return buffer___str__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.buffer___str___doc)
+    final PyString buffer___str__() {
+        try (PyBuffer buf = getBuffer()) {
+            return new PyString(buf.toString());
         }
     }
 
@@ -292,7 +292,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * conventions, left-to-right (low to high index). Zero bytes are significant, even at the end
      * of the array: <code>[65,66,67]&lt;"ABC\u0000"</code>, for example and <code>[]</code> is less
      * than every non-empty b, while <code>[]==""</code>.
-     * 
+     *
      * @param a left-hand wrapped array in the comparison
      * @param b right-hand wrapped object in the comparison
      * @return 1, 0 or -1 as a>b, a==b, or a&lt;b respectively
@@ -333,7 +333,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     /**
      * Comparison function between this <code>buffer</code> and any other object. The inequality
      * comparison operators are based on this.
-     * 
+     *
      * @param b
      * @return 1, 0 or -1 as this>b, this==b, or this&lt;b respectively, or -2 if the comparison is
      *         not implemented
@@ -377,7 +377,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * Fail-fast comparison function between byte array types and any other object, for when the
      * test is only for equality. The inequality comparison operators <code>__eq__</code> and
      * <code>__ne__</code> are based on this.
-     * 
+     *
      * @param b
      * @return 0 if this==b, or +1 or -1 if this!=b, or -2 if the comparison is not implemented
      */
@@ -487,7 +487,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * Gets the indexed element of the <code>buffer</code> as a one byte string. This is an
      * extension point called by PySequence in its implementation of {@link #__getitem__}. It is
      * guaranteed by PySequence that the index is within the bounds of the <code>buffer</code>.
-     * 
+     *
      * @param index index of the element to get.
      * @return one-character string formed from the byte at the index
      */
@@ -505,7 +505,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
 
     /**
      * Returns a slice of elements from this sequence as a PyString.
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
@@ -530,7 +530,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
     /**
      * <code>buffer*int</code> represents repetition in Python, and returns a <code>str</code> (
      * <code>bytes</code>) object.
-     * 
+     *
      * @param count the number of times to repeat this.
      * @return a PyString repeating this buffer (as a <code>str</code>) that many times
      */
@@ -553,7 +553,7 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * {@link #__setitem__} It is guaranteed by PySequence that the index is within the bounds of
      * the <code>buffer</code>. Any other clients calling <tt>pyset(int, PyObject)</tt> must make
      * the same guarantee.
-     * 
+     *
      * @param index index of the element to set.
      * @param value to set this element to, regarded as a buffer of length one unit.
      * @throws PyException(AttributeError) if value cannot be converted to an integer
@@ -585,13 +585,13 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * Sets the given range of elements according to Python slice assignment semantics. If the step
      * size is one, it is a simple slice and the operation is equivalent to replacing that slice,
      * with the value, accessing the value via the buffer protocol.
-     * 
+     *
      * <pre>
      * a = bytearray(b'abcdefghijklmnopqrst')
      * m = buffer(a)
      * m[2:7] = "ABCDE"
      * </pre>
-     * 
+     *
      * Results in <code>a=bytearray(b'abABCDEhijklmnopqrst')</code>.
      * <p>
      * If the step size is one, but stop-start does not match the length of the right-hand-side a
@@ -600,14 +600,14 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
      * If the step size is not one, and start!=stop, the slice defines a certain number of elements
      * to be replaced. This function is not available in Python 2.7 (but it is in Python 3.3).
      * <p>
-     * 
+     *
      * <pre>
      * a = bytearray(b'abcdefghijklmnopqrst')
      * a[2:12:2] = iter( [65, 66, 67, long(68), "E"] )
      * </pre>
-     * 
+     *
      * Results in <code>a=bytearray(b'abAdBfChDjElmnopqrst')</code> in Python 3.3.
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.

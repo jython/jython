@@ -273,12 +273,14 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
         return __dict__;
     }
 
+    @Override
     @ExposedGet(name = "__dict__")
     public PyObject getDict() {
         ensureDict();
         return __dict__;
     }
 
+    @Override
     @ExposedSet(name = "__dict__")
     public void setDict(PyObject value) {
         if (!(value instanceof AbstractDict)) {
@@ -287,6 +289,7 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
         __dict__ = value;
     }
 
+    @Override
     @ExposedDelete(name = "__dict__")
     public void delDict() {
         throw Py.TypeError("function's dictionary may not be deleted");
@@ -483,6 +486,16 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
     }
 
     @Override
+    public PyString __repr__() {
+        return function___repr__();
+    }
+
+    @ExposedMethod(doc = BuiltinDocs.buffer___repr___doc)
+    final PyString function___repr__() {
+        return Py.newString(toString());
+    }
+
+    @Override
     public String toString() {
         return String.format("<function %s at %s>", __name__, Py.idstr(this));
     }
@@ -525,6 +538,7 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
         return Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, this);
     }
 
+    @Override
     public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
         // Handle invocation when invoked through Proxy (as coerced to single method interface)
         if (method.getDeclaringClass() == Object.class) {
@@ -583,7 +597,7 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
         if (retVal != 0) {
             return retVal;
         }
-        
+
 //      CPython also traverses the name, which is not stored
 //      as a PyObject in Jython:
 //      Py_VISIT(f->func_name);
