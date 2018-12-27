@@ -50,7 +50,7 @@ public class NewExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 2);
         mv.visitVarInsn(ALOAD, 3);
         mv.visitVarInsn(ALOAD, 4);
-        mv.visitMethodInsn(INVOKESTATIC, onType.getInternalName(), name, NEW_DESCRIPTOR);
+        mv.visitMethodInsn(INVOKESTATIC, onType.getInternalName(), name, NEW_DESCRIPTOR, false);
         endMethod(ARETURN);
     }
 

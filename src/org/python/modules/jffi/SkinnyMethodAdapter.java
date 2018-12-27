@@ -153,19 +153,19 @@ public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
     }
     
     public void invokestatic(String arg1, String arg2, String arg3) {
-        getMethodVisitor().visitMethodInsn(INVOKESTATIC, arg1, arg2, arg3);
+        getMethodVisitor().visitMethodInsn(INVOKESTATIC, arg1, arg2, arg3, false);
     }
     
     public void invokespecial(String arg1, String arg2, String arg3) {
-        getMethodVisitor().visitMethodInsn(INVOKESPECIAL, arg1, arg2, arg3);
+        getMethodVisitor().visitMethodInsn(INVOKESPECIAL, arg1, arg2, arg3, false);
     }
     
     public void invokevirtual(String arg1, String arg2, String arg3) {
-        getMethodVisitor().visitMethodInsn(INVOKEVIRTUAL, arg1, arg2, arg3);
+        getMethodVisitor().visitMethodInsn(INVOKEVIRTUAL, arg1, arg2, arg3, false);
     }
     
     public void invokeinterface(String arg1, String arg2, String arg3) {
-        getMethodVisitor().visitMethodInsn(INVOKEINTERFACE, arg1, arg2, arg3);
+        getMethodVisitor().visitMethodInsn(INVOKEINTERFACE, arg1, arg2, arg3, true);
     }
 
     public void aprintln() {
@@ -840,8 +840,13 @@ public class SkinnyMethodAdapter extends MethodVisitor implements Opcodes {
         getMethodVisitor().visitFieldInsn(arg0, arg1, arg2, arg3);
     }
 
+    @Deprecated
     public void visitMethodInsn(int arg0, String arg1, String arg2, String arg3) {
-        getMethodVisitor().visitMethodInsn(arg0, arg1, arg2, arg3);
+        getMethodVisitor().visitMethodInsn(arg0, arg1, arg2, arg3, arg0 == Opcodes.INVOKEINTERFACE);
+    }
+
+    public void visitMethodInsn(int arg0, String arg1, String arg2, String arg3, boolean arg4) {
+        getMethodVisitor().visitMethodInsn(arg0, arg1, arg2, arg3, arg4);
     }
 
     public void visitJumpInsn(int arg0, Label arg1) {
