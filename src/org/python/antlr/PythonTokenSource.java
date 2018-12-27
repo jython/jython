@@ -135,8 +135,10 @@ public class PythonTokenSource implements TokenSource {
         // if something in queue, just remove and return it
         if (tokens.size() > 0) {
             Token t = tokens.firstElement();
-            tokens.removeElementAt(0);
-            //System.out.println(filename + t);
+            if (t.getType() != Token.EOF) { // EOF stops further insertImaginaryIndentDedentTokens
+                tokens.removeElementAt(0);
+            }
+            // System.out.println(filename + t);
             return t;
         }
 
@@ -165,7 +167,6 @@ public class PythonTokenSource implements TokenSource {
 
     protected void insertImaginaryIndentDedentTokens() {
         Token t = stream.LT(1);
-        stream.consume();
 
         if (t.getType() == Token.EOF) {
             Token prev = stream.LT(-1);
@@ -187,13 +188,12 @@ public class PythonTokenSource implements TokenSource {
         } else if (t.getType() == PythonLexer.NEWLINE) {
             // save NEWLINE in the queue
             //System.out.println("found newline: "+t+" stack is "+stackString());
-            enqueueHiddens(t);
-            tokens.addElement(t);
+            enqueue(t);
             Token newline = t;
+            stream.consume();
 
             // grab first token of next line
             t = stream.LT(1);
-            stream.consume();
 
             List<Token> commentedNewlines = enqueueHiddens(t);
 
@@ -204,13 +204,15 @@ public class PythonTokenSource implements TokenSource {
                 cpos = -1; // pretend EOF always happens at left edge
             }
             else if (t.getType() == PythonLexer.LEADING_WS) {
+                stream.consume();
                 Token next = stream.LT(1);
                 if (next != null && next.getType() == Token.EOF) {
-                    stream.consume();
                     return;
                 } else {
                     cpos = t.getText().length();
                 }
+            } else {
+                stream.consume();
             }
 
             //System.out.println("next token is: "+t);
@@ -241,9 +243,10 @@ public class PythonTokenSource implements TokenSource {
 
         } else {
             enqueue(t);
+            stream.consume();
         }
     }
-    
+
     private void enqueue(Token t) {
         enqueueHiddens(t);
         tokens.addElement(t);
@@ -276,7 +279,9 @@ public class PythonTokenSource implements TokenSource {
                 }
             }
         }
-        List<Token> hiddenTokens = stream.getTokens(lastTokenAddedIndex + 1,t.getTokenIndex() - 1);
+
+        List<? extends Token> hiddenTokens =
+                stream.getTokens(lastTokenAddedIndex + 1, t.getTokenIndex() - 1);
         if (hiddenTokens != null) {
             tokens.addAll(hiddenTokens);
         }

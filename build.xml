@@ -144,9 +144,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${oracle.jar}" />
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.42-bin.jar" />
             <pathelement path="${extlibs.dir}/postgresql-42.1.1.jre7.jar" />
-            <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
-            <pathelement path="${extlibs.dir}/antlr-3.1.3.jar" />
-            <pathelement path="${extlibs.dir}/stringtemplate-3.2.1.jar" />
+            <!-- pin to Antlr 3 until we upgrade parsing -->
+            <pathelement path="${extlibs.dir}/antlr-complete-3.5.2.jar" />
             <pathelement path="${extlibs.dir}/commons-compress-1.14.jar"/>
             <pathelement path="${extlibs.dir}/asm-7.0.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-7.0.jar" />
@@ -547,8 +546,8 @@ The readme text for the next release will be like:
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-1.4.jar"/>
         <jarjar destfile="${dist.dir}/${jython.deploy.jar}">
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
-            <!-- pin to Antlr 3.1.3 until we upgrade parsing -->
-            <zipfileset src="extlibs/antlr-runtime-3.1.3.jar"/>
+            <!-- pin to Antlr 3 until we upgrade parsing -->
+            <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
             <zipfileset src="extlibs/asm-7.0.jar"/>
             <zipfileset src="extlibs/asm-commons-7.0.jar"/>
