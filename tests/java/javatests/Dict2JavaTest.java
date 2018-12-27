@@ -64,7 +64,7 @@ public class Dict2JavaTest {
 
     public boolean test_put_hig() {
         map.put("h", null);
-        map.put("i", new Integer(3));
+        map.put("i", Integer.valueOf(3));
         Object val = map.put("g", "3");
         return val.equals("2");
     }
@@ -78,7 +78,7 @@ public class Dict2JavaTest {
 
         // Test a number
         hmap = new HashMap<String, Object>();
-        hmap.put("i", new Integer(3));
+        hmap.put("i", Integer.valueOf(3));
         entry = hmap.entrySet().iterator().next();
         if (!map.entrySet().contains(entry)) return false;
 
@@ -95,7 +95,7 @@ public class Dict2JavaTest {
     public boolean test_entry_set_nulls() {
         Set<Map.Entry<Object, Object>> set = map.entrySet();
         return set.contains(null) == false  && set.remove(null) == false &&
-          set.contains(new Boolean(true)) == false && set.remove(new String("")) == false;
+          set.contains(Boolean.TRUE) == false && set.remove(new String("")) == false;
     }
   
     

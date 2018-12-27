@@ -32,8 +32,8 @@ public class LineNumberTable {
     }
 
     public void addLine(int startpc, int lineno) {
-        lines.addElement(new Short((short) startpc));
-        lines.addElement(new Short((short) lineno));
+        lines.addElement(Short.valueOf((short) startpc));
+        lines.addElement(Short.valueOf((short) lineno));
     }
 
     public int length() {

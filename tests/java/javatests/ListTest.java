@@ -210,11 +210,11 @@ public abstract class ListTest {
             a.add(i, b.get(i));
         }
         try {
-            a.add(a.size() + 1, new Integer(a.size() + 1));
+            a.add(a.size() + 1, Integer.valueOf(a.size() + 1));
             TestSupport.fail("expected IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException e) {}
         try {
-            a.add(-1, new Integer(-1));
+            a.add(-1, Integer.valueOf(-1));
             TestSupport.fail("expected IndexOutOfBoundsException");
         } catch (IndexOutOfBoundsException e) {}
     }

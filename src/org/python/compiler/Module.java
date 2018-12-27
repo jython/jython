@@ -97,7 +97,7 @@ class PyFloatConstant extends Constant implements ClassConstants, Opcodes {
 
     @Override
     void get(Code c) throws IOException {
-        c.ldc(new Double(value));
+        c.ldc(Double.valueOf(value));
         c.invokestatic(p(Py.class), "newFloat", sig(PyFloat.class, Double.TYPE));
     }
 
@@ -132,7 +132,7 @@ class PyComplexConstant extends Constant implements ClassConstants, Opcodes {
 
     @Override
     void get(Code c) throws IOException {
-        c.ldc(new Double(value));
+        c.ldc(Double.valueOf(value));
         c.invokestatic(p(Py.class), "newImaginary", sig(PyComplex.class, Double.TYPE));
     }
 

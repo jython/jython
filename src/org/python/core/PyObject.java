@@ -188,7 +188,7 @@ public class PyObject implements Serializable {
         ThreadContext.initializingProxy.set(new Object[] {this});
         try {
             try {
-                proxy = (PyProxy) c.newInstance();
+                proxy = (PyProxy) c.getDeclaredConstructor().newInstance();
             } catch (java.lang.InstantiationException e) {
                 Class<?> sup = c.getSuperclass();
                 String msg = "Default constructor failed for Java superclass";

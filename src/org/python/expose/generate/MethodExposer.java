@@ -249,26 +249,26 @@ public abstract class MethodExposer extends Exposer {
             // For primitive types, parse using the Java wrapper for that type and push onto the
             // stack as a constant. If the default is malformed, a NumberFormatException will be
             // raised.
-            mv.visitLdcInsn(new Long(def));
+            mv.visitLdcInsn(Long.valueOf(def));
         } else if(arg.equals(INT)) {
-            mv.visitLdcInsn(new Integer(def));
+            mv.visitLdcInsn(Integer.valueOf(def));
         } else if(arg.equals(BYTE)) {
             // byte, char, boolean and short go as int constants onto the stack, so convert them
             // to ints to get the right type
-            mv.visitLdcInsn(new Byte(def).intValue());
+            mv.visitLdcInsn(Byte.valueOf(def).intValue());
         } else if(arg.equals(SHORT)) {
-            mv.visitLdcInsn(new Short(def).intValue());
+            mv.visitLdcInsn(Short.valueOf(def).intValue());
         } else if(arg.equals(CHAR)) {
             if(def.length() != 1) {
                 throwInvalid("A default for a char argument must be one character in length");
             }
-            mv.visitLdcInsn((int)new Character(def.charAt(0)).charValue());
+            mv.visitLdcInsn(def.charAt(0));
         } else if(arg.equals(BOOLEAN)) {
             mv.visitLdcInsn(Boolean.valueOf(def) ? 1 : 0);
         } else if(arg.equals(Type.FLOAT_TYPE)) {
-            mv.visitLdcInsn(new Float(def));
+            mv.visitLdcInsn(Float.valueOf(def));
         } else if(arg.equals(Type.DOUBLE_TYPE)) {
-            mv.visitLdcInsn(new Double(def));
+            mv.visitLdcInsn(Double.valueOf(def));
         }
     }
 

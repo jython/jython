@@ -1161,8 +1161,8 @@ public class PySystemState extends PyObject
             return false;
         }
         try {
-            ((JythonInitializer) initializer.newInstance()).initialize(pre, post, argv,
-                    sysClassLoader, adapter);
+            ((JythonInitializer) initializer.getDeclaredConstructor().newInstance()).initialize(pre,
+                    post, argv, sysClassLoader, adapter);
         } catch (Exception e) {
             Py.writeWarning("initializer",
                     "Failed initializing with class '" + className + "', continuing");

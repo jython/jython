@@ -105,7 +105,7 @@ import static org.python.util.CodegenUtils.*;
 
 public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
-    private static final Object Exit = new Integer(1);
+    private static final Object Exit = Integer.valueOf(1);
     private static final Object NoExit = null;
     private Module module;
     private Code code;

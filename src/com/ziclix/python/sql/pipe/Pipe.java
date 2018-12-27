@@ -87,8 +87,8 @@ public class Pipe {
         // the purpose of the assert, but there's no need to create the buffer if I don't need it and I still
         // want to throw the AssertionError if required
         if ((sourceRunner.getCount() - sinkRunner.getCount()) != 0) {
-            Integer[] counts = {new Integer(sourceRunner.getCount()),
-                                new Integer(sinkRunner.getCount())};
+            Integer[] counts = {Integer.valueOf(sourceRunner.getCount()),
+                                Integer.valueOf(sinkRunner.getCount())};
             String msg = zxJDBC.getString("inconsistentRowCount", counts);
 
             Py.assert_(Py.Zero, Py.newString(msg));

@@ -301,9 +301,9 @@ public class PyFloat extends PyObject {
     public Object __tojava__(Class<?> c) {
         if (c == Double.TYPE || c == Number.class || c == Double.class || c == Object.class
                 || c == Serializable.class) {
-            return new Double(getValue());
+            return Double.valueOf(getValue());
         } else if (c == Float.TYPE || c == Float.class) {
-            return new Float(getValue());
+            return Float.valueOf((float) getValue());
         }
         return super.__tojava__(c);
     }

@@ -1,12 +1,5 @@
 package org.python.core;
 
-/**
- * Proxy Java objects implementing java.util.List with Python methods
- * corresponding to the standard list type
- */
-
-import org.python.util.Generic;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +9,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.python.util.Generic;
 
+/**
+ * Proxy Java objects implementing java.util.List with Python methods corresponding to the standard
+ * list type
+ */
 class JavaProxyList {
 
     @Untraversable
@@ -35,10 +33,9 @@ class JavaProxyList {
 
         protected List newList() {
             try {
-                return (List) asList().getClass().newInstance();
-            } catch (IllegalAccessException e) {
-                throw Py.JavaError(e);
-            } catch (InstantiationException e) {
+                return (List) asList().getClass().getDeclaredConstructor().newInstance();
+            } catch (ReflectiveOperationException | SecurityException
+                    | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
         }
@@ -131,8 +128,9 @@ class JavaProxyList {
             int n = PySequence.sliceLength(start, stop, step);
             List newList;
             try {
-                newList = list.getClass().newInstance();
-            } catch (Exception e) {
+                newList = list.getClass().getDeclaredConstructor().newInstance();
+            } catch (ReflectiveOperationException | SecurityException
+                    | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
             int j = 0;
@@ -556,10 +554,9 @@ class JavaProxyList {
             List jList = asList();
             List jClone;
             try {
-                jClone = (List) jList.getClass().newInstance();
-            } catch (IllegalAccessException e) {
-                throw Py.JavaError(e);
-            } catch (InstantiationException e) {
+                jClone = (List) jList.getClass().getDeclaredConstructor().newInstance();
+            } catch (ReflectiveOperationException | SecurityException
+                    | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
             for (Object entry : jList) {

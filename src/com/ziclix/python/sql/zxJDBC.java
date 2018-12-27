@@ -223,7 +223,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             String className = props.getProperty(name).trim();
 
             try {
-                connector = (PyObject) Class.forName(className).newInstance();
+                connector =
+                        (PyObject) Class.forName(className).getDeclaredConstructor().newInstance();
                 dict.__setitem__(name, connector);
                 Py.writeComment("zxJDBC", "loaded connector [" + className + "] as [" + name
                                 + "]");

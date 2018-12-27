@@ -90,7 +90,7 @@ public class TypeExposer extends Exposer {
         }
         Class<?> descriptor = load(l);
         try {
-            return (TypeBuilder)descriptor.newInstance();
+            return (TypeBuilder)descriptor.getDeclaredConstructor().newInstance();
         } catch(Exception e) {
             // If we're unable to create the generated class, the process is
             // definitely ill, but that shouldn't be the case most of the time

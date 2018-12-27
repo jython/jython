@@ -449,20 +449,12 @@ public class imp {
         if (PyRunnable.class.isAssignableFrom(c)) {
             try {
                 if (ContainsPyBytecode.class.isAssignableFrom(c)) {
-                    try {
-                        BytecodeLoader.fixPyBytecode((Class<? extends ContainsPyBytecode>) c);
-                    } catch (NoSuchFieldException e) {
-                        throw Py.JavaError(e);
-                    } catch (java.io.IOException e) {
-                        throw Py.JavaError(e);
-                    } catch (ClassNotFoundException e) {
-                        throw Py.JavaError(e);
-                    }
+                    BytecodeLoader.fixPyBytecode((Class<? extends ContainsPyBytecode>) c);
                 }
-                return createFromCode(name, ((PyRunnable)c.newInstance()).getMain());
-            } catch (InstantiationException e) {
-                throw Py.JavaError(e);
-            } catch (IllegalAccessException e) {
+                return createFromCode(name,
+                        ((PyRunnable) c.getDeclaredConstructor().newInstance()).getMain());
+            } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException
+                    | IOException e) {
                 throw Py.JavaError(e);
             }
         }

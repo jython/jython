@@ -313,7 +313,7 @@ public class Jython22DataHandler extends DataHandler {
                 break;
 
             default :
-                throw createUnsupportedTypeSQLException(new Integer(type), col);
+                throw createUnsupportedTypeSQLException(Integer.valueOf(type), col);
         }
 
         return (set.wasNull() || (obj == null)) ? Py.None : obj;
@@ -401,7 +401,7 @@ public class Jython22DataHandler extends DataHandler {
                 break;
 
             default :
-                throw createUnsupportedTypeSQLException(new Integer(type), col);
+                throw createUnsupportedTypeSQLException(Integer.valueOf(type), col);
         }
 
         return (stmt.wasNull() || (obj == null)) ? Py.None : obj;

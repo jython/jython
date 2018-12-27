@@ -243,11 +243,11 @@ public class ClassFile
         AnnotationVisitor av = cw.visitAnnotation("Lorg/python/compiler/APIVersion;", true);
         // XXX: should imp.java really house this value or should imp.java point into
         // org.python.compiler?
-        av.visit("value", new Integer(imp.getAPIVersion()));
+        av.visit("value", Integer.valueOf(imp.getAPIVersion()));
         av.visitEnd();
 
         av = cw.visitAnnotation("Lorg/python/compiler/MTime;", true);
-        av.visit("value", new Long(mtime));
+        av.visit("value", Long.valueOf(mtime));
         av.visitEnd();
 
         if (sfilenameShort != null) {

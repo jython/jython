@@ -35,11 +35,11 @@ public class ExposedTypeProcessorTest extends InterpTestCase {
         ice.getTypeExposer().load(loader);
         Class doctoredSimple = loader.loadClassFromBytes("org.python.expose.generate.SimpleExposed",
                                                          ice.getBytecode());
-        PyObject simp = (PyObject)doctoredSimple.newInstance();
+        PyObject simp = (PyObject)doctoredSimple.getDeclaredConstructor().newInstance();
         PyBuiltinCallable func = MethodExposerTest.instantiate(simple_method, "invisible");
         PyBuiltinCallable bound = func.bind(simp);
         bound.__call__();
-        PyDataDescr desc = (PyDataDescr)tostringDesc.newInstance();
+        PyDataDescr desc = (PyDataDescr)tostringDesc.getDeclaredConstructor().newInstance();
         desc.setType(simp.getType());
         assertEquals(doctoredSimple.getField("toStringVal").get(simp),
                      desc.__get__(simp, PyType.fromClass(doctoredSimple)).toString());

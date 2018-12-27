@@ -398,10 +398,10 @@ class JavaProxyMap {
             Map<Object, Object> jmap = asMap();
             Map<Object, Object> jclone;
             try {
-                jclone = (Map<Object, Object>) jmap.getClass().newInstance();
-            } catch (IllegalAccessException e) {
-                throw Py.JavaError(e);
-            } catch (InstantiationException e) {
+                jclone = (Map<Object, Object>) jmap.getClass().getDeclaredConstructor()
+                        .newInstance();
+            } catch (ReflectiveOperationException | SecurityException
+                    | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
             for (Map.Entry<Object, Object> entry : jmap.entrySet()) {
@@ -514,14 +514,14 @@ class JavaProxyMap {
                  * always injected to java.util.Map, so we know the class object we get from
                  * asClass is subtype of java.util.Map
                  */
-                Map<Object, Object> theMap = (Map<Object, Object>) theClass.newInstance();
+                Map<Object, Object> theMap = (Map<Object, Object>) theClass
+                        .getDeclaredConstructor().newInstance();
                 for (PyObject key : keys.asIterable()) {
                     theMap.put(Py.tojava(key, Object.class), defobj);
                 }
                 return Py.java2py(theMap);
-            } catch (InstantiationException e) {
-                throw Py.JavaError(e);
-            } catch (IllegalAccessException e) {
+            } catch (ReflectiveOperationException | SecurityException
+                    | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
         }

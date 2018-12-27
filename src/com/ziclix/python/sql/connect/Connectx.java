@@ -58,7 +58,7 @@ public class Connectx extends PyObject {
 
         try {
             String klass = (String) parser.arg(0).__tojava__(String.class);
-            datasource = Class.forName(klass).newInstance();
+            datasource = Class.forName(klass).getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw zxJDBC.makeException(zxJDBC.DatabaseError, "unable to instantiate datasource");
         }
