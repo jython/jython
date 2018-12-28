@@ -189,15 +189,13 @@ public class PyObject implements Serializable {
         try {
             try {
                 proxy = (PyProxy) c.getDeclaredConstructor().newInstance();
-            } catch (java.lang.InstantiationException e) {
+            } catch (InstantiationException | NoSuchMethodException e) {
                 Class<?> sup = c.getSuperclass();
-                String msg = "Default constructor failed for Java superclass";
+                String msg = "Default constructor failed/missing for Java superclass";
                 if (sup != null) {
                     msg += " " + sup.getName();
                 }
                 throw Py.TypeError(msg);
-            } catch (NoSuchMethodError nsme) {
-                throw Py.TypeError("constructor requires arguments");
             } catch (Exception exc) {
                 throw Py.JavaError(exc);
             }
