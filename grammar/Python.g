@@ -1770,9 +1770,9 @@ atom
         }
        )
        RCURLY
-     | lb=BACKQUOTE testlist[expr_contextType.Load] rb=BACKQUOTE
+     | lb=BACKQUOTE testlist1[expr_contextType.Load] rb=BACKQUOTE
        {
-           etype = new Repr($lb, actions.castExpr($testlist.tree));
+           etype = new Repr($lb, actions.castExpr($testlist1.tree));
        }
      | name_or_print
        {
@@ -2206,6 +2206,26 @@ comp_if[List gens, List ifs]
       }
     ;
 
+// Variant of testlist used between BACKQUOTEs (the deprecated back-tick repr()) only
+//testlist1: test (',' test)*
+testlist1[expr_contextType ctype]
+@init {
+    expr etype = null;
+}
+@after {
+    if (etype != null) {
+        $testlist1.tree = etype;
+    }
+}
+    : t+=test[ctype]
+      (
+        COMMA t+=test[ctype]
+        {
+            etype = new Tuple($testlist1.start, actions.castExprs($t), ctype);
+        }
+      )*
+    ;
+
 //yield_expr: 'yield' [testlist]
 yield_expr
     returns [expr etype]
@@ -2400,16 +2420,14 @@ STRING
         }
     ;
 
-/** the two '"'? cause a warning -- is there a way to avoid that? */
 fragment
 TRIQUOTE
-    : '"'? '"'? (ESC|~('\\'|'"'))+
+    : ('"' '"'?)? (ESC|~('\\'|'"'))+
     ;
 
-/** the two '\''? cause a warning -- is there a way to avoid that? */
 fragment
 TRIAPOS
-    : '\''? '\''? (ESC|~('\\'|'\''))+
+    : ('\'' '\''?)? (ESC|~('\\'|'\''))+
     ;
 
 fragment

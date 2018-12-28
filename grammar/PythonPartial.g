@@ -187,7 +187,7 @@ single_input
 
 //eval_input: testlist NEWLINE* ENDMARKER
 eval_input
-    : LEADING_WS? (NEWLINE)* testlist? (NEWLINE)* EOF
+    : LEADING_WS? (NEWLINE)* (testlist (NEWLINE)*)? EOF
     ;
 
 //not in CPython's Grammar file
@@ -744,7 +744,7 @@ atom
        |
        )
        RCURLY
-     | BACKQUOTE testlist BACKQUOTE
+     | BACKQUOTE testlist1 BACKQUOTE
      | NAME
      | INT
      | LONGINT
@@ -905,6 +905,12 @@ comp_for
 //comp_if: 'if' old_test [comp_iter]
 comp_if
     : IF test comp_iter?
+    ;
+
+// Variant of testlist used between BACKQUOTEs (the deprecated back-tick repr()) only
+//testlist1: test (',' test)*
+testlist1
+    : test (COMMA test)*
     ;
 
 //yield_expr: 'yield' [testlist]
@@ -1106,13 +1112,13 @@ STRINGPART
 /** the two '"'? cause a warning -- is there a way to avoid that? */
 fragment
 TRIQUOTE
-    : '"'? '"'? (ESC|~('\\'|'"'))+
+    : ('"' '"'?)? (ESC|~('\\'|'"'))+
     ;
 
 /** the two '\''? cause a warning -- is there a way to avoid that? */
 fragment
 TRIAPOS
-    : '\''? '\''? (ESC|~('\\'|'\''))+
+    : ('\'' '\''?)? (ESC|~('\\'|'\''))+
     ;
 
 fragment
@@ -1133,7 +1139,7 @@ CONTINUED_LINE
          | nl=NEWLINE
            {
                extraNewlines = true;
-           }        
+           }
          |
          ) {
                if (input.LA(1) == -1) {
