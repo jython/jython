@@ -136,6 +136,7 @@ class PlatformTest(unittest.TestCase):
         self.assertTrue(any(res))
 
     @unittest.skipUnless(sys.platform.startswith('win'), "windows only test")
+    # One may enable this for Jython, but must disable the cache in os.uname() to pass.
     def test_uname_win32_ARCHITEW6432(self):
         # Issue 7860: make sure we get architecture from the correct variable
         # on 64 bit Windows: if PROCESSOR_ARCHITEW6432 exists we should be

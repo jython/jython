@@ -50,27 +50,24 @@ class Hider {
         }
         return false;
     }
+
+    /** Tags PosixModule methods as hidden on the specified OS or PosixImpl. */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @interface Hide {
+
+        /** Hide method on these OSes. */
+        OS[] value() default {};
+
+        /**
+         * @Hide(posixImpl = PosixImpl.JAVA) hides the method from Python when the POSIX
+         * library isn't native. The default NOT_APPLICABLE means the POSIX implementation
+         * doesn't matter.
+         */
+        PosixImpl posixImpl() default PosixImpl.NOT_APPLICABLE;
+    }
+
+    /** The type of underlying POSIX library implementation (native or not). */
+    enum PosixImpl {NOT_APPLICABLE, NATIVE, JAVA};
+
 }
-
-/**
- * Tags PosixModule methods as hidden on the specified OS or PosixImpl.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-@interface Hide {
-
-    /** Hide method on these OSes. */
-    OS[] value() default {};
-
-    /**
-     * @Hide(posixImpl = PosixImpl.JAVA) hides the method from Python when the POSIX
-     * library isn't native. The default NOT_APPLICABLE means the POSIX implementation
-     * doesn't matter.
-     */
-    PosixImpl posixImpl() default PosixImpl.NOT_APPLICABLE;
-}
-
-/**
- * The type of underlying POSIX library implementation (native or not).
- */
-enum PosixImpl {NOT_APPLICABLE, NATIVE, JAVA};

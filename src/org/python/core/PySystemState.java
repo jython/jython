@@ -996,7 +996,7 @@ public class PySystemState extends PyObject
 
         } else if (os != null && os.startsWith("Windows")) {
             // Go via the Windows code page built-in command "chcp".
-            String output = getCommandResult("cmd", "/c", "chcp");
+            String output = Py.getCommandResult("cmd", "/c", "chcp");
             /*
              * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
              * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
@@ -1009,7 +1009,7 @@ public class PySystemState extends PyObject
 
         } else {
             // Try a Unix-like "locale charmap".
-            String output = getCommandResult("locale", "charmap");
+            String output = Py.getCommandResult("locale", "charmap");
             // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
             if (output.length() > 0) {
                 return output;
@@ -1782,10 +1782,10 @@ public class PySystemState extends PyObject
             // "Microsoft Windows [版本 10.0.17134.472]"
             // We match the dots and digits within square brackets.
             Pattern p = Pattern.compile("\\[.* ([\\d.]+)\\]");
-            Matcher m = p.matcher(getCommandResult("cmd.exe", "/c", "ver"));
+            Matcher m = p.matcher(Py.getCommandResult("cmd.exe", "/c", "ver"));
             return m.find() ? m.group(1) : "";
         } else {
-            return getCommandResult("uname", "-v");
+            return Py.getCommandResult("uname", "-v");
         }
     }
 
@@ -1795,31 +1795,11 @@ public class PySystemState extends PyObject
      *
      * @param command as strings (as for <code>ProcessBuilder</code>)
      * @return the first line with content, or ""
+     * @deprecated Use {@link Py#getCommandResult(String...)} instead
      */
+    @Deprecated
     private static String getCommandResult(String... command) {
-        String result = "", line = null;
-        ProcessBuilder pb = new ProcessBuilder(command);
-        try {
-            Process p = pb.start();
-            java.io.BufferedReader br =
-                    new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()));
-            // We read to the end-of-stream in case the sub-process cannot end cleanly without.
-            while ((line = br.readLine()) != null) {
-                if (line.length() > 0 && result.length() == 0) {
-                    // This is the first line with content (maybe).
-                    result = line.trim();
-                }
-            }
-            br.close();
-            // Now we wait for the sub-process to terminate nicely.
-            if (p.waitFor() != 0) {
-                // Bad exit status: don't take the result.
-                result = "";
-            }
-        } catch (IOException | InterruptedException | SecurityException e) {
-            result = "";
-        }
-        return result;
+        return PrePy.getCommandResult(command);
     }
 
     /* Traverseproc implementation */

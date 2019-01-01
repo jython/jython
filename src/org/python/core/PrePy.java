@@ -264,4 +264,37 @@ public class PrePy {
         }
         return url;
     }
+
+    /**
+     * Run a command as a sub-process and return as the result the first line of output that
+     * consists of more than white space. It returns "" on any kind of error.
+     *
+     * @param command as strings (as for <code>ProcessBuilder</code>)
+     * @return the first line with content, or ""
+     */
+    public static String getCommandResult(String... command) {
+        String result = "", line = null;
+        ProcessBuilder pb = new ProcessBuilder(command);
+        try {
+            Process p = pb.start();
+            java.io.BufferedReader br =
+                    new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()));
+            // We read to the end-of-stream in case the sub-process cannot end cleanly without.
+            while ((line = br.readLine()) != null) {
+                if (line.length() > 0 && result.length() == 0) {
+                    // This is the first line with content (maybe).
+                    result = line.trim();
+                }
+            }
+            br.close();
+            // Now we wait for the sub-process to terminate nicely.
+            if (p.waitFor() != 0) {
+                // Bad exit status: don't take the result.
+                result = "";
+            }
+        } catch (IOException | InterruptedException | SecurityException e) {
+            result = "";
+        }
+        return result;
+    }
 }
