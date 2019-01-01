@@ -1772,30 +1772,26 @@ public class PySystemState extends PyObject
 
     /**
      * Attempt to find the OS version. The mechanism on Windows is to extract it from the result of
-     * <code>cmd.exe /C ver</code>, and otherwise (assumed Unix-like OS) to use
-     * <code>uname -v</code>.
+     * {@code cmd.exe /C ver}, and otherwise (assumed Unix-like OS) to use {@code uname -v</code>}.
      */
     public static String getSystemVersionString() {
         if (System.getProperty("os.name").startsWith("Windows")) {
-            String ver = getCommandResult("cmd.exe", "/c", "ver");
-            int start = ver.toLowerCase().indexOf("version ");
-            if (start != -1) {
-                start += 8;
-                int end = ver.length();
-                if (ver.endsWith("]")) {
-                    --end;
-                }
-                ver = ver.substring(start, end);
-            }
-            return ver;
+            // Windows ver command returns a string similar to:
+            // "Microsoft Windows [Version 10.0.10586]"
+            // "Microsoft Windows XP [Version 5.1.2600]"
+            // "Microsoft Windows [版本 10.0.17134.472]"
+            // We match the dots and digits within square brackets.
+            Pattern p = Pattern.compile("\\[.* ([\\d.]+)\\]");
+            Matcher m = p.matcher(getCommandResult("cmd.exe", "/c", "ver"));
+            return m.find() ? m.group(1) : "";
         } else {
             return getCommandResult("uname", "-v");
         }
     }
 
     /**
-     * Run a command as a sub-process and return as the result the first line of output that consist
-     * of more than white space. It returns "" on any kind of error.
+     * Run a command as a sub-process and return as the result the first line of output that
+     * consists of more than white space. It returns "" on any kind of error.
      *
      * @param command as strings (as for <code>ProcessBuilder</code>)
      * @return the first line with content, or ""

@@ -322,6 +322,18 @@ class UnicodeTestCase(unittest.TestCase):
                     "File %r (%r) should be testable for existence" %
                     (f, entry_path))
 
+    def test_uname(self):
+        # Test that os.uname returns a tuple of (arbitrary) strings.
+        # uname failed on on a Chinese localised system (see
+        # https://bugs.jython.org/issue2726). This test really needs to
+        # run in that environment or it passes too easily.
+        result = os.uname()
+        # (sysname, nodename, release, version, machine)
+        self.assertEqual(type(result), tuple)
+        self.assertEqual(len(result), 5)
+        for s in result: self.assertEqual(type(s), str)
+
+
 class LocaleTestCase(unittest.TestCase):
 
     def get_installed_locales(self, codes, msg=None):

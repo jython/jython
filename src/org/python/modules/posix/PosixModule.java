@@ -1167,11 +1167,11 @@ public class PosixModule implements ClassDictInit {
         }
 
         PyObject[] vals = {
-                Py.newString(sysname),
+                Py.fileSystemEncode(sysname),
                 Py.fileSystemEncode(uname_nodename),
-                Py.newString(sysrelease),
-                Py.newString(uname_sysver),
-                Py.newString(uname_machine)
+                Py.fileSystemEncode(sysrelease),
+                Py.fileSystemEncode(uname_sysver),
+                Py.fileSystemEncode(uname_machine)
         };
         uname_cache = new PyTuple(vals, false);
         return uname_cache;

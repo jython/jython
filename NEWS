@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2726 ] os.uname() throws IllegalArgumentException on Windows (Chinese localisation)
     - [ 2719 ] Divergence of __str__ and __repr__ from CPython
     - [ 2714 ] Locale and java version failures in test_os_jy
     - [ GH-111 ] Proper processing of gzip trailer without resubmission
