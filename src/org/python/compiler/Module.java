@@ -21,6 +21,7 @@ import java.util.List;
 import javax.xml.bind.DatatypeConverter;
 
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodTooLargeException;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.python.antlr.ParseException;
@@ -631,7 +632,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             for (i = 0; i < labels.length; i++) {
                 labels[i] = new Label();
             }
-    
+
             // Get index for function to call
             code.iload(1);
             code.tableswitch(0, labels.length - 1, def, labels);
@@ -840,7 +841,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             }
         }
     }
-    
+
     private static String serializePyBytecode(PyBytecode btcode) throws java.io.IOException {
         // For some reason we cannot do this using _marshal:
         /*
@@ -871,7 +872,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
     }
 
     private static final int maxLiteral = 65535;
-    
+
     /**
      * This method stores Python-Bytecode in String literals.
      * While Java supports rather long strings, constrained only by
@@ -930,15 +931,14 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             Module module = new Module(name, filename, linenumbers, mtime);
             _module_init(node, module, printResults, cflags);
             module.write(ostream);
-        } catch (RuntimeException re) {
-            if (re.getMessage() != null && re.getMessage().equals("Method code too large!")) {
+        } catch (MethodTooLargeException re) {
                 PyBytecode btcode = loadPyBytecode(filename, true);
                 int thresh = 22000;
                 // No idea, how to determine at this point if a method is oversized, so we just try
                 // a threshold regarding Python code-length, while JVM restriction is actually about
                 // Java bytecode length. Anyway; given that code-lengths are strongly related, this
                 // should work well enough.
-                
+
                 while (true) { // Always enjoy to write a line like this :)
                     try {
                         List<PyBytecode> largest_m_codes = new ArrayList<>();
@@ -993,12 +993,8 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                         _module_init(node, module, printResults, cflags);
                         module.write(ostream);
                         break;
-                    } catch (RuntimeException e) {
-                        if (re.getMessage() == null || !e.getMessage().equals("Method code too large!")) {
-                            throw e;
-                        } else {
-                            thresh -= 100;
-                        }
+                    } catch (MethodTooLargeException e) {
+                        thresh -= 100;
                     }
                     if (thresh == 10000) { /* This value should be well feasible by JVM-bytecode,
                                               so something else must be wrong. */
@@ -1007,9 +1003,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                                 "\nby PyBytecode-approach:\n"+filename);
                     }
                 }
-            } else {
-                throw re;
-            }
         }
     }
 
