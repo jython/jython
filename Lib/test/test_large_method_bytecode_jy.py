@@ -16,7 +16,6 @@ Note: As of this writing, a CPython 2.7 bytecode-file (.pyc)
 import unittest
 from test import test_support
 
-@unittest.skipIf(test_support.get_java_version() >= (9,), "Fails on Java 9+, see #2663")
 class large_method_tests(unittest.TestCase):
     '''Tests some oversized functions and methods.
     '''
@@ -53,7 +52,6 @@ class large_method_tests(unittest.TestCase):
         '''
         self.assertEqual(large_methods.small_function(), 'small 10')
 
-@unittest.skipIf(test_support.get_java_version() >= (9,), "Fails on Java 9+, issue #2663")
 class large_module_tests(unittest.TestCase):
     '''Tests a module with oversized main-code.
     So the whole module is represented as a single PyBytecode object.

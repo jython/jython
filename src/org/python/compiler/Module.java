@@ -858,151 +858,239 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
          bytes not directly suitable as String-values. cStringIO does not use Base64 or
          something, but rather supports only string-compatible data.
         */
-        // so we use Java-reflection...
+        // so we use Java-serialization...
 
         // serialize the object
         ByteArrayOutputStream bo = new ByteArrayOutputStream();
         ObjectOutputStream so = new ObjectOutputStream(bo);
         so.writeObject(btcode);
         so.flush();
-        String code_str = DatatypeConverter.printBase64Binary(bo.toByteArray());
+        // From Java 8 use: String code_str = Base64.getEncoder().encodeToString(bo.toByteArray());
+        String code_str = base64encodeToString(bo.toByteArray());
         so.close();
         bo.close();
         return code_str;
     }
 
+    /**
+     * Implement a simplified base64 encoding compatible with the decoding in BytecodeLoader. This
+     * encoder adds no '=' padding or line-breaks. equivalent to
+     * {@code binascii.b2a_base64(bytes).rstrip('=\n')}.
+     * 
+     * @param data to encode
+     * @return the string encoding the data
+     */
+    private static String base64encodeToString(byte[] data) {
+
+        final int N = data.length;
+        int tail = N % 3;
+
+        StringBuilder chars = new StringBuilder(((N / 3) + 1) * 4);
+
+        // Process bytes in blocks of three
+        int b = 0, quantum;
+        while (b <= N - 3) {
+            // Process [b:b+3]
+            quantum = ((data[b++] & 0xff) << 16) + ((data[b++] & 0xff) << 8) + (data[b++] & 0xff);
+            chars.append(base64enc[quantum >> 18]);
+            chars.append(base64enc[(quantum >> 12) & 0x3f]);
+            chars.append(base64enc[(quantum >> 6) & 0x3f]);
+            chars.append(base64enc[quantum & 0x3f]);
+        }
+
+        // Process the tail bytes
+        if (tail >= 1) {
+            quantum = ((data[b++] & 0xff) << 8);
+            if (tail == 2) {
+                quantum += data[b++] & 0xff;
+            }
+            chars.append(base64enc[quantum >> 10]);
+            chars.append(base64enc[(quantum >> 4) & 0x3f]);
+            if (tail == 2) {
+                chars.append(base64enc[(quantum << 2) & 0x3f]);
+            }
+        }
+
+        return chars.toString();
+    }
+
+    /** Look-up table for {@link #base64encodeToString(byte[])}. */
+    private static final char[] base64enc =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
+
     private static final int maxLiteral = 65535;
 
     /**
-     * This method stores Python-Bytecode in String literals.
-     * While Java supports rather long strings, constrained only by
-     * int-addressing of arrays, it supports only up to 65535 characters
-     * in literals (not sure how escape-sequences are counted).
-     * To circumvent this limitation, the code is automatically splitted
-     * into several literals with the following naming-scheme.
-     *
-     * - The marker-interface 'ContainsPyBytecode' indicates that a class
-     *   contains (static final) literals of the following scheme:
-     * - a prefix of '___' indicates a bytecode-containing string literal
-     * - a number indicating the number of parts follows
-     * - '0_' indicates that no splitting occurred
-     * - otherwise another number follows, naming the index of the literal
-     * - indexing starts at 0
-     *
+     * This method stores Base64 encoded Python byte code in one or more String literals.
+     * <p>
+     * While Java String objects are limited only by the address range of arrays, the class file
+     * standard only supports literals representable in at most 65535 bytes of modified UTF-8. This
+     * method us used only with base64 Strings (therefore ASCII without nulls) and so each character
+     * occupies exactly 1 byte in the class file after encoding to UTF-8.
+     * <p>
+     * To work within the 65535 byte limitation, the {@code code_str} is split into several literals
+     * with the following naming-scheme:
+     * <ul>
+     * <li>The marker-interface 'ContainsPyBytecode' indicates that a class contains (static final)
+     * literals of the following scheme:
+     * <li>a prefix of '___' indicates a bytecode-containing string literal
+     * <li>a number indicating the number of parts follows
+     * <li>'0_' indicates that no splitting occurred
+     * <li>otherwise another number follows, naming the index of the literal
+     * <li>indexing starts at 0
+     * </ul>
      * Examples:
-     * ___0_method1   contains bytecode for method1
-     * ___2_0_method2 contains first part of method2's bytecode
-     * ___2_1_method2 contains second part of method2's bytecode
-     *
-     * Note that this approach is provisional. In future, Jython might contain
-     * the bytecode directly as bytecode-objects. The current approach was
-     * feasible with far less complicated JVM bytecode-manipulation, but needs
-     * special treatment after class-loading.
+     * <ul>
+     * <li>{@code ___0_method1} contains bytecode for method1
+     * <li>{@code ___2_0_method2} contains first part of method2's bytecode
+     * <li>{@code ___2_1_method2} contains second part of method2's bytecode
+     * </ul>
+     * Note that this approach is provisional. In future, Jython might contain the bytecode directly
+     * as bytecode-objects. The current approach was feasible with far less complicated JVM
+     * bytecode-manipulation, but needs special treatment after class-loading.
+     * 
+     * @param name of the method or function being generated
+     * @param code_str Base64 encoded CPython byte code
+     * @param module currently being defined as a class file
+     * @throws java.io.IOException
      */
     private static void insert_code_str_to_classfile(String name, String code_str, Module module)
             throws java.io.IOException {
-        // We might need to split the code into several literals.
-        if (code_str.length() > maxLiteral) {
-            int splits = code_str.length()/maxLiteral;
-            if (code_str.length()%maxLiteral > 0) {
+        if (code_str.length() <= maxLiteral) {
+            // This can go as a single literal
+            module.classfile.addFinalStringLiteral("___0_" + name, code_str);
+        } else {
+            // We need to split the code into several literals.
+            int splits = code_str.length() / maxLiteral;
+            if (code_str.length() % maxLiteral > 0) {
                 ++splits;
             }
             int pos = 0, i = 0;
-            for (; pos+maxLiteral <= code_str.length(); ++i) {
-                module.classfile.addFinalStringLiteral(
-                        "___"+splits+"_"+i+"_"+name,
-                        code_str.substring(pos, pos+maxLiteral));
+            for (; pos + maxLiteral <= code_str.length(); ++i) {
+                module.classfile.addFinalStringLiteral("___" + splits + "_" + i + "_" + name,
+                        code_str.substring(pos, pos + maxLiteral));
                 pos += maxLiteral;
             }
             if (i < splits) {
-                module.classfile.addFinalStringLiteral(
-                        "___"+splits+"_"+i+"_"+name,
+                module.classfile.addFinalStringLiteral("___" + splits + "_" + i + "_" + name,
                         code_str.substring(pos));
             }
-        } else {
-            module.classfile.addFinalStringLiteral("___0_"+name, code_str);
         }
     }
 
+    /**
+     * Create and write a Python module as a Java class file.
+     * 
+     * @param node AST of the module to write
+     * @param ostream stream onto which to write it
+     * @param name
+     * @param filename
+     * @param linenumbers
+     * @param printResults
+     * @param cflags
+     * @param mtime
+     * @throws Exception
+     */
     public static void compile(mod node, OutputStream ostream, String name, String filename,
             boolean linenumbers, boolean printResults, CompilerFlags cflags, long mtime)
             throws Exception {
+
         try {
             Module module = new Module(name, filename, linenumbers, mtime);
             _module_init(node, module, printResults, cflags);
             module.write(ostream);
-        } catch (MethodTooLargeException re) {
-                PyBytecode btcode = loadPyBytecode(filename, true);
-                int thresh = 22000;
-                // No idea, how to determine at this point if a method is oversized, so we just try
-                // a threshold regarding Python code-length, while JVM restriction is actually about
-                // Java bytecode length. Anyway; given that code-lengths are strongly related, this
-                // should work well enough.
 
-                while (true) { // Always enjoy to write a line like this :)
-                    try {
-                        List<PyBytecode> largest_m_codes = new ArrayList<>();
-                        Stack<PyBytecode> buffer = new Stack<>();
-                        //HashSet<PyBytecode> allCodes = new HashSet<>();
-                        buffer.push(btcode);
-                        //allCodes.add(btcode);
-                        while (!buffer.isEmpty()) {
-                            // Probably this cannot yield cycles, so cycle-proof stuff
-                            // is out-commented for now. (everything regarding 'allCodes')
-                            PyBytecode bcode = buffer.pop();
-                            if (bcode.co_code.length > thresh) {
-                                largest_m_codes.add(bcode);
-                            } else {
-                                // If a function needs to be represented as CPython bytecode, we create
-                                // all inner PyCode-items (classes, functions, methods) also as CPython
-                                // bytecode implicitly, so no need to look at them individually.
-                                // Maybe we can later optimize this such that inner methods can be
-                                // JVM-bytecode as well (if not oversized themselves).
-                                for (PyObject item: bcode.co_consts) {
-                                    if (item instanceof PyBytecode /*&& !allCodes.contains(item)*/) {
-                                        PyBytecode mpbc = (PyBytecode) item;
-                                        buffer.push(mpbc);
-                                        //allCodes.add(mpbc);
-                                    }
+        } catch (MethodTooLargeException re) {
+            PyBytecode btcode = loadPyBytecode(filename, true);
+            int thresh = 22000;
+            /*
+             * No idea, how to determine at this point if a method is oversized, so we just try a
+             * threshold regarding Python code-length, while JVM restriction is actually about Java
+             * bytecode length. Anyway; given that code-lengths are strongly related, this should
+             * work well enough.
+             */
+            while (true) { // Always enjoy to write a line like this :)
+                try {
+                    List<PyBytecode> largest_m_codes = new ArrayList<>();
+                    Stack<PyBytecode> buffer = new Stack<>();
+                    // HashSet<PyBytecode> allCodes = new HashSet<>();
+                    buffer.push(btcode);
+                    // allCodes.add(btcode);
+
+                    while (!buffer.isEmpty()) {
+                        /*
+                         * Probably this cannot yield cycles, so cycle-proof stuff is out-commented
+                         * for now. (everything regarding 'allCodes')
+                         */
+                        PyBytecode bcode = buffer.pop();
+                        if (bcode.co_code.length > thresh) {
+                            largest_m_codes.add(bcode);
+                        } else {
+                            /*
+                             * If a function needs to be represented as CPython bytecode, we create
+                             * all inner PyCode-items (classes, functions, methods) also as CPython
+                             * bytecode implicitly, so no need to look at them individually. Maybe
+                             * we can later optimize this such that inner methods can be
+                             * JVM-bytecode as well (if not oversized themselves).
+                             */
+                            for (PyObject item : bcode.co_consts) {
+                                if (item instanceof PyBytecode /* && !allCodes.contains(item) */) {
+                                    PyBytecode mpbc = (PyBytecode) item;
+                                    buffer.push(mpbc);
+                                    // allCodes.add(mpbc);
                                 }
                             }
                         }
-                        Module module = new Module(name, filename, linenumbers, mtime);
-                        module.oversized_methods = new Hashtable<>(largest_m_codes.size());
-                        int ov_id = 0;
-                        String name_id;
-                        for (PyBytecode largest_m_code: largest_m_codes) {
-                            if (!PyCodeConstant.isJavaIdentifier(largest_m_code.co_name)) {
-                                name_id = "f$_"+ov_id++;
-                            } else {
-                                name_id = largest_m_code.co_name+"$_"+ov_id++;
-                            }
-                            if (largest_m_code.co_name.equals("<module>")) {
-                                // In Jython's opinion module begins at line 0
-                                // (while CPython reports line 1)
-                                module.oversized_methods.put(
-                                        largest_m_code.co_name+0, name_id);
-                            } else {
-                                module.oversized_methods.put(
-                                        largest_m_code.co_name+largest_m_code.co_firstlineno, name_id);
-                            }
-                            String code_str = serializePyBytecode(largest_m_code);
-                            insert_code_str_to_classfile(name_id, code_str, module);
+                    }
+
+                    Module module = new Module(name, filename, linenumbers, mtime);
+
+                    module.oversized_methods = new Hashtable<>(largest_m_codes.size());
+                    int ov_id = 0;
+                    String name_id;
+
+                    for (PyBytecode largest_m_code : largest_m_codes) {
+                        if (!PyCodeConstant.isJavaIdentifier(largest_m_code.co_name)) {
+                            name_id = "f$_" + ov_id++;
+                        } else {
+                            name_id = largest_m_code.co_name + "$_" + ov_id++;
                         }
-                        module.classfile.addInterface(p(org.python.core.ContainsPyBytecode.class));
-                        _module_init(node, module, printResults, cflags);
-                        module.write(ostream);
-                        break;
-                    } catch (MethodTooLargeException e) {
-                        thresh -= 100;
+                        if (largest_m_code.co_name.equals("<module>")) {
+                            /*
+                             * In Jython's opinion module begins at line 0 (while CPython reports
+                             * line 1)
+                             */
+                            module.oversized_methods.put(largest_m_code.co_name + 0, name_id);
+                        } else {
+                            module.oversized_methods.put(
+                                    largest_m_code.co_name + largest_m_code.co_firstlineno,
+                                    name_id);
+                        }
+
+                        String code_str = serializePyBytecode(largest_m_code);
+                        insert_code_str_to_classfile(name_id, code_str, module);
                     }
-                    if (thresh == 10000) { /* This value should be well feasible by JVM-bytecode,
-                                              so something else must be wrong. */
-                        throw new RuntimeException(
-                                "For unknown reason, too large method code couldn't be resolved"+
-                                "\nby PyBytecode-approach:\n"+filename);
-                    }
+
+                    module.classfile.addInterface(p(org.python.core.ContainsPyBytecode.class));
+
+                    _module_init(node, module, printResults, cflags);
+                    module.write(ostream);
+
+                    break;
+
+                } catch (MethodTooLargeException e) {
+                    thresh -= 1000;
                 }
+                if (thresh < 10000) {
+                    /*
+                     * This value should be well feasible by JVM-bytecode, so something else must be
+                     * wrong.
+                     */
+                    throw new RuntimeException(
+                            "For unknown reason, too large method code couldn't be resolved"
+                                    + "\nby PyBytecode-approach:\n" + filename);
+                }
+            }
         }
     }
 

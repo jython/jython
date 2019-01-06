@@ -77,15 +77,92 @@ public class BytecodeLoader {
     }
 
     private static PyCode parseSerializedCode(String code_str)
-            throws IOException, ClassNotFoundException
-    {
-        byte[] b = DatatypeConverter.parseBase64Binary(code_str);
+            throws IOException, ClassNotFoundException {
+        // From Java 8 use: byte[] b = Base64.getDecoder().decode(code_str);
+        byte[] b = base64decode(code_str);
         ByteArrayInputStream bi = new ByteArrayInputStream(b);
         ObjectInputStream si = new ObjectInputStream(bi);
         PyBytecode meth_code = (PyBytecode) si.readObject();
         si.close();
         bi.close();
         return meth_code;
+    }
+
+    /**
+     * Implement a restricted form of base64 decoding compatible with the encoding in Module. This
+     * decoder treats characters outside the set of 64 necessary to encode data as errors, including
+     * the pad "=". As a result, the length of the argument exactly determines the size of array
+     * returned.
+     * 
+     * @param src to decode
+     * @return a new byte array
+     * @throws IllegalArgumentException if src has an invalid character or impossible length.
+     */
+    private static byte[] base64decode(String src) throws IllegalArgumentException {
+
+        // Length L is a multiple of 4 plus 0, 2 or 3 tail characters (bearing 0, 8, or 16 bits)
+        final int L = src.length();
+        final int tail = L % 4; // 0 to 3 where 1 (an extra 6 bits) is invalid.
+        if (tail == 1) {
+            throw new IllegalArgumentException("Input length invalid (4n+1)");
+        }
+
+        // src encodes exactly this many bytes:
+        final int N = (L / 4) * 3 + (tail > 0 ? tail - 1 : 0);
+        byte[] data = new byte[N];
+
+        // Work through src in blocks of 4
+        int s = 0, b = 0, quantum;
+        while (s <= L - 4) {
+            // Process src[s:s+4]
+            quantum = (base64CharToBits(src.charAt(s++)) << 18)
+                    + (base64CharToBits(src.charAt(s++)) << 12)
+                    + (base64CharToBits(src.charAt(s++)) << 6) + base64CharToBits(src.charAt(s++));
+            data[b++] = (byte) (quantum >> 16);
+            data[b++] = (byte) (quantum >> 8);
+            data[b++] = (byte) quantum;
+        }
+
+        // Now deal with 2 or 3 tail characters, generating one or two bytes.
+        if (tail >= 2) {
+            // Repeat the loop body, but everything is 8 bits to the right.
+            quantum = (base64CharToBits(src.charAt(s++)) << 10)
+                    + (base64CharToBits(src.charAt(s++)) << 4);
+            data[b++] = (byte) (quantum >> 8);
+            if (tail == 3) {
+                quantum += (base64CharToBits(src.charAt(s++)) >> 2);
+                data[b++] = (byte) quantum;
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Helper for {@link #base64decode(String)}, converting one character.
+     * @param c to convert
+     * @return value 0..63
+     * @throws IllegalArgumentException if not a base64 character
+     */
+    private static int base64CharToBits(char c) throws IllegalArgumentException {
+        if (c >= 'a') {
+            if (c <= 'z') {
+                return c - ('a' - 26);
+            }
+        } else if (c >= 'A') {
+            if (c <= 'Z') {
+                return c - 'A';
+            }
+        } else if (c >= '0') {
+            if (c <= '9') {
+                return c + (52 - '0');
+            }
+        } else if (c == '+') {
+            return 62;
+        } else if (c == '/') {
+            return 63;
+        }
+        throw new IllegalArgumentException("Invalid character " + c);
     }
 
     /**
