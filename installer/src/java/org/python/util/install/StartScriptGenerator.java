@@ -81,7 +81,6 @@ public class StartScriptGenerator {
             }
             Files.delete(bindir.resolve("jython.py"));
             Files.delete(bindir.resolve("jython.exe"));
-            Files.delete(bindir.resolve("python27.dll"));
             Files.setPosixFilePermissions(bindir.resolve("jython"),
                     PosixFilePermissions.fromString("rwxr-xr-x")); // 0755
         }
