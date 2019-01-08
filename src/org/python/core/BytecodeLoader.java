@@ -8,7 +8,6 @@ import java.lang.reflect.Field;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import javax.xml.bind.DatatypeConverter;
 
 import org.objectweb.asm.ClassReader;
 import org.python.util.Generic;

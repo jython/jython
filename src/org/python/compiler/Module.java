@@ -18,7 +18,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.List;
-import javax.xml.bind.DatatypeConverter;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodTooLargeException;
