@@ -180,7 +180,7 @@ public abstract class PackageManager extends Object {
         private int class_access;
 
         public AccessVisitor() throws IOException {
-            super(Opcodes.ASM5);
+            super(Opcodes.ASM7);
         }
 
         @Override

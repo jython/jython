@@ -22,7 +22,7 @@ public class Code extends MethodVisitor implements Opcodes {
     //XXX: I'd really like to get sig and access out of here since MethodVistitor
     //     should already have this information.
     public Code(MethodVisitor mv, String sig, int access) {
-        super(ASM5);
+        super(ASM7);
         this.mv = mv;
         this.sig = sig;
         nlocals = -sigSize(sig, false);

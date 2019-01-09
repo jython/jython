@@ -10,7 +10,7 @@ import org.objectweb.asm.Opcodes;
 public class RestrictiveAnnotationVisitor extends AnnotationVisitor {
 
     public RestrictiveAnnotationVisitor() {
-        super(Opcodes.ASM5);
+        super(Opcodes.ASM7);
     }
 
     public AnnotationVisitor visitAnnotation(String name, String desc) {

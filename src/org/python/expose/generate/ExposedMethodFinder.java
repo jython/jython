@@ -35,7 +35,7 @@ public abstract class ExposedMethodFinder extends MethodVisitor implements PyTyp
                                String desc,
                                String[] exceptions,
                                MethodVisitor delegate) {
-        super(Opcodes.ASM5, delegate);
+        super(Opcodes.ASM7, delegate);
         this.typeName = typeName;
         this.onType = onType;
         this.access = access;

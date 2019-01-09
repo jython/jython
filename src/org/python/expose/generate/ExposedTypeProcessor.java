@@ -114,7 +114,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
-            super(Opcodes.ASM5, cv);
+            super(Opcodes.ASM7, cv);
         }
 
         @Override
@@ -228,7 +228,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                                            desc,
                                                                            signature,
                                                                            exceptions);
-                return new MethodVisitor(Opcodes.ASM5, passthroughVisitor) {
+                return new MethodVisitor(Opcodes.ASM7, passthroughVisitor) {
 
                     @Override
                     public void visitCode() {

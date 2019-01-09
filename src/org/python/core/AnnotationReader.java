@@ -36,7 +36,7 @@ public class AnnotationReader extends ClassVisitor {
      * @throws IOException - if the classfile is malformed.
      */
     public AnnotationReader(byte[] data) throws IOException {
-        super(Opcodes.ASM5);
+        super(Opcodes.ASM7);
         ClassReader r;
         try {
             r = new ClassReader(data);
@@ -52,7 +52,7 @@ public class AnnotationReader extends ClassVisitor {
         nextVisitIsVersion = desc.equals("Lorg/python/compiler/APIVersion;");
         nextVisitIsMTime = desc.equals("Lorg/python/compiler/MTime;");
         nextVisitIsFilename = desc.equals("Lorg/python/compiler/Filename;");
-        return new AnnotationVisitor(Opcodes.ASM5) {
+        return new AnnotationVisitor(Opcodes.ASM7) {
 
         	public void visit(String name, Object value) {
         		if (nextVisitIsVersion) {

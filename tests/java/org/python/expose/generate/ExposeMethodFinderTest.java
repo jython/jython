@@ -16,7 +16,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
                                        methodName,
                                        descriptor,
                                        null,
-                                       new MethodVisitor(Opcodes.ASM4) {}) {
+                                       new MethodVisitor(Opcodes.ASM7) {}) {
 
             @Override
             public void handleResult(InstanceMethodExposer exposer) {
