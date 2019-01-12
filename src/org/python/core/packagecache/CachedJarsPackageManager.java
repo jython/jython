@@ -261,14 +261,18 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /**
-     * Create (or ensure we have) a {@link PyJavaPackage}, for each package in a jar specified by a
-     * file or URL, descending from {@link PackageManager#topLevelPackage} in this
-     * {@link PackageManager} instance. Ensure that the class list in each package is updated with
-     * the classes this JAR supplies to it. This information may be from a previously cached account
-     * of the JAR, if the last-modified time of the JAR matches a cached value. Otherwise, it will
-     * be obtained by inspecting the JAR, and a new cache will be written (if requested). Eventually
-     * updated info is (re-)cached if param cache is true. Persistent cache storage access goes
-     * through {@link #inOpenCacheFile(String)} and {@link #outCreateCacheFile(JarXEntry, boolean)}.
+     * Create (or ensure we have) a {@link PyJavaPackage}, descending from
+     * {@link PackageManager#topLevelPackage} in this {@link PackageManager} instance, for each
+     * package in a jar specified by a file or URL. Ensure that the class list in each package is
+     * updated with the classes this JAR supplies to it.
+     *
+     * The information concerning packages in the JAR and the classes they contain, may be read from
+     * from a previously cached account of the JAR, if the last-modified time of the JAR matches a
+     * cached value. If it is not read from a cache, it will be obtained by inspecting the JAR, and
+     * a new cache will be written (if requested).
+     *
+     * Access to persistent cache storage goes through {@link #inOpenCacheFile(String)} and
+     * {@link #outCreateCacheFile(JarXEntry, boolean)}.
      *
      * @param jarurl identifying the JAR if {@code jarfile} is {@code null}
      * @param jarfile identifying the JAR
@@ -276,13 +280,17 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      */
     private void addJarToPackages(URL jarurl, File jarfile, boolean writeCache) {
         try {
+            // We try to read the cache (for this jar) if caching is in operation.
             boolean readCache = this.index != null;
+            // We write a cache if caching is in operation AND writing has been requested.
             writeCache &= readCache;
+
             URLConnection jarconn = null;
             boolean localfile = true;
 
+            // If a local JAR file was not given directly in jarfile, try to find one from the URL.
             if (jarfile == null) {
-                // We were not given a File, so the URL must be reliable (but maybe not a file)
+                // We were not given a File, so the URL must be reliable (but may not be a file)
                 jarconn = jarurl.openConnection();
                 // The following comment may be out of date. Also 2 reasons or just the bug?
                 /*
@@ -296,12 +304,13 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     jarfilename = jarfilename.replace('/', File.separatorChar);
                     jarfile = new File(jarfilename);
                 } else {
+                    // We can't find a local file
                     localfile = false;
                 }
             }
 
-            // Claimed JAR does not exist. Silently ignore.
             if (localfile && !jarfile.exists()) {
+                // Local JAR file claimed or deduced does not exist. Silently ignore.
                 return;
             }
 
@@ -527,9 +536,10 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         }
     }
 
-    /** Scan a module from the modular JVM, creating package objects. */
-    protected void addModule(Path modulePath) {
+    /** Scan a Java module, creating package objects. */
+    protected void addModuleToPackages(Path modulePath) {
         try {
+            comment("reading packages from " + modulePath);
             Map<String, String> packages = getModularPackages(modulePath);
             addPackages(packages, modulePath.toUri().toString());
         } catch (IOException ioe) {
@@ -543,9 +553,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * (surviving) classes in two lists: accessible and inaccessible, which is judged according to
      * {@link #filterByAccess(String, int)}. The returned map is from package to these two lists,
      * now comma-separated lists, with an '@' between them.
+     *
+     * @param modulePath up to and including the name of the module
+     * @return map from packages to classes
+     * @throws IOException
      */
     private Map<String, String> getModularPackages(Path modulePath) throws IOException {
 
+        final int M = modulePath.getNameCount();
         final Map<String, ClassList> modPackages = Generic.map();
 
         FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
@@ -555,18 +570,18 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     throws IOException {
                 //System.out.println("    visitFile:" + file);
 
-                // file has at least 4 parts /modules/[module]/ ... /[name].class
+                // file starts with modulePath, then has package & class: / ... /[name].class
                 int n = file.getNameCount();
                 // Apply name and access tests and conditionally add to modPackages
                 String fileName = file.getFileName().toString();
-                if (fileName.endsWith(".class") && n > 3) {
+                if (fileName.endsWith(".class") && n > M + 1) {
                     // Split off the bare class name
                     String className = fileName.substring(0, fileName.length() - 6);
 
                     // Check acceptable name: in practice, this is used to ignore inner classes.
                     if (!filterByName(className, false)) {
-                        // File this class by name against the package
-                        String packageName = file.subpath(2, n - 1).toString().replace('/', '.');
+                        // Parts M to n-1 define the package of this class
+                        String packageName = file.subpath(M, n - 1).toString().replace('/', '.');
                         ClassList classes = modPackages.get(packageName);
 
                         if (classes == null) {
@@ -575,7 +590,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                             modPackages.put(packageName, classes);
                         }
 
-                        // Put the class on the right list
+                        // Put the class on the accessible or inaccessible list
                         try (InputStream c = Files.newInputStream(file, StandardOpenOption.READ)) {
                             int access = checkAccess(c);
                             if ((access != -1) && !filterByAccess(fileName, access)) {

@@ -9,11 +9,17 @@ import org.python.core.PyList;
 import org.python.core.PySystemState;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -67,7 +73,7 @@ public class SysPackageManager extends PathPackageManager {
     /**
      * Index the contents of every JAR or ZIP in a directory.
      *
-     * @param jdir direcory containing some JAR or ZIP files
+     * @param jdir directory containing some JAR or ZIP files
      * @param cache
      * @param saveCache
      */
@@ -107,30 +113,61 @@ public class SysPackageManager extends PathPackageManager {
     }
 
     /**
-     * Walk the packages found in paths specified indirectly through the given {@code Properties}
-     * object, which in practice is the Jython registry.
+     * Index the packages in every module in a directory. Entries in the directory that are not modules
+     * (do not contain a {@code module-info.class}) are ignored. Only modules exploded on the file system of this path are (currently) supported,
+     * and at the time of writing, we only use this method on the {@code jrt:} file system.
      *
-     * @param registry
+     * @param moduleDir directory containing some modules
+     */
+    private void addModuleDir(final Path moduleDir) {
+        try {
+            // Walk the directory tree with this visitor
+            FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    // System.out.println(dir);
+                    if (dir.equals(moduleDir)) {
+                        // Ignore this, it's just the root)
+                    } else if (Files.exists(dir.resolve("module-info.class"))) {
+                        // dir is a module: scan packages from it.
+                        addModuleToPackages(dir);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            };
+
+            Files.walkFileTree(moduleDir, visitor);
+
+        } catch (IOException e) {
+            warning("error enumerating Java modules in " + moduleDir + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Walk the packages found in paths specified indirectly through the given {@code Properties}
+     * object.
+     *
+     * @param registry in practice, the Jython registry
      */
     private void findAllPackages(Properties registry) {
 
-        String defaultPaths = "java.class.path";
-        String defaultDirectories = "";
-        String defaultModules = "java.base,java.desktop,java.logging,java.se,java.sql,java.xml";
-
+        /*
+         * Packages in the Java runtime environment are enumerated in the jrt file system (from Java
+         * 9 onwards), or in JARs and directories designated by the properties
+         * sun.boot.class.path and java.ext.dirs (up to Java 8).
+         */
+        String defaultClassPaths, defaultDirectories;
         try {
             // Support for the modular JVM (particular packages).
-            // XXX This may not be our final approach: maybe enumerate all the packages instead?
-            Set<String> modules =
-                    split(registry.getProperty("python.packages.modules", defaultModules));
             FileSystem jrtfs = FileSystems.getFileSystem(URI.create("jrt:/"));
-            for (String moduleName : modules) {
-                Path modulePath = jrtfs.getPath("/modules/" + moduleName);
-                addModule(modulePath);
-            }
+            addModuleDir(jrtfs.getPath("/modules/"));
+            defaultClassPaths = "java.class.path";
+            defaultDirectories = "";
         } catch (ProviderNotFoundException e) {
             // Running on a JVM before Java 9: add boot class path and optional extensions.
-            defaultPaths = "java.class.path,sun.boot.class.path";
+            defaultClassPaths = "java.class.path,sun.boot.class.path";
             defaultDirectories = "java.ext.dirs";
         }
 
@@ -139,13 +176,13 @@ public class SysPackageManager extends PathPackageManager {
          * string. The default setting causes directories and JARs on the classpath and in the JRE
          * (before Java 9) to be sources of Python packages.
          */
-        Set<String> paths = split(registry.getProperty("python.packages.paths", defaultPaths));
-        for (String name : paths) {
-            // Each property is a path string containing directories
-            String path = registry.getProperty(name);
-            if (path != null) {
+        Set<String> cps = split(registry.getProperty("python.packages.paths", defaultClassPaths));
+        for (String name : cps) {
+            // Each property is a class-path string containing JARS and directories
+            String classPath = registry.getProperty(name);
+            if (classPath != null) {
                 // Each path may be a mixture of directory and JAR specifiers (source of packages)
-                addClassPath(path);
+                addClassPath(classPath);
             }
         }
 

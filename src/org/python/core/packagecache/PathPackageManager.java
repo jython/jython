@@ -191,8 +191,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     }
 
     /**
-     * Scan a path that may be a mixture of directory and JAR specifiers, and within each path entry
-     * index the packages. Calls {@link #addDirectory} if a path entry refers to a dir,
+     * Scan a Java class-path that may be a mixture of directory and JAR specifiers, and within each
+     * path entry index the packages. Calls {@link #addDirectory} if a path entry refers to a dir,
      * {@link #addJarToPackages(java.io.File, boolean)} with param cache true if the path entry
      * refers to a jar.
      */

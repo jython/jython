@@ -10,10 +10,8 @@
 #python.path = d:\\python20\\lib
 
 # Set the directory to use for caches (currently just package information)
-# This directory should be writable by the user
-# If this is an absolute path it is used as given
-# Otherwise it is interpreted relative to sys.prefix
-# (typically the directory of this file)
+#   This directory should be writable by the user. If this is an absolute path it is used as given,
+#   otherwise it is interpreted relative to sys.prefix (typically the directory of this file).
 python.cachedir = cachedir
 
 # Setting this property to true disables the package scan for the cachedir.
@@ -22,15 +20,12 @@ python.cachedir = cachedir
 
 # Properties to check for initializing and updating the package cache
 # Values shown here are those hard-coded in Jython's cache manager.
-#   Treat JARs on the classpath and (before Java 9) in the JRE as a source of Python packages.
-#python.packages.paths = java.class.path, sun.boot.class.path   # before Java 9
+#   Treat JARs on the classpath and (up to Java 8) in the JRE as a source of Python packages.
+#python.packages.paths = java.class.path, sun.boot.class.path   # up to Java 8
 #python.packages.paths = java.class.path                        # from Java 9
 #   Treat installed optional (Java) packages as source of Python packages (before Java 9)
-#python.packages.directories = java.ext.dirs    # before Java 9
+#python.packages.directories = java.ext.dirs    # up to Java 8
 #python.packages.directories                    # undefined from Java 9
-#   Treat the following Java modules as sources of of Python packages (from Java 9)
-#python.packages.modules = java.base, java.desktop, java.logging, java.se, java.sql, java.xml
-
 
 # Set verbosity to error, warning, message, comment, or debug
 # for varying levels of informative messages from Jython. Normally
@@ -39,7 +34,7 @@ python.cachedir = cachedir
 
 # Jython ships with a JLine console (http://jline.sourceforge.net/) out of the
 # box. This is selected by default in the Jython command-line application
-# (org.python.util,jython) if you do not define python.console to be another
+# (org.python.util.jython) if you do not define python.console to be another
 # class on the command line. Alternatively, you could set python.console here,
 # but be aware that this will also affect the console in applications that
 # embed a PythonInterpreter, or use Jython as a JSR-223 script engine.
