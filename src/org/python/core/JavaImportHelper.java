@@ -21,10 +21,10 @@ public class JavaImportHelper {
      * <p>
      * There is some self-healing in the sense that a correct, explicit import of a java class will succeed even if
      * sys.modules already contains a Py.None entry for the corresponding java package.
-     * 
+     *
      * @param packageName The dotted name of the java package
      * @param fromlist A tuple with the from names to import. Can be null or empty.
-     * 
+     *
      * @return <code>true</code> if a java package was doubtlessly identified and added, <code>false</code>
      * otherwise.
      */
@@ -91,9 +91,9 @@ public class JavaImportHelper {
      * Check if a java package is already known to the VM.
      * <p>
      * May return <code>false</code> even if the given package name is a valid java package !
-     * 
+     *
      * @param packageName
-     * 
+     *
      * @return <code>true</code> if the package with the given name is already loaded by the VM, <code>false</code>
      * otherwise.
      */
@@ -105,7 +105,7 @@ public class JavaImportHelper {
      * Convert the fromlist into a java.lang.String based list.
      * <p>
      * Do some sanity checks: filter out '*' and empty tuples, as well as non tuples.
-     * 
+     *
      * @param fromlist
      * @return a list containing java.lang.String entries
      */
@@ -134,11 +134,11 @@ public class JavaImportHelper {
      * Faster way to check if a java package is already known to the VM.
      * <p>
      * May return <code>false</code> even if the given package name is a valid java package !
-     * 
+     *
      * @param packageName
      * @param packages A Map containing all packages actually known to the VM. Such a Map can be obtained using
      * {@link JavaImportHelper.buildLoadedPackagesTree()}
-     * 
+     *
      * @return <code>true</code> if the package with the given name is already loaded by the VM, <code>false</code>
      * otherwise.
      */
@@ -185,7 +185,7 @@ public class JavaImportHelper {
 
     /**
      * Add a java package to sys.modules, if not already done
-     * 
+     *
      * @return <code>true</code> if something was really added, <code>false</code> otherwise
      */
     private static boolean addPackage(String packageName, boolean packageAdded) {
