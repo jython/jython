@@ -1063,99 +1063,97 @@ public final class Py extends PrePy {
     private static boolean syspathJavaLoaderRestricted = false;
 
     /**
-     * Common code for findClass and findClassEx
-     * @param name Name of the Java class to load and initialize
-     * @param reason Reason for loading it, used for debugging. No debug output
-     *               is generated if it is null
+     * Common code for {@link #findClass(String)} and {@link #findClassEx(String, String)}.
+     *
+     * @param name of the Java class to load and initialise
+     * @param reason to be given in debug output (or {@code null} to suppress debug output.
      * @return the loaded class
      * @throws ClassNotFoundException if the class wasn't found by the class loader
      */
-    private static Class<?> findClassInternal(String name, String reason) throws ClassNotFoundException {
+    private static Class<?> findClassInternal(String name, String reason)
+            throws ClassNotFoundException {
+
         ClassLoader classLoader = Py.getSystemState().getClassLoader();
         if (classLoader != null) {
             if (reason != null) {
-                writeDebug("import", "trying " + name + " as " + reason +
-                          " in sys.classLoader");
+                writeDebug("import", "trying " + name + " as " + reason + " in sys.classLoader");
             }
             return loadAndInitClass(name, classLoader);
         }
+
         if (!syspathJavaLoaderRestricted) {
             try {
                 classLoader = imp.getSyspathJavaLoader();
                 if (classLoader != null && reason != null) {
-                    writeDebug("import", "trying " + name + " as " + reason +
-                            " in SysPathJavaLoader");
+                    writeDebug("import",
+                            "trying " + name + " as " + reason + " in SysPathJavaLoader");
                 }
             } catch (SecurityException e) {
                 syspathJavaLoaderRestricted = true;
             }
         }
+
         if (syspathJavaLoaderRestricted) {
             classLoader = imp.getParentClassLoader();
             if (classLoader != null && reason != null) {
-                writeDebug("import", "trying " + name + " as " + reason +
-                        " in Jython's parent class loader");
+                writeDebug("import",
+                        "trying " + name + " as " + reason + " in Jython's parent class loader");
             }
         }
+
         if (classLoader != null) {
             try {
                 return loadAndInitClass(name, classLoader);
             } catch (ClassNotFoundException cnfe) {
                 // let the default classloader try
-                // XXX: by trying another classloader that may not be on a
-                //      parent/child relationship with the Jython's parent
-                //      classsloader we are risking some nasty class loading
-                //      problems (such as having two incompatible copies for
-                //      the same class that is itself a dependency of two
-                //      classes loaded from these two different class loaders)
+                /*
+                 * XXX: by trying another classloader that may not be on a parent/child relationship
+                 * with the Jython's parent classsloader we are risking some nasty class loading
+                 * problems (such as having two incompatible copies for the same class that is
+                 * itself a dependency of two classes loaded from these two different class
+                 * loaders).
+                 */
             }
         }
+
         if (reason != null) {
-            writeDebug("import", "trying " + name + " as " + reason +
-                       " in context class loader, for backwards compatibility");
+            writeDebug("import", "trying " + name + " as " + reason
+                    + " in context class loader, for backwards compatibility");
         }
+
         return loadAndInitClass(name, Thread.currentThread().getContextClassLoader());
     }
 
     /**
-     * Tries to find a Java class.
-     * @param name Name of the Java class.
-     * @return The class, or null if it wasn't found
+     * Find and load a Java class by name.
+     *
+     * @param name of the Java class.
+     * @return the class, or {@code null} if it wasn't found or something went wrong
      */
     public static Class<?> findClass(String name) {
         try {
             return findClassInternal(name, null);
-        } catch (ClassNotFoundException e) {
-            //             e.printStackTrace();
-            return null;
-        } catch (IllegalArgumentException e) {
-            //             e.printStackTrace();
-            return null;
-        } catch (NoClassDefFoundError e) {
-            //             e.printStackTrace();
+        } catch (ClassNotFoundException | IllegalArgumentException | NoClassDefFoundError e) {
+            // e.printStackTrace();
             return null;
         }
     }
 
     /**
-     * Tries to find a Java class.
+     * Find and load a Java class by name.
      *
-     * Unless {@link #findClass(String)}, it raises a JavaError
-     * if the class was found but there were problems loading it.
      * @param name Name of the Java class.
-     * @param reason Reason for finding the class. Used for debugging messages.
-     * @return The class, or null if it wasn't found
-     * @throws JavaError wrapping LinkageErrors/IllegalArgumentExceptions
-     * occurred when the class is found but can't be loaded.
+     * @param reason for finding the class. Used in debugging messages.
+     * @return the class, or {@code null} if it simply wasn't found
+     * @throws PyException (JavaError) wrapping errors occurring when the class is found but cannot
+     *             be loaded.
      */
-    public static Class<?> findClassEx(String name, String reason) {
+    public static Class<?> findClassEx(String name, String reason) throws PyException {
         try {
             return findClassInternal(name, reason);
         } catch (ClassNotFoundException e) {
             return null;
-        } catch (IllegalArgumentException e) {
-            throw JavaError(e);
-        } catch (LinkageError e) {
+        } catch (IllegalArgumentException | LinkageError e) {
             throw JavaError(e);
         }
     }

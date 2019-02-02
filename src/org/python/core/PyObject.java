@@ -897,7 +897,7 @@ public class PyObject implements Serializable {
      *
      * <b>Warning: name must be an interned string!</b>
      *
-     * @param name the name to lookup in this namespace <b> must be an interned string </b>.
+     * @param name the name to lookup in this namespace <b>must be an interned string</b>.
      * @return the value corresponding to name or null if name is not found
      **/
     public final PyObject __findattr__(String name) {
@@ -1027,7 +1027,15 @@ public class PyObject implements Serializable {
         object___delattr__(name);
     }
 
-    // Used by import logic.
+    /**
+     * This is a variant of {@link #__findattr__(String)} used by the module import logic to find a
+     * sub-module amongst the attributes of an object representing a package. The default behaviour
+     * is to delegate to {@code __findattr__}, but in particular cases it becomes a hook for
+     * specialised search behaviour.
+     *
+     * @param name the name to lookup in this namespace <b>must be an interned string</b>.
+     * @return the value corresponding to name or null if name is not found
+     */
     protected PyObject impAttr(String name) {
         return __findattr__(name);
     }

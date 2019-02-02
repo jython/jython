@@ -14,7 +14,7 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "module")
 public class PyModule extends PyObject implements Traverseproc {
-    private final PyObject moduleDoc = new PyString(
+    private final PyObject moduleDoc = new PyString( //FIXME: not used (and not static)
         "module(name[, doc])\n" +
         "\n" +
         "Create a module object.\n" +
@@ -88,8 +88,16 @@ public class PyModule extends PyObject implements Traverseproc {
         throw Py.TypeError("readonly attribute");
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Overridden in {@code PyModule} to search for the named attribute as a
+     * module in {@code sys.modules} (using the key {@code ".".join(self.__name__, name)}) and on the
+     * {@code self.__path__}.
+     */
     @Override
     protected PyObject impAttr(String name) {
+        // Get hold of the module dictionary and __name__, and __path__ if it has one.
         if (__dict__ == null || name.length() == 0) {
             return null;
         }
@@ -102,10 +110,12 @@ public class PyModule extends PyObject implements Traverseproc {
             return null;
         }
 
+        // Maybe the module we're looking for is in sys.modules
         String fullName = (pyName.__str__().toString() + '.' + name).intern();
         PyObject modules = Py.getSystemState().modules;
         PyObject attr = modules.__finditem__(fullName);
 
+        // If not, look along the module's __path__
         if (path instanceof PyList) {
             if (attr == null) {
                 attr = imp.find_module(name, fullName, (PyList)path);
@@ -115,6 +125,7 @@ public class PyModule extends PyObject implements Traverseproc {
         }
 
         if (attr == null) {
+            // Still looking: maybe it's a Java package?
             attr = PySystemState.packageManager.lookupName(fullName);
         }
 
@@ -131,6 +142,13 @@ public class PyModule extends PyObject implements Traverseproc {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Overridden in {@code PyModule} so that if the base-class {@code __findattr_ex__} is
+     * unsuccessful, it will to search for the named attribute as a module via
+     * {@link #impAttr(String)}.
+     */
     @Override
     public PyObject __findattr_ex__(String name) {
         PyObject attr = super.__findattr_ex__(name);

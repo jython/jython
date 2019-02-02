@@ -1,31 +1,29 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.List;
-import java.lang.reflect.Field;
+import org.objectweb.asm.ClassReader;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-
-import org.objectweb.asm.ClassReader;
-import org.python.util.Generic;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * Utility class for loading compiled python modules and java classes defined in python modules.
+ * Utility class for loading compiled Python modules and Java classes defined in Python modules.
  */
 public class BytecodeLoader {
 
     /**
-     * Turn the java byte code in data into a java class.
+     * Turn the Java class file data into a Java class.
      *
-     * @param name
-     *            the name of the class
-     * @param data
-     *            the java byte code.
-     * @param referents
-     *            superclasses and interfaces that the new class will reference.
+     * @param name fully-qualified binary name of the class
+     * @param data a class file as a byte array
+     * @param referents super-classes and interfaces that the new class will reference.
      */
     @SuppressWarnings("unchecked")
     public static Class<?> makeClass(String name, byte[] data, Class<?>... referents) {
@@ -33,24 +31,15 @@ public class BytecodeLoader {
         Loader loader = new Loader();
         for (Class<?> referent : referents) {
             try {
-                ClassLoader cur = referent.getClassLoader();
-                if (cur != null) {
-                    loader.addParent(cur);
-                }
-            } catch (SecurityException e) {
-            }
+                loader.addParent(referent.getClassLoader());
+            } catch (SecurityException e) {}
         }
         Class<?> c = loader.loadClassFromBytes(name, data);
         if (ContainsPyBytecode.class.isAssignableFrom(c)) {
             try {
                 fixPyBytecode((Class<? extends ContainsPyBytecode>) c);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (IllegalAccessException | NoSuchFieldException | ClassNotFoundException
+                    | IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -59,14 +48,11 @@ public class BytecodeLoader {
     }
 
     /**
-     * Turn the java byte code in data into a java class.
+     * Turn the Java class file data into a Java class.
      *
-     * @param name
-     *            the name of the class
-     * @param referents
-     *            superclasses and interfaces that the new class will reference.
-     * @param data
-     *            the java byte code.
+     * @param name the name of the class
+     * @param referents super-classes and interfaces that the new class will reference.
+     * @param data a class file as a byte array
      */
     public static Class<?> makeClass(String name, List<Class<?>> referents, byte[] data) {
         if (referents != null) {
@@ -92,7 +78,7 @@ public class BytecodeLoader {
      * decoder treats characters outside the set of 64 necessary to encode data as errors, including
      * the pad "=". As a result, the length of the argument exactly determines the size of array
      * returned.
-     * 
+     *
      * @param src to decode
      * @return a new byte array
      * @throws IllegalArgumentException if src has an invalid character or impossible length.
@@ -139,6 +125,7 @@ public class BytecodeLoader {
 
     /**
      * Helper for {@link #base64decode(String)}, converting one character.
+     *
      * @param c to convert
      * @return value 0..63
      * @throws IllegalArgumentException if not a base64 character
@@ -146,7 +133,7 @@ public class BytecodeLoader {
     private static int base64CharToBits(char c) throws IllegalArgumentException {
         if (c >= 'a') {
             if (c <= 'z') {
-                return c - ('a' - 26);
+                return c - 71; // c - 'a' + 26
             }
         } else if (c >= 'A') {
             if (c <= 'Z') {
@@ -154,7 +141,7 @@ public class BytecodeLoader {
             }
         } else if (c >= '0') {
             if (c <= '9') {
-                return c + (52 - '0');
+                return c + 4; // c - '0' + 52
             }
         } else if (c == '+') {
             return 62;
@@ -191,14 +178,14 @@ public class BytecodeLoader {
      * special treatment after class-loading.
      */
     public static void fixPyBytecode(Class<? extends ContainsPyBytecode> c)
-            throws IllegalAccessException, NoSuchFieldException, java.io.IOException, ClassNotFoundException
-    {
+            throws IllegalAccessException, NoSuchFieldException, java.io.IOException,
+            ClassNotFoundException {
         Field[] fields = c.getDeclaredFields();
         for (Field fld: fields) {
             String fldName = fld.getName();
             if (fldName.startsWith("___")) {
                 fldName = fldName.substring(3);
-                
+
                 String[] splt = fldName.split("_");
                 if (splt[0].equals("0")) {
                     fldName = fldName.substring(2);
@@ -227,13 +214,16 @@ public class BytecodeLoader {
                                         if (Integer.parseInt(splt2[1]) == pos) {
                                             blt.append((String) fldPart.get(null));
                                             pos += 1;
-                                            if (pos == len) break;
+                                            if (pos == len) {
+                                                break;
+                                            }
                                         }
                                     }
                                 }
                                 if (pos0 == pos) {
-                                    throw new RuntimeException("Invalid PyBytecode splitting in "+c.getName()+
-                                            ":\nSplit-index "+pos+" wasn't found.");
+                                    throw new RuntimeException(
+                                            "Invalid PyBytecode splitting in " + c.getName()
+                                                    + ":\nSplit-index " + pos + " wasn't found.");
                                 }
                             }
                             codeField.set(null, parseSerializedCode(blt.toString()));
@@ -245,20 +235,22 @@ public class BytecodeLoader {
     }
 
     /**
-     * Turn the java byte code for a compiled python module into a java class.
+     * Turn the Java class file data for a compiled Python module into a {@code PyCode} object, by
+     * constructing an instance of the named class and calling the instance's
+     * {@link PyRunnable#getMain()}.
      *
-     * @param name
-     *            the name of the class
-     * @param data
-     *            the java byte code.
+     * @param name fully-qualified binary name of the class
+     * @param data a class file as a byte array
+     * @param filename to provide to the constructor of the named class
+     * @return the {@code PyCode} object produced by the named class' {@code getMain}
      */
     public static PyCode makeCode(String name, byte[] data, String filename) {
         try {
             Class<?> c = makeClass(name, data);
-            Object o = c.getConstructor(new Class[] {String.class})
-                    .newInstance(new Object[] {filename});
-
-            PyCode result = ((PyRunnable)o).getMain();
+            // A compiled module has a constructor taking a String filename argument.
+            Constructor<?> cons = c.getConstructor(new Class<?>[] {String.class});
+            Object instance = cons.newInstance(new Object[] {filename});
+            PyCode result = ((PyRunnable) instance).getMain();
             return result;
         } catch (Exception e) {
             throw Py.JavaError(e);
@@ -267,16 +259,17 @@ public class BytecodeLoader {
 
     public static class Loader extends URLClassLoader {
 
-        private List<ClassLoader> parents = Generic.list();
+        private LinkedList<ClassLoader> parents = new LinkedList<>();
 
         public Loader() {
             super(new URL[0]);
             parents.add(imp.getSyspathJavaLoader());
         }
 
+        /** Add given loader at the front of the list of the parent list (if not {@code null}). */
         public void addParent(ClassLoader referent) {
-            if (!parents.contains(referent)) {
-                parents.add(0, referent);
+            if (referent != null && !parents.contains(referent)) {
+                parents.addFirst(referent);
             }
         }
 
@@ -295,6 +288,15 @@ public class BytecodeLoader {
             throw new ClassNotFoundException(name);
         }
 
+        /**
+         * Define the named class using the class file data provided, and resolve it. (See JVM
+         * specification.) For class names ending "$py", this method may adjust that name to that
+         * found in the class file itself.
+         *
+         * @param name fully-qualified binary name of the class
+         * @param data a class file as a byte array
+         * @return the defined and resolved class
+         */
         public Class<?> loadClassFromBytes(String name, byte[] data) {
             if (name.endsWith("$py")) {
                 try {

@@ -1,6 +1,10 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.compiler.Module;
+import org.python.core.util.FileUtil;
+import org.python.core.util.PlatformUtil;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,10 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.python.compiler.Module;
-import org.python.core.util.FileUtil;
-import org.python.core.util.PlatformUtil;
 
 /**
  * Utility functions for "import" support.
@@ -38,6 +38,12 @@ public class imp {
 
     private static final boolean IS_OSX = PySystemState.getNativePlatform().equals("darwin");
 
+    /**
+     * A bundle of a file name, the file's content and a last modified time, with no behaviour. As
+     * used here, the file is a class file and the last modified time is that of the matching
+     * source, while the filename is taken from the annotation in the class file. See
+     * {@link imp#readCodeData(String, InputStream, boolean, long)}.
+     */
     public static class CodeData {
 
         private final byte[] bytes;
@@ -63,8 +69,18 @@ public class imp {
         }
     }
 
-    public static enum CodeImport {
-        source, compiled_only;
+    /**
+     * A two-way selector given to
+     * {@link imp#createFromPyClass(String, InputStream, boolean, String, String, long, CodeImport)}
+     * that tells it whether the source file name to give the module-class constructor, and which
+     * ends up in {@code co_filename} attribute of the module's {@code PyCode}, should be from the
+     * caller or the compiled file.
+     */
+    static enum CodeImport {
+        /** Take the filename from the {@code sourceName} argument */
+        source,
+        /** Take filename from the compiler annotation */
+        compiled_only;
     }
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
@@ -76,11 +92,11 @@ public class imp {
 
     /**
      * Selects the parent class loader for Jython, to be used for dynamically loaded classes and
-     * resources. Chooses between the current and context classloader based on the following
+     * resources. Chooses between the current and context class loader based on the following
      * criteria:
      *
      * <ul>
-     * <li>If both are the same classloader, return that classloader.
+     * <li>If both are the same class loader, return that class loader.
      * <li>If either is null, then the non-null one is selected.
      * <li>If both are not null, and a parent/child relationship can be determined, then the child
      * is selected.
@@ -89,62 +105,61 @@ public class imp {
      * Jython classes)
      * </ul>
      *
-     * @return the parent class loader for Jython or null if both the current and context
-     *         classloaders are null.
+     * @return the parent class loader for Jython or null if both the current and context class
+     *         loaders are null.
      */
     public static ClassLoader getParentClassLoader() {
         ClassLoader current = imp.class.getClassLoader();
         ClassLoader context = Thread.currentThread().getContextClassLoader();
-        if (context == current) {
+        if (context == current || context == null) {
             return current;
-        }
-        if (context == null) {
-            return current;
-        }
-        if (current == null) {
+        } else if (current == null) {
             return context;
-        }
-        if (isParentClassLoader(context, current)) {
+        } else if (isAncestor(context, current)) {
+            return current;
+        } else if (isAncestor(current, context)) {
+            return context;
+        } else {
             return current;
         }
-        if (isParentClassLoader(current, context)) {
-            return context;
-        }
-        return current;
     }
 
-    private static boolean isParentClassLoader(ClassLoader suspectedParent, ClassLoader child) {
+    /** True iff a {@code possibleAncestor} is the ancestor of the {@code subject}. */
+    private static boolean isAncestor(ClassLoader possibleAncestor, ClassLoader subject) {
         try {
-            ClassLoader parent = child.getParent();
-            if (suspectedParent == parent) {
+            ClassLoader parent = subject.getParent();
+            if (possibleAncestor == parent) {
                 return true;
-            }
-            if (parent == null || parent == child) {
-                // We reached the boot class loader
+            } else if (parent == null || parent == subject) {
+                // The subject is the boot class loader
                 return false;
+            } else {
+                return isAncestor(possibleAncestor, parent);
             }
-            return isParentClassLoader(suspectedParent, parent);
-
         } catch (SecurityException e) {
             return false;
         }
     }
 
-    private imp() {}
+    private imp() {} // Prevent instantiation.
 
     /**
      * If the given name is found in sys.modules, the entry from there is returned. Otherwise a new
-     * PyModule is created for the name and added to sys.modules
+     * {@link PyModule} is created for the name and added to {@code sys.modules}. Creating the
+     * module does not execute the body of the module to initialise its attributes.
+     *
+     * @param name fully-qualified name of the module
+     * @return created {@code PyModule}
      */
     public static PyModule addModule(String name) {
         name = name.intern();
         PyObject modules = Py.getSystemState().modules;
-        PyModule module = (PyModule)modules.__finditem__(name);
+        PyModule module = (PyModule) modules.__finditem__(name);
         if (module != null) {
             return module;
         }
         module = new PyModule(name, null);
-        PyModule __builtin__ = (PyModule)modules.__finditem__("__builtin__");
+        PyModule __builtin__ = (PyModule) modules.__finditem__("__builtin__");
         PyObject __dict__ = module.__getattr__("__dict__");
         __dict__.__setitem__("__builtins__", __builtin__.__getattr__("__dict__"));
         __dict__.__setitem__("__package__", Py.None);
@@ -153,7 +168,7 @@ public class imp {
     }
 
     /**
-     * Remove name form sys.modules if it's there.
+     * Remove name from sys.modules if present.
      *
      * @param name the module name
      */
@@ -172,6 +187,12 @@ public class imp {
         }
     }
 
+    /**
+     * Read a stream as a new byte array and close the stream.
+     *
+     * @param fp to read
+     * @return bytes read
+     */
     private static byte[] readBytes(InputStream fp) {
         try {
             return FileUtil.readBytes(fp);
@@ -186,6 +207,7 @@ public class imp {
         }
     }
 
+    /** Open a file, raising a {@code PyException} on error. */
     private static InputStream makeStream(File file) {
         try {
             return new FileInputStream(file);
@@ -194,23 +216,69 @@ public class imp {
         }
     }
 
+    /**
+     * As {@link #createFromPyClass(String, InputStream, boolean, String, String, long, CodeImport)}
+     * but always constructs the named class using {@code sourceName} as argument and makes no check
+     * on the last-modified time.
+     *
+     * @param name module name on which to base the class name as {@code name + "$py"}
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @param sourceName used for identification in messages and the constructor of the named class.
+     * @param compiledName used for identification in messages and {@code __file__}.
+     * @return the module or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API mismatch or i/o error.
+     */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
             String sourceName, String compiledName) {
         return createFromPyClass(name, fp, testing, sourceName, compiledName, NO_MTIME);
-
     }
 
+    /**
+     * As {@link #createFromPyClass(String, InputStream, boolean, String, String, long, CodeImport)}
+     * but always constructs the named class using {@code sourceName} as argument.
+     *
+     * @param name module name on which to base the class name as {@code name + "$py"}
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @param sourceName used for identification in messages and the constructor of the named class.
+     * @param compiledName used for identification in messages and {@code __file__}.
+     * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
+     * @return the module or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API or last-modified time mismatch or i/o error.
+     */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
-            String sourceName, String compiledName, long mtime) {
-        return createFromPyClass(name, fp, testing, sourceName, compiledName, mtime,
+            String sourceName, String compiledName, long sourceLastModified) {
+        return createFromPyClass(name, fp, testing, sourceName, compiledName, sourceLastModified,
                 CodeImport.source);
     }
 
+    /**
+     * Create a Python module from its compiled form, reading the class file from the open input
+     * stream passed in (which is closed once read). The method may be used in a "testing" mode in
+     * which the module is imported (if possible), but error conditions return {@code null}, or in a
+     * non-testing mode where they throw. The caller may choose whether the source file name to give
+     * the module-class constructor, and which ends up in {@code co_filename} attribute of the
+     * module's {@code PyCode}, should be {@code sourceName} or the compiled file (See
+     * {@link CodeImport}.)
+     *
+     * @param name module name on which to base the class name as {@code name + "$py"}
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @param sourceName used for identification in messages.
+     * @param compiledName used for identification in messages and {@code __file__}.
+     * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
+     * @param source choose what to use as the file name when initialising the class
+     * @return the module or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API or last-modified time mismatch or i/o error.
+     */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
-            String sourceName, String compiledName, long mtime, CodeImport source) {
+            String sourceName, String compiledName, long sourceLastModified, CodeImport source) {
+
+        // Get the contents of a compiled ($py.class) file and some meta-data
         CodeData data = null;
         try {
-            data = readCodeData(compiledName, fp, testing, mtime);
+            data = readCodeData(compiledName, fp, testing, sourceLastModified);
         } catch (IOException ioe) {
             if (!testing) {
                 throw Py.ImportError(ioe.getMessage() + "[name=" + name + ", source=" + sourceName
@@ -220,10 +288,13 @@ public class imp {
         if (testing && data == null) {
             return null;
         }
+
+        // Instantiate the class and have it produce its PyCode object.
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data.getBytes(), //
-                    source == CodeImport.compiled_only ? data.getFilename() : sourceName);
+            // Choose which file name to provide to the module-class constructor
+            String display = source == CodeImport.compiled_only ? data.getFilename() : sourceName;
+            code = BytecodeLoader.makeCode(name + "$py", data.getBytes(), display);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -232,18 +303,42 @@ public class imp {
             }
         }
 
+        // Execute the PyCode object (run the module body) to populate the module __dict__
         Py.writeComment(IMPORT_LOG,
                 String.format("import %s # precompiled from %s", name, compiledName));
         return createFromCode(name, code, compiledName);
     }
 
+    /**
+     * As {@link #readCodeData(String, InputStream, boolean, long)} but do not check last-modified
+     * time and return only the class file bytes as an array.
+     *
+     * @param name of source file (used for identification in error/log messages)
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @return the class file bytes as an array or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws IOException from read failures
+     */
     public static byte[] readCode(String name, InputStream fp, boolean testing) throws IOException {
         return readCode(name, fp, testing, NO_MTIME);
     }
 
-    public static byte[] readCode(String name, InputStream fp, boolean testing, long mtime)
-            throws IOException {
-        CodeData data = readCodeData(name, fp, testing, mtime);
+    /**
+     * As {@link #readCodeData(String, InputStream, boolean, long)} but return only the class file
+     * bytes as an array.
+     *
+     * @param name of source file (used for identification in error/log messages)
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
+     * @return the class file bytes as an array or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws IOException from read failures
+     */
+    public static byte[] readCode(String name, InputStream fp, boolean testing,
+            long sourceLastModified) throws IOException {
+        CodeData data = readCodeData(name, fp, testing, sourceLastModified);
         if (data == null) {
             return null;
         } else {
@@ -251,17 +346,45 @@ public class imp {
         }
     }
 
+    /**
+     * As {@link #readCodeData(String, InputStream, boolean, long)} but do not check last-modified
+     * time.
+     *
+     * @param name of source file (used for identification in error/log messages)
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @return the {@code CodeData} bundle or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API mismatch
+     * @throws IOException from read failures
+     */
     public static CodeData readCodeData(String name, InputStream fp, boolean testing)
             throws IOException {
         return readCodeData(name, fp, testing, NO_MTIME);
     }
 
-    public static CodeData readCodeData(String name, InputStream fp, boolean testing, long mtime)
-            throws IOException {
-        byte[] data = readBytes(fp);
-        int api;
-        AnnotationReader ar = new AnnotationReader(data);
-        api = ar.getVersion();
+    /**
+     * Create a {@link CodeData} object bundling the contents of a class file (given as a stream),
+     * source-last-modified time supplied, and the name of the file taken from annotations on the
+     * class. On the way, the method checks the API version annotation matches the current process,
+     * and that the {@code org.python.compiler.MTime} annotation matches the source-last-modified
+     * time passed in.
+     *
+     * @param name of source file (used for identification in error/log messages)
+     * @param fp stream from which to read class file (closed when read)
+     * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
+     * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
+     * @return the {@code CodeData} bundle or {@code null} on failure (if {@code testing}).
+     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws IOException from read failures
+     */
+    public static CodeData readCodeData(String name, InputStream fp, boolean testing,
+            long sourceLastModified) throws IOException, PyException {
+
+        byte[] classFileData = readBytes(fp);
+        AnnotationReader ar = new AnnotationReader(classFileData);
+
+        // Check API version fossilised in the class file against that expected
+        int api = ar.getVersion();
         if (api != APIVersion) {
             if (testing) {
                 return null;
@@ -270,13 +393,17 @@ public class imp {
                 throw Py.ImportError(String.format(fmt, api, APIVersion, name));
             }
         }
-        if (testing && mtime != NO_MTIME) {
-            long time = ar.getMTime();
-            if (mtime != time) {
+
+        // Check source-last-modified time fossilised in the class file against that expected
+        if (testing && sourceLastModified != NO_MTIME) {
+            long mtime = ar.getMTime();
+            if (sourceLastModified != mtime) {
                 return null;
             }
         }
-        return new CodeData(data, mtime, ar.getFilename());
+
+        // All well: make the bundle.
+        return new CodeData(classFileData, sourceLastModified, ar.getFilename());
     }
 
     public static byte[] compileSource(String name, File file) {
@@ -383,6 +510,16 @@ public class imp {
         return createFromSource(name, fp, filename, outFilename, NO_MTIME);
     }
 
+    /**
+     * Compile Jython source (as an {@code InputStream}) to a module.
+     *
+     * @param name of the module to create (class will be name$py)
+     * @param fp opened on the (Jython) source to compile (will be closed)
+     * @param filename of the source backing {@code fp} (to embed in class as data)
+     * @param outFilename in which to write the compiled class
+     * @param mtime last modified time of the file backing {@code fp}
+     * @return created module
+     */
     public static PyObject createFromSource(String name, InputStream fp, String filename,
             String outFilename, long mtime) {
         byte[] bytes = compileSource(name, fp, filename, mtime);
@@ -405,11 +542,18 @@ public class imp {
     }
 
     /**
-     * Returns a module with the given name whose contents are the results of running c. Sets
-     * __file__ on the module to be moduleLocation unless moduleLocation is null. If c comes from a
-     * local .py file or compiled $py.class class moduleLocation should be the result of running new
-     * File(moduleLocation).getAbsolutePath(). If c comes from a remote file or is a jar
-     * moduleLocation should be the full uri for c.
+     * Return a Python module with the given {@code name} whose attributes are the result of running
+     * {@code PyCode c}. If {@code moduleLocation != null} it is used to set {@code __file__ }.
+     * <p>
+     * In normal circumstances, if {@code c} comes from a local {@code .py} file or compiled
+     * {@code $py.class} class the caller should should set {@code moduleLocation} to something like
+     * {@code new File(moduleLocation).getAbsolutePath()}. If {@code c} comes from a remote file or
+     * is a JAR, {@code moduleLocation} should be the full URI for that source or class.
+     *
+     * @param name fully-qualified name of the module
+     * @param c code supplying the module
+     * @param moduleLocation to become {@code __file__} if not {@code null}
+     * @return the module object
      */
     public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
         checkName(name);
@@ -417,7 +561,7 @@ public class imp {
 
         PyBaseCode code = null;
         if (c instanceof PyBaseCode) {
-            code = (PyBaseCode)c;
+            code = (PyBaseCode) c;
         }
 
         if (moduleLocation != null) {
@@ -466,18 +610,30 @@ public class imp {
         return getPathImporter(sys.path_importer_cache, sys.path_hooks, p);
     }
 
+    /**
+     * Return an importer object for an element of {@code sys.path} or of a package's
+     * {@code __path__}, possibly by fetching it from the {@code cache}. If it wasn’t yet cached,
+     * traverse {@code hooks} until a hook is found that can handle the path item. Return
+     * {@link Py#None} if no hook could do so. This tells our caller it should fall back to the
+     * built-in import mechanism. Cache the result in {@code cache}. Return a new reference to the
+     * importer object.
+     * <p>
+     * This is the "path hooks" mechanism first described in PEP 302
+     *
+     * @param cache normally {@code sys.path_importer_cache}
+     * @param hooks normally (@code sys.path_hooks}
+     * @param p an element of {@code sys.path} or of a package's {@code __path__}
+     * @return the importer object for the path element or {@code Py.None} for "fall-back".
+     */
     static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {
 
-        // attempt to get an importer for the path
-        // use null as default value since Py.None is
-        // a valid value in the cache for the default
-        // importer
+        // Is it in the cache?
         PyObject importer = cache.__finditem__(p);
         if (importer != null) {
             return importer;
         }
 
-        // nothing in the cache, so check all hooks
+        // Nothing in the cache, so check all hooks.
         PyObject iter = hooks.__iter__();
         for (PyObject hook; (hook = iter.__iternext__()) != null;) {
             try {
@@ -491,6 +647,7 @@ public class imp {
         }
 
         if (importer == null) {
+            // No hook claims to handle the location p, so add an imp.NullImporter
             try {
                 importer = new PyNullImporter(p);
             } catch (PyException e) {
@@ -501,19 +658,32 @@ public class imp {
         }
 
         if (importer != null) {
+            // We found an importer. Cache it for next time.
             cache.__setitem__(p, importer);
         } else {
+            // Caller will fall-back to built-in mechanisms.
             importer = Py.None;
         }
 
         return importer;
     }
 
+    /**
+     * Try to load a module from {@code sys.meta_path}, as a built-in module, or from either the the
+     * {@code __path__} of the enclosing package or {@code sys.path} if the module is being sought
+     * at the top level.
+     *
+     * @param name simple name of the module.
+     * @param moduleName fully-qualified (dotted) name of the module (ending in {@code name}.
+     * @param path {@code __path__} of the enclosing package (or {@code null} if top level).
+     * @return the module if we can load it (or {@code null} if we can't).
+     */
     static PyObject find_module(String name, String moduleName, PyList path) {
         PyObject loader = Py.None;
         PySystemState sys = Py.getSystemState();
         PyObject metaPath = sys.meta_path;
 
+        // Check for importers along sys.meta_path
         for (PyObject importer : metaPath.asIterable()) {
             PyObject findModule = importer.__getattr__("find_module");
             loader = findModule.__call__(new PyObject[] { //
@@ -523,23 +693,27 @@ public class imp {
             }
         }
 
+        // Attempt to load from (prepared) builtins in sys.builtins.
         PyObject ret = loadBuiltin(moduleName);
         if (ret != null) {
             return ret;
         }
 
+        // Note the path here may be sys.path or the search path of a Python package.
         path = path == null ? sys.path : path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject p = path.__getitem__(i);
+            // Is there a path-specific importer?
             PyObject importer = getPathImporter(sys.path_importer_cache, sys.path_hooks, p);
             if (importer != Py.None) {
+                // A specific importer is defined. Try its finder method.
                 PyObject findModule = importer.__getattr__("find_module");
                 loader = findModule.__call__(new PyObject[] {new PyString(moduleName)});
                 if (loader != Py.None) {
                     return loadFromLoader(loader, moduleName);
                 }
             }
-            // p could be unicode or bytes (in the file system encoding)
+            // p could be a unicode or bytes object (in the file system encoding)
             ret = loadFromSource(sys, name, moduleName, Py.fileSystemDecode(p));
             if (ret != null) {
                 return ret;
@@ -549,6 +723,14 @@ public class imp {
         return ret;
     }
 
+    /**
+     * Load a built-in module by reference to {@link PySystemState#builtins}, which maps Python
+     * module names to class names. Special treatment is given to the modules {@code sys} and
+     * {@code __builtin__}.
+     *
+     * @param fully-qualified name of module
+     * @return
+     */
     private static PyObject loadBuiltin(String name) {
         if (name == "sys") {
             Py.writeComment(IMPORT_LOG, "'" + name + "' as sys in builtin modules");
@@ -569,7 +751,8 @@ public class imp {
                     }
                     return createFromClass(name, c);
                 } catch (NoClassDefFoundError e) {
-                    throw Py.ImportError("Cannot import " + name + ", missing class " + c.getName());
+                    throw Py.ImportError(
+                            "Cannot import " + name + ", missing class " + c.getName());
                 }
             }
         }
@@ -593,39 +776,54 @@ public class imp {
         return createFromPyClass(name, stream, false, sourceName, compiledName);
     }
 
-    static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
-        String dirName = sys.getPath(entry);
+    /**
+     * Import a module defined in Python by loading it from source (or a compiled
+     * {@code name$pyclass}) file in the specified location (often an entry from {@code sys.path},
+     * or a sub-directory of it named for the {@code modName}. For example, if {@code name} is
+     * "pkg1" and the {@code modName} is "pkg.pkg1", {@code location} might be "mylib/pkg".
+     *
+     * @param sys the sys module of the interpreter importing the module.
+     * @param name by which to look for files or a directory representing the module.
+     * @param modName name by which to enter the module in {@code sys.modules}.
+     * @param location where to look for the {@code name}.
+     * @return the module if we can load it (or {@code null} if we can't).
+     */
+    static PyObject loadFromSource(PySystemState sys, String name, String modName,
+            String location) {
+        String dirName = sys.getPath(location);
         String sourceName = "__init__.py";
         String compiledName = makeCompiledFilename(sourceName);
         // display names are for identification purposes (e.g. __file__): when entry is
         // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
         // /tmp/foo/bar.py)
-        String displayDirName = entry.equals("") ? null : entry;
+        String displayDirName = location.equals("") ? null : location;
         String displaySourceName = new File(new File(displayDirName, name), sourceName).getPath();
         String displayCompiledName =
                 new File(new File(displayDirName, name), compiledName).getPath();
 
-        // First check for packages
-        File dir = new File(dirName, name);
-        File sourceFile = new File(dir, sourceName);
-        File compiledFile = new File(dir, compiledName);
+        // Create file objects to check for a Python package
+        File dir = new File(dirName, name);                 // entry/name/
+        File sourceFile = new File(dir, sourceName);        // entry/name/__init__.py
+        File compiledFile = new File(dir, compiledName);    // entry/name/__init__$py.class
 
-        boolean pkg = false;
+        boolean isPackage = false;
         try {
             if (dir.isDirectory()) {
                 if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
-                    pkg = true;
+                    isPackage = true;
                 } else {
                     String printDirName = PyString.encode_UnicodeEscape(dir.getPath(), '\'');
                     Py.warning(Py.ImportWarning, String.format(
                             "Not importing directory %s: missing __init__.py", printDirName));
+                    return null;
                 }
             }
         } catch (SecurityException e) {
             // ok
         }
 
-        if (!pkg) {
+        if (!isPackage) {
+            // The source is entry/name.py and compiled is entry/name$py.class
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
             compiledName = makeCompiledFilename(sourceName);
@@ -634,18 +832,24 @@ public class imp {
             sourceFile = new File(dirName, sourceName);
             compiledFile = new File(dirName, compiledName);
         } else {
+            // Create a PyModule (uninitialised) for name.py, called modName in sys.modules
             PyModule m = addModule(modName);
             PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());
+            // FIXME: FS encode file name for __path__
             m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
         }
 
+        // Load and execute the module, from its compiled or source form.
         try {
+            // Try to create the module from source or an existing compiled class.
             if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
                 long pyTime = sourceFile.lastModified();
                 if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+                    // We have the compiled file and will use that if it is not out of date
                     Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
                     if (classTime >= pyTime) {
+                        // The compiled file does not appear out of date relative to the source.
                         PyObject ret = createFromPyClass(modName, makeStream(compiledFile), //
                                 true, // OK to fail here as we have the source
                                 displaySourceName, displayCompiledName, pyTime);
@@ -653,15 +857,15 @@ public class imp {
                             return ret;
                         }
                     }
-                    return createFromSource(modName, makeStream(sourceFile), displaySourceName,
-                            compiledFile.getPath(), pyTime);
                 }
+                // The compiled class is not present, was out of date, or trying to use it failed.
                 return createFromSource(modName, makeStream(sourceFile), displaySourceName,
                         compiledFile.getPath(), pyTime);
             }
 
-            // If no source, try loading precompiled
-            Py.writeDebug(IMPORT_LOG, "trying precompiled with no source " + compiledFile.getPath());
+            // If no source, try loading compiled
+            Py.writeDebug(IMPORT_LOG,
+                    "trying precompiled with no source " + compiledFile.getPath());
             if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
                 return createFromPyClass(modName, makeStream(compiledFile), //
                         false, // throw ImportError here if this fails
@@ -673,6 +877,28 @@ public class imp {
         return null;
     }
 
+    /**
+     * Check that the canonical name of {@code file} matches {@code filename}, case-sensitively,
+     * even when the OS platform is case-insensitive. This is used to obtain as a check during
+     * import on platforms (Windows) that may be case-insensitive regarding file open. It is assumed
+     * that {@code file} was derived from attempting to find {@code filename}, so it returns
+     * {@code true} on a case-sensitive platform.
+     * <p>
+     * Algorithmically, we return {@code true} if any of the following is true:
+     * <ul>
+     * <li>{@link Options#caseok} is {@code true} (default is {@code false}).</li>
+     * <li>The platform is case sensitive (according to
+     * {@link PlatformUtil#isCaseInsensitive()})</li>
+     * <li>The name part of the canonical path of {@code file} starts with {@code filename}</li>
+     * <li>The name of any sibling (in the same directory as) {@code file} equals
+     * {@code filename}</li>
+     * </ul>
+     * and false otherwise.
+     *
+     * @param file to be tested
+     * @param filename to be matched
+     * @return {@code file} matches {@code filename}
+     */
     public static boolean caseok(File file, String filename) {
         if (Options.caseok || !PlatformUtil.isCaseInsensitive()) {
             return true;
@@ -681,13 +907,8 @@ public class imp {
             File canFile = new File(file.getCanonicalPath());
             boolean match = filename.regionMatches(0, canFile.getName(), 0, filename.length());
             if (!match) {
-                // possibly a symlink. Get parent and look for exact match in listdir()
-                // This is what CPython does in the case of Mac OS X and Cygwin.
-                // XXX: This will be a performance hit, maybe jdk7 nio2 can give us a better
-                // method?
-                File parent = file.getParentFile();
-                String[] children = parent.list();
-                for (String c : children) {
+                // Get parent and look for exact match in listdir(). This is horrible, but rare.
+                for (String c : file.getParentFile().list()) {
                     if (c.equals(filename)) {
                         return true;
                     }
@@ -718,17 +939,17 @@ public class imp {
 
     /**
      * Find the parent package name for a module.
-     *
+     * <p>
      * If __name__ does not exist in the module or if level is <code>0</code>, then the parent is
      * <code>null</code>. If __name__ does exist and is not a package name, the containing package
      * is located. If no such package exists and level is <code>-1</code>, the parent is
      * <code>null</code>. If level is <code>-1</code>, the parent is the current name. Otherwise,
-     * <code>level-1</code> doted parts are stripped from the current name. For example, the
+     * <code>level-1</code> dotted parts are stripped from the current name. For example, the
      * __name__ <code>"a.b.c"</code> and level <code>2</code> would return <code>"a.b"</code>, if
      * <code>c</code> is a package and would return <code>"a"</code>, if <code>c</code> is not a
      * package.
      *
-     * @param dict the __dict__ of a loaded module
+     * @param dict the __dict__ of a loaded module that is the context of the import statement
      * @param level used for relative and absolute imports. -1 means try both, 0 means absolute
      *            only, positive ints represent the level to look upward for a relative path (1
      *            means current package, 2 means one level up). See PEP 328 at
@@ -745,7 +966,7 @@ public class imp {
             return null;
         }
 
-        PyObject tmp = dict.__finditem__("__package__");
+        PyObject tmp = dict.__finditem__("__package__"); // XXX: why is this not guaranteed set?
         if (tmp != null && tmp != Py.None) {
             if (!Py.isInstance(tmp, PyString.TYPE)) {
                 throw Py.ValueError("__package__ set to non-string");
@@ -806,128 +1027,220 @@ public class imp {
     }
 
     /**
+     * Try to import the module named by <i>parentName.name</i>. The method tries 3 ways, accepting
+     * the first that * succeeds:
+     * <ol>
+     * <li>Check for the module (by its fully-qualified name) in {@code sys.modules}.</li>
+     * <li>If {@code mod==null}, try to load the module via
+     * {@link #find_module(String, String, PyList)}. If {@code mod!=null}, find it as an attribute
+     * of {@code mod} via its {@link PyObject#impAttr(String)} method (which then falls back to
+     * {@code find_module} if {@code mod} has a {@code __path__}). Either way, add the loaded module
+     * to {@code sys.modules}.</li>
+     * <li>Try to load the module as a Java package by the name {@code outerFullName}
+     * {@link JavaImportHelper#tryAddPackage(String, PyObject)}.</li>
+     * </ol>
+     * Finally, if one is found, If a module by the given name already exists in {@code sys.modules}
+     * it will be returned from there directly. Otherwise, in {@code mod==null} (frequent case) it
+     * will be looked for via {@link #find_module(String, String, PyList)}.
+     * <p>
+     * The case {@code mod!=null} supports circumstances in which the module sought may be found as
+     * an attribute of a parent module.
      *
-     * @param mod a previously loaded module
-     * @param parentNameBuffer
-     * @param name the name of the module to load
-     * @return null or None
+     * @param mod if not {@code null}, a package where the module may be an attribute.
+     * @param parentName parent name of the module. (Buffer is appended with "." and {@code name}.
+     * @param name the (simple) name of the module to load
+     * @param outerFullName name to use with the {@code JavaImportHelper}.
+     * @param fromlist if not {@code null} the import is {@code from <module> import <fromlist>}
+     * @return the imported module (or {@code null} or {@link Py#None} on failure).
      */
-    private static PyObject import_next(PyObject mod, StringBuilder parentNameBuffer, String name,
+    private static PyObject import_next(PyObject mod, StringBuilder parentName, String name,
             String outerFullName, PyObject fromlist) {
-        if (parentNameBuffer.length() > 0 && name != null && name.length() > 0) {
-            parentNameBuffer.append('.');
+
+        // Concatenate the parent name and module name *modifying the parent name buffer*
+        if (parentName.length() > 0 && name != null && name.length() > 0) {
+            parentName.append('.');
         }
-        parentNameBuffer.append(name);
+        String fullName = parentName.append(name).toString().intern();
 
-        String fullName = parentNameBuffer.toString().intern();
-
+        // Check if already in sys.modules (possibly Py.None).
         PyObject modules = Py.getSystemState().modules;
         PyObject ret = modules.__finditem__(fullName);
         if (ret != null) {
             return ret;
         }
+
         if (mod == null) {
+            // We are looking for a top-level module
             ret = find_module(fullName, name, null);
         } else {
+            // Look within mod as enclosing package
             ret = mod.impAttr(name.intern());
         }
+
         if (ret == null || ret == Py.None) {
+            // Maybe this is a Java package: full name from the import and maybe classes to import
             if (JavaImportHelper.tryAddPackage(outerFullName, fromlist)) {
+                // The action has already added it to sys.modules
                 ret = modules.__finditem__(fullName);
             }
             return ret;
         }
+
+        // The find operation may have added to sys.modules the module object we seek.
         if (modules.__finditem__(fullName) == null) {
-            modules.__setitem__(fullName, ret);
+            modules.__setitem__(fullName, ret);     // Nope, add it
         } else {
-            ret = modules.__finditem__(fullName);
+            ret = modules.__finditem__(fullName);   // Yep, return that instead
         }
+
+        // On OSX we currently have to monkeypatch setuptools.command.easy_install.
         if (IS_OSX && fullName.equals("setuptools.command")) {
-            // On OSX we currently have to monkeypatch setuptools.command.easy_install.
             // See http://bugs.jython.org/issue2570
             load("_fix_jython_setuptools_osx");
         }
+
         return ret;
     }
 
-    // never returns null or None
-    private static PyObject import_first(String name, StringBuilder parentNameBuffer) {
-        PyObject ret = import_next(null, parentNameBuffer, name, null, null);
+    /**
+     * Top of the import logic in the case of a simple {@code import a.b.c.m}.
+     *
+     * @param name fully-qualified name of module to import {@code import a.b.c.m}
+     * @param parentName used as a workspace as the search descends the package hierarchy
+     * @return the named module (never {@code null} or {@code None})
+     * @throws PyException (ImportError) if not found
+     */
+    private static PyObject import_first(String name, StringBuilder parentName) throws PyException {
+        PyObject ret = import_next(null, parentName, name, null, null);
         if (ret == null || ret == Py.None) {
             throw Py.ImportError("No module named " + name);
         }
         return ret;
     }
 
-    private static PyObject import_first(String name, StringBuilder parentNameBuffer,
-            String fullName, PyObject fromlist) {
-        PyObject ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
+    /**
+     * Top of the import logic in the case of a complex {@code from a.b.c.m import n1, n2, n3}.
+     *
+     * @param name fully-qualified name of module to import {@code a.b.c.m}.
+     * @param parentName used as a workspace as the search descends the package hierarchy
+     * @param fullName the "outer" name by which the module is known {@code a.b.c.m}.
+     * @param fromlist names to import from the module {@code n1, n2, n3}.
+     * @return the named module (never returns {@code null} or {@code None})
+     * @throws PyException (ImportError) if not found
+     */
+    private static PyObject import_first(String name, StringBuilder parentName,
+            String fullName, PyObject fromlist) throws PyException {
+
+        // Try the "normal" Python import process
+        PyObject ret = import_next(null, parentName, name, fullName, fromlist);
+
+        // If unsuccessful try importing as a Java package
         if (ret == null || ret == Py.None) {
             if (JavaImportHelper.tryAddPackage(fullName, fromlist)) {
-                ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
+                ret = import_next(null, parentName, name, fullName, fromlist);
             }
         }
+
+        // If still unsuccessful, it's an error
         if (ret == null || ret == Py.None) {
             throw Py.ImportError("No module named " + name);
         }
         return ret;
     }
 
-    // Hierarchy-recursively search for dotted name in mod;
-    // never returns null or None
+    /**
+     * Iterate through the components (after the first) of a fully-qualified module name
+     * {@code a.b.c.m} finding the corresponding modules {@code a.b}, {@code a.b.c}, and
+     * {@code a.b.c.m}, importing them if necessary. This is a helper to
+     * {@link #import_module_level(String, boolean, PyObject, PyObject, int)}, used when the module
+     * name involves more than one level.
+     * <p>
+     * This method may be called in support of (effectively) of a simple import statement like
+     * {@code import a.b.c.m} or a complex statement {@code from a.b.c.m import n1, n2, n3}. This
+     * method always returns the "deepest" name, in the example, the module {@code m} whose full
+     * name is {@code a.b.c.m}.
+     *
+     * @param mod top module of the import
+     * @param parentName used as a workspace as the search descends the package hierarchy
+     * @param restOfName {@code b.c.m}
+     * @param fullName {@code a.b.c.m}
+     * @param fromlist names to import from the module {@code n1, n2, n3}.
+     * @return the last named module (never {@code null} or {@code None})
+     * @throws PyException (ImportError) if not found
+     */
     // ??pending: check if result is really a module/jpkg/jclass?
-    private static PyObject import_logic(PyObject mod, StringBuilder parentNameBuffer,
-            String dottedName, String fullName, PyObject fromlist) {
+    private static PyObject import_logic(PyObject mod, StringBuilder parentName, String restOfName,
+            String fullName, PyObject fromlist) throws PyException {
+
         int dot = 0;
-        int last_dot = 0;
+        int start = 0;
 
         do {
+            // Extract the name that starts at restOfName[start:] up to next dot.
             String name;
-            dot = dottedName.indexOf('.', last_dot);
+            dot = restOfName.indexOf('.', start);
             if (dot == -1) {
-                name = dottedName.substring(last_dot);
+                name = restOfName.substring(start);
             } else {
-                name = dottedName.substring(last_dot, dot);
-            }
-            PyJavaPackage jpkg = null;
-            if (mod instanceof PyJavaPackage) {
-                jpkg = (PyJavaPackage)mod;
+                name = restOfName.substring(start, dot);
             }
 
-            mod = import_next(mod, parentNameBuffer, name, fullName, fromlist);
+            PyJavaPackage jpkg = null;
+            if (mod instanceof PyJavaPackage) {
+                jpkg = (PyJavaPackage) mod;
+            }
+
+            // Find (and maybe import) the package/module corresponding to this new segment.
+            mod = import_next(mod, parentName, name, fullName, fromlist);
+
+            // Try harder when importing as a Java package :/
             if (jpkg != null && (mod == null || mod == Py.None)) {
                 // try again -- under certain circumstances a PyJavaPackage may
                 // have been added as a side effect of the last import_next
                 // attempt. see Lib/test_classpathimport.py#test_bug1126
-                mod = import_next(jpkg, parentNameBuffer, name, fullName, fromlist);
+                mod = import_next(jpkg, parentName, name, fullName, fromlist);
             }
+
+            // If still unsuccessful, it's an error
             if (mod == null || mod == Py.None) {
                 throw Py.ImportError("No module named " + name);
             }
-            last_dot = dot + 1;
+
+            // Next module/package simple-name starts just after the last dot we found
+            start = dot + 1;
         } while (dot != -1);
 
         return mod;
     }
 
     /**
-     * @param name
-     * @param top
-     * @param modDict
-     * @return a module
+     * Import a module by name. This supports the default {@code __import__()} function
+     * {@code __builtin__.__import__}. (Called with the import system locked.)
+     *
+     * @param name qualified name of the package/module to import (may be relative)
+     * @param top if true, return the top module in the name, otherwise the last
+     * @param modDict the __dict__ of the importing module (used to navigate a relative import)
+     * @param fromlist list of names being imported
+     * @param level 0=absolute, n&gt;0=relative levels to go up, -1=try relative then absolute.
+     * @return an imported module (Java or Python)
      */
     private static PyObject import_module_level(String name, boolean top, PyObject modDict,
             PyObject fromlist, int level) {
+
+        // Check for basic invalid call
         if (name.length() == 0) {
             if (level == 0 || modDict == null) {
                 throw Py.ValueError("Empty module name");
             } else {
                 PyObject moduleName = modDict.__findattr__("__name__");
+                // XXX: should this test be for "__main__"?
                 if (moduleName != null && moduleName.toString().equals("__name__")) {
                     throw Py.ValueError("Attempted relative import in non-package");
                 }
             }
         }
+
+        // Seek the module (in sys.modules) that the import is relative to.
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
@@ -938,6 +1251,8 @@ public class imp {
                 pkgMod = null;
             }
         }
+
+        // Extract the first element of the (fully qualified) name.
         int dot = name.indexOf('.');
         String firstName;
         if (dot == -1) {
@@ -945,22 +1260,31 @@ public class imp {
         } else {
             firstName = name.substring(0, dot);
         }
-        StringBuilder parentNameBuffer = new StringBuilder(pkgMod != null ? pkgName : "");
-        PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName, name, fromlist);
+
+        // Import the first-named module, relative to pkgMod (which may be null)
+        StringBuilder parentName = new StringBuilder(pkgMod != null ? pkgName : "");
+        PyObject topMod = import_next(pkgMod, parentName, firstName, name, fromlist);
+
         if (topMod == Py.None || topMod == null) {
-            parentNameBuffer = new StringBuilder("");
+            // The first attempt failed. This time
+            parentName = new StringBuilder("");
             // could throw ImportError
             if (level > 0) {
-                topMod = import_first(pkgName + "." + firstName, parentNameBuffer, name, fromlist);
+                // Import relative to context. pkgName was already computed from level.
+                topMod = import_first(pkgName + "." + firstName, parentName, name, fromlist);
             } else {
-                topMod = import_first(firstName, parentNameBuffer, name, fromlist);
+                // Absolute import
+                topMod = import_first(firstName, parentName, name, fromlist);
             }
         }
+
         PyObject mod = topMod;
+
         if (dot != -1) {
-            // could throw ImportError
-            mod = import_logic(topMod, parentNameBuffer, name.substring(dot + 1), name, fromlist);
+            // This is a dotted name: work through the remaining name elements.
+            mod = import_logic(topMod, parentName, name.substring(dot + 1), name, fromlist);
         }
+
         if (top) {
             return topMod;
         }
@@ -990,10 +1314,28 @@ public class imp {
         }
     }
 
+    /**
+     * Ensure that the items mentioned in the from-list of an import are actually present, even if
+     * they are modules we have not imported yet.
+     *
+     * @param mod module we are importing from
+     * @param fromlist tuple of names to import
+     * @param name of module we are importing from (as given, may be relative)
+     */
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name) {
         ensureFromList(mod, fromlist, name, false);
     }
 
+    /**
+     * Ensure that the items mentioned in the from-list of an import are actually present, even if
+     * they are modules we have not imported yet.     *
+     *
+     * @param mod module we are importing from
+     * @param fromlist tuple of names to import
+     * @param name of module we are importing from (as given, may be relative)
+     * @param recursive if true, when the from-list includes "*", do not import __all__
+     */
+    // XXX: effect of the recursive argument is hard to fathom.
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name,
             boolean recursive) {
         // This can happen with imports like "from . import foo"
@@ -1044,11 +1386,14 @@ public class imp {
     }
 
     /**
-     * Import a module by name. This is the default call for __builtin__.__import__.
+     * Import a module by name. This supports the default {@code __import__()} function
+     * {@code __builtin__.__import__}. Locks the import system while it operates.
      *
-     * @param name the name of the package to import
+     * @param name the fully-qualified name of the package/module to import
      * @param top if true, return the top module in the name, otherwise the last
-     * @param modDict the __dict__ of an already imported module
+     * @param modDict the __dict__ of the importing module (used for name in relative import)
+     * @param fromlist list of names being imported
+     * @param level 0=absolute, n&gt;0=relative levels to go up, -1=try relative then absolute.
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top, PyObject modDict,
