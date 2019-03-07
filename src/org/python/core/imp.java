@@ -669,12 +669,12 @@ public class imp {
     }
 
     /**
-     * Try to load a module from {@code sys.meta_path}, as a built-in module, or from either the the
-     * {@code __path__} of the enclosing package or {@code sys.path} if the module is being sought
-     * at the top level.
+     * Try to load a Python module from {@code sys.meta_path}, as a built-in module, or from either
+     * the {@code __path__} of the enclosing package or {@code sys.path} if the module is being
+     * sought at the top level.
      *
      * @param name simple name of the module.
-     * @param moduleName fully-qualified (dotted) name of the module (ending in {@code name}.
+     * @param moduleName fully-qualified (dotted) name of the module (ending in {@code name}).
      * @param path {@code __path__} of the enclosing package (or {@code null} if top level).
      * @return the module if we can load it (or {@code null} if we can't).
      */
@@ -966,12 +966,12 @@ public class imp {
             return null;
         }
 
-        PyObject tmp = dict.__finditem__("__package__"); // XXX: why is this not guaranteed set?
+        PyObject tmp = dict.__finditem__("__package__");
         if (tmp != null && tmp != Py.None) {
             if (!Py.isInstance(tmp, PyString.TYPE)) {
                 throw Py.ValueError("__package__ set to non-string");
             }
-            modname = ((PyString)tmp).getString();
+            modname = ((PyString) tmp).getString();
         } else {
             // __package__ not set, so figure it out and set it.
 
@@ -1015,12 +1015,14 @@ public class imp {
         if (Py.getSystemState().modules.__finditem__(modname) == null) {
             if (orig_level < 1) {
                 if (modname.length() > 0) {
-                    Py.warning(Py.RuntimeWarning, String.format("Parent module '%.200s' not found "
-                            + "while handling absolute import", modname));
+                    Py.warning(Py.RuntimeWarning, String.format(
+                            "Parent module '%.200s' not found " + "while handling absolute import",
+                            modname));
                 }
             } else {
-                throw Py.SystemError(String.format("Parent module '%.200s' not loaded, "
-                        + "cannot perform relative import", modname));
+                throw Py.SystemError(String.format(
+                        "Parent module '%.200s' not loaded, " + "cannot perform relative import",
+                        modname));
             }
         }
         return modname.intern();
@@ -1221,7 +1223,7 @@ public class imp {
      * @param top if true, return the top module in the name, otherwise the last
      * @param modDict the __dict__ of the importing module (used to navigate a relative import)
      * @param fromlist list of names being imported
-     * @param level 0=absolute, n&gt;0=relative levels to go up, -1=try relative then absolute.
+     * @param level 0=absolute, n&gt;0=relative levels to go up - 1, -1=try relative then absolute.
      * @return an imported module (Java or Python)
      */
     private static PyObject import_module_level(String name, boolean top, PyObject modDict,
@@ -1266,7 +1268,7 @@ public class imp {
         PyObject topMod = import_next(pkgMod, parentName, firstName, name, fromlist);
 
         if (topMod == Py.None || topMod == null) {
-            // The first attempt failed. This time
+            // The first attempt failed.
             parentName = new StringBuilder("");
             // could throw ImportError
             if (level > 0) {
@@ -1328,14 +1330,13 @@ public class imp {
 
     /**
      * Ensure that the items mentioned in the from-list of an import are actually present, even if
-     * they are modules we have not imported yet.     *
+     * they are modules we have not imported yet.
      *
      * @param mod module we are importing from
      * @param fromlist tuple of names to import
      * @param name of module we are importing from (as given, may be relative)
-     * @param recursive if true, when the from-list includes "*", do not import __all__
+     * @param recursive true, when this method calls itself
      */
-    // XXX: effect of the recursive argument is hard to fathom.
     private static void ensureFromList(PyObject mod, PyObject fromlist, String name,
             boolean recursive) {
         // This can happen with imports like "from . import foo"

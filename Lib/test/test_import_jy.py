@@ -11,8 +11,10 @@ import sys
 import tempfile
 import unittest
 import subprocess
+import zipfile
 from test import test_support
 from test_chdir import read, safe_mktemp, COMPILED_SUFFIX
+from doctest import script_from_examples
 
 class MislabeledImportTestCase(unittest.TestCase):
 
@@ -233,11 +235,225 @@ class UnicodeNamesTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.reason, "ordinal not in range(128)")
 
 
+class MixedImportTestCase(unittest.TestCase):
+    #
+    # This test case depends on material in a file structure unpacked
+    # from an associated ZIP archive. The test depends on Python source
+    # and Java class files. The archive also contains the Java source
+    # from which the class files may be regenerated if necessary.
+    #
+    # To regenerate the class files, explode the archive in a
+    # convenient spot on the file system and compile them with javac at
+    # the lowest supported code standard (currently Java 7), e.g. (posh)
+    #   PS jython-trunk> cd mylib
+    #   PS mylib> javac  $(get-childitem -Recurse -Name -Include "*.java")
+    # or the equivalent Unix command using find.
+
+    ZIP = test_support.findfile("test_import_jy.zip")
+
+    @classmethod
+    def setUpClass(cls):
+        td = tempfile.mkdtemp()
+        cls.source = os.path.join(td, "test.py")
+        cls.setpath = "import sys; sys.modules[0] = r'" + td + "'"
+        zip = zipfile.ZipFile(cls.ZIP, 'r')
+        zip.extractall(td)
+        cls.tmpdir = td
+
+    @classmethod
+    def tearDownClass(cls):
+        td = cls.tmpdir
+        if td and os.path.isdir(td):
+            test_support.rmtree(td)
+
+    def make_prog(self, *script):
+        "Write a program to test.py"
+        with open(self.source, "wt") as f:
+            print >> f, MixedImportTestCase.setpath
+            for line in script:
+                print >> f, line
+            print >> f, "raise SystemExit"
+
+    def run_prog(self):
+        # Feed lines to interpreter and capture output
+        process = subprocess.Popen([sys.executable, "-S", MixedImportTestCase.source],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            raise subprocess.CalledProcessError(retcode, sys.executable, output=err)
+        return output
+
+    def module_regex(self, module):
+        "Partial filename from module"
+        sep = "\\" + os.path.sep
+        return sep + module.replace('.', sep)
+
+    def check_package(self, line, module):
+        target = "Executed: .*" +  self.module_regex(module) + "\\" + os.path.sep \
+                    + r"__init__(\.py|\$py\.class|\.pyc)"
+        self.assertRegexpMatches(line, target)
+
+    def check_module(self, line, module):
+        "Check output from loading a module"
+        target = "Executed: .*" + self.module_regex(module) + r"(\.py|\$py\.class|\.pyc)"
+        self.assertRegexpMatches(line, target)
+
+    def test_import_to_program(self):
+        # A Python module in a Python program
+        self.make_prog("import a.b.c.m", "print repr(a.b.c.m)")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "a")
+        self.check_package(out[1], "a.b")
+        self.check_package(out[2], "a.b.c")
+        self.check_module(out[3], "a.b.c.m")
+        self.assertRegexpMatches(out[4], r"\<module 'a\.b\.c\.m' from .*\>")
+
+    def test_import_to_program_no_magic(self):
+        # A Python module in a Python program (issue 2654)
+        self.make_prog("import a.b, a.b.c", "print repr(a.b.m3)")
+        try:
+            out = self.run_prog()
+            self.fail("reference to a.b.m3 did not raise exception")
+        except subprocess.CalledProcessError as e:
+            self.assertRegexpMatches(e.output, r"AttributeError: .* has no attribute 'm3'")
+
+    def test_import_relative_implicit(self):
+        # A Python module by implicit relative import (no dots)
+        self.make_prog("import a.b.m3")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "a")
+        self.check_package(out[1], "a.b")
+        self.check_module(out[2], "a.b.m3")
+        self.check_package(out[3], "a.b.c")
+        self.check_module(out[4], "a.b.c.m")
+        self.assertRegexpMatches(out[5], r"\<module 'a\.b\.c\.m' from .*\>")
+
+    def test_import_absolute_implicit(self):
+        # A built-in module by absolute import (but relative must be tried first)
+        self.make_prog("import a.b.m4")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "a")
+        self.check_package(out[1], "a.b")
+        self.check_module(out[2], "a.b.m4")
+        self.assertRegexpMatches(out[3], r"\<module 'sys' \(built-in\)\>")
+
+    def test_import_from_module(self):
+        # A Python module by from-import
+        self.make_prog("import a.b.m5")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "a")
+        self.check_package(out[1], "a.b")
+        self.check_module(out[2], "a.b.m5")
+        self.check_package(out[3], "a.b.c")
+        self.check_module(out[4], "a.b.c.m")
+        self.assertRegexpMatches(out[5], r"\<module 'a\.b\.c\.m' from .*\>")
+        self.assertRegexpMatches(out[6], r"1 2")
+
+    def test_import_from_relative_module(self):
+        # A Python module by relative from-import
+        self.make_prog("import a.b.m6")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "a")
+        self.check_package(out[1], "a.b")
+        self.check_module(out[2], "a.b.m6")
+        self.check_package(out[3], "a.b.c")
+        self.check_module(out[4], "a.b.c.m")
+        self.assertRegexpMatches(out[5], r"\<module 'a\.b\.c\.m' from .*\>")
+        self.assertRegexpMatches(out[6], r"1 2")
+
+    def check_java_package(self, line, module):
+        target = r"\<java package " + module + r" 0x[0-9a-f]+\>"
+        self.assertRegexpMatches(line, target)
+
+    def test_import_java_java(self):
+        # A Java class in a Java package by from-import
+        self.make_prog("from jpkg.j import K", "print repr(K)")
+        out = self.run_prog().splitlines()
+        self.assertRegexpMatches(out[0], r"\<type 'jpkg.j.K'\>")
+
+    def test_import_java_java_magic(self):
+        # A Java class in a Java package
+        # with implicit sub-module and class import
+        self.make_prog(
+            "import jpkg",
+            "print repr(jpkg)",
+            "print repr(jpkg.j)",
+            "print repr(jpkg.j.K)",
+            "print repr(jpkg.L)")
+        out = self.run_prog().splitlines()
+        self.check_java_package(out[0], "jpkg")
+        self.check_java_package(out[1], "jpkg.j")
+        self.assertRegexpMatches(out[2], r"\<type 'jpkg.j.K'\>")
+        self.assertRegexpMatches(out[3], r"\<type 'jpkg.L'\>")
+
+    def test_import_java_python(self):
+        # A Java class in a Python package by from-import
+        self.make_prog("from mix.b import K1", "print repr(K1)")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "mix")
+        self.check_package(out[1], "mix.b")
+        self.assertRegexpMatches(out[2], r"\<type 'mix.b.K1'\>")
+
+    def test_import_java_python_magic(self):
+        # A Java class in a Python package
+        # with implicit sub-module and class import
+        self.make_prog(
+            "import mix",
+            "print repr(mix.b)",
+            "print repr(mix.b.K1)",
+            "import mix.b",
+            "print repr(mix.b)",
+            "print repr(mix.b.K1)",
+            "print repr(mix.J1)")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "mix")
+        self.check_java_package(out[1], "mix.b")
+        self.assertRegexpMatches(out[2], r"\<type 'mix.b.K1'\>")
+        self.check_package(out[3], "mix.b")
+        self.assertRegexpMatches(out[4], r"\<module 'mix\.b' from .*\>")
+        self.assertRegexpMatches(out[5], r"\<type 'mix.b.K1'\>")
+        self.assertRegexpMatches(out[6], r"\<type 'mix.J1'\>")
+
+    def test_import_javapkg_python(self):
+        # A Java package in a Python package
+        self.make_prog("import mix.j", "print repr(mix.j)", "print repr(mix.j.K2)")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "mix")
+        self.check_java_package(out[1], "mix.j")
+        self.assertRegexpMatches(out[2], r"\<type 'mix.j.K2'\>")
+
+    def test_import_java_from_javapkg(self):
+        # A Java class in a Java package in a Python package
+        self.make_prog("from mix.j import K2", "print repr(K2)")
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "mix")
+        self.assertRegexpMatches(out[1], r"\<type 'mix.j.K2'\>")
+
+    def test_import_javapkg_magic(self):
+        # A Java class in a Java package in a Python package
+        # with implicit sub-module and class import
+        self.make_prog(
+            "import mix",
+            "print repr(mix.J1)",
+            "print repr(mix.j)",
+            "print repr(mix.j.K2)",
+            )
+        out = self.run_prog().splitlines()
+        self.check_package(out[0], "mix")
+        self.assertRegexpMatches(out[1], r"\<type 'mix.J1'\>")
+        self.check_java_package(out[2], "mix.j")
+        self.assertRegexpMatches(out[3], r"\<type 'mix.j.K2'\>")
+
+
 def test_main():
-    test_support.run_unittest(MislabeledImportTestCase,
-                              OverrideBuiltinsImportTestCase,
-                              ImpTestCase,
-                              UnicodeNamesTestCase)
+    test_support.run_unittest(
+            MislabeledImportTestCase,
+            OverrideBuiltinsImportTestCase,
+            ImpTestCase,
+            UnicodeNamesTestCase,
+            MixedImportTestCase
+    )
 
 if __name__ == '__main__':
     test_main()

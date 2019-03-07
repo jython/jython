@@ -91,54 +91,100 @@ public class PyModule extends PyObject implements Traverseproc {
     /**
      * {@inheritDoc}
      * <p>
-     * Overridden in {@code PyModule} to search for the named attribute as a
-     * module in {@code sys.modules} (using the key {@code ".".join(self.__name__, name)}) and on the
-     * {@code self.__path__}.
+     * Overridden in {@code PyModule} to search for a sub-module of this module (using the key
+     * {@code ".".join(self.__name__, name)}) in {@code sys.modules}, on the {@code self.__path__},
+     * and as a Java package with the same name. The named sub-module becomes an attribute of this
+     * module (in {@code __dict__}).
      */
     @Override
     protected PyObject impAttr(String name) {
-        // Get hold of the module dictionary and __name__, and __path__ if it has one.
-        if (__dict__ == null || name.length() == 0) {
-            return null;
-        }
-        PyObject path = __dict__.__finditem__("__path__");
-        if (path == null) {
-            path = new PyList();
-        }
-        PyObject pyName = __dict__.__finditem__("__name__");
-        if (pyName == null) {
-            return null;
-        }
 
-        // Maybe the module we're looking for is in sys.modules
-        String fullName = (pyName.__str__().toString() + '.' + name).intern();
-        PyObject modules = Py.getSystemState().modules;
-        PyObject attr = modules.__finditem__(fullName);
+        // Some of our look-up needs the full name, deduced from __name__ and name.
+        String fullName = getFullName(name);
 
-        // If not, look along the module's __path__
-        if (path instanceof PyList) {
+        if (fullName != null) {
+            // Maybe the attribute is a Python sub-module
+            PyObject attr = findSubModule(name, fullName);
+
+            // Or is a Java package
             if (attr == null) {
-                attr = imp.find_module(name, fullName, (PyList)path);
+                // Still looking: maybe it's a Java package?
+                attr = PySystemState.packageManager.lookupName(fullName);
             }
-        } else if (path != Py.None) {
-            throw Py.TypeError("__path__ must be list or None");
-        }
 
-        if (attr == null) {
-            // Still looking: maybe it's a Java package?
-            attr = PySystemState.packageManager.lookupName(fullName);
+            // Add as an attribute the thing we found (if not still null)
+            return addedSubModule(name, fullName, attr);
         }
+        return null;
+    }
 
+    /**
+     * Find Python sub-module within this object, within {@code sys.modules} or along this module's
+     * {@code __path__}.
+     *
+     * @param name simple name of sub package
+     * @param fullName of sub package
+     * @return module found or {@code null}
+     */
+    private PyObject findSubModule(String name, String fullName) {
+        PyObject attr =  null;
+        if (fullName != null) {
+            // The module may already have been loaded in sys.modules
+            attr = Py.getSystemState().modules.__finditem__(fullName);
+            // Or it may be found as a Python module along this module's __path__
+            if (attr == null) {
+                PyObject path = __dict__.__finditem__("__path__");
+                if (path == null) {
+                    attr = imp.find_module(name, fullName, new PyList());
+                } else if (path instanceof PyList) {
+                    attr = imp.find_module(name, fullName, (PyList) path);
+                } else if (path != Py.None) {
+                    throw Py.TypeError("__path__ must be list or None");
+                }
+            }
+        }
+        return attr;
+    }
+
+    /**
+     * Add the given attribute to {@code __dict__}, if it is not {@code null} allowing
+     * {@code sys.modules[fullName]} to override.
+     *
+     * @param name of attribute to add
+     * @param fullName by which to check in {@code sys.modules}
+     * @param attr attribute to add (if not overridden)
+     * @return attribute value actually added (may be from {@code sys.modules}) or {@code null}
+     */
+    private PyObject addedSubModule(String name, String fullName, PyObject attr) {
         if (attr != null) {
-            // Allow a package component to change its own meaning
-            PyObject found = modules.__finditem__(fullName);
-            if (found != null) {
-                attr = found;
+            if (fullName != null) {
+                // If a module by the full name exists in sys.modules, that takes precedence.
+                PyObject entry = Py.getSystemState().modules.__finditem__(fullName);
+                if (entry != null) {
+                    attr = entry;
+                }
             }
+            // Enter this as an attribute of this module.
             __dict__.__setitem__(name, attr);
-            return attr;
         }
+        return attr;
+    }
 
+    /**
+     * Construct (and intern) the full name of a possible sub-module of this one, using the
+     * {@code __name__} attribute and a simple sub-module name. Return {@code null} if any of these
+     * requirements is missing.
+     *
+     * @param name simple name of (possible) sub-module
+     * @return interned full name or {@code null}
+     */
+    private String getFullName(String name) {
+        if (__dict__ != null) {
+            PyObject pyName = __dict__.__finditem__("__name__");
+            if (pyName != null && name != null && name.length() > 0) {
+                return (pyName.__str__().toString() + '.' + name).intern();
+            }
+        }
         return null;
     }
 
@@ -146,16 +192,24 @@ public class PyModule extends PyObject implements Traverseproc {
      * {@inheritDoc}
      * <p>
      * Overridden in {@code PyModule} so that if the base-class {@code __findattr_ex__} is
-     * unsuccessful, it will to search for the named attribute as a module via
-     * {@link #impAttr(String)}.
+     * unsuccessful, it will to search for the named attribute as a Java sub-package. This is
+     * responsible for the automagical import of Java (but not Python) packages when referred to as
+     * attributes.
      */
     @Override
     public PyObject __findattr_ex__(String name) {
+        // Find the attribute in the dictionary
         PyObject attr = super.__findattr_ex__(name);
-        if (attr != null) {
-            return attr;
+        if (attr == null) {
+            // The attribute may be a Java sub-package to auto-import.
+            String fullName = getFullName(name);
+            if (fullName != null) {
+                attr = PySystemState.packageManager.lookupName(fullName);
+                // Any entry in sys.modules to takes precedence.
+                attr = addedSubModule(name, fullName, attr);
+            }
         }
-        return impAttr(name);
+        return attr;
     }
 
     @Override
