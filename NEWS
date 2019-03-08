@@ -5,6 +5,9 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2654 ] Imported modules allow access to submodules
+    - [ 2362 ] Import * doesn't work on JDK9 for java.*, jdk.* namespaces
+    - [ 2630 ] Cannot import java.awt.* on Java 9
     - [ 2663 ] Remove dependency on javax.xml.bind.DatatypeConverter
     - [ 2726 ] os.uname() throws IllegalArgumentException on Windows (Chinese localisation)
     - [ 2719 ] Divergence of __str__ and __repr__ from CPython

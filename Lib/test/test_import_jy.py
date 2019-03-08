@@ -14,7 +14,6 @@ import subprocess
 import zipfile
 from test import test_support
 from test_chdir import read, safe_mktemp, COMPILED_SUFFIX
-from doctest import script_from_examples
 
 class MislabeledImportTestCase(unittest.TestCase):
 
