@@ -327,7 +327,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(PyObject type, String msg) {
-        return Py.makeException(type, msg == null ? Py.EmptyString : Py.newString(msg));
+        return Py.makeException(type, msg == null ? Py.EmptyString : Py.newStringOrUnicode(msg));
     }
 
     /**

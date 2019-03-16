@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ GH-131 ] Support Unicode in zxJDBC exceptions.
     - [ 2654 ] Imported modules allow access to submodules
     - [ 2362 ] Import * doesn't work on JDK9 for java.*, jdk.* namespaces
     - [ 2630 ] Cannot import java.awt.* on Java 9
