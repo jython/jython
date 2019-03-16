@@ -653,8 +653,14 @@ class TestSymbolicallyLinkedPackage(unittest.TestCase):
         sys.path[:] = self.orig_sys_path
 
 def test_main(verbose=None):
-    run_unittest(ImportTests, PycRewritingTests, PathsTests,
-        RelativeImportTests, TestSymbolicallyLinkedPackage)
+    run_unittest(
+            ImportTests,
+            PycRewritingTests,
+            PathsTests,
+            RelativeImportTests,
+            TestSymbolicallyLinkedPackage
+        )
+
 
 if __name__ == '__main__':
     # Test needs to be a package, so we can do relative imports.

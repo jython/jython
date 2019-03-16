@@ -406,21 +406,47 @@ public class imp {
         return new CodeData(classFileData, sourceLastModified, ar.getFilename());
     }
 
-    public static byte[] compileSource(String name, File file) {
-        return compileSource(name, file, null);
+    /**
+     * Compile Python source in file to a class file represented by a byte array.
+     *
+     * @param name of module (class name will be name$py)
+     * @param source file containing the source
+     * @return Java byte code as array
+     */
+    public static byte[] compileSource(String name, File source) {
+        return compileSource(name, source, null);
     }
 
-    public static byte[] compileSource(String name, File file, String sourceFilename) {
-        return compileSource(name, file, sourceFilename, null);
-    }
-
-    public static byte[] compileSource(String name, File file, String sourceFilename,
-            String compiledFilename) {
-        if (sourceFilename == null) {
-            sourceFilename = file.toString();
+    /**
+     * Compile Python source in file to a class file represented by a byte array.
+     *
+     * @param name of module (class name will be name$py)
+     * @param source file containing the source
+     * @param filename explicit source file name (or {@code null} to use that in source)
+     * @return Java byte code as array
+     */
+    public static byte[] compileSource(String name, File source, String filename) {
+        if (filename == null) {
+            filename = source.toString();
         }
-        long mtime = file.lastModified();
-        return compileSource(name, makeStream(file), sourceFilename, mtime);
+        long mtime = source.lastModified();
+        return compileSource(name, makeStream(source), filename, mtime);
+    }
+
+    /**
+     * Compile Python source in file to a class file represented by a byte array.
+     *
+     * @param name of module (class name will be name$py)
+     * @param source file containing the source
+     * @param sourceFilename explicit source file name (or {@code null} to use that in source)
+     * @param compiledFilename ignored (huh?)
+     * @return Java byte code as array
+     * @deprecated Use {@link #compileSource(String, File, String, String)} instead.
+     */
+    @Deprecated
+    public static byte[] compileSource(String name, File source, String sourceFilename,
+            String compiledFilename) {
+        return compileSource(name, source, sourceFilename);
     }
 
     /** Remove the last three characters of a file name and add the compiled suffix "$py.class". */
@@ -478,11 +504,29 @@ public class imp {
         }
     }
 
-    public static byte[] compileSource(String name, InputStream fp, String filename) {
-        return compileSource(name, fp, filename, NO_MTIME);
+    /**
+     * Compile Python source to a class file represented by a byte array.
+     *
+     * @param name of module (class name will be name$py)
+     * @param source open input stream (will be closed)
+     * @param filename of source (or {@code null} if unknown)
+     * @return Java byte code as array
+     */
+    public static byte[] compileSource(String name, InputStream source, String filename) {
+        return compileSource(name, source, filename, NO_MTIME);
     }
 
-    public static byte[] compileSource(String name, InputStream fp, String filename, long mtime) {
+    /**
+     * Compile Python source to a class file represented by a byte array.
+     *
+     * @param name of module (class name will be name$py)
+     * @param source open input stream (will be closed)
+     * @param filename of source (or {@code null} if unknown)
+     * @param mtime last-modified time of source, to annotate class
+     * @return Java byte code as array
+     */
+    public static byte[] compileSource(String name, InputStream source, String filename,
+            long mtime) {
         ByteArrayOutputStream ofp = new ByteArrayOutputStream();
         try {
             if (filename == null) {
@@ -490,10 +534,12 @@ public class imp {
             }
             org.python.antlr.base.mod node;
             try {
-                node = ParserFacade.parse(fp, CompileMode.exec, filename, new CompilerFlags());
+                // Compile source to AST
+                node = ParserFacade.parse(source, CompileMode.exec, filename, new CompilerFlags());
             } finally {
-                fp.close();
+                source.close();
             }
+            // Generate code
             Module.compile(node, ofp, name + "$py", filename, true, false, null, mtime);
             return ofp.toByteArray();
         } catch (Throwable t) {
@@ -790,61 +836,86 @@ public class imp {
      */
     static PyObject loadFromSource(PySystemState sys, String name, String modName,
             String location) {
-        String dirName = sys.getPath(location);
-        String sourceName = "__init__.py";
-        String compiledName = makeCompiledFilename(sourceName);
-        // display names are for identification purposes (e.g. __file__): when entry is
-        // null it forces java.io.File to be a relative path (e.g. foo/bar.py instead of
-        // /tmp/foo/bar.py)
-        String displayDirName = location.equals("") ? null : location;
-        String displaySourceName = new File(new File(displayDirName, name), sourceName).getPath();
-        String displayCompiledName =
-                new File(new File(displayDirName, name), compiledName).getPath();
+        File sourceFile;     // location/name/__init__.py or location/name.py
+        File compiledFile;   // location/name/__init__$py.class or location/name$py.class
+        boolean haveSource = false, haveCompiled = false;
 
-        // Create file objects to check for a Python package
-        File dir = new File(dirName, name);                 // entry/name/
-        File sourceFile = new File(dir, sourceName);        // entry/name/__init__.py
-        File compiledFile = new File(dir, compiledName);    // entry/name/__init__$py.class
+        // display* names are for mainly identification purposes (e.g. __file__)
+        String displayLocation = (location.equals("") || location.equals(",")) ? null : location;
+        String displaySourceName, displayCompiledName;
 
-        boolean isPackage = false;
         try {
+            /*
+             * Distinguish package and module cases by choosing File objects sourceFile and
+             * compiledFile based on name/__init__ or name. haveSource and haveCompiled are set true
+             * if the corresponding source or compiled files exist, and this is what steers the
+             * loading in the second part of the process.
+             */
+            String dirName = sys.getPath(location);
+            File dir = new File(dirName, name);
+
             if (dir.isDirectory()) {
-                if (caseok(dir, name) && (sourceFile.isFile() || compiledFile.isFile())) {
-                    isPackage = true;
+                // This should be a package: location/name
+                File displayDir = new File(displayLocation, name);
+
+                // Source is location/name/__init__.py
+                String sourceName = "__init__.py";
+                sourceFile = new File(dir, sourceName);
+                displaySourceName = new File(displayDir, sourceName).getPath();
+
+                // Compiled is location/name/__init__$py.class
+                String compiledName = makeCompiledFilename(sourceName);
+                compiledFile = new File(dir, compiledName);
+                displayCompiledName = new File(displayDir, compiledName).getPath();
+
+                // Check the directory name is ok according to case-matching option and platform.
+                if (caseok(dir, name)) {
+                    haveSource = sourceFile.isFile();
+                    haveCompiled = compiledFile.isFile();
+                }
+
+                if (haveSource || haveCompiled) {
+                    // Create a PyModule (uninitialised) for name, called modName in sys.modules
+                    PyModule m = addModule(modName);
+                    PyString filename = Py.fileSystemEncode(displayDir.getPath());
+                    m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
                 } else {
+                    /*
+                     * There is neither source nor compiled code for __init__.py. In Jython, this
+                     * message warning is premature, as there may be a Java package by this name.
+                     */
                     String printDirName = PyString.encode_UnicodeEscape(dir.getPath(), '\'');
                     Py.warning(Py.ImportWarning, String.format(
                             "Not importing directory %s: missing __init__.py", printDirName));
-                    return null;
                 }
+
+            } else {
+                // This is a (non-package) module: location/name
+
+                // Source is location/name.py
+                String sourceName = name + ".py";
+                sourceFile = new File(dirName, sourceName);     // location/name.py
+                displaySourceName = new File(displayLocation, sourceName).getPath();
+
+                // Compiled is location/name$py.class
+                String compiledName = makeCompiledFilename(sourceName);
+                compiledFile = new File(dirName, compiledName); // location/name$py.class
+                displayCompiledName = new File(displayLocation, compiledName).getPath();
+
+                // Check file names exist and ok according to case-matching option and platform.
+                haveSource = sourceFile.isFile() && caseok(sourceFile, sourceName);
+                haveCompiled = compiledFile.isFile() && caseok(compiledFile, compiledName);
             }
-        } catch (SecurityException e) {
-            // ok
-        }
 
-        if (!isPackage) {
-            // The source is entry/name.py and compiled is entry/name$py.class
-            Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
-            sourceName = name + ".py";
-            compiledName = makeCompiledFilename(sourceName);
-            displaySourceName = new File(displayDirName, sourceName).getPath();
-            displayCompiledName = new File(displayDirName, compiledName).getPath();
-            sourceFile = new File(dirName, sourceName);
-            compiledFile = new File(dirName, compiledName);
-        } else {
-            // Create a PyModule (uninitialised) for name.py, called modName in sys.modules
-            PyModule m = addModule(modName);
-            PyObject filename = Py.newStringOrUnicode(new File(displayDirName, name).getPath());
-            // FIXME: FS encode file name for __path__
-            m.__dict__.__setitem__("__path__", new PyList(new PyObject[] {filename}));
-        }
-
-        // Load and execute the module, from its compiled or source form.
-        try {
-            // Try to create the module from source or an existing compiled class.
-            if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
+            /*
+             * Now we are ready to load and execute the module in sourceFile or compiledFile, from
+             * its compiled or source form, as directed by haveSource and haveCompiled.
+             */
+            if (haveSource) {
+                // Try to create the module from source or an existing compiled class.
                 long pyTime = sourceFile.lastModified();
-                if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+
+                if (haveCompiled) {
                     // We have the compiled file and will use that if it is not out of date
                     Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
@@ -858,21 +929,23 @@ public class imp {
                         }
                     }
                 }
-                // The compiled class is not present, was out of date, or trying to use it failed.
+
+                // The compiled class is not present, is out of date, or using it failed somehow.
+                Py.writeDebug(IMPORT_LOG, "trying source " + sourceFile.getPath());
                 return createFromSource(modName, makeStream(sourceFile), displaySourceName,
                         compiledFile.getPath(), pyTime);
-            }
 
-            // If no source, try loading compiled
-            Py.writeDebug(IMPORT_LOG,
-                    "trying precompiled with no source " + compiledFile.getPath());
-            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+            } else if (haveCompiled) {
+                // There is no source, try loading compiled
+                Py.writeDebug(IMPORT_LOG,
+                        "trying precompiled with no source " + compiledFile.getPath());
                 return createFromPyClass(modName, makeStream(compiledFile), //
                         false, // throw ImportError here if this fails
                         displaySourceName, displayCompiledName, NO_MTIME, CodeImport.compiled_only);
             }
+
         } catch (SecurityException e) {
-            // ok
+            // We were prevented from reading some essential file, so pretend we didn't find it.
         }
         return null;
     }

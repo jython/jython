@@ -41,7 +41,6 @@ public class JavaImportHelper {
             for (String fromName : stringFromlist) {
                 if (isJavaClass(packageName, fromName)) {
                     packageAdded = addPackage(packageName, packageAdded);
-
                 }
             }
 
@@ -218,5 +217,4 @@ public class JavaImportHelper {
         }
         return packageAdded;
     }
-
 }
