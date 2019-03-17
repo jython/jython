@@ -257,7 +257,17 @@ public class PyJavaType extends PyType {
                     PyList types = new PyList();
                     Set<Class<?>> proxySet = Generic.set();
                     for (PyJavaType othertype : conflictedAttributes) {
-                        if (othertype.modified != null && othertype.modified.contains(method)) {
+                        /*
+                         * Ignore any pairings of types that are in a superclass/superinterface
+                         * relationship with each other. This problem is a false positive that
+                         * happens because of the automatic addition of methods so that Java classes
+                         * behave more like their corresponding Python types, such as adding sort or
+                         * remove. See http://bugs.jython.org/issue2445
+                         */
+                        if (othertype.modified != null && othertype.modified.contains(method)
+                                && !(othertype.getProxyType().isAssignableFrom(type.getProxyType())
+                                        || type.getProxyType()
+                                                .isAssignableFrom(othertype.getProxyType()))) {
                             types.add(othertype);
                             proxySet.add(othertype.getProxyType());
                         }
@@ -269,13 +279,16 @@ public class PyJavaType extends PyType {
                      * __iter__. Annoying but necessary logic. See http://bugs.jython.org/issue1878
                      */
                     if (method.equals("__iter__")
-                            && proxySet.equals(Generic.set(Iterable.class, Map.class))) {
+                            && Generic.set(Iterable.class, Map.class).containsAll(proxySet)) {
                         continue;
                     }
-                    throw Py.TypeError(String.format(
-                            "Supertypes that share a modified attribute "
-                                    + "have an MRO conflict[attribute=%s, supertypes=%s, type=%s]",
-                            method, types, this.getName()));
+
+                    if (types.size() > 0) {
+                        throw Py.TypeError(String.format(
+                                "Supertypes that share a modified attribute "
+                                        + "have an MRO conflict[attribute=%s, supertypes=%s, type=%s]",
+                                method, types, this.getName()));
+                    }
                 }
             }
         }

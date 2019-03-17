@@ -234,6 +234,7 @@ Keywords.while = lambda self: "while"
 Keywords.with = lambda self: "with"
 Keywords.yield = lambda self: "yield"
 
+
 class PyReservedNamesTest(unittest.TestCase):
     "Access to reserved words"
 
@@ -330,6 +331,7 @@ class PyReservedNamesTest(unittest.TestCase):
     def test_yield(self):
         self.assertEquals(self.kws.yield(), "yield")
 
+
 class ImportTest(unittest.TestCase):
     def test_bad_input_exception(self):
         self.assertRaises(ValueError, __import__, '')
@@ -377,6 +379,13 @@ class JavaStringTest(unittest.TestCase):
     def test_string_not_iterable(self):
         x = String('test')
         self.assertRaises(TypeError, list, x)
+
+    def test_null_tostring(self):
+        # http://bugs.jython.org/issue1819
+        nts = NullToString()
+        self.assertEqual(repr(nts), '')
+        self.assertEqual(str(nts), '')
+        self.assertEqual(unicode(nts), '')
 
 class JavaDelegationTest(unittest.TestCase):
     def test_list_delegation(self):
@@ -531,6 +540,9 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         self.assertEquals(7, m.initial)
         self.assertEquals(None, m.nonexistent, "Nonexistent fields should be passed on to the Map")
 
+
+class JavaMROTest(unittest.TestCase):
+
     def test_adding_on_interface(self):
         GetitemAdder.addPredefined()
         class UsesInterfaceMethod(FirstPredefinedGetitem):
@@ -542,13 +554,6 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         GetitemAdder.addPredefined()
         self.assertRaises(TypeError, __import__, "org.python.tests.mro.ConfusedOnImport")
         self.assertRaises(TypeError, GetitemAdder.addPostdefined)
-
-    def test_null_tostring(self):
-        # http://bugs.jython.org/issue1819
-        nts = NullToString()
-        self.assertEqual(repr(nts), '')
-        self.assertEqual(str(nts), '')
-        self.assertEqual(unicode(nts), '')
 
     def test_diamond_inheritance_of_iterable_and_map(self):
         """Test deeply nested diamond inheritance of Iterable and Map, as see in some Clojure classes"""
@@ -569,6 +574,11 @@ class JavaWrapperCustomizationTest(unittest.TestCase):
         m["xyz"] = 47
         self.assertEqual(set(m), set(["abc", "xyz"]))
         self.assertEqual(m["abc"], 42)
+
+    def test_diamond_lattice_inheritance(self):
+        # http://bugs.jython.org/issue2445
+        from org.python.tests.mro import TortureMRO
+
 
 def roundtrip_serialization(obj):
     """Returns a deep copy of an object, via serializing it
@@ -946,6 +956,7 @@ def test_main():
         JavaDelegationTest,
         JavaReservedNamesTest,
         JavaStringTest,
+        JavaMROTest,
         JavaWrapperCustomizationTest,
         PyReservedNamesTest,
         SecurityManagerTest,

@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict
     - [ 2732 ] Regression in large module support for pip
     - [ GH-131 ] Support Unicode in zxJDBC exceptions.
     - [ 2654 ] Imported modules allow access to submodules
