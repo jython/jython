@@ -717,53 +717,57 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         module.mainCode = main;
     }
 
+    /** Property naming the cpython executable. */
+    private static String CPYTHON = "python.cpython2";
+
+    // Error message formats required by loadPyBytecode
+    private static String TRIED_CREATE_PYC_MSG =
+            "\nJython tried to create a pyc-file by executing\n    %s\nwhich failed because %s";
+    private static String LARGE_METHOD_MSG = "Module or method too large in `%s`.";
+    private static String PLEASE_PROVIDE_MSG =
+            "\n\nPlease provide a CPython 2.7 bytecode file (.pyc), e.g. run"
+                    + "\n    python -m py_compile %s";
+    private static String CPYTHON_CMD_MSG =
+            "\n\nAlternatively, specify a CPython 2.7 command via the " //
+                    + CPYTHON + " property, e.g.:" //
+                    + "\n    jython -D" + CPYTHON + "=python" //
+                    + "\nor (e.g. for pip) through the environment variable JYTHON_OPTS:" //
+                    + "\n    export JYTHON_OPTS=\"-D" + CPYTHON + "=python\"\n";
+
     private static PyBytecode loadPyBytecode(String filename, boolean try_cpython)
-            throws RuntimeException
-    {
+            throws RuntimeException {
         if (filename.startsWith(ClasspathPyImporter.PYCLASSPATH_PREFIX)) {
             ClassLoader cld = Py.getSystemState().getClassLoader();
             if (cld == null) {
                 cld = imp.getParentClassLoader();
             }
-            URL py_url = cld.getResource(filename.replace(
-                    ClasspathPyImporter.PYCLASSPATH_PREFIX, ""));
+            URL py_url =
+                    cld.getResource(filename.replace(ClasspathPyImporter.PYCLASSPATH_PREFIX, ""));
             if (py_url != null) {
                 filename = py_url.getPath();
             } else {
                 // Should never happen, but let's play it safe and treat this case.
-                throw new RuntimeException(
-                        "\nEncountered too large method code in \n"+filename+",\n"+
-                        "but couldn't resolve that filename within classpath.\n"+
-                        "Make sure the source file is at a proper location.");
+                throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
+                        + "but couldn't resolve that filename within classpath.\n"
+                        + "Make sure the source file is at a proper location.");
             }
         }
-        String cpython_cmd_msg =
-                "\n\nAlternatively provide proper CPython 2.7 execute command via"+
-                "\ncpython_cmd property, e.g. call "+
-                "\n    jython -J-Dcpython_cmd=python"+
-                "\nor if running pip on Jython:"+
-                "\n    pip install --global-option=\"-J-Dcpython_cmd=python\" <package>";
-        String large_method_msg = "\nEncountered too large method code in \n"+filename+"\n";
-        String please_provide_msg =
-                "\nPlease provide a CPython 2.7 bytecode file (.pyc) to proceed, e.g. run"+
-                "\npython -m py_compile "+filename+"\nand try again.";
 
-        String pyc_filename = filename+"c";
+        String pyc_filename = filename + "c";
         File pyc_file = new File(pyc_filename);
         if (pyc_file.exists()) {
             PyFile f = new PyFile(pyc_filename, "rb", 4096);
             byte[] bts = f.read(8).toBytes();
-            int magic = (bts[1]<< 8) & 0x0000FF00 |
-                        (bts[0]<< 0) & 0x000000FF;
-//            int mtime_pyc = (bts[7]<<24) & 0xFF000000 |
-//                            (bts[6]<<16) & 0x00FF0000 |
-//                            (bts[5]<< 8) & 0x0000FF00 |
-//                            (bts[4]<< 0) & 0x000000FF;
+            int magic = (bts[1] << 8) & 0x0000FF00 | (bts[0] << 0) & 0x000000FF;
+            // int mtime_pyc = (bts[7]<<24) & 0xFF000000 |
+            // (bts[6]<<16) & 0x00FF0000 |
+            // (bts[5]<< 8) & 0x0000FF00 |
+            // (bts[4]<< 0) & 0x000000FF;
             if (magic != 62211) { // check Python 2.7 bytecode
-                throw new RuntimeException(large_method_msg+
-                        "\n"+pyc_filename+
-                        "\ncontains wrong bytecode version, not CPython 2.7 bytecode."+
-                        please_provide_msg);
+                throw new RuntimeException(
+                        String.format(LARGE_METHOD_MSG, filename) //
+                                + "\n'" + pyc_filename + "' is not CPython 2.7 bytecode." //
+                                + String.format(PLEASE_PROVIDE_MSG, filename));
             }
             _marshal.Unmarshaller un = new _marshal.Unmarshaller(f);
             PyObject code = un.load();
@@ -771,24 +775,24 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
             if (code instanceof PyBytecode) {
                 return (PyBytecode) code;
             }
-            throw new RuntimeException(large_method_msg+
-                    "\n"+pyc_filename+
-                    "\ncontains invalid bytecode."+
-                    please_provide_msg);
+            throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename) //
+                    + "\n'" + pyc_filename + "' contains invalid bytecode."
+                    + String.format(PLEASE_PROVIDE_MSG, filename));
+
         } else {
-            String CPython_command = System.getProperty("cpython_cmd");
+            String CPython_command = System.getProperty(CPYTHON);
             if (try_cpython && CPython_command != null) {
                 // check version...
-                String command_ver = CPython_command+" --version";
-                String command = CPython_command+" -m py_compile "+filename;
-                String tried_create_pyc_msg = "\nTried to create pyc-file by executing\n"+
-                        command+"\nThis failed because of\n";
+                String command_ver = CPython_command + " --version";
+                String command = CPython_command + " -m py_compile " + filename;
                 Exception exc = null;
                 int result = 0;
+                String reason;
                 try {
                     Process p = Runtime.getRuntime().exec(command_ver);
                     // Python 2.7 writes version to error-stream for some reason:
-                    BufferedReader br = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                    BufferedReader br =
+                            new BufferedReader(new InputStreamReader(p.getErrorStream()));
                     String cp_version = br.readLine();
                     while (br.readLine() != null) {}
                     br.close();
@@ -801,19 +805,15 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                     }
                     result = p.waitFor();
                     if (!cp_version.startsWith("Python 2.7.")) {
-                        throw new RuntimeException(large_method_msg+
-                                tried_create_pyc_msg+
-                                "wrong Python version: "+cp_version+"."+
-                                "\nRequired is Python 2.7.x.\n"+
-                                please_provide_msg+cpython_cmd_msg);
+                        reason = cp_version + " has been provided, but 2.7.x is required.";
+                        throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
+                                + String.format(TRIED_CREATE_PYC_MSG, command, reason)
+                                + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG);
                     }
+                } catch (InterruptedException | IOException e) {
+                    exc = e;
                 }
-                catch (InterruptedException ie) {
-                    exc = ie;
-                }
-                catch (IOException ioe) {
-                    exc = ioe;
-                }
+
                 if (exc == null && result == 0) {
                     try {
                         Process p = Runtime.getRuntime().exec(command);
@@ -821,22 +821,19 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                         if (result == 0) {
                             return loadPyBytecode(filename, false);
                         }
-                    }
-                    catch (InterruptedException ie) {
-                        exc = ie;
-                    }
-                    catch (IOException ioe) {
-                        exc = ioe;
+                    } catch (InterruptedException | IOException e) {
+                        exc = e;
                     }
                 }
-                String exc_msg = large_method_msg+
-                        tried_create_pyc_msg+
-                        (exc != null ? exc.toString() : "bad return: "+result)+".\n"+
-                        please_provide_msg+cpython_cmd_msg;
-                throw exc != null ? new RuntimeException(exc_msg, exc) : new RuntimeException(exc_msg);
+                reason = exc != null ? "of " + exc.toString() : "of a bad return: " + result;
+                String exc_msg = String.format(LARGE_METHOD_MSG, filename)
+                        + String.format(TRIED_CREATE_PYC_MSG, command, reason)
+                        + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG;
+                throw exc != null ? new RuntimeException(exc_msg, exc)
+                        : new RuntimeException(exc_msg);
             } else {
-                throw new RuntimeException(large_method_msg+
-                        please_provide_msg+cpython_cmd_msg);
+                throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
+                        + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG);
             }
         }
     }
@@ -875,7 +872,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
      * Implement a simplified base64 encoding compatible with the decoding in BytecodeLoader. This
      * encoder adds no '=' padding or line-breaks. equivalent to
      * {@code binascii.b2a_base64(bytes).rstrip('=\n')}.
-     * 
+     *
      * @param data to encode
      * @return the string encoding the data
      */
@@ -947,7 +944,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
      * Note that this approach is provisional. In future, Jython might contain the bytecode directly
      * as bytecode-objects. The current approach was feasible with far less complicated JVM
      * bytecode-manipulation, but needs special treatment after class-loading.
-     * 
+     *
      * @param name of the method or function being generated
      * @param code_str Base64 encoded CPython byte code
      * @param module currently being defined as a class file
@@ -979,7 +976,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
 
     /**
      * Create and write a Python module as a Java class file.
-     * 
+     *
      * @param node AST of the module to write
      * @param ostream stream onto which to write it
      * @param name
