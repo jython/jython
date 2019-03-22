@@ -46,7 +46,6 @@ public class _marshal implements ClassDictInit {
     private final static char TYPE_DICT = '{';
     private final static char TYPE_CODE = 'c';
     private final static char TYPE_UNICODE = 'u';
-    private final static char TYPE_UNKNOWN = '?';
     private final static char TYPE_SET = '<';
     private final static char TYPE_FROZENSET = '>';
     private final static int MAX_MARSHAL_STACK_DEPTH = 2000;
@@ -239,9 +238,8 @@ public class _marshal implements ClassDictInit {
                 write_int(code.co_firstlineno);
                 write_object(Py.newString(new String(code.co_lnotab)), depth + 1);
             } else {
-                write_byte(TYPE_UNKNOWN);
+                throw Py.ValueError("unmarshallable object");
             }
-
             depth--;
         }
 
