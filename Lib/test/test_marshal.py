@@ -136,7 +136,6 @@ class StringTestCase(unittest.TestCase):
             self.assertEqual(type(s), type(new))
         os.unlink(test_support.TESTFN)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: bjo #2744 buffer not supported")
     def test_buffer(self):
         for s in ["", "André Previn", "abc", " "*10000]:
             with test_support.check_py3k_warnings(("buffer.. not supported",
@@ -252,7 +251,6 @@ class BugsTestCase(unittest.TestCase):
         last.append([0])
         self.assertRaises(ValueError, marshal.dumps, head)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: bjo #2077 ValueError not raised")
     def test_exact_type_match(self):
         # Former bug:
         #   >>> class Int(int): pass
@@ -271,7 +269,6 @@ class BugsTestCase(unittest.TestCase):
         testString = 'abc' * size
         marshal.dumps(testString)
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: bjo #2077 ValueError not raised")
     def test_invalid_longs(self):
         # Issue #7019: marshal.loads shouldn't produce unnormalized PyLongs
         invalid_string = 'l\x02\x00\x00\x00\x00\x00\x00\x00'

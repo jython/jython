@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2744 ] Support buffer type in marshal.dump(s)
     - [ 2077 ] marshal doesn't raise error when fed unmarshalable object
     - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict
     - [ 2732 ] Regression in large module support for pip
