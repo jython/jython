@@ -245,12 +245,12 @@ class JavaHashtableTest(JavaIntegrationTest):
     type2test = Hashtable
 
 class JavaConcurrentHashMapTest(JavaIntegrationTest):
-    type2test = HashMap
+    type2test = ConcurrentHashMap
 
 
 class JavaDictTest(test_dict.DictTest):
 
-    _class = HashMap
+    _class = dict
 
     def test_copy_java_hashtable(self):
         x = Hashtable()
@@ -287,6 +287,27 @@ class JavaDictTest(test_dict.DictTest):
             prop(a, self._make_dict(b))
         with self.assertRaises(AssertionError):
             prop(self._make_dict(a), b)
+
+    # Some variants with unicode keys
+
+    @unittest.skip("FIXME: failing test for bjo #2649")
+    def test_repr_unicode(self):
+        d = self._make_dict({})
+        d[u'3\uc6d4'] = 2
+        self.assertEqual(repr(d), "{u'3\uc6d4': 2}")
+
+        d = self._make_dict({})
+        d[2] = u'\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2'
+        self.assertEqual(repr(d), "{2: u'\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2'}")
+
+        d = self._make_dict({})
+        d[u'\uc6d4'] = d
+        self.assertEqual(repr(d), "{u'\uc6d4': {...}}")
+
+    def test_fromkeys_unicode(self):
+        super(JavaDictTest, self).test_fromkeys()
+        self.assertEqual(self._class.fromkeys(u'\U00010840\U00010841\U00010842'),
+                         {u'\U00010840':None, u'\U00010841':None, u'\U00010842':None})
 
     # NOTE: when comparing dictionaries below exclusively in Java
     # space, keys like 1 and 1L are different objects. Only when they
@@ -327,7 +348,7 @@ class JavaDictTest(test_dict.DictTest):
         self.assertGreater({1L: 2L, 3L: 4L}, self._make_dict({1: 2}))
 
 
-class PyStringMapTest(test_dict.DictTest):
+class PyStringMapDictTest(test_dict.DictTest):
     # __dict__ for objects uses PyStringMap for historical reasons, so
     # we have to test separately
 
@@ -343,6 +364,38 @@ class PyStringMapTest(test_dict.DictTest):
         return newdict
 
 
+class JavaHashMapDictTest(JavaDictTest):
+    _class = HashMap
+
+class JavaLinkedHashMapDictTest(JavaDictTest):
+    _class = LinkedHashMap
+
+class JavaHashtableDictTest(JavaDictTest):
+    _class = Hashtable
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_has_key(self): pass # defining here only so we can skip it
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_keys(self): pass # defining here only so we can skip it
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_repr_value_None(self): pass # defining here only so we can skip it
+
+
+class JavaConcurrentHashMapDictTest(JavaDictTest):
+    _class = ConcurrentHashMap
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_has_key(self): pass # defining here only so we can skip it
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_keys(self): pass # defining here only so we can skip it
+
+    @unittest.skip("FIXME: see bjo #2746")
+    def test_repr_value_None(self): pass # defining here only so we can skip it
+
+
 def test_main():
     test_support.run_unittest(
         DictInitTest,
@@ -354,7 +407,13 @@ def test_main():
         JavaConcurrentHashMapTest,
         JavaHashtableTest,
         JavaDictTest,
-        PyStringMapTest)
+        PyStringMapDictTest,
+        JavaHashMapDictTest,
+        JavaLinkedHashMapDictTest,
+        JavaHashtableDictTest,
+        JavaConcurrentHashMapDictTest,
+    )
+
 
 if __name__ == '__main__':
     test_main()
