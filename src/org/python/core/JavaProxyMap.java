@@ -129,23 +129,31 @@ class JavaProxyMap {
         }
     };
     private static final PyBuiltinMethodNarrow mapReprProxy = new MapMethod("__repr__", 0) {
+
         @Override
         public PyObject __call__() {
-            StringBuilder repr = new StringBuilder("{");
-            for (Map.Entry<Object, Object> entry : asMap().entrySet()) {
-                Object jkey = entry.getKey();
-                Object jval = entry.getValue();
-                repr.append(jkey.toString());
-                repr.append(": ");
-                repr.append(jval == asMap() ? "{...}" : (jval == null ? "None" : jval.toString()));
-                repr.append(", ");
+            ThreadState ts = Py.getThreadState();
+            if (!ts.enterRepr(self)) {
+                return Py.newString("{...}");
+            } else {
+                StringBuilder repr = new StringBuilder("{");
+                boolean first = true;
+                for (Map.Entry<Object, Object> entry : asMap().entrySet()) {
+                    if (first) {
+                        first=false;
+                    } else {
+                        repr.append(", ");
+                    }
+                    PyObject key = Py.java2py(entry.getKey());
+                    repr.append(key.__repr__().toString());
+                    repr.append(": ");
+                    PyObject value = Py.java2py(entry.getValue());
+                    repr.append(value.__repr__().toString());
+                }
+                repr.append("}");
+                ts.exitRepr(self);
+                return Py.newString(repr.toString());
             }
-            int lastindex = repr.lastIndexOf(", ");
-            if (lastindex > -1) {
-                repr.delete(lastindex, lastindex + 2);
-            }
-            repr.append("}");
-            return new PyString(repr.toString());
         }
     };
     private static final PyBuiltinMethodNarrow mapEqProxy = new MapMethod("__eq__", 1) {

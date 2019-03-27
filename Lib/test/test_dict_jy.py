@@ -290,19 +290,18 @@ class JavaDictTest(test_dict.DictTest):
 
     # Some variants with unicode keys
 
-    @unittest.skip("FIXME: failing test for bjo #2649")
     def test_repr_unicode(self):
         d = self._make_dict({})
         d[u'3\uc6d4'] = 2
-        self.assertEqual(repr(d), "{u'3\uc6d4': 2}")
+        self.assertEqual(repr(d), "{u'3\\uc6d4': 2}")
 
         d = self._make_dict({})
         d[2] = u'\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2'
-        self.assertEqual(repr(d), "{2: u'\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2'}")
+        self.assertEqual(repr(d), "{2: u'\\u039c\\u03ac\\u03c1\\u03c4\\u03b9\\u03bf\\u03c2'}")
 
         d = self._make_dict({})
         d[u'\uc6d4'] = d
-        self.assertEqual(repr(d), "{u'\uc6d4': {...}}")
+        self.assertEqual(repr(d), "{u'\\uc6d4': {...}}")
 
     def test_fromkeys_unicode(self):
         super(JavaDictTest, self).test_fromkeys()

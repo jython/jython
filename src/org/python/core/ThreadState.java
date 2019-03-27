@@ -38,19 +38,19 @@ public class ThreadState {
             systemStateRef = new PySystemStateRef(systemState, this);
         }
     }
-    
+
     public PySystemState getSystemState() {
         PySystemState systemState = systemStateRef == null ? null : systemStateRef.get();
-        return systemState == null ? Py.defaultSystemState : systemState; 
+        return systemState == null ? Py.defaultSystemState : systemState;
     }
-    
+
     public boolean enterRepr(PyObject obj) {
         if (reprStack == null) {
             reprStack = new PyList(new PyObject[] {obj});
             return true;
         }
         for (int i = reprStack.size() - 1; i >= 0; i--) {
-            if (obj == reprStack.pyget(i)) {
+            if (obj._is(reprStack.pyget(i)).__nonzero__()) {
                 return false;
             }
         }
@@ -63,7 +63,7 @@ public class ThreadState {
             return;
         }
         for (int i = reprStack.size() - 1; i >= 0; i--) {
-            if (reprStack.pyget(i) == obj) {
+            if (obj._is(reprStack.pyget(i)).__nonzero__()) {
                 reprStack.delRange(i, reprStack.size());
             }
         }
