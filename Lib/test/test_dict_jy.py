@@ -381,9 +381,11 @@ class JavaHashtableDictTest(JavaDictTest):
     @unittest.skip("FIXME: see bjo #2746")
     def test_repr_value_None(self): pass # defining here only so we can skip it
 
-
 class JavaConcurrentHashMapDictTest(JavaDictTest):
     _class = ConcurrentHashMap
+
+    @unittest.skip("FIXME: bjo #2711 affects ConcurrentHashMap in all Java versions.")
+    def test_setdefault_atomic(self): pass # defining here only so we can skip it
 
     @unittest.skip("FIXME: see bjo #2746")
     def test_has_key(self): pass # defining here only so we can skip it
