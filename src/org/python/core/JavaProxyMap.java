@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -56,14 +57,14 @@ class JavaProxyMap {
             }
             // Loop through all entries checking the keys and values are matched
             for (Entry<Object, Object> entry : selfMap.entrySet()) {
-                Object jkey = entry.getKey();
-                Object jval = entry.getValue();
-                PyObject oVal = oDict.__finditem__(Py.java2py(jkey));
+                Object k = entry.getKey();
+                Object v = entry.getValue();
+                PyObject oVal = oDict.__finditem__(Py.java2py(k));
                 if (oVal == null) {
                     // No value for this key in oDict, therefore not equal
                     return Py.False;
                 }
-                if (!Py.java2py(jval)._eq(oVal).__nonzero__()) {
+                if (!Py.java2py(v)._eq(oVal).__nonzero__()) {
                     // The values for this key differ therefore not equal
                     return Py.False;
                 }
@@ -75,9 +76,9 @@ class JavaProxyMap {
             Object oj = other.getJavaProxy();
             if (oj instanceof Map) {
                 // Being compared to a Java Map convert to Python
-                Map<Object, Object> jMap = (Map) oj;
+                Map<Object, Object> map = (Map) oj;
                 final Map<PyObject, PyObject> pyMap = new HashMap<>();
-                for (Entry<Object, Object> el : jMap.entrySet()) {
+                for (Entry<Object, Object> el : map.entrySet()) {
                     pyMap.put(Py.java2py(el.getKey()), Py.java2py(el.getValue()));
                 }
                 // Compare again this time after conversion to Python dict
@@ -96,6 +97,34 @@ class JavaProxyMap {
         return object.getType().isSubType(PyDictionary.TYPE);
     }
 
+    /**
+     * Substitute for {@link Py#tojava(PyObject, Class)} when the second argument is
+     * {@code Object.class}, and in which we allow a {@code null} argument to signify {@code None},
+     * since {@code null} is then the return value.
+     */
+    private static Object tojava(PyObject pyo) {
+        return (pyo == null || pyo == Py.None) ? null : Py.tojava(pyo, Object.class);
+    }
+
+    /** Return Python {@code ValueError} that None is not allowed. */
+    private static RuntimeException nullException() {
+        return Py.ValueError(
+                "None is not allowed because underlying container cannot store a Java null.");
+    }
+
+    /** Return Python {@code ValueError} that None is not allowed, or the {@code NullPointerException},
+     * if in fact the value was not {@code None}.
+     *
+     * @param npe original exception
+     * @param key possibly causing the problem
+     * @param value possibly causing the problem
+     * @return the Python {@code ValueError}
+     */
+    private static RuntimeException nullException(NullPointerException npe, Object key,
+            Object value) {
+        return (value == Py.None || value == Py.None) ? nullException() : npe;
+    }
+
     /*
      * Map ordering comparisons (lt, le, gt, ge) are based on the key sets; we just define mapLe +
      * mapEq for total ordering of such key sets
@@ -104,8 +133,8 @@ class JavaProxyMap {
         Set<Object> selfKeys = ((Map<Object, Object>) self.getJavaProxy()).keySet();
         if (other.getType().isSubType(PyDictionary.TYPE)) {
             PyDictionary oDict = (PyDictionary) other;
-            for (Object jkey : selfKeys) {
-                if (!oDict.__contains__(Py.java2py(jkey))) {
+            for (Object k : selfKeys) {
+                if (!oDict.__contains__(Py.java2py(k))) {
                     return Py.False;
                 }
             }
@@ -113,8 +142,8 @@ class JavaProxyMap {
         } else {
             Object oj = other.getJavaProxy();
             if (oj instanceof Map) {
-                Map<Object, Object> oMap = (Map<Object, Object>) oj;
-                return Py.newBoolean(oMap.keySet().containsAll(selfKeys));
+                Map<Object, Object> map = (Map<Object, Object>) oj;
+                return Py.newBoolean(map.keySet().containsAll(selfKeys));
             } else {
                 return null;
             }
@@ -207,8 +236,7 @@ class JavaProxyMap {
     private static final PyBuiltinMethodNarrow mapContainsProxy = new MapMethod("__contains__", 1) {
         @Override
         public PyObject __call__(PyObject obj) {
-            Object other = obj.__tojava__(Object.class);
-            return asMap().containsKey(other) ? Py.True : Py.False;
+            return asMap().containsKey(tojava(obj)) ? Py.True : Py.False;
         }
     };
     /*
@@ -225,61 +253,71 @@ class JavaProxyMap {
 
         @Override
         public PyObject __call__(PyObject key, PyObject _default) {
-            Object jkey = Py.tojava(key, Object.class);
-            if (asMap().containsKey(jkey)) {
-                return Py.java2py(asMap().get(jkey));
+            Map<Object, Object> map = asMap();
+            Object k = tojava(key);
+            if (map.containsKey(k)) {
+                return Py.java2py(map.get(k));
             } else {
                 return _default;
             }
         }
     };
+
     private static final PyBuiltinMethodNarrow mapGetItemProxy = new MapMethod("__getitem__", 1) {
         @Override
         public PyObject __call__(PyObject key) {
-            Object jkey = Py.tojava(key, Object.class);
-            if (asMap().containsKey(jkey)) {
-                return Py.java2py(asMap().get(jkey));
-            } else {
-                throw Py.KeyError(key);
+            Map<Object, Object> map = asMap();
+            Object k = tojava(key);
+            if (map.containsKey(k)) {
+                return Py.java2py(map.get(k));
             }
+            throw Py.KeyError(key);
         }
     };
+
     private static final PyBuiltinMethodNarrow mapPutProxy = new MapMethod("__setitem__", 2) {
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
-            asMap().put(Py.tojava(key, Object.class),
-                    value == Py.None ? Py.None : Py.tojava(value, Object.class));
-            return Py.None;
+            try {
+                asMap().put(tojava(key), tojava(value));
+                return Py.None;
+            } catch (NullPointerException npe) {
+                throw nullException(npe, key, value);
+            }
         }
     };
+
     private static final PyBuiltinMethodNarrow mapRemoveProxy = new MapMethod("__delitem__", 1) {
         @Override
         public PyObject __call__(PyObject key) {
-            Object jkey = Py.tojava(key, Object.class);
-            if (asMap().remove(jkey) == null) {
-                throw Py.KeyError(key);
+            Map<Object, Object> map = asMap();
+            Object k = tojava(key);
+            if (map.containsKey(k)) {
+                map.remove(k);
+                return Py.None;
             }
-            return Py.None;
+            throw Py.KeyError(key);
         }
     };
+
     private static final PyBuiltinMethodNarrow mapIterItemsProxy = new MapMethod("iteritems", 0) {
         @Override
         public PyObject __call__() {
-            final Iterator<Map.Entry<Object, Object>> entrySetIterator = asMap().entrySet().iterator();
+            final Iterator<Map.Entry<Object, Object>> entryIterator = asMap().entrySet().iterator();
             return new PyIterator() {
                 @Override
                 public PyObject __iternext__() {
-                    if (entrySetIterator.hasNext()) {
-                        Map.Entry<Object, Object> nextEntry = entrySetIterator.next();
+                    if (entryIterator.hasNext()) {
+                        Map.Entry<Object, Object> e = entryIterator.next();
                         // yield a Python tuple object (key, value)
-                        return new PyTuple(Py.java2py(nextEntry.getKey()),
-                                Py.java2py(nextEntry.getValue()));
+                        return new PyTuple(Py.java2py(e.getKey()), Py.java2py(e.getValue()));
                     }
                     return null;
                 }
             };
         }
     };
+
     private static final PyBuiltinMethodNarrow mapIterKeysProxy = new MapMethod("iterkeys", 0) {
         @Override
         public PyObject __call__() {
@@ -297,6 +335,7 @@ class JavaProxyMap {
             };
         }
     };
+
     private static final PyBuiltinMethodNarrow mapIterValuesProxy = new MapMethod("itervalues", 0) {
         @Override
         public PyObject __call__() {
@@ -314,12 +353,14 @@ class JavaProxyMap {
             };
         }
     };
+
     private static final PyBuiltinMethodNarrow mapHasKeyProxy = new MapMethod("has_key", 1) {
         @Override
         public PyObject __call__(PyObject key) {
-            return asMap().containsKey(Py.tojava(key, Object.class)) ? Py.True : Py.False;
+            return asMap().containsKey(tojava(key)) ? Py.True : Py.False;
         }
     };
+
     private static final PyBuiltinMethodNarrow mapKeysProxy = new MapMethod("keys", 0) {
         @Override
         public PyObject __call__() {
@@ -330,6 +371,7 @@ class JavaProxyMap {
             return keys;
         }
     };
+
     private static final PyBuiltinMethod mapValuesProxy = new MapMethod("values", 0) {
         @Override
         public PyObject __call__() {
@@ -340,6 +382,7 @@ class JavaProxyMap {
             return values;
         }
     };
+
     private static final PyBuiltinMethodNarrow mapSetDefaultProxy = new MapMethod("setdefault", 1, 2) {
         @Override
         public PyObject __call__(PyObject key) {
@@ -347,16 +390,22 @@ class JavaProxyMap {
         }
 
         @Override
-        public PyObject __call__(PyObject key, PyObject _default) {
-            Object jkey = Py.tojava(key, Object.class);
-            Object jval = asMap().get(jkey);
-            if (jval == null) {
-                asMap().put(jkey, _default == Py.None ? Py.None : Py.tojava(_default, Object.class));
-                return _default;
+        public PyObject __call__(PyObject pykey, PyObject _default) {
+            Map<Object, Object> map = asMap();
+            Object key = tojava(pykey);
+            try {
+                if (map.containsKey(key)) {
+                    return Py.java2py(map.get(key));
+                } else {
+                    map.put(key, tojava(_default));
+                    return _default;
+                }
+            } catch (NullPointerException npe) {
+                throw nullException(npe, key, _default);
             }
-            return Py.java2py(jval);
         }
     };
+
     private static final PyBuiltinMethodNarrow mapPopProxy = new MapMethod("pop", 1, 2) {
         @Override
         public PyObject __call__(PyObject key) {
@@ -365,61 +414,67 @@ class JavaProxyMap {
 
         @Override
         public PyObject __call__(PyObject key, PyObject _default) {
-            Object jkey = Py.tojava(key, Object.class);
-            if (asMap().containsKey(jkey)) {
-                PyObject value = Py.java2py(asMap().remove(jkey));
-                assert (value != null);
-                return Py.java2py(value);
+            Map<Object, Object> map = asMap();
+            Object k = tojava(key);
+            if (map.containsKey(k)) {
+                return Py.java2py(map.remove(k));
+            } else if (_default == null) {
+                throw Py.KeyError(key);
             } else {
-                if (_default == null) {
-                    throw Py.KeyError(key);
-                }
                 return _default;
             }
         }
     };
+
     private static final PyBuiltinMethodNarrow mapPopItemProxy = new MapMethod("popitem", 0) {
         @Override
         public PyObject __call__() {
-            if (asMap().size() == 0) {
-                throw Py.KeyError("popitem(): map is empty");
+            Map<Object, Object> map = asMap();
+            Iterator<Entry<Object, Object>> entryIterator = map.entrySet().iterator();
+            if (entryIterator.hasNext()) {
+                Map.Entry<Object, Object> e = entryIterator.next();
+                entryIterator.remove();
+                return new PyTuple(Py.java2py(e.getKey()), Py.java2py(e.getValue()));
             }
-            Object key = asMap().keySet().toArray()[0];
-            Object val = asMap().remove(key);
-            return Py.java2py(val);
+            throw Py.KeyError("popitem(): map is empty");
         }
     };
+
     private static final PyBuiltinMethodNarrow mapItemsProxy = new MapMethod("items", 0) {
         @Override
         public PyObject __call__() {
             PyList items = new PyList();
             for (Map.Entry<Object, Object> entry : asMap().entrySet()) {
-                items.add(new PyTuple(Py.java2py(entry.getKey()),
-                        Py.java2py(entry.getValue())));
+                items.add(new PyTuple(Py.java2py(entry.getKey()), Py.java2py(entry.getValue())));
             }
             return items;
         }
     };
+
     private static final PyBuiltinMethodNarrow mapCopyProxy = new MapMethod("copy", 0) {
         @Override
         public PyObject __call__() {
-            Map<Object, Object> jmap = asMap();
-            Map<Object, Object> jclone;
+            Map<Object, Object> map = asMap();
+            Map<Object, Object> newMap;
+            Class<? extends Map<Object, Object>> clazz;
             try {
-                jclone = (Map<Object, Object>) jmap.getClass().getDeclaredConstructor()
-                        .newInstance();
+                clazz = (Class<Map<Object, Object>>) map.getClass();
+                Constructor<? extends Map<Object, Object>> ctor = clazz.getDeclaredConstructor();
+                newMap = ctor.newInstance();
+                for (Map.Entry<Object, Object> entry : map.entrySet()) {
+                    newMap.put(entry.getKey(), entry.getValue());
+                }
+            } catch (NullPointerException npe) {
+                throw nullException();
             } catch (ReflectiveOperationException | SecurityException
                     | IllegalArgumentException e) {
                 throw Py.JavaError(e);
             }
-            for (Map.Entry<Object, Object> entry : jmap.entrySet()) {
-                jclone.put(entry.getKey(), entry.getValue());
-            }
-            return Py.java2py(jclone);
+            return Py.java2py(newMap);
         }
     };
+
     private static final PyBuiltinMethodNarrow mapUpdateProxy = new MapMethod("update", 0, 1) {
-        private Map<Object, Object> jmap;
 
         @Override
         public PyObject __call__() {
@@ -437,53 +492,53 @@ class JavaProxyMap {
 
         @Override
         public PyObject __call__(PyObject[] args, String[] keywords) {
-            if ((args.length - keywords.length) != 1) {
-                throw info.unexpectedCall(args.length, false);
+            // Adapted from PyDictionary#update
+            int nargs = args.length - keywords.length;
+            if (nargs > 1) {
+                throw PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, false, "update", 0, 1);
             }
-            jmap = asMap();
-            PyObject other = args[0];
-            // update with entries from `other` (adapted from their equivalent in PyDictionary#update)
-            Object proxy = other.getJavaProxy();
-            if (proxy instanceof Map) {
-                merge((Map<Object, Object>) proxy);
-            } else if (other.__findattr__("keys") != null) {
-                merge(other);
-            } else {
-                mergeFromSeq(other);
-            }
-            // update with entries from keyword arguments
-            for (int i = 0; i < keywords.length; i++) {
-                String jkey = keywords[i];
-                PyObject value = args[1 + i];
-                jmap.put(jkey, Py.tojava(value, Object.class));
+            Map<Object, Object> map = asMap();
+            try {
+                if (nargs == 1) {
+                    PyObject other = args[0];
+                    Object proxy = other.getJavaProxy();
+                    if (proxy instanceof Map) {
+                        // other proxies a Java container: take contents verbatim.
+                        map.putAll((Map<Object, Object>) proxy);
+                    } else if (other instanceof PyDictionary) {
+                        // keys and values must be converted from Python to Java equivalents.
+                        mergeFromSeq(map, other.invoke("items"));
+                    } else if (other instanceof PyStringMap) {
+                        // keys and values must be converted from Python to Java equivalents.
+                        mergeFromKeys(map, other, ((PyStringMap) other).keys());
+                    } else if (other.__findattr__("keys") != null) {
+                        // This is a dict-like object but addressed by looking up the keys.
+                        mergeFromKeys(map, other, other.invoke("keys"));
+                    } else {
+                        // This should be a sequence of tuples (each an entry).
+                        mergeFromSeq(map, other);
+                    }
+                }
+                // update with entries from keyword arguments
+                for (int i = 0; i < keywords.length; i++) {
+                    String k = keywords[i];
+                    Object v = tojava(args[nargs + i]);
+                    map.put(k, v);
+                }
+            } catch (NullPointerException npe) {
+                throw nullException();
             }
             return Py.None;
         }
 
-        private void merge(Map<Object, Object> other) {
-            for (Map.Entry<Object, Object> entry : other.entrySet()) {
-                jmap.put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        private void merge(PyObject other) {
-            if (other instanceof PyDictionary) {
-                jmap.putAll(((PyDictionary) other).getMap());
-            } else if (other instanceof PyStringMap) {
-                mergeFromKeys(other, ((PyStringMap) other).keys());
-            } else {
-                mergeFromKeys(other, other.invoke("keys"));
-            }
-        }
-
-        private void mergeFromKeys(PyObject other, PyObject keys) {
+        private void mergeFromKeys(Map<Object, Object> map, PyObject other, PyObject keys) {
             for (PyObject key : keys.asIterable()) {
-                jmap.put(Py.tojava(key, Object.class),
-                        Py.tojava(other.__getitem__(key), Object.class));
+                Object value = tojava(other.__getitem__(key));
+                map.put(tojava(key), value);
             }
         }
 
-        private void mergeFromSeq(PyObject other) {
+        private void mergeFromSeq(Map<Object, Object> map, PyObject other) {
             PyObject pairs = other.__iter__();
             PyObject pair;
 
@@ -502,11 +557,11 @@ class JavaProxyMap {
                     throw Py.ValueError(String.format("dictionary update sequence element #%d "
                             + "has length %d; 2 is required", i, n));
                 }
-                jmap.put(Py.tojava(pair.__getitem__(0), Object.class),
-                        Py.tojava(pair.__getitem__(1), Object.class));
+                map.put(tojava(pair.__getitem__(0)), tojava(pair.__getitem__(1)));
             }
         }
     };
+
     private static final PyBuiltinClassMethodNarrow mapFromKeysProxy = new MapClassMethod("fromkeys", 1, 2) {
         @Override
         public PyObject __call__(PyObject keys) {
@@ -515,19 +570,18 @@ class JavaProxyMap {
 
         @Override
         public PyObject __call__(PyObject keys, PyObject _default) {
-            Object defobj = _default == null ? Py.None : Py.tojava(_default, Object.class);
-            Class<?> theClass = asClass();
+            Object defobj = tojava(_default);
+            Class<? extends Map<Object, Object>> clazz;
             try {
-                /*
-                 * always injected to java.util.Map, so we know the class object we get from
-                 * asClass is subtype of java.util.Map
-                 */
-                Map<Object, Object> theMap = (Map<Object, Object>) theClass
-                        .getDeclaredConstructor().newInstance();
+                clazz = (Class<Map<Object, Object>>) asClass();
+                Constructor<? extends Map<Object, Object>> ctor = clazz.getDeclaredConstructor();
+                Map<Object, Object> theMap = ctor.newInstance();
                 for (PyObject key : keys.asIterable()) {
-                    theMap.put(Py.tojava(key, Object.class), defobj);
+                    theMap.put(tojava(key), defobj);
                 }
                 return Py.java2py(theMap);
+            } catch (NullPointerException npe) {
+                throw nullException();
             } catch (ReflectiveOperationException | SecurityException
                     | IllegalArgumentException e) {
                 throw Py.JavaError(e);

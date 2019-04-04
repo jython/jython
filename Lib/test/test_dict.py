@@ -1,7 +1,5 @@
 import unittest
 from test import test_support
-from java.util import Map
-from java.util.concurrent import ConcurrentMap
 
 import UserDict, random, string
 import gc, weakref
@@ -9,10 +7,14 @@ import gc, weakref
 
 class DictTest(unittest.TestCase):
 
-    _class = None
+    type2test = dict
 
     def _make_dict(self, pydict):
-        return pydict if not self._class else self._class(pydict)
+        'Create a self.type2test from pydict, or just return it if we are testing dict'
+        if self.type2test is dict:
+            return pydict
+        else:
+            return self.type2test(pydict)
 
     def test_constructor(self):
         # calling built-in types without argument must return empty
@@ -217,7 +219,10 @@ class DictTest(unittest.TestCase):
         self.assertRaises(ValueError, d.update, [(1, 2, 3)])
 
     def test_fromkeys(self):
-        self.assertEqual(dict.fromkeys('abc'), {'a':None, 'b':None, 'c':None})
+        Dict = self.type2test
+
+        self.assertEqual(Dict.fromkeys('abc'), {'a':None, 'b':None, 'c':None})
+
         d = self._make_dict({})
         self.assertIsNot(d.fromkeys('abc'), d)
         self.assertEqual(d.fromkeys('abc'), {'a':None, 'b':None, 'c':None})
@@ -226,23 +231,25 @@ class DictTest(unittest.TestCase):
         def g():
             yield 1
         self.assertEqual(d.fromkeys(g()), {1:None})
-        self.assertRaises(TypeError, {}.fromkeys, 3)
-        class dictlike(dict): pass
+        self.assertRaises(TypeError, self._make_dict({}).fromkeys, 3)
+
+        class dictlike(Dict): pass
         self.assertEqual(dictlike.fromkeys('a'), {'a':None})
         self.assertEqual(dictlike().fromkeys('a'), {'a':None})
         self.assertIsInstance(dictlike.fromkeys('a'), dictlike)
         self.assertIsInstance(dictlike().fromkeys('a'), dictlike)
-        class mydict(dict):
+
+        class mydict(Dict):
             def __new__(cls):
                 return UserDict.UserDict()
         ud = mydict.fromkeys('ab')
         self.assertEqual(ud, {'a':None, 'b':None})
         self.assertIsInstance(ud, UserDict.UserDict)
-        self.assertRaises(TypeError, dict.fromkeys)
+        self.assertRaises(TypeError, Dict.fromkeys)
 
         class Exc(Exception): pass
 
-        class baddict1(dict):
+        class baddict1(Dict):
             def __init__(self):
                 raise Exc()
 
@@ -254,17 +261,25 @@ class DictTest(unittest.TestCase):
             def next(self):
                 raise Exc()
 
-        self.assertRaises(Exc, dict.fromkeys, BadSeq())
+        self.assertRaises(Exc, Dict.fromkeys, BadSeq())
 
-        class baddict2(dict):
+        class baddict2(Dict):
             def __setitem__(self, key, value):
                 raise Exc()
 
         self.assertRaises(Exc, baddict2.fromkeys, [1])
 
         # test fast path for dictionary inputs
-        d = dict(zip(range(6), range(6)))
-        self.assertEqual(dict.fromkeys(d, 0), dict(zip(range(6), [0]*6)))
+        d = Dict(zip(range(6), range(6)))
+        self.assertEqual(Dict.fromkeys(d, 0), Dict(zip(range(6), [0]*6)))
+
+        class baddict3(Dict):
+            def __new__(cls):
+                return d
+        d = self._make_dict({i : i for i in range(10)})
+        res = d.copy()
+        res.update(a=None, b=None, c=None)
+        self.assertEqual(baddict3.fromkeys({"a", "b", "c"}), res)
 
     def test_copy(self):
         d = self._make_dict({1:1, 2:2, 3:3})
@@ -312,8 +327,7 @@ class DictTest(unittest.TestCase):
         x.fail = True
         self.assertRaises(Exc, d.setdefault, x, [])
 
-    @unittest.skipIf(test_support.is_jython and test_support.get_java_version() >= (9,),
-                     "Fails on Java 9+. See b.j.o. issue 2711.")
+    @unittest.skipIf(test_support.is_jython, "CPython specific. See bjo issue 2711.")
     def test_setdefault_atomic(self):
         # Issue #13521: setdefault() calls __hash__ and __eq__ only once.
         class Hashed(object):
@@ -328,8 +342,6 @@ class DictTest(unittest.TestCase):
                 return id(self) == id(other)
         hashed1 = Hashed()
         y = self._make_dict({hashed1: 5})
-        if isinstance(y, Map) and not isinstance(y, ConcurrentMap):
-            raise unittest.SkipTest("java.util.Map objects that do not implement ConcurrentMap have no concurrency guarantees")
         # given that there are potentially multiple copies of the
         # above dict in self._make_dict, record the hash_count so it
         # can be subtracted out
@@ -454,15 +466,16 @@ class DictTest(unittest.TestCase):
             d1 < d2
 
     def test_missing(self):
+        Dict = self.type2test
         # Make sure dict doesn't have a __missing__ method
-        self.assertFalse(hasattr(dict, "__missing__"))
+        self.assertFalse(hasattr(Dict, "__missing__"))
         self.assertFalse(hasattr(self._make_dict({}), "__missing__"))
         # Test several cases:
         # (D) subclass defines __missing__ method returning a value
         # (E) subclass defines __missing__ method raising RuntimeError
         # (F) subclass sets __missing__ instance variable (no effect)
         # (G) subclass doesn't define __missing__ at a all
-        class D(dict):
+        class D(Dict):
             def __missing__(self, key):
                 return 42
         d = D({1: 2, 3: 4})
@@ -472,7 +485,7 @@ class DictTest(unittest.TestCase):
         self.assertNotIn(2, d.keys())
         self.assertEqual(d[2], 42)
 
-        class E(dict):
+        class E(Dict):
             def __missing__(self, key):
                 raise RuntimeError(key)
         e = E()
@@ -480,7 +493,7 @@ class DictTest(unittest.TestCase):
             e[42]
         self.assertEqual(c.exception.args, (42,))
 
-        class F(dict):
+        class F(Dict):
             def __init__(self):
                 # An instance variable __missing__ should have no effect
                 self.__missing__ = lambda key: None
@@ -489,7 +502,7 @@ class DictTest(unittest.TestCase):
             f[42]
         self.assertEqual(c.exception.args, (42,))
 
-        class G(dict):
+        class G(Dict):
             pass
         g = G()
         with self.assertRaises(KeyError) as c:
@@ -581,13 +594,15 @@ class DictTest(unittest.TestCase):
 
     def test_container_iterator(self):
         # Bug #3680: tp_traverse was not implemented for dictiter objects
+        Dict = self.type2test
         class C(object):
             pass
-        iterators = (dict.iteritems, dict.itervalues, dict.iterkeys)
+        #iterators = (lambda c: c.iteritems, lambda c: c.itervalues, lambda c: c.iterkeys)
+        iterators = (Dict.iteritems, Dict.itervalues, Dict.iterkeys)
         for i in iterators:
             obj = C()
             ref = weakref.ref(obj)
-            container = {obj: 1}
+            container = self._make_dict({obj: 1})
             obj.x = i(container)
             del obj, container
             gc.collect()
@@ -693,11 +708,6 @@ class DictTest(unittest.TestCase):
         class MyDict(dict):
             pass
         self._tracked(MyDict())
-
-    def test_list_equality(self):
-        class A(dict): pass
-        for dtype in (A, dict):
-            self.assertEquals([dtype()], [dict()])
 
 
 from test import mapping_tests
