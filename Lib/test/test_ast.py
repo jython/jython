@@ -1,4 +1,4 @@
-import sys, itertools, unittest
+import sys, itertools, unittest, traceback
 from test import test_support
 import ast
 
@@ -289,6 +289,19 @@ class ASTHelpers_Test(unittest.TestCase):
         self.assertEqual(ast.literal_eval('{"foo": 42}'), {"foo": 42})
         self.assertEqual(ast.literal_eval('(True, False, None)'), (True, False, None))
         self.assertRaises(ValueError, ast.literal_eval, 'foo()')
+
+    def test_uses_lineno(self):
+        node = ast.Module(body=[ast.Expr(value=ast.Name(id='x', ctx=ast.Load()), lineno=42)])
+        node = ast.fix_missing_locations(node)
+        exc = None
+        try:
+            exec compile(node,'<test_uses_lineno>','exec')
+        except:
+            exc = traceback.format_tb(sys.exc_info()[2])
+        assert exc is not None
+
+        # can only check the last line of the stack trace:
+        self.assertEqual(exc[-1],'  File "<test_uses_lineno>", line 42, in <module>\n')
 
 
 def test_main():

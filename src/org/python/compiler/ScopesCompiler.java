@@ -285,7 +285,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     @Override
     public Object visitListComp(ListComp node) throws Exception {
-        String tmp = "_[" + node.getLine() + "_" + node.getCharPositionInLine()
+        String tmp = "_[" + node.getLineno() + "_" + node.getCol_offset()
                 + "]";
         cur.addBound(tmp);
         traverse(node);
@@ -328,7 +328,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             visit(generators.get(0).getInternalIter());
         }
         String bound_exp = "_(x)";
-        String tmp = "_(" + node.getLine() + "_" + node.getCharPositionInLine()
+        String tmp = "_(" + node.getLineno() + "_" + node.getCol_offset()
                 + ")";
         def(tmp);
         ArgListCompiler ac = new ArgListCompiler();

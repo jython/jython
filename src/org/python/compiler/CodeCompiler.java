@@ -183,7 +183,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
     }
 
     public void setline(PythonTree node) throws Exception {
-        setline(node.getLine());
+        setline(node.getLineno());
     }
 
     public void set(PythonTree node) throws Exception {
@@ -509,7 +509,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         scope.setup_closure();
         scope.dump();
         module.codeConstant(new Suite(node, node.getInternalBody()), name, true, className, false,
-                false, node.getLine(), scope, cflags).get(code);
+                false, node.getLineno(), scope, cflags).get(code);
 
         Str docStr = getDocStr(node.getInternalBody());
         if (docStr != null) {
@@ -2168,7 +2168,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         code.ldc("append");
 
         code.invokevirtual(p(PyObject.class), "__getattr__", sig(PyObject.class, String.class));
-        String tmp_append = "_[" + node.getLine() + "_" + node.getCharPositionInLine() + "]";
+        String tmp_append = "_[" + node.getLineno() + "_" + node.getCol_offset() + "]";
 
         java.util.List<expr> args = new ArrayList<expr>();
         args.add(node.getInternalElt());
@@ -2312,7 +2312,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
         scope.setup_closure();
         scope.dump();
-        module.codeConstant(retSuite, name, true, className, false, false, node.getLine(), scope,
+        module.codeConstant(retSuite, name, true, className, false, false, node.getLineno(), scope,
                 cflags).get(code);
 
         if (!makeClosure(scope)) {
@@ -2387,8 +2387,8 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         // Make code object out of suite
 
         module.codeConstant(new Suite(node, node.getInternalBody()), name, false, name,
-                getDocStr(node.getInternalBody()), true, false, node.getLine(), scope, cflags).get(
-                code);
+                getDocStr(node.getInternalBody()), true, false, node.getLineno(), scope, cflags)
+                .get(code);
 
         // Make class out of name, bases, and code
         if (!makeClosure(scope)) {
@@ -2608,7 +2608,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         java.util.List<stmt> bod = new ArrayList<stmt>();
         bod.add(n);
         module.codeConstant(new Suite(node, bod), "<genexpr>", true, className, false, false,
-                node.getLine(), scope, cflags).get(code);
+                node.getLineno(), scope, cflags).get(code);
 
         code.aconst_null();
         if (!makeClosure(scope)) {
@@ -2681,7 +2681,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
         java.util.List<stmt> bod = new ArrayList<stmt>();
         bod.add(n);
         module.codeConstant(new Suite(node, bod), "<genexpr>", true, className, false, false,
-                node.getLine(), scope, cflags).get(code);
+                node.getLineno(), scope, cflags).get(code);
 
         code.aconst_null();
         if (!makeClosure(scope)) {

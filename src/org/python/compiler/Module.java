@@ -685,7 +685,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         if (!err) {
             try {
                 Py.warning(Py.SyntaxWarning, msg, (sfilename != null) ? sfilename : "?",
-                        node.getLine(), null, Py.None);
+                        node.getLineno(), null, Py.None);
                 return;
             } catch (PyException e) {
                 if (!e.match(Py.SyntaxWarning)) {

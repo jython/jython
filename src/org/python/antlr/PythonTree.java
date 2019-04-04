@@ -78,7 +78,7 @@ public class PythonTree extends AST implements Traverseproc {
         return node.getText();
     }
 
-    public int getLine() {
+    protected int getLine() {
         if (node.getToken()==null || node.getToken().getLine()==0) {
             if ( getChildCount()>0 ) {
                 return getChild(0).getLine();
@@ -88,7 +88,7 @@ public class PythonTree extends AST implements Traverseproc {
         return node.getToken().getLine();
     }
 
-    public int getCharPositionInLine() {
+    protected int getCharPositionInLine() {
         Token token = node.getToken();
         if (token==null || token.getCharPositionInLine()==-1) {
             if (getChildCount()>0) {
@@ -103,6 +103,14 @@ public class PythonTree extends AST implements Traverseproc {
             return -1;
         }
         return token.getCharPositionInLine();
+    }
+
+    public int getLineno() {
+        return getLine();
+    }
+
+    public int getCol_offset() {
+        return getCharPositionInLine();
     }
 
     public int getTokenStartIndex() {

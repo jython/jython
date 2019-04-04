@@ -35,7 +35,7 @@ public class ParseException extends RuntimeException {
      * n must not be null to use this constructor
      */
     public ParseException(String message, PythonTree n) {
-        this(message, n.getLine(), n.getCharPositionInLine());
+        this(message, n.getLineno(), n.getCol_offset());
         this.node = n;
         this.token = n.getToken();
     }
