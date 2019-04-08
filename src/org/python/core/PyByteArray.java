@@ -2014,12 +2014,17 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
     @Override
     public String toString() {
-        return bytearray_repr();
+        return this.asString();
+    }
+
+    @Override
+    public PyString __repr__(){
+       return bytearray___repr__();
     }
 
     @ExposedMethod(names = {"__repr__"}, doc = BuiltinDocs.bytearray___repr___doc)
-    final synchronized String bytearray_repr() {
-        return basebytes_repr("bytearray(b", ")");
+    final synchronized PyString bytearray___repr__() {
+        return new PyString(basebytes_repr("bytearray(b", ")"));
     }
 
     /**

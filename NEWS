@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ GH-121 ] Allow struct unpack and unpack_from bytearray and buffer
     - [ 2635 ] AST.lineno ignored by compile
     - [ 2744 ] Support buffer type in marshal.dump(s)
     - [ 2077 ] marshal doesn't raise error when fed unmarshalable object

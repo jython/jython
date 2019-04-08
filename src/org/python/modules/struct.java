@@ -21,6 +21,8 @@ import org.python.core.PyTuple;
 import java.math.BigInteger;
 import org.python.core.ClassDictInit;
 import org.python.core.PyArray;
+import org.python.core.PyByteArray;
+import org.python.core.Py2kBuffer;
 
 /**
  * This module performs conversions between Python values and C
@@ -1097,6 +1099,31 @@ public class struct implements ClassDictInit {
          return unpack(f, size, format, new ByteStream(string));
     }
     
+    public static PyTuple unpack(String format, Py2kBuffer buffer){
+        return unpack(format, buffer.toString());
+    }
+
+    public static PyTuple unpack(String format, PyByteArray bytearray) {
+        /* bytearray is added in 2.7.7 */
+        return unpack(format, bytearray.toString());
+    }
+
+    public static PyTuple unpack_from(String format, Py2kBuffer buffer) {
+        return unpack_from(format, buffer.toString(), 0);
+    }
+
+    public static PyTuple unpack_from(String format, PyByteArray bytearray) {
+        return unpack_from(format, bytearray.toString(), 0);
+    }
+
+    public static PyTuple unpack_from(String format, Py2kBuffer buffer, int offset) {
+        return unpack_from(format, buffer.toString(), offset);
+    }
+
+    public static PyTuple unpack_from(String format, PyByteArray bytearray, int offset) {
+        return unpack_from(format, bytearray.toString(), offset);
+    }
+
     public static PyTuple unpack_from(String format, String string) {
         return unpack_from(format, string, 0);   
     }

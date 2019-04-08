@@ -203,8 +203,13 @@ public class Py2kBuffer extends PySequence implements BufferProtocol {
 
     @ExposedMethod(doc = BuiltinDocs.buffer___str___doc)
     final PyString buffer___str__() {
+        return new PyString(toString());
+    }
+
+    @Override
+    public String toString() {
         try (PyBuffer buf = getBuffer()) {
-            return new PyString(buf.toString());
+            return buf.toString();
         }
     }
 
