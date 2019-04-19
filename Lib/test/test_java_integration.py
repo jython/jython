@@ -45,6 +45,7 @@ from javatests import Issue1833
 from javatests.ProxyTests import NullToString, Person
 
 from clamp import SerializableProxies
+from unittest.case import skip
 
 
 
@@ -575,9 +576,15 @@ class JavaMROTest(unittest.TestCase):
         self.assertEqual(set(m), set(["abc", "xyz"]))
         self.assertEqual(m["abc"], 42)
 
-    def test_diamond_lattice_inheritance(self):
+    def test_mro_eclipse(self):
         # http://bugs.jython.org/issue2445
-        from org.python.tests.mro import TortureMRO
+        from org.python.tests.mro import EclipseChallengeMRO
+
+    @unittest.skip("FIXME: see http://bugs.jython.org/issue2445")
+    def test_mro_ibmmq(self):
+        # http://bugs.jython.org/issue2445
+        from org.python.tests.mro import IBMMQChallengeMRO
+        t = IBMMQChallengeMRO.mq.jms.MQQueue
 
 
 def roundtrip_serialization(obj):

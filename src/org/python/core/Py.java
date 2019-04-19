@@ -69,8 +69,7 @@ public final class Py extends PrePy {
     /** A zero-length array of Strings to pass to functions that
     don't have any keyword arguments **/
     public final static String[] NoKeywords = new String[0];
-    /** A zero-length array of PyObject's to pass to functions that
-    expect zero-arguments **/
+    /** A zero-length array of PyObject's to pass to functions when we have no arguments **/
     public final static PyObject[] EmptyObjects = new PyObject[0];
     /** A frozenset with zero elements **/
     public final static PyFrozenSet EmptyFrozenSet = new PyFrozenSet();
@@ -2566,29 +2565,29 @@ public final class Py extends PrePy {
         }
     }
 
+    /**
+     * Turn any Python iterable into an array of its elements.
+     *
+     * @param iterable to evaluate
+     * @return array of elements from iterable
+     */
     static PyObject[] make_array(PyObject iterable) {
         // Special-case the common tuple and list cases, for efficiency
         if (iterable instanceof PySequenceList) {
             return ((PySequenceList) iterable).getArray();
-        }
-
-        // Guess result size and allocate space. The typical make_array arg supports
-        // __len__, with one exception being generators, so avoid the overhead of an
-        // exception from __len__ in their case
-        int n = 10;
-        if (!(iterable instanceof PyGenerator)) {
-            try {
-                n = iterable.__len__();
-            } catch (PyException pye) {
-                // ok
+        } else {
+            int n = 10;
+            if (!(iterable instanceof PyGenerator)) {
+                try {
+                    n = iterable.__len__(); // may be available, otherwise ...
+                } catch (PyException pye) { /* ... leave n at 0 */ }
             }
+            List<PyObject> objs = new ArrayList<PyObject>(n);
+            for (PyObject item : iterable.asIterable()) {
+                objs.add(item);
+            }
+            return objs.toArray(Py.EmptyObjects);
         }
-
-        List<PyObject> objs = new ArrayList<PyObject>(n);
-        for (PyObject item : iterable.asIterable()) {
-            objs.add(item);
-        }
-        return objs.toArray(Py.EmptyObjects);
     }
 
 //------------------------constructor-section---------------------------

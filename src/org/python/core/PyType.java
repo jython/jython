@@ -1441,30 +1441,39 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return (tp_flags & Py.TPFLAGS_IS_ABSTRACT) != 0;
     }
 
+    /**
+     * Set the {@link #mro} field from the Python {@code mro()} method which uses
+     * ({@link #computeMro()} by default. We must repeat this whenever the bases of this type
+     * change, which they may in general for classes defined in Python.
+     */
     private void mro_internal() {
+
         if (getType() == TYPE) {
-            mro = computeMro();
+            mro = computeMro(); // Shortcut
+
         } else {
+            // Use the mro() method, which may have been redefined to find the MRO as an array.
             PyObject mroDescr = getType().lookup("mro");
             if (mroDescr == null) {
                 throw Py.AttributeError("mro");
             }
             PyObject[] result = Py.make_array(mroDescr.__get__(null, getType()).__call__(this));
 
+            // Verify that Python types in the MRO have a "solid base" in common with this type.
             PyType solid = solid_base(this);
+
             for (PyObject cls : result) {
                 if (cls instanceof PyClass) {
                     continue;
-                }
-                if (!(cls instanceof PyType)) {
-                    throw Py.TypeError(String.format("mro() returned a non-class ('%.500s')",
-                            cls.getType().fastGetName()));
-                }
-                PyType t = (PyType) cls;
-                if (!solid.isSubType(solid_base(t))) {
-                    throw Py.TypeError(String.format(
-                            "mro() returned base with unsuitable layout " + "('%.500s')",
-                            t.fastGetName()));
+                } else if (cls instanceof PyType) {
+                    PyType t = (PyType) cls;
+                    if (!solid.isSubType(solid_base(t))) {
+                        String fmt = "mro() returned base with unsuitable layout ('%.500s')";
+                        throw Py.TypeError(String.format(fmt, t.fastGetName()));
+                    }
+                } else {
+                    String fmt = "mro() returned a non-class ('%.500s')";
+                    throw Py.TypeError(String.format(fmt, cls.getType().fastGetName()));
                 }
             }
             mro = result;
@@ -1605,14 +1614,20 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.type_mro_doc)
-    final PyList type_mro(PyObject o) {
-        if (o == null) {
-            return new PyList(computeMro());
-        }
-        return new PyList(((PyType) o).computeMro());
+    final PyList type_mro(PyObject X) {
+        // This is either X.mro (where X is a type object) or type.mro(X)
+        PyObject[] res = (X == null) ? computeMro() : ((PyType) X).computeMro();
+        return new PyList(res);
     }
 
+    /**
+     * Examine the bases (which must contain no repetition) and the MROs of these bases and return
+     * the MRO of this class.
+     *
+     * @return the MRO of this class
+     */
     PyObject[] computeMro() {
+        // First check that there are no duplicates amongst the bases of this class.
         for (int i = 0; i < bases.length; i++) {
             PyObject cur = bases[i];
             for (int j = i + 1; j < bases.length; j++) {
@@ -1624,6 +1639,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
         }
 
+        // Build a table of the MROs of the bases as MROMergeState objects.
         MROMergeState[] toMerge = new MROMergeState[bases.length + 1];
         for (int i = 0; i < bases.length; i++) {
             toMerge[i] = new MROMergeState();
@@ -1633,14 +1649,27 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 toMerge[i].mro = classic_mro((PyClass) bases[i]);
             }
         }
+
+        // Append to this table the list of bases of this class
         toMerge[bases.length] = new MROMergeState();
         toMerge[bases.length].mro = bases;
 
+        // The head of the output MRO is the current class itself.
         List<PyObject> mro = Generic.list();
         mro.add(this);
+
+        // Now execute the core of the MRO generation algorithm.
         return computeMro(toMerge, mro);
     }
 
+    /**
+     * Core algorithm for computing the MRO for "new-style" (although it's been a while) Python
+     * classes.
+     *
+     * @param toMerge data structure representing the (partly processed) MROs of bases.
+     * @param mro partial MRO (initially only this class)
+     * @return the MRO of this class
+     */
     PyObject[] computeMro(MROMergeState[] toMerge, List<PyObject> mro) {
         boolean addedProxy = false;
         Class<?> thisProxyAttr = this.getProxyType();
@@ -1693,12 +1722,17 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Must either throw an exception, or bring the merges in <code>toMerge</code> to completion by
-     * finishing filling in <code>mro</code>.
+     * This method is called when the {@link #computeMro(MROMergeState[], List)} reaches an impasse
+     * as far as its official algorithm is concerned, with the partial MRO and current state of the
+     * working lists at the point the problem is detected. The base implementation raises a Python
+     * {@code TypeError}, diagnosing the problem.
+     *
+     * @param toMerge partially processed algorithm state
+     * @param mro output MRO (incomplete)
      */
     void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
         StringBuilder msg = new StringBuilder(
-                "Cannot create a consistent method resolution\n" + "order (MRO) for bases ");
+                "Cannot create a consistent method resolution\norder (MRO) for bases ");
         Set<PyObject> set = Generic.set();
         for (MROMergeState mergee : toMerge) {
             if (!mergee.isMerged()) {
@@ -1720,7 +1754,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     /**
-     * Finds the parent of type with an underlying_class or with slots sans a __dict__ slot.
+     * Finds the first super-type of the given {@code type} that is a "solid base" of the type, that
+     * is, the returned type has an {@link #underlying_class}, or it defines {@code __slots__} and
+     * no instance level dictionary ({@code __dict__} attribute).
      */
     private static PyType solid_base(PyType type) {
         do {
@@ -1732,38 +1768,48 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         return PyObject.TYPE;
     }
 
+    /**
+     * A "solid base" is a type that has an {@link #underlying_class}, or defines {@code __slots__}
+     * and no instance level dictionary (no {@code __dict__} attribute).
+     */
     private static boolean isSolidBase(PyType type) {
         return type.underlying_class != null || (type.ownSlots != 0 && !type.needs_userdict);
     }
 
     /**
-     * Finds the base in bases with the most derived solid_base, ie the most base type
+     * Find the base selected from a {@link #bases} array that has the "most derived solid base".
+     * This will become the {@link #base} attribute of a class under construction, or in which the
+     * {@link #bases} tuple is being updated. On a successful return, the return value is one of the
+     * elements of the argument {@code bases} and the solid base of that return is a sub-type of the
+     * solid bases of all other (non-classic) elements of the argument.
      *
      * @throws Py.TypeError if the bases don't all derive from the same solid_base
      * @throws Py.TypeError if at least one of the bases isn't a new-style class
      */
     private static PyType best_base(PyObject[] bases) {
-        PyType winner = null;
-        PyType candidate = null;
-        PyType best = null;
-        for (PyObject base : bases) {
-            if (base instanceof PyClass) {
+        PyType best = null;         // The best base found so far
+        PyType bestSolid = null;    // The solid base of the best base so far
+        for (PyObject b : bases) {
+            if (b instanceof PyType) {
+                PyType base = (PyType) b, solid = solid_base(base);
+                if (bestSolid == null) {
+                    // First (non-classic) base we find becomes the best base so far
+                    best = base;
+                    bestSolid = solid;
+                } else if (bestSolid.isSubType(solid)) {
+                    // Current best is still the best so far
+                } else if (solid.isSubType(bestSolid)) {
+                    // base is better than the previous best since its solid base is more derived.
+                    best = base;
+                    bestSolid = solid;
+                } else {
+                    throw Py.TypeError("multiple bases have instance lay-out conflict");
+                }
+            } else if (b instanceof PyClass) {
+                // Skip over classic bases
                 continue;
-            }
-            if (!(base instanceof PyType)) {
-                throw Py.TypeError("bases must be types");
-            }
-            candidate = solid_base((PyType) base);
-            if (winner == null) {
-                winner = candidate;
-                best = (PyType) base;
-            } else if (winner.isSubType(candidate)) {
-                ;
-            } else if (candidate.isSubType(winner)) {
-                winner = candidate;
-                best = (PyType) base;
             } else {
-                throw Py.TypeError("multiple bases have instance lay-out conflict");
+                throw Py.TypeError("bases must be types");
             }
         }
         if (best == null) {
@@ -2602,6 +2648,20 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 }
             }
             mro = newMro.toArray(new PyObject[newMro.size()]);
+        }
+
+        @Override
+        public String toString() {
+            List<String> names = Generic.list();
+            for (int i = next; i < mro.length; i++) {
+                PyObject t = mro[i];
+                if (t instanceof PyType) {
+                    names.add(((PyType) t).name);
+                } else {
+                    names.add(t.toString());
+                }
+            }
+            return names.toString();
         }
     }
 

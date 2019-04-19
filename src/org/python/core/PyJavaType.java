@@ -1,5 +1,8 @@
 package org.python.core;
 
+import org.python.core.util.StringUtil;
+import org.python.util.Generic;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,16 +30,15 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
-
-import org.python.core.util.StringUtil;
-import org.python.util.Generic;
 
 public class PyJavaType extends PyType {
 
@@ -218,76 +220,88 @@ public class PyJavaType extends PyType {
         postDelattr(name);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * An override specifically for Java classes (that are not {@link PyObject}) has the possibility
+     * of completing the MRO in {@code mro}, by additional steps affecting the {@code mro} and
+     * {@code toMerge} passed in. This divergence from the Python rules is acceptable for Java.
+     */
     @Override
     void handleMroError(MROMergeState[] toMerge, List<PyObject> mro) {
+
         if (underlying_class != null) {
-            // If this descends from PyObject, don't do the Java mro cleanup
+            // This descends from PyObject (but is not exposed): don't attempt recovery.
             super.handleMroError(toMerge, mro);
         }
-        Set<PyJavaType> inConflict = Generic.set();
-        PyJavaType winner = null;
+
+        // Make a set of all the PyJavaTypes still in the lists to merge.
+        Set<PyJavaType> inConflict = new LinkedHashSet<>();
         for (MROMergeState mergee : toMerge) {
             for (int i = mergee.next; i < mergee.mro.length; i++) {
-                if (mergee.mro[i] == PyObject.TYPE
-                        || mergee.mro[i] == PyType.fromClass(Object.class)) {
-                    continue;
+                PyObject m = mergee.mro[i];
+                if (m instanceof PyJavaType && m != Constant.OBJECT) {
+                    inConflict.add((PyJavaType) m);
                 }
-                if (winner == null) {
-                    /*
-                     * Pick an arbitrary class to be added to the mro next and break the conflict.
-                     * If method name conflicts were allowed between methods added to Java types, it
-                     * would go first, but that's prevented, so being a winner doesn't actually get
-                     * it anything.
-                     */
-                    winner = (PyJavaType) mergee.mro[i];
-                }
-                inConflict.add((PyJavaType) mergee.mro[i]);
             }
         }
 
-        Set<String> allModified = Generic.set();
-        PyJavaType[] conflictedAttributes = inConflict.toArray(new PyJavaType[inConflict.size()]);
-        for (PyJavaType type : conflictedAttributes) {
-            if (type.modified == null) {
-                continue;
-            }
-            for (String method : type.modified) {
-                if (!allModified.add(method)) {
-                    // Another type in conflict has this method, possibly fail
-                    PyList types = new PyList();
-                    Set<Class<?>> proxySet = Generic.set();
-                    for (PyJavaType othertype : conflictedAttributes) {
+        /*
+         * Collect the names of all the methods added to any of these types (with certain
+         * exclusions) that occur in more than one of these residual types. If a name is found in
+         * more than one of these types, raise an error.
+         */
+        Set<String> allModified = new HashSet<>();
+        for (PyJavaType type : inConflict) {
+            if (type.modified != null) {
+                // For every method name modified in type ...
+                for (String method : type.modified) {
+                    if (!allModified.add(method)) {
                         /*
-                         * Ignore any pairings of types that are in a superclass/superinterface
-                         * relationship with each other. This problem is a false positive that
-                         * happens because of the automatic addition of methods so that Java classes
-                         * behave more like their corresponding Python types, such as adding sort or
-                         * remove. See http://bugs.jython.org/issue2445
-                         */
-                        if (othertype.modified != null && othertype.modified.contains(method)
-                                && !(othertype.getProxyType().isAssignableFrom(type.getProxyType())
-                                        || type.getProxyType()
-                                                .isAssignableFrom(othertype.getProxyType()))) {
-                            types.add(othertype);
-                            proxySet.add(othertype.getProxyType());
+                         * The method name was already in the set, so has appeared already. Work out
+                         * which one that was by rescanning.
+                         */// XXX Why didn't we keep a map?
+                        List<PyJavaType> types = new ArrayList<>();
+                        Set<Class<?>> proxySet = new HashSet<>();
+                        Class<?> proxyType = type.getProxyType();
+                        for (PyJavaType othertype : inConflict) {
+                            /*
+                             * Ignore any pairings of types that are in a superclass/superinterface
+                             * relationship with each other. This problem is a false positive that
+                             * happens because of the automatic addition of methods so that Java
+                             * classes behave more like their corresponding Python types, such as
+                             * adding sort or remove. See http://bugs.jython.org/issue2445
+                             */
+                            if (othertype.modified != null && othertype.modified.contains(method)) {
+                                Class<?> otherProxyType = othertype.getProxyType();
+                                if (otherProxyType.isAssignableFrom(proxyType)) {
+                                    continue;
+                                } else if (proxyType.isAssignableFrom(otherProxyType)) {
+                                    continue;
+                                } else {
+                                    types.add(othertype);
+                                    proxySet.add(otherProxyType);
+                                }
+                            }
                         }
-                    }
-                    /*
-                     * Need to special case collections that implement both Iterable and Map. Ignore
-                     * the conflict in having duplicate __iter__ added (see getCollectionProxies),
-                     * while still allowing each path on the inheritance hierarchy to get an
-                     * __iter__. Annoying but necessary logic. See http://bugs.jython.org/issue1878
-                     */
-                    if (method.equals("__iter__")
-                            && Generic.set(Iterable.class, Map.class).containsAll(proxySet)) {
-                        continue;
-                    }
 
-                    if (types.size() > 0) {
-                        throw Py.TypeError(String.format(
-                                "Supertypes that share a modified attribute "
-                                        + "have an MRO conflict[attribute=%s, supertypes=%s, type=%s]",
-                                method, types, this.getName()));
+                        /*
+                         * Need to special case collections that implement both Iterable and Map.
+                         * Ignore the conflict in having duplicate __iter__ added (see
+                         * getCollectionProxies), while still allowing each path on the inheritance
+                         * hierarchy to get an __iter__. Annoying but necessary logic. See
+                         * http://bugs.jython.org/issue1878
+                         */
+                        if (method.equals("__iter__")
+                                && Generic.set(Iterable.class, Map.class).containsAll(proxySet)) {
+                            continue;
+                        }
+
+                        String fmt = "Supertypes that share a modified attribute "
+                                + "have an MRO conflict[attribute=%s, supertypes=%s, type=%s]";
+                        if (types.size() > 0) {
+                            throw Py.TypeError(String.format(fmt, method, types, this.getName()));
+                        }
                     }
                 }
             }
@@ -297,7 +311,7 @@ public class PyJavaType extends PyType {
          * We can keep trucking, there aren't any existing method name conflicts. Mark the conflicts
          * in all the classes so further method additions can check for trouble.
          */
-        for (PyJavaType type : conflictedAttributes) {
+        for (PyJavaType type : inConflict) {
             for (PyJavaType otherType : inConflict) {
                 if (otherType != type) {
                     if (type.conflicted == null) {
@@ -308,11 +322,18 @@ public class PyJavaType extends PyType {
             }
         }
 
-        // Add our winner to the mro, clear the clog, and try to finish the rest
+        /*
+         * Emit the first conflicting type we encountered to the MRO, and remove it from the working
+         * lists. Forcing a step like this is ok for classes compiled from Java as the order of
+         * bases is not significant as long as hierarchy is preserved.
+         */
+        PyJavaType winner = inConflict.iterator().next();
         mro.add(winner);
         for (MROMergeState mergee : toMerge) {
             mergee.removeFromUnmerged(winner);
         }
+
+        // Restart the MRO generation algorithm from the current state.
         computeMro(toMerge, mro);
     }
 
