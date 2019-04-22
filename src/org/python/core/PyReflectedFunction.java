@@ -1,4 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
+// Copyright (c)2019 Jython Developers.
+// Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
 import java.lang.reflect.Method;
@@ -169,7 +171,7 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
             throwError(callData.errArg, args.length, self != null, keywords.length != 0);
         }
         Object cself = callData.self;
-        Method m = (Method)match.data;
+        Method m = (Method)match.method;
 
         // If this is a direct call to a Java class instance method with a PyProxy instance as the
         // arg, use the super__ version to actually route this through the method on the class.
@@ -344,7 +346,9 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
     public int traverse(Visitproc visit, Object arg) {
         if (__module__ != null) {
             int res = visit.visit(__module__, arg);
-            if (res != 0) return res;
+            if (res != 0) {
+                return res;
+            }
         }
         return __doc__ != null ? visit.visit(__doc__, arg) : 0;
     }

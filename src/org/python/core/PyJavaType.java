@@ -1,3 +1,5 @@
+// Copyright (c)2019 Jython Developers.
+// Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
 import org.python.core.util.StringUtil;
@@ -465,14 +467,17 @@ public class PyJavaType extends PyType {
                 }
             }
         }
-        // Methods must be in resolution order. See issue #2391 for detail.
+        // Methods must be in resolution order. See issue bjo #2391 for detail.
         Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
-        // Add methods, also accumulating them in reflectedFuncs, and spotting Java Bean members.
+        /* Add methods, also accumulating them in reflectedFuncs, and spotting Java Bean members. */
         ArrayList<PyReflectedFunction> reflectedFuncs = new ArrayList<>(methods.length);
         Map<String, PyBeanProperty> props = Generic.map();
         Map<String, PyBeanEvent<?>> events = Generic.map();
+
+        // First pass skip inherited (and certain "ignored") methods.
         addMethods(baseClass, reflectedFuncs, props, events, methods);
+        // Add inherited and previously ignored methods
         addInheritedMethods(reflectedFuncs, methods);
 
         // Add fields declared on this type
@@ -625,10 +630,11 @@ public class PyJavaType extends PyType {
     }
 
     /**
-     * Process the given class for methods defined on the target class itself (the
-     * <code>fromClass</code>), rather than inherited.
-     *
-     * This is exclusively a helper method for {@link #init(Set)}.
+     * Add descriptors to this type's dictionary ({@code __dict__}) for methods defined on the
+     * target class itself (the {@code fromClass}), where not inherited. One descriptor is created
+     * for each simple name and a signature for every method with that simple name is added to the
+     * descriptor. See also {@link #addInheritedMethods(List, Method[])}. This is exclusively a
+     * helper method for {@link #init(Set)}.
      *
      * @param baseClass ancestor of the target class
      * @param reflectedFuncs to which reflected functions are added for further processing
@@ -642,7 +648,6 @@ public class PyJavaType extends PyType {
 
         boolean isInAwt = name.startsWith("java.awt.") && name.indexOf('.', 9) == -1;
 
-        // First pass skip inherited (and certain "ignored") methods.
         for (Method meth : methods) {
             if (!declaredHere(baseClass, meth) || ignore(meth)) {
                 continue;
@@ -663,10 +668,12 @@ public class PyJavaType extends PyType {
 
             PyReflectedFunction reflfunc = (PyReflectedFunction) dict.__finditem__(nmethname);
             if (reflfunc == null) {
+                // A new descriptor is required
                 reflfunc = new PyReflectedFunction(meth);
                 reflectedFuncs.add(reflfunc);
                 dict.__setitem__(nmethname, reflfunc);
             } else {
+                // A descriptor for the same simple name exists: add a signature to it.
                 reflfunc.addMethod(meth);
             }
 
@@ -752,15 +759,29 @@ public class PyJavaType extends PyType {
     }
 
     /**
-     * Process the given class for methods inherited from ancestor classes.
-     *
-     * This is exclusively a helper method for {@link #init(Set)}.
+     * Add descriptors to this type's dictionary ({@code __dict__}) for methods inherited from
+     * ancestor classes. This is exclusively a helper method for {@link #init(Set)}.
+     * <p>
+     * Python finds an inherited method by looking in the dictionaries of types along the MRO. This
+     * is does not directly emulate the signature polymorphism of Java. Even though the entries of
+     * the MRO include the {@code PyType}s of the Java ancestors of this class, each type's
+     * dictionary is keyed on the simple name of the method. For the present class, and at the point
+     * where this method is called, any method defined on this class has created a descriptor entry
+     * for that method name (see {@link #addMethods(Class, List, Map, Map, Method[])}), but only for
+     * the signatures defined directly in this class. If any method of the same simple name is
+     * inherited in Java from a super-class, it is now shadowed by this entry as far as Python is
+     * concerned. The purpose of this method is to add the shadowed method signatures.
+     * <p>
+     * For example {@code AbstractCollection<E>} defines {@code add(E)}, and {@code AbstractList<E>}
+     * inherits it but also defines {@code add(int, E)} (giving control of the insertion point).
+     * When {@link #addMethods(Class, List, Map, Map, Method[])} completes, the "add" descriptor in
+     * {@code type(AbstractList)}, represents only {@code add(int, E)}, and we must add the
+     * inherited signature for {@code add(E)}.
      *
      * @param reflectedFuncs to which reflected functions are added for further processing
      * @param methods of the target class
      */
     private void addInheritedMethods(List<PyReflectedFunction> reflectedFuncs, Method[] methods) {
-        // Add inherited and previously ignored methods
         for (Method meth : methods) {
             String nmethname = normalize(meth.getName());
             PyReflectedFunction reflfunc = (PyReflectedFunction) dict.__finditem__(nmethname);

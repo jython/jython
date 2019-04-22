@@ -1,3 +1,5 @@
+// Copyright (c)2019 Jython Developers.
+// Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
 import org.python.expose.ExposedGet;
@@ -17,7 +19,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
         minargs = func.info.getMinargs();
         maxargs = func.info.getMaxargs();
         meth = func;
-        meth.setInfo(this);
+        meth.setInfo(this); // XXX Why modify func.info each time used?
     }
 
     @ExposedGet(name = "__doc__")
@@ -25,10 +27,12 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
         return meth.getDoc();
     }
 
+    @Override
     public int getMaxargs() {
         return maxargs;
     }
 
+    @Override
     public int getMinargs() {
         return minargs;
     }
@@ -54,6 +58,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
         return meth.bind(args[0]).__call__(actualArgs, kwargs);
     }
 
+    @Override
     public PyException unexpectedCall(int nargs, boolean keywords) {
         return PyBuiltinCallable.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs,
                                                             maxargs);
@@ -78,6 +83,7 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinCallable.Inf
      *
      * @return a name String
      */
+    @Override
     @ExposedGet(name = "__name__")
     public String getName() {
         return name;

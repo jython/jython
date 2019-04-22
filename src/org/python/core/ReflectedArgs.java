@@ -1,10 +1,18 @@
 // Copyright (c) Corporation for National Research Initiatives
+// Copyright (c)2019 Jython Developers.
+// Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
+import java.lang.reflect.Member;
+
+/** Map the signature of a method to the {@code Method} itself, within the context of a given simple name. This is used in support of signature polymorphism in Java methods and constructors reflected into Python. **/
 public class ReflectedArgs {
+
+    /** The types of arguments defining this signature (key) */
     public Class<?>[] args;
 
-    public Object data;
+    /** The specific method (or constructor). */
+    public Member method;
 
     public Class<?> declaringClass;
 
@@ -20,21 +28,21 @@ public class ReflectedArgs {
 
     public static final int PyArgsKeywordsCall = 2;
 
-    public ReflectedArgs(Object data, Class<?>[] args, Class<?> declaringClass, boolean isStatic) {
-        this(data, args, declaringClass, isStatic, false);
+    public ReflectedArgs(Member method, Class<?>[] args, Class<?> declaringClass, boolean isStatic) {
+        this(method, args, declaringClass, isStatic, false);
     }
 
-    public ReflectedArgs(Object data, Class<?>[] args, Class<?> declaringClass, boolean isStatic, boolean isVarArgs) {
-        this.data = data;
+    public ReflectedArgs(Member method, Class<?>[] args, Class<?> declaringClass, boolean isStatic,
+            boolean isVarArgs) {
+        this.method = method;
         this.args = args;
         this.declaringClass = declaringClass;
         this.isStatic = isStatic;
-        this.isVarArgs = isVarArgs; // only used for varargs matching; it should be added after the unboxed form
-
+        // only used for varargs matching; it should be added after the unboxed form
+        this.isVarArgs = isVarArgs;
         if (args.length == 1 && args[0] == PyObject[].class) {
             this.flags = PyArgsCall;
-        } else if (args.length == 2 && args[0] == PyObject[].class
-                && args[1] == String[].class) {
+        } else if (args.length == 2 && args[0] == PyObject[].class && args[1] == String[].class) {
             this.flags = PyArgsKeywordsCall;
         } else {
             this.flags = StandardCall;
@@ -52,8 +60,8 @@ public class ReflectedArgs {
         // if (isStatic ? self != null : self == null) return Py.NoConversion;
         /* Ugly code to handle mismatch in static vs. instance functions... */
         /*
-         * Will be very inefficient in cases where static and instance functions
-         * both exist with same names and number of args
+         * Will be very inefficient in cases where static and instance functions both exist with
+         * same names and number of args
          */
         if (this.isStatic) {
             if (self != null) {
@@ -136,7 +144,7 @@ public class ReflectedArgs {
 
         for (int i = 0; i < n; i++) {
             PyObject pyArg = pyArgs[i];
-            Class targetClass = this.args[i];
+            Class<?> targetClass = this.args[i];
             Object javaArg = pyArg.__tojava__(targetClass);
             javaArgs[i] = javaArg;
             if (javaArg == Py.NoConversion) {
@@ -153,13 +161,11 @@ public class ReflectedArgs {
     private PyObject[] ensureBoxedVarargs(PyObject[] pyArgs, int n) {
         if (pyArgs.length == 0) {
             // If there are no args return an empty list
-            return new PyObject[]{new PyList()};
+            return new PyObject[] {new PyList()};
         }
         PyObject lastArg = pyArgs[pyArgs.length - 1];
-        if (lastArg instanceof PySequenceList ||
-                lastArg instanceof PyArray ||
-                lastArg instanceof PyXRange ||
-                lastArg instanceof PyIterator) {
+        if (lastArg instanceof PySequenceList || lastArg instanceof PyArray
+                || lastArg instanceof PyXRange || lastArg instanceof PyIterator) {
             // NOTE that the check is against PySequenceList, not PySequence,
             // because certain Java <=> Python semantics currently require this
             // additional strictness. Perhaps this can be relaxed.
@@ -236,9 +242,8 @@ public class ReflectedArgs {
     }
 
     /*
-     * Returns 0 iff arg1 == arg2 Returns +/-1 iff arg1 and arg2 are
-     * unimportantly different Returns +/-2 iff arg1 and arg2 are significantly
-     * different
+     * Returns 0 iff arg1 == arg2 Returns +/-1 iff arg1 and arg2 are unimportantly different Returns
+     * +/-2 iff arg1 and arg2 are significantly different
      */
     public static int compare(Class<?> arg1, Class<?> arg2) {
         int p1 = precedence(arg1);
@@ -320,7 +325,8 @@ public class ReflectedArgs {
 
     @Override
     public String toString() {
-        String s =  declaringClass + ", static=" + isStatic + ", varargs=" + isVarArgs + ",flags=" + flags + ", " + data + "\n";
+        String s = declaringClass + ", static=" + isStatic + ", varargs=" + isVarArgs + ",flags="
+                + flags + ", " + method + "\n";
         s = s + "\t(";
         for (Class<?> arg : args) {
             s += arg.getName() + ", ";
