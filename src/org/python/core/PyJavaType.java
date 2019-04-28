@@ -38,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -262,7 +263,7 @@ public class PyJavaType extends PyType {
                         /*
                          * The method name was already in the set, so has appeared already. Work out
                          * which one that was by rescanning.
-                         */// XXX Why didn't we keep a map?
+                         */
                         List<PyJavaType> types = new ArrayList<>();
                         Set<Class<?>> proxySet = new HashSet<>();
                         Class<?> proxyType = type.getProxyType();
@@ -288,15 +289,27 @@ public class PyJavaType extends PyType {
                         }
 
                         /*
-                         * Need to special case collections that implement both Iterable and Map.
-                         * Ignore the conflict in having duplicate __iter__ added (see
-                         * getCollectionProxies), while still allowing each path on the inheritance
-                         * hierarchy to get an __iter__. Annoying but necessary logic. See
-                         * http://bugs.jython.org/issue1878
+                         * Need to special case __iter__ in certain circumstances to ignore the
+                         * conflict in having duplicate __iter__ added (see getCollectionProxies),
+                         * while still allowing each path on the inheritance hierarchy to get an
+                         * __iter__. Annoying but necessary logic.
                          */
-                        if (method.equals("__iter__")
-                                && Generic.set(Iterable.class, Map.class).containsAll(proxySet)) {
-                            continue;
+                        if (method.equals("__iter__")) {
+                            if (Generic.set(Iterable.class, Map.class).containsAll(proxySet)) {
+                                /*
+                                 * Need to special case __iter__ in collections that implement both
+                                 * Iterable and Map. See http://bugs.jython.org/issue1878
+                                 */
+                                continue;
+                            } else if (Generic.set(Iterator.class, Enumeration.class)
+                                    .containsAll(proxySet)) {
+                                /*
+                                 * Need to special case __iter__ in iterators that Iterator and
+                                 * Enumeration. Annoying but necessary logic. See
+                                 * http://bugs.jython.org/issue2445
+                                 */
+                                continue;
+                            }
                         }
 
                         String fmt = "Supertypes that share a modified attribute "
@@ -381,7 +394,7 @@ public class PyJavaType extends PyType {
              * superclass.
              */
             needsInners.add(this);
-            List<PyObject> visibleBases = Generic.list();
+            LinkedList<PyObject> visibleBases = new LinkedList<>();
             for (Class<?> iface : forClass.getInterfaces()) {
                 if (iface == PyProxy.class || iface == ClassDictInit.class) {
                     /*
@@ -405,13 +418,27 @@ public class PyJavaType extends PyType {
             if (forClass == Object.class) {
                 base = Constant.PYOBJECT;
             } else if (baseClass == null) {
+                /*
+                 * It would be most like Java to have no base (like PyNone) but in that case, the
+                 * MRO calculation puts Object ahead of the interface. Our patching of Java
+                 * container interfaces to behave like Python container objects requires the
+                 * opposite.
+                 */
                 base = Constant.OBJECT;
             } else if (forClass == Class.class) {
                 base = Constant.PYTYPE;
             } else {
                 base = fromClass(baseClass);
             }
-            visibleBases.add(base);
+
+            if (baseClass == null) {
+                // Object, an interface, a primitive or void: base goes last.
+                visibleBases.add(base);
+            } else {
+                // forClass represents a (concrete or abstract) class: base comes before interfaces.
+                visibleBases.push(base);
+            }
+
             this.bases = visibleBases.toArray(new PyObject[visibleBases.size()]);
             mro = computeMro();
         }
@@ -467,10 +494,11 @@ public class PyJavaType extends PyType {
                 }
             }
         }
+
         // Methods must be in resolution order. See issue bjo #2391 for detail.
         Arrays.sort(methods, new MethodComparator(new ClassComparator()));
 
-        /* Add methods, also accumulating them in reflectedFuncs, and spotting Java Bean members. */
+        // Add methods, also accumulating them in reflectedFuncs, and spotting Java Bean members.
         ArrayList<PyReflectedFunction> reflectedFuncs = new ArrayList<>(methods.length);
         Map<String, PyBeanProperty> props = Generic.map();
         Map<String, PyBeanEvent<?>> events = Generic.map();

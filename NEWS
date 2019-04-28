@@ -5,11 +5,11 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict (and IBM's MQQueue)
     - [ GH-121 ] Allow struct unpack and unpack_from bytearray and buffer
     - [ 2635 ] AST.lineno ignored by compile
     - [ 2744 ] Support buffer type in marshal.dump(s)
     - [ 2077 ] marshal doesn't raise error when fed unmarshalable object
-    - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict
     - [ 2732 ] Regression in large module support for pip
     - [ GH-131 ] Support Unicode in zxJDBC exceptions.
     - [ 2654 ] Imported modules allow access to submodules

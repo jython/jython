@@ -557,18 +557,18 @@ class JavaMROTest(unittest.TestCase):
         self.assertRaises(TypeError, GetitemAdder.addPostdefined)
 
     def test_diamond_inheritance_of_iterable_and_map(self):
-        """Test deeply nested diamond inheritance of Iterable and Map, as see in some Clojure classes"""
-        # http://bugs.jython.org/issue1878
-        from javatests import DiamondIterableMapMRO  # this will raise a TypeError re MRO conflict without the fix
-        # Verify the correct MRO is generated - order is of course *important*;
-        # the following used types are implemented as empty interfaces/abstract classes, but match the inheritance graph
-        # and naming of Clojure/Storm.
-        #
-        # Also instead of directly importing, which would cause annoying bloat in javatests by making lots of little files,
-        # just match using str - this will still be stable/robust.
-        self.assertEqual(
-            str(DiamondIterableMapMRO.__mro__),
-            "(<type 'javatests.DiamondIterableMapMRO'>, <type 'javatests.ILookup'>, <type 'javatests.IPersistentMap'>, <type 'java.lang.Iterable'>, <type 'javatests.Associative'>, <type 'javatests.IPersistentCollection'>, <type 'javatests.Seqable'>, <type 'javatests.Counted'>, <type 'java.util.Map'>, <type 'javatests.AFn'>, <type 'javatests.IFn'>, <type 'java.util.concurrent.Callable'>, <type 'java.lang.Runnable'>, <type 'java.lang.Object'>, <type 'object'>)")
+        """Test deeply nested diamond inheritance of Iterable and Map"""
+        # http://bugs.jython.org/issue1878. Previously raised a TypeError (MRO conflict).
+        from javatests import DiamondIterableMapMRO
+        # The MRO places Iterable ahead of Map (so that __iter__ means j.u.Iterator.__iter__).
+        # The following used types are empty interfaces and abstract classes matching the 
+        # inheritance graph and naming of Clojure/Storm, where the bug was discovered.
+        # Match using str - this will still be stable/robust.
+        mrostr = str(DiamondIterableMapMRO.__mro__)
+        jli = mrostr.find("java.lang.Iterable")
+        self.assertGreater(jli, -1, "Iterable must be in the MRO")
+        jum = mrostr.find("java.util.Map")
+        self.assertGreater(jum, jli, "Map must come later than Iterable")
         # And usable with __iter__ and map functionality
         m = DiamondIterableMapMRO()
         m["abc"] = 42
@@ -580,7 +580,6 @@ class JavaMROTest(unittest.TestCase):
         # http://bugs.jython.org/issue2445
         from org.python.tests.mro import EclipseChallengeMRO
 
-    @unittest.skip("FIXME: see http://bugs.jython.org/issue2445")
     def test_mro_ibmmq(self):
         # http://bugs.jython.org/issue2445
         from org.python.tests.mro import IBMMQChallengeMRO
