@@ -117,7 +117,7 @@ class BeanTest(unittest.TestCase):
 
     def test_awt_hack(self):
         # We ignore several deprecated methods in java.awt.* in favor of bean properties that were
-        # addded in Java 1.1.  This tests that one of those bean properties is visible.
+        # added in Java 1.1.  This tests that one of those bean properties is visible.
         c = Container()
         c.size = 400, 300
         self.assertEquals(Dimension(400, 300), c.size)
@@ -128,6 +128,7 @@ class SysIntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         sys.stdout = self.orig_stdout
+        test_support.unlink(test_support.TESTFN)
 
     def test_stdout_outputstream(self):
         out = FileOutputStream(test_support.TESTFN)

@@ -360,15 +360,18 @@ public class PyFileIO extends PyRawIOBase {
 
     @ExposedMethod
     final synchronized void FileIO_close() {
-        // Close this object to further input (also calls flush)
-        super.close();
-        // Now close downstream (if required to)
-        if (closefd) {
-            ioDelegate.close();
+        try {
+            // Close this object to further input (also calls flush)
+            super.close();
+        } finally {
+            // Now close downstream (if required to)
+            if (closefd) {
+                ioDelegate.close();
+            }
+            // This saves us doing two tests for each action (when the file is open)
+            readable = false;
+            writable = false;
         }
-        // This saves us doing two tests for each action (when the file is open)
-        readable = false;
-        writable = false;
     }
 
     @Override

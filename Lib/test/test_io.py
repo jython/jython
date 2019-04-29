@@ -2203,6 +2203,7 @@ class TextIOWrapperTest(unittest.TestCase):
         self.assertEqual(s, prefix.decode("ascii"))
         self.assertEqual(f.tell(), prefix_size)
         self.assertEqual(f.readline(), u_suffix)
+        f.close()
 
     def test_seeking_too(self):
         # Regression test for a specific bug
@@ -2215,6 +2216,7 @@ class TextIOWrapperTest(unittest.TestCase):
         f._CHUNK_SIZE = 2
         f.readline()
         f.tell()
+        f.close()
 
     def test_seek_and_tell(self):
         #Test seek/tell using the StatefulIncrementalDecoder.
