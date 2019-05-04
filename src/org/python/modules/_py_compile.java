@@ -34,7 +34,7 @@ public class _py_compile {
         // Convert file in which to put the byte code and display name (each may be null)
         String c = (compiledName == null) ? null : sys.getPath(Py.fileSystemDecode(compiledName));
         String d = (displayName == null) ? null : Py.fileSystemDecode(displayName);
-        byte[] bytes = org.python.core.imp.compileSource(getModuleName(f), f, d, c);
+        byte[] bytes = org.python.core.imp.compileSource(getModuleName(f), f, d);
         org.python.core.imp.cacheCompiledSource(file, c, bytes);
         return bytes.length > 0;
     }

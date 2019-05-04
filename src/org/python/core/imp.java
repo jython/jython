@@ -441,7 +441,7 @@ public class imp {
      * @param sourceFilename explicit source file name (or {@code null} to use that in source)
      * @param compiledFilename ignored (huh?)
      * @return Java byte code as array
-     * @deprecated Use {@link #compileSource(String, File, String, String)} instead.
+     * @deprecated Use {@link #compileSource(String, File, String)} instead.
      */
     @Deprecated
     public static byte[] compileSource(String name, File source, String sourceFilename,

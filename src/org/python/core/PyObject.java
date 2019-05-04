@@ -123,19 +123,17 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * <p>
      * From Jython 2.7 on, {@code PyObject}s must not have finalizers directly. If a finalizer,
      * a.k.a. {@code __del__} is needed, follow the instructions in the documentation of
      * {@link org.python.core.finalization.FinalizablePyObject}.
-     * </p>
      * <p>
      * Note that this empty finalizer implementation is optimized away by the JVM. (See <a
      * href=http://www.javaspecialists.eu/archive/Issue170.html}>Discovering Objects with
      * Non-trivial Finalizers</a>). So {@code PyObject}s are not expensively treated as finalizable
      * objects by the Java-GC. Its single intention is to prevent subclasses from having Java-style
      * finalizers.
-     * </p>
      */
+    @SuppressWarnings("deprecation") // See the Javadoc
     @Override
     protected final void finalize() throws Throwable {}
 
