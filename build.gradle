@@ -156,7 +156,9 @@ dependencies {
     implementation group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'
     implementation group: 'org.ow2.asm', name: 'asm-util', version: '7.0'
 
-    api group: 'com.google.guava', name: 'guava', version: '22.0-android'
+    api group: 'com.google.guava', name: 'guava', version: '27.1-android'
+    compile group: 'com.google.guava', name: 'failureaccess', version: '1.0.1'
+
     implementation group: 'com.ibm.icu', name: 'icu4j', version: '59.1'
 
     implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'

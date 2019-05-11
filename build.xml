@@ -150,7 +150,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${extlibs.dir}/asm-7.0.jar" />
             <pathelement path="${extlibs.dir}/asm-commons-7.0.jar" />
             <pathelement path="${extlibs.dir}/asm-util-7.0.jar" />
-            <pathelement path="${extlibs.dir}/guava-22.0-android.jar" />
+            <pathelement path="${extlibs.dir}/failureaccess-1.0.1.jar" />
+            <pathelement path="${extlibs.dir}/guava-27.1-android.jar" />
             <pathelement path="${extlibs.dir}/icu4j-59_1.jar" />
             <pathelement path="${extlibs.dir}/jffi-1.2.18.jar"/>
             <pathelement path="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
@@ -559,7 +560,8 @@ The readme text for the next release will be like:
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.18.jar"/>
             <rule pattern="org.apache.**" result="org.python.apache.@1"/>
-            <zipfileset src="extlibs/guava-22.0-android.jar"/>
+            <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
+            <zipfileset src="extlibs/guava-27.1-android.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-59_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
