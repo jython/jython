@@ -147,7 +147,7 @@ dependencies {
     implementation 'org.antlr:antlr-runtime:3.1.3'
     implementation 'org.antlr:stringtemplate:3.2.1'
 
-    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.14'
+    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.18'
 
     implementation group: 'org.ow2.asm', name: 'asm', version: '7.0'
     implementation group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'

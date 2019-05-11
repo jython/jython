@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2762 ] Upgrade Apache commons-compress to 1.18
     - [ GH-108 ] Updates to JNR/JFFI to improve ARM HF support
     - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict (and IBM's MQQueue)
     - [ GH-121 ] Allow struct unpack and unpack_from bytearray and buffer
