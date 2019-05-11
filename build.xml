@@ -553,9 +553,9 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-commons-7.0.jar"/>
             <zipfileset src="extlibs/asm-util-7.0.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.57.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk15on-1.61.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.57.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk15on-1.61.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.18.jar"/>
             <rule pattern="org.apache.**" result="org.python.apache.@1"/>
