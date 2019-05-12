@@ -782,6 +782,8 @@ class ContextTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             ctx.verify_flags = None
 
+    @unittest.skipIf(support.is_jython and support.get_java_version() < (8,),
+                     "Fails on Java 7. See bjo #2770")
     def test_load_cert_chain(self):
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
         # Combined key and cert in a single file
