@@ -12,9 +12,9 @@ import tempfile
 __all__ = ["version", "bootstrap"]
 
 
-_SETUPTOOLS_VERSION = "28.8.0"
+_SETUPTOOLS_VERSION = "41.0.1"
 
-_PIP_VERSION = "9.0.1"
+_PIP_VERSION = "19.1"
 
 # pip currently requires ssl support, so we try to provide a nicer
 # error message when that is missing (http://bugs.python.org/issue19744)
@@ -42,8 +42,8 @@ def _run_pip(args, additional_paths=None):
         sys.path = additional_paths + sys.path
 
     # Install the bundled software
-    import pip
-    pip.main(args)
+    from pip._internal import main
+    main(args)
 
 
 def version():
