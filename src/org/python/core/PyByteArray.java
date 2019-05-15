@@ -602,6 +602,7 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @param value an object possibly bearing the Buffer API
+     * @return <code>true</code> if the slice was set successfully, <code>false</code> otherwise
      * @throws PyException (SliceSizeError) if the value size is inconsistent with an extended slice
      */
     private boolean setsliceFromBuffer(int start, int stop, int step, PyObject value)
@@ -926,32 +927,13 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.bytearray___add___doc)
     final synchronized PyObject bytearray___add__(PyObject o) {
-        PyByteArray sum = null;
+        // Duplicate this buffer, but size it large enough to hold the sum
+        byte[] copy = new byte[size + o.__len__()];
+        System.arraycopy(storage, offset, copy, 0, size);
+        PyByteArray sum = new PyByteArray(copy, size);
 
-        // XXX re-write using buffer API
-
-        if (o instanceof BaseBytes) {
-            BaseBytes ob = (BaseBytes)o;
-            // Quick route: allocate the right size bytearray and copy the two parts in.
-            sum = new PyByteArray(size + ob.size);
-            System.arraycopy(storage, offset, sum.storage, sum.offset, size);
-            System.arraycopy(ob.storage, ob.offset, sum.storage, sum.offset + size, ob.size);
-
-        } else if (o.getType() == PyString.TYPE) {
-            // Support bytes type, which in in Python 2.7 is an alias of str. Remove in 3.0
-            PyString os = (PyString)o;
-            // Allocate the right size bytearray and copy the two parts in.
-            sum = new PyByteArray(size + os.__len__());
-            System.arraycopy(storage, offset, sum.storage, sum.offset, size);
-            sum.setslice(size, sum.size, 1, os);
-
-        } else {
-            // Unsuitable type
-            // XXX note reversed order relative to __iadd__ may be wrong, matches Python 2.7
-            throw ConcatenationTypeError(TYPE, o.getType());
-        }
-
-        return sum;
+        // Concatenate the other buffer
+        return sum.bytearray___iadd__(o);
     }
 
     /**
@@ -1343,6 +1325,9 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
         } else if (oType == PyString.TYPE) {
             // Will fail if somehow not 8-bit clean
             setslice(size, size, 1, (PyString)o);
+        } else if (setsliceFromBuffer(size, size, 1, o)) {
+            // No-op setsliceFromBuffer has already done the work and if it returns true then were done.
+            // setsliceFromBuffer will return false for PyUnicode where the buffer cannot be obtained.
         } else {
             // Unsuitable type
             throw ConcatenationTypeError(oType, TYPE);

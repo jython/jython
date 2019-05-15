@@ -197,12 +197,64 @@ class BufferOperationsTest(unittest.TestCase):
         self.assertEqual(str(buf), expected)
         self.assertEqual(buf.__str__(), expected)
 
+    def test_add_memoryview(self):
+        b = buffer(b"abc")
+        # add memoryview
+        c = b + memoryview('xyz')
+        self.assertEqual(str(c), 'abcxyz')
+
+    def test_add_bytearray(self):
+        b = buffer(b"abc")
+        # add bytearray
+        b += bytearray('xyz')
+        self.assertEqual(str(b), 'abcxyz')
+
+    def test_iadd_memoryview(self):
+        b = buffer(b"abc")
+        # concatenate memoryview
+        b += memoryview('xyz')
+        self.assertEqual(str(b), 'abcxyz')
+
+    def test_iadd_bytearray(self):
+        b = buffer(b"abc")
+        # concatenate bytearray
+        b += bytearray('xyz')
+        self.assertEqual(str(b), 'abcxyz')
+
+
+class ByteArrayTest(unittest.TestCase):
+    # Tests additional to the CPython library, on bytearray
+
+    def test_add_memoryview(self):
+        b = bytearray(b"abc")
+        # add memoryview
+        c = b + memoryview('xyz')
+        self.assertEqual(str(c), 'abcxyz')
+
+    def test_add_buffer(self):
+        b = bytearray(b"abc")
+        # add buffer
+        c = b + buffer('xyz')
+        self.assertEqual(str(c), 'abcxyz')
+
+    def test_iadd_memoryview(self):
+        b = bytearray(b"abc")
+        # concatenate memoryview
+        b += memoryview('xyz')
+        self.assertEqual(str(b), 'abcxyz')
+
+    def test_iadd_buffer(self):
+        b = bytearray(b"abc")
+        # concatenate buffer
+        b += buffer('xyz')
+        self.assertEqual(str(b), 'abcxyz')
 
 def test_main():
     test.test_support.run_unittest(
             ByteArraySubclassTest,
             BytesOperationsTest,
             BufferOperationsTest,
+            ByteArrayTest
         )
 
 
