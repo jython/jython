@@ -1322,6 +1322,7 @@ _failures = {
         test_peepholer
         test_pyclbr
         test_pyexpat
+        test_ssl        # overridden by test_ssl_jy
         test_stringprep # UnicodeDecodeError
         test_threadsignals
         test_transformer

@@ -97,6 +97,8 @@ OP_SINGLE_DH_USE, OP_NO_COMPRESSION, OP_CIPHER_SERVER_PREFERENCE, OP_SINGLE_ECDH
 
 VERIFY_DEFAULT, VERIFY_CRL_CHECK_LEAF, VERIFY_CRL_CHECK_CHAIN, VERIFY_X509_STRICT = 0, 4, 12, 32
 
+HAS_TLSv1_3 = False
+
 CHANNEL_BINDING_TYPES = []
 
 # https://docs.python.org/2/library/ssl.html#ssl.HAS_ALPN etc...
@@ -691,7 +693,7 @@ class SSLSocket(object):
             self._sock._handle_channel_future(self._handshake_future, "SSL handshake")
 
     def dup(self):
-        raise NotImplemented("Can't dup() %s instances" %
+        raise NotImplementedError("Can't dup() %s instances" %
                              self.__class__.__name__)
 
     @raises_java_exception
