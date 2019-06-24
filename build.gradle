@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
  * here. But of course you have to do it the hard way too (see build.xml) as
  * long as Ant is also used.
  */
+// Versions are specified in this grammar:
 // <major> . <minor> ( . <micro> )? ( <release> <serial> )? ([-+] <word>? )?
 
 version = '2.7.2a1+'
@@ -127,63 +128,67 @@ sourceSets {
 dependencies {
     /*
      * Must these correspond exactly with the external libraries (JARs)
-     * mentioned in the Ant build.xml, or is it better to allow "at least"
-     * matching of versions, to grant this freedom to user applications?
+     * mentioned in the Ant build.xml? Or is some form of dynamic version
+     * better for downstream?
+     *
+     * Note that an application may specify a later version. Gradle will
+     * choose the latest required.
      */
 
     // Using a version available from repo (not 'extlibs/servlet-api-2.5' as in build.xml)
-    implementation group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
 
     /*
      * These seem to be unnecessary while the proprietary database support is
-     * not bundled with Jython. Applications needing them can cite thse or a
+     * not bundled with Jython. Applications needing them can cite these or a
      * version they prefer.
      */
-    //implementation group: 'mysql', name: 'mysql-connector-java', version: '5.1.42'
-    //implementation group: 'org.postgresql', name: 'postgresql', version: '42.1.1.jre7'
+    //implementation 'mysql:mysql-connector-java:5.1.42'
+    //implementation 'org.postgresql:postgresql:42.1.1.jre7'
 
-    // pin to Antlr 3.1.3 until we upgrade parsing
-    antlr 'org.antlr:antlr:3.1.3' // use ANTLR version 3
-    implementation 'org.antlr:antlr-runtime:3.1.3'
-    implementation 'org.antlr:stringtemplate:3.2.1'
+    // pin to Antlr 3 until we upgrade parsing
+    antlr 'org.antlr:antlr:3.5.2'
+    implementation 'org.antlr:antlr-runtime:3.5.2'
 
-    implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.18'
+    implementation 'org.apache.commons:commons-compress:1.18'
 
-    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.61'
-    implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.61'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.61'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.61'
 
-    implementation group: 'org.ow2.asm', name: 'asm', version: '7.0'
-    implementation group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'
-    implementation group: 'org.ow2.asm', name: 'asm-util', version: '7.0'
+    implementation 'org.ow2.asm:asm:7.0'
+    implementation 'org.ow2.asm:asm-commons:7.0'
+    implementation 'org.ow2.asm:asm-util:7.0'
 
-    api group: 'com.google.guava', name: 'guava', version: '27.1-android'
-    compile group: 'com.google.guava', name: 'failureaccess', version: '1.0.1'
+    // The Android Guava and "failureaccess" are necessary to support Java 7.
+    implementation 'com.google.guava:guava:27.1-android'
+    implementation 'com.google.guava:failureaccess:1.0.1'
+    // Swap for regular Guava at Java 8.
 
-    implementation group: 'com.ibm.icu', name: 'icu4j', version: '59.1'
+    implementation 'com.ibm.icu:icu4j:59.1'
 
-    implementation group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
+    implementation 'com.carrotsearch:java-sizeof:0.0.5'
 
-    implementation group: 'com.github.jnr', name: 'jffi', version: '1.2.18'
-    implementation group: 'com.github.jnr', name: 'jnr-netdb', version: '1.1.6'
-    implementation group: 'com.github.jnr', name: 'jnr-ffi', version: '2.1.9'
-    implementation group: 'com.github.jnr', name: 'jnr-posix', version: '3.0.49'
-    implementation group: 'com.github.jnr', name: 'jnr-constants', version: '0.9.12'
+    implementation 'com.github.jnr:jffi:1.2.18'
+    implementation 'com.github.jnr:jnr-netdb:1.1.6'
+    implementation 'com.github.jnr:jnr-ffi:2.1.9'
+    implementation 'com.github.jnr:jnr-posix:3.0.49'
+    implementation 'com.github.jnr:jnr-constants:0.9.12'
 
-    implementation group: 'jline', name: 'jline', version: '2.14.5'
+    implementation 'jline:jline:2.14.5'
 
-    implementation group: 'io.netty', name: 'netty-buffer', version: '4.1.24.Final'
-    implementation group: 'io.netty', name: 'netty-codec', version: '4.1.24.Final'
-    implementation group: 'io.netty', name: 'netty-common', version: '4.1.24.Final'
-    implementation group: 'io.netty', name: 'netty-handler', version: '4.1.24.Final'
-    implementation group: 'io.netty', name: 'netty-resolver', version: '4.1.24.Final'
-    implementation group: 'io.netty', name: 'netty-transport', version: '4.1.24.Final'
+    implementation 'io.netty:netty-buffer:4.1.24.Final'
+    implementation 'io.netty:netty-codec:4.1.24.Final'
+    implementation 'io.netty:netty-common:4.1.24.Final'
+    implementation 'io.netty:netty-handler:4.1.24.Final'
+    implementation 'io.netty:netty-resolver:4.1.24.Final'
+    implementation 'io.netty:netty-transport:4.1.24.Final'
 
     // Used implicitly in the Ant build, must be explicit here
-    implementation group: 'org.apache.ant', name: 'ant', version: '1.9.7'
+    implementation 'org.apache.ant:ant:1.9.7'
 
-    testImplementation group: 'junit', name: 'junit', version: '4.10'
-
+    testImplementation 'junit:junit:4.10'
 }
+
 
 // ---------------- Resource Processing ----------------------------------------
 
@@ -321,7 +326,7 @@ task generateVersionInfo(
         /*
          * Decompose the version string into elements for Jython to access as
          * properties. (The Ant build.xml requires them to be set in parts, but
-         * we can work it out from the .)
+         * we can work it out from project.version.)
          */
         // <major>.<minor>(.<micro>)(<release><serial>)?([-+]<snapshot>)?
         def versionRegex = /(\d+)\.(\d+)(\.(\d+))?((a|b|rc)(\d+))?([-+]\w*)?/
@@ -342,7 +347,7 @@ task generateVersionInfo(
         int SNAPSHOT = 0xaa
         int level = 0, serial = 0
         if (versionResult[5]) {
-            // This is some kind of pre-final release (unless snapshaot)
+            // This is some kind of pre-final release (unless snapshot)
             serial = versionResult[7] as int
             switch (versionResult[6]) {
                 case 'a': level = 0xa; break // ALPHA release
@@ -554,12 +559,12 @@ task pycompile(
 
     doLast {
         /*
-         * Now use the 'jycompile' Ant task tocompile the Python source we
-         * supply to users. The exclusions are copied from build.xml, as also
-         * is this comment:
+         * Now use the 'jycompile' Ant task to compile the Python source we
+         * supply to users. The exclusions have been copied from build.xml,
+         * and also this comment:
             <!-- One might think that the exclusion of lib2to3/tests/** is
                  recursive, but one would be wrong ;) It's actually only
-                 two levels, so for now the workaround is to also include
+                 two levels, so for now the workaround is also to include
                  data/myfixes/**
 
                  This exclusion for lib2to3/tests/ in general is necessary
@@ -624,11 +629,12 @@ jar {
 /*
  * This is a task complementary to the jar task, taking just the test material.
  * This is not published via the main repositories because it counts as a
- * distinct needs a distinct artefact with its own POM.
+ * distinct artefact with its own POM.
  */
+// XXX Consider instead a multi-project build with one artefact per sub-project.
 task testJar(type: Jar) {
     classifier = 'tests'
-    
+
     from sourceSets.test.output
     // We don't JAR the expose tool, so we don't JAR the tests
     exclude 'org/python/expose/generate/**'
@@ -654,7 +660,7 @@ task testJar(type: Jar) {
 // ---------------- Documentation ----------------------------------------------
 
 /*
- * JavaDoc, anyway.
+ * The JavaDoc, anyway.
  */
 
 javadoc {
@@ -693,7 +699,7 @@ publishing {
         main(MavenPublication) {
 
             from components.java
-            
+
             // Also provide the source.
             artifact sourcesJar
             // Also provide the docs. (Some javadoc errors currently.)
@@ -751,7 +757,7 @@ test {
     systemProperty 'python.cachedir', "${project.buildDir}/cachedir"
 
     include '**/*Test*'
-    
+
     // Exclude based on Ant target javatest-basepath
     exclude '**/InterpTestCase'
     exclude '**/jythonTest*'            // Must run interactively
@@ -778,7 +784,7 @@ test {
         println "systemProperties = $systemProperties"
     }
 
-    /* From build.xml :
+    /* A reminder of how this is addressed in build.xml, for comparison:
 
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
@@ -831,40 +837,41 @@ tasks.withType(JavaCompile) {
 
 
 
-// ---------------- Tasks for debugging ----------------------------------------
+// ---------------- Support for debugging --------------------------------------
 
 
-task dumpCP {
-    doLast {
-        //println('configurations.testCompile:')
-        //configurations.testCompile.each { println it }
-        //println('configurations.testRuntime:')
-        //configurations.testRuntime.each { println it }
-        println('configurations.expose:')
-        configurations.expose.each { println it }
-        println('configurations.pycompile:')
-        configurations.pycompile.each { println it }
-    }
+afterEvaluate { project ->
+    //dumpCP()
+    //dumpSS()
 }
 
-task dumpSS {
-    doLast {
-        println '*** source sets ***'
-        for (ss in sourceSets) {
-            String name = ss.name
-            println ss
-            println "  ${name}.compileConfigurationName = ${ss.compileConfigurationName}"
-            println "  ${name}.implementationConfigurationName = ${ss.implementationConfigurationName}"
-            println "  ${name}.runtimeConfigurationName = ${ss.runtimeConfigurationName}"
-            println "  ${name}.java.srcDirs = ${ss.java.srcDirs}"
-            println "  ${name}.antlr.srcDirs = ${ss.antlr.srcDirs}"
-            println "  ${name}.resources.srcDirs = ${ss.resources.srcDirs}"
-            println "  ${name}.output.dirs = ${ss.output.dirs.files}"
-            println "  ${name}.output.classesDirs = ${ss.output.classesDirs.files}"
-            println "  ${name}.output.resourcesDir = ${ss.output.resourcesDir}"
-            println "  ${name}.classesTaskName = ${ss.classesTaskName}"
-            println "  ${name}.compileJavaTaskName = ${ss.compileJavaTaskName}"
-            println "  ${name}.jarTaskName = ${ss.jarTaskName}"
-        }
+void dumpCP() {
+    println('\nconfigurations.testCompile:')
+    configurations.testCompile.each { println it }
+    println('\nconfigurations.testRuntime:')
+    configurations.testRuntime.each { println it }
+    println('\nconfigurations.expose:')
+    configurations.expose.each { println it }
+    println('\nconfigurations.pycompile:')
+    configurations.pycompile.each { println it }
+}
+
+void dumpSS() {
+    println '*** source sets ***'
+    for (ss in sourceSets) {
+        String name = ss.name
+        println ss
+        println "  ${name}.compileConfigurationName = ${ss.compileConfigurationName}"
+        println "  ${name}.implementationConfigurationName = ${ss.implementationConfigurationName}"
+        println "  ${name}.runtimeConfigurationName = ${ss.runtimeConfigurationName}"
+        println "  ${name}.java.srcDirs = ${ss.java.srcDirs}"
+        println "  ${name}.antlr.srcDirs = ${ss.antlr.srcDirs}"
+        println "  ${name}.resources.srcDirs = ${ss.resources.srcDirs}"
+        println "  ${name}.output.dirs = ${ss.output.dirs.files}"
+        println "  ${name}.output.classesDirs = ${ss.output.classesDirs.files}"
+        println "  ${name}.output.resourcesDir = ${ss.output.resourcesDir}"
+        println "  ${name}.classesTaskName = ${ss.classesTaskName}"
+        println "  ${name}.compileJavaTaskName = ${ss.compileJavaTaskName}"
+        println "  ${name}.jarTaskName = ${ss.jarTaskName}"
     }
 }
