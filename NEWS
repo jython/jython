@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2708 ] test_urllib2net fails (on Travis CI)
     - [ 2774 ] test_ssl failures from weak certificate
     - [ 2768 ] Allow bytearray + and += to accept buffer protocol objects
     - [ 2742 ] JARs for bouncycastle out of date (upgrade to 1.16)

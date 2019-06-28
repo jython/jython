@@ -591,6 +591,10 @@ del fp
 # module name.
 TESTFN = "{}_{}_tmp".format(TESTFN, "1") #XXX "1" is a dummy for os.getpid()
 
+# Define the URL of a dedicated HTTP server for the network tests.
+# The URL must use clear-text HTTP: no redirection to encrypted HTTPS.
+TEST_HTTP_URL = "http://www.pythontest.net"
+
 # Save the initial cwd
 SAVEDCWD = os.getcwd()
 
