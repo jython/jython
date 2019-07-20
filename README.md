@@ -3,11 +3,7 @@
 
 This is the development repository of Jython. Along with language and runtime compatibility with CPython 2.7, Jython 2.7 provides substantial support of the Python ecosystem. This includes built-in support of *pip/setuptools* (you can use with `bin/pip`) and a native launcher for Windows (`bin/jython.exe`), with the implication that you can finally install Jython scripts on Windows.
 
-**Note that if you have `JYTHON_HOME` set, you should unset it to avoid problems with the installer and pip/setuptools.**
-
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
-
-The release was compiled on OSX using JDK 7 and requires a minimum of Java 7 to run.
 
 Please try this release out and report any bugs at http://bugs.jython.org
 

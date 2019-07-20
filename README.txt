@@ -6,11 +6,7 @@ This is an alpha release of the 2.7.2 version of Jython. Along with
 language and runtime compatibility with CPython 2.7, Jython 2.7
 provides substantial support of the Python ecosystem. This includes
 built-in support of pip/setuptools (you can use with bin/pip) and a
-native launcher for Windows (bin/jython.exe), with the implication
-that you can finally install Jython scripts on Windows.
-
-**Note that if you have JYTHON_HOME set, you should unset it to avoid
-problems with the installer and pip/setuptools.**
+native launcher for Windows (bin/jython.exe).
 
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including
 demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
@@ -31,8 +27,8 @@ about half an hour.
 
 See ACKNOWLEDGMENTS for details about Jython's copyright, license,
 contributors, and mailing lists; and NEWS for detailed release notes,
-including bugs fixed, backwards breaking changes, and new features. We
-sincerely thank all who contribute to Jython, including - but not
-limited to - bug reports, patches, pull requests, documentation
-changes, support emails, and fantastic conversation on Freenode at
-#jython. Join us there for your questions and answers!
+including bugs fixed, backwards breaking changes, and new features.
+
+We sincerely thank all who contributed to this release of Jython,
+through bug reports, patches, pull requests, documentation changes,
+email and conversation in all media.
