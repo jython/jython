@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2764 ] Readme is not displayed when using the GUI installer
     - [ 2345 ] Installing pip fails if JYTHON_HOME points to old installation
     - [ 2774 ] test_ssl failures from weak certificate
     - [ 2768 ] Allow bytearray + and += to accept buffer protocol objects
@@ -69,6 +70,9 @@ Development tip
     - We no longer recommend overriding toString in PyObject sub-classes as a way of defining
       string forms. Override __repr__, and if necessary __str__, as is usual in Python. We
       recommend toString should return the same as __str__ (or __unicode__).
+    - Experimentally, we use Gradle to build a JAR and POM that may be cited as a dependency by
+      other projects. The Jython project would like to know if this is being done suitably
+      for downstream use.
 
 Jython 2.7.2a1
   Bugs fixed
