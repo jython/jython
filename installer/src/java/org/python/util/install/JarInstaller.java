@@ -188,6 +188,8 @@ public class JarInstaller {
             }
             ChildProcess childProcess = new ChildProcess(command);
             childProcess.setCWD(bindir);
+            // JYTHON_HOME will be wrong if set: see https://bugs.jython.org/issue2345
+            childProcess.putEnvironment("JYTHON_HOME", null);
             errorCode = childProcess.run();
         } catch (Throwable t) {
             errorCode = 1;

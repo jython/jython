@@ -6,7 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Easy start of a child process.
@@ -84,6 +86,11 @@ public class ChildProcess {
      * The command as an array of strings
      */
     private String _command[] = null;
+
+    /**
+     * Environment name-value pairs to add or remove (if null) at the start of {@link #run()}.
+     */
+    private Map<String, String> _environmentChanges = new HashMap<>();
 
     /**
      * The timeout (in milliseconds)
@@ -169,6 +176,16 @@ public class ChildProcess {
     }
 
     public void setCWD(Path cwd) { _cwd = cwd; }
+
+    /**
+     * Set or delete an environment variable for the subsequently run command.
+     *
+     * @param key name of variable
+     * @param value new value or {@code null} to delete it.
+     */
+    public void putEnvironment(String key, String value) {
+        _environmentChanges.put(key, value);
+    }
 
     public Path getCWD() { return _cwd; }
 
@@ -263,14 +280,23 @@ public class ChildProcess {
         try {
             // determine start time
             _startTime = System.currentTimeMillis();
-            // start the process
+            // Create and configure the process specification
             ProcessBuilder pb = new ProcessBuilder();
             pb.command(getCommand());
             if (getCWD() != null) {
                 pb.directory(getCWD().toFile());
             }
+            // Adjust the environment variables from the default System.getenv()
+            for (Map.Entry<String, String> change : _environmentChanges.entrySet()) {
+                if (change.getValue() == null) {
+                    pb.environment().remove(change.getKey());
+                } else {
+                    pb.environment().put(change.getKey(), change.getValue());
+                }
+            }
+            // Run the process with redirected input and error streams.
+            debugCommand(pb);
             _process = pb.start();
-            debugCommand();
             // handle stdout and stderr
             OutputMonitor stdoutMonitor = new OutputMonitor(_process.getInputStream());
             stdoutMonitor.start();
@@ -349,21 +375,15 @@ public class ChildProcess {
     /**
      * Lists the submitted command (if so indicated)
      */
-    private void debugCommand() {
+    private void debugCommand(ProcessBuilder pb) {
         if (isDebug()) {
-            String[] command = getCommand();
-            if (command != null) {
-                System.out.print("[ChildProcess] command '");
-                for (int i = 0; i < command.length; i++) {
-                    String commandPart = command[i];
-                    if (i == 0) {
-                        System.out.print(commandPart);
-                    } else {
-                        System.out.print(" " + commandPart);
-                    }
-                }
-                System.out.println("' is now running...");
-            }
+            System.out.print("[ChildProcess] command = ");
+            System.out.println(pb.command());
+            System.out.print("[ChildProcess] environment = ");
+            System.out.println(pb.environment());
+            System.out.print("[ChildProcess] working directory = ");
+            System.out.println(pb.directory());
         }
     }
 }
+
