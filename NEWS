@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2703 ] JycompileAntTask cannot find ...ant.taskdefs.MatchingTask
     - [ 2708 ] test_urllib2net fails (on Travis CI)
     - [ 2764 ] Readme is not displayed when using the GUI installer
     - [ 2345 ] Installing pip fails if JYTHON_HOME points to old installation

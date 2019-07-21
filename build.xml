@@ -559,7 +559,7 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/bcprov-jdk15on-1.61.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.18.jar"/>
-            <rule pattern="org.apache.**" result="org.python.apache.@1"/>
+            <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
             <zipfileset src="extlibs/guava-27.1-android.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
