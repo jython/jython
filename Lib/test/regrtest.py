@@ -378,7 +378,6 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
     test_times = []
     test_support.verbose = verbose      # Tell tests to be moderately quiet
     test_support.use_resources = use_resources
-    test_support.junit_xml_dir = junit_xml
     save_modules = sys.modules.keys()
 
     skips = _ExpectedSkips()
@@ -600,6 +599,7 @@ def runtest_inner(test, verbose, quiet, test_times,
             save_stderr = sys.stderr
             sys.stdout = stdout = Tee(sys.stdout)
             sys.stderr = stderr = Tee(sys.stderr)
+            test_support.junit_xml_dir = junit_xml_dir
         try:
             if capture_stdout:
                 sys.stdout = capture_stdout
@@ -630,6 +630,7 @@ def runtest_inner(test, verbose, quiet, test_times,
             test_times.append((test_time, test))
         finally:
             sys.stdout = save_stdout
+            test_support.junit_xml_dir = None
             if junit_xml_dir:
                 sys.stderr = save_stderr
                 test_time = time.time() - start_time
