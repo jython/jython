@@ -1,6 +1,10 @@
 # Python Registry -*- sh -*-
 # This default registry sets many common options to their default values
 # All of these settings could be erased with no change in behavior
+#
+# Definitive descriptions of supported keys and values is in the javadoc 
+# for org.python.core.RegistryKey
+#
 
 # This is how Jim sets his path on his Windows development machine
 #python.path=.;c:\\Jython\\Lib;d:\\Python-1.5.2\\Lib

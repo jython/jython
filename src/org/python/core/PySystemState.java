@@ -48,6 +48,9 @@ import com.carrotsearch.sizeof.RamUsageEstimator;
 
 import jnr.posix.util.Platform;
 
+import static org.python.core.RegistryKey.*;
+
+
 /**
  * The "sys" module.
  */
@@ -56,11 +59,6 @@ import jnr.posix.util.Platform;
 public class PySystemState extends PyObject
         implements AutoCloseable, ClassDictInit, Closeable, Traverseproc {
 
-    public static final String PYTHON_CACHEDIR = "python.cachedir";
-    public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
-    public static final String PYTHON_CONSOLE_ENCODING = "python.console.encoding";
-    public static final String PYTHON_IO_ENCODING = "python.io.encoding";
-    public static final String PYTHON_IO_ERRORS = "python.io.errors";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
     public static final String JYTHON_JAR = "jython.jar";
@@ -942,7 +940,8 @@ public class PySystemState extends PyObject
             }
             try {
                 // user registry has precedence over installed registry
-                File homeFile = new File(registry.getProperty("user.home"), ".jython");
+                File homeFile = new File(registry.getProperty(USER_HOME), 
+                                            ".jython");
                 addRegistryFile(homeFile);
                 addRegistryFile(new File(prefix, "registry"));
             } catch (Exception exc) {
@@ -1335,12 +1334,14 @@ public class PySystemState extends PyObject
      * object may be accessed via {@link Py#getConsole()}.
      *
      * @param props containing (or not) <code>python.console</code>
+     *
+     * @see org.python.core.RegistryKey#PYTHON_CONSOLE
      */
     private static void initConsole(Properties props) {
         // At this stage python.console.encoding is always defined (but null=default)
         String encoding = props.getProperty(PYTHON_CONSOLE_ENCODING);
         // The console type is chosen by this registry entry:
-        String consoleName = props.getProperty("python.console", "").trim();
+        String consoleName = props.getProperty(PYTHON_CONSOLE, "").trim();
         // And must be of type ...
         final Class<Console> consoleType = Console.class;
 
@@ -1441,7 +1442,7 @@ public class PySystemState extends PyObject
         }
 
         // add builtins specified in the registry file
-        String builtinprop = props.getProperty("python.modules.builtin", "");
+        String builtinprop = props.getProperty(PYTHON_MODULES_BUILTIN, "");
         StringTokenizer tok = new StringTokenizer(builtinprop, ",");
         while (tok.hasMoreTokens()) {
             addBuiltin(tok.nextToken());
@@ -1462,7 +1463,7 @@ public class PySystemState extends PyObject
 
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
-        addPaths(path, props.getProperty("python.path", ""));
+        addPaths(path, props.getProperty(PYTHON_PATH, ""));
         if (prefix != null) {
             String libpath = new File(Py.fileSystemDecode(prefix), "Lib").toString();
             path.append(Py.fileSystemEncode(libpath)); // XXX or newUnicode?

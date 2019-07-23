@@ -28,6 +28,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 import org.python.core.imp;
 
 public class jython {
@@ -348,7 +349,7 @@ public class jython {
      * @param interp to do the work
      */
     private static void runStartupFile(InteractiveConsole interp) {
-        String filename = PySystemState.registry.getProperty("python.startup", null);
+        String filename = PySystemState.registry.getProperty(RegistryKey.PYTHON_STARTUP, null);
         if (filename != null) {
             try (InputStream fp = new FileInputStream(filename)) {
                 // May raise exceptions, (including SystemExit)
@@ -416,7 +417,8 @@ public class jython {
             // We'll be going interactive eventually. condition an interactive console.
             if (PrePy.haveConsole()) {
                 // Set the default console type if nothing else has
-                addDefault(preProperties, "python.console", PYTHON_CONSOLE_CLASS);
+                addDefault(preProperties, RegistryKey.PYTHON_CONSOLE, 
+                                        PYTHON_CONSOLE_CLASS);
             }
         }
 
@@ -622,9 +624,9 @@ public class jython {
         if (pythonIoEncoding != null) {
             String[] spec = pythonIoEncoding.split(":", 2);
             // Note that if encoding or errors is blank (=null), the registry value wins.
-            addDefault(registry, PySystemState.PYTHON_IO_ENCODING, spec[0]);
+            addDefault(registry, RegistryKey.PYTHON_IO_ENCODING, spec[0]);
             if (spec.length > 1) {
-                addDefault(registry, PySystemState.PYTHON_IO_ERRORS, spec[1]);
+                addDefault(registry, RegistryKey.PYTHON_IO_ERRORS, spec[1]);
             }
         }
     }

@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.compiler;
 
+import static org.python.core.RegistryKey.PYTHON_CPYTHON;
 import static org.python.util.CodegenUtils.ci;
 import static org.python.util.CodegenUtils.p;
 import static org.python.util.CodegenUtils.sig;
@@ -53,6 +54,8 @@ import org.python.core.PyString;
 import org.python.core.PyUnicode;
 import org.python.core.ThreadState;
 import org.python.modules._marshal;
+
+
 
 class PyIntegerConstant extends Constant implements ClassConstants, Opcodes {
 
@@ -717,9 +720,6 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         module.mainCode = main;
     }
 
-    /** Property naming the cpython executable. */
-    private static String CPYTHON = "python.cpython2";
-
     // Error message formats required by loadPyBytecode
     private static String TRIED_CREATE_PYC_MSG =
             "\nJython tried to create a pyc-file by executing\n    %s\nwhich failed because %s";
@@ -729,10 +729,11 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                     + "\n    python -m py_compile %s";
     private static String CPYTHON_CMD_MSG =
             "\n\nAlternatively, specify a CPython 2.7 command via the " //
-                    + CPYTHON + " property, e.g.:" //
-                    + "\n    jython -D" + CPYTHON + "=python" //
+                    + PYTHON_CPYTHON + " property, e.g.:" //
+                    + "\n    jython -D" + PYTHON_CPYTHON + "=python" //
                     + "\nor (e.g. for pip) through the environment variable JYTHON_OPTS:" //
-                    + "\n    export JYTHON_OPTS=\"-D" + CPYTHON + "=python\"\n";
+                    + "\n    export JYTHON_OPTS=\"-D" + PYTHON_CPYTHON 
+                    + "=python\"\n";
 
     private static PyBytecode loadPyBytecode(String filename, boolean try_cpython)
             throws RuntimeException {
@@ -780,7 +781,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                     + String.format(PLEASE_PROVIDE_MSG, filename));
 
         } else {
-            String CPython_command = System.getProperty(CPYTHON);
+            String CPython_command = System.getProperty(PYTHON_CPYTHON);
             if (try_cpython && CPython_command != null) {
                 // check version...
                 String command_ver = CPython_command + " --version";

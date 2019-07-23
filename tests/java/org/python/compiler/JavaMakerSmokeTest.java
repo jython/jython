@@ -12,6 +12,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 import org.python.util.PythonInterpreter;
 
 
@@ -23,7 +24,7 @@ public class JavaMakerSmokeTest {
     @Before
     public void setUp() throws Exception {
         Properties props = new Properties(System.getProperties());
-        props.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
+        props.setProperty(RegistryKey.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize(props, null);
         interp = new PythonInterpreter();
         

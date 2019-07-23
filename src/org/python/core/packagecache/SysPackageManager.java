@@ -7,6 +7,7 @@ import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -171,12 +172,8 @@ public class SysPackageManager extends PathPackageManager {
             defaultDirectories = "java.ext.dirs";
         }
 
-        /*
-         * python.packages.paths defines a sequence of property names. Each property is a path
-         * string. The default setting causes directories and JARs on the classpath and in the JRE
-         * (before Java 9) to be sources of Python packages.
-         */
-        Set<String> cps = split(registry.getProperty("python.packages.paths", defaultClassPaths));
+        Set<String> cps = split(registry.getProperty(
+                    RegistryKey.PYTHON_PACKAGES_PATHS, defaultClassPaths));
         for (String name : cps) {
             // Each property is a class-path string containing JARS and directories
             String classPath = registry.getProperty(name);
@@ -186,14 +183,10 @@ public class SysPackageManager extends PathPackageManager {
             }
         }
 
-        /*
-         * python.packages.directories defines a sequence of property names. Each property name is a
-         * path string, in which the elements are directories. Each directory contains JAR/ZIP files
-         * that are to be a source of Python packages. By default, these directories are those where
-         * the JVM stores its optional packages as JARs (a mechanism withdrawn in Java 9).
-         */
         Set<String> directories =
-                split(registry.getProperty("python.packages.directories", defaultDirectories));
+                split(registry.getProperty(
+                            RegistryKey.PYTHON_PACKAGES_DIRECTORIES, 
+                            defaultDirectories));
         for (String name : directories) {
             // Each property defines a path string containing directories
             String path = registry.getProperty(name);
@@ -203,11 +196,8 @@ public class SysPackageManager extends PathPackageManager {
             }
         }
 
-        /*
-         * python.packages.fakepath defines a sequence of directories and JARs that are to be
-         * sources of Python packages.
-         */
-        String fakepath = registry.getProperty("python.packages.fakepath", null);
+        String fakepath = registry.getProperty(
+                RegistryKey.PYTHON_PACKAGES_FAKEPATH, null);
         if (fakepath != null) {
             addClassPath(fakepath);
         }

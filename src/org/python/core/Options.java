@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import static org.python.core.RegistryKey.*;
+
 /**
  * A class with static fields for each of the settable options. The options from
  * registry and command line is copied into the fields here and the rest of
@@ -20,6 +22,8 @@ public class Options {
      * If true, exceptions raised from Python code will include a Java stack
      * trace in addition to the Python traceback.  This can slow raising
      * considerably.
+     *
+     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS
      */
     public static boolean includeJavaStackInExceptions = true;
 
@@ -29,6 +33,8 @@ public class Options {
      * implementing CORBA server. Some CORBA servers will turn python exception
      * (say a NameError) into an anonymous user exception without any
      * stacktrace. Setting this option will show the stacktrace.
+     *
+     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS
      */
     public static boolean showPythonProxyExceptions = false;
 
@@ -37,6 +43,8 @@ public class Options {
      * methods, and constructors. This means you can only access public members.
      * Set this to false to access all members by toggling the accessible flag
      * on the member.
+     *
+     * @see org.python.core.RegistryKey#PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY
      */
     public static boolean respectJavaAccessibility = true;
 
@@ -46,6 +54,7 @@ public class Options {
      * {@link org.python.util.PythonInterpreter}.
      *
      * @see #no_site
+     * @see org.python.core.RegistryKey#PYTHON_IMPORT_SITE
      */
     public static boolean importSite = true;
 
@@ -96,11 +105,15 @@ public class Options {
      * File.isFile() returns true. Setting this to true have no effect on
      * unix-type filesystems. On Windows/HFS+ systems setting it to true will
      * enable Jython-2.0 behaviour.
+     *
+     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_CASE_OK
      */
     public static boolean caseok = false;
 
     /**
      * If true, enable truedivision for the '/' operator.
+     *
+     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_Q_NEW;
      */
     public static boolean Qnew = false;
 
@@ -160,7 +173,7 @@ public class Options {
     }
 
     private static boolean getBooleanOption(String name, boolean defaultValue) {
-        String prop = PySystemState.registry.getProperty("python." + name);
+        String prop = PySystemState.registry.getProperty(name);
         if (prop == null) {
             return defaultValue;
         }
@@ -168,7 +181,7 @@ public class Options {
     }
 
     private static String getStringOption(String name, String defaultValue) {
-        String prop = PySystemState.registry.getProperty("python." + name);
+        String prop = PySystemState.registry.getProperty(name);
         if (prop == null) {
             return defaultValue;
         }
@@ -181,24 +194,27 @@ public class Options {
     public static void setFromRegistry() {
         // Set the more unusual options
         Options.showJavaExceptions = getBooleanOption(
-                "options.showJavaExceptions", Options.showJavaExceptions);
+                PYTHON_OPTIONS_SHOW_JAVA_EXCEPTIONS, 
+                Options.showJavaExceptions);
 
         Options.includeJavaStackInExceptions = getBooleanOption(
-        	"options.includeJavaStackInExceptions", Options.includeJavaStackInExceptions);
+        	PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS,
+                Options.includeJavaStackInExceptions);
 
         Options.showPythonProxyExceptions = getBooleanOption(
-                "options.showPythonProxyExceptions",
+                PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS,
                 Options.showPythonProxyExceptions);
 
         Options.respectJavaAccessibility = getBooleanOption(
-                "security.respectJavaAccessibility",
+                PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY,
                 Options.respectJavaAccessibility);
 
         Options.proxyDebugDirectory = getStringOption(
-                "options.proxyDebugDirectory", Options.proxyDebugDirectory);
+                PYTHON_OPTIONS_PROXY_DEBUG_DIRECTORY, 
+                Options.proxyDebugDirectory);
 
         // verbosity is more complicated:
-        String prop = PySystemState.registry.getProperty("python.verbose");
+        String prop = PySystemState.registry.getProperty(PYTHON_VERBOSE);
         if (prop != null) {
             if (prop.equalsIgnoreCase("error")) {
                 Options.verbose = Py.ERROR;
@@ -216,11 +232,12 @@ public class Options {
             }
         }
 
-        Options.caseok = getBooleanOption("options.caseok", Options.caseok);
+        Options.caseok = getBooleanOption(PYTHON_OPTIONS_CASE_OK, 
+                Options.caseok);
 
-        Options.Qnew = getBooleanOption("options.Qnew", Options.Qnew);
+        Options.Qnew = getBooleanOption(PYTHON_OPTIONS_Q_NEW, Options.Qnew);
 
-        prop = PySystemState.registry.getProperty("python.division_warning");
+        prop = PySystemState.registry.getProperty(PYTHON_DIVISION_WARNING);
         if (prop != null) {
             if (prop.equalsIgnoreCase("old")) {
                 Options.division_warning = 0;
@@ -234,9 +251,11 @@ public class Options {
             }
         }
 
-        Options.sreCacheSpec = getStringOption("sre.cachespec", Options.sreCacheSpec);
-        Options.inspect |= getStringOption("inspect", "").length() > 0;
-        Options.importSite = getBooleanOption("import.site", Options.importSite);
+        Options.sreCacheSpec = getStringOption(PYTHON_SRE_CACHESPEC, 
+                Options.sreCacheSpec);
+        Options.inspect |= getStringOption(PYTHON_INSPECT, "").length() > 0;
+        Options.importSite = getBooleanOption(PYTHON_IMPORT_SITE, 
+                Options.importSite);
         Options.no_site = !Options.importSite;
     }
 }

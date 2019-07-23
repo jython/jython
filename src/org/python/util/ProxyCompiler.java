@@ -3,6 +3,7 @@ package org.python.util;
 import java.util.Properties;
 
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 
 public class ProxyCompiler {
 
@@ -17,7 +18,7 @@ public class ProxyCompiler {
      */
     public static void compile(String filename, String destDir) {
         Properties props = new Properties(System.getProperties());
-        props.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
+        props.setProperty(RegistryKey.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize(props, null);
         PythonInterpreter interp = new PythonInterpreter();
 

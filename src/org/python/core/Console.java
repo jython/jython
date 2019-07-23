@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
  * use on the console. Such a class may provide line editing and history recall to an interactive
  * console. A default implementation (that does not provide any such facilities) is available as
  * {@link PlainConsole}.
+ *
+ * @see org.python.core.RegistryKey.PYTHON_CONSOLE
  */
 public interface Console {
 

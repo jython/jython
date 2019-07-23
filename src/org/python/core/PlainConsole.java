@@ -17,6 +17,8 @@ import java.nio.charset.UnsupportedCharsetException;
  * <code>System.in</code> or <code>System.out</code>, or use a native library. It prompts on
  * <code>System.out</code> and reads from <code>System.in</code> (wrapped with the console
  * encoding).
+ *
+ * @see org.python.core.RegistryKey#PYTHON_CONSOLE
  */
 public class PlainConsole implements Console {
 

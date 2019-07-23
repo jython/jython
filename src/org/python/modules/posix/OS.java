@@ -3,6 +3,7 @@ package org.python.modules.posix;
 
 import java.util.Locale;
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 
 /**
  * A Marker tagging what OS we're running on, with some accompanying information about
@@ -44,7 +45,8 @@ enum OS {
      * Return the OS we're running on.
      */
     static OS getOS() {
-        String osName = PySystemState.registry.getProperty("python.os");
+        String osName = PySystemState.registry.getProperty(
+                                                RegistryKey.PYTHON_OS);
         if (osName == null) {
             osName = System.getProperty("os.name");
         }

@@ -2,6 +2,7 @@ package org.python.expose.generate;
 
 import org.python.core.Py;
 import org.python.core.PySystemState;
+import org.python.core.RegistryKey;
 
 import junit.framework.TestCase;
 
@@ -11,7 +12,7 @@ import junit.framework.TestCase;
 public abstract class InterpTestCase extends TestCase {
 
     public void setUp() throws Exception {
-        System.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
+        System.setProperty(RegistryKey.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize();
     }
 }
