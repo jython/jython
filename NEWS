@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2651 ] Travis builds failing with *** buffer overflow detected ***
     - [ 2703 ] JycompileAntTask cannot find ...ant.taskdefs.MatchingTask
     - [ 2708 ] test_urllib2net fails (on Travis CI)
     - [ 2764 ] Readme is not displayed when using the GUI installer
