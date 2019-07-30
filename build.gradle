@@ -160,7 +160,7 @@ dependencies {
     implementation 'org.ow2.asm:asm-util:7.0'
 
     // The Android Guava and "failureaccess" are necessary to support Java 7.
-    implementation 'com.google.guava:guava:27.1-android'
+    implementation 'com.google.guava:guava:28.0-android'
     implementation 'com.google.guava:failureaccess:1.0.1'
     // Swap for regular Guava at Java 8.
 
