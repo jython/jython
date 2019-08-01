@@ -22,9 +22,7 @@ import sys, os, time, errno
 
 if (sys.platform[:3] in ('win', 'os2') or sys.platform == 'riscos' or
     (test_support.is_jython and os._name == 'nt')):
-    raise test_support.TestSkipped("Can't test signal on %s" % \
-                                   sys.platform)
-
+    raise unittest.SkipTest("Can't test signal on %s" % sys.platform)
 
 class HandlerBCalled(Exception):
     pass
@@ -208,12 +206,21 @@ class BasicSignalTests(unittest.TestCase):
         self.assertRaises(TypeError, signal.signal,
                           signal.SIGUSR1, None)
 
+    @unittest.skipIf(test_support.is_jython,
+                     "getsignal is equivalent but not identical (bjo #2790)")
     def test_getsignal(self):
         hup = signal.signal(signal.SIGHUP, self.trivial_signal_handler)
         self.assertEquals(signal.getsignal(signal.SIGHUP),
                           self.trivial_signal_handler)
         signal.signal(signal.SIGHUP, hup)
         self.assertEquals(signal.getsignal(signal.SIGHUP), hup)
+
+    def test_getsignal_jy(self):
+        hup = signal.signal(signal.SIGHUP, self.trivial_signal_handler)
+        self.assertEquals(signal.getsignal(signal.SIGHUP),
+                          self.trivial_signal_handler)
+        signal.signal(signal.SIGHUP, hup)
+        #self.assertEquals(signal.getsignal(signal.SIGHUP), hup)
 
 
 class WakeupSignalTests(unittest.TestCase):
