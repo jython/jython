@@ -1,30 +1,39 @@
 language: java
 
 addons:
-  homebrew:
+  hostname: jyshort
+
+  homebrew: # only active on osx
     update: true
-    packages: ant
+    packages:
+      - ant
+
 
 matrix:
   include:
-    - jdk: openjdk7
-    # - jdk: openjdk8
-    - jdk: oraclejdk8
-    # - jdk: oraclejdk9
-    # - jdk: oraclejdk11  # times out
+    - os: linux
+      dist: precise
+      jdk: oraclejdk7
+
+    - os: linux
+      dist: xenial
+      addons:
+        apt:
+          packages:
+            - ant
+      jdk: openjdk11
+
     - os: osx
-      name: "JDK: oraclejdk10 Java on macOS"
-      install: export JAVA_HOME=$(/usr/libexec/java_home)
+      osx_image: xcode9.3 # Last supporting Java 8
+      jdk: oraclejdk8
 
-addons:
-  hostname: jyshort
 
-before_install:
-  - cat /etc/hosts # optionally check the content *after*
+install:
+  - ant developer-build
 
-install: ant
 
-script: ant && ant regrtest-travis
+script:
+  - ant regrtest-travis
 
 notifications:
   email:

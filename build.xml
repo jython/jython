@@ -1106,13 +1106,14 @@ The readme text for the next release will be like:
             <arg value="-w"/> <!-- re-run failed tests in verbose mode -->
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
-            <arg value="-j"/>
-            <arg value="${junit.reports}"/>
             <arg value="--use"/>
             <arg value="network,subprocess"/>
             <!-- Exclude particular tests troublesome on the build bots -->
             <arg value="--exclude"/>
+            <arg value="test_gc"/> <!-- intermittently fails/hangs (xenial) -->
+            <arg value="test_mailbox"/>
             <arg value="test_select_new"/>
+            <arg value="test_smtpnet"/>
             <arg value="test_socket"/>
         </exec>
     </target>
@@ -1124,13 +1125,13 @@ The readme text for the next release will be like:
             <arg value="-w"/> <!-- re-run failed tests in verbose mode -->
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
-            <arg value="-j"/>
-            <arg value="${junit.reports}"/>
             <arg value="--use"/>
             <arg value="network,subprocess"/>
             <!-- Exclude particular tests troublesome on the build bots -->
             <arg value="--exclude"/>
+            <arg value="test_mailbox"/>
             <arg value="test_select_new"/>
+            <arg value="test_smtpnet"/>
             <arg value="test_socket"/>
         </exec>
     </target>
