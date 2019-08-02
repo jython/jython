@@ -1,42 +1,32 @@
 language: java
 
-notifications:
-  email:
-    recipients:
-      - jython-dev@lists.sourceforge.net
-
-install: ant
-
-os:
-  - linux
-  - osx
-
-env:
-  matrix:
-    - CUSTOM_JDK="default"
-    - CUSTOM_JDK="openjdk7"
-    - CUSTOM_JDK="oraclejdk8"
+addons:
+  homebrew:
+    update: true
+    packages: ant
 
 matrix:
-  exclude:
-     # On OSX, run with default JDK only.
-     - os: osx
-       env: CUSTOM_JDK="openjdk7"
-     - os: osx
-       env: CUSTOM_JDK="oraclejdk8"
-     # On Linux, run with specific JDKs only.
-     - os: linux
-       env: CUSTOM_JDK="default"
+  include:
+    - jdk: openjdk7
+    # - jdk: openjdk8
+    - jdk: oraclejdk8
+    # - jdk: oraclejdk9
+    # - jdk: oraclejdk11  # times out
+    - os: osx
+      name: "JDK: oraclejdk10 Java on macOS"
+      install: export JAVA_HOME=$(/usr/libexec/java_home)
 
 addons:
   hostname: jyshort
 
 before_install:
   - cat /etc/hosts # optionally check the content *after*
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export JAVA_HOME=$(/usr/libexec/java_home); fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ant; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then jdk_switcher use "$CUSTOM_JDK"; fi
+
+install: ant
 
 script: ant && ant regrtest-travis
 
+notifications:
+  email:
+    recipients:
+      - jython-dev@lists.sourceforge.net
