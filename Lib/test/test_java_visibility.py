@@ -267,6 +267,8 @@ class RespectJavaAccessibilityTest(unittest.TestCase):
             self.add_opens("java.desktop", "java.awt.geom")
             for package in ("lang", "util", "nio", "nio.charset"):
                 self.add_opens("java.base", "java." + package)
+            if test_support.get_java_version() >= (12,):
+                self.add_opens("java.base", "java.lang.constant")
 
         self.command.append(fn)
         self.assertEquals(subprocess.call(self.command), 0)
