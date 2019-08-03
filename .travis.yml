@@ -23,6 +23,14 @@ matrix:
             - ant
       jdk: openjdk11
 
+    - os: linux
+      dist: xenial
+      addons:
+        apt:
+          packages:
+            - ant
+      jdk: openjdk12
+
     - os: osx
       osx_image: xcode9.3 # Last supporting Java 8
       jdk: oraclejdk8
