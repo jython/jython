@@ -30,6 +30,51 @@ import jnr.posix.util.Platform;
 // Do not refer to any PyObject, Py export or PySystemState in this class.
 public class PrePy {
 
+    // Logging convenience functions are here so they may work before the Jython runtime starts.
+
+    /** {@link Options#verbose} level indicating an error that prevents correct results. */
+    public static final int ERROR = -1;
+    /** {@link Options#verbose} level indicating an unexpected event, still working correctly. */
+    public static final int WARNING = 0;
+    /** {@link Options#verbose} level for messages that confirm correct functioning. */
+    public static final int MESSAGE = 1;
+    /** {@link Options#verbose} level providing detail during correct functioning. */
+    public static final int COMMENT = 2;
+    /** {@link Options#verbose} level providing detail in support of debugging or tracing. */
+    public static final int DEBUG = 3;
+
+    /** Log a message at a specified level (if that level be not below the threshold). */
+    public static void maybeWrite(String type, String msg, int level) {
+        if (level <= Options.verbose) {
+            System.err.println(type + ": " + msg);
+        }
+    }
+
+    /** Submit a message to logging at the severity level ERROR. */
+    public static void writeError(String type, String msg) {
+        maybeWrite(type, msg, ERROR);
+    }
+
+    /** Submit a message to logging at the severity level WARNING. */
+    public static void writeWarning(String type, String msg) {
+        maybeWrite(type, msg, WARNING);
+    }
+
+    /** Submit a message to logging at the severity level MESSAGE. */
+    public static void writeMessage(String type, String msg) {
+        maybeWrite(type, msg, MESSAGE);
+    }
+
+    /** Submit a message to logging at the severity level COMMENT. */
+    public static void writeComment(String type, String msg) {
+        maybeWrite(type, msg, COMMENT);
+    }
+
+    /** Submit a message to logging at the severity level DEBUG. */
+    public static void writeDebug(String type, String msg) {
+        maybeWrite(type, msg, DEBUG);
+    }
+
     /**
      * Get the System properties if we are allowed to. Configuration values set via
      * {@code -Dprop=value} to the java command will be found here. If a security manager prevents

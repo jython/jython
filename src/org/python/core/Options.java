@@ -77,7 +77,7 @@ public class Options {
      * Py.DEBUG for varying levels of informative messages from Jython. Normally
      * this option is set from the command line.
      */
-    public static int verbose = Py.MESSAGE;
+    public static int verbose = PrePy.MESSAGE;
 
     /**
      * Set by the {@code -i} option to the interpreter command, to ask for an interactive session to
@@ -161,16 +161,15 @@ public class Options {
      * CacheBuilderSpec string and affects how the SRE_STATE cache will behave/evict
      * cached PyString -> int[] code points.
      */
-    public static final String sreCacheSpecDefault = "weakKeys,concurrencyLevel=4,maximumWeight=2621440,expireAfterAccess=30s";
+    public static final String sreCacheSpecDefault =
+            "weakKeys,concurrencyLevel=4,maximumWeight=2621440,expireAfterAccess=30s";
     public static String sreCacheSpec = sreCacheSpecDefault;
 
     //
     // ####### END OF OPTIONS
     //
 
-    private Options() {
-        ;
-    }
+    private Options() {}
 
     private static boolean getBooleanOption(String name, boolean defaultValue) {
         String prop = PySystemState.registry.getProperty(name);
@@ -188,74 +187,67 @@ public class Options {
         return prop;
     }
 
-    /**
-     * Initialize the static fields from the registry options.
-     */
+    /** Initialize the static fields from the registry options. */
     public static void setFromRegistry() {
         // Set the more unusual options
-        Options.showJavaExceptions = getBooleanOption(
-                PYTHON_OPTIONS_SHOW_JAVA_EXCEPTIONS, 
-                Options.showJavaExceptions);
-
-        Options.includeJavaStackInExceptions = getBooleanOption(
-        	PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS,
-                Options.includeJavaStackInExceptions);
-
-        Options.showPythonProxyExceptions = getBooleanOption(
-                PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS,
-                Options.showPythonProxyExceptions);
-
-        Options.respectJavaAccessibility = getBooleanOption(
-                PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY,
-                Options.respectJavaAccessibility);
-
-        Options.proxyDebugDirectory = getStringOption(
-                PYTHON_OPTIONS_PROXY_DEBUG_DIRECTORY, 
-                Options.proxyDebugDirectory);
+        showJavaExceptions =
+                getBooleanOption(PYTHON_OPTIONS_SHOW_JAVA_EXCEPTIONS, showJavaExceptions);
+        includeJavaStackInExceptions = getBooleanOption(
+                PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS, includeJavaStackInExceptions);
+        showPythonProxyExceptions = getBooleanOption(
+                PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS, showPythonProxyExceptions);
+        respectJavaAccessibility = getBooleanOption(
+                PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY, respectJavaAccessibility);
+        proxyDebugDirectory =
+                getStringOption(PYTHON_OPTIONS_PROXY_DEBUG_DIRECTORY, proxyDebugDirectory);
 
         // verbosity is more complicated:
-        String prop = PySystemState.registry.getProperty(PYTHON_VERBOSE);
-        if (prop != null) {
-            if (prop.equalsIgnoreCase("error")) {
-                Options.verbose = Py.ERROR;
-            } else if (prop.equalsIgnoreCase("warning")) {
-                Options.verbose = Py.WARNING;
-            } else if (prop.equalsIgnoreCase("message")) {
-                Options.verbose = Py.MESSAGE;
-            } else if (prop.equalsIgnoreCase("comment")) {
-                Options.verbose = Py.COMMENT;
-            } else if (prop.equalsIgnoreCase("debug")) {
-                Options.verbose = Py.DEBUG;
-            } else {
-                throw Py.ValueError("Illegal verbose option setting: '" + prop
-                        + "'");
-            }
+        String prop;
+        switch ((prop = getStringOption(PYTHON_VERBOSE, "")).toLowerCase()) {
+            case "":
+                break;
+            case "error":
+                verbose = PrePy.ERROR;
+                break;
+            case "warning":
+                verbose = PrePy.WARNING;
+                break;
+            case "message":
+                verbose = PrePy.MESSAGE;
+                break;
+            case "comment":
+                verbose = PrePy.COMMENT;
+                break;
+            case "debug":
+                verbose = PrePy.DEBUG;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid verbose option: '" + prop + "'");
         }
 
-        Options.caseok = getBooleanOption(PYTHON_OPTIONS_CASE_OK, 
-                Options.caseok);
+        caseok = getBooleanOption(PYTHON_OPTIONS_CASE_OK, caseok);
+        Qnew = getBooleanOption(PYTHON_OPTIONS_Q_NEW, Qnew);
 
-        Options.Qnew = getBooleanOption(PYTHON_OPTIONS_Q_NEW, Options.Qnew);
-
-        prop = PySystemState.registry.getProperty(PYTHON_DIVISION_WARNING);
-        if (prop != null) {
-            if (prop.equalsIgnoreCase("old")) {
-                Options.division_warning = 0;
-            } else if (prop.equalsIgnoreCase("warn")) {
-                Options.division_warning = 1;
-            } else if (prop.equalsIgnoreCase("warnall")) {
-                Options.division_warning = 2;
-            } else {
-                throw Py.ValueError("Illegal division_warning option "
-                        + "setting: '" + prop + "'");
-            }
+        switch ((prop = getStringOption(PYTHON_DIVISION_WARNING, "")).toLowerCase()) {
+            case "":
+                break;
+            case "old":
+                division_warning = 0;
+                break;
+            case "warn":
+                division_warning = 1;
+                break;
+            case "warnall":
+                division_warning = 2;
+                break;
+            default:
+                throw new IllegalArgumentException(
+                        "Invalid division_warning option: '" + prop + "'");
         }
 
-        Options.sreCacheSpec = getStringOption(PYTHON_SRE_CACHESPEC, 
-                Options.sreCacheSpec);
-        Options.inspect |= getStringOption(PYTHON_INSPECT, "").length() > 0;
-        Options.importSite = getBooleanOption(PYTHON_IMPORT_SITE, 
-                Options.importSite);
-        Options.no_site = !Options.importSite;
+        sreCacheSpec = getStringOption(PYTHON_SRE_CACHESPEC, sreCacheSpec);
+        inspect |= getStringOption(PYTHON_INSPECT, "").length() > 0;
+        importSite = getBooleanOption(PYTHON_IMPORT_SITE, importSite);
+        no_site = !importSite;
     }
 }
