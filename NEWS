@@ -76,6 +76,16 @@ Development tip
     - Experimentally, we use Gradle to build a JAR and POM that may be cited as a dependency by
       other projects. The Jython project would like to know if this is being done suitably
       for downstream use.
+    - The registry setting (or Java property) "python.verbose", and direct use of the global
+      org.python.core.Options.verbose are DEPRECATED: use a Java logging properties file instead.
+      Console messages are now produced via java.util.logging (JUL), and the logger "org.python"
+      or its descendants. The jython command configures a ConsoleLogger for "org.python" and by
+      default a format for messages generally similar to that in v2.7.1, preceded by the logger
+      name and JUL severity. The volume of messages is controlled by your logging preferences, but
+      by default is unchanged from v2.7.1. Each -v option on the command line makes the logging
+      one step finer on the JUL scale. Error messages from Python and stack traces are unaffected.
+      When embedded in your application, Jython makes no logging configuration changes: messages
+      from the "org.python" name space merge with those of your application.
 
 Jython 2.7.2a1
   Bugs fixed

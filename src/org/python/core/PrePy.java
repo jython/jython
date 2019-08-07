@@ -11,6 +11,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessControlException;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jnr.posix.util.Platform;
 
@@ -30,7 +32,10 @@ import jnr.posix.util.Platform;
 // Do not refer to any PyObject, Py export or PySystemState in this class.
 public class PrePy {
 
-    // Logging convenience functions are here so they may work before the Jython runtime starts.
+    // Logging functions are here so they may be used without starting the Jython runtime.
+
+    /** Our name-spaced root logger is "org.python". */
+    protected static final Logger logger = Logger.getLogger("org.python");
 
     /** {@link Options#verbose} level indicating an error that prevents correct results. */
     public static final int ERROR = -1;
@@ -43,10 +48,136 @@ public class PrePy {
     /** {@link Options#verbose} level providing detail in support of debugging or tracing. */
     public static final int DEBUG = 3;
 
-    /** Log a message at a specified level (if that level be not below the threshold). */
-    public static void maybeWrite(String type, String msg, int level) {
-        if (level <= Options.verbose) {
-            System.err.println(type + ": " + msg);
+    static final Level[] LEVELS = {//
+            Level.OFF,      //
+            Level.SEVERE,   // Legacy: ERROR
+            Level.WARNING,  // Legacy: WARNING
+            Level.INFO,     // Legacy: MESSAGE
+            Level.CONFIG,   // Legacy: COMMENT
+            Level.FINE,     // Legacy: DEBUG
+            Level.FINER, Level.FINEST, Level.ALL};
+
+    /**
+     * Translate from the traditional "verbosity" system to JUL Level. We allow Jython verbosity
+     * values beyond the conventional range, treating values &lt;{@link #ERROR} as {@code ERROR}
+     * (that is {@code Level.SEVERE}) and values &gt;{@link #DEBUG} (that is {@code Level.FINE}) as
+     * {@code FINER}, {@code FINEST} and {@code ALL}.
+     *
+     * @param verbosity any integer verbosity, where the runtime default {@link #MESSAGE} = 1
+     * @return a corresponding level where the default {@link #MESSAGE} produces {@code Level.INFO}.
+     */
+    public static Level levelFromVerbosity(int verbosity) {
+        if (verbosity < ERROR) {
+            return Level.OFF;
+        } else if (verbosity >= LEVELS.length + (ERROR - 1)) {
+            return Level.ALL;
+        } else {
+            // Bound the index to the LEVELS array.
+            int index = verbosity - (ERROR - 1);
+            return LEVELS[index];
+        }
+    }
+
+    /**
+     * Translate from JUL Level to equivalent in the traditional "verbosity" system. We return
+     * Jython verbosity values beyond the conventional range, enough to enumerate the Java standard
+     * levels (e.g {@code FINER} returns 4 and {@code ALL} returns 6 ).
+     *
+     * @param level {@code java.util.logging.Level} to translate.
+     * @return integer verbosity, where the runtime default {@code INFO} = 1
+     */
+    public static int verbosityFromLevel(Level level) {
+        /*
+         * Find the least verbose setting v such that events at the given level or above will be
+         * logged by Jython, that is, v such that levelFromVerbosity(v) is a threshold no higher
+         * than the given level. We allow Jython verbosity values beyond the conventional range (e.g
+         * level==FINER), according to the range of values in the LEVELS array.
+         */
+        int intLevel = level.intValue();
+        int index = 0, v = ERROR - 1; // = OFF
+        while (index < LEVELS.length && LEVELS[index].intValue() > intLevel) {
+            assert LEVELS[index] == levelFromVerbosity(v);
+            index += 1;
+            v += 1;
+        }
+        return v;
+    }
+
+    /**
+     * Convenience function to get the effective level of a given Logger, looking up the parent
+     * chain.
+     */
+    private static Level getEffectiveLoggingLevel(Logger logger) {
+        Level level;
+        while ((level = logger.getLevel()) == null) {
+            logger = logger.getParent();
+        }
+        return level;
+    }
+
+    /** Convenience function to get the effective level of Logger "org.python". */
+    public static Level getLoggingLevel() {
+        return getEffectiveLoggingLevel(logger);
+    }
+
+    /**
+     * Used by {@link #maybeWrite(Level, String)}, the terminus of all verbosity-based logging
+     * calls, to detect changes made directly to {@link Options#verbose}.
+     */
+    private static int savedVerbosity = Py.MESSAGE;
+
+    /**
+     * Set the level of the Jython logger "org.python" using the standard {@code java.util.logging}
+     * scale. For backward compatibility with the traditional "verbosity" system, make a
+     * corresponding setting of {@link Options#verbose}.
+     */
+    @SuppressWarnings("deprecation")
+    public static void setLoggingLevel(Level newLevel) {
+        Level currentLevel = getLoggingLevel();
+        if (newLevel != currentLevel) {
+            try {
+                logger.setLevel(newLevel);
+                currentLevel = newLevel;
+            } catch (SecurityException se) {
+                logger.warning("A security manager prevented a change to the logging level.");
+            }
+        }
+        savedVerbosity = Options.verbose = verbosityFromLevel(currentLevel);
+    }
+
+    /**
+     * Adjust the level of the Jython logger "org.python" using the traditional "verbosity" system:
+     * the bigger the number, the lower the logging threshold. This is primarily for the
+     * command-line Jython, where each "-v" increases the verbosity by one, on the
+     * {@code java.util.logging} scale.
+     *
+     * @param n increment on the scale {@code 1=INFO, 2=CONFIG, 3=FINE, ... }
+     */
+    public static void increaseLoggingLevel(int n) {
+        int v = verbosityFromLevel(getLoggingLevel());
+        setLoggingLevel(levelFromVerbosity(v + n));
+    }
+
+    /**
+     * Ensure that the logging system threshold is adjusted to match the legacy
+     * {@link Options#verbose} in the event that that has changed since we last looked.
+     */
+    @SuppressWarnings("deprecation")
+    private static void syncLoggingLevel() {
+        if (Options.verbose != savedVerbosity) {
+            Level level = levelFromVerbosity(savedVerbosity = Options.verbose);
+            setLoggingLevel(level);
+        }
+    }
+
+    /** Log a message at a specified level (if that level is not below the threshold). */
+    @SuppressWarnings("deprecation")
+    public static void maybeWrite(String type, String msg, int verbosity) {
+        // If the caller is using the legacy logging system they may have changed Options.verbose.
+        syncLoggingLevel();
+        if (verbosity <= Options.verbose) {
+            // Formulate the message in legacy style, then as a log message
+            logger.log(levelFromVerbosity(verbosity), "{0}: {1}", new Object[] {type, msg});
         }
     }
 

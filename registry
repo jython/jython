@@ -31,9 +31,10 @@ python.cachedir = cachedir
 #python.packages.directories = java.ext.dirs    # up to Java 8
 #python.packages.directories                    # undefined from Java 9
 
-# Set verbosity to error, warning, message, comment, or debug
-# for varying levels of informative messages from Jython. Normally
-# this option is set from the command line.
+# DEPRECATED way to set the verbosity of messages output by Jython. If
+# specified, "python.verbose" will set logging level for "org.python" when
+# the runtime is initialised. It is better to use java.util.logging
+# preferences (and the -v option) which work from the start of execution.
 #python.verbose = message
 
 # Jython ships with a JLine console (http://jline.sourceforge.net/) out of the

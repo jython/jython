@@ -10,6 +10,10 @@ import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -36,6 +40,54 @@ public class jython {
     /** Exit status: must have {@code OK.ordinal()==0} */
     private enum Status {
         OK, ERROR, NOT_RUN, NO_FILE
+    }
+
+    /** The root of the Jython Logger hierarchy, named "org.python". */
+    public static final Logger logger;// = Logger.getLogger("org.python");
+
+    /**
+     * The default format for console log messages in the command-line Jython. See
+     * {@code java.util.logging.SimpleFormatter} for an explanation of the syntax.
+     * <p>
+     * This format is used in the absence of other logging preferences. Jython tests for definitions
+     * in the system properties of {@code java.util.logging.config.class},
+     * {@code java.util.logging.config.file}, and {@code java.util.logging.SimpleFormatter.format}
+     * and if none of these is defined, it sets the last of them to this value.
+     * <p>
+     * You can choose something else, for example to log with millisecond time stamps, launch Jython
+     * as: <pre>
+     * jython -vv -J-Djava.util.logging.SimpleFormatter.format="[%1$tT.%1$tL] %3$s: (%4$s) %5$s%n"
+     * </pre> Depending on your shell, the argument may need quoting or escaping.
+     */
+    public static final String CONSOLE_LOG_FORMAT = "%3$s %4$s %5$s%n";
+
+    static {
+        SecurityException exception = null;
+        try {
+            // Jython console messages (-v option) are emitted using SimpleFormatter
+            configureSimpleFormatter(CONSOLE_LOG_FORMAT);
+        } catch (SecurityException se) {
+            // Unable to access the necessary system properties. Give up on custom logging.
+            exception = se;
+        }
+
+        // Whether we can configure it or not, we can still _use_ logging.
+        logger = Logger.getLogger("org.python");
+
+        if (exception == null) {
+            try {
+                // Make our "org.python" logger do its own output and not propagate to root.
+                setConsoleHandler(logger);
+            } catch (SecurityException se) {
+                // This probably means no logging finer than INFO (so none enabled by -v)
+                exception = se;
+            }
+        }
+
+        if (exception != null) {
+            logger.log(Level.WARNING, "Unable to format console messages: {0}",
+                    exception.getMessage());
+        }
     }
 
     // An instance of this class will provide the console (python.console) by default.
@@ -75,7 +127,7 @@ public class jython {
             + "-u       : unbuffered binary stdout and stderr\n"
             // + "(also PYTHONUNBUFFERED=x)\n"
             // + "           see man page for details on internal buffering relating to '-u'\n"
-            + "-v       : verbose (trace import statements)\n"
+            + "-v       : verbose (emit more \"org.python\" log messages)\n"
             // + "(also PYTHONVERBOSE=x)\n"
             + "           can be supplied multiple times to increase verbosity\n"
             + "-V       : print the Python version number and exit (also --version)\n"
@@ -110,6 +162,45 @@ public class jython {
             f.println("Try 'jython -h' for more information.");
         }
         return status;
+    }
+
+    /**
+     * Try to set the format for SimpleFormatter if no other mechanism has been provided, and
+     * security allows it.
+     *
+     * @param format to set for {@code java.util.logging.SimpleFormatter}
+     * @throws SecurityException if not allowed to read or set necessary properties.
+     */
+    private static void configureSimpleFormatter(String format) throws SecurityException {
+        final String CLASS_KEY = "java.util.logging.config.class";
+        String className = System.getProperty(CLASS_KEY);
+        if (className == null) {
+            final String FILE_KEY = "java.util.logging.config.file";
+            String fileName = System.getProperty(FILE_KEY);
+            if (fileName == null) {
+                final String FORMAT_KEY = "java.util.logging.SimpleFormatter.format";
+                String currentFormat = System.getProperty(FORMAT_KEY);
+                if (currentFormat == null) {
+                    // Note that this sets the format for _all_ console logging
+                    System.setProperty(FORMAT_KEY, format);
+                }
+            }
+        }
+    }
+
+    /**
+     * Customise the logger so that it does not propagate to its parent and has its own
+     * {@code Handler} accepting all messages. The level set on the logger alone therefore controls
+     * whether messages are emitted to the console.
+     *
+     * @param logger to adjust (always "python.org")
+     * @throws SecurityException if no permission to adjust logging
+     */
+    private static void setConsoleHandler(Logger logger) throws SecurityException {
+        logger.setUseParentHandlers(false);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        logger.addHandler(handler);
     }
 
     /**
@@ -384,6 +475,8 @@ public class jython {
     public static void main(String[] args) {
         // Parse the command line options
         CommandLineOptions opts = CommandLineOptions.parse(args);
+
+        // Choose the basic action
         switch (opts.action) {
             case VERSION:
                 System.err.printf("Jython %s\n", Version.PY_VERSION);
@@ -396,6 +489,9 @@ public class jython {
             case RUN:
                 // Let's run some Python! ...
         }
+
+        // Adjust relative to the level set by java.util.logging.
+        PrePy.increaseLoggingLevel(opts.verbosity);
 
         // Get system properties (or empty set if we're prevented from accessing them)
         Properties preProperties = PrePy.getSystemProperties();
@@ -417,8 +513,7 @@ public class jython {
             // We'll be going interactive eventually. condition an interactive console.
             if (PrePy.haveConsole()) {
                 // Set the default console type if nothing else has
-                addDefault(preProperties, RegistryKey.PYTHON_CONSOLE, 
-                                        PYTHON_CONSOLE_CLASS);
+                addDefault(preProperties, RegistryKey.PYTHON_CONSOLE, PYTHON_CONSOLE_CLASS);
             }
         }
 
@@ -455,7 +550,7 @@ public class jython {
          */
         InteractiveConsole interp = new InteractiveConsole();
 
-        if (Options.verbose > Py.MESSAGE || (!haveScript && stdinIsInteractive)) {
+        if (opts.verbosity > 0 || (!haveScript && stdinIsInteractive)) {
             // Verbose or going interactive immediately: produce sign on messages.
             System.err.println(InteractiveConsole.getDefaultBanner());
             if (Options.importSite) {
@@ -721,6 +816,8 @@ public class jython {
         boolean version = false;
         /** -jar option. */
         boolean jar = false;
+        /** Count of -v options. */
+        int verbosity = 0;
 
         /** Collects definitions made with the -D option directly to Jython (not java -D). */
         Properties properties = new Properties();
@@ -736,12 +833,12 @@ public class jython {
 
         /** Valid long-name options. */
         static final char JAR_OPTION = '\u2615';
-        static final OptionScanner.LongSpec[] PROGRAM_LONG_OPTS = {
-                new OptionScanner.LongSpec("--", OptionScanner.DONE),
-                new OptionScanner.LongSpec("--help", 'h'),
-                new OptionScanner.LongSpec("--version", 'V'),
-                new OptionScanner.LongSpec("-jar", JAR_OPTION, true), // Yes, just one dash.
-        };
+        static final OptionScanner.LongSpec[] PROGRAM_LONG_OPTS =
+                {new OptionScanner.LongSpec("--", OptionScanner.DONE),
+                        new OptionScanner.LongSpec("--help", 'h'),
+                        new OptionScanner.LongSpec("--version", 'V'),
+                        new OptionScanner.LongSpec("-jar", JAR_OPTION, true), // Yes, just one dash.
+                };
 
         /**
          * Parse the arguments into the static {@link Options} and a returned instance of this
@@ -892,7 +989,7 @@ public class jython {
                         break;
 
                     case 'v':
-                        Options.verbose++;
+                        verbosity++;
                         break;
 
                     case 'x':

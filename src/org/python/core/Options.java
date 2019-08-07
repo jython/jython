@@ -3,35 +3,34 @@ package org.python.core;
 
 import static org.python.core.RegistryKey.*;
 
+import java.util.logging.Level;
+
 /**
- * A class with static fields for each of the settable options. The options from
- * registry and command line is copied into the fields here and the rest of
- * Jython checks these fields.
+ * A class with static fields for each of the settable options. The options from registry and
+ * command line is copied into the fields here and the rest of Jython checks these fields.
  */
 public class Options {
     // Jython options. Some of these can be set from the command line
     // options, but all can be controlled through the Jython registry
 
     /**
-     * when an exception occurs in Java code, and it is not caught, should the
-     * interpreter print out the Java exception in the traceback?
+     * when an exception occurs in Java code, and it is not caught, should the interpreter print out
+     * the Java exception in the traceback?
      */
     public static boolean showJavaExceptions = false;
 
     /**
-     * If true, exceptions raised from Python code will include a Java stack
-     * trace in addition to the Python traceback.  This can slow raising
-     * considerably.
+     * If true, exceptions raised from Python code will include a Java stack trace in addition to
+     * the Python traceback. This can slow raising considerably.
      *
      * @see org.python.core.RegistryKey#PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS
      */
     public static boolean includeJavaStackInExceptions = true;
 
     /**
-     * When true, python exception raised in overridden methods will be shown on
-     * stderr. This option is remarkably useful when python is used for
-     * implementing CORBA server. Some CORBA servers will turn python exception
-     * (say a NameError) into an anonymous user exception without any
+     * When true, python exception raised in overridden methods will be shown on stderr. This option
+     * is remarkably useful when python is used for implementing CORBA server. Some CORBA servers
+     * will turn python exception (say a NameError) into an anonymous user exception without any
      * stacktrace. Setting this option will show the stacktrace.
      *
      * @see org.python.core.RegistryKey#PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS
@@ -39,10 +38,9 @@ public class Options {
     public static boolean showPythonProxyExceptions = false;
 
     /**
-     * If true, Jython respects Java the accessibility flag for fields,
-     * methods, and constructors. This means you can only access public members.
-     * Set this to false to access all members by toggling the accessible flag
-     * on the member.
+     * If true, Jython respects Java the accessibility flag for fields, methods, and constructors.
+     * This means you can only access public members. Set this to false to access all members by
+     * toggling the accessible flag on the member.
      *
      * @see org.python.core.RegistryKey#PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY
      */
@@ -73,11 +71,16 @@ public class Options {
     public static boolean no_site = false;
 
     /**
-     * Set verbosity to Py.ERROR, Py.WARNING, Py.MESSAGE, Py.COMMENT, or
-     * Py.DEBUG for varying levels of informative messages from Jython. Normally
-     * this option is set from the command line.
+     * Verbosity of informative messages from Jython, retained as a field for reasons of
+     * backward-compatibility. Normally this option should be allowed to find its value indirectly
+     * through {@code java.util.logging}, as adjusted by the command line {@code -v} option.
+     *
+     * @deprecated Use {@link Py#getLoggingLevel()},
+     *             {@link Py#setLoggingLevel(java.util.logging.Level)}, or {@code java.util.logging}
+     *             preferences to configure logging levels.
      */
-    public static int verbose = PrePy.MESSAGE;
+    @Deprecated
+    public static int verbose = PrePy.verbosityFromLevel(PrePy.getLoggingLevel());
 
     /**
      * Set by the {@code -i} option to the interpreter command, to ask for an interactive session to
@@ -95,16 +98,15 @@ public class Options {
     public static boolean inspect = false;
 
     /**
-     * A directory where the dynamically generated classes are written. Nothing is
-     * ever read from here, it is only for debugging purposes.
+     * A directory where the dynamically generated classes are written. Nothing is ever read from
+     * here, it is only for debugging purposes.
      */
     public static String proxyDebugDirectory;
 
     /**
-     * If true, Jython will use the first module found on sys.path where java
-     * File.isFile() returns true. Setting this to true have no effect on
-     * unix-type filesystems. On Windows/HFS+ systems setting it to true will
-     * enable Jython-2.0 behaviour.
+     * If true, Jython will use the first module found on sys.path where java File.isFile() returns
+     * true. Setting this to true have no effect on unix-type filesystems. On Windows/HFS+ systems
+     * setting it to true will enable Jython-2.0 behaviour.
      *
      * @see org.python.core.RegistryKey#PYTHON_OPTIONS_CASE_OK
      */
@@ -117,8 +119,7 @@ public class Options {
      */
     public static boolean Qnew = false;
 
-    /** Force stdin, stdout and stderr to be unbuffered, and opened in
-     * binary mode */
+    /** Force stdin, stdout and stderr to be unbuffered, and opened in binary mode */
     public static boolean unbuffered = false;
 
     /** Whether -3 (py3k warnings) was enabled via the command line. */
@@ -136,7 +137,7 @@ public class Options {
      */
     public static boolean no_user_site = false;
 
-    //XXX: place holder
+    // XXX: place holder
     public static int bytes_warning = 0;
 
     /**
@@ -157,9 +158,8 @@ public class Options {
     public static int division_warning = 0;
 
     /**
-     * Cache spec for the SRE_STATE code point cache. The value maps to the
-     * CacheBuilderSpec string and affects how the SRE_STATE cache will behave/evict
-     * cached PyString -> int[] code points.
+     * Cache spec for the SRE_STATE code point cache. The value maps to the CacheBuilderSpec string
+     * and affects how the SRE_STATE cache will behave/evict cached PyString -> int[] code points.
      */
     public static final String sreCacheSpecDefault =
             "weakKeys,concurrencyLevel=4,maximumWeight=2621440,expireAfterAccess=30s";
@@ -189,45 +189,82 @@ public class Options {
 
     /** Initialize the static fields from the registry options. */
     public static void setFromRegistry() {
-        // Set the more unusual options
+
         showJavaExceptions =
                 getBooleanOption(PYTHON_OPTIONS_SHOW_JAVA_EXCEPTIONS, showJavaExceptions);
         includeJavaStackInExceptions = getBooleanOption(
                 PYTHON_OPTIONS_INCLUDE_JAVA_STACK_IN_EXCEPTIONS, includeJavaStackInExceptions);
-        showPythonProxyExceptions = getBooleanOption(
-                PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS, showPythonProxyExceptions);
-        respectJavaAccessibility = getBooleanOption(
-                PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY, respectJavaAccessibility);
+        showPythonProxyExceptions = getBooleanOption(PYTHON_OPTIONS_SHOW_PYTHON_PROXY_EXCEPTIONS,
+                showPythonProxyExceptions);
+        respectJavaAccessibility = getBooleanOption(PYTHON_SECURITY_RESPECT_JAVA_ACCESSIBILITY,
+                respectJavaAccessibility);
         proxyDebugDirectory =
                 getStringOption(PYTHON_OPTIONS_PROXY_DEBUG_DIRECTORY, proxyDebugDirectory);
 
-        // verbosity is more complicated:
-        String prop;
-        switch ((prop = getStringOption(PYTHON_VERBOSE, "")).toLowerCase()) {
-            case "":
-                break;
-            case "error":
-                verbose = PrePy.ERROR;
-                break;
-            case "warning":
-                verbose = PrePy.WARNING;
-                break;
-            case "message":
-                verbose = PrePy.MESSAGE;
-                break;
-            case "comment":
-                verbose = PrePy.COMMENT;
-                break;
-            case "debug":
-                verbose = PrePy.DEBUG;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid verbose option: '" + prop + "'");
-        }
+        // Legacy python.verbose if used may countermand logging.properties::org.python.level
+        setLoggingFromRegistry();
 
         caseok = getBooleanOption(PYTHON_OPTIONS_CASE_OK, caseok);
         Qnew = getBooleanOption(PYTHON_OPTIONS_Q_NEW, Qnew);
 
+        setDivisionWarningFromRegistry();
+
+        sreCacheSpec = getStringOption(PYTHON_SRE_CACHESPEC, sreCacheSpec);
+        inspect |= getStringOption(PYTHON_INSPECT, "").length() > 0;
+        importSite = getBooleanOption(PYTHON_IMPORT_SITE, importSite);
+        no_site = !importSite;
+    }
+
+    /**
+     * Set the logging level from {@link RegistryKey#PYTHON_VERBOSE}. We recognise the traditional
+     * Jython names and those used by {@code java.util.logging}. If that key is present in the
+     * Jython registry it will determine the level or the logger named "org.python".
+     */
+    private static void setLoggingFromRegistry() {
+        String prop;
+        switch ((prop = getStringOption(PYTHON_VERBOSE, "")).toLowerCase()) {
+            case "": // Leave it as it is.
+                break;
+            case "off":
+                PrePy.setLoggingLevel(Level.OFF);
+                break;
+            case "error":
+            case "severe":
+                PrePy.setLoggingLevel(Level.SEVERE);
+                break;
+            case "warning":
+            case "warn":
+                PrePy.setLoggingLevel(Level.WARNING);
+                break;
+            case "message":
+            case "info":
+                PrePy.setLoggingLevel(Level.INFO);
+                break;
+            case "comment":
+            case "config":
+                PrePy.setLoggingLevel(Level.CONFIG);
+                break;
+            case "debug":
+            case "fine":
+                PrePy.setLoggingLevel(Level.FINE);
+                break;
+            case "finer":
+                PrePy.setLoggingLevel(Level.FINER);
+                break;
+            case "finest":
+                PrePy.setLoggingLevel(Level.FINEST);
+                break;
+            case "all":
+                PrePy.setLoggingLevel(Level.ALL);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid verbose option: '" + prop + "'");
+        }
+    }
+
+    /** Set {@link division_warning} from {@link RegistryKey#PYTHON_DIVISION_WARNING}. */
+    private static void setDivisionWarningFromRegistry() {
+        String prop;
         switch ((prop = getStringOption(PYTHON_DIVISION_WARNING, "")).toLowerCase()) {
             case "":
                 break;
@@ -244,10 +281,6 @@ public class Options {
                 throw new IllegalArgumentException(
                         "Invalid division_warning option: '" + prop + "'");
         }
-
-        sreCacheSpec = getStringOption(PYTHON_SRE_CACHESPEC, sreCacheSpec);
-        inspect |= getStringOption(PYTHON_INSPECT, "").length() > 0;
-        importSite = getBooleanOption(PYTHON_IMPORT_SITE, importSite);
-        no_site = !importSite;
     }
+
 }
