@@ -130,19 +130,23 @@ public class PrePy {
      * Set the level of the Jython logger "org.python" using the standard {@code java.util.logging}
      * scale. For backward compatibility with the traditional "verbosity" system, make a
      * corresponding setting of {@link Options#verbose}.
+     *
+     * @param newLevel to set
+     * @return previous logging level
      */
     @SuppressWarnings("deprecation")
-    public static void setLoggingLevel(Level newLevel) {
-        Level currentLevel = getLoggingLevel();
-        if (newLevel != currentLevel) {
+    public static Level setLoggingLevel(Level newLevel) {
+        Level previousLevel = getLoggingLevel();
+        if (newLevel != previousLevel) {
             try {
                 logger.setLevel(newLevel);
-                currentLevel = newLevel;
             } catch (SecurityException se) {
                 logger.warning("A security manager prevented a change to the logging level.");
+                newLevel = previousLevel;
             }
         }
-        savedVerbosity = Options.verbose = verbosityFromLevel(currentLevel);
+        savedVerbosity = Options.verbose = verbosityFromLevel(newLevel);
+        return previousLevel;
     }
 
     /**

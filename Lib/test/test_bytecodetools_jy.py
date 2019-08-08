@@ -36,32 +36,26 @@ class BytecodeCallbackTest(unittest.TestCase):
 
     def faulty_callback(self, name, byte, klass):
         raise Exception("test exception")
+
     def faulty_callback2(self, name, byte, klass, bogus):
         return 
 
     def test_faulty_callback(self):
-        import java.lang.System as Sys
-        import java.io.PrintStream as PrintStream
-        import java.io.OutputStream as OutputStream
-
-        class NullOutputStream(OutputStream):
-            def write(self, b): pass
-            def write(self, buf, offset, len): pass
-
-        syserr = Sys.err
-        Sys.setErr(PrintStream(NullOutputStream()))
-
         tools.register(self.faulty_callback)
         tools.register(self.assert_callback)
         tools.register(self.faulty_callback2)
         self.count=0
         try:
+            # Suppress the warning otherwise produced
+            from org.python.core import Py
+            from java.util.logging import Level
+            level = Py.setLoggingLevel(Level.SEVERE)
             eval("42+1")
         finally:
             self.assertTrue(tools.unregister(self.faulty_callback))
             self.assertTrue(tools.unregister(self.faulty_callback2))
             self.assertTrue(tools.unregister(self.assert_callback))
-            Sys.setErr(syserr)
+            Py.setLoggingLevel(level)
         self.assertEqual(self.count, 1)
 
 
