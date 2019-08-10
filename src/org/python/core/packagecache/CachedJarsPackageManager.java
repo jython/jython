@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,33 +43,39 @@ import java.util.zip.ZipInputStream;
  */
 public abstract class CachedJarsPackageManager extends PackageManager {
 
+    protected static Logger logger = Logger.getLogger("org.python.import");
+
     /**
      * Message log method - hook. This default implementation does nothing.
      *
-     * @param msg message text
+     * @param msg message template (see java.text.MessageFormat)
+     * @param params parameters to insert
      */
-    protected void message(String msg) {}
+    protected void message(String msg, Object... params) {}
 
     /**
      * Warning log method - hook. This default implementation does nothing.
      *
-     * @param warn warning text
+     * @param msg message template (see java.text.MessageFormat)
+     * @param params parameters to insert
      */
-    protected void warning(String warn) {}
+    protected void warning(String msg, Object... params) {}
 
     /**
      * Comment log method - hook. This default implementation does nothing.
      *
-     * @param msg message text
+     * @param msg message template (see java.text.MessageFormat)
+     * @param params parameters to insert
      */
-    protected void comment(String msg) {}
+    protected void comment(String msg, Object... params) {}
 
     /**
      * Debug log method - hook. This default implementation does nothing.
      *
-     * @param msg message text
+     * @param msg message template (see java.text.MessageFormat)
+     * @param params parameters to insert
      */
-    protected void debug(String msg) {}
+    protected void debug(String msg, Object... params) {}
 
     /**
      * Filter class/pkg by name helper method - hook. The default implementation is used by
@@ -338,7 +345,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
                 if (writeCache && (entry == null || !(new File(entry.cachefile).exists()))) {
                     // We intend to use a cache but there is no valid existing file.
-                    comment("processing new jar, '" + jarcanon + "'");
+                    comment("processing new jar ''{0}''", jarcanon);
 
                     // Create a base-name for the cache file
                     String jarname;
@@ -377,7 +384,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     // Update the index entry for the cache file we shall eventually write.
                     this.indexModified = true;
                     if (entry.mtime != 0) {
-                        comment("processing modified jar, '" + jarcanon + "'");
+                        comment("processing modified jar ''{0}''", jarcanon);
                     }
                     entry.mtime = mtime;
                 }
@@ -415,8 +422,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         } catch (IOException ioe) {
             // Skip the bad JAR with a message
-            warning("skipping bad jar, '"
-                    + (jarfile != null ? jarfile.toString() : jarurl.toString()) + "'");
+            warning("skipping bad jar ''{0}''", (jarfile != null ? jarfile : jarurl).toString());
         }
     }
 
@@ -450,7 +456,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         String cachefile = entry.cachefile;
         long mtime = entry.mtime;
 
-        debug("reading cache, '" + jarcanon + "'");
+        debug("reading cache of ''{0}''", jarcanon);
 
         DataInputStream istream = null;
         try {
@@ -458,8 +464,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             String old_jarcanon = istream.readUTF();
             long old_mtime = istream.readLong();
             if ((!old_jarcanon.equals(jarcanon)) || (old_mtime != mtime)) {
-                comment("invalid cache file: " + cachefile + ", " + jarcanon + ":" + old_jarcanon
-                        + ", " + mtime + ":" + old_mtime);
+                comment("invalid cache file: {0} for new:{1}({3}), old:{2}({4})", cachefile, jarcanon,
+                        old_jarcanon, mtime, old_mtime);
                 deleteCacheFile(cachefile);
                 return null;
             }
@@ -512,7 +518,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             ostream = outCreateCacheFile(entry, brandNew);
             ostream.writeUTF(jarcanon);
             ostream.writeLong(entry.mtime);
-            comment("rewriting cachefile for '" + jarcanon + "'");
+            comment("rewriting cache for ''{0}''", jarcanon);
 
             for (Entry<String, String> kv : zipPackages.entrySet()) {
                 String classes = kv.getValue();
@@ -524,7 +530,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 }
             }
         } catch (IOException ioe) {
-            warning("can't write cache file for '" + jarcanon + "'");
+            warning("failed to write cache for ''{0}'' ({1})", jarcanon, ioe.getMessage());
         } finally {
             if (ostream != null) {
                 try {
@@ -539,11 +545,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /** Scan a Java module, creating package objects. */
     protected void addModuleToPackages(Path modulePath) {
         try {
-            comment("reading packages from " + modulePath);
+            comment("reading packages from ''{0}''", modulePath);
             Map<String, String> packages = getModularPackages(modulePath);
             addPackages(packages, modulePath.toUri().toString());
         } catch (IOException ioe) {
-            warning("skipping bad module, '" + modulePath + "'" + ioe);
+            warning("skipping bad module ''{0}'' ({1})", modulePath, ioe.getMessage());
         }
     }
 
@@ -708,7 +714,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 ostream.writeLong(xentry.mtime);
             }
         } catch (IOException ioe) {
-            warning("can't write index file");
+            warning("failed to write index file ({0})", ioe.getMessage());
         } finally {
             if (ostream != null) {
                 try {
@@ -841,12 +847,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         try {
             if (!aCachedir1.isDirectory() && aCachedir1.mkdirs() == false) {
-                warning("can't create package cache dir, '" + aCachedir1 + "'");
+                warning("failed to create cache dir ''{0}''", aCachedir1);
                 return false;
             }
         } catch (AccessControlException ace) {
-            warning("The java security manager isn't allowing access to the package cache dir, '"
-                    + aCachedir1 + "'");
+            warning("Not permitted to access cache ''{0}'' ({1})", aCachedir1, ace.getMessage());
             return false;
         }
 

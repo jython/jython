@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
  * Utility functions for "import" support.
@@ -24,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class imp {
 
-    private static final String IMPORT_LOG = "import";
+    private static Logger logger = Logger.getLogger("org.python.import");
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
@@ -304,8 +306,8 @@ public class imp {
         }
 
         // Execute the PyCode object (run the module body) to populate the module __dict__
-        Py.writeComment(IMPORT_LOG,
-                String.format("import %s # precompiled from %s", name, compiledName));
+        logger.log(Level.CONFIG, "import {0} # precompiled from {1}",
+                new Object[] {name, compiledName});
         return createFromCode(name, code, compiledName);
     }
 
@@ -482,23 +484,18 @@ public class imp {
             fop.write(compiledSource);
             fop.close();
             return compiledFilename;
-        } catch (IOException exc) {
-            // If we can't write the cache file, just log and continue
-            Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '" + compiledFilename
-                    + "' due to " + exc);
-            return null;
-        } catch (SecurityException exc) {
-            // If we can't write the cache file, just log and continue
-            Py.writeDebug(IMPORT_LOG, "Unable to write to source cache file '" + compiledFilename
-                    + "' due to " + exc);
+        } catch (IOException | SecurityException exc) {
+            // If we can't write the cache file, just logger and continue
+            logger.log(Level.FINE, "Unable to write to source cache file ''{0}'' due to {1}",
+                    new Object[] {compiledFilename, exc});
             return null;
         } finally {
             if (fop != null) {
                 try {
                     fop.close();
                 } catch (IOException e) {
-                    Py.writeDebug(IMPORT_LOG, "Unable to close source cache file '"
-                            + compiledFilename + "' due to " + e);
+                    logger.log(Level.FINE, "Unable to close source cache file ''{0}'' due to {1}",
+                            new Object[] {compiledFilename, e});
                 }
             }
         }
@@ -573,7 +570,7 @@ public class imp {
             outFilename = cacheCompiledSource(filename, outFilename, bytes);
         }
 
-        Py.writeComment(IMPORT_LOG, "'" + name + "' as " + filename);
+        logger.log(Level.CONFIG, "import {0} # from {1}", new Object[]{name, filename});
 
         PyCode code = BytecodeLoader.makeCode(name + "$py", bytes, filename);
         return createFromCode(name, code, filename);
@@ -616,7 +613,7 @@ public class imp {
         } else if (module.__findattr__("__file__") == null) {
             // Should probably never happen (but maybe with an odd custom builtins, or
             // Java Integration)
-            Py.writeDebug(IMPORT_LOG, String.format("Warning: %s __file__ is unknown", name));
+            logger.log(Level.WARNING, "{0} __file__ is unknown", name);
         }
 
         ReentrantLock importLock = Py.getSystemState().getImportLock();
@@ -778,19 +775,20 @@ public class imp {
      * @return
      */
     private static PyObject loadBuiltin(String name) {
+        final String MSG = "import {0} # builtin";
         if (name == "sys") {
-            Py.writeComment(IMPORT_LOG, "'" + name + "' as sys in builtin modules");
+            logger.log(Level.CONFIG, MSG, name);
             return Py.java2py(Py.getSystemState());
         }
         if (name == "__builtin__") {
-            Py.writeComment(IMPORT_LOG, "'" + name + "' as __builtin__ in builtin modules");
+            logger.log(Level.CONFIG, MSG, new Object[] {name, name});
             return new PyModule("__builtin__", Py.getSystemState().builtins);
         }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
-            Class<?> c = Py.findClassEx(mod, "builtin modules");
+            Class<?> c = Py.findClassEx(mod, "builtin module");
             if (c != null) {
-                Py.writeComment(IMPORT_LOG, "'" + name + "' as " + mod + " in builtin modules");
+                logger.log(Level.CONFIG, "import {0} # builtin {1}", new Object[] {name, mod});
                 try {
                     if (PyObject.class.isAssignableFrom(c)) { // xxx ok?
                         return PyType.fromClass(c);
@@ -917,7 +915,7 @@ public class imp {
 
                 if (haveCompiled) {
                     // We have the compiled file and will use that if it is not out of date
-                    Py.writeDebug(IMPORT_LOG, "trying precompiled " + compiledFile.getPath());
+                    logger.log(Level.FINE, "# trying precompiled {0}", compiledFile.getPath());
                     long classTime = compiledFile.lastModified();
                     if (classTime >= pyTime) {
                         // The compiled file does not appear out of date relative to the source.
@@ -931,14 +929,14 @@ public class imp {
                 }
 
                 // The compiled class is not present, is out of date, or using it failed somehow.
-                Py.writeDebug(IMPORT_LOG, "trying source " + sourceFile.getPath());
+                logger.log(Level.FINE, "# trying source {0}", sourceFile.getPath());
                 return createFromSource(modName, makeStream(sourceFile), displaySourceName,
                         compiledFile.getPath(), pyTime);
 
             } else if (haveCompiled) {
                 // There is no source, try loading compiled
-                Py.writeDebug(IMPORT_LOG,
-                        "trying precompiled with no source " + compiledFile.getPath());
+                logger.log(Level.FINE, "# trying precompiled with no source {0}",
+                        compiledFile.getPath());
                 return createFromPyClass(modName, makeStream(compiledFile), //
                         false, // throw ImportError here if this fails
                         displaySourceName, displayCompiledName, NO_MTIME, CodeImport.compiled_only);

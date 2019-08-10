@@ -3,6 +3,13 @@
 
 package org.python.core.packagecache;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.logging.Level;
+
 import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
@@ -10,12 +17,6 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.imp;
 import org.python.core.util.RelativeFile;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
 
 /**
  * Path package manager. Gathering classes info dynamically from a set of directories in path
@@ -56,7 +57,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                     f.listFiles(m);
                     boolean exists = m.packageExists();
                     if (exists) {
-                        Py.writeComment("import", "java package as '" + f.getAbsolutePath() + "'");
+                        logger.log(Level.CONFIG, "# trying {0}", f.getAbsolutePath());
                     }
                     return exists;
                 }
@@ -186,7 +187,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 this.searchPath.append(Py.newStringOrUnicode(dir.getCanonicalPath()));
             }
         } catch (IOException e) {
-            warning("skipping bad directory, '" + dir + "'");
+            warning("# skipping bad directory {0} ({1})", dir, e.getMessage());
         }
     }
 

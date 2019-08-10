@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.python.core.util.FileUtil;
 import org.python.core.util.StringUtil;
@@ -213,9 +214,10 @@ public class ClasspathPyImporter extends importer<String> {
         return null;
     }
 
-    private InputStream tryClassLoader(String fullFilename, ClassLoader loader, String name) {
+    private InputStream tryClassLoader(String fullFilename, ClassLoader loader, String place) {
         if (loader != null) {
-            Py.writeDebug("import", "trying " + fullFilename + " in " + name + " class loader");
+            logger.log(Level.FINE, "# trying {0} in {1} class loader",
+                    new Object[] {fullFilename, place});
             return loader.getResourceAsStream(fullFilename);
         }
         return null;

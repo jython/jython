@@ -36,6 +36,7 @@ public class PrePy {
 
     /** Our name-spaced root logger is "org.python". */
     protected static final Logger logger = Logger.getLogger("org.python");
+    protected static final Logger importLogger = Logger.getLogger("org.python.import");
 
     /** {@link Options#verbose} level indicating an error that prevents correct results. */
     public static final int ERROR = -1;

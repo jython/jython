@@ -4,7 +4,6 @@ package org.python.core;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,6 +21,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.python.antlr.base.mod;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -33,8 +33,6 @@ import com.google.common.base.CharMatcher;
 import jline.console.UserInterruptException;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
 import jnr.posix.util.Platform;
 
 public final class Py extends PrePy {
@@ -1074,19 +1072,14 @@ public final class Py extends PrePy {
 
         ClassLoader classLoader = Py.getSystemState().getClassLoader();
         if (classLoader != null) {
-            if (reason != null) {
-                writeDebug("import", "trying " + name + " as " + reason + " in sys.classLoader");
-            }
+            findClassTrying(name, reason, classLoader, "sys.classLoader");
             return loadAndInitClass(name, classLoader);
         }
 
         if (!syspathJavaLoaderRestricted) {
             try {
                 classLoader = imp.getSyspathJavaLoader();
-                if (classLoader != null && reason != null) {
-                    writeDebug("import",
-                            "trying " + name + " as " + reason + " in SysPathJavaLoader");
-                }
+                findClassTrying(name, reason, classLoader, "SysPathJavaLoader");
             } catch (SecurityException e) {
                 syspathJavaLoaderRestricted = true;
             }
@@ -1094,10 +1087,7 @@ public final class Py extends PrePy {
 
         if (syspathJavaLoaderRestricted) {
             classLoader = imp.getParentClassLoader();
-            if (classLoader != null && reason != null) {
-                writeDebug("import",
-                        "trying " + name + " as " + reason + " in Jython's parent class loader");
-            }
+            findClassTrying(name, reason, classLoader, "Jython's parent class loader");
         }
 
         if (classLoader != null) {
@@ -1115,12 +1105,17 @@ public final class Py extends PrePy {
             }
         }
 
-        if (reason != null) {
-            writeDebug("import", "trying " + name + " as " + reason
-                    + " in context class loader, for backwards compatibility");
-        }
+        classLoader = Thread.currentThread().getContextClassLoader();
+        findClassTrying(name, reason, classLoader,
+                "context class loader, for backwards compatibility");
+        return loadAndInitClass(name, classLoader);
+    }
 
-        return loadAndInitClass(name, Thread.currentThread().getContextClassLoader());
+    private static void findClassTrying(String name, String reason, ClassLoader cl, String place) {
+        if (cl != null && reason != null && importLogger.isLoggable(Level.FINE)) {
+            importLogger.log(Level.FINE, "# trying {0} as {1} in {2}",
+                    new Object[] {name, reason, place});
+        }
     }
 
     /**
@@ -1160,10 +1155,10 @@ public final class Py extends PrePy {
     // An alias to express intent (since boolean flags aren't exactly obvious).
     // We *need* to initialize classes on findClass/findClassEx, so that import
     // statements can trigger static initializers
-    private static Class<?> loadAndInitClass(String name, ClassLoader loader) throws ClassNotFoundException {
+    private static Class<?> loadAndInitClass(String name, ClassLoader loader)
+            throws ClassNotFoundException {
         return Class.forName(name, true, loader);
     }
-
 
     public static void initProxy(PyProxy proxy, String module, String pyclass, Object[] args)
     {

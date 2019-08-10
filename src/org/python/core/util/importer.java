@@ -4,6 +4,8 @@ package org.python.core.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
@@ -19,6 +21,8 @@ import org.python.core.imp;
  * items in the right order, and creating and filling in modules.
  */
 public abstract class importer<T> extends PyObject {
+
+    protected static Logger logger = Logger.getLogger("org.python.import");
 
     static enum EntryType {
         IS_SOURCE, IS_BYTECODE, IS_PACKAGE
@@ -114,7 +118,8 @@ public abstract class importer<T> extends PyObject {
             mod.__dict__.__setitem__("__path__", pkgpath);
         }
         imp.createFromCode(fullname, moduleCodeData.code, moduleCodeData.path);
-        Py.writeDebug("import", "import " + fullname + " # loaded from " + moduleCodeData.path);
+        logger.log(Level.FINE, "import {0} # loaded from {1}",
+                new Object[] {fullname, moduleCodeData.path});
         return mod;
     }
 
@@ -199,7 +204,7 @@ public abstract class importer<T> extends PyObject {
             String searchPath = path + suffix;
             String fullSearchPath = fullPath + suffix;
 
-            Py.writeDebug("import", "# trying " + searchPath);
+            logger.log(Level.FINE, "# trying {0}", searchPath);
             T tocEntry = makeEntry(searchPath);
             if (tocEntry == null) {
                 continue;

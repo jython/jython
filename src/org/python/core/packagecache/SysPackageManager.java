@@ -24,30 +24,34 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * System package manager. Used by org.python.core.PySystemState.
  */
 public class SysPackageManager extends PathPackageManager {
 
+    private static Logger pkglog = Logger.getLogger("org.python.package");
+
     @Override
-    protected void message(String msg) {
-        Py.writeMessage("*sys-package-mgr*", msg);
+    protected void message(String msg, Object... params) {
+        pkglog.log(Level.INFO, msg, params);
     }
 
     @Override
-    protected void warning(String warn) {
-        Py.writeWarning("*sys-package-mgr*", warn);
+    protected void warning(String msg, Object... params) {
+        pkglog.log(Level.WARNING, msg, params);
     }
 
     @Override
-    protected void comment(String msg) {
-        Py.writeComment("*sys-package-mgr*", msg);
+    protected void comment(String msg, Object... params) {
+        pkglog.log(Level.CONFIG, msg, params);
     }
 
     @Override
-    protected void debug(String msg) {
-        Py.writeDebug("*sys-package-mgr*", msg);
+    protected void debug(String msg, Object... params) {
+        pkglog.log(Level.FINE, msg, params);
     }
 
     public SysPackageManager(File cachedir, Properties registry) {
@@ -142,7 +146,7 @@ public class SysPackageManager extends PathPackageManager {
             Files.walkFileTree(moduleDir, visitor);
 
         } catch (IOException e) {
-            warning("error enumerating Java modules in " + moduleDir + ": " + e.getMessage());
+            warning("error enumerating Java modules in {0}: {1}", moduleDir, e.getMessage());
         }
     }
 
@@ -185,7 +189,7 @@ public class SysPackageManager extends PathPackageManager {
 
         Set<String> directories =
                 split(registry.getProperty(
-                            RegistryKey.PYTHON_PACKAGES_DIRECTORIES, 
+                            RegistryKey.PYTHON_PACKAGES_DIRECTORIES,
                             defaultDirectories));
         for (String name : directories) {
             // Each property defines a path string containing directories
@@ -206,16 +210,17 @@ public class SysPackageManager extends PathPackageManager {
     @Override
     public void notifyPackageImport(String pkg, String name) {
         if (pkg != null && pkg.length() > 0) {
-            name = pkg + '.' + name;
+            comment("import {0} # as java package {1}.{0}", name);
+        } else {
+            comment("import {0} # as java package", name);
         }
-        Py.writeComment("import", "'" + name + "' as java package");
     }
 
     @Override
     public Class findClass(String pkg, String name) {
         Class c = super.findClass(pkg, name);
         if (c != null) {
-            Py.writeComment("import", "'" + name + "' as java class");
+            comment("import {0} # as java class", name);
         }
         return c;
     }
