@@ -194,6 +194,10 @@ public class ModjyTestAppInvocation extends ModjyTestBase {
         assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
     }
 
+    /*
+     * 5 tests are disabled until we can supply invocation_tests.py, missing from the code base.
+     * See https://bugs.jython.org/issue2794 .
+     *
     protected void callableQueryAppInvocationTestSetUp() throws Exception {
         baseSetUp();
         setRealPath("/test_apps_dir", "test_apps_dir");
@@ -254,5 +258,6 @@ public class ModjyTestAppInvocation extends ModjyTestBase {
         String result = getOutput();
         assertEquals("Status code != 500: ServerError, =='" + getStatus() + "'", 500, getStatus());
     }
-
+     *
+     */
 }
