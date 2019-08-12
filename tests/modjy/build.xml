@@ -58,6 +58,7 @@
 
         <javac srcdir="${test_src}" destdir="${build}" classpathref="test.classpath" debug="on" />
         <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes" classpathref="test.classpath">
+            <jvmarg value="-XX:MaxPermSize=128m"/>
             <sysproperty key="JYTHON_HOME" value="${jython_home}" />
             <sysproperty key="python.cachedir.skip" value="true" />
         </java>
