@@ -801,9 +801,11 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="copy-license" if="do.checkout">
-        <echo>copy CPython LICENSE from ${checkout.dir}/python</echo>
-        <copy file="${checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
+    <target name="copy-license" if="full-build">
+        <echo>copy CPython license from ${jython.base.dir}/lib-python</echo>
+        <copy file="${jython.base.dir}/lib-python/LICENSE.txt"
+              tofile="${dist.dir}/LICENSE_CPython.txt"
+              preservelastmodified="true" />
     </target>
 
     <target name="copy-misc-files" depends="init">

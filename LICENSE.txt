@@ -188,13 +188,15 @@ From the 2.2 release on, Jython contributors have signed
 Python Software Foundation contributor agreements and releases are
 covered under the Python Software Foundation license version 2.
 
-The standard library is covered by the Python Software Foundation
-license as well. See the Lib/LICENSE file for details.
+The Python standard library developed for CPython is also used in Jython, and
+(like Jython itself) is provided under the Python Software Foundation
+license. See the file LICENSE_CPython.txt for details.
 
 The zxJDBC package was written by Brian Zimmer and originally licensed
 under the GNU Public License.  The package is now covered by the Jython
 Software License.
 
-The command line interpreter is covered by the Apache Software
-License.  See the org/apache/LICENSE file for details.
+Elements of the supporting libraries (appearing renamed in some Jython JARs)
+are covered by the Apache Software License.  See the file LICENSE_Apache.txt
+for details.
 
