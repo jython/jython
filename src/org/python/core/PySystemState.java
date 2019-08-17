@@ -940,7 +940,7 @@ public class PySystemState extends PyObject
             }
             try {
                 // user registry has precedence over installed registry
-                File homeFile = new File(registry.getProperty(USER_HOME), 
+                File homeFile = new File(registry.getProperty(USER_HOME),
                                             ".jython");
                 addRegistryFile(homeFile);
                 addRegistryFile(new File(prefix, "registry"));
@@ -1238,8 +1238,6 @@ public class PySystemState extends PyObject
             s = "candidate";
         } else if (Version.PY_RELEASE_LEVEL == 0x0F) {
             s = "final";
-        } else if (Version.PY_RELEASE_LEVEL == 0xAA) {
-            s = "snapshot";
         } else {
             throw new RuntimeException(
                     "Illegal value for PY_RELEASE_LEVEL: " + Version.PY_RELEASE_LEVEL);
