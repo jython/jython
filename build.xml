@@ -82,42 +82,48 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         </uptodate>
     </target>
 
-    <target name="init">
+    <target name="common-config" depends="common-constants">
+        <!-- Initialisations common to full and developer builds. -->
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
-        <property name="jython.java.version" value="1.7"/>
-
-        <!-- Constants for relese levels (defined by Python)  -->
-        <property name="PY_RELEASE_LEVEL_ALPHA" value="10"/> <!-- 0xA -->
-        <property name="PY_RELEASE_LEVEL_BETA" value="11"/> <!-- 0xB -->
-        <property name="PY_RELEASE_LEVEL_GAMMA" value="12"/> <!-- 0xC -->
-        <property name="PY_RELEASE_LEVEL_FINAL" value="15"/> <!-- 0xF -->
-
-        <!-- Specify the version to build here. -->
-        <!-- What we are building, if it is not an official release, will usually be some
-             development *beyond* this version, for developement which we may provide. -->
-        <property name="jython.version.noplus" value="2.7.2a1"/>
+        <property name="jython.java.version" value="1.7" />
+        <!-- Designate the official release encoded in parts. In normal times, this is the previous
+             official release, e.g. 2.7.2a1 while working towards 2.7.2b1, and sys.version will be
+             "2.7.2a1+". If you are trying to building an official release, designate that release.
+             Until you get it right sys.version should (or will) have a snapshot suffix you can
+             specify by -Dsnapshot.name on the ant comnmand line (or we may force one in). -->
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="2"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
         <property name="jython.release_serial" value="1"/>
+    </target>
 
-        <!-- The release level visible in JAR needs a string -->
+    <target name="common-constants">
+        <!-- Our repository. -->
+        <property name="hg.jython.repo" value="https://hg.python.org/jython" />
+        <!-- Constants for relese levels (defined by Python)  -->
+        <property name="PY_RELEASE_LEVEL_ALPHA" value="10"/> <!-- 0xA -->
+        <property name="PY_RELEASE_LEVEL_BETA" value="11"/> <!-- 0xB -->
+        <property name="PY_RELEASE_LEVEL_GAMMA" value="12"/> <!-- 0xC -->
+        <property name="PY_RELEASE_LEVEL_FINAL" value="15"/> <!-- 0xF -->
+    </target>
+
+    <target name="common-version-strings" depends="common-config">
+        <!-- Compose version strings we need, but not the "snapshot" suffix. -->
+        <property name="jython.version.short"
+             value="${jython.major_version}.${jython.minor_version}.${jython.micro_version}" />
+        <!-- The release level visible in the JAR needs a string form -->
         <condition property="jython.release.str" value="a">
             <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_ALPHA}" />
         </condition>
         <condition property="jython.release.str" value="b">
             <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_BETA}" />
         </condition>
-        <condition property="jython.release.str" value="rc">
+        <condition property="jython.release.str" value="rc" else="">
             <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_GAMMA}" />
         </condition>
-        <condition property="jython.release.str" value="" else="x">
-            <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_FINAL}" />
-        </condition>
-
         <!-- And the release serial too -->
         <condition property="jython.release.num" value="" else="${jython.release_serial}">
             <or>
@@ -125,15 +131,20 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                 <equals arg1="${jython.release.str}" arg2="" />
             </or>
         </condition>
+        <!-- Finally the target version (last or next release) without snapshot suffix -->
+        <property name="jython.release"
+            value="${jython.version.short}${jython.release.str}${jython.release.num}" />
+    </target>
 
-        <!-- And finally if we haven't set it yet (see full-preinit), the suffix: -->
+    <target name="init" depends="common-version-strings">
+
+        <!-- If we haven't set it yet (see full-preinit), the suffix: -->
         <condition property="snapshot.suffix" value="-${snapshot.name}" else="+">
             <isset property="snapshot.name"/>
         </condition>
 
-        <!-- We can now compose the version as seen in Version.PY_VERSION and the installer -->
-        <property name="jython.version"
-            value="${jython.major_version}.${jython.minor_version}.${jython.micro_version}${jython.release.str}${jython.release.num}${snapshot.suffix}" />
+        <!-- We can now compose the version as seen in sys.version and the installer -->
+        <property name="jython.version" value="${jython.release}${snapshot.suffix}" />
 
         <!-- Build-time OS detection -->
         <condition property="os.family.unix">
@@ -281,16 +292,19 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <fail unless="oracle.present" message="oracle jar not present" />
     </target>
 
-    <target name="dump-env" depends="init"
-            description="dump the properties computed for the build" >
+    <target name="dump-env" depends="init, dump"
+            description="dump the properties computed for the build" />
+
+    <target name="dump" >
         <echo>.</echo>
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- build Jython version ---</echo>
-        <echo>jython.version     = '${jython.version}'</echo>
-        <echo>jython.release_level = '${jython.release_level}'</echo>
-        <echo>snapshot.name      = '${snapshot.name}'</echo>
-        <echo>snapshot.suffix    = '${snapshot.suffix}'</echo>
+        <echo>jython.version.short      = '${jython.version.short}'</echo>
+        <echo>jython.release            = '${jython.release}'</echo>
+        <echo>jython.version            = '${jython.version}'</echo>
+        <echo>snapshot.name             = '${snapshot.name}'</echo>
+        <echo>snapshot.suffix           = '${snapshot.suffix}'</echo>
         <echo>jython.dev.jar     = '${jython.dev.jar}'</echo>
         <echo>jython.deploy.jar  = '${jython.deploy.jar}'</echo>
         <echo>jython.standalone.jar = '${jython.standalone.jar}'</echo>
@@ -382,7 +396,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     </target>
 
     <!-- create output directories -->
-    <target name ="prepare-output" depends="init,needed-check,clean-if-antlr-needed">
+    <target name ="prepare-output" depends="init, needed-check, clean-if-antlr-needed">
         <mkdir dir="${compile.dir}" />
         <mkdir dir="${gensrc.dir}/org/python/antlr" />
         <mkdir dir="${exposed.dir}" />
@@ -453,7 +467,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <property name="build.hg.tag" value=""/>
         <property name="build.hg.version" value=""/>
         <tstamp>
-            <format property="build.date" pattern="yyyy-MM-dd" offset="0"/>
+            <format property="build.date" pattern="MMM d yyyy" offset="0"/>
             <format property="build.time" pattern="HH:mm:ss" offset="0"/>
         </tstamp>
         <mkdir dir="${compile.dir}/org/python"/>
@@ -471,21 +485,41 @@ jython.build.hg_tag=${build.hg.tag}
 jython.build.hg_version=${build.hg.version}</echo>
     </target>
 
-    <target name="brand-readme-version" depends="checkout" if="do.snapshot.build">
-        <!-- change README.txt version string, if so defined: used for
-        snapshot builds. XXX: a bit broken for now-->
-        <replace file="${jython.base.dir}/README.txt" token='2.7.1rc2'
-        value='2.7.1b${xxx.revision}' />
-        <replace file="${jython.base.dir}/README.txt">
-            <replacetoken>=======================</replacetoken>
-            <replacevalue>--------------------------
+    <target name="brand-readme" depends="init">
+        <!-- Copy over README.txt and replace placeholders with information from the build. -->
+        <copy file="${jython.base.dir}/README.txt" todir="${dist.dir}" overwrite="true" />
 
-This is a snapshot build.
-It reflects the current development status.
+        <!-- An article and adjective to precede "release" to appear in README.txt -->
+        <condition property="readme.release" value="an alpha">
+            <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_ALPHA}" />
+        </condition>
+        <condition property="readme.release" value="a beta">
+            <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_BETA}" />
+        </condition>
+        <condition property="readme.release" value="a candidate" else="a final">
+            <equals arg1="${jython.release_level}" arg2="${PY_RELEASE_LEVEL_GAMMA}" />
+        </condition>
 
-The readme text for the next release will be like:
+        <!-- README.txt contains this paragraph if this is a snapshot build. -->
+        <property name="snapshot.banner">
+-------------------------------------------------------------------------
+This is a snapshot build. It reflects the current development status.
+The text for the next official release will continue:
+-------------------------------------------------------------------------</property>
 
-            </replacevalue>
+        <!-- Change README.txt to replace placeholders with version-specific information. -->
+        <condition property="snapshot.warning" value="${snapshot.banner}" else="">
+            <equals arg1="${snapshot.name}" arg2="" />
+        </condition>
+        <replace file="${dist.dir}/README.txt" encoding="UTF-8">
+            <replacefilter token="@jython.version@" value="${jython.version}" />
+            <replacefilter token="@snapshot.banner@" value="${snapshot.banner}" />
+            <replacefilter token="@readme.release@" value="${readme.release}" />
+            <replacefilter token="@jython.version.short@" value="${jython.version.short}" />
+            <replacefilter token="@os.name@" value="${os.name}" />
+            <replacefilter token="@java.vendor@" value="${java.vendor}" />
+            <replacefilter token="@java.version@" value="${java.version}" />
+            <replacefilter token="@jdk.target.version@" value="${jdk.target.version}" />
         </replace>
     </target>
 
@@ -533,7 +567,7 @@ The readme text for the next release will be like:
         -->
     </target>
 
-    <target name="compile" depends="init,antlr_gen,brand-version">
+    <target name="compile" depends="init, antlr_gen, brand-version">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -729,7 +763,7 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="jar" depends="compile,expose">
+    <target name="jar" depends="compile, expose">
        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
            <classpath>
                <path refid="main.classpath" />
@@ -801,13 +835,6 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="copy-license" if="full-build">
-        <echo>copy CPython license from ${jython.base.dir}/lib-python</echo>
-        <copy file="${jython.base.dir}/lib-python/LICENSE.txt"
-              tofile="${dist.dir}/LICENSE_CPython.txt"
-              preservelastmodified="true" />
-    </target>
-
     <target name="copy-misc-files" depends="init">
         <echo>copy misc files from ${jython.base.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true" overwrite="true">
@@ -817,7 +844,6 @@ The readme text for the next release will be like:
                 <include name="build.Lib.include.properties" />
                 <include name="NEWS" />
                 <include name="LICENSE.txt" />
-                <include name="README.txt" />
                 <include name="registry" />
                 <include name="ACKNOWLEDGMENTS" />
             </fileset>
@@ -825,7 +851,7 @@ The readme text for the next release will be like:
     </target>
 
     <target name="copy-full"
-            depends="copy-lib, copy-license, copy-misc-files"
+            depends="copy-lib, brand-readme, copy-misc-files"
             if="full-build">
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
         <echo>copy sources from ${jython.base.dir}</echo>
@@ -909,7 +935,10 @@ The readme text for the next release will be like:
         <copy todir="${dist.dir}" file="${jython.base.dir}/registry" preservelastmodified="true"/>
     </target>
 
-    <target name="copy-cpythonlib">
+    <target name="copy-cpythonlib" depends="init">
+        <copy file="${jython.base.dir}/lib-python/LICENSE.txt"
+              tofile="${dist.dir}/LICENSE_CPython.txt"
+              preservelastmodified="true" />
         <copy todir="${dist.dir}/Lib">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
                 <!-- The include file gets all of lib-python/2.7's test directory, but we only want the ones from Jython's Lib.   -->
@@ -938,8 +967,9 @@ The readme text for the next release will be like:
 
     <!-- wrap the build into the installer -->
     <target name="installer"
-        depends="brand-readme-version, installer-init, jar-standalone, javadoc, copy-full"
+        depends="installer-init, jar-standalone, javadoc, copy-full"
         description="Build an installer for the current version of Jython" >
+
         <property name="installer.src.dir" value="${jython.base.dir}/installer/src/java" />
         <echo>compiling installer from ${installer.src.dir}</echo>
         <javac srcdir="${installer.src.dir}"
@@ -951,6 +981,7 @@ The readme text for the next release will be like:
                deprecation="${deprecation}"
                nowarn="${nowarn}"
         />
+
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${compile.dir}">
@@ -960,6 +991,7 @@ The readme text for the next release will be like:
         </copy>
         <copy file="${installer.src.dir}/org/apache/LICENSE.txt"
             tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
+
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${installer.src.dir}">
@@ -969,6 +1001,7 @@ The readme text for the next release will be like:
                 <exclude name="bin/**" />
             </fileset>
         </copy>
+
         <echo>building installer .jar file</echo>
         <jar destfile="${dist.dir}/jython-installer.jar" update="true">
             <fileset dir="${dist.dir}">

@@ -1,9 +1,11 @@
 Jython: Python for the Java Platform
 
-Welcome to Jython 2.7.2a1.
+Welcome to Jython @jython.version@.
+@snapshot.banner@
 
-This is an alpha release of the 2.7.2 version of Jython. Along with
-language and runtime compatibility with CPython 2.7, Jython 2.7
+This is @readme.release@ release of the @jython.version.short@ version of Jython.
+
+Along with language and runtime compatibility with CPython 2.7, Jython 2.7
 provides substantial support of the Python ecosystem. This includes
 built-in support of pip/setuptools (you can use with bin/pip) and a
 native launcher for Windows (bin/jython.exe).
@@ -11,24 +13,27 @@ native launcher for Windows (bin/jython.exe).
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including
 demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
 
-The release was compiled on OSX using JDK 7 and requires a minimum of
-Java 7 to run.
+This release was compiled on @os.name@ using @java.vendor@ Java
+version @java.version@ and requires a minimum of Java @jdk.target.version@ to run.
 
-Please try this release out and report any bugs at
-http://bugs.jython.org You can test your installation of Jython (not
-the standalone jar) by running the regression tests, with the command:
+You can test your installation of Jython (not the standalone jar) by running the
+regression tests, with the command:
 
-jython -m test.regrtest -e -m regrtest_memo.txt
+jython -m test.regrtest -e
 
-For Windows, there is a simple script to do this: jython_regrtest.bat.
-In either case, the memo file regrtest_memo.txt will be useful in the
-bug report if you see test failures. The regression tests can take
-about half an hour.
+The regression tests can take about forty minutes. At the time of writing, these
+tests are known to fail:
+    test___all__
+    test_java_visibility
+    test_jy_internals
+    test_pep277
+    test_ssl_jy
+Please report other bugs at http://bugs.jython.org .
 
 See ACKNOWLEDGMENTS for details about Jython's copyright, license,
 contributors, and mailing lists; and NEWS for detailed release notes,
 including bugs fixed, backwards breaking changes, and new features.
 
-We sincerely thank all who contributed to this release of Jython,
-through bug reports, patches, pull requests, documentation changes,
-email and conversation in all media.
+The developers extend their thanks to all who contributed to this release
+of Jython, through bug reports, patches, pull requests, documentation changes,
+email and conversation in any media.
