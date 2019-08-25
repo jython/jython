@@ -28,13 +28,14 @@ syntax: glob
 .DS_Store
 .settings
 __pycache__
-ant.properties
 bin
 
+ant.properties
 build
 build2
 cachedir
 dist
+reports
 
 profile.txt
 out

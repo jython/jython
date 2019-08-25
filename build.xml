@@ -141,32 +141,35 @@ informix.jar = ../support/jdbc-4.10.12.jar
     </target>
 
     <target name="common-dirs">
-        <!-- There are 3 points of reference. The first is the base of the checked-out code: -->
-        <property name="jython.base.dir" value="${basedir}" />
-        <property name="source.dir" value="${jython.base.dir}/src" />
-        <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
-        <property name="test.shell.dir" value="${jython.base.dir}/tests/shell" />
+        <!-- There are several points of reference. The first is the base of the source code: -->
+        <property name="source.dir" value="${basedir}/src" />
         <property name="templates.dir" value="${source.dir}/templates" />
-        <property name="python.lib" value="${jython.base.dir}/lib-python/2.7" />
-        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
         <property name="templates.lazy" value="true" />
-        <property name="extlibs.dir" value="${jython.base.dir}/extlibs" />
+        <property name="installer.src.dir" value="${basedir}/installer/src/java" />
 
-        <!-- The output of code-generation and compilation (all intermediary files). -->
-        <property name="output.dir" value="${jython.base.dir}/build" />
-        <property name="compile.dir" value="${output.dir}/classes" />
-        <property name="exposed.dir" value="${output.dir}/exposed" />
-        <property name="gensrc.dir" value="${output.dir}/gensrc" />
+        <!-- The stdlib from CPython and JARs we import: -->
+        <property name="python.lib" value="${basedir}/lib-python/2.7" />
+        <property name="extlibs.dir" value="${basedir}/extlibs" />
 
-        <!-- The place where we assemble the installation (for test, or to build the installer). -->
-        <property name="dist.dir" value="${jython.base.dir}/dist" />
+        <!-- Source specifically for test: -->
+        <property name="test.source.dir" value="${basedir}/tests/java" />
+        <property name="bugtests.dir" value="${basedir}/bugtests" />
+        <property name="test.shell.dir" value="${basedir}/tests/shell" />
+
+        <!-- Intermediate products including generated code and compiled classews go here: -->
+        <property name="build.dir" value="${basedir}/build" />
+        <property name="compile.dir" value="${build.dir}/classes" />
+        <property name="exposed.dir" value="${build.dir}/exposed" />
+        <property name="gensrc.dir" value="${build.dir}/gensrc" />
+
+        <!-- The distribution (mirroring the user's installation) is built here: -->
+        <property name="dist.dir" value="${basedir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
 
-        <!--Strangely, test results are in the installation. -->
-        <property name="junit.reports" value="${dist.dir}/testreports" />
-        <property name="junit.htmlreports" value="${dist.dir}/test-html-reports" />
-
-        <property name="installer.src.dir" value="${jython.base.dir}/installer/src/java" />
+        <!-- Test reports. -->
+        <property name="reports.dir" value="${basedir}/reports" />
+        <property name="junit.dir" value="${reports.dir}/junit" />
+        <property name="junit.reports" value="${junit.dir}/raw" />
     </target>
 
     <target name="common-jars" depends="common-dirs">
@@ -360,9 +363,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>oracle                    = '${oracle.jar}'</echo>
         <echo>oracle.present            = '${oracle.present}'</echo>
         <echo>--- properties ---</echo>
-        <echo>jython.base.dir           = '${jython.base.dir}'</echo>
+        <echo>basedir                   = '${basedir}'</echo>
         <echo>source.dir                = '${source.dir}'</echo>
-        <echo>output.dir                = '${output.dir}'</echo>
+        <echo>build.dir                 = '${build.dir}'</echo>
         <echo>compile.dir               = '${compile.dir}'</echo>
         <echo>exposed.dir               = '${exposed.dir}'</echo>
         <echo>gensrc.dir                = '${gensrc.dir}'</echo>
@@ -382,6 +385,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>--- test config ---</echo>
         <echo>test                      = '${test}'</echo>
         <echo>test.source.dir           = '${test.source.dir}'</echo>
+        <echo>reports.dir               = '${reports.dir}'</echo>
         <!-- <echo>test.classpath            = '${ant.refid:test.classpath}'</echo> -->
     </target>
 
@@ -398,21 +402,21 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
     <!-- Delete all intermediate build products. Directories correspond to those bases defined in
          common-dirs and built upon by the various targets as they are executed.  -->
-    <target name="clean" depends="common-dirs"
+    <target name="clean" depends="common-dirs, clean-test"
         description="Delete contents of working directories">
         <delete includeemptydirs="true" failonerror="false">
-            <!-- all files and subdirectories of ${output.dir}, without ${output.dir} itself. -->
-            <fileset dir="${output.dir}" includes="**/*" defaultexcludes="false" />
+            <!-- all files and subdirectories of ${build.dir}, without ${build.dir} itself. -->
+            <fileset dir="${build.dir}" includes="**/*" defaultexcludes="false" />
             <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
             <fileset dir="${dist.dir}" includes="**/*" defaultexcludes="false" />
         </delete>
     </target>
 
-    <target name="devclean" depends="common-dirs"
+    <target name="devclean" depends="common-dirs, clean-test"
         description="Delete contents of working directories preserving antlr, cachedir, and Lib">
         <delete includeemptydirs="true" failonerror="false">
-            <!-- all files and subdirectories of ${output.dir}, without ${output.dir} itself. -->
-            <fileset dir="${output.dir}" includes="**/*" excludes="gensrc/**" />
+            <!-- all files and subdirectories of ${build.dir}, without ${build.dir} itself. -->
+            <fileset dir="${build.dir}" includes="**/*" excludes="gensrc/**" />
             <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
             <fileset dir="${dist.dir}" includes="**/*" excludes="cachedir/**, Lib/**" />
         </delete>
@@ -477,10 +481,12 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <exec executable="hg" outputproperty="build.hg.status">
             <arg line="status" />
         </exec>
+        <!-- 
         <echo>build.hg.branch       = ${build.hg.branch}</echo>
         <echo>build.hg.version      = ${build.hg.version}</echo>
         <echo>build.hg.tag          = ${build.hg.tag}</echo>
-        <echo>build.hg.status       = ${build.hg.status}</echo>
+        -->
+        <!-- <echo>build.hg.status       = ${build.hg.status}</echo> -->
     </target>
 
     <target name="hg-present">
@@ -540,7 +546,7 @@ jython.build.hg_version=${build.hg.version}</echo>
 
     <target name="brand-readme" depends="init">
         <!-- Copy over README.txt and replace placeholders with information from the build. -->
-        <copy file="${jython.base.dir}/README.txt" todir="${dist.dir}" overwrite="true" />
+        <copy file="${basedir}/README.txt" todir="${dist.dir}" overwrite="true" />
 
         <!-- An article and adjective to precede "release" to appear in README.txt -->
         <condition property="readme.release" value="an alpha">
@@ -586,7 +592,8 @@ The text for the next official release will continue ...
                 source="${jdk.source.version}"
                 debug="${debug}"
                 deprecation="${deprecation}"
-                nowarn="${nowarn}">
+                nowarn="${nowarn}"
+                includeantruntime="false">
             <include name="org/python/util/TemplateAntTask.java" />
             <compilerarg line="${javac.Xlint}"/>
         </javac>
@@ -602,7 +609,7 @@ The text for the next official release will continue ...
         <!-- Check freshness of generated parser & lexer files. -->
         <uptodate property="antlr-up-to-date">
             <!-- We don't check freshness of all generated files since they're made in a batch. -->
-            <srcfiles dir="${jython.base.dir}/grammar" includes="Python*.g" />
+            <srcfiles dir="${basedir}/grammar" includes="Python*.g" />
             <globmapper from="*.g" to="${gensrc.dir}/org/python/antlr/*Parser.java" />
         </uptodate>
     </target>
@@ -612,7 +619,7 @@ The text for the next official release will continue ...
         <property name="out" value="${gensrc.dir}/org/python/antlr" />
         <mkdir dir="${out}" />
         <java classname="org.antlr.Tool"
-              dir="${jython.base.dir}"
+              dir="${basedir}"
               failonerror="true"
               fork="true" >
             <jvmarg value="-Xmx512m"/>
@@ -623,8 +630,8 @@ The text for the next official release will continue ...
             <arg path="${out}"/>
             <arg value="-lib"/>
             <arg path="${out}"/>
-            <arg file="${jython.base.dir}/grammar/Python.g"/>
-            <arg file="${jython.base.dir}/grammar/PythonPartial.g"/>
+            <arg file="${basedir}/grammar/Python.g"/>
+            <arg file="${basedir}/grammar/PythonPartial.g"/>
             <classpath refid="main.classpath"/>
         </java>
 
@@ -645,6 +652,7 @@ The text for the next official release will continue ...
                debug="${debug}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"
+               includeantruntime="true"
                memoryMaximumSize="1024m"
                fork="true"
                encoding="UTF-8">
@@ -656,14 +664,15 @@ The text for the next official release will continue ...
             <classpath refid="main.classpath" />
         </javac>
 
-        <javac srcdir="${jython.base.dir}/Lib"
+        <javac srcdir="${basedir}/Lib"
                includes="jxxload_help/**"
                destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}">
+               nowarn="${nowarn}"
+               includeantruntime="false">
             <compilerarg line="${javac.Xlint}"/>
         </javac>
 
@@ -675,6 +684,7 @@ The text for the next official release will continue ...
                debug="${debug}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"
+               includeantruntime="false"
                encoding="UTF-8">
             <compilerarg line="${javac.Xlint}"/>
             <classpath refid="test.classpath" />
@@ -723,7 +733,7 @@ The text for the next official release will continue ...
         <mkdir dir="${exposed.dir}" />
         <expose srcdir="${compile.dir}"
             destdir="${exposed.dir}"
-            includesfile="${jython.base.dir}/CoreExposed.includes"/>
+            includesfile="${basedir}/CoreExposed.includes"/>
     </target>
 
     <target name="jar-complete" depends="jar, pycompile">
@@ -921,7 +931,7 @@ The text for the next official release will continue ...
 
     <target name="jar-sources" depends="init">
         <jar destfile="dist/${jython.sources.jar}" update="${jar.update}">
-            <fileset dir="${jython.base.dir}">
+            <fileset dir="${basedir}">
                 <exclude name="build/**" />
                 <exclude name="dist/**" />
                 <exclude name="extlibs/**" />
@@ -931,9 +941,9 @@ The text for the next official release will continue ...
     </target>
 
     <target name="copy-misc-files" depends="init">
-        <echo>copy misc files from ${jython.base.dir}</echo>
+        <echo>copy misc files from ${basedir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true" overwrite="true">
-            <fileset dir="${jython.base.dir}">
+            <fileset dir="${basedir}">
                 <include name="ACKNOWLEDGMENTS" />
                 <include name="build.xml" />
                 <include name="NEWS" />
@@ -947,9 +957,9 @@ The text for the next official release will continue ...
             depends="copy-bin, copy-lib, brand-readme, copy-misc-files"
             if="full-build">
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
-        <echo>copy sources from ${jython.base.dir}</echo>
+        <echo>copy sources from ${basedir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${jython.base.dir}">
+            <fileset dir="${basedir}">
                 <include name="src/**/*.java" />
                 <include name="src/com/**/*.properties" />
                 <include name="src/shell/*" />
@@ -971,9 +981,9 @@ The text for the next official release will continue ...
             </fileset>
         </copy>
 
-        <echo>copy the demo files from ${jython.base.dir}/Demo</echo>
+        <echo>copy the demo files from ${basedir}/Demo</echo>
         <copy todir="${dist.dir}/Demo" preservelastmodified="true">
-            <fileset dir="${jython.base.dir}/Demo">
+            <fileset dir="${basedir}/Demo">
               <include name="**/*.java" />
               <include name="**/*.html" />
               <include name="**/*.py" />
@@ -991,7 +1001,7 @@ The text for the next official release will continue ...
          Loke lecences and the README. -->
     <target name="copy-dev" depends="copy-javalib, copy-bin, copy-lib" />
 
-    <target name="pycompile" depends="jar,copy-lib">
+    <target name="pycompile" depends="jar, copy-lib">
         <taskdef name="jycompile" classname="org.python.util.JycompileAntTask">
             <classpath path="${dist.dir}/Lib"/>
             <classpath path="${dist.dir}/${jython.dev.jar}" />
@@ -1016,7 +1026,7 @@ The text for the next official release will continue ...
 
     <target name="copy-lib" depends="common-dirs, copy-cpythonlib">
         <copy todir="${dist.dir}/Lib">
-            <fileset dir="${jython.base.dir}/Lib">
+            <fileset dir="${basedir}/Lib">
                 <exclude name="**/*.class"/>
             </fileset>
         </copy>
@@ -1032,17 +1042,17 @@ The text for the next official release will continue ...
         </chmod>
 
         <!-- copy the registry -->
-        <copy todir="${dist.dir}" file="${jython.base.dir}/registry" preservelastmodified="true"/>
+        <copy todir="${dist.dir}" file="${basedir}/registry" preservelastmodified="true"/>
     </target>
 
     <target name="copy-cpythonlib" depends="init">
-        <copy file="${jython.base.dir}/lib-python/LICENSE.txt"
+        <copy file="${basedir}/lib-python/LICENSE.txt"
               tofile="${dist.dir}/LICENSE_CPython.txt"
               preservelastmodified="true" />
         <copy todir="${dist.dir}/Lib">
-            <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
+            <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${basedir}/CPythonLib.includes">
                 <!-- The include file gets all of lib-python/2.7's test directory, but we only want the ones from Jython's Lib.   -->
-                <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
+                <present present="srconly" targetdir="${basedir}/Lib"/>
             </fileset>
         </copy>
     </target>
@@ -1052,10 +1062,10 @@ The text for the next official release will continue ...
              $dist.dir/javalib/*, to be available when using jython-dev.jar
         -->
         <copy todir="${dist.dir}/javalib">
-            <fileset dir="${jython.base.dir}/extlibs">
+            <fileset dir="${basedir}/extlibs">
                 <exclude name="profile.properties"/>
             </fileset>
-            <fileset dir="${output.dir}">
+            <fileset dir="${build.dir}">
                 <include name="*.jar"/>
                 <include name="*.properties"/>
             </fileset>
@@ -1076,7 +1086,7 @@ The text for the next official release will continue ...
                debug="${debug}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"
-        />
+               includeantruntime="false" />
 
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
@@ -1136,10 +1146,10 @@ The text for the next official release will continue ...
         </jar>
     </target>
 
-    <target name="test" depends="prepare-test,javatest,launchertest,regrtest,modjytest"
+    <target name="test" depends="clean-test, javatest, launchertest, regrtest, modjytest"
         description="run all the tests"/>
 
-    <target name="singlejavatest" depends="compile,expose"
+    <target name="singlejavatest" depends="compile, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
@@ -1152,12 +1162,21 @@ The text for the next official release will continue ...
         </junit>
     </target>
 
-    <target name="prepare-test" depends="init">
-        <!-- Clean any old test output -->
-        <delete dir="${junit.reports}"/>
+    <target name="clean-test" depends="common-dirs"
+            description="clean up old test output">
+        <delete includeemptydirs="true" failonerror="false">
+            <!-- all files and subdirectories of ${reports.dir}, without ${reports.dir} itself. -->
+            <fileset dir="${reports.dir}" includes="**/*" />
+            <!-- Test droppings (annoying between regrtest and full-build) -->
+            <filelist dir="${basedir}">
+                <file name="$test_1_tmp" />
+                <file name="bar$py.class" />
+                <file name="longlist$py.class" />
+            </filelist>
+        </delete>
     </target>
 
-    <target name="javatest" depends="javatest-basepath,importest"
+    <target name="javatest" depends="javatest-basepath, importest"
             description="run all the JUnit tests">
     </target>
 
@@ -1190,7 +1209,7 @@ The text for the next official release will continue ...
             <classpath refid="test.classpath"/>
             <classpath refid="test.classpath"/>
             <classpath>
-                <pathelement location="${jython.base.dir}/tests/python"/>
+                <pathelement location="${basedir}/tests/python"/>
             </classpath>
             <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="org/python/tests/imp/*Test*.java">
@@ -1258,10 +1277,11 @@ The text for the next official release will continue ...
       </exec>
     </target>
 
-    <target name="regrtest" depends="developer-build,regrtest-unix,regrtest-windows"
+    <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"
         description="run Python tests expected to work on Jython"/>
 
     <target name="regrtest-unix" if="os.family.unix">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
@@ -1275,6 +1295,7 @@ The text for the next official release will continue ...
     </target>
 
     <target name="regrtest-windows" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe">
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <!-- Only run the tests that are expected to work on Jython -->
@@ -1287,10 +1308,11 @@ The text for the next official release will continue ...
     </target>
 
     <target name="regrtest-file"
-        depends="developer-build,regrtest-unix-file,regrtest-windows-file"
+        depends="developer-build, regrtest-unix-file, regrtest-windows-file"
         description="run Python tests specified in file regr.tests"/>
 
     <target name="regrtest-unix-file" if="os.family.unix">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
@@ -1301,11 +1323,12 @@ The text for the next official release will continue ...
             <arg value="network,subprocess"/>
             <!-- Only run the tests specified in the named file -->
             <arg value="--fromfile"/>
-            <arg value="${jython.base.dir}/regr.tests"/>
+            <arg value="${basedir}/regr.tests"/>
         </exec>
     </target>
 
     <target name="regrtest-windows-file" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe">
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="--junit-xml"/>
@@ -1315,15 +1338,16 @@ The text for the next official release will continue ...
             <arg value="network,subprocess"/>
             <!-- Only run the tests specified in the named file -->
             <arg value="--fromfile"/>
-            <arg value="${jython.base.dir}/regr.tests"/>
+            <arg value="${basedir}/regr.tests"/>
         </exec>
     </target>
 
     <target name="regrtest-travis"
-            depends="developer-build,regrtest-unix-travis,regrtest-windows-travis"
+            depends="developer-build, regrtest-unix-travis, regrtest-windows-travis"
             description="run Python tests expected to work on Jython for Travis intergration"/>
 
     <target name="regrtest-unix-travis" if="os.family.unix">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
@@ -1343,6 +1367,7 @@ The text for the next official release will continue ...
     </target>
 
     <target name="regrtest-windows-travis" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
@@ -1360,13 +1385,14 @@ The text for the next official release will continue ...
         </exec>
     </target>
 
-    <target name="regrtest-html-report" depends="init" description="generates HTML output out of regrtest JUnit XML">
-        <mkdir dir="${junit.htmlreports}/html"/>
-        <junitreport todir="${junit.htmlreports}">
+    <target name="regrtest-html-report" depends="init"
+            description="generates HTML report from JUnit XML output of regrtest">
+        <mkdir dir="${junit.dir}/html"/>
+        <junitreport todir="${junit.dir}">
             <fileset dir="${junit.reports}">
                 <include name="TEST-*.xml"/>
             </fileset>
-            <report format="frames" todir="${junit.htmlreports}/html"/>
+            <report format="frames" todir="${junit.dir}/html" />
         </junitreport>
     </target>
 
