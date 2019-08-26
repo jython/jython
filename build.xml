@@ -387,7 +387,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
     </target>
 
     <target name="full-dump"
-            depends="dump, hg-is-unmodified, hg-is-clean, hg-is-tagged, hg-branch" >
+            depends="hg-is-unmodified, hg-is-clean, hg-is-tagged, hg-branch, dump" >
         <echo>--- properties only used for a full-build ---</echo>
         <echo>hg.present                = '${hg.present}'</echo>
         <echo>build.hg.is_unmodified    = '${build.hg.is_unmodified}'</echo>
@@ -470,10 +470,7 @@ ${build.hg.status}
 
     <target name="hg-is-unmodified" depends="hg-present" if="${hg.present}">
         <!-- Set build.hg.version, and if it has no + at the end, set build.hg.is_unmodified -->
-        <!-- Get the identity of the change set. -->
-        <exec executable="hg" outputproperty="build.hg.version">
-            <arg line="identify -i"/>
-        </exec>
+        <!-- If hg.present then build.hg.version was already set by dependency hg-present. -->
         <!-- Check there have been no modifications to controlled files. -->
         <condition property="build.hg.is_unmodified">
             <and>
@@ -519,8 +516,27 @@ ${build.hg.status}
     </target>
 
     <target name="hg-present" depends="common-dirs">
+        <!-- Work out whether Mercurial is available: the command and a repo. -->
+        <!-- Try using Mercurial to set "build.hg.version" as a test of availability. This will
+             fail if hg is not on the path or .hg doesn't exist. We choose this particular
+             property because we use it every build. -->
+        <local name="hg_result" />
+        <local name="hg_output" />
+        <exec executable="hg" outputproperty="hg_output"
+            failifexecutionfails="false" failonerror="false" resultproperty="hg_result">
+            <arg line="identify -i"/>
+        </exec>
+        <!-- Deduce presence of the hg command and repo from how that execution went. -->
         <condition property="hg.present" else="false">
-             <available file="${basedir}/.hg" type="dir" />
+            <and>
+                <isset property="hg_output" />
+                <equals arg1="${hg_result}" arg2="0" />
+                <available file="${basedir}/.hg" type="dir" />
+            </and>
+        </condition>
+        <!-- And if both are present, the result provides the change set id. -->
+        <condition property="build.hg.version" value="${hg_output}">
+            <istrue value="${hg.present}" />
         </condition>
     </target>
 
@@ -533,25 +549,42 @@ ${build.hg.status}
                 <uptodate targetfile="${compile.dir}/org/python/version.properties">
                     <srcfiles file="build.xml" />
                 </uptodate>
-                <!-- *and* there are things we have not checked in. -->
+                <!-- *and* we have uncommited changes. This may sound backwards, but the idea is
+                     that part-way through development, we'd rather not wait to regenerate the
+                     file (and JAR), only when we reach the little rubicon of a commit. -->
                 <not><isset property="build.hg.is_unmodified"/></not>
             </and>
         </condition>
     </target>
 
-    <target name="brand-version" depends="brand-up-to-date, init" unless="${brand-up-to-date}">
-        <!-- Update version.properties, but only if something significant has changed.
-             We're lazy about this (in a bad way) when making a developer build,
-             as a change to this one file causes the JAR to be rebuilt. -->
-
-        <!-- build.hg.version already set by dependency brand-up-to-date. -->
+    <target name="brand-version-metadata"
+            depends="hg-present, brand-up-to-date"
+            unless="${brand-up-to-date}"
+            if="${hg.present}">
+        <!-- Get the hg metadata (branch and tag) to update version.properties (see brand-version").
+             We're lazy about this: we only do it if we need the information for brand-version. -->
         <exec executable="hg" outputproperty="build.hg.branch">
             <arg line="identify -b"/>
         </exec>
         <exec executable="hg" outputproperty="build.hg.tag">
             <arg line="identify -t"/>
         </exec>
+    </target>
 
+    <target name="brand-version-nohg" depends="hg-present" unless="${hg.present}">
+        <!-- Substitute hg metadata (branch and tag) to update version.properties. -->
+        <property name="build.hg.branch" value="uncontrolled" />
+        <property name="build.hg.version" value="+" />
+        <property name="build.hg.tag" value="" />
+    </target>
+
+    <target name="brand-version"
+            depends="brand-version-metadata, brand-version-nohg, init"
+            unless="${brand-up-to-date}">
+        <!-- Update version.properties, but only if something significant has changed. -->
+
+        <!-- These values are guaranteed by the dependencies, even if hg is not installad or there
+             is no repo.-->
         <echo>Writing hg and build metadata to version.properties.</echo>
         <echo>jython.version        = ${jython.version}</echo>
         <echo>build.hg.branch       = ${build.hg.branch}</echo>
