@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2613 ] MANIFEST.MF contains unfilled placeholders
     - [ 2330 ] full-build fails to copy CPython License
     - [ 2651 ] Travis builds failing with *** buffer overflow detected ***
     - [ 2703 ] JycompileAntTask cannot find ...ant.taskdefs.MatchingTask
