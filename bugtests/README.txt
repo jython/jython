@@ -2,6 +2,14 @@
 This directory contains small tests that attempt to ensure that old fixed
 bugs do not reappear.
 
+These tests are not actively maintained and while many pass, others have been
+broken by changes in the main codebase and now fail for what might be spurious
+reasons.
+
+As the regression tests have grown, the need for these has largely ceased.
+It is likely these tests will be removed eventually.
+
+
 Running
 =======
 

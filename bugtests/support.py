@@ -84,7 +84,7 @@ def compileJava(src, **kw):
     cmd = "%s/bin/javac -classpath %s %s" % (cfg.java_home, classpath, src)
   elif WIN:
     src = src.replace("/", "\\")
-    cmd = 'cmd /C "%s/bin/javac.exe -classpath %s %s"' % (cfg.java_home, classpath, src)
+    cmd = 'cmd /C "%s/bin/javac.exe" -classpath %s %s' % (cfg.java_home, classpath, src)
   return execCmd(cmd, kw)
 
 def runJava(cls, **kw):
@@ -98,7 +98,7 @@ def runJava(cls, **kw):
   if UNIX:
     cmd = ['/bin/sh', '-c', "%s/bin/java -classpath %s %s %s" % (cfg.java_home, classpath, defs, cls)]
   elif WIN:
-    cmd = 'cmd /C "%s/bin/java.exe -classpath %s %s %s"' % (cfg.java_home, classpath, defs, cls)
+    cmd = 'cmd /C "%s/bin/java.exe" -classpath %s %s %s' % (cfg.java_home, classpath, defs, cls)
   return execCmd(cmd, kw)
 
 def runJavaJar(jar, *args, **kw):
@@ -106,7 +106,7 @@ def runJavaJar(jar, *args, **kw):
   if UNIX:
     cmd = ['/bin/sh', '-c', "%s/bin/java -jar %s %s" % (cfg.java_home, jar, argString)]
   elif WIN:
-    cmd = 'cmd /C "%s/bin/java.exe -jar %s %s"' % (cfg.java_home, jar, argString)
+    cmd = 'cmd /C "%s/bin/java.exe" -jar %s %s' % (cfg.java_home, jar, argString)
   return execCmd(cmd, kw)
 
 def runJython(cls, **kw):
@@ -119,7 +119,7 @@ def runJython(cls, **kw):
   if UNIX:
     cmd = "%s/bin/java -classpath %s %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, javaargs, cfg.jython_home, cls)
   elif WIN:
-    cmd = 'cmd /C "%s/bin/java.exe -classpath %s %s -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, javaargs, cfg.jython_home, cls)
+    cmd = 'cmd /C "%s/bin/java.exe" -classpath %s %s -Dpython.home=%s org.python.util.jython %s' % (cfg.java_home, classpath, javaargs, cfg.jython_home, cls)
   return execCmd(cmd, kw)
 
 def compileJPythonc(*files, **kw):
@@ -148,12 +148,12 @@ def compileJPythonc(*files, **kw):
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
-  
+
   jythonc = "%s/Tools/jythonc/jythonc.py %s" % (cfg.jython_home, cmd)
   if UNIX:
     cmd = "%s/bin/java -classpath %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, cfg.jython_home, jythonc)
   elif WIN:
-    cmd = 'cmd /C "%s/bin/java.exe -classpath \"%s\" -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, cfg.jython_home, jythonc)
+    cmd = 'cmd /C "%s/bin/java.exe" -classpath "%s" -Dpython.home=%s org.python.util.jython %s' % (cfg.java_home, classpath, cfg.jython_home, jythonc)
   return execCmd(cmd, kw)
 
 def grep(file, text, count=0):
@@ -173,7 +173,7 @@ def grep(file, text, count=0):
 class JarPacker:
   __doc__ = """helper class to pack stuff into a jar file -
   the terms 'file' and 'dir' mean java.io.File here """
-  
+
   def __init__(self, jarFile, bufsize=1024):
     self._jarFile = jarFile
     self._bufsize = bufsize
@@ -186,11 +186,11 @@ class JarPacker:
   def addManifestFile(self, manifestFile):
     __doc__ = """only one manifest file can be added"""
     self.addManifest(Manifest(FileInputStream(manifestFile)))
-    
+
   def addManifest(self, manifest):
     if not self._manifest:
       self._manifest = manifest
-    
+
   def addFile(self, file, parentDirName=None):
     buffer = jarray.zeros(self._bufsize, 'b')
     inputStream = FileInputStream(file)
@@ -204,7 +204,7 @@ class JarPacker:
         read = inputStream.read(buffer)
     self.getJarOutputStream().closeEntry()
     inputStream.close()
-    
+
   def addDirectory(self, dir, parentDirName=None):
     if not dir.isDirectory():
       return
@@ -221,7 +221,7 @@ class JarPacker:
         else:
           newParentDirName = dir.getName()
         self.addDirectory(currentFile, newParentDirName)
-        
+
   def addJarFile(self, jarFile):
     __doc__ = """if you want to add a .jar file with a MANIFEST, add it first"""
     jarJarFile = JarFile(jarFile)
