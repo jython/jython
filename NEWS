@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2730 ] datetime.strptime('%b') behaviour inconsistent with CPython on Windows JDK 9+
     - [ 2613 ] MANIFEST.MF contains unfilled placeholders
     - [ 2330 ] full-build fails to copy CPython License
     - [ 2651 ] Travis builds failing with *** buffer overflow detected ***
@@ -88,6 +89,9 @@ Development tip
       one step finer on the JUL scale. Error messages from Python and stack traces are unaffected.
       When embedded in your application, Jython makes no logging configuration changes: messages
       from the "org.python" name space merge with those of your application.
+    - There is much improved support for locale, but as a backward-incompatible change, it is
+      provided as an opt-in. Define property python.locale.control=settable on the command line
+      or via the Jython registry, to enable. This  may become the default in a later version.
 
 Jython 2.7.2a1
   Bugs fixed

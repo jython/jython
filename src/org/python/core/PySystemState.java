@@ -15,7 +15,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.security.AccessControlException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;

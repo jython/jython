@@ -1371,11 +1371,15 @@ _failures = {
 
     'java.nt':     # Expected to fail on Windows
         """
-        test_mailbox           # fails miserably and ruins other tests
-        # test_os_jy             # Locale tests fail on Cygwin (but not Windows)
-        # test_popen             # Passes, but see http://bugs.python.org/issue1559298
-        test_select_new        # Hangs (Windows), though ok run singly
-        test_urllib2           # file not on local host (likely Windows only)
+        test_calendar           # Same, covered by test_calendar_jy
+        test_email              # test_email_jy overrides for correct locale handling
+        test_mailbox            # fails miserably and ruins other tests
+        # test_popen            # Passes, but see http://bugs.python.org/issue1559298
+        test_select_new         # Hangs (Windows), though ok run singly
+        test_strptime           # Fails on JDK 9+ due to locale strings change
+                                # Covered by test_strptime_jy until the beta locale 
+                                # behaviour becomes the default
+        test_urllib2            # file not on local host (likely Windows only)
         """,
 
     'java.posix':   # Expected to fail on Linux

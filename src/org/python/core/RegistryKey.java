@@ -100,6 +100,29 @@ public class RegistryKey {
     public static final String PYTHON_IO_ERRORS = "python.io.errors";
 
     /**
+     * {@code python.locale.control} determines locale module behaviour, including enabling locale
+     * module support, currently in beta.
+     * <p>
+     * Values:
+     * <table>
+     * <tr>
+     * <td>{@code settable}</td>
+     * <td>Python locale module is available and supports {@code setlocale()} and other standard
+     * functions. This will be the default in a future Jython version.</td>
+     * </tr>
+     * <tr>
+     * <td>{@code jython2_legacy} (default)</td>
+     * <td>Mix of implicit Java locale and emulated 'C' locale behaviour, consistent with behaviour
+     * in Jython 2.7.1 and earlier. Will be deprecated in a future Jython version.</td>
+     * </tr>
+     * </table>
+     * <p>
+     * More detail can be found in the documentation for the {@code locale} module and the
+     * underlying platform services exposed in {@link org.python.modules._locale._locale}.
+     */
+    public static final String PYTHON_LOCALE_CONTROL = "python.locale.control";
+
+    /**
      * {@code python.modules.builtin} controls the list of builtin modules; you can add, remove, or
      * override builtin modules. The value for this registry key is a comma separated list of module
      * entries, each entry of which has the following allowable forms:

@@ -56,6 +56,7 @@ public class Setup
         "itertools:org.python.modules.itertools.itertools",
         "jarray",
         "jffi:org.python.modules.jffi.jffi",
+        "_locale:org.python.modules._locale._locale",
         "math",
         "operator",
         "struct",

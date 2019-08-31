@@ -4,6 +4,7 @@ package org.python.core;
 import java.io.File;
 import java.lang.reflect.Method;
 
+import org.python.modules._locale._locale;
 import org.python.modules.zipimport.zipimport;
 
 /**
@@ -174,11 +175,15 @@ public class exceptions extends PyObject implements ClassDictInit {
                    "Base class for warnings about bytes and buffer related problems, mostly\n"
                    + "related to conversion from str or comparing to str.");
 
-        // Initialize ZipImportError here, where it's safe to; it's
-        // needed immediately
-        zipimport.initClassExceptions(dict);
-
+        buildModuleExceptions(dict);
         ts.frame = ts.frame.f_back;
+    }
+
+    // Native modules exposing errors as part of their public interface
+    private static void buildModuleExceptions(PyObject dict) {
+        // Initialize ZipImportError here, where it's safe to; it's needed immediately
+        zipimport.initClassExceptions(dict);
+        _locale.initClassExceptions(dict);
     }
 
     public static PyObject SyntaxError() {

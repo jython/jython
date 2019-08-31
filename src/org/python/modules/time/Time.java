@@ -12,12 +12,10 @@
 // see org/python/modules/time.java for previous history.
 package org.python.modules.time;
 
-import java.text.DateFormatSymbols;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.Locale;
 import java.util.TimeZone;
 
 import org.python.core.ClassDictInit;
@@ -28,8 +26,11 @@ import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-import org.python.core.__builtin__;
 import org.python.core.Untraversable;
+import org.python.core.__builtin__;
+import org.python.modules._locale.DateSymbolLocale;
+import org.python.modules._locale._locale;
+
 
 @Untraversable
 class TimeFunctions extends PyBuiltinFunctionSet
@@ -329,11 +330,11 @@ public class Time implements ClassDictInit
     }
 
     // Python's time module specifies use of current locale
-    protected static Locale currentLocale = null;
-    protected static DateFormatSymbols datesyms = new DateFormatSymbols();
+    protected static DateSymbolLocale datesyms = _locale.getDateSymbolLocale();
     protected static String[] shortdays = null;
     protected static String[] shortmonths = null;
 
+    // Consider moving to CEmulationLocale, where there is another copy
     private static String[] enshortdays = new String[] {"Mon",
                                                         "Tue",
                                                         "Wed",
@@ -375,7 +376,7 @@ public class Time implements ClassDictInit
     }
 
     private synchronized static String _shortmonth(int month0to11) {
-        // getShortWeekdays() returns a 13 element array with the last item
+        // getShortMonths() returns a 13 element array with the last item
         // being the empty string.  This is also undocumented ;-/
         if (shortmonths == null) {
             shortmonths = new String[12];
@@ -633,13 +634,16 @@ public class Time implements ClassDictInit
                 // locale is set by user.language and user.region
                 // properties and is "en_US" by default, at least around
                 // here!  Locale "en_US" differs from locale "C" in the way
-                // it represents dates and times.  Eventually we might want
-                // to craft a "C" locale for Java and set Jython to use
-                // this by default, but that's too much work right now.
+                // it represents dates and times.  Beta support for a "C" 
+                // locale is in org.python.modules._locale.CEmulationLocale 
                 //
-                // For now, we hard code %x and %X to return values
-                // formatted in the "C" locale, i.e. the default way
-                // CPython does it.  E.g.:
+                // For now, we continue the historically hard coded pre-2.7.1
+                // %x and %X behaviour to return values formatted in the 
+                // "C" locale, i.e. the default way CPython does it. This 
+                // can be unified and simplified using CEmulationLocale once 
+                // native _locale support becomes the default in a future 
+                // version.
+                // E.g.:
                 //     %x == mm/dd/yy
                 //     %X == HH:mm:SS
                 //
@@ -698,9 +702,9 @@ public class Time implements ClassDictInit
 
 
     private static void checkLocale() {
-        if (!Locale.getDefault().equals(currentLocale)) {
-            currentLocale = Locale.getDefault();
-            datesyms = new DateFormatSymbols(currentLocale);
+        DateSymbolLocale latestLocale = _locale.getDateSymbolLocale();
+        if (!latestLocale.equals(datesyms)) {
+            datesyms = latestLocale;
             shortdays = null;
             shortmonths = null;
         }
@@ -710,10 +714,6 @@ public class Time implements ClassDictInit
         return strptime(data_string, DEFAULT_FORMAT_PY);
     }
 
-    /**
-     * Calls _strptime.strptime(), for cases that our SimpleDateFormat backed
-     * strptime can't handle.
-     */
     private static PyTuple pystrptime(String data_string, String format) {
         return (PyTuple) __builtin__.__import__("_strptime")
                                     .invoke("_strptime_time",
@@ -728,3 +728,4 @@ public class Time implements ClassDictInit
     private static final String DEFAULT_FORMAT_PY = "%a %b %d %H:%M:%S %Y";
 
 }
+

@@ -1129,6 +1129,35 @@ def run_with_locale(catstr, *locales):
     return decorator
 
 #=======================================================================
+# Reset locale to C / POSIX locale. In Jython to date the default locale
+# has been Locale.getDefaultLocale(), ie OS determined
+# The new locale.setlocale() support is in beta and off by default,
+# but some tests need the changes it introduces to pass.
+# It requires certain "startup" initialization corresponding to
+# -J-Dpython.locale.control=settable which is hard to simulate in a unit
+# test. To see the calling test pass without the reload throat-clearing,
+# invoke Jython with python.locale.control=settable on the command line, 
+# in either direct or regrtest flavours.
+# Use of this function can be removed from most tests once 
+# locale.setlocale() support is on by default
+def force_reset_locale(initialize=True):
+    import locale
+    if initialize:
+        from datetime import datetime
+        import time
+        from java.lang import System
+        System.setProperty('python.locale.control','settable')
+        import _locale
+        reload(_locale)
+        reload(locale)
+        # Trigger date format cache reload - need lang change
+        import _strptime
+        locale.setlocale(locale.LC_ALL,'de_DE')
+        _strptime._strptime('16', '%d') # numbers more portable hopefully
+    locale.setlocale(locale.LC_ALL,'C')
+
+
+#=======================================================================
 # Big-memory-test support. Separate from 'resources' because memory use should be configurable.
 
 # Some handy shorthands. Note that these are used for byte-limits as well

@@ -828,7 +828,7 @@ public class PyObject implements Serializable {
      * </pre> When iterating over a python sequence from java code, it should be done with code like
      * this: <pre>
      * for (PyObject item : seq.asIterable()) {
-     *     // Do somting with item
+     *     // Do something with item
      * }
      * </pre>
      *
