@@ -32,48 +32,52 @@
   <property file="${user.home}/ant.properties" />
   <property file="${basedir}/default.properties"/>
 
-  <property name="project.version" value="2.7.0-SNAPSHOT"/>
-
   <property name="m2.repo" value="${user.home}/.m2/repository"/>
   <property name="m2.groupDir" value="org/python"/>
 
   <property name="build.base" value="${basedir}/build"/>
   <property name="build.dir" value="${build.base}/maven"/>
+  <property name="version.properties" value="${build.base}/classes/org/python/version.properties"/>
   <property name="dist.base" value="${basedir}/dist"/>
   <property name="src.dir" value="${basedir}/src"/>
 
   <condition property="do.build">
     <not>
       <and>
+        <available file="${version.properties}"/>
         <available file="${dist.base}/jython.jar"/>
         <available file="${dist.base}/jython-standalone.jar"/>
       </and>
     </not>
   </condition>
 
-  <target name="install" depends="prep">
-    <m2-install artifactId="jython"/>
+  <target name="version">
+      <property file="${version.properties}"/>
   </target>
 
-  <target name="install-standalone" depends="prep">
-    <m2-install artifactId="jython-standalone"/>
+  <target name="install" depends="prepare">
+    <m2-install artifactId="jython" version="${jython.version}"/>
   </target>
 
-  <target name="bundle" depends="prep">
-    <m2-bundle artifactId="jython"/>
+  <target name="install-standalone" depends="prepare">
+    <m2-install artifactId="jython-standalone" version="${jython.version}"/>
   </target>
 
-  <target name="bundle-standalone" depends="prep">
-    <m2-bundle artifactId="jython-standalone"/>
+  <target name="bundle" depends="prepare">
+    <m2-bundle artifactId="jython" version="${jython.version}"/>
   </target>
 
-  <target name="bundle-installer" depends="prep">
-    <m2-bundle artifactId="jython-installer"/>
+  <target name="bundle-standalone" depends="prepare">
+    <m2-bundle artifactId="jython-standalone" version="${jython.version}"/>
+  </target>
+
+  <target name="bundle-installer" depends="prepare">
+    <m2-bundle artifactId="jython-installer" version="${jython.version}"/>
   </target>
 
   <target name="install-all" depends="install, install-standalone"/>
 
-  <target name="bundle-all" depends="bundle, bundle-standalone, bundle-installer"/>
+  <target name="bundle-all" depends="version, bundle, bundle-standalone, bundle-installer"/>
 
   <target name="clean">
     <delete dir="${build.dir}"/>
@@ -89,18 +93,19 @@
 
   <macrodef name="m2-install">
     <attribute name="artifactId"/>
+    <attribute name="version"/>
     <attribute name="install.dir"
-               default="${m2.repo}/${m2.groupDir}/@{artifactId}/${project.version}"/>
+               default="${m2.repo}/${m2.groupDir}/@{artifactId}/@{version}"/>
     <attribute name="install.name"
-               default="@{artifactId}-${project.version}"/>
+               default="@{artifactId}-@{version}"/>
 
     <sequential>
-      <stage artifactId="@{artifactId}"/>
+      <stage artifactId="@{artifactId}" version="@{version}"/>
       <mkdir dir="@{install.dir}"/>
       <copy file="maven/pom-template.xml"
             tofile="@{install.dir}/@{install.name}.pom">
         <filterset>
-          <filter token="PROJECT-VERSION" value="${project.version}"/>
+          <filter token="PROJECT-VERSION" value="@{version}"/>
           <filter token="ARTIFACT-ID" value="@{artifactId}"/>
         </filterset>
       </copy>
@@ -125,10 +130,11 @@
   -->
   <macrodef name="m2-bundle">
     <attribute name="artifactId"/>
+    <attribute name="version"/>
     <sequential>
-      <stage artifactId="@{artifactId}"/>
+      <stage artifactId="@{artifactId}" version="@{version}"/>
 
-      <jar jarfile="${dist.base}/@{artifactId}-${project.version}-bundle.jar">
+      <jar jarfile="${dist.base}/@{artifactId}-@{version}-bundle.jar">
         <fileset dir="${build.dir}"/>
       </jar>
     </sequential>
@@ -139,13 +145,14 @@
   -->
   <macrodef name="stage">
     <attribute name="artifactId"/>
+    <attribute name="version"/>
     <sequential>
       <delete dir="${build.dir}"/>
       <mkdir dir="${build.dir}"/>
       <copy file="maven/pom-template.xml"
-            tofile="${build.dir}/@{artifactId}-${project.version}.pom">
+            tofile="${build.dir}/@{artifactId}-@{version}.pom">
         <filterset>
-          <filter token="PROJECT-VERSION" value="${project.version}"/>
+          <filter token="PROJECT-VERSION" value="@{version}"/>
           <filter token="ARTIFACT-ID" value="@{artifactId}"/>
         </filterset>
       </copy>
@@ -157,33 +164,32 @@
       -->
 
       <copy file="${dist.base}/@{artifactId}.jar"
-            tofile="${build.dir}/@{artifactId}-${project.version}.jar"/>
+            tofile="${build.dir}/@{artifactId}-@{version}.jar"/>
 
-      <copy file="dist/sources.jar" tofile="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
-      <copy file="dist/javadoc.jar" tofile="${build.dir}/@{artifactId}-${project.version}-javadoc.jar"/>
+      <copy file="dist/sources.jar" tofile="${build.dir}/@{artifactId}-@{version}-sources.jar"/>
+      <copy file="dist/javadoc.jar" tofile="${build.dir}/@{artifactId}-@{version}-javadoc.jar"/>
 
-      <!-- TODO: make the gpg sign step optional -->
+      <!-- TODO: make the gpg sign step optional (disabled as not cross-platform)
       <exec executable="gpg">
           <arg value="-ab"/>
-          <arg value="${build.dir}/@{artifactId}-${project.version}.jar"/>
+          <arg value="${build.dir}/@{artifactId}-@{version}.jar"/>
       </exec>
 
       <exec executable="gpg">
           <arg value="-ab"/>
-          <arg value="${build.dir}/@{artifactId}-${project.version}-javadoc.jar"/>
+          <arg value="${build.dir}/@{artifactId}-@{version}-javadoc.jar"/>
       </exec>
 
       <exec executable="gpg">
           <arg value="-ab"/>
-          <arg value="${build.dir}/@{artifactId}-${project.version}.pom"/>
+          <arg value="${build.dir}/@{artifactId}-@{version}.pom"/>
       </exec>
 
       <exec executable="gpg">
           <arg value="-ab"/>
-          <arg value="${build.dir}/@{artifactId}-${project.version}-sources.jar"/>
+          <arg value="${build.dir}/@{artifactId}-@{version}-sources.jar"/>
       </exec>
-
-
+      -->
     </sequential>
   </macrodef>
 
@@ -208,5 +214,5 @@
     <ant antfile="build.xml" target="all-jars"/>
   </target>
 
-  <target name="prep" depends="build-jython, validate-pom"/>
+  <target name="prepare" depends="build-jython, validate-pom, version"/>
 </project>
