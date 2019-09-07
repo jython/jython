@@ -45,8 +45,8 @@ import java.util.ListIterator;
  * when applied to a <code>bytearray</code>. Or it may be that the method returns a
  * <code>PyList</code> of instances of the target type, for example {@link #rpartition(PyObject)}.
  * This is achieved by the sub-class defining {@link #getslice(int, int, int)} and
- * {@link #getBuilder(int)} to return instances of its own type. See the documentation of particular
- * methods for more information.
+ * {@link #getResult(Builder)} to return instances of its own type. See the documentation of the
+ * particular methods for more information.
  */
 @Untraversable
 public abstract class BaseBytes extends PySequence implements List<PyInteger> {
@@ -120,7 +120,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @throws IllegalArgumentException if the range [offset:offset+size] is not within the array
      *             bounds of storage or size<0.
      */
-    protected void setStorage(byte[] storage, int size, int offset) throws IllegalArgumentException {
+    protected void setStorage(byte[] storage, int size, int offset)
+            throws IllegalArgumentException {
         if (size < 0 || offset < 0 || offset + size > storage.length) {
             throw new IllegalArgumentException();
         } else {
@@ -257,7 +258,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * @throws PyException (TypeError) if the <code>PyString</code> is actually a {@link PyUnicode}
      *             and encoding is <code>null</code>
      */
-    protected static String encode(PyString arg, String encoding, String errors) throws PyException {
+    protected static String encode(PyString arg, String encoding, String errors)
+            throws PyException {
         // Jython encode emits a String (not byte[])
         String encoded;
 
@@ -585,7 +587,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         if (value < 0 || value > 255) {
             throw Py.ValueError("byte must be in range(0, 256)");
         }
-        return (byte)value;
+        return (byte) value;
     }
 
     /**
@@ -621,7 +623,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return byteCheck(value.asIndex());
         } else if (value.getType() == PyString.TYPE) {
             // Exactly PyString (not PyUnicode)
-            String strValue = ((PyString)value).getString();
+            String strValue = ((PyString) value).getString();
             if (strValue.length() != 1) {
                 throw Py.ValueError("string must be of size 1");
             }
@@ -653,7 +655,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return null;
 
         } else if (b instanceof BufferProtocol) {
-            return ((BufferProtocol)b).getBuffer(PyBUF.FULL_RO);
+            return ((BufferProtocol) b).getBuffer(PyBUF.FULL_RO);
 
         } else {
             return null;
@@ -1039,7 +1041,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
         if (target instanceof PyTuple) {
             // target is a tuple of suffixes/prefixes and only one need match
-            for (PyObject t : ((PyTuple)target).getList()) {
+            for (PyObject t : ((PyTuple) target).getList()) {
                 if (match(t, index[0], index[3], endswith)) {
                     return true;
                 }
@@ -1121,7 +1123,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         char[] buf = new char[size];
         int j = offset + size;
         for (int i = size; --i >= 0;) {
-            buf[i] = (char)(0xff & storage[--j]);
+            buf[i] = (char) (0xff & storage[--j]);
         }
         return new String(buf);
     }
@@ -1182,8 +1184,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * Convenience method to create a <code>TypeError</code> PyException with the message
-     * "can't concat {type} to {toType}"
+     * Convenience method to create a <code>TypeError</code> PyException with the message "can't
+     * concat {type} to {toType}"
      *
      * @param type
      * @param toType
@@ -1260,11 +1262,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     }
 
     /**
-     * This class implements the Boyer-Moore-Horspool Algorithm for find a pattern in text, applied
-     * to byte arrays. The BMH algorithm uses a table of bad-character skips derived from the
-     * pattern. The bad-character skips table tells us how far from the end of the pattern is a byte
-     * that might match the text byte currently aligned with the end of the pattern. For example,
-     * suppose the pattern ("panama") is at position 6:
+     * This class implements the Boyer-Moore-Horspool Algorithm for finding a pattern in text,
+     * applied to byte arrays. The BMH algorithm uses a table of bad-character skips derived from
+     * the pattern. The bad-character skips table tells us how far from the end of the pattern is a
+     * byte that might match the text byte currently aligned with the end of the pattern. For
+     * example, suppose the pattern ("panama") is at position 6:
      *
      * <pre>
      *                    1         2         3
@@ -1274,7 +1276,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * </pre>
      *
      * This puts the 'p' of 'map' against the last byte 'a' of the pattern. Rather than testing the
-     * pattern, we will look up 'p' in the skip table. There is an 'p' just 5 steps from the end of
+     * pattern, we will look up 'p' in the skip table. There is a 'p' just 5 steps from the end of
      * the pattern, so we will move the pattern 5 places to the right before trying to match it.
      * This allows us to move in large strides through the text.
      */
@@ -1869,7 +1871,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                     int value = hexDigit(c);
                     c = hex.charAt(i++); // Throw IndexOutOfBoundsException if no second digit
                     value = (value << 4) + hexDigit(c);
-                    r[p++] = (byte)value;
+                    r[p++] = (byte) value;
                 } catch (IllegalArgumentException e) {
                     throw Py.ValueError(String.format(fmt, i - 1));
                 } catch (IndexOutOfBoundsException e) {
@@ -1924,8 +1926,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 if (v == null) {
                     // Unsuitable object to be in this join
                     String fmt = "can only join an iterable of bytes (item %d has type '%.80s')";
-                    throw Py.TypeError(String.format(fmt, iterList.size(), o.getType()
-                            .fastGetName()));
+                    throw Py.TypeError(
+                            String.format(fmt, iterList.size(), o.getType().fastGetName()));
                 }
                 iterList.add(v);
                 totalSize += v.getLen();
@@ -1943,7 +1945,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             }
 
             // Load the Views from the iterator into a new PyByteArray
-            PyByteArray result = new PyByteArray((int)totalSize);
+            PyByteArray result = new PyByteArray((int) totalSize);
             int p = result.offset; // Copy-to pointer
             first = true;
 
@@ -1963,7 +1965,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return result;
 
         } finally {
-            // All the buffers we acquired have to be realeased
+            // All the buffers we acquired have to be released
             for (PyBuffer v : iterList) {
                 v.release();
             }
@@ -2189,7 +2191,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         byte[] r; // Build result here
         try {
             // Good to go. As we know the ultimate size, we can do all our allocation in one
-            r = new byte[(int)result_len];
+            r = new byte[(int) result_len];
         } catch (OutOfMemoryError e) {
             throw Py.OverflowError("replace bytes is too long");
         }
@@ -2252,11 +2254,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         int to_len = to.getLen();
 
         // Calculate length of result and check for too big
-        long result_len = ((long)count) * to_len + size;
+        long result_len = ((long) count) * to_len + size;
         byte[] r; // Build result here
         try {
             // Good to go. As we know the ultimate size, we can do all our allocation in one
-            r = new byte[(int)result_len];
+            r = new byte[(int) result_len];
         } catch (OutOfMemoryError e) {
             throw Py.OverflowError("replace bytes is too long");
         }
@@ -2313,7 +2315,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         byte[] r; // Build result here
         try {
             // Good to go. As we know the ultimate size, we can do all our allocation in one
-            r = new byte[(int)result_len];
+            r = new byte[(int) result_len];
         } catch (OutOfMemoryError e) {
             throw Py.OverflowError("replace bytes is too long");
         }
@@ -2919,7 +2921,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         if (fillchar == null) {
             return ' ';
         } else if (fillchar.length() == 1) {
-            return (byte)fillchar.charAt(0);
+            return (byte) fillchar.charAt(0);
         } else {
             throw Py.TypeError(function + "() argument 2 must be char, not str");
         }
@@ -2946,11 +2948,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         // Construct the result in a Builder of the desired width
-        Builder builder = getBuilder(left + size + right);
+        Builder builder = new Builder(left + size + right);
         builder.repeat(pad, left);
         builder.append(this);
         builder.repeat(pad, right);
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3019,7 +3021,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * occurring in the array. This treats other non-printing characters or escape sequences as
      * regular characters.
      * <p>
-     * The actual class of the returned object is determined by {@link #getBuilder(int)}.
+     * The actual class of the returned object is determined by {@link #getResult(Builder)}.
      *
      * @param tabsize number of character positions between tab stops
      * @return copy of this byte array with tabs expanded
@@ -3027,8 +3029,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final BaseBytes basebytes_expandtabs(int tabsize) {
         // We could only work out the true size by doing the work twice,
         // so make a guess and let the Builder re-size if it's not enough.
-        int estimatedSize = size + size / 8;
-        Builder builder = getBuilder(estimatedSize);
+        long estimatedSize = (long) size + size / 8;
+        Builder builder = new Builder(estimatedSize);
 
         int carriagePosition = 0;
         int limit = offset + size;
@@ -3038,7 +3040,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             if (c == '\t') {
                 // Number of spaces is 1..tabsize
                 int spaces = tabsize - carriagePosition % tabsize;
-                builder.repeat((byte)' ', spaces);
+                builder.repeat((byte) ' ', spaces);
                 carriagePosition += spaces;
             } else {
                 // Transfer the character, but if it is a line break, reset the carriage
@@ -3047,7 +3049,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             }
         }
 
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3062,7 +3064,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     final BaseBytes basebytes_zfill(int width) {
         // How many zeros will I need?
         int fill = width - size;
-        Builder builder = getBuilder((fill > 0) ? width : size);
+        Builder builder = new Builder((fill > 0) ? width : size);
 
         if (fill <= 0) {
             // width <= size so result is just a copy of this array
@@ -3078,19 +3080,18 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 }
             }
             // Now insert enough zeros
-            builder.repeat((byte)'0', fill);
+            builder.repeat((byte) '0', fill);
             // And finally the numeric part. Note possibility of no text eg. ''.zfill(6).
             if (size > p) {
                 builder.append(this, p, size);
             }
         }
-        return builder.getResult();
+        return getResult(builder);
     }
 
     //
     // Character class operations
     //
-
 
     // Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa.
     private static final int SWAP_CASE = 0x20;
@@ -3356,7 +3357,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         // 2 = in a word (hence have have seen cased character)
 
         for (int i = 0; i < size; i++) {
-            byte c = storage[offset+i];
+            byte c = storage[offset + i];
             if (isupper(c)) {
                 if (state == 2) {
                     // Violation: can't continue a word in upper case
@@ -3454,7 +3455,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final BaseBytes basebytes_capitalize() {
 
-        Builder builder = getBuilder(size);
+        Builder builder = new Builder(size);
 
         if (size > 0) {
             // Treat first character
@@ -3467,7 +3468,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
 
             // Treat the rest
             for (int i = 1; i < size; i++) {
-                c = storage[offset+i];
+                c = storage[offset + i];
                 if (isupper(c)) {
                     c ^= SWAP_CASE;     // 'A' -> 'a', etc.
                 }
@@ -3476,7 +3477,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             }
         }
 
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3498,10 +3499,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final BaseBytes basebytes_lower() {
 
-        Builder builder = getBuilder(size);
+        Builder builder = new Builder(size);
 
         for (int i = 0; i < size; i++) {
-            byte c = storage[offset+i];
+            byte c = storage[offset + i];
             if (isupper(c)) {
                 c ^= SWAP_CASE;     // 'A' -> 'a', etc.
             }
@@ -3509,7 +3510,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             builder.append(c);
         }
 
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3531,10 +3532,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final BaseBytes basebytes_swapcase() {
 
-        Builder builder = getBuilder(size);
+        Builder builder = new Builder(size);
 
         for (int i = 0; i < size; i++) {
-            byte c = storage[offset+i];
+            byte c = storage[offset + i];
             if (isalpha(c)) {
                 c ^= SWAP_CASE;     // 'a' -> 'A', 'A' -> 'a', etc.
             }
@@ -3542,7 +3543,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             builder.append(c);
         }
 
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3568,11 +3569,11 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final BaseBytes basebytes_title() {
 
-        Builder builder = getBuilder(size);
+        Builder builder = new Builder(size);
         boolean inWord = false; // We begin, not in a word (sequence of cased characters)
 
         for (int i = 0; i < size; i++) {
-            byte c = storage[offset+i];
+            byte c = storage[offset + i];
 
             if (!inWord) {
                 // When we are not in a word ...
@@ -3594,7 +3595,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             // Put the adjusted character in the output as a byte
             builder.append(c);
         }
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /**
@@ -3617,10 +3618,10 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
     final BaseBytes basebytes_upper() {
 
-        Builder builder = getBuilder(size);
+        Builder builder = new Builder(size);
 
         for (int i = 0; i < size; i++) {
-            byte c = storage[offset+i];
+            byte c = storage[offset + i];
             if (islower(c)) {
                 c ^= SWAP_CASE;     // 'a' -> 'A' etc.
             }
@@ -3628,7 +3629,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             builder.append(c);
         }
 
-        return builder.getResult();
+        return getResult(builder);
     }
 
     /*
@@ -3659,41 +3660,6 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
     public synchronized int intAt(int index) throws PyException {
         indexCheck(index);
         return 0xff & byteAt(index);
-    }
-
-    /**
-     * Helper to implement {@link #repeat(int)}. Use something like:
-     *
-     * <pre>
-     * &#064;Override
-     * protected PyByteArray repeat(int count) {
-     *     PyByteArray ret = new PyByteArray();
-     *     ret.setStorage(repeatImpl(count));
-     *     return ret;
-     * }
-     * </pre>
-     *
-     * @param count the number of times to repeat this.
-     * @return this byte array repeated count times.
-     */
-    protected synchronized byte[] repeatImpl(int count) {
-        if (count <= 0) {
-            return emptyStorage;
-        } else {
-            // Allocate new storage, in a guarded way
-            long newSize = ((long)count) * size;
-            byte[] dst;
-            try {
-                dst = new byte[(int)newSize];
-            } catch (OutOfMemoryError e) {
-                throw Py.MemoryError(e.getMessage());
-            }
-            // Now fill with the repetitions needed
-            for (int i = 0, p = 0; i < count; i++, p += size) {
-                System.arraycopy(storage, offset, dst, p, size);
-            }
-            return dst;
-        }
     }
 
     //
@@ -3752,7 +3718,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
                 if (c == '\\' || c == '\'') {    // Special cases
                     buf.append('\\');
                 }
-                buf.append((char)c);
+                buf.append((char) c);
             } else if (c == '\t') { // Special cases in the low 32
                 buf.append("\\t");
             } else if (c == '\n') {
@@ -3850,7 +3816,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @see java.util.List#size()
      * @return Number of bytes in byte array.
-     * */
+     */
     @Override
     public int size() {
         return size;
@@ -4072,55 +4038,50 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      */
 
     /**
+     * Every sub-class of BaseBytes overrides this method to access a <code>Builder</code> and
+     * return that class' particular type, possibly without copying. Although the instance of which
+     * this is a method is not used, the class of that instance determines which overridden
+     * implementation is chosen, and hence both the action and the return type.
+     *
+     * @param b containing the result
+     * @return a new object of the correct sub-class
+     */
+    protected abstract BaseBytes getResult(Builder b);
+
+    /**
      * A <code>Builder</code> holds a buffer of bytes to which new bytes may be appended while
      * constructing the value of byte array, even when the type ultimately constructed is immutable.
      * The value it builds may be transferred (normally without copying) to a new instance of the
      * type being built.
-     * <p>
-     * <code>Builder</code> is an abstract class. The each sub-class of <code>BaseBytes</code> may
-     * define its own concrete implementation in which {@link Builder#getResult()} returns an object
-     * of its own type, taking its value from the <code>Builder</code> contents using
-     * {@link #getStorage()} and {@link #getSize()}. Methods in <code>BaseBytes</code> obtain a
-     * <code>Builder</code> by calling the abstract method {@link BaseBytes#getBuilder(int)}, which
-     * the sub-class also defines, to return an isnstance of its characteristic <code>Builder</code>
-     * sub-class. The subclass that uses a method from <code>BaseBytes</code> returning a
-     * <code>BaseBytes</code> has to cast a returned from a BaseBytes method to its proper type.
-     * which it can do without error, since it was responsible for its actual type.
-     * <p>
-     * <b>Implementation note:</b> This can be done in a type-safe way but, in the present design,
-     * only by making <code>BaseBytes</code> parameterised class.
-     *
      */
-    protected static abstract class Builder /* <B> */{
-
-        /**
-         * Return an object of type B extends <code>BaseBytes</code> whose content is what we built.
-         */
-        abstract BaseBytes getResult();
+    protected static class Builder {
 
         // Internal state
         private byte[] storage = emptyStorage;
         private int size = 0;
 
         /**
-         * Construct a builder with specified initial capacity.
+         * Construct a builder with specified initial capacity. The use of a {@code long} argument
+         * allows the caller to delegate overflow checks to this constructor in certain cases. One
+         * cannot allocate more bytes than the JVM-allows for an array.
          *
          * @param capacity
          */
-        Builder(int capacity) {
+        Builder(long capacity) {
             makeRoomFor(capacity);
         }
 
         /**
-         * Get an array of bytes containing the accumulated value, and clear the existing contents
-         * of the Builder. {@link #getCount()} returns the number of valid bytes in this array,
-         * which may be longer than the valid data.
+         * Destructively get the array of bytes containing the accumulated value, leaving the
+         * Builder empty. The array may be longer than the valid data if {@link #makeRoomFor(long)}
+         * chose so. {@link #getSize()}, continues to return the number of valid bytes in the array
+         * last returned, until an append next occurs. This ensures the idiom
+         * {@code func(getStorage(), getSize())} works as expected.
          * <p>
          * It is intended the client call this method only once to get the result of a series of
-         * append operations. A second call to {@link #getCount()}, before any further appending,
+         * append operations. A second call to {@link #getStorage()}, before any further appending,
          * returns a zero-length array. This is to ensure that the same array is not given out
-         * twice. However, {@link #getCount()} continues to return the number bytes accumulated
-         * until an append next occurs.
+         * twice.
          *
          * @return an array containing the accumulated result
          */
@@ -4131,8 +4092,8 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         /**
-         * Number of bytes accumulated. In conjunctin with {@link #getStorage()}, this provides the
-         * result. Unlike {@link #getStorage()}, it does not affect the contents.
+         * Number of bytes accumulated. In conjunction with {@link #getStorage()}, this provides the
+         * result. Unlike {@link #getStorage()}, it does not affect the contents of the builder.
          *
          * @return number of bytes accumulated
          */
@@ -4151,7 +4112,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         /**
-         * Append a number of repeats of a single byte to the value, fo example in padding.
+         * Append a number of repeats of a single byte to the value, for example in padding.
          *
          * @param b byte to repeat
          * @param n number of repeats (none if n<=0)
@@ -4159,7 +4120,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         void repeat(byte b, int n) {
             if (n > 0) {
                 makeRoomFor(n);
-                while (n-- > 0) {
+                while (--n >= 0) {
                     storage[size++] = b;
                 }
             }
@@ -4175,17 +4136,44 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
         }
 
         /**
+         * Repeat the contents of the given byte array.
+         *
+         * @param b
+         */
+        void repeat(BaseBytes b, int n) {
+            repeat(b, 0, b.size, n);
+        }
+
+        /**
          * Append the contents of a slice of the given byte array.
          *
          * @param b
          * @param start index of first byte copied
-         * @param end index of fisrt byte not copied
+         * @param end index of first byte not copied
          */
         void append(BaseBytes b, int start, int end) {
-            int n = end - start;
-            makeRoomFor(n);
-            System.arraycopy(b.storage, b.offset + start, storage, size, n);
-            size += n;
+            int len = end - start;
+            makeRoomFor(len);
+            System.arraycopy(b.storage, b.offset + start, storage, size, len);
+            size += len;
+        }
+
+        /**
+         * Repeat the contents of a slice of the given byte array.
+         *
+         * @param b
+         * @param start index of first byte copied
+         * @param end index of first byte not copied
+         * @param n number of repetitions
+         */
+        void repeat(BaseBytes b, int start, int end, int n) {
+            int len = end - start;
+            makeRoomFor(len * (long) n);
+            start += b.offset;
+            while (--n >= 0) {
+                System.arraycopy(b.storage, start, storage, size, len);
+                size += len;
+            }
         }
 
         /**
@@ -4200,34 +4188,43 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             size += n;
         }
 
-        // Ensure there is enough free space for n bytes (or allocate some)
-        void makeRoomFor(int n) throws PyException {
-            int needed = size + n;
+        /**
+         * Ensure there is room for an additional {@code n} bytes, if necessary allocating a new
+         * {@code byte[]} and copying the contents. Trap and convert to {@code PyException} any
+         * overflow.
+         *
+         * @param n additional capacity requested ({@code long} so we can recognise overflow).
+         * @throws PyException(OverflowError) when {@code sys.maxsize} is exceeded.
+         * @throws PyException(MemoryError) when free heap or JVM limitation is exceeded.
+         */
+        final void makeRoomFor(long n) throws PyException {
+            long needed = size + n;
             if (needed > storage.length) {
-                try {
-                    if (storage == emptyStorage) {
-                        /*
-                         * After getStorage(): size deliberately retains its prior value, even
-                         * though storage is set to emptyStorage. However, the first (non-empty)
-                         * append() operation after that lands us here, because storage.length==0.
-                         */
-                        size = 0;
-                        if (n > 0) {
-                            // When previously empty (incluing the constructor) allocate exactly n.
-                            storage = new byte[n];
+                if (size > 0 && storage == emptyStorage) {
+                    // Special case where append comes after a getStorage().
+                    size = 0;
+                    needed = n;
+                }
+                // Guardedly allocate the needed amount (or a rounded-up amount)
+                if (needed > PySystemState.maxsize) {
+                    throw Py.OverflowError("max bytes len is " + PySystemState.maxsize);
+                } else if (needed <= 0) {
+                    storage = emptyStorage;
+                } else {
+                    try {
+                        if (size == 0) {
+                            // Just a new array
+                            storage = new byte[(int) needed];
+                        } else {
+                            // New array preserving existing contents
+                            byte[] existing = storage;
+                            storage = new byte[roundUp((int) needed)];
+                            System.arraycopy(existing, 0, storage, 0, size);
                         }
-                    } else {
-                        // We are expanding an existing allocation: be imaginative
-                        byte[] old = storage;
-                        storage = new byte[roundUp(needed)];
-                        System.arraycopy(old, 0, storage, 0, size);
+                    } catch (OutOfMemoryError e) {
+                        // Exceeded the available heap or the limits of this JVM.
+                        throw Py.MemoryError(e.getMessage());
                     }
-                } catch (OutOfMemoryError e) {
-                    /*
-                     * MemoryError is right for most clients. Some (e.g. bytearray.replace()) should
-                     * convert it to an overflow, with a customised message.
-                     */
-                    throw Py.MemoryError(e.getMessage());
                 }
             }
         }
@@ -4259,16 +4256,4 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
             return 0;
         }
     }
-
-    /**
-     * Every sub-class of BaseBytes overrides this method to return a <code>Builder&lt;B></code>
-     * where <code>B</code> is (normally) that class's particular type, and it extends
-     * <code>Builder&lt;B></code> so that {@link Builder#getResult()} produces an instance of
-     * <code>B</code> from the contents.
-     *
-     * @param capacity of the <code>Builder&lt;B></code> returned
-     * @return a <code>Builder&lt;B></code> for the correct sub-class
-     */
-    protected abstract Builder/* <? extends BaseBytes> */getBuilder(int capacity);
-
 }

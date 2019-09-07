@@ -341,9 +341,9 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      */
     @Override
     protected synchronized PyByteArray repeat(int count) {
-        PyByteArray ret = new PyByteArray();
-        ret.setStorage(repeatImpl(count));
-        return ret;
+        Builder builder = new Builder(size * (long) count);
+        builder.repeat(this, count);
+        return getResult(builder);
     }
 
     /**
@@ -831,21 +831,11 @@ public class PyByteArray extends BaseBytes implements BufferProtocol {
      * Support for Builder
      * ============================================================================================
      *
-     * Extend BaseBytes.Builder so that it can return a PyByteArray and give the superclass a hook
-     * for it.
      */
 
     @Override
-    protected Builder getBuilder(int capacity) {
-        // Return a Builder specialised for my class
-        return new Builder(capacity) {
-
-            @Override
-            PyByteArray getResult() {
-                // Create a PyByteArray from the storage that the builder holds
-                return new PyByteArray(getStorage(), getSize());
-            }
-        };
+    protected PyByteArray getResult(Builder b) {
+        return new PyByteArray(b.getStorage(), b.getSize());
     }
 
     /*

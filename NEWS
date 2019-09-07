@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2796 ] Request for oversize arrays not handled in BaseBytes and PyByteArray
     - [ 2730 ] datetime.strptime('%b') behaviour inconsistent with CPython on Windows JDK 9+
     - [ 2613 ] MANIFEST.MF contains unfilled placeholders
     - [ 2330 ] full-build fails to copy CPython License
