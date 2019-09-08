@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
  * console. A default implementation (that does not provide any such facilities) is available as
  * {@link PlainConsole}.
  *
- * @see org.python.core.RegistryKey.PYTHON_CONSOLE
+ * @see org.python.core.RegistryKey#PYTHON_CONSOLE
  */
 public interface Console {
 

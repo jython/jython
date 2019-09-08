@@ -113,13 +113,13 @@ public class Options {
     public static boolean caseok = false;
 
     /**
-     * If true, enable truedivision for the '/' operator.
+     * If true, enable true division for the '/' operator.
      *
-     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_Q_NEW;
+     * @see org.python.core.RegistryKey#PYTHON_OPTIONS_Q_NEW
      */
     public static boolean Qnew = false;
 
-    /** Force stdin, stdout and stderr to be unbuffered, and opened in binary mode */
+    /** Force stdin, stdout and stderr to be unbuffered, and opened in binary mode. */
     public static boolean unbuffered = false;
 
     /** Whether -3 (py3k warnings) was enabled via the command line. */

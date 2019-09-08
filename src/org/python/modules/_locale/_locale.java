@@ -27,19 +27,19 @@ import static org.python.core.RegistryKey.PYTHON_LOCALE_CONTROL;
  * implied by the Python locale module.
  *
  * Functional documentation can be found in the Python module docstring. This class depends on
- * registry key {@link org.python.core.RegistryKey.PYTHON.LOCALE_CONTROL}. Additional implementation
+ * registry key {@link org.python.core.RegistryKey#PYTHON_LOCALE_CONTROL}. Additional implementation
  * details for users of this class are captured below.
  * <p>
  * Unicode. In general, Java and its locale settings are quite unicode heavy, making rich use of
- * different symbols for eg currencies. This solution allows some of that to leak through by
+ * different symbols for e.g. currencies. This solution allows some of that to leak through by
  * encoding the Java locale value with the current character encoding. The Python locale module is
  * quite conservative and tends to keep things as solely strings. Python 2.x usually supports only
  * string / ascii by default in many cases, and only unicode when asked. This is a little less
  * conservative while only allowing values consistent with the current encoding.
  * <p>
- * An example of this is some Python implementations using EUR rather than the Euro symbol € /
- * {@code 'u20ac'}, probably because € is only available in Unicode. In the Java implementation, if
- * UTF-8 encoding is set, the resulting entry in {@code localeconv()['currency_code']} is
+ * An example of this is some Python implementations using EUR rather than the Euro symbol €
+ * ({@code 'u20ac'}), probably because € is only available in Unicode. In the Java implementation,
+ * if UTF-8 encoding is set, the resulting entry in {@code localeconv()['currency_code']} is
  * {@code '\xe2\x82\xac'}. This can be used by {@code print()} and related functions directly.
  * Encoding failures for {@code currency_symbol} fall back to {@code int_curr_symbol} (eg EUR).
  * Encoding failures for {@code negative_sign}, which are sometimes unicode, fall back to an ANSI
@@ -58,7 +58,6 @@ import static org.python.core.RegistryKey.PYTHON_LOCALE_CONTROL;
  * is the responsibility of the calling code.
  *
  * @since Jython 2.7.2
- *
  */
 public class _locale implements ClassDictInit {
 

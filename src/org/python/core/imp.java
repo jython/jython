@@ -772,7 +772,7 @@ public class imp {
      * {@code __builtin__}.
      *
      * @param fully-qualified name of module
-     * @return
+     * @return the module named
      */
     private static PyObject loadBuiltin(String name) {
         final String MSG = "import {0} # builtin";

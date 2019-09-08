@@ -24,8 +24,6 @@ import org.python.core.PyUnicode;
  * Used by the _locale module. Callers would not usually interact with this class directly unless
  * working with _locale internals.
  *
- * @Immutable
- *
  * @since Jython 2.7.2
  */
 public class JyLocale extends DateSymbolJyLocale implements PyLocale {

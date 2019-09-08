@@ -280,7 +280,7 @@ public class PrePy {
      * <ol type="a">
      * <li>it is {@code System.in} and {@link #isInteractive()} is {@code true}, or</li>
      * <li>the {@code -i} flag was given ({@link Options#interactive}={@code true}), and the
-     * filename associated with it is {@code null} or {@code"<stdin>"} or {@code "???"}.</li>
+     * filename associated with it is {@code null} or {@code "<stdin>"} or {@code "???"}.</li>
      * </ol>
      *
      * @param fp stream (tested only for {@code System.in})

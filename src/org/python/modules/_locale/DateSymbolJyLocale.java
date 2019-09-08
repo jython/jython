@@ -6,11 +6,9 @@ import java.util.Locale;
 /**
  * Separating these largely constant values from Python encoding conversions allows for safer
  * initialization even if modules are loaded in different orders. The Python {@code locale} and
- * {@code codecs} modules have interdependencies, as well as {@org.python.modules.time.Time} and
- * {@code org.python.modules._locale._locale}. The latter in particular depends on
+ * {@code codecs} modules have interdependencies, as well as {@link org.python.modules.time.Time}
+ * and {@link org.python.modules._locale._locale}. The latter in particular depends on
  * {@code java.util.Locale} and this class, but only uses the date symbol aspect.
- *
- * @Immutable
  *
  * @since Jython 2.7.2
  */

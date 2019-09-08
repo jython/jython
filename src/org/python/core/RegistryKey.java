@@ -89,8 +89,8 @@ public class RegistryKey {
     public static final String PYTHON_INSPECT = "python.inspect";
 
     /**
-     * {@code python.io.encoding} controls the encoding of {@code sys.stdin}, {@codesys.stdout}, and
-     * {@code sys.stderr}. The encoding must name a Python codec, as in {@code codecs.encode()}.
+     * {@code python.io.encoding} controls the encoding of {@code sys.stdin}, {@code sys.stdout},
+     * and {@code sys.stderr}. The encoding must name a Python codec, as in {@code codecs.encode()}.
      */
     public static final String PYTHON_IO_ENCODING = "python.io.encoding";
 
@@ -200,12 +200,12 @@ public class RegistryKey {
 
     /**
      * {@code python.os} defines the string used to report the underlying operating system. Used as
-     * prefix when resolving which operating system, impacting * some OS-specific behaviour.
+     * prefix when resolving which operating system, impacting some OS-specific behaviour.
      */
     public static final String PYTHON_OS = "python.os";
 
     /**
-     * {@code python.packages.fakepath} defines a sequence of directories and JARs * that are to be
+     * {@code python.packages.fakepath} defines a sequence of directories and JARs that are to be
      * sources of Python packages.
      */
     public static final String PYTHON_PACKAGES_FAKEPATH = "python.packages.fakepath";
