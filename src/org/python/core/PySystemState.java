@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,6 +58,8 @@ import static org.python.core.RegistryKey.*;
 // but it will require some refactoring to see this wish come true.
 public class PySystemState extends PyObject
         implements AutoCloseable, ClassDictInit, Closeable, Traverseproc {
+
+    protected static final Logger logger = Logger.getLogger("org.python");
 
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
@@ -130,7 +133,7 @@ public class PySystemState extends PyObject
      * contain bytes in the file system encoding for consistency with use in the standard library
      * (see <code>sysconfig.py</code>).
      */
-    public static PyObject exec_prefix = Py.EmptyString;
+    public static PyObject exec_prefix;
 
     public static final PyString byteorder = new PyString("big");
     public static final int maxint = Integer.MAX_VALUE;
@@ -927,32 +930,36 @@ public class PySystemState extends PyObject
             Py.writeError("systemState", "trying to reinitialize registry");
             return;
         }
-
         registry = preProperties;
+
+        // Work out sys.prefix
         String prefix = findRoot(preProperties, postProperties, jarFileName);
+
+        if (prefix == null || prefix.length() == 0) {
+            /*
+             * All strategies in find_root failed (can happen in embedded use), but sys.prefix is
+             * generally assumed not to be null (or even None). Go for current directory.
+             */
+            prefix = ".";
+            logger.config("No property 'jython.home' or other clue. sys.prefix defaulting to ''.");
+        }
+
+        // sys.exec_prefix is the same initially
         String exec_prefix = prefix;
 
         // Load the default registry
-        if (prefix != null) {
-            if (prefix.length() == 0) {
-                prefix = exec_prefix = ".";
-            }
-            try {
-                // user registry has precedence over installed registry
-                File homeFile = new File(registry.getProperty(USER_HOME),
-                                            ".jython");
-                addRegistryFile(homeFile);
-                addRegistryFile(new File(prefix, "registry"));
-            } catch (Exception exc) {
-                // Continue
-            }
+        try {
+            // user registry has precedence over installed registry
+            File homeFile = new File(registry.getProperty(USER_HOME), ".jython");
+            addRegistryFile(homeFile);
+            addRegistryFile(new File(prefix, "registry"));
+        } catch (Exception exc) {
+            // Continue: addRegistryFile does its own logging.
         }
-        if (prefix != null) {
-            PySystemState.prefix = Py.fileSystemEncode(prefix);
-        }
-        if (exec_prefix != null) {
-            PySystemState.exec_prefix = Py.fileSystemEncode(exec_prefix);
-        }
+
+        // Exposed values have to be properly-encoded objects
+        PySystemState.prefix = Py.fileSystemEncode(prefix);
+        PySystemState.exec_prefix = Py.fileSystemEncode(exec_prefix);
 
         // Now the post properties (possibly set by custom JythonInitializer).
         registry.putAll(postProperties);
@@ -1261,7 +1268,7 @@ public class PySystemState extends PyObject
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            String prefixString = prefix == null ? null : Py.fileSystemDecode(prefix);
+            String prefixString = Py.fileSystemDecode(prefix);
             cachedir = new File(prefixString, cachedir.getPath());
         }
     }
@@ -1304,13 +1311,9 @@ public class PySystemState extends PyObject
             // The executable from the registry is a Unicode String path
             executableFile = new File(executable);
         } else {
-            if (prefix == null) {
-                return Py.None;
-            } else {
-                // The prefix is a unicode or encoded bytes object
-                executableFile = new File(Py.fileSystemDecode(prefix),
-                        Platform.IS_WINDOWS ? "bin\\jython.exe" : "bin/jython");
-            }
+            // The prefix is a unicode or encoded bytes object
+            executableFile = new File(Py.fileSystemDecode(prefix),
+                    Platform.IS_WINDOWS ? "bin\\jython.exe" : "bin/jython");
         }
 
         try {
@@ -1461,15 +1464,12 @@ public class PySystemState extends PyObject
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
         addPaths(path, props.getProperty(PYTHON_PATH, ""));
-        if (prefix != null) {
-            String libpath = new File(Py.fileSystemDecode(prefix), "Lib").toString();
-            path.append(Py.fileSystemEncode(libpath)); // XXX or newUnicode?
-        }
+        String libpath = new File(Py.fileSystemDecode(prefix), "Lib").toString();
+        path.append(Py.fileSystemEncode(libpath)); // XXX or newUnicode?
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
             addPaths(path, jarFileName + "/Lib");
         }
-
         return path;
     }
 
