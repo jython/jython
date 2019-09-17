@@ -36,13 +36,19 @@ import java.text.SimpleDateFormat
  * application. It should be all you have to edit to version a release built
  * here. But of course you have to do it the hard way too (see build.xml) as
  * long as Ant is also used.
+ *
+ * The convention here is that you specify the version of the next release. If
+ * there are files not checked in, extra files (not of types hg ignores), or the
+ * changeset is not tagged correspondingly, the build will add "-SNAPSHOT" to
+ * the effective version.
  */
 // Versions are specified in this grammar:
-// <major> . <minor> ( . <micro> )? ( <release> <serial> )? ([-+] <word>? )?
+// <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( + | - <word> )?
 
 version = '2.7.2a1+'
 
 // Valid examples (please preserve in comments):
+//version = '2.7.2a1+'
 //version = '2.7.2a2'
 //version = '2.7.2b1-SNAPSHOT'
 //version = '2.7.2b1'
@@ -306,9 +312,7 @@ task generateVersionInfo(
 
     // Create the properties when the task runs. But do it before the write!
     doFirst {
-        /*
-         * Query Mercurial for version and tagging.
-         */
+        // Query Mercurial for version and tagging.
         String hgOutput = 'hg identify -ibt'.execute().text
         hgOutput = hgOutput.split('\n', 2)[0]
 
@@ -328,8 +332,8 @@ task generateVersionInfo(
          * properties. (The Ant build.xml requires them to be set in parts, but
          * we can work it out from project.version.)
          */
-        // <major>.<minor>(.<micro>)(<release><serial>)?([-+]<snapshot>)?
-        def versionRegex = /(\d+)\.(\d+)(\.(\d+))?((a|b|rc)(\d+))?([-+]\w*)?/
+        // <major>.<minor>(.<micro>)(<release><serial>)?(+|-<snapshot>)?
+        def versionRegex = /(\d+)\.(\d+)(\.(\d+))?((a|b|rc)(\d+))?(\+|-(\w+))?/
         def versionMatcher = project.version =~ versionRegex
         if (versionMatcher.count != 1) {
             throw new IllegalArgumentException(
@@ -344,7 +348,6 @@ task generateVersionInfo(
         String micro = versionResult[3] ? versionResult[4] : '0'
 
         // Convert the optional <release><serial> to numbers
-        int SNAPSHOT = 0xaa
         int level = 0, serial = 0
         if (versionResult[5]) {
             // This is some kind of pre-final release (unless snapshot)
@@ -359,11 +362,48 @@ task generateVersionInfo(
             level = 0xf
         }
 
-        // Except, if there was something after the version we decoded ...
-        if (versionResult[8]) {
-            level = SNAPSHOT // it's snapshot or dev version of some kind
-            serial = 0
+        // Convert optional +|-<word> to -DEV or -SNAPSHOT suffix or empty string
+        String snapshotSuffix = versionResult[8];
+        if (snapshotSuffix == '+') {
+            snapshotSuffix = "-SNAPSHOT"
         }
+
+        /*
+         * Work out if it looks like a release, or adjust project.version. This logic prevents us
+         * releasing from a polluted repo (similar to logic in the Ant build.xml).
+         */
+        def L = [0:'', 10:'a', 11:'b', 12:'rc', 15:'']
+        String release = "$major.$minor.$micro${L[level]}${serial?:''}"
+
+        if (snapshotSuffix == null) {
+            // The version is named correctly for a release. Make safety checks on the repo.
+            String expectTag = "v$release"
+            String message = null;
+            if (ident.endsWith('+')) {
+                message = 'Version-controlled files have been edited since the last commit'
+            } else if (tag != expectTag) {
+                message = "Change set $ident is not tagged $expectTag."
+            } else {
+                // Query Mercurial for status: non-empty if uncontrolled (unignored) files.
+                String hgStatus = 'hg status'.execute().text
+                if (hgStatus.trim().length() > 0) {
+                    message = 'Workspace contains uncontrolled files'
+                }
+            }
+            // If a message was set for any reason, fall back to a snapshot.
+            if (message == null) {
+                // Repository state is good for a full build.
+                snapshotSuffix = ''
+            } else {
+                // Some reason found not to build the release.
+                println "$message - build is a snapshot."
+                snapshotSuffix = '-SNAPSHOT'
+            }
+        }
+
+        // Rebuild the version with the snapshot suffix, even if not given originally.
+        project.version = release + snapshotSuffix
+        println "This build is for v${project.version}."
 
         property('jython.version', project.version)
         property('jython.major_version', major)
@@ -382,22 +422,6 @@ task generateVersionInfo(
         property('jython.build.date',
                 (new SimpleDateFormat('MMM d yyyy'))
                 .format(project.ext.buildDate))
-
-        /*
-         * Remind the developer about tagging it if it looks like a release,
-         * or to adjust project.version if we're moving on from the release.
-         */
-        if (level != SNAPSHOT) {
-            def L = [0:'', 10:'a', 11:'b', 12:'rc', 15:'']
-            String release = "$major.$minor.$micro${L[level]}${serial?:''}"
-            println "This build is versioned for distribution as $release"
-            if (tag == 'tip' || ident.endsWith('+')) {
-                println "If this really is distributable, " +
-                        "don't forget to tag it in the repository.\n" +
-                        "Alternatively, add a suffix to version = " +
-                        "'${project.version}' in build.gradle to shut this up."
-            }
-        }
     }
 }
 
@@ -678,16 +702,15 @@ javadoc {
  * distribute.
  *
  * Maybe have a second JAR that contains the additional material necessary to
- * run integration tests (regression tests and others). Python tests are
- * (incorrectly) in the main JAR at present.
+ * run integration tests (regression tests and others).
  */
 
-task sourcesJar(type: Jar) {
+task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allJava
 }
 
-task javadocJar(type: Jar) {
+task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
@@ -708,13 +731,23 @@ publishing {
     }
 
     repositories {
-        // Dummy one for test: need sonatype here and credentials from user
+        // Staging area where ant -f maven/build.xml will look.
         maven {
-            name = 'myRepo'
-            url = "file://${buildDir}/repo"
+            name = 'stagingRepo'
+            url = "file://${buildDir}/stagingRepo"
         }
     }
 }
+
+// Ensure version computation/branding precedes any publication we use.
+publish.dependsOn(generateVersionInfo)
+
+/* FIXME: Depending on publishMainPublicationToMavenLocal does not work,
+   because it does not exist when evaluating this line. Is this the deferred
+   configuration removed in Gradle 5.0? Failsd on POM version mismatch if main
+   publish task not run before publishMainPublicationToMavenLocal.
+*/
+//publishMainPublicationToMavenLocal.dependsOn(generateVersionInfo)
 
 
 // ---------------- Java unit tests --------------------------------------------
@@ -755,6 +788,8 @@ test {
     systemProperty 'python.test.source.dir', project.ext.testSourceDir
     // Place cache outside the targets for jar task
     systemProperty 'python.cachedir', "${project.buildDir}/cachedir"
+    // Logging level: default is message=INFO
+    //systemProperty 'python.verbose', 'CONFIG'
 
     include '**/*Test*'
 
@@ -784,47 +819,6 @@ test {
         println "systemProperties = $systemProperties"
     }
 
-    /* A reminder of how this is addressed in build.xml, for comparison:
-
-    <target name="javatest-basepath" depends="developer-build">
-        <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
-            <formatter type="xml"/>
-            <sysproperty key="python.home" value="${dist.dir}"/>
-            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
-            <batchtest todir="${junit.reports}" skipNonTests="true">
-                <fileset dir="${test.source.dir}" includes="** /*Test*.java">
-                    <exclude name="** /InterpTestCase.java" />
-                    <exclude name="** /jythonTest*" /> <!-- Must run interactively -->
-                    <exclude name="org/python/antlr/**" />
-                    <exclude name="org/python/tests/imp/**" /> <!-- See importest -->
-                    <exclude name=".classpath" />
-                    <exclude name=".project" />
-                </fileset>
-            </batchtest>
-        </junit>
-    </target>
-
-    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
-        <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
-            <formatter type="xml"/>
-            <sysproperty key="python.home" value="${dist.dir}"/>
-            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
-            <classpath refid="test.classpath"/>
-            <classpath>
-                <pathelement location="${jython.base.dir}/tests/python"/>
-            </classpath>
-            <batchtest todir="${junit.reports}">
-                <fileset dir="${test.source.dir}" includes="org/python/tests/imp/*Test*.java">
-                </fileset>
-            </batchtest>
-        </junit>
-    </target>
-
-    */
 }
 
 

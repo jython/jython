@@ -2,4 +2,4 @@
  * Gradle settings for Jython. See also build.gradle.
  */
 
-rootProject.name = 'jython'
+rootProject.name = 'jython-slim'

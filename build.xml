@@ -168,6 +168,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="reports.dir" value="${basedir}/reports" />
         <property name="junit.dir" value="${reports.dir}/junit" />
         <property name="junit.reports" value="${junit.dir}/raw" />
+
+        <!-- Artefacts for publication. -->
+        <property name="pubs.dir" value="${basedir}/publications" />
     </target>
 
     <target name="common-jars" depends="common-dirs">
@@ -261,8 +264,6 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <path id="test.classpath">
             <path refid="main.classpath"/>
             <filelist dir="${extlibs.dir}">
-                <file name="asm-commons-7.0.jar" />
-                <file name="asm-util-7.0.jar" />
                 <file name="junit-4.10.jar" />
             </filelist>
             <pathelement location="${exposed.dir}" />
@@ -407,6 +408,8 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <fileset dir="${build.dir}" includes="**/*" defaultexcludes="false" />
             <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
             <fileset dir="${dist.dir}" includes="**/*" defaultexcludes="false" />
+            <!-- all files and subdirectories of ${pubs.dir}, without ${pubs.dir} itself. -->
+            <fileset dir="${pubs.dir}" includes="**/*" />
         </delete>
     </target>
 

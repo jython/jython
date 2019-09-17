@@ -30,11 +30,13 @@ syntax: glob
 __pycache__
 bin
 
+# Jython specific
 ant.properties
 build
 build2
 cachedir
 dist
+publications
 reports
 
 profile.txt
