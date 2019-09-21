@@ -9,6 +9,8 @@ import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.python.antlr.ParseException;
 import org.python.antlr.PythonTree;
@@ -17,47 +19,49 @@ import org.python.antlr.base.expr;
 
 public class ScopeInfo extends Object implements ScopeConstants {
 
+    static final Logger LOGGER = Logger.getLogger("org.python.compiler");
+
     public PythonTree scope_node;
     public String scope_name;
     public int level;
     public int func_level;
 
     public void dump() { // for debugging
-        if (org.python.core.Options.verbose < org.python.core.Py.DEBUG) {
-            return;
+        if (LOGGER.isLoggable(Level.FINE)) {
+            StringBuilder m = new StringBuilder(100);
+            for (int i = 0; i < level; i++) {
+                m.append(' ');
+            }
+            m.append(((kind != CLASSSCOPE) ? scope_name : "class " + scope_name) + ": ");
+            for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
+                String name = entry.getKey();
+                SymInfo info = entry.getValue();
+                int flags = info.flags;
+                m.append(name);
+                if ((flags & BOUND) != 0) {
+                    m.append('=');
+                }
+                // func scope global (affect nested scopes) vs. class scope global
+                if ((flags & NGLOBAL) != 0) {
+                    m.append('G');
+                } else if ((flags & CLASS_GLOBAL) != 0) {
+                    m.append('g');
+                }
+                if ((flags & PARAM) != 0) {
+                    m.append('P');
+                } else if ((flags & FROM_PARAM) != 0) {
+                    m.append('p');
+                }
+                if ((flags & CELL) != 0) {
+                    m.append('!');
+                }
+                if ((flags & FREE) != 0) {
+                    m.append(",f");
+                }
+                m.append(' ');
+            }
+            LOGGER.fine(m.toString());
         }
-        for (int i = 0; i < level; i++) {
-            System.err.print(' ');
-        }
-        System.err.print(((kind != CLASSSCOPE) ? scope_name : "class " + scope_name) + ": ");
-        for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
-            String name = entry.getKey();
-            SymInfo info = entry.getValue();
-            int flags = info.flags;
-            System.err.print(name);
-            if ((flags & BOUND) != 0) {
-                System.err.print('=');
-            }
-            // func scope global (affect nested scopes) vs. class scope global
-            if ((flags & NGLOBAL) != 0) {
-                System.err.print('G');
-            } else if ((flags & CLASS_GLOBAL) != 0) {
-                System.err.print('g');
-            }
-            if ((flags & PARAM) != 0) {
-                System.err.print('P');
-            } else if ((flags & FROM_PARAM) != 0) {
-                System.err.print('p');
-            }
-            if ((flags & CELL) != 0) {
-                System.err.print('!');
-            }
-            if ((flags & FREE) != 0) {
-                System.err.print(",f");
-            }
-            System.err.print(" ");
-        }
-        System.err.println();
     }
 
     public ScopeInfo(String name, PythonTree node, int level, int kind, int func_level,
