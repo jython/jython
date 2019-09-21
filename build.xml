@@ -88,9 +88,16 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
     <target name="common-config" depends="common-constants">
         <!-- Initialisations common to full and developer builds. -->
+
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
-        <property name="jython.java.version" value="1.7" />
+        <property name="jython.java.version" value="1.8" />
+
+        <!-- Temporarily fix the source compatibility at Java 7 to keep open the possibility of
+        compiling for that target. After v2.7.2 is out, delete this assignment, and this comment,
+        reconsider choice of JARs, and feel free to use Java 8 syntax. -->
+        <property name="jdk.source.version" value="1.7" />
+
         <!-- Designate the official release encoded in parts. In normal times, this is the previous
              official release, e.g. 2.7.2a1 while working towards 2.7.2b1, and sys.version will be
              "2.7.2a1+". If you are trying to building an official release, designate that release.
@@ -100,6 +107,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="2"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
+
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
         <property name="jython.release_serial" value="1"/>
     </target>

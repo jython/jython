@@ -60,9 +60,13 @@ group = 'org.python'
 
 // ---------------- Miscellaneous configuration --------------------------------
 
-// Support Java 7 onwards
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
+/*
+ * We support Java 8 onwards officially, up to v2.7.2, but retain the option of
+ * compiling for Java 7 (in v2.7.2) by maintaining compatibility in the code
+ * base and in the choice of JARs.
+ */
+sourceCompatibility = '1.7' // Make both 1.8 after 2.7.2 released
+targetCompatibility = '1.8'
 
 project.compileJava.options.debug = true
 
@@ -90,10 +94,7 @@ ext {
 
 
 repositories {
-    /*
-     * Jython is distributed through Maven Central. Get our dependencies there
-     * too.
-     */
+    // Jython is distributed through Maven Central. Get our dependencies there too.
     mavenCentral()
 }
 

@@ -12,8 +12,12 @@ addons:
 matrix:
   include:
     - os: linux
-      dist: precise
-      jdk: oraclejdk7
+      dist: xenial
+      addons:
+        apt:
+          packages:
+            - ant
+      jdk: openjdk8
 
     - os: linux
       dist: xenial
