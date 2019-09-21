@@ -162,9 +162,9 @@ dependencies {
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.62'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.62'
 
-    implementation 'org.ow2.asm:asm:7.0'
-    implementation 'org.ow2.asm:asm-commons:7.0'
-    implementation 'org.ow2.asm:asm-util:7.0'
+    implementation 'org.ow2.asm:asm:7.1'
+    implementation 'org.ow2.asm:asm-commons:7.1'
+    implementation 'org.ow2.asm:asm-util:7.1'
 
     // The Android Guava and "failureaccess" are necessary to support Java 7.
     implementation 'com.google.guava:guava:28.0-android'
@@ -175,7 +175,7 @@ dependencies {
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'
 
-    implementation 'com.github.jnr:jffi:1.2.19'
+    implementation 'com.github.jnr:jffi:1.2.20'
     implementation 'com.github.jnr:jnr-netdb:1.1.6'
     implementation 'com.github.jnr:jnr-ffi:2.1.10'
     implementation 'com.github.jnr:jnr-posix:3.0.50'
@@ -193,6 +193,7 @@ dependencies {
     // Used implicitly in the Ant build, must be explicit here
     implementation 'org.apache.ant:ant:1.9.7'
 
+    // Pin to 4.10 until dependency on hamcrest classes resolved.
     testImplementation 'junit:junit:4.10'
 }
 

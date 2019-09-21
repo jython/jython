@@ -246,14 +246,14 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.2.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-7.0.jar" />
-                <file name="asm-commons-7.0.jar" />
-                <file name="asm-util-7.0.jar" />
+                <file name="asm-7.1.jar" />
+                <file name="asm-commons-7.1.jar" />
+                <file name="asm-util-7.1.jar" />
                 <file name="commons-compress-1.19.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-28.0-android.jar" />
                 <file name="icu4j-59_1.jar" />
-                <file name="jffi-1.2.19.jar"/>
+                <file name="jffi-1.2.20.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
                 <file name="jnr-ffi-2.1.10.jar"/>
                 <file name="jnr-netdb-1.1.6.jar"/>
@@ -272,6 +272,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <path id="test.classpath">
             <path refid="main.classpath"/>
             <filelist dir="${extlibs.dir}">
+                <!-- Pin to 4.10 until dependency on hamcrest classes resolved. -->
                 <file name="junit-4.10.jar" />
             </filelist>
             <pathelement location="${exposed.dir}" />
@@ -824,15 +825,15 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-7.0.jar"/>
-            <zipfileset src="extlibs/asm-commons-7.0.jar"/>
-            <zipfileset src="extlibs/asm-util-7.0.jar"/>
+            <zipfileset src="extlibs/asm-7.1.jar"/>
+            <zipfileset src="extlibs/asm-commons-7.1.jar"/>
+            <zipfileset src="extlibs/asm-util-7.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk15on-1.62.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.18.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.19.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
             <zipfileset src="extlibs/guava-28.0-android.jar"/>
@@ -876,7 +877,7 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.2.19.jar"/>
+            <zipfileset src="extlibs/jffi-1.2.20.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.10.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.0.50.jar"/>
