@@ -5,6 +5,11 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2666 ] Oracle JDK 7 out of support so no longer available on Travis
+    - [ 2294 ] Importation of modules from directories with non-ASCII characters fails
+    - [ 2055 ] isinstance() and issubclass() fail with abc.ABCMeta
+    - [ 2569 ] jython launcher fails on Windows if JAVA_HOME is set
+    - [ 2505 ] PySystemState is lost
     - [ 2796 ] Request for oversize arrays not handled in BaseBytes and PyByteArray
     - [ 2730 ] datetime.strptime('%b') behaviour inconsistent with CPython on Windows JDK 9+
     - [ 2613 ] MANIFEST.MF contains unfilled placeholders
