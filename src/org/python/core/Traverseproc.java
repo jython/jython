@@ -147,7 +147,7 @@ import org.python.modules.gc;
  * <pre>
  *  {@literal @}Override
  *  public boolean refersDirectlyTo(PyObject ob) {
- *      return ob != null && (ob == im_class || ob == __func__ || ob == __self__);
+ *      return ob != null {@literal &&} (ob == im_class || ob == __func__ || ob == __self__);
  *  }
  * </pre>
  * If there is a Java-set or other iterable that it is not a {@code PyObject},
@@ -177,7 +177,7 @@ import org.python.modules.gc;
  * <pre>
  *  {@literal @}Override
  *  public boolean refersDirectlyTo(PyObject ob) {
- *      return ob != null && _set.contains(ob);
+ *      return ob != null {@literal &&} _set.contains(ob);
  *  }
  * </pre>
  * If a class extends a {@code Traverseproc}-implementing class and adds
@@ -256,7 +256,6 @@ import org.python.modules.gc;
  *      throw new UnsupportedOperationException();
  *  }
  * </pre>
- * </p>
  * <p>
  * <br>
  * <b>List of {@code PyObject}-subclasses</b><br><br>

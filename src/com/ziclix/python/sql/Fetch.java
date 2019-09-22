@@ -31,14 +31,14 @@ import java.util.Set;
 /**
  * <p>The responsibility of a Fetch instance is to manage the iteration of a
  * ResultSet.  Two different alogorithms are available: static or dynamic.</p>
- * <p/>
+ * 
  * <p><b>Static</b> The static variety iterates the entire set immediately,
  * creating the necessary Jython objects and storing them.  It is able to
  * immediately close the ResultSet so a call to close() is essentially a no-op
  * from a database resource perspective (it does clear the results list however).
  * This approach also allows for the correct rowcount to be determined since
  * the entire result set has been iterated.</p>
- * <p/>
+ * 
  * <p><b>Dynamic</b> The dynamic variety iterates the result set only as requested.
  * This holds a bit truer to the intent of the API as the fetch*() methods actually
  * fetch when instructed.  This is especially useful for managing exeedingly large
@@ -54,7 +54,7 @@ abstract public class Fetch implements Traverseproc {
 
     /**
      * The total number of rows in the result set.
-     * <p/>
+     * <p>
      * Note: since JDBC provides no means to get this information without iterating
      * the entire result set, only those fetches which build the result statically
      * will have an accurate row count.
@@ -157,7 +157,7 @@ abstract public class Fetch implements Traverseproc {
     /**
      * Fetch the next row of a query result set, returning a single sequence,
      * or None when no more data is available.
-     * <p/>
+     * <p>
      * An Error (or subclass) exception is raised if the previous call to
      * executeXXX() did not produce any result set or no call was issued yet.
      *
@@ -178,7 +178,7 @@ abstract public class Fetch implements Traverseproc {
      * Fetch all (remaining) rows of a query result, returning them as a sequence
      * of sequences (e.g. a list of tuples). Note that the cursor's arraysize attribute
      * can affect the performance of this operation.
-     * <p/>
+     * <p>
      * An Error (or subclass) exception is raised if the previous call to executeXXX()
      * did not produce any result set or no call was issued yet.
      *
@@ -190,16 +190,16 @@ abstract public class Fetch implements Traverseproc {
      * Fetch the next set of rows of a query result, returning a sequence of
      * sequences (e.g. a list of tuples). An empty sequence is returned when
      * no more rows are available.
-     * <p/>
+     * <p>
      * The number of rows to fetch per call is specified by the parameter. If
      * it is not given, the cursor's arraysize determines the number of rows
      * to be fetched. The method should try to fetch as many rows as indicated
      * by the size parameter. If this is not possible due to the specified number
      * of rows not being available, fewer rows may be returned.
-     * <p/>
+     * <p>
      * An Error (or subclass) exception is raised if the previous call to executeXXX()
      * did not produce any result set or no call was issued yet.
-     * <p/>
+     * <p>
      * Note there are performance considerations involved with the size parameter.
      * For optimal performance, it is usually best to use the arraysize attribute.
      * If the size parameter is used, then it is best for it to retain the same value
@@ -219,15 +219,15 @@ abstract public class Fetch implements Traverseproc {
     /**
      * Scroll the cursor in the result set to a new position according
      * to mode.
-     * <p/>
+     * <p>
      * If mode is 'relative' (default), value is taken as offset to
      * the current position in the result set, if set to 'absolute',
      * value states an absolute target position.
-     * <p/>
+     * <p>
      * An IndexError should be raised in case a scroll operation would
      * leave the result set. In this case, the cursor position is left
      * undefined (ideal would be to not move the cursor at all).
-     * <p/>
+     * <p>
      * Note: This method should use native scrollable cursors, if
      * available, or revert to an emulation for forward-only
      * scrollable cursors. The method may raise NotSupportedErrors to
@@ -248,9 +248,9 @@ abstract public class Fetch implements Traverseproc {
 
     /**
      * Builds a tuple containing the meta-information about each column.
-     * <p/>
+     * <p>
      * (name, type_code, display_size, internal_size, precision, scale, null_ok)
-     * <p/>
+     * <p>
      * precision and scale are only available for numeric types
      */
     protected PyObject createDescription(ResultSetMetaData meta) throws SQLException {
@@ -293,9 +293,9 @@ abstract public class Fetch implements Traverseproc {
 
     /**
      * Builds a tuple containing the meta-information about each column.
-     * <p/>
+     * <p>
      * (name, type_code, display_size, internal_size, precision, scale, null_ok)
-     * <p/>
+     * <p>
      * precision and scale are only available for numeric types
      */
     protected PyObject createDescription(Procedure procedure) throws SQLException {
@@ -617,7 +617,7 @@ class StaticFetch extends Fetch {
      * Fetch all (remaining) rows of a query result, returning them as a sequence
      * of sequences (e.g. a list of tuples). Note that the cursor's arraysize attribute
      * can affect the performance of this operation.
-     * <p/>
+     * <p>
      * An Error (or subclass) exception is raised if the previous call to executeXXX()
      * did not produce any result set or no call was issued yet.
      *
@@ -633,16 +633,16 @@ class StaticFetch extends Fetch {
      * Fetch the next set of rows of a query result, returning a sequence of
      * sequences (e.g. a list of tuples). An empty sequence is returned when
      * no more rows are available.
-     * <p/>
+     * <p>
      * The number of rows to fetch per call is specified by the parameter. If
      * it is not given, the cursor's arraysize determines the number of rows
      * to be fetched. The method should try to fetch as many rows as indicated
      * by the size parameter. If this is not possible due to the specified number
      * of rows not being available, fewer rows may be returned.
-     * <p/>
+     * <p>
      * An Error (or subclass) exception is raised if the previous call to executeXXX()
      * did not produce any result set or no call was issued yet.
-     * <p/>
+     * <p>
      * Note there are performance considerations involved with the size parameter.
      * For optimal performance, it is usually best to use the arraysize attribute.
      * If the size parameter is used, then it is best for it to retain the same value

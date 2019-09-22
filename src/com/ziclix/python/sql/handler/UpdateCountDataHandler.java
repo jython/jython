@@ -18,7 +18,7 @@ import java.sql.Statement;
 /**
  * A data handler that keeps track of the update count for each execution of a
  * Statement.
- * <p/>
+ * 
  * <p><b>Note:</b> MySql does not return the correct count for a
  * <a href="http://www.mysql.com/doc/D/E/DELETE.html">delete</a> statement that has
  * no <code>where</code> clause. Therefore, to assure the correct update count is returned,

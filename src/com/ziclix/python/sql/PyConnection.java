@@ -273,7 +273,7 @@ public class PyConnection extends PyObject implements ClassDictInit, ContextMana
      * Commit any pending transaction to the database. Note that if the database supports
      * an auto-commit feature, this must be initially off. An interface method may be
      * provided to turn it back on.
-     * <p/>
+     * <p>
      * Database modules that do not support transactions should implement this method with
      * void functionality.
      */
@@ -295,7 +295,7 @@ public class PyConnection extends PyObject implements ClassDictInit, ContextMana
 
     /**
      * <i>This method is optional since not all databases provide transaction support.</i>
-     * <p/>
+     * <p>
      * In case a database does provide transactions this method causes the database to
      * roll back to the start of any pending transaction. Closing a connection without
      * committing the changes first will cause an implicit rollback to be performed.

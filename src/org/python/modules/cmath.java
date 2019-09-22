@@ -1131,7 +1131,7 @@ public class cmath {
      * @param arg to include in check
      * @return result if <code>arg</code> was <code>NaN</code> or <code>result</code> was not
      *         <code>NaN</code>
-     * @throws PyException (ValueError) if <code>result</code> was <code>NaN</code> and
+     * @throws PyException {@code ValueError} if <code>result</code> was <code>NaN</code> and
      *             <code>arg</code> was not <code>NaN</code>
      */
     private static PyComplex exceptNaN(PyComplex result, PyComplex arg) throws PyException {

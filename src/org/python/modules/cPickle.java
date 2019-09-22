@@ -1,3 +1,4 @@
+// Copyright (c)2019 Jython Developers
 /*
  * Copyright 1998 Finn Bock.
  *
@@ -5,6 +6,7 @@
  * Copyright (c) 1991-1995 by Stichting Mathematisch Centrum, Amsterdam,
  * The Netherlands.
  */
+// Licensed to the PSF under a Contributor Agreement
 
 /* note about impl:
   instanceof vs. CPython type(.) is .
@@ -289,10 +291,8 @@ import org.python.util.Generic;
  * <P>
  * Apart from the <tt>Pickler</tt> and <tt>Unpickler</tt> classes, the
  * module defines the following functions, and an exception:
- *
- * <P>
- * <dl><dt><b><tt>dump</tt></a></b> (<var>object, file</var><big>[</big><var>,
- *      bin</var><big>]</big>)
+ * <dl>
+ * <dt><b><tt>dump</tt></b> (object, file[, bin])</dt>
  * <dd>
  * Write a pickled representation of <i>obect</i> to the open file object
  * <i>file</i>.  This is equivalent to
@@ -300,41 +300,35 @@ import org.python.util.Generic;
  * If the optional <i>bin</i> argument is present and nonzero, the binary
  * pickle format is used; if it is zero or absent, the (less efficient)
  * text pickle format is used.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>load</tt></a></b> (<var>file</var>)
+ * <dt><b><tt>load</tt></b> (file)</dt>
  * <dd>
  * Read a pickled object from the open file object <i>file</i>.  This is
  * equivalent to "<tt>Unpickler(<i>file</i>).load()</tt>".
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>dumps</tt></a></b> (<var>object</var><big>[</big><var>,
- *     bin</var><big>]</big>)
+ * <dt><b><tt>dumps</tt></b> (object[, bin])</dt>
  * <dd>
  * Return the pickled representation of the object as a string, instead
  * of writing it to a file.  If the optional <i>bin</i> argument is
  * present and nonzero, the binary pickle format is used; if it is zero
  * or absent, the (less efficient) text pickle format is used.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>loads</tt></a></b> (<var>string</var>)
+ * <dt><b><tt>loads</tt></b> (string)</dt>
  * <dd>
  * Read a pickled object from a string instead of a file.  Characters in
  * the string past the pickled object's representation are ignored.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><a name="l2h-3763"><tt>PicklingError</tt></a></b>
+ * <dt><b><tt>PicklingError</tt></b></dt>
  * <dd>
  * This exception is raised when an unpicklable object is passed to
  * <tt>Pickler.dump()</tt>.
+ * </dd>
  * </dl>
  *
- *
- * <p>
  * For the complete documentation on the pickle module, please see the
  * "Python Library Reference"
  * <p><hr><p>
@@ -781,10 +775,11 @@ public class cPickle implements ClassDictInit {
             PyType t = object.getType();
 
             if (t == TupleType && object.__len__() == 0) {
-                if (protocol > 0)
+                if (protocol > 0) {
                     save_empty_tuple(object);
-                else
+                } else {
                     save_tuple(object);
+                }
                 return;
             }
 
@@ -794,8 +789,9 @@ public class cPickle implements ClassDictInit {
                 return;
             }
 
-            if (save_type(object, t))
+            if (save_type(object, t)) {
                 return;
+            }
 
             if (!pers_save && inst_persistent_id != null && save_pers(object, inst_persistent_id)) {
                 return;
@@ -814,8 +810,9 @@ public class cPickle implements ClassDictInit {
                     tup = reduce.__call__(Py.newInteger(protocol));
                 } else {
                     reduce = object.__findattr__("__reduce__");
-                    if (reduce == null)
+                    if (reduce == null) {
                         throw new PyException(UnpickleableError, object);
+                    }
                     tup = reduce.__call__();
                 }
             } else {
@@ -883,9 +880,10 @@ public class cPickle implements ClassDictInit {
             if(protocol >= 2 && callableName != null
                     && "__newobj__".equals(callableName.toString())) {
                 PyObject cls = arg_tup.__finditem__(0);
-                if(cls.__findattr__("__new__") == null)
+                if(cls.__findattr__("__new__") == null) {
                     throw new PyException(PicklingError,
                                           "args[0] from __newobj__ args has no __new__");
+                }
                 // TODO: check class
                 save(cls);
                 save(arg_tup.__getslice__(Py.One, Py.None));
@@ -915,40 +913,41 @@ public class cPickle implements ClassDictInit {
 
         final private boolean save_type(PyObject object, PyType type) {
             //System.out.println("save_type " + object + " " + cls);
-            if (type == NoneType)
+            if (type == NoneType) {
                 save_none(object);
-            else if (type == StringType)
+            } else if (type == StringType) {
                 save_string(object);
-            else if (type == UnicodeType)
+            } else if (type == UnicodeType) {
                 save_unicode(object);
-            else if (type == IntType)
+            } else if (type == IntType) {
                 save_int(object);
-            else if (type == LongType)
+            } else if (type == LongType) {
                 save_long(object);
-            else if (type == FloatType)
+            } else if (type == FloatType) {
                 save_float(object);
-            else if (type == TupleType)
+            } else if (type == TupleType) {
                 save_tuple(object);
-            else if (type == ListType)
+            } else if (type == ListType) {
                 save_list(object);
-            else if (type == DictionaryType || type == StringMapType)
+            } else if (type == DictionaryType || type == StringMapType) {
                 save_dict(object);
-            else if (type == InstanceType)
+            } else if (type == InstanceType) {
                 save_inst((PyInstance)object);
-            else if (type == ClassType)
+            } else if (type == ClassType) {
                 save_global(object);
-            else if (type == TypeType)
+            } else if (type == TypeType) {
                 save_global(object);
-            else if (type == FunctionType)
+            } else if (type == FunctionType) {
                 save_global(object);
-            else if (type == BuiltinCallableType)
+            } else if (type == BuiltinCallableType) {
                 save_global(object);
-            else if (type == ReflectedFunctionType)
+            } else if (type == ReflectedFunctionType) {
                 save_global(object);
-            else if (type == BoolType)
+            } else if (type == BoolType) {
                 save_bool(object);
-            else
+            } else {
                 return false;
+            }
             return true;
         }
 
@@ -1113,12 +1112,14 @@ public class cPickle implements ClassDictInit {
             int len = object.__len__();
 
             if (len > 0 && len <= 3 && protocol >= 2) {
-                for (int i = 0; i < len; i++)
+                for (int i = 0; i < len; i++) {
                     save(object.__finditem__(i));
+                }
                 int m = getMemoPosition(d, object);
                 if (m >= 0) {
-                    for (int i = 0; i < len; i++)
+                    for (int i = 0; i < len; i++) {
                         file.write(POP);
+                    }
                     get(m);
                 }
                 else {
@@ -1131,8 +1132,9 @@ public class cPickle implements ClassDictInit {
 
             file.write(MARK);
 
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < len; i++) {
                 save(object.__finditem__(i));
+            }
 
             if (len > 0) {
                 int m = getMemoPosition(d, object);
@@ -1142,8 +1144,9 @@ public class cPickle implements ClassDictInit {
                         get(m);
                         return;
                     }
-                    for (int i = 0; i < len+1; i++)
+                    for (int i = 0; i < len+1; i++) {
                         file.write(POP);
+                    }
                     get(m);
                     return;
                 }
@@ -1158,9 +1161,9 @@ public class cPickle implements ClassDictInit {
         }
 
         private void save_list(PyObject object) {
-            if (protocol > 0)
+            if (protocol > 0) {
                 file.write(EMPTY_LIST);
-            else {
+            } else {
                 file.write(MARK);
                 file.write(LIST);
             }
@@ -1188,15 +1191,16 @@ public class cPickle implements ClassDictInit {
                     }
                 }
             }
-            if (countInBatch > 0)
+            if (countInBatch > 0) {
                 file.write(APPENDS);
+            }
         }
 
 
         private void save_dict(PyObject object) {
-            if (protocol > 0)
+            if (protocol > 0) {
                 file.write(EMPTY_DICT);
-            else {
+            } else {
                 file.write(MARK);
                 file.write(DICT);
             }
@@ -1264,13 +1268,15 @@ public class cPickle implements ClassDictInit {
             }
 
             file.write(MARK);
-            if (protocol > 0)
+            if (protocol > 0) {
                 save(cls);
+            }
 
             if (args != null) {
                 int len = args.__len__();
-                for (int i = 0; i < len; i++)
+                for (int i = 0; i < len; i++) {
                     save(args.__finditem__(i));
+                }
             }
 
             int mid = putMemo(get_id(object), object);
@@ -1305,12 +1311,14 @@ public class cPickle implements ClassDictInit {
 
 
         final private void save_global(PyObject object, PyObject name) {
-            if (name == null)
+            if (name == null) {
                 name = object.__findattr__("__name__");
+            }
 
             PyObject module = object.__findattr__("__module__");
-            if (module == null || module == Py.None)
+            if (module == null || module == Py.None) {
                 module = whichmodule(object, name);
+            }
 
             if(protocol >= 2) {
                 PyTuple extKey = new PyTuple(module, name);
@@ -1380,8 +1388,9 @@ public class cPickle implements ClassDictInit {
                                               PyObject clsname)
     {
         PyObject name = classmap.get(cls);
-        if (name != null)
+        if (name != null) {
             return name;
+        }
 
         name = new PyString("__main__");
 
@@ -1465,21 +1474,27 @@ public class cPickle implements ClassDictInit {
                 if (tkey == key && value == values[index]) {
                     return index;
                 }
-                if (values[index] == null) return -1;
+                if (values[index] == null) {
+                    return -1;
+                }
                 index = (index+stepsize) % maxindex;
             }
         }
 
         public int findPosition(int key, Object value) {
             int idx = findIndex(key, value);
-            if (idx < 0) return -1;
+            if (idx < 0) {
+                return -1;
+            }
             return position[idx];
         }
 
 
         public Object findValue(int key, Object value) {
             int idx = findIndex(key, value);
-            if (idx < 0) return null;
+            if (idx < 0) {
+                return null;
+            }
             return values[idx];
         }
 
@@ -1514,7 +1529,9 @@ public class cPickle implements ClassDictInit {
         private final void resize(int capacity) {
             int p = prime;
             for(; p<primes.length; p++) {
-                if (primes[p] >= capacity) break;
+                if (primes[p] >= capacity) {
+                    break;
+                }
             }
             if (primes[p] < capacity) {
                 throw Py.ValueError("can't make hashtable of size: " +
@@ -1538,14 +1555,18 @@ public class cPickle implements ClassDictInit {
 
                 for(int i=0; i<n; i++) {
                     Object value = oldValues[i];
-                    if (value == null) continue;
+                    if (value == null) {
+                        continue;
+                    }
                     insertkey(oldKeys[i], oldPositions[i], value);
                 }
             }
         }
 
         public void put(int key, int pos, Object value) {
-            if (2*filled > keys.length) resize(keys.length+1);
+            if (2*filled > keys.length) {
+                resize(keys.length+1);
+            }
             insertkey(key, pos, value);
         }
     }
@@ -1603,8 +1624,9 @@ public class cPickle implements ClassDictInit {
 //              System.out.println("load:" + s);
 //              for (int i = 0; i < stackTop; i++)
 //                  System.out.println("   " + stack[i]);
-                if (s.length() < 1)
+                if (s.length() < 1) {
                     load_eof();
+                }
                 char key = s.charAt(0);
                 switch (key) {
                 case PERSID:          load_persid(); break;
@@ -1670,9 +1692,11 @@ public class cPickle implements ClassDictInit {
 
 
         final private int marker() {
-            for (int k = stackTop-1; k >= 0; k--)
-                if (stack[k] == mark)
+            for (int k = stackTop-1; k >= 0; k--) {
+                if (stack[k] == mark) {
                     return stackTop-k-1;
+                }
+            }
             throw new PyException(UnpicklingError,
                         "Inputstream corrupt, marker not found");
         }
@@ -1684,8 +1708,9 @@ public class cPickle implements ClassDictInit {
 
         private void load_proto() {
             int proto = file.read(1).charAt(0);
-            if (proto < 0 || proto > 2)
+            if (proto < 0 || proto > 2) {
                 throw Py.ValueError("unsupported pickle protocol: " + proto);
+            }
         }
 
 
@@ -1807,12 +1832,13 @@ public class cPickle implements ClassDictInit {
         }
 
         private int read_binint(int length) {
-            if (length == 1)
+            if (length == 1) {
                 return file.read(1).charAt(0);
-            else if (length == 2)
+            } else if (length == 2) {
                 return read_binint2();
-            else
+            } else {
                 return read_binint();
+            }
         }
 
         final private void load_float() {
@@ -1838,8 +1864,9 @@ public class cPickle implements ClassDictInit {
 
             String value;
             char quote = line.charAt(0);
-            if (quote != '"' && quote != '\'')
+            if (quote != '"' && quote != '\'') {
                 throw Py.ValueError("insecure string pickle");
+            }
 
             int nslash = 0;
             int i;
@@ -1847,19 +1874,23 @@ public class cPickle implements ClassDictInit {
             int n = line.length();
             for (i = 1; i < n; i++) {
                 ch = line.charAt(i);
-                if (ch == quote && nslash % 2 == 0)
+                if (ch == quote && nslash % 2 == 0) {
                     break;
-                if (ch == '\\')
+                }
+                if (ch == '\\') {
                     nslash++;
-                else
+                } else {
                     nslash = 0;
+                }
             }
-            if (ch != quote)
+            if (ch != quote) {
                 throw Py.ValueError("insecure string pickle");
+            }
 
             for (i++ ; i < line.length(); i++) {
-                if (line.charAt(i) > ' ')
+                if (line.charAt(i) > ' ') {
                     throw Py.ValueError("insecure string pickle " + i);
+                }
             }
             value = PyString.decode_UnicodeEscape(line, 1, n-1,
                                                   "strict", false);
@@ -1988,9 +2019,10 @@ public class cPickle implements ClassDictInit {
 
         final private PyObject find_class(String module, String name) {
             if (find_global != null) {
-               if (find_global == Py.None)
-                   throw new PyException(UnpicklingError,
+               if (find_global == Py.None) {
+                throw new PyException(UnpicklingError,
                          "Global and instance pickles are not supported.");
+            }
                return find_global.__call__(new PyString(module), new PyString(name));
             }
 
@@ -2049,8 +2081,9 @@ public class cPickle implements ClassDictInit {
             int n = seq.__len__();
             PyObject[] objs= new PyObject[n];
 
-            for(int i=0; i<n; i++)
+            for(int i=0; i<n; i++) {
                 objs[i] = seq.__finditem__(i);
+            }
             return objs;
         }
 
@@ -2225,8 +2258,9 @@ public class cPickle implements ClassDictInit {
         }
 
         final private void pop(int count) {
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
                 stack[--stackTop] = null;
+            }
         }
 
 

@@ -43,13 +43,14 @@ public class ExtraMath {
      * <p>
      * For sufficiently small <i>x*10<sup>n</sup></i>, the rounding is to zero, and the return value
      * is a signed zero (same sign as x). Suppose <i>x = a*2<sup>b</sup></i>, where the significand
-     * we must have <i>a&lt;2</i>. Sufficiently small means such that <i>n log<sub>2</sub>10 <
+     * we must have <i>a&lt;2</i>. Sufficiently small means such that <i>n log<sub>2</sub>10 &lt;
      * -(b+2)</i>.
      * <p>
      * For sufficiently large <i>x*10<sup>n</sup></i>, the adjustment of rounding is too small to
      * affect the least significant bit. That is <i>a*2<sup>b</sup></i> represents an amount greater
      * than one, and rounding no longer affects the value, and the return is x. Since the matissa
-     * has 52 fractional bits, sufficiently large means such that <i>n log<sub>2</sub>10 > 52-b</i>.
+     * has 52 fractional bits, sufficiently large means such that <i>n log<sub>2</sub>10 &gt;
+     * 52-b</i>.
      *
      * @param x to round
      * @param n decimal places

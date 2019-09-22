@@ -41,7 +41,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return the byte indexed from a one-dimensional buffer with item size one. This is part of the
      * fully-encapsulated API: the buffer implementation exported takes care of navigating the
      * structure of the buffer. Results are undefined where the number of dimensions is not one or
-     * if <code>itemsize&gt;1</code>.
+     * if <code>itemsize</code>&gt;1.
      *
      * @param index to retrieve from
      * @return the item at index, which is a byte
@@ -52,10 +52,10 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return the unsigned byte value indexed from a one-dimensional buffer with item size one. This
      * is part of the fully-encapsulated API: the exporter takes care of navigating the structure of
      * the buffer. Results are undefined where the number of dimensions is not one or if
-     * <code>itemsize&gt;1</code>.
+     * <code>itemsize</code>&gt;1.
      *
      * @param index to retrieve from
-     * @return the item at index, treated as an unsigned byte, <code>=0xff & byteAt(index)</code>
+     * @return the item at index, treated as an unsigned byte, {@code =0xff & byteAt(index)}
      */
     int intAt(int index) throws IndexOutOfBoundsException;
 
@@ -63,7 +63,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Store the given byte at the indexed location in of a one-dimensional buffer with item size
      * one. This is part of the fully-encapsulated API: the buffer implementation exported takes
      * care of navigating the structure of the buffer. Results are undefined where the number of
-     * dimensions is not one or if <code>itemsize&gt;1</code>.
+     * dimensions is not one or if <code>itemsize</code>&gt;1.
      *
      * @param value to store
      * @param index to location
@@ -76,7 +76,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return the byte indexed from an N-dimensional buffer with item size one. This is part of the
      * fully-encapsulated API: the buffer implementation exported takes care of navigating the
      * structure of the buffer. The indices must be correct in number and range for the array shape.
-     * Results are undefined where <code>itemsize&gt;1</code>.
+     * Results are undefined where <code>itemsize</code>&gt;1.
      *
      * @param indices specifying location to retrieve from
      * @return the item at location, which is a byte
@@ -87,10 +87,10 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Return the unsigned byte value indexed from an N-dimensional buffer with item size one. This
      * is part of the fully-encapsulated API: the buffer implementation exported takes care of
      * navigating the structure of the buffer. The indices must be correct in number and range for
-     * the array shape. Results are undefined where <code>itemsize&gt;1</code>.
+     * the array shape. Results are undefined where <code>itemsize</code>&gt;1.
      *
      * @param indices specifying location to retrieve from
-     * @return the item at location, treated as an unsigned byte, <code>=0xff & byteAt(index)</code>
+     * @return the item at location, treated as an unsigned byte, {@code =0xff & byteAt(index)}
      */
     int intAt(int... indices) throws IndexOutOfBoundsException;
 
@@ -98,7 +98,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * Store the given byte at the indexed location in of an N-dimensional buffer with item size
      * one. This is part of the fully-encapsulated API: the exporter takes care of navigating the
      * structure of the buffer. The indices must be correct in number and range for the array shape.
-     * Results are undefined where <code>itemsize&gt;1</code>.
+     * Results are undefined where <code>itemsize</code>&gt;1.
      *
      * @param value to store
      * @param indices specifying location to store at
@@ -145,7 +145,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      * @param destIndex starting item-index in the destination (i.e. <code>this</code>)
      * @param count number of items to copy in
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
-     * @throws PyException (TypeError) if read-only buffer
+     * @throws PyException {@code TypeError} if read-only buffer
      */
     void copyFrom(byte[] src, int srcPos, int destIndex, int count)    // mimic arraycopy args
             throws IndexOutOfBoundsException, PyException;
@@ -157,7 +157,7 @@ public interface PyBuffer extends PyBUF, BufferProtocol, AutoCloseable {
      *
      * @param src source buffer
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
-     * @throws PyException (TypeError) if read-only buffer
+     * @throws PyException {@code TypeError} if read-only buffer
      */
     void copyFrom(PyBuffer src) throws IndexOutOfBoundsException, PyException;
 

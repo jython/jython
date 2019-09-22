@@ -924,7 +924,7 @@ public class PyComplex extends PyObject {
      *
      * @param spec a parsed PEP-3101 format specification.
      * @return 0, 1, or other value for none-format, a float format, or incorrect type.
-     * @throws PyException(ValueError) if the specification is faulty.
+     * @throws PyException {@code ValueError} if the specification is faulty.
      */
     @SuppressWarnings("fallthrough")
     private static int checkSpecification(Spec spec) {

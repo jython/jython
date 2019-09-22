@@ -117,8 +117,8 @@ public class PyInteger extends PyObject {
      *
      * @param x to convert to an int
      * @return int or long result.
-     * @throws PyException (TypeError) if no method of conversion can be found
-     * @throws PyException (AttributeError) if neither __int__ nor __trunc__ found (?)
+     * @throws PyException {@code TypeError} if no method of conversion can be found
+     * @throws PyException {@code AttributeError} if neither __int__ nor __trunc__ found (?)
      */
     private static PyObject asPyInteger(PyObject x) throws PyException {
         // XXX: Not sure that this perfectly matches CPython semantics.
@@ -1062,7 +1062,7 @@ public class PyInteger extends PyObject {
      *
      * @param spec a parsed PEP-3101 format specification.
      * @return a formatter ready to use, or null if the type is not an integer format type.
-     * @throws PyException(ValueError) if the specification is faulty.
+     * @throws PyException {@code ValueError} if the specification is faulty.
      */
     @SuppressWarnings("fallthrough")
     static IntegerFormatter prepareFormatter(Spec spec) throws PyException {

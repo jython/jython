@@ -30,7 +30,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
     private int lenMarker;
     /** The length of the exponent sign and digits or zero if there isn't one. */
     private int lenExponent;
-    /** if >=0, minimum digits to follow decimal point (where consulted) */
+    /** if &ge;0, minimum digits to follow decimal point (where consulted) */
     private int minFracDigits;
 
     /**
@@ -85,7 +85,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * formats remove trailing zero digits, trimming to zero or one. Set member
      * <code>minFracDigits</code>, to modify this behaviour.
      *
-     * @param minFracDigits if &lt;0 prevent truncation; if >=0 the minimum number of fractional
+     * @param minFracDigits if &lt;0 prevent truncation; if &ge;0 the minimum number of fractional
      *            digits; when this is zero, and all fractional digits are zero, the decimal point
      *            will also be removed.
      */
@@ -436,6 +436,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * these recommended values:
      *
      * <table>
+     * <caption>Recommended values for formatting arguments</caption>
      * <tr>
      * <th>type</th>
      * <th>precision</th>

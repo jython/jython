@@ -58,7 +58,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
      *             inconsistent with <code>storage.length</code>
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage, int index0, int size)
             throws PyException, ArrayIndexOutOfBoundsException, NullPointerException {
@@ -92,7 +92,7 @@ public class SimpleNIOBuffer extends BaseNIOBuffer {
      * @param obj exporting object (or <code>null</code>)
      * @param storage the <code>ByteBuffer</code> wrapping the exported object state
      * @throws NullPointerException if <code>storage</code> is null
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage) throws PyException,
             NullPointerException {

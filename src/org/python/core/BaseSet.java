@@ -64,7 +64,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
     }
 
     /**
-     * The union of <code>this</code> with <code>other</code>. <p/> <br/> (I.e. all elements
+     * The union of <code>this</code> with <code>other</code>. <p>  (I.e. all elements
      * that are in either set)
      *
      * @param other A <code>BaseSet</code> instance.
@@ -84,8 +84,8 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
 
     /**
      * The intersection of the <code>this</code> with <code>other</code>.
-     * <p/>
-     * <br/>
+     * <p>
+     *
      * (I.e. all elements that are in both sets)
      *
      * @param other A <code>BaseSet</code> instance.
@@ -105,8 +105,8 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
 
     /**
      * The difference of the <code>this</code> with <code>other</code>.
-     * <p/>
-     * <br/>
+     * <p>
+     *
      * (I.e. all elements that are in this set and not in the other)
      *
      * @param other A <code>BaseSet</code> instance.
@@ -153,8 +153,8 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
 
     /**
      * The symmetric difference of the <code>this</code> with <code>other</code>.
-     * <p/>
-     * <br/>
+     * <p>
+     *
      * (I.e. all elements that are in exactly one of the sets)
      *
      * @param other A <code>BaseSet</code> instance.
@@ -367,7 +367,7 @@ public abstract class BaseSet extends PyObject implements Set, Traverseproc {
     }
 
     /**
-     * Used for pickling.  Uses the module <code>setsfactory</sets> to
+     * Used for pickling.  Uses the module <code>setsfactory</code> to
      * export safe constructors.
      *
      * @return a tuple of (constructor, (elements))

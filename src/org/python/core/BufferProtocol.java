@@ -26,7 +26,7 @@ public interface BufferProtocol {
      *
      * @param flags specifying features demanded and the navigational capabilities of the consumer
      * @return exported buffer
-     * @throws PyException (BufferError) when expectations do not correspond with the buffer
+     * @throws PyException {@code BufferError} when expectations do not correspond with the buffer
      * @throws ClassCastException when the object only formally implements {@code BufferProtocol}
      */
     PyBuffer getBuffer(int flags) throws PyException, ClassCastException;

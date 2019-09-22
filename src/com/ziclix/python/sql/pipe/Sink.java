@@ -24,9 +24,9 @@ public interface Sink {
 
     /**
      * Invoked for each row of data.  In general, the first row of data will
-     * consist of header information in the format:<br/>
+     * consist of header information in the format:<br>
      * &nbsp;&nbsp;[(colName, colType), ...]
-     * and in the format:<br/>
+     * and in the format:<br>
      * &nbsp;&nbsp;(colData, colData, ...)
      * for all other data.
      */

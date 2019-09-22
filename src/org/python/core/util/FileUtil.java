@@ -72,7 +72,7 @@ public class FileUtil {
     }
 
     /**
-     * Read all bytes from the input stream. <p/> Note that using this method to
+     * Read all bytes from the input stream. <p> Note that using this method to
      * read very large streams could cause out-of-memory exceptions and/or block
      * for large periods of time.
      */

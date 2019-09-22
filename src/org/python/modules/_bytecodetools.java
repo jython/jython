@@ -6,7 +6,7 @@ import org.python.core.Py;
 
 /**
  * BytecodeTools provides tools for generated JVM bytecode.
- * <p/>
+ * <p>
  * This module supports registering a python callback function
  * to be notified when new bytecode is loaded.
  * see also core/BytecodeNotification.java

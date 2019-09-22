@@ -29,56 +29,52 @@ import org.python.core.util.StringUtil;
  * The <tt>binascii.java</tt> module contains a number of methods to convert
  * between binary and various ASCII-encoded binary
  * representations. Normally, you will not use these modules directly but
- * use wrapper modules like <tt>uu</tt><a name="l2h-"></a> or
- * <tt>hexbin</tt><a name="l2h-"></a> instead, this module solely
- * exists because bit-manipuation of large amounts of data is slow in
+ * use wrapper modules like <tt>uu</tt> or
+ * <tt>hexbin</tt> instead, this module solely
+ * exists because bit-manipulation of large amounts of data is slow in
  * Python.
  *
  * <P>
  * The <tt>binascii.java</tt> module defines the following functions:
- * <P>
- * <dl><dt><b><a name="l2h-19960"><tt>a2b_uu</tt></a></b> (<var>string</var>)
+ *
+ * <dl>
+ * <dt><b><tt>a2b_uu</tt></b> (string)</dt>
  * <dd>
  * Convert a single line of uuencoded data back to binary and return the
  * binary data. Lines normally contain 45 (binary) bytes, except for the
  * last line. Line data may be followed by whitespace.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>b2a_uu</tt></b> (<var>data</var>)
+ * <dt><b><tt>b2a_uu</tt></b> (data)</dt>
  * <dd>
  * Convert binary data to a line of ASCII characters, the return value
  * is the converted line, including a newline char. The length of
  * <i>data</i> should be at most 45.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>a2b_base64</tt></b> (<var>string</var>)
+ * <dt><b><tt>a2b_base64</tt></b> (string)</dt>
  * <dd>
  * Convert a block of base64 data back to binary and return the
  * binary data. More than one line may be passed at a time.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>b2a_base64</tt></b> (<var>data</var>)
+ * <dt><b><tt>b2a_base64</tt></b> (data)</dt>
  * <dd>
  * Convert binary data to a line of ASCII characters in base64 coding.
  * The return value is the converted line, including a newline char.
  * The length of <i>data</i> should be at most 57 to adhere to the base64
  * standard.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>a2b_hqx</tt></b> (<var>string</var>)
+ * <dt><b><tt>a2b_hqx</tt></b> (string)</dt>
  * <dd>
  * Convert binhex4 formatted ASCII data to binary, without doing
  * RLE-decompression. The string should contain a complete number of
  * binary bytes, or (in case of the last portion of the binhex4 data)
  * have the remaining bits zero.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>rledecode_hqx</tt></b> (<var>data</var>)
+ * <dt><b><tt>rledecode_hqx</tt></b> (data)</dt>
  * <dd>
  * Perform RLE-decompression on the data, as per the binhex4
  * standard. The algorithm uses <tt>0x90</tt> after a byte as a repeat
@@ -86,46 +82,43 @@ import org.python.core.util.StringUtil;
  * value of <tt>0x90</tt>. The routine returns the decompressed data,
  * unless data input data ends in an orphaned repeat indicator, in which
  * case the <tt>Incomplete</tt> exception is raised.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>rlecode_hqx</tt></b> (<var>data</var>)
+ * <dt><b><tt>rlecode_hqx</tt></b> (data)</dt>
  * <dd>
  * Perform binhex4 style RLE-compression on <i>data</i> and return the
  * result.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>b2a_hqx</tt></b> (<var>data</var>)
+ * <dt><b><tt>b2a_hqx</tt></b> (data)</dt>
  * <dd>
  * Perform hexbin4 binary-to-ASCII translation and return the
  * resulting string. The argument should already be RLE-coded, and have a
  * length divisible by 3 (except possibly the last fragment).
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>crc_hqx</tt></b> (<var>data, crc</var>)
+ * <dt><b><tt>crc_hqx</tt></b> (data, crc)</dt>
  * <dd>
  * Compute the binhex4 crc value of <i>data</i>, starting with an initial
  * <i>crc</i> and returning the result.
- * </dl>
+ * </dd>
  *
- * <dl><dt><b><tt>Error</tt></b>
+ * <dt><b><tt>Error</tt></b></dt>
  * <dd>
  * Exception raised on errors. These are usually programming errors.
- * </dl>
+ * </dd>
  *
- * <P>
- * <dl><dt><b><tt>Incomplete</tt></b>
+ * <dt><b><tt>Incomplete</tt></b></dt>
  * <dd>
  * Exception raised on incomplete data. These are usually not programming
  * errors, but may be handled by reading a little more data and trying
  * again.
+ * </dd>
  * </dl>
  *
  * The module is a line-by-line conversion of the original binasciimodule.c
  * written by Jack Jansen, except that all mistakes and errors are my own.
- * <p>
+ *
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
  * @version binascii.java,v 1.6 1999/02/20 11:37:07 fb Exp
 
@@ -284,8 +277,9 @@ public class binascii {
         StringBuilder bin_data = new StringBuilder();
 
         try (PyBuffer ascii_data = getTextBuffer(bp)) {
-            if (ascii_data.getLen() == 0)
+            if (ascii_data.getLen() == 0) {
                 return new PyString("");
+            }
 
             char this_ch;
             int i;
@@ -334,8 +328,9 @@ public class binascii {
             }
 
             // finally, if we haven't decoded enough stuff, fill it up with zeros
-            for (; i < bin_len; i++)
+            for (; i < bin_len; i++) {
                 bin_data.append((char) 0);
+            }
 
             return new PyString(bin_data.toString());
 
@@ -374,10 +369,11 @@ public class binascii {
 
             for (int i = 0; bin_len > 0 || leftbits != 0; i++, bin_len--) {
                 // Shift the data (or padding) into our buffer
-                if (bin_len > 0)    // Data
+                if (bin_len > 0) {
                     leftchar = (leftchar << 8) | (char) bin_data.intAt(i);
-                else  // Padding
+                } else {
                     leftchar <<= 8;
+                }
                 leftbits += 8;
 
                 // See if there are 6-bit groups ready
@@ -409,8 +405,9 @@ public class binascii {
             int c = b.intAt(offset);
             short b64val = table_a2b_base64[c & 0x7f];
             if (((c <= 0x7f) && (b64val != -1)) ) {
-                if (num == 0)
-                     ret = c;
+                if (num == 0) {
+                    ret = c;
+                }
                 num--;
             }
 
@@ -445,14 +442,15 @@ public class binascii {
             for (int i = 0; ascii_len > 0; ascii_len--, i++) {
                 // Skip some punctuation
                 this_ch = (char) ascii_data.intAt(i);
-                if (this_ch > 0x7F || this_ch == '\r' || this_ch == '\n' || this_ch == ' ')
+                if (this_ch > 0x7F || this_ch == '\r' || this_ch == '\n' || this_ch == ' ') {
                     continue;
+                }
 
                 if (this_ch == BASE64_PAD) {
                     if (quad_pos < 2 || (quad_pos == 2
-                            && binascii_find_valid(ascii_data, i, 1) != BASE64_PAD))
+                            && binascii_find_valid(ascii_data, i, 1) != BASE64_PAD)) {
                         continue;
-                    else {
+                    } else {
                         // A pad sequence means no more input.
                         // We've already interpreted the data
                         // from the quad at this point.
@@ -462,8 +460,9 @@ public class binascii {
                 }
 
                 short this_v = table_a2b_base64[this_ch];
-                if (this_v == -1)
+                if (this_v == -1) {
                     continue;
+                }
 
                 // Shift it in on the low end, and see if there's
                 // a byte ready for output.
@@ -566,8 +565,9 @@ public class binascii {
             for (int i = 0; len > 0; len--, i++) {
                 // Get the byte and look it up
                 this_ch = (char) table_a2b_hqx[ascii_data.intAt(i)];
-                if (this_ch == SKIP)
+                if (this_ch == SKIP) {
                     continue;
+                }
                 if (this_ch == FAIL) {
                     throw new PyException(Error, "Illegal char");
                 }
@@ -624,8 +624,9 @@ public class binascii {
                     int inend;
                     for (inend=in+1; inend < len &&
                                      (char) in_data.intAt(inend) == ch &&
-                                     inend < in+255; inend++)
+                                     inend < in+255; inend++) {
                         ;
+                    }
                     if (inend - in > 3) {
                         // More than 3 in a row. Output RLE.
                         out_data.append(ch);
@@ -711,17 +712,22 @@ public class binascii {
         StringBuilder out_data = new StringBuilder();
         try {
             // Empty string is a special case
-            if (in_len == 0)
+            if (in_len == 0) {
                 return Py.EmptyString;
+            }
 
 
             // Handle first byte separately (since we have to get angry
             // in case of an orphaned RLE code).
-            if (--in_len < 0) throw new PyException(Incomplete);
+            if (--in_len < 0) {
+                throw new PyException(Incomplete);
+            }
             in_byte = (char) in_data.intAt(i++);
 
             if (in_byte == RUNCHAR) {
-                if (--in_len < 0) throw new PyException(Incomplete);
+                if (--in_len < 0) {
+                    throw new PyException(Incomplete);
+                }
                 in_repeat = (char) in_data.intAt(i++);
 
                 if (in_repeat != 0) {
@@ -735,11 +741,15 @@ public class binascii {
             }
 
             while (in_len > 0) {
-                if (--in_len < 0) throw new PyException(Incomplete);
+                if (--in_len < 0) {
+                    throw new PyException(Incomplete);
+                }
                 in_byte = (char) in_data.intAt(i++);
 
                 if (in_byte == RUNCHAR) {
-                    if (--in_len < 0) throw new PyException(Incomplete);
+                    if (--in_len < 0) {
+                        throw new PyException(Incomplete);
+                    }
                     in_repeat = (char) in_data.intAt(i++);
 
                     if (in_repeat == 0) {
@@ -748,8 +758,9 @@ public class binascii {
                     } else {
                         // Pick up value and output a sequence of it
                         in_byte = out_data.charAt(out_data.length()-1);
-                        while (--in_repeat > 0)
+                        while (--in_repeat > 0) {
                             out_data.append(in_byte);
+                        }
                     }
                 } else {
                     // Normal byte
@@ -868,10 +879,11 @@ static long[] crc_32_tab = new long[] {
         } finally {
             bin_data.release();
         }
-        if (crc >= 0x80000000)
+        if (crc >= 0x80000000) {
             return -(int)(crc+1 & 0xFFFFFFFF);
-        else
+        } else {
             return (int)(crc & 0xFFFFFFFF);
+        }
     }
 
 
@@ -927,14 +939,16 @@ static long[] crc_32_tab = new long[] {
              * XXX What should we do about strings with an odd length? Should we add an implicit
              * leading zero, or a trailing zero? For now, raise an exception.
              */
-            if (arglen % 2 != 0)
+            if (arglen % 2 != 0) {
                 throw Py.TypeError("Odd-length string");
+            }
 
             for (int i = 0; i < arglen; i += 2) {
                 int top = Character.digit(argbuf.intAt(i), 16);
                 int bot = Character.digit(argbuf.intAt(i + 1), 16);
-                if (top == -1 || bot == -1)
+                if (top == -1 || bot == -1) {
                     throw Py.TypeError("Non-hexadecimal digit found");
+                }
                 retbuf.append((char) ((top << 4) + bot));
             }
 
@@ -968,8 +982,9 @@ static long[] crc_32_tab = new long[] {
         try {
         	val = ap.getInt(index, dflt) != 0;
         } catch (PyException e) {
-        	if (e.match(Py.AttributeError) || e.match(Py.ValueError))
-			throw Py.TypeError(errMsg);
+        	if (e.match(Py.AttributeError) || e.match(Py.ValueError)) {
+                throw Py.TypeError(errMsg);
+            }
         	throw e;
         }
         return val;
@@ -1027,7 +1042,7 @@ static long[] crc_32_tab = new long[] {
 
     final private static Pattern RN_TO_N = Pattern.compile("\r\n");
     final private static Pattern N_TO_RN = Pattern.compile("(?<!\r)\n");
-    
+
     final public static PyString __doc__b2a_qp = new PyString("b2a_qp(data, quotetabs=0, istext=1, header=0) -> s;\n"
     		+ "Encode a string using quoted-printable encoding.\n\n"
     		+ "On encoding, when istext is set, newlines are not encoded, and white\n"
@@ -1146,7 +1161,7 @@ static long[] crc_32_tab = new long[] {
      * it is byte-like, the bytes are used unchanged, assumed in the "intended" character set. It
      * may be a {@code PyUnicode}, in which case the it will be decoded to bytes using the default
      * encoding ({@code sys.getdefaultencoding()}.
-     * 
+     *
      * @param text an object with the buffer protocol
      * @return a byte-buffer view of the ASCII text
      * @throws ClassCastException where the text object does not implement the buffer protocol

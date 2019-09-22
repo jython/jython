@@ -120,10 +120,10 @@ public class OpenMode {
      * <p>
      * The invalid combinations enforced here are those for the "raw" (ie non-text) file types:
      * <ul>
-     * <li>universal & (writing | appending)),</li>
-     * <li>text & binary</li>,
-     * <li>reading & writing,</li>
-     * <li>appending & (reading | writing)</li>
+     * <li>{@code universal & (writing | appending)},</li>
+     * <li>{@code text & binary},</li>
+     * <li>{@code reading & writing},</li>
+     * <li>{@code appending & (reading | writing)}</li>
      * </ul>
      * See also {@link #validate(String, String, String)} for additional checks relevant to text
      * files.
@@ -191,7 +191,7 @@ public class OpenMode {
      * by either {@link #invalid} or {@link #other} being <code>true</code> after that call. If no
      * more specific message has been assigned in {@link #message}, report the original mode string.
      *
-     * @throws PyException (ValueError) if the mode string was invalid.
+     * @throws PyException {@code ValueError} if the mode string was invalid.
      */
     public void checkValid() throws PyException {
 

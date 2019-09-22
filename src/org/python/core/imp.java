@@ -229,7 +229,7 @@ public class imp {
      * @param sourceName used for identification in messages and the constructor of the named class.
      * @param compiledName used for identification in messages and {@code __file__}.
      * @return the module or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API mismatch or i/o error.
+     * @throws PyException {@code ImportError} on API mismatch or i/o error.
      */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
             String sourceName, String compiledName) {
@@ -247,7 +247,7 @@ public class imp {
      * @param compiledName used for identification in messages and {@code __file__}.
      * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
      * @return the module or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API or last-modified time mismatch or i/o error.
+     * @throws PyException {@code ImportError} on API or last-modified time mismatch or i/o error.
      */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
             String sourceName, String compiledName, long sourceLastModified) {
@@ -272,7 +272,7 @@ public class imp {
      * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
      * @param source choose what to use as the file name when initialising the class
      * @return the module or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API or last-modified time mismatch or i/o error.
+     * @throws PyException {@code ImportError} on API or last-modified time mismatch or i/o error.
      */
     static PyObject createFromPyClass(String name, InputStream fp, boolean testing,
             String sourceName, String compiledName, long sourceLastModified, CodeImport source) {
@@ -319,7 +319,7 @@ public class imp {
      * @param fp stream from which to read class file (closed when read)
      * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
      * @return the class file bytes as an array or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws PyException {@code ImportError} on API or last-modified time mismatch
      * @throws IOException from read failures
      */
     public static byte[] readCode(String name, InputStream fp, boolean testing) throws IOException {
@@ -335,7 +335,7 @@ public class imp {
      * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
      * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
      * @return the class file bytes as an array or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws PyException {@code ImportError} on API or last-modified time mismatch
      * @throws IOException from read failures
      */
     public static byte[] readCode(String name, InputStream fp, boolean testing,
@@ -356,7 +356,7 @@ public class imp {
      * @param fp stream from which to read class file (closed when read)
      * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
      * @return the {@code CodeData} bundle or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API mismatch
+     * @throws PyException {@code ImportError} on API mismatch
      * @throws IOException from read failures
      */
     public static CodeData readCodeData(String name, InputStream fp, boolean testing)
@@ -376,7 +376,7 @@ public class imp {
      * @param testing if {@code true}, failures are signalled by a {@code null} not an exception
      * @param sourceLastModified time expected to match {@code MTime} annotation in the class file
      * @return the {@code CodeData} bundle or {@code null} on failure (if {@code testing}).
-     * @throws PyException (ImportError) on API or last-modified time mismatch
+     * @throws PyException {@code ImportError} on API or last-modified time mismatch
      * @throws IOException from read failures
      */
     public static CodeData readCodeData(String name, InputStream fp, boolean testing,
@@ -1181,7 +1181,7 @@ public class imp {
      * @param name fully-qualified name of module to import {@code import a.b.c.m}
      * @param parentName used as a workspace as the search descends the package hierarchy
      * @return the named module (never {@code null} or {@code None})
-     * @throws PyException (ImportError) if not found
+     * @throws PyException {@code ImportError} if not found
      */
     private static PyObject import_first(String name, StringBuilder parentName) throws PyException {
         PyObject ret = import_next(null, parentName, name, null, null);
@@ -1199,7 +1199,7 @@ public class imp {
      * @param fullName the "outer" name by which the module is known {@code a.b.c.m}.
      * @param fromlist names to import from the module {@code n1, n2, n3}.
      * @return the named module (never returns {@code null} or {@code None})
-     * @throws PyException (ImportError) if not found
+     * @throws PyException {@code ImportError} if not found
      */
     private static PyObject import_first(String name, StringBuilder parentName,
             String fullName, PyObject fromlist) throws PyException {
@@ -1239,7 +1239,7 @@ public class imp {
      * @param fullName {@code a.b.c.m}
      * @param fromlist names to import from the module {@code n1, n2, n3}.
      * @return the last named module (never {@code null} or {@code None})
-     * @throws PyException (ImportError) if not found
+     * @throws PyException {@code ImportError} if not found
      */
     // ??pending: check if result is really a module/jpkg/jclass?
     private static PyObject import_logic(PyObject mod, StringBuilder parentName, String restOfName,

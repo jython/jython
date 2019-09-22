@@ -875,7 +875,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param obj to coerce to a String
      * @return coerced value
-     * @throws PyException if the coercion fails (including <code>unicode</code>)
+     * @throws PyException {@code TypeError} if the coercion fails (including <code>unicode</code>)
      */
     protected static String asU16BytesOrError(PyObject obj) throws PyException {
         String ret = asU16BytesOrNull(obj);
@@ -2190,7 +2190,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param sub substring to find.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int index(PyObject sub) {
         return str_index(sub, null, null);
@@ -2204,7 +2204,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param sub substring to find.
      * @param start start of slice.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int index(PyObject sub, PyObject start) throws PyException {
         return str_index(sub, start, null);
@@ -2221,7 +2221,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param start start of slice.
      * @param end end of slice.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int index(PyObject sub, PyObject start, PyObject end) throws PyException {
         return checkIndex(str_index(sub, start, end));
@@ -2256,7 +2256,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param sub substring to find.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int rindex(PyObject sub) {
         return str_rindex(sub, null, null);
@@ -2270,7 +2270,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param sub substring to find.
      * @param start start of slice.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int rindex(PyObject sub, PyObject start) throws PyException {
         return str_rindex(sub, start, null);
@@ -2287,7 +2287,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param start start of slice.
      * @param end end of slice.
      * @return index of <code>sub</code> in this object.
-     * @throws PyException(ValueError) if not found.
+     * @throws PyException {@code ValueError} if not found.
      */
     public int rindex(PyObject sub, PyObject start, PyObject end) throws PyException {
         return checkIndex(str_rindex(sub, start, end));
@@ -2323,7 +2323,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param index to check
      * @return <code>index</code> if non-negative
-     * @throws PyException(ValueError) if not found
+     * @throws PyException {@code ValueError} if not found
      */
     protected final int checkIndex(int index) throws PyException {
         if (index >= 0) {
@@ -4237,7 +4237,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      *
      * @param spec a parsed PEP-3101 format specification.
      * @return a formatter ready to use, or null if the type is not a string format type.
-     * @throws PyException(ValueError) if the specification is faulty.
+     * @throws PyException {@code ValueError} if the specification is faulty.
      */
     @SuppressWarnings("fallthrough")
     static TextFormatter prepareFormatter(Spec spec) throws PyException {

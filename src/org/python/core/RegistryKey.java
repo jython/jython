@@ -48,11 +48,10 @@ public class RegistryKey {
      * console (http://jline.sourceforge.net/) out of the box. This is selected by default in the
      * Jython command-line application ({@link org.python.util.jython}) if you do not define
      * {@code python.console} to be another class on the command line. Alternatively, you can set
-     * python.console in the registry, but be aware that this will also affect the console in
-     * applications that embed a PythonInterpreter, or use Jython as a JSR-223 script engine.
-     * <p>
-     * Values:
+     * {@code python.console} in the registry, but be aware that this will also affect the console
+     * in applications that embed a PythonInterpreter, or use Jython as a JSR-223 script engine.
      * <table>
+     * <caption>Values for {@code python.console}</caption>
      * <tr>
      * <td>{@link org.python.util.JLineConsole} (default)</td>
      * </tr>
@@ -105,6 +104,7 @@ public class RegistryKey {
      * <p>
      * Values:
      * <table>
+     * <caption>Values for {@code python.locale.control}</caption>
      * <tr>
      * <td>{@code settable}</td>
      * <td>Python locale module is available and supports {@code setlocale()} and other standard
@@ -128,6 +128,7 @@ public class RegistryKey {
      * entries, each entry of which has the following allowable forms:
      * <p>
      * <table>
+     * <caption>Values for {@code python.modules.builtin}</caption>
      * <tr>
      * <td>{@code name}</td>
      * <td>The module name is {@code name} and the class name is

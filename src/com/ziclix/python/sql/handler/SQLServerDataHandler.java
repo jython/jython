@@ -47,7 +47,7 @@ public class SQLServerDataHandler extends FilterDataHandler {
     /**
      * Given a ResultSet, column and type, return the appropriate
      * Jython object.
-     * <p/>
+     * 
      * <p>Note: DO NOT iterate the ResultSet.
      *
      * @param set  the current ResultSet set to the current row

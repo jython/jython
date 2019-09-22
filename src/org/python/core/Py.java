@@ -1139,8 +1139,8 @@ public final class Py extends PrePy {
      * @param name Name of the Java class.
      * @param reason for finding the class. Used in debugging messages.
      * @return the class, or {@code null} if it simply wasn't found
-     * @throws PyException (JavaError) wrapping errors occurring when the class is found but cannot
-     *             be loaded.
+     * @throws PyException {@code JavaError} wrapping errors occurring when the class is found but
+     *             cannot be loaded.
      */
     public static Class<?> findClassEx(String name, String reason) throws PyException {
         try {

@@ -15,6 +15,7 @@ import java.lang.reflect.Modifier;
 
 import org.python.core.JyAttribute;
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyInstance;
@@ -35,140 +36,121 @@ import org.python.modules._weakref.ReferenceBackend;
 //import javax.management.openmbean.*;
 
 /**
+ * In Jython, the gc module notably differs from that in CPython. This comes from the different ways
+ * Jython and CPython perform garbage collection. While CPython's garbage collection is based on
+ * <a href="http://en.wikipedia.org/wiki/Reference_counting" target="_blank"> reference
+ * counting</a>, Jython is backed by Java's gc, which is based on a
+ * <a href="http://en.wikipedia.org/wiki/Tracing_garbage_collection" target="_blank"> mark-and-sweep
+ * approach</a>.
  * <p>
- * In Jython, the gc module notably differs from that in CPython.
- * This comes from the different ways Jython and CPython perform
- * garbage collection. While CPython's garbage collection is based on
- * <a href="http://en.wikipedia.org/wiki/Reference_counting" target="_blank">
- * reference counting</a>, Jython is backed by Java's gc, which is
- * based on a
- * <a href="http://en.wikipedia.org/wiki/Tracing_garbage_collection" target="_blank">
- * mark-and-sweep approach</a>.
- * </p>
+ * This difference becomes most notable if finalizers are involved that perform resurrection. While
+ * the resurrected object itself behaves rather similar between Jython and CPython, things are more
+ * delicate with objects that are reachable (i.e. strongly referenced) via the resurrected object
+ * exclusively. While in CPython such objects do not get their finalizers called, Jython/Java would
+ * call all their finalizers. That is because Java detects the whole unreachable subgraph as garbage
+ * and thus calls all their finalizers without any chance of direct intervention. CPython instead
+ * detects the unreachable object and calls its finalizer, which makes the object reachable again.
+ * Then all other objects are reachable from it and CPython does not treat them as garbage and does
+ * not call their finalizers at all. This further means that in Jython weak references to such
+ * indirectly resurrected objects break, while these persist in CPython.
  * <p>
- * This difference becomes most notable if finalizers are involved that perform resurrection.
- * While the resurrected object itself behaves rather similar between Jython and CPython,
- * things are more delicate with objects that are reachable (i.e. strongly referenced)
- * via the resurrected object exclusively.
- * While in CPython such objects do not get their finalizers called, Jython/Java would
- * call all their finalizers. That is because Java detects the whole unreachable subgraph
- * as garbage and thus calls all their finalizers without any chance of direct intervention.
- * CPython instead detects the unreachable object and calls its finalizer, which makes the
- * object reachable again. Then all other objects are reachable from it and CPython does not
- * treat them as garbage and does not call their finalizers at all.
- * This further means that in Jython weak references to such indirectly resurrected objects
- * break, while these persist in CPython.
- * </p>
+ * As of Jython 2.7, the gc module offers some options to emulate CPython behavior. Especially see
+ * the flags {@link #PRESERVE_WEAKREFS_ON_RESURRECTION}, {@link #DONT_FINALIZE_RESURRECTED_OBJECTS}
+ * and {@link #DONT_FINALIZE_CYCLIC_GARBAGE} for this.
  * <p>
- * As of Jython 2.7, the gc module offers some options to emulate CPython behavior.
- * Especially see the flags {@link #PRESERVE_WEAKREFS_ON_RESURRECTION},
- * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} and {@link #DONT_FINALIZE_CYCLIC_GARBAGE}
- * for this.
- * </p>
+ * Another difference is that CPython's gc module offers some debug features like counting of
+ * collected cyclic trash, which are hard to support by Jython. As of Jython 2.7 the introduction of
+ * a traverseproc mechanism (c.f. {@link org.python.core.Traverseproc}) made support of these
+ * features feasible. As support of these features comes with a significant emulation cost, one must
+ * explicitly tell gc to perform this. To make objects subject to cyclic trash counting, these
+ * objects must be gc-monitored in Jython. See {@link #monitorObject(PyObject)},
+ * {@link #unmonitorObject(PyObject)}, {@link #MONITOR_GLOBAL} and {@link #stopMonitoring()} for
+ * this.
  * <p>
- * Another difference is that CPython's gc module offers some debug features like counting
- * of collected cyclic trash, which are hard to support by Jython. As of Jython 2.7 the
- * introduction of a traverseproc mechanism (c.f. {@link org.python.core.Traverseproc})
- * made support of these features feasible. As support of these features comes
- * with a significant emulation cost, one must explicitly tell gc to perform this.
- * To make objects subject to cyclic trash counting, these objects must be gc-monitored in
- * Jython. See {@link #monitorObject(PyObject)}, {@link #unmonitorObject(PyObject)},
- * {@link #MONITOR_GLOBAL} and {@link #stopMonitoring()} for this.<br>
- * If at least one object is gc-monitored, {@link #collect()} works synchronously in the
- * sense that it blocks until all gc-monitored objects that are garbage actually have been
- * collected and had their finalizers called and completed. {@link #collect()} will report
- * the number of collected objects in the same manner as in CPython, i.e. counts only those
- * that participate in reference cycles. This allows a unified test implementation across
- * Jython and CPython (which applies to most tests in test_gc.py). If not any object is
- * gc-monitored, {@link #collect()} just delegates to {@link java.lang.System#gc()}, runs
- * asynchronously (i.e. non-blocking) and returns {@link #UNKNOWN_COUNT}.
- * See also {@link #DEBUG_SAVEALL} for a useful gc debugging feature that is supported by
- * Jython from version 2.7 onwards.
- * </p>
+ * If at least one object is gc-monitored, {@link #collect()} works synchronously in the sense that
+ * it blocks until all gc-monitored objects that are garbage actually have been collected and had
+ * their finalizers called and completed. {@link #collect()} will report the number of collected
+ * objects in the same manner as in CPython, i.e. counts only those that participate in reference
+ * cycles. This allows a unified test implementation across Jython and CPython (which applies to
+ * most tests in test_gc.py). If not any object is gc-monitored, {@link #collect()} just delegates
+ * to {@link java.lang.System#gc()}, runs asynchronously (i.e. non-blocking) and returns
+ * {@link #UNKNOWN_COUNT}. See also {@link #DEBUG_SAVEALL} for a useful gc debugging feature that is
+ * supported by Jython from version 2.7 onwards.
  * <p>
- * Implementing all these features in Jython involved a lot of synchronization logic.
- * While care was taken to implement this without using timeouts as far as possible and
- * rely on locks, states and system/hardware independent synchronization techniques,
- * this was not entirely feasible.<br>
- * The aspects that were only feasible using a timeout are waiting for gc to enqueue all
- * collected objects (i.e. weak references to monitored objects that were gc'ed) to the
- * reference queue and waiting for gc to run all PyObject finalizers.
- * </p>
+ * Implementing all these features in Jython involved a lot of synchronization logic. While care was
+ * taken to implement this without using timeouts as far as possible and rely on locks, states and
+ * system/hardware independent synchronization techniques, this was not entirely feasible.<br>
+ * The aspects that were only feasible using a timeout are waiting for gc to enqueue all collected
+ * objects (i.e. weak references to monitored objects that were gc'ed) to the reference queue and
+ * waiting for gc to run all PyObject finalizers.
  * <p>
  * Waiting for trash could in theory be strictly synchronized by using {@code MXBean}s, i.e.
- * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
- * target="_blank">GarbageCollectionNotificationInfo</a> and related API.
- * However, experiments showed that the arising gc notifications do not reliably indicate
- * when enqueuing was done for a specific gc run. We kept the experimental implementation
- * in source code comments to allow easy reproducibility of this issue. (Note that out commented
- * code contradicts Jython styleguide, but this one - however - is needed to document this
- * infeasible approach and is explicitly declared accordingly).<br>
- * But how <b>is</b> sync done now?
- * We insert a sentinel before running gc and wait until this sentinel was collected.
- * Timestamps are taken to give us an idea at which time scales the gc of the current JVM
- * performs. We then wait until twice the measured time (i.e. duration from call to
- * {@link java.lang.System#gc()} until the sentinel reference was enqueued) has passed after
- * the last reference was enqueued by gc. While this approach is not entirely safe in theory,
- * it passes all tests on various systems and machines we had available for testing so far.
- * We consider it more robust than a fixed-length timeout and regard it the best known feasible
- * compromise to emulate synchronous gc runs in Java.
- * </p>
+ * <a href=
+ * "https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
+ * target="_blank">GarbageCollectionNotificationInfo</a> and related API. However, experiments
+ * showed that the arising gc notifications do not reliably indicate when enqueuing was done for a
+ * specific gc run. We kept the experimental implementation in source code comments to allow easy
+ * reproducibility of this issue. (Note that out commented code contradicts Jython styleguide, but
+ * this one - however - is needed to document this infeasible approach and is explicitly declared
+ * accordingly).
+ * <p>
+ * But how <b>is</b> sync done now? We insert a sentinel before running gc and wait until this
+ * sentinel was collected. Timestamps are taken to give us an idea at which time scales the gc of
+ * the current JVM performs. We then wait until twice the measured time (i.e. duration from call to
+ * {@link java.lang.System#gc()} until the sentinel reference was enqueued) has passed after the
+ * last reference was enqueued by gc. While this approach is not entirely safe in theory, it passes
+ * all tests on various systems and machines we had available for testing so far. We consider it
+ * more robust than a fixed-length timeout and regard it the best known feasible compromise to
+ * emulate synchronous gc runs in Java.
  * <p>
  * The other timing-based synchronization issue - waiting for finalizers to run - is solved as
  * follows. Since PyObject finalizers are based on
- * {@link org.python.core.finalization.FinalizeTrigger}s, Jython has full control about
- * these finalization process from a central point. Before such a finalizer runs, it calls
- * {@link #notifyPreFinalization()} and when it is done, it calls
- * {@link #notifyPostFinalization()}. While processing of a finalizer can be of arbitrary
- * duration, it widely holds that Java's gc thread calls the next finalizer almost
- * instantaneously after the former. That means that a timestamp taken in
- * {@link #notifyPreFinalization()} is usually delayed only few milliseconds
- * - often even reported as 0 milliseconds - after the last taken timestamp in
- * {@link #notifyPostFinalization()} (i.e. that was called by the previous finalizer).
- * Jython's gc module assumes the end of Java's finalization process if
- * {@link #postFinalizationTimeOut} milliseconds passed after a call of
- * {@link #notifyPostFinalization()} without another call to
+ * {@link org.python.core.finalization.FinalizeTrigger}s, Jython has full control about these
+ * finalization process from a central point. Before such a finalizer runs, it calls
+ * {@link #notifyPreFinalization()} and when it is done, it calls {@link #notifyPostFinalization()}.
+ * While processing of a finalizer can be of arbitrary duration, it widely holds that Java's gc
+ * thread calls the next finalizer almost instantaneously after the former. That means that a
+ * timestamp taken in {@link #notifyPreFinalization()} is usually delayed only few milliseconds -
+ * often even reported as 0 milliseconds - after the last taken timestamp in
+ * {@link #notifyPostFinalization()} (i.e. that was called by the previous finalizer). Jython's gc
+ * module assumes the end of Java's finalization process if {@link #postFinalizationTimeOut}
+ * milliseconds passed after a call of {@link #notifyPostFinalization()} without another call to
  * {@link #notifyPreFinalization()} in that time. The default value of
- * {@link #postFinalizationTimeOut} is {@code 100}, which is far larger than the
- * usual almost-zero duration between finalizer calls.<br>
- * This process can be disturbed by third-party finalizers of non-PyObjects brought
- * into the process by external libraries. If these finalizers are of short duration
- * (which applies to typical finalizers), one can deal with this by adjusting
- * {@link #postFinalizationTimeOut}, which was declared {@code public} for exactly this
- * purpose. However if the external framework causing the issue is Jython aware, a
- * cleaner solution would be to let its finalizers call {@link #notifyPreFinalization()}
- * and {@link #notifyPostFinalization()} appropriately. In that case these finalizers
- * must not terminate by throwing an exception before {@link #notifyPostFinalization()}
- * was called. This is a strict requirement, since a deadlock can be caused otherwise.<br>
- * <br>
- * Note that the management API
- * (c.f.
- * <a href="https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html
- * target="_blank">com.sun.management.GarbageCollectionNotificationInfo</a>) does not emit any
- * notifications that allow to detect the end of the finalization phase. So this API
- * provides no alternative to the described technique.
- * </p>
+ * {@link #postFinalizationTimeOut} is {@code 100}, which is far larger than the usual almost-zero
+ * duration between finalizer calls.<br>
+ * This process can be disturbed by third-party finalizers of non-PyObjects brought into the process
+ * by external libraries. If these finalizers are of short duration (which applies to typical
+ * finalizers), one can deal with this by adjusting {@link #postFinalizationTimeOut}, which was
+ * declared {@code public} for exactly this purpose. However if the external framework causing the
+ * issue is Jython aware, a cleaner solution would be to let its finalizers call
+ * {@link #notifyPreFinalization()} and {@link #notifyPostFinalization()} appropriately. In that
+ * case these finalizers must not terminate by throwing an exception before
+ * {@link #notifyPostFinalization()} was called. This is a strict requirement, since a deadlock can
+ * be caused otherwise.
  * <p>
- * Usually Java's gc provides hardly any guarantee about its collection and finalization
- * process. It not even guarantees that finalizers are called at all (c.f.
- * <a href="http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java"
- * target="_blank">http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java</a>).
- * While at least the most common JVM implementations usually <b>do</b> call finalizers
- * reliably under normal conditions, there still is no specific finalization order guaranteed
- * (one might reasonably expect that this would be related to reference connection graph
- * topology, but this appears not to be the case).
- * However Jython now offers some functionality to compensate this
- * situation. Via {@link #registerPreFinalizationProcess(Runnable)} and
- * {@link #registerPostFinalizationProcess(Runnable)} and related methods one can now
- * listen to beginning and end of the finalization process. Note that this functionality
- * relies on the technique described in the former paragraph (i.e. based on calls to
- * {@link #notifyPreFinalization()} and {@link #notifyPostFinalization()}) and thus
- * underlies its unsafety, if third-party finalizers are involved. Such finalizers can
- * cause false-positive runs of registered (pre/post) finalization processes, so this
- * feature should be used with some care. It is recommended to use it only in such a way
- * that false-positive runs would not cause serious harm, but only some loss in
- * performance or so.
- * </p>
+ * Note that the management API (c.f. <a href=
+ * "https://docs.oracle.com/javase/7/docs/jre/api/management/extension/index.html?com/sun/management/GcInfo.html"
+ * target="_blank">com.sun.management.GarbageCollectionNotificationInfo</a>) does not emit any
+ * notifications that allow to detect the end of the finalization phase. So this API provides no
+ * alternative to the described technique.
+ * <p>
+ * Usually Java's gc provides hardly any guarantee about its collection and finalization process. It
+ * not even guarantees that finalizers are called at all (c.f.
+ * <a href="http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java" target=
+ * "_blank">http://howtodoinjava.com/2012/10/31/why-not-to-use-finalize-method-in-java</a>). While
+ * at least the most common JVM implementations usually <b>do</b> call finalizers reliably under
+ * normal conditions, there still is no specific finalization order guaranteed (one might reasonably
+ * expect that this would be related to reference connection graph topology, but this appears not to
+ * be the case). However Jython now offers some functionality to compensate this situation. Via
+ * {@link #registerPreFinalizationProcess(Runnable)} and
+ * {@link #registerPostFinalizationProcess(Runnable)} and related methods one can now listen to
+ * beginning and end of the finalization process. Note that this functionality relies on the
+ * technique described in the former paragraph (i.e. based on calls to
+ * {@link #notifyPreFinalization()} and {@link #notifyPostFinalization()}) and thus underlies its
+ * unsafety, if third-party finalizers are involved. Such finalizers can cause false-positive runs
+ * of registered (pre/post) finalization processes, so this feature should be used with some care.
+ * It is recommended to use it only in such a way that false-positive runs would not cause serious
+ * harm, but only some loss in performance or so.
  */
 public class gc {
     /**
@@ -195,7 +177,7 @@ public class gc {
     /**
      * CPython prior to 3.4 does not finalize cyclic garbage
      * PyObjects, while Jython does this by default. This flag
-     * tells Jython's gc to mimic CPython <3.4 behavior (i.e.
+     * tells Jython's gc to mimic CPython &lt;3.4 behavior (i.e.
      * add such objects to {@code gc.garbage} list instead).
      *
      * @see #setJythonGCFlags(short)
@@ -253,7 +235,7 @@ public class gc {
 
     /**
      * <p>
-     * Reflection-based traversion is an inefficient fallback method to
+     * Reflection-based traversal is an inefficient fallback method to
      * traverse PyObject subtypes that don't implement
      * {@link org.python.core.Traverseproc} and
      * are not marked as {@link org.python.core.Untraversable}.
@@ -262,19 +244,19 @@ public class gc {
      * compensate this.
      * </p>
      * <p>
-     * This flag allows to inhibit reflection-based traversion. If it is
+     * This flag allows to inhibit reflection-based traversal. If it is
      * activated, objects that don't implement
      * {@link org.python.core.Traverseproc}
      * are always treated as if they were marked as
      * {@link org.python.core.Untraversable}.
      * </p>
      * <p>
-     * Note that reflection-based traversion fallback is performed by
+     * Note that reflection-based traversal fallback is performed by
      * default. Further note that Jython emits warning messages if
-     * reflection-based traversion occurs or if an object is encountered
+     * reflection-based traversal occurs or if an object is encountered
      * that neither implements {@link org.python.core.Traverseproc}
      * nor is marked as {@link org.python.core.Untraversable} (even if
-     * reflection-based traversion is inhibited). See
+     * reflection-based traversal is inhibited). See
      * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} and
      * {@link #INSTANCE_TRAVERSE_BY_REFLECTION_WARNING} to control
      * these warning messages.
@@ -292,9 +274,9 @@ public class gc {
     /**
      * <p>
      * If this flag is not set, gc warns whenever an object would be subject to
-     * reflection-based traversion.
+     * reflection-based traversal.
      * Note that if this flag is not set, the warning will occur even if
-     * reflection-based traversion is not active. The purpose of this behavior is
+     * reflection-based traversal is not active. The purpose of this behavior is
      * to identify objects that don't properly support the traverseproc mechanism,
      * i.e. instances of PyObject subclasses that neither implement
      * {@link org.python.core.Traverseproc},
@@ -304,7 +286,7 @@ public class gc {
      * A SUPPRESS flag was chosen rather than a WARN flag, so that warning is the
      * default behavior - the user must actively set this flag in order to not to
      * be warned.
-     * This is because in an ideal implementation reflection-based traversion never
+     * This is because in an ideal implementation reflection-based traversal never
      * occurs; it is only an inefficient fallback.
      * </p>
      *
@@ -317,9 +299,9 @@ public class gc {
     public static final short SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING =    (1<<7);
 
     /**
-     * Makes gc emit reflection-based traversion warning for every traversed
+     * Makes gc emit reflection-based traversal warning for every traversed
      * object instead of only once per class.
-     * A potential reflection-based traversion occurs whenever an object is
+     * A potential reflection-based traversal occurs whenever an object is
      * traversed that neither implements {@link org.python.core.Traverseproc},
      * nor is annotated with the {@link org.python.core.Untraversable} annotation.
      *
@@ -1618,7 +1600,7 @@ public class gc {
      * {@link #PRESERVE_WEAKREFS_ON_RESURRECTION} - Keeps weak references alive if the referent is resurrected.<br>
      * {@link #DONT_FINALIZE_RESURRECTED_OBJECTS} -
      * Emulates CPython behavior regarding resurrected objects and finalization.<br>
-     * {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversion.<br>
+     * {@link #DONT_TRAVERSE_BY_REFLECTION} - Inhibits reflection-based traversal.<br>
      * {@link #SUPPRESS_TRAVERSE_BY_REFLECTION_WARNING} -
      * Suppress warnings for PyObjects that neither implement {@link org.python.core.Traverseproc} nor
      * are marked as {@link org.python.core.Untraversable}.<br>
@@ -1736,9 +1718,8 @@ public class gc {
 
     /**
      * Not supported by Jython.
-     * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py.NotImplementedError
+     * @throws PyException {@code NotImplementedError}
      */
     public static void disable() {
         throw Py.NotImplementedError("can't disable Java GC");
@@ -2401,9 +2382,8 @@ public class gc {
 
     /**
      * Not supported by Jython.
-     * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py.NotImplementedError
+     * @throws PyException {@code NotImplementedError}
      */
     public static PyObject get_count() {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2448,9 +2428,8 @@ public class gc {
 
     /**
      * Not supported by Jython.
-     * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py.NotImplementedError
+     * @throws PyException {@code NotImplementedError}
      */
     public static void set_threshold(PyObject[] args, String[] kwargs) {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2458,9 +2437,8 @@ public class gc {
 
     /**
      * Not supported by Jython.
-     * Throws {@link org.python.core.Py#NotImplementedError}.
      *
-     * @throws org.python.core.Py.NotImplementedError
+     * @throws PyException {@code NotImplementedError}
      */
     public static PyObject get_threshold() {
         throw Py.NotImplementedError("not applicable to Java GC");
@@ -2470,10 +2448,9 @@ public class gc {
      * Only works reliably if {@code monitorGlobal} is active, as it depends on
      * monitored objects to search for referrers. It only finds referrers that
      * properly implement the traverseproc mechanism (unless reflection-based
-     * traversion is activated and works stable).
-     * Throws {@link org.python.core.Py#NotImplementedError}.
+     * traversal is activated and works stable).
      *
-     * @throws org.python.core.Py.NotImplementedError
+     * @throws PyException {@code NotImplementedError}
      */
     public static PyObject get_objects() {
         if (!isMonitoring()) {
@@ -2497,7 +2474,7 @@ public class gc {
      * Only works reliably if {@code monitorGlobal} is active, as it depends on
      * monitored objects to search for referrers. It only finds referrers that
      * properly implement the traverseproc mechanism (unless reflection-based
-     * traversion is activated and works stable).
+     * traversal is activated and works stable).
      * Further note that the resulting list will contain referrers in no specific
      * order and may even include duplicates.
      */
@@ -2537,7 +2514,7 @@ public class gc {
 
     /**
      * Only works reliably if all objects in args properly
-     * implement the Traverseproc mechanism (unless reflection-based traversion
+     * implement the Traverseproc mechanism (unless reflection-based traversal
      * is activated and works stable).
      * Further note that the resulting list will contain referents in no
      * specific order and may even include duplicates.
@@ -2874,7 +2851,7 @@ public class gc {
      * {@link org.python.core.TraverseprocDerived#traverseDerived(Visitproc, Object)}.
      * If {@code ob} neither implements {@link org.python.core.Traverseproc} nor
      * {@link org.python.core.Traverseproc} and is not annotated with
-     * {@link org.python.core.Untraversable}, reflection-based traversion via
+     * {@link org.python.core.Untraversable}, reflection-based traversal via
      * {@link #traverseByReflection(Object, Visitproc, Object)} may be attempted
      * according to {@link #DONT_TRAVERSE_BY_REFLECTION}.
      *

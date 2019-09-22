@@ -27,8 +27,8 @@ import org.python.core.PySystemState;
  * This servlet is used to re-serve Jython servlets. It stores bytecode for Jython servlets and
  * re-uses it if the underlying .py file has not changed.
  * <p>
- * e.g. http://localhost:8080/test/hello.py
- * <pre>
+ * e.g. {@code http://localhost:8080/test/hello.py}
+ * <pre>{@literal
  *
  * from javax.servlet.http import HttpServlet
  * class hello(HttpServlet):
@@ -41,26 +41,25 @@ import org.python.core.PySystemState;
  *         print >>out, "</body>"
  *         print >>out, "</html>"
  *         out.close()
- * </pre>
+ * }</pre>
  *
  * in web.xml for the PyServlet context:
- * <pre>
- * &lt;web-app>
- *     &lt;servlet>
- *         &lt;servlet-name>PyServlet&lt;/servlet-name>
- *         &lt;servlet-class>org.python.util.PyServlet&lt;/servlet-class>
- *         &lt;init-param>
- *             &lt;param-name>python.home&lt;/param-name>
- *             &lt;param-value>/usr/home/jython-2.5&lt;/param-value>
- *         &lt;/init-param>
- *     &lt;/servlet>
- *     &lt;servlet-mapping>
- *         &lt;servlet-name>PyServlet&lt;/servlet-name>
- *         &lt;url-pattern>*.py&lt;/url-pattern>
- *     &lt;/servlet-mapping>
- * &lt;/web-app>
- *
- * </pre>
+ * <pre>{@literal
+ * <web-app>
+ *     <servlet>
+ *         <servlet-name>PyServlet</servlet-name>
+ *         <servlet-class>org.python.util.PyServlet</servlet-class>
+ *         <init-param>
+ *             <param-name>python.home</param-name>
+ *             <param-value>/usr/home/jython-2.5</param-value>
+ *         </init-param>
+ *     </servlet>
+ *     <servlet-mapping>
+ *         <servlet-name>PyServlet</servlet-name>
+ *         <url-pattern>*.py</url-pattern>
+ *     </servlet-mapping>
+ * </web-app>
+ * }</pre>
  */
 public class PyServlet extends HttpServlet {
 

@@ -822,6 +822,7 @@ public class PySystemState extends PyObject
      * Emulates CPython's way to name sys.platform. Works according to this table:
      *
      * <table>
+     * <caption>Platform names</caption>
      * <tr>
      * <th style="text-align:left">System</th>
      * <th style="text-align:left">Value</th>
@@ -883,6 +884,7 @@ public class PySystemState extends PyObject
      * argument is the {@code System.getProperties()}, if were allowed to access it, and therefore
      * represents definitions made on the command-line. The net precedence order is:
      * <table>
+     * <caption>Precedence order of registry sources</caption>
      * <tr>
      * <th>Source</th>
      * <th>Filled by</th>
@@ -1525,16 +1527,17 @@ public class PySystemState extends PyObject
      * <b>Note</b>. Classes found in directory and sub-directory are not made available to jython by
      * this call. It only makes the java package found in the directory available. This call is
      * mostly useful if jython is embedded in an application that deals with its own class loaders.
-     * A servlet container is a very good example. Calling add_classdir("<context>/WEB-INF/classes")
-     * makes the java packages in WEB-INF classes available to jython import. However the actual
-     * classloading is completely handled by the servlet container's context classloader.
+     * A servlet container is a very good example. Calling
+     * {@code add_classdir("<context>/WEB-INF/classes")} makes the java packages in WEB-INF classes
+     * available to jython import. However the actual class loading is completely handled by the
+     * servlet container's context classloader.
      */
     public static void add_classdir(String directoryPath) {
         packageManager.addDirectory(new File(directoryPath));
     }
 
     /**
-     * Add a .jar & .zip directory to the list of places that are searched for java .jar and .zip
+     * Add a .jar and .zip directory to the list of places that are searched for java .jar and .zip
      * files. The .jar and .zip files found will not be cached.
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory are not made available to
@@ -1549,7 +1552,7 @@ public class PySystemState extends PyObject
     }
 
     /**
-     * Add a .jar & .zip directory to the list of places that are searched for java .jar and .zip
+     * Add a .jar and .zip directory to the list of places that are searched for java .jar and .zip
      * files.
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory are not made available to
@@ -1589,8 +1592,8 @@ public class PySystemState extends PyObject
      * Exit a Python program with the given status.
      *
      * @param status the value to exit with
-     * @exception Py.SystemExit always throws this exception. When caught at top level the program
-     *                will exit.
+     * @throws PyException {@code SystemExit} always throws this exception. When caught at top level
+     *             the program will exit.
      */
     public static void exit(PyObject status) {
         throw new PyException(Py.SystemExit, status);

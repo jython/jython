@@ -736,7 +736,7 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
      *
      * @param count the number of times to repeat this.
      * @return never
-     * @throws PyException(NotImlemented) always
+     * @throws PyException {@code NotImplemented} always
      */
     @Override
     protected synchronized PyMemoryView repeat(int count) throws PyException {
@@ -754,8 +754,8 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
      *
      * @param index index of the element to set.
      * @param value to set this element to, regarded as a buffer of length one unit.
-     * @throws PyException(AttributeError) if value cannot be converted to an integer
-     * @throws PyException(ValueError) if value<0 or value>255
+     * @throws PyException {@code AttributeError} if value cannot be converted to an integer
+     * @throws PyException {@code ValueError} if value&lt;0 or value&gt;255
      */
     @Override
     public synchronized void pyset(int index, PyObject value) throws PyException {

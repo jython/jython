@@ -101,13 +101,14 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     /**
-     * Returns the banner to print before the first interaction: "Jython <version> on <platform>".
+     * Returns the banner to print before the first interaction:
+     * "{@code Jython <version> on <platform>}".
      *
      * @return the banner.
      */
     public static String getDefaultBanner() {
-        return String
-                .format("Jython %s on %s", PySystemState.version, Py.getSystemState().platform);
+        return String.format("Jython %s on %s", PySystemState.version,
+                Py.getSystemState().platform);
     }
 
     /**

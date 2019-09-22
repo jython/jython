@@ -44,16 +44,31 @@ public abstract class IOBase {
     }
 
     /**
-     * Seek to byte offset pos relative to position indicated by whence: 0 Start of stream (the
-     * default). pos should be >= 0; 1 Current position - whence may be negative; 2 End of stream -
-     * whence usually negative.
-     *
+     * Seek to byte offset {@code pos} relative to position indicated by {@code whence}.
+     * <table>
+     * <caption> Semantics</caption>
+     * <tr>
+     * <th>{@code whence}</th>
+     * <th align="left">Seek to</th>
+     * <th>{@code pos}</th>
+     * </tr>
+     * <tr>
+     * <th>0</th>
+     * <td>Start of stream (the default).</td><td>Should be &ge;0.</td>
+     * </tr>
+     * <tr>
+     * <th>1</th>
+     * <td>Current position + {@code pos} </td><td>Either sign.</td>
+     * </tr>
+     * <tr>
+     * <th>2</th>
+     * <td>End of stream + {@code pos} </td><td>Usually &le;0.</td>
+     * </tr>
+     * </table>
      * Returns the new absolute position.
      *
-     * @param pos
-     *            a long position value
-     * @param whence
-     *            an int whence value
+     * @param pos a long position value
+     * @param whence an int whence value
      * @return a long position value seeked to
      */
     public long seek(long pos, int whence) {

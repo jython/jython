@@ -19,7 +19,7 @@ public class SimpleWritableBuffer extends SimpleBuffer {
      * @param storage the array of bytes storing the implementation of the exporting object
      * @param index0 offset where the data starts in that array (item[0])
      * @param size the number of bytes occupied
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleWritableBuffer(int flags, BufferProtocol obj, byte[] storage, int index0, int size)
             throws PyException, NullPointerException {
@@ -36,7 +36,7 @@ public class SimpleWritableBuffer extends SimpleBuffer {
      * @param flags consumer requirements
      * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleWritableBuffer(int flags, BufferProtocol obj, byte[] storage) throws PyException,
             NullPointerException {

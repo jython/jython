@@ -600,9 +600,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      * Converts a character code for the array type to a Java <code>Class</code>.
-     * <p>
-     * The following character codes and their native types are supported:<br />
      * <table>
+     * <caption>Supported character codes and their native types</caption>
      * <tr>
      * <td><strong>Type code</strong></td>
      * <td><strong>native type</strong></td>
@@ -1285,9 +1284,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * memory this value is the <em>minimum</em> number of bytes required to store the type.
      * <p>
      * This method is used by other methods to define read/write quanta from strings and streams.
-     * <p>
-     * Values returned are:<br />
      * <table>
+     * <caption>Values returned</caption>
      * <tr>
      * <td><strong>Type</strong></td>
      * <td><strong>Size</strong></td>
@@ -2105,7 +2103,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     /**
      * Try to re-use an existing exported buffer, or return <code>null</code> if we can't.
      *
-     * @throws PyException (BufferError) if the the flags are incompatible with the buffer
+     * @throws PyException {@code BufferError} if the the flags are incompatible with the buffer
      */
     private BaseBuffer getExistingBuffer(int flags) throws PyException {
         BaseBuffer pybuf = null;
@@ -2129,7 +2127,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * Test to see if the array may be resized and raise a BufferError if not. This must be called
      * by the implementation of any operation that changes the number of elements in the array.
      *
-     * @throws PyException (BufferError) if there are buffer exports preventing a resize
+     * @throws PyException {@code BufferError} if there are buffer exports preventing a resize
      */
     private void resizeCheck() throws PyException {
         if (export != null) {

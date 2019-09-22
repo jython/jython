@@ -95,7 +95,8 @@ public class StringUtil {
     }
 
     /**
-     * Decapitalize a String if it begins with a capital letter, e.g.: FooBar -> fooBar
+     * Decapitalize a String if it begins with a capital letter, e.g.:
+     * {@code decapitalize("FooBar") == "fooBar"}
      *
      * @param string a String
      * @return a decapitalized String

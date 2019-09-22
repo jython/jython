@@ -785,7 +785,7 @@ public class __builtin__ {
      *
      * @param c string-like object of length 1
      * @return ordinal value of character or byte value in
-     * @throws PyException (TypeError) if not a string-like type
+     * @throws PyException {@code TypeError} if not a string-like type
      */
     public static final int ord(PyObject c) throws PyException {
         final int length;

@@ -15,7 +15,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
      * Provide an instance of <code>Strided1DWritableBuffer</code> on a particular array of bytes
      * specifying a starting index, the number of items in the result, and a byte-indexing stride.
      * The result of <code>byteAt(i)</code> will be equal to <code>storage[index0+stride*i]</code>
-     * (whatever the sign of <code>stride>0</code>), valid for <code>0&lt;=i&lt;count</code>.
+     * (whatever the sign of {@code stride}), valid for 0&le;{@code i}&lt;{@code count}.
      * <p>
      * The constructed <code>PyBuffer</code> meets the consumer's expectations as expressed in the
      * <code>flags</code> argument, or an exception will be thrown if these are incompatible with
@@ -34,7 +34,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public Strided1DWritableBuffer(int flags, BufferProtocol obj, byte[] storage, int index0,
             int count, int stride) throws ArrayIndexOutOfBoundsException, NullPointerException,
@@ -105,7 +105,7 @@ public class Strided1DWritableBuffer extends Strided1DBuffer {
          * @param index0 index into storage of item[0]
          * @param count number of items in the sliced view
          * @param stride in between successive elements of the new PyBuffer
-         * @throws PyException (BufferError) when expectations do not correspond with the type
+         * @throws PyException {@code BufferError} when expectations do not correspond with the type
          */
         public SlicedView(PyBuffer root, int flags, byte[] storage, int index0, int count,
                 int stride) throws PyException {

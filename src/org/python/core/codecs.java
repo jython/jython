@@ -723,6 +723,7 @@ public class codecs {
      * decoder, where partial output characters are an error. For 32 bits or more, It duplicates
      * some logic, but is called only during abnormal processing. The return is:
      * <table>
+     * <caption>Values returned</caption>
      * <tr>
      * <td>NONE</td>
      * <td>No error</td>

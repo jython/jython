@@ -28,7 +28,7 @@ public interface Source {
      * Return the next row from the source.
      * The following format:<br>
      * &nbsp;&nbsp;[(colName, colType), (colName, colType), ...]
-     * for headers and:<br/>
+     * for headers and:<br>
      * &nbsp;&nbsp;[(col), (colName, colType), ...]
      * for all other data must be used.
      */

@@ -182,7 +182,7 @@ public abstract class BaseNIOBuffer extends Base1DBuffer {
      * @param destIndex starting item-index in the destination (i.e. <code>this</code>)
      * @param count number of items to copy in
      * @throws IndexOutOfBoundsException if access out of bounds in source or destination
-     * @throws PyException (TypeError) if read-only buffer
+     * @throws PyException {@code TypeError} if read-only buffer
      */
     // XXX Should this become part of the PyBUffer interface?
     protected void copyFrom(ByteBuffer src, int destIndex, int count)

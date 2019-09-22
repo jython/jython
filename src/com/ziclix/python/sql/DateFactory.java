@@ -53,7 +53,7 @@ public interface DateFactory {
      * This function constructs an object holding a date value from the
      * given ticks value (number of seconds since the epoch; see the
      * documentation of the standard Python <i>time</i> module for details).
-     * <p/>
+     * <p>
      * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
      * while the Java Date object returns time in milliseconds since the epoch.
      * This module adheres to the python API and will therefore use time in
@@ -68,7 +68,7 @@ public interface DateFactory {
      * This function constructs an object holding a time value from the
      * given ticks value (number of seconds since the epoch; see the
      * documentation of the standard Python <i>time</i> module for details).
-     * <p/>
+     * <p>
      * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
      * while the Java Date object returns time in milliseconds since the epoch.
      * This module adheres to the python API and will therefore use time in
@@ -83,7 +83,7 @@ public interface DateFactory {
      * This function constructs an object holding a time stamp value from
      * the given ticks value (number of seconds since the epoch; see the
      * documentation of the standard Python <i>time</i> module for details).
-     * <p/>
+     * <p>
      * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
      * while the Java Date object returns time in milliseconds since the epoch.
      * This module adheres to the python API and will therefore use time in

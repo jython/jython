@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,9 @@ import java.lang.reflect.Array;
  * <li>float</li>
  * <li>double</li>
  * </ul>
- * <p />
+ *
  * Note this functionality is provided in the base types since 1.5.
- * 
+ *
  * @author Andrew Howard
  */
 public class ByteSwapper {
@@ -38,7 +38,7 @@ public class ByteSwapper {
     /**
      * Reverses the byte order of all elements in the supplied array, converting
      * between little and big endian byte order.
-     * 
+     *
      * @param array the input array for type sensitive byte swapping.
      */
     public static void swap(Object array) {
@@ -68,7 +68,7 @@ public class ByteSwapper {
 
     /**
      * Byte order reverses an <code>Array</code> of <code>doubles</code>
-     * 
+     *
      * @param array input array
      */
     private static void swapDoubleArray(Object array) {
@@ -99,7 +99,7 @@ public class ByteSwapper {
 
     /**
      * Byte order reverses an <code>Array</code> of <code>floats</code>
-     * 
+     *
      * @param array input array
      */
     private static void swapFloatArray(Object array) {
@@ -125,7 +125,7 @@ public class ByteSwapper {
 
     /**
      * Byte order reverses an <code>Array</code> of <code>ints</code>
-     * 
+     *
      * @param array input array
      */
     private static void swapIntegerArray(Object array) {
@@ -148,7 +148,7 @@ public class ByteSwapper {
 
     /**
      * Byte order reverses an <code>Array</code> of <code>longs</code>
-     * 
+     *
      * @param array input array
      */
     private static void swapLongArray(Object array) {
@@ -176,7 +176,7 @@ public class ByteSwapper {
 
     /**
      * Byte order reverses an <code>Array</code> of <code>shorts</code>
-     * 
+     *
      * @param array input array
      */
     private static void swapShortArray(Object array) {

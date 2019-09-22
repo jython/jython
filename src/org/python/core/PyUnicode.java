@@ -480,7 +480,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      * @param string of UTF-16 code units
      * @param p index into that string
      * @return 2 if a surrogate pair stands at <code>p</code>, 1 if not
-     * @throws PyException(ValueError) if a lone surrogate stands at <code>p</code>.
+     * @throws PyException {@code ValueError} if a lone surrogate stands at <code>p</code>.
      */
     private static int calcAdvance(String string, int p) throws PyException {
 

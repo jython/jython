@@ -544,7 +544,7 @@ public class math implements ClassDictInit {
      * @param arg to include in check
      * @return result if <code>arg</code> was <code>NaN</code> or <code>result</code> was not
      *         <code>NaN</code>
-     * @throws PyException (ValueError) if <code>result</code> was <code>NaN</code> and
+     * @throws PyException {@code ValueError} if <code>result</code> was <code>NaN</code> and
      *             <code>arg</code> was not <code>NaN</code>
      */
     private static double exceptNaN(double result, double arg) throws PyException {
@@ -570,8 +570,8 @@ public class math implements ClassDictInit {
      * @param result to return (if we return)
      * @param arg to include in check
      * @return result if <code>arg</code> was infinite or <code>result</code> was not infinite
-     * @throws PyException (ValueError) if <code>result</code> was infinite and <code>arg</code> was
-     *             not infinite
+     * @throws PyException {@code ValueError} if <code>result</code> was infinite and
+     *             <code>arg</code> was not infinite
      */
     private static double exceptInf(double result, double arg) {
         if (Double.isInfinite(result) && !Double.isInfinite(arg)) {

@@ -131,7 +131,7 @@ public class Strided1DNIOBuffer extends BaseNIOBuffer {
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code>, <code>count</code> and
      *             <code>stride</code> are inconsistent with <code>storage.length</code>
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public Strided1DNIOBuffer(int flags, BufferProtocol obj, ByteBuffer storage, int index0,
             int count, int stride) throws ArrayIndexOutOfBoundsException, NullPointerException,
@@ -190,7 +190,7 @@ public class Strided1DNIOBuffer extends BaseNIOBuffer {
          * @param index0 index into storage of item[0]
          * @param count the number of items in the sliced view
          * @param stride in between successive elements of the new PyBuffer
-         * @throws PyException (BufferError) when expectations do not correspond with the type
+         * @throws PyException {@code BufferError} when expectations do not correspond with the type
          */
         public SlicedView(PyBuffer root, int flags, ByteBuffer storage, int index0, int count,
                 int stride) throws PyException {

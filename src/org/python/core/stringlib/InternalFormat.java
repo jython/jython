@@ -316,6 +316,7 @@ public class InternalFormat {
          * When the padding method has decided that that it needs to add n padding characters, it
          * will affect {@link #start} or {@link #lenWhole} as follows.
          * <table border style>
+         * <caption>Effect of padding on {@link #start} or {@link #lenWhole}</caption>
          * <tr>
          * <th>align</th>
          * <th>meaning</th>
@@ -324,28 +325,28 @@ public class InternalFormat {
          * <th>result.length()</th>
          * </tr>
          * <tr>
-         * <th>&lt;</th>
+         * <th>{@code <}</th>
          * <td>left-aligned</td>
          * <td>+0</td>
          * <td>+0</td>
          * <td>+n</td>
          * </tr>
          * <tr>
-         * <th>></th>
+         * <th>{@code >}</th>
          * <td>right-aligned</td>
          * <td>+n</td>
          * <td>+0</td>
          * <td>+n</td>
          * </tr>
          * <tr>
-         * <th>^</th>
+         * <th>{@code ^}</th>
          * <td>centred</td>
          * <td>+(n/2)</td>
          * <td>+0</td>
          * <td>+n</td>
          * </tr>
          * <tr>
-         * <th>=</th>
+         * <th>{@code =}</th>
          * <td>pad after sign</td>
          * <td>+0</td>
          * <td>+n</td>
@@ -655,7 +656,7 @@ public class InternalFormat {
      *
      * A typical idiom is:
      *
-     * <pre>
+     * <pre>{@literal
      *     private static final InternalFormatSpec FLOAT_DEFAULTS = InternalFormatSpec.from(">");
      *     ...
      *         InternalFormat.Spec spec = InternalFormat.fromText(specString);
@@ -663,17 +664,13 @@ public class InternalFormat {
      *         ... // Validation of spec.type, and other attributes, for this type.
      *         FloatFormatter f = new FloatFormatter(spec);
      *         String result = f.format(value).getResult();
-     *
-     * </pre>
+     * }</pre>
      */
     public static class Spec {
 
         /** The fill character specified, or U+FFFF if unspecified. */
         public final char fill;
-        /**
-         * Alignment indicator is one of {<code>'&lt;', '^', '>', '='</code>, or U+FFFF if
-         * unspecified.
-         */
+        /** Alignment indicator is one of {'&lt;', '^', '&gt;', '=', or U+FFFF if unspecified. */
         public final char align;
         /**
          * Sign-handling flag, one of <code>'+'</code>, <code>'-'</code>, or <code>' '</code>, or
@@ -710,7 +707,7 @@ public class InternalFormat {
          * Test to see if an attribute has been specified.
          *
          * @param value of attribute
-         * @return true only if the attribute is >=0 (meaning that it has been specified).
+         * @return true only if the attribute is &ge;0 (meaning that it has been specified).
          */
         public static final boolean specified(int value) {
             return value >= 0;
@@ -724,7 +721,7 @@ public class InternalFormat {
          * </pre>
          *
          * @param fill fill character (or {@link #NONE}
-         * @param align alignment indicator, one of {<code>'&lt;', '^', '>', '='</code>
+         * @param align alignment indicator, one of {'&lt;', '^', '&gt;', '='}
          * @param sign policy, one of <code>'+'</code>, <code>'-'</code>, or <code>' '</code>.
          * @param alternate true to request alternate formatting mode (<code>'#'</code> flag).
          * @param width of field after padding or -1 to default
@@ -785,8 +782,8 @@ public class InternalFormat {
          * defaults may also be unspecified.) The use of this method is to allow a <code>Spec</code>
          * constructed from text to record exactly, and only, what was in the textual specification,
          * while the __format__ method of a client object supplies its type-specific defaults. Thus
-         * "20" means "<20s" to a <code>str</code>, ">20.12" to a <code>float</code> and ">20.12g"
-         * to a <code>complex</code>.
+         * "20" means "&lt;20s" to a <code>str</code>, "&gt;20.12" to a <code>float</code> and
+         * "&gt;20.12g" to a <code>complex</code>.
          *
          * @param other defaults to merge where this object does not specify the attribute.
          * @return a new Spec object.
@@ -804,15 +801,11 @@ public class InternalFormat {
             );
         }
 
-        /**
-         * Defaults applicable to most numeric types. Equivalent to " >"
-         */
+        /** Defaults applicable to most numeric types. Equivalent to " &gt;" */
         public static final Spec NUMERIC = new Spec(' ', '>', Spec.NONE, false, Spec.UNSPECIFIED,
                 false, Spec.UNSPECIFIED, Spec.NONE);
 
-        /**
-         * Defaults applicable to string types. Equivalent to " &lt;"
-         */
+        /** Defaults applicable to string types. Equivalent to " &lt;" */
         public static final Spec STRING = new Spec(' ', '<', Spec.NONE, false, Spec.UNSPECIFIED,
                 false, Spec.UNSPECIFIED, Spec.NONE);
 

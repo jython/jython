@@ -41,7 +41,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
 
     /**
      * Compile and run some source in the interpreter, in the mode {@link CompileMode#single} which
-     * is used for incremental compilation at the interactive console, known as "<input>".
+     * is used for incremental compilation at the interactive console, known as {@code <input>}.
      *
      * @param source Python code
      * @return <code>true</code> to indicate a partial statement was entered
@@ -65,31 +65,30 @@ public class InteractiveInterpreter extends PythonInterpreter {
     /**
      * Compile and run some source in the interpreter, according to the {@link CompileMode} given.
      * This method supports incremental compilation and interpretation through the return value,
-     * where <code>true</code> signifies that more input is expected in order to complete the Python
-     * statement. An interpreter can use this to decide whether to use <code>sys.ps1</code> ("
-     * <code>>>> </code> ") or <code>sys.ps2</code> ("<code>... </code> ") to prompt the next line.
-     * The arguments are the same as the mandatory ones in the Python <code>compile()</code>
-     * command.
+     * where {@code true} signifies that more input is expected in order to complete the Python
+     * statement. An interpreter can use this to decide whether to use {@code sys.ps1}
+     * ("{@code >>> }") or {@code sys.ps2} ("{@code ... }") to prompt the next line. The arguments
+     * are the same as the mandatory ones in the Python {@code compile()} command.
      * <p>
      * One the following can happen:
      * <ol>
      * <li>The input is incorrect; compilation raised an exception (SyntaxError or OverflowError). A
      * syntax traceback will be printed by calling {@link #showexception(PyException)}. Return is
-     * <code>false</code>.</li>
+     * {@code false}.</li>
      *
      * <li>The input is incomplete, and more input is required; compilation returned no code.
-     * Nothing happens. Return is <code>true</code>.</li>
+     * Nothing happens. Return is {@code true}.</li>
      *
      * <li>The input is complete; compilation returned a code object. The code is executed by
      * calling {@link #runcode(PyObject)} (which also handles run-time exceptions, except for
-     * SystemExit). Return is <code>false</code>.</li>
+     * SystemExit). Return is {@code false}.</li>
      * </ol>
      *
      * @param source Python code
      * @param filename name with which to label this console input (e.g. in error messages).
      * @param kind of compilation required: {@link CompileMode#eval}, {@link CompileMode#exec} or
      *            {@link CompileMode#single}
-     * @return <code>true</code> to indicate a partial statement was provided
+     * @return {@code true} to indicate a partial statement was provided
      */
     public boolean runsource(String source, String filename, CompileMode kind) {
         PyObject code;

@@ -31,89 +31,81 @@ import java.math.BigInteger;
  *
  * <P>
  * The module defines the following exception and functions:
- *
- * <P>
- * <dl><dt><b><tt>error</tt></b>
+ * <dl>
+ * <dt><b><tt>error</tt></b></dt>
  * <dd>
  *   Exception raised on various occasions; argument is a string
  *   describing what is wrong.
- * </dl>
- *
- * <P>
- * <dl><dt><b><tt>pack</tt></b> (<var>fmt, v1, v2,  ...</var>)
+ * </dd>
+ * <dt><b><tt>pack</tt></b> (<var>fmt, v1, v2,  ...</var>)</dt>
  * <dd>
  *   Return a string containing the values
  *   <tt><i>v1</i>, <i>v2</i>,  ...</tt> packed according to the given
  *   format.  The arguments must match the values required by the format
  *   exactly.
- * </dl>
- *
- * <P>
- * <dl><dt><b><tt>unpack</tt>></b> (<var>fmt, string</var>)
+ * </dd>
+ * <dt><b><tt>unpack</tt></b> (<var>fmt, string</var>)</dt>
  * <dd>
  *   Unpack the string (presumably packed by <tt>pack(<i>fmt</i>,
  *    ...)</tt>) according to the given format.  The result is a
  *   tuple even if it contains exactly one item.  The string must contain
  *   exactly the amount of data required by the format (i.e.
  *   <tt>len(<i>string</i>)</tt> must equal <tt>calcsize(<i>fmt</i>)</tt>).
- * </dl>
- *
- * <P>
- * <dl><dt><b><tt>calcsize</tt></b> (<var>fmt</var>)
+ * </dd>
+ * <dt><b><tt>calcsize</tt></b> (<var>fmt</var>)</dt>
  * <dd>
  *   Return the size of the struct (and hence of the string)
  *   corresponding to the given format.
  * </dl>
  *
- * <P>
  * Format characters have the following meaning; the conversion between
  * C and Python values should be obvious given their types:
- *
- * <P>
- * <table border align=center>
+
+ * <table border>
+ *   <caption>Format characters</caption>
  *   <tr><th><b>Format</b></th>
  *       <th align=left><b>C Type</b></th>
  *       <th align=left><b>Python</b></th>
- *   <tr><td align=center><samp>x</samp></td>
+ *   <tr><td align=center>{@code x}</td>
  *       <td>pad byte</td>
  *       <td>no value</td>
- *   <tr><td align=center><samp>c</samp></td>
+ *   <tr><td align=center>{@code c}</td>
  *       <td><tt>char</tt></td>
  *       <td>string of length 1</td>
- *   <tr><td align=center><samp>b</samp></td>
+ *   <tr><td align=center>{@code b}</td>
  *       <td><tt>signed char</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>B</samp></td>
+ *   <tr><td align=center>{@code B}</td>
  *       <td><tt>unsigned char</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>h</samp></td>
+ *   <tr><td align=center>{@code h}</td>
  *       <td><tt>short</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>H</samp></td>
+ *   <tr><td align=center>{@code H}</td>
  *       <td><tt>unsigned short</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>i</samp></td>
+ *   <tr><td align=center>{@code i}</td>
  *       <td><tt>int</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>I</samp></td>
+ *   <tr><td align=center>{@code I}</td>
  *       <td><tt>unsigned int</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>size</samp></td>
+ *   <tr><td align=center>{@code size}</td>
  *       <td><tt>long</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>L</samp></td>
+ *   <tr><td align=center>{@code L}</td>
  *       <td><tt>unsigned long</tt></td>
  *       <td>integer</td>
- *   <tr><td align=center><samp>f</samp></td>
+ *   <tr><td align=center>{@code f}</td>
  *       <td><tt>float</tt></td>
  *       <td>float</td>
- *   <tr><td align=center><samp>d</samp></td>
+ *   <tr><td align=center>{@code d}</td>
  *       <td><tt>double</tt></td>
  *       <td>float</td>
- *   <tr><td align=center><samp>s</samp></td>
+ *   <tr><td align=center>{@code s}</td>
  *       <td><tt>char[]</tt></td>
  *       <td>string</td>
- *   <tr><td align=center><samp>p</samp></td>
+ *   <tr><td align=center>{@code p}</td>
  *       <td><tt>char[]</tt></td>
  *       <td>string</td>
  * </table>
@@ -161,24 +153,24 @@ import java.math.BigInteger;
  * according to the following table:
  *
  * <P>
- * <table border align=center>
- *
+ * <table border>
+ *   <caption>Byte order and alignment characters</caption>
  *   <tr><th><b>Character</b></th>
  *       <th align=left><b>Byte order</b></th>
  *       <th align=left><b>Size and alignment</b></th>
- *   <tr><td align=center><samp>@</samp></td>
+ *   <tr><td align=center>{@code @}</td>
  *       <td>native</td>
  *       <td>native</td>
- *   <tr><td align=center><samp>=</samp></td>
+ *   <tr><td align=center>{@code =}</td>
  *       <td>native</td>
  *       <td>standard</td>
- *   <tr><td align=center><samp>&lt;</samp></td>
+ *   <tr><td align=center>{@code <}</td>
  *       <td>little-endian</td>
  *       <td>standard</td>
- *   <tr><td align=center><samp>&gt;</samp></td>
+ *   <tr><td align=center>{@code >}</td>
  *       <td>big-endian</td>
  *       <td>standard</td>
- *   <tr><td align=center><samp>!</samp></td>
+ *   <tr><td align=center>{@code !}</td>
  *       <td>network (= big-endian)</td>
  *       <td>standard</td>
  *
@@ -222,19 +214,16 @@ import java.math.BigInteger;
  *
  * <P>
  * Examples (all using native byte order, size and alignment, on a
- * big-endian machine):
- *
- * <P>
- * <dl><dd><pre>
- * &gt;&gt;&gt; from struct import *
- * &gt;&gt;&gt; pack('hhl', 1, 2, 3)
+ * big-endian machine): <pre>{@literal
+ * >>> from struct import *
+ * >>> pack('hhl', 1, 2, 3)
  * '\000\001\000\002\000\000\000\003'
- * &gt;&gt;&gt; unpack('hhl', '\000\001\000\002\000\000\000\003')
+ * >>> unpack('hhl', '\000\001\000\002\000\000\000\003')
  * (1, 2, 3)
- * &gt;&gt;&gt; calcsize('hhl')
+ * >>> calcsize('hhl')
  * 8
- * &gt;&gt;&gt;
- * </pre></dl>
+ * >>>
+ * }</pre>
  *
  * <P>
  * Hint: to align the end of a structure to the alignment requirement of

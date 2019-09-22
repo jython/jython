@@ -158,6 +158,7 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
      * stream is used in a byte-oriented way (mostly) that depends on the type of file-like object.
      * The behaviour as implemented is:
      * <table border=1>
+     * <caption>Stream behaviour for various object types</caption>
      * <tr align=center>
      * <td></td>
      * <td colspan=3>Python type of object <code>o</code> written</td>

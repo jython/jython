@@ -48,7 +48,7 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * @throws NullPointerException if <code>storage</code> is null
      * @throws ArrayIndexOutOfBoundsException if <code>index0</code> and <code>size</code> are
      *             inconsistent with <code>storage.length</code>
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleBuffer(int flags, BufferProtocol obj, byte[] storage, int index0, int size)
             throws PyException, ArrayIndexOutOfBoundsException, NullPointerException {
@@ -83,7 +83,7 @@ public class SimpleBuffer extends BaseArrayBuffer {
      * @param obj exporting object (or <code>null</code>)
      * @param storage the array of bytes storing the implementation of the exporting object
      * @throws NullPointerException if <code>storage</code> is null
-     * @throws PyException (BufferError) when expectations do not correspond with the type
+     * @throws PyException {@code BufferError} when expectations do not correspond with the type
      */
     public SimpleBuffer(int flags, BufferProtocol obj, byte[] storage) throws PyException,
             NullPointerException {

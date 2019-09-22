@@ -211,7 +211,7 @@ public abstract class BaseBuffer implements PyBuffer {
      * corresponding to an array that the buffer deems necessary.
      *
      * @param flags capabilities of and navigation assumed by the consumer
-     * @throws PyException (BufferError) when expectations do not correspond with the buffer
+     * @throws PyException {@code BufferError} when expectations do not correspond with the buffer
      */
     protected void checkRequestFlags(int flags) throws PyException {
         /*
@@ -291,7 +291,7 @@ public abstract class BaseBuffer implements PyBuffer {
      *
      * @param value to store
      * @param byteIndex byte-index of location to retrieve
-     * @throws PyException(BufferError) if this object is read-only.
+     * @throws PyException {@code BufferError} if this object is read-only.
      */
     abstract protected void storeAtImpl(byte value, int byteIndex)
             throws IndexOutOfBoundsException, PyException;
@@ -820,7 +820,7 @@ public abstract class BaseBuffer implements PyBuffer {
      *
      * @param indices into the buffer (to test)
      * @return number of dimensions
-     * @throws PyException (BufferError) if wrong number of indices
+     * @throws PyException {@code BufferError} if wrong number of indices
      */
     int checkDimension(int[] indices) throws PyException {
         int n = indices.length;
@@ -834,7 +834,7 @@ public abstract class BaseBuffer implements PyBuffer {
      * N-dimensional arrays.
      *
      * @param n number of dimensions being assumed by caller
-     * @throws PyException (BufferError) if wrong number of indices
+     * @throws PyException {@code BufferError} if wrong number of indices
      */
     void checkDimension(int n) throws PyException {
         int ndim = getNdim();
@@ -848,7 +848,7 @@ public abstract class BaseBuffer implements PyBuffer {
     /**
      * Check that the buffer is writable.
      *
-     * @throws PyException (TypeError) if not
+     * @throws PyException {@code TypeError} if not
      */
     protected void checkWritable() throws PyException {
         if (isReadonly()) {
@@ -859,7 +859,7 @@ public abstract class BaseBuffer implements PyBuffer {
     /**
      * Check that the buffer is backed by an array the client can access as byte[].
      *
-     * @throws PyException (BufferError) if not
+     * @throws PyException {@code BufferError} if not
      */
     protected void checkHasArray() throws PyException {
         if (!hasArray()) {

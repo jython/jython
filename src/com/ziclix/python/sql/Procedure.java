@@ -235,13 +235,13 @@ public class Procedure extends Object {
     }
 
     /**
-     * Returns the call in the syntax:
-     * <p/>
+     * Returns the call in the syntax: <pre>{@literal
      * {? = call <procedure-name>(?, ?, ...)}
      * {call <procedure-name>(?, ?, ...)}
-     * <p/>
-     * As of now, all parameters variables are created and no support for named variable
-     * calling is supported.
+     * }</pre>
+     *
+     * As of now, all parameters variables are created and no support for named variable calling is
+     * supported.
      *
      * @return String
      */
