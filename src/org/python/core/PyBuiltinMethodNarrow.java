@@ -9,7 +9,7 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
     }
 
     /**
-     * Creates a method for the <code>name<code> that takes exactly <code>numArgs</code> arguments.
+     * Creates a method for the <code>name</code> that takes exactly <code>numArgs</code> arguments.
      */
     protected PyBuiltinMethodNarrow(String name, int numArgs) {
         this(name, numArgs, numArgs);
@@ -31,6 +31,7 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
         super(type, self, info);
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if(keywords.length != 0) {
             throw info.unexpectedCall(args.length, true);
@@ -38,6 +39,7 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
         return __call__(args);
     }
 
+    @Override
     public PyObject __call__(PyObject[] args) {
         switch(args.length){
             case 0:
@@ -55,22 +57,27 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
         }
     }
 
+    @Override
     public PyObject __call__() {
         throw info.unexpectedCall(0, false);
     }
 
+    @Override
     public PyObject __call__(PyObject arg0) {
         throw info.unexpectedCall(1, false);
     }
 
+    @Override
     public PyObject __call__(PyObject arg0, PyObject arg1) {
         throw info.unexpectedCall(2, false);
     }
 
+    @Override
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
         throw info.unexpectedCall(3, false);
     }
 
+    @Override
     public PyObject __call__(PyObject arg0,
                              PyObject arg1,
                              PyObject arg2,

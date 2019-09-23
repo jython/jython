@@ -280,8 +280,8 @@ public abstract class PySequence extends PyObject {
     /**
      * Compare the specified object/length pairs.
      *
-     * @return value >= 0 is the index where the sequences differs. -1: reached the end of o1
-     *         without a difference -2: reached the end of both seqeunces without a difference -3:
+     * @return value &ge; 0 is the index where the sequences differs. -1: reached the end of o1
+     *         without a difference -2: reached the end of both sequences without a difference -3:
      *         reached the end of o2 without a difference
      */
     protected static int cmp(PyObject o1, int ol1, PyObject o2, int ol2) {
@@ -334,8 +334,9 @@ public abstract class PySequence extends PyObject {
     }
 
     /**
-     * Adjusts <code>index</code> such that it's >= 0 and <= __len__. If <code>index</code> starts
-     * off negative, it's treated as an index from the end of the sequence going back to the start.
+     * Adjusts <code>index</code> such that it's &ge;0 and &le; __len__. If <code>index</code>
+     * starts off negative, it's treated as an index from the end of the sequence going back to the
+     * start.
      */
     protected int boundToSequence(int index) {
         int length = __len__();

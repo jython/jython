@@ -182,7 +182,7 @@ public abstract class BaseBuffer implements PyBuffer {
     /**
      * Remove features from this buffer expressed using the constants defined in {@link PyBUF},
      * clearing individual flags specified while leaving others already set. Equivalent to
-     * <code>setFeatureFlags(~flags & getFeatureFlags())</code>.
+     * {@code setFeatureFlags(~flags & getFeatureFlags())}.
      *
      * @param flags to clear within the feature flags
      */

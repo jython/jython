@@ -283,7 +283,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param start index in this byte array at which the first character code lands
      * @param value source of characters
-     * @throws PyException {@code ValueError} if any value[i] > 255
+     * @throws PyException {@code ValueError} if any {@code value[i] > 255}
      */
     protected void setBytes(int start, String value) throws PyException {
         int n = value.length();
@@ -299,7 +299,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      *
      * @param start index in this byte array at which the first character code lands
      * @param value source of characters
-     * @throws PyException {@code ValueError} if any value[i] > 255
+     * @throws PyException {@code ValueError} if any {@code value[i] > 255}
      */
     protected void setBytes(int start, int step, String value) throws PyException {
         int n = value.length();
@@ -4225,7 +4225,7 @@ public abstract class BaseBytes extends PySequence implements List<PyInteger> {
      * for small array sizes to avoid needless reallocation.
      *
      * @param size of storage actually needed
-     * @return n >= size a recommended storage array size
+     * @return n &ge; size a recommended storage array size
      */
     protected static final int roundUp(int size) {
         /*

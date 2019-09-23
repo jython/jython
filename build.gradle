@@ -688,9 +688,9 @@ task testJar(type: Jar) {
 /*
  * The JavaDoc, anyway.
  */
-
 javadoc {
     options.encoding = 'UTF-8'
+    source = fileTree(dir: 'src', include: '**/*.java')
 }
 
 // ---------------- Publication ------------------------------------------------

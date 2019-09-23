@@ -30,7 +30,7 @@ public class Pipe {
     }
 
     /**
-     * Start the processing of the Source->Sink.
+     * Start the processing of the Source to the Sink.
      *
      * @param source the data generator
      * @param sink   the consumer of the data
@@ -144,6 +144,7 @@ abstract class PipeRunner extends Thread {
     /**
      * Method run
      */
+    @Override
     public void run() {
 
         try {
@@ -216,6 +217,7 @@ class SourceRunner extends PipeRunner {
      *
      * @throws InterruptedException
      */
+    @Override
     protected void pipe() throws InterruptedException {
 
         PyObject row = Py.None;
@@ -270,6 +272,7 @@ class SinkRunner extends PipeRunner {
      *
      * @throws InterruptedException
      */
+    @Override
     protected void pipe() throws InterruptedException {
 
         PyObject row = Py.None;

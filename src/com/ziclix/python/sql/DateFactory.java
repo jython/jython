@@ -19,33 +19,33 @@ public interface DateFactory {
     /**
      * This function constructs an object holding a date value.
      *
-     * @param year
-     * @param month
-     * @param day
-     * @return PyObject
+     * @param year to set
+     * @param month to set
+     * @param day to set
+     * @return date as PyObject
      */
     public PyObject Date(int year, int month, int day);
 
     /**
      * This function constructs an object holding a time value.
      *
-     * @param hour
-     * @param minute
-     * @param second
-     * @return PyObject
+     * @param hour to set
+     * @param minute to set
+     * @param second to set
+     * @return time as PyObject
      */
     public PyObject Time(int hour, int minute, int second);
 
     /**
      * This function constructs an object holding a time stamp value.
      *
-     * @param year
-     * @param month
-     * @param day
-     * @param hour
-     * @param minute
-     * @param second
-     * @return PyObject
+     * @param year to set
+     * @param month to set
+     * @param day to set
+     * @param hour to set
+     * @param minute to set
+     * @param second to set
+     * @return time stamp as PyObject
      */
     public PyObject Timestamp(int year, int month, int day, int hour, int minute, int second);
 
