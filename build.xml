@@ -817,9 +817,12 @@ The text for an official release would continue like ...
     </target>
 
     <target name="jar-complete" depends="jar, pycompile">
-        <taskdef name="jarjar"
-                 classname="com.tonicsystems.jarjar.JarJarTask"
-                 classpath="extlibs/jarjar-1.4.jar"/>
+        <taskdef name="jarjar" classname="org.pantsbuild.jarjar.JarJarTask">
+            <classpath>
+                <pathelement path="extlibs/jarjar-1.7.2.jar" />
+                <path refid="main.classpath" />
+            </classpath>
+        </taskdef>
         <jarjar destfile="${dist.dir}/${jython.deploy.jar}"  update="${jar.update}">
             <zipfileset src="${dist.dir}/${jython.dev.jar}"/>
             <!-- pin to Antlr 3 until we upgrade parsing -->

@@ -5,6 +5,7 @@ https://github.com/jythontools/jython
 
 Development tip
   Bugs fixed
+    - [ 2806 ] Installer contains dependencies unshaded (Java 8)
     - [ 2666 ] Oracle JDK 7 out of support so no longer available on Travis
     - [ 2294 ] Importation of modules from directories with non-ASCII characters fails
     - [ 2055 ] isinstance() and issubclass() fail with abc.ABCMeta
