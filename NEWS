@@ -3,7 +3,7 @@ Jython NEWS
 For more details of issue [ n ], please see https://hg.python.org/jython, or for tags [ GH-n ] see
 https://github.com/jythontools/jython
 
-Development tip
+Jython 2.7.2b1
   Bugs fixed
     - [ 2806 ] Installer contains dependencies unshaded (Java 8)
     - [ 2666 ] Oracle JDK 7 out of support so no longer available on Travis
