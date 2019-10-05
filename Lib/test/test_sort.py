@@ -43,6 +43,60 @@ def check(tag, expected, raw, compare=None):
             return
 
 class TestBase(unittest.TestCase):
+
+    def testGently(self):
+        #
+        # This is a copy of testStressfully omitting the pathological comparator. See bjo #2812.
+        #
+        # Try a variety of sizes at and around powers of 2, and at powers of 10.
+        sizes = [0]
+        for power in range(1, 10):
+            n = 2 ** power
+            sizes.extend(range(n-1, n+2))
+        sizes.extend([10, 100, 1000])
+
+        class Stable(object):
+            def __init__(self, key, i):
+                self.key = key
+                self.index = i
+
+            def __cmp__(self, other):
+                return cmp(self.key, other.key)
+            __hash__ = None # Silence Py3k warning
+
+            def __repr__(self):
+                return "Stable(%d, %d)" % (self.key, self.index)
+
+        for n in sizes:
+            x = range(n)
+            if verbose:
+                print "Testing size", n
+
+            s = x[:]
+            check("identity", x, s)
+
+            s = x[:]
+            s.reverse()
+            check("reversed", x, s)
+
+            s = x[:]
+            random.shuffle(s)
+            check("random permutation", x, s)
+
+            y = x[:]
+            y.reverse()
+            s = x[:]
+            check("reversed via function", y, s, lambda a, b: cmp(b, a))
+
+            s = [Stable(random.randrange(10), i) for i in xrange(n)]
+            augmented = [(e, e.index) for e in s]
+            augmented.sort()    # forced stable because ties broken by index
+            x = [e for e, i in augmented] # a stable sort of s
+            check("stability", x, s)
+
+
+    @unittest.skipIf(test_support.is_jython,
+                     "Pathological comparators not handled. See bjo #2812.")
     def testStressfully(self):
         # Try a variety of sizes at and around powers of 2, and at powers of 10.
         sizes = [0]
@@ -104,15 +158,8 @@ class TestBase(unittest.TestCase):
                 print "    Checking against an insane comparison function."
                 print "        If the implementation isn't careful, this may segfault."
             s = x[:]
-
-            if test_support.is_jython:
-                try:
-                    s.sort(lambda a, b:  int(random.random() * 3) - 1)
-                except java.lang.IllegalArgumentException:
-                    pass
-            else:
-                s.sort(lambda a, b:  int(random.random() * 3) - 1)
-                check("an insane function left some permutation", x, s)
+            s.sort(lambda a, b:  int(random.random() * 3) - 1)
+            check("an insane function left some permutation", x, s)
 
             x = [Complains(i) for i in x]
             s = x[:]

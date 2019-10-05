@@ -592,6 +592,7 @@ class DictTest(unittest.TestCase):
                         'f': None, 'g': None, 'h': None})
         d = {}
 
+    @unittest.skipIf(test_support.is_jython, "CPython specific (garbage collection).")
     def test_container_iterator(self):
         # Bug #3680: tp_traverse was not implemented for dictiter objects
         Dict = self.type2test
