@@ -9,29 +9,33 @@
     <packaging>jar</packaging>
     <name>Jython</name>
     <version>@PROJECT-VERSION@</version>
-    <url>http://www.jython.org/</url>
+    <url>https://www.jython.org/</url>
+
     <description>
         Jython is an implementation of the high-level, dynamic, object-oriented
         language Python written in 100% Pure Java, and seamlessly integrated with
         the Java platform. It thus allows you to run Python on any Java platform.
     </description>
+
     <licenses>
         <license>
             <name>Jython Software License</name>
-            <url>http://www.jython.org/Project/license.html</url>
+            <url>https://www.jython.org/Project/license.html</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
+
     <scm>
-        <connection>scm:hg:http://hg.python.org/jython</connection>
+        <connection>scm:hg:https://hg.python.org/jython</connection>
         <developerConnection>scm:hg:ssh://hg@hg.python.org/jython</developerConnection>
-        <url>http://hg.python.org/jython</url>
+        <url>https://hg.python.org/jython</url>
     </scm>
-    <!-- Just put my name in for now to make the maven uploader happy -->
+
     <developers>
         <developer>
-            <id>fwierzbicki</id>
-            <name>Frank Wierzbicki</name>
+            <id>jython</id>
+            <name>Jython Developers</name>
+            <email>jython-dev@lists.sourceforge.net</email>
         </developer>
     </developers>
 </project>

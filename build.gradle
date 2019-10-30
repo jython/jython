@@ -729,6 +729,42 @@ publishing {
             artifact sourcesJar
             // Also provide the docs. (Some javadoc errors currently.)
             artifact javadocJar
+
+            pom {
+                // Same description as in ~/maven/pom-template
+                name = 'Jython'
+                description =
+                    'Jython is an implementation of the high-level, dynamic, object-oriented\n' +
+                    'language Python written in 100% Pure Java, and seamlessly integrated with\n' +
+                    'the Java platform. It thus allows you to run Python on any Java platform.'
+                url = 'https://www.jython.org/'
+
+                // We use the PSF 2.0, but only most recently, but actually a bundle.
+                licenses {
+                    license {
+                        name = 'Jython Software License'
+                        // Not actually the license URL, but linked from here.
+                        url = 'https://www.jython.org/'
+                        distribution = 'repo'
+                    }
+                }
+
+                // Point to hg repositories hosetd by PSF (up to 2.7.2, anyway).
+                scm {
+                    connection = 'scm:hg:https://hg.python.org/jython'
+                    developerConnection = 'scm:hg:ssh://hg@hg.python.org/jython'
+                    url = 'https://hg.python.org/jython'
+                }
+
+                // Could list us all, but why not just the list for now?
+                developers {
+                    developer {
+                        id = 'jython'
+                        name = 'Jython Developers'
+                        email = 'jython-dev@lists.sourceforge.net'
+                    }
+                }
+            }
         }
     }
 

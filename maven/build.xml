@@ -83,12 +83,7 @@
   </target>
 
   <target name="bundle-slim" depends="prepare" if="gradle.published">
-    <jar jarfile="${pubs.dir}/jython-slim-${jython.version}-bundle.jar">
-        <fileset dir="${gradle.repo}/${m2.groupDir}/jython-slim/${jython.version}">
-            <include name="*.pom"/>
-            <include name="*.jar"/>
-        </fileset>
-    </jar>
+    <m2-bundle-gradle artifactId="jython-slim" version="${jython.version}"/>
   </target>
 
   <target name="install-all" depends="install, install-standalone"/>
@@ -138,51 +133,102 @@
     </sequential>
   </macrodef>
 
-  <!-- Stage (in ${build.maven}) and bundle an artifact in ${pubs.dir} for release -->
+  <!-- Stage (in @{stageDir}), creating a POM, and adding the version to names used.
+       Then create a bundle in ${pubs.dir} for release. -->
   <macrodef name="m2-bundle">
     <attribute name="artifactId"/>
     <attribute name="version"/>
+    <attribute name="fromDir" default="${dist.dir}" />
+    <attribute name="stageDir" default="${build.maven}" />
+    <attribute name="basename" default="@{artifactId}-@{version}" />
     <sequential>
-      <stage artifactId="@{artifactId}" version="@{version}"/>
-      <jar jarfile="${pubs.dir}/@{artifactId}-@{version}-bundle.jar">
-        <fileset dir="${build.maven}"/>
-      </jar>
-    </sequential>
-  </macrodef>
+      <!-- Clean the staging directory. -->
+      <delete dir="@{stageDir}" />
+      <mkdir dir="@{stageDir}" />
 
-  <!-- Stage artefacts for Maven (copy to a clean ${build.maven} adding version). -->
-  <macrodef name="stage">
-    <attribute name="artifactId"/>
-    <attribute name="version"/>
-    <attribute name="fromDir" default="${dist.dir}"/>
-    <sequential>
+      <!-- Copy over the primary artifact from @{fromDir} to the staging area. -->
+      <copy file="@{fromDir}/@{artifactId}.jar" tofile="@{stageDir}/@{basename}.jar"/>
 
-      <!-- Clean the temporary directory where we "stage" the primary and secondary artefacts. -->
-      <delete dir="${build.maven}"/>
-      <mkdir dir="${build.maven}"/>
+      <!-- The source and Javadoc are already prepared (but add the version to the name). -->
+      <copy file="@{fromDir}/sources.jar" tofile="@{stageDir}/@{basename}-sources.jar"/>
+      <copy file="@{fromDir}/javadoc.jar" tofile="@{stageDir}/@{basename}-javadoc.jar"/>
 
       <!-- Create the POM from the given template with placeholders replaced. -->
       <copy file="maven/pom-template.xml"
-            tofile="${build.maven}/@{artifactId}-@{version}.pom">
+            tofile="@{stageDir}/@{basename}.pom">
         <filterset>
           <filter token="PROJECT-VERSION" value="@{version}"/>
           <filter token="ARTIFACT-ID" value="@{artifactId}"/>
         </filterset>
       </copy>
 
-      <!-- XXX: License is already in the jars and maven central is
-                rejecting this in the bundle - investigate.
-      <copy file="LICENSE.txt" tofile="${build.maven}/LICENSE.txt"/>
-      -->
+      <!-- Sign everything. -->
+      <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}"/>
 
-      <!-- Copy over the primary artefact from @{fromDir} to the staging area. -->
-      <copy file="@{fromDir}/@{artifactId}.jar"
-            tofile="${build.maven}/@{artifactId}-@{version}.jar"/>
+      <!-- JAR-up the entire contents of the staging directory. -->
+      <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+        <fileset dir="@{stageDir}"/>
+      </jar>
+    </sequential>
+  </macrodef>
 
-      <!-- The source and Javadoc are the same each time (but add the version to the name). -->
-      <copy file="@{fromDir}/sources.jar" tofile="${build.maven}/@{artifactId}-@{version}-sources.jar"/>
-      <copy file="@{fromDir}/javadoc.jar" tofile="${build.maven}/@{artifactId}-@{version}-javadoc.jar"/>
+  <!-- Stage (in @{stageDir}), a gradle-built artifact in which Gradle has created a POM,
+       and the secondary artifacts (source, javadoc) with the version in the file names.
+       Then create a bundle in ${pubs.dir} for release. -->
+  <macrodef name="m2-bundle-gradle">
+    <attribute name="artifactId"/>
+    <attribute name="version"/>
+    <attribute name="fromDir"
+               default="${gradle.repo}/${m2.groupDir}/@{artifactId}/@{version}"/>
+    <attribute name="stageDir" default="${build.maven}" />
+    <attribute name="basename" default="@{artifactId}-@{version}" />
+    <sequential>
+      <!-- Clean the staging directory. -->
+      <delete dir="@{stageDir}" />
+      <mkdir dir="@{stageDir}" />
 
+      <!-- Copy over all the artifacts from @{fromDir} to the staging area. -->
+      <copy todir="@{stageDir}">
+        <fileset dir="@{fromDir}">
+          <include name="*.jar" />
+          <include name="*.pom" />
+        </fileset>
+      </copy>
+
+      <!-- Sign everything. -->
+      <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}"/>
+
+      <!-- JAR-up the entire contents of the staging directory. -->
+      <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+        <fileset dir="@{stageDir}"/>
+      </jar>
+    </sequential>
+  </macrodef>
+
+  <!-- Add detached signature for single artifact in staging directory. -->
+  <macrodef name="sign-detached">
+    <attribute name="file" />
+    <attribute name="stageDir" />
+    <sequential>
+      <!-- Generate a detached signature for each artifact in the bundle. -->
+      <exec executable="gpg" dir="@{stageDir}">
+        <arg value="-ab"/>
+        <arg value="@{file}"/>
+      </exec>
+    </sequential>
+  </macrodef>
+
+  <!-- Add detached signatures for group of artifacts in staging directory. -->
+  <macrodef name="sign-all">
+    <attribute name="artifactId" />
+    <attribute name="version" />
+    <attribute name="stageDir" />
+    <attribute name="basename" default="@{artifactId}-@{version}" />
+    <sequential>
+      <sign-detached stageDir="@{stageDir}" file="@{basename}.pom" />
+      <sign-detached stageDir="@{stageDir}" file="@{basename}.jar" />
+      <sign-detached stageDir="@{stageDir}" file="@{basename}-sources.jar" />
+      <sign-detached stageDir="@{stageDir}" file="@{basename}-javadoc.jar" />
     </sequential>
   </macrodef>
 
@@ -208,11 +254,11 @@
   </target>
 
   <target name="prepare" depends="build-jython, validate-pom, version">
-    <local name="artefacts"/>
-    <property name="artefacts"
+    <local name="artifacts"/>
+    <property name="artifacts"
               value="${gradle.repo}/${m2.groupDir}/jython-slim/${jython.version}" />
     <condition property="gradle.published">
-      <available file="${artefacts}" type="dir"/>
+      <available file="${artifacts}" type="dir"/>
     </condition>
   </target>
 
