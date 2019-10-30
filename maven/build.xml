@@ -8,7 +8,7 @@
    to you under the Apache License, Version 2.0 (the
    "License"); you may not use this file except in compliance
    with the License.  You may obtain a copy of the License at
-   
+
      http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing,
@@ -29,237 +29,221 @@
 <!-- ================================================= -->
 <project name="jython-maven" default="bundle-all" basedir="..">
 
-  <property file="${user.home}/ant.properties" />
-  <property file="${basedir}/default.properties"/>
+    <property file="${user.home}/ant.properties" />
+    <property file="${basedir}/default.properties" />
 
-  <!-- Artefacts for publication. -->
-  <property name="pubs.dir" value="${basedir}/publications" />
+    <!-- Artefacts for publication. -->
+    <property name="pubs.dir" value="${basedir}/publications" />
 
-  <property name="m2.repo" value="${user.home}/.m2/repository"/>
-  <property name="m2.groupDir" value="org/python"/>
+    <property name="m2.repo" value="${user.home}/.m2/repository" />
+    <property name="m2.groupDir" value="org/python" />
 
-  <property name="gradle.base" value="${basedir}/build2"/>
-  <property name="gradle.repo" value="${gradle.base}/stagingRepo"/>
+    <property name="gradle.base" value="${basedir}/build2" />
+    <property name="gradle.repo" value="${gradle.base}/stagingRepo" />
 
-  <property name="build.base" value="${basedir}/build"/>
-  <property name="build.maven" value="${build.base}/maven"/>
-  <property name="version.properties" value="${build.base}/classes/org/python/version.properties"/>
-  <property name="dist.dir" value="${basedir}/dist"/>
-  <property name="src.dir" value="${basedir}/src"/>
-  <property name="bundle.dir" value="${basedir}/bundle"/>
+    <property name="build.base" value="${basedir}/build" />
+    <property name="build.maven" value="${build.base}/maven" />
+    <property name="version.properties" value="${build.base}/classes/org/python/version.properties" />
+    <property name="dist.dir" value="${basedir}/dist" />
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="bundle.dir" value="${basedir}/bundle" />
 
-  <condition property="do.build">
-    <not>
-      <and>
-        <available file="${version.properties}"/>
-        <available file="${dist.dir}/jython.jar"/>
-        <available file="${dist.dir}/jython-standalone.jar"/>
-      </and>
-    </not>
-  </condition>
-
-  <target name="version">
-      <property file="${version.properties}"/>
-  </target>
-
-  <target name="install" depends="prepare">
-    <m2-install artifactId="jython" version="${jython.version}"/>
-  </target>
-
-  <target name="install-standalone" depends="prepare">
-    <m2-install artifactId="jython-standalone" version="${jython.version}"/>
-  </target>
-
-  <target name="bundle" depends="prepare">
-    <m2-bundle artifactId="jython" version="${jython.version}"/>
-  </target>
-
-  <target name="bundle-standalone" depends="prepare">
-    <m2-bundle artifactId="jython-standalone" version="${jython.version}"/>
-  </target>
-
-  <target name="bundle-installer" depends="prepare">
-    <m2-bundle artifactId="jython-installer" version="${jython.version}"/>
-  </target>
-
-  <target name="bundle-slim" depends="prepare" if="gradle.published">
-    <m2-bundle-gradle artifactId="jython-slim" version="${jython.version}"/>
-  </target>
-
-  <target name="install-all" depends="install, install-standalone"/>
-
-  <target name="bundle-all"
-          depends="version, bundle, bundle-standalone, bundle-installer, bundle-slim"/>
-
-  <target name="clean">
-    <delete dir="${build.maven}"/>
-    <delete>
-      <fileset dir="${bundle.dir}" includes="*-bundle.jar"/>
-    </delete>
-  </target>
-
-  <!-- Install an artifact to the local repo specified by ${m2.repo}. -->
-  <macrodef name="m2-install">
-    <attribute name="artifactId"/>
-    <attribute name="version"/>
-    <attribute name="install.dir"
-               default="${m2.repo}/${m2.groupDir}/@{artifactId}/@{version}"/>
-    <attribute name="install.name"
-               default="@{artifactId}-@{version}"/>
-
-    <sequential>
-      <stage artifactId="@{artifactId}" version="@{version}"/>
-      <mkdir dir="@{install.dir}"/>
-      <copy file="maven/pom-template.xml"
-            tofile="@{install.dir}/@{install.name}.pom">
-        <filterset>
-          <filter token="PROJECT-VERSION" value="@{version}"/>
-          <filter token="ARTIFACT-ID" value="@{artifactId}"/>
-        </filterset>
-      </copy>
-
-      <move file="${build.maven}/@{install.name}.jar"
-            tofile="@{install.dir}/@{install.name}.jar"/>
-      <move file="${build.maven}/@{install.name}-sources.jar"
-            tofile="@{install.dir}/@{install.name}-sources.jar"/>
-
-      <checksum algorithm="SHA1" fileext=".sha1">
-        <fileset dir="@{install.dir}" excludes="*.sha1,*.md5,*.tmp"/>
-      </checksum>
-
-      <checksum algorithm="MD5" fileext=".md5">
-        <fileset dir="@{install.dir}" excludes="*.sha1,*.md5,*.tmp"/>
-      </checksum>
-    </sequential>
-  </macrodef>
-
-  <!-- Stage (in @{stageDir}), creating a POM, and adding the version to names used.
-       Then create a bundle in ${pubs.dir} for release. -->
-  <macrodef name="m2-bundle">
-    <attribute name="artifactId"/>
-    <attribute name="version"/>
-    <attribute name="fromDir" default="${dist.dir}" />
-    <attribute name="stageDir" default="${build.maven}" />
-    <attribute name="basename" default="@{artifactId}-@{version}" />
-    <sequential>
-      <!-- Clean the staging directory. -->
-      <delete dir="@{stageDir}" />
-      <mkdir dir="@{stageDir}" />
-
-      <!-- Copy over the primary artifact from @{fromDir} to the staging area. -->
-      <copy file="@{fromDir}/@{artifactId}.jar" tofile="@{stageDir}/@{basename}.jar"/>
-
-      <!-- The source and Javadoc are already prepared (but add the version to the name). -->
-      <copy file="@{fromDir}/sources.jar" tofile="@{stageDir}/@{basename}-sources.jar"/>
-      <copy file="@{fromDir}/javadoc.jar" tofile="@{stageDir}/@{basename}-javadoc.jar"/>
-
-      <!-- Create the POM from the given template with placeholders replaced. -->
-      <copy file="maven/pom-template.xml"
-            tofile="@{stageDir}/@{basename}.pom">
-        <filterset>
-          <filter token="PROJECT-VERSION" value="@{version}"/>
-          <filter token="ARTIFACT-ID" value="@{artifactId}"/>
-        </filterset>
-      </copy>
-
-      <!-- Sign everything. -->
-      <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}"/>
-
-      <!-- JAR-up the entire contents of the staging directory. -->
-      <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
-        <fileset dir="@{stageDir}"/>
-      </jar>
-    </sequential>
-  </macrodef>
-
-  <!-- Stage (in @{stageDir}), a gradle-built artifact in which Gradle has created a POM,
-       and the secondary artifacts (source, javadoc) with the version in the file names.
-       Then create a bundle in ${pubs.dir} for release. -->
-  <macrodef name="m2-bundle-gradle">
-    <attribute name="artifactId"/>
-    <attribute name="version"/>
-    <attribute name="fromDir"
-               default="${gradle.repo}/${m2.groupDir}/@{artifactId}/@{version}"/>
-    <attribute name="stageDir" default="${build.maven}" />
-    <attribute name="basename" default="@{artifactId}-@{version}" />
-    <sequential>
-      <!-- Clean the staging directory. -->
-      <delete dir="@{stageDir}" />
-      <mkdir dir="@{stageDir}" />
-
-      <!-- Copy over all the artifacts from @{fromDir} to the staging area. -->
-      <copy todir="@{stageDir}">
-        <fileset dir="@{fromDir}">
-          <include name="*.jar" />
-          <include name="*.pom" />
-        </fileset>
-      </copy>
-
-      <!-- Sign everything. -->
-      <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}"/>
-
-      <!-- JAR-up the entire contents of the staging directory. -->
-      <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
-        <fileset dir="@{stageDir}"/>
-      </jar>
-    </sequential>
-  </macrodef>
-
-  <!-- Add detached signature for single artifact in staging directory. -->
-  <macrodef name="sign-detached">
-    <attribute name="file" />
-    <attribute name="stageDir" />
-    <sequential>
-      <!-- Generate a detached signature for each artifact in the bundle. -->
-      <exec executable="gpg" dir="@{stageDir}">
-        <arg value="-ab"/>
-        <arg value="@{file}"/>
-      </exec>
-    </sequential>
-  </macrodef>
-
-  <!-- Add detached signatures for group of artifacts in staging directory. -->
-  <macrodef name="sign-all">
-    <attribute name="artifactId" />
-    <attribute name="version" />
-    <attribute name="stageDir" />
-    <attribute name="basename" default="@{artifactId}-@{version}" />
-    <sequential>
-      <sign-detached stageDir="@{stageDir}" file="@{basename}.pom" />
-      <sign-detached stageDir="@{stageDir}" file="@{basename}.jar" />
-      <sign-detached stageDir="@{stageDir}" file="@{basename}-sources.jar" />
-      <sign-detached stageDir="@{stageDir}" file="@{basename}-javadoc.jar" />
-    </sequential>
-  </macrodef>
-
-  <!--
-       Performs POM Schema validation.
-  -->
-  <target name="validate-pom">
-    <xmlvalidate failonerror="true" file="maven/pom-template.xml">
-      <attribute name="http://xml.org/sax/features/validation"
-                 value="true"/>
-      <attribute name="http://apache.org/xml/features/validation/schema"
-                 value="true"/>
-      <attribute name="http://xml.org/sax/features/namespaces"
-                 value="true"/>
-      <property
-          name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation"
-          value="maven/maven-v4_0_0.xsd"/>
-    </xmlvalidate>
-  </target>
-
-  <target name="build-jython" if="do.build">
-    <ant antfile="build.xml" target="all-jars"/>
-  </target>
-
-  <target name="prepare" depends="build-jython, validate-pom, version">
-    <local name="artifacts"/>
-    <property name="artifacts"
-              value="${gradle.repo}/${m2.groupDir}/jython-slim/${jython.version}" />
-    <condition property="gradle.published">
-      <available file="${artifacts}" type="dir"/>
+    <condition property="do.build">
+        <not>
+            <and>
+                <available file="${version.properties}" />
+                <available file="${dist.dir}/jython.jar" />
+                <available file="${dist.dir}/jython-standalone.jar" />
+            </and>
+        </not>
     </condition>
-  </target>
+
+    <target name="version">
+        <property file="${version.properties}" />
+    </target>
+
+    <target name="install" depends="prepare">
+        <m2-install artifactId="jython" version="${jython.version}" />
+    </target>
+
+    <target name="install-standalone" depends="prepare">
+        <m2-install artifactId="jython-standalone" version="${jython.version}" />
+    </target>
+
+    <target name="bundle" depends="prepare">
+        <m2-bundle artifactId="jython" version="${jython.version}" />
+    </target>
+
+    <target name="bundle-standalone" depends="prepare">
+        <m2-bundle artifactId="jython-standalone" version="${jython.version}" />
+    </target>
+
+    <target name="bundle-installer" depends="prepare">
+        <m2-bundle artifactId="jython-installer" version="${jython.version}" />
+    </target>
+
+    <target name="bundle-slim" depends="prepare" if="gradle.published">
+        <m2-bundle-gradle artifactId="jython-slim" version="${jython.version}" />
+    </target>
+
+    <target name="install-all" depends="install, install-standalone" />
+
+    <target name="bundle-all" depends="version, bundle, bundle-standalone, bundle-installer, bundle-slim" />
+
+    <target name="clean">
+        <delete dir="${build.maven}" />
+        <delete>
+            <fileset dir="${bundle.dir}" includes="*-bundle.jar" />
+        </delete>
+    </target>
+
+    <!-- Install an artifact to the local repo specified by ${m2.repo}. -->
+    <macrodef name="m2-install">
+        <attribute name="artifactId" />
+        <attribute name="version" />
+        <attribute name="install.dir" default="${m2.repo}/${m2.groupDir}/@{artifactId}/@{version}" />
+        <attribute name="install.name" default="@{artifactId}-@{version}" />
+
+        <sequential>
+            <stage artifactId="@{artifactId}" version="@{version}" />
+            <mkdir dir="@{install.dir}" />
+            <copy file="maven/pom-template.xml" tofile="@{install.dir}/@{install.name}.pom">
+                <filterset>
+                    <filter token="PROJECT-VERSION" value="@{version}" />
+                    <filter token="ARTIFACT-ID" value="@{artifactId}" />
+                </filterset>
+            </copy>
+
+            <move file="${build.maven}/@{install.name}.jar" tofile="@{install.dir}/@{install.name}.jar" />
+            <move file="${build.maven}/@{install.name}-sources.jar" tofile="@{install.dir}/@{install.name}-sources.jar" />
+
+            <checksum algorithm="SHA1" fileext=".sha1">
+                <fileset dir="@{install.dir}" excludes="*.sha1,*.md5,*.tmp" />
+            </checksum>
+
+            <checksum algorithm="MD5" fileext=".md5">
+                <fileset dir="@{install.dir}" excludes="*.sha1,*.md5,*.tmp" />
+            </checksum>
+        </sequential>
+    </macrodef>
+
+    <!-- Stage (in @{stageDir}), creating a POM, and adding the version to names used.
+         Then create a bundle in ${pubs.dir} for release. -->
+    <macrodef name="m2-bundle">
+        <attribute name="artifactId" />
+        <attribute name="version" />
+        <attribute name="fromDir" default="${dist.dir}" />
+        <attribute name="stageDir" default="${build.maven}" />
+        <attribute name="basename" default="@{artifactId}-@{version}" />
+        <sequential>
+            <!-- Clean the staging directory. -->
+            <delete dir="@{stageDir}" />
+            <mkdir dir="@{stageDir}" />
+
+            <!-- Copy over the primary artifact from @{fromDir} to the staging area. -->
+            <copy file="@{fromDir}/@{artifactId}.jar" tofile="@{stageDir}/@{basename}.jar" />
+
+            <!-- The source and Javadoc are already prepared (but add the version to the name). -->
+            <copy file="@{fromDir}/sources.jar" tofile="@{stageDir}/@{basename}-sources.jar" />
+            <copy file="@{fromDir}/javadoc.jar" tofile="@{stageDir}/@{basename}-javadoc.jar" />
+
+            <!-- Create the POM from the given template with placeholders replaced. -->
+            <copy file="maven/pom-template.xml" tofile="@{stageDir}/@{basename}.pom">
+                <filterset>
+                    <filter token="PROJECT-VERSION" value="@{version}" />
+                    <filter token="ARTIFACT-ID" value="@{artifactId}" />
+                </filterset>
+            </copy>
+
+            <!-- Sign everything. -->
+            <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}" />
+
+            <!-- JAR-up the entire contents of the staging directory. -->
+            <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+                <fileset dir="@{stageDir}" />
+            </jar>
+        </sequential>
+    </macrodef>
+
+    <!-- Stage (in @{stageDir}), a gradle-built artifact in which Gradle has created a POM,
+         and the secondary artifacts (source, javadoc) with the version in the file names.
+         Then create a bundle in ${pubs.dir} for release. -->
+    <macrodef name="m2-bundle-gradle">
+        <attribute name="artifactId" />
+        <attribute name="version" />
+        <attribute name="fromDir" default="${gradle.repo}/${m2.groupDir}/@{artifactId}/@{version}" />
+        <attribute name="stageDir" default="${build.maven}" />
+        <attribute name="basename" default="@{artifactId}-@{version}" />
+        <sequential>
+            <!-- Clean the staging directory. -->
+            <delete dir="@{stageDir}" />
+            <mkdir dir="@{stageDir}" />
+
+            <!-- Copy over all the artifacts from @{fromDir} to the staging area. -->
+            <copy todir="@{stageDir}">
+                <fileset dir="@{fromDir}">
+                    <include name="*.jar" />
+                    <include name="*.pom" />
+                </fileset>
+            </copy>
+
+            <!-- Sign everything. -->
+            <sign-all stageDir="@{stageDir}" artifactId="@{artifactId}" version="@{version}" />
+
+            <!-- JAR-up the entire contents of the staging directory. -->
+            <jar jarfile="${pubs.dir}/@{basename}-bundle.jar">
+                <fileset dir="@{stageDir}" />
+            </jar>
+        </sequential>
+    </macrodef>
+
+    <!-- Add detached signature for single artifact in staging directory. -->
+    <macrodef name="sign-detached">
+        <attribute name="file" />
+        <attribute name="stageDir" />
+        <sequential>
+            <!-- Generate a detached signature for each artifact in the bundle. -->
+            <exec executable="gpg" dir="@{stageDir}">
+                <arg value="-ab" />
+                <arg value="@{file}" />
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <!-- Add detached signatures for group of artifacts in staging directory. -->
+    <macrodef name="sign-all">
+        <attribute name="artifactId" />
+        <attribute name="version" />
+        <attribute name="stageDir" />
+        <attribute name="basename" default="@{artifactId}-@{version}" />
+        <sequential>
+            <sign-detached stageDir="@{stageDir}" file="@{basename}.pom" />
+            <sign-detached stageDir="@{stageDir}" file="@{basename}.jar" />
+            <sign-detached stageDir="@{stageDir}" file="@{basename}-sources.jar" />
+            <sign-detached stageDir="@{stageDir}" file="@{basename}-javadoc.jar" />
+        </sequential>
+    </macrodef>
+
+    <!-- Performs POM Schema validation. -->
+    <target name="validate-pom">
+        <xmlvalidate failonerror="true" file="maven/pom-template.xml">
+            <attribute name="http://xml.org/sax/features/validation" value="true" />
+            <attribute name="http://apache.org/xml/features/validation/schema" value="true" />
+            <attribute name="http://xml.org/sax/features/namespaces" value="true" />
+            <property name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation" value="maven/maven-v4_0_0.xsd" />
+        </xmlvalidate>
+    </target>
+
+    <target name="build-jython" if="do.build">
+        <ant antfile="build.xml" target="all-jars" />
+    </target>
+
+    <target name="prepare" depends="build-jython, validate-pom, version">
+        <local name="artifacts" />
+        <property name="artifacts" value="${gradle.repo}/${m2.groupDir}/jython-slim/${jython.version}" />
+        <condition property="gradle.published">
+            <available file="${artifacts}" type="dir" />
+        </condition>
+    </target>
 
 </project>
