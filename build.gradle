@@ -37,20 +37,19 @@ import java.text.SimpleDateFormat
  * here. But of course you have to do it the hard way too (see build.xml) as
  * long as Ant is also used.
  *
- * The convention here is that you specify the version of the next release. If
+ * The convention here is that you specify the version of the *next* release. If
  * there are files not checked in, extra files (not of types hg ignores), or the
  * changeset is not tagged correspondingly, the build will add "-SNAPSHOT" to
  * the effective version.
  */
 // Versions are specified in this grammar:
-// <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( + | - <word> )?
+// <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( - <word> )?
 
-version = '2.7.2b1'
+version = '2.7.2b2'
 
 // Valid examples (please preserve in comments):
-//version = '2.7.2a1+'
 //version = '2.7.2a2'
-//version = '2.7.2b1-SNAPSHOT'
+//version = '2.7.2b2-DEV'
 //version = '2.7.2b1'
 //version = '2.7.2rc1'
 //version = '2.7.2'

@@ -16,7 +16,7 @@ or just:
     ant
 as it is the default target. This build will create directories
 /build and /dist below ${basedir}.
-Jython will identify its version with a trailing "+".
+Jython will identify its version with a trailing "-DEV".
 
 Case 2: build an installer for the development version
 ------------------------------------------------------
@@ -98,18 +98,18 @@ informix.jar = ../support/jdbc-4.10.12.jar
         reconsider choice of JARs, and feel free to use Java 8 syntax. -->
         <property name="jdk.source.version" value="1.7" />
 
-        <!-- Designate the official release encoded in parts. In normal times, this is the previous
-             official release, e.g. 2.7.2a1 while working towards 2.7.2b1, and sys.version will be
-             "2.7.2a1+". If you are trying to building an official release, designate that release.
-             Until you get it right sys.version should (or will) have a snapshot suffix you can
-             specify by -Dsnapshot.name on the ant comnmand line (or we may force one in). -->
+        <!-- Designate the official release encoded in parts. In normal times, this is the *next*
+             official release, e.g. 2.7.2b2 while working towards 2.7.2b2, and sys.version will be
+             "2.7.2b2-DEV". To build that release, work in a clean checkout of the corresponding
+             tag. Until then sys.version will have a snapshot suffix (-DEV or -SNAPSHOT). You can
+             specify that suffix by -Dsnapshot.name on the ant command line. -->
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="2"/>
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
 
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
-        <property name="jython.release_serial" value="1"/>
+        <property name="jython.release_serial" value="2"/>
     </target>
 
     <target name="common-constants">
@@ -317,7 +317,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         -->
 
         <!-- The suffix is "-" and the snapshot name, otherwise this is a developer build. -->
-        <condition property="snapshot.suffix" value="-${snapshot.name}" else="+">
+        <condition property="snapshot.suffix" value="-${snapshot.name}" else="-DEV">
             <isset property="snapshot.name"/>
         </condition>
     </target>
