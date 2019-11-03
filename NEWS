@@ -1,7 +1,13 @@
 Jython NEWS
 
+The features new in a given release are generally listed under the section for the "b1" release
+of that version.
+
 For more details of issue [ n ], please see https://hg.python.org/jython, or for tags [ GH-n ] see
 https://github.com/jythontools/jython
+
+Jython 2.7.2b3
+  Bugs fixed
 
 Jython 2.7.2b2
   Bugs fixed
