@@ -59,6 +59,19 @@ public class PyShadowString extends PyString {
         this(TYPE, Py.newString(primary), Py.newString(shadow), new PyList());
     }
 
+    /**
+     * Construct an instance specifying primary and shadow values
+     * (bytes object expected for primary).
+     * This somewhat uncanonical constructor was removed in Jython 2.7.2.
+     * The deprecated version is kept for compatibility with JyNI 2.7-alpha5.
+     *
+     * @deprecated use the constructor with strings instead.
+     */
+    @Deprecated
+    public PyShadowString(PyObject primary, String shadow) {
+        this(TYPE, primary, Py.newString(shadow), new PyList());
+    }
+
     /** Construct an instance specifying primary and shadow values (bytes objects expected). */
     private PyShadowString(PyObject primary, PyObject shadow) {
         this(TYPE, primary, shadow, new PyList());
