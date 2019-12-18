@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,12 +17,12 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
+import org.python.Version;
 import org.python.core.PrePy;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 
 /**
@@ -63,26 +65,35 @@ import org.python.core.PySystemState;
  */
 public class PyServlet extends HttpServlet {
 
+    protected static final Logger logger = Logger.getLogger("org.python.servlet");
+
     public static final String SKIP_INIT_NAME = "skip_jython_initialization";
 
     protected static final String INIT_ATTR = "__jython_initialized__";
 
     @Override
     public void init() {
-        Properties props = new Properties();
+        logger.log(Level.INFO, "Jython {0} servlet {1}",
+                new Object[] {Version.PY_VERSION, getServletName()});
+
         // Config parameters
+        Properties props = new Properties();
         Enumeration<?> e = getInitParameterNames();
         while (e.hasMoreElements()) {
             String name = (String)e.nextElement();
             props.put(name, getInitParameter(name));
         }
+
         boolean initialize = getServletConfig().getInitParameter(SKIP_INIT_NAME) != null;
+
         if (getServletContext().getAttribute(INIT_ATTR) != null) {
             if (initialize) {
-                System.err.println("Jython has already been initialized in this context, not "
-                        + "initializing for " + getServletName() + ".  Add " + SKIP_INIT_NAME
-                        + " to as an init param to this servlet's configuration to indicate this "
-                        + "is expected.");
+                logger.log(Level.WARNING, //
+                        "Jython has already been initialized in this context."
+                                + " Not initializing for ''{0}''."
+                                + " Add {1} as an init param to this servlet''s configuration"
+                                + " to indicate this is expected.",
+                        new Object[] {getServletName(), SKIP_INIT_NAME});
             }
         } else if (initialize) {
             init(props, getServletContext());
@@ -96,9 +107,11 @@ public class PyServlet extends HttpServlet {
      * context, the system state initialization code only runs once.
      */
     protected static void init(Properties props, ServletContext context) {
+
         String rootPath = getRootPath(context);
         context.setAttribute(INIT_ATTR, true);
         Properties baseProps = PrePy.getSystemProperties();
+
         // Context parameters
         Enumeration<?> e = context.getInitParameterNames();
         while (e.hasMoreElements()) {
@@ -109,6 +122,7 @@ public class PyServlet extends HttpServlet {
                 && baseProps.getProperty("python.home") == null) {
             props.put("python.home", rootPath + "WEB-INF" + File.separator + "lib");
         }
+
         PySystemState.initialize(baseProps, props, new String[0]);
         PySystemState.add_package("javax.servlet");
         PySystemState.add_package("javax.servlet.http");
@@ -237,7 +251,7 @@ public class PyServlet extends HttpServlet {
         public HttpServlet servlet;
 
         CacheEntry(HttpServlet servlet, long date) {
-            this.servlet=  servlet;
+            this.servlet = servlet;
             this.date = date;
         }
     }

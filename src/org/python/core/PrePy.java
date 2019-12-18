@@ -106,14 +106,15 @@ public class PrePy {
 
     /**
      * Convenience function to get the effective level of a given Logger, looking up the parent
-     * chain.
+     * chain. If the root logger is reached without an explicit level set, assume
+     * {@code Level.INFO}.
      */
     private static Level getEffectiveLoggingLevel(Logger logger) {
-        Level level;
-        while ((level = logger.getLevel()) == null) {
+        Level level = null;
+        while (logger != null && (level = logger.getLevel()) == null) {
             logger = logger.getParent();
         }
-        return level;
+        return level != null ? level : Level.INFO;
     }
 
     /** Convenience function to get the effective level of Logger "org.python". */
@@ -125,7 +126,7 @@ public class PrePy {
      * Used by {@link #maybeWrite(Level, String)}, the terminus of all verbosity-based logging
      * calls, to detect changes made directly to {@link Options#verbose}.
      */
-    private static int savedVerbosity = Py.MESSAGE;
+    private static int savedVerbosity = MESSAGE;
 
     /**
      * Set the level of the Jython logger "org.python" using the standard {@code java.util.logging}
@@ -368,12 +369,12 @@ public class PrePy {
      * then be opened using {@code jarFile = new JarFile(jarFileName)}. The path to the JAR is
      * returned. If the JAR is accessed by another mechanism ({@code http:} say) this will fail.
      * <p>
-     * The JBoss URL must be a reference to exactly
-     * {@code vfs:<JAR>/org/python/core/PySystemState.class}, or the same thing using the
-     * {@code vfszip:} protocol, where &lt;JAR&gt; stands for the absolute path to the Jython JAR in
-     * VFS. There is no "!/" marker: in JBoss VFS a JAR is treated just like a directory and can no
-     * longer be opened as a JAR. The method essentially just swaps a VFS protocol for the Java
-     * {@code file:} protocol. The path returned will be correct only if this naive swap is valid.
+     * The JBoss URL must be a reference to exactly {@code vfs:<JAR>/org/python/core/PrePy.class},
+     * or the same thing using the {@code vfszip:} protocol, where &lt;JAR&gt; stands for the
+     * absolute path to the Jython JAR in VFS. There is no "!/" marker: in JBoss VFS a JAR is
+     * treated just like a directory and can no longer be opened as a JAR. The method essentially
+     * just swaps a VFS protocol for the Java {@code file:} protocol. The path returned will be
+     * correct only if this naive swap is valid.
      *
      * @param url into the JAR
      * @return the file path or {@code null} in the event of a detectable error
@@ -396,9 +397,9 @@ public class PrePy {
 
                 case "vfs":
                 case "vfszip":
-                    // path is /some/path/some-jython.jar/org/python/core/PySystemState.class
+                    // path is /some/path/some-jython.jar/org/python/core/PrePy.class
                     String path = url.getPath();
-                    final String target = ".jar/" + Py.class.getName().replace('.', '/');
+                    final String target = ".jar/org/python/core/PrePy.class";
                     int jarIndex = path.indexOf(target);
                     if (jarIndex > 0) {
                         // path contains the target class in a JAR, so make a file URL for it

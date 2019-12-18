@@ -121,7 +121,7 @@ public class Version {
      * Describe the current Java VM.
      */
     public static String getVM() {
-        return String.format("\n[%s (%s)]", System.getProperty("java.vm.name"),
+        return String.format("[%s (%s)]", System.getProperty("java.vm.name"),
                              System.getProperty("java.vm.vendor"));
     }
 
@@ -130,7 +130,7 @@ public class Version {
      * the Java VM).
      */
     public static String getVersion() {
-        return String.format("%.80s (%.80s) %.80s", PY_VERSION, getBuildInfo(), getVM());
+        return String.format("%.80s (%.80s)\n%.80s", PY_VERSION, getBuildInfo(), getVM());
     }
 
     public static Set<CodeFlag> getDefaultCodeFlags() {

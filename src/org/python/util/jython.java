@@ -166,7 +166,9 @@ public class jython {
 
     /**
      * Try to set the format for SimpleFormatter if no other mechanism has been provided, and
-     * security allows it.
+     * security allows it. Note that the absolute fall-back format is:
+     * {@code "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS %1$Tp %2$s%n%4$s: %5$s%6$s%n"},
+     * defined ultimately in {@code sun.util.logging.LoggingSupport}.
      *
      * @param format to set for {@code java.util.logging.SimpleFormatter}
      * @throws SecurityException if not allowed to read or set necessary properties.

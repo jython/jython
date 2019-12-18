@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +60,7 @@ import static org.python.core.RegistryKey.*;
 public class PySystemState extends PyObject
         implements AutoCloseable, ClassDictInit, Closeable, Traverseproc {
 
-    protected static final Logger logger = Logger.getLogger("org.python");
+    private static final Logger logger = Logger.getLogger("org.python.core");
 
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
 
@@ -94,10 +95,8 @@ public class PySystemState extends PyObject
 
     public final static PyTuple _mercurial = new PyTuple(Py.newString("Jython"),
             Py.newString(Version.getHGIdentifier()), Py.newString(Version.getHGVersion()));
-    /**
-     * The copyright notice for this release.
-     */
 
+    /** The copyright notice for this release. */
     public static final PyObject copyright =
             Py.newString("Copyright (c) 2000-2017 Jython Developers.\n" + "All rights reserved.\n\n"
                     + "Copyright (c) 2000 BeOpen.com.\n" + "All Rights Reserved.\n\n"
@@ -251,6 +250,7 @@ public class PySystemState extends PyObject
         __dict__.__setitem__("displayhook", __displayhook__);
         __dict__.__setitem__("excepthook", __excepthook__);
 
+        logger.config("sys module instance created");
     }
 
     public static void classDictInit(PyObject dict) {
