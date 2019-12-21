@@ -1,10 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.compiler.Module;
-import org.python.core.util.FileUtil;
-import org.python.core.util.PlatformUtil;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,8 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.python.compiler.Module;
+import org.python.core.util.FileUtil;
+import org.python.core.util.PlatformUtil;
 
 /**
  * Utility functions for "import" support.
@@ -744,7 +744,7 @@ public class imp {
 
         // Note the path here may be sys.path or the search path of a Python package.
         path = path == null ? sys.path : path;
-        for (int i = 0; i < path.__len__(); i++) {
+        for (int i = 0; ret == null && i < path.__len__(); i++) {
             PyObject p = path.__getitem__(i);
             // Is there a path-specific importer?
             PyObject importer = getPathImporter(sys.path_importer_cache, sys.path_hooks, p);
@@ -757,9 +757,9 @@ public class imp {
                 }
             }
             // p could be a unicode or bytes object (in the file system encoding)
-            ret = loadFromSource(sys, name, moduleName, Py.fileSystemDecode(p));
-            if (ret != null) {
-                return ret;
+            String pathElement = fileSystemDecode(p, false);
+            if (pathElement != null) {
+                ret = loadFromSource(sys, name, moduleName, pathElement);
             }
         }
 
@@ -1385,6 +1385,45 @@ public class imp {
                 throw Py.ImportError("No module named " + name);
             }
         }
+    }
+
+    /**
+     * A wrapper for {@link Py#fileSystemDecode(PyObject)} for <b>project internal use</b> within
+     * the import mechanism to convert decoding errors that occur during import to either
+     * {@code null} or {@link Py#ImportError(String)} calls (and a log message), which usually
+     * results in quiet failure.
+     *
+     * @param p assumed to be a (partial) file path
+     * @param raiseImportError if true and {@code p} cannot be decoded raise {@code ImportError}.
+     * @return String form of the object {@code p} (or {@code null}).
+     */
+    public static String fileSystemDecode(PyObject p, boolean raiseImportError) {
+        try {
+            return Py.fileSystemDecode(p);
+        } catch (PyException e) {
+            if (e.match(Py.UnicodeDecodeError)) {
+                // p is bytes we cannot convert to a String using the FS encoding
+                if (raiseImportError) {
+                    logger.log(Level.CONFIG, "Cannot decode path entry {0}", p.__repr__());
+                    throw Py.ImportError("cannot decode");
+                }
+                return null;
+            } else {
+                // Any other kind of exception continues as itself
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * For <b>project internal use</b>, equivalent to {@code fileSystemDecode(p, true)} (see
+     * {@link #fileSystemDecode(PyObject, boolean)}).
+     *
+     * @param p assumed to be a (partial) file path
+     * @return String form of the object {@code p}.
+     */
+    public static String fileSystemDecode(PyObject p) {
+        return fileSystemDecode(p, true);
     }
 
     /**

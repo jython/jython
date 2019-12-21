@@ -113,11 +113,11 @@ public class SyspathJavaLoader extends ClassLoader {
         	byte[] buffer;
             PyObject entry = replacePathItem(sys, i, path);
             if (entry instanceof SyspathArchive) {
-                SyspathArchive archive = (SyspathArchive)entry;
+                SyspathArchive archive = (SyspathArchive) entry;
                 buffer = getBytesFromArchive(archive, name);
             } else {
-                String dir = Py.fileSystemDecode(entry);
-                buffer = getBytesFromDir(dir, name);
+                String dir = imp.fileSystemDecode(entry, false);
+                buffer = dir != null ? getBytesFromDir(dir, name) : null;
             }
             if (buffer != null) {
             	definePackageForClass(name);

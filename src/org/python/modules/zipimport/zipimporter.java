@@ -25,6 +25,7 @@ import org.python.core.PyType;
 import org.python.core.PyUnicode;
 import org.python.core.Traverseproc;
 import org.python.core.Visitproc;
+import org.python.core.imp;
 import org.python.core.util.FileUtil;
 import org.python.core.util.StringUtil;
 import org.python.core.util.importer;
@@ -90,7 +91,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     @ExposedMethod
     final void zipimporter___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("__init__", args, kwds, new String[] {"path"});
-        String path = Py.fileSystemDecode(ap.getPyObject(0));
+        String path = imp.fileSystemDecode(ap.getPyObject(0));
         zipimporter___init__(path);
     }
 

@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 
 import org.python.core.Py;
+import org.python.core.PyException;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyObject;
@@ -41,28 +42,30 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
         for (int i = 0; i < path.__len__(); i++) {
 
-            // Each entry in the path may be byte-encoded or unicode
             PyObject entry = path.pyget(i);
-            String dir = Py.fileSystemDecode(entry);
-            File f = new RelativeFile(dir, child);
 
-            try {
-                if (f.isDirectory() && imp.caseok(f, name)) {
-                    /*
-                     * f is a directory matching the package name. This directory is considered to
-                     * define a package if it contains no Python (source or compiled), or contains a
-                     * Java .class file (not compiled from Python).
-                     */
-                    PackageExistsFileFilter m = new PackageExistsFileFilter();
-                    f.listFiles(m);
-                    boolean exists = m.packageExists();
-                    if (exists) {
-                        logger.log(Level.CONFIG, "# trying {0}", f.getAbsolutePath());
+            // Each entry in the path may be byte-encoded or unicode
+            String dir = imp.fileSystemDecode(entry, false);
+            if (dir != null) {
+                File f = new RelativeFile(dir, child);
+                try {
+                    if (f.isDirectory() && imp.caseok(f, name)) {
+                        /*
+                         * f is a directory matching the package name. This directory is considered
+                         * to define a package if it contains no Python (source or compiled), or
+                         * contains a Java .class file (not compiled from Python).
+                         */
+                        PackageExistsFileFilter m = new PackageExistsFileFilter();
+                        f.listFiles(m);
+                        boolean exists = m.packageExists();
+                        if (exists) {
+                            logger.log(Level.CONFIG, "# trying {0}", f.getAbsolutePath());
+                        }
+                        return exists;
                     }
-                    return exists;
+                } catch (SecurityException se) {
+                    return false;
                 }
-            } catch (SecurityException se) {
-                return false;
             }
         }
         return false;
