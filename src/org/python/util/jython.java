@@ -674,9 +674,16 @@ public class jython {
             }
         }
 
-        // Shut down in a tidy way
-        interp.cleanup();
-        exit(sts);
+        /*
+         * If we arrive here then we ran some Python code. It is possible that threads we started
+         * are still running, so if the status is currently good, just return into the JVM. (This
+         * exits with good status if nothing goes wrong subsequently.)
+         */
+        if (sts != Status.OK) {
+            // Something went wrong running Python code: shut down in a tidy way.
+            interp.cleanup();
+            exit(sts);
+        }
     }
 
     /**
