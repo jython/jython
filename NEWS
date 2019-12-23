@@ -9,6 +9,7 @@ https://github.com/jythontools/jython
 Jython 2.7.2b3
   Bugs fixed
     - [ 2820 ] Import fails with UnicodeDecodeError if sys.path contains invalid UTF-8 bytes
+    - [ 2826 ] Unicode hex string decode failure
     - [ 2836 ] Java Swing library works only in interactive jython session
 
 Jython 2.7.2b2

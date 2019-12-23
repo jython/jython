@@ -1,5 +1,6 @@
 /*
- * Copyright 1998 Finn Bock.
+ * Copyright 2019 Jython Developers
+ * Original conversion from CPython source copyright 1998 Finn Bock.
  *
  * This program contains material copyrighted by:
  * Copyright (c) 1991, 1992, 1993, 1994 by Stichting Mathematisch Centrum,
@@ -145,6 +146,7 @@ public class binascii {
     private static short SKIP = 0x7E;
     private static short FAIL = 0x7D;
 
+    //@formatter:off
     private static short[] table_a2b_hqx = {
         /*       ^@    ^A    ^B    ^C    ^D    ^E    ^F    ^G   */
         /* 0*/  FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL,
@@ -195,13 +197,14 @@ public class binascii {
                 FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL,
                 FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL, FAIL,
     };
+    //@formatter:on
 
     private static byte[] table_b2a_hqx =
         StringUtil.toBytes("!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr");
 
 
 
-
+    //@formatter:off
     private static short table_a2b_base64[] = {
         -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
         -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
@@ -212,6 +215,7 @@ public class binascii {
         -1,26,27,28, 29,30,31,32, 33,34,35,36, 37,38,39,40,
         41,42,43,44, 45,46,47,48, 49,50,51,-1, -1,-1,-1,-1
     };
+    //@formatter:on
 
     private static char BASE64_PAD = '=';
 
@@ -222,7 +226,7 @@ public class binascii {
         StringUtil.toBytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
 
-
+    //@formatter:off
     private static int[] crctab_hqx = {
         0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
         0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
@@ -257,6 +261,7 @@ public class binascii {
         0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
         0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
     };
+    //@formatter:on
 
 
 
@@ -270,7 +275,7 @@ public class binascii {
      * binary data. Lines normally contain 45 (binary) bytes, except for the
      * last line. Line data may be followed by whitespace.
      */
-    public static PyString a2b_uu(BufferProtocol bp) {
+    public static PyString a2b_uu(PyObject bp) {
         int leftbits = 0;
         int leftchar = 0;
 
@@ -349,20 +354,22 @@ public class binascii {
      * is the converted line, including a newline char. The length of
      * <i>data</i> should be at most 45.
      */
-    public static PyString b2a_uu(BufferProtocol bp) {
+    public static PyString b2a_uu(PyObject bp) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
 
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
 
-        StringBuilder ascii_data = new StringBuilder();
-        try {
             int bin_len = bin_data.getLen();
             if (bin_len > 45) {
                 // The 45 is a limit that appears in all uuencode's
                 throw new PyException(Error, "At most 45 bytes at once");
             }
+            // Each 3 bytes in (rounded up) produces 4 characters out.
+            int ascii_len = 4 * ((bin_len + 2) / 3);
+            // Plus a 1 byte length and '\n'
+            StringBuilder ascii_data = new StringBuilder(ascii_len + 2);
 
             // Store the length */
             ascii_data.append((char)(' ' + (bin_len & 077)));
@@ -383,14 +390,14 @@ public class binascii {
                     ascii_data.append((char)(this_ch + ' '));
                 }
             }
-        } finally {
-            bin_data.release();
+
+            ascii_data.append('\n'); // Append a courtesy newline
+            return new PyString(ascii_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("b2a_uu", bp);
         }
-        ascii_data.append('\n'); // Append a courtesy newline
-
-        return new PyString(ascii_data.toString());
     }
-
 
     private static int binascii_find_valid(PyBuffer b, int offset, int num) {
         int blen = b.getLen() - offset;
@@ -427,7 +434,7 @@ public class binascii {
      * Convert a block of base64 data back to binary and return the
      * binary data. More than one line may be passed at a time.
      */
-    public static PyString a2b_base64(BufferProtocol bp) {
+    public static PyString a2b_base64(PyObject bp) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -437,7 +444,9 @@ public class binascii {
             int ascii_len = ascii_data.getLen();
 
             int bin_len = 0;
-            StringBuilder bin_data = new StringBuilder();
+
+            // Every 4 characters (rounded up) maps to 3 bytes
+            StringBuilder bin_data = new StringBuilder(3 * ((ascii_len + 3) / 4));
 
             for (int i = 0; ascii_len > 0; ascii_len--, i++) {
                 // Skip some punctuation
@@ -498,18 +507,18 @@ public class binascii {
      * Convert binary data to a line of ASCII characters in base64 coding.
      * The return value is the converted line, including a newline char.
      */
-    public static PyString b2a_base64(BufferProtocol bp) {
-        int leftbits = 0;
+    public static PyString b2a_base64(PyObject bp) {
+        int leftbits = 0;   // how many bits waiting
         char this_ch;
-        int leftchar = 0;
-
-        StringBuilder ascii_data = new StringBuilder();
+        int leftchar = 0;   // store bits not yet emitted (max 12 bits)
 
         try (PyBuffer bin_data = getTextBuffer(bp)) {
             int bin_len = bin_data.getLen();
             if (bin_len > BASE64_MAXBIN) {
                 throw new PyException(Error, "Too much data for base64 line");
             }
+            // Every 3 bytes (rounded up) maps to 4 characters (and there's a newline)
+            StringBuilder ascii_data = new StringBuilder(4 * ((bin_len + 2) / 3) + 1);
 
             for (int i = 0; bin_len > 0; bin_len--, i++) {
                 // Shift the data into our buffer
@@ -524,6 +533,7 @@ public class binascii {
                 }
             }
 
+            // Emit the balance of bits and append a newline
             if (leftbits == 2) {
                 ascii_data.append((char) table_b2a_base64[(leftchar & 3) << 4]);
                 ascii_data.append(BASE64_PAD);
@@ -551,7 +561,7 @@ public class binascii {
      * binary bytes, or (in case of the last portion of the binhex4 data)
      * have the remaining bits zero.
      */
-    public static PyTuple a2b_hqx(BufferProtocol bp) {
+    public static PyTuple a2b_hqx(PyObject bp) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -606,13 +616,13 @@ public class binascii {
      * Perform binhex4 style RLE-compression on <i>data</i> and return the
      * result.
      */
-    static public PyString rlecode_hqx(BufferProtocol bp) {
-        PyBuffer in_data = bp.getBuffer(PyBUF.SIMPLE);
-        int len = in_data.getLen();
+    static public PyString rlecode_hqx(PyObject bp) {
 
-        StringBuilder out_data = new StringBuilder();
+        try (PyBuffer in_data = getTextBuffer(bp)) {
 
-        try {
+            int len = in_data.getLen();
+            StringBuilder out_data = new StringBuilder();
+
             for (int in=0; in < len; in++) {
                 char ch = (char) in_data.intAt(in);
                 if (ch == RUNCHAR) {
@@ -639,10 +649,10 @@ public class binascii {
                     }
                 }
             }
-        } finally {
-            in_data.release();
+            return new PyString(out_data.toString());
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("rlecode_hqx", bp);
         }
-        return new PyString(out_data.toString());
     }
 
 
@@ -655,7 +665,7 @@ public class binascii {
      * resulting string. The argument should already be RLE-coded, and have a
      * length divisible by 3 (except possibly the last fragment).
      */
-    public static PyString b2a_hqx(BufferProtocol bp) {
+    public static PyString b2a_hqx(PyObject bp) {
         int leftbits = 0;
         char this_ch;
         int leftchar = 0;
@@ -702,20 +712,19 @@ public class binascii {
      * unless data input data ends in an orphaned repeat indicator, in which
      * case the <tt>Incomplete</tt> exception is raised.
      */
-    static public PyString rledecode_hqx(BufferProtocol bp) {
+    static public PyString rledecode_hqx(PyObject bp) {
         char in_byte, in_repeat;
 
-        PyBuffer in_data = bp.getBuffer(PyBUF.SIMPLE);
-        int in_len = in_data.getLen();
-        int i = 0;
+        try (PyBuffer in_data = getTextBuffer(bp)) {
+            int in_len = in_data.getLen();
+            int i = 0;
 
-        StringBuilder out_data = new StringBuilder();
-        try {
+            StringBuilder out_data = new StringBuilder();
+
             // Empty string is a special case
             if (in_len == 0) {
                 return Py.EmptyString;
             }
-
 
             // Handle first byte separately (since we have to get angry
             // in case of an orphaned RLE code).
@@ -767,13 +776,13 @@ public class binascii {
                     out_data.append(in_byte);
                 }
             }
-        } finally {
-            in_data.release();
+
+            return new PyString(out_data.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("rledecode_hqx", bp);
         }
-        return new PyString(out_data.toString());
     }
-
-
 
     public static PyString __doc__crc_hqx = new PyString(
         "(data, oldcrc) -> newcrc. Compute hqx CRC incrementally"
@@ -784,26 +793,25 @@ public class binascii {
      * Compute the binhex4 crc value of <i>data</i>, starting with an initial
      * <i>crc</i> and returning the result.
      */
-    public static int crc_hqx(BufferProtocol bp, int crc) {
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
-        int len = bin_data.getLen();
-        int i = 0;
+    public static int crc_hqx(PyObject bp, int crc) {
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
+            int len = bin_data.getLen();
+            int i = 0;
 
-        try {
             while(len-- > 0) {
                 crc=((crc<<8)&0xff00) ^
                            crctab_hqx[((crc>>8)&0xff)^ (char) bin_data.intAt(i++)];
             }
-        } finally {
-            bin_data.release();
-        }
+            return crc;
 
-        return crc;
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("crc_hqx", bp);
+        }
     }
 
 
 
-
+//@formatter:off
 static long[] crc_32_tab = new long[] {
 0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
 0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
@@ -858,34 +866,35 @@ static long[] crc_32_tab = new long[] {
 0x5d681b02L, 0x2a6f2b94L, 0xb40bbe37L, 0xc30c8ea1L, 0x5a05df1bL,
 0x2d02ef8dL
 };
+//@formatter:on
 
-    public static int crc32(BufferProtocol bp) {
+    public static int crc32(PyObject bp) {
         return crc32(bp, 0);
     }
 
-    public static int crc32(BufferProtocol bp, long crc) {
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
-        int len = bin_data.getLen();
+    public static int crc32(PyObject bp, long crc) {
 
         crc &= 0xFFFFFFFFL;
         crc = crc ^ 0xFFFFFFFFL;
-        try {
+
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
+            int len = bin_data.getLen();
             for (int i = 0; i < len; i++) {
                 char ch = (char) bin_data.intAt(i);
                 crc = (int)crc_32_tab[(int) ((crc ^ ch) & 0xffL)] ^ (crc >> 8);
                 /* Note:  (crc >> 8) MUST zero fill on left */
                 crc &= 0xFFFFFFFFL;
             }
-        } finally {
-            bin_data.release();
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("crc32", bp);
         }
+
         if (crc >= 0x80000000) {
             return -(int)(crc+1 & 0xFFFFFFFF);
         } else {
             return (int)(crc & 0xFFFFFFFF);
         }
     }
-
 
     private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
@@ -895,7 +904,7 @@ static long[] crc_32_tab = new long[] {
         "This function is also available as \"hexlify()\"."
     );
 
-    public static PyString b2a_hex(BufferProtocol bp) {
+    public static PyString b2a_hex(PyObject bp) {
 
         try (PyBuffer argbuf = getTextBuffer(bp)) {
 
@@ -916,7 +925,7 @@ static long[] crc_32_tab = new long[] {
         }
     }
 
-    public static PyString hexlify(BufferProtocol argbuf) {
+    public static PyString hexlify(PyObject argbuf) {
         return b2a_hex(argbuf);
     }
 
@@ -929,9 +938,9 @@ static long[] crc_32_tab = new long[] {
         "This function is also available as \"unhexlify()\""
     );
 
-    public static PyString a2b_hex(BufferProtocol bp) {
+    public static PyString a2b_hex(PyObject bp) {
 
-        try (PyBuffer argbuf = bp.getBuffer(PyBUF.SIMPLE)) {
+        try (PyBuffer argbuf = getTextBuffer(bp)) {
 
             int arglen = argbuf.getLen();
             StringBuilder retbuf = new StringBuilder(arglen / 2);
@@ -959,7 +968,7 @@ static long[] crc_32_tab = new long[] {
         }
     }
 
-    public static PyString unhexlify(BufferProtocol argbuf) {
+    public static PyString unhexlify(PyObject argbuf) {
         return a2b_hex(argbuf);
     }
 
@@ -994,20 +1003,12 @@ static long[] crc_32_tab = new long[] {
     {
         ArgParser ap = new ArgParser("a2b_qp", arg, kws, new String[] {"s", "header"});
 
-        PyObject pyObject = ap.getPyObject(0);
-        BufferProtocol bp;
-        if (pyObject instanceof BufferProtocol) {
-            bp = (BufferProtocol) pyObject;
-        } else {
-            throw Py.TypeError("expected something conforming to the buffer protocol, got "
-                    + pyObject.getType().fastGetName());
-        }
+        PyObject bp = ap.getPyObject(0);
 
         StringBuilder sb = new StringBuilder();
         boolean header = getIntFlagAsBool(ap, 1, 0, "an integer is required");
 
-        PyBuffer ascii_data = bp.getBuffer(PyBUF.SIMPLE);
-        try {
+        try (PyBuffer ascii_data = getTextBuffer((PyObject)bp)) {
             for (int i=0, m=ascii_data.getLen(); i<m;) {
                     char c = (char) ascii_data.intAt(i++);
                     if (header && c == '_') {
@@ -1034,10 +1035,10 @@ static long[] crc_32_tab = new long[] {
                             sb.append(c);
                     }
             }
-        } finally {
-            ascii_data.release();
-        }
         return new PyString(sb.toString());
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("a2b_qp", bp);
+        }
     }
 
     final private static Pattern RN_TO_N = Pattern.compile("\r\n");
@@ -1055,21 +1056,14 @@ static long[] crc_32_tab = new long[] {
         boolean istext = getIntFlagAsBool(ap, 2, 1, "an integer is required");
         boolean header = getIntFlagAsBool(ap, 3, 0, "an integer is required");
 
-        PyObject pyObject = ap.getPyObject(0);
-        BufferProtocol bp;
-        if (pyObject instanceof BufferProtocol) {
-            bp = (BufferProtocol) pyObject;
-        } else {
-            throw Py.TypeError("expected something conforming to the buffer protocol, got "
-                    + pyObject.getType().fastGetName());
-        }
+        PyObject bp = ap.getPyObject(0);
 
-        PyBuffer bin_data = bp.getBuffer(PyBUF.SIMPLE);
-        int datalen = bin_data.getLen();
-        StringBuilder sb = new StringBuilder(datalen);
-        try {
+        try (PyBuffer bin_data = getTextBuffer(bp)) {
 
+            int datalen = bin_data.getLen();
+            StringBuilder sb = new StringBuilder(datalen);
             String lineEnd = "\n";
+
             // Work out if line endings should be crlf.
             for (int i = 0, m = bin_data.getLen(); i < m; i++) {
                 if ('\n' == bin_data.intAt(i)) {
@@ -1149,11 +1143,13 @@ static long[] crc_32_tab = new long[] {
                     }
                 }
             }
-        } finally {
-            bin_data.release();
+
+            return new PyString(sb.toString());
+
+        } catch (ClassCastException e) {
+            throw argMustBeBytes("b2a_qp", bp);
         }
 
-        return new PyString(sb.toString());
     }
 
     /**
@@ -1162,17 +1158,16 @@ static long[] crc_32_tab = new long[] {
      * may be a {@code PyUnicode}, in which case the it will be decoded to bytes using the default
      * encoding ({@code sys.getdefaultencoding()}.
      *
-     * @param text an object with the buffer protocol
-     * @return a byte-buffer view of the ASCII text
+     * @param text an object with the buffer protocol (or {@code unicode})
+     * @return a byte-buffer view of argument (or default decoding if {@code unicode})
      * @throws ClassCastException where the text object does not implement the buffer protocol
      */
-    private static PyBuffer getTextBuffer(BufferProtocol text)
-            throws ClassCastException {
+    private static PyBuffer getTextBuffer(PyObject text) throws ClassCastException {
         if (text instanceof PyUnicode) {
             String s = ((PyUnicode) text).encode();
             return new SimpleStringBuffer(PyBUF.SIMPLE, null, s);
         } else {
-            return text.getBuffer(PyBUF.SIMPLE);
+            return ((BufferProtocol) text).getBuffer(PyBUF.SIMPLE);
         }
     }
 
@@ -1184,7 +1179,7 @@ static long[] crc_32_tab = new long[] {
      * @param arg argument provided from which actual type will be reported
      * @return TypeError to throw
      */
-    private static PyException argMustBeBytes(String f, BufferProtocol arg) {
+    private static PyException argMustBeBytes(String f, PyObject arg) {
         String fmt = "%s() argument 1 must bytes or unicode, not %s";
         String type = "null";
         if (arg instanceof PyObject) {
