@@ -115,41 +115,61 @@ public class PySystemStateTest extends TestCase {
         final String host = "";
         final int port = -1;
         final URLStreamHandler handler = new TestJBossURLStreamHandler();
+        // Test with any class file in org.python.core
+        final String classPart = "/org/python/core/PySystemState.class";
         String file;
         URL url;
         if (Platform.IS_WINDOWS) {
             // plain jboss url
-            file = "/C:/some_dir/some.jar/org/python/core/PySystemState.class";
+            file = "/C:/some_dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
             // tests with jboss on windows gave URL's like this:
-            assertEquals("vfszip:/C:/some_dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:\\some_dir\\some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/C:/some_dir/some.jar" + classPart, url.toString());
+            String result = Py.getJarFileNameFromURL(url);
+            assertEquals("C:\\some_dir\\some.jar", result);
             // jboss url to decode
-            file = "/C:/some%20dir/some.jar/org/python/core/PySystemState.class";
+            file = "/C:/some%20dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
-            assertEquals("vfszip:/C:/some%20dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:\\some dir\\some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/C:/some%20dir/some.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("C:\\some dir\\some.jar", result);
             // jboss url with + to escape
-            file = "/C:/some+dir/some.jar/org/python/core/PySystemState.class";
+            file = "/C:/some+dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
-            assertEquals("vfszip:/C:/some+dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("C:\\some+dir\\some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/C:/some+dir/some.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("C:\\some+dir\\some.jar", result);
+            // jboss url with challenging JAR name (assume will be provided RFC-2396 encoded)
+            file = "/C:/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart;
+            url = new URL(protocol, host, port, file, handler);
+            assertEquals("vfszip:/C:/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("C:\\någon\\katalog\\rätt.jar", result);
         } else {
             // plain jboss url
-            file = "/some_dir/some.jar/org/python/core/PySystemState.class";
+            file = "/some_dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
-            assertEquals("vfszip:/some_dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some_dir/some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/some_dir/some.jar" + classPart, url.toString());
+            String result = Py.getJarFileNameFromURL(url);
+            assertEquals("/some_dir/some.jar", result);
             // jboss url to decode
-            file = "/some%20dir/some.jar/org/python/core/PySystemState.class";
+            file = "/some dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
-            assertEquals("vfszip:/some%20dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some dir/some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/some%20dir/some.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("/some dir/some.jar", result);
             // jboss url with + to escape
-            file = "/some+dir/some.jar/org/python/core/PySystemState.class";
+            file = "/some+dir/some.jar" + classPart;
             url = new URL(protocol, host, port, file, handler);
-            assertEquals("vfszip:/some+dir/some.jar/org/python/core/PySystemState.class", url.toString());
-            assertEquals("/some+dir/some.jar", Py.getJarFileNameFromURL(url));
+            assertEquals("vfszip:/some+dir/some.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("/some+dir/some.jar", result);
+            // jboss url with challenging JAR name (assume will be provided RFC-2396 encoded)
+            file = "/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart;
+            url = new URL(protocol, host, port, file, handler);
+            assertEquals("vfszip:/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals("/någon/katalog/rätt.jar", result);
         }
     }
 
