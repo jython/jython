@@ -240,9 +240,9 @@ public class SysPackageManager extends PathPackageManager {
 
         doDir(this.searchPath, ret, jpkg, instantiate, exclpkgs);
 
-        PySystemState system = Py.getSystemState();
-        if (system.getClassLoader() == null) {
-            doDir(system.path, ret, jpkg, instantiate, exclpkgs);
+        PySystemState sys = Py.getSystemState();
+        if (sys.getClassLoader() == null) {
+            doDir(sys.path, ret, jpkg, instantiate, exclpkgs);
         }
 
         return merge(basic, ret);

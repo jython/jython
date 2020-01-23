@@ -5,8 +5,8 @@ package org.python.core;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,7 +43,7 @@ import org.python.util.PythonInterpreter;
  */
 public class ConcurrentTypeTest {
 
-    private static int RUNNERS = 30;
+    private static int RUNNERS = 100;
 
     static {
         // Do not need site.py for test: makes more complicated in IDE.
@@ -52,20 +52,30 @@ public class ConcurrentTypeTest {
 
     private abstract static class ScriptRunner implements Runnable {
 
-        final String script;
+        final int instance;
         final Thread thread;
+        String script;
+        PyCode code;
         final PyStringMap globals = Py.newStringMap();
         /** Sub-class constructor must assign the configured interpreter. */
-        protected PythonInterpreter interp;
+        PythonInterpreter interp;
 
-        ScriptRunner(String script) {
-            this.script = script;
+        ScriptRunner(int instance) {
+            this.instance = instance;
             this.thread = new Thread(this);
+            this.globals.__setitem__("instance", Py.newInteger(instance));
+        }
+
+        /** Set the interpreter and compile the script. */
+        void setInterp(PythonInterpreter interp, String script) {
+            this.interp = interp;
+            this.script = script;
+            this.code = interp.compile(script);
         }
 
         @Override
         public void run() {
-            interp.exec(script);
+            interp.exec(code);
         }
     }
 
@@ -79,7 +89,7 @@ public class ConcurrentTypeTest {
         // Make all the runners in advance.
         List<SharedStateRunner> runners = new ArrayList<>(RUNNERS);
         for (int i = 0; i < RUNNERS; i++) {
-            runners.add(new SharedStateRunner(javaImportScript));
+            runners.add(new SharedStateRunner(javaImportScript, i));
         }
 
         // Start the runners then let all of them finish (or fail).
@@ -87,9 +97,8 @@ public class ConcurrentTypeTest {
 
         // Check status of every thread
         for (SharedStateRunner r : runners) {
-            PyObject status = r.globals.__finditem__("status");
-            assertTrue("status not set to an int", status instanceof PyInteger);
-            assertEquals(((PyInteger) status).asInt(), 1);
+            PyObject e = r.globals.__finditem__("e");
+            assertEquals("Runner " + r.instance, null, e);
         }
     }
 
@@ -99,30 +108,39 @@ public class ConcurrentTypeTest {
      */
     //@formatter:off
     static final String javaImportScript = String.join("\n", new String[] {
-        "from javax.swing.text.Utilities import *",
-        "try:",
-        "    f = getNextWord",
-        "    status = 1",
-        "except Exception:",
-        "    status = 0"
+       "try:",
+       "    from javax.swing.text.Utilities import *",
+       "    f = getNextWord", // May raise NameError
+       "except Exception as e:",
+       "    pass"
     });
     //@formatter:on
 
     /**
-     * Each instance of this type has its own interpreter, but they all share the same (default)
-     * {@code PySystemState}
+     * Each instance of this type has its own {@link PythonInterpreter}, but they all share the same
+     * (default) {@code PySystemState}
      */
     private static class SharedStateRunner extends ScriptRunner {
 
-        SharedStateRunner(String script) {
-            super(script);
-            this.interp = new PythonInterpreter(globals);
+        SharedStateRunner(String script, int instance) {
+            super(instance);
+            setInterp(new PythonInterpreter(globals), script);
         }
     }
 
     /**
      * Test concurrency when importing the same Java class where the interpreters all have their own
-     * {@code PySystemState}.
+     * {@code PySystemState}. At version 2.7.2b2, this test occasionally fails with a
+     * {@code NameError}, when the member {@code getNextWord} imported from
+     * {@code javax.swing.text.Utilities} is not found. The cause is thought to be a race between
+     * threads in {@code SysPackageManager}. It is necessary to run this test in the shell with
+     * something like:<pre>
+     * PS jython-trunk> do {
+     * >>   java -cp "build\exposed;build\classes;extlibs\*" org.junit.runner.JUnitCore org.python.core.ConcurrentTypeTest
+     * >> } while ($LastExitCode -eq 0)
+     * </pre> Expect a hundred iterations or more before you see
+     * {@code "name 'getNextWord' is not defined"}. Suppress other tests in the suite.
+     *
      */
     @Test
     public void testSeparateState() {
@@ -130,7 +148,7 @@ public class ConcurrentTypeTest {
         // Make all the runners in advance.
         List<SeparateStateRunner> runners = new ArrayList<>(RUNNERS);
         for (int i = 0; i < RUNNERS; i++) {
-            runners.add(new SeparateStateRunner(javaImportScript));
+            runners.add(new SeparateStateRunner(javaImportScript, i));
         }
 
         // Start the runners then let all of them finish (or fail).
@@ -138,24 +156,67 @@ public class ConcurrentTypeTest {
 
         // Check status of every thread
         for (SeparateStateRunner r : runners) {
-            PyObject status = r.globals.__finditem__("status");
-            assertTrue("status not set to an int", status instanceof PyInteger);
-            assertEquals(((PyInteger) status).asInt(), 1);
+            PyObject e = r.globals.__finditem__("e");
+            assertEquals("Runner " + r.instance, null, e);
         }
     }
 
     /**
-     * Each instance of this type has its own {@code PySystemState}, as well as its own interpreter.
+     * Script to import all names from a Java class for {@link #testSharedState()} and
+     * {@link #testSeparateState()}. At version 2.7.2b2, this test frequently (not every time) fails
+     * with an {@code AttributeError}, when member {@code sleep} of {@code java.lang.Thread} is not
+     * found for the call.
+     */
+    //@formatter:off
+    static final String javaImportScript2 = String.join("\n", new String[] {
+       "try:",
+       "    from java.lang import Thread",
+       "    Thread.sleep(instance*10)",  // May raise AttributeError
+       "    from javax.swing.text.Utilities import *",
+       "    f = getNextWord", // May raise NameError
+       "except Exception as e:",
+       "    pass"
+    });
+    //@formatter:on
+
+    /**
+     * Test concurrency when importing the same Java class where the interpreters all have their own
+     * {@code PySystemState}. It differs from {@link #testSeparateState()} in importing
+     * {@code Thread} add calling {@code Thread.sleep}. (The original idea was to provoke
+     * switching.) At version 2.7.2b2, this test fails about one time in 5 with an AttributeError,
+     * when the member {@code Thread.sleep} is not found.
+     */
+    @Test
+    public void testSeparateState2() {
+
+        // Make all the runners in advance.
+        List<SeparateStateRunner> runners = new ArrayList<>(RUNNERS);
+        for (int i = 0; i < RUNNERS; i++) {
+            runners.add(new SeparateStateRunner(javaImportScript2, i));
+        }
+
+        // Start the runners then let all of them finish (or fail).
+        awaitAll(runners);
+
+        // Check status of every thread
+        for (SeparateStateRunner r : runners) {
+            PyObject e = r.globals.__finditem__("e");
+            assertEquals("Runner " + r.instance, null, e);
+        }
+    }
+
+    /**
+     * Each instance of this type has its own {@code PySystemState}, as well as its own
+     * {@link PythonInterpreter}.
      */
     private static class SeparateStateRunner extends ScriptRunner {
 
         final PySystemState sys = new PySystemState();
 
-        SeparateStateRunner(String script) {
-            super(script);
-            this.interp = new PythonInterpreter(globals, sys);
+        SeparateStateRunner(String script, int instance) {
+            super(instance);
+            setInterp(new PythonInterpreter(globals, sys), script);
         }
-
     }
 
     /**
@@ -171,15 +232,18 @@ public class ConcurrentTypeTest {
         // Make all the runners in advance, primed with the same script.
         List<SeparateLoaderRunner> runners = new ArrayList<>(RUNNERS);
         for (int i = 0; i < RUNNERS; i++) {
-            runners.add(new SeparateLoaderRunner(loaderScript, fileManager.newClassLoader()));
+            runners.add(new SeparateLoaderRunner(loaderScript, i, fileManager.newClassLoader()));
         }
 
         // Start the runners then let all of them finish (or fail).
         awaitAll(runners);
 
-        // Check status of every thread
+        // Check result of every thread
         for (SeparateLoaderRunner r : runners) {
+            PyObject e = r.globals.__finditem__("e");
+            assertEquals("Runner " + r.instance, null, e);
             PyObject staticConstant = r.globals.__finditem__("staticConstant");
+            assertNotNull(staticConstant);
             assertEquals(staticConstant.asInt(), 42);
             PyObject x = r.globals.__finditem__("x");
             assertEquals(x.asInt(), 42);
@@ -204,13 +268,16 @@ public class ConcurrentTypeTest {
     //@formatter:on
 
     /**
-     * Script to import all names from a Java class conjured from thin air (via class loader), usaed
+     * Script to import all names from a Java class conjured from thin air (via class loader), used
      * by {@link #testSeparateLoader()}.
      */
     //@formatter:off
     static final String loaderScript = String.join("\n", new String[] {
-        "from thin.air.Foo import *",
-        "x = staticMethod()"
+       "try:",
+       "    from thin.air.Foo import *",
+       "    x = staticMethod()",
+       "except Exception as e:",
+       "    pass"
     });
     //@formatter:on
 
@@ -228,17 +295,19 @@ public class ConcurrentTypeTest {
         // Make all the runners in advance, primed with the same script.
         List<SeparateLoaderRunner> runners = new ArrayList<>(RUNNERS);
         for (int i = 0; i < RUNNERS; i++) {
-            runners.add(new SeparateLoaderRunner(loaderScript2, fileManager.newClassLoader()));
+            runners.add(new SeparateLoaderRunner(loaderScript2, i, fileManager.newClassLoader()));
         }
 
         // Start the runners then let all of them finish (or fail).
         awaitAll(runners);
 
-        // Check status of every thread
+        // Check result of every thread
         Set<Object> classes = new HashSet<>();
         Set<PyType> types = new HashSet<>();
 
         for (SeparateLoaderRunner r : runners) {
+            PyObject e = r.globals.__finditem__("e");
+            assertEquals("Runner " + r.instance, null, e);
             PyObject m = r.globals.__finditem__("m");
             assertEquals(m.toString(), "forty-two");
             PyObject x = r.globals.__finditem__("x");
@@ -260,25 +329,28 @@ public class ConcurrentTypeTest {
      */
     //@formatter:off
     static final String loaderScript2 = String.join("\n", new String[] {
-        "from thin.air import Foo",
-        "f = Foo()",
-        "m = f.member",
-        "x = f.method()"
+       "try:",
+       "    from thin.air import Foo",
+       "    f = Foo()",
+       "    m = f.member",
+       "    x = f.method()",
+       "except Exception as e:",
+       "    pass"
     });
     //@formatter:on
 
     /**
      * Each instance of this type has its own {@code ClassLoader}, as well as its own {@code sys}
-     * module and interpreter.
+     * module and {@link PythonInterpreter}.
      */
     private static class SeparateLoaderRunner extends ScriptRunner {
 
         final PySystemState sys = new PySystemState();
 
-        SeparateLoaderRunner(String script, ClassLoader classLoader) {
-            super(script);
+        SeparateLoaderRunner(String script, int instance, ClassLoader classLoader) {
+            super(instance);
             sys.setClassLoader(classLoader);
-            this.interp = new PythonInterpreter(globals, sys);
+            setInterp(new PythonInterpreter(globals, sys), script);
         }
     }
 
