@@ -5,6 +5,7 @@ package org.python.core.packagecache;
 
 import org.python.core.Options;
 import org.python.core.PyJavaPackage;
+import org.python.core.util.FileUtil;
 import org.python.util.Generic;
 
 import java.io.BufferedInputStream;
@@ -773,7 +774,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * overridden.
      */
     protected DataOutputStream outOpenIndex() throws IOException {
-        File indexFile = new File(this.cachedir, "packages.idx");
+        File indexFile = FileUtil.makePrivateRW(new File(this.cachedir, "packages.idx"));
         FileOutputStream ostream = new FileOutputStream(indexFile);
         return new DataOutputStream(new BufferedOutputStream(ostream));
     }
@@ -821,6 +822,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 // That name is in use: make up another one.
                 file = new File(this.cachedir, jarname + "$" + index + ".pkc");
             }
+            file = FileUtil.makePrivateRW(file);
             entry.cachefile = file.getCanonicalPath();
 
         } else {

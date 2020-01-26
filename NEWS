@@ -8,6 +8,7 @@ https://github.com/jythontools/jython
 
 Jython 2.7.2b3
   Bugs fixed
+    - [ 2044 ] CVE-2013-2027 Current umask sets privileges of class files and cache
     - [ 2834 ] Import of Java classes is not thread safe
     - [ 2820 ] Import fails with UnicodeDecodeError if sys.path contains invalid UTF-8 bytes
     - [ 2826 ] Unicode hex string decode failure

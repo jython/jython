@@ -480,12 +480,12 @@ public class imp {
             if (man != null) {
                 man.checkWrite(compiledFilename);
             }
-            fop = new FileOutputStream(compiledFilename);
+            fop = new FileOutputStream(FileUtil.makePrivateRW(compiledFilename));
             fop.write(compiledSource);
             fop.close();
             return compiledFilename;
         } catch (IOException | SecurityException exc) {
-            // If we can't write the cache file, just logger and continue
+            // If we can't write the cache file, just log and continue
             logger.log(Level.FINE, "Unable to write to source cache file ''{0}'' due to {1}",
                     new Object[] {compiledFilename, exc});
             return null;

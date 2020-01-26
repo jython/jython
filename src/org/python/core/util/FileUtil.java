@@ -2,6 +2,7 @@
 package org.python.core.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -90,4 +91,35 @@ public class FileUtil {
         }
         return out.toByteArray();
     }
+
+    /**
+     * Create the named file (if necessary) and give just the owner read-write access.
+     *
+     * @param filename to create/control
+     * @return {@code File} object for subsequent open
+     * @throws IOException
+     */
+    public static File makePrivateRW(String filename) throws IOException {
+        return makePrivateRW(new File(filename));
+    }
+
+    /**
+     * Create the identified file (if necessary) and give just the owner read-write access.
+     *
+     * @param file to create/control
+     * @return {@code File} object for subsequent open
+     * @throws IOException
+     */
+    public static File makePrivateRW(File file) throws IOException {
+        file.createNewFile();
+        // Remove permissions for all
+        file.setReadable(false, false);
+        file.setWritable(false, false);
+        file.setExecutable(false, false);
+        // Add permissions for owner
+        file.setReadable(true);
+        file.setWritable(true);
+        return file;
+    }
+
 }
