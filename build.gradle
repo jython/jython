@@ -182,12 +182,12 @@ dependencies {
 
     implementation 'jline:jline:2.14.5'
 
-    implementation 'io.netty:netty-buffer:4.1.24.Final'
-    implementation 'io.netty:netty-codec:4.1.24.Final'
-    implementation 'io.netty:netty-common:4.1.24.Final'
-    implementation 'io.netty:netty-handler:4.1.24.Final'
-    implementation 'io.netty:netty-resolver:4.1.24.Final'
-    implementation 'io.netty:netty-transport:4.1.24.Final'
+    implementation 'io.netty:netty-buffer:4.1.45.Final'
+    implementation 'io.netty:netty-codec:4.1.45.Final'
+    implementation 'io.netty:netty-common:4.1.45.Final'
+    implementation 'io.netty:netty-handler:4.1.45.Final'
+    implementation 'io.netty:netty-resolver:4.1.45.Final'
+    implementation 'io.netty:netty-transport:4.1.45.Final'
 
     // Used implicitly in the Ant build, must be explicit here
     implementation 'org.apache.ant:ant:1.9.7'
