@@ -5,8 +5,8 @@ import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -14,8 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.python.antlr.ast.cmpopType;
@@ -194,7 +192,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      */
     private static final class Registry {
 
-        /** Mapping of Java classes to their PyTypes, not yet in {@link #classToType}. */
+        /** Mapping of Java classes to their PyTypes, under construction. */
         private static final Map<Class<?>, PyType> classToNewType = new IdentityHashMap<>();
 
         /** Mapping of Java classes to their TypeBuilders, until these are used. */
@@ -204,14 +202,34 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         static ClassValue<PyType> classToType = new ClassValue<PyType>() {
 
             @Override
-            protected PyType computeValue(Class<?> c) {
+            protected PyType computeValue(Class<?> c) throws IncompleteType {
                 synchronized (Registry.class) {
                     // Competing threads will block and this thread will win the return.
-                    resolveType(c);
-                    return classToNewType.remove(c);
+                    return resolveType(c);
                 }
             }
         };
+
+        /**
+         * An exception used internally to signal a result from {@code classToType.get()} when the
+         * type is still under construction.
+         */
+        private static class IncompleteType extends RuntimeException {
+
+            /** The incompletely constructed {@code PyType}. */
+            final PyType type;
+
+            IncompleteType(PyType type) {
+                this.type = type;
+            }
+        }
+
+        /**
+         * Mapping of Java classes to their PyTypes that have been thrown as {@link IncompleteType}
+         * exceptions. That action causes the {@code computeValue()} in progress to be re-tried, so
+         * we have to have the answer ready.
+         */
+        private static final Map<Class<?>, PyType> classToThrownType = new IdentityHashMap<>();
 
         /**
          * A list of <code>PyObject</code> sub-classes, instances of which are used in the type
@@ -245,7 +263,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
          * {@link #resolveType(Class)} is called reentrantly, while attempting to type some other
          * class.
          */
-        private static boolean topLevel = true;
+        private static int depth = 0;
 
         /** Java types awaiting processing of their inner classes. */
         private static Set<PyJavaType> needsInners = new HashSet<>();
@@ -270,58 +288,87 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         }
 
         /**
-         * Place the <code>PyType</code> for the given target Java class in {@link #classToNewType}
-         * if it is not there already. This supports {@link PyType#fromClass(Class)} in the case
-         * where a <code>PyType</code> has not already been published. See there for caveats. If the
-         * making of a type (it will be a <code>PyJavaType</code>) might require the processing of
-         * inner classes, {@link PyType#fromClass(Class)} is called recursively for each.
+         * Return the <code>PyType</code> for the given target Java class. During the execution of
+         * this method, {@link #classToNewType} will hold any incompletely constructed
+         * {@link PyType}s, and a second attempt to resolve the same class will throw an
+         * {@link IncompleteType}, holding the incomplete {@code PyType}. This supports
+         * {@link PyType#fromClass(Class)} in the case where a <code>PyType</code> has not already
+         * been published. See there for caveats. If the making of a type (it will be a
+         * <code>PyJavaType</code>) might require the processing of inner classes,
+         * {@link PyType#fromClass(Class)} is called recursively for each.
          * <p>
          * The caller guarantees that this thread holds the lock on the registry.
          *
          * @param c for which a PyType is to be created
+         * @throws IncompleteType to signal an incompletely constructed result
          */
-        static void resolveType(Class<?> c) {
+        static PyType resolveType(Class<?> c) throws IncompleteType {
 
+            // log("resolve", c);
             PyType type = classToNewType.get(c);
 
             if (type != null) {
-                // The type for c was "waiting" in classToNewType (some reentrant calls land here).
-                return;
+                /*
+                 * The type for c is still under construction, so we cannot return it normally,
+                 * which would publish it immediately to other threads. The client must be our
+                 * thread, calling re-entrantly, so we sneak it a reference in an exception, and
+                 * remember we have done this.
+                 */
+                classToThrownType.put(c, type);
+                // log("> ", type);
+                throw new IncompleteType(type);
 
-            } else if (!topLevel) {
+            } else if ((type = classToThrownType.remove(c)) != null) {
+                /*
+                 * The type for c has been fully constructed, but was ignored because an exception
+                 * was raised between the call to computeValue() and the return. .
+                 */
+
+            } else if (depth > 0) {
                 /*
                  * This is a nested call about a class c we haven't seen before. Create (or choose
                  * an existing) type for c.
                  */
+                depth += 1;
                 addFromClass(c);
+                depth -= 1;
+                type = classToNewType.remove(c);
 
             } else {
                 /*
                  * This is a top-level call about a class c we haven't seen before. Create (or
                  * choose an existing) type for c. (In rare circumstances a thread that saw the
                  * cache miss will arrive here after some other thread populates classToNewType. The
-                 * duplicate will be discarded and this must be harmless.
+                 * duplicate will be discarded, but the implementation must ensure this is harmless.
                  */
                 assert needsInners.isEmpty();
 
                 try {
                     // Signal to further invocations that they are nested.
-                    topLevel = false;
+                    depth = 1;
 
                     // Create (or choose an existing) type for c, accumulating classes in
                     // needsInners.
                     addFromClass(c);
 
-                    // Process inner classes too, if necessary. (This invalidates needsIners.)
+                    // Process inner classes too, if necessary. (This invalidates needsInners.)
                     if (!needsInners.isEmpty()) {
                         processInners();
                     }
                 } finally {
                     // Guarantee subsequent calls are top-level and needsInners is empty.
-                    topLevel = true;
+                    depth = 0;
                     needsInners.clear();
                 }
+                type = classToNewType.remove(c);
             }
+
+            /*
+             * Return the PyType we made for c, which is now complete. (We may still be part way
+             * through making others.)
+             */
+            // log("+-->", type);
+            return type;
         }
 
         /**
@@ -338,7 +385,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             PyJavaType[] ni = needsInners.toArray(new PyJavaType[needsInners.size()]);
 
             // Ensure calls to fromClass are top-level.
-            topLevel = true;
+            depth = 0;
             needsInners.clear();
 
             for (PyJavaType javaType : ni) {
@@ -503,6 +550,40 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 }
             }
             return missing;
+        }
+
+        // -------- Debugging for the registry --------
+        private static void log(String where, Class<?> c) {
+            String name = abbr(c.getName());
+            System.err.printf("%s%s: %s %s thr=%s\n", pad(), where, name, names(classToNewType),
+                    names(classToThrownType));
+            // logger.log(Level.INFO, "{0}{1}: {2}", new Object[] {pad, where, name});
+        }
+
+        private static void log(String kind, PyType result) {
+            String r = result.toString();
+            System.err.printf("%s%s %s %s thr=%s\n", pad(), kind, r, names(classToNewType),
+                    names(classToThrownType));
+        }
+
+        /** For logging formatting. */
+        private static final String PAD = "                              ";
+
+        private static String abbr(String name) {
+            return name.replace("java.lang.", "j.l.").replace("org.python.core.", "");
+        }
+
+        private static String pad() {
+            int d = Math.min(Math.max(2 * depth, 0), PAD.length());
+            return PAD.substring(0, d);
+        }
+
+        private static List<String> names(Map<Class<?>, PyType> map) {
+            ArrayList<String> names = new ArrayList<>(map.size());
+            for (Class<?> k : map.keySet()) {
+                names.add(abbr(k.getName()));
+            }
+            return names;
         }
     }
 
@@ -2050,10 +2131,18 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * @param c for which the corresponding <code>PyType</code> is to be found
      * @return the <code>PyType</code> found or created
      */
-    // It would be nice to give a less complicated guarantee about when the PyType is complete.
     public static PyType fromClass(Class<?> c) {
-        // Look up or create a Python type for c in the registry.
-        return Registry.classToType.get(c);
+        try {
+            // Look up or create a Python type for c in the registry.
+            return Registry.classToType.get(c);
+        } catch (Registry.IncompleteType it) {
+            /*
+             * This *only* happens when called recursively during type construction, and therefore
+             * we can assume the caller is prepared to receive an incompletely constructed PyType as
+             * the answer. *
+             */
+            return it.type;
+        }
     }
 
     @ExposedMethod(doc = BuiltinDocs.type___getattribute___doc)
@@ -2715,6 +2804,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                 table.compareAndSet(index, entry,
                         new MethodCacheEntry(versionTag, name, where[0], value));
             }
+
             return value;
         }
 
