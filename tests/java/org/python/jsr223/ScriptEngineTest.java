@@ -15,11 +15,12 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
-import junit.framework.TestCase;
-
 import org.junit.Assert;
 import org.python.core.Options;
+import org.python.core.PyList;
 import org.python.core.PyString;
+
+import junit.framework.TestCase;
 
 public class ScriptEngineTest extends TestCase {
 
@@ -160,25 +161,37 @@ public class ScriptEngineTest extends TestCase {
         assertNull(pythonEngine.get("x"));
     }
 
-    class ThreadLocalBindingsTest implements Runnable {
+    static class ThreadLocalBindingsTest implements Runnable {
 
         ScriptEngine engine;
+        int value;
         Object x;
+        Object name;
         Throwable exception;
 
-        public ThreadLocalBindingsTest(ScriptEngine engine) {
+        public ThreadLocalBindingsTest(ScriptEngine engine, int value) {
             this.engine = engine;
+            this.value = value;
         }
+
+        //@formatter:off
+        static final String script = String.join("\n", new String[] {
+            "try:",
+            "    a",
+            "except NameError:",
+            "   pass",
+            "else:",
+            "   raise Exception('a is defined', a)"});
+        //@formatter:on
 
         @Override
         public void run() {
             try {
                 Bindings bindings = engine.createBindings();
-                assertNull(engine.eval(
-                        "try: a\nexcept NameError: pass\nelse: raise Exception('a is defined', a)",
-                        bindings));
-                bindings.put("x", -7);
+                assertNull(engine.eval(script, bindings));
+                bindings.put("x", value);
                 x = engine.eval("x", bindings);
+                name = engine.eval("__name__", bindings);
             } catch (Throwable e) {
                 e.printStackTrace();
                 exception = e;
@@ -186,6 +199,13 @@ public class ScriptEngineTest extends TestCase {
         }
     }
 
+    /**
+     * Test that, with the use of a {@code Bindings} argument to {@code ScriptEngine.eval}, the
+     * interpreter is presented with a distinct name space, whether in a thread or not, and
+     * that __name__ == "__main__" in the engine-scoped name space (only).
+     *
+     * @throws Exception
+     */
     public void testThreadLocalBindings() throws ScriptException, InterruptedException {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine pythonEngine = manager.getEngineByName("python");
@@ -193,15 +213,27 @@ public class ScriptEngineTest extends TestCase {
         pythonEngine.put("a", 42);
         pythonEngine.put("x", 15);
 
-        ThreadLocalBindingsTest test = new ThreadLocalBindingsTest(pythonEngine);
-        Thread thread = new Thread(test);
-        thread.run();
-        thread.join();
+        // Examine name space of the engine with Bindings
+        ThreadLocalBindingsTest test = new ThreadLocalBindingsTest(pythonEngine, -7);
+        test.run();     // This does not start a thread
         assertNull(test.exception);
         assertEquals(-7, test.x);
+        assertEquals("__builtin__", test.name);
+
+        // Examine name space of the engine with Bindings and in a thread
+        ThreadLocalBindingsTest test2 = new ThreadLocalBindingsTest(pythonEngine, -22);
+        Thread thread = new Thread(test2);
+        thread.start(); // This *does* start a thread
+        thread.join();
+        assertNull(test2.exception);
+        assertEquals(-22, test2.x);
+        assertEquals("__builtin__", test2.name);
+
+        // Test name space of the pythonEngine without Bindings is unaffected
         assertEquals(15, pythonEngine.get("x"));
         assertNull(pythonEngine.eval("del x"));
         assertNull(pythonEngine.get("x"));
+        assertEquals("__main__", pythonEngine.eval("__name__"));
     }
 
     public void testInvoke() throws ScriptException, NoSuchMethodException {
@@ -295,9 +327,10 @@ public class ScriptEngineTest extends TestCase {
         ScriptEngine pythonEngine = manager.getEngineByName("python");
         pythonEngine.eval("a = 4");
         pythonEngine.eval("b = 'hi'");
-        assertEquals(
-                "['__builtins__', 'a', 'b']",
-                pythonEngine.eval("repr(sorted((item for item in locals())))"));
+        PyList locals = (PyList) pythonEngine.eval("sorted((item for item in locals()))");
+        Assert.assertTrue(locals.contains("a"));
+        Assert.assertTrue(locals.contains("b"));
+        Assert.assertTrue(locals.contains("__name__"));
     }
 
     public void testScope_lookup() throws ScriptException {

@@ -101,10 +101,8 @@ public class PythonInterpreter implements AutoCloseable, Closeable {
         setSystemState();
 
         this.useThreadLocalState = useThreadLocalState;
-        if (!useThreadLocalState) {
-            PyModule module = new PyModule("__main__", globals);
-            this.systemState.modules.__setitem__("__main__", module);
-        }
+        PyModule module = new PyModule("__main__", globals);
+        this.systemState.modules.__setitem__("__main__", module);
 
         if (Options.Qnew) {
             cflags.setFlag(CodeFlag.CO_FUTURE_DIVISION);
