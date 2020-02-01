@@ -65,8 +65,7 @@ class JavaProxySet {
                 }
                 // All elements are equal so the sets are equal
                 return Py.True;
-            }
-            else {
+            } else {
                 // Being compared to something that is not a Python set
                 final Object oj = other.getJavaProxy();
                 if (oj instanceof Set) {
@@ -165,6 +164,7 @@ class JavaProxySet {
             symDiff.removeAll(intersection);
             return symDiff;
         }
+
         protected void symDiffUpdate(Collection<Object> other) {
             Set<Object> selfSet = asSet();
             Set<Object> intersection = new HashSet<>(selfSet);
@@ -176,6 +176,7 @@ class JavaProxySet {
 
     @Untraversable
     private static class SetMethodVarargs extends SetMethod {
+
         protected SetMethodVarargs(String name) {
             super(name, 0, -1);
         }
@@ -187,22 +188,22 @@ class JavaProxySet {
 
         @Override
         public PyObject __call__(PyObject obj) {
-            return __call__(new PyObject[]{obj});
+            return __call__(new PyObject[] {obj});
         }
 
         @Override
         public PyObject __call__(PyObject obj1, PyObject obj2) {
-            return __call__(new PyObject[]{obj1, obj2});
+            return __call__(new PyObject[] {obj1, obj2});
         }
 
         @Override
         public PyObject __call__(PyObject obj1, PyObject obj2, PyObject obj3) {
-            return __call__(new PyObject[]{obj1, obj2, obj3});
+            return __call__(new PyObject[] {obj1, obj2, obj3});
         }
 
         @Override
         public PyObject __call__(PyObject obj1, PyObject obj2, PyObject obj3, PyObject obj4) {
-            return __call__(new PyObject[]{obj1, obj2, obj3, obj4});
+            return __call__(new PyObject[] {obj1, obj2, obj3, obj4});
         }
     }
 
@@ -214,7 +215,7 @@ class JavaProxySet {
     private static Collection<Object> getJavaSet(PyObject self, String op, PyObject obj) {
         Collection<Object> items;
         if (isPySet(obj)) {
-            Set<PyObject> otherPySet = ((BaseSet)obj).getSet();
+            Set<PyObject> otherPySet = ((BaseSet) obj).getSet();
             items = new ArrayList<>(otherPySet.size());
             for (PyObject pyobj : otherPySet) {
                 items.add(pyobj.__tojava__(Object.class));
@@ -226,9 +227,9 @@ class JavaProxySet {
                 Set<Object> jSet = (Set<Object>) oj;
                 items = jSet;
             } else {
-                throw Py.TypeError(String.format(
-                        "unsupported operand type(s) for %s: '%.200s' and '%.200s'",
-                        op, self.getType().fastGetName(), obj.getType().fastGetName()));
+                throw Py.TypeError(
+                        String.format("unsupported operand type(s) for %s: '%.200s' and '%.200s'",
+                                op, self.getType().fastGetName(), obj.getType().fastGetName()));
             }
         }
         return items;
@@ -244,7 +245,7 @@ class JavaProxySet {
                 items = jCollection;
             } else if (oj instanceof Iterable) {
                 items = new HashSet<>();
-                for (Object item: (Iterable) oj) {
+                for (Object item : (Iterable) oj) {
                     items.add(item);
                 }
             } else {
@@ -299,18 +300,21 @@ class JavaProxySet {
     }
 
     private static final SetMethod cmpProxy = new SetMethod("__cmp__", 1) {
+
         @Override
         public PyObject __call__(PyObject value) {
             throw Py.TypeError("cannot compare sets using cmp()");
         }
     };
     private static final SetMethod eqProxy = new SetMethod("__eq__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return isEqual(other);
         }
     };
     private static final SetMethod neProxy = new SetMethod("__ne__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             // isEqual may return null if we don't know how to compare to other.
@@ -323,6 +327,7 @@ class JavaProxySet {
         }
     };
     private static final SetMethod ltProxy = new SetMethod("__lt__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return isEqual(other).__not__().__and__(Py.newBoolean(isSubset(other)));
@@ -358,6 +363,7 @@ class JavaProxySet {
     }
 
     private static final SetMethod gtProxy = new SetMethod("__gt__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return isEqual(other).__not__().__and__(Py.newBoolean(isSuperset(other)));
@@ -365,28 +371,34 @@ class JavaProxySet {
     };
 
     private static final SetMethod isDisjointProxy = new SetMethod("isdisjoint", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
-            return Py.newBoolean(intersect(new Collection[]{getJavaCollection(other)}).size() == 0);
+            Collection[] otherJava = new Collection[] {getJavaCollection(other)};
+            return Py.newBoolean(intersect(otherJava).size() == 0);
         }
     };
 
     private static final SetMethod differenceProxy = new SetMethodVarargs("difference") {
+
         @Override
         public PyObject __call__(PyObject[] others) {
             return makePySet(difference(getCombinedJavaCollections(others)));
         }
     };
 
-    private static final SetMethod differenceUpdateProxy = new SetMethodVarargs("difference_update") {
-        @Override
-        public PyObject __call__(PyObject[] others) {
-            differenceUpdate(getCombinedJavaCollections(others));
-            return Py.None;
-        }
-    };
+    private static final SetMethod differenceUpdateProxy =
+            new SetMethodVarargs("difference_update") {
+
+                @Override
+                public PyObject __call__(PyObject[] others) {
+                    differenceUpdate(getCombinedJavaCollections(others));
+                    return Py.None;
+                }
+            };
 
     private static final SetMethod subProxy = new SetMethod("__sub__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return makePySet(difference(getJavaSet(self, "-", other)));
@@ -394,6 +406,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod isubProxy = new SetMethod("__isub__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             differenceUpdate(getJavaSet(self, "-=", other));
@@ -402,51 +415,60 @@ class JavaProxySet {
     };
 
     private static final SetMethod intersectionProxy = new SetMethodVarargs("intersection") {
+
         @Override
         public PyObject __call__(PyObject[] others) {
             return makePySet(intersect(getJavaCollections(others)));
         }
     };
 
-    private static final SetMethod intersectionUpdateProxy = new SetMethodVarargs("intersection_update") {
-        @Override
-        public PyObject __call__(PyObject[] others) {
-            intersectUpdate(getJavaCollections(others));
-            return Py.None;
-        }
-    };
+    private static final SetMethod intersectionUpdateProxy =
+            new SetMethodVarargs("intersection_update") {
+
+                @Override
+                public PyObject __call__(PyObject[] others) {
+                    intersectUpdate(getJavaCollections(others));
+                    return Py.None;
+                }
+            };
 
     private static final SetMethod andProxy = new SetMethod("__and__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
-            return makePySet(intersect(new Collection[]{getJavaSet(self, "&", other)}));
+            return makePySet(intersect(new Collection[] {getJavaSet(self, "&", other)}));
         }
     };
 
     private static final SetMethod iandProxy = new SetMethod("__iand__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
-            intersectUpdate(new Collection[]{getJavaSet(self, "&=", other)});
+            intersectUpdate(new Collection[] {getJavaSet(self, "&=", other)});
             return self;
         }
     };
 
     private static final SetMethod symDiffProxy = new SetMethod("symmetric_difference", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return makePySet(symDiff(getJavaCollection(other)));
         }
     };
 
-    private static final SetMethod symDiffUpdateProxy = new SetMethod("symmetric_difference_update", 1) {
-        @Override
-        public PyObject __call__(PyObject other) {
-            symDiffUpdate(getJavaCollection(other));
-            return Py.None;
-        }
-    };
+    private static final SetMethod symDiffUpdateProxy =
+            new SetMethod("symmetric_difference_update", 1) {
+
+                @Override
+                public PyObject __call__(PyObject other) {
+                    symDiffUpdate(getJavaCollection(other));
+                    return Py.None;
+                }
+            };
 
     private static final SetMethod xorProxy = new SetMethod("__xor__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return makePySet(symDiff(getJavaSet(self, "^", other)));
@@ -454,6 +476,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod ixorProxy = new SetMethod("__ixor__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             symDiffUpdate(getJavaSet(self, "^=", other));
@@ -462,6 +485,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod unionProxy = new SetMethodVarargs("union") {
+
         @Override
         public PyObject __call__(PyObject[] others) {
             return makePySet(union(getCombinedJavaCollections(others)));
@@ -469,6 +493,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod updateProxy = new SetMethodVarargs("update") {
+
         @Override
         public PyObject __call__(PyObject[] others) {
             update(getCombinedJavaCollections(others));
@@ -477,6 +502,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod orProxy = new SetMethod("__or__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return makePySet(union(getJavaSet(self, "|", other)));
@@ -484,6 +510,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod iorProxy = new SetMethod("__ior__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             update(getJavaSet(self, "|=", other));
@@ -493,9 +520,11 @@ class JavaProxySet {
 
     @Untraversable
     private static class CopyMethod extends SetMethod {
+
         protected CopyMethod(String name) {
             super(name, 0);
         }
+
         @Override
         public PyObject __call__() {
             return makePySet(asSet());
@@ -503,6 +532,7 @@ class JavaProxySet {
     }
 
     private static final SetMethod deepcopyOverrideProxy = new SetMethod("__deepcopy__", 1) {
+
         @Override
         public PyObject __call__(PyObject memo) {
             Set<Object> newSet = new HashSet<>();
@@ -516,6 +546,7 @@ class JavaProxySet {
     };
 
     private static final SetMethod reduceProxy = new SetMethod("__reduce__", 0) {
+
         @Override
         public PyObject __call__() {
             PyObject args = new PyTuple(new PyList(new JavaIterator(asSet())));
@@ -528,20 +559,24 @@ class JavaProxySet {
     };
 
     private static final SetMethod containsProxy = new SetMethod("__contains__", 1) {
+
         @Override
         public PyObject __call__(PyObject value) {
             return Py.newBoolean(asSet().contains(value.__tojava__(Object.class)));
         }
     };
     private static final SetMethod hashProxy = new SetMethod("__hash__", 0) {
+
         // in general, we don't know if this is really true or not
         @Override
         public PyObject __call__(PyObject value) {
-            throw Py.TypeError(String.format("unhashable type: '%.200s'", self.getType().fastGetName()));
+            throw Py.TypeError(
+                    String.format("unhashable type: '%.200s'", self.getType().fastGetName()));
         }
     };
 
     private static final SetMethod discardProxy = new SetMethod("discard", 1) {
+
         @Override
         public PyObject __call__(PyObject value) {
             asSet().remove(value.__tojava__(Object.class));
@@ -549,6 +584,7 @@ class JavaProxySet {
         }
     };
     private static final SetMethod popProxy = new SetMethod("pop", 0) {
+
         @Override
         public PyObject __call__() {
             Set selfSet = asSet();
@@ -568,6 +604,7 @@ class JavaProxySet {
         }
     };
     private static final SetMethod removeOverrideProxy = new SetMethod("remove", 1) {
+
         @Override
         public PyObject __call__(PyObject value) {
             boolean removed = asSet().remove(value.__tojava__(Object.class));
@@ -579,6 +616,7 @@ class JavaProxySet {
     };
 
     static PyBuiltinMethod[] getProxyMethods() {
+        //@formatter:off
         return new PyBuiltinMethod[]{
                 cmpProxy,
                 eqProxy,
@@ -621,13 +659,16 @@ class JavaProxySet {
                 discardProxy,
                 popProxy
         };
+        //@formatter:on
     }
 
     static PyBuiltinMethod[] getPostProxyMethods() {
+        //@formatter:off
         return new PyBuiltinMethod[]{
                 deepcopyOverrideProxy,
                 removeOverrideProxy
         };
+        //@formatter:on
     }
 
 }

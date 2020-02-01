@@ -8,13 +8,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Proxy Java objects implementing java.util.List with Python methods
- * corresponding to the standard list type
+ * Proxy Java objects implementing java.util.List with Python methods corresponding to the standard
+ * list type
  */
 class JavaProxyMap {
 
     @Untraversable
     private static class MapMethod extends PyBuiltinMethodNarrow {
+
         protected MapMethod(String name, int numArgs) {
             super(name, numArgs);
         }
@@ -30,6 +31,7 @@ class JavaProxyMap {
 
     @Untraversable
     private static class MapClassMethod extends PyBuiltinClassMethodNarrow {
+
         protected MapClassMethod(String name, int minArgs, int maxArgs) {
             super(name, minArgs, maxArgs);
         }
@@ -108,12 +110,12 @@ class JavaProxyMap {
 
     /** Return Python {@code ValueError} that None is not allowed. */
     private static RuntimeException nullException() {
-        return Py.ValueError(
-                "None is not allowed because underlying container cannot store a Java null.");
+        return Py.ValueError("None is not allowed: underlying container cannot store Java null.");
     }
 
-    /** Return Python {@code ValueError} that None is not allowed, or the {@code NullPointerException},
-     * if in fact the value was not {@code None}.
+    /**
+     * Return Python {@code ValueError} that None is not allowed, or the
+     * {@code NullPointerException}, if in fact the value was not {@code None}.
      *
      * @param npe original exception
      * @param key possibly causing the problem
@@ -122,7 +124,7 @@ class JavaProxyMap {
      */
     private static RuntimeException nullException(NullPointerException npe, Object key,
             Object value) {
-        return (value == Py.None || value == Py.None) ? nullException() : npe;
+        return (key == Py.None || value == Py.None) ? nullException() : npe;
     }
 
     /*
@@ -152,6 +154,7 @@ class JavaProxyMap {
 
     // Map doesn't extend Collection, so it needs its own version of len, iter and contains
     private static final PyBuiltinMethodNarrow mapLenProxy = new MapMethod("__len__", 0) {
+
         @Override
         public PyObject __call__() {
             return Py.java2py(asMap().size());
@@ -169,7 +172,7 @@ class JavaProxyMap {
                 boolean first = true;
                 for (Map.Entry<Object, Object> entry : asMap().entrySet()) {
                     if (first) {
-                        first=false;
+                        first = false;
                     } else {
                         repr.append(", ");
                     }
@@ -186,12 +189,14 @@ class JavaProxyMap {
         }
     };
     private static final PyBuiltinMethodNarrow mapEqProxy = new MapMethod("__eq__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return mapEq(self, other);
         }
     };
     private static final PyBuiltinMethodNarrow mapNeProxy = new MapMethod("__ne__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             // mapEq may return null if we don't know how to compare to other.
@@ -204,36 +209,42 @@ class JavaProxyMap {
         }
     };
     private static final PyBuiltinMethodNarrow mapLeProxy = new MapMethod("__le__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return mapLe(self, other);
         }
     };
     private static final PyBuiltinMethodNarrow mapGeProxy = new MapMethod("__ge__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return (mapLe(self, other).__not__()).__or__(mapEq(self, other));
         }
     };
     private static final PyBuiltinMethodNarrow mapLtProxy = new MapMethod("__lt__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return mapLe(self, other).__and__(mapEq(self, other).__not__());
         }
     };
     private static final PyBuiltinMethodNarrow mapGtProxy = new MapMethod("__gt__", 1) {
+
         @Override
         public PyObject __call__(PyObject other) {
             return mapLe(self, other).__not__();
         }
     };
     private static final PyBuiltinMethodNarrow mapIterProxy = new MapMethod("__iter__", 0) {
+
         @Override
         public PyObject __call__() {
             return new JavaIterator(asMap().keySet());
         }
     };
     private static final PyBuiltinMethodNarrow mapContainsProxy = new MapMethod("__contains__", 1) {
+
         @Override
         public PyObject __call__(PyObject obj) {
             return asMap().containsKey(tojava(obj)) ? Py.True : Py.False;
@@ -264,6 +275,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapGetItemProxy = new MapMethod("__getitem__", 1) {
+
         @Override
         public PyObject __call__(PyObject key) {
             Map<Object, Object> map = asMap();
@@ -276,6 +288,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapPutProxy = new MapMethod("__setitem__", 2) {
+
         @Override
         public PyObject __call__(PyObject key, PyObject value) {
             try {
@@ -288,6 +301,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapRemoveProxy = new MapMethod("__delitem__", 1) {
+
         @Override
         public PyObject __call__(PyObject key) {
             Map<Object, Object> map = asMap();
@@ -301,10 +315,12 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapIterItemsProxy = new MapMethod("iteritems", 0) {
+
         @Override
         public PyObject __call__() {
             final Iterator<Map.Entry<Object, Object>> entryIterator = asMap().entrySet().iterator();
             return new PyIterator() {
+
                 @Override
                 public PyObject __iternext__() {
                     if (entryIterator.hasNext()) {
@@ -319,10 +335,12 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapIterKeysProxy = new MapMethod("iterkeys", 0) {
+
         @Override
         public PyObject __call__() {
             final Iterator<Object> keyIterator = asMap().keySet().iterator();
             return new PyIterator() {
+
                 @Override
                 public PyObject __iternext__() {
                     if (keyIterator.hasNext()) {
@@ -337,10 +355,12 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapIterValuesProxy = new MapMethod("itervalues", 0) {
+
         @Override
         public PyObject __call__() {
             final Iterator<Object> valueIterator = asMap().values().iterator();
             return new PyIterator() {
+
                 @Override
                 public PyObject __iternext__() {
                     if (valueIterator.hasNext()) {
@@ -355,6 +375,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapHasKeyProxy = new MapMethod("has_key", 1) {
+
         @Override
         public PyObject __call__(PyObject key) {
             return asMap().containsKey(tojava(key)) ? Py.True : Py.False;
@@ -362,6 +383,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapKeysProxy = new MapMethod("keys", 0) {
+
         @Override
         public PyObject __call__() {
             PyList keys = new PyList();
@@ -373,6 +395,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethod mapValuesProxy = new MapMethod("values", 0) {
+
         @Override
         public PyObject __call__() {
             PyList values = new PyList();
@@ -383,30 +406,33 @@ class JavaProxyMap {
         }
     };
 
-    private static final PyBuiltinMethodNarrow mapSetDefaultProxy = new MapMethod("setdefault", 1, 2) {
-        @Override
-        public PyObject __call__(PyObject key) {
-            return __call__(key, Py.None);
-        }
+    private static final PyBuiltinMethodNarrow mapSetDefaultProxy =
+            new MapMethod("setdefault", 1, 2) {
 
-        @Override
-        public PyObject __call__(PyObject pykey, PyObject _default) {
-            Map<Object, Object> map = asMap();
-            Object key = tojava(pykey);
-            try {
-                if (map.containsKey(key)) {
-                    return Py.java2py(map.get(key));
-                } else {
-                    map.put(key, tojava(_default));
-                    return _default;
+                @Override
+                public PyObject __call__(PyObject key) {
+                    return __call__(key, Py.None);
                 }
-            } catch (NullPointerException npe) {
-                throw nullException(npe, key, _default);
-            }
-        }
-    };
+
+                @Override
+                public PyObject __call__(PyObject pykey, PyObject _default) {
+                    Map<Object, Object> map = asMap();
+                    Object key = tojava(pykey);
+                    try {
+                        if (map.containsKey(key)) {
+                            return Py.java2py(map.get(key));
+                        } else {
+                            map.put(key, tojava(_default));
+                            return _default;
+                        }
+                    } catch (NullPointerException npe) {
+                        throw nullException(npe, key, _default);
+                    }
+                }
+            };
 
     private static final PyBuiltinMethodNarrow mapPopProxy = new MapMethod("pop", 1, 2) {
+
         @Override
         public PyObject __call__(PyObject key) {
             return __call__(key, null);
@@ -427,6 +453,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapPopItemProxy = new MapMethod("popitem", 0) {
+
         @Override
         public PyObject __call__() {
             Map<Object, Object> map = asMap();
@@ -441,6 +468,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapItemsProxy = new MapMethod("items", 0) {
+
         @Override
         public PyObject __call__() {
             PyList items = new PyList();
@@ -452,6 +480,7 @@ class JavaProxyMap {
     };
 
     private static final PyBuiltinMethodNarrow mapCopyProxy = new MapMethod("copy", 0) {
+
         @Override
         public PyObject __call__() {
             Map<Object, Object> map = asMap();
@@ -547,49 +576,56 @@ class JavaProxyMap {
                     pair = PySequence.fastSequence(pair, "");
                 } catch (PyException pye) {
                     if (pye.match(Py.TypeError)) {
-                        throw Py.TypeError(String.format("cannot convert dictionary update sequence "
-                                + "element #%d to a sequence", i));
+                        throw Py.TypeError(String.format(ERR_SEQ, i));
                     }
                     throw pye;
                 }
                 int n;
                 if ((n = pair.__len__()) != 2) {
-                    throw Py.ValueError(String.format("dictionary update sequence element #%d "
-                            + "has length %d; 2 is required", i, n));
+                    throw Py.ValueError(String.format(ERR_LENGTH, i, n));
                 }
                 map.put(tojava(pair.__getitem__(0)), tojava(pair.__getitem__(1)));
             }
         }
+
+        private static final String ERR_SEQ =
+                "cannot convert dictionary update element #%d to a sequence";
+        private static final String ERR_LENGTH =
+                "dictionary update sequence element #%d has length %d; 2 is required";
     };
 
-    private static final PyBuiltinClassMethodNarrow mapFromKeysProxy = new MapClassMethod("fromkeys", 1, 2) {
-        @Override
-        public PyObject __call__(PyObject keys) {
-            return __call__(keys, null);
-        }
+    private static final PyBuiltinClassMethodNarrow mapFromKeysProxy =
+            new MapClassMethod("fromkeys", 1, 2) {
 
-        @Override
-        public PyObject __call__(PyObject keys, PyObject _default) {
-            Object defobj = tojava(_default);
-            Class<? extends Map<Object, Object>> clazz;
-            try {
-                clazz = (Class<Map<Object, Object>>) asClass();
-                Constructor<? extends Map<Object, Object>> ctor = clazz.getDeclaredConstructor();
-                Map<Object, Object> theMap = ctor.newInstance();
-                for (PyObject key : keys.asIterable()) {
-                    theMap.put(tojava(key), defobj);
+                @Override
+                public PyObject __call__(PyObject keys) {
+                    return __call__(keys, null);
                 }
-                return Py.java2py(theMap);
-            } catch (NullPointerException npe) {
-                throw nullException();
-            } catch (ReflectiveOperationException | SecurityException
-                    | IllegalArgumentException e) {
-                throw Py.JavaError(e);
-            }
-        }
-    };
+
+                @Override
+                public PyObject __call__(PyObject keys, PyObject _default) {
+                    Object defobj = tojava(_default);
+                    Class<? extends Map<Object, Object>> clazz;
+                    try {
+                        clazz = (Class<Map<Object, Object>>) asClass();
+                        Constructor<? extends Map<Object, Object>> ctor =
+                                clazz.getDeclaredConstructor();
+                        Map<Object, Object> theMap = ctor.newInstance();
+                        for (PyObject key : keys.asIterable()) {
+                            theMap.put(tojava(key), defobj);
+                        }
+                        return Py.java2py(theMap);
+                    } catch (NullPointerException npe) {
+                        throw nullException();
+                    } catch (ReflectiveOperationException | SecurityException
+                            | IllegalArgumentException e) {
+                        throw Py.JavaError(e);
+                    }
+                }
+            };
 
     static PyBuiltinMethod[] getProxyMethods() {
+        //@formatter:off
         return new PyBuiltinMethod[]{
                 mapLenProxy,
                 // map IterProxy can conflict with Iterable.class;
@@ -620,6 +656,7 @@ class JavaProxyMap {
                 mapFromKeysProxy     // class method
 
         };
+        //@formatter:on
     }
 
     static PyBuiltinMethod[] getPostProxyMethods() {
