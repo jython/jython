@@ -8,6 +8,7 @@ https://github.com/jythontools/jython
 
 Jython 2.7.2b3
   Bugs fixed
+    - [ 2810 ] NoSuchMethodError in test_jython_initializer (Java 10+)
     - [ 2808 ] lib2to3 test failures on Windows JDK 11
     - [ 2846 ] Main module __name __ is not "__main__" under Java Scripting API
     - [ 2828 ] Update netty JARs to 4.1.45

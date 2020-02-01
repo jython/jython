@@ -12,6 +12,7 @@ class TestUsingInitializer(unittest.TestCase):
         fn = test_support.findfile('check_for_initializer_in_syspath.py')
         jar = test_support.findfile('syspath_initializer.jar')
         env = dict(CLASSPATH=jar,
+                   JAVA_HOME=sys.registry['java.home'],
                    PATH=os.environ.get('PATH', ''))
 
         if WINDOWS:
