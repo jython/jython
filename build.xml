@@ -1190,7 +1190,7 @@ The text for an official release would continue like ...
         </copy>
 
         <echo>building installer .jar file</echo>
-        <jar destfile="${dist.dir}/jython-installer.jar" update="${jar.update}">
+        <jar destfile="${dist.dir}/jython-installer.jar" update="${jar.update}" roundup="false">
             <fileset dir="${dist.dir}">
                 <exclude name="jython-installer.jar"/>
                 <exclude name="${jython.dev.jar}"/>

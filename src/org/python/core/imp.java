@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -396,10 +397,16 @@ public class imp {
             }
         }
 
-        // Check source-last-modified time fossilised in the class file against that expected
+        /*
+         * The source-last-modified time is fossilised in the class file. The source may have been
+         * installed from a JAR, and this will have resulted in rounding of the last-modified time
+         * down (see build.xml::jar-sources) to the nearest 2 seconds.
+         */
         if (testing && sourceLastModified != NO_MTIME) {
-            long mtime = ar.getMTime();
-            if (sourceLastModified != mtime) {
+            long diff = ar.getMTime() - sourceLastModified;
+            if (diff > 2000L) { // = 2000 milliseconds
+                logger.log(Level.FINE, "# {0} time is {1} ms later than source",
+                        new Object[] {name, diff});
                 return null;
             }
         }
@@ -925,6 +932,10 @@ public class imp {
                         if (ret != null) {
                             return ret;
                         }
+                    } else {
+                        logger.log(Level.FINE,
+                                "# {0} dated ({1,date} {1,time,long}) < ({2,date} {2,time,long})",
+                                new Object[] {name, new Date(classTime), new Date(pyTime)});
                     }
                 }
 

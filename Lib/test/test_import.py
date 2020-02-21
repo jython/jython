@@ -142,9 +142,9 @@ class ImportTests(unittest.TestCase):
             # Write a Python file, make it read-only and import it
             with open(fname, 'w') as f:
                 f.write("x = 'original'\n")
-            # Tweak the mtime of the source to ensure pyc gets updated later
+            # Tweak the mtime of the source 10s later to ensure compiled looks out of date
             s = os.stat(fname)
-            os.utime(fname, (s.st_atime, s.st_mtime-100000000))
+            os.utime(fname, (s.st_atime, s.st_mtime+10000))
             os.chmod(fname, 0400)
             m1 = __import__(TESTFN)
             self.assertEqual(m1.x, 'original')

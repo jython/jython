@@ -49,7 +49,7 @@ public class JarInstaller {
      * <li>generate the start scripts
      * <li>run ensurepip if selected
      * </ul>
-     * 
+     *
      * @param targetDirectory
      * @param installationType
      */
@@ -102,8 +102,9 @@ public class JarInstaller {
                     }
                 }
                 // exclude build.xml when not installing source
-                if (!installationType.installSources() && zipEntryName.equals("build.xml"))
+                if (!installationType.installSources() && zipEntryName.equals("build.xml")) {
                     exclude = true;
+                }
                 // handle exclusion of core Lib files
                 if (!exclude) {
                     exclude = shouldExcludeFile(installationType,
@@ -182,9 +183,9 @@ public class JarInstaller {
         try {
             String command[];
             if (Installation.isWindows()) {
-                command = new String[]{ bindir.resolve("jython.exe").toString(), "-m", "ensurepip" };
+                command = new String[] {bindir.resolve("jython.exe").toString(), "-m", "ensurepip"};
             } else {
-                command = new String[]{ Paths.get(".", "jython").toString(), "-m", "ensurepip"};
+                command = new String[] {Paths.get(".", "jython").toString(), "-m", "ensurepip"};
             }
             ChildProcess childProcess = new ChildProcess(command);
             childProcess.setCWD(bindir);
