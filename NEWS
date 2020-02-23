@@ -8,6 +8,7 @@ https://github.com/jythontools/jython
 
 Jython 2.7.2b4
   Bugs fixed
+    - [ 2858 ] test_ssl failure due to embedding Bouncy Castle (doc change only)
     - [ GH-156 ] Race condition in PyStringMap keys method
     - [ 2862 ] Jython fails on Linux for normal user when installed by root
 
@@ -124,8 +125,13 @@ Jython 2.7.2b1
       provided as an opt-in. Define property python.locale.control=settable on the command line
       or via the Jython registry, to enable. This  may become the default in a later version.
     - The default location of the Jython package cache has moved from the installation directory
-      to the current working directory and called ".jython_cache". Previously, Jython installed
+      to the current working directory and is called ".jython_cache". Previously, Jython installed
       system-wide either exposed the cache as world read-write (a security risk) or disabled it.
+    - BouncyCastle SSL support is incomplete as bundled. The Jython JAR is not signed, and may not
+      be trusted by your JVM as a security provider. This manifests as a PEMException: "Unable to
+      create OpenSSL PBDKF: PBKDF-OpenSSL SecretKeyFactory not available" during certain
+      operations. If this is a problem, place genuine BouncyCastle JARs on the class path, and
+      Jython will use those in preference to the classes we include. The slim JAR is not affected.
 
 Jython 2.7.2a1
   Bugs fixed
