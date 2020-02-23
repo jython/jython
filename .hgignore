@@ -35,6 +35,7 @@ ant.properties
 build
 build2
 cachedir
+.jython_cache
 dist
 publications
 reports

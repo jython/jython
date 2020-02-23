@@ -15,8 +15,8 @@
 
 # Set the directory to use for caches (currently just package information)
 #   This directory should be writable by the user. If this is an absolute path it is used as given,
-#   otherwise it is interpreted relative to sys.prefix (typically the directory of this file).
-python.cachedir = cachedir
+#   otherwise it is interpreted relative to the current working directory (at initialisation).
+#python.cachedir = .jython_cache
 
 # Setting this property to true disables the package scan for the cachedir.
 # Please be aware that disabling this will break importing * from java packages
@@ -24,12 +24,14 @@ python.cachedir = cachedir
 
 # Properties to check for initializing and updating the package cache
 # Values shown here are those hard-coded in Jython's cache manager.
+
 #   Treat JARs on the classpath and (up to Java 8) in the JRE as a source of Python packages.
 #python.packages.paths = java.class.path, sun.boot.class.path   # up to Java 8
 #python.packages.paths = java.class.path                        # from Java 9
 #   Treat installed optional (Java) packages as source of Python packages (before Java 9)
 #python.packages.directories = java.ext.dirs    # up to Java 8
 #python.packages.directories                    # undefined from Java 9
+
 
 # DEPRECATED way to set the verbosity of messages output by Jython. If
 # specified, "python.verbose" will set logging level for "org.python" when

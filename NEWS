@@ -8,7 +8,7 @@ https://github.com/jythontools/jython
 
 Jython 2.7.2b4
   Bugs fixed
-
+    - [ 2862 ] Jython fails on Linux for normal user when installed by root
 
 Jython 2.7.2b3
   Bugs fixed
@@ -122,6 +122,9 @@ Jython 2.7.2b1
     - There is much improved support for locale, but as a backward-incompatible change, it is
       provided as an opt-in. Define property python.locale.control=settable on the command line
       or via the Jython registry, to enable. This  may become the default in a later version.
+    - The default location of the Jython package cache has moved from the installation directory
+      to the current working directory and called ".jython_cache". Previously, Jython installed
+      system-wide either exposed the cache as world read-write (a security risk) or disabled it.
 
 Jython 2.7.2a1
   Bugs fixed

@@ -62,7 +62,7 @@ public class PySystemState extends PyObject
 
     private static final Logger logger = Logger.getLogger("org.python.core");
 
-    protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
+    private static final String CACHEDIR_DEFAULT_NAME = ".jython_cache";
 
     public static final String JYTHON_JAR = "jython.jar";
     public static final String JYTHON_DEV_JAR = "jython-dev.jar";
@@ -1270,9 +1270,11 @@ public class PySystemState extends PyObject
         }
         cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
-            String prefixString = Py.fileSystemDecode(prefix);
+            String prefixString = props.getProperty("user.dir", "");
             cachedir = new File(prefixString, cachedir.getPath());
+            cachedir = cachedir.getAbsoluteFile();
         }
+        logger.log(Level.CONFIG, "cache at {0}", cachedir);
     }
 
     private static void initPackages(Properties props) {

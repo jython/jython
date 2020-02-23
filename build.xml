@@ -157,6 +157,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="python.lib" value="${basedir}/lib-python/2.7" />
         <property name="extlibs.dir" value="${basedir}/extlibs" />
 
+        <!-- Cache we need to clean (now it is not in dist.dir) -->
+        <property name="cache.dir" value="${basedir}/.jython_cache" />
+
         <!-- Source specifically for test: -->
         <property name="test.source.dir" value="${basedir}/tests/java" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
@@ -413,12 +416,14 @@ informix.jar = ../support/jdbc-4.10.12.jar
     <target name="clean" depends="common-dirs, clean-test"
         description="Delete contents of working directories">
         <delete includeemptydirs="true" failonerror="false">
+            <!-- the package cache (now it is not in dist.dir). -->
+            <fileset dir="${cache.dir}" includes="**/*" erroronmissingdir="false" />
             <!-- all files and subdirectories of ${build.dir}, without ${build.dir} itself. -->
             <fileset dir="${build.dir}" includes="**/*" defaultexcludes="false" />
             <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
             <fileset dir="${dist.dir}" includes="**/*" defaultexcludes="false" />
             <!-- all files and subdirectories of ${pubs.dir}, without ${pubs.dir} itself. -->
-            <fileset dir="${pubs.dir}" includes="**/*" />
+            <fileset dir="${pubs.dir}" includes="**/*" erroronmissingdir="false" />
         </delete>
     </target>
 
@@ -428,7 +433,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- all files and subdirectories of ${build.dir}, without ${build.dir} itself. -->
             <fileset dir="${build.dir}" includes="**/*" excludes="gensrc/**" />
             <!-- all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
-            <fileset dir="${dist.dir}" includes="**/*" excludes="cachedir/**, Lib/**" />
+            <fileset dir="${dist.dir}" includes="**/*" excludes="Lib/**" />
         </delete>
     </target>
 
