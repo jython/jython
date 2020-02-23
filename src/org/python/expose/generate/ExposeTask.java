@@ -8,8 +8,6 @@ import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
 import org.objectweb.asm.ClassWriter;
-import org.python.core.Py;
-import org.python.core.Options;
 import org.python.util.GlobMatchingTask;
 
 public class ExposeTask extends GlobMatchingTask {
@@ -32,14 +30,7 @@ public class ExposeTask extends GlobMatchingTask {
             log("Exposing 1 class");
         }
 
-        // Quiet harmless unbootstrapped warnings during the expose process
-        int verbose = Options.verbose;
-        Options.verbose = Py.ERROR;
-        try {
-            expose(toExpose);
-        } finally {
-            Options.verbose = verbose;
-        }
+        expose(toExpose);
     }
 
     private void expose(Set<File> toExpose) {

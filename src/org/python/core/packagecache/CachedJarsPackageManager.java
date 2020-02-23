@@ -841,24 +841,20 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * before {@link #initCache}. cachedir is the cache repository directory, this is eventually
      * created. Returns true if dir works.
      */
-    protected boolean useCacheDir(File aCachedir1) {
-
-        if (aCachedir1 == null) {
-            return false;
-        }
-
+    protected boolean useCacheDir(File cachedir) {
         try {
-            if (!aCachedir1.isDirectory() && aCachedir1.mkdirs() == false) {
-                warning("failed to create cache dir ''{0}''", aCachedir1);
-                return false;
+            if (cachedir != null) {
+                if (cachedir.isDirectory() || cachedir.mkdirs()) {
+                    this.cachedir = cachedir;
+                    return true;
+                } else {
+                    warning("failed to create cache dir ''{0}''", cachedir);
+                }
             }
         } catch (AccessControlException ace) {
-            warning("Not permitted to access cache ''{0}'' ({1})", aCachedir1, ace.getMessage());
-            return false;
+            warning("Not permitted to access cache ''{0}'' ({1})", cachedir, ace.getMessage());
         }
-
-        this.cachedir = aCachedir1;
-        return true;
+        return false;
     }
 
 }

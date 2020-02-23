@@ -4,12 +4,14 @@ package org.python.modules.posix;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.logging.Level;
 
 import jnr.constants.platform.Errno;
 import jnr.posix.POSIXHandler;
 
 import org.python.core.imp;
 import org.python.core.Options;
+import org.python.core.PrePy;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
@@ -19,14 +21,17 @@ import org.python.core.PyObject;
  */
 public class PythonPOSIXHandler implements POSIXHandler {
 
+    @Override
     public void error(Errno error, String extraData) {
         throw Py.OSError(error, Py.newStringOrUnicode(extraData));
     }
 
+    @Override
     public void error(Errno error, String methodName, String extraData) {
         throw Py.OSError(error, Py.newStringOrUnicode(extraData));
     }
 
+    @Override
     public void unimplementedError(String methodName) {
         if (methodName.startsWith("stat.")) {
             // Ignore unimplemented FileStat methods
@@ -35,17 +40,22 @@ public class PythonPOSIXHandler implements POSIXHandler {
         throw Py.NotImplementedError(methodName);
     }
 
+    @Override
     public void warn(WARNING_ID id, String message, Object... data) {
     }
 
+    @Override
     public boolean isVerbose() {
-        return Options.verbose >= Py.DEBUG;
+        // Verbose if the general threshold for logging is FINE or lower.
+        return PrePy.getLoggingLevel().intValue() <= Level.FINE.intValue();
     }
 
+    @Override
     public File getCurrentWorkingDirectory() {
         return new File(Py.getSystemState().getCurrentWorkingDir());
     }
 
+    @Override
     public String[] getEnv() {
         PyObject items = imp.load("os").__getattr__("environ").invoke("items");
         String[] env = new String[items.__len__()];
@@ -56,18 +66,22 @@ public class PythonPOSIXHandler implements POSIXHandler {
         return env;
     }
 
+    @Override
     public InputStream getInputStream() {
         return System.in;
     }
 
+    @Override
     public PrintStream getOutputStream() {
         return System.out;
     }
 
+    @Override
     public int getPID() {
         return 0;
     }
 
+    @Override
     public PrintStream getErrorStream() {
         return System.err;
     }
