@@ -8,6 +8,7 @@ https://github.com/jythontools/jython
 
 Jython 2.7.2b4
   Bugs fixed
+    - [ GH-156 ] Race condition in PyStringMap keys method
     - [ 2862 ] Jython fails on Linux for normal user when installed by root
 
 Jython 2.7.2b3

@@ -637,9 +637,10 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
 
     @ExposedMethod(doc = BuiltinDocs.dict_keys_doc)
     final PyList stringmap_keys() {
-        PyObject[] keyArray = new PyObject[table.size()];
+        Object[] keys = table.keySet().toArray();
+        PyObject[] keyArray = new PyObject[keys.length];
         int i = 0;
-        for (Object key : table.keySet()) {
+        for (Object key : keys) {
             keyArray[i++] = keyToPy(key);
         }
         return new PyList(keyArray);
