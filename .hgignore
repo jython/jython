@@ -39,6 +39,7 @@ cachedir
 dist
 publications
 reports
+jffi*.dll
 
 profile.txt
 out
