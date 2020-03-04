@@ -109,7 +109,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="jython.release_level" value="${PY_RELEASE_LEVEL_GAMMA}"/>
 
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
-        <property name="jython.release_serial" value="1"/>
+        <property name="jython.release_serial" value="2"/>
     </target>
 
     <target name="common-constants">
