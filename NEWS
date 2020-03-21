@@ -6,6 +6,9 @@ of that version.
 For more details of issue [ n ], please see https://hg.python.org/jython, or for tags [ GH-n ] see
 https://github.com/jythontools/jython
 
+Jython 2.7.2
+  same as 2.7.2rc1
+
 Jython 2.7.2rc1
   Bugs fixed
     - [ 2858 ] test_ssl failure due to embedding Bouncy Castle (doc change only)
