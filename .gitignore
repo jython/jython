@@ -45,6 +45,7 @@ dist
 publications
 reports
 jffi*.dll
+$test_*
 
 profile.txt
 out
