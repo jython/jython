@@ -3,13 +3,17 @@ Jython NEWS
 The features new in a given release are generally listed under the section for the "b1" release
 of that version.
 
-For more details of issue [ n ], please see https://hg.python.org/jython, or for tags [ GH-n ] see
-https://github.com/jythontools/jython
+For more details, three sources are available according to type:
+ - [ n ], please see https://hg.python.org/jython.
+ - [ GH-n ], please see https://github.com/jython/jython.
+ - [ FM-n ], please see https://github.com/jython/frozen-mirror.
+
 
 Jython 2.7.3a1
   Bugs fixed
     - [ 2892 ] Migrate from hg.python.org to GitHub
     - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
+    - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
     - The project has moved its home to GitHub.
@@ -20,7 +24,7 @@ Jython 2.7.2
 Jython 2.7.2rc1
   Bugs fixed
     - [ 2858 ] test_ssl failure due to embedding Bouncy Castle (doc change only)
-    - [ GH-156 ] Race condition in PyStringMap keys method
+    - [ FM-156 ] Race condition in PyStringMap keys method
     - [ 2862 ] Jython fails on Linux for normal user when installed by root
 
 Jython 2.7.2b3
@@ -38,7 +42,7 @@ Jython 2.7.2b3
 Jython 2.7.2b2
   Bugs fixed
     - [ 2814 ] maven/build.xml does not PGP-sign the publication
-
+2)
 Jython 2.7.2b1
   Bugs fixed
     - [ 2806 ] Installer contains dependencies unshaded (Java 8)
@@ -60,14 +64,14 @@ Jython 2.7.2b1
     - [ 2768 ] Allow bytearray + and += to accept buffer protocol objects
     - [ 2742 ] JARs for bouncycastle out of date (upgrade to 1.16)
     - [ 2762 ] Upgrade Apache commons-compress to 1.18
-    - [ GH-108 ] Updates to JNR/JFFI to improve ARM HF support
+    - [ GH-5 ] Updates to JNR/JFFI to improve ARM HF support
     - [ 2445 ] Eclipse's DelegatingFeatureMap has MRO conflict (and IBM's MQQueue)
-    - [ GH-121 ] Allow struct unpack and unpack_from bytearray and buffer
+    - [ FM-121 ] Allow struct unpack and unpack_from bytearray and buffer
     - [ 2635 ] AST.lineno ignored by compile
     - [ 2744 ] Support buffer type in marshal.dump(s)
     - [ 2077 ] marshal doesn't raise error when fed unmarshalable object
     - [ 2732 ] Regression in large module support for pip
-    - [ GH-131 ] Support Unicode in zxJDBC exceptions.
+    - [ FM-131 ] Support Unicode in zxJDBC exceptions.
     - [ 2654 ] Imported modules allow access to submodules
     - [ 2362 ] Import * doesn't work on JDK9 for java.*, jdk.* namespaces
     - [ 2630 ] Cannot import java.awt.* on Java 9
@@ -75,7 +79,7 @@ Jython 2.7.2b1
     - [ 2726 ] os.uname() throws IllegalArgumentException on Windows (Chinese localisation)
     - [ 2719 ] Divergence of __str__ and __repr__ from CPython
     - [ 2714 ] Locale and java version failures in test_os_jy
-    - [ GH-111 ] Proper processing of gzip trailer without resubmission
+    - [ FM-111 ] Proper processing of gzip trailer without resubmission
     - [ 2231 ] __doc__ of PyString objects is always "The most base type"
     - [ 2230 ] Jython evaluation blocks under heavy load with high multi-core systems
     - [ 2506 ] ensurepip is reporting an error
@@ -217,7 +221,7 @@ Jython 2.7.1rc1
     - [ 2552 ] installing scandir via pip fails (breaks e.g. installing pathlib2 via pip)
     - [ 2534 ] os.getlogin() returns a wrong user or returns an exception
     - [ 2553 ] sys.getwindowsversion not implemented (breaks pathlib on Windows)
-    - [ PR55 ] Replace deprecated use of ASCII constant with ascii()
+    - [ FM-55 ] Replace deprecated use of ASCII constant with ascii()
     - [ 1777 ] Help getting SymPy working with Jython
     - [ 2475 ] Backported python 3 pathlib and pathlib2 do not work b/c of meta class issues
     - [ 2551 ] __slots__ in diamond-style causes lay-out conflict (breaks pathlib and sympy)
@@ -226,7 +230,7 @@ Jython 2.7.1rc1
     - [ 2548 ] Unicode u'\N{name}' frequently broken, because ucnhash.dat outdated
     - [ 2527 ] cStringIO throws IllegalArgumentException with non-ASCII values
     - [ 2511 ] Percent operator calls __getattr__('__getitem__')
-    - [ PR28 ] zipimporter supports multi-byte characters in pathnames
+    - [ FM-28 ] zipimporter supports multi-byte characters in pathnames
     - [ 2228 ] Re-use "makeCompiledFilename" function where possible
     - [ 608632 ] __doc__foo should accept java String
     - [ 2523 ] defaultdict.__getitem__() does not propagate exceptions raised by calling
@@ -242,7 +246,7 @@ Jython 2.7.1rc1
     - [ 2533 ] Opcode.java is outdated -> breaks PyBytecode.interpret
     - [ 2502 ] Missing OpenFlags enum entry makes Jython clash with JRuby dependency
     - [ 2446 ] Support SNI for SSL/TLS client sockets
-    - [ GH-50 ] Calling Java vararg methods with no arguments fails
+    - [ FM-50 ] Calling Java vararg methods with no arguments fails
     - [ 2455 ] Java classes in packages with __init__.py not found
     - [ 2481 ] Update urllib2.py from 2.7.11
     - [ 2514 ] Jython Class.__subclasses__() does not match Python output (not in load order)
