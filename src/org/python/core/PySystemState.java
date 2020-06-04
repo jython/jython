@@ -93,8 +93,8 @@ public class PySystemState extends PyObject
 
     public final static Class flags = Options.class;
 
-    public final static PyTuple _mercurial = new PyTuple(Py.newString("Jython"),
-            Py.newString(Version.getHGIdentifier()), Py.newString(Version.getHGVersion()));
+    public final static PyTuple _git = new PyTuple(Py.newString("Jython"),
+            Py.newString(Version.getGitIdentifier()), Py.newString(Version.getGitVersion()));
 
     /** The copyright notice for this release. */
     public static final PyObject copyright =

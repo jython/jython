@@ -34,14 +34,14 @@ public class Version {
     public static String DATE;
     public static String TIME;
 
-    /** Current hg branch (hg id -b). */
-    public static String HG_BRANCH;
+    /** Current Git branch {@code git name-rev --name-only HEAD}. */
+    private static String GIT_BRANCH;
 
-    /** Current hg tag (hg id -t), e.g. 'tip'. */
-    public static String HG_TAG;
+    /** Current Git tag {@code git describe --all --always --dirty}, e.g. 'tip'. */
+    private static String GIT_TAG;
 
-    /** Current hg global revision id (hg id -i). */
-    public static String HG_VERSION;
+    /** Current Git global revision id {@code git rev-parse --short HEAD}. */
+    private static String GIT_VERSION;
 
     /** The flags that are set by default in a code object. */
     private static final Collection<CodeFlag> defaultCodeFlags = Arrays.asList(
@@ -71,9 +71,9 @@ public class Version {
                 PY_RELEASE_SERIAL = Integer.valueOf(properties.getProperty("jython.release_serial"));
                 DATE = properties.getProperty("jython.build.date");
                 TIME = properties.getProperty("jython.build.time");
-                HG_BRANCH = properties.getProperty("jython.build.hg_branch");
-                HG_TAG = properties.getProperty("jython.build.hg_tag");
-                HG_VERSION = properties.getProperty("jython.build.hg_version");
+                GIT_BRANCH = properties.getProperty("jython.build.git_branch");
+                GIT_TAG = properties.getProperty("jython.build.git_tag");
+                GIT_VERSION = properties.getProperty("jython.build.git_version");
             } catch (IOException ioe) {
                 System.err.println("There was a problem loading ".concat(versionProperties)
                         .concat(":"));
@@ -93,28 +93,29 @@ public class Version {
     }
 
     /**
-     * Return the current hg version number. May be an empty string on environments that
+     * Return the current git version number. May be an empty string on environments that
      * can't determine it.
      */
-    public static String getHGVersion() {
-        return HG_VERSION;
+    public static String getGitVersion() {
+        return GIT_VERSION;
     }
 
     /**
-     * Return the current hg identifier name, either the current branch or tag.
+     * Return the current git identifier name, normally the current tag, falling
+     * back to the branch.
      */
-    public static String getHGIdentifier() {
-        return "".equals(HG_TAG) || "tip".equals(HG_TAG) ? HG_BRANCH : HG_TAG;
+    public static String getGitIdentifier() {
+        return "".equals(GIT_TAG) || "undefined".equals(GIT_TAG) ? GIT_BRANCH : GIT_TAG;
     }
 
     /**
      * Return the current build information, including revision and timestamp.
      */
     public static String getBuildInfo() {
-        String revision = getHGVersion();
+        String revision = getGitVersion();
         String sep = "".equals(revision) ? "" : ":";
-        String hgId = getHGIdentifier();
-        return String.format("%s%s%s, %.20s, %.9s", hgId, sep, revision, DATE, TIME);
+        String gitId = getGitIdentifier();
+        return String.format("%s%s%s, %.20s, %.9s", gitId, sep, revision, DATE, TIME);
     }
 
     /**

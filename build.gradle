@@ -38,7 +38,7 @@ import java.text.SimpleDateFormat
  * long as Ant is also used.
  *
  * The convention here is that you specify the version of the *next* release. If
- * there are files not checked in, extra files (not of types hg ignores), or the
+ * there are files not checked in, extra files (not of types git ignores), or the
  * changeset is not tagged correspondingly, the build will add "-SNAPSHOT" to
  * the effective version.
  */
@@ -298,7 +298,7 @@ classes.dependsOn(mergeExposed)
 /*
  * Write the information that org.python.Version reads from
  * org/python/version.properties in the class file structure. The inputs to
- * this are: information from Mercurial (hg command required); project.version;
+ * this are: information from Git (git command required); project.version;
  * and project.ext.buildDate. The task works quite hard to decode
  * project.version, which must have the correct form, to deduce whether you
  * really intend this to be a release. If anything comes after the release
@@ -313,20 +313,28 @@ task generateVersionInfo(
 
     // Create the properties when the task runs. But do it before the write!
     doFirst {
-        // Query Mercurial for version and tagging.
-        String hgOutput = 'hg identify -ibt'.execute().text
-        hgOutput = hgOutput.split('\n', 2)[0]
 
-        // <revision-id>(+)? <branch> <tag>
-        String[] parts = hgOutput.split(/\s+/, 3)
-        if (parts.length != 3) {
-            throw new IllegalArgumentException(
-                    "Cannot split Mercurial output '$hgOutput' into 3")
-        }
-        def (ident, branch, tag) = parts
-        property('jython.build.hg_branch', branch)
-        property('jython.build.hg_tag', tag)
-        property('jython.build.hg_version', ident)
+        /*
+         * Query Git for version and tagging. The git commands are exactly
+         * those used by CPython to create constants configure.ac, but do not
+         * correspond very well to their names.
+         */
+        
+        // Not much like a branch. Used only if git_tag is blank.
+        def branch = 'git name-rev --name-only HEAD'.execute().text.split('\n', 2)[0]
+        property('jython.build.git_branch', branch)
+        println "    jython.build.git_branch = ${branch}"
+
+        // When tagged, the result is "tags/vX.Y.Zrc9", or whatever.
+        // When not, tagged it is the (short) revision number.
+        def tag = 'git describe --all --always --dirty'.execute().text.split('\n', 2)[0]
+        property('jython.build.git_tag', tag)
+        println "    jython.build.git_tag = ${tag}"
+
+        // Revision number (short = 7 hex digits)
+        def ident = 'git rev-parse --short HEAD'.execute().text.split('\n', 2)[0]
+        property('jython.build.git_version', ident)
+        println "    jython.build.git_version = ${ident}"
 
         /*
          * Decompose the version string into elements for Jython to access as
@@ -378,16 +386,16 @@ task generateVersionInfo(
 
         if (snapshotSuffix == null) {
             // The version is named correctly for a release. Make safety checks on the repo.
-            String expectTag = "v$release"
+            String expectTag = "tags/v$release"
             String message = null;
-            if (ident.endsWith('+')) {
+            if (tag.endsWith('-dirty')) {
                 message = 'Version-controlled files have been edited since the last commit'
             } else if (tag != expectTag) {
                 message = "Change set $ident is not tagged $expectTag."
             } else {
-                // Query Mercurial for status: non-empty if uncontrolled (unignored) files.
-                String hgStatus = 'hg status'.execute().text
-                if (hgStatus.trim().length() > 0) {
+                // Query Git for status: non-empty if uncontrolled (unignored) files.
+                String gitStatus = 'git status --porcelain'.execute().text
+                if (gitStatus.trim().length() > 0) {
                     message = 'Workspace contains uncontrolled files'
                 }
             }
@@ -738,7 +746,7 @@ publishing {
                     'the Java platform. It thus allows you to run Python on any Java platform.'
                 url = 'https://www.jython.org/'
 
-                // We use the PSF 2.0, but only most recently, but actually a bundle.
+                // We use the PSF 2.0, but only most recently, and actually a bundle.
                 licenses {
                     license {
                         name = 'Jython Software License'
@@ -748,11 +756,11 @@ publishing {
                     }
                 }
 
-                // Point to hg repositories hosetd by PSF (up to 2.7.2, anyway).
+                // Point to Git repositories hosted on GitHub.
                 scm {
-                    connection = 'scm:hg:https://hg.python.org/jython'
-                    developerConnection = 'scm:hg:ssh://hg@hg.python.org/jython'
-                    url = 'https://hg.python.org/jython'
+                    connection = 'scm:git:https://github.com/jython/jython.git'
+                    developerConnection = 'scm:git:ssh://git@github.com:jython/jython.git'
+                    url = 'https://github.com/jython/jython'
                 }
 
                 // Could list us all, but why not just the list for now?

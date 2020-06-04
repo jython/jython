@@ -8,10 +8,11 @@ https://github.com/jythontools/jython
 
 Jython 2.7.3a1
   Bugs fixed
-    - [  ] 
+    - [ 2892 ] Migrate from hg.python.org to GitHub
+    - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
 
   New Features
-    - 
+    - The project has moved its home to GitHub.
 
 Jython 2.7.2
   same as 2.7.2rc1

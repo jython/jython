@@ -30,12 +30,12 @@ for the snapshot, via a property:
 
 Case 3: full build for a release (use clean, tagged checkout)
 -------------------------------------------------------------
-You do not have to have access to the Jython mercurial
+You do not have to have access to the Jython Git
 repository, but you do need to be at the root of a checked-out
 (i.e. newly cloned) source tree. The release aretefacts will be
 marked as a snapshot (not an official release) if any of the
 following apply:
-- there is no .hg directory (this is not a repo),
+- there is no .git directory (this is not a repo),
 - the source tree contains any extraneous files,
 - files have been edited and not committed,
 - the current state is not tagged with correct release,
@@ -344,8 +344,8 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <!-- Require all of the optional jars for a full build -->
         <fail unless="${informix.present}" message="informix jar not present" />
         <fail unless="${oracle.present}" message="oracle jar not present" />
-        <!-- Require all hg for a full build -->
-        <fail unless="${hg.present}" message="A Mercurial repository is required" />
+        <!-- Require all git for a full build -->
+        <fail unless="${git.present}" message="A Git repository is required" />
     </target>
 
     <target name="dump-env" depends="init, dump"
@@ -400,15 +400,15 @@ informix.jar = ../support/jdbc-4.10.12.jar
     </target>
 
     <target name="full-dump"
-            depends="hg-is-unmodified, hg-is-clean, hg-is-tagged, hg-branch, dump" >
+            depends="git-is-unmodified, git-is-clean, git-is-tagged, git-branch, dump" >
         <echo>--- properties only used for a full-build ---</echo>
-        <echo>hg.present                = '${hg.present}'</echo>
-        <echo>build.hg.is_unmodified    = '${build.hg.is_unmodified}'</echo>
-        <echo>build.hg.is_clean         = '${build.hg.is_clean}'</echo>
-        <echo>build.hg.is_tagged        = '${build.hg.is_tagged}'</echo>
-        <echo>build.hg.branch           = '${build.hg.branch}'</echo>
-        <echo>build.hg.tag              = '${build.hg.tag}'</echo>
-        <echo>build.hg.version          = '${build.hg.version}'</echo>
+        <echo>git.present               = '${git.present}'</echo>
+        <echo>build.git.is_unmodified   = '${build.git.is_unmodified}'</echo>
+        <echo>build.git.is_clean        = '${build.git.is_clean}'</echo>
+        <echo>build.git.is_tagged       = '${build.git.is_tagged}'</echo>
+        <echo>build.git.branch          = '${build.git.branch}'</echo>
+        <echo>build.git.tag             = '${build.git.tag}'</echo>
+        <echo>build.git.version         = '${build.git.version}'</echo>
     </target>
 
     <!-- Delete all intermediate build products. Directories correspond to those bases defined in
@@ -437,27 +437,31 @@ informix.jar = ../support/jdbc-4.10.12.jar
         </delete>
     </target>
 
-    <target name="force-snapshot-if-polluted" depends="hg-is-unmodified, hg-is-clean, hg-is-tagged">
+    <target name="force-snapshot-if-polluted" depends="git-is-unmodified, git-is-clean, git-is-tagged">
         <!-- Ensure that a snapshot name is provided, if the workspace is not a pure checkout.
              This only works before init is called, since it will set a value. -->
 
         <!-- Check for conditions that will force us to a snapshot build. -->
         <local name="diagnosis" />
         <condition property="diagnosis"
-                   value="The working directory is not a Mercurial repository">
-            <not><istrue value="${hg.present}"/></not>
+                   value="The working directory is not a Git repository">
+            <not><istrue value="${git.present}"/></not>
+        </condition>
+        <condition property="build.git.status"
+                   value="The git command failed (or is not on the path).">
+            <not><istrue value="${git.present}"/></not>
         </condition>
         <condition property="diagnosis"
                    value="Version-controlled files have been edited since the last commit">
-            <not><isset property="build.hg.is_unmodified"/></not>
+            <not><isset property="build.git.is_unmodified"/></not>
         </condition>
         <condition property="diagnosis"
                    value="Workspace contains uncontrolled files">
-            <not><isset property="build.hg.is_clean"/></not>
+            <not><isset property="build.git.is_clean"/></not>
         </condition>
         <condition property="diagnosis"
-                   value="Change set ${build.hg.version} is not tagged v${jython.release}">
-            <not><isset property="build.hg.is_tagged"/></not>
+                   value="Change set ${build.git.version} is not tagged 'v${jython.release}'">
+            <not><isset property="build.git.is_tagged"/></not>
         </condition>
 
         <!-- If there was any kind of defect, make this a snapshot build. -->
@@ -480,84 +484,82 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>
 ${message}
 
-${build.hg.status}
+${build.git.status}
         </echo>
 
     </target>
 
-    <target name="hg-is-unmodified" depends="hg-present" if="${hg.present}">
-        <!-- Set build.hg.version, and if it has no + at the end, set build.hg.is_unmodified -->
-        <!-- If hg.present then build.hg.version was already set by dependency hg-present. -->
-        <!-- Check there have been no modifications to controlled files. -->
-        <condition property="build.hg.is_unmodified">
+    <target name="git-is-unmodified" depends="git-is-tagged" if="${git.present}">
+        <!-- If build.git.tag has no -dirty at the end, set build.git.is_unmodified -->
+        <condition property="build.git.is_unmodified">
             <and>
-                <istrue value="${hg.present}" />
-                <not><contains string="${build.hg.version}" substring="+" /></not>
+                <istrue value="${git.present}" />
+                <not><contains string="${build.git.tag}" substring="-dirty" /></not>
             </and>
         </condition>
     </target>
 
-    <target name="hg-is-clean" depends="hg-present" if="${hg.present}">
-        <!-- Set build.hg.status, and if it lists no files, set build.hg.is_clean -->
-        <exec executable="hg" outputproperty="build.hg.status">
-            <arg line="status" />
+    <target name="git-is-clean" depends="git-present" if="${git.present}">
+        <!-- Set build.git.status, and if it lists no files, set build.git.is_clean -->
+        <exec executable="git" outputproperty="build.git.status">
+            <arg line="status --porcelain" />
         </exec>
-        <!-- Check there are no extra files (except as per .hgignore) to catch in the build. -->
-        <condition property="build.hg.is_clean">
+        <!-- Check there are no extra files (except as per .gitignore) to catch in the build. -->
+        <condition property="build.git.is_clean">
             <and>
-                <istrue value="${hg.present}" />
-                <length string="${build.hg.status}" trim="true" length="0" />
+                <istrue value="${git.present}" />
+                <length string="${build.git.status}" trim="true" length="0" />
             </and>
         </condition>
     </target>
 
-    <target name="hg-is-tagged" depends="hg-present, common-version-strings" if="${hg.present}">
-        <!-- Set build.hg.tag, and if it matches this version, set build.hg.is_tagged -->
-        <exec executable="hg" outputproperty="build.hg.tag">
-            <arg line="identify -t"/>
+    <target name="git-is-tagged" depends="git-present, common-version-strings" if="${git.present}">
+        <!-- Set build.git.tag, and if it matches this version, set build.git.is_tagged -->
+        <exec executable="git" outputproperty="build.git.tag">
+            <arg line="describe --all --always --dirty"/>
         </exec>
         <!-- Check we are at a tag matching the release claimed in the configuration. -->
-        <condition property="build.hg.is_tagged">
+        <condition property="build.git.is_tagged">
             <and>
-                <istrue value="${hg.present}" />
-                <equals arg1="${build.hg.tag}" arg2="v${jython.release}" />
+                <istrue value="${git.present}" />
+                <equals arg1="${build.git.tag}" arg2="tags/v${jython.release}" />
             </and>
         </condition>
     </target>
 
-    <target name="hg-branch" depends="hg-present" if="${hg.present}">
-        <!-- Set build.hg.branch. -->
-        <exec executable="hg" outputproperty="build.hg.branch">
-            <arg line="identify -b"/>
+    <target name="git-branch" depends="git-present" if="${git.present}">
+        <!-- Set build.git.branch. -->
+        <exec executable="git" outputproperty="build.git.branch">
+            <arg line="name-rev --name-only HEAD"/>
         </exec>
     </target>
 
-    <target name="hg-present" depends="common-dirs">
-        <!-- Work out whether Mercurial is available: the command and a repo. -->
-        <!-- Try using Mercurial to set "build.hg.version" as a test of availability. This will
-             fail if hg is not on the path or .hg doesn't exist. We choose this particular
-             property because we use it every build. -->
-        <local name="hg_result" />
-        <local name="hg_output" />
-        <exec executable="hg" outputproperty="hg_output"
-            failifexecutionfails="false" failonerror="false" resultproperty="hg_result">
-            <arg line="identify -i"/>
+    <target name="git-present" depends="common-dirs">
+        <!-- Work out whether Git is available: the command and a repo. -->
+        <!-- Try using Git to set "build.git.version" as a test of availability,
+             as we need it anyway. This will fail if git is not on the path or
+             .git doesn't exist. -->
+        <local name="git_result" />
+        <local name="git_output" />
+        <exec executable="git" outputproperty="git_output"
+            failifexecutionfails="false" failonerror="false" resultproperty="git_result">
+            <arg line="rev-parse --short HEAD"/>
         </exec>
-        <!-- Deduce presence of the hg command and repo from how that execution went. -->
-        <condition property="hg.present" else="false">
+        <!-- Deduce presence of the git command and repo from how that execution went. -->
+        <condition property="git.present" else="false">
             <and>
-                <isset property="hg_output" />
-                <equals arg1="${hg_result}" arg2="0" />
-                <available file="${basedir}/.hg" type="dir" />
+                <isset property="git_output" />
+                <equals arg1="${git_result}" arg2="0" />
+                <available file="${basedir}/.git" type="dir" />
             </and>
         </condition>
         <!-- And if both are present, the result provides the change set id. -->
-        <condition property="build.hg.version" value="${hg_output}">
-            <istrue value="${hg.present}" />
+        <condition property="build.git.version" value="${git_output}">
+            <istrue value="${git.present}" />
         </condition>
     </target>
 
-    <target name="brand-up-to-date" depends="common-paths, hg-is-unmodified">
+    <target name="brand-up-to-date" depends="common-paths, git-is-unmodified">
         <!-- Check freshness of generated version.properties file. -->
         <condition property="brand-up-to-date" else="false">
             <!-- The branding (version.properties) is adequately up to date if ... -->
@@ -569,44 +571,45 @@ ${build.hg.status}
                 <!-- *and* we have uncommited changes. This may sound backwards, but the idea is
                      that part-way through development, we'd rather not wait to regenerate the
                      file (and JAR), only when we reach the little rubicon of a commit. -->
-                <not><isset property="build.hg.is_unmodified"/></not>
+                <not><isset property="build.git.is_unmodified"/></not>
             </and>
         </condition>
     </target>
 
     <target name="brand-version-metadata"
-            depends="hg-present, brand-up-to-date"
+            depends="git-present, brand-up-to-date"
             unless="${brand-up-to-date}"
-            if="${hg.present}">
-        <!-- Get the hg metadata (branch and tag) to update version.properties (see brand-version").
-             We're lazy about this: we only do it if we need the information for brand-version. -->
-        <exec executable="hg" outputproperty="build.hg.branch">
-            <arg line="identify -b"/>
+            if="${git.present}">
+        <!-- Get the git metadata (branch and tag) to update version.properties (see
+             brand-version"). We're lazy about this: we only do it if we need the information for
+             brand-version. -->
+        <exec executable="git" outputproperty="build.git.branch">
+            <arg line="name-rev --name-only HEAD"/>
         </exec>
-        <exec executable="hg" outputproperty="build.hg.tag">
-            <arg line="identify -t"/>
+        <exec executable="git" outputproperty="build.git.tag">
+            <arg line="describe --all --always --dirty"/>
         </exec>
     </target>
 
-    <target name="brand-version-nohg" depends="hg-present" unless="${hg.present}">
-        <!-- Substitute hg metadata (branch and tag) to update version.properties. -->
-        <property name="build.hg.branch" value="uncontrolled" />
-        <property name="build.hg.version" value="+" />
-        <property name="build.hg.tag" value="" />
+    <target name="brand-version-nogit" depends="git-present" unless="${git.present}">
+        <!-- Substitute git metadata (branch and tag) to update version.properties. -->
+        <property name="build.git.branch" value="uncontrolled" />
+        <property name="build.git.version" value="uncontrolled" />
+        <property name="build.git.tag" value="-dirty" />
     </target>
 
     <target name="brand-version"
-            depends="brand-version-metadata, brand-version-nohg, init"
+            depends="brand-version-metadata, brand-version-nogit, init"
             unless="${brand-up-to-date}">
         <!-- Update version.properties, but only if something significant has changed. -->
 
-        <!-- These values are guaranteed by the dependencies, even if hg is not installad or there
+        <!-- These values are guaranteed by the dependencies, even if git is not installad or there
              is no repo.-->
-        <echo>Writing hg and build metadata to version.properties.</echo>
+        <echo>Writing git and build metadata to version.properties.</echo>
         <echo>jython.version        = ${jython.version}</echo>
-        <echo>build.hg.branch       = ${build.hg.branch}</echo>
-        <echo>build.hg.version      = ${build.hg.version}</echo>
-        <echo>build.hg.tag          = ${build.hg.tag}</echo>
+        <echo>build.git.branch      = ${build.git.branch}</echo>
+        <echo>build.git.version     = ${build.git.version}</echo>
+        <echo>build.git.tag         = ${build.git.tag}</echo>
 
         <tstamp>
             <format property="build.date" pattern="MMM d yyyy" offset="0"/>
@@ -622,9 +625,9 @@ jython.release_level=${jython.release_level}
 jython.release_serial=${jython.release_serial}
 jython.build.date=${build.date}
 jython.build.time=${build.time}
-jython.build.hg_branch=${build.hg.branch}
-jython.build.hg_tag=${build.hg.tag}
-jython.build.hg_version=${build.hg.version}</echo>
+jython.build.git_branch=${build.git.branch}
+jython.build.git_tag=${build.git.tag}
+jython.build.git_version=${build.git.version}</echo>
     </target>
 
     <target name="brand-readme" depends="init">
@@ -929,7 +932,7 @@ The text for an official release would continue like ...
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
-                    <attribute name="hg-build" value="${hg.present}" />
+                    <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
@@ -973,7 +976,7 @@ The text for an official release would continue like ...
               <!-- info section. ATTN: no blanks, no '.' in the names -->
               <section name="Build-Info">
                   <attribute name="version" value="${jython.version}" />
-                  <attribute name="hg-build" value="${hg.present}" />
+                  <attribute name="git-build" value="${git.present}" />
                   <attribute name="oracle" value="${oracle.present}" />
                   <attribute name="informix" value="${informix.present}" />
                   <attribute name="build-compiler" value="${build.compiler}" />
@@ -1224,7 +1227,7 @@ The text for an official release would continue like ...
                 </section>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
-                    <attribute name="hg-build" value="${hg.present}" />
+                    <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
