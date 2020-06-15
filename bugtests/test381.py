@@ -7,6 +7,8 @@ namespace (PyStringMap) deletion-confused insert bug
 # with the same initial index in hash table
 
 
+import support
+
 from java.lang.System import identityHashCode
 from java.lang import String
 
