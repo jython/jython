@@ -1061,7 +1061,7 @@ public class cPickle implements ClassDictInit {
                 file.write((char)((bits >>>  0) & 0xFF));
             } else {
                 file.write(FLOAT);
-                file.write(object.toString());
+                file.write(object.__repr__().toString());
                 file.write("\n");
             }
         }

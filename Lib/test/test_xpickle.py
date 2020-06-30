@@ -32,26 +32,7 @@ if pickletester.__name__ in sys.modules:
 sys.modules[pickletester.__name__] = pickletester
 
 
-class ApproxFloat(unittest.TestCase):
-    # FIXME for Jython: remove this class - and its use from bases in
-    # subsequent test classes - when we can guarantee that floats that
-    # are pickled by cPickle are exact in the same way they are on
-    # CPython
-    
-    def test_float(self):
-        from test.pickletester import protocols
-
-        test_values = [0.0, 4.94e-324, 1e-310, 7e-308, 6.626e-34, 0.1, 0.5,
-                       3.14, 263.44582062374053, 6.022e23, 1e30]
-        test_values = test_values + [-x for x in test_values]
-        for proto in protocols:
-            for value in test_values:
-                pickle = self.dumps(value, proto)
-                got = self.loads(pickle)
-                self.assertAlmostEqual(value, got)
-
-
-class DumpCPickle_LoadPickle(ApproxFloat, AbstractPickleTests):
+class DumpCPickle_LoadPickle(AbstractPickleTests):
 
     error = KeyError
 
