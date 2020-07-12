@@ -36,6 +36,7 @@ class CmdLineTest(unittest.TestCase):
         data = self.start_python(cmd_line)
         self.assertTrue(data == '' or data.endswith('\n'))
         self.assertNotIn('Traceback', data)
+        self.assertNotIn('usage:', data)
 
     def test_optimize(self):
         self.verify_valid_flag('-O')
