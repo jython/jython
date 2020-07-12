@@ -11,6 +11,7 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-27 ] -Q new always fails
     - [ 2892 ] Migrate from hg.python.org to GitHub
     - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
