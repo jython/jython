@@ -957,6 +957,7 @@ public class jython {
                                 break;
                             case "new":
                                 Options.Qnew = true;
+                                break;
                             default:
                                 error("-Q option should be `-Qold', "
                                         + "`-Qwarn', `-Qwarnall', or `-Qnew' only");
