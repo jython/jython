@@ -49,3 +49,12 @@ $test_*
 
 profile.txt
 out
+
+bugtests/support_config.py
+bugtests/*.err
+bugtests/*.out
+bugtests/*.zip
+bugtests/**/*.jar
+bugtests/test*jar
+bugtests/test*cache/
+bugtests/test*javapackage/
