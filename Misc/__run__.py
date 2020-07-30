@@ -1,21 +1,25 @@
-# Copyright © Corporation for National Research Initiatives
+# Copyright ï¿½ Corporation for National Research Initiatives
 import sys, os, java, jarray
 
-# The global `zipfile' is magically inserted by jpython -jar.  IMO this is
-# somewhat bogus.  See org/python/util/jpython.java for alternatives
+# This file is retained only for backward compatibility.
+#
+# This supports the jython -jar <zip-or-jar-file> command, under a mechanism by which
+# This file must be copied into the root of a ZIP/JAR file system.
+# See org/python/util/jython.java for an explanation and alternatives.
 
 def fixname(s):
     result = []
     lasti = 0
     for i in range(len(s)):
-	if s[i] == '/':
-	    result.append(s[lasti:i])
-	    lasti = i+1
+        if s[i] == '/':
+            result.append(s[lasti:i])
+            lasti = i+1
     result.append(s[lasti:])
     return apply(os.path.join, tuple(result))
 
 
-entries = zipfile.entries()
+# The global `zipfile' is magically inserted when processing jython -jar,
+entries = zipfile.entries()  # noqa: F821
 
 outdir = sys.prefix #os.path.join(sys.prefix, 'Lib')
 
@@ -31,14 +35,14 @@ while entries.hasMoreElements():
     entry = entries.nextElement()
 
     if entry.isDirectory():
-	continue
+        continue
 
-    infile = zipfile.getInputStream(entry)
+    infile = zipfile.getInputStream(entry)  # noqa: F821
 
     name = fixname(entry.getName())
 
     if name == '__run__.py':
-	continue
+        continue
 
     outname = os.path.join(outdir, name)
 
@@ -47,17 +51,17 @@ while entries.hasMoreElements():
 ##    print entry.getSize(), entry.getMethod(), entry.DEFLATED
 
 ##    if entry.getMethod() == entry.DEFLATED:
-##	infile = java.util.zip.GZIPInputStream(infile)
+##        infile = java.util.zip.GZIPInputStream(infile)
 
     bytes = entry.getSize() #infile.available()
 
     print 'copying %s to %s (%d bytes)' % (name, outname, bytes)
 
     while 1:
-	n = infile.read(buffer)
-	if n == -1:
-	    break
-	outfile.write(buffer, 0, n)
+        n = infile.read(buffer)
+        if n == -1:
+            break
+        outfile.write(buffer, 0, n)
 
     infile.close()
     outfile.close()
