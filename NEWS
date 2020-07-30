@@ -11,13 +11,15 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
+    - [ GH-50 ] (First) migration from Mercurial corrupted project history
     - [ GH-27 ] -Q new always fails
     - [ 2892 ] Migrate from hg.python.org to GitHub
     - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
-    - The project has moved its home to GitHub.
+    - The project has moved its home to GitHub (twice).
 
 Jython 2.7.2
   same as 2.7.2rc1
