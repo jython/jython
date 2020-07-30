@@ -50,7 +50,9 @@ $test_*
 profile.txt
 out
 
+# Stuff dropped by bug tests (just in case that ant target is used)
 bugtests/support_config.py
+bugtests/test392m.py
 bugtests/*.err
 bugtests/*.out
 bugtests/*.zip

@@ -18,12 +18,12 @@ UNIX = os.pathsep == ":"
 WIN  = os.pathsep == ";"
 test_jythonc = 1
 
-if not UNIX ^ WIN:
-  raise TestError("Unknown platform")
-
 class TestError(exceptions.Exception):
   def __init__(self, args):
     exceptions.Exception.__init__(self, args)
+
+if not UNIX ^ WIN:
+  raise TestError("Unknown platform")
 
 class TestWarning(exceptions.Exception):
   def __init__(self, args):
