@@ -9,71 +9,99 @@ addons:
   apt:  # only active on Linux
     packages:
       - ant
+
   hostname: jyshort
-  homebrew:  # only active on macOS
-    update: true
-    packages:
-      - ant
 
-services: xvfb
-
-jdk:
-  # - openjdk12
-  # - openjdk14
   
 jobs:
   include:
     - name: "openjdk8 on Linux"
       dist: xenial
       jdk: openjdk8
+
     - name: "openjdk11 on Linux"
       jdk: openjdk11
+
     - name: "openjdk13 on Linux"
       jdk: openjdk13
+
     - name: "openjdk8 on macOS"
       os: osx
-      osx_image: xcode9.3  # Last supporting Java 8
-      jdk: oraclejdk8
-    - name: "openjdk13 on macOS"
+      osx_image: xcode11.6  # Supports homebrew bundle without needing update
+      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
+      # https://docs.travis-ci.com/user/installing-dependencies/
+      addons:
+        homebrew:
+          taps:
+            # - AdoptOpenJDK/openjdk # for java
+            # but see https://github.com/AdoptOpenJDK/homebrew-openjdk/issues/106
+            - homebrew/cask-versions # ant & jdk 8
+          casks:
+            - adoptopenjdk8
+          packages:
+            - ant
+      before_install:
+        # Add the required JDK to the path
+        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
+        - echo $JAVA_HOME
+        - export PATH="$JAVA_HOME/bin:$PATH"
+
+    - name: "openjdk11 on macOS"
       os: osx
-      osx_image: xcode11.5
-      jdk: openjdk13
-    - name: "openjdk13 on Windows"
+      osx_image: xcode11.6  # Supports homebrew bundle without update
+      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
+      # https://docs.travis-ci.com/user/installing-dependencies/
+      addons:
+        homebrew:
+          taps:
+            - AdoptOpenJDK/openjdk    # for java
+            - homebrew/cask-versions  # for ant
+          casks:
+            - adoptopenjdk11
+          packages:
+            - ant
+      before_install:
+        # Add the required JDK to the path
+        - export JAVA_HOME="$(/usr/libexec/java_home -v11)"
+        - echo $JAVA_HOME
+        - export PATH="$JAVA_HOME/bin:$PATH"
+
+    - name: "openjdk11 on Windows"
       os: windows
       language: shell  # Travis CI Windows does not yet support language: java
       env:
-        - PATH="/c/Program Files/AdoptOpenJDK/jdk-13.0.2.8-hotspot/bin:/c/Users/travis/build/jython/jython/apache-ant-1.10.8/bin:$PATH"
-        - JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-13.0.2.8-hotspot"
-        - ANT_HOME="/c/Users/travis/build/jython/jython/apache-ant-1.10.8"
+        - JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
+        - ANT_HOME="/c/Users/travis/apache-ant"
+        - PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
       before_install:
-        - choco install adoptopenjdk13
-        - java -version
+        - pwd # /c/Users/travis/build/<github-user>/<repo-name>
+        # Install the required JDK (must match JAVA_HOME in env: section)
+        - choco install adoptopenjdk11
+        - ls "/c/Program Files/AdoptOpenJDK" # Check JAVA_HOME is correct :(
+        # Install ant at $ANT_HOME (chosen in env: section)
         - curl https://downloads.apache.org/ant/binaries/apache-ant-1.10.8-bin.zip -o apache-ant.zip
-        - unzip apache-ant.zip
+        - unzip -q apache-ant.zip
         - rm apache-ant.zip
-        - ant -version
+        - mv apache-ant-1.10.8 $ANT_HOME
+
     #- name: "Lint Python 2 code for syntax errors and undefined names"
     #  language: python  # lint Python code for syntax errors and undefined names
     #  python: 2.7
     #  install: pip install flake8
     #  script: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    #- name: "Lint Python 3 code for syntax errors and undefined names"
-    #  language: python  # lint Python code for syntax errors and undefined names
-    #  install: pip install flake8
-    #  script: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
   allow_failures:
     - language: python
-    - jdk: openjdk12  # fails on: test_dunder_init (test.test_import_jy.MislabeledImportTestCase)
-                      # ..and on: test_import_star (test.test_import_jy.ImpTestCase)
-    - jdk: openjdk14  # hangs on: [exec] test_subprocess
-    - os: osx
-      jdk: openjdk13
-    - os: windows     # hangs on: [exec] test_subprocess
+    - os: osx # remains flakey
 
-install: ant developer-build
+# Install (i.e. build) Jython
+install:
+  # Confirm versions and paths (this has been a problem)
+  - echo $PATH
+  - java -version
+  - ant -version
+  - ant developer-build
+
+# Run the regression test (tweaked for Travis in build.xml)
 script:  ant regrtest-travis
 
-notifications:
-  email:
-    recipients:
-      - jython-dev@lists.sourceforge.net
