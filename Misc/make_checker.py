@@ -50,6 +50,7 @@ type(slice),
 ]
 
 del f, tb
+types = {}
 if 0:
     for n, x in __builtin__.__dict__.items():
         if isinstance(x, type):
@@ -58,7 +59,6 @@ if 0:
 
 i = 0
 #Make types a mapping from an item in types_list to its index
-types = {}
 for t in types_list:
     if t is not None:
         types.setdefault(t, i)
