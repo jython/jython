@@ -1,22 +1,17 @@
-# Jython: Python for the Java Platform
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.python/jython-standalone/badge.svg)](https://search.maven.org/artifact/org.python/jython-standalone/)
-[![Javadocs](https://www.javadoc.io/badge/org.python/jython-standalone.svg)](https://www.javadoc.io/doc/org.python/jython-standalone)
+# Jython 3: Python 3 for the Java Platform
 
 This is the development repository of Jython,
 the implementation of Python in Java.
-Only version 2.7 of Python can be supported at present
-(but watch this space for a 3.x version).
+You are looking at the branch intended to support version 3.8 of Python.
+
+Jython 3.x is not yet a viable product you can use in applications.
 
 Along with good (not perfect!) language
-and runtime compatibility with CPython 2.7,
-Jython 2.7 provides substantial support of the Python ecosystem.
+and runtime compatibility with CPython 3.8,
+Jython 3.8 is intended to provide substantial support of the Python ecosystem.
 This includes built-in support of *pip/setuptools*
 (you can use `bin/pip` if the targets do not include `C` extensions)
-and a native launcher for Windows (`bin/jython.exe`)
-that works essentially as the `python` command.
-
-Jim Baker presented a talk at PyCon 2015 about Jython 2.7,
-including demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
+and a native launcher that works essentially as the `python` command.
 
 See [ACKNOWLEDGMENTS](ACKNOWLEDGMENTS) for details about Jython's copyright,
 license, contributors, and mailing lists.
@@ -28,65 +23,20 @@ pull requests, documentation changes and e-mail discussions.
 ## How to build Jython
 
 The project uses Git for version-control,
-and the master repository is at https://github.com/jython/jython,
+and the master repository is at https://github.com/jython/jython.
 You should clone this repository to create a buildable copy of the latest state
 of the Jython source.
 The previously authoritative repository at https://hg.python.org/jython is not now in use,
 remaining frozen at v2.7.2.
 
-### Build using `ant` for development
+### Build using `Gradle` for development
 
-Jython is normally built using `ant`.
+Jython is normally built using `Gradle`.
 It is necessary to have Ant and at least a Java 8 SDK on the path.
-To build Jython in development, we generally use the command:
+To build Jython in development, we generally use this command:
 ```
-ant
+$ ./gradlew build
 ```
-This leaves an executable in `dist/bin`
-that you may run from the check-out root with:
-```
-dist/bin/jython
-```
-Other `ant` targets exist, notably `clean`, and `jar`.
+In its present state, the build doesn't produce anything useful.
+Watch this space for further developments.
 
-You can test your build of Jython (by running the regression tests),
-with the command:
-```
-dist/bin/jython -m test.regrtest -e -m regrtest_memo.txt
-```
-
-### Build an installer using `ant`
-
-If you want to install a snapshot build of Jython, use the command:
-```
-ant installer
-```
-This will leave you with a snapshot installer JAR in `dist`,
-that you can run with:
-```
-java -jar jython-installer.jar
-```
-for the graphical installer, or:
-```
-java -jar jython-installer.jar --console
-```
-For the console version. (A `--help` option gives you the full story.)
-
-### Build a JAR using Gradle
-
-Experimentally, we have a Gradle build that results in a family of JARs,
-and a POM.
-This is intended to provide the Jython core in a form that Gradle and Maven
-users can consume as a dependency.
-Invoke this with:
-```
-PS> .\gradlew publish
-```
-and a JAR and POM are delivered to ` .build2\repo` 
-
-Whereas the JARs delivered by the installer are somewhat "fat",
-embedding certain dependencies in shaded (renamed) form,
-the JAR from the Gradle build is "spare"
-and cites its dependencies externally through a POM.
-The project would like to know if this is being done suitably
-for downstream use.

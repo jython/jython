@@ -1,0 +1,27 @@
+/*
+ * build-tools.gradle
+ *
+ * Build the tools on which the Jython Project depends at *build time*.
+ * This is structured as an independent build. It is included in the main
+ * Jython build through its settings file, and its products aa dependencies.
+ */
+
+plugins {
+    id 'java-library'
+}
+
+description = 'Tools for building Jython'
+group = 'org.python'
+//version = '0.4.0-SNAPSHOT'
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+

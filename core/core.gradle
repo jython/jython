@@ -1,0 +1,26 @@
+/*
+ * core.gradle
+ *
+ * Sub-project of Jython: interpreter core. We to generate and compile the
+ * implementation of the core Python objects, exporting a minimal API.
+ */
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    //implementation 'org.ow2.asm:asm:9.+'
+
+    // JUnit 5 dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+
+test {
+    useJUnitPlatform {  // JUnit5 as standard
+        includeEngines 'junit-jupiter'
+    }
+}
+

@@ -1,43 +1,62 @@
+# .gitignore: things not to put under source control
+
+# Places and extensions for unmanaged tools and scraps
+/local/
+/scraps/
+/temp/
+*.sav*
+*.patch
+
+# Project specific structure
+**/bin/
+**/venv/
+
+# Generated during build
+**/build/
+**/_build/
+**/_static/
+**/_templates/
+
+# Droppings of various tools, not for the record
+**/.gradle/
+**/__pycache__/
+.AppleDouble
+.DS_Store
 *.class
+*.log
 *.pyc
 *.pyd
 *.pyo
 *.orig
 *.rej
 *.swp
+*.tmp
 \#*
 *~
 
-.gradle
+#
+# IDE Files. (We don't check them in: make your own!)
+#
+
+# Eclipse
+.classpath
+.externalToolBuilders/
+.project
+.settings/
+.pydevproject
 
 # IntelliJ files
 *.eml
 *.ipr
 *.iml
 *.iws
-.idea/*
+.idea/
 
-# Eclipse files
-.classpath
-.externalToolBuilders/*
-.project
-.pydevproject
-
-# Netbeans files
-nbproject
-nbbuild.xml
-
-.vagrant
-
-.AppleDouble
-.DS_Store
-.settings
-__pycache__
-bin
-
-# Jython specific
+#
+# Jython 2 specific: retire these when we can (or promote them to 3)
+#
+.hg*
 ant.properties
-build
 build2
 cachedir
 .jython_cache
@@ -49,3 +68,15 @@ $test_*
 
 profile.txt
 out
+
+# Stuff dropped by bug tests (just in case that ant target is used)
+bugtests/support_config.py
+bugtests/test392m.py
+bugtests/*.err
+bugtests/*.out
+bugtests/*.zip
+bugtests/**/*.jar
+bugtests/test*jar
+bugtests/test*cache/
+bugtests/test*javapackage/
+

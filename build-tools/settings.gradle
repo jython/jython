@@ -1,0 +1,9 @@
+/*
+ * build-tools/settings.gradle
+ *
+ * Included project for tools used to create Jython.
+ */
+
+rootProject.name = 'build-tools'
+
+rootProject.buildFileName = rootProject.name + '.gradle'

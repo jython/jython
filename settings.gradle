@@ -1,5 +1,33 @@
 /*
- * Gradle settings for Jython. See also build.gradle.
+ * Settings for the top-level project build of Jython.
  */
 
-rootProject.name = 'jython-slim'
+rootProject.name = 'jython'
+
+/*
+ * Sub-projects each generate a Java module or documentation.
+ * Tasks from each may run in any (depenency) order Gradle chooses.
+ */
+include 'core'          // core API and objects of the interpreter runtime
+//include 'extensions'    // extension modules implemented in Java
+//include 'interpreter'   // interpreter(s) and support for embedding Jython
+//include 'compiler'      // Python compiler(s)
+//include 'stdlib'        // standard library
+//include 'artefact'      // published Jython artefact (slim jar)
+//include 'command'       // the Jython command (an application)
+//include 'installer'     // installer (an application)
+
+// Each sub-project contains a build file named after it.
+rootProject.children.each {
+    println it
+    it.buildFileName = it.name + '.gradle'
+}
+
+/*
+ * Tools used to generate code but not deployed as part of Jython
+ * (e.g. plug-ins we use) enter the main build as dependencies.
+ * These are built as needed but built completely before use.
+ */
+// https://docs.gradle.org/current/userguide/composite_builds.html
+includeBuild 'build-tools' 
+
