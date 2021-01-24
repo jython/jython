@@ -4,26 +4,42 @@ import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.python.antlr.base.mod;
+import org.python.core.CodeFlag;
+import org.python.core.CompilerFlags;
 
 public class BaseParser {
 
     protected final CharStream charStream;
     @Deprecated
     protected final boolean partial;
+    protected final boolean printFunction, unicodeLiterals;
     protected final String filename;
     protected final String encoding;
     protected ErrorHandler errorHandler = new FailFastHandler();
     
-    public BaseParser(CharStream stream, String filename, String encoding) {
-        this(stream, filename, encoding, false);
+    public BaseParser(CharStream stream, String filename, CompilerFlags flags) {
+        this(stream, filename, flags.encoding, false,
+             flags.isFlagSet(CodeFlag.CO_FUTURE_PRINT_FUNCTION),
+             flags.isFlagSet(CodeFlag.CO_FUTURE_UNICODE_LITERALS));
     }
-    
+
+    public BaseParser(CharStream stream, String filename, String encoding) {
+        this(stream, filename, encoding, false, false, false);
+    }
+
     @Deprecated
     public BaseParser(CharStream stream, String filename, String encoding, boolean partial) {
+        this(stream, filename, encoding, partial, false, false);
+    }
+
+    private BaseParser(CharStream stream, String filename, String encoding,
+                       boolean partial, boolean printFunction, boolean unicodeLiterals) {
         this.charStream = stream;
         this.filename = filename;
         this.encoding = encoding;
         this.partial = partial;
+        this.printFunction = printFunction;
+        this.unicodeLiterals = unicodeLiterals;
     }
 
     public void setAntlrErrorHandler(ErrorHandler eh) {
@@ -37,7 +53,7 @@ public class BaseParser {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PythonTokenSource indentedSource = new PythonTokenSource(tokens, filename, single);
         tokens = new CommonTokenStream(indentedSource);
-        PythonParser parser = new PythonParser(tokens, encoding);
+        PythonParser parser = new PythonParser(tokens, encoding, printFunction, unicodeLiterals);
         parser.setErrorHandler(errorHandler);
         parser.setTreeAdaptor(new PythonTreeAdaptor());
         return parser;

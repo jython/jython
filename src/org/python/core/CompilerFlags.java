@@ -61,7 +61,8 @@ public class CompilerFlags implements Serializable {
     public String toString() {
         return String.format(
                 "CompilerFlags[division=%s nested_scopes=%s generators=%s "
-                        + "with_statement=%s absolute_import=%s only_ast=%s "
+                        + "with_statement=%s absolute_import=%s "
+                        + "print_function=%s unicode_literals=%s only_ast=%s "
                         + "dont_imply_dedent=%s  source_is_utf8=%s]",
                 isFlagSet(CodeFlag.CO_FUTURE_DIVISION),
                 isFlagSet(CodeFlag.CO_NESTED),
