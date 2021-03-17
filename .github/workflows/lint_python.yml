@@ -7,9 +7,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - run: pip install bandit black codespell flake8 isort mypy pytest pyupgrade safety
-      - run: bandit -r . || true
+      #- run: bandit -r . || true  # Not so helpful
       #- run: black --check . || true  # Disable because it takes too long.
-      - run: codespell --ignore-words-list="als,ist,nd,ois,parm,parms,sie,spawnve,te,titel,upto" --quiet-level=2 --skip="./lib-python,./Lib" || true
+      - run: |
+          IGNORE_WORDS_LIST="als,ba,fo,inout,iself,ist,nd,ois,parm,parms,sie,spawnve,te,titel,ue,upto"
+          codespell --ignore-words-list=$IGNORE_WORDS_LIST --quiet-level=2 --skip="./lib-python,./Lib" || true
       - run: flake8 --count --select=E9,F63,F7,F82 --show-source --statistics ./Demo ./tests
       - run: isort --check-only --profile black . || true
       - run: pip install -r requirements.txt || true
