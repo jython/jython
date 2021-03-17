@@ -12,7 +12,6 @@ addons:
 
   hostname: jyshort
 
-  
 jobs:
   include:
     - name: "openjdk8 on Linux"
@@ -30,6 +29,9 @@ jobs:
 
     - name: "openjdk16 on Linux"
       jdk: openjdk16
+
+    - name: "oraclejdk16 on Linux"
+      jdk: oraclejdk16
 
     - name: "openjdk8 on macOS"
       os: osx
@@ -90,11 +92,11 @@ jobs:
         - rm apache-ant.zip
         - mv apache-ant-1.10.8 $ANT_HOME
 
-    #- name: "Lint Python 2 code for syntax errors and undefined names"
-    #  language: python  # lint Python code for syntax errors and undefined names
-    #  python: 2.7
-    #  install: pip install flake8
-    #  script: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    - name: "Lint Python 2 code for syntax errors and undefined names"
+      language: python  # lint Python code for syntax errors and undefined names
+      python: 2.7
+      install: pip install flake8
+      script: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
   allow_failures:
     - language: python
@@ -110,4 +112,3 @@ install:
 
 # Run the regression test (tweaked for Travis in build.xml)
 script:  ant regrtest-travis
-
