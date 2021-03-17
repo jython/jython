@@ -31,7 +31,7 @@ jobs:
       addons:
         homebrew:
           taps:
-            - AdoptOpenJDK/openjdk. # for Java
+            - AdoptOpenJDK/openjdk  # for Java
           casks:
             - adoptopenjdk11
       before_install:
