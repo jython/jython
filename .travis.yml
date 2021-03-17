@@ -27,10 +27,11 @@ jobs:
       osx_image: xcode11.6  # Supports homebrew bundle without update
       # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
       # https://docs.travis-ci.com/user/installing-dependencies/
+      # https://github.com/AdoptOpenJDK/homebrew-openjdk
       addons:
         homebrew:
           taps:
-            - AdoptOpenJDK/openjdk    # for java
+            - AdoptOpenJDK/openjdk. # for Java
           casks:
             - adoptopenjdk11
       before_install:
