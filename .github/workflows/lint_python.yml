@@ -12,7 +12,7 @@ jobs:
       - run: |
           IGNORE_WORDS_LIST="als,ba,fo,inout,iself,ist,nd,ois,parm,parms,sie,spawnve,te,titel,ue,upto"
           codespell --ignore-words-list=$IGNORE_WORDS_LIST --quiet-level=2 --skip="./lib-python,./Lib" || true
-      - run: flake8 --count --select=E9,F63,F7,F82 --show-source --statistics ./Demo ./tests
+      - run: flake8 --count --select=E9,F63,F7,F82 --show-source --statistics ./Demo
       - run: isort --check-only --profile black . || true
       - run: pip install -r requirements.txt || true
       - run: mypy --ignore-missing-imports . || true
