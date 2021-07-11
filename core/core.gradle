@@ -24,3 +24,27 @@ test {
     }
 }
 
+
+// Some adjustments to Javadoc to ensure complex tables readable
+
+tasks.withType(Javadoc) {
+
+    options.showFromPackage()
+
+    // addStringOption inserts one "-" for us :/
+    // CSS adjustments (initially only for table style)
+    options.addStringOption("-add-stylesheet",
+        "src/main/javadoc/project-styles.css")
+
+    // Enable "custom" tags used in JDK Javadoc since JSR-335.
+    // https://nipafx.dev/javadoc-tags-apiNote-implSpec-implNote
+    options.tags(
+        "apiNote:a:API Note:",
+        "implSpec:a:Implementation Requirements:",
+        "implNote:a:Implementation Note:",
+        // Unfortunately we must add these standard tags too,
+        // so they come after the ones we want to enable.
+        "param", "return", "throws",
+        "since", "version", "serialData", "see")
+}
+
