@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+/* Styles supplementary to the standard Javadoc doclet. */
+
+/* Table layout for framed data. */
+table.framed-layout {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+table.framed-layout th, table.framed-layout td {
+    border: 1px solid black;
+    text-align: center;
+    min-width: 2em;
+}
+
+table.framed-layout td.label {
+    text-align: left;
+    font-weight: bold;
+}
