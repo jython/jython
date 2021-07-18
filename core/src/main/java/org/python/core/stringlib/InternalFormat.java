@@ -2,10 +2,6 @@
 package org.python.core.stringlib;
 
 import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.core.PyUnicode;
 
 public class InternalFormat {
 
@@ -14,28 +10,11 @@ public class InternalFormat {
      *
      * @param text to parse
      * @return parsed equivalent to text
+     * @throws IllegalArgumentException on a parse error
      */
-    public static Spec fromText(String text) {
+    public static Spec fromText(String text) throws IllegalArgumentException {
         Parser parser = new Parser(text);
-        try {
-            return parser.parse();
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
-        }
-    }
-
-    /**
-     * Create a {@link Spec} object by parsing a format specification, supplied as an object.
-     *
-     * @param text to parse
-     * @return parsed equivalent to text
-     */
-    public static Spec fromText(PyObject text, String method) {
-        if (text instanceof PyString) {
-            return fromText(((PyString)text).getString());
-        } else {
-            throw Py.TypeError(method + " requires str or unicode");
-        }
+        return parser.parse();
     }
 
     /**
@@ -52,9 +31,10 @@ public class InternalFormat {
         protected StringBuilder result;
 
         /**
-         * Signals the client's intention to make a PyString (or other byte-like) interpretation of
-         * {@link #result}, rather than a PyUnicode one.
+         * Signals the client's intention to make a {@code bytes} (or other byte-like)
+         * interpretation of {@link #result}, rather than a {@code String} one.
          */
+        // XXX Needs a re-think for Jython 3: specialised adapter?
         protected boolean bytes;
 
         /** The start of the formatted data for padding purposes, &lt;={@link #start} */
@@ -126,22 +106,6 @@ public class InternalFormat {
          */
         public String getResult() {
             return result.toString();
-        }
-
-        /**
-         * Convenience method to return the current result of the formatting, as a
-         * <code>PyObject</code>, either {@link PyString} or {@link PyUnicode} according to
-         * {@link #bytes}.
-         *
-         * @return formatted result
-         */
-        public PyString getPyResult() {
-            String r = getResult();
-            if (bytes) {
-                return new PyString(r);
-            } else {
-                return new PyUnicode(r);
-            }
         }
 
         /*
@@ -497,7 +461,7 @@ public class InternalFormat {
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting:
+         * Convenience method returning a {@link FormatError} reporting:
          * <p>
          * <code>"Unknown format code '"+code+"' for object of type '"+forType+"'"</code>
          *
@@ -505,94 +469,94 @@ public class InternalFormat {
          * @param forType the type it was found applied to
          * @return exception to throw
          */
-        public static PyException unknownFormat(char code, String forType) {
+        public static FormatError unknownFormat(char code, String forType) {
             String msg = "Unknown format code '" + code + "' for object of type '" + forType + "'";
-            return Py.ValueError(msg);
+            return new FormatError(msg);
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that alternate form is not
+         * Convenience method returning a {@link FormatError} reporting that alternate form is not
          * allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @return exception to throw
          */
-        public static PyException alternateFormNotAllowed(String forType) {
+        public static FormatError alternateFormNotAllowed(String forType) {
             return alternateFormNotAllowed(forType, '\0');
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that alternate form is not
+         * Convenience method returning a {@link FormatError} reporting that alternate form is not
          * allowed in a format specifier for the named type and specified typoe code.
          *
          * @param forType the type it was found applied to
          * @param code the formatting code (or '\0' not to mention one)
          * @return exception to throw
          */
-        public static PyException alternateFormNotAllowed(String forType, char code) {
+        public static FormatError alternateFormNotAllowed(String forType, char code) {
             return notAllowed("Alternate form (#)", forType, code);
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that the given alignment
+         * Convenience method returning a {@link FormatError} reporting that the given alignment
          * flag is not allowed in a format specifier for the named type.
          *
          * @param align type of alignment
          * @param forType the type it was found applied to
          * @return exception to throw
          */
-        public static PyException alignmentNotAllowed(char align, String forType) {
+        public static FormatError alignmentNotAllowed(char align, String forType) {
             return notAllowed("'" + align + "' alignment flag", forType, '\0');
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that specifying a sign is
+         * Convenience method returning a {@link FormatError} reporting that specifying a sign is
          * not allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @param code the formatting code (or '\0' not to mention one)
          * @return exception to throw
          */
-        public static PyException signNotAllowed(String forType, char code) {
+        public static FormatError signNotAllowed(String forType, char code) {
             return notAllowed("Sign", forType, code);
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that specifying a
+         * Convenience method returning a {@link FormatError} reporting that specifying a
          * precision is not allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @return exception to throw
          */
-        public static PyException precisionNotAllowed(String forType) {
+        public static FormatError precisionNotAllowed(String forType) {
             return notAllowed("Precision", forType, '\0');
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that zero padding is not
+         * Convenience method returning a {@link FormatError} reporting that zero padding is not
          * allowed in a format specifier for the named type.
          *
          * @param forType the type it was found applied to
          * @return exception to throw
          */
-        public static PyException zeroPaddingNotAllowed(String forType) {
+        public static FormatError zeroPaddingNotAllowed(String forType) {
             return notAllowed("Zero padding", forType, '\0');
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
+         * Convenience method returning a {@link FormatError} reporting that some format specifier
          * feature is not allowed for the named data type.
          *
          * @param outrage committed in the present case
          * @param forType the data type (e.g. "integer") it where it is an outrage
          * @return exception to throw
          */
-        public static PyException notAllowed(String outrage, String forType) {
+        public static FormatError notAllowed(String outrage, String forType) {
             return notAllowed(outrage, forType, '\0');
         }
 
         /**
-         * Convenience method returning a {@link Py#ValueError} reporting that some format specifier
+         * Convenience method returning a {@link FormatError} reporting that some format specifier
          * feature is not allowed for the named format code and data type. Produces a message like:
          * <p>
          * <code>outrage+" not allowed with "+forType+" format specifier '"+code+"'"</code>
@@ -604,7 +568,7 @@ public class InternalFormat {
          * @param code the formatting code for which it is an outrage (or '\0' not to mention one)
          * @return exception to throw
          */
-        public static PyException notAllowed(String outrage, String forType, char code) {
+        public static FormatError notAllowed(String outrage, String forType, char code) {
             // Try really hard to be like CPython
             String codeAsString, withOrIn;
             if (code == 0) {
@@ -617,7 +581,7 @@ public class InternalFormat {
             String msg =
                     outrage + " not allowed " + withOrIn + forType + " format specifier"
                             + codeAsString;
-            return Py.ValueError(msg);
+            return new FormatError(msg);
         }
 
         /**
@@ -628,9 +592,9 @@ public class InternalFormat {
          * @param type of formatting ("integer", "float")
          * @return exception to throw
          */
-        public static PyException precisionTooLarge(String type) {
+        public static FormatOverflow precisionTooLarge(String type) {
             String msg = "formatted " + type + " is too long (precision too large?)";
-            return Py.OverflowError(msg);
+            return new FormatOverflow(msg);
         }
 
     }
@@ -989,4 +953,30 @@ public class InternalFormat {
 
     }
 
+    /**
+     * An exception signifying a problem with a format string. The client code will
+     * normally convert this to a Python {@code ValueError}.
+     */
+    /*
+     * In Jython 2 we threw a ValueError directly, but would like to keep the
+     * formatter pure from Python object types,
+     */
+    public static class FormatError extends Exception {
+        private static final long serialVersionUID = 1L;
+        public FormatError(String message) { super(message); }
+    }
+
+    /**
+     * An exception signifying an overflow (or precision too large) during a formatting operation.
+     *  The client code will
+     * normally convert this to a Python {@code OverflowError}.
+     */
+    /*
+     * In Jython 2 we threw a OverflowError directly, but would like to keep the
+     * formatter pure from Python object types,
+     */
+    public static class FormatOverflow extends FormatError {
+        private static final long serialVersionUID = 1L;
+        public FormatOverflow(String message) { super(message); }
+    }
 }

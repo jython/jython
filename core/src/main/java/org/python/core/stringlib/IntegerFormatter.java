@@ -3,12 +3,8 @@ package org.python.core.stringlib;
 
 import java.math.BigInteger;
 
-import org.python.core.Py;
-import org.python.core.PyInteger;
-import org.python.core.PyLong;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.core.PySystemState;
+import org.python.core.stringlib.InternalFormat.FormatError;
+import org.python.core.stringlib.InternalFormat.FormatOverflow;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
@@ -38,6 +34,58 @@ public class IntegerFormatter extends InternalFormat.Formatter {
     public IntegerFormatter(Spec spec) {
         // Rule of thumb: big enough for 32-bit binary with base indicator 0b
         this(new StringBuilder(34), spec);
+    }
+
+    /**
+     * Prepare an {@link IntegerFormatter}. This object has an overloaded format
+     * method {@link IntegerFormatter#format(int)} and
+     * {@link IntegerFormatter#format(BigInteger)} to support the two implementation
+     * types.
+     *
+     * @param spec a parsed PEP-3101 format specification.
+     * @return a formatter ready to use, or null if the type is not an integer
+     *     format type.
+     * @throws FormatOverflow if a value is out of range (including the precision)
+     * @throws FormatError if an unsupported format character is encountered
+     */
+    @SuppressWarnings({"fallthrough"})
+    public static IntegerFormatter prepareFormatter(Spec spec) throws FormatOverflow, FormatError {
+
+        // Slight differences between format types
+        switch (spec.type) {
+            case 'c':
+                // Character data: specific prohibitions.
+                if (Spec.specified(spec.sign)) {
+                    throw signNotAllowed("integer", spec.type);
+                } else if (spec.alternate) {
+                    throw alternateFormNotAllowed("integer", spec.type);
+                }
+                // Fall through
+
+            case 'x':
+            case 'X':
+            case 'o':
+            case 'b':
+            case 'n':
+                if (spec.grouping) {
+                    throw notAllowed("Grouping", "integer", spec.type);
+                }
+                // Fall through
+
+            case Spec.NONE:
+            case 'd':
+                // Check for disallowed parts of the specification
+                if (Spec.specified(spec.precision)) {
+                    throw precisionNotAllowed("integer");
+                }
+                // spec may be incomplete. The defaults are those commonly used for numeric formats.
+                spec = spec.withDefaults(Spec.NUMERIC);
+                // Get a formatter for the spec.
+                return new IntegerFormatter(spec);
+
+            default:
+                return null;
+        }
     }
 
     /*
@@ -70,9 +118,11 @@ public class IntegerFormatter extends InternalFormat.Formatter {
      *
      * @param value to convert
      * @return this object
+     * @throws FormatOverflow if a value is out of range (including the precision)
+     * @throws FormatError if an unsupported format character is encountered
      */
-    @SuppressWarnings("fallthrough")
-    public IntegerFormatter format(BigInteger value) {
+    public IntegerFormatter format(BigInteger value)
+            throws FormatOverflow, FormatError {
         try {
             // Different process for each format type.
             switch (spec.type) {
@@ -227,12 +277,13 @@ public class IntegerFormatter extends InternalFormat.Formatter {
      * Format the value as a character (into {@link #result}).
      *
      * @param value to convert
+     * @throws FormatOverflow if {@code value} out of range
      */
-    void format_c(BigInteger value) {
+    void format_c(BigInteger value) throws FormatOverflow {
         // Limit is 256 if we're formatting for byte output, unicode range otherwise.
         BigInteger limit = bytes ? LIMIT_BYTE : LIMIT_UNICODE;
         if (value.signum() < 0 || value.compareTo(limit) >= 0) {
-            throw Py.OverflowError("%c arg not in range(0x" + toHexString(limit) + ")");
+            throw new FormatOverflow("%c arg not in range(0x" + toHexString(limit) + ")");
         } else {
             result.appendCodePoint(value.intValue());
         }
@@ -240,7 +291,7 @@ public class IntegerFormatter extends InternalFormat.Formatter {
 
     // Limits used in format_c(BigInteger)
     private static final BigInteger LIMIT_UNICODE = BigInteger
-            .valueOf(PySystemState.maxunicode + 1);
+            .valueOf(Character.MAX_CODE_POINT + 1);
     private static final BigInteger LIMIT_BYTE = BigInteger.valueOf(256);
 
     /**
@@ -251,9 +302,10 @@ public class IntegerFormatter extends InternalFormat.Formatter {
      *
      * @param value to convert
      * @return this object
+     * @throws FormatOverflow if a value is out of range (including the precision)
+     * @throws FormatError if an unsupported format character is encountered
      */
-    @SuppressWarnings("fallthrough")
-    public IntegerFormatter format(int value) {
+    public IntegerFormatter format(int value) throws FormatOverflow, FormatError {
         try {
             // Scratch all instance variables and start = result.length().
             setStart();
@@ -414,12 +466,13 @@ public class IntegerFormatter extends InternalFormat.Formatter {
      * Format the value as a character (into {@link #result}).
      *
      * @param value to convert
+     * @throws FormatOverflow if {@code value} out of range
      */
-    void format_c(int value) {
+    void format_c(int value) throws FormatOverflow {
         // Limit is 256 if we're formatting for byte output, unicode range otherwise.
-        int limit = bytes ? 256 : PySystemState.maxunicode + 1;
+        int limit = bytes ? 256 :  Character.MAX_CODE_POINT + 1;
         if (value < 0 || value >= limit) {
-            throw Py.OverflowError("%c arg not in range(0x" + Integer.toHexString(limit) + ")");
+            throw new FormatOverflow("%c arg not in range(0x" + Integer.toHexString(limit) + ")");
         } else {
             result.appendCodePoint(value);
         }
@@ -586,47 +639,6 @@ public class IntegerFormatter extends InternalFormat.Formatter {
         return signum < 0 ? "-" + result : result;
     }
 
-    /** Format specification used by bin(). */
-    public static final Spec BIN = InternalFormat.fromText("#b");
-
-    /** Format specification used by oct(). */
-    public static final Spec OCT = InternalFormat.fromText("#o");
-
-    /** Format specification used by hex(). */
-    public static final Spec HEX = InternalFormat.fromText("#x");
-
-    /**
-     * Convert the object to binary according to the conventions of Python built-in
-     * <code>bin()</code>. The object's __index__ method is called, and is responsible for raising
-     * the appropriate error (which the base {@link PyObject#__index__()} does).
-     *
-     * @param number to convert
-     * @return PyString converted result
-     */
-    // Follow this pattern in Python 3, where objects no longer have __hex__, __oct__ members.
-    public static PyString bin(PyObject number) {
-        return formatNumber(number, BIN);
-    }
-
-    /**
-     * Convert the object according to the conventions of Python built-in <code>hex()</code>, or
-     * <code>oct()</code>. The object's <code>__index__</code> method is called, and is responsible
-     * for raising the appropriate error (which the base {@link PyObject#__index__()} does).
-     *
-     * @param number to convert
-     * @return PyString converted result
-     */
-    public static PyString formatNumber(PyObject number, Spec spec) {
-        number = number.__index__();
-        IntegerFormatter f = new IntegerFormatter(spec);
-        if (number instanceof PyInteger) {
-            f.format(((PyInteger)number).getValue());
-        } else {
-            f.format(((PyLong)number).getValue());
-        }
-        return new PyString(f.getResult());
-    }
-
     /**
      * A minor variation on {@link IntegerFormatter} to handle "traditional" %-formatting. The
      * difference is in support for <code>spec.precision</code>, the formatting octal in "alternate"
@@ -683,16 +695,17 @@ public class IntegerFormatter extends InternalFormat.Formatter {
          * Format the value as a character (into {@link #result}).
          *
          * @param value to convert
+         * @throws FormatOverflow if {@code value} out of range
          */
         @Override
-        void format_c(BigInteger value) {
+        void format_c(BigInteger value) throws FormatOverflow {
             if (value.signum() < 0) {
-                throw Py.OverflowError("unsigned byte integer is less than minimum");
+                throw new FormatOverflow("unsigned byte integer is less than minimum");
             } else {
                 // Limit is 256 if we're formatting for byte output, unicode range otherwise.
                 BigInteger limit = bytes ? LIMIT_BYTE : LIMIT_UNICODE;
                 if (value.compareTo(limit) >= 0) {
-                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                    throw new FormatOverflow("unsigned byte integer is greater than maximum");
                 } else {
                     result.appendCodePoint(value.intValue());
                 }
@@ -726,16 +739,17 @@ public class IntegerFormatter extends InternalFormat.Formatter {
          * Format the value as a character (into {@link #result}).
          *
          * @param value to convert
+         * @throws FormatOverflow if {@code value} out of range
          */
         @Override
-        void format_c(int value) {
+        void format_c(int value) throws FormatOverflow {
             if (value < 0) {
-                throw Py.OverflowError("unsigned byte integer is less than minimum");
+                throw new FormatOverflow("unsigned byte integer is less than minimum");
             } else {
                 // Limit is 256 if we're formatting for byte output, unicode range otherwise.
-                int limit = bytes ? 256 : PySystemState.maxunicode + 1;
+                int limit = bytes ? 256 : Character.MAX_CODE_POINT + 1;
                 if (value >= limit) {
-                    throw Py.OverflowError("unsigned byte integer is greater than maximum");
+                    throw new FormatOverflow("unsigned byte integer is greater than maximum");
                 } else {
                     result.appendCodePoint(value);
                 }
