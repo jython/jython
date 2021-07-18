@@ -1541,12 +1541,4 @@ public class PyType extends Operations implements DictPyObject {
             return bases[0];
         }
     }
-
-    /**
-     * Helper for {@link #__call__} and {@link #__new__}. This is a type enquiry if
-     * {@code type} is {@link PyType#TYPE} and there is just one argument.
-     */
-    private static boolean isTypeEnquiry(PyType type, Object[] args, String[] names) {
-        return type == TYPE && args.length == 1 && (names == null || names.length == 0);
-    }
 }

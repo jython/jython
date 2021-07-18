@@ -3,226 +3,442 @@
 
 package org.python.core;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.ZERO;
 
+import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
+import java.math.BigInteger;
+import java.util.Map;
+
+import org.python.base.InterpreterError;
+import org.python.base.MissingFeature;
+import org.python.core.PyObjectUtil.NoConversion;
+import org.python.core.Slot.EmptyException;
 import org.python.core.stringlib.FloatFormatter;
 import org.python.core.stringlib.IntegerFormatter;
 import org.python.core.stringlib.InternalFormat;
+import org.python.core.stringlib.InternalFormat.FormatError;
+import org.python.core.stringlib.InternalFormat.FormatOverflow;
 import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
 
 /**
- * A builtin python long. This is implemented as a java.math.BigInteger.
+ * A Python {@code int} object may be represented by a
+ * {@code java.lang.Integer} or a {@code java.math.BigInteger}. An
+ * instance of a Python sub-class of {@code int}, must be
+ * represented by an instance of a Java sub-class of) this class.
  */
-@Untraversable
-@ExposedType(name = "long", doc = BuiltinDocs.long_doc)
-public class PyLong extends PyObject {
+// @Untraversable
+// @ExposedType(name = "long", doc = BuiltinDocs.long_doc)
+public class PyLong extends AbstractPyObject {
 
-    public static final PyType TYPE = PyType.fromClass(PyLong.class);
+    /** The type {@code int}. */
+    public static final PyType TYPE = PyType.fromSpec( //
+            new PyType.Spec("int", MethodHandles.lookup()) //
+                    .adopt(BigInteger.class, Integer.class) //
+                    .accept(Boolean.class) //
+                    .methods(PyLongMethods.class));
 
     public static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
     public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
-    public static final BigInteger MAX_ULONG = BigInteger.valueOf(1).shiftLeft(64)
-            .subtract(BigInteger.valueOf(1));
-
-    /** @deprecated Use MIN_INT instead. */
-    @Deprecated
-    public static final BigInteger minLong = MIN_LONG;
-    /** @deprecated Use MAX_INT instead. */
-    @Deprecated
-    public static final BigInteger maxLong = MAX_LONG;
-    /** @deprecated Use MAX_ULONG instead. */
-    @Deprecated
-    public static final BigInteger maxULong = MAX_ULONG;
+    public static final BigInteger MAX_ULONG = ONE.shiftLeft(64).subtract(ONE);
 
     private final BigInteger value;
 
-    public BigInteger getValue() {
-        return value;
-    }
+    public BigInteger getValue() { return value; }
 
-    public PyLong(PyType subType, BigInteger v) {
+    /**
+     * Constructor for Python sub-class specifying {@link #type}.
+     *
+     * @param subType actual Python sub-class being created
+     * @param v of the {@code int}
+     */
+    private PyLong(PyType subType, BigInteger v) {
         super(subType);
         value = v;
     }
 
-    public PyLong(BigInteger v) {
-        this(TYPE, v);
-    }
+    // Instance methods on PyLong -------------------------------------
 
-    public PyLong(double v) {
-        this(toBigInteger(v));
-    }
-
-    public PyLong(long v) {
-        this(BigInteger.valueOf(v));
-    }
-
-    public PyLong(String s) {
-        this(new BigInteger(s));
-    }
-
-    @ExposedNew
-    public static PyObject long___new__(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        if (new_.for_type != subtype) {
-            return longSubtypeNew(new_, init, subtype, args, keywords);
+    @Override
+    public boolean equals(Object obj) {
+        try {
+            // XXX Use Dict.pythonEquals when available
+            return getValue().equals(asBigInteger(convertToInt(obj)));
+        } catch (Throwable e) {
+            return false;
         }
+    }
 
-        ArgParser ap = new ArgParser("long", args, keywords, new String[] {"x", "base"}, 0);
-        PyObject x = ap.getPyObject(0, null);
-        if (x != null && x.getJavaProxy() instanceof BigInteger) {
-            return new PyLong((BigInteger)x.getJavaProxy());
+    @Override
+    public int hashCode() { return __hash__(this); }
+
+    // Constructor from Python ----------------------------------------
+
+    @SuppressWarnings("fallthrough")
+    static Object __new__(PyType subType, Object[] args, String[] kwnames) throws Throwable {
+        Object x = null, obase = null;
+        int argsLen = args.length;
+        switch (argsLen) {
+            case 2:
+                obase = args[1]; // fall through
+            case 1:
+                x = args[0]; // fall through
+            case 0:
+                break;
+            default:
+                throw new TypeError("int() takes at most %d arguments (%d given)", 2, argsLen);
         }
-        int base = ap.getInt(1, -909);
+        return __new__impl(subType, x, obase);
+    }
+
+    /**
+     * Implementation of {@code __new__} with classic arguments
+     * unpacked.
+     *
+     * @param subType actual sub-type of int to produce
+     * @param x {@code int}-like or {@code str}-like value or
+     *     {@code null}.
+     * @param obase number base ({@code x} must be {@code str}-like)
+     * @return an {@code int} or sub-class with the right value
+     * @throws Throwable on argument type or other errors
+     */
+    private static Object __new__impl(PyType subType, Object x, Object obase) throws Throwable {
+
+        if (subType != TYPE) {
+            return longSubtypeNew(subType, x, obase);
+        }
 
         if (x == null) {
-            return new PyLong(0);
+            // Zero-arg int() ... unless invalidly like int(base=10)
+            if (obase != null) {
+                throw new TypeError("int() missing string argument");
+            }
+            return 0;
         }
-        if (base == -909) {
-            return asPyLong(x);
-        }
-        if (!(x instanceof PyString)) {
-            throw Py.TypeError("long: can't convert non-string with explicit base");
-        }
-        return ((PyString)x).atol(base);
-    }
 
-    /**
-     * @return convert to a long.
-     * @throws TypeError and AttributeError.
-     */
-    private static PyObject asPyLong(PyObject x) {
-        try {
-            return x.__long__();
-        } catch (PyException pye) {
-            if (!pye.match(Py.AttributeError)) {
-                throw pye;
-            }
-            try {
-                PyObject integral = x.invoke("__trunc__");
-                return convertIntegralToLong(integral);
-            } catch (PyException pye2) {
-                if (!pye2.match(Py.AttributeError)) {
-                    throw pye2;
-                }
-                throw Py.TypeError(String.format(
-                        "long() argument must be a string or a number, not '%.200s'", x.getType()
-                                .fastGetName()));
-            }
+        if (obase == null)
+            return PyNumber.asLong(x);
+        else {
+            int base = PyNumber.asSize(obase, null);
+            if (base != 0 && (base < 2 || base > 36))
+                throw new ValueError("int() base must be >= 2 and <= 36, or 0");
+            else if (PyUnicode.TYPE.check(x))
+                return PyLong.fromUnicode(x, base);
+            // else if ... support for bytes-like objects
+            else
+                throw new TypeError(NON_STR_EXPLICIT_BASE);
         }
     }
 
-    /**
-     * @return convert to an int.
-     * @throws TypeError and AttributeError.
-     */
-    private static PyObject convertIntegralToLong(PyObject integral) {
-        if (!(integral instanceof PyInteger) && !(integral instanceof PyLong)) {
-            PyObject i = integral.invoke("__int__");
-            if (!(i instanceof PyInteger) && !(i instanceof PyLong)) {
-                throw Py.TypeError(String.format("__trunc__ returned non-Integral (type %.200s)",
-                        integral.getType().fastGetName()));
-            }
-            return i;
-        }
-        return integral;
-    }
+    private static final String NON_STR_EXPLICIT_BASE =
+            "int() can't convert non-string with explicit base";
 
     /**
-     * Wimpy, slow approach to new calls for subtypes of long.
+     * Wimpy, slow approach to {@code __new__} calls for sub-types of
+     * {@code int}, that will temporarily create a regular {@code int}
+     * from the arguments.
      *
-     * First creates a regular long from whatever arguments we got, then allocates a subtype
-     * instance and initializes it from the regular long. The regular long is then thrown away.
+     * @throws Throwable on argument type or other errors
      */
-    private static PyObject longSubtypeNew(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        PyObject tmp = long___new__(new_, init, TYPE, args, keywords);
-        if (tmp instanceof PyInteger) {
-            int intValue = ((PyInteger)tmp).getValue();
-            return new PyLongDerived(subtype, BigInteger.valueOf(intValue));
-        } else {
-            return new PyLongDerived(subtype, ((PyLong)tmp).getValue());
+    private static Object longSubtypeNew(PyType subType, Object x, Object obase) throws Throwable {
+        // Create a regular int from whatever arguments we got.
+        Object v = __new__impl(TYPE, x, obase);
+        // create a sub-type instance from the value in tmp
+        return new PyLong.Derived(subType, PyLong.asBigInteger(v));
+    }
+
+    // Representations of the value -----------------------------------
+
+    /**
+     * Present the value as a Java {@code int} when the argument is
+     * expected to be a Python {@code int} or a sub-class of it.
+     *
+     * @param v claimed {@code int}
+     * @return {@code int} value
+     * @throws TypeError if {@code v} is not a Python {@code int}
+     * @throws OverflowError if {@code v} is out of Java range
+     */
+    static int asInt(Object v) throws TypeError, OverflowError {
+        try {
+            return convertToInt(v);
+        } catch (NoConversion nc) {
+            throw Abstract.requiredTypeError("an integer", v);
         }
     }
 
     /**
-     * Convert a double to BigInteger, raising an OverflowError if infinite.
+     * Present the value as a Java {@code int} when the argument is
+     * expected to be a Python {@code int} or a sub-class of it.
+     *
+     * @param v claimed {@code int}
+     * @return {@code int} value
+     * @throws TypeError if {@code v} is not a Python {@code int}
+     * @throws OverflowError if {@code v} is out of Java range
      */
-    private static BigInteger toBigInteger(double value) {
-        if (Double.isInfinite(value)) {
-            throw Py.OverflowError("cannot convert float infinity to long");
-        }
-        if (Double.isNaN(value)) {
-            throw Py.ValueError("cannot convert float NaN to integer");
-        }
-        return new BigDecimal(value).toBigInteger();
+    static int asSize(Object v) throws TypeError, OverflowError { return asInt(v); }
+
+    /**
+     * Present the value as a Java {@code BigInteger} when the argument
+     * is expected to be a Python {@code int} or a sub-class of it.
+     *
+     * @param v claimed {@code int}
+     * @return {@code BigInteger} value
+     * @throws TypeError if {@code v} is not a Python {@code int}
+     */
+    static BigInteger asBigInteger(Object v) throws TypeError {
+        if (v instanceof BigInteger)
+            return (BigInteger)v;
+        else if (v instanceof Integer)
+            return BigInteger.valueOf(((Integer)v).longValue());
+        else if (v instanceof PyLong)
+            return ((PyLong)v).value;
+        else if (v instanceof Boolean)
+            return (Boolean)v ? BigInteger.ONE : BigInteger.ZERO;
+        else
+            throw Abstract.requiredTypeError("an integer", v);
     }
+
+    /**
+     * Value as a Java {@code double} using the round-half-to-even rule.
+     *
+     * @param v to convert
+     * @return nearest double
+     * @throws OverflowError if out of double range
+     */
+    // Compare CPython longobject.c: PyLong_AsDouble
+    static double asDouble(Object v) {
+        try {
+            return convertToDouble(v);
+        } catch (NoConversion nc) {
+            throw Abstract.requiredTypeError("an integer", v);
+        }
+    }
+
+    static int signum(Object v) throws TypeError {
+        if (v instanceof BigInteger)
+            return ((BigInteger)v).signum();
+        else if (v instanceof Integer)
+            return Integer.signum((Integer)v);
+        else if (v instanceof PyLong)
+            return ((PyLong)v).value.signum();
+        else if (v instanceof Boolean)
+            return (Boolean)v ? 1 : 0;
+        else
+            throw Abstract.requiredTypeError("an integer", v);
+    }
+
+    // Factories ------------------------------------------------------
+
+    /*
+     * These methods create Python int from other Python objects, or
+     * from specific Java types. The methods make use of special methods
+     * on the argument and produce Python exceptions when that goes
+     * wrong. Note that they never produce a PyLong, but always Java
+     * Integer or BigInteger. The often correspond to CPython public or
+     * internal API.
+     */
+    /**
+     * Convert the given object to a Python {@code int} using the
+     * {@code op_int} slot, if available. Raise {@code TypeError} if
+     * either the {@code op_int} slot is not available or the result of
+     * the call to {@code op_int} returns something not of type
+     * {@code int}.
+     * <p>
+     * The return is not always exactly an {@code int}.
+     * {@code integral.__int__}, which this method wraps, may return any
+     * type: Python sub-classes of {@code int} are tolerated, but with a
+     * deprecation warning. Returns not even a sub-class type
+     * {@code int} raise {@link TypeError}.
+     *
+     * @param integral to convert to {@code int}
+     * @return integer value of argument
+     * @throws TypeError if {@code integral} seems not to be
+     * @throws Throwable from the supporting implementation
+     */
+    // Compare CPython longobject.c::_PyLong_FromNbInt
+    static Object fromIntOf(Object integral) throws TypeError, Throwable {
+        Operations ops = Operations.of(integral);
+
+        if (ops.isIntExact()) {
+            // Fast path for the case that we already have an int.
+            return integral;
+        }
+
+        else
+            try {
+                /*
+                 * Convert using the op_int slot, which should return something of
+                 * exact type int.
+                 */
+                Object r = ops.op_int.invokeExact(integral);
+                if (PyLong.TYPE.checkExact(r)) {
+                    return r;
+                } else if (PyLong.TYPE.check(r)) {
+                    // Result not of exact type int but is a subclass
+                    Abstract.returnDeprecation("__int__", "int", r);
+                    return r;
+                } else
+                    throw Abstract.returnTypeError("__int__", "int", r);
+            } catch (EmptyException e) {
+                // __int__ is not defined for t
+                throw Abstract.requiredTypeError("an integer", integral);
+            }
+    }
+
+    /**
+     * Convert the given object to a {@code int} using the
+     * {@code __index__} or {@code __int__} special methods, if
+     * available (the latter is deprecated).
+     * <p>
+     * The return is not always exactly an {@code int}.
+     * {@code integral.__index__} or {@code integral.__int__}, which
+     * this method wraps, may return any type: Python sub-classes of
+     * {@code int} are tolerated, but with a deprecation warning.
+     * Returns not even a sub-class type {@code int} raise
+     * {@link TypeError}. This method should be replaced with
+     * {@link PyNumber#index(Object)} after the end of the deprecation
+     * period.
+     *
+     * @param integral to convert to {@code int}
+     * @return integer value of argument
+     * @throws TypeError if {@code integral} seems not to be
+     * @throws Throwable from the supporting implementation
+     */
+    // Compare CPython longobject.c :: _PyLong_FromNbIndexOrNbInt
+    static Object fromIndexOrIntOf(Object integral) throws TypeError, Throwable {
+        Operations ops = Operations.of(integral);
+        ;
+
+        if (ops.isIntExact())
+            // Fast path for the case that we already have an int.
+            return integral;
+
+        try {
+            // Normally, the op_index slot will do the job
+            Object r = ops.op_index.invokeExact(integral);
+            if (Operations.of(r).isIntExact())
+                return r;
+            else if (PyLong.TYPE.check(r)) {
+                // 'result' not of exact type int but is a subclass
+                Abstract.returnDeprecation("__index__", "int", r);
+                return r;
+            } else
+                throw Abstract.returnTypeError("__index__", "int", r);
+        } catch (EmptyException e) {}
+
+        // We're here because op_index was empty. Try op_int.
+        if (Slot.op_int.isDefinedFor(ops)) {
+            Object r = fromIntOf(integral);
+            // ... but grumble about it.
+            // Warnings.format(DeprecationWarning.TYPE, 1,
+            // "an integer is required (got type %.200s). "
+            // + "Implicit conversion to integers "
+            // + "using __int__ is deprecated, and may be "
+            // + "removed in a future version of Python.",
+            // ops.type(integral).name);
+            return r;
+        } else
+            throw Abstract.requiredTypeError("an integer", integral);
+    }
+
+    /**
+     * Convert a sequence of Unicode digits in the string u to a Python
+     * integer value.
+     *
+     * @param u string to convert
+     * @param base in which to interpret it
+     * @return converted value
+     * @throws ValueError if {@code u} is an invalid literal
+     * @throws TypeError if {@code u} is not a Python {@code str}
+     */
+    // Compare CPython longobject.c :: PyLong_FromUnicodeObject
+    static BigInteger fromUnicode(Object u, int base) throws ValueError, TypeError {
+        try {
+            // XXX maybe check 2<=base<=36 even if Number.asLong does?
+            // XXX Should allow for only string types, but for now ...
+            String value = u.toString();
+            // String value = PyUnicode.asString(u);
+            return new BigInteger(value, base);
+        } catch (NumberFormatException e) {
+            throw new ValueError("invalid literal for int() with base %d: %.200s", base, u);
+        }
+    }
+
+    /**
+     * Return a Python {@code int} from a Python {@code int} or
+     * subclass. If the value has exactly Python type {@code int} return
+     * it, otherwise construct a new instance of exactly {@code int}
+     * type.
+     *
+     * @param value to represent
+     * @return the same value as exactly {@code int}
+     * @throws TypeError if not a Python {@code int} or sub-class
+     */
+    static Object from(Object value) throws TypeError {
+        Operations ops = Operations.of(value);
+        if (ops.isIntExact())
+            return value;
+        else if (value instanceof PyLong)
+            return ((PyLong)value).value;
+        else
+            throw Abstract.requiredTypeError("an integer", value);
+    }
+
+
+    // Methods --------------------------------------------------------
+    // Expose to Python when mechanisms are available
+
+    /*
 
     @ExposedGet(name = "real", doc = BuiltinDocs.long_real_doc)
-    public PyObject getReal() {
-        return long___long__();
-    }
+     */
+    public static Object getReal(Object self) { return self; }
+
+    /*
 
     @ExposedGet(name = "imag", doc = BuiltinDocs.long_imag_doc)
-    public PyObject getImag() {
-        return Py.newLong(0);
-    }
+     */
+    public static Object getImag(Object self) { return 0; }
+
+    /*
 
     @ExposedGet(name = "numerator", doc = BuiltinDocs.long_numerator_doc)
-    public PyObject getNumerator() {
-        return long___long__();
-    }
+     */
+    public static Object getNumerator(Object self) { return self; }
+
+    /*
 
     @ExposedGet(name = "denominator", doc = BuiltinDocs.long_denominator_doc)
-    public PyObject getDenominator() {
-        return Py.newLong(1);
-    }
+     */
+    public static Object getDenominator(Object self) { return 1; }
 
-    @Override
-    public String toString() {
-        return long_toString();
-    }
-
-    @ExposedMethod(names = "__repr__", doc = BuiltinDocs.long___repr___doc)
-    final String long_toString() {
-        return getValue().toString() + "L";
-    }
-
-    @Override
-    public int hashCode() {
-        return long___hash__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___hash___doc)
-    final int long___hash__() {
-        return getValue().hashCode();
+     */
+    static int __hash__(Object self) {
+        try {
+            return toBig(self).hashCode();
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @Override
-    public boolean __nonzero__() {
-        return long___nonzero__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___nonzero___doc)
-    public boolean long___nonzero__() {
-        return !getValue().equals(BigInteger.ZERO);
+     */
+    static boolean __bool__(Object self) {
+        try {
+            return toBig(self).signum() != 0;
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    public double doubleValue() {
-        double v = getValue().doubleValue();
-        if (Double.isInfinite(v)) {
-            throw Py.OverflowError("long int too large to convert to float");
-        }
-        return v;
-    }
+    // ----------------------------------------------------------------
 
     private static final double scaledDoubleValue(BigInteger val, int[] exp) {
         double x = 0;
@@ -252,48 +468,30 @@ public class PyLong extends PyObject {
         return signum * x;
     }
 
-    public double scaledDoubleValue(int[] exp) {
-        return scaledDoubleValue(getValue(), exp);
-    }
+    public double scaledDoubleValue(int[] exp) { return scaledDoubleValue(getValue(), exp); }
 
-    public long getLong(long min, long max) {
+    // ----------------------------------------------------------------
+
+    public long getLong(long min, long max) throws OverflowError {
         return getLong(min, max, "long int too large to convert");
     }
 
-    public long getLong(long min, long max, String overflowMsg) {
+    public long getLong(long min, long max, String overflowMsg) throws OverflowError {
         if (getValue().compareTo(MAX_LONG) <= 0 && getValue().compareTo(MIN_LONG) >= 0) {
             long v = getValue().longValue();
             if (v >= min && v <= max) {
                 return v;
             }
         }
-        throw Py.OverflowError(overflowMsg);
+        throw new OverflowError(overflowMsg);
     }
 
-    @Override
-    public long asLong(int index) {
-        return asLong();
-    }
-
-    @Override
-    public int asInt(int index) {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
-                "long int too large to convert to int");
-    }
-
-    @Override
-    public int asInt() {
-        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE,
-                "long int too large to convert to int");
-    }
-
-    @Override
     public long asLong() {
         return getLong(Long.MIN_VALUE, Long.MAX_VALUE, "long too big to convert");
     }
 
-    @Override
     public Object __tojava__(Class<?> c) {
+        // XXX something like this necessary in Jython 3 but what?
         try {
             if (c == Boolean.TYPE || c == Boolean.class) {
                 return Boolean.valueOf(!getValue().equals(BigInteger.ZERO));
@@ -311,227 +509,250 @@ public class PyLong extends PyObject {
                 return Long.valueOf(getLong(Long.MIN_VALUE, Long.MAX_VALUE));
             }
             if (c == Float.TYPE || c == Double.TYPE || c == Float.class || c == Double.class) {
-                return __float__().__tojava__(c);
+                return __float__(this);
             }
             if (c == BigInteger.class || c == Number.class || c == Object.class
                     || c == Serializable.class) {
                 return getValue();
             }
-        } catch (PyException e) {
-            return Py.NoConversion;
+        } catch (OverflowError e) {
+            throw new InternalError(e);
         }
-        return super.__tojava__(c);
+        throw new MissingFeature("default __tojava__ behaviour for %s", c.getSimpleName());
     }
 
-    @Override
-    public int __cmp__(PyObject other) {
-        return long___cmp__(other);
-    }
+    // XXX __coerce__ and __coerce_ex not needed in Jython 3 (reasonably
+    // certain).
 
-    @ExposedMethod(type = MethodType.CMP, doc = BuiltinDocs.long___cmp___doc)
-    final int long___cmp__(PyObject other) {
-        if (!canCoerce(other)) {
-            return -2;
-        }
-        return getValue().compareTo(coerce(other));
-    }
+    /**
+     * Convert an {@code int} or its sub-class to a Java
+     * {@code BigInteger}. Conversion may raise an exception that is
+     * propagated to the caller. If the Java type of the {@code int} is
+     * declared, generally there is a better option than this method. We
+     * only use it for {@code Object} arguments. If the method throws
+     * the special exception {@link NoConversion}, the caller must catch
+     * it, and will normally return {@link Py#NotImplemented}.
+     *
+     * @param v to convert
+     * @return converted to {@code BigInteger}
+     * @throws NoConversion v is not an {@code int}
+     */
+    private static BigInteger toBig(Object v) throws NoConversion {
+        // Check against supported types, most likely first
+        if (v instanceof Integer)
+            return BigInteger.valueOf(((Integer)v).longValue());
+        else if (v instanceof BigInteger)
+            return (BigInteger)v;
+        else if (v instanceof PyLong)
+            return ((PyLong)v).value;
+        else if (v instanceof Boolean)
+            return (Boolean)v ? ONE : ZERO;
 
-    @Override
-    public Object __coerce_ex__(PyObject other) {
-        return long___coerce_ex__(other);
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.long___coerce___doc)
-    final PyObject long___coerce__(PyObject other) {
-        return adaptToCoerceTuple(long___coerce_ex__(other));
+        throw PyObjectUtil.NO_CONVERSION;
     }
 
     /**
-     * Coercion logic for long. Implemented as a final method to avoid invocation of virtual methods
-     * from the exposed coerce.
+     * Reduce a {@code BigInteger} result to {@code Integer} if
+     * possible. This makes it more likely the next operation will be
+     * 32-bit.
+     *
+     * @param r to reduce
+     * @return equal value
      */
-    final Object long___coerce_ex__(PyObject other) {
-        if (other instanceof PyLong) {
-            return other;
-        } else if (other instanceof PyInteger) {
-            return Py.newLong(((PyInteger)other).getValue());
+    static Object toInt(BigInteger r) {
+        /*
+         * Implementation note: r.intValueExact() is for exactly this
+         * purpose, but building the ArithmeticException is a huge cost.
+         * (2900ns is added to a 100ns __add__.) The compiler (as tested in
+         * JDK 11.0.9) doesn't recognise that it can be optimised to a jump.
+         * This version of toInt() adds around 5ns.
+         */
+        if (r.bitLength() < 32)
+            return r.intValue();
+        else
+            return r;
+    }
+
+    /**
+     * Convert a Python {@code object} to a Java {@code int} suitable as
+     * a shift distance. Negative values are a {@link ValueError}, while
+     * positive values too large to convert are clipped to the maximum
+     * Java {@code int} value.
+     *
+     * @param shift to interpret as an {@code int} shift
+     * @return {@code min(v, Integer.MAX_VALUE)}
+     * @throws NoConversion for values not convertible to a Python
+     *     {@code int}
+     * @throws ValueError when the argument is negative
+     */
+    private static final int toShift(Object shift) throws NoConversion, ValueError {
+        BigInteger s = toBig(shift); // implicitly: check its an int
+        if (s.signum() < 0) {
+            throw new ValueError("negative shift count");
+        } else if (s.bitLength() < 32) {
+            return s.intValue();
         } else {
-            return Py.None;
+            return Integer.MAX_VALUE;
         }
     }
 
-    private static final boolean canCoerce(PyObject other) {
-        return other instanceof PyLong || other instanceof PyInteger;
-    }
+    // special methods ------------------------------------------------
 
-    private static final BigInteger coerce(PyObject other) {
-        if (other instanceof PyLong) {
-            return ((PyLong)other).getValue();
-        } else if (other instanceof PyInteger) {
-            return BigInteger.valueOf(((PyInteger)other).getValue());
-        } else {
-            throw Py.TypeError("xxx");
-        }
-    }
-
-    @Override
-    public PyObject __add__(PyObject right) {
-        return long___add__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___add___doc)
-    final PyObject long___add__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __add__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).add(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(getValue().add(coerce(right)));
     }
 
-    @Override
-    public PyObject __radd__(PyObject left) {
-        return long___radd__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___radd___doc)
-    final PyObject long___radd__(PyObject left) {
-        return __add__(left);
+     */
+    static Object __radd__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).add(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
     }
 
-    @Override
-    public PyObject __sub__(PyObject right) {
-        return long___sub__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___sub___doc)
-    final PyObject long___sub__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __sub__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).subtract(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(getValue().subtract(coerce(right)));
     }
 
-    @Override
-    public PyObject __rsub__(PyObject left) {
-        return long___rsub__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rsub___doc)
-    final PyObject long___rsub__(PyObject left) {
-        return Py.newLong(coerce(left).subtract(getValue()));
+     */
+    static Object __rsub__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).subtract(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
     }
 
-    @Override
-    public PyObject __mul__(PyObject right) {
-        return long___mul__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mul___doc)
-    final PyObject long___mul__(PyObject right) {
-        if (right instanceof PySequence) {
-            return ((PySequence)right).repeat(coerceInt(this));
+     */
+    static Object __mul__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).multiply(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-
-        if (!canCoerce(right)) {
-            return null;
-        }
-        return Py.newLong(getValue().multiply(coerce(right)));
     }
 
-    @Override
-    public PyObject __rmul__(PyObject left) {
-        return long___rmul__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmul___doc)
-    final PyObject long___rmul__(PyObject left) {
-        if (left instanceof PySequence) {
-            return ((PySequence)left).repeat(coerceInt(this));
+     */
+    static Object __rmul__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).multiply(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        if (!canCoerce(left)) {
-            return null;
-        }
-        return Py.newLong(coerce(left).multiply(getValue()));
     }
 
-    // Getting signs correct for integer division
-    // This convention makes sense when you consider it in tandem with modulo
-    private BigInteger divide(BigInteger x, BigInteger y) {
-        BigInteger zero = BigInteger.valueOf(0);
-        if (y.equals(zero)) {
-            throw Py.ZeroDivisionError("long division or modulo");
-        }
-
-        if (y.compareTo(zero) < 0) {
-            if (x.compareTo(zero) > 0) {
-                return (x.subtract(y).subtract(BigInteger.valueOf(1))).divide(y);
+    /**
+     * Divide x by y with integer result, following the Python sign
+     * convention. The convention makes sense taken together with that
+     * for remainders (the modulo operation {@code %}). As would be
+     * expected, Python guarantees that {@code x = (x//y)*y + (x%y)}. It
+     * also chooses that the sign of {@code x%y} should be the same as
+     * that of {@code y}. This causes both {@code /} and {@code %} to
+     * differ from their semantics in Java.
+     *
+     * @param x dividend
+     * @param y divisor
+     * @return quotient
+     */
+    private static BigInteger divide(BigInteger x, BigInteger y) {
+        /*
+         * Getting signs correct for integer division is accomplished by
+         * adjusting x in the saces where the signs are opposite. This
+         * convention makes sense when you consider it with modulo.
+         */
+        int ySign = y.signum();
+        if (ySign == 0) {
+            throw new ZeroDivisionError("long division or modulo");
+        } else if (ySign < 0) {
+            if (x.signum() > 0) {
+                x = x.subtract(y).subtract(ONE);
             }
         } else {
-            if (x.compareTo(zero) < 0) {
-                return (x.subtract(y).add(BigInteger.valueOf(1))).divide(y);
+            if (x.signum() < 0) {
+                x = x.subtract(y).add(ONE);
             }
         }
         return x.divide(y);
     }
 
-    @Override
-    public PyObject __div__(PyObject right) {
-        return long___div__(right);
+    static Object __div__(Object self, Object right) {
+        try {
+            // Warnings not supported for now
+            // if (Options.division_warning > 0) {
+            // Py.warning(Py.DeprecationWarning, "classic long division");
+            // }
+            return toInt(divide(toBig(self), toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
     }
 
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___div___doc)
-    final PyObject long___div__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+    static Object __rdiv__(Object self, Object left) {
+        try {
+            // Warnings not supported for now
+            // if (Options.division_warning > 0) {
+            // Py.warning(new DeprecationWarning, "classic long division");
+            // }
+            return toInt(divide(toBig(left), toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        if (Options.division_warning > 0) {
-            Py.warning(Py.DeprecationWarning, "classic long division");
-        }
-        return Py.newLong(divide(getValue(), coerce(right)));
     }
 
-    @Override
-    public PyObject __rdiv__(PyObject left) {
-        return long___rdiv__(left);
-    }
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rdiv___doc)
-    final PyObject long___rdiv__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
-        }
-        if (Options.division_warning > 0) {
-            Py.warning(Py.DeprecationWarning, "classic long division");
-        }
-        return Py.newLong(divide(coerce(left), getValue()));
-    }
-
-    @Override
-    public PyObject __floordiv__(PyObject right) {
-        return long___floordiv__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___floordiv___doc)
-    final PyObject long___floordiv__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __floordiv__(Object self, Object right) {
+        try {
+            return toInt(divide(toBig(self), toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(divide(getValue(), coerce(right)));
     }
 
-    @Override
-    public PyObject __rfloordiv__(PyObject left) {
-        return long___rfloordiv__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rfloordiv___doc)
-    final PyObject long___rfloordiv__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rfloordiv__(Object self, Object left) {
+        try {
+            return toInt(divide(toBig(left), toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(divide(coerce(left), getValue()));
     }
 
-    private static final PyFloat true_divide(BigInteger a, BigInteger b) {
+    private static final double true_divide(BigInteger a, BigInteger b) {
         int[] ae = new int[1];
         int[] be = new int[1];
         double ad, bd;
@@ -540,602 +761,652 @@ public class PyLong extends PyObject {
         bd = scaledDoubleValue(b, be);
 
         if (bd == 0) {
-            throw Py.ZeroDivisionError("long division or modulo");
+            throw new ZeroDivisionError("long division or modulo");
         }
 
         ad /= bd;
         int aexp = ae[0] - be[0];
 
         if (aexp > Integer.MAX_VALUE / 8) {
-            throw Py.OverflowError("long/long too large for a float");
+            throw new OverflowError("long/long too large for a float");
         } else if (aexp < -(Integer.MAX_VALUE / 8)) {
-            return PyFloat.ZERO;
+            return 0.0;
         }
 
         ad = ad * Math.pow(2.0, aexp * 8);
 
         if (Double.isInfinite(ad)) {
-            throw Py.OverflowError("long/long too large for a float");
+            throw new OverflowError("long/long too large for a float");
         }
 
-        return new PyFloat(ad);
+        return ad;
     }
 
-    @Override
-    public PyObject __truediv__(PyObject right) {
-        return long___truediv__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___truediv___doc)
-    final PyObject long___truediv__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __truediv__(Object self, Object right) {
+        try {
+            return true_divide(toBig(self), toBig(right));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return true_divide(this.getValue(), coerce(right));
     }
 
-    @Override
-    public PyObject __rtruediv__(PyObject left) {
-        return long___rtruediv__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rtruediv___doc)
-    final PyObject long___rtruediv__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rtruediv__(Object self, Object left) {
+        try {
+            return true_divide(toBig(left), toBig(self));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return true_divide(coerce(left), this.getValue());
     }
 
-    private BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {
+    private static BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {
         return x.subtract(xdivy.multiply(y));
     }
 
-    @Override
-    public PyObject __mod__(PyObject right) {
-        return long___mod__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mod___doc)
-    final PyObject long___mod__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __mod__(Object self, Object right) {
+        try {
+            BigInteger x = toBig(self);
+            BigInteger y = toBig(right);
+            return toInt(modulo(x, y, divide(x, y)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        BigInteger rightv = coerce(right);
-        return Py.newLong(modulo(getValue(), rightv, divide(getValue(), rightv)));
     }
 
-    @Override
-    public PyObject __rmod__(PyObject left) {
-        return long___rmod__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmod___doc)
-    final PyObject long___rmod__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rmod__(Object self, Object left) {
+        try {
+            BigInteger x = toBig(left);
+            BigInteger y = toBig(self);
+            return toInt(modulo(x, y, divide(x, y)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        BigInteger leftv = coerce(left);
-        return Py.newLong(modulo(leftv, getValue(), divide(leftv, getValue())));
     }
 
-    @Override
-    public PyObject __divmod__(PyObject right) {
-        return long___divmod__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___divmod___doc)
-    final PyObject long___divmod__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __divmod__(Object self, Object right) {
+        try {
+            BigInteger x = toBig(self);
+            BigInteger y = toBig(right);
+            BigInteger q = divide(x, y);
+            return new PyTuple(q, modulo(x, y, q));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        BigInteger rightv = coerce(right);
-
-        BigInteger xdivy = divide(getValue(), rightv);
-        return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(getValue(), rightv, xdivy)));
     }
 
-    @Override
-    public PyObject __rdivmod__(PyObject left) {
-        return long___rdivmod__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rdivmod___doc)
-    final PyObject long___rdivmod__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rdivmod__(Object self, Object left) {
+        try {
+            BigInteger x = toBig(left);
+            BigInteger y = toBig(self);
+            BigInteger q = divide(x, y);
+            return new PyTuple(q, modulo(x, y, q));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        BigInteger leftv = coerce(left);
-
-        BigInteger xdivy = divide(leftv, getValue());
-        return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(leftv, getValue(), xdivy)));
     }
 
-    @Override
-    public PyObject __pow__(PyObject right, PyObject modulo) {
-        return long___pow__(right, modulo);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, defaults = {"null"},
             doc = BuiltinDocs.long___pow___doc)
-    final PyObject long___pow__(PyObject right, PyObject modulo) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __pow__(Object self, Object right, Object modulo) {
+        try {
+            modulo = (modulo == Py.None) ? null : modulo;
+            return _pow(toBig(self), toBig(right), modulo, self, right);
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-
-        modulo = (modulo == Py.None) ? null : modulo;
-        if (modulo != null && !canCoerce(modulo)) {
-            return null;
-        }
-
-        return _pow(getValue(), coerce(right), modulo, this, right);
     }
 
-    @Override
-    public PyObject __rpow__(PyObject left) {
-        return long___rpow__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rpow___doc)
-    final PyObject long___rpow__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rpow__(Object self, Object left) {
+        try {
+            return _pow(toBig(left), toBig(self), null, left, self);
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-
-        return _pow(coerce(left), getValue(), null, left, this);
     }
 
-    public static PyObject _pow(BigInteger value, BigInteger y, PyObject modulo, PyObject left,
-            PyObject right) {
-        if (y.compareTo(BigInteger.ZERO) < 0) {
-            if (value.compareTo(BigInteger.ZERO) != 0) {
-                return left.__float__().__pow__(right, modulo);
+    private static Object _pow(BigInteger x, BigInteger y, Object modulo, Object left, Object right)
+            throws NoConversion {
+
+        // For negative exponent, resort to float calculation
+        // XXX This is the only reason we pass left, right. Lift to caller.
+        if (y.signum() < 0) {
+            if (x.signum() != 0) {
+                // return PyFloat.__pow__(__float__(left), right, modulo);
+                throw new MissingFeature("float.__pow__");
             } else {
-                throw Py.ZeroDivisionError("zero to a negative power");
+                throw new ZeroDivisionError("zero to a negative power");
             }
         }
-        if (modulo == null) {
-            return Py.newLong(value.pow(y.intValue()));
+
+        if (modulo == null || modulo == Py.None) {
+            return toInt(x.pow(y.intValue()));
+
         } else {
+            /*
+             * XXX The original contains comments about alleged bugs in Sun Java
+             * 1.1. These must be very old. The bugs may have been fixed and the
+             * work-around removed. Or is may not have been a bug since Java
+             * definitions of % differs from Python's.
+             */
             // This whole thing can be trivially rewritten after bugs
             // in modPow are fixed by SUN
-
-            BigInteger z = coerce(modulo);
-            // Clear up some special cases right away
-            if (z.equals(BigInteger.ZERO)) {
-                throw Py.ValueError("pow(x, y, z) with z == 0");
-            }
-            if (z.abs().equals(BigInteger.ONE)) {
-                return Py.newLong(0);
-            }
-
-            if (z.compareTo(BigInteger.valueOf(0)) <= 0) {
+            BigInteger z = toBig(modulo);
+            // Identify some special cases for quick treatment
+            if (z.signum() == 0) {
+                throw new ValueError("pow(x, y, z) with z == 0");
+            } else if (z.abs().equals(ONE)) {
+                return 0;
+            } else if (z.signum() < 0) {
                 // Handle negative modulo specially
-                // if (z.compareTo(BigInteger.valueOf(0)) == 0) {
-                // throw Py.ValueError("pow(x, y, z) with z == 0");
-                // }
-                y = value.modPow(y, z.negate());
-                if (y.compareTo(BigInteger.valueOf(0)) > 0) {
-                    return Py.newLong(z.add(y));
+                y = x.modPow(y, z.negate());
+                if (y.signum() > 0) {
+                    return toInt(z.add(y));
                 } else {
-                    return Py.newLong(y);
+                    return toInt(y);
                 }
                 // return __pow__(right).__mod__(modulo);
             } else {
                 // XXX: 1.1 no longer supported so review this.
                 // This is buggy in SUN's jdk1.1.5
                 // Extra __mod__ improves things slightly
-                return Py.newLong(value.modPow(y, z));
+                return toInt(x.modPow(y, z));
                 // return __pow__(right).__mod__(modulo);
             }
         }
     }
 
-    private static final int coerceInt(PyObject other) {
-        if (other instanceof PyLong) {
-            return ((PyLong)other).asInt();
-        } else if (other instanceof PyInteger) {
-            return ((PyInteger)other).getValue();
-        } else {
-            throw Py.TypeError("xxx");
-        }
-    }
-
-    @Override
-    public PyObject __lshift__(PyObject right) {
-        return long___lshift__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___lshift___doc)
-    final PyObject long___lshift__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __lshift__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).shiftLeft(toShift(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        int rightv = coerceInt(right);
-        if (rightv < 0) {
-            throw Py.ValueError("negative shift count");
-        }
-        return Py.newLong(getValue().shiftLeft(rightv));
     }
+
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rlshift___doc)
-    final PyObject long___rlshift__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rlshift__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).shiftLeft(toShift(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        if (getValue().intValue() < 0) {
-            throw Py.ValueError("negative shift count");
-        }
-        return Py.newLong(coerce(left).shiftLeft(coerceInt(this)));
     }
 
-    @Override
-    public PyObject __rshift__(PyObject right) {
-        return long___rshift__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rshift___doc)
-    final PyObject long___rshift__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __rshift__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).shiftRight(toShift(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        int rightv = coerceInt(right);
-        if (rightv < 0) {
-            throw Py.ValueError("negative shift count");
-        }
-        return Py.newLong(getValue().shiftRight(rightv));
     }
+
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rrshift___doc)
-    final PyObject long___rrshift__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rrshift__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).shiftRight(toShift(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        if (getValue().intValue() < 0) {
-            throw Py.ValueError("negative shift count");
-        }
-        return Py.newLong(coerce(left).shiftRight(coerceInt(this)));
     }
 
-    @Override
-    public PyObject __and__(PyObject right) {
-        return long___and__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___and___doc)
-    final PyObject long___and__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __and__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).and(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(getValue().and(coerce(right)));
     }
 
-    @Override
-    public PyObject __rand__(PyObject left) {
-        return long___rand__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rand___doc)
-    final PyObject long___rand__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rand__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).and(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(coerce(left).and(getValue()));
     }
 
-    @Override
-    public PyObject __xor__(PyObject right) {
-        return long___xor__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___xor___doc)
-    final PyObject long___xor__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __xor__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).xor(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(getValue().xor(coerce(right)));
     }
 
-    @Override
-    public PyObject __rxor__(PyObject left) {
-        return long___rxor__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rxor___doc)
-    final PyObject long___rxor__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __rxor__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).xor(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(coerce(left).xor(getValue()));
     }
 
-    @Override
-    public PyObject __or__(PyObject right) {
-        return long___or__(right);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___or___doc)
-    final PyObject long___or__(PyObject right) {
-        if (!canCoerce(right)) {
-            return null;
+     */
+    static Object __or__(Object self, Object right) {
+        try {
+            return toInt(toBig(self).or(toBig(right)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(getValue().or(coerce(right)));
     }
 
-    @Override
-    public PyObject __ror__(PyObject left) {
-        return long___ror__(left);
-    }
+    /*
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___ror___doc)
-    final PyObject long___ror__(PyObject left) {
-        if (!canCoerce(left)) {
-            return null;
+     */
+    static Object __ror__(Object self, Object left) {
+        try {
+            return toInt(toBig(left).or(toBig(self)));
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
         }
-        return Py.newLong(coerce(left).or(getValue()));
     }
 
-    @Override
-    public PyObject __neg__() {
-        return long___neg__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___neg___doc)
-    final PyObject long___neg__() {
-        return Py.newLong(getValue().negate());
+     */
+    static Object __neg__(Object self) {
+        try {
+            return toInt(toBig(self).negate());
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @Override
-    public PyObject __pos__() {
-        return long___pos__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___pos___doc)
-    final PyObject long___pos__() {
-        return long___long__();
-    }
+     */
+    static Object __pos__(Object self) { return __int__(self); }
 
-    @Override
-    public PyObject __abs__() {
-        return long___abs__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___abs___doc)
-    final PyObject long___abs__() {
-        if (getValue().signum() == -1) {
-            return long___neg__();
+     */
+    static Object __abs__(Object self) {
+        try {
+            return toInt(toBig(self).abs());
+        } catch (NoConversion e) {
+            throw impossible(self);
         }
-        return long___long__();
     }
 
-    @Override
-    public PyObject __invert__() {
-        return long___invert__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___invert___doc)
-    final PyObject long___invert__() {
-        return Py.newLong(getValue().not());
+     */
+    static Object __invert__(Object self) {
+        try {
+            return toInt(toBig(self).not());
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @Override
-    public PyObject __int__() {
-        return long___int__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___int___doc)
-    final PyObject long___int__() {
-        if (getValue().compareTo(PyInteger.MAX_INT) <= 0
-                && getValue().compareTo(PyInteger.MIN_INT) >= 0) {
-            return Py.newInteger(getValue().intValue());
+     */
+    static Object __int__(Object self) {
+        try {
+            // Guarantee type is exactly int
+            return PyType.of(self) == TYPE ? self : toBig(self);
+        } catch (NoConversion e) {
+            throw impossible(self);
         }
-        return long___long__();
     }
 
-    @Override
-    public PyObject __long__() {
-        return long___long__();
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.long___long___doc)
-    final PyObject long___long__() {
-        return getType() == TYPE ? this : Py.newLong(getValue());
-    }
-
-    @Override
-    public PyFloat __float__() {
-        return long___float__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___float___doc)
-    final PyFloat long___float__() {
-        return new PyFloat(doubleValue());
+     */
+    static double __float__(Object self) {
+        try {
+            return convertToDouble(self);
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @Override
-    public PyComplex __complex__() {
-        return long___complex__();
-    }
-
-    final PyComplex long___complex__() {
-        return new PyComplex(doubleValue(), 0.);
-    }
-
-    @Override
-    public PyObject __trunc__() {
-        return long___trunc__();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long___trunc___doc)
-    final PyObject long___trunc__() {
-        return this;
-    }
+     */
+    static Object __trunc__(Object self) { return __int__(self); }
 
-    @Override
-    public PyObject conjugate() {
-        return long_conjugate();
-    }
+    /*
 
     @ExposedMethod(doc = BuiltinDocs.long_conjugate_doc)
-    final PyObject long_conjugate() {
-        return this;
+     */
+    static Object conjugate(Object self) { return self; }
+
+    static PyComplex __complex__(Object self) {
+        try {
+            return new PyComplex(convertToDouble(self), 0.);
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @Override
-    public PyString __oct__() {
-        return long___oct__();
+    /*
+
+    @ExposedMethod(doc = BuiltinDocs.long___str___doc)
+     */
+    static Object __str__(Object self) {
+        try {
+            return toBig(self).toString();
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @ExposedMethod(doc = BuiltinDocs.long___oct___doc)
-    final PyString long___oct__() {
-        // Use the prepared format specifier for octal.
-        return formatImpl(IntegerFormatter.OCT);
+    static Object __repr__(Object self) {
+        assert TYPE.check(self);
+        return asBigInteger(self).toString();
     }
 
-    @Override
-    public PyString __hex__() {
-        return long___hex__();
+    /*
+
+    @ExposedMethod(doc = BuiltinDocs.long___getnewargs___doc)
+     */
+    static PyTuple __getnewargs__(Object self) {
+        try {
+            return new PyTuple(toBig(self));
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
     }
 
-    @ExposedMethod(doc = BuiltinDocs.long___hex___doc)
-    final PyString long___hex__() {
-        // Use the prepared format specifier for hexadecimal.
-        return formatImpl(IntegerFormatter.HEX);
+    /*
+
+    @ExposedMethod(doc = BuiltinDocs.long___index___doc)
+     */
+    static Object __index__(Object self) { return __int__(self); }
+
+    /*
+
+    @ExposedMethod(doc = BuiltinDocs.long_bit_length_doc)
+     */
+    static int bit_length(Object self) {
+        try {
+            BigInteger v = toBig(self);
+            if (v.signum() == -1) {
+                v = v.negate();
+            }
+            return v.bitLength();
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
+
+    }
+
+    /*
+
+    @ExposedMethod(doc = BuiltinDocs.long___format___doc)
+     */
+    static Object __format__(Object self, Object formatSpec) {
+        try {
+            // Parse the specification, which must at least sub-class str in
+            // Python
+            if (!PyUnicode.TYPE.check(formatSpec)) {
+                throw Abstract.argumentTypeError("__format__", 0, "str", formatSpec);
+            }
+
+            BigInteger value = toBig(self);
+            Spec spec = InternalFormat.fromText(formatSpec.toString());
+            InternalFormat.Formatter f;
+
+            // Try to make an integer formatter from the specification
+            IntegerFormatter fi = IntegerFormatter.prepareFormatter(spec);
+            if (fi != null) {
+                // Bytes mode if formatSpec argument is not unicode.
+                fi.setBytes(!(formatSpec instanceof PyUnicode));
+                // Convert as per specification.
+                fi.format(value);
+                f = fi;
+
+            } else {
+                // Try to make a float formatter from the specification
+                FloatFormatter ff = FloatFormatter.prepareFormatter(spec);
+                if (ff != null) {
+                    // Bytes mode if formatSpec argument is not str.
+                    ff.setBytes(!(formatSpec instanceof PyUnicode));
+                    // Convert as per specification.
+                    ff.format(value.doubleValue());
+                    f = ff;
+
+                } else {
+                    // The type code was not recognised in either prepareFormatter
+                    throw Formatter.unknownFormat(spec.type, "integer");
+                }
+            }
+
+            /*
+             * Return a result that has the same type (str or unicode) as the
+             * formatSpec argument.
+             */
+            return f.pad().getResult();
+
+        } catch (FormatOverflow fe) {
+            throw new OverflowError(fe.getMessage());
+        } catch (FormatError fe) {
+            throw new ValueError(fe.getMessage());
+        } catch (NoConversion e) {
+            throw impossible(self);
+        }
+    }
+
+    // Python sub-class -----------------------------------------------
+
+    /**
+     * Instances in Python of sub-classes of 'int', are represented in
+     * Java by instances of this class.
+     */
+    static class Derived extends PyLong implements DictPyObject {
+
+        protected Derived(PyType subType, BigInteger value) { super(subType, value); }
+
+        // /** The instance dictionary {@code __dict__}. */
+        // protected PyDict dict = new PyDict();
+
+        @Override
+        public Map<Object, Object> getDict() { return null; }
+    }
+
+    // plumbing -------------------------------------------------------
+
+    // Convert from int (core use) ------------------------------------
+
+    /*
+     * These methods are for use internal to the core, in the
+     * implementation of special functions: they may throw NoConversion
+     * of failure, which must be caught by those implementations. They
+     * convert a Python int, or a specific Java implementation of int,
+     * to a specific Java type.
+     */
+
+    /**
+     * Convert an {@code int} to a Java {@code double} (or throw
+     * {@link NoConversion}), using the round-half-to-even rule.
+     * Conversion to a {@code double} may overflow, raising an exception
+     * that is propagated to the caller.
+     * <p>
+     * If the method throws the special exception {@link NoConversion},
+     * the caller must deal with it by throwing an appropriate Python
+     * exception or taking an alternative course of action. Binary
+     * operations will normally return {@link Py#NotImplemented} in
+     * response.
+     *
+     * @param v to convert
+     * @return converted to {@code double}
+     * @throws NoConversion v is not an {@code int}
+     * @throws OverflowError v is too large to be a {@code float}
+     */
+    // Compare CPython longobject.c: PyLong_AsDouble
+    static double convertToDouble(Object v) throws NoConversion, OverflowError {
+        // Check against supported types, most likely first
+        if (v instanceof Integer)
+            // No loss of precision
+            return ((Integer)v).doubleValue();
+        else if (v instanceof BigInteger)
+            // Round half-to-even
+            return convertToDouble((BigInteger)v);
+        else if (v instanceof PyLong)
+            // Round half-to-even
+            return convertToDouble(((PyLong)v).value);
+        else if (v instanceof Boolean)
+            return (Boolean)v ? 1.0 : 0.0;
+        throw PyObjectUtil.NO_CONVERSION;
     }
 
     /**
-     * Common code used by the number-base conversion method __oct__ and __hex__.
+     * Convert a {@code BigInteger} to a Java double , using the
+     * round-half-to-even rule. Conversion to a double may overflow,
+     * raising an exception that is propagated to the caller.
      *
-     * @param spec prepared format-specifier.
-     * @return converted value of this object
+     * @param v to convert
+     * @return converted to {@code double}
+     * @throws OverflowError if too large to be a {@code float}
      */
-    private PyString formatImpl(Spec spec) {
-        // Traditional formatter (%-format) because #o means "-0123" not "-0o123".
-        IntegerFormatter f = new IntegerFormatter.Traditional(spec);
-        f.format(value).append('L');
-        return new PyString(f.getResult());
+    static double convertToDouble(BigInteger v) throws OverflowError {
+        /*
+         * According to the code, BigInteger.doubleValue() rounds
+         * half-to-even as required. This differs from conversion from long
+         * which rounds to nearest (JLS 3.0 5.1.2).
+         */
+        double vv = v.doubleValue();
+        // On overflow, doubleValue returns ±∞ rather than throwing.
+        if (Double.isInfinite(vv))
+            throw tooLarge("Python int", "float");
+        else
+            return vv;
     }
 
-    @ExposedMethod(doc = BuiltinDocs.long___str___doc)
-    public PyString long___str__() {
-        return Py.newString(getValue().toString());
+    /**
+     * Convert a Python {@code int} to a Java {@code int} (or throw
+     * {@link NoConversion}). Conversion to an {@code int} may overflow,
+     * raising an exception that is propagated to the caller.
+     * <p>
+     * If the method throws the special exception {@link NoConversion},
+     * the caller must deal with it by throwing an appropriate Python
+     * exception or taking an alternative course of action.
+     *
+     * @param v to convert
+     * @return converted to {@code int}
+     * @throws NoConversion v is not an {@code int}
+     * @throws OverflowError v is too large to be a Java {@code int}
+     */
+    // Compare CPython longobject.c: PyLong_AsSsize_t
+    static int convertToInt(Object v) throws NoConversion, OverflowError {
+        // Check against supported types, most likely first
+        if (v instanceof Integer)
+            return ((Integer)v).intValue();
+        else if (v instanceof BigInteger)
+            return convertToInt((BigInteger)v);
+        else if (v instanceof PyLong)
+            return convertToInt(((PyLong)v).value);
+        else if (v instanceof Boolean)
+            return (Boolean)v ? 1 : 0;
+        throw PyObjectUtil.NO_CONVERSION;
     }
 
-    @Override
-    public PyString __str__() {
-        return long___str__();
+    /**
+     * Convert a {@code BigInteger} to a Java {@code int}. Conversion to
+     * an {@code int} may overflow, raising an exception that is
+     * propagated to the caller.
+     *
+     * @param v to convert
+     * @return converted to {@code int}
+     * @throws OverflowError if too large to be a Java {@code int}
+     */
+    static int convertToInt(BigInteger v) throws OverflowError {
+        if (v.bitLength() < 32)
+            return v.intValue();
+        else
+            throw tooLarge("Python int", "int");
     }
 
-    @Override
-    public PyUnicode __unicode__() {
-        return new PyUnicode(getValue().toString());
+    /**
+     * Create an OverflowError with a message along the lines "X too
+     * large to convert to Y", where X is {@code from} and Y is
+     * {@code to}.
+     *
+     * @param from description of type to convert from
+     * @param to description of type to convert to
+     * @return an {@link OverflowError} with that message
+     */
+    private static OverflowError tooLarge(String from, String to) {
+        String msg = String.format(TOO_LARGE, from, to);
+        return new OverflowError(msg);
     }
 
-    @ExposedMethod(doc = BuiltinDocs.long___getnewargs___doc)
-    final PyTuple long___getnewargs__() {
-        return new PyTuple(new PyLong(this.getValue()));
-    }
+    private static final String TOO_LARGE = "%s too large to convert to %s";
 
-    @Override
-    public PyTuple __getnewargs__() {
-        return long___getnewargs__();
-    }
-
-    @Override
-    public PyObject __index__() {
-        return long___index__();
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.long___index___doc)
-    final PyObject long___index__() {
-        return this;
-    }
-
-    @Override
-    public int bit_length() {
-        return long_bit_length();
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.long_bit_length_doc)
-    final int long_bit_length() {
-        BigInteger v = value;
-        if (v.compareTo(BigInteger.ZERO) == -1) {
-            v = v.negate();
-        }
-        return v.bitLength();
-    }
-
-    @Override
-    public PyObject __format__(PyObject formatSpec) {
-        return long___format__(formatSpec);
-    }
-
-    @ExposedMethod(doc = BuiltinDocs.long___format___doc)
-    final PyObject long___format__(PyObject formatSpec) {
-
-        // Parse the specification
-        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
-        InternalFormat.Formatter f;
-
-        // Try to make an integer formatter from the specification
-        IntegerFormatter fi = PyInteger.prepareFormatter(spec);
-        if (fi != null) {
-            // Bytes mode if formatSpec argument is not unicode.
-            fi.setBytes(!(formatSpec instanceof PyUnicode));
-            // Convert as per specification.
-            fi.format(value);
-            f = fi;
-
-        } else {
-            // Try to make a float formatter from the specification
-            FloatFormatter ff = PyFloat.prepareFormatter(spec);
-            if (ff != null) {
-                // Bytes mode if formatSpec argument is not unicode.
-                ff.setBytes(!(formatSpec instanceof PyUnicode));
-                // Convert as per specification.
-                ff.format(value.doubleValue());
-                f = ff;
-
-            } else {
-                // The type code was not recognised in either prepareFormatter
-                throw Formatter.unknownFormat(spec.type, "integer");
-            }
-        }
-
-        // Return a result that has the same type (str or unicode) as the formatSpec argument.
-        return f.pad().getPyResult();
-    }
-
-    @Override
-    public boolean isIndex() {
-        return true;
-    }
-
-    @Override
-    public int asIndex(PyObject err) {
-        boolean tooLow = getValue().compareTo(PyInteger.MIN_INT) < 0;
-        boolean tooHigh = getValue().compareTo(PyInteger.MAX_INT) > 0;
-        if (tooLow || tooHigh) {
-            if (err != null) {
-                throw new PyException(err, "cannot fit 'long' into an index-sized integer");
-            }
-            return tooLow ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        }
-        return (int)getValue().longValue();
-    }
-
-    @Override
-    public boolean isMappingType() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumberType() {
-        return true;
-    }
-
-    @Override
-    public boolean isSequenceType() {
-        return false;
+    private static InterpreterError impossible(Object self) {
+        return Abstract.impossibleArgumentError("int", self);
     }
 }

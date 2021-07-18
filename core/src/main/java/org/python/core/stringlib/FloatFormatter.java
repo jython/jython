@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
+import org.python.core.stringlib.InternalFormat.FormatError;
+import org.python.core.stringlib.InternalFormat.FormatOverflow;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
@@ -81,6 +83,53 @@ public class FloatFormatter extends InternalFormat.Formatter {
     }
 
     /**
+     * Prepare a {@link FloatFormatter} from a parsed specification. The object
+     * returned has format method {@link FloatFormatter#format(double)}.
+     *
+     * @param spec a parsed PEP-3101 format specification.
+     * @return a formatter ready to use, or null if the type is not a floating point
+     *     format type.
+     * @throws FormatOverflow if a value is out of range (including the precision)
+     * @throws FormatError if an unsupported format character is encountered
+     */
+    @SuppressWarnings("fallthrough")
+    public static FloatFormatter prepareFormatter(Spec spec)
+            throws FormatOverflow, FormatError {
+
+        // Slight differences between format types
+        switch (spec.type) {
+
+        case 'n':
+            if (spec.grouping) {
+                throw notAllowed("Grouping", "float", spec.type);
+            }
+            // Fall through
+
+        case Spec.NONE:
+        case 'e':
+        case 'f':
+        case 'g':
+        case 'E':
+        case 'F':
+        case 'G':
+        case '%':
+            // Check for disallowed parts of the specification
+            if (spec.alternate) {
+                throw alternateFormNotAllowed("float");
+            }
+            /*
+             * spec may be incomplete. The defaults are those commonly used for numeric
+             * formats.
+             */
+            spec = spec.withDefaults(Spec.NUMERIC);
+            return new FloatFormatter(spec);
+
+        default:
+            return null;
+        }
+    }
+
+    /**
      * Override the default truncation behaviour for the specification originally supplied. Some
      * formats remove trailing zero digits, trimming to zero or one. Set member
      * <code>minFracDigits</code>, to modify this behaviour.
@@ -133,8 +182,10 @@ public class FloatFormatter extends InternalFormat.Formatter {
      *
      * @param value to convert
      * @return this object
+     * @throws FormatOverflow if the precision is too large
+     * @throws FormatError if an unsupported format character is encountered
      */
-    public FloatFormatter format(double value) {
+    public FloatFormatter format(double value) throws FormatOverflow, FormatError {
         return format(value, null);
     }
 
@@ -148,9 +199,12 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * @param value to convert
      * @param positivePrefix to use before positive values (e.g. "+") or null to default to ""
      * @return this object
+     * @throws FormatOverflow if the precision is too large
+     * @throws FormatError if an unsupported format character is encountered
      */
-    @SuppressWarnings("fallthrough")
-    public FloatFormatter format(double value, String positivePrefix) {
+    //@SuppressWarnings("fallthrough")
+    public FloatFormatter format(double value, String positivePrefix)
+            throws FormatOverflow, FormatError {
 
         // Puts all instance variables back to their starting defaults, and start = result.length().
         setStart();

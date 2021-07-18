@@ -306,6 +306,15 @@ abstract class Operations {
     abstract Class<?> getJavaClass();
 
     /**
+     * Fast check that the target is exactly a Python {@code int}. We
+     * can do this without reference to the object itself, since it is
+     * deducible from the Java class.
+     *
+     * @return target is exactly a Python {@code int}
+     */
+    boolean isIntExact() { return this == PyLong.TYPE; }
+
+    /**
      * Fast check that the target is a data descriptor.
      *
      * @return target is a data descriptor

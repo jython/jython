@@ -1,7 +1,6 @@
 // Copyright (c) Jython Developers
 package org.python.core.stringlib;
 
-import org.python.core.stringlib.InternalFormat.Formatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
