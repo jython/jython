@@ -1,51 +1,48 @@
+# Build and run tests under Travis CI
+
 # https://docs.travis-ci.com/user/languages/java/
 # https://docs.travis-ci.com/user/reference/osx/
-# https://docs.travis-ci.com/user/reference/windows/
+
+# Defaults so need not specify in linux jobs
+os: linux
+dist: focal  # has Python 3.8 as default "python" command
 
 language: java
 
-addons:
-  apt:  # only active on Linux
-    packages:
-      - ant
-
-  hostname: jyshort
-
-  
 jobs:
   include:
+    ## These worked (without the pyenv bits). Let's just focus on OSX.
     - name: "openjdk11 on Linux"
-      os: linux
       jdk: openjdk11
-
-    - name: "openjdk14 on Linux"
-      os: linux
-      jdk: openjdk14
+ 
+    - name: "openjdk15 on Linux"
+      jdk: openjdk15
 
     - name: "openjdk11 on macOS"
       os: osx
-      osx_image: xcode11.6  # Supports homebrew bundle without update
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/
-      # https://github.com/AdoptOpenJDK/homebrew-openjdk
-      addons:
-        homebrew:
-          taps:
-            - AdoptOpenJDK/openjdk  # for Java
-          casks:
-            - adoptopenjdk11
+      osx_image: xcode12.4 # supports jdk key up to 15
+      jdk: openjdk11
+
       before_install:
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v11)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
+        # Ensure pyenv is in charge of Python versions
+        - pyenv root
+        - export PATH=$(pyenv root)/shims:$PATH
+        # Limited by this list, we pick the latest 3.8 to install
+        - pyenv install --list
+        - pyenv install 3.8.7
+        # Make python command mean that version (used in gradle build)
+        - pyenv global 3.8.7
+
 
 # No installation, but check versions here
 install:
   # Confirm versions and paths (this has been a problem)
   - echo $PATH
   - java -version
+  - which python
+  - python -V
   - ./gradlew --version
+
 
 # Cache artefacts downloaded by Gradle
 # https://guides.gradle.org/executing-gradle-builds-on-travisci/#enable_caching_of_downloaded_artifacts
@@ -59,6 +56,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 
-# Run the build and post results via a build scan
+
+# Run the build and tests
 script:
   - ./gradlew check
