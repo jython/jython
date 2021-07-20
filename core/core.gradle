@@ -25,6 +25,15 @@ test {
 }
 
 
+// Report the version of Python available
+
+task pythonVersion(type: Exec) {
+    executable 'python'
+    args '-V'
+}
+compileJava.dependsOn(pythonVersion)
+
+
 // Some adjustments to Javadoc to ensure complex tables readable
 
 tasks.withType(Javadoc) {
