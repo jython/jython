@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.invoke.MethodHandles;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,13 +19,15 @@ import org.python.core.Operations.Clash;
 import org.python.core.PyType.Spec;
 
 /**
- * An {@link Operations} object contains information about a Java class
- * considered as a Python object. There are several patterns to explore.
+ * An {@link Operations} object contains information about a Java
+ * class considered as a Python object. There are several patterns
+ * to explore.
  * <p>
- * These tests can't work unless parts of {@link PyType} formation also work, so
- * there is a bit of overlap. In fact many of the {@code Operations} objects
- * involved are {@code PyType}s. We do not test that the {@code PyType}s
- * encountered are fully-working as a Python {@code type}.
+ * These tests can't work unless parts of {@link PyType} formation
+ * also work, so there is a bit of overlap. In fact many of the
+ * {@code Operations} objects involved are {@code PyType}s. We do
+ * not test that the {@code PyType}s encountered are fully-working
+ * as a Python {@code type}.
  */
 @DisplayName("The Operations object of")
 class OperationsFormationTest {
@@ -107,9 +110,9 @@ class OperationsFormationTest {
     static class J {}
 
     /**
-     * A Java class simulating one generated when we extend a found Java class
-     * {@link J} in Python. There is no {@link PyType} corresponding directly to
-     * this class (unless "found").
+     * A Java class simulating one generated when we extend a found Java
+     * class {@link J} in Python. There is no {@link PyType}
+     * corresponding directly to this class (unless "found").
      */
     static class JDerived extends J implements DerivedPyObject, DictPyObject {
 
@@ -130,8 +133,9 @@ class OperationsFormationTest {
     }
 
     /**
-     * Certain nested test classes implement these as standard. A base class here is
-     * just a way to describe the tests once that reappear in each nested case.
+     * Certain nested test classes implement these as standard. A base
+     * class here is just a way to describe the tests once that reappear
+     * in each nested case.
      */
     abstract static class Base {
 
@@ -147,8 +151,8 @@ class OperationsFormationTest {
         }
 
         /**
-         * The {@link Operations} object finds the expected {@link PyType}, given the
-         * target class definition.
+         * The {@link Operations} object finds the expected {@link PyType},
+         * given the target class definition.
          *
          * @throws Throwable unexpectedly
          */
@@ -190,8 +194,8 @@ class OperationsFormationTest {
         @Test
         void finds_expected_type() {
             /*
-             * The Operations object of the canonical implementation is the type itself.
-             * (Python must touch C before C2.)
+             * The Operations object of the canonical implementation is the type
+             * itself. (Python must touch C before C2.)
              */
             assertSame(C.TYPE, ops);
             C c = new C();
@@ -215,25 +219,28 @@ class OperationsFormationTest {
         }
 
         /**
-         * This is an un-feature. The test is like {@link #finds_expected_type()} but
-         * the adopted class gets handled as a Python object before its adopting class
-         * can create its {@link PyType}. This causes an unintended binding that
-         * prevents {@link BadC} initialising correctly.The problem seems unavoidable,
-         * and the requirement is to detect it.
+         * This is an un-feature. The test is like
+         * {@link #finds_expected_type()} but the adopted class gets handled
+         * as a Python object before its adopting class can create its
+         * {@link PyType}. This causes an unintended binding that prevents
+         * {@link BadC} initialising correctly.The problem seems
+         * unavoidable, and the requirement is to detect it.
          */
         @Test
         void is_sensitive_to_order_of_use() {
             /*
-             * An instance of the adopted implementation has the fails to have the adopting
-             * type if it treated as a Python object before that type.
+             * An instance of the adopted implementation has the fails to have
+             * the adopting type if it treated as a Python object before that
+             * type.
              */
             BadC2 c2 = new BadC2(); // ok
             Operations ops2 = Operations.of(c2);
             // That created a PyType but not for BadC
             assertNotSame(BadC.class, ops2.type(c2).definingClass);
             /*
-             * The Operations object of the canonical implementation is the type itself.
-             * BadC will try to adopt BadC2 and this is detected as a clash.
+             * The Operations object of the canonical implementation is the type
+             * itself. BadC will try to adopt BadC2 and this is detected as a
+             * clash.
              */
             try {
                 Operations.fromClass(BadC.class);
@@ -260,12 +267,13 @@ class OperationsFormationTest {
         }
 
         /**
-         * Simulating a Python sub-class of a built-in Python type something like: <pre>
+         * Simulating a Python sub-class of a built-in Python type something
+         * like: <pre>
          * class MyA(A):
          *     pass
-         * </pre> {@code MyA} must be a Java sub-class of {@code A} in order that
-         * methods defined in {@code A} in Java be applicable to instances of
-         * {@code MyA}.
+         * </pre> {@code MyA} must be a Java sub-class of {@code A} in order
+         * that methods defined in {@code A} in Java be applicable to
+         * instances of {@code MyA}.
          */
         @Override
         @Test
@@ -299,8 +307,9 @@ class OperationsFormationTest {
         @Test
         void finds_expected_type() {
             /*
-             * The Operations object is the type itself. Even if J has initialised,
-             * Operations.Registry.computeValue will not find it in opsMap.
+             * The Operations object is the type itself. Even if J has
+             * initialised, Operations.Registry.computeValue will not find it in
+             * opsMap.
              */
             PyType type = ops.uniqueType();
             assertSame(type, ops);
@@ -342,6 +351,72 @@ class OperationsFormationTest {
 
             // However, the type of an instance is MyA
             assertSame(typeMyJ, ops.type(obj));
+        }
+    }
+
+    @Nested
+    @DisplayName("the adopted Integer class")
+    class IntegerTest extends Base {
+        // Python must get PyType ready before touching any objects.
+        PyType OBJECT = PyType.OBJECT_TYPE;
+
+        @BeforeEach
+        void setup() throws Throwable { setup(Integer.class, "Integer as <class 'int'>"); }
+
+        @Override
+        @Test
+        void finds_expected_type() {
+            /*
+             * The Operations object of non-canonical implementation differs
+             * from the type itself, but that type is found for instances.
+             */
+            assertNotSame(PyLong.TYPE, ops);
+            assertSame(PyLong.TYPE, ops.type(42));
+            assertSame(PyLong.TYPE, ops.type(Integer.MIN_VALUE));
+        }
+    }
+
+    @Nested
+    @DisplayName("the adopted BigInteger class")
+    class BigIntegerTest extends Base {
+        // Python must get PyType ready before touching any objects.
+        PyType OBJECT = PyType.OBJECT_TYPE;
+
+        @BeforeEach
+        void setup() throws Throwable { setup(BigInteger.class, "BigInteger as <class 'int'>"); }
+
+        @Override
+        @Test
+        void finds_expected_type() {
+            /*
+             * The Operations object of non-canonical implementation differs
+             * from the type itself, but that type is found for instances.
+             */
+            assertNotSame(PyLong.TYPE, ops);
+            assertSame(PyLong.TYPE, ops.type(BigInteger.valueOf(42L)));
+            assertSame(PyLong.TYPE, ops.type(BigInteger.TEN));
+        }
+    }
+
+    @Nested
+    @DisplayName("the adopted Boolean class")
+    class BooleanTest extends Base {
+        // Python must get PyType ready before touching any objects.
+        PyType OBJECT = PyType.OBJECT_TYPE;
+
+        @BeforeEach
+        void setup() throws Throwable { setup(Boolean.class, "<class 'bool'>"); }
+
+        @Override
+        @Test
+        void finds_expected_type() {
+            /*
+             * The Operations object of the canonical implementation is the type
+             * itself.
+             */
+            assertSame(PyBool.TYPE, ops);
+            assertSame(PyBool.TYPE, ops.type(true));
+            assertSame(PyBool.TYPE, ops.type(Boolean.FALSE));
         }
     }
 }
