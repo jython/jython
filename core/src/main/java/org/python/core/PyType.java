@@ -60,10 +60,10 @@ public class PyType extends Operations implements DictPyObject {
                 // PyMethodDescr.class, //
                 // And sometimes things go wrong :(
                 BaseException.class, //
-                // Types with multiple implementations
+                // Types with multiple/adopted implementations
                 // PyUnicode.class, //
-                // PyLong.class, //
-                // PyBool.class, //
+                PyLong.class, //
+                PyBool.class, //
                 // PyFloat.class, //
         };
         // Fill the map from the list.
