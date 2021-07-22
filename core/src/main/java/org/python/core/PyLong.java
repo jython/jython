@@ -44,8 +44,11 @@ public class PyLong extends AbstractPyObject {
     public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger MAX_ULONG = ONE.shiftLeft(64).subtract(ONE);
 
-    private final BigInteger value;
+    /** The value of this Python {@code int} (in sub-class instances). */
+    // Has to be package visible for method implementations.
+    final BigInteger value;
 
+    /** The value of this Python {@code int} (in sub-class instances). */
     public BigInteger getValue() { return value; }
 
     /**
@@ -1124,7 +1127,7 @@ public class PyLong extends AbstractPyObject {
 
     @ExposedMethod(doc = BuiltinDocs.long___float___doc)
      */
-    static double __float__(Object self) {
+    static Object __float__(Object self) {
         try {
             return convertToDouble(self);
         } catch (NoConversion e) {

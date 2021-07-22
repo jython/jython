@@ -1,15 +1,16 @@
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
+import java.util.AbstractList;
 
 import org.python.core.PyType.Spec;
 
 /**
- * This is a placeholder to satisfy references in implementations o preserved
- * from Jython 2.
+ * This is a minimal implementation to satisfy references elsewhere
+ * in the code.
  */
 /** The Python {@code tuple} object. */
-public class PyTuple implements CraftedPyObject {
+public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
 
     /** The Python type object for {@code tuple}. */
     static final PyType TYPE = PyType.fromSpec( //
@@ -32,6 +33,14 @@ public class PyTuple implements CraftedPyObject {
 
     @SafeVarargs
     public <E> PyTuple(E... value) { this(TYPE, value); }
+
+    // AbstractList methods ------------------------------------------
+
+    @Override
+    public Object get(int i) { return value[i]; }
+
+    @Override
+    public int size() { return value.length; }
 
     @Override
     public PyType getType() { return type; }
