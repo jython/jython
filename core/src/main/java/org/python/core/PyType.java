@@ -495,7 +495,9 @@ public class PyType extends Operations implements DictPyObject {
      * @param spec to apply
      */
     private void addMethods(Spec spec) {
-        // Placeholder
+        // Add definitions found in the defining class to the type
+        TypeExposer exposer = Exposer.exposeType(this, spec.definingClass, spec.methodClass);
+        exposer.populate(dict, spec.lookup);
     }
 
     /**
