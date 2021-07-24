@@ -114,7 +114,7 @@ class UnitTestSupport {
     }
 
     /**
-     * The Python type of {@code o} is the one expected.
+     * The Python type of {@code o} is exactly the one expected.
      *
      * @param expected type
      * @param o to test

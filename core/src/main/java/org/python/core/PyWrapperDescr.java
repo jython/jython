@@ -2,7 +2,6 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
 
 import org.python.core.PyType.Flag;
 
