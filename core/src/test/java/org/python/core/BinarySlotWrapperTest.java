@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test the {@link PyWrapperDescr}s for binary special functions on a
- * variety of types. Unlike the companion call-site tests, a descriptor
- * is <b>the descriptor in a particular type</b>. The particular
- * operations are not the focus: we are testing the mechanisms for
- * creating and calling slot wrappers.
+ * Test the {@link PyWrapperDescr}s for binary special functions on
+ * a variety of types. Unlike the companion call-site tests, a
+ * descriptor is <b>the descriptor in a particular type</b>. The
+ * particular operations are not the focus: we are testing the
+ * mechanisms for creating and calling slot wrappers.
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class BinarySlotWrapperTest extends UnitTestSupport {
@@ -35,24 +35,20 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @Override
             Object expected(Object s, Object o) {
-                return PyLong.asBigInteger(s)
-                        .subtract(PyLong.asBigInteger(o));
+                return PyLong.asBigInteger(s).subtract(PyLong.asBigInteger(o));
             }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 Integer iv = 50, iw = 8;
-                // self may be int or bool (since bool sub-classes int)
-                List<Object> vList = List.of(iv, BigInteger.valueOf(iv),
-                        newPyLong(iv), true, false);
+                List<Object> vList =
+                        List.of(iv, BigInteger.valueOf(iv), newPyLong(iv), true, false);
                 // other argument accepts same types
-                List<Object> wList = List.of(iw, BigInteger.valueOf(iw),
-                        newPyLong(iw), true, false);
+                List<Object> wList =
+                        List.of(iw, BigInteger.valueOf(iw), newPyLong(iw), true, false);
                 super.setup(PyLong.TYPE, NAME, vList, wList);
             }
 
@@ -68,8 +64,7 @@ class BinarySlotWrapperTest extends UnitTestSupport {
             }
 
             /**
-             * As {@link #supports_bound_call()} but with empty keyword
-             * array.
+             * As {@link #supports_bound_call()} but with empty keyword array.
              */
             @Test
             void supports_bound_call_with_keywords() throws Throwable {
@@ -86,8 +81,7 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @Override
             Object expected(Boolean s, Object o) {
-                return (s ? BigInteger.ONE : BigInteger.ZERO)
-                        .subtract(PyLong.asBigInteger(o));
+                return (s ? BigInteger.ONE : BigInteger.ZERO).subtract(PyLong.asBigInteger(o));
             }
 
             @Override
@@ -101,8 +95,8 @@ class BinarySlotWrapperTest extends UnitTestSupport {
                 List<Boolean> vList = List.of(true, false);
                 // other argument accepts int and bool types
                 Integer iw = 42;
-                List<Object> wList = List.of(true, false, iw,
-                        BigInteger.valueOf(iw), newPyLong(iw));
+                List<Object> wList =
+                        List.of(true, false, iw, BigInteger.valueOf(iw), newPyLong(iw));
                 super.setup(PyBool.TYPE, NAME, vList, wList);
             }
 
@@ -128,24 +122,21 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @Override
             Object expected(Object s, Object o) {
-                return PyLong.asBigInteger(o)
-                        .subtract(PyLong.asBigInteger(s));
+                return PyLong.asBigInteger(o).subtract(PyLong.asBigInteger(s));
             }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 Integer iv = 800, iw = 5000;
                 // self may be int or bool (since bool sub-classes int)
-                List<Object> vList = List.of(iv, BigInteger.valueOf(iv),
-                        newPyLong(iv), true, false);
+                List<Object> vList =
+                        List.of(iv, BigInteger.valueOf(iv), newPyLong(iv), true, false);
                 // other argument accepts same types
-                List<Object> wList = List.of(iw, BigInteger.valueOf(iw),
-                        newPyLong(iw), true, false);
+                List<Object> wList =
+                        List.of(iw, BigInteger.valueOf(iw), newPyLong(iw), true, false);
                 super.setup(PyLong.TYPE, NAME, vList, wList);
             }
         }
@@ -156,8 +147,7 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @Override
             Object expected(Boolean s, Object o) {
-                return PyLong.asBigInteger(o)
-                        .subtract(s ? BigInteger.ONE : BigInteger.ZERO);
+                return PyLong.asBigInteger(o).subtract(s ? BigInteger.ONE : BigInteger.ZERO);
             }
 
             @Override
@@ -171,8 +161,8 @@ class BinarySlotWrapperTest extends UnitTestSupport {
                 List<Boolean> vList = List.of(true, false);
                 // other argument accepts int and bool types
                 Integer iw = 4200;
-                List<Object> wList = List.of(true, false, iw,
-                        BigInteger.valueOf(iw), newPyLong(iw));
+                List<Object> wList =
+                        List.of(true, false, iw, BigInteger.valueOf(iw), newPyLong(iw));
                 super.setup(PyBool.TYPE, NAME, vList, wList);
             }
 
@@ -198,24 +188,19 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @Override
             Object expected(Object s, Object o) {
-                return PyLong.asBigInteger(s)
-                        .and(PyLong.asBigInteger(o));
+                return PyLong.asBigInteger(s).and(PyLong.asBigInteger(o));
             }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 Integer iv = 50, iw = 8;
-                // self may be int or bool (since bool sub-classes int)
-                List<Object> vList = List.of(iv, BigInteger.valueOf(iv),
-                        newPyLong(iv), true, false);
-                // other argument accepts same types
-                List<Object> wList = List.of(iw, BigInteger.valueOf(iw),
-                        newPyLong(iw), true, false);
+                List<Object> vList = List.of(iv, BigInteger.valueOf(iv), newPyLong(iv));
+                // other argument accepts int or bool
+                List<Object> wList =
+                        List.of(iw, BigInteger.valueOf(iw), newPyLong(iw), true, false);
                 super.setup(PyLong.TYPE, NAME, vList, wList);
             }
         }
@@ -225,14 +210,10 @@ class BinarySlotWrapperTest extends UnitTestSupport {
         class OfBool extends BinaryTest<Boolean, Boolean> {
 
             @Override
-            Boolean expected(Boolean s, Object o) {
-                return s && s.equals(o);
-            }
+            Boolean expected(Boolean s, Object o) { return s && s.equals(o); }
 
             @Override
-            void check(Boolean exp, Object r) throws Throwable {
-                checkBool(exp, r);
-            }
+            void check(Boolean exp, Object r) throws Throwable { checkBool(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
@@ -250,40 +231,5 @@ class BinarySlotWrapperTest extends UnitTestSupport {
                 assertNotSame(PyLong.TYPE.lookup(NAME), descr);
             }
         }
-
-        @Nested
-        @DisplayName("of 'bool' objects with 'int'")
-        class OfBoolInt extends BinaryTest<Object, Boolean> {
-
-            @Override
-            Object expected(Boolean s, Object o) {
-                return (s ? BigInteger.ONE : BigInteger.ZERO)
-                        .and(PyLong.asBigInteger(o));
-            }
-
-            @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);  // bool & int is int
-            }
-
-            @BeforeEach
-            void setup() throws AttributeError, Throwable {
-                // self will bool
-                List<Boolean> vList = List.of(true, false);
-                // other argument is actual int to ensure int result
-                List<Object> wList = List.of(100, 101,
-                        BigInteger.valueOf(102), newPyLong(103));
-                super.setup(PyBool.TYPE, NAME, vList, wList);
-            }
-
-            @Test
-            @Override
-            void has_expected_fields() {
-                super.has_expected_fields();
-                // The descriptor should not be that from int
-                assertNotSame(PyLong.TYPE.lookup(NAME), descr);
-            }
-        }
     }
-
 }
