@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.python.base.InterpreterError;
+import org.python.base.MissingFeature;
 import org.python.core.ArgumentError.Mode;
 
 /**
@@ -253,21 +254,68 @@ enum Slot {
     }
 
     /**
-     * Set the {@code MethodHandle} of this slot's operation in the given operations
-     * object to one that calls the object given in a manner appropriate to its
-     * type. This method is used when updating setting the operation slots of a new
-     * type from the new type's dictionary, and when updating them after a change.
-     * The object argument is then the entry found by lookup of this slot's name. It
-     * may be {@code null} if no entry was found.
-     * 
+     * Set the {@code MethodHandle} of this slot's operation in the
+     * given operations object to one that calls the object given in a
+     * manner appropriate to its type. This method is used when updating
+     * setting the operation slots of a new type from the new type's
+     * dictionary, and when updating them after a change. The object
+     * argument is then the entry found by lookup of this slot's name.
+     * It may be {@code null} if no entry was found.
+     *
      * @param ops target {@code Operations} (or {@code PyType}).
      * @param def object defining the handle to set (or {@code null})
      */
     // Compare CPython update_one_slot in typeobject.c
     void setDefinition(Operations ops, Object def) {
-        // Placeholder always setting empty
-        MethodHandle mh = signature.empty;
-        setHandle(ops, mh);
+        MethodHandle mh;
+        if (def == null) {
+            // No definition available for the special method
+            if (this == op_next) {
+                // XXX We should special-case __next__
+                /*
+                 * In CPython, this slot is sometimes null=empty, and sometimes
+                 * _PyObject_NextNotImplemented. PyIter_Check checks both, but
+                 * PyIter_Next calls it without checking and a null would then cause
+                 * a crash. We have EmptyException for a similar purpose.
+                 */
+            }
+            mh = signature.empty;
+
+        } else if (def instanceof PyWrapperDescr) {
+            /*
+             * When we invoke this slot in ops, the Java class of self will be
+             * assignable to ops.getJavaClass(), since that class led us to ops.
+             * It had better also be compatible with the method ultimately
+             * invoked by the handle we install. We have no control over what
+             * gets into the dictionary of a type, however, we do know that
+             * method in a PyWrapperDescr are applicable to the accepted
+             * implementations of classes of their defining class. We check here
+             * that ops.getJavaClass() is assignable to an accepted
+             * implementation of the defining type.
+             */
+            PyWrapperDescr wd = (PyWrapperDescr)def;
+            mh = wd.getWrapped(ops.getJavaClass());
+            if (wd.slot.signature != signature || mh == signature.empty) {
+                /*
+                 * wd is not compatible with objects of the type(s) that will show
+                 * up at this slot: for example we have inserted float.__add__ into
+                 * a sub-type of int. Python chooses to fail later, when the slot is
+                 * bound or invoked, so insert something that checks.
+                 */
+                throw new MissingFeature("equivalent of the slot_* functions");
+                // mh = signature.slotCalling(def);
+            }
+
+        } else if (def == Py.None && this == op_hash) {
+            throw new MissingFeature("special case __hash__ == None");
+            // mh = PyObject_HashNotImplemented
+
+        } else {
+            throw new MissingFeature("equivalent of the slot_* functions");
+            // mh = makeSlotHandle(wd);
+        }
+
+        slotHandle.set(ops, mh);
     }
 
     /** The type of exception thrown by invoking an empty slot. */

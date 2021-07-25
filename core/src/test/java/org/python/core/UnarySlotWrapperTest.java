@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test the {@link PyWrapperDescr}s for unary special functions on a
- * variety of types. The particular operations are not the focus: we are
- * testing the mechanisms for creating and calling slot wrappers.
+ * variety of types. The particular operations are not the focus: we
+ * are testing the mechanisms for creating and calling slot
+ * wrappers.
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class UnarySlotWrapperTest extends UnitTestSupport {
@@ -35,17 +36,14 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 // x is Integer, BigInteger, PyLong, Boolean
                 Integer ix = 42;
                 super.setup(PyLong.TYPE, NAME,
-                        List.of(ix, BigInteger.valueOf(ix),
-                                newPyLong(ix), false, true));
+                        List.of(ix, BigInteger.valueOf(ix), newPyLong(ix), false, true));
             }
 
             /**
@@ -60,8 +58,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             }
 
             /**
-             * As {@link #supports_bound_call()} but with empty keyword
-             * array.
+             * As {@link #supports_bound_call()} but with empty keyword array.
              */
             @Test
             void supports_bound_call_with_keywords() throws Throwable {
@@ -80,9 +77,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             Object expected(Boolean x) { return x ? -1 : 0; }
 
             @Override
-            void check(Object exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Object exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
@@ -102,22 +97,16 @@ class UnarySlotWrapperTest extends UnitTestSupport {
         class OfInt extends UnaryTest<String, Object> {
 
             @Override
-            String expected(Object x) {
-                return Integer.toString(toInt(x));
-            }
+            String expected(Object x) { return Integer.toString(toInt(x)); }
 
             @Override
-            void check(String exp, Object r) throws Throwable {
-                checkStr(exp, r);
-            }
+            void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
-                // x is Integer, BigInteger, PyLong, Boolean
+                // x is Integer, BigInteger, PyLong but not Boolean
                 Integer ix = 42;
-                super.setup(PyLong.TYPE, NAME,
-                        List.of(ix, BigInteger.valueOf(ix),
-                                newPyLong(ix), false, true));
+                super.setup(PyLong.TYPE, NAME, List.of(ix, BigInteger.valueOf(ix), newPyLong(ix)));
             }
         }
 
@@ -129,9 +118,7 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             String expected(Boolean x) { return x ? "True" : "False"; }
 
             @Override
-            void check(String exp, Object r) throws Throwable {
-                checkStr(exp, r);
-            }
+            void check(String exp, Object r) throws Throwable { checkStr(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
@@ -148,37 +135,32 @@ class UnarySlotWrapperTest extends UnitTestSupport {
 
         @Nested
         @DisplayName("of 'int' objects")
-        class OfInt extends UnaryTest<Integer, Object> {
+        class OfInt extends LenTest<Integer, Object> {
 
             @Override
             Integer expected(Object x) { return toInt(x); }
 
             @Override
-            void check(Integer exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 // x is Integer, BigInteger, PyLong, Boolean
                 Integer ix = 42;
                 super.setup(PyLong.TYPE, NAME,
-                        List.of(ix, BigInteger.valueOf(ix),
-                                newPyLong(ix), false, true));
+                        List.of(ix, BigInteger.valueOf(ix), newPyLong(ix), false, true));
             }
         }
 
         @Nested
         @DisplayName("of 'bool' objects")
-        class OfBool extends UnaryTest<Integer, Boolean> {
+        class OfBool extends LenTest<Integer, Boolean> {
 
             @Override
             Integer expected(Boolean x) { return x ? 1 : 0; }
 
             @Override
-            void check(Integer exp, Object r) throws Throwable {
-                checkInt(exp, r);
-            }
+            void check(Integer exp, Object r) throws Throwable { checkInt(exp, r); }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
