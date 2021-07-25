@@ -91,7 +91,6 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
-                // self will bool (since bool sub-classes int)
                 List<Boolean> vList = List.of(true, false);
                 // other argument accepts int and bool types
                 Integer iw = 42;
@@ -131,7 +130,7 @@ class BinarySlotWrapperTest extends UnitTestSupport {
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 Integer iv = 800, iw = 5000;
-                // self may be int or bool (since bool sub-classes int)
+                // int and bool are both served by int.__rsub__
                 List<Object> vList =
                         List.of(iv, BigInteger.valueOf(iv), newPyLong(iv), true, false);
                 // other argument accepts same types
@@ -157,7 +156,6 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
-                // self will bool (since bool sub-classes int)
                 List<Boolean> vList = List.of(true, false);
                 // other argument accepts int and bool types
                 Integer iw = 4200;
@@ -197,6 +195,7 @@ class BinarySlotWrapperTest extends UnitTestSupport {
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 Integer iv = 50, iw = 8;
+                // not bool here as bool.__and__ is distinct
                 List<Object> vList = List.of(iv, BigInteger.valueOf(iv), newPyLong(iv));
                 // other argument accepts int or bool
                 List<Object> wList =
@@ -207,19 +206,29 @@ class BinarySlotWrapperTest extends UnitTestSupport {
 
         @Nested
         @DisplayName("of 'bool' objects")
-        class OfBool extends BinaryTest<Boolean, Boolean> {
+        class OfBool extends BinaryTest<Object, Boolean> {
 
             @Override
-            Boolean expected(Boolean s, Object o) { return s && s.equals(o); }
+            Object expected(Boolean s, Object o) {
+                if (o instanceof Boolean)
+                    return (s) && s.equals(o);
+                else
+                    return PyLong.asBigInteger(s).and(PyLong.asBigInteger(o));
+            }
 
             @Override
-            void check(Boolean exp, Object r) throws Throwable { checkBool(exp, r); }
+            void check(Object exp, Object r) throws Throwable {
+                if (exp instanceof Boolean)
+                    checkBool(exp, r);
+                else
+                    checkInt(exp, r);
+            }
 
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 List<Boolean> vList = List.of(true, false);
-                // other argument tested with bool types only
-                List<Object> wList = List.of(true, false);
+                List<Object> wList =
+                        List.of(true, false, 100, 101, BigInteger.valueOf(102), newPyLong(103));
                 super.setup(PyBool.TYPE, NAME, vList, wList);
             }
 

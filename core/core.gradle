@@ -25,13 +25,64 @@ test {
 }
 
 
+// Sources and destinations when generating Java object implementations
+
+def genOutputDir = "$buildDir/generated/sources/javaTemplate"
+def genJavaDir = "$genOutputDir/java/main"
+def genTestJavaDir = "$genOutputDir/java/test"
+
+def genInputDir = getProject().file('src/main/javaTemplate')
+def genTestInputDir = getProject().file('src/main/javaTemplate')
+
+
+sourceSets {
+
+    main {
+        java {
+            srcDir genJavaDir
+        }
+    }
+
+    test {
+        java {
+            srcDir genTestJavaDir
+        }
+    }
+}
+
+
+// A task that runs Python with the tools library on the path
+
+class PythonExec extends Exec {
+
+    PythonExec() {
+        executable 'python'
+        environment('PYTHONPATH', getProject().getRootProject().file(
+                'build-tools/python/lib'))
+    }
+}
+
+
+// Generate Python object definitions
+
+task generateObjectDefinitions(type: PythonExec,
+        description: 'Generate object definitions from templates' ) {
+    args getProject().getRootProject().file(
+            'build-tools/python/tool/java_object_gen.py')
+    args '--verbose'
+    args genInputDir
+    args genJavaDir
+}
+compileJava.dependsOn(generateObjectDefinitions)
+
+
 // Report the version of Python available
 
-task pythonVersion(type: Exec) {
-    executable 'python'
+task pythonVersion(type: PythonExec) {
     args '-V'
 }
-compileJava.dependsOn(pythonVersion)
+generateObjectDefinitions.dependsOn(pythonVersion)
+
 
 
 // Some adjustments to Javadoc to ensure complex tables readable
