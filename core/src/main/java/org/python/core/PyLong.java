@@ -74,9 +74,6 @@ public class PyLong extends AbstractPyObject {
         }
     }
 
-    @Override
-    public int hashCode() { return __hash__(this); }
-
     // Constructor from Python ----------------------------------------
 
     @SuppressWarnings("fallthrough")
@@ -191,16 +188,11 @@ public class PyLong extends AbstractPyObject {
      * @throws TypeError if {@code v} is not a Python {@code int}
      */
     static BigInteger asBigInteger(Object v) throws TypeError {
-        if (v instanceof BigInteger)
-            return (BigInteger)v;
-        else if (v instanceof Integer)
-            return BigInteger.valueOf(((Integer)v).longValue());
-        else if (v instanceof PyLong)
-            return ((PyLong)v).value;
-        else if (v instanceof Boolean)
-            return (Boolean)v ? BigInteger.ONE : BigInteger.ZERO;
-        else
+        try {
+            return convertToBigInteger(v);
+        } catch (NoConversion nc) {
             throw Abstract.requiredTypeError("an integer", v);
+        }
     }
 
     /**
@@ -417,30 +409,6 @@ public class PyLong extends AbstractPyObject {
      */
     public static Object getDenominator(Object self) { return 1; }
 
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___hash___doc)
-     */
-    static int __hash__(Object self) {
-        try {
-            return toBig(self).hashCode();
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___nonzero___doc)
-     */
-    static boolean __bool__(Object self) {
-        try {
-            return toBig(self).signum() != 0;
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
     // ----------------------------------------------------------------
 
     private static final double scaledDoubleValue(BigInteger val, int[] exp) {
@@ -600,276 +568,6 @@ public class PyLong extends AbstractPyObject {
     }
 
     // special methods ------------------------------------------------
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___add___doc)
-     */
-    static Object __add__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).add(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___radd___doc)
-     */
-    static Object __radd__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).add(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___sub___doc)
-     */
-    static Object __sub__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).subtract(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rsub___doc)
-     */
-    static Object __rsub__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).subtract(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mul___doc)
-     */
-    static Object __mul__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).multiply(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmul___doc)
-     */
-    static Object __rmul__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).multiply(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /**
-     * Divide x by y with integer result, following the Python sign
-     * convention. The convention makes sense taken together with that
-     * for remainders (the modulo operation {@code %}). As would be
-     * expected, Python guarantees that {@code x = (x//y)*y + (x%y)}. It
-     * also chooses that the sign of {@code x%y} should be the same as
-     * that of {@code y}. This causes both {@code /} and {@code %} to
-     * differ from their semantics in Java.
-     *
-     * @param x dividend
-     * @param y divisor
-     * @return quotient
-     */
-    private static BigInteger divide(BigInteger x, BigInteger y) {
-        /*
-         * Getting signs correct for integer division is accomplished by
-         * adjusting x in the saces where the signs are opposite. This
-         * convention makes sense when you consider it with modulo.
-         */
-        int ySign = y.signum();
-        if (ySign == 0) {
-            throw new ZeroDivisionError("long division or modulo");
-        } else if (ySign < 0) {
-            if (x.signum() > 0) {
-                x = x.subtract(y).subtract(ONE);
-            }
-        } else {
-            if (x.signum() < 0) {
-                x = x.subtract(y).add(ONE);
-            }
-        }
-        return x.divide(y);
-    }
-
-    static Object __div__(Object self, Object right) {
-        try {
-            // Warnings not supported for now
-            // if (Options.division_warning > 0) {
-            // Py.warning(Py.DeprecationWarning, "classic long division");
-            // }
-            return toInt(divide(toBig(self), toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    static Object __rdiv__(Object self, Object left) {
-        try {
-            // Warnings not supported for now
-            // if (Options.division_warning > 0) {
-            // Py.warning(new DeprecationWarning, "classic long division");
-            // }
-            return toInt(divide(toBig(left), toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___floordiv___doc)
-     */
-    static Object __floordiv__(Object self, Object right) {
-        try {
-            return toInt(divide(toBig(self), toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rfloordiv___doc)
-     */
-    static Object __rfloordiv__(Object self, Object left) {
-        try {
-            return toInt(divide(toBig(left), toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    private static final double true_divide(BigInteger a, BigInteger b) {
-        int[] ae = new int[1];
-        int[] be = new int[1];
-        double ad, bd;
-
-        ad = scaledDoubleValue(a, ae);
-        bd = scaledDoubleValue(b, be);
-
-        if (bd == 0) {
-            throw new ZeroDivisionError("long division or modulo");
-        }
-
-        ad /= bd;
-        int aexp = ae[0] - be[0];
-
-        if (aexp > Integer.MAX_VALUE / 8) {
-            throw new OverflowError("long/long too large for a float");
-        } else if (aexp < -(Integer.MAX_VALUE / 8)) {
-            return 0.0;
-        }
-
-        ad = ad * Math.pow(2.0, aexp * 8);
-
-        if (Double.isInfinite(ad)) {
-            throw new OverflowError("long/long too large for a float");
-        }
-
-        return ad;
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___truediv___doc)
-     */
-    static Object __truediv__(Object self, Object right) {
-        try {
-            return true_divide(toBig(self), toBig(right));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rtruediv___doc)
-     */
-    static Object __rtruediv__(Object self, Object left) {
-        try {
-            return true_divide(toBig(left), toBig(self));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    private static BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {
-        return x.subtract(xdivy.multiply(y));
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___mod___doc)
-     */
-    static Object __mod__(Object self, Object right) {
-        try {
-            BigInteger x = toBig(self);
-            BigInteger y = toBig(right);
-            return toInt(modulo(x, y, divide(x, y)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rmod___doc)
-     */
-    static Object __rmod__(Object self, Object left) {
-        try {
-            BigInteger x = toBig(left);
-            BigInteger y = toBig(self);
-            return toInt(modulo(x, y, divide(x, y)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___divmod___doc)
-     */
-    static Object __divmod__(Object self, Object right) {
-        try {
-            BigInteger x = toBig(self);
-            BigInteger y = toBig(right);
-            BigInteger q = divide(x, y);
-            return new PyTuple(q, modulo(x, y, q));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rdivmod___doc)
-     */
-    static Object __rdivmod__(Object self, Object left) {
-        try {
-            BigInteger x = toBig(left);
-            BigInteger y = toBig(self);
-            BigInteger q = divide(x, y);
-            return new PyTuple(q, modulo(x, y, q));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
 
     /*
 
@@ -1394,6 +1092,31 @@ public class PyLong extends AbstractPyObject {
     }
 
     /**
+     * Convert a Python {@code int} to a Java {@code BigInteger} (or
+     * throw {@link NoConversion}).
+     * <p>
+     * If the method throws the special exception {@link NoConversion},
+     * the caller must deal with it by throwing an appropriate Python
+     * exception or taking an alternative course of action.
+     *
+     * @param v claimed {@code int}
+     * @return converted to {@code BigInteger}
+     * @throws NoConversion if {@code v} is not a Python {@code int}
+     */
+    static BigInteger convertToBigInteger(Object v)
+            throws NoConversion {
+        if (v instanceof BigInteger)
+            return (BigInteger)v;
+        else if (v instanceof Integer)
+            return BigInteger.valueOf(((Integer)v).longValue());
+        else if (v instanceof PyLong)
+            return ((PyLong)v).value;
+        else if (v instanceof Boolean)
+            return (Boolean)v ? BigInteger.ONE : BigInteger.ZERO;
+        throw PyObjectUtil.NO_CONVERSION;
+    }
+
+    /**
      * Create an OverflowError with a message along the lines "X too
      * large to convert to Y", where X is {@code from} and Y is
      * {@code to}.
@@ -1402,7 +1125,7 @@ public class PyLong extends AbstractPyObject {
      * @param to description of type to convert to
      * @return an {@link OverflowError} with that message
      */
-    private static OverflowError tooLarge(String from, String to) {
+    static OverflowError tooLarge(String from, String to) {
         String msg = String.format(TOO_LARGE, from, to);
         return new OverflowError(msg);
     }

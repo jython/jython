@@ -108,8 +108,70 @@ def _unary_method_big(op:UnaryOpInfo, t:IntTypeInfo):
     '''
 
 
-def binary_method(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    "Template generating the body of a binary operation."
+def binary_intmethod(op:BinaryOpInfo,
+                     t1:IntTypeInfo, n1,
+                     t2:IntTypeInfo, n2):
+    "Template generating the body of a binary operation with int result."
+    # Decide the width at which to work with these typse and op
+    iw = max(op.min_working_type.value,
+            t1.min_working_type.value,
+            t2.min_working_type.value)
+    w = WorkingType(iw)
+    if w == WorkingType.INT:
+        return _binary_intmethod_int(op, t1, n1, t2, n2)
+    elif w == WorkingType.LONG:
+        return _binary_intmethod_long(op, t1, n1, t2, n2)
+    elif w == WorkingType.BIG:
+        return _binary_intmethod_big(op, t1, n1, t2, n2)
+    elif w == WorkingType.OBJECT:
+        return _binary_intmethod_obj(op, t1, n1, t2, n2)
+    else:
+        raise ValueError(
+            f"Cannot make method body for {op.name} and {w}")
+
+def _binary_intmethod_int(op:BinaryOpInfo,
+                          t1:IntTypeInfo, n1,
+                          t2:IntTypeInfo, n2):
+    "Template for binary int methods when the working type is INT"
+    return f'''
+        return {op.int_op(t1.as_int(n1), t2.as_int(n2))};
+    '''
+
+def _binary_intmethod_long(op:BinaryOpInfo,
+                           t1:IntTypeInfo, n1,
+                           t2:IntTypeInfo, n2):
+    "Template for binary int methods when the working type is LONG"
+    return f'''
+        long r = {op.long_op(t1.as_long(n1), t2.as_long(n2))};
+        int s = (int) r;
+        return s == r ? s : BigInteger.valueOf(r);
+    '''
+
+def _binary_intmethod_big(op:BinaryOpInfo,
+                          t1:IntTypeInfo, n1,
+                          t2:IntTypeInfo, n2):
+    "Template for binary int methods when the working type is BIG"
+    return f'''
+        return toInt({op.big_op(t1.as_big(n1), t2.as_big(n2))});
+    '''
+
+def _binary_intmethod_obj(op:BinaryOpInfo,
+                          t1:IntTypeInfo, n1,
+                          t2:IntTypeInfo, n2):
+    "Template for binary int methods when the working type is OBJECT"
+    return f'''
+        try {{
+            return toInt({op.big_op(t1.as_big(n1), t2.as_big(n2))});
+        }} catch (NoConversion e) {{
+            return Py.NotImplemented;
+        }}
+    '''
+
+
+def binary_method(op:BinaryOpInfo,
+                  t1:IntTypeInfo, n1,
+                  t2:IntTypeInfo, n2):
+    "Template generating the body of a binary operation result."
     # Decide the width at which to work with these typse and op
     iw = max(op.min_working_type.value,
             t1.min_working_type.value,
@@ -127,68 +189,34 @@ def binary_method(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
         raise ValueError(
             f"Cannot make method body for {op.name} and {w}")
 
-
-def _binary_method_int(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
+def _binary_method_int(op:BinaryOpInfo,
+                       t1:IntTypeInfo, n1,
+                       t2:IntTypeInfo, n2):
+    "Template for binary methods when the working type is INT"
     return f'''
         return {op.int_op(t1.as_int(n1), t2.as_int(n2))};
     '''
 
-def _binary_method_long(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    return f'''
-        long r = {op.long_op(t1.as_long(n1), t2.as_long(n2))};
-        int s = (int) r;
-        return s == r ? s : BigInteger.valueOf(r);
-    '''
-
-def _binary_method_big(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    return f'''
-        return toInt({op.big_op(t1.as_big(n1), t2.as_big(n2))});
-    '''
-
-def _binary_method_obj(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    return f'''
-        try {{
-            return toInt({op.big_op(t1.as_big(n1), t2.as_big(n2))});
-        }} catch (NoConversion e) {{
-            return Py.NotImplemented;
-        }}
-    '''
-
-def comparison(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    "Template generating the body of a comparison operation."
-    iw = max(op.min_working_type.value,
-            t1.min_working_type.value,
-            t2.min_working_type.value)
-    w = WorkingType(iw)
-    if w == WorkingType.INT:
-        return _comparison_int(op, t1, n1, t2, n2)
-    elif w == WorkingType.LONG:
-        return _comparison_long(op, t1, n1, t2, n2)
-    elif w == WorkingType.BIG:
-        return _comparison_big(op, t1, n1, t2, n2)
-    elif w == WorkingType.OBJECT:
-        return _comparison_obj(op, t1, n1, t2, n2)
-    else:
-        raise ValueError(
-            f"Cannot make method body for {op.name} and {w}")
-
-
-def _comparison_int(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
-    return f'''
-        return {op.int_op(t1.as_int(n1), t2.as_int(n2))};
-    '''
-
-def _comparison_long(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
+def _binary_method_long(op:BinaryOpInfo,
+                        t1:IntTypeInfo, n1,
+                        t2:IntTypeInfo, n2):
+    "Template for binary methods when the working type is LONG"
     return f'''
         return {op.long_op(t1.as_long(n1), t2.as_long(n2))};
     '''
 
-def _comparison_big(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
+def _binary_method_big(op:BinaryOpInfo,
+                       t1:IntTypeInfo, n1,
+                       t2:IntTypeInfo, n2):
+    "Template for binary methods when the working type is BIG"
     return f'''
         return {op.big_op(t1.as_big(n1), t2.as_big(n2))};
     '''
 
-def _comparison_obj(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
+def _binary_method_obj(op:BinaryOpInfo,
+                       t1:IntTypeInfo, n1,
+                       t2:IntTypeInfo, n2):
+    "Template for binary methods when the working type is OBJECT"
     return f'''
         try {{
             return {op.big_op(t1.as_big(n1), t2.as_big(n2))};
@@ -196,6 +224,7 @@ def _comparison_obj(op:BinaryOpInfo, t1:IntTypeInfo, n1, t2:IntTypeInfo, n2):
             return Py.NotImplemented;
         }}
     '''
+
 
 class PyLongGenerator(ImplementationGenerator):
 
@@ -250,130 +279,157 @@ class PyLongGenerator(ImplementationGenerator):
         # Arguments are: name, return_type, working_type,
         #            body_method,
         #            big_op, long_op, int_op
+        #            with_class_specific_binops
         BinaryOpInfo('__add__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.add({y})',
             lambda x, y: f'{x} + {y}', 
             lambda x, y: f'{x} + {y}',
             True),
         BinaryOpInfo('__radd__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.add({x})',
             lambda x, y: f'{y} + {x}', 
             lambda x, y: f'{y} + {x}',
             True),
         BinaryOpInfo('__sub__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.subtract({y})',
             lambda x, y: f'{x} - {y}', 
             lambda x, y: f'{x} - {y}',
             True),
         BinaryOpInfo('__rsub__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.subtract({x})',
             lambda x, y: f'{y} - {x}', 
             lambda x, y: f'{y} - {x}',
             True),
         BinaryOpInfo('__mul__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.multiply({y})',
             lambda x, y: f'{x} * {y}', 
             lambda x, y: f'{x} * {y}',
             True),
         BinaryOpInfo('__rmul__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.multiply({x})',
             lambda x, y: f'{y} * {x}', 
             lambda x, y: f'{y} * {x}',
             True),
-        BinaryOpInfo('__floordiv__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
-            lambda x, y: f'{x}.divide({y})',
-            lambda x, y: f'{x} / {y}', 
-            lambda x, y: f'{x} / {y}',
+        BinaryOpInfo('__floordiv__', OBJECT_CLASS, WorkingType.INT,
+            binary_intmethod,
+            lambda x, y: f'divide({x}, {y})',
+            lambda x, y: f'divide({x}, {y})',
+            lambda x, y: f'divide({x}, {y})',
             True),
-        BinaryOpInfo('__rfloordiv__', OBJECT_CLASS, WorkingType.LONG,
-            binary_method,
-            lambda x, y: f'{y}.divide({x})',
-            lambda x, y: f'{y} / {x}', 
-            lambda x, y: f'{y} / {x}',
+        BinaryOpInfo('__rfloordiv__', OBJECT_CLASS, WorkingType.INT,
+            binary_intmethod,
+            lambda x, y: f'divide({y}, {x})',
+            lambda x, y: f'divide({y}, {x})',
+            lambda x, y: f'divide({y}, {x})',
             True),
-#         BinaryOpInfo('__truediv__', OBJECT_CLASS, WorkingType.DOUBLE,
-#             binary_method,
-#             lambda x, y: f'{x} / {y}',
-#             lambda x, y: f'{x} / {y}', 
-#             lambda x, y: f'{x} / {y}',
-#             True),
-#         BinaryOpInfo('__rtruediv__', OBJECT_CLASS, WorkingType.DOUBLE,
-#             binary_method,
-#             lambda x, y: f'{y} / {x}',
-#             lambda x, y: f'{y} / {x}', 
-#             lambda x, y: f'{y} / {x}',
-#             True),
+        BinaryOpInfo('__mod__', OBJECT_CLASS, WorkingType.INT,
+            binary_intmethod,
+            lambda x, y: f'modulo({x}, {y})',
+            lambda x, y: f'modulo({x}, {y})',
+            lambda x, y: f'modulo({x}, {y})',
+            True),
+        BinaryOpInfo('__rmod__', OBJECT_CLASS, WorkingType.INT,
+            binary_intmethod,
+            lambda x, y: f'modulo({y}, {x})',
+            lambda x, y: f'modulo({y}, {x})',
+            lambda x, y: f'modulo({y}, {x})',
+            True),
+
+        BinaryOpInfo('__divmod__', OBJECT_CLASS, WorkingType.INT,
+            binary_method,
+            lambda x, y: f'divmod({x}, {y})',
+            lambda x, y: f'divmod({x}, {y})',
+            lambda x, y: f'divmod({x}, {y})',
+            True),
+        BinaryOpInfo('__rdivmod__', OBJECT_CLASS, WorkingType.INT,
+            binary_method,
+            lambda x, y: f'divmod({y}, {x})',
+            lambda x, y: f'divmod({y}, {x})',
+            lambda x, y: f'divmod({y}, {x})',
+            True),
+
+        BinaryOpInfo('__truediv__', OBJECT_CLASS, WorkingType.INT,
+            binary_method,
+            lambda x, y: f'trueDivide({x}, {y})',
+            lambda x, y: f'trueDivide({x}, {y})',
+            lambda x, y: f'(double){x} / (double){y}',
+            True),
+        BinaryOpInfo('__rtruediv__', OBJECT_CLASS, WorkingType.INT,
+            binary_method,
+            lambda x, y: f'trueDivide({y}, {x})',
+            lambda x, y: f'trueDivide({y}, {x})',
+            lambda x, y: f'(double){y} / (double){x}',
+            True),
 
         BinaryOpInfo('__and__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.and({y})',
             lambda x, y: f'{x} & {y}', 
             lambda x, y: f'{x} & {y}',
             True),
         BinaryOpInfo('__rand__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.and({x})',
             lambda x, y: f'{y} & {x}', 
             lambda x, y: f'{y} & {x}',
             True),
         BinaryOpInfo('__or__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.or({y})',
             lambda x, y: f'{x} | {y}', 
             lambda x, y: f'{x} | {y}',
             True),
         BinaryOpInfo('__ror__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.or({x})',
             lambda x, y: f'{y} | {x}', 
             lambda x, y: f'{y} | {x}'),
         BinaryOpInfo('__xor__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{x}.xor({y})',
             lambda x, y: f'{x} ^ {y}', 
             lambda x, y: f'{x} ^ {y}',
             True),
         BinaryOpInfo('__rxor__', OBJECT_CLASS, WorkingType.INT,
-            binary_method,
+            binary_intmethod,
             lambda x, y: f'{y}.xor({x})',
             lambda x, y: f'{y} ^ {x}', 
             lambda x, y: f'{y} ^ {x}',
             True),
 
         BinaryOpInfo('__lt__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) < 0',
             lambda x, y: f'{x} < {y}', 
             lambda x, y: f'{x} < {y}'),
         BinaryOpInfo('__le__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) <= 0',
             lambda x, y: f'{x} <= {y}', 
             lambda x, y: f'{x} <= {y}'),
         BinaryOpInfo('__eq__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) == 0',
             lambda x, y: f'{x} == {y}', 
             lambda x, y: f'{x} == {y}'),
         BinaryOpInfo('__ne__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) != 0',
             lambda x, y: f'{x} != {y}', 
             lambda x, y: f'{x} != {y}'),
         BinaryOpInfo('__gt__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) > 0',
             lambda x, y: f'{x} > {y}', 
             lambda x, y: f'{x} > {y}'),
         BinaryOpInfo('__ge__', OBJECT_CLASS, WorkingType.INT,
-            comparison,
+            binary_method,
             lambda x, y: f'{x}.compareTo({y}) >= 0',
             lambda x, y: f'{x} >= {y}', 
             lambda x, y: f'{x} >= {y}'),
