@@ -39,13 +39,20 @@ group = 'org.python'
 // ---------------- Miscellaneous configuration --------------------------------
 
 allprojects {
+
     apply plugin: 'java'
     // We support Java 11 onwards officially.
     sourceCompatibility = '11'
+
     // Same configuiration all sub-projects
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
         options.debug = true
+    }
+
+    tasks.withType(Javadoc) {
+        options.encoding = 'UTF-8'
+        options.showFromPackage()
     }
 
     repositories {

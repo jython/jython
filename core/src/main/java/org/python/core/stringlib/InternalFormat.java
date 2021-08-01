@@ -279,7 +279,7 @@ public class InternalFormat {
          * <p>
          * When the padding method has decided that that it needs to add n padding characters, it
          * will affect {@link #start} or {@link #lenWhole} as follows.
-         * <table border style>
+         * <table >
          * <caption>Effect of padding on {@link #start} or {@link #lenWhole}</caption>
          * <tr>
          * <th>align</th>
@@ -585,7 +585,7 @@ public class InternalFormat {
         }
 
         /**
-         * Convenience method returning a {@link Py#OverflowError} reporting:
+         * Convenience method returning a {@link FormatOverflow} reporting:
          * <p>
          * <code>"formatted "+type+" is too long (precision too large?)"</code>
          *
@@ -596,7 +596,6 @@ public class InternalFormat {
             String msg = "formatted " + type + " is too long (precision too large?)";
             return new FormatOverflow(msg);
         }
-
     }
 
     /**
@@ -787,26 +786,42 @@ public class InternalFormat {
             this(' ', '>', Spec.NONE, false, UNSPECIFIED, false, precision, type);
         }
 
-        /** The alignment from the parsed format specification, or default. */
-        public char getFill(char defaultFill) {
-            return specified(fill) ? fill : defaultFill;
-        }
+        /**
+         * The fill from the parsed format specification, or default.
+         *
+         * @param defaultFill to return if not specified
+         * @return fill to use
+         */
+        public char getFill(char defaultFill) { return specified(fill) ? fill : defaultFill; }
 
-        /** The alignment from the parsed format specification, or default. */
+        /**
+         * The alignment from the parsed format specification, or default. *
+         *
+         * @param defaultAlign to return if not specified
+         * @return alignment to use
+         */
         public char getAlign(char defaultAlign) {
             return specified(align) ? align : defaultAlign;
         }
 
-        /** The precision from the parsed format specification, or default. */
+        /**
+         * The precision from the parsed format specification, or default.
+         *
+         * @param defaultPrecision to return if not specified
+         * @return precision to use
+         */
         public int getPrecision(int defaultPrecision) {
             return specified(precision) ? precision : defaultPrecision;
         }
 
-        /** The type code from the parsed format specification, or default supplied. */
-        public char getType(char defaultType) {
-            return specified(type) ? type : defaultType;
-        }
-
+        /**
+         * The type code from the parsed format specification, or default
+         * supplied.
+         *
+         * @param defaultType to return if not specified
+         * @return type code to use
+         */
+        public char getType(char defaultType) { return specified(type) ? type : defaultType; }
     }
 
     /**
