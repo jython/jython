@@ -48,7 +48,11 @@ public class PyLong extends AbstractPyObject {
     // Has to be package visible for method implementations.
     final BigInteger value;
 
-    /** The value of this Python {@code int} (in sub-class instances). */
+    /**
+     * The value of this Python {@code int} (in sub-class instances).
+     *
+     * @return value
+     */
     public BigInteger getValue() { return value; }
 
     /**

@@ -73,6 +73,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
      * be a "right" answer for e and g-format, and for f-format with values up to 9,999,999.
      *
      * @param spec parsed conversion specification
+     * @return recommended a buffer size
      */
     public static int size(Spec spec) {
         // Rule of thumb used here (no right answer):

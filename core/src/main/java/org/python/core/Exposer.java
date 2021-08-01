@@ -44,7 +44,7 @@ abstract class Exposer {
      * <p>
      * Special methods are identified by their reserved name, while
      * other attributes are identified by annotations. (See
-     * {@link Exposed}.)
+     * {@code Exposed}.)
      * <p>
      * In those attributes that reference their defining Python type
      * (descriptors), the {@code type} object will be referenced (as

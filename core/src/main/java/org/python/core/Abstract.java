@@ -410,7 +410,7 @@ public class Abstract {
     }
 
     /**
-     * Submit a {@link DeprecationWarning} call (which may result in an
+     * Submit a {@code DeprecationWarning} call (which may result in an
      * exception) with the same message as
      * {@link #returnTypeError(String, String, Object)}, the whole
      * followed by one about deprecation of the facility.
