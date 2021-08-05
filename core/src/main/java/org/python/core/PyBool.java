@@ -30,7 +30,7 @@ final class PyBool {
             return v ? w : v;
         else
             // w is not a bool, go arithmetic.
-            return PyLong.__and__(v, w);
+            return PyLongMethods.__and__(v, w);
     }
 
     static Object __rand__(Boolean w, Object v) {
@@ -38,7 +38,7 @@ final class PyBool {
             return w ? v : w;
         else
             // v is not a bool, go arithmetic.
-            return PyLong.__rand__(w, v);
+            return PyLongMethods.__rand__(w, v);
     }
 
     static Object __or__(Boolean v, Object w) {
@@ -46,7 +46,7 @@ final class PyBool {
             return v ? v : w;
         else
             // w is not a bool, go arithmetic.
-            return PyLong.__or__(v, w);
+            return PyLongMethods.__or__(v, w);
     }
 
     static Object __ror__(Boolean w, Object v) {
@@ -54,7 +54,7 @@ final class PyBool {
             return w ? w : v;
         else
             // v is not a bool, go arithmetic.
-            return PyLong.__ror__(w, v);
+            return PyLongMethods.__ror__(w, v);
     }
 
     static Object __xor__(Boolean v, Object w) {
@@ -62,7 +62,7 @@ final class PyBool {
             return v ^ ((Boolean)w);
         else
             // w is not a bool, go arithmetic.
-            return PyLong.__xor__(v, w);
+            return PyLongMethods.__xor__(v, w);
     }
 
     static Object __rxor__(Boolean w, Object v) {
@@ -70,6 +70,6 @@ final class PyBool {
             return ((Boolean)v) ^ w;
         else
             // v is not a bool, go arithmetic.
-            return PyLong.__rxor__(w, v);
+            return PyLongMethods.__rxor__(w, v);
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
-// Copyright (c) Jython Developers
-
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static java.math.BigInteger.ONE;
@@ -44,7 +44,9 @@ public class PyLong extends AbstractPyObject {
     public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger MAX_ULONG = ONE.shiftLeft(64).subtract(ONE);
 
-    /** The value of this Python {@code int} (in sub-class instances). */
+    /**
+     * The value of this Python {@code int} (in sub-class instances).
+     */
     // Has to be package visible for method implementations.
     final BigInteger value;
 
@@ -110,15 +112,11 @@ public class PyLong extends AbstractPyObject {
      */
     private static Object __new__impl(PyType subType, Object x, Object obase) throws Throwable {
 
-        if (subType != TYPE) {
-            return longSubtypeNew(subType, x, obase);
-        }
+        if (subType != TYPE) { return longSubtypeNew(subType, x, obase); }
 
         if (x == null) {
             // Zero-arg int() ... unless invalidly like int(base=10)
-            if (obase != null) {
-                throw new TypeError("int() missing string argument");
-            }
+            if (obase != null) { throw new TypeError("int() missing string argument"); }
             return 0;
         }
 
@@ -375,6 +373,7 @@ public class PyLong extends AbstractPyObject {
      * @return the same value as exactly {@code int}
      * @throws TypeError if not a Python {@code int} or sub-class
      */
+    // Compare CPython longobject.c :: long_long
     static Object from(Object value) throws TypeError {
         Operations ops = Operations.of(value);
         if (ops.isIntExact())
@@ -385,66 +384,6 @@ public class PyLong extends AbstractPyObject {
             throw Abstract.requiredTypeError("an integer", value);
     }
 
-
-    // Methods --------------------------------------------------------
-    // Expose to Python when mechanisms are available
-
-    /*
-
-    @ExposedGet(name = "real", doc = BuiltinDocs.long_real_doc)
-     */
-    public static Object getReal(Object self) { return self; }
-
-    /*
-
-    @ExposedGet(name = "imag", doc = BuiltinDocs.long_imag_doc)
-     */
-    public static Object getImag(Object self) { return 0; }
-
-    /*
-
-    @ExposedGet(name = "numerator", doc = BuiltinDocs.long_numerator_doc)
-     */
-    public static Object getNumerator(Object self) { return self; }
-
-    /*
-
-    @ExposedGet(name = "denominator", doc = BuiltinDocs.long_denominator_doc)
-     */
-    public static Object getDenominator(Object self) { return 1; }
-
-    // ----------------------------------------------------------------
-
-    private static final double scaledDoubleValue(BigInteger val, int[] exp) {
-        double x = 0;
-        int signum = val.signum();
-        byte[] digits;
-
-        if (signum >= 0) {
-            digits = val.toByteArray();
-        } else {
-            digits = val.negate().toByteArray();
-        }
-
-        int count = 8;
-        int i = 0;
-
-        if (digits[0] == 0) {
-            i++;
-            count++;
-        }
-        count = count <= digits.length ? count : digits.length;
-
-        while (i < count) {
-            x = x * 256 + (digits[i] & 0xff);
-            i++;
-        }
-        exp[0] = digits.length - i;
-        return signum * x;
-    }
-
-    public double scaledDoubleValue(int[] exp) { return scaledDoubleValue(getValue(), exp); }
-
     // ----------------------------------------------------------------
 
     public long getLong(long min, long max) throws OverflowError {
@@ -454,9 +393,7 @@ public class PyLong extends AbstractPyObject {
     public long getLong(long min, long max, String overflowMsg) throws OverflowError {
         if (getValue().compareTo(MAX_LONG) <= 0 && getValue().compareTo(MIN_LONG) >= 0) {
             long v = getValue().longValue();
-            if (v >= min && v <= max) {
-                return v;
-            }
+            if (v >= min && v <= max) { return v; }
         }
         throw new OverflowError(overflowMsg);
     }
@@ -484,7 +421,7 @@ public class PyLong extends AbstractPyObject {
                 return Long.valueOf(getLong(Long.MIN_VALUE, Long.MAX_VALUE));
             }
             if (c == Float.TYPE || c == Double.TYPE || c == Float.class || c == Double.class) {
-                return __float__(this);
+                return asDouble(this);
             }
             if (c == BigInteger.class || c == Number.class || c == Object.class
                     || c == Serializable.class) {
@@ -496,423 +433,63 @@ public class PyLong extends AbstractPyObject {
         throw new MissingFeature("default __tojava__ behaviour for %s", c.getSimpleName());
     }
 
-    // XXX __coerce__ and __coerce_ex not needed in Jython 3 (reasonably
-    // certain).
-
-    /**
-     * Convert an {@code int} or its sub-class to a Java
-     * {@code BigInteger}. Conversion may raise an exception that is
-     * propagated to the caller. If the Java type of the {@code int} is
-     * declared, generally there is a better option than this method. We
-     * only use it for {@code Object} arguments. If the method throws
-     * the special exception {@link NoConversion}, the caller must catch
-     * it, and will normally return {@link Py#NotImplemented}.
-     *
-     * @param v to convert
-     * @return converted to {@code BigInteger}
-     * @throws NoConversion v is not an {@code int}
-     */
-    private static BigInteger toBig(Object v) throws NoConversion {
-        // Check against supported types, most likely first
-        if (v instanceof Integer)
-            return BigInteger.valueOf(((Integer)v).longValue());
-        else if (v instanceof BigInteger)
-            return (BigInteger)v;
-        else if (v instanceof PyLong)
-            return ((PyLong)v).value;
-        else if (v instanceof Boolean)
-            return (Boolean)v ? ONE : ZERO;
-
-        throw PyObjectUtil.NO_CONVERSION;
-    }
-
-    /**
-     * Reduce a {@code BigInteger} result to {@code Integer} if
-     * possible. This makes it more likely the next operation will be
-     * 32-bit.
-     *
-     * @param r to reduce
-     * @return equal value
-     */
-    static Object toInt(BigInteger r) {
-        /*
-         * Implementation note: r.intValueExact() is for exactly this
-         * purpose, but building the ArithmeticException is a huge cost.
-         * (2900ns is added to a 100ns __add__.) The compiler (as tested in
-         * JDK 11.0.9) doesn't recognise that it can be optimised to a jump.
-         * This version of toInt() adds around 5ns.
-         */
-        if (r.bitLength() < 32)
-            return r.intValue();
-        else
-            return r;
-    }
-
-    /**
-     * Convert a Python {@code object} to a Java {@code int} suitable as
-     * a shift distance. Negative values are a {@link ValueError}, while
-     * positive values too large to convert are clipped to the maximum
-     * Java {@code int} value.
-     *
-     * @param shift to interpret as an {@code int} shift
-     * @return {@code min(v, Integer.MAX_VALUE)}
-     * @throws NoConversion for values not convertible to a Python
-     *     {@code int}
-     * @throws ValueError when the argument is negative
-     */
-    private static final int toShift(Object shift) throws NoConversion, ValueError {
-        BigInteger s = toBig(shift); // implicitly: check its an int
-        if (s.signum() < 0) {
-            throw new ValueError("negative shift count");
-        } else if (s.bitLength() < 32) {
-            return s.intValue();
-        } else {
-            return Integer.MAX_VALUE;
-        }
-    }
+    // XXX __coerce__ and __coerce_ex not needed in Jython 3 ?
 
     // special methods ------------------------------------------------
 
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"},
-            doc = BuiltinDocs.long___pow___doc)
-     */
-    static Object __pow__(Object self, Object right, Object modulo) {
-        try {
-            modulo = (modulo == Py.None) ? null : modulo;
-            return _pow(toBig(self), toBig(right), modulo, self, right);
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rpow___doc)
-     */
-    static Object __rpow__(Object self, Object left) {
-        try {
-            return _pow(toBig(left), toBig(self), null, left, self);
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    private static Object _pow(BigInteger x, BigInteger y, Object modulo, Object left, Object right)
-            throws NoConversion {
-
-        // For negative exponent, resort to float calculation
-        // XXX This is the only reason we pass left, right. Lift to caller.
-        if (y.signum() < 0) {
-            if (x.signum() != 0) {
-                // return PyFloat.__pow__(__float__(left), right, modulo);
-                throw new MissingFeature("float.__pow__");
-            } else {
-                throw new ZeroDivisionError("zero to a negative power");
-            }
-        }
-
-        if (modulo == null || modulo == Py.None) {
-            return toInt(x.pow(y.intValue()));
-
-        } else {
-            /*
-             * XXX The original contains comments about alleged bugs in Sun Java
-             * 1.1. These must be very old. The bugs may have been fixed and the
-             * work-around removed. Or is may not have been a bug since Java
-             * definitions of % differs from Python's.
-             */
-            // This whole thing can be trivially rewritten after bugs
-            // in modPow are fixed by SUN
-            BigInteger z = toBig(modulo);
-            // Identify some special cases for quick treatment
-            if (z.signum() == 0) {
-                throw new ValueError("pow(x, y, z) with z == 0");
-            } else if (z.abs().equals(ONE)) {
-                return 0;
-            } else if (z.signum() < 0) {
-                // Handle negative modulo specially
-                y = x.modPow(y, z.negate());
-                if (y.signum() > 0) {
-                    return toInt(z.add(y));
-                } else {
-                    return toInt(y);
-                }
-                // return __pow__(right).__mod__(modulo);
-            } else {
-                // XXX: 1.1 no longer supported so review this.
-                // This is buggy in SUN's jdk1.1.5
-                // Extra __mod__ improves things slightly
-                return toInt(x.modPow(y, z));
-                // return __pow__(right).__mod__(modulo);
-            }
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___lshift___doc)
-     */
-    static Object __lshift__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).shiftLeft(toShift(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rlshift___doc)
-     */
-    static Object __rlshift__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).shiftLeft(toShift(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rshift___doc)
-     */
-    static Object __rshift__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).shiftRight(toShift(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rrshift___doc)
-     */
-    static Object __rrshift__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).shiftRight(toShift(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___and___doc)
-     */
-    static Object __and__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).and(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rand___doc)
-     */
-    static Object __rand__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).and(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___xor___doc)
-     */
-    static Object __xor__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).xor(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___rxor___doc)
-     */
-    static Object __rxor__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).xor(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___or___doc)
-     */
-    static Object __or__(Object self, Object right) {
-        try {
-            return toInt(toBig(self).or(toBig(right)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.long___ror___doc)
-     */
-    static Object __ror__(Object self, Object left) {
-        try {
-            return toInt(toBig(left).or(toBig(self)));
-        } catch (NoConversion e) {
-            return Py.NotImplemented;
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___neg___doc)
-     */
-    static Object __neg__(Object self) {
-        try {
-            return toInt(toBig(self).negate());
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___pos___doc)
-     */
-    static Object __pos__(Object self) { return __int__(self); }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___abs___doc)
-     */
-    static Object __abs__(Object self) {
-        try {
-            return toInt(toBig(self).abs());
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___invert___doc)
-     */
-    static Object __invert__(Object self) {
-        try {
-            return toInt(toBig(self).not());
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___int___doc)
-     */
-    static Object __int__(Object self) {
-        try {
-            // Guarantee type is exactly int
-            return PyType.of(self) == TYPE ? self : toBig(self);
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___float___doc)
-     */
-    static Object __float__(Object self) {
-        try {
-            return convertToDouble(self);
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___trunc___doc)
-     */
-    static Object __trunc__(Object self) { return __int__(self); }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long_conjugate_doc)
-     */
-    static Object conjugate(Object self) { return self; }
-
-    static PyComplex __complex__(Object self) {
-        try {
-            return new PyComplex(convertToDouble(self), 0.);
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___str___doc)
-     */
-    static Object __str__(Object self) {
-        try {
-            return toBig(self).toString();
-        } catch (NoConversion e) {
-            throw impossible(self);
-        }
-    }
-
-    static Object __repr__(Object self) {
+    @SuppressWarnings("unused")
+    private static Object __repr__(Object self) {
         assert TYPE.check(self);
         return asBigInteger(self).toString();
     }
 
-    /*
+    // __str__: let object.__str__ handle it (calls __repr__)
 
-    @ExposedMethod(doc = BuiltinDocs.long___getnewargs___doc)
-     */
+    // Methods --------------------------------------------------------
+    // Expose to Python when mechanisms are available
+
+    // @ExposedGet(name = "real", doc = BuiltinDocs.long_real_doc)
+    public static Object getReal(Object self) { return self; }
+
+    // @ExposedGet(name = "imag", doc = BuiltinDocs.long_imag_doc)
+    public static Object getImag(Object self) { return 0; }
+
+    // @ExposedGet(name = "numerator", doc =
+    // BuiltinDocs.long_numerator_doc)
+    public static Object getNumerator(Object self) { return self; }
+
+    // @ExposedGet(name = "denominator", doc =
+    // BuiltinDocs.long_denominator_doc)
+    public static Object getDenominator(Object self) { return 1; }
+
+    // @ExposedMethod(doc = BuiltinDocs.long___trunc___doc)
+    static Object __trunc__(Object self) { return from(self); }
+
+    // @ExposedMethod(doc = BuiltinDocs.long_conjugate_doc)
+    static Object conjugate(Object self) { return from(self); }
+
+    // @ExposedMethod(doc = BuiltinDocs.long___getnewargs___doc)
     static PyTuple __getnewargs__(Object self) {
+        assert TYPE.check(self);
         try {
-            return new PyTuple(toBig(self));
+            return new PyTuple(convertToBigInteger(self));
         } catch (NoConversion e) {
             throw impossible(self);
         }
     }
 
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___index___doc)
-     */
-    static Object __index__(Object self) { return __int__(self); }
-
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long_bit_length_doc)
-     */
+    // @ExposedMethod(doc = BuiltinDocs.long_bit_length_doc)
     static int bit_length(Object self) {
         try {
-            BigInteger v = toBig(self);
-            if (v.signum() == -1) {
-                v = v.negate();
-            }
+            BigInteger v = convertToBigInteger(self);
+            if (v.signum() == -1) { v = v.negate(); }
             return v.bitLength();
         } catch (NoConversion e) {
             throw impossible(self);
         }
-
     }
 
-    /*
-
-    @ExposedMethod(doc = BuiltinDocs.long___format___doc)
-     */
+    // @ExposedMethod(doc = BuiltinDocs.long___format___doc)
     static Object __format__(Object self, Object formatSpec) {
         try {
             // Parse the specification, which must at least sub-class str in
@@ -921,7 +498,7 @@ public class PyLong extends AbstractPyObject {
                 throw Abstract.argumentTypeError("__format__", 0, "str", formatSpec);
             }
 
-            BigInteger value = toBig(self);
+            BigInteger value = convertToBigInteger(self);
             Spec spec = InternalFormat.fromText(formatSpec.toString());
             InternalFormat.Formatter f;
 
@@ -1097,7 +674,10 @@ public class PyLong extends AbstractPyObject {
 
     /**
      * Convert a Python {@code int} to a Java {@code BigInteger} (or
-     * throw {@link NoConversion}).
+     * throw {@link NoConversion}). Conversion may raise an exception
+     * that is propagated to the caller. If the Java type of the
+     * {@code int} is declared, generally there is a better option than
+     * this method. We only use it for {@code Object} arguments.
      * <p>
      * If the method throws the special exception {@link NoConversion},
      * the caller must deal with it by throwing an appropriate Python
@@ -1107,8 +687,7 @@ public class PyLong extends AbstractPyObject {
      * @return converted to {@code BigInteger}
      * @throws NoConversion if {@code v} is not a Python {@code int}
      */
-    static BigInteger convertToBigInteger(Object v)
-            throws NoConversion {
+    static BigInteger convertToBigInteger(Object v) throws NoConversion {
         if (v instanceof BigInteger)
             return (BigInteger)v;
         else if (v instanceof Integer)
@@ -1116,7 +695,7 @@ public class PyLong extends AbstractPyObject {
         else if (v instanceof PyLong)
             return ((PyLong)v).value;
         else if (v instanceof Boolean)
-            return (Boolean)v ? BigInteger.ONE : BigInteger.ZERO;
+            return (Boolean)v ? ONE : ZERO;
         throw PyObjectUtil.NO_CONVERSION;
     }
 
@@ -1136,7 +715,17 @@ public class PyLong extends AbstractPyObject {
 
     private static final String TOO_LARGE = "%s too large to convert to %s";
 
-    private static InterpreterError impossible(Object self) {
-        return Abstract.impossibleArgumentError("int", self);
+    /**
+     * We received an argument that should be impossible in a correct
+     * interpreter. We use this when conversion of an
+     * {@code Object self} argument may theoretically fail, but we know
+     * that we should only reach that point by paths that guarantee
+     * {@code self`} to be some kind on {@code int}.
+     *
+     * @param o actual argument
+     * @return exception to throw
+     */
+    private static InterpreterError impossible(Object o) {
+        return Abstract.impossibleArgumentError("int", o);
     }
 }
