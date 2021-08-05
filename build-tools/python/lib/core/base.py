@@ -1,5 +1,8 @@
 # base.py: foundations for source-code generation from templates
-#
+
+# Copyright (c)2021 Jython Developers.
+# Licensed to PSF under a contributor agreement.
+
 # Module: evo1.generate.base
 
 from dataclasses import dataclass

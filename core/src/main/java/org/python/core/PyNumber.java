@@ -1,3 +1,5 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;
@@ -5,11 +7,10 @@ import java.util.function.Function;
 
 import org.python.core.Slot.EmptyException;
 
-
 /**
  * Abstract API for operations on numeric types, corresponding to
- * CPython methods defined in {@code abstract.h} and with names like:
- * {@code PyNumber_*}.
+ * CPython methods defined in {@code abstract.h} and with names
+ * like: {@code PyNumber_*}.
  */
 public class PyNumber extends Abstract {
 
@@ -54,8 +55,8 @@ public class PyNumber extends Abstract {
      * @return exception to throw
      */
     static PyException operandError(Slot op, Object v) {
-        return new TypeError("bad operand type for %s: '%.200s'",
-                op.opName, PyType.of(v).getName());
+        return new TypeError("bad operand type for %s: '%.200s'", op.opName,
+                PyType.of(v).getName());
     }
 
     /**
@@ -141,8 +142,7 @@ public class PyNumber extends Abstract {
      * @throws TypeError if neither operand implements the operation
      * @throws Throwable from the implementation of the operation
      */
-    private static Object binary_op(Object v, Object w, Slot binop)
-            throws TypeError, Throwable {
+    private static Object binary_op(Object v, Object w, Slot binop) throws TypeError, Throwable {
         try {
             Object r = binary_op1(v, w, binop);
             if (r != Py.NotImplemented) { return r; }
@@ -175,9 +175,9 @@ public class PyNumber extends Abstract {
         MethodHandle slotv, slotw;
 
         /*
-         * CPython would also test: (slotw = rbinop.getSlot(wtype)) ==
-         * slotv as an optimisation , but that's never the case since we
-         * use distinct binop and rbinop slots.
+         * CPython would also test: (slotw = rbinop.getSlot(wtype)) == slotv
+         * as an optimisation , but that's never the case since we use
+         * distinct binop and rbinop slots.
          */
         if (wtype == vtype) {
             // Same types so only try the binop slot
@@ -206,8 +206,7 @@ public class PyNumber extends Abstract {
         }
     }
 
-    private static final MethodHandle BINARY_EMPTY =
-            Slot.Signature.BINARY.empty;
+    private static final MethodHandle BINARY_EMPTY = Slot.Signature.BINARY.empty;
 
     /**
      * Return a Python {@code int} (or subclass) from the object
@@ -270,8 +269,7 @@ public class PyNumber extends Abstract {
      * @throws Throwable on other errors
      */
     // Compare with CPython abstract.c :: PyNumber_AsSsize_t
-    static int asSize(Object o, Function<String, PyException> exc)
-            throws TypeError, Throwable {
+    static int asSize(Object o, Function<String, PyException> exc) throws TypeError, Throwable {
 
         // Convert to Python int or sub-class. (May raise TypeError.)
         Object value = PyNumber.index(o);
@@ -290,8 +288,7 @@ public class PyNumber extends Abstract {
                     return Integer.MAX_VALUE;
             } else {
                 // Throw an exception of the caller's preferred type.
-                String msg = String.format(CANNOT_FIT,
-                        PyType.of(o).getName());
+                String msg = String.format(CANNOT_FIT, PyType.of(o).getName());
                 throw exc.apply(msg);
             }
         } catch (TypeError e) {
@@ -344,14 +341,12 @@ public class PyNumber extends Abstract {
 
         // else if ... support for bytes-like objects
         else
-            throw argumentTypeError("int", 0,
-                    "a string, a bytes-like object or a number", o);
+            throw argumentTypeError("int", 0, "a string, a bytes-like object or a number", o);
     }
 
     private static final String CANNOT_INTERPRET_AS_INT =
             "'%.200s' object cannot be interpreted as an integer";
-    private static final String CANNOT_FIT =
-            "cannot fit '%.200s' into an index-sized integer";
+    private static final String CANNOT_FIT = "cannot fit '%.200s' into an index-sized integer";
 
     /**
      * Throw a {@code TypeError} for the named binary operation, along
@@ -364,8 +359,8 @@ public class PyNumber extends Abstract {
      */
     // XXX Possibly move to Slot so may bind early.
     static PyException operandError(Slot op, Object v, Object w) {
-        return new TypeError(UNSUPPORTED_TYPES, op.opName,
-                PyType.of(v).getName(), PyType.of(w).getName());
+        return new TypeError(UNSUPPORTED_TYPES, op.opName, PyType.of(v).getName(),
+                PyType.of(w).getName());
     }
 
     private static final String UNSUPPORTED_TYPES =

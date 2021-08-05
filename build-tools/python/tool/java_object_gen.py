@@ -1,5 +1,8 @@
 # tool/java_object_gen Emit Java
 #
+# Copyright (c)2021 Jython Developers.
+# Licensed to PSF under a contributor agreement.
+
 # This is a tool used from the core.gradle build file to generate object
 # implementation methods, such as __neg__ and __rsub__, in Java.
 # It processes Java files looking for a few simple markers, which it
