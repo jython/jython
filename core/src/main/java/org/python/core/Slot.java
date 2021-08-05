@@ -1,3 +1,5 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.python.core.ClassShorthand.B;
@@ -901,13 +903,9 @@ enum Slot {
                     throws ArgumentError, Throwable {
                 checkArgs(args, 1, 2, names);
                 Object obj = args[0];
-                if (obj == Py.None) {
-                    obj = null;
-                }
+                if (obj == Py.None) { obj = null; }
                 Object type = null;
-                if (type != Py.None) {
-                    type = args[1];
-                }
+                if (type != Py.None) { type = args[1]; }
                 if (type == null && obj == null) {
                     throw new TypeError("__get__(None, None) is invalid");
                 }
@@ -956,9 +954,7 @@ enum Slot {
 
             // Prepare the kind of lookup we should do
             Class<?> p0 = ptypes.length > 0 ? ptypes[0] : null;
-            if (p0 != O) {
-                throw new InterpreterError("Special methods must be instance methods");
-            }
+            if (p0 != O) { throw new InterpreterError("Special methods must be instance methods"); }
         }
 
         /**
@@ -1083,9 +1079,7 @@ enum Slot {
             if (methodNameTable == null) {
                 Slot[] slots = Slot.values();
                 methodNameTable = new HashMap<>(2 * slots.length);
-                for (Slot s : slots) {
-                    methodNameTable.put(s.methodName, s);
-                }
+                for (Slot s : slots) { methodNameTable.put(s.methodName, s); }
             }
             return methodNameTable;
         }

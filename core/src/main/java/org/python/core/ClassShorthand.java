@@ -1,8 +1,10 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 /**
- * Some shorthands used to construct method signatures, {@code MethodType}s,
- * etc..
+ * Some shorthands used to construct method signatures,
+ * {@code MethodType}s, etc..
  */
 interface ClassShorthand {
     /** Shorthand for {@code Object.class}. */
@@ -21,8 +23,8 @@ interface ClassShorthand {
     static final Class<?> V = void.class;
     // ** Shorthand for {@code Comparison.class}. */
     // static final Class<Comparison> CMP = Comparison.class;
-    /// ** Shorthand for {@code PyTuple.class}. */
-    // static final Class<PyTuple> TUPLE = PyTuple.class;
+    /** Shorthand for {@code PyTuple.class}. */
+    static final Class<PyTuple> TUPLE = PyTuple.class;
     /// ** Shorthand for {@code PyDict.class}. */
     // static final Class<PyDict> DICT = PyDict.class;
     /** Shorthand for {@code Object[].class}. */

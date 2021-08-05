@@ -1,3 +1,5 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static java.lang.invoke.MethodHandles.exactInvoker;
@@ -73,9 +75,7 @@ abstract class Operations {
          */
         synchronized void set(Class<?> c, Operations ops) throws Clash {
             Operations old = opsMap.putIfAbsent(c, ops);
-            if (old != null) {
-                throw new Clash(c, old);
-            }
+            if (old != null) { throw new Clash(c, old); }
         }
 
         /**
@@ -93,9 +93,7 @@ abstract class Operations {
                 Operations old = opsMap.putIfAbsent(c[i], ops[i]);
                 if (old != null) {
                     // We failed to insert c[i]: erase what we did
-                    for (int j = 0; j < i; j++) {
-                        opsMap.remove(c[j]);
-                    }
+                    for (int j = 0; j < i; j++) { opsMap.remove(c[j]); }
                     throw new Clash(c[i], old);
                 }
             }
@@ -515,9 +513,7 @@ abstract class Operations {
          * the actual type of their target object.
          */
         private void setAllSlots() {
-            for (Slot s : Slot.values()) {
-                s.setHandle(this, indirectSlot(s));
-            }
+            for (Slot s : Slot.values()) { s.setHandle(this, indirectSlot(s)); }
         }
 
         @Override

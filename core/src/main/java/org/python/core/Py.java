@@ -1,3 +1,5 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;

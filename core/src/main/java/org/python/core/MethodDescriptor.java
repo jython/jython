@@ -1,9 +1,11 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 /**
- * Abstract base class for the descriptor of a method defined in Java.
- * This class provides some common behaviour and support methods that
- * would otherwise be duplicated.
+ * Abstract base class for the descriptor of a method defined in
+ * Java. This class provides some common behaviour and support
+ * methods that would otherwise be duplicated.
  */
 abstract class MethodDescriptor extends Descriptor implements FastCall {
 
@@ -23,13 +25,13 @@ abstract class MethodDescriptor extends Descriptor implements FastCall {
     protected TypeError typeError(ArgumentError ae, Object[] args) {
         int n = args.length;
         switch (ae.mode) {
-        case NOARGS:
-        case NUMARGS:
-        case MINMAXARGS:
-            return new TypeError("%s() %s (%d given)", name, ae, n);
-        case NOKWARGS:
-        default:
-            return new TypeError("%s() %s", name, ae);
+            case NOARGS:
+            case NUMARGS:
+            case MINMAXARGS:
+                return new TypeError("%s() %s (%d given)", name, ae, n);
+            case NOKWARGS:
+            default:
+                return new TypeError("%s() %s", name, ae);
         }
     }
 }

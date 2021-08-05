@@ -1,5 +1,8 @@
 # Classes that emit indented, wrapped (Java) source code
 
+# Copyright (c)2021 Jython Developers.
+# Licensed to PSF under a contributor agreement.
+
 import io
 import sys
 
