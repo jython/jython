@@ -1,3 +1,5 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;
@@ -6,21 +8,100 @@ import org.python.base.InterpreterError;
 import org.python.core.Slot.EmptyException;
 
 /**
- * The "abstract interface" to operations on Python objects. Methods here
- * execute the slot functions of the type definition of the objects passed in. A
- * primary application is to the CPython byte code interpreter. (Methods here
- * often correspond closely to a CPython opcode.)
+ * The "abstract interface" to operations on Python objects. Methods
+ * here execute the slot functions of the type definition of the
+ * objects passed in. A primary application is to the CPython byte
+ * code interpreter. (Methods here often correspond closely to a
+ * CPython opcode.)
  * <p>
  * In CPython, the methods are found in {@code Objects/abstract.c}
  */
 public class Abstract {
 
     /**
-     * There are only static methods here, so no instances should be created.
-     * Formally make the constructor {@code protected} so we can sub-class.
-     * (Otherwise {@code private} would be the right choice.)
+     * There are only static methods here, so no instances should be
+     * created. Formally make the constructor {@code protected} so we
+     * can sub-class. (Otherwise {@code private} would be the right
+     * choice.)
      */
     protected Abstract() {}
+
+    /**
+     * The equivalent of the Python expression repr(o), and is called by
+     * the repr() built-in function.
+     *
+     * @param o object
+     * @return the string representation o
+     * @throws TypeError if {@code __repr__} returns a non-string
+     * @throws Throwable from invoked implementation of {@code __repr__}
+     */
+    // Compare CPython PyObject_Repr in object.c
+    static Object repr(Object o) throws TypeError, Throwable {
+        if (o == null) {
+            return "<null>";
+        } else {
+            Operations ops = Operations.of(o);
+            try {
+                Object res = ops.op_repr.invoke(o);
+                if (PyUnicode.TYPE.check(res)) {
+                    return res;
+                } else {
+                    throw returnTypeError("__repr__", "string", res);
+                }
+            } catch (Slot.EmptyException e) {
+                return String.format("<%s object>", PyType.of(o).getName());
+            }
+        }
+    }
+
+    /**
+     * The equivalent of the Python expression str(o).
+     *
+     * @param o object
+     * @return the string representation o
+     * @throws TypeError if {@code __str__} or {@code __repr__} returns
+     *     a non-string
+     * @throws Throwable from invoked implementations of {@code __str__}
+     *     or {@code __repr__}
+     */
+    // Compare CPython PyObject_Str in object.c
+    static Object str(Object o) throws Throwable {
+        if (o == null) {
+            return "<null>";
+        } else {
+            Operations ops = Operations.of(o);
+            if (PyUnicode.TYPE.checkExact(o)) {
+                return o;
+            } else if (Slot.op_str.isDefinedFor(ops)) {
+                Object res = ops.op_str.invoke(o);
+                if (PyUnicode.TYPE.check(res)) {
+                    return res;
+                } else {
+                    throw returnTypeError("__str__", "string", res);
+                }
+            } else {
+                return repr(o);
+            }
+        }
+    }
+
+    /**
+     * Compute and return the hash value of an object. On failure,
+     * return -1. This is the equivalent of the Python expression
+     * {@code hash(v)}.
+     *
+     * @param v to hash
+     * @return the hash
+     * @throws TypeError if {@code v} is an unhashable type
+     * @throws Throwable on errors within {@code __hash__}
+     */
+    static int hash(Object v) throws TypeError, Throwable {
+        try {
+            return (int)Operations.of(v).op_hash.invokeExact(v);
+        } catch (Slot.EmptyException e) {
+            throw typeError("unhashable type: %s", v);
+        }
+    }
 
     /**
      * {@code o.name} with Python semantics.
@@ -33,8 +114,7 @@ public class Abstract {
      */
     // Compare CPython _PyObject_GetAttr in object.c
     // Also PyObject_GetAttrString in object.c
-    static Object getAttr(Object o, String name)
-            throws AttributeError, Throwable {
+    static Object getAttr(Object o, String name) throws AttributeError, Throwable {
         // Decisions are based on type of o (that of name is known)
         Operations ops = Operations.of(o);
         try {
@@ -63,8 +143,7 @@ public class Abstract {
      * @throws Throwable on other errors
      */
     // Compare CPython PyObject_GetAttr in object.c
-    static Object getAttr(Object o, Object name)
-            throws AttributeError, TypeError, Throwable {
+    static Object getAttr(Object o, Object name) throws AttributeError, TypeError, Throwable {
         // Decisions are based on types of o and name
         if (name instanceof String) {
             return getAttr(o, name);
@@ -88,8 +167,7 @@ public class Abstract {
      * @throws Throwable on other errors
      */
     // Compare CPython _PyObject_LookupAttr in object.c
-    static Object lookupAttr(Object o, Object name)
-            throws TypeError, Throwable {
+    static Object lookupAttr(Object o, Object name) throws TypeError, Throwable {
         // Corresponds to object.c : PyObject_GetAttr
         // Decisions are based on types of o and name
         if (name instanceof String) {
@@ -113,8 +191,7 @@ public class Abstract {
      * @throws Throwable on other errors than {@code AttributeError}
      */
     // Compare CPython _PyObject_LookupAttr in object.c
-    static Object lookupAttr(Object o, String name)
-            throws TypeError, Throwable {
+    static Object lookupAttr(Object o, String name) throws TypeError, Throwable {
         // Decisions are based on type of o (that of name is known)
         try {
             // Invoke __getattribute__
@@ -144,7 +221,6 @@ public class Abstract {
         return bases instanceof PyTuple ? (PyTuple)bases : null;
     }
 
-
     /**
      * Return {@code true} iff the class {@code derived} is identical to
      * or derived from the class {@code cls}. The answer is sought along
@@ -163,8 +239,7 @@ public class Abstract {
      */
     // Compare CPython recursive_issubclass in abstract.c
     // and _PyObject_RealIsSubclass in abstract.c
-    static boolean recursiveIsSubclass(Object derived, Object cls)
-            throws TypeError, Throwable {
+    static boolean recursiveIsSubclass(Object derived, Object cls) throws TypeError, Throwable {
         if (cls instanceof PyType && derived instanceof PyType)
             // Both are PyType so this is relatively easy.
             return ((PyType)derived).isSubTypeOf((PyType)cls);
@@ -173,8 +248,7 @@ public class Abstract {
             throw new TypeError("issubclass", 1, "a class", derived);
         else if (getBasesOf(cls) == null)
             // cls is neither PyType nor has __bases__
-            throw argumentTypeError("issubclass", 2,
-                    "a class or tuple of classes", cls);
+            throw argumentTypeError("issubclass", 2, "a class or tuple of classes", cls);
         else
             // Answer by traversing cls.__bases__ for derived
             return isSubclassHelper(derived, cls);
@@ -193,8 +267,7 @@ public class Abstract {
      * @throws Throwable from looking up {@code __bases__}
      */
     // Compare CPython abstract_issubclass in abstract.c
-    private static boolean isSubclassHelper(Object derived, Object cls)
-            throws Throwable {
+    private static boolean isSubclassHelper(Object derived, Object cls) throws Throwable {
         while (derived != cls) {
             // Consider the bases of derived
             PyTuple bases = getBasesOf(derived);
@@ -219,16 +292,11 @@ public class Abstract {
         return true;
     }
 
-
-
     // Convenience functions constructing errors --------------------
 
-    private static final String IS_REQUIRED_NOT =
-            "%.200s is required, not '%.100s'";
-    private static final String RETURNED_NON_TYPE =
-            "%.200s returned non-%.200s (type %.200s)";
-    private static final String ARGUMENT_MUST_BE =
-            "%s()%s argument must be %s, not '%.200s'";
+    private static final String IS_REQUIRED_NOT = "%.200s is required, not '%.100s'";
+    private static final String RETURNED_NON_TYPE = "%.200s returned non-%.200s (type %.200s)";
+    private static final String ARGUMENT_MUST_BE = "%s()%s argument must be %s, not '%.200s'";
 
     /**
      * Create a {@link TypeError} with a message involving the type of
@@ -254,8 +322,7 @@ public class Abstract {
      * @return exception to throw
      */
     static TypeError requiredTypeError(String t, Object o) {
-        return new TypeError(IS_REQUIRED_NOT, t,
-                PyType.of(o).getName());
+        return new TypeError(IS_REQUIRED_NOT, t, PyType.of(o).getName());
     }
 
     /**
@@ -272,8 +339,8 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link TypeError} with a message along the lines "can't set
-     * attributes of X" giving str of {@code name}.
+     * Create a {@link TypeError} with a message along the lines "can't
+     * set attributes of X" giving str of {@code name}.
      *
      * @param obj actual object on which setting failed
      * @return exception to throw
@@ -285,10 +352,10 @@ public class Abstract {
     /**
      * Create a {@link TypeError} with a message along the lines "F()
      * [nth] argument must be T, not X", involving a function name,
-     * optionally an ordinal n, an expected type description T and the type X of
-     * {@code o}, e.g. "int() argument must be a string, a bytes-like
-     * object or a number, not 'list'" or "complex() second argument
-     * must be a number, not 'type'".
+     * optionally an ordinal n, an expected type description T and the
+     * type X of {@code o}, e.g. "int() argument must be a string, a
+     * bytes-like object or a number, not 'list'" or "complex() second
+     * argument must be a number, not 'type'".
      *
      * @param f name of function or operation
      * @param n ordinal of argument: 1 for "first", etc., 0 for ""
@@ -296,10 +363,8 @@ public class Abstract {
      * @param o actual argument (not its type)
      * @return exception to throw
      */
-    static TypeError argumentTypeError(String f, int n, String t,
-            Object o) {
-        return new TypeError(ARGUMENT_MUST_BE, f, ordinal(n), t,
-                PyType.of(o).getName());
+    static TypeError argumentTypeError(String f, int n, String t, Object o) {
+        return new TypeError(ARGUMENT_MUST_BE, f, ordinal(n), t, PyType.of(o).getName());
     }
 
     // Helper for argumentTypeError
@@ -330,13 +395,13 @@ public class Abstract {
      * @return exception to throw
      */
     static TypeError returnTypeError(String f, String t, Object o) {
-        return new TypeError(RETURNED_NON_TYPE, f, t,
-                PyType.of(o).getName());
+        return new TypeError(RETURNED_NON_TYPE, f, t, PyType.of(o).getName());
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * has no attribute N", where T is the type of the object accessed.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object has no attribute N", where T is the type of the
+     * object accessed.
      *
      * @param v object accessed
      * @param name of attribute
@@ -347,8 +412,8 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * has no attribute N", where T is the type given.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object has no attribute N", where T is the type given.
      *
      * @param type of object accessed
      * @param name of attribute
@@ -360,8 +425,9 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * attribute N is read-only", where T is the type of the object accessed.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object attribute N is read-only", where T is the type of the
+     * object accessed.
      *
      * @param v object accessed
      * @param name of attribute
@@ -372,8 +438,8 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * attribute N is read-only", where T is the type given.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object attribute N is read-only", where T is the type given.
      *
      * @param type of object accessed
      * @param name of attribute
@@ -385,8 +451,9 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * attribute N cannot be deleted", where T is the type of the object accessed.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object attribute N cannot be deleted", where T is the type
+     * of the object accessed.
      *
      * @param v object accessed
      * @param name of attribute
@@ -397,8 +464,9 @@ public class Abstract {
     }
 
     /**
-     * Create a {@link AttributeError} with a message along the lines "'T' object
-     * attribute N cannot be deleted", where T is the type given.
+     * Create a {@link AttributeError} with a message along the lines
+     * "'T' object attribute N cannot be deleted", where T is the type
+     * given.
      *
      * @param type of object accessed
      * @param name of attribute
@@ -428,8 +496,7 @@ public class Abstract {
     }
 
     private static final String RETURNED_NON_TYPE_DEPRECATION =
-            RETURNED_NON_TYPE + ".  "
-                    + "The ability to return an instance of a strict "
+            RETURNED_NON_TYPE + ".  " + "The ability to return an instance of a strict "
                     + "subclass of %s is deprecated, and may be "
                     + "removed in a future version of Python.";
 

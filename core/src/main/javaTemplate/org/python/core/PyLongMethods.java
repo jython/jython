@@ -28,6 +28,128 @@ class PyLongMethods {
 
     // $SPECIAL_METHODS$ ---------------------------------------------
 
+    // ----------------------------------------------------- __pow__
+    // Hand-crafted
+    static Object __pow__(Object v, Object w, Object modulus) {
+        modulus = (modulus == Py.None) ? null : modulus;
+        try {
+            // If any conversion fails __pow__ is not implemented
+            BigInteger y = toBig(w);
+            if (y.signum() < 0 && modulus == null) {
+                // No modulus and w<0: let PyFloat handle it
+                return floatPow(v, w, modulus);
+            } else {
+                BigInteger z = modulus == null ? null : toBig(modulus);
+                return pow(toBig(v), y, z);
+            }
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
+    // ---------------------------------------------------- __rpow__
+    // Hand-crafted
+    static Object __rpow__(Object w, Object v) {
+        try {
+            // If either conversion fails __rpow__ is not implemented
+            BigInteger y = toBig(w);
+            // For negative exponent, resort to float calculation
+            if (y.signum() < 0) { return floatPow(v, w, null); }
+            BigInteger x = toBig(v);
+            return pow(x, y, null);
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
+    // -------------------------------------------------- __lshift__
+    // Hand-crafted
+    static Object __lshift__(PyLong v, Object w) {
+        return __lshift__(v.value, w);
+    }
+
+    static Object __lshift__(BigInteger v, Object w) {
+        try {
+            int iw;
+            if (v.signum() == 0)
+                return 0;
+            else if ((iw = toShift(w)) == 0)
+                return v;
+            else {
+                return toInt(v.shiftLeft(iw));
+            }
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
+    static Object __lshift__(Integer v, Object w) {
+        if (v == 0) {
+            return 0;
+        } else {
+            BigInteger vv = BigInteger.valueOf(v.longValue());
+            return __lshift__(vv, w);
+        }
+    }
+
+    static Object __lshift__(Boolean v, Object w) {
+        return v ? __lshift__(ONE, w) : 0;
+    }
+
+    // ------------------------------------------------- __rlshift__
+    // Hand-crafted
+    static Object __rlshift__(Object w, Object v) {
+        try {
+            return __lshift__(toBig(v), w);
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
+    // -------------------------------------------------- __rshift__
+    // Hand-crafted
+    static Object __rshift__(PyLong v, Object w) {
+        return __rshift__(v.value, w);
+    }
+
+    static Object __rshift__(BigInteger v, Object w) {
+        try {
+            int iw;
+            if (v.signum() == 0)
+                return 0;
+            else if ((iw = toShift(w)) == 0)
+                return v;
+            else {
+                return toInt(v.shiftRight(iw));
+            }
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
+    static Object __rshift__(Integer v, Object w) {
+        if (v == 0) {
+            return 0;
+        } else {
+            BigInteger vv = BigInteger.valueOf(v.longValue());
+            return __rshift__(vv, w);
+        }
+    }
+
+    static Object __rshift__(Boolean v, Object w) {
+        return v ? __rshift__(ONE, w) : 0;
+    }
+
+    // ------------------------------------------------- __rrshift__
+    // Hand-crafted
+    static Object __rrshift__(Object w, Object v) {
+        try {
+            return __rshift__(toBig(v), w);
+        } catch (NoConversion e) {
+            return Py.NotImplemented;
+        }
+    }
+
     // plumbing ------------------------------------------------------
 
     /**
@@ -77,6 +199,30 @@ class PyLongMethods {
             return r.intValue();
         else
             return r;
+    }
+
+    /**
+     * Convert a Python {@code object} to a Java {@code int} suitable as
+     * a shift distance. Negative values are a {@link ValueError}, while
+     * positive values too large to convert are clipped to the maximum
+     * Java {@code int} value.
+     *
+     * @param shift to interpret as an {@code int} shift
+     * @return {@code min(v, Integer.MAX_VALUE)}
+     * @throws NoConversion for values not convertible to a Python
+     *     {@code int}
+     * @throws ValueError when the argument is negative
+     */
+    private static final int toShift(Object shift)
+            throws NoConversion, ValueError {
+        BigInteger s = toBig(shift); // implicitly: check it's an int
+        if (s.signum() < 0) {
+            throw new ValueError("negative shift count");
+        } else if (s.bitLength() < 32) {
+            return s.intValue();
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 
     /** 2**31 aka Integer.MIN_VALUE / -1, which Java can't do. */
@@ -356,5 +502,55 @@ class PyLongMethods {
         while (i < count) { x = x * 256 + (digits[i] & 0xff); i++; }
         exp[0] = digits.length - i;
         return signum * x;
+    }
+
+    /**
+     * Helper for the case where {@code y<0}, using
+     * {@link PyFloat#__pow__(Object, Object, Object)} if possible.
+     */
+    private static Object floatPow(Object ox, Object oy,
+            Object modulus) {
+        double x = PyLong.asDouble(ox);
+        if (x != 0.0) {
+            return PyFloat.__pow__(x, oy, modulus);
+        } else {
+            throw new ZeroDivisionError("zero to a negative power");
+        }
+    }
+
+    /**
+     * The implementation of exponentiation (behind {@code __pow__} and
+     * {@code __rpow__}) in terms of {@code BigInteger}. {@code __pow__}
+     * has a ternary form in which an integer modulus is provided.
+     *
+     * @param x base
+     * @param y exponent
+     * @param z the modulus (or {@code null}
+     * @return <i>x<sup>y</sup></i>mod <i>z</i>
+     */
+    private static Object pow(BigInteger x, BigInteger y,
+            BigInteger z) {
+
+        if (z == null) {
+            return toInt(x.pow(y.intValue()));
+
+        } else {
+            // Identify some special cases for quick treatment
+            if (z.signum() == 0) {
+                throw new ValueError("pow(x, y, z) with z == 0");
+            } else if (z.abs().equals(ONE)) {
+                return 0;
+            } else if (z.signum() < 0) {
+                // Handle negative modulo specially
+                y = x.modPow(y, z.negate());
+                if (y.signum() > 0) {
+                    return toInt(z.add(y));
+                } else {
+                    return toInt(y);
+                }
+            } else {
+                return toInt(x.modPow(y, z));
+            }
+        }
     }
 }
