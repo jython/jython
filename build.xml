@@ -252,7 +252,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-7.1.jar" />
                 <file name="asm-commons-7.1.jar" />
                 <file name="asm-util-7.1.jar" />
-                <file name="commons-compress-1.19.jar"/>
+                <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-28.0-android.jar" />
                 <file name="icu4j-59_1.jar" />
@@ -844,7 +844,7 @@ The text for an official release would continue like ...
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.19.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
             <zipfileset src="extlibs/guava-28.0-android.jar"/>
