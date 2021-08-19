@@ -13,7 +13,7 @@ Jython 2.7 provides substantial support of the Python ecosystem.
 This includes built-in support of *pip/setuptools*
 (you can use `bin/pip` if the targets do not include `C` extensions)
 and a native launcher for Windows (`bin/jython.exe`)
-that works essentially as the `python` command.
+that works essentially like the `python` command.
 
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7,
 including demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
@@ -21,7 +21,7 @@ including demos of new features: https://www.youtube.com/watch?v=hLm3garVQFo
 See [ACKNOWLEDGMENTS](ACKNOWLEDGMENTS) for details about Jython's copyright,
 license, contributors, and mailing lists.
 Consult [NEWS](NEWS) for detailed release notes, including bugs fixed,
-backwards breaking changes, and new features.
+backward breaking changes, and new features.
 We sincerely thank all who contribute to Jython, by bug reports, patches,
 pull requests, documentation changes and e-mail discussions.
 
