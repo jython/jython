@@ -173,21 +173,21 @@ public class PySystemStateTest extends TestCase {
             assertEquals("/någon/katalog/rätt.jar", result);
         }
     }
-    
+
     /**
-     * Test case for finding the path in the local file system of the file located by a JAR-file
-     * URL as reported by a JavaWebStart application. As the path points to a HTTP resource, there
-     * is no way to find the jar in the local file system: in this case, the method must return null.
+     * Test case for finding the path in the local file system of the file located by a JAR-file URL
+     * as reported by a JavaWebStart application. As the path points to a HTTP resource, there is no
+     * way to find the jar in the local file system: in this case, the method must return null.
      */
     public void testGetJarFileNameFromURL_javaWebStart() throws MalformedURLException {
         // Examples from the table
         for (JarExample ex : jarExamples) {
             // Something like jar:file:/some_dir/some.jar!/a/package/with/A.class
-            URL url = new URL("jar:http://server:8080/signedWebApp/" + ex.urlJarPath + "!/" + ex.urlClassPath);
+            URL url = new URL("jar:http://server:8080/signedWebApp/" + ex.urlJarPath + "!/"
+                    + ex.urlClassPath);
             assertNull(PrePy.getJarFileNameFromURL(url));
         }
     }
-
 
     public void testImport() throws Exception {
         Options.importSite = false;
