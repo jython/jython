@@ -22,8 +22,8 @@ jobs:
     - name: "openjdk11 on Linux"
       jdk: openjdk11
 
-    - name: "openjdk13 on Linux"
-      jdk: openjdk13
+    #- name: "openjdk13 on Linux"
+    #  jdk: openjdk13
 
     - name: "openjdk8 on macOS"
       os: osx
@@ -50,19 +50,19 @@ jobs:
       os: windows
       language: shell  # Travis CI Windows does not yet support language: java
       env:
-        - JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
-        - ANT_HOME="/c/Users/travis/apache-ant"
-        - PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
+        - echo $PATH
       before_install:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK (must match JAVA_HOME in env: section)
-        - choco install adoptopenjdk11
-        - ls "/c/Program Files/AdoptOpenJDK" # Check JAVA_HOME is correct :(
-        # Install ant at $ANT_HOME (chosen in env: section)
-        - curl https://downloads.apache.org/ant/binaries/apache-ant-1.10.8-bin.zip -o apache-ant.zip
-        - unzip -q apache-ant.zip
-        - rm apache-ant.zip
-        - mv apache-ant-1.10.8 $ANT_HOME
+        - choco install ojdkbuild11
+        - choco install ant
+        # Confidence checks
+        - which java
+        - which javac
+        - which ant
+         #- JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
+        #- ANT_HOME="/c/Users/travis/apache-ant"
+        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
     #  language: python  # lint Python code for syntax errors and undefined names
@@ -83,5 +83,10 @@ install:
   - ant developer-build
 
 # Run the regression test (tweaked for Travis in build.xml)
-script:  ant regrtest-travis
+script:
+    # Disabled for now: only report environment
+    ant dump-env
+    dist/bin/jython -V
+    # Fairly full regression test
+    #ant regrtest-travis
 
