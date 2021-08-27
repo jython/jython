@@ -48,7 +48,7 @@ jobs:
 
     - name: "openjdk11 on Windows"
       os: windows
-      language: shell  # Travis CI Windows does not yet support language: java
+      language: bash  # Travis CI Windows does not yet support language: java
       env:
         - echo $PATH
       before_install:
@@ -85,8 +85,8 @@ install:
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Disabled for now: only report environment
-    ant dump-env
-    dist/bin/jython -V
+    - ant dump-env
+    - dist/bin/jython -V
     # Fairly full regression test
-    #ant regrtest-travis
+    #- ant regrtest-travis
 
