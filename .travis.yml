@@ -12,15 +12,15 @@ addons:
 
   hostname: jyshort
 
-  
+
 jobs:
   include:
     - name: "openjdk8 on Linux"
       dist: xenial
       jdk: openjdk8
 
-    - name: "openjdk11 on Linux"
-      jdk: openjdk11
+    #- name: "openjdk11 on Linux"
+    #  jdk: openjdk11
 
     #- name: "openjdk13 on Linux"
     #  jdk: openjdk13
@@ -35,9 +35,9 @@ jobs:
           taps:
             # - AdoptOpenJDK/openjdk # for java
             # but see https://github.com/AdoptOpenJDK/homebrew-openjdk/issues/106
-            - homebrew/cask-versions # ant & jdk 8
-          casks:
-            - adoptopenjdk8
+            - homebrew/cask-versions # ant ##& jdk 8
+          #casks:
+          #  - adoptopenjdk8
           packages:
             - ant
       before_install:
@@ -50,19 +50,14 @@ jobs:
       os: windows
       language: bash  # Travis CI Windows does not yet support language: java
       env:
-        - echo $PATH
+        #- JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
+        #- ANT_HOME="/c/Users/travis/apache-ant"
+        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
       before_install:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK (must match JAVA_HOME in env: section)
         - choco install ojdkbuild11
         - choco install ant
-        # Confidence checks
-        - which java
-        - which javac
-        - which ant
-         #- JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
-        #- ANT_HOME="/c/Users/travis/apache-ant"
-        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
     #  language: python  # lint Python code for syntax errors and undefined names
@@ -77,9 +72,13 @@ jobs:
 # Install (i.e. build) Jython
 install:
   # Confirm versions and paths (this has been a problem)
+  - which java
+  - which javac
+  - which ant
   - echo $PATH
   - java -version
   - ant -version
+  # Build Jython
   - ant developer-build
 
 # Run the regression test (tweaked for Travis in build.xml)
