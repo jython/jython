@@ -46,26 +46,6 @@ jobs:
         - echo $JAVA_HOME
         - export PATH="$JAVA_HOME/bin:$PATH"
 
-    - name: "openjdk11 on macOS"
-      os: osx
-      osx_image: xcode11.6  # Supports homebrew bundle without update
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/
-      addons:
-        homebrew:
-          taps:
-            - AdoptOpenJDK/openjdk    # for java
-            - homebrew/cask-versions  # for ant
-          casks:
-            - adoptopenjdk11
-          packages:
-            - ant
-      before_install:
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v11)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
-
     - name: "openjdk11 on Windows"
       os: windows
       language: shell  # Travis CI Windows does not yet support language: java
