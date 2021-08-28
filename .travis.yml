@@ -38,11 +38,14 @@ jobs:
         homebrew:
           taps:
             - homebrew/cask-versions # for openjdk
-          casks:
-            - openjdk@8
           packages:
             - ant
+            - openjdk@8
       before_install:
+        # Probe the brew Cellar
+        - brew --prefix
+        - brew list ant
+        - brew list openjdk@8
         # Make available to the JDK switcher.
         # See: https://formulae.brew.sh/formula/openjdk@8
         - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
@@ -65,7 +68,7 @@ jobs:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK and ant
         - choco install openjdk11 ant
-        - cat /c/ProgramData/chocolatey/logs/chocolatey.log
+        - tail --lines=200 /c/ProgramData/chocolatey/logs/chocolatey.log
         - ls -l /c/ProgramData/chocolatey/lib/ant/tools
         - ls -l "/c/Program Files/OpenJDK"
         # Does this access the new path?
