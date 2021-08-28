@@ -37,7 +37,7 @@ jobs:
       addons:
         homebrew:
           taps:
-            - homebrew/cask-core # for openjdk
+            - homebrew/cask-versions # for openjdk
           casks:
             - openjdk@8
           packages:
@@ -57,22 +57,20 @@ jobs:
       os: windows
       language: bash  # Travis CI Windows does not yet support language: java
       env:
-        # Control installation locations (see also before_install: section)
-        - JAVA_HOME="/c/Users/travis/build/jdk"
-        - ANT_HOME="/c/Users/travis/build/ant"
-        - PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
+        # Installation locations? (see also before_install: section)
+        #- JAVA_HOME="/c/Users/travis/build/jdk"
+        #- ANT_HOME="/c/Users/travis/build/ant"
+        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
       before_install:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
-        # Install the required JDK (at variables in env: section)
-        - cygpath -w "$JAVA_HOME"
-        - java_home=$(cygpath -w "$JAVA_HOME")
-        - echo "$java_home"
-        - choco install openjdk11 -params "installdir=$(cygpath -w $JAVA_HOME)" -y
-        # Install the required Ant (at variables in env: section)
-        - cygpath -w $ANT_HOME
-        - ant_home=$(cygpath -w "$ANT_HOME")
-        - echo "$ant_home"
-        - choco install ant -params "installdir=$ant_home" -y
+        # Install the required JDK and ant
+        - choco install openjdk11 ant
+        - cat /c/ProgramData/chocolatey/logs/chocolatey.log
+        - ls -l /c/ProgramData/chocolatey/lib/ant/tools
+        - ls -l "/c/Program Files/OpenJDK"
+        # Does this access the new path?
+        - bash -c 'echo $JAVA_HOME'
+        - bash -c 'echo $PATH'
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
