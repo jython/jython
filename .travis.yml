@@ -15,29 +15,33 @@ addons:
 
 jobs:
   include:
+
     - name: "openjdk8 on Linux"
       dist: xenial
       jdk: openjdk8
 
+
     #- name: "openjdk11 on Linux"
     #  jdk: openjdk11
+
 
     #- name: "openjdk13 on Linux"
     #  jdk: openjdk13
 
-    - name: "openjdk8 on macOS"
+
+    - name: "java8 on macOS xcode11.6"
       os: osx
       osx_image: xcode11.6  # Supports homebrew bundle without needing update
       # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
       # https://docs.travis-ci.com/user/installing-dependencies/
       addons:
         homebrew:
+          # https://docs.travis-ci.com/user/installing-dependencies/#installing-from-taps
           taps:
-            # - AdoptOpenJDK/openjdk # for java
             # but see https://github.com/AdoptOpenJDK/homebrew-openjdk/issues/106
-            - homebrew/cask-versions # ant ##& jdk 8
-          #casks:
-          #  - adoptopenjdk8
+            - homebrew/cask-versions # ant & jdk 8
+          casks:
+            - java8
           packages:
             - ant
       before_install:
@@ -45,6 +49,28 @@ jobs:
         - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
         - echo $JAVA_HOME
         - export PATH="$JAVA_HOME/bin:$PATH"
+
+
+    - name: "openjdk8 on macOS xcode9.3"
+      os: osx
+      osx_image: xcode9.3  # Runs java 8 out of the box
+      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
+      # https://docs.travis-ci.com/user/installing-dependencies/
+      addons:
+        homebrew:
+          # https://docs.travis-ci.com/user/installing-dependencies/#installing-from-taps
+          taps:
+            - homebrew/cask-versions # ant
+          casks:
+            - adoptopenjdk8
+          packages:
+            - ant
+      before_install:
+        # Add the required JDK to the path
+        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
+        - echo $JAVA_HOME
+        - export PATH="$JAVA_HOME/bin:$PATH"
+
 
     - name: "openjdk11 on Windows"
       os: windows
@@ -59,6 +85,7 @@ jobs:
         - choco install ojdkbuild11
         - choco install ant
 
+
     #- name: "Lint Python 2 code for syntax errors and undefined names"
     #  language: python  # lint Python code for syntax errors and undefined names
     #  python: 2.7
@@ -72,9 +99,6 @@ jobs:
 # Install (i.e. build) Jython
 install:
   # Confirm versions and paths (this has been a problem)
-  - which java
-  - which javac
-  - which ant
   - echo $PATH
   - java -version
   - ant -version
