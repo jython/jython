@@ -16,9 +16,9 @@ addons:
 jobs:
   include:
 
-    - name: "openjdk8 on Linux"
-      dist: xenial
-      jdk: openjdk8
+    #- name: "openjdk8 on Linux"
+    #  dist: xenial
+    #  jdk: openjdk8
 
 
     #- name: "openjdk11 on Linux"
@@ -29,31 +29,32 @@ jobs:
     #  jdk: openjdk13
 
 
-    - name: "java8 on macOS xcode11.6"
+    - name: "openjdk@8 on macOS xcode11.6"
       os: osx
       osx_image: xcode11.6  # Supports homebrew bundle without needing update
       # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/
+      # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
       addons:
         homebrew:
-          # https://docs.travis-ci.com/user/installing-dependencies/#installing-from-taps
-          taps:
-            # but see https://github.com/AdoptOpenJDK/homebrew-openjdk/issues/106
-            - homebrew/cask-versions # ant & jdk 8
           casks:
-            - java8
+            - openjdk@8
           packages:
+            # Does this work without taps: homebrew/cask-versions
             - ant
       before_install:
+        # Make available to the JDK switcher.
+        # See: https://formulae.brew.sh/formula/openjdk@8
+        - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
+            /Library/Java/JavaVirtualMachines/openjdk-8.jdk
         # Add the required JDK to the path
         - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
         - echo $JAVA_HOME
         - export PATH="$JAVA_HOME/bin:$PATH"
 
 
-    - name: "openjdk8 on macOS xcode9.3"
+    - name: "default Java 8 on macOS xcode9.3"
       os: osx
-      osx_image: xcode9.3  # Runs java 8 out of the box
+      osx_image: xcode9.3  # Runs Java 8 out of the box
       # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
       # https://docs.travis-ci.com/user/installing-dependencies/
       addons:
@@ -61,8 +62,6 @@ jobs:
           # https://docs.travis-ci.com/user/installing-dependencies/#installing-from-taps
           taps:
             - homebrew/cask-versions # ant
-          casks:
-            - adoptopenjdk8
           packages:
             - ant
       before_install:
@@ -76,14 +75,24 @@ jobs:
       os: windows
       language: bash  # Travis CI Windows does not yet support language: java
       env:
-        #- JAVA_HOME="/c/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot"
-        #- ANT_HOME="/c/Users/travis/apache-ant"
-        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
+      # Control installation locations (see also before_install: section)
+        - JAVA_HOME="/c/Users/travis/build/jdk"
+        - ANT_HOME="/c/Users/travis/build/ant"
+        - PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
       before_install:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
-        # Install the required JDK (must match JAVA_HOME in env: section)
-        - choco install ojdkbuild11
-        - choco install ant
+        # Install the required JDK (at variables in env: section)
+        - cygpath -w "$JAVA_HOME"
+        - java_home=$(cygpath -w "$JAVA_HOME")
+        - echo "$java_home"
+        - choco install openjdk11 -params installdir="$(cygpath -w $JAVA_HOME)"
+        - java -version
+        # Install the required Ant (at variables in env: section)
+        - cygpath -w $ANT_HOME
+        - ant_home=$(cygpath -w "$ANT_HOME")
+        - echo "$ant_home"
+        - choco install ant -params installdir="$ant_home"
+        - ant -version
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
