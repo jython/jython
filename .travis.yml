@@ -36,10 +36,11 @@ jobs:
       # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
       addons:
         homebrew:
+          taps:
+            - homebrew/cask-core # for openjdk
           casks:
             - openjdk@8
           packages:
-            # Does this work without taps: homebrew/cask-versions
             - ant
       before_install:
         # Make available to the JDK switcher.
@@ -52,30 +53,11 @@ jobs:
         - export PATH="$JAVA_HOME/bin:$PATH"
 
 
-    - name: "default Java 8 on macOS xcode9.3"
-      os: osx
-      osx_image: xcode9.3  # Runs Java 8 out of the box
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/
-      addons:
-        homebrew:
-          # https://docs.travis-ci.com/user/installing-dependencies/#installing-from-taps
-          taps:
-            - homebrew/cask-versions # ant
-          packages:
-            - ant
-      before_install:
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
-
-
     - name: "openjdk11 on Windows"
       os: windows
       language: bash  # Travis CI Windows does not yet support language: java
       env:
-      # Control installation locations (see also before_install: section)
+        # Control installation locations (see also before_install: section)
         - JAVA_HOME="/c/Users/travis/build/jdk"
         - ANT_HOME="/c/Users/travis/build/ant"
         - PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
@@ -85,14 +67,12 @@ jobs:
         - cygpath -w "$JAVA_HOME"
         - java_home=$(cygpath -w "$JAVA_HOME")
         - echo "$java_home"
-        - choco install openjdk11 -params installdir="$(cygpath -w $JAVA_HOME)"
-        - java -version
+        - choco install openjdk11 -params "installdir=$(cygpath -w $JAVA_HOME)" -y
         # Install the required Ant (at variables in env: section)
         - cygpath -w $ANT_HOME
         - ant_home=$(cygpath -w "$ANT_HOME")
         - echo "$ant_home"
-        - choco install ant -params installdir="$ant_home"
-        - ant -version
+        - choco install ant -params "installdir=$ant_home" -y
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
@@ -105,20 +85,26 @@ jobs:
     - language: python
     - os: osx # remains flakey
 
+#
+# Common part to all hosts
+#
+
 # Install (i.e. build) Jython
 install:
-  # Confirm versions and paths (this has been a problem)
-  - echo $PATH
-  - java -version
-  - ant -version
-  # Build Jython
-  - ant developer-build
+    # Confirm versions and paths (this has been a problem)
+    - echo $PATH
+    - echo $JAVA_HOME
+    - java -version
+    - ant -version
+    # Build Jython
+    #- ant developer-build
+    #- dist/bin/jython -V
+
 
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Disabled for now: only report environment
     - ant dump-env
-    - dist/bin/jython -V
     # Fairly full regression test
     #- ant regrtest-travis
 
