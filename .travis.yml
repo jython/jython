@@ -58,34 +58,24 @@ jobs:
     - name: "openjdk11 on Windows"
       os: windows
       language: bash  # Travis CI Windows does not yet support language: java
-      env:
-        # Installation locations? (see also before_install: section)
-        #- JAVA_HOME="/c/Users/travis/build/jdk"
-        #- ANT_HOME="/c/Users/travis/build/ant"
-        #- PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
       before_install:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK and ant
         - choco install openjdk11 ant
-        # Only a new sub-shell knows where Chocolatey put Ant
-        - powershell -NonInteractive -Command  '[Environment]::GetEnvironmentVariable("PATH","Machine")'
-        - powershell -NonInteractive -Command  '[Environment]::GetEnvironmentVariable("PATH","User")'
-        - powershell -NonInteractive -Command  'ant -version'
-        - ant_exe=$(powershell -NonInteractive -Command  '(Get-Command ant).Path')
-        - echo $ant_exe
-        - echo ${ant_exe%\\*}
-        - export ANT_BIN=$(cygpath "${ant_exe%\\*}")
-        - echo $ANT_BIN
-        # Only a new sub-shell knows where Chocolatey put Java
-        - powershell -NonInteractive -Command  'java -version'
+        - ls -l /c/ProgramData/chocolatey/bin
+        # Chocolatey has updated the PATH, but only for a new powershell
+        # Dig out the path and translate it to Unix
+        - posh_path=$(powershell -NonInteractive -Command
+            'write($env:PATH.replace("\","/").replace("C:","/c").replace(";",":"))')
+        - echo $posh_path
+        - export PATH="$posh_path"
+        # Can we get JAVA_HOME this way too?
         - powershell -NonInteractive -Command  'Get-Command java'
         - java_exe=$(powershell -NonInteractive -Command  '(Get-Command java).Path')
         - echo $java_exe
         - echo ${java_exe%\\bin\\*}
         - export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
         - echo $JAVA_HOME
-        # Now stitch together the path
-        - export PATH="$JAVA_HOME"/bin:"$ANT_BIN":"$PATH"
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
