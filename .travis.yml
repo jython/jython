@@ -44,7 +44,6 @@ jobs:
       before_install:
         # Probe the brew Cellar
         - brew --prefix
-        - brew list ant
         - brew list openjdk@8
         # Make available to the JDK switcher.
         # See: https://formulae.brew.sh/formula/openjdk@8
@@ -69,19 +68,19 @@ jobs:
         # Install the required JDK and ant
         - choco install openjdk11 ant
         # Only a new sub-shell knows where Chocolatey put Ant
-        ant_exe=$(powershell -c '(Get-Command ant).Path')
-        echo $ant_exe
-        echo ${ant_exe%\\*}
-        export ANT_BIN=$(cygpath "${ant_exe%\\*}")
-        echo $ANT_BIN
+        - ant_exe=$(powershell -c '(Get-Command ant).Path')
+        - echo $ant_exe
+        - echo ${ant_exe%\\*}
+        - export ANT_BIN=$(cygpath "${ant_exe%\\*}")
+        - echo $ANT_BIN
         # Only a new sub-shell knows where Chocolatey put Java
-        java_exe=$(powershell -c '(Get-Command java).Path')
-        echo $java_exe
-        echo ${java_exe%\\bin\\*}
-        export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
-        echo $JAVA_HOME
+        - java_exe=$(powershell -c '(Get-Command java).Path')
+        - echo $java_exe
+        - echo ${java_exe%\\bin\\*}
+        - export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
+        - echo $JAVA_HOME
         # Now stitch together the path
-        export PATH="$JAVA_HOME"/bin:"$ANT_BIN":"$PATH"
+        - export PATH="$JAVA_HOME"/bin:"$ANT_BIN":"$PATH"
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
