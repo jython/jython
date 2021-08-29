@@ -62,7 +62,6 @@ jobs:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK and ant
         - choco install openjdk11 ant
-        - ls -l /c/ProgramData/chocolatey/bin
         # Chocolatey has updated the PATH, but only in powershell [Environment]
         # Dig out the path from [Environment] and translate it to Unix
         - posh_path=$(powershell -NonInteractive -Command
@@ -72,8 +71,22 @@ jobs:
         - echo $posh_path
         #- export PATH="$posh_path"
         # Can we get JAVA_HOME this way too?
-        - powershell -NonInteractive -Command  'RefreshEnv; Get-Command java'
-        - java_exe=$(powershell -NonInteractive -Command 'RefreshEnv; write((Get-Command java).Path)')
+        - powershell -NonInteractive -Command
+            '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
+            write((Get-Command java).Path)'
+        - java_exe=$(PATH=$posh_path powershell -NonInteractive -Command
+            '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
+            write((Get-Command java).Path)')
+        - echo $java_exe
+        - java_exe=$(cygpath "$java_exe")
+        - echo $java_exe
+        - echo ${java_exe%/bin/*}
+        - export JAVA_HOME="${java_exe%/bin/*}"
+        - echo $JAVA_HOME
+        - export PATH="$JAVA_HOME/bin:$PATH"
+        # Another way to get JAVA_HOME
+        - PATH=$posh_path powershell -NonInteractive -Command  'Get-Command java'
+        - java_exe=$(PATH=$posh_path powershell -NonInteractive -Command 'write((Get-Command java).Path)')
         - echo $java_exe
         - java_exe=$(cygpath "$java_exe")
         - echo $java_exe
