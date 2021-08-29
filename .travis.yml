@@ -72,8 +72,8 @@ jobs:
         - echo $posh_path
         #- export PATH="$posh_path"
         # Can we get JAVA_HOME this way too?
-        - powershell -NonInteractive -Command  'Get-Command java'
-        - java_exe=$(powershell -NonInteractive -Command  'RefreshEnv; write((Get-Command java).Path)')
+        - powershell -NonInteractive -Command  'RefreshEnv; Get-Command java'
+        - java_exe=$(powershell -NonInteractive -Command 'RefreshEnv; write((Get-Command java).Path)')
         - echo $java_exe
         - java_exe=$(cygpath "$java_exe")
         - echo $java_exe
