@@ -67,8 +67,8 @@ jobs:
         # Dig out the path from [Environment] and translate it to Unix
         - posh_path=$(powershell -NonInteractive -Command
             'write(([Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
-                    [Environment]::GetEnvironmentVariable("PATH","User"))
-                .replace("\","/").replace("C:","/c").replace(";",":"))')
+                    [Environment]::GetEnvironmentVariable("PATH","User")
+                ).replace("\","/").replace("C:","/c").replace(";",":"))')
         - echo $posh_path
         - export PATH="$posh_path"
         # Can we get JAVA_HOME this way too?
