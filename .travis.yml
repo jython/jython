@@ -63,10 +63,12 @@ jobs:
         # Install the required JDK and ant
         - choco install openjdk11 ant
         - ls -l /c/ProgramData/chocolatey/bin
-        # Chocolatey has updated the PATH, but only for a new powershell
-        # Dig out the path and translate it to Unix
+        # Chocolatey has updated the PATH, but only in powershell [Environment]
+        # Dig out the path from [Environment] and translate it to Unix
         - posh_path=$(powershell -NonInteractive -Command
-            'write($env:PATH.replace("\","/").replace("C:","/c").replace(";",":"))')
+            'write(([Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
+                    [Environment]::GetEnvironmentVariable("PATH","User"))
+                .replace("\","/").replace("C:","/c").replace(";",":"))')
         - echo $posh_path
         - export PATH="$posh_path"
         # Can we get JAVA_HOME this way too?
