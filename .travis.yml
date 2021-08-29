@@ -68,12 +68,20 @@ jobs:
         - pwd # /c/Users/travis/build/<github-user>/<repo-name>
         # Install the required JDK and ant
         - choco install openjdk11 ant
-        - tail --lines=200 /c/ProgramData/chocolatey/logs/chocolatey.log
-        - ls -l /c/ProgramData/chocolatey/lib/ant/tools
-        - ls -l "/c/Program Files/OpenJDK"
-        # Does this access the new path?
-        - bash -c 'echo $JAVA_HOME'
-        - bash -c 'echo $PATH'
+        # Only a new sub-shell knows where Chocolatey put Ant
+        ant_exe=$(powershell -c '(Get-Command ant).Path')
+        echo $ant_exe
+        echo ${ant_exe%\\*}
+        export ANT_BIN=$(cygpath "${ant_exe%\\*}")
+        echo $ANT_BIN
+        # Only a new sub-shell knows where Chocolatey put Java
+        java_exe=$(powershell -c '(Get-Command java).Path')
+        echo $java_exe
+        echo ${java_exe%\\bin\\*}
+        export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
+        echo $JAVA_HOME
+        # Now stitch together the path
+        export PATH="$JAVA_HOME"/bin:"$ANT_BIN":"$PATH"
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
