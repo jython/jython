@@ -29,30 +29,30 @@ jobs:
     #  jdk: openjdk13
 
 
-    - name: "openjdk@8 on macOS xcode11.6"
-      os: osx
-      osx_image: xcode11.6  # Supports homebrew bundle without needing update
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
-      addons:
-        homebrew:
-          taps:
-            - homebrew/cask-versions # for openjdk
-          packages:
-            - ant
-            - openjdk@8
-      before_install:
-        # Probe the brew Cellar
-        - brew --prefix
-        - brew list openjdk@8
-        # Make available to the JDK switcher.
-        # See: https://formulae.brew.sh/formula/openjdk@8
-        - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
-            /Library/Java/JavaVirtualMachines/openjdk-8.jdk
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
+    #- name: "openjdk@8 on macOS xcode11.6"
+    #  os: osx
+    #  osx_image: xcode11.6  # Supports homebrew bundle without needing update
+    #  # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
+    #  # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
+    #  addons:
+    #    homebrew:
+    #      taps:
+    #        - homebrew/cask-versions # for openjdk
+    #      packages:
+    #        - ant
+    #        - openjdk@8
+    #  before_install:
+    #    # Probe the brew Cellar
+    #    - brew --prefix
+    #    - brew list openjdk@8
+    #    # Make available to the JDK switcher.
+    #    # See: https://formulae.brew.sh/formula/openjdk@8
+    #    - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
+    #        /Library/Java/JavaVirtualMachines/openjdk-8.jdk
+    #    # Add the required JDK to the path
+    #    - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
+    #    - echo $JAVA_HOME
+    #    - export PATH="$JAVA_HOME/bin:$PATH"
 
 
     - name: "openjdk11 on Windows"
@@ -68,13 +68,18 @@ jobs:
         # Install the required JDK and ant
         - choco install openjdk11 ant
         # Only a new sub-shell knows where Chocolatey put Ant
-        - ant_exe=$(powershell -c '(Get-Command ant).Path')
+        - powershell -NonInteractive -Command  '[Environment]::GetEnvironmentVariable("PATH","Machine")'
+        - powershell -NonInteractive -Command  '[Environment]::GetEnvironmentVariable("PATH","User")'
+        - powershell -NonInteractive -Command  'ant -version'
+        - ant_exe=$(powershell -NonInteractive -Command  '(Get-Command ant).Path')
         - echo $ant_exe
         - echo ${ant_exe%\\*}
         - export ANT_BIN=$(cygpath "${ant_exe%\\*}")
         - echo $ANT_BIN
         # Only a new sub-shell knows where Chocolatey put Java
-        - java_exe=$(powershell -c '(Get-Command java).Path')
+        - powershell -NonInteractive -Command  'java -version'
+        - powershell -NonInteractive -Command  'Get-Command java'
+        - java_exe=$(powershell -NonInteractive -Command  '(Get-Command java).Path')
         - echo $java_exe
         - echo ${java_exe%\\bin\\*}
         - export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
