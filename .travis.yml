@@ -70,14 +70,17 @@ jobs:
                     [Environment]::GetEnvironmentVariable("PATH","User")
                 ).replace("\","/").replace("C:","/c").replace(";",":"))')
         - echo $posh_path
-        - export PATH="$posh_path"
+        #- export PATH="$posh_path"
         # Can we get JAVA_HOME this way too?
         - powershell -NonInteractive -Command  'Get-Command java'
-        - java_exe=$(powershell -NonInteractive -Command  '(Get-Command java).Path')
+        - java_exe=$(powershell -NonInteractive -Command  'RefreshEnv; write((Get-Command java).Path)')
         - echo $java_exe
-        - echo ${java_exe%\\bin\\*}
-        - export JAVA_HOME=$(cygpath "${java_exe%\\bin\\*}")
+        - java_exe=$(cygpath "$java_exe")
+        - echo $java_exe
+        - echo ${java_exe%/bin/*}
+        - export JAVA_HOME="${java_exe%/bin/*}"
         - echo $JAVA_HOME
+        - export PATH="$JAVA_HOME/bin:$PATH"
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
