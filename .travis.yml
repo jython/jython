@@ -35,13 +35,13 @@ jobs:
       # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
       addons:
         homebrew:
-          update: false
           taps:
             - homebrew/cask-versions # for openjdk
           packages:
             - ant
             - openjdk@8
       before_install:
+        - export HOMEBREW_NO_AUTO_UPDATE=1
         # Probe the brew Cellar
         - brew list openjdk@8
         # Make available to the JDK switcher.
