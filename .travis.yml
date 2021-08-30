@@ -5,10 +5,11 @@ os: linux
 dist: focal
 language: java
 
-# Put these up front in the hope of getting before addons.homebrew
-before_install:
-  - export HOMEBREW_NO_AUTO_UPDATE=1
-  - export HOMEBREW_NO_INSTALL_CLEANUP=1
+# Put these in env global in the hope of getting before addons.homebrew
+env:
+  global:
+    - HOMEBREW_NO_AUTO_UPDATE=1
+    - HOMEBREW_NO_INSTALL_CLEANUP=1
 
 
 addons:
@@ -106,13 +107,14 @@ install:
     - java -version
     - ant -version
     # Build Jython
-    #- ant developer-build
+    - ant developer-build
 
 
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Disabled for now: only report version (includes Java version)
-    #- ant -emacs versions
+    - ant -emacs versions
+    #- ant dump-env
     # Fairly full regression test
     #- ant regrtest-travis
 
