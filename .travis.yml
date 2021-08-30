@@ -29,29 +29,30 @@ jobs:
     #  jdk: openjdk13
 
 
-    - name: "openjdk@8 on macOS xcode11.6"
-      os: osx
-      osx_image: xcode11.6  # Supports homebrew bundle without needing update
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
-      addons:
-        homebrew:
-          taps:
-            - homebrew/cask-versions # for openjdk
-          packages:
-            - ant
-            - openjdk@8
-      before_install:
-        # Probe the brew Cellar
-        - brew list openjdk@8
-        # Make available to the JDK switcher.
-        # See: https://formulae.brew.sh/formula/openjdk@8
-        - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
-            /Library/Java/JavaVirtualMachines/openjdk-8.jdk
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
+    ## OSX disabled because it is expensive (and currently fails anyway)
+    #- name: "openjdk@8 on macOS xcode11.6"
+    #  os: osx
+    #  osx_image: xcode11.6  # Supports homebrew bundle without needing update
+    #  # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
+    #  # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
+    #  addons:
+    #    homebrew:
+    #      taps:
+    #        - homebrew/cask-versions # for openjdk
+    #      packages:
+    #        - ant
+    #        - openjdk@8
+    #  before_install:
+    #    # Probe the brew Cellar
+    #    - brew list openjdk@8
+    #    # Make available to the JDK switcher.
+    #    # See: https://formulae.brew.sh/formula/openjdk@8
+    #    - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
+    #        /Library/Java/JavaVirtualMachines/openjdk-8.jdk
+    #    # Add the required JDK to the path
+    #    - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
+    #    - echo $JAVA_HOME
+    #    - export PATH="$JAVA_HOME/bin:$PATH"
 
 
     - name: "openjdk11 on Windows"
@@ -106,7 +107,7 @@ install:
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Disabled for now: only report version (includes Java version)
-    - dist/bin/jython -V
+    - ant -emacs versions
     # Fairly full regression test
     #- ant regrtest-travis
 
