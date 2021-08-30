@@ -5,6 +5,12 @@ os: linux
 dist: focal
 language: java
 
+# Put these up front in the hope of getting before addons.homebrew
+before_install:
+  - export HOMEBREW_NO_AUTO_UPDATE=1
+  - export HOMEBREW_NO_INSTALL_CLEANUP=1
+
+
 addons:
   apt:  # only active on Linux
     packages:
@@ -16,13 +22,14 @@ addons:
 jobs:
   include:
 
-    - name: "openjdk8 on Linux"
-      dist: xenial
-      jdk: openjdk8
+    # Disable everything but the OSX build
+    #- name: "openjdk8 on Linux"
+    #  dist: xenial
+    #  jdk: openjdk8
 
 
-    - name: "openjdk11 on Linux"
-      jdk: openjdk11
+    #- name: "openjdk11 on Linux"
+    #  jdk: openjdk11
 
 
     #- name: "openjdk13 on Linux"
@@ -41,7 +48,6 @@ jobs:
             - ant
             - openjdk@8
       before_install:
-        - export HOMEBREW_NO_AUTO_UPDATE=1
         # Probe the brew Cellar
         - brew list openjdk@8
         # Make available to the JDK switcher.
@@ -54,27 +60,27 @@ jobs:
         - export PATH="$JAVA_HOME/bin:$PATH"
 
 
-    - name: "openjdk11 on Windows"
-      os: windows
-      language: bash  # Travis CI Windows does not yet support language: java
+    #- name: "openjdk11 on Windows"
+    #  os: windows
+    #  language: bash  # Travis CI Windows does not yet support language: java
 
-      before_install:
-        - pwd # /c/Users/travis/build/<github-user>/<repo-name>
-        # Install the required JDK and ant
-        - choco install openjdk11 ant
+    #  before_install:
+    #    - pwd # /c/Users/travis/build/<github-user>/<repo-name>
+    #    # Install the required JDK and ant
+    #    - choco install openjdk11 ant
 
-        # Ant is installed on the (bash) PATH at /c/ProgramData/chocolatey/bin.
-        # Java is at /c/Program Files/OpenJDK/openjdk-<version-patch>/bin which is liable to change.
-        # Chocolatey has updated the PATH for Java, but only in powershell [Environment].
-        # Dig out the Java path from [Environment] and translate it to Unix.
-        - java_exe=$(powershell -NonInteractive -Command
-            '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
-                write((Get-Command java).Path)')
-        - java_exe=$(cygpath "$java_exe")
-        - echo $java_exe
-        - export JAVA_HOME="${java_exe%/bin/*}"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
+    #    # Ant is installed on the (bash) PATH at /c/ProgramData/chocolatey/bin.
+    #    # Java is at /c/Program Files/OpenJDK/openjdk-<version-patch>/bin which is liable to change.
+    #    # Chocolatey has updated the PATH for Java, but only in powershell [Environment].
+    #    # Dig out the Java path from [Environment] and translate it to Unix.
+    #    - java_exe=$(powershell -NonInteractive -Command
+    #        '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
+    #            write((Get-Command java).Path)')
+    #    - java_exe=$(cygpath "$java_exe")
+    #    - echo $java_exe
+    #    - export JAVA_HOME="${java_exe%/bin/*}"
+    #    - echo $JAVA_HOME
+    #    - export PATH="$JAVA_HOME/bin:$PATH"
 
 
     #- name: "Lint Python 2 code for syntax errors and undefined names"
@@ -100,13 +106,13 @@ install:
     - java -version
     - ant -version
     # Build Jython
-    - ant developer-build
+    #- ant developer-build
 
 
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Disabled for now: only report version (includes Java version)
-    - ant -emacs versions
+    #- ant -emacs versions
     # Fairly full regression test
     #- ant regrtest-travis
 
