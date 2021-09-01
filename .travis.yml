@@ -1,15 +1,11 @@
-# https://docs.travis-ci.com/user/languages/java/
-# https://docs.travis-ci.com/user/reference/osx/
-# https://docs.travis-ci.com/user/reference/windows/
+# Build and run regression tests at Travis CI
+#
+# Sections of this are commented out principally for economy in running the tests.
+# Runs are about 20 minutes on each host.
+#
 os: linux
 dist: focal
 language: java
-
-# Put these in env global in the hope of getting before addons.homebrew
-env:
-  global:
-    - HOMEBREW_NO_AUTO_UPDATE=1
-    - HOMEBREW_NO_INSTALL_CLEANUP=1
 
 
 addons:
@@ -23,72 +19,60 @@ addons:
 jobs:
   include:
 
-    # Disable everything but the OSX build
-    #- name: "openjdk8 on Linux"
-    #  dist: xenial
-    #  jdk: openjdk8
+    - name: "openjdk8 on Linux"
+      dist: xenial
+      jdk: openjdk8
 
 
-    #- name: "openjdk11 on Linux"
-    #  jdk: openjdk11
+    - name: "openjdk11 on Linux"
+      jdk: openjdk11
 
 
-    #- name: "openjdk13 on Linux"
-    #  jdk: openjdk13
-
-    - name: "openjdk@8 on macOS xcode11.6"
-      os: osx
-      osx_image: xcode11.6  # Supports homebrew bundle without needing update
-      # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/26
-      # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
-      addons:
-        homebrew:
-          taps:
-            - homebrew/cask-versions # for openjdk
-          packages:
-            - ant
-            - openjdk@8
-      before_install:
-        # Probe the brew Cellar
-        - brew list openjdk@8
-        # Make available to the JDK switcher.
-        # See: https://formulae.brew.sh/formula/openjdk@8
-        - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
-            /Library/Java/JavaVirtualMachines/openjdk-8.jdk
-        # Add the required JDK to the path
-        - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
-        - echo $JAVA_HOME
-        - export PATH="$JAVA_HOME/bin:$PATH"
-
-
-    #- name: "openjdk11 on Windows"
-    #  os: windows
-    #  language: bash  # Travis CI Windows does not yet support language: java
-
+    ####
+    # OSX disabled because the homebrew installation of Java 8 takes nearly 20 minutes.
+    # (It seems impossible to stop it doing a "brew update".)
+    ####
+    #- name: "openjdk@8 on macOS xcode11.6"
+    #  os: osx
+    #  osx_image: xcode11.6  # Supports homebrew bundle without needing update
+    #  # https://docs.travis-ci.com/user/installing-dependencies/#installing-packages-on-macos
+    #  addons:
+    #    homebrew:
+    #      taps:
+    #        - homebrew/cask-versions # for openjdk
+    #      packages:
+    #        - ant
+    #        - openjdk@8
     #  before_install:
-    #    - pwd # /c/Users/travis/build/<github-user>/<repo-name>
-    #    # Install the required JDK and ant
-    #    - choco install openjdk11 ant
-
-    #    # Ant is installed on the (bash) PATH at /c/ProgramData/chocolatey/bin.
-    #    # Java is at /c/Program Files/OpenJDK/openjdk-<version-patch>/bin which is liable to change.
-    #    # Chocolatey has updated the PATH for Java, but only in powershell [Environment].
-    #    # Dig out the Java path from [Environment] and translate it to Unix.
-    #    - java_exe=$(powershell -NonInteractive -Command
-    #        '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
-    #            write((Get-Command java).Path)')
-    #    - java_exe=$(cygpath "$java_exe")
-    #    - echo $java_exe
-    #    - export JAVA_HOME="${java_exe%/bin/*}"
+    #    # Probe the brew Cellar
+    #    - brew list openjdk@8
+    #    # Make available to the JDK switcher.
+    #    - sudo ln -sfn $(brew --prefix)/opt/openjdk@8/libexec/openjdk.jdk
+    #        /Library/Java/JavaVirtualMachines/openjdk-8.jdk
+    #    # Add the required JDK to the path
+    #    - export JAVA_HOME="$(/usr/libexec/java_home -v1.8)"
     #    - echo $JAVA_HOME
     #    - export PATH="$JAVA_HOME/bin:$PATH"
 
 
-    #- name: "Lint Python 2 code for syntax errors and undefined names"
-    #  language: python  # lint Python code for syntax errors and undefined names
-    #  python: 2.7
-    #  install: pip install flake8
-    #  script: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    - name: "openjdk11 on Windows"
+      os: windows
+      language: bash  # Travis CI Windows does not yet support language: java
+
+      before_install:
+        # Install the required JDK and ant
+        - choco install openjdk11 ant
+        # Java is at /c/Program Files/OpenJDK/openjdk-<version-patch>/bin which is liable to change.
+        # Chocolatey has updated the PATH with that, but only in powershell [Environment].
+        # Dig out the Java path from [Environment] and translate it to Unix.
+        - java_exe=$(powershell -NonInteractive -Command
+            '$env:PATH=[Environment]::GetEnvironmentVariable("PATH","Machine");
+                write((Get-Command java).Path)')
+        - java_exe=$(cygpath "$java_exe")
+        - echo $java_exe
+        - export JAVA_HOME="${java_exe%/bin/*}"
+        - export PATH="$JAVA_HOME/bin:$PATH"
+
 
   allow_failures:
     - language: python
@@ -104,7 +88,6 @@ install:
     # Confirm versions and paths (this has been a problem)
     - echo $PATH
     - echo $JAVA_HOME
-    - java -version
     - ant -version
     # Build Jython
     - ant developer-build
@@ -112,9 +95,8 @@ install:
 
 # Run the regression test (tweaked for Travis in build.xml)
 script:
-    # Disabled for now: only report version (includes Java version)
+    # Echo versions of Jython, Java and OS
     - ant -emacs versions
-    #- ant dump-env
     # Fairly full regression test
     #- ant regrtest-travis
 
