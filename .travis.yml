@@ -96,7 +96,7 @@ install:
 # Run the regression test (tweaked for Travis in build.xml)
 script:
     # Echo versions of Jython, Java and OS
-    - ant -emacs versions
+    #- ant -emacs versions
     # Fairly full regression test
-    #- ant regrtest-travis
+    - ant regrtest-travis
 
