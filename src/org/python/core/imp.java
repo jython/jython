@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -875,8 +876,8 @@ public class imp {
 
                 // Check the directory name is ok according to case-matching option and platform.
                 if (caseok(dir, name)) {
-                    haveSource = sourceFile.isFile();
-                    haveCompiled = compiledFile.isFile();
+                    haveSource = sourceFile.isFile() && Files.isReadable(sourceFile.toPath());
+                    haveCompiled = compiledFile.isFile() && Files.isReadable(compiledFile.toPath());
                 }
 
                 if (haveSource || haveCompiled) {
@@ -907,9 +908,9 @@ public class imp {
                 compiledFile = new File(dirName, compiledName); // location/name$py.class
                 displayCompiledName = new File(displayLocation, compiledName).getPath();
 
-                // Check file names exist and ok according to case-matching option and platform.
-                haveSource = sourceFile.isFile() && caseok(sourceFile, sourceName);
-                haveCompiled = compiledFile.isFile() && caseok(compiledFile, compiledName);
+                // Check file names exist (and readable) and ok according to case-matching option and platform.
+                haveSource = sourceFile.isFile() && caseok(sourceFile, sourceName) && Files.isReadable(sourceFile.toPath());
+                haveCompiled = compiledFile.isFile() && caseok(compiledFile, compiledName) && Files.isReadable(compiledFile.toPath());
             }
 
             /*
