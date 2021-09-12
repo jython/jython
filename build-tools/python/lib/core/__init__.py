@@ -8,7 +8,7 @@
 # and their methods.
 
 from .base import ImplementationGenerator, TypeInfo, WorkingType, OpInfo
-#from .PyFloat import PyFloatGenerator
+from .PyFloat import PyFloatGenerator
 from .PyLong import PyLongGenerator
 #from .PyUnicode import PyUnicodeGenerator
 

@@ -20,7 +20,7 @@ from contextlib import closing
 from dataclasses import dataclass
 
 from core import ImplementationGenerator
-#from core import PyFloatGenerator
+from core import PyFloatGenerator
 from core import PyLongGenerator
 #from core import PyUnicodeGenerator
 

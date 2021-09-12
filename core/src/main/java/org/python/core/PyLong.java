@@ -384,6 +384,20 @@ public class PyLong extends AbstractPyObject {
             throw Abstract.requiredTypeError("an integer", value);
     }
 
+    /**
+     * Create a Python {@code int} from a Java {@code double}.
+     *
+     * @param value to convert
+     * @return BigInteger equivalent.
+     * @throws OverflowError when {@code value} is a floating infinity
+     * @throws ValueError when {@code value} is a floating NaN
+     */
+    // Compare CPython longobject.c :: PyLong_FromDouble
+    static BigInteger fromDouble(double value) {
+        // XXX Maybe return Object and Integer if possible
+        return PyFloat.bigIntegerFromDouble(value);
+    }
+
     // ----------------------------------------------------------------
 
     public long getLong(long min, long max) throws OverflowError {
@@ -443,7 +457,7 @@ public class PyLong extends AbstractPyObject {
         return asBigInteger(self).toString();
     }
 
-    // __str__: let object.__str__ handle it (calls __repr__)
+    // __str__: let object.__str__ handle it (by calling __repr__)
 
     // Methods --------------------------------------------------------
     // Expose to Python when mechanisms are available
@@ -492,8 +506,8 @@ public class PyLong extends AbstractPyObject {
     // @ExposedMethod(doc = BuiltinDocs.long___format___doc)
     static Object __format__(Object self, Object formatSpec) {
         try {
-            // Parse the specification, which must at least sub-class str in
-            // Python
+            /* Parse the specification, which must at least sub-class str in
+            * Python.*/
             if (!PyUnicode.TYPE.check(formatSpec)) {
                 throw Abstract.argumentTypeError("__format__", 0, "str", formatSpec);
             }
@@ -531,6 +545,7 @@ public class PyLong extends AbstractPyObject {
              * Return a result that has the same type (str or unicode) as the
              * formatSpec argument.
              */
+            // XXX For Jython 3: re-think the way we choose str/bytes returns
             return f.pad().getResult();
 
         } catch (FormatOverflow fe) {

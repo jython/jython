@@ -96,5 +96,24 @@ class ImplementationGenerator:
     def emit_object_plumbing(self, e):
         pass
 
+    def left_justify(self, text):
+        "Left-justify a block of text, returning a list of lines."
+        lines = list()
+        # Find common leading indent
+        common = 999
+        for line in text.splitlines():
+            # Discard trailing space
+            line = line.rstrip()
+            # Discard empty lines
+            if (n:=len(line)) > 0:
+                space = n - len(line.lstrip())
+                if space < common: common = space
+                lines.append(line)
+        if common == 999: common = 0
+        # Remove this common prefix
+        clean = list()
+        for line in lines:
+            clean.append(line[common:])
+        return clean
 
 
