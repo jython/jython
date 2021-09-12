@@ -101,8 +101,8 @@ class UnitTestSupport {
     static double toDouble(Object v) {
         if (v instanceof Double)
             return ((Double)v).doubleValue();
-        // else if (v instanceof PyFloat)
-        // return ((PyFloat) v).value;
+        else if (v instanceof PyFloat)
+            return ((PyFloat)v).value;
         else if (v instanceof Integer)
             return ((Integer)v).intValue();
         else if (v instanceof BigInteger)
@@ -112,7 +112,32 @@ class UnitTestSupport {
         else if (v instanceof Boolean)
             return (Boolean)v ? 1. : 0.;
 
-        throw new IllegalArgumentException(String.format("cannot convert '%s' to double", v));
+        throw new IllegalArgumentException(
+                String.format("cannot convert '%s' to double", v));
+    }
+
+    /**
+     * Force creation of an actual {@link PyFloat}
+     *
+     * @return from this value.
+     */
+    static PyFloat newPyFloat(double value) {
+        return new PyFloat.Derived(PyFloat.TYPE, value);
+    }
+
+    /**
+     * Force creation of an actual {@link PyFloat} from Object
+     *
+     * @return from this value.
+     */
+    static PyFloat newPyFloat(Object value) {
+        double vv = 0.0;
+        try {
+            vv = toDouble(value);
+        } catch (Throwable e) {
+            fail("Failed to create a PyFloat");
+        }
+        return newPyFloat(toDouble(vv));
     }
 
     /**

@@ -2,8 +2,10 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -109,6 +111,39 @@ class BinarySlotWrapperTest extends UnitTestSupport {
                 assertSame(PyLong.TYPE.lookup(NAME), descr);
             }
         }
+
+        @Nested
+        @DisplayName("of 'float' objects")
+        class OfFloat extends BinaryTest<Object, Object> {
+
+            @Override
+            Object expected(Object s, Object o) {
+                try {
+                    return PyFloat.asDouble(s) - PyFloat.asDouble(o);
+                } catch (Throwable e) {
+                    return fail("unconvertible");
+                }
+            }
+
+            @Override
+            void check(Object exp, Object r) throws Throwable {
+                checkFloat(exp, r);
+            }
+
+            @BeforeEach
+            void setup() throws AttributeError, Throwable {
+                Integer iw = 8;
+                Double dv = 50.0, dw = iw.doubleValue();
+
+                // self argument must be a float
+                List<Object> vList = List.of(dv, newPyFloat(dv));
+                // other argument accepts float, int, bool
+                List<Object> wList = List.of(dw, newPyFloat(dw), iw,
+                        BigInteger.valueOf(iw), newPyLong(iw), false,
+                        true);
+                super.setup(PyFloat.TYPE, NAME, vList, wList);
+            }
+        }
     }
 
     @Nested
@@ -172,6 +207,39 @@ class BinarySlotWrapperTest extends UnitTestSupport {
                 super.has_expected_fields();
                 // The descriptor should be *exactly* that from int
                 assertSame(PyLong.TYPE.lookup(NAME), descr);
+            }
+        }
+
+        @Nested
+        @DisplayName("of 'float' objects")
+        class OfFloat extends BinaryTest<Object, Object> {
+
+            @Override
+            Object expected(Object s, Object o) {
+                try {
+                    return PyFloat.asDouble(o) - PyFloat.asDouble(s);
+                } catch (Throwable e) {
+                    return fail("unconvertible");
+                }
+            }
+
+            @Override
+            void check(Object exp, Object r) throws Throwable {
+                checkFloat(exp, r);
+            }
+
+            @BeforeEach
+            void setup() throws AttributeError, Throwable {
+                Integer iw = 5000;
+                Double dv = 800.0, dw = iw.doubleValue();
+
+                // self argument must be a float
+                List<Object> vList = List.of(dv, newPyFloat(dv));
+                // other argument accepts float, int, bool
+                List<Object> wList = List.of(dw, newPyFloat(dw), iw,
+                        BigInteger.valueOf(iw), newPyLong(iw), false,
+                        true);
+                super.setup(PyFloat.TYPE, NAME, vList, wList);
             }
         }
     }

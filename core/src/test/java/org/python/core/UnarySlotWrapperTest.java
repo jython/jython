@@ -86,6 +86,30 @@ class UnarySlotWrapperTest extends UnitTestSupport {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
             }
         }
+
+        @Nested
+        @DisplayName("of 'float' objects")
+        class OfFloat extends UnaryTest<Object, Object> {
+
+            private double exp;
+
+            @Override
+            Object expected(Object x) { return exp; }
+
+            @Override
+            void check(Object exp, Object r) throws Throwable {
+                checkFloat(exp, r);
+            }
+
+            @BeforeEach
+            void setup() throws AttributeError, Throwable {
+                // Invoke for Double, PyFloat
+                double dx = 42.0;
+                exp = -dx;
+                super.setup(PyFloat.TYPE, NAME,
+                        List.of(dx, newPyFloat(dx)));
+            }
+        }
     }
 
     @Nested
@@ -125,6 +149,30 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
+            }
+        }
+
+        @Nested
+        @DisplayName("of 'float' objects")
+        class OfFloat extends UnaryTest<String, Object> {
+
+            private String exp;
+
+            @Override
+            String expected(Object x) { return exp; }
+
+            @Override
+            void check(String exp, Object r) throws Throwable {
+                checkStr(exp, r);
+            }
+
+            @BeforeEach
+            void setup() throws AttributeError, Throwable {
+                // Invoke for Double, PyFloat
+                double dx = 42.0;
+                exp = "42.0";
+                super.setup(PyFloat.TYPE, NAME,
+                        List.of(dx, newPyFloat(dx)));
             }
         }
     }
@@ -167,6 +215,31 @@ class UnarySlotWrapperTest extends UnitTestSupport {
             @BeforeEach
             void setup() throws AttributeError, Throwable {
                 super.setup(PyBool.TYPE, NAME, List.of(false, true));
+            }
+        }
+
+        // XXX Disabled until float.__hash__ implemented
+        // @Nested
+        @DisplayName("of 'float' objects")
+        class OfFloat extends LenTest<Integer, Object> {
+
+            private Integer exp;
+
+            @Override
+            Integer expected(Object x) { return exp; }
+
+            @Override
+            void check(Integer exp, Object r) throws Throwable {
+                checkInt(exp, r);
+            }
+
+            @BeforeEach
+            void setup() throws AttributeError, Throwable {
+                // Invoke for Double, PyFloat
+                double dx = 42.0;
+                exp = 42; // since equal in Python
+                super.setup(PyFloat.TYPE, NAME,
+                        List.of(dx, newPyFloat(dx)));
             }
         }
     }

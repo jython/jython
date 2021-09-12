@@ -119,6 +119,21 @@ class SlotWrapperTestBase {
     }
 
     /**
+     * Check a return value that is expected to be a Python
+     * {@code float}.
+     *
+     * @param exp value expected
+     * @param r return value to test
+     * @throws Throwable unexpectedly
+     */
+    static void checkFloat(Object exp, Object r) throws Throwable {
+        assertPythonType(PyFloat.TYPE, r);
+        double e = PyFloat.asDouble(exp);
+        double res = PyFloat.asDouble(r);
+        assertEquals(e, res);
+    }
+
+    /**
      * A class that implements the tests for one combination of slot
      * wrapper and type. The class specialises its type to the Java
      * return type {@code R} of the special method under test, and a
