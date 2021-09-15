@@ -5,6 +5,10 @@ package org.python.core;
 // $OBJECT_GENERATOR$ PyFloatGenerator
 
 import org.python.core.PyObjectUtil.NoConversion;
+import static org.python.core.PyFloat.nonzero;
+import static org.python.core.PyFloat.floordiv;
+import static org.python.core.PyFloat.mod;
+import static org.python.core.PyFloat.divmod;
 
 /**
  * This class contains static methods implementing operations on the
@@ -51,38 +55,5 @@ class PyFloatMethods {
             // BigInteger, PyLong, Boolean, etc.
             // or throw PyObjectUtil.NO_CONVERSION;
             return PyLong.convertToDouble(v);
-    }
-
-    /**
-     * Convenience function to throw a {@link ZeroDivisionError} if the
-     * argument is zero. (Java float arithmetic does not throw whatever
-     * the arguments.)
-     *
-     * @param v value to check is not zero
-     * @param msg for exception if {@code v==0.0}
-     * @return {@code v}
-     */
-    static double nonzero(double v, String msg) {
-        if (v == 0.0) { throw new ZeroDivisionError(msg); }
-        return v;
-    }
-
-    /** Used as error message text for division by zero. */
-    final static String DIV_ZERO = "float division by zero";
-    /** Used as error message text for modulo zero. */
-    final static String MOD_ZERO = "float modulo zero";
-    /** Used as error message text for {@code __divmod__} with zero. */
-    private final static String DIVMOD_ZERO = "float divmod()";
-
-    /**
-     * Inner method for {@code __divmod__} and {@code __rdivmod__}.
-     *
-     * @param left operand
-     * @param right operand
-     * @return {@code tuple} of {@code (left//right, left%right)}
-     */
-    static final PyTuple divmod(double left, double right) {
-        double z = Math.floor(left / nonzero(right, DIVMOD_ZERO));
-        return new PyTuple(z, left - z * right);
     }
 }

@@ -361,8 +361,9 @@ public class PyFloat extends AbstractPyObject {
     // @formatter:on
 
     /**
-     * Python % operator: y = n*x + z. The modulo operator always yields a result with the same sign
-     * as its second operand (or zero). (Compare <code>java.Math.IEEEremainder</code>)
+     * Python % operator: y = n*x + z. The modulo operator always yields
+     * a result with the same sign as its second operand (or zero).
+     * (Compare <code>java.Math.IEEEremainder</code>)
      *
      * @param x dividend
      * @param y divisor
@@ -415,63 +416,7 @@ public class PyFloat extends AbstractPyObject {
         }
     }
 
-    /**
-     * Exponentiation with Python semantics.
-     *
-     * @param v base value
-     * @param w exponent
-     * @return {@code v ** w}
-     */
-    static double pow(double v, double w) {
-        /*
-         * This code was translated from the CPython implementation at v2.7.8 by progressively
-         * removing cases that could be delegated to Java. Jython differs from CPython in that where
-         * C pow() overflows, Java pow() returns inf (observed on Windows). This is not subject to
-         * regression tests, so we take it as an allowable platform dependency. All other
-         * differences in Java Math.pow() are trapped below and Python behaviour is enforced.
-         */
-        if (w == 0) {
-            // v**0 is 1, even 0**0
-            return ONE;
-
-        } else if (Double.isNaN(v)) {
-            // nan**w = nan, unless w == 0
-            return NAN;
-
-        } else if (Double.isNaN(w)) {
-            // v**nan = nan, unless v == 1; 1**nan = 1
-            if (v == 1.0) {
-                return ONE;
-            } else {
-                return NAN;
-            }
-
-        } else if (Double.isInfinite(w)) {
-            /*
-             * In Java Math pow(1,inf) = pow(-1,inf) = pow(1,-inf) = pow(-1,-inf) = nan, but in
-             * Python they are all 1.
-             */
-            if (v == 1.0 || v == -1.0) {
-                return ONE;
-            }
-
-        } else if (v == 0.0) {
-            // 0**w is an error if w is negative.
-            if (w < 0.0) {
-                throw new ZeroDivisionError("0.0 cannot be raised to a negative power");
-            }
-
-        } else if (!Double.isInfinite(v) && v < 0.0) {
-            if (w != Math.floor(w)) {
-                throw new ValueError("negative number cannot be raised to a fractional power");
-            }
-        }
-
-        // In all cases not caught above we can entrust the calculation to Java
-        return Math.pow(v, w);
-    }
-
-    /** Smallest value that cannot be represented as an int */
+       /** Smallest value that cannot be represented as an int */
     private static double INT_LONG_BOUNDARY = -(double)Integer.MIN_VALUE; // 2^31
 
     /*
@@ -822,4 +767,168 @@ public class PyFloat extends AbstractPyObject {
     }
 
     private static final String CANNOT_CONVERT = "cannot convert float %s to %s";
+
+    /**
+     * Exponentiation with Python semantics.
+     *
+     * @param v base value
+     * @param w exponent
+     * @return {@code v ** w}
+     */
+    static double pow(double v, double w) {
+        /*
+         * This code was translated from the CPython implementation at
+         * v2.7.8 by progressively removing cases that could be delegated to
+         * Java. Jython differs from CPython in that where C pow()
+         * overflows, Java pow() returns inf (observed on Windows). This is
+         * not subject to regression tests, so we take it as an allowable
+         * platform dependency. All other differences in Java Math.pow() are
+         * trapped below and Python behaviour is enforced.
+         */
+        if (w == 0) {
+            // v**0 is 1, even 0**0 and nan**0
+            return ONE;
+
+        } else if (Double.isNaN(v)) {
+            // nan**w = nan, unless w == 0
+            return NAN;
+
+        } else if (Double.isNaN(w)) {
+            // v**nan = nan, unless v == 1; 1**nan = 1
+            return v == 1.0 ? ONE : NAN;
+
+        } else if (Double.isInfinite(w)) {
+            /*
+             * In Java Math pow(1,inf) = pow(-1,inf) = pow(1,-inf) =
+             * pow(-1,-inf) = nan, but in Python they are all 1.
+             */
+            if (v == 1.0 || v == -1.0) { return ONE; }
+
+        } else if (v == 0.0) {
+            // 0**w is an error if w is negative.
+            if (w < 0.0) {
+                throw new ZeroDivisionError("0.0 cannot be raised to a negative power");
+            }
+
+        } else if (!Double.isInfinite(v) && v < 0.0) {
+            if (w != Math.floor(w)) {
+                throw new ValueError("negative number cannot be raised to a fractional power");
+            }
+        }
+
+        // In all other cases entrust the calculation to Java
+        return Math.pow(v, w);
+    }
+
+
+    /** Used as error message text for division by zero. */
+    static final String DIV_ZERO = "float division by zero";
+    /** Used as error message text for modulo zero. */
+    static final String MOD_ZERO = "float modulo zero";
+
+    /**
+     * Convenience function to throw a {@link ZeroDivisionError} if the
+     * argument is zero. (Java float arithmetic does not throw whatever
+     * the arguments.)
+     *
+     * @param v value to check is not zero
+     * @param msg for exception if {@code v==0.0}
+     * @return {@code v}
+     */
+    static double nonzero(double v, String msg) {
+        if (v == 0.0) { throw new ZeroDivisionError(msg); }
+        return v;
+    }
+
+    /**
+     * Convenience function to throw a {@link ZeroDivisionError} if the
+     * argument is zero. (Java float arithmetic does not throw whatever
+     * the arguments.)
+     *
+     * @param v value to check is not zero
+     * @return {@code v}
+     */
+    static double nonzero(double v) {
+        if (v == 0.0) { throw new ZeroDivisionError(DIV_ZERO); }
+        return v;
+    }
+
+    /**
+     * Test that two {@code double}s have the same sign.
+     *
+     * @param u a double
+     * @param v another double
+     * @return if signs equal (works for signed zeros, etc.)
+     */
+    private static boolean sameSign(double u, double v) {
+        long uBits = Double.doubleToRawLongBits(u);
+        long vBits = Double.doubleToRawLongBits(v);
+        return ((uBits ^ vBits) & SIGN) == 0L;
+    }
+
+    /**
+     * Inner method for {@code __floordiv__} and {@code __rfloordiv__}.
+     *
+     * @param x operand
+     * @param y operand
+     * @return {@code x//y}
+     */
+    static final double floordiv(double x, double y) {
+        // Java and Python agree a lot of the time (after floor()).
+        // Also, Java / never throws: it just returns nan or inf.
+        // So we ask Java first, then adjust the answer.
+        double z = x / y;
+        if (Double.isFinite(z)) {
+            // Finite result: only need floor ...
+            if (Double.isInfinite(y) && x != 0.0 && !sameSign(x, y))
+                // ... except in this messy corner case :(
+                return -1.;
+            return Math.floor(z);
+        } else {
+            // Non-finite result: Java & Python differ
+            if (y == 0.) {
+                throw new ZeroDivisionError(DIV_ZERO);
+            } else {
+                return Double.NaN;
+            }
+        }
+    }
+
+    /**
+     * Inner method for {@code __mod__} and {@code __rmod__}.
+     *
+     * @param x operand
+     * @param y operand
+     * @return {@code x%y}
+     */
+    static final double mod(double x, double y) {
+        // Java and Python agree a lot of the time.
+        // Also, Java % never throws: it just returns nan.
+        // So we ask Java first, then adjust the answer.
+        double z = x % y;
+        if (Double.isNaN(z)) {
+            if (y == 0.) { throw new ZeroDivisionError(MOD_ZERO); }
+            // Otherwise nan is fine
+        } else if (!sameSign(z, y)) {
+            // z is finite (and x), but only correct if signs match
+            if (z == 0.) {
+                z = Math.copySign(z, y);
+            } else {
+                z = z + y;
+            }
+        }
+        return z;
+    }
+
+    /**
+     * Inner method for {@code __divmod__} and {@code __rdivmod__}.
+     *
+     * @param x operand
+     * @param y operand
+     * @return {@code tuple} of {@code (x//y, x%y)}
+     */
+    static final PyTuple divmod(double x, double y) {
+        // Possibly not the most efficient
+        return new PyTuple(floordiv(x, y), mod(x, y));
+    }
 }
