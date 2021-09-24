@@ -252,7 +252,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-7.1.jar" />
                 <file name="asm-commons-7.1.jar" />
                 <file name="asm-util-7.1.jar" />
-                <file name="commons-compress-1.19.jar"/>
+                <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-28.0-android.jar" />
                 <file name="icu4j-59_1.jar" />
@@ -844,7 +844,7 @@ The text for an official release would continue like ...
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.19.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
             <zipfileset src="extlibs/guava-28.0-android.jar"/>
@@ -1367,6 +1367,25 @@ The text for an official release would continue like ...
       <exec executable="${test.shell.dir}/test-jython.sh">
         <arg value="${dist.dir}"/>
       </exec>
+    </target>
+
+    <target name="versions" depends="init, versions-unix, versions-windows"
+        description="identify the versions of Jython and its platform (needs developer-build)"/>
+
+    <target name="versions-unix" if="os.family.unix">
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
+    </target>
+
+    <target name="versions-windows" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
     </target>
 
     <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"

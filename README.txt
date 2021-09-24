@@ -18,12 +18,12 @@ version @java.version@ and requires a minimum of Java @jdk.target.version@ to ru
 
 See ACKNOWLEDGMENTS for details about Jython's copyright, license,
 contributors, and mailing lists; and NEWS for detailed release notes,
-including bugs fixed, backwards breaking changes, and new features.
+including bugs fixed, backward breaking changes, and new features.
 
 The developers extend their thanks to all who contributed to this release
 of Jython, through bug reports, patches, pull requests, documentation
 changes, email and conversation in any media. We are grateful to the PSF for
-continuing practical help and support to the project.
+continuing practical help and support of the project.
 
 Testing
 -------

@@ -11,6 +11,7 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-122 ] Upgrade Apache commons-compress to 1.21
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
