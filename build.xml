@@ -1369,6 +1369,25 @@ The text for an official release would continue like ...
       </exec>
     </target>
 
+    <target name="versions" depends="init, versions-unix, versions-windows"
+        description="identify the versions of Jython and its platform (needs developer-build)"/>
+
+    <target name="versions-unix" if="os.family.unix">
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
+    </target>
+
+    <target name="versions-windows" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
+    </target>
+
     <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"
         description="run Python tests expected to work on Jython"/>
 
