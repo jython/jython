@@ -424,7 +424,10 @@ public class PrePy {
         }
 
         // The JAR file is now identified in fileURI but needs decoding to a file
-        return fileURI == null ? null : new File(fileURI).toString();
+        if ( (fileURI == null) || (!"file".equals(fileURI.getScheme())) ) {
+            	return null;
+        }
+        return new File(fileURI).toString();
     }
 
     /**
