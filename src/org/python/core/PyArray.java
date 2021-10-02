@@ -25,64 +25,91 @@ import org.python.expose.MethodType;
 import org.python.modules.gc;
 
 /**
- * A wrapper class around native java arrays.
- *
- * Instances of PyArray are created either by java functions or directly by the jarray module.
+ * The type {@code array.array}. This is a wrapper around native Java arrays. Instances of
+ * {@code PyArray} are created either by Java functions or directly by the {@code jarray} module
+ * (q.v.).
  * <p>
- * See also the jarray module.
+ * The range of possible element (item) types exceeds that in Python, since it allows for arbitrary
+ * Java classes. This extended behaviour is not accessible from Python (probably) but instances may
+ * be encountered created from Java.
  */
-
 @ExposedType(name = "array.array", base = PyObject.class)
 public class PyArray extends PySequence implements Cloneable, BufferProtocol, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyArray.class);
 
-    /** The underlying Java array. */
+    /** The underlying Java array, a Java Array in practice. */
     private Object data;
 
-    /** The Java array class. */
-    private Class<?> type;
+    /** The Java class of elements in the {@code data} array. */
+    private Class<?> itemClass;
 
-    /** The Python style typecode of the array. */
+    /**
+     * Either a Python-style {@code array.array} type code for the element (item) type or the Java
+     * class name.
+     */
     private String typecode;
 
+    /**
+     * Mix in the mechanisms for manipulating the underlying array as this "delegate" object. Many
+     * operations on this {@code array.array} are actually operations on this delegate (an
+     * {@code AbstractArray} in practice), which in turn manipulates {@link #data}.
+     */
     private ArrayDelegate delegate;
 
-    public PyArray(PyType type) {
-        super(type);
+    /**
+     * Create a default {@code PyArray} of specific Python type (for sub-class use).
+     *
+     * @param subtype actual Python type
+     */
+    public PyArray(PyType subtype) {
+        super(subtype);
     }
 
-    public PyArray(Class<?> type, Object data) {
+    /**
+     * Create a {@code PyArray} with the given array item class and data.
+     *
+     * @param itemClass of elements in the array
+     * @param data
+     */
+    public PyArray(Class<?> itemClass, Object data) {
         this(TYPE);
-        setup(type, data);
+        setup(itemClass, data);
     }
 
-    public PyArray(Class<?> type, PyObject initial) {
+    public PyArray(Class<?> itemClass, PyObject initial) {
         this(TYPE);
-        this.type = type;
-        typecode = class2char(type);
-        data = Array.newInstance(type, 0);
+        this.itemClass = itemClass;
+        typecode = classToTypecode(itemClass);
+        data = Array.newInstance(itemClass, 0);
         delegate = new ArrayDelegate();
         useInitial(initial);
     }
 
-    public PyArray(Class<?> type, int n) {
-        this(type, Array.newInstance(type, n));
+    public PyArray(Class<?> itemClass, int n) {
+        this(itemClass, Array.newInstance(itemClass, n));
     }
 
     public PyArray(PyArray toCopy) {
-        this(toCopy.type, toCopy.delegate.copyArray());
+        this(toCopy.itemClass, toCopy.delegate.copyArray());
         typecode = toCopy.typecode;
     }
 
-    private void setup(Class<?> type, Object data) {
-        this.type = type;
-        typecode = class2char(type);
+    /**
+     * Initialise this array.
+     *
+     * @param itemClass of the elements
+     * @param data
+     */
+    private void setup(Class<?> itemClass, Object data) {
+        this.itemClass = itemClass;
+        typecode = classToTypecode(itemClass);
         if (data == null) {
-            this.data = Array.newInstance(type, 0);
+            this.data = Array.newInstance(itemClass, 0);
         } else {
             this.data = data;
         }
+        // this.data != null at this call
         delegate = new ArrayDelegate();
     }
 
@@ -91,7 +118,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
          * The initialiser may be omitted, or may validly be one of several types in the broad
          * categories of a byte string (which is treated as a machine representation of the data) or
          * an iterable yielding values assignable to the elements. There is special treatment for
-         * type 'u' Unicode.
+         * typecode 'u', itemClass Unicode.
          */
         if (initial == null) {
             // Fall through
@@ -104,7 +131,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
         } else if ("u".equals(typecode)) {
             if (initial instanceof PyUnicode) {
-                extendArray(((PyUnicode)initial).toCodePoints());
+                extendArray(((PyUnicode) initial).toCodePoints());
             } else {
                 extendUnicodeIter(initial);
             }
@@ -130,27 +157,26 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
 
         // Build the argument parser for this call
-        ArgParser ap =
-                new ArgParser("array", args, Py.NoKeywords,
-                        new String[] {"typecode", "initializer"}, 1);
+        ArgParser ap = new ArgParser("array", args, Py.NoKeywords,
+                new String[] {"typecode", "initializer"}, 1);
         ap.noKeywords();
 
-        // Retrieve the mandatory type code that determines the element type
+        // Retrieve the mandatory type code that determines the element itemClass
         PyObject obj = ap.getPyObject(0);
-        Class<?> type;
+        Class<?> itemClass;
         String typecode;
         if (obj instanceof PyString && !(obj instanceof PyUnicode)) {
             if (obj.__len__() != 1) {
                 throw Py.TypeError("array() argument 1 must be char, not str");
             }
             typecode = obj.toString();
-            type = char2class(typecode.charAt(0));
+            itemClass = char2class(typecode.charAt(0));
         } else if (obj instanceof PyJavaType) {
-            type = ((PyJavaType)obj).getProxyType();
-            typecode = type.getName();
+            itemClass = ((PyJavaType) obj).getProxyType();
+            typecode = itemClass.getName();
         } else {
-            throw Py.TypeError("array() argument 1 must be char, not "
-                    + obj.getType().fastGetName());
+            throw Py.TypeError(
+                    "array() argument 1 must be char, not " + obj.getType().fastGetName());
         }
 
         /*
@@ -163,9 +189,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             self = new PyArrayDerived(subtype);
         }
 
-        // Initialize the typecode (and validate type) before creating the backing Array
-        class2char(type);
-        self.setup(type, Array.newInstance(type, 0));
+        // Initialize the typecode (and validate itemClass) before creating the backing Array
+        classToTypecode(itemClass);
+        self.setup(itemClass, Array.newInstance(itemClass, 0));
         self.typecode = typecode;
         self.useInitial(ap.getPyObject(1, null));
         return self;
@@ -194,17 +220,16 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Create a PyArray storing <code>ctype</code> types and being initialised with
-     * <code>init</code>.
+     * Create a {@code PyArray} storing {@code ctype} types and being initialised with {@code init}.
      *
-     * @param init an initialiser for the array - can be PyString or PySequence (including PyArray)
-     *            or iterable type.
-     * @param ctype <code>Class</code> type of the elements stored in the array.
+     * @param init an initialiser for the array - can be {@code PyString} or {@code PySequence}
+     *            (including {@code PyArray}) or iterable type.
+     * @param itemClass {@code Class} of the elements stored in the array.
      * @return a new PyArray
      */
-    public static PyArray array(PyObject init, Class<?> ctype) {
-        PyArray array = new PyArray(ctype, 0);
-        array.typecode = ctype.getName();
+    public static PyArray array(PyObject init, Class<?> itemClass) {
+        PyArray array = new PyArray(itemClass, 0);
+        array.typecode = itemClass.getName();
         array.extendInternal(init);
         return array;
     }
@@ -361,21 +386,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___iadd__(PyObject other) {
-
-        if (!(other instanceof PyArray)) {
+        try {
+            PyArray otherArr = arrayChecked(other);
+            resizeCheck();  // Prohibited if exporting a buffer
+            delegate.appendArray(otherArr.delegate.copyArray());
+            return this;
+        } catch (ClassCastException e) {
+            // other wasn't a PyArray
             return null;
         }
-
-        PyArray otherArr = (PyArray)other;
-        if (!otherArr.typecode.equals(this.typecode)) {
-            throw Py.TypeError("can only append arrays of the same type, expected '" + this.type
-                    + ", found " + otherArr.type);
-        }
-
-        resizeCheck();  // Prohibited if exporting a buffer
-
-        delegate.appendArray(otherArr.delegate.copyArray());
-        return this;
     }
 
     @Override
@@ -386,23 +405,38 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     /**
      * Adds (appends) two PyArrays together
      *
-     * @param other a PyArray to be added to the instance
-     * @return the result of the addition as a new PyArray instance
+     * @param other a {@code PyArray} to be added to the instance
+     * @return the result of the addition as a new {@code PyArray} instance
      */
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject array___add__(PyObject other) {
-        if (!(other instanceof PyArray)) {
+        try {
+            PyArray otherArr = arrayChecked(other);
+            PyArray ret = new PyArray(this);
+            ret.delegate.appendArray(otherArr.delegate.copyArray());
+            return ret;
+        } catch (ClassCastException e) {
+            // other wasn't a PyArray
             return null;
         }
 
-        PyArray otherArr = (PyArray)other;
+    }
+
+    /**
+     * Check the other array is an array and is compatible for element type. Raise {@code TypeError}
+     * if not.
+     *
+     * @param other supposed {@code PyArray}
+     * @return {@code other}
+     * @throws ClassCastException if {@code other} not {@code PyArray}
+     */
+    private PyArray arrayChecked(PyObject other) throws ClassCastException {
+        PyArray otherArr = (PyArray) other;
         if (!otherArr.typecode.equals(this.typecode)) {
-            throw Py.TypeError("can only append arrays of the same type, expected '" + this.type
-                    + "', found '" + otherArr.type + "'");
+            throw Py.TypeError("can only append arrays of the same type, expected '"
+                    + this.itemClass + ", found " + otherArr.itemClass);
         }
-        PyArray ret = new PyArray(this);
-        ret.delegate.appendArray(otherArr.delegate.copyArray());
-        return ret;
+        return otherArr;
     }
 
     /**
@@ -432,8 +466,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             dict = Py.None;
         }
         if (__len__() > 0) {
-            return new PyTuple(getType(), new PyTuple(Py.newString(typecode),
-                    Py.newString(tostring())), dict);
+            return new PyTuple(getType(),
+                    new PyTuple(Py.newString(typecode), Py.newString(tostring())), dict);
         } else {
             return new PyTuple(getType(), new PyTuple(Py.newString(typecode)), dict);
         }
@@ -465,15 +499,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      *
-     * @param c target <code>Class</code> for the conversion
+     * @param c target {@code Class} for the conversion
      * @return Java object converted to required class type if possible.
      */
     @Override
     public Object __tojava__(Class<?> c) {
         boolean isArray = c.isArray();
-        Class componentType = c.getComponentType();
+        Class<?> componentType = c.getComponentType();
 
-        if (c == Object.class || (isArray && componentType.isAssignableFrom(type))) {
+        if (c == Object.class || (isArray && componentType.isAssignableFrom(itemClass))) {
             if (delegate.capacity != delegate.size) {
                 // when unboxing, need to shrink the array first, otherwise incorrect
                 // results to Java
@@ -507,7 +541,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     private static int getCodePoint(PyObject obj) {
         if (obj instanceof PyUnicode) {
-            PyUnicode u = (PyUnicode)obj;
+            PyUnicode u = (PyUnicode) obj;
             int[] codepoints = u.toCodePoints();
             if (codepoints.length == 1) {
                 return codepoints[0];
@@ -519,10 +553,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     // relax to allow mixing with PyString, integers
     private static int getCodePointOrInt(PyObject obj) {
         if (obj instanceof PyUnicode) {
-            PyUnicode u = (PyUnicode)obj;
+            PyUnicode u = (PyUnicode) obj;
             return u.toCodePoints()[0];
         } else if (obj instanceof PyString) {
-            PyString s = (PyString)obj;
+            PyString s = (PyString) obj;
             return s.toString().charAt(0);
         } else if (obj.__nonzero__()) {
             return obj.asInt();
@@ -578,8 +612,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      * "Byteswap" all items of the array. This is only supported for values which are 1, 2, 4, or 8
-     * bytes in size; for other types of values, RuntimeError is raised. It is useful when reading
-     * data from a file written on a machine with a different byte order.
+     * bytes in size; for other types of values, {@code RuntimeError} is raised. It is useful when
+     * reading data from a file written on a machine with a different byte order.
      */
     public void byteswap() {
         if (getStorageSize() == 0 || "u".equals(typecode)) {
@@ -589,7 +623,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Implementation of <code>Cloneable</code> interface.
+     * Implementation of {@code Cloneable} interface.
      *
      * @return copy of current PyArray
      */
@@ -599,7 +633,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Converts a character code for the array type to a Java <code>Class</code>.
+     * Converts a character code for the array type to the Java {@code Class} of the elements of the
+     * implementation array.
      * <table>
      * <caption>Supported character codes and their native types</caption>
      * <tr>
@@ -608,46 +643,46 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * </tr>
      * <tr>
      * <td>z</td>
-     * <td><code>boolean</code></td>
+     * <td>{@code boolean}</td>
      * </tr>
      * <tr>
      * <td>c</td>
-     * <td><code>char</code></td>
+     * <td>{@code char}</td>
      * </tr>
      * <tr>
      * <td>b</td>
-     * <td><code>byte</code></td>
+     * <td>{@code byte}</td>
      * </tr>
      * <tr>
      * <td>h</td>
-     * <td><code>short</code></td>
+     * <td>{@code short}</td>
      * </tr>
      * <tr>
      * <td>i</td>
-     * <td><code>int</code></td>
+     * <td>{@code int}</td>
      * </tr>
      * <tr>
      * <td>l</td>
-     * <td><code>long</code></td>
+     * <td>{@code long}</td>
      * </tr>
      * <tr>
      * <td>f</td>
-     * <td><code>float</code></td>
+     * <td>{@code float}</td>
      * </tr>
      * <tr>
      * <td>d</td>
-     * <td><code>double</code></td>
+     * <td>{@code double}</td>
      * </tr>
      * </table>
      * <p>
      *
-     * @param type character code for the array type
-     * @return <code>Class</code> of the native type
+     * @param typecode character code for the array type
+     * @return {@code Class} of the native itemClass
      */
 
     // promote B, H, I (unsigned int) to next larger size
-    public static Class<?> char2class(char type) throws PyIgnoreMethodTag {
-        switch (type) {
+    public static Class<?> char2class(char typecode) throws PyIgnoreMethodTag {
+        switch (typecode) {
             case 'z':
                 return Boolean.TYPE;
             case 'b':
@@ -679,7 +714,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
     }
 
-    private static String class2char(Class<?> cls) {
+    private static String classToTypecode(Class<?> cls) {
         if (cls.equals(Boolean.TYPE)) {
             return "z";
         } else if (cls.equals(Character.TYPE)) {
@@ -735,7 +770,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Delete the element at position <code>i</code> from the array
+     * Delete the element at position {@code i} from the array
      *
      * @param i index of the item to be deleted from the array
      */
@@ -746,7 +781,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Delete the slice defined by <code>start</code> to <code>stop</code> from the array.
+     * Delete the slice defined by {@code start} to {@code stop} from the array.
      *
      * @param start starting index of slice
      * @param stop finishing index of slice
@@ -763,10 +798,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Append items from <code>iterable</code> to the end of the array. If iterable is another
-     * array, it must have exactly the same type code; if not, TypeError will be raised. If iterable
-     * is not an array, it must be iterable and its elements must be the right type to be appended
-     * to the array.
+     * Append items from {@code iterable} to the end of the array. If iterable is another array, it
+     * must have exactly the same type code; if not, TypeError will be raised. If iterable is not an
+     * array, it must be iterable and its elements must be the right type to be appended to the
+     * array.
      *
      * @param iterable iterable object used to extend the array
      */
@@ -776,7 +811,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      * Internal extend function, provides basic interface for extending arrays. Handles specific
-     * cases of <code>iterable</code> being PyStrings or PyArrays. Default behaviour is to defer to
+     * cases of {@code iterable} being PyStrings or PyArrays. Default behaviour is to defer to
      * {@link #extendInternalIter(PyObject) extendInternalIter }
      *
      * @param iterable object of type PyString, PyArray or any object that can be iterated over.
@@ -792,12 +827,12 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 throw Py.TypeError("an integer is required");
             }
 
-// } else if (iterable instanceof PyString) {
-// // XXX CPython treats a str/bytes as an iterable, not as previously here:
-// fromstring(((PyString)iterable).toString());
+            // } else if (iterable instanceof PyString) {
+            // // XXX CPython treats a str/bytes as an iterable, not as previously here:
+            // fromstring(((PyString)iterable).toString());
 
         } else if (iterable instanceof PyArray) {
-            PyArray source = (PyArray)iterable;
+            PyArray source = (PyArray) iterable;
             if (!source.typecode.equals(typecode)) {
                 throw Py.TypeError("can only extend with array of same kind");
             }
@@ -839,12 +874,11 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     /**
      * Helper used only when the array elements are Unicode characters (<code>typecode=='u'</code>).
      * (Characters are stored as integer point codes.) The parameter must be an iterable yielding
-     * <code>PyUnicode</code>s. Often this will be an instance of {@link PyUnicode}, which is an
-     * iterable yielding single-character <code>PyUnicode</code>s. But it is also acceptable to this
-     * method for the argument to yield arbitrary <code>PyUnicode</code>s, which will be
-     * concatenated in the array.
+     * {@link PyUnicode}s. Often this will be an instance of {@link PyUnicode}, which is an iterable
+     * yielding single-character {@code PyUnicode}s. But it is also acceptable to this method for
+     * the argument to yield arbitrary {@code PyUnicode}s, which will be concatenated in the array.
      *
-     * @param iterable of <code>PyUnicode</code>s
+     * @param iterable of {@link PyUnicode}s
      */
     private void extendUnicodeIter(PyObject iterable) {
 
@@ -852,10 +886,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         resizeCheck();
 
         try {
-
             // Append all the code points of all the strings in the iterable
             for (PyObject item : iterable.asIterable()) {
-                PyUnicode uitem = (PyUnicode)item;
+                PyUnicode uitem = (PyUnicode) item;
                 // Append all the code points of this item
                 for (int codepoint : uitem.toCodePoints()) {
                     int afterLast = delegate.getSize();
@@ -863,10 +896,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                     Array.setInt(data, afterLast, codepoint);
                 }
             }
-
         } catch (ClassCastException e) {
             // One of the PyUnicodes wasn't
-            throw Py.TypeError("Type not compatible with array type");
+            throw Py.TypeError(TYPE_NOT_COMPATIBLE);
         }
     }
 
@@ -889,11 +921,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Read <code>count</code> items (as machine values) from the file object <code>f</code> and
-     * append them to the end of the array. If less than <code>count</code> items are available,
-     * EOFError is raised, but the items that were available are still inserted into the array.
-     * <code>f</code> must be a real built-in file object; something else with a read() method won't
-     * do.
+     * Read {@code count} items (as machine values) from the file object {@code f} and append them
+     * to the end of the array. If less than {@code count} items are available, EOFError is raised,
+     * but the items that were available are still inserted into the array. {@code f} must be a real
+     * built-in file object; something else with a read() method won't do.
      *
      * @param f Python builtin file object to retrieve data
      * @param count number of array elements to read
@@ -909,7 +940,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
          * Now get the required number of bytes from the file. Guard against non-file or closed.
          */
         if (f instanceof PyFile) {
-            PyFile file = (PyFile)f;
+            PyFile file = (PyFile) f;
             if (!file.getClosed()) {
                 // Load required amount or whatever is available into a bytes object
                 int readbytes = count * getStorageSize();
@@ -933,8 +964,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Append items from the list. This is equivalent to "for x in list: a.append(x)" except that if
-     * there is a type error, the array is unchanged.
+     * Append items from the list. This is equivalent to {@code for x in list: a.append(x)} except
+     * that if there is a type error, the array is unchanged.
      *
      * @param obj input list object that will be appended to the array
      */
@@ -973,8 +1004,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Generic stream reader to read <code>count</code> primitive types from a stream into the
-     * array.
+     * Generic stream reader to read {@code count} primitive types from a stream into the array.
      *
      * @param is InputStream to source the data from
      * @param count number of primitive types to read from the stream
@@ -1014,7 +1044,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * concentrate in one place the manipulation of bytes into the several primitive element types
      * on behalf of {@link #fillFromStream(InputStream)} etc.. The storage is resized if the slice
      * being written ends beyond the current end of the array, i.e. it is increased to the value of
-     * <code>limit</code>.
+     * {@code limit}.
      * <p>
      * Since different read methods respond differently to it, the caller must specify whether the
      * exhaustion of the stream (EOF) should be treated as an error or not. If the stream does not
@@ -1043,8 +1073,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         DataInputStream dis = new DataInputStream(is);
 
         try {
-            // We have to deal with each primitive type as a distinct case
-            if (type.isPrimitive()) {
+            // We have to deal with each primitive itemClass as a distinct case
+            if (itemClass.isPrimitive()) {
                 switch (typecode.charAt(0)) {
                     case 'z':
                         for (; index < limit; index++) {
@@ -1069,7 +1099,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                         break;
                     case 'c':
                         for (; index < limit; index++) {
-                            Array.setChar(data, index, (char)(dis.readByte() & 0xff));
+                            Array.setChar(data, index, (char) (dis.readByte() & 0xff));
                         }
                         break;
                     case 'h':
@@ -1161,12 +1191,12 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
             if (input instanceof PyUnicode) {
                 // Unicode is treated as specifying a byte string via the default encoding.
-                String s = ((PyUnicode)input).encode();
+                String s = ((PyUnicode) input).encode();
                 frombytesInternal(StringUtil.toBytes(s));
 
             } else {
                 // Access the bytes through the abstract API of the BufferProtocol
-                try (PyBuffer pybuf = ((BufferProtocol)input).getBuffer(PyBUF.STRIDED_RO)) {
+                try (PyBuffer pybuf = ((BufferProtocol) input).getBuffer(PyBUF.STRIDED_RO)) {
                     if (pybuf.getNdim() == 1) {
                         if (pybuf.getStrides()[0] == 1) {
                             // Data are contiguous in the buffer
@@ -1255,7 +1285,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Get the element at position <code>i</code> from the array
+     * Get the element at position {@code i} from the array
      *
      * @param i index of the item to be retrieved from the array
      */
@@ -1268,9 +1298,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Return the internal Java array storage of the PyArray instance
+     * Return the internal Java array storage of the {@code PyArray} instance
      *
-     * @return the <code>Array</code> store.
+     * @return the {@code Array} store.
      */
     public Object getArray() throws PyIgnoreMethodTag {
         return delegate.copyArray();
@@ -1291,35 +1321,35 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * <td><strong>Size</strong></td>
      * </tr>
      * <tr>
-     * <td><code>boolean</code></td>
+     * <td>{@code boolean}</td>
      * <td>1</td>
      * </tr>
      * <tr>
-     * <td><code>byte</code></td>
+     * <td>{@code byte}</td>
      * <td>1</td>
      * </tr>
      * <tr>
-     * <td><code>char</code></td>
+     * <td>{@code char}</td>
      * <td>1</td>
      * </tr>
      * <tr>
-     * <td><code>short</code></td>
+     * <td>{@code short}</td>
      * <td>2</td>
      * </tr>
      * <tr>
-     * <td><code>int</code></td>
+     * <td>{@code int}</td>
      * <td>4</td>
      * </tr>
      * <tr>
-     * <td><code>long</code></td>
+     * <td>{@code long}</td>
      * <td>8</td>
      * </tr>
      * <tr>
-     * <td><code>float</code></td>
+     * <td>{@code float}</td>
      * <td>4</td>
      * </tr>
      * <tr>
-     * <td><code>double</code></td>
+     * <td>{@code double}</td>
      * <td>8</td>
      * </tr>
      * </table>
@@ -1328,22 +1358,22 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     @ExposedGet(name = "itemsize")
     public int getItemsize() {
-        if (type.isPrimitive()) {
-            if (type == Boolean.TYPE) {
+        if (itemClass.isPrimitive()) {
+            if (itemClass == Boolean.TYPE) {
                 return 1;
-            } else if (type == Byte.TYPE) {
+            } else if (itemClass == Byte.TYPE) {
                 return 1;
-            } else if (type == Character.TYPE) {
+            } else if (itemClass == Character.TYPE) {
                 return 1;
-            } else if (type == Short.TYPE) {
+            } else if (itemClass == Short.TYPE) {
                 return 2;
-            } else if (type == Integer.TYPE) {
+            } else if (itemClass == Integer.TYPE) {
                 return 4;
-            } else if (type == Long.TYPE) {
+            } else if (itemClass == Long.TYPE) {
                 return 8;
-            } else if (type == Float.TYPE) {
+            } else if (itemClass == Float.TYPE) {
                 return 4;
-            } else if (type == Double.TYPE) {
+            } else if (itemClass == Double.TYPE) {
                 return 8;
             }
         }
@@ -1352,7 +1382,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     public int getStorageSize() {
-        if (type.isPrimitive()) {
+        if (itemClass.isPrimitive()) {
             switch (typecode.charAt(0)) {
                 case 'z':
                     return 1;
@@ -1381,7 +1411,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 case 'd':
                     return 8;
                 default:
-                    throw Py.ValueError("bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
+                    throw Py.ValueError(
+                            "bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
             }
         }
         // return something here... could be a calculated size?
@@ -1389,8 +1420,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Retrieve a slice from the array specified by the <code>start</code>, <code>stop</code> and
-     * <code>step</code>.
+     * Retrieve a slice from the array specified by the {@code start}, {@code stop} and
+     * {@code step}.
      *
      * @param start start index of the slice
      * @param stop stop index of the slice
@@ -1403,7 +1434,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             stop = start;
         }
         int n = sliceLength(start, stop, step);
-        PyArray ret = new PyArray(type, n);
+        PyArray ret = new PyArray(itemClass, n);
         // XXX:
         ret.typecode = typecode;
         if (step == 1) {
@@ -1438,10 +1469,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      * Return the smallest <em>i</em> such that <em>i</em> is the index of the first occurrence of
-     * <code>value</code> in the array.
+     * {@code value} in the array.
      *
      * @param value value to find the index of
-     * @return index of the first occurrence of <code>value</code>
+     * @return index of the first occurrence of {@code value}
      */
     public PyObject index(PyObject value) {
         return Py.newInteger(array_index(value));
@@ -1449,10 +1480,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     /**
      * Return the smallest <em>i</em> such that <em>i</em> is the index of the first occurrence of
-     * <code>value</code> in the array.
+     * {@code value} in the array.
      *
      * @param value value to find the index of
-     * @return index of the first occurrence of <code>value</code>
+     * @return index of the first occurrence of {@code value}
      */
     private int indexInternal(PyObject value) {
         // note: cpython does not raise type errors based on item type
@@ -1481,8 +1512,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Insert a new item with value <code>value</code> in the array before position
-     * <code>index</code>. Negative values are treated as being relative to the end of the array.
+     * Insert a new item with value {@code value} in the array before position {@code index}.
+     * Negative values are treated as being relative to the end of the array.
      *
      * @param index insert position
      * @param value value to be inserted into array
@@ -1497,13 +1528,13 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
         } else {
             delegate.makeInsertSpace(index);
-            Array.set(data, index, Py.tojava(value, type));
+            Array.set(data, index, Py.tojava(value, itemClass));
         }
     }
 
     /**
-     * Removes the item at the index <code>i</code> from the array and returns it. The optional
-     * argument defaults to -1, so that by default the last item is removed and returned.
+     * Removes the item at the index {@code i} from the array and returns it. The optional argument
+     * defaults to -1, so that by default the last item is removed and returned.
      */
     @ExposedMethod(defaults = "-1")
     public final PyObject array_pop(int i) {
@@ -1522,7 +1553,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Removes the item with the index <code>index</code> from the array and returns it.
+     * Removes the item with the index {@code index} from the array and returns it.
      *
      * @param index array location to be popped from the array
      * @return array element popped from index
@@ -1550,7 +1581,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Remove the first occurrence of <code>value</code> from the array.
+     * Remove the first occurrence of {@code value} from the array.
      *
      * @param value array value to be removed
      */
@@ -1566,15 +1597,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Repeat the array <code>count</code> times.
+     * Repeat the array {@code count} times.
      *
      * @param count number of times to repeat the array
-     * @return A new PyArray object containing the source object repeated <code>count</code> times.
+     * @return A new PyArray object containing the source object repeated {@code count} times.
      */
     @Override
     protected PyObject repeat(int count) {
         Object arraycopy = delegate.copyArray();
-        PyArray ret = new PyArray(type, 0);
+        PyArray ret = new PyArray(itemClass, 0);
         ret.typecode = typecode;
         for (int i = 0; i < count; i++) {
             ret.delegate.appendArray(arraycopy);
@@ -1592,7 +1623,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     public void reverse() {
         // build a new reversed array and set this.data to it when done
-        Object array = Array.newInstance(type, Array.getLength(data));
+        Object array = Array.newInstance(itemClass, Array.getLength(data));
         for (int i = 0, lastIndex = delegate.getSize() - 1; i <= lastIndex; i++) {
             Array.set(array, lastIndex - i, Array.get(data, i));
         }
@@ -1621,82 +1652,82 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             return;
         }
 
-        if (type == Byte.TYPE) {
+        if (itemClass == Byte.TYPE) {
             long val;
             try {
-                val = ((Long)value.__tojava__(Long.TYPE)).longValue();
+                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
             } catch (ClassCastException e) {
-                throw Py.TypeError("Type not compatible with array type");
+                throw Py.TypeError(TYPE_NOT_COMPATIBLE);
             }
             if (val < (isSigned() ? 0 : Byte.MIN_VALUE)) {
-                throw Py.OverflowError("value too small for " + type.getName());
+                throw Py.OverflowError("value too small for " + itemClass.getName());
             } else if (val > Byte.MAX_VALUE) {
-                throw Py.OverflowError("value too large for " + type.getName());
+                throw Py.OverflowError("value too large for " + itemClass.getName());
             }
-        } else if (type == Short.TYPE) {
+        } else if (itemClass == Short.TYPE) {
             long val;
             try {
-                val = ((Long)value.__tojava__(Long.TYPE)).longValue();
+                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
             } catch (ClassCastException e) {
-                throw Py.TypeError("Type not compatible with array type");
+                throw Py.TypeError(TYPE_NOT_COMPATIBLE);
             }
             if (val < (isSigned() ? 0 : Short.MIN_VALUE)) {
-                throw Py.OverflowError("value too small for " + type.getName());
+                throw Py.OverflowError("value too small for " + itemClass.getName());
             } else if (val > Short.MAX_VALUE) {
-                throw Py.OverflowError("value too large for " + type.getName());
+                throw Py.OverflowError("value too large for " + itemClass.getName());
             }
-        } else if (type == Integer.TYPE) {
+        } else if (itemClass == Integer.TYPE) {
             long val;
             try {
-                val = ((Long)value.__tojava__(Long.TYPE)).longValue();
+                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
             } catch (ClassCastException e) {
-                throw Py.TypeError("Type not compatible with array type");
+                throw Py.TypeError(TYPE_NOT_COMPATIBLE);
             }
             if (val < (isSigned() ? 0 : Integer.MIN_VALUE)) {
-                throw Py.OverflowError("value too small for " + type.getName());
+                throw Py.OverflowError("value too small for " + itemClass.getName());
             } else if (val > Integer.MAX_VALUE) {
-                throw Py.OverflowError("value too large for " + type.getName());
+                throw Py.OverflowError("value too large for " + itemClass.getName());
             }
-        } else if (type == Long.TYPE) {
+        } else if (itemClass == Long.TYPE) {
             if (isSigned() && value instanceof PyInteger) {
-                if (((PyInteger)value).getValue() < 0) {
-                    throw Py.OverflowError("value too small for " + type.getName());
+                if (((PyInteger) value).getValue() < 0) {
+                    throw Py.OverflowError("value too small for " + itemClass.getName());
                 }
             } else if (value instanceof PyLong) {
-                ((PyLong)value).getLong(isSigned() ? 0 : Long.MIN_VALUE, Long.MAX_VALUE);
+                ((PyLong) value).getLong(isSigned() ? 0 : Long.MIN_VALUE, Long.MAX_VALUE);
             } else {
                 Object o;
                 try {
                     o = value.__tojava__(Long.TYPE);
                 } catch (ClassCastException e) {
-                    throw Py.TypeError("Type not compatible with array type");
+                    throw Py.TypeError(TYPE_NOT_COMPATIBLE);
                 }
                 if (o == Py.NoConversion) {
-                    throw Py.TypeError("Type not compatible with array type");
+                    throw Py.TypeError(TYPE_NOT_COMPATIBLE);
                 }
             }
         }
-        Object o = Py.tojava(value, type);
+        Object o = Py.tojava(value, itemClass);
         if (o == Py.NoConversion) {
-            throw Py.TypeError("Type not compatible with array type");
+            throw Py.TypeError(TYPE_NOT_COMPATIBLE);
         }
         Array.set(data, i, o);
     }
 
     // xxx - add more efficient comparable typecode lookup via an enumset, and expand
     public void set(int i, int value) {
-        if ("u".equals(typecode) || type == Integer.TYPE || type == Long.TYPE) {
+        if ("u".equals(typecode) || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
             Array.setInt(data, i, value);
         } else {
-            throw Py.TypeError("Type not compatible with array type");
+            throw Py.TypeError(TYPE_NOT_COMPATIBLE);
         }
     }
 
     public void set(int i, char value) {
-        if ("c".equals(typecode) || type == Integer.TYPE || type == Long.TYPE) {
+        if ("c".equals(typecode) || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
             Array.setChar(data, i, value);
         } else {
-            throw Py.TypeError("Type not compatible with array type");
+            throw Py.TypeError(TYPE_NOT_COMPATIBLE);
         }
     }
 
@@ -1705,9 +1736,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Sets a slice of the array. <code>value</code> can be a string (for <code>byte</code> and
-     * <code>char</code> types) or PyArray. If a PyArray, its type must be convertible into the type
-     * of the target PyArray.
+     * Sets a slice of the array. {@code value} can be a string (for {@code byte} and {@code char}
+     * types) or {@code PyArray}. If a {@code PyArray}, its type must be convertible into the type
+     * of the target {@code PyArray}.
      *
      * @param start start index of the delete slice
      * @param stop end index of the delete slice
@@ -1720,7 +1751,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             stop = start;
         }
 
-        if (type == Character.TYPE && value instanceof PyString) {
+        if (itemClass == Character.TYPE && value instanceof PyString) {
             char[] chars = null;
             // if (value instanceof PyString) {
             if (step != 1) {
@@ -1735,8 +1766,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
         } else {
 
-            if (value instanceof PyString && type == Byte.TYPE) {
-                byte[] chars = ((PyString)value).toBytes();
+            if (value instanceof PyString && itemClass == Byte.TYPE) {
+                byte[] chars = ((PyString) value).toBytes();
                 if (chars.length == stop - start && step == 1) {
                     System.arraycopy(chars, 0, data, start, chars.length);
                 } else {
@@ -1744,7 +1775,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 }
 
             } else if (value instanceof PyArray) {
-                PyArray array = (PyArray)value;
+                PyArray array = (PyArray) value;
                 if (!array.typecode.equals(typecode)) {
                     throw Py.TypeError("bad argument type for built-in operation|" + array.typecode
                             + "|" + typecode);
@@ -1778,7 +1809,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
                 } else if (step < 0) {
                     if (array == this) {
-                        array = (PyArray)array.clone();
+                        array = (PyArray) array.clone();
                     }
 
                     int len = array.__len__();
@@ -1788,8 +1819,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 }
 
             } else {
-                throw Py.TypeError(String.format("can only assign array (not \"%.200s\") to array "
-                        + "slice", value.getType().fastGetName()));
+                throw Py.TypeError(
+                        String.format("can only assign array (not \"%.200s\") to array " + "slice",
+                                value.getType().fastGetName()));
             }
         }
     }
@@ -1805,7 +1837,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Write all items (as machine values) to the file object <code>f</code>.
+     * Write all items (as machine values) to the file object {@code f}.
      *
      * @param f Python builtin file object to write data
      */
@@ -1813,7 +1845,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         if (!(f instanceof PyFile)) {
             throw Py.TypeError("arg must be open file");
         }
-        PyFile file = (PyFile)f;
+        PyFile file = (PyFile) f;
         file.write(tostring());
     }
 
@@ -1876,7 +1908,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 break;
             case 'c':
                 for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeByte((byte)Array.getChar(data, i));
+                    dos.writeByte((byte) Array.getChar(data, i));
                 }
                 break;
             case 'h':
@@ -1925,9 +1957,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     private static byte signedByte(short x) {
         if (x >= 128 && x < 256) {
-            return (byte)(x - 256);
+            return (byte) (x - 256);
         } else if (x >= 0) {
-            return (byte)x;
+            return (byte) x;
         } else {
             throw Py.ValueError("invalid storage");
         }
@@ -1935,9 +1967,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     private static short signedShort(int x) {
         if (x >= 32768 && x < 65536) {
-            return (short)(x - 65536);
+            return (short) (x - 65536);
         } else if (x >= 0) {
-            return (short)x;
+            return (short) x;
         } else {
             throw Py.ValueError("invalid storage");
         }
@@ -1945,9 +1977,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     private static int signedInt(long x) {
         if (x >= 2147483648L && x < 4294967296L) {
-            return (int)(x - 4294967296L);
+            return (int) (x - 4294967296L);
         } else if (x >= 0) {
-            return (int)x;
+            return (int) x;
         } else {
             throw Py.ValueError("invalid storage");
         }
@@ -1955,7 +1987,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     private static short unsignedByte(byte x) {
         if (x < 0) {
-            return (short)(x + 256);
+            return (short) (x + 256);
         } else {
             return x;
         }
@@ -2018,7 +2050,13 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     // PyArray can't extend anymore, so delegate
     private class ArrayDelegate extends AbstractArray {
 
+        /**
+         * Construct a delegate that manages the {@link PyArray#data} in the containing
+         * {@code PyArray} or a private array of length zero it creates (if {@link PyArray#data} is
+         * {@code null} at the time of the call).
+         */
         private ArrayDelegate() {
+            // When do we need the data==null path?
             super(data == null ? 0 : Array.getLength(data));
         }
 
@@ -2101,7 +2139,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Try to re-use an existing exported buffer, or return <code>null</code> if we can't.
+     * Try to re-use an existing exported buffer, or return {@code null} if we can't.
      *
      * @throws PyException {@code BufferError} if the the flags are incompatible with the buffer
      */
@@ -2147,7 +2185,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Wrap a <code>ByteBuffer</code> in an InputStream. Reference: <a
+     * Wrap a {@link ByteBuffer} in an InputStream. Reference: <a
      * href=http://stackoverflow.com/questions/4332264/wrapping-a-bytebuffer-with-an-inputstream>
      * Stackoverflow question 4332264</a>.
      */
@@ -2206,4 +2244,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
         throw new UnsupportedOperationException();
     }
+
+    private static final String TYPE_NOT_COMPATIBLE = "Type not compatible with array type";
+
 }
