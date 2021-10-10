@@ -10,8 +10,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import org.python.core.PyArray.ItemType;
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.buffer.SimpleBuffer;
 import org.python.core.buffer.SimpleStringBuffer;
@@ -38,6 +40,106 @@ import org.python.modules.gc;
  * >>> type(ax[2])
  * &lt;type 'java.math.BigDecimal'>
  * </pre>
+ *
+ * <table>
+ * <caption>Supported item types</caption>
+ * <tr>
+ * <th>typecode</th>
+ * <th>Python type</th>
+ * <th>Java type</th>
+ * <th>serialised size</th>
+ * <th>signed</th>
+ * </tr>
+ * <tr>
+ * <td>{@code b}</td>
+ * <td>{@code int}</td>
+ * <td>{@code byte}</td>
+ * <td>1</td>
+ * </tr>
+ * <tr>
+ * <td>{@code B}</td>
+ * <td>{@code int}</td>
+ * <td>{@code byte}</td>
+ * <td>1</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code h}</td>
+ * <td>{@code int}</td>
+ * <td>{@code short}</td>
+ * <td>2</td>
+ * </tr>
+ * <tr>
+ * <td>{@code H}</td>
+ * <td>{@code int}</td>
+ * <td>{@code short}</td>
+ * <td>2</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code i}</td>
+ * <td>{@code int}</td>
+ * <td>{@code int}</td>
+ * <td>4</td>
+ * </tr>
+ * <tr>
+ * <td>{@code I}</td>
+ * <td>{@code long}</td>
+ * <td>{@code int}</td>
+ * <td>4</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code l}</td>
+ * <td>{@code long}</td>
+ * <td>{@code long}</td>
+ * <td>8</td>
+ * </tr>
+ * <tr>
+ * <td>{@code L}</td>
+ * <td>{@code long}</td>
+ * <td>{@code long}</td>
+ * <td>8</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code f}</td>
+ * <td>{@code float}</td>
+ * <td>{@code float}</td>
+ * <td>4</td>
+ * </tr>
+ * <tr>
+ * <td>{@code d}</td>
+ * <td>{@code float}</td>
+ * <td>{@code double}</td>
+ * <td>8</td>
+ * </tr>
+ * <tr>
+ * <td>{@code c}</td>
+ * <td>{@code str}</td>
+ * <td>{@code byte}</td>
+ * <td>1</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code u}</td>
+ * <td>{@code unicode}</td>
+ * <td>{@code int}</td>
+ * <td>1</td>
+ * <td>unsigned</td>
+ * </tr>
+ * <tr>
+ * <td>{@code z}</td>
+ * <td>{@code bool}</td>
+ * <td>{@code boolean}</td>
+ * <td>1</td>
+ * </tr>
+ * </table>
+ * Types shown as "unsigned" represent positive values encoded in the same number of bits as the
+ * equivalent signed type. The Java value serialised makes no distinction. The consumer of the
+ * stream has to know whether to make a signed or unsigned interpretation of the bits. When reading
+ * a stream, the type code declared for the destination array decides the interpretation of the
+ * bytes.
  */
 @ExposedType(name = "array.array", base = PyObject.class)
 public class PyArray extends PySequence implements Cloneable, BufferProtocol, Traverseproc {
@@ -50,11 +152,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     /** The Java class of elements in the {@code data} array. */
     private Class<?> itemClass;
 
-    /**
-     * Either a Python-style {@code array.array} type code for the element (item) type or the Java
-     * class name.
-     */
-    private String typecode;
+    /** Everything else we need to know about the type of elements in the {@code data} array. */
+    private ItemType itemType;
 
     /**
      * Mix in the mechanisms for manipulating the underlying array as this "delegate" object. Many
@@ -73,70 +172,148 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Create a {@code PyArray} with the given array item class and content.
+     * Create a {@code PyArray} with the given array item type, specific item class and content.
      *
-     * @param itemClass of elements in the array
-     * @param data
+     * The primary specification is the {@link ItemType} parameter and if that is
+     * {@link ItemType#OBJECT} a specific Java class for the items.
+     *
+     * In a subtle twist, if {@code itemType =} {@link ItemType#OBJECT} but {@code itemClass} is one
+     * of the types used to implement the "single letter" type codes, the item type of the array
+     * will be the first signed type represented by that class, not {@code OBJECT}. This is to
+     * preserve a legacy behaviour of the {@code PyArray} constructors.
+     *
+     * @param subtype actual Python type
+     * @param itemType of the elements
+     * @param itemClass when {@code itemType =} {@link ItemType#OBJECT}
+     * @param data content array
      */
-    public PyArray(Class<?> itemClass, Object data) {
-        this(TYPE);
-        setElementType(itemClass);
+    PyArray(PyType subtype, ItemType itemType, Class<?> itemClass, Object data) {
+        this(subtype);
+        setElementType(itemType, itemClass);
         setData(data);
     }
 
-    public PyArray(Class<?> itemClass, PyObject initial) {
-        this(TYPE);
-        setElementType(itemClass);
+    /**
+     * Create a {@code PyArray} with the given array item type, specific item class and length, but
+     * zero content.
+     *
+     * Roughly equivalent to<pre>
+     * PyArray(itemType, itemClass, Array.newInstance(itemClass, n))
+     * </pre> But with {@code itemClass} for the new array deduced from {@code itemType} as
+     * explained in {@link PyArray#PyArray(ItemType, Class, Object)}.
+     *
+     * @param subtype actual Python type
+     * @param itemType of the elements
+     * @param itemClass when {@code itemType =} {@link ItemType#OBJECT}
+     * @param n length of content array to create
+     */
+    PyArray(PyType subtype, ItemType itemType, Class<?> itemClass, int n) {
+        this(subtype);
+        setElementType(itemType, itemClass);
+        setData(Array.newInstance(this.itemClass, n));
+    }
+
+    /**
+     * Create a {@code PyArray} with the given array item class and content initialised from a
+     * Python object (like an iterable).
+     *
+     * @param subtype actual Python type
+     * @param itemType of the elements
+     * @param itemClass when {@code itemType =} {@link ItemType#OBJECT}
+     * @param initial provider of initial contents
+     */
+    public PyArray(PyType subtype, ItemType itemType, Class<?> itemClass, PyObject initial) {
+        this(subtype, itemType, itemClass, 0);
         useInitial(initial);
     }
 
+    /**
+     * Create a {@code PyArray} with the given array item class and content. If {@code itemClass} is
+     * one of the primitive types used to implement the "single letter" type codes, the type code of
+     * the array will be a signed zero of that item class.
+     *
+     * @param itemClass of elements in the array
+     * @param data content array
+     */
+    public PyArray(Class<?> itemClass, Object data) {
+        this(TYPE, ItemType.OBJECT, itemClass, data);
+    }
+
+    /**
+     * Create a {@code PyArray} with the given array item class and content initialised from a
+     * Python object (iterable).
+     *
+     * @param itemClass of elements in the array
+     * @param initial provider of initial contents
+     */
+    public PyArray(Class<?> itemClass, PyObject initial) {
+        this(TYPE, ItemType.OBJECT, itemClass, initial);
+    }
+
+    /**
+     * Create a {@code PyArray} with the given array item class and number of zero or {@code null}
+     * elements. If {@code itemClass} is one of the primitive types used to implement the "single
+     * letter" type codes, the type code of the array will be a signed zero of that item class.
+     *
+     * @param itemClass of elements in the array
+     * @param n number of (zero or {@code null}) elements
+     */
     public PyArray(Class<?> itemClass, int n) {
-        this(itemClass, Array.newInstance(itemClass, n));
+        this(TYPE, ItemType.OBJECT, itemClass, Array.newInstance(itemClass, n));
     }
 
+    /**
+     * Create a {@code PyArray} as a copy of another.
+     *
+     * @param toCopy the other array
+     */
     public PyArray(PyArray toCopy) {
-        this(toCopy.itemClass, toCopy.delegate.copyArray());
-        typecode = toCopy.typecode;
+        this(TYPE, toCopy.itemType, toCopy.itemClass, toCopy.delegate.copyArray());
     }
 
     /**
-     * Initialise this array from a Python {@code array.array} type code character. The way
-     * {@link #array_new(PyNewWrapper, boolean, PyType, PyObject[], String[]) array_new} works, and
-     * the constructors, is to create an instance with the almost parameterless
-     * {@link #PyArray(PyType)} with sub-type argument. This blank canvas needs to be inscribed with
-     * a consistent state by a call to this method and either {@link #setData(Object) setData} or
-     * {@link #useInitial(PyObject) useInitial}.
+     * Initialise this array from an {@link ItemType} (from a Python {@code array.array} type code
+     * character) and if that is {@link ItemType#OBJECT} a specific Java class for the items.
+     * <p>
+     * If {@code itemType =} {@link ItemType#OBJECT} but {@code itemClass} is one of the types used
+     * to implement the "single letter" type codes, the item type of the array will be the first
+     * signed type represented by that class, not {@code OBJECT}. This is to preserve a legacy
+     * behaviour of the {@code PyArray} constructors.
+     * <p>
+     * The way {@link #array_new(PyNewWrapper, boolean, PyType, PyObject[], String[]) array_new}
+     * works, and the constructors, is to create an instance with the almost parameterless
+     * {@link #PyArray(PyType)} with sub-type argument.
+     * <p>
+     * This blank canvas needs to be inscribed with a consistent state by a call to this method and
+     * either {@link #setData(Object) setData} or {@link #useInitial(PyObject) useInitial}.
      *
-     * @param typecode of the elements
+     * @param itemType of the elements
+     * @param itemClass when {@code itemType =} {@link ItemType#OBJECT}
      */
-    private void setElementType(char typecode) {
-        this.itemClass = char2class(typecode);
-        this.typecode = Character.toString(typecode);
-    }
-
-    /**
-     * Initialise this array from the Java element class. The way
-     * {@link #array_new(PyNewWrapper, boolean, PyType, PyObject[], String[]) array_new} works and
-     * the constructors, is to create an instance with the almost parameterless
-     * {@link #PyArray(PyType)} with sub-type argument. This blank canvas needs to be inscribed with
-     * a consistent state by a call to this method and either {@link #setData(Object) setData} or
-     * {@link #useInitial(PyObject) useInitial}.
-     *
-     * @param itemClass of the elements
-     */
-    private void setElementType(Class<?> itemClass) {
-        this.itemClass = itemClass;
-        this.typecode = classToTypecode(itemClass);
+    private void setElementType(ItemType itemType, Class<?> itemClass) {
+        if (itemType == ItemType.OBJECT) {
+            /*
+             * If itemClass is one of the types used to implement the "single letter" type codes,
+             * the item type of the array will be the first signed type represented by that class,
+             * not OBJECT. This is to preserve a legacy behaviour of the PyArray constructors.
+             */
+            this.itemClass = itemClass;
+            this.itemType = ItemType.fromJavaClass(itemClass);
+        } else {
+            // itemType tells the whole story
+            this.itemType = itemType;
+            this.itemClass = itemType.itemClass;
+        }
     }
 
     /**
      * Make a given object the storage for the array. Normally this is a Java array of type
      * consistent with the element type. It will be manipulated by {@link #delegate}.
      *
-     * @param data the storage.
+     * @param data the storage (or {@code null} to to create at zero length consistent with type).
      */
     private void setData(Object data) {
-        this.data = data;
+        this.data = data != null ? data : Array.newInstance(itemClass, 0);
         this.delegate = new ArrayDelegate();
     }
 
@@ -165,9 +342,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         } else if (initial instanceof PyString && !(initial instanceof PyUnicode)) {
             fromstring(initial.toString());
 
-        } else if ("u".equals(typecode)) {
+        } else if (itemType == ItemType.UNICHAR) {
             if (initial instanceof PyUnicode) {
-                extendArray(((PyUnicode) initial).toCodePoints());
+                extendArray((PyUnicode) initial);
             } else {
                 extendUnicodeIter(initial);
             }
@@ -208,10 +385,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 throw Py.TypeError("array() argument 1 must be char, not str");
             }
             char typecode = obj.toString().charAt(0);
-            self.setElementType(typecode);
+            self.setElementType(ItemType.fromTypecode(typecode), null);
         } else if (obj instanceof PyJavaType) {
             Class<?> itemClass = ((PyJavaType) obj).getProxyType();
-            self.setElementType(itemClass);
+            self.setElementType(ItemType.OBJECT, itemClass);
         } else {
             throw Py.TypeError(
                     "array() argument 1 must be char, not " + obj.getType().fastGetName());
@@ -222,22 +399,40 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         return self;
     }
 
+    /**
+     * Create a {@code PyArray} with the given array type code and number of zero elements.
+     *
+     * @param typecode of elements in the array
+     * @param n number of (zero or {@code null}) elements
+     * @return created array
+     */
     public static PyArray zeros(int n, char typecode) {
-        PyArray array = zeros(n, char2class(typecode));
-        array.typecode = Character.toString(typecode);
-        return array;
+        return new PyArray(TYPE, ItemType.fromTypecode(typecode), null, n);
     }
 
-    public static PyArray zeros(int n, Class<?> ctype) {
-        PyArray array = new PyArray(ctype, n);
-        array.typecode = ctype.getName();
-        return array;
+    /**
+     * Create a {@code PyArray} with the given array item class and number of zero or {@code null}
+     * elements. If {@code itemClass} is one of the primitive types used to implement the "single
+     * letter" type codes, the type code of the array will be a signed zero of that item class.
+     *
+     * @param itemClass
+     * @param n number of (zero or {@code null}) elements
+     * @return created array
+     */
+    public static PyArray zeros(int n, Class<?> itemClass) {
+        return new PyArray(TYPE, ItemType.OBJECT, itemClass, n);
     }
 
+    /**
+     * Create a {@code PyArray} with the given array item type and content initialised from a Python
+     * object (iterable).
+     *
+     * @param seq to suply content
+     * @param typecode
+     * @return created array
+     */
     public static PyArray array(PyObject seq, char typecode) {
-        PyArray array = PyArray.array(seq, char2class(typecode));
-        array.typecode = Character.toString(typecode);
-        return array;
+        return new PyArray(TYPE, ItemType.fromTypecode(typecode), null, seq);
     }
 
     public static Class<?> array_class(Class<?> type) {
@@ -253,10 +448,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * @return a new PyArray
      */
     public static PyArray array(PyObject init, Class<?> itemClass) {
-        PyArray array = new PyArray(itemClass, 0);
-        array.typecode = itemClass.getName();
-        array.extendInternal(init);
-        return array;
+        return new PyArray(TYPE, ItemType.OBJECT, itemClass, init);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -451,21 +643,25 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * Check the other array is an array and is compatible for element type. Raise {@code TypeError}
      * if not.
      *
-     * @param other supposed {@code PyArray}
+     * @param otherObject supposed {@code PyArray}
      * @return {@code other}
      * @throws ClassCastException if {@code other} not {@code PyArray}
      */
-    private PyArray arrayChecked(PyObject other) throws ClassCastException {
-        PyArray otherArr = (PyArray) other;
-        if (!otherArr.typecode.equals(this.typecode)) {
-            throw Py.TypeError("can only append arrays of the same type, expected '"
-                    + this.itemClass + ", found " + otherArr.itemClass);
+    private PyArray arrayChecked(PyObject otherObject) throws ClassCastException {
+        PyArray other = (PyArray) otherObject;
+        if (itemType == other.itemType) {
+            if (itemType != ItemType.OBJECT) {
+                return other;
+            } else if (itemClass.isAssignableFrom(other.itemClass)) {
+                return other;
+            }
         }
-        return otherArr;
+        throw Py.TypeError(String.format("bad argument types for built-in operation: (%s, %s)",
+                reprTypecode(), other.reprTypecode()));
     }
 
     /**
-     * Length of the array
+     * Length of the array (as the number of elements, not a storage size).
      *
      * @return number of elements in the array
      */
@@ -490,35 +686,38 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         if (dict == null) {
             dict = Py.None;
         }
+        PyString typecode = Py.newString(getTypecode());
         if (__len__() > 0) {
-            return new PyTuple(getType(),
-                    new PyTuple(Py.newString(typecode), Py.newString(tostring())), dict);
+            return new PyTuple(getType(), new PyTuple(typecode, Py.newString(tostring())), dict);
         } else {
-            return new PyTuple(getType(), new PyTuple(Py.newString(typecode)), dict);
+            return new PyTuple(getType(), new PyTuple(typecode), dict);
         }
     }
 
     @Override
     public String toString() {
         if (__len__() == 0) {
-            return String.format("array(%s)", encodeTypecode(typecode));
+            return String.format("array(%s)", reprTypecode());
         }
         String value;
-        if ("c".equals(typecode)) {
-            value = PyString.encode_UnicodeEscape(tostring(), true);
-        } else if ("u".equals(typecode)) {
-            value = (new PyUnicode(tounicode())).__repr__().toString();
-        } else {
-            value = tolist().toString();
+        switch (itemType) {
+            case CHAR:
+                value = PyString.encode_UnicodeEscape(tostring(), true);
+                break;
+            case UNICHAR:
+                value = (new PyUnicode(tounicode())).__repr__().toString();
+                break;
+            default:
+                value = tolist().toString();
         }
-        return String.format("array(%s, %s)", encodeTypecode(typecode), value);
+        return String.format("array(%s, %s)", reprTypecode(), value);
     }
 
-    private String encodeTypecode(String typecode) {
-        if (typecode.length() > 1) {
-            return typecode;
+    private String reprTypecode() {
+        if (itemType == ItemType.OBJECT) {
+            return getTypecode();
         } else {
-            return "'" + typecode + "'";
+            return "'" + getTypecode() + "'";
         }
     }
 
@@ -534,8 +733,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
         if (c == Object.class || (isArray && componentType.isAssignableFrom(itemClass))) {
             if (delegate.capacity != delegate.size) {
-                // when unboxing, need to shrink the array first, otherwise incorrect
-                // results to Java
+                // when unboxing, shrink the array first, otherwise incorrect results to Java
                 return delegate.copyArray();
             } else {
                 return data;
@@ -564,32 +762,6 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         appendUnchecked(value);
     }
 
-    private static int getCodePoint(PyObject obj) {
-        if (obj instanceof PyUnicode) {
-            PyUnicode u = (PyUnicode) obj;
-            int[] codepoints = u.toCodePoints();
-            if (codepoints.length == 1) {
-                return codepoints[0];
-            }
-        }
-        throw Py.TypeError("array item must be unicode character");
-    }
-
-    // relax to allow mixing with PyString, integers
-    private static int getCodePointOrInt(PyObject obj) {
-        if (obj instanceof PyUnicode) {
-            PyUnicode u = (PyUnicode) obj;
-            return u.toCodePoints()[0];
-        } else if (obj instanceof PyString) {
-            PyString s = (PyString) obj;
-            return s.toString().charAt(0);
-        } else if (obj.__nonzero__()) {
-            return obj.asInt();
-        } else {
-            return -1;
-        }
-    }
-
     /**
      * Append new value x to the end of the array.
      *
@@ -607,26 +779,13 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * @param value item to be appended to the array
      */
     private final void appendUnchecked(PyObject value) {
-        // Currently, append is asymmetric with extend, which
-        // *will* do conversions like append(5.0) to an int array.
-        // Also, CPython 2.2 will do the append coercion. However,
-        // it is deprecated in CPython 2.3, so maybe we are just
-        // ahead of our time ;-)
-
         int afterLast = delegate.getSize();
-
-        if ("u".equals(typecode)) {
-            int codepoint = getCodePoint(value);
-            delegate.makeInsertSpace(afterLast);
-            Array.setInt(data, afterLast, codepoint);
-        } else {
-            delegate.makeInsertSpace(afterLast);
-            try {
-                set(afterLast, value);
-            } catch (PyException e) {
-                delegate.setSize(afterLast);
-                throw new PyException(e.type, e.value);
-            }
+        delegate.makeInsertSpace(afterLast);
+        try {
+            pyset(afterLast, value);
+        } catch (PyException e) {
+            delegate.setSize(afterLast);
+            throw new PyException(e.type, e.value);
         }
     }
 
@@ -641,7 +800,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * reading data from a file written on a machine with a different byte order.
      */
     public void byteswap() {
-        if (getStorageSize() == 0 || "u".equals(typecode)) {
+        if (itemType == ItemType.OBJECT) {
             throw Py.RuntimeError("don't know how to byteswap this array type");
         }
         ByteSwapper.swap(data);
@@ -660,114 +819,12 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     /**
      * Converts a character code for the array type to the Java {@code Class} of the elements of the
      * implementation array.
-     * <table>
-     * <caption>Supported character codes and their native types</caption>
-     * <tr>
-     * <td><strong>Type code</strong></td>
-     * <td><strong>native type</strong></td>
-     * </tr>
-     * <tr>
-     * <td>z</td>
-     * <td>{@code boolean}</td>
-     * </tr>
-     * <tr>
-     * <td>c</td>
-     * <td>{@code char}</td>
-     * </tr>
-     * <tr>
-     * <td>b</td>
-     * <td>{@code byte}</td>
-     * </tr>
-     * <tr>
-     * <td>h</td>
-     * <td>{@code short}</td>
-     * </tr>
-     * <tr>
-     * <td>i</td>
-     * <td>{@code int}</td>
-     * </tr>
-     * <tr>
-     * <td>l</td>
-     * <td>{@code long}</td>
-     * </tr>
-     * <tr>
-     * <td>f</td>
-     * <td>{@code float}</td>
-     * </tr>
-     * <tr>
-     * <td>d</td>
-     * <td>{@code double}</td>
-     * </tr>
-     * </table>
-     * <p>
      *
      * @param typecode character code for the array type
      * @return {@code Class} of the native itemClass
      */
-    // promote B, H, I (unsigned int) to next larger size
     public static Class<?> char2class(char typecode) throws PyIgnoreMethodTag {
-        switch (typecode) {
-            case 'z':
-                return Boolean.TYPE;
-            case 'b':
-                return Byte.TYPE;
-            case 'B':
-                return Short.TYPE;
-            case 'u':
-                return Integer.TYPE;
-            case 'c':
-                return Character.TYPE;
-            case 'h':
-                return Short.TYPE;
-            case 'H':
-                return Integer.TYPE;
-            case 'i':
-                return Integer.TYPE;
-            case 'I':
-                return Long.TYPE;
-            case 'l':
-                return Long.TYPE;
-            case 'L':
-                return Long.TYPE;
-            case 'f':
-                return Float.TYPE;
-            case 'd':
-                return Double.TYPE;
-            default:
-                throw Py.ValueError(
-                        "bad typecode (must be c, b, B, u, h, H, i, I, l, L, f, d or z)");
-        }
-    }
-
-    /**
-     * Map a Java class to the {@code array.array} type code that represents it. Where that may be
-     * ambiguous, the method assumes signed representation (so for example {@code Integer} maps to
-     * {@code 'i'} not {@code 'I'}). Classes other than those map to their Java class name. THis
-     * supports the extended repertoire {@code array.array} has in Jython.
-     *
-     * @param cls element class
-     * @return the {@code array.array} type code that representing {@code cls}
-     */
-    private static String classToTypecode(Class<?> cls) {
-        if (cls.equals(Boolean.TYPE)) {
-            return "z";
-        } else if (cls.equals(Character.TYPE)) {
-            return "c";
-        } else if (cls.equals(Byte.TYPE)) {
-            return "b";
-        } else if (cls.equals(Short.TYPE)) {
-            return "h";
-        } else if (cls.equals(Integer.TYPE)) {
-            return "i";
-        } else if (cls.equals(Long.TYPE)) {
-            return "l";
-        } else if (cls.equals(Float.TYPE)) {
-            return "f";
-        } else if (cls.equals(Double.TYPE)) {
-            return "d";
-        } else {
-            return cls.getName();
-        }
+        return ItemType.fromTypecode(typecode).itemClass;
     }
 
     @ExposedMethod
@@ -775,19 +832,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         // note: cpython does not raise type errors based on item type;
         int iCount = 0;
         int len = delegate.getSize();
-        if ("u".equals(typecode)) {
-            int codepoint = getCodePointOrInt(value);
-            for (int i = 0; i < len; i++) {
-                if (codepoint == Array.getInt(data, i)) {
-                    iCount++;
-                }
-            }
-        } else {
-
-            for (int i = 0; i < len; i++) {
-                if (value.equals(Py.java2py(Array.get(data, i)))) {
-                    iCount++;
-                }
+        for (int i = 0; i < len; i++) {
+            if (value.equals(itemType.get(this, i))) {
+                iCount++;
             }
         }
         return iCount;
@@ -853,25 +900,22 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     private void extendInternal(PyObject iterable) {
 
         if (iterable instanceof PyUnicode) {
-            if ("u".equals(typecode)) {
+            if (itemType == ItemType.UNICHAR) {
                 extendUnicodeIter(iterable);
-            } else if ("c".equals(typecode)) {
+            } else if (itemType == ItemType.CHAR) {
                 throw Py.TypeError("array item must be char");
             } else {
                 throw Py.TypeError("an integer is required");
             }
 
-            // } else if (iterable instanceof PyString) {
-            // // XXX CPython treats a str/bytes as an iterable, not as previously here:
-            // fromstring(((PyString)iterable).toString());
-
         } else if (iterable instanceof PyArray) {
             PyArray source = (PyArray) iterable;
-            if (!source.typecode.equals(typecode)) {
+            if (source.itemType == itemType) {
+                resizeCheck();  // Prohibited if exporting a buffer
+                delegate.appendArray(source.delegate.copyArray());
+            } else {
                 throw Py.TypeError("can only extend with array of same kind");
             }
-            resizeCheck();  // Prohibited if exporting a buffer
-            delegate.appendArray(source.delegate.copyArray());
 
         } else {
             extendInternalIter(iterable);
@@ -893,7 +937,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             int last = delegate.getSize();
             delegate.ensureCapacity(last + iterable.__len__());
             for (PyObject item : iterable.asIterable()) {
-                set(last++, item);
+                pyset(last++, item);
                 delegate.size++;
             }
 
@@ -936,15 +980,16 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
     }
 
-    private void extendArray(int[] items) {
+    private void extendArray(PyUnicode codepoints) {
 
         // Prohibited operation if exporting a buffer
         resizeCheck();
 
         int last = delegate.getSize();
+        int[] items = codepoints.toCodePoints();
         delegate.ensureCapacity(last + items.length);
         for (int item : items) {
-            Array.set(data, last++, item);
+            Array.setInt(data, last++, item);
             delegate.size++;
         }
     }
@@ -977,20 +1022,22 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             PyFile file = (PyFile) f;
             if (!file.getClosed()) {
                 // Load required amount or whatever is available into a bytes object
-                int readbytes = count * getStorageSize();
+                int readbytes = count * itemType.itemsize;
                 String buffer = file.read(readbytes).toString();
                 fromstring(buffer);
                 // check for underflow
                 if (buffer.length() < readbytes) {
-                    int readcount = buffer.length() / getStorageSize();
-                    throw Py.EOFError("not enough items in file. " + Integer.toString(count)
-                            + " requested, " + Integer.toString(readcount) + " actually read");
+                    int readcount = buffer.length() / itemType.itemsize;
+                    throw Py.EOFError(String.format(NOT_ENOUGH_IN_FILE, count, readcount));
                 }
             }
             return;
         }
         throw Py.TypeError("arg1 must be open file");
     }
+
+    private static final String NOT_ENOUGH_IN_FILE =
+            "not enough items in file. %d requested, %d actually read";
 
     @ExposedMethod
     public final void array_fromlist(PyObject obj) {
@@ -1008,9 +1055,6 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             throw Py.TypeError("arg must be list");
         }
 
-        // Prohibited operation if exporting a buffer
-        resizeCheck();
-
         // store the current size of the internal array
         int size = delegate.getSize();
         try {
@@ -1024,175 +1068,54 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Generic stream reader to read the entire contents of a stream into the array.
-     *
-     * @param is InputStream to source the data from
-     *
-     * @return number of primitives successfully read
-     *
-     * @throws IOException
-     * @throws EOFException
-     */
-    private int fromStream(InputStream is) throws IOException, EOFException {
-        return fromStream(is, is.available() / getStorageSize());
-    }
-
-    /**
-     * Generic stream reader to read {@code count} primitive types from a stream into the array.
-     *
-     * @param is InputStream to source the data from
-     * @param count number of primitive types to read from the stream
-     *
-     * @return number of primitives successfully read
-     *
-     * @throws IOException
-     * @throws EOFException
-     */
-    private int fromStream(InputStream is, int count) throws IOException, EOFException {
-
-        // Current number of items present
-        int origsize = delegate.getSize();
-
-        // Read into the array, after the current contents, up to new size (or EOF thrown)
-        int n = fromStream(is, origsize, origsize + count, true);
-        return n - origsize;
-    }
-
-    /**
-     * Read primitive values from a stream into the array without resizing. Data is read until the
-     * array is filled or the stream runs out. If the stream does not contain a whole number of
-     * items (possible if the item size is not one byte), the behaviour in respect of the final
-     * partial item and straem position is not defined.
+     * Fill the current array with primitive values (of the type the array holds) from a stream,
+     * starting at array index zero, up to the capacity of the array, without resizing. Data are
+     * read until the array is filled or the stream runs out. If the stream does not contain a whole
+     * number of items (possible if the item size is not one byte), the behaviour in respect of the
+     * final partial item and stream position is not defined.
      *
      * @param is InputStream to source the data from
      * @return number of primitives successfully read
      * @throws IOException reflecting I/O errors during reading
      */
     public int fillFromStream(InputStream is) throws IOException {
-        return fromStream(is, 0, delegate.size, false);
+        return fromStream(is, 0, delegate.getSize());
     }
 
     /**
-     * Helper for reading primitive values from a stream into a slice of the array. Data is read
-     * until the array slice is filled or the stream runs out. The purpose of the method is to
-     * concentrate in one place the manipulation of bytes into the several primitive element types
-     * on behalf of {@link #fillFromStream(InputStream)} etc.. The storage is resized if the slice
-     * being written ends beyond the current end of the array, i.e. it is increased to the value of
-     * {@code limit}.
+     * Read primitive values from a stream into a slice of the array, defined by a start and a
+     * count. Data are read until the array slice is filled or the stream runs out. Data in the
+     * array beyond the slice.
      * <p>
-     * Since different read methods respond differently to it, the caller must specify whether the
-     * exhaustion of the stream (EOF) should be treated as an error or not. If the stream does not
-     * contain a whole number of items (possible if the item size is not one byte), the behaviour in
-     * respect of the final partial item and stream position is not defined.
+     * This method is behind the manipulation of bytes into the several primitive element types on
+     * behalf of {@link #fillFromStream(InputStream)} etc.. The storage is resized if the slice
+     * being written ends beyond the current end of the array, i.e. it is increased to the value of
+     * {@code limit}. The return value should be checked against the count of items requested. If
+     * the stream runs out before the request is satisfied, the return will be less than the count,
+     * and items beyond the last whole item read are not altered.
      *
      * @param dis data stream source for the values
-     * @param index first element index to read
-     * @param limit first element index <b>not</b> to read
-     * @param eofIsError if true, treat EOF as expected way to end
-     * @return index of first element not read (<code>=limit</code>, if not ended by EOF)
+     * @param start first element index to read
+     * @param count number of primitive elements to read
+     * @return number of primitives successfully read ({@code =count}, if not ended by EOF)
      * @throws IOException reflecting I/O errors during reading
-     * @throws EOFException if stream ends before read is satisfied and eofIsError is true
      */
-    private int fromStream(InputStream is, int index, int limit, boolean eofIsError)
-            throws IOException, EOFException {
-
+    private int fromStream(InputStream is, int start, int count) throws IOException {
         // Ensure the array is dimensioned to fit the data expected
-        if (limit > delegate.getSize()) {
-            // Prohibited operation if exporting a buffer
+        int size = delegate.getSize(), limit = start + count;
+        if (limit > size) {
             resizeCheck();
             delegate.setSize(limit);
         }
-
         // We need a wrapper capable of decoding the data from the representation defined by Java.
         DataInputStream dis = new DataInputStream(is);
-
-        try {
-            // We have to deal with each primitive itemClass as a distinct case
-            if (itemClass.isPrimitive()) {
-                switch (typecode.charAt(0)) {
-                    case 'z':
-                        for (; index < limit; index++) {
-                            Array.setBoolean(data, index, dis.readBoolean());
-                        }
-                        break;
-                    case 'b':
-                        for (; index < limit; index++) {
-                            Array.setByte(data, index, dis.readByte());
-                        }
-                        break;
-                    case 'B':
-                        for (; index < limit; index++) {
-                            Array.setShort(data, index, unsignedByte(dis.readByte()));
-                        }
-                        break;
-                    case 'u':
-                        // use 32-bit integers since we want UCS-4 storage
-                        for (; index < limit; index++) {
-                            Array.setInt(data, index, dis.readInt());
-                        }
-                        break;
-                    case 'c':
-                        for (; index < limit; index++) {
-                            Array.setChar(data, index, (char) (dis.readByte() & 0xff));
-                        }
-                        break;
-                    case 'h':
-                        for (; index < limit; index++) {
-                            Array.setShort(data, index, dis.readShort());
-                        }
-                        break;
-                    case 'H':
-                        for (; index < limit; index++) {
-                            Array.setInt(data, index, unsignedShort(dis.readShort()));
-                        }
-                        break;
-                    case 'i':
-                        for (; index < limit; index++) {
-                            Array.setInt(data, index, dis.readInt());
-                        }
-                        break;
-                    case 'I':
-                        for (; index < limit; index++) {
-                            Array.setLong(data, index, unsignedInt(dis.readInt()));
-                        }
-                        break;
-                    case 'l':
-                        for (; index < limit; index++) {
-                            Array.setLong(data, index, dis.readLong());
-                        }
-                        break;
-                    case 'L': // faking it
-                        for (; index < limit; index++) {
-                            Array.setLong(data, index, dis.readLong());
-                        }
-                        break;
-                    case 'f':
-                        for (; index < limit; index++) {
-                            Array.setFloat(data, index, dis.readFloat());
-                        }
-                        break;
-                    case 'd':
-                        for (; index < limit; index++) {
-                            Array.setDouble(data, index, dis.readDouble());
-                        }
-                        break;
-                }
-            }
-
-        } catch (EOFException eof) {
-            if (eofIsError) {
-                throw eof;
-            }
-            // EOF = end of reading: excess odd bytes read inside dis.readXXX() discarded
-        }
-
-        // index points to the first element *not* written
-        return index;
+        // itemType.fromStream returns *index* of first element *not* written
+        return itemType.fromStream(dis, data, start, limit) - start;
     }
 
     /**
-     * Appends items from the object, which is a byte string of some kind (PyString or object with
-     * the buffer interface providing bytes) The string of bytes is interpreted as an array of
+     * Append items from the object, which is a byte string of some kind ({@code PyString} or object
+     * with the buffer interface providing bytes). The string of bytes is interpreted as an array of
      * machine values (as if it had been read from a file using the {@link #fromfile(PyObject, int)
      * fromfile()} method).
      *
@@ -1203,30 +1126,52 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Appends items from the string, interpreting the string as an array of machine values (as if
-     * it had been read from a file using the {@link #fromfile(PyObject, int) fromfile()} method).
+     * Append items from the string, interpreting the string as an array of bytes (as if it had been
+     * read from a file using the {@link #fromfile(PyObject, int) fromfile()} method). The bytes
+     * encode primitive values of the type appropriate to the array,
      *
      * @param input string of bytes containing array data
      */
     public void fromstring(String input) {
-        frombytesInternal(StringUtil.toBytes(input));
+        fromBytes(delegate.getSize(), StringUtil.toBytes(input));
     }
 
     /**
-     * Appends items from the string, interpreting the string as an array of machine values (as if
-     * it had been read from a file using the {@link #fromfile(PyObject, int) fromfile()} method).
+     * Read primitive values from a stream into a slice of the array, defined by a start and the
+     * number of items encoded in the bytes. Data are read until the array slice is filled or the
+     * stream runs out. Data in the array beyond the slice are not altered. Write a slice of the
+     * array with primitive values
+     *
+     * items from the string, interpreting the string as an array of bytes (as if it had been read
+     * from a file using the {@link #fromfile(PyObject, int) fromfile()} method). The bytes encode
+     * primitive values of the type appropriate to the array,
+     *
+     * @param start first element index to read into
+     * @param input string of bytes containing array data
+     * @return number of primitives successfully read ({@code =count}, if not ended by EOF)
+     */
+    public void fromstring(int start, String input) {
+        fromBytes(start, StringUtil.toBytes(input));
+    }
+
+    /**
+     * Append items from a bytes-like object. The bytes encode primitive values of the type
+     * appropriate to the array,
      *
      * @param input string of bytes containing array data
      */
     @ExposedMethod
     final void array_fromstring(PyObject input) {
 
+        // This is an append, so start at the current end.
+        int start = delegate.getSize();
+
         if (input instanceof BufferProtocol) {
 
             if (input instanceof PyUnicode) {
                 // Unicode is treated as specifying a byte string via the default encoding.
                 String s = ((PyUnicode) input).encode();
-                frombytesInternal(StringUtil.toBytes(s));
+                fromBytes(start, StringUtil.toBytes(s));
 
             } else {
                 // Access the bytes through the abstract API of the BufferProtocol
@@ -1234,12 +1179,12 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                     if (pybuf.getNdim() == 1) {
                         if (pybuf.getStrides()[0] == 1) {
                             // Data are contiguous in the buffer
-                            frombytesInternal(pybuf.getNIOByteBuffer());
+                            fromBytes(start, pybuf.getNIOByteBuffer());
                         } else {
                             // As frombytesInternal only knows contiguous bytes, make a copy.
                             byte[] copy = new byte[pybuf.getLen()];
                             pybuf.copyTo(copy, 0);
-                            frombytesInternal(ByteBuffer.wrap(copy));
+                            fromBytes(start, ByteBuffer.wrap(copy));
                         }
                     } else {
                         // Currently don't support n-dimensional sources
@@ -1255,51 +1200,50 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
+     * Copy into this array, starting at the given item index and expanding if necessary, a sequence
+     * of primitive values decoded from the contents of a byte array. The number of items copied is
+     * determined by the size of the byte array.
+     *
+     *
      * Common code supporting Java and Python versions of <code>.fromstring()</code> or
      * <code>.frombytes()</code> (Python 3.2+ name).
      *
-     * @param bytes array containing the new array data in machine encoding
+     * @param start item-index of first item to read from byte buffer
+     * @param bytes array encoding the primitive values
+     * @return number of primitives successfully read
      */
-    private final void frombytesInternal(byte[] bytes) {
-        frombytesInternal(ByteBuffer.wrap(bytes));
+    private final int fromBytes(int start, byte[] bytes) {
+        return fromBytes(start, ByteBuffer.wrap(bytes));
     }
 
     /**
-     * Copy into this array, the remaining bytes of a ByteBuffer (from the current position to the
-     * limit). This is common code supporting Java and Python versions of <code>.fromstring()</code>
-     * or <code>.frombytes()</code> (Python 3.2+ name).
+     * Copy into this array, starting at the given item index and expanding if necessary, a sequence
+     * of primitive values decoded from the remaining bytes of a {@code ByteBuffer} (from the
+     * current position to the limit of the source buffer). The number of items copied is determined
+     * by the size of the data.
+     * <p>
+     * This is common code supporting Java and Python versions of <code>.fromstring()</code> or
+     * <code>.frombytes()</code> (Python 3.2+ name).
      *
-     * @param bytes buffer containing the new array data in machine encoding
+     * @param start item-index of first item to read from byte buffer
+     * @param bytes buffer encoding the primitive values
+     * @return number of primitives successfully read
      */
-    private final void frombytesInternal(ByteBuffer bytes) {
-
-        // Access the bytes
-        int origsize = delegate.getSize();
-
+    private final int fromBytes(int start, ByteBuffer bytes) {
         // Check validity wrt array itemsize
-        int itemsize = getStorageSize();
-        int count = bytes.remaining();
-        if ((count % itemsize) != 0) {
-            throw Py.ValueError("string length not a multiple of item size");
+        int byteCount = bytes.remaining();
+        int count = byteCount / itemType.itemsize;
+        if (byteCount > count * itemType.itemsize) {
+            throw Py.ValueError("data length not a multiple of item size");
         }
 
-        // Prohibited operation if we are exporting a buffer
-        resizeCheck();
-
         try {
-
             // Provide argument as stream of bytes for fromstream method
             InputStream is = new ByteBufferBackedInputStream(bytes);
-            fromStream(is);
-
-        } catch (EOFException e) {
-            // stubbed catch for fromStream throws
-            throw Py.EOFError("not enough items in string");
-
-        } catch (IOException e) {
-            // discard anything successfully loaded
-            delegate.setSize(origsize);
-            throw Py.IOError(e);
+            return fromStream(is, start, count);
+        } catch (IOException ioe) {
+            // Not really possible since we just wrapped a byte buffer
+            return 0;
         }
     }
 
@@ -1311,11 +1255,11 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     final void array_fromunicode(PyObject input) {
         if (!(input instanceof PyUnicode)) {
             throw Py.ValueError("fromunicode argument must be an unicode object");
-        }
-        if (!"u".equals(typecode)) {
+        } else if (itemType != ItemType.UNICHAR) {
             throw Py.ValueError("fromunicode() may only be called on type 'u' arrays");
+        } else {
+            extend(input);
         }
-        extend(input);
     }
 
     /**
@@ -1325,10 +1269,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     @Override
     protected PyObject pyget(int i) {
-        if ("u".equals(typecode)) {
-            return new PyUnicode(Array.getInt(data, i));
-        }
-        return Py.java2py(Array.get(data, i));
+        return itemType.get(this, i);
     }
 
     /**
@@ -1344,84 +1285,17 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * Getter for the item size of the array element type.
      * <p>
      * The sizes returned by this method represent the number of bytes used to store the type. In
-     * the case of streams, this is the number of bytes written to, or read from a stream. For
-     * memory this value is the <em>minimum</em> number of bytes required to store the type.
+     * the case of streams of primitive values, this is the number of bytes written to, or read from
+     * a stream. The amount of memory occupied by each item is an internal matter for Java.
      * <p>
      * This method is used by other methods to define read/write quanta from strings and streams.
-     * <table>
-     * <caption>Values returned</caption>
-     * <tr>
-     * <th>typecode</th>
-     * <th>Java type</th>
-     * <th>itemsize</th>
-     * </tr>
-     * <tr>
-     * <td>{@code z}</td>
-     * <td>{@code boolean}</td>
-     * <td>1</td>
-     * </tr>
-     * <tr>
-     * <td>{@code b}</td>
-     * <td>{@code byte}</td>
-     * <td>1</td>
-     * </tr>
-     * <tr>
-     * <td>{@code c}</td>
-     * <td>{@code char}</td>
-     * <td>1</td>
-     * </tr>
-     * <tr>
-     * <td>{@code h}</td>
-     * <td>{@code short}</td>
-     * <td>2</td>
-     * </tr>
-     * <tr>
-     * <td>{@code i}</td>
-     * <td>{@code int}</td>
-     * <td>4</td>
-     * </tr>
-     * <tr>
-     * <td>{@code l}</td>
-     * <td>{@code long}</td>
-     * <td>8</td>
-     * </tr>
-     * <tr>
-     * <td>{@code f}</td>
-     * <td>{@code float}</td>
-     * <td>4</td>
-     * </tr>
-     * <tr>
-     * <td>{@code d}</td>
-     * <td>{@code double}</td>
-     * <td>8</td>
-     * </tr>
-     * </table>
      *
-     * @return number of bytes used to store array type.
+     * @return number of bytes used to store array type, relevant when serialising to an array of
+     *         bytes, or the reverse.
      */
     @ExposedGet(name = "itemsize")
     public int getItemsize() {
-        if (itemClass.isPrimitive()) {
-            if (itemClass == Boolean.TYPE) {
-                return 1;
-            } else if (itemClass == Byte.TYPE) {
-                return 1;
-            } else if (itemClass == Character.TYPE) {
-                return 1;
-            } else if (itemClass == Short.TYPE) {
-                return 2;
-            } else if (itemClass == Integer.TYPE) {
-                return 4;
-            } else if (itemClass == Long.TYPE) {
-                return 8;
-            } else if (itemClass == Float.TYPE) {
-                return 4;
-            } else if (itemClass == Double.TYPE) {
-                return 8;
-            }
-        }
-        // return something here... could be a calculated size?
-        return 0;
+        return itemType.itemsize;
     }
 
     /**
@@ -1429,43 +1303,11 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * bytes, or the reverse.
      *
      * @return actual storage size
+     * @deprecated Use {@link #getItemsize()} instead which (since 2.7.3) gives the same result.
      */
+    @Deprecated
     public int getStorageSize() {
-        if (itemClass.isPrimitive()) {
-            switch (typecode.charAt(0)) {
-                case 'z':
-                    return 1;
-                case 'b':
-                    return 1;
-                case 'B':
-                    return 1;
-                case 'u':
-                    return 4;
-                case 'c':
-                    return 1;
-                case 'h':
-                    return 2;
-                case 'H':
-                    return 2;
-                case 'i':
-                    return 4;
-                case 'I':
-                    return 4;
-                case 'l':
-                    return 8;
-                case 'L':
-                    return 8;
-                case 'f':
-                    return 4;
-                case 'd':
-                    return 8;
-                default:
-                    throw Py.ValueError(
-                            "bad typecode (must be c, b, B, u, h, H, i, I, l, L, f or d)");
-            }
-        }
-        // return something here... could be a calculated size?
-        return 0;
+        return itemType.itemsize;
     }
 
     /**
@@ -1483,9 +1325,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             stop = start;
         }
         int n = sliceLength(start, stop, step);
-        PyArray ret = new PyArray(itemClass, n);
-        // XXX:
-        ret.typecode = typecode;
+        // We have to specify both the type and the class (for use when OBJECT)
+        PyArray ret = new PyArray(TYPE, itemType, itemClass, n);
         if (step == 1) {
             System.arraycopy(data, start, ret.data, 0, n);
             return ret;
@@ -1497,14 +1338,31 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     }
 
     /**
-     * Getter for the type code of the array. {@link #char2class(char) char2class} describes the
-     * possible type codes and their meaning.
+     * Type as it would appear in an error message. Simple class name for {@code OBJECT}.
      *
-     * @return single character type code for the array
+     * @return single character type code or simple class name
+     */
+    private CharSequence description() {
+        if (itemType == ItemType.OBJECT) {
+            return itemClass.getName();
+        } else {
+            return itemType.description();
+        }
+    }
+
+    /**
+     * Return either a Python-style {@code array.array} type code for the element (item) type or the
+     * Java class name.
+     *
+     * @return single character type code or simple class name
      */
     @ExposedGet(name = "typecode")
     public String getTypecode() {
-        return typecode;
+        if (itemType == ItemType.OBJECT) {
+            return itemClass.getName();
+        } else {
+            return itemType.typecode;
+        }
     }
 
     @ExposedMethod
@@ -1536,20 +1394,10 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     private int indexInternal(PyObject value) {
         // note: cpython does not raise type errors based on item type
-
         int len = delegate.getSize();
-        if ("u".equals(typecode)) {
-            int codepoint = getCodePointOrInt(value);
-            for (int i = 0; i < len; i++) {
-                if (codepoint == Array.getInt(data, i)) {
-                    return i;
-                }
-            }
-        } else {
-            for (int i = 0; i < len; i++) {
-                if (value.equals(Py.java2py(Array.get(data, i)))) {
-                    return i;
-                }
+        for (int i = 0; i < len; i++) {
+            if (value.equals(pyget(i))) {
+                return i;
             }
         }
         return -1;
@@ -1570,15 +1418,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     public void insert(int index, PyObject value) {
         resizeCheck();  // Prohibited operation if exporting a buffer
         index = boundToSequence(index);
-        if ("u".equals(typecode)) {
-            int codepoint = getCodePoint(value);
-            delegate.makeInsertSpace(index);
-            Array.setInt(data, index, codepoint);
-
-        } else {
-            delegate.makeInsertSpace(index);
-            Array.set(data, index, Py.tojava(value, itemClass));
-        }
+        delegate.makeInsertSpace(index);
+        pyset(index, value);
     }
 
     /**
@@ -1587,11 +1428,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     @ExposedMethod(defaults = "-1")
     public final PyObject array_pop(int i) {
-        PyObject val = pop(i);
-        if ("u".equals(typecode)) {
-            return new PyUnicode(val.asInt());
-        }
-        return val;
+        return pop(i);
     }
 
     /**
@@ -1611,15 +1448,15 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         if (delegate.getSize() == 0) {
             throw Py.IndexError("pop from empty array");
         }
+
         index = delegator.fixindex(index);
         if (index == -1) {
             throw Py.IndexError("pop index out of range");
         }
 
-        // Prohibited operation if exporting a buffer
-        resizeCheck();
+        resizeCheck();  // Prohibit when exporting a buffer
 
-        PyObject ret = Py.java2py(Array.get(data, index));
+        PyObject ret = itemType.get(this, index);
         delegate.remove(index);
         return ret;
     }
@@ -1637,8 +1474,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     public void remove(PyObject value) {
         int index = indexInternal(value);
         if (index != -1) {
-            // Prohibited operation if exporting a buffer
-            resizeCheck();
+            resizeCheck();  // Prohibit when exporting a buffer
             delegate.remove(index);
             return;
         }
@@ -1655,7 +1491,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     protected PyObject repeat(int count) {
         Object arraycopy = delegate.copyArray();
         PyArray ret = new PyArray(itemClass, 0);
-        ret.typecode = typecode;
+        ret.setElementType(itemType, itemClass);
         for (int i = 0; i < count; i++) {
             ret.delegate.appendArray(arraycopy);
         }
@@ -1696,97 +1532,56 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
 
     @Override
     protected void pyset(int i, PyObject value) {
-
-        if ("u".equals(typecode)) {
-            Array.setInt(data, i, getCodePoint(value));
-            return;
+        try {
+            itemType.set(this, i, value);
+        } catch (ClassCastException cce) {
+            throw Py.TypeError(String.format("array item must be %s", description()));
         }
-
-        if (itemClass == Byte.TYPE) {
-            long val;
-            try {
-                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
-            } catch (ClassCastException e) {
-                throw notCompatibleTypeError();
-            }
-            if (val < (isSigned() ? 0 : Byte.MIN_VALUE)) {
-                throw lessThanMinimum();
-            } else if (val > Byte.MAX_VALUE) {
-                throw moreThanMaximum();
-            }
-
-        } else if (itemClass == Short.TYPE) {
-            long val;
-            try {
-                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
-            } catch (ClassCastException e) {
-                throw notCompatibleTypeError();
-            }
-            if (val < (isSigned() ? 0 : Short.MIN_VALUE)) {
-                throw lessThanMinimum();
-            } else if (val > Short.MAX_VALUE) {
-                throw moreThanMaximum();
-            }
-
-        } else if (itemClass == Integer.TYPE) {
-            long val;
-            try {
-                val = ((Long) value.__tojava__(Long.TYPE)).longValue();
-            } catch (ClassCastException e) {
-                throw notCompatibleTypeError();
-            }
-            if (val < (isSigned() ? 0 : Integer.MIN_VALUE)) {
-                throw lessThanMinimum();
-            } else if (val > Integer.MAX_VALUE) {
-                throw moreThanMaximum();
-            }
-
-        } else if (itemClass == Long.TYPE) {
-            if (isSigned() && value instanceof PyInteger) {
-                if (((PyInteger) value).getValue() < 0) {
-                    throw lessThanMinimum();
-                }
-            } else if (value instanceof PyLong) {
-                ((PyLong) value).getLong(isSigned() ? 0 : Long.MIN_VALUE, Long.MAX_VALUE);
-            } else {
-                Object o;
-                try {
-                    o = value.__tojava__(Long.TYPE);
-                } catch (ClassCastException e) {
-                    throw notCompatibleTypeError();
-                }
-                if (o == Py.NoConversion) {
-                    throw notCompatibleTypeError();
-                }
-            }
-        }
-
-        Object o = Py.tojava(value, itemClass);
-        if (o == Py.NoConversion) {
-            throw notCompatibleTypeError();
-        }
-        Array.set(data, i, o);
     }
 
-    // xxx - add more efficient comparable typecode lookup via an enumset, and expand
+    /**
+     * Set element to integer value, tolerating primitive integer values in arrays of Unicode
+     * character, {@code int} or {@code long}. Negative values assigned to unsigned elements adopt
+     * their wrapped unsigned values.
+     *
+     * @param i index to set
+     * @param value to set
+     */
     public void set(int i, int value) {
-        if ("u".equals(typecode) || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
+        if (itemType == ItemType.UNICHAR || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
             Array.setInt(data, i, value);
         } else {
             throw notCompatibleTypeError();
         }
     }
 
+    /**
+     * Set element to integer value given as a Java {@code char}, tolerating primitive integer
+     * values in arrays of Unicode character, {@code int} or {@code long}.
+     *
+     * @param i index to set
+     * @param value to set
+     */
     public void set(int i, char value) {
-        if ("c".equals(typecode) || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
+        if (itemType == ItemType.CHAR || itemClass == Integer.TYPE || itemClass == Long.TYPE) {
             Array.setChar(data, i, value);
         } else {
             throw notCompatibleTypeError();
         }
     }
 
-    private boolean isSigned() {
-        return typecode.length() == 1 && typecode.equals(typecode.toUpperCase());
+    /**
+     * Set element in an array of element type 'b','B', or 'c' to a Java {@code byte}.
+     *
+     * @param i index to set
+     * @param value to set
+     */
+    public void set(int i, byte value) {
+        if (itemClass == Byte.TYPE) {
+            Array.setByte(data, i, value);
+        } else {
+            throw notCompatibleTypeError();
+        }
     }
 
     /**
@@ -1829,11 +1624,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 }
 
             } else if (value instanceof PyArray) {
-                PyArray array = (PyArray) value;
-                if (!array.typecode.equals(typecode)) {
-                    throw Py.TypeError("bad argument type for built-in operation|" + array.typecode
-                            + "|" + typecode);
-                }
+                PyArray array = arrayChecked(value);
 
                 if (step == 1) {
                     Object arrayDelegate;
@@ -1850,9 +1641,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                     try {
                         delegate.replaceSubArray(start, stop, arrayDelegate, 0, len);
                     } catch (IllegalArgumentException e) {
-                        throw Py.TypeError("Slice typecode '" + array.typecode
-                                + "' is not compatible with this array (typecode '" + this.typecode
-                                + "')");
+                        throw Py.TypeError("Slice typecode " + array.reprTypecode()
+                                + " is not compatible with this array (typecode " + reprTypecode()
+                                + ")");
                     }
 
                 } else if (step > 1) {
@@ -1916,14 +1707,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
     public PyObject tolist() {
         PyList list = new PyList();
         int len = delegate.getSize();
-        if ("u".equals(typecode)) {
-            for (int i = 0; i < len; i++) {
-                list.append(new PyUnicode(Array.getInt(data, i)));
-            }
-        } else {
-            for (int i = 0; i < len; i++) {
-                list.append(Py.java2py(Array.get(data, i)));
-            }
+        for (int i = 0; i < len; i++) {
+            list.append(itemType.get(this, i));
         }
         return list;
     }
@@ -1938,130 +1723,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      */
     public int toStream(OutputStream os) throws IOException {
         DataOutputStream dos = new DataOutputStream(os);
-        switch (typecode.charAt(0)) {
-            case 'z':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeBoolean(Array.getBoolean(data, i));
-                }
-                break;
-            case 'b':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeByte(Array.getByte(data, i));
-                }
-                break;
-            case 'B':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeByte(signedByte(Array.getShort(data, i)));
-                }
-                break;
-            case 'u':
-                // use 32-bit integers since we want UCS-4 storage
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeInt(Array.getInt(data, i));
-                }
-                break;
-            case 'c':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeByte((byte) Array.getChar(data, i));
-                }
-                break;
-            case 'h':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeShort(Array.getShort(data, i));
-                }
-                break;
-            case 'H':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeShort(signedShort(Array.getInt(data, i)));
-                }
-                break;
-            case 'i':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeInt(Array.getInt(data, i));
-                }
-                break;
-            case 'I':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeInt(signedInt(Array.getLong(data, i)));
-                }
-                break;
-            case 'l':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeLong(Array.getLong(data, i));
-                }
-                break;
-            case 'L': // faking it
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeLong(Array.getLong(data, i));
-                }
-                break;
-            case 'f':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeFloat(Array.getFloat(data, i));
-                }
-                break;
-            case 'd':
-                for (int i = 0; i < delegate.getSize(); i++) {
-                    dos.writeDouble(Array.getDouble(data, i));
-                }
-                break;
-        }
+        itemType.toStream(dos, data, delegate.getSize());
         return dos.size(); // bytes written
-    }
-
-    private static byte signedByte(short x) {
-        if (x >= 128 && x < 256) {
-            return (byte) (x - 256);
-        } else if (x >= 0) {
-            return (byte) x;
-        } else {
-            throw Py.ValueError("invalid storage");
-        }
-    }
-
-    private static short signedShort(int x) {
-        if (x >= 32768 && x < 65536) {
-            return (short) (x - 65536);
-        } else if (x >= 0) {
-            return (short) x;
-        } else {
-            throw Py.ValueError("invalid storage");
-        }
-    }
-
-    private static int signedInt(long x) {
-        if (x >= 2147483648L && x < 4294967296L) {
-            return (int) (x - 4294967296L);
-        } else if (x >= 0) {
-            return (int) x;
-        } else {
-            throw Py.ValueError("invalid storage");
-        }
-    }
-
-    private static short unsignedByte(byte x) {
-        if (x < 0) {
-            return (short) (x + 256);
-        } else {
-            return x;
-        }
-    }
-
-    private static int unsignedShort(short x) {
-        if (x < 0) {
-            return x + 65536;
-        } else {
-            return x;
-        }
-    }
-
-    private static long unsignedInt(int x) {
-        if (x < 0) {
-            return x + 4294967296L;
-        } else {
-            return x;
-        }
-
     }
 
     @ExposedMethod
@@ -2084,8 +1747,9 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         return StringUtil.fromBytes(bos.toByteArray());
     }
 
-    public String tounicode() {
-        if (!"u".equals(typecode)) {
+    @ExposedMethod
+    public final PyUnicode array_tounicode() {
+        if (itemType != ItemType.UNICHAR) {
             throw Py.ValueError("tounicode() may only be called on type 'u' arrays");
         }
         int len = delegate.getSize();
@@ -2093,12 +1757,11 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         for (int i = 0; i < len; i++) {
             codepoints[i] = Array.getInt(data, i);
         }
-        return new String(codepoints, 0, codepoints.length);
+        return new PyUnicode(codepoints);
     }
 
-    @ExposedMethod
-    public final PyObject array_tounicode() {
-        return new PyUnicode(tounicode());
+    public String tounicode() {
+        return array_tounicode().getString();
     }
 
     // PyArray can't extend anymore, so delegate
@@ -2131,6 +1794,809 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         }
     }
 
+    /**
+     * An enumeration of the supported array element (item) types and their properties (type code,
+     * representation, range, etc.). One member {@code OBJECT} covers all other types, to support
+     * Jython's ability to represent a (homogeneous) array of an arbitrary class.
+     */
+    static enum ItemType {
+
+        // Put the signed case before an unsigned case of same Java class (fromJavaClass depends)
+
+        BYTE("b", "byte", Byte.TYPE, 1, Byte.MIN_VALUE, Byte.MAX_VALUE) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setByte(a.data, i, (byte) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.newInteger(Array.getByte(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeByte(Array.getByte(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        byte val = dis.readByte();
+                        Array.setByte(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        UBYTE("B", "byte", Byte.TYPE, 1, Byte.MAX_VALUE * 2L + 1) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setByte(a.data, i, (byte) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                // Negative values must be masked to positive int
+                return Py.newInteger(0xff & Array.getByte(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeByte(Array.getByte(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        byte val = dis.readByte();
+                        Array.setByte(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        SHORT("h", "short integer", Short.TYPE, 2, Short.MIN_VALUE, Short.MAX_VALUE) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setShort(a.data, i, (short) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.newInteger(Array.getShort(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeShort(Array.getShort(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        short val = dis.readShort();
+                        Array.setShort(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        USHORT("H", "short integer", Short.TYPE, 2, Short.MAX_VALUE * 2L + 1) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setShort(a.data, i, (short) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                // Negative values must be masked to positive int
+                return Py.newInteger(0xffff & Array.getShort(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeShort(Array.getShort(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        short val = dis.readShort();
+                        Array.setShort(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        INT("i", "int", Integer.TYPE, 4, Integer.MIN_VALUE, Integer.MAX_VALUE) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setInt(a.data, i, (int) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.newInteger(Array.getInt(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeInt(Array.getInt(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        int val = dis.readInt();
+                        Array.setInt(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        UINT("I", "int", Integer.TYPE, 4, Integer.MAX_VALUE * 2L + 1) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setInt(a.data, i, (int) checkedInteger(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                int val = Array.getInt(a.data, i);
+                if (val >= 0) {
+                    return Py.newInteger(val);
+                } else {
+                    // Negative values must be interpreted as positive
+                    return new PyLong(0xffffffffL & val);
+                }
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeInt(Array.getInt(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        int val = dis.readInt();
+                        Array.setInt(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        LONG("l", "long", Long.TYPE, 8, Long.MIN_VALUE, Long.MAX_VALUE) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setLong(a.data, i, checkedSignedLong(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return new PyLong(Array.getLong(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeLong(Array.getLong(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        long val = dis.readLong();
+                        Array.setLong(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        ULONG("L", "long", Long.TYPE, 8, Long.MAX_VALUE * 2L + 1) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setLong(a.data, i, checkedUnsignedLong(value));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                long val = Array.getLong(a.data, i);
+                if (val >= 0) {
+                    return new PyLong(val);
+                } else {
+                    // Negative values must be interpreted as positive
+                    return new PyLong(BigInteger.valueOf(val).add(TWO_TO_64));
+                }
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeLong(Array.getLong(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        long val = dis.readLong();
+                        Array.setLong(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        FLOAT("f", "float", Float.TYPE, 4) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setFloat(a.data, i, (float) value.asDouble());
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return new PyFloat(Array.getFloat(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeFloat(Array.getFloat(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        float val = dis.readFloat();
+                        Array.setFloat(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        DOUBLE("d", "double", Double.TYPE, 8) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setDouble(a.data, i, value.asDouble());
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return new PyFloat(Array.getDouble(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeDouble(Array.getDouble(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        double val = dis.readDouble();
+                        Array.setDouble(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        CHAR("c", "char", Byte.TYPE, 1, Byte.MAX_VALUE * 2L + 1) {
+            // Has to be after BYTE so fromJavaClass returns that for Byte.TYPE
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                String s = ((PyString) value).getString();
+                if (s.length() != 1) {
+                    throw new ClassCastException();
+                }
+                Array.setByte(a.data, i, (byte) s.charAt(0));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.makeCharacter((char) (0xff & Array.getByte(a.data, i)));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeByte(Array.getByte(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        byte val = dis.readByte();
+                        Array.setByte(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        UNICHAR("u", "unicode character", Integer.TYPE, 4, Character.MAX_CODE_POINT) {
+            // Has to be after INT so fromJavaClass returns that for Integer.TYPE
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                String s = ((PyUnicode) value).getString();
+                if (s.codePointCount(0, Math.min(s.length(), 4)) != 1) {
+                    throw new ClassCastException();
+                }
+                Array.setInt(a.data, i, s.codePointAt(0));
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return new PyUnicode(Array.getInt(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeInt(Array.getInt(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        int val = dis.readInt();
+                        Array.setInt(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        BOOLEAN("z", "boolean", Boolean.TYPE, 1, 0) {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Array.setBoolean(a.data, i, value.__nonzero__());
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.newBoolean(Array.getBoolean(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                for (int i = 0; i < n; i++) {
+                    dos.writeBoolean(Array.getBoolean(data, i));
+                }
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                try {
+                    while (index < limit) {
+                        boolean val = dis.readBoolean();
+                        Array.setBoolean(data, index++, val);
+                    }
+                } catch (EOFException eof) {}
+                return index;
+            }
+        },
+
+        OBJECT() {
+
+            @Override
+            void set(PyArray a, int i, PyObject value) {
+                Object val = value.__tojava__(a.itemClass);
+                if (val == Py.NoConversion) {
+                    throw a.notCompatibleTypeError();
+                }
+                Array.set(a.data, i, val);
+            }
+
+            @Override
+            PyObject get(PyArray a, int i) {
+                return Py.java2py(Array.get(a.data, i));
+            }
+
+            @Override
+            void toStream(DataOutputStream dos, Object data, int n) throws IOException {
+                // Not supported: silently ignored (in versions so far)
+            }
+
+            @Override
+            int fromStream(DataInputStream dis, Object data, int index, int limit)
+                    throws IOException {
+                // Not supported: silently ignored (in versions so far)
+                return index;
+            }
+        };
+
+        /**
+         * Implementation of setting an element in the data array, specific to this
+         * {@code ItemType}.
+         *
+         * @param a the PyArray on which to operate
+         * @param i index of element
+         * @param value to set
+         */
+        abstract void set(PyArray a, int i, PyObject value);
+
+        /**
+         * Implementation of getting an element from the data array, specific to this
+         * {@code ItemType}.
+         *
+         * @param a the PyArray on which to operate
+         * @param i index of element
+         * @return value got
+         */
+        abstract PyObject get(PyArray a, int i);
+
+        /**
+         * Generic stream writer to write the entire contents of the array to the stream as
+         * primitive types. After the call returns, {@code dos.size()} indicates the number of bytes
+         * successfully written.
+         *
+         * @param dos to sink the array data to
+         * @param data array to write from
+         * @param n number of items to write
+         * @throws IOException reflecting I/O errors during writing
+         */
+        abstract void toStream(DataOutputStream dos, Object data, int n) throws IOException;
+
+        /**
+         * Implementation of reading primitive values from a stream into a slice of the array. Data
+         * are read until the array slice is filled or the stream runs out. Return the index of the
+         * first item not written: if this is less than the limit, it is because the read ended
+         * early on an end-of-file.
+         *
+         * Each item type provides its own manipulation of bytes into the several primitive element
+         * types on behalf of {@link #fillFromStream(InputStream)} etc..
+         *
+         * If the stream does not contain a whole number of items (possible if the item size is not
+         * one byte), the behaviour in respect of the final partial item and stream position is not
+         * defined.
+         *
+         * @param dis data stream source for the values
+         * @param data destination array
+         * @param index of first array element to read
+         * @param limit first element <b>not</b> to read
+         * @return index of first element not read ({@code =limit}, if not ended by EOF)
+         * @throws IOException reflecting I/O errors during reading
+         */
+        abstract int fromStream(DataInputStream dis, Object data, int index, int limit)
+                throws IOException;
+
+        /** Type name as it would appear in an {@code array.array} constructor. */
+        String typecode;
+        /** Type as it would appear in an error message. "" for OBJECT. */
+        final String description;
+        /** Class representing elements of this type (for primitive cases). "" for OBJECT. */
+        Class<?> itemClass;
+        /** Number of bytes in serialised form (not necessarily in memory). */
+        int itemsize;
+        /** Minimum value (only valid in integral and character types). */
+        long min;
+        /** Maximum value (only valid in integral and character types). */
+        long max;
+
+        /**
+         * Do-it-all constructor.
+         *
+         * @param typecode type name (as seen in {@code array.array} constructor)
+         * @param itemClass class of the elements of the array (when primitive)
+         * @param itemsize size of items in the array for serialisation
+         * @param min minimum value (for integer item types)
+         * @param max maximum value (for integer item types)
+         */
+        ItemType(String typecode, String description, Class<?> itemClass, int itemsize, long min,
+                long max) {
+            this.typecode = typecode;
+            this.description = description;
+            this.itemClass = itemClass;
+            this.itemsize = itemsize;
+            this.min = min;
+            this.max = max;
+        }
+
+        /** Signed types with values representable by a Java {@code double}. */
+        ItemType(String typecode, String description, Class<?> itemClass, int itemsize) {
+            this(typecode, description, itemClass, itemsize, 0, 0);
+        }
+
+        /** Unsigned types with values representable by a Java {@code long}. */
+        ItemType(String typecode, String description, Class<?> itemClass, int itemsize, long max) {
+            this(typecode, description, itemClass, itemsize, 0L, max);
+        }
+
+        /** Object element types (represented by the singular {@code ItemType OBJECT}. */
+        ItemType() {
+            this("", "Java Object", Object.class, 0, 0, 0);
+        }
+
+        /**
+         * Converts a character code for the array type to the corresponding {@code ItemType} for
+         * the elements of the implementation array. If the code is not one of the valid options,
+         * {@code ValueError} is raised.
+         *
+         * @param typecode character code for the array item type
+         * @return {@code ItemType} of the array elements
+         */
+        static ItemType fromTypecode(char typecode) {
+            switch (typecode) {
+                case 'z':
+                    return BOOLEAN;
+                case 'b':
+                    return BYTE;
+                case 'B':
+                    return UBYTE;
+                case 'u':
+                    return UNICHAR;
+                case 'c':
+                    return CHAR;
+                case 'h':
+                    return SHORT;
+                case 'H':
+                    return USHORT;
+                case 'i':
+                    return INT;
+                case 'I':
+                    return UINT;
+                case 'l':
+                    return LONG;
+                case 'L':
+                    return ULONG;
+                case 'f':
+                    return FLOAT;
+                case 'd':
+                    return DOUBLE;
+                default:
+                    throw Py.ValueError("typecode must be " + reminder());
+            }
+        }
+
+        /**
+         * Map a Java class to the {@code ItemType} type code that represents it. Where that may be
+         * ambiguous, the method assumes signed representation (so for example {@code Integer.TYPE}
+         * maps to {@code 'i'} not {@code 'I'}). Classes other than those map to their Java class
+         * name. This supports the extended repertoire {@code array.array} has in Jython.
+         *
+         * @param cls element class
+         * @return the {@code array.array} type code that representing {@code cls}
+         */
+        static ItemType fromJavaClass(Class<?> cls) {
+            for (ItemType i : ItemType.values()) {
+                if (cls.equals(i.itemClass)) {
+                    return i;
+                }
+            }
+            return OBJECT;
+        }
+
+        protected static final BigInteger TWO_TO_64 = BigInteger.ONE.shiftLeft(64);
+
+        /**
+         * Convert an integer value to a Java long and test it against the bounds {@link #min} and
+         * {@link #max}.
+         * <p>
+         * An {@code OverflowError} is raised if these bounds are exceeded and a
+         * {@code ClassCastException} if the type is not integral (cannot be converted to a
+         * {@code long}).
+         *
+         * @param value to convert
+         * @return {@code value} as a {@code long}
+         * @throws PyException {@code OverflowError} if out of range for item type
+         * @throws ClassCastException if not integral (cannot be converted to a {@code long}).
+         */
+        protected long checkedInteger(PyObject value) {
+            long val;
+            if (min == 0) {
+                val = checkedUnsignedLong(value);
+            } else {
+                val = checkedSignedLong(value);
+                if (val < min) {
+                    throw lessThanMinimum();
+                }
+            }
+            if (val > max) {
+                throw moreThanMaximum();
+            } else {
+                return val;
+            }
+        }
+
+        /**
+         * Check the range of an integer value is correct for a Java {@code long} and convert it to
+         * that type. An {@code OverflowError} is raised if these bounds are exceeded.
+         *
+         * @param value to convert
+         * @return {@code value} as a {@code long}
+         * @throws PyException {@code OverflowError} if out of range for signed long
+         * @throws ClassCastException if not integral (cannot be converted to a {@code long}).
+         */
+        protected long checkedSignedLong(PyObject value) throws PyException, ClassCastException {
+            if (value instanceof PyInteger) {
+                return ((PyInteger) value).getValue();
+            } else if (value instanceof PyLong) {
+                BigInteger val = ((PyLong) value).getValue();
+                if (PyLong.MAX_LONG.compareTo(val) < 0) {
+                    throw moreThanMaximum();
+                } else if (PyLong.MIN_LONG.compareTo(val) > 0) {
+                    throw lessThanMinimum();
+                } else {
+                    return val.longValue();
+                }
+            } else {
+                Long val = (Long) value.__tojava__(Long.TYPE);
+                if (val == null) {
+                    throw new ClassCastException();
+                }
+                return val.longValue();
+            }
+        }
+
+        /**
+         * Check the range of an integer value is correct for an unsigned 64-bit integer, and
+         * convert it to the Java {@code long} with the same bit pattern. (This is what represents
+         * an {@code unsigned long} in the array.) An {@code OverflowError} is raised if the
+         * allowable range is exceeded.
+         *
+         * @param value to convert
+         * @return {@code value} as a {@code long}
+         * @throws PyException {@code OverflowError} if out of range for unsigned long
+         * @throws ClassCastException if not integral (cannot be converted to a {@code long}).
+         */
+        protected long checkedUnsignedLong(PyObject value) throws ClassCastException {
+            if (value instanceof PyInteger) {
+                int val = ((PyInteger) value).getValue();
+                if (val < 0) {
+                    throw lessThanMinimum();
+                } else {
+                    return val;
+                }
+            } else {
+                BigInteger val;
+                if (value instanceof PyLong) {
+                    val = ((PyLong) value).getValue();
+                } else {
+                    val = (BigInteger) value.__tojava__(BigInteger.class);
+                    if (val == null) {
+                        throw new ClassCastException();
+                    }
+                }
+                if (BigInteger.ZERO.compareTo(val) > 0) {
+                    throw lessThanMinimum();
+                } else if (PyLong.MAX_ULONG.compareTo(val) < 0) {
+                    throw moreThanMaximum();
+                } else if (PyLong.MAX_LONG.compareTo(val) < 0) {
+                    // In range 2^63 <= value < 2^64: represent as negative long.
+                    return val.subtract(TWO_TO_64).longValue();
+                } else {
+                    return val.longValue();
+                }
+            }
+        }
+
+        /**
+         * Provide a description of the element type, typically for use in an error message.
+         *
+         * @return a description of the element type
+         */
+        CharSequence description() {
+            StringBuilder buf = new StringBuilder(description.length() + 10);
+
+            switch (this) {
+                case BOOLEAN:
+                case CHAR:
+                case DOUBLE:
+                case FLOAT:
+                case OBJECT:
+                case UNICHAR:
+                    break;
+                default:
+                    buf.append(min < 0 ? "signed " : "unsigned ");
+            }
+            buf.append(description);
+            return buf;
+        }
+
+        /** @return a reminder of the valid item types. */
+        private static CharSequence reminder() {
+            StringBuilder buf = new StringBuilder(100);
+            for (ItemType i : ItemType.values()) {
+                if (i != OBJECT) {
+                    if (buf.length() != 0) {
+                        buf.append(", ");
+                    }
+                    buf.append(i.typecode);
+                }
+            }
+            buf.append(" or a Java class");
+            return buf;
+        }
+
+        /**
+         * Create throwable {@code OverflowError} along the lines "TYPE-array value is less than
+         * minimum", where TYPE is the element type of the array.
+         *
+         * @return the {@code OverflowError}
+         */
+        protected PyException lessThanMinimum() {
+            return Py.OverflowError(
+                    String.format("%s array value is less than minimum", description()));
+        }
+
+        /**
+         * Create throwable {@code OverflowError} along the lines "TYPE-array value is more than
+         * maximum", where TYPE is the element type of the array.
+         *
+         * @return the {@code OverflowError}
+         */
+        protected PyException moreThanMaximum() {
+            return Py.OverflowError(
+                    String.format("%s array value is more than maximum", description()));
+        }
+    }
     /*
      * ============================================================================================
      * Support for the Buffer API
@@ -2170,8 +2636,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
             BaseBuffer pybuf = getExistingBuffer(flags);
 
             if (pybuf == null) {
-                // No existing export we can re-use: create a new one
-                if ("b".equals(typecode)) {
+                // No existing export we can re-use: create a new one (acts as unsigned)
+                if (itemClass == Byte.TYPE) {
                     // This is byte data, so we can export directly
                     byte[] storage = (byte[]) data;
                     int size = delegate.getSize();
@@ -2299,38 +2765,13 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
         throw new UnsupportedOperationException();
     }
 
-    private static final String TYPE_NOT_COMPATIBLE = "Type not compatible with array of '%s'";
-
     /**
      * Create throwable {@code TypeError} along the lines "Type not compatible with array of
      * TYPECODE", where TYPECODE is the element type of the array.
      *
      * @return the {@code TypeError}
      */
-    private PyException notCompatibleTypeError() {
-        return Py.TypeError(String.format(TYPE_NOT_COMPATIBLE, typecode));
+    PyException notCompatibleTypeError() {
+        return Py.TypeError(String.format("Type not compatible with array of '%s'", description()));
     }
-
-    /**
-     * Create throwable {@code OverflowError} along the lines "TYPE-array value is less than
-     * minimum", where TYPE is the element type of the array.
-     *
-     * @return the {@code OverflowError}
-     */
-    private PyException lessThanMinimum() {
-        return Py.OverflowError(
-                String.format("'%s'-array value is less than minimum", itemClass.getName()));
-    }
-
-    /**
-     * Create throwable {@code OverflowError} along the lines "TYPE-array value is more than
-     * maximum", where TYPE is the element type of the array.
-     *
-     * @return the {@code OverflowError}
-     */
-    private PyException moreThanMaximum() {
-        return Py.OverflowError(
-                String.format("'%s'-array value is more than maximum", itemClass.getName()));
-    }
-
 }
