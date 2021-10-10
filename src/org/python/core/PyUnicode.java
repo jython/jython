@@ -101,10 +101,11 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      * @throws PyException(ValueError) if not a valid Unicode codepoint.
      */
     private static String checkedCPString(int codePoint) throws PyException {
-        try {
-            return Character.toString(codePoint);
-        } catch (IllegalArgumentException e) {
-            throw Py.ValueError(e.getMessage());
+        if (Character.isValidCodePoint(codePoint)) {
+            return new String(Character.toChars(codePoint));
+        } else {
+            throw Py.ValueError(
+                    String.format("character U+%08x is not in Unicode range", codePoint));
         }
     }
 
