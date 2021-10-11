@@ -1,13 +1,7 @@
 # Run unit tests on rt3 sub-project (GitHub action)
 name: unit tests
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   unit-tests-Ubuntu-jdk-11:
