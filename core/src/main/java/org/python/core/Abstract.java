@@ -3,6 +3,7 @@
 package org.python.core;
 
 import java.lang.invoke.MethodHandle;
+import java.util.function.Supplier;
 
 import org.python.base.InterpreterError;
 import org.python.core.Slot.EmptyException;
@@ -100,6 +101,108 @@ public class Abstract {
             return (int)Operations.of(v).op_hash.invokeExact(v);
         } catch (Slot.EmptyException e) {
             throw typeError("unhashable type: %s", v);
+        }
+    }
+
+    /**
+     * Test a value used as condition in a {@code for} or {@code if}
+     * statement.
+     *
+     * @param v to test
+     * @return if Python-truthy
+     * @throws Throwable from invoked implementations of
+     *     {@code __bool__} or {@code __len__}
+     */
+    // Compare CPython PyObject_IsTrue in object.c
+    static boolean isTrue(Object v) throws Throwable {
+        // Begin with common special cases
+        if (v == Py.True)
+            return true;
+        else if (v == Py.False || v == Py.None)
+            return false;
+        else {
+            // Ask the object type through the op_bool or op_len slots
+            Operations ops = Operations.of(v);
+            if (Slot.op_bool.isDefinedFor(ops))
+                return (boolean)ops.op_bool.invokeExact(v);
+            else if (Slot.op_len.isDefinedFor(ops))
+                return 0 != (int)ops.op_len.invokeExact(v);
+            else
+                // No op_bool and no length: claim everything is True.
+                return true;
+        }
+    }
+
+    /**
+     * Perform a rich comparison, raising {@code TypeError} when the
+     * requested comparison operator is not supported.
+     *
+     * @param v left operand
+     * @param w right operand
+     * @param op comparison type
+     * @return comparison result
+     * @throws Throwable from invoked implementations
+     */
+    // Compare CPython PyObject_RichCompare, do_richcompare in object.c
+    static Object richCompare(Object v, Object w, Comparison op) throws Throwable {
+        return op.apply(v, w);
+    }
+
+    /**
+     * Perform a rich comparison with boolean result. This wraps
+     * {@link #richCompare(Object, Object, Comparison)}, converting the
+     * result to Java {@code false} or {@code true}, or throwing
+     * (probably {@link TypeError}), when the objects cannot be
+     * compared.
+     *
+     * @param v left operand
+     * @param w right operand
+     * @param op comparison type
+     * @return comparison result
+     * @throws Throwable from invoked method implementations
+     */
+    // Compare CPython PyObject_RichCompareBool in object.c
+    static boolean richCompareBool(Object v, Object w, Comparison op) throws Throwable {
+        /*
+         * Quick result when objects are the same. Guarantees that identity
+         * implies equality.
+         */
+        if (v == w) {
+            if (op == Comparison.EQ)
+                return true;
+            else if (op == Comparison.NE)
+                return false;
+        }
+        return isTrue(op.apply(v, w));
+    }
+
+    /**
+     * Perform a rich comparison with boolean result. This wraps
+     * {@link #richCompare(Object, Object, Comparison)}, converting the
+     * result to Java {@code false} or {@code true}.
+     * <p>
+     * When the when the objects cannot be compared, the client gets to
+     * choose the exception through the provider {@code exc}. When this
+     * is {@code null}, the return will simply be {@code false} for
+     * incomparable objects.
+     *
+     * @param <T> type of exception
+     * @param v left operand
+     * @param w right operand
+     * @param op comparison type
+     * @param exc supplies an exception of the desired type
+     * @return comparison result
+     * @throws T on any kind of error
+     */
+    static <T extends PyException> boolean richCompareBool(Object v, Object w, Comparison op,
+            Supplier<T> exc) throws T {
+        try {
+            return richCompareBool(v, w, op);
+        } catch (Throwable e) {
+            if (exc == null)
+                return false;
+            else
+                throw exc.get();
         }
     }
 
