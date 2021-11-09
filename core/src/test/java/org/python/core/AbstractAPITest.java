@@ -3,10 +3,13 @@
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +42,10 @@ class AbstractAPITest extends UnitTestSupport {
         abstract void supports_str() throws Throwable;
 
         abstract void supports_hash() throws Throwable;
+
+        abstract void supports_isTrue() throws Throwable;
+
+        abstract void supports_richCompare() throws Throwable;
 
         abstract void supports_getAttr_String() throws Throwable;
 
@@ -79,6 +86,34 @@ class AbstractAPITest extends UnitTestSupport {
         @Test
         void supports_hash() throws Throwable {
             for (Object v : all) { assertEquals(v.hashCode(), Abstract.hash(v)); }
+        }
+
+        @Override
+        @Test
+        void supports_isTrue() throws Throwable {
+            // Zero is false
+            assertFalse(Abstract.isTrue(zero));
+            // The rest are true
+            Iterator<Object> rest = all.listIterator(1);
+            while (rest.hasNext()) { assertTrue(Abstract.isTrue(rest.next())); }
+        }
+
+        @Override
+        @Test
+        void supports_richCompare() throws Throwable {
+            // Let's not try to be exhaustive
+            assertEquals(Boolean.TRUE, Abstract.richCompare(zero, small, Comparison.LT));
+            assertEquals(Boolean.TRUE, Abstract.richCompare(large, large, Comparison.LE));
+            assertEquals(Boolean.TRUE, Abstract.richCompare(zero, negative, Comparison.GT));
+            assertEquals(Boolean.TRUE, Abstract.richCompare(large, large, Comparison.GE));
+            assertEquals(Boolean.TRUE, Abstract.richCompare(zero, "zero", Comparison.NE));
+            assertEquals(Boolean.TRUE, Abstract.richCompare(zero, 0, Comparison.EQ));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(small, negative, Comparison.LT));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(small, small, Comparison.GT));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(large, small, Comparison.LE));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(large, large, Comparison.NE));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(zero, small, Comparison.GE));
+            assertEquals(Boolean.FALSE, Abstract.richCompare(zero, "zero", Comparison.EQ));
         }
 
         @Override
