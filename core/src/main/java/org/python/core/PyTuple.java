@@ -9,15 +9,12 @@ import java.util.ListIterator;
 
 import java.lang.reflect.Array;
 
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
-
 /**
  * A builtin python tuple.
  */
+/*
 @ExposedType(name = "tuple", base = PyObject.class, doc = BuiltinDocs.tuple_doc)
+*/
 public class PyTuple extends PySequenceList {
 
     public static final PyType TYPE = PyType.fromClass(PyTuple.class);
@@ -70,7 +67,9 @@ public class PyTuple extends PySequenceList {
         return cachedList;
     }
 
+    /*
     @ExposedNew
+    */
     final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
                                     PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("tuple", args, keywords, new String[] {"sequence"}, 0);
@@ -150,47 +149,65 @@ public class PyTuple extends PySequenceList {
         return fromArrayNoCopy(newArray);
     }
 
+    // Special methods -----------------------------------------------
+
     @Override
     public int __len__() {
         return tuple___len__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___len___doc)
+    */
     final int tuple___len__() {
         return size();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___contains___doc)
+    */
     final boolean tuple___contains__(PyObject o) {
         return super.__contains__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___ne___doc)
+    */
     final PyObject tuple___ne__(PyObject o) {
         return super.__ne__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___eq___doc)
+    */
     final PyObject tuple___eq__(PyObject o) {
         return super.__eq__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___gt___doc)
+    */
     final PyObject tuple___gt__(PyObject o) {
         return super.__gt__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___ge___doc)
+    */
     final PyObject tuple___ge__(PyObject o) {
         return super.__ge__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___lt___doc)
+    */
     final PyObject tuple___lt__(PyObject o) {
         return super.__lt__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___le___doc)
+    */
     final PyObject tuple___le__(PyObject o) {
         return super.__le__(o);
     }
@@ -200,7 +217,9 @@ public class PyTuple extends PySequenceList {
         return tuple___add__(generic_other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___add___doc)
+    */
     final PyObject tuple___add__(PyObject generic_other) {
         PyTuple sum = null;
         if (generic_other instanceof PyTuple) {
@@ -218,7 +237,9 @@ public class PyTuple extends PySequenceList {
         return tuple___mul__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___mul___doc)
+    */
     final PyObject tuple___mul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -231,7 +252,9 @@ public class PyTuple extends PySequenceList {
         return tuple___rmul__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.tuple___rmul___doc)
+    */
     final PyObject tuple___rmul__(PyObject o) {
         if (!o.isIndex()) {
             return null;
@@ -244,17 +267,23 @@ public class PyTuple extends PySequenceList {
         return tuple___iter__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___iter___doc)
+    */
     public PyObject tuple___iter__() {
         return new PyTupleIterator(this);
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.tuple___getslice___doc)
+    */
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
         return seq___getslice__(s_start, s_stop, s_step);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___getitem___doc)
+    */
     final PyObject tuple___getitem__(PyObject index) {
         PyObject ret = seq___finditem__(index);
         if (ret == null) {
@@ -263,7 +292,9 @@ public class PyTuple extends PySequenceList {
         return ret;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___getnewargs___doc)
+    */
     final PyTuple tuple___getnewargs__() {
         return new PyTuple(new PyTuple(getArray()));
     }
@@ -278,7 +309,9 @@ public class PyTuple extends PySequenceList {
         return tuple___hash__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___hash___doc)
+    */
     final int tuple___hash__() {
         // strengthened hash to avoid common collisions. from CPython
         // tupleobject.tuplehash. See http://bugs.python.org/issue942952
@@ -306,7 +339,9 @@ public class PyTuple extends PySequenceList {
         return tuple___repr__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple___repr___doc)
+    */
     final String tuple___repr__() {
         StringBuilder buf = new StringBuilder("(");
         for (int i = 0; i < array.length - 1; i++) {
@@ -322,6 +357,9 @@ public class PyTuple extends PySequenceList {
         buf.append(")");
         return buf.toString();
     }
+
+
+    // AbstractList methods ------------------------------------------
 
     public List subList(int fromIndex, int toIndex) {
         if (fromIndex < 0 || toIndex > size()) {
@@ -473,7 +511,9 @@ public class PyTuple extends PySequenceList {
         return tuple_count(value);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.tuple_count_doc)
+    */
     final int tuple_count(PyObject value) {
         int count = 0;
         for (PyObject item : array) {
@@ -496,7 +536,9 @@ public class PyTuple extends PySequenceList {
         return tuple_index(value, start, stop);
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.tuple_index_doc)
+    */
     final int tuple_index(PyObject value, PyObject start, PyObject stop) {
         int startInt = start == null ? 0 : PySlice.calculateSliceIndex(start);
         int stopInt = stop == null ? size() : PySlice.calculateSliceIndex(stop);
@@ -605,6 +647,7 @@ public class PyTuple extends PySequenceList {
         return converted;
     }
 
+    // Plumbing ------------------------------------------------------
 
     /* Traverseproc implementation */
     @Override
