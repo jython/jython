@@ -415,6 +415,36 @@ public class Abstract {
     }
 
     /**
+     * Create a {@link TypeError} with a message along the lines "T
+     * indices must be integers or slices, not X" involving the a target
+     * type T and a purported index type X presented, e.g. "list indices
+     * must be integers or slices, not str".
+     *
+     * @param t type of target of function or operation
+     * @param x type of object presented as an index
+     * @return exception to throw
+     */
+    static TypeError indexTypeError(PyType t, PyType x) {
+        String fmt = "%.200s indices must be integers or slices, not %.200s";
+        return new TypeError(fmt, t.getName(), x.getName());
+    }
+
+    /**
+     * Create a {@link TypeError} with a message along the lines "T
+     * indices must be integers or slices, not X" involving the type
+     * name T of a target {@code o} and the type name X of {@code i}
+     * presented as an index, e.g. "list indices must be integers or
+     * slices, not str".
+     *
+     * @param o target of function or operation
+     * @param i actual object presented as an index
+     * @return exception to throw
+     */
+    static TypeError indexTypeError(Object o, Object i) {
+        return indexTypeError(PyType.of(o), PyType.of(i));
+    }
+
+    /**
      * Create a {@link TypeError} with a message along the lines "T is
      * required, not X" involving any descriptive phrase T and the type
      * X of {@code o}, e.g. "<u>a bytes-like object</u> is required, not
@@ -581,7 +611,19 @@ public class Abstract {
     }
 
     /**
-     * Submit a {@code DeprecationWarning} call (which may result in an
+     * Create an {@link IndexError} with a message along the lines "N
+     * index out of range", where N is usually a function or type name.
+     *
+     * @param name object accessed
+     * @return exception to throw
+     */
+    static IndexError indexOutOfRange(String name) {
+        String fmt = "%.50s index out of range";
+        return new IndexError(fmt, name);
+    }
+
+    /**
+     * Submit a {@link DeprecationWarning} call (which may result in an
      * exception) with the same message as
      * {@link #returnTypeError(String, String, Object)}, the whole
      * followed by one about deprecation of the facility.
@@ -602,6 +644,11 @@ public class Abstract {
             RETURNED_NON_TYPE + ".  " + "The ability to return an instance of a strict "
                     + "subclass of %s is deprecated, and may be "
                     + "removed in a future version of Python.";
+
+    /** Throw generic something went wrong internally (last resort). */
+    static void badInternalCall() {
+        throw new InterpreterError("bad internal call");
+    }
 
     /**
      * Create an {@link InterpreterError} for use where a Python method

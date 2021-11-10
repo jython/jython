@@ -65,6 +65,16 @@ public class Py {
      */
     static PyBaseObject object() { return new PyBaseObject(); }
 
+    /**
+     * Return Python {@code tuple} for array of {@code Object}.
+     *
+     * @param values to contain
+     * @return equivalent {@code tuple} object
+     */
+    static PyTuple tuple(Object... values) {
+        return PyTuple.from(values);
+    }
+
     /** Empty (zero-length) array of {@link Object}. */
     static final Object[] EMPTY_ARRAY = new Object[0];
 
