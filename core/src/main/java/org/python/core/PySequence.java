@@ -13,8 +13,8 @@ import org.python.core.Slot.EmptyException;
 
 /**
  * Abstract API for operations on sequence types, corresponding to
- * CPython methods defined in {@code abstract.h} and with names like:
- * {@code PySequence_*}.
+ * CPython methods defined in {@code abstract.h} and with names
+ * like: {@code PySequence_*}.
  */
 public class PySequence extends Abstract {
 
@@ -87,6 +87,30 @@ public class PySequence extends Abstract {
     }
 
     /**
+     * {@code o[i1:12]} with Python semantics, where {@code o} must be a
+     * sequence. Receiving objects will normally interpret indices as
+     * end-relative, and bounded to the sequence length.
+     *
+     * @param o sequence to operate on
+     * @param i1 index of first item in slice
+     * @param i2 index of first item not in slice
+     * @return {@code o[i1:i2]}
+     * @throws TypeError when {@code o} does not allow subscripting
+     * @throws Throwable from invoked method implementations
+     */
+    // Compare CPython PyObject_GetItem in abstract.c
+    static Object getSlice(Object o, int i1, int i2) throws Throwable {
+        // Decisions are based on type of o and known type of key
+        try {
+            Object key = new PySlice(i1, i2);
+            Operations ops = Operations.of(o);
+            return ops.op_getitem.invokeExact(o, key);
+        } catch (EmptyException e) {
+            throw typeError(NOT_SLICEABLE, o);
+        }
+    }
+
+    /**
      * {@code o[key] = value} with Python semantics, where {@code o} may
      * be a mapping or a sequence.
      *
@@ -97,8 +121,7 @@ public class PySequence extends Abstract {
      * @throws Throwable from invoked method implementations
      */
     // Compare CPython PyObject_SetItem in abstract.c
-    static void setItem(Object o, Object key, Object value)
-            throws Throwable {
+    static void setItem(Object o, Object key, Object value) throws Throwable {
         // Decisions are based on types of o and key
         Operations ops = Operations.of(o);
         try {
@@ -132,10 +155,9 @@ public class PySequence extends Abstract {
 
     // Convenience functions constructing errors ----------------------
 
-    protected static final String HAS_NO_LEN =
-            "object of type '%.200s' has no len()";
-    private static final String NOT_SUBSCRIPTABLE =
-            "'%.200s' object is not subscriptable";
+    protected static final String HAS_NO_LEN = "object of type '%.200s' has no len()";
+    private static final String NOT_SUBSCRIPTABLE = "'%.200s' object is not subscriptable";
+    private static final String NOT_SLICEABLE = "'%.200s' object is unsliceable";
     protected static final String DOES_NOT_SUPPORT_ITEM =
             "'%.200s' object does not support item %s";
 
@@ -147,9 +169,9 @@ public class PySequence extends Abstract {
      * interface provides a standardised API. Several {@link Delegate}
      * implementations in the core also provide this interface.
      *
-     * @param <T> the type of element returned by the iterators
+     * @param <E> the type of element returned by the iterators
      */
-    static interface Of<T> extends Iterable<T>, Comparable<Of<T>> {
+    static interface Of<E> extends Iterable<E> {
 
         /**
          * The length of this sequence.
@@ -159,31 +181,18 @@ public class PySequence extends Abstract {
         int length();
 
         /**
-         * Get one element from the sequence.
-         *
-         * @param i index of element to get
-         * @return value at {@code i}th position
-         */
-        T get(int i);
-
-        // /** Set one element from the sequence (if mutable). */
-        // void setItem(int i, Object v);
-
-        /**
          * {@inheritDoc} The characteristics {@code SIZED} and
          * {@code SUBSIZED} are additionally reported.
          */
         @Override
-        default Spliterator<T> spliterator() {
+        default Spliterator<E> spliterator() {
             return Spliterators.spliterator(iterator(), length(), 0);
         }
 
         /**
          * @return the elements of this sequence as a {@code Stream}
          */
-        default Stream<T> asStream() {
-            return StreamSupport.stream(spliterator(), false);
-        }
+        default Stream<E> asStream() { return StreamSupport.stream(spliterator(), false); }
     }
 
     /**
@@ -214,8 +223,7 @@ public class PySequence extends Abstract {
      * {@link #setImpl(Indices)}, {@link #delItem(int)} and
      * {@link #delSlice(Indices)}.
      *
-     * @param <E> the element type, and return type of
-     *     {@link #getItem(int)} etc..
+     * @param <E> the element type returned by {@code iterator().next()}
      * @param <S> the slice type, and return type of
      *     {@link #getSlice(Indices)} etc..
      */
@@ -223,22 +231,23 @@ public class PySequence extends Abstract {
      * This has been adapted from Jython 2 SequenceIndexDelegate and
      * documented.
      */
-    static abstract class Delegate<E, S> {
+    static abstract class Delegate<E, S> implements Of<E>, Comparable<Delegate<E, S>> {
 
         /**
-         * Returns the length of the client sequence from the
-         * perspective of indexing and slicing operations.
+         * Returns the length of the client sequence from the perspective of
+         * indexing and slicing operations.
          *
          * @return the length of the client sequence
          */
+        @Override
         public abstract int length();
 
         /**
-         * Provide the type of client sequence, primarily for use in
-         * error messages e.g. "&lt;TYPE> index out of bounds".
+         * Provide the type of client sequence, primarily for use in error
+         * messages e.g. "&lt;TYPE> index out of bounds".
          *
-         * @implNote This can simply return a constant characteristic of
-         *     the the implementing class, the Python type implements or
+         * @implNote This can simply return a constant characteristic of the
+         *     the implementing class, the Python type implements or
          *     supports. E.g the adaptor for a Java String returns
          *     {@code PyUnicode.TYPE} which is {@code str}.
          *
@@ -247,11 +256,10 @@ public class PySequence extends Abstract {
         public abstract PyType getType();
 
         /**
-         * Return the name of the Python type of the client sequence.
-         * This is used in exception messages generated here. By default
-         * this is {@code getType().getName()}, which is normally
-         * correct, but Python {@code str} likes to call itself
-         * "string", exceptionally.
+         * Return the name of the Python type of the client sequence. This
+         * is used in exception messages generated here. By default this is
+         * {@code getType().getName()}, which is normally correct, but
+         * Python {@code str} likes to call itself "string", exceptionally.
          *
          * @return the name of Python type being served
          */
@@ -259,15 +267,15 @@ public class PySequence extends Abstract {
 
         /**
          * Inner implementation of {@code __getitem__}, called by
-         * {@link #__getitem__(Object)} when its argument is an integer.
-         * The argument is the equivalent {@code int}, adjusted and
-         * checked by {@link #adjustGet(int)}.
+         * {@link #__getitem__(Object)} when its argument is an integer. The
+         * argument is the equivalent {@code int}, adjusted and checked by
+         * {@link #adjustGet(int)}.
          *
          * @param i index of item to return
          * @return the element from the client sequence
          * @throws Throwable from errors other than indexing
          */
-        public abstract E getItem(int i) throws Throwable;
+        public abstract Object getItem(int i) throws Throwable;
 
         /**
          * Inner implementation of {@code __getitem__}, called by
@@ -276,23 +284,22 @@ public class PySequence extends Abstract {
          * {@link PySlice#getIndices(int)}, which is guaranteed to be
          * range-compatible with the sequence length {@link #length()}.
          *
-         * @param slice containing [start, stop, step, count] of the
-         *     slice to return
+         * @param slice containing [start, stop, step, count] of the slice
+         *     to return
          * @return the slice from the client sequence
          * @throws Throwable from errors other than indexing
          */
-        public abstract S getSlice(PySlice.Indices slice)
-                throws Throwable;
+        public abstract S getSlice(PySlice.Indices slice) throws Throwable;
 
         /**
          * Inner implementation of {@code __setitem__}, called by
          * {@link #__setitem__(Object,Object)} when its argument is an
-         * integer. The argument is the equivalent {@code int}, adjusted
-         * and checked by {@link #adjustSet(int)}.
+         * integer. The argument is the equivalent {@code int}, adjusted and
+         * checked by {@link #adjustSet(int)}.
          * <p>
-         * In mutable types, override this to assign a value to the
-         * given element of the client sequence. The default
-         * implementation (for immutable types) does nothing.
+         * In mutable types, override this to assign a value to the given
+         * element of the client sequence. The default implementation (for
+         * immutable types) does nothing.
          *
          * @param i index of item to set
          * @throws Throwable from errors other than indexing
@@ -306,25 +313,24 @@ public class PySequence extends Abstract {
          * {@link PySlice#getIndices(int)}, which is guaranteed to be
          * range-compatible with the sequence length {@link #length()}.
          * <p>
-         * In mutable types, override this to assign a value to the
-         * given slice of the client sequence. The default
-         * implementation (for immutable types) does nothing.
+         * In mutable types, override this to assign a value to the given
+         * slice of the client sequence. The default implementation (for
+         * immutable types) does nothing.
          *
          * @param slice to assign in the client sequence
          * @param value to assign
          * @throws Throwable from errors other than indexing
          */
-        public void setSlice(PySlice.Indices slice, Object value)
-                throws Throwable {};
+        public void setSlice(PySlice.Indices slice, Object value) throws Throwable {};
 
         /**
          * Inner implementation of {@code __delitem__}, called by
          * {@link #__setitem__(Object,Object)} when its argument is an
-         * integer. The argument is the equivalent {@code int}, adjusted
-         * and checked by {@link #adjustSet(int)}.
+         * integer. The argument is the equivalent {@code int}, adjusted and
+         * checked by {@link #adjustSet(int)}.
          * <p>
-         * The default implementation deletes a slice {@code [i:i+1]}
-         * using {@link #delSlice(Indices)}.
+         * The default implementation deletes a slice {@code [i:i+1]} using
+         * {@link #delSlice(Indices)}.
          *
          * @param i index of item to delete
          * @throws Throwable from errors other than indexing
@@ -341,54 +347,52 @@ public class PySequence extends Abstract {
          * {@link PySlice#getIndices(int)}, which is guaranteed to be
          * range-compatible with the sequence length {@link #length()}.
          * <p>
-         * In mutable types, override this to delete the given slice of
-         * the client sequence. The default implementation (for
-         * immutable types) does nothing.
+         * In mutable types, override this to delete the given slice of the
+         * client sequence. The default implementation (for immutable types)
+         * does nothing.
          *
-         * @param slice containing [start, stop, step, count] of the
-         *     slice to delete
+         * @param slice containing [start, stop, step, count] of the slice
+         *     to delete
          * @throws Throwable
          * @throws TypeError
          */
         public void delSlice(PySlice.Indices slice) throws Throwable {}
 
         /**
-         * Inner implementation of {@code __add__} on the client
-         * sequence, called by {@link #__add__(Object)}.
+         * Inner implementation of {@code __add__} on the client sequence,
+         * called by {@link #__add__(Object)}.
          *
          * @param ow the right operand
          * @return concatenation {@code self+ow}
          * @throws OutOfMemoryError when allocating the result fails.
          *     {@link #__add__(Object) __add__} will raise a Python
          *     {@code OverflowError}.
-         * @throws NoConversion when the client does not support the
-         *     type of {@code ow}. {@link #__add__(Object) __add__} will
-         *     return a Python {@code NotImplemented}.
+         * @throws NoConversion when the client does not support the type of
+         *     {@code ow}. {@link #__add__(Object) __add__} will return a
+         *     Python {@code NotImplemented}.
          * @throws Throwable from other causes in the implementation
          */
-        abstract S add(Object ow)
-                throws OutOfMemoryError, NoConversion, Throwable;
+        abstract S add(Object ow) throws OutOfMemoryError, NoConversion, Throwable;
 
         /**
-         * Inner implementation of {@code __radd__} on the client
-         * sequence, called by {@link #__radd__(Object)}.
+         * Inner implementation of {@code __radd__} on the client sequence,
+         * called by {@link #__radd__(Object)}.
          *
          * @param ov the left operand
          * @return concatenation {@code ov+self}
          * @throws OutOfMemoryError when allocating the result fails.
          *     {@link #__radd__(Object) __radd__} will raise a Python
          *     {@code OverflowError}.
-         * @throws NoConversion when the client does not support the
-         *     type of {@code ov}. {@link #__radd__(Object) __radd__}
-         *     will return a Python {@code NotImplemented}.
+         * @throws NoConversion when the client does not support the type of
+         *     {@code ov}. {@link #__radd__(Object) __radd__} will return a
+         *     Python {@code NotImplemented}.
          * @throws Throwable from other causes in the implementation
          */
-        abstract S radd(Object ov)
-                throws OutOfMemoryError, NoConversion, Throwable;
+        abstract S radd(Object ov) throws OutOfMemoryError, NoConversion, Throwable;
 
         /**
-         * Inner implementation of {@code __mul__} on the client
-         * sequence, called by {@link #__mul__(Object)}.
+         * Inner implementation of {@code __mul__} on the client sequence,
+         * called by {@link #__mul__(Object)}.
          *
          * @param n the number of repetitions
          * @return repetition {@code self*n}
@@ -400,9 +404,9 @@ public class PySequence extends Abstract {
         abstract S repeat(int n) throws OutOfMemoryError, Throwable;
 
         /**
-         * Implementation of {@code __getitem__}. Get either an element
-         * or a slice of the client sequence, after checks, by calling
-         * either {@link #getItem(int)} or {@link #getSlice(Indices)}.
+         * Implementation of {@code __getitem__}. Get either an element or a
+         * slice of the client sequence, after checks, by calling either
+         * {@link #getItem(int)} or {@link #getSlice(Indices)}.
          *
          * @param item (or slice) to get from in the client
          * @return the element or slice
@@ -410,8 +414,7 @@ public class PySequence extends Abstract {
          * @throws TypeError from bad slice index types
          * @throws Throwable from errors other than indexing
          */
-        public Object __getitem__(Object item)
-                throws TypeError, Throwable {
+        public Object __getitem__(Object item) throws TypeError, Throwable {
             if (PyNumber.indexCheck(item)) {
                 int i = PyNumber.asSize(item, IndexError::new);
                 return getItem(adjustGet(i));
@@ -424,21 +427,20 @@ public class PySequence extends Abstract {
         }
 
         /**
-         * Implementation of {@code __setitem__}. Assign a value to
-         * either an element or a slice of the client sequence, after
-         * checks, by calling either {@link #setItem(int, Object)} or
+         * Implementation of {@code __setitem__}. Assign a value to either
+         * an element or a slice of the client sequence, after checks, by
+         * calling either {@link #setItem(int, Object)} or
          * {@link #setSlice(Indices, Object)}.
          *
          * @param item (or slice) to assign in the client
          * @param value to assign
          * @throws ValueError if {@code slice.step==0} or
-         *     {@code slice.step!=1} (an "extended" slice) and
-         *     {@code value} is the wrong length.
+         *     {@code slice.step!=1} (an "extended" slice) and {@code value}
+         *     is the wrong length.
          * @throws TypeError from bad slice index types
          * @throws Throwable from errors other than indexing
          */
-        public void __setitem__(Object item, Object value)
-                throws TypeError, Throwable {
+        public void __setitem__(Object item, Object value) throws TypeError, Throwable {
             if (PyNumber.indexCheck(item)) {
                 int i = PyNumber.asSize(item, IndexError::new);
                 setItem(adjustSet(i), value);
@@ -451,19 +453,18 @@ public class PySequence extends Abstract {
         }
 
         /**
-         * Implementation of {@code __delitem__}. Delete either an
-         * element or a slice of the client sequence, after checks, by
-         * calling either {@link #delItem(int)} or
+         * Implementation of {@code __delitem__}. Delete either an element
+         * or a slice of the client sequence, after checks, by calling
+         * either {@link #delItem(int)} or
          * {@link #delImpl(Indices, Object)}.
          *
          * @param item (or slice) to delete in the client
-         * @throws ValueError if {@code slice.step==0} or value is the
-         *     wrong length in an extended slice ({@code slice.step!=1}
+         * @throws ValueError if {@code slice.step==0} or value is the wrong
+         *     length in an extended slice ({@code slice.step!=1}
          * @throws TypeError from bad slice index types
          * @throws Throwable from errors other than indexing
          */
-        public void __delitem__(Object item)
-                throws TypeError, Throwable {
+        public void __delitem__(Object item) throws TypeError, Throwable {
             if (PyNumber.indexCheck(item)) {
                 int i = PyNumber.asSize(item, IndexError::new);
                 delItem(adjustSet(i));
@@ -479,14 +480,14 @@ public class PySequence extends Abstract {
          * Implementation of {@code __add__} (concatenation) by calling
          * {@link #add(Object)}.
          * <p>
-         * The wrapper attempts no conversion of the argument, but it
-         * will catch {@link NoConversion} exceptions from
-         * {@link #add(Object)}, to return {@code NotImplemented}. It
-         * will also catch Java {@code OutOfMemoryError} and convert it
-         * to a Python {@link OverflowError}.
+         * The wrapper attempts no conversion of the argument, but it will
+         * catch {@link NoConversion} exceptions from {@link #add(Object)},
+         * to return {@code NotImplemented}. It will also catch Java
+         * {@code OutOfMemoryError} and convert it to a Python
+         * {@link OverflowError}.
          *
          * @param w right operand
-         * @return the concatenated result {@code self+w}
+         * @return {@code self+w} or {@code NotImplemented}
          * @throws OverflowError when cannot allocate space
          * @throws Throwable from other causes in the implementation.
          */
@@ -497,11 +498,10 @@ public class PySequence extends Abstract {
                 throw concatOverflow();
             } catch (NoConversion e) {
                 /*
-                 * Since we do not implement __concat__ separate from
-                 * __add_, unlike CPython, we do not yet know that
-                 * Object w has no __radd__, and cannot produce the
-                 * TypeError "can only concatenate S to S". Instead,
-                 * Abstract.add will produce a TypeError about
+                 * Since we do not implement __concat__ separate from __add_, unlike
+                 * CPython, we do not yet know that Object w has no __radd__, and
+                 * cannot produce the TypeError "can only concatenate S to S".
+                 * Instead, Abstract.add will produce a TypeError about
                  * "unsupported operand types" for '+'.
                  */
                 return Py.NotImplemented;
@@ -509,17 +509,17 @@ public class PySequence extends Abstract {
         }
 
         /**
-         * Implementation of {@code __radd__} (reflected concatenation)
-         * by calling {@link #radd(Object)}.
+         * Implementation of {@code __radd__} (reflected concatenation) by
+         * calling {@link #radd(Object)}.
          * <p>
-         * The wrapper attempts no conversion of the argument, but it
-         * will catch {@link NoConversion} exceptions from
-         * {@link #radd(Object)}, to return {@code NotImplemented}. It
-         * will also catch Java {@code OutOfMemoryError} and convert it
-         * to a Python {@link OverflowError}.
+         * The wrapper attempts no conversion of the argument, but it will
+         * catch {@link NoConversion} exceptions from {@link #radd(Object)},
+         * to return {@code NotImplemented}. It will also catch Java
+         * {@code OutOfMemoryError} and convert it to a Python
+         * {@link OverflowError}.
          *
          * @param v left operand
-         * @return the concatenated result {@code v+self}
+         * @return {@code v+self} or {@code NotImplemented}
          * @throws OverflowError when cannot allocate space
          * @throws Throwable from other causes in the implementation.
          */
@@ -530,8 +530,8 @@ public class PySequence extends Abstract {
                 throw concatOverflow();
             } catch (NoConversion e) {
                 /*
-                 * See comment in __add__, noting that sometimes
-                 * __radd__ is called before v.__add__.
+                 * See comment in __add__, noting that sometimes __radd__ is called
+                 * before v.__add__.
                  */
                 return Py.NotImplemented;
             }
@@ -541,19 +541,19 @@ public class PySequence extends Abstract {
          * Implementation of {@code __mul__} (repetition) and
          * {@code __rmul__} by calling {@link #repeat(Object)}.
          * <p>
-         * The wrapper attempts conversion of the argument to
-         * {@code int}, and if this cannot be achieved, it will return
+         * The wrapper attempts conversion of the argument to {@code int},
+         * and if this cannot be achieved, it will return
          * {@code NotImplemented}. It will also catch Java
          * {@code OutOfMemoryError} and convert it to a Python
          * {@link OverflowError}.
          *
          * @param n number of repetitions in result
-         * @return the repeating result {@code self*n}
-         * @throws OverflowError when {@code n} over-size or cannot
-         *     allocate space
+         * @return {@code self*n} or {@code NotImplemented}
+         * @throws OverflowError when {@code n} over-size or cannot allocate
+         *     space
          * @throws TypeError if {@code n} has no {@code __index__}
-         * @throws Throwable from implementation of {@code __index__},
-         *     or other causes in the implementation.
+         * @throws Throwable from implementation of {@code __index__}, or
+         *     other causes in the implementation.
          */
         Object __mul__(Object n) throws TypeError, Throwable {
             if (PyNumber.indexCheck(n)) {
@@ -565,12 +565,12 @@ public class PySequence extends Abstract {
                 }
             } else {
                 /*
-                 * Since we do not implement __repeat__ separate from
-                 * __mul_, unlike CPython, we do not yet know that
-                 * Object n has no __rmul__, and cannot produce the
-                 * TypeError "can't multiply sequence by non-int".
-                 * Instead, Abstract.multiply will produce a TypeError
-                 * about "unsupported operand types" for '*'.
+                 * Since we do not implement __repeat__ separate from __mul_, unlike
+                 * CPython, we do not yet know that Object n has no __rmul__, so we
+                 * cannot produce the TypeError
+                 * "can't multiply sequence by non-int". Instead, Abstract.multiply
+                 * will produce a TypeError about "unsupported operand types" for
+                 * '*'.
                  */
                 return Py.NotImplemented;
             }
@@ -578,9 +578,9 @@ public class PySequence extends Abstract {
 
         /**
          * Implementation of the {@code index} method of sequences. Find the
-         * index, in the given range, of an element equal to the argument. or
-         * a slice of the client sequence, after checks, by calling either
-         * {@link #getItem(int)} or {@link #getSlice(Indices)}.
+         * index, in the given range, of an element equal to the argument.
+         * or a slice of the client sequence, after checks, by calling
+         * either {@link #getItem(int)} or {@link #getSlice(Indices)}.
          *
          * @param v value to match in the client
          * @return the index at which found
@@ -599,9 +599,8 @@ public class PySequence extends Abstract {
 
         /**
          * Check that an index {@code i} satisfies
-         * 0&le;i&lt;{@link #length()}. If the original index is
-         * negative, treat it as end-relative by first adding
-         * {@link #length()}.
+         * 0&le;i&lt;{@link #length()}. If the original index is negative,
+         * treat it as end-relative by first adding {@link #length()}.
          *
          * @param i to check is valid index
          * @return range-checked {@code i}
@@ -618,10 +617,10 @@ public class PySequence extends Abstract {
 
         /**
          * Check that an index {@code i} satisfies
-         * 0&le;i&lt;{@link #length()}. If the original index is
-         * negative, treat it as end-relative by first adding
-         * {@link #length()}. This differs from {@link #adjustGet(int)}
-         * only in that the message produced mentions "assignment".
+         * 0&le;i&lt;{@link #length()}. If the original index is negative,
+         * treat it as end-relative by first adding {@link #length()}. This
+         * differs from {@link #adjustGet(int)} only in that the message
+         * produced mentions "assignment".
          *
          * @param i to check is valid index
          * @return range-checked {@code i}
@@ -646,21 +645,19 @@ public class PySequence extends Abstract {
          */
         final protected IndexError rangeIndexError(String kind) {
             String space = kind.length() > 0 ? " " : "";
-            return new IndexError("%s%s%s index out of range",
-                    getTypeName(), space, kind);
+            return new IndexError("%s%s%s index out of range", getTypeName(), space, kind);
         }
 
         /**
          * An overflow error with the message "concatenated
-         * {@link #getTypeName()} is too long", involving the type name
-         * of the client sequence type.
+         * {@link #getTypeName()} is too long", involving the type name of
+         * the client sequence type.
          *
          * @param seq the sequence operated on
          * @return an exception to throw
          */
         private OverflowError concatOverflow() {
-            return new OverflowError("concatenated %s is too long",
-                    getTypeName());
+            return new OverflowError("concatenated %s is too long", getTypeName());
         }
 
         /**
@@ -670,8 +667,7 @@ public class PySequence extends Abstract {
          * @return an exception to throw
          */
         private OverflowError repeatOverflow() {
-            return new OverflowError("repeated %s is too long",
-                    getTypeName());
+            return new OverflowError("repeated %s is too long", getTypeName());
         }
 
         /**
@@ -682,7 +678,7 @@ public class PySequence extends Abstract {
          * PyNumber.asSize}. Unlike {@link #adjustGet(int)}, is not an error
          * for the index value to fall outside the valid range. (It is
          * simply clipped to the nearer end.)
-         * 
+         *
          * @param index purported index (or {@code null})
          * @param defaultValue to use if {@code index==null}
          * @return converted index

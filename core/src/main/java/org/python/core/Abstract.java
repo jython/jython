@@ -87,9 +87,8 @@ public class Abstract {
     }
 
     /**
-     * Compute and return the hash value of an object. On failure,
-     * return -1. This is the equivalent of the Python expression
-     * {@code hash(v)}.
+     * Compute and return the hash value of an object. This is the
+     * equivalent of the Python expression {@code hash(v)}.
      *
      * @param v to hash
      * @return the hash
