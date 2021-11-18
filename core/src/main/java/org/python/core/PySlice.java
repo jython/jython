@@ -5,15 +5,10 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
-import org.python.base.MissingFeature;
 import org.python.core.PyType.Flag;
 
 /**
  * The Python {@code slice} object.
- */
-/*
- * @ExposedType(name = "slice", isBaseType = false, doc =
- * BuiltinDocs.slice_doc)
  */
 public class PySlice extends AbstractPyObject {
 
@@ -88,14 +83,12 @@ public class PySlice extends AbstractPyObject {
 
     @SuppressWarnings("unused")
     private Object __eq__(Object o) throws Throwable {
-        throw new MissingFeature("Comparison enum");
-        // return this == o ? true : compare(o, Comparison.EQ);
+        return this == o ? true : compare(o, Comparison.EQ);
     }
 
     @SuppressWarnings("unused")
     private Object __ne__(Object o) throws Throwable {
-        throw new MissingFeature("Comparison enum");
-        // return this == o ? false : compare(o, Comparison.NE);
+        return this == o ? false : compare(o, Comparison.NE);
     }
 
     /*
@@ -234,14 +227,12 @@ public class PySlice extends AbstractPyObject {
                     start = Math.min(start0, length);
 
                 if (stop0 < 0)
-                    stop = Math.max(stop0 + length, 0);
+                    stop = Math.max(stop0 + length, start);
                 else
-                    stop = Math.min(stop0, length);
+                    stop = Math.min(Math.max(stop0, start), length);
 
-                if (start0 < stop0)
-                    slicelength = (stop0 - start0 - 1) / step + 1;
-                else
-                    slicelength = 0;
+                assert stop >= start;
+                slicelength = (stop - start + step - 1) / step;
 
             } else {
                 // The start, stop while ignoring the sequence length.
@@ -258,17 +249,38 @@ public class PySlice extends AbstractPyObject {
                 if (stop0 < 0)
                     stop = Math.max(stop0 + length, -1);
                 else
-                    stop = Math.min(stop0, length - 1);
+                    stop = Math.min(stop0, start);
 
-                if (stop < start)
-                    slicelength = (start - stop - 1) / (-step) + 1;
-                else
-                    slicelength = 0;
+                assert stop <= start;
+                slicelength = (start - stop - step - 1) / (-step);
             }
+        }
+
+        @Override
+        public String toString() {
+            return String.format("[%d:%d:%d] len= %d", start, stop, step, slicelength);
         }
     }
 
     // Plumbing -------------------------------------------------------
 
-
+    /**
+     * Invoke the comparison specified (supports {@code __eq__} and
+     * {@code __ne__}).
+     *
+     * @param o must be a slice or return {@code NotImplemented}
+     * @param op {@link Comparison#EQ} or {@link Comparison#NE}
+     * @return result of comparison or {@code NotImplemented}
+     * @throws Throwable from element comparison
+     */
+    private Object compare(Object o, Comparison op) throws Throwable {
+        if (TYPE.checkExact(o)) {
+            // Compare the slices as if they were tuples
+            PySlice s = (PySlice)o;
+            return Abstract.richCompare(Py.tuple(start, stop, step),
+                    Py.tuple(s.start, s.stop, s.step), op);
+        } else {
+            return Py.NotImplemented;
+        }
+    }
 }
