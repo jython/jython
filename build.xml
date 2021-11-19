@@ -66,9 +66,9 @@ An example ant.properties file:
 oracle.jar = ../support/ojdbc6.jar
 informix.jar = ../support/jdbc-4.10.12.jar
 
-# - option for javac (build.compiler=modern is a global option to use standard jdk 1.7/1.8)
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.8)
 #build.compiler=modern
-#jdk.target.version=1.7
+#jdk.target.version=1.8
 #debug=false
 #deprecation=off
         </echo>
@@ -92,11 +92,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
         <property name="jython.java.version" value="1.8" />
-
-        <!-- Temporarily fix the source compatibility at Java 7 to keep open the possibility of
-        compiling for that target. After v2.7.2 is out, delete this assignment, and this comment,
-        reconsider choice of JARs, and feel free to use Java 8 syntax. -->
-        <property name="jdk.source.version" value="1.7" />
+        <property name="jdk.source.version" value="1.8" />
 
         <!-- Designate the official release encoded in parts. In normal times, this is the *next*
              official release, e.g. 2.7.2b2 while working towards 2.7.2b2, and sys.version will be
@@ -847,6 +843,7 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
+            <!-- We needed the -android JAR only for Java 1.7 compatibility -->
             <zipfileset src="extlibs/guava-28.0-android.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-59_1.jar"/>

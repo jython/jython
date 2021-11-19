@@ -31,6 +31,8 @@ Jython 2.7.3a1
       character) is 4 on all platforms. Client code that was working around these anomalies may
       have to change. Overall, the experience should be closer to that with CPython.
 
+    - We no longer aspire to compile Jython with Java 7. (We may use Java 8 features.)
+
     - The project has moved its home to GitHub (twice).
 
 Jython 2.7.2

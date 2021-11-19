@@ -60,11 +60,9 @@ group = 'org.python'
 // ---------------- Miscellaneous configuration --------------------------------
 
 /*
- * We support Java 8 onwards officially, up to v2.7.2, but retain the option of
- * compiling for Java 7 (in v2.7.2) by maintaining compatibility in the code
- * base and in the choice of JARs.
+ * We support Java 8 onwards.
  */
-sourceCompatibility = '1.7' // Make both 1.8 after 2.7.2 released
+sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 project.compileJava.options.debug = true
