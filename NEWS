@@ -11,6 +11,7 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-119 ] array.array itemsize and serialization anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
@@ -21,6 +22,14 @@ Jython 2.7.3a1
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
+
+    - array.array itemsize of unsigned types is now the same as their signed counterparts, where 
+      previously it was mostly double. Internal representations have changed. Anomalies have been
+      eliminated between itemsize and the serialisation (tostring() etc.) for unsigned types,
+      and in the range of values accepted in different contexts. The size of type 'u' (unicode
+      character) is 4 on all platforms. Client code that was working around these anomalies may
+      have to change. Overall, the experience should be closer to that with CPython.
+
     - The project has moved its home to GitHub (twice).
 
 Jython 2.7.2
