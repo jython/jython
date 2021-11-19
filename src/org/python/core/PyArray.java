@@ -34,11 +34,11 @@ import org.python.modules.gc;
  * The range of possible element (item) types exceeds that in Python, since it allows for arbitrary
  * Java classes. This extended behaviour is accessible from Python by supplying a Java type (class)
  * to the constructor, where one might have used a single character type code. For example:<pre>
- * >>> ax = array.array(BigDecimal, (BigDecimal(str(n)) for n in range(5)))
- * >>> ax
+ * &gt;&gt;&gt; ax = array.array(BigDecimal, (BigDecimal(str(n)) for n in range(5)))
+ * &gt;&gt;&gt; ax
  * array(java.math.BigDecimal, [0, 1, 2, 3, 4])
- * >>> type(ax[2])
- * &lt;type 'java.math.BigDecimal'>
+ * &gt;&gt;&gt; type(ax[2])
+ * &lt;type 'java.math.BigDecimal'&gt;
  * </pre>
  *
  * <table>
@@ -222,7 +222,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * @param itemClass when {@code itemType =} {@link ItemType#OBJECT}
      * @param initial provider of initial contents
      */
-    public PyArray(PyType subtype, ItemType itemType, Class<?> itemClass, PyObject initial) {
+    PyArray(PyType subtype, ItemType itemType, Class<?> itemClass, PyObject initial) {
         this(subtype, itemType, itemClass, 0);
         useInitial(initial);
     }
@@ -1150,8 +1150,8 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * @param input string of bytes containing array data
      * @return number of primitives successfully read ({@code =count}, if not ended by EOF)
      */
-    public void fromstring(int start, String input) {
-        fromBytes(start, StringUtil.toBytes(input));
+    public int fromstring(int start, String input) {
+        return fromBytes(start, StringUtil.toBytes(input));
     }
 
     /**
