@@ -11,7 +11,8 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
-    - [ GH-119 ] array.array itemsize and serialization anomalies for unsigned types
+    - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
