@@ -836,14 +836,13 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/asm-commons-7.1.jar"/>
             <zipfileset src="extlibs/asm-util-7.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.62.jar" excludes="META-INF/**"/>
-            <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk15on-1.69.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk15on-1.69.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-30.0.1-jre.jar"/>
+            <zipfileset src="extlibs/guava-31.0.1-jre.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-59_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
