@@ -164,11 +164,8 @@ dependencies {
     implementation 'org.ow2.asm:asm-commons:7.1'
     implementation 'org.ow2.asm:asm-util:7.1'
 
-    // The Android Guava and "failureaccess" are necessary to support Java 7.
-    implementation 'com.google.guava:guava:28.0-android'
-    implementation 'com.google.guava:failureaccess:1.0.1'
-    // Swap for regular Guava at Java 8.
-
+    implementation 'com.google.guava:guava:31.0.1-jre'
+ 
     implementation 'com.ibm.icu:icu4j:59.1'
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'

@@ -250,7 +250,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-util-7.1.jar" />
                 <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-28.0-android.jar" />
+                <file name="guava-31.0.1-jre.jar" />
                 <file name="icu4j-59_1.jar" />
                 <file name="jffi-1.2.20.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
@@ -843,8 +843,7 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <!-- We needed the -android JAR only for Java 1.7 compatibility -->
-            <zipfileset src="extlibs/guava-28.0-android.jar"/>
+            <zipfileset src="extlibs/guava-30.0.1-jre.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-59_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
