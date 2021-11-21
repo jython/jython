@@ -1,3 +1,6 @@
+// Copyright (c)2021 Jython Developers.
+// Licensed to PSF under a contributor agreement.
+// @formatter:off
 package org.python.core;
 
 import java.io.Serializable;
@@ -10,10 +13,6 @@ import java.util.Set;
 
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.MarkupIterator;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
-import org.python.expose.MethodType;
 import org.python.modules._codecs;
 import org.python.util.Generic;
 
@@ -22,8 +21,9 @@ import com.google.common.base.CharMatcher;
 /**
  * a builtin python unicode string.
  */
-@Untraversable
+/*
 @ExposedType(name = "unicode", base = PyBaseString.class, doc = BuiltinDocs.unicode_doc)
+*/
 public class PyUnicode extends PyString implements Iterable<Integer> {
 
     /**
@@ -601,6 +601,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return codecs.PyUnicode_EncodeASCII(s, s.length(), null);
     }
 
+    // @formatter:off
+    /*
     @ExposedNew
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -640,6 +642,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
             }
         }
     }
+    */
 
     @Override
     public PyString createInstance(String str) {
@@ -655,12 +658,17 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(string, isBasic);
     }
 
+
+    // Special methods -----------------------------------------------
+
     @Override
     public PyObject __mod__(PyObject other) {
         return unicode___mod__(other);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___mod___doc)
+    */
     final PyObject unicode___mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(getString(), true);
         return fmt.format(other);
@@ -676,7 +684,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___str__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___str___doc)
+    */
     final PyString unicode___str__() {
         return new PyString(encode());
     }
@@ -686,7 +696,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___len__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___len___doc)
+    */
     final int unicode___len__() {
         return getCodePointCount();
     }
@@ -696,17 +708,23 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___repr__();
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___repr___doc)
+    */
     final PyString unicode___repr__() {
         return new PyString("u" + encode_UnicodeEscape(getString(), true));
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___getitem___doc)
+    */
     final PyObject unicode___getitem__(PyObject index) {
         return str___getitem__(index);
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
@@ -727,7 +745,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return createInstance(buffer.toString());
     }
 
+    /*
     @ExposedMethod(type = MethodType.CMP)
+    */
     final int unicode___cmp__(PyObject other) {
         // XXX needs proper coercion like __eq__, then UCS-32 code point order :(
         return str___cmp__(other);
@@ -738,7 +758,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___eq__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___eq___doc)
+    */
     final PyObject unicode___eq__(PyObject other) {
         try {
             String s = coerceForComparison(other);
@@ -757,7 +779,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___ne__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___ne___doc)
+    */
     final PyObject unicode___ne__(PyObject other) {
         try {
             String s = coerceForComparison(other);
@@ -776,7 +800,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___lt__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___lt___doc)
+    */
     final PyObject unicode___lt__(PyObject other) {
         String s = coerceForComparison(other);
         if (s == null) {
@@ -790,7 +816,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___le__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___le___doc)
+    */
     final PyObject unicode___le__(PyObject other) {
         String s = coerceForComparison(other);
         if (s == null) {
@@ -804,7 +832,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___gt__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___gt___doc)
+    */
     final PyObject unicode___gt__(PyObject other) {
         String s = coerceForComparison(other);
         if (s == null) {
@@ -818,7 +848,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___ge__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___ge___doc)
+    */
     final PyObject unicode___ge__(PyObject other) {
         String s = coerceForComparison(other);
         if (s == null) {
@@ -827,7 +859,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return getString().compareTo(s) >= 0 ? Py.True : Py.False;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___hash___doc)
+    */
     final int unicode___hash__() {
         return str___hash__();
     }
@@ -1145,18 +1179,24 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___contains__(o);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___contains___doc)
+    */
     final boolean unicode___contains__(PyObject o) {
         String other = coerceToString(o);
         return getString().indexOf(other) >= 0;
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode___mul__(PyObject o) {
         return str___mul__(o);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode___rmul__(PyObject o) {
         return str___rmul__(o);
     }
@@ -1166,24 +1206,32 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___add__(other);
     }
 
+    /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode___add__(PyObject other) {
         // Interpret other as a Java String
         String s = coerceToStringOrNull(other);
         return s == null ? null : new PyUnicode(getString().concat(s));
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_lower_doc)
+    */
     final PyObject unicode_lower() {
         return new PyUnicode(getString().toLowerCase());
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_upper_doc)
+    */
     final PyObject unicode_upper() {
         return new PyUnicode(getString().toUpperCase());
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_title_doc)
+    */
     final PyObject unicode_title() {
         StringBuilder buffer = new StringBuilder(getString().length());
         boolean previous_is_cased = false;
@@ -1205,7 +1253,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(buffer);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_swapcase_doc)
+    */
     final PyObject unicode_swapcase() {
         StringBuilder buffer = new StringBuilder(getString().length());
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
@@ -1309,7 +1359,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
+    */
     final PyObject unicode_strip(PyObject sepObj) {
 
         PyUnicode sep = coerceStripSepToUnicode(sepObj, "strip");
@@ -1330,7 +1382,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 new ReversedIterator<>(new StripIterator(sep, newSubsequenceIterator())))));
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
+    */
     final PyObject unicode_lstrip(PyObject sepObj) {
 
         PyUnicode sep = coerceStripSepToUnicode(sepObj, "lstrip");
@@ -1350,7 +1404,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(new StripIterator(sep, newSubsequenceIterator()));
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
+    */
     final PyObject unicode_rstrip(PyObject sepObj) {
 
         PyUnicode sep = coerceStripSepToUnicode(sepObj, "rstrip");
@@ -1400,7 +1456,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode_partition(sep);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_partition_doc)
+    */
     final PyTuple unicode_partition(PyObject sep) {
         return unicodePartition(coerceToUnicode(sep));
     }
@@ -1654,12 +1712,16 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode_rpartition(sep);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_rpartition_doc)
+    */
     final PyTuple unicode_rpartition(PyObject sep) {
         return unicodeRpartition(coerceToUnicode(sep));
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_split_doc)
+    */
     final PyList unicode_split(PyObject sepObj, int maxsplit) {
         String sep = coerceToString(sepObj, true);
         if (sep != null) {
@@ -1730,7 +1792,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return list;
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_rsplit_doc)
+    */
     final PyList unicode_rsplit(PyObject sepObj, int maxsplit) {
         String sep = coerceToString(sepObj, true);
         if (sep != null) {
@@ -1802,7 +1866,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return list;
     }
 
+    /*
     @ExposedMethod(defaults = "false", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyList unicode_splitlines(boolean keepends) {
         return new PyList(new LineSplitIterator(keepends));
     }
@@ -1813,21 +1879,27 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(getString().substring(begin, end), true);
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
+    */
     final int unicode_index(PyObject subObj, PyObject start, PyObject end) {
         final String sub = coerceToString(subObj);
         // Now use the mechanics of the PyString on the UTF-16.
         return checkIndex(_find(sub, start, end));
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
+    */
     final int unicode_rindex(PyObject subObj, PyObject start, PyObject end) {
         final String sub = coerceToString(subObj);
         // Now use the mechanics of the PyString on the UTF-16.
         return checkIndex(_rfind(sub, start, end));
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_count_doc)
+    */
     final int unicode_count(PyObject subObj, PyObject start, PyObject end) {
         final PyUnicode sub = coerceToUnicode(subObj);
         if (isBasicPlane()) {
@@ -1852,13 +1924,17 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return count;
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
+    */
     final int unicode_find(PyObject subObj, PyObject start, PyObject end) {
         int found = _find(coerceToString(subObj), start, end);
         return found < 0 ? -1 : translator.codePointIndex(found);
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_rfind_doc)
+    */
     final int unicode_rfind(PyObject subObj, PyObject start, PyObject end) {
         int found = _rfind(coerceToString(subObj), start, end);
         return found < 0 ? -1 : translator.codePointIndex(found);
@@ -1882,7 +1958,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return fillchar.codePointAt(0);
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode_ljust(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
@@ -1892,7 +1970,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode_rjust(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
@@ -1902,7 +1982,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode_center(int width, String padding) {
         int n = width - getCodePointCount();
         if (n <= 0) {
@@ -1916,7 +1998,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(padding(half, pad) + getString() + padding(n - half, pad));
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_zfill_doc)
+    */
     final PyObject unicode_zfill(int width) {
         int n = getCodePointCount();
         if (n >= width) {
@@ -1955,12 +2039,16 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(buffer);
     }
 
+    /*
     @ExposedMethod(defaults = "8", doc = BuiltinDocs.unicode___getslice___doc)
+    */
     final PyObject unicode_expandtabs(int tabsize) {
         return new PyUnicode(str_expandtabs(tabsize));
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_capitalize_doc)
+    */
     final PyObject unicode_capitalize() {
         if (getString().length() == 0) {
             return this;
@@ -1978,7 +2066,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return new PyUnicode(buffer);
     }
 
+    /*
     @ExposedMethod(defaults = "-1", doc = BuiltinDocs.unicode_replace_doc)
+    */
     final PyString unicode_replace(PyObject oldPieceObj, PyObject newPieceObj, int count) {
 
         // Convert other argument types to PyUnicode (or error)
@@ -2031,7 +2121,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode_join(seq);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_join_doc)
+    */
     final PyUnicode unicode_join(PyObject seq) {
         return unicodeJoin(seq);
     }
@@ -2054,7 +2146,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode_startswith(prefix, start, end);
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_startswith_doc)
+    */
     final boolean unicode_startswith(PyObject prefix, PyObject startObj, PyObject endObj) {
         int[] indices = translateIndices(startObj, endObj);
         int start = indices[0];
@@ -2097,7 +2191,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode_endswith(suffix, start, end);
     }
 
+    /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_endswith_doc)
+    */
     final boolean unicode_endswith(PyObject suffix, PyObject startObj, PyObject endObj) {
         int[] indices = translateIndices(startObj, endObj);
         String substr = getString().substring(indices[0], indices[1]);
@@ -2121,12 +2217,16 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         }
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_translate_doc)
+    */
     final PyObject unicode_translate(PyObject table) {
         return _codecs.translateCharmap(this, "ignore", table);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_islower_doc)
+    */
     final boolean unicode_islower() {
         boolean cased = false;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
@@ -2140,7 +2240,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return cased;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isupper_doc)
+    */
     final boolean unicode_isupper() {
         boolean cased = false;
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
@@ -2154,7 +2256,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return cased;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isalpha_doc)
+    */
     final boolean unicode_isalpha() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2167,7 +2271,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isalnum_doc)
+    */
     final boolean unicode_isalnum() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2182,7 +2288,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isdecimal_doc)
+    */
     final boolean unicode_isdecimal() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2195,7 +2303,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isdigit_doc)
+    */
     final boolean unicode_isdigit() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2208,7 +2318,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isnumeric_doc)
+    */
     final boolean unicode_isnumeric() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2223,7 +2335,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_istitle_doc)
+    */
     final boolean unicode_istitle() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2251,7 +2365,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return cased;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_isspace_doc)
+    */
     final boolean unicode_isspace() {
         if (getCodePointCount() == 0) {
             return false;
@@ -2265,23 +2381,31 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     // end utf-16 aware
+    /*
     @ExposedMethod(doc = "isunicode is deprecated.")
+    */
     final boolean unicode_isunicode() {
         Py.warning(Py.DeprecationWarning, "isunicode is deprecated.");
         return true;
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_encode_doc)
+    */
     final String unicode_encode(PyObject[] args, String[] keywords) {
         return str_encode(args, keywords);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_decode_doc)
+    */
     final PyObject unicode_decode(PyObject[] args, String[] keywords) {
         return str_decode(args, keywords);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___getnewargs___doc)
+    */
     final PyTuple unicode___getnewargs__() {
         return new PyTuple(new PyUnicode(this.getString()));
     }
@@ -2291,24 +2415,32 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
         return unicode___format__(formatSpec);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode___format___doc)
+    */
     final PyObject unicode___format__(PyObject formatSpec) {
         // Re-use the str implementation, which adapts itself to unicode.
         return str___format__(formatSpec);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_parser_doc)
+    */
     final PyObject unicode__formatter_parser() {
         return new MarkupIterator(this);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_field_name_split_doc)
+    */
     final PyObject unicode__formatter_field_name_split() {
         FieldNameIterator iterator = new FieldNameIterator(this);
         return new PyTuple(iterator.pyHead(), iterator);
     }
 
+    /*
     @ExposedMethod(doc = BuiltinDocs.unicode_format_doc)
+    */
     final PyObject unicode_format(PyObject[] args, String[] keywords) {
         try {
             return new PyUnicode(buildFormattedString(args, keywords, null, null));
@@ -2316,6 +2448,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
             throw Py.ValueError(e.getMessage());
         }
     }
+
+
+    // Plumbing ------------------------------------------------------
 
     @Override
     public Iterator<Integer> iterator() {
