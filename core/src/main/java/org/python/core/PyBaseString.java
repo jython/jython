@@ -9,7 +9,7 @@ package org.python.core;
 /*
 @ExposedType(name = "basestring", base = PyObject.class, doc = BuiltinDocs.basestring_doc)
 */
-public abstract class PyBaseString extends PySequence implements CharSequence {
+public abstract class PyBaseString extends PyObject /*PySequence*/ implements CharSequence {
     
     public static final PyType TYPE = PyType.fromClass(PyBaseString.class);
 
