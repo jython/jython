@@ -71,7 +71,7 @@ class UnitTestSupport {
      * @param value to assign
      * @return from this value.
      */
-    static PyLong newPyLong(BigInteger value) { return new PyLong.Derived(PyLong.TYPE, value); }
+    static PyLong newPyLong(BigInteger value) { return new PyLong(PyLong.TYPE, value); }
 
     /**
      * Force creation of an actual {@link PyLong} from Object
@@ -112,8 +112,7 @@ class UnitTestSupport {
         else if (v instanceof Boolean)
             return (Boolean)v ? 1. : 0.;
 
-        throw new IllegalArgumentException(
-                String.format("cannot convert '%s' to double", v));
+        throw new IllegalArgumentException(String.format("cannot convert '%s' to double", v));
     }
 
     /**
@@ -121,9 +120,7 @@ class UnitTestSupport {
      *
      * @return from this value.
      */
-    static PyFloat newPyFloat(double value) {
-        return new PyFloat.Derived(PyFloat.TYPE, value);
-    }
+    static PyFloat newPyFloat(double value) { return new PyFloat(PyFloat.TYPE, value); }
 
     /**
      * Force creation of an actual {@link PyFloat} from Object
@@ -139,6 +136,24 @@ class UnitTestSupport {
         }
         return newPyFloat(toDouble(vv));
     }
+
+    /**
+     * Force creation of an actual {@link PyUnicode} from a
+     * {@code String} to be treated as in the usual Java encoding.
+     * Surrogate pairs will be interpreted as their characters, unless
+     * lone.
+     *
+     * @return from this value.
+     */
+    static PyUnicode newPyUnicode(String value) { return new PyUnicode(PyUnicode.TYPE, value); }
+
+    /**
+     * Force creation of an actual {@link PyUnicode} from an array of
+     * code points, which could include surrogates, even in pairs.
+     *
+     * @return from this value.
+     */
+    static PyUnicode newPyUnicode(int[] value) { return new PyUnicode(PyUnicode.TYPE, value); }
 
     /**
      * The Python type of {@code o} is exactly the one expected.

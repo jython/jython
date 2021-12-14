@@ -482,7 +482,7 @@ public class PyString extends PyBaseString /*implements BufferProtocol*/ {
     */
 
     // Plumbing ------------------------------------------------------
-
+}
 
 /**
  * Interpreter for %-format strings. (Note visible across the core package.)

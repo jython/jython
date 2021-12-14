@@ -4,6 +4,7 @@ package org.python.core;
 
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -193,6 +194,37 @@ public class PySequence extends Abstract {
          * @return the elements of this sequence as a {@code Stream}
          */
         default Stream<E> asStream() { return StreamSupport.stream(spliterator(), false); }
+    }
+
+    /**
+     * A specialisation of {@link Of PySequence.Of&lt;Integer>} where
+     * the elements may be consumed as primitive {@code int}.
+     */
+    static interface OfInt extends Of<Integer> {
+
+        @Override
+        Spliterator.OfInt spliterator();
+
+        /**
+         * Provide a stream specialised to primitive {@code int}.
+         *
+         * @return a stream of primitive {@code int}
+         */
+        IntStream asIntStream();
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implNote The default implementation is the stream of values
+         *     from {@link #asIntStream()}, boxed to {@code Integer}.
+         *     Consumers that are able, will obtain improved efficiency
+         *     by preferring {@link #asIntStream()} and specialising
+         *     intermediate processing to {@code int}.
+         */
+        @Override
+        default Stream<Integer> asStream() {
+            return asIntStream().boxed();
+        }
     }
 
     /**

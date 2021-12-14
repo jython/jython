@@ -398,7 +398,7 @@ public class Abstract {
 
     private static final String IS_REQUIRED_NOT = "%.200s is required, not '%.100s'";
     private static final String RETURNED_NON_TYPE = "%.200s returned non-%.200s (type %.200s)";
-    private static final String ARGUMENT_MUST_BE = "%s()%s argument must be %s, not '%.200s'";
+    private static final String ARGUMENT_MUST_BE = "%s()%s%s argument must be %s, not '%.200s'";
 
     /**
      * Create a {@link TypeError} with a message involving the type of
@@ -483,6 +483,24 @@ public class Abstract {
 
     /**
      * Create a {@link TypeError} with a message along the lines "F()
+     * [name] argument must be T, not X", involving a function name,
+     * an argument name, an expected type description T and the
+     * type X of {@code o}, e.g. "split() separator argument must be str
+     * or None, 'tuple'".
+     *
+     * @param f name of function or operation
+     * @param name of argument
+     * @param t describing the expected kind of argument
+     * @param o actual argument (not its type)
+     * @return exception to throw
+     */
+    static TypeError argumentTypeError(String f, String name, String t, Object o) {
+        String space = name.length() == 0 ? "" : " ";
+        return new TypeError(ARGUMENT_MUST_BE, f, space, name, t, PyType.of(o).getName());
+    }
+
+    /**
+     * Create a {@link TypeError} with a message along the lines "F()
      * [nth] argument must be T, not X", involving a function name,
      * optionally an ordinal n, an expected type description T and the
      * type X of {@code o}, e.g. "int() argument must be a string, a
@@ -496,7 +514,7 @@ public class Abstract {
      * @return exception to throw
      */
     static TypeError argumentTypeError(String f, int n, String t, Object o) {
-        return new TypeError(ARGUMENT_MUST_BE, f, ordinal(n), t, PyType.of(o).getName());
+        return argumentTypeError(f, ordinal(n), t, o);
     }
 
     // Helper for argumentTypeError
@@ -505,13 +523,13 @@ public class Abstract {
             case 0:
                 return "";
             case 1:
-                return " first";
+                return "first";
             case 2:
-                return " second";
+                return "second";
             case 3:
-                return " third";
+                return "third";
             default:
-                return String.format(" %dth", n);
+                return String.format("%dth", n);
         }
     }
 
