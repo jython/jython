@@ -2,12 +2,15 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.python.base.MissingFeature;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
 import org.python.core.Slot.EmptyException;
@@ -151,6 +154,41 @@ public class PySequence extends Abstract {
             return;
         } catch (EmptyException e) {
             throw typeError(DOES_NOT_SUPPORT_ITEM, o, "deletion");
+        }
+    }
+
+    /**
+     * Return the sequence or iterable {@code o} as a Java {@code List}.
+     * If {@code o} is one of several built-in types that implement Java
+     * {@code List<Object>}, this will be the object itself. Otherwise,
+     * it will be a copy in a Java list that supports efficient random
+     * access.
+     * <p>
+     * If the object is not a Python sequence (defines
+     * {@code __getitem__}) or Python iterable (defines
+     * {@code __iter__}), call {@code exc} to raise an exception
+     * (typically a {@link TypeError}).
+     *
+     * @param <E> the type of exception to throw
+     * @param o to present as a list
+     * @param exc a supplier (e.g. lambda expression) for the exception
+     * @return the iterable or its contents as a list
+     * @throws E to throw if an iterator cannot be formed
+     * @throws Throwable from the implementation of {@code o}.
+     */
+    // Compare CPython PySequence_Fast in abstract.c
+    static <E extends PyException> List<Object> fastList(Object o,
+            Supplier<E> exc) throws E, Throwable {
+
+        if (PyList.TYPE.checkExact(o)) {
+            return (PyList)o;
+
+        } else if (PyTuple.TYPE.checkExact(o)) {
+            return (PyTuple)o;
+
+        } else {
+            // Not one of the ready-made lists
+            throw new MissingFeature("fastList() from  iterable or sequence");
         }
     }
 
