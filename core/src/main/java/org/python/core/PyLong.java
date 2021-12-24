@@ -40,9 +40,14 @@ public class PyLong extends AbstractPyObject {
                     .accept(Boolean.class) //
                     .methods(PyLongMethods.class));
 
-    public static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
-    public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
-    public static final BigInteger MAX_ULONG = ONE.shiftLeft(64).subtract(ONE);
+    /** The minimum Java {@code int} as a {@code BigInteger}. */
+    static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
+    /** The maximum Java {@code int} as a {@code BigInteger}. */
+    static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
+    /** The minimum Java {@code long} as a {@code BigInteger}. */
+    static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
+    /** The maximum Java {@code long} as a {@code BigInteger}. */
+    static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
 
     /**
      * The value of this Python {@code int} (in sub-class instances).

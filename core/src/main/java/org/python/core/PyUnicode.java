@@ -19,6 +19,7 @@ import java.util.Spliterators;
 import java.util.function.IntUnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -51,9 +52,13 @@ import org.python.modules.ucnhashAPI;
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
  */
-public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Integer>, CharSequence {
+public class PyUnicode
+   // extends PyString
+    implements CraftedPyObject
+    //, CharSequence 
+    {
 
-    /** The type of Python object this class implements. */
+    /** The type {@code str}. */
     static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("str", MethodHandles.lookup())
                     .methods(PyUnicodeMethods.class)
@@ -249,8 +254,10 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___repr___doc)
     */
-    final PyString __repr__() {
-        return new PyString("u" + encode_UnicodeEscape(getString(), true));
+    @SuppressWarnings("unused")
+    private Object __repr__(Object self) {
+        // XXX make encode_UnicodeEscape (if needed) take a delegate
+        return "u" + encode_UnicodeEscape(asString(self), true);
     }
 
     /*
@@ -312,22 +319,10 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         return delegate.__getitem__(item);
     }
 
-
-    // Temporary to satisfy references
-    private int sliceLength(int start, int stop, int step) {
-       Indices i;
-        try {
-            i = (new  PySlice(start, stop, step)).getIndices(__len__());
-            return i.slicelength;
-        } catch (Throwable e) {
-            return 0;
-        }
-    }
-
-
     // Copied from PyString
     public Object __tojava__(Class<?> c) {
         // XXX something like this necessary in Jython 3 but not used yet
+        // Need PyUnicode and String versions
         if (c.isAssignableFrom(String.class)) {
             /*
              * If c is a CharSequence we assume the caller is prepared to get maybe not an actual
@@ -335,12 +330,15 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
              * returned PyString or PyUnicode or whatever. (If c is Object.class, the caller usually
              * expects to get actually a String)
              */
-            return c == CharSequence.class ? this : getString();
+            // XXX this is a bit questionable if non-BMP
+            return c == CharSequence.class ? this : asString();
         }
 
         if (c == Character.TYPE || c == Character.class) {
-            if (getString().length() == 1) {
-                return getString().charAt(0);
+            // XXX ? non-BMP
+            String s = asString();
+            if (s.length() == 1) {
+                return s.charAt(0);
             }
         }
 
@@ -349,7 +347,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 //                return toBytes();
 //            }
             if (c.getComponentType() == Character.TYPE) {
-                return getString().toCharArray();
+                // XXX ? non-BMP
+                return asString().toCharArray();
             }
         }
 
@@ -369,140 +368,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     }
 
     /**
-     * An iterator returning code points from this array, for use when not basic plane.
-     */
-    private class SubsequenceIteratorImpl extends SubsequenceIteratorBasic {
-
-        private int k; // UTF-16 index (of current)
-
-        SubsequenceIteratorImpl(int start, int stop, int step) {
-            super(start, stop, step);
-            k = translator.utf16Index(current);
-        }
-
-        SubsequenceIteratorImpl() {
-            this(0, getCodePointCount(), 1);
-        }
-
-        @Override
-        protected int nextCodePoint() {
-            int U;
-            int W1 = getString().charAt(k);
-            if (W1 >= 0xD800 && W1 < 0xDC00) {
-                int W2 = getString().charAt(k + 1);
-                U = (((W1 & 0x3FF) << 10) | (W2 & 0x3FF)) + 0x10000;
-                k += 2;
-            } else {
-                U = W1;
-                k += 1;
-            }
-            current += 1;
-            return U;
-        }
-    }
-
-    /**
-     * An iterator returning code points from this array, for use when basic plane.
-     */
-    private class SubsequenceIteratorBasic implements Iterator<Integer> {
-
-        protected int current, stop, step; // Character indexes
-
-        SubsequenceIteratorBasic(int start, int stop, int step) {
-            current = start;
-            this.stop = stop;
-            this.step = step;
-        }
-
-        SubsequenceIteratorBasic() {
-            this(0, getCodePointCount(), 1);
-        }
-
-        @Override
-        public boolean hasNext() {
-            return current < stop;
-        }
-
-        @Override
-        public Integer next() {
-            int codePoint = nextCodePoint();
-            for (int j = 1; j < step && hasNext(); j++) {
-                nextCodePoint();
-            }
-            return codePoint;
-        }
-
-        protected int nextCodePoint() {
-            return getString().charAt(current++);
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException(
-                    "Not supported on PyUnicode objects (immutable)");
-        }
-    }
-
-    private static class SteppedIterator<T> implements Iterator<T> {
-
-        private final Iterator<T> iter;
-        private final int step;
-        private T lookahead = null;
-
-        public SteppedIterator(int step, Iterator<T> iter) {
-            this.iter = iter;
-            this.step = step;
-            lookahead = advance();
-        }
-
-        private T advance() {
-            if (iter.hasNext()) {
-                T elem = iter.next();
-                for (int i = 1; i < step && iter.hasNext(); i++) {
-                    iter.next();
-                }
-                return elem;
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return lookahead != null;
-        }
-
-        @Override
-        public T next() {
-            T old = lookahead;
-            if (iter.hasNext()) {
-                lookahead = iter.next();
-                for (int i = 1; i < step && iter.hasNext(); i++) {
-                    iter.next();
-                }
-            } else {
-                lookahead = null;
-            }
-            return old;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    // XXX: Parameterize SubsequenceIteratorImpl and friends (and make them Iterable)
-    /** Get an iterator over the code point sequence. */
-    public Iterator<Integer> newSubsequenceIterator() {
-        if (isBasicPlane()) {
-            return new SubsequenceIteratorBasic();
-        } else {
-            return new SubsequenceIteratorImpl();
-        }
-    }
-
-    /**
      * Interpret the object as a Java {@code String} representing characters as UTF-16, or
      * return {@code null} if the type does not admit this conversion. From a
      * {@code PyUnicode} we return its internal string. A byte argument is decoded with the
@@ -513,7 +378,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      */
     private static String coerceToStringOrNull(Object o) {
         if (o instanceof PyUnicode) {
-            return ((PyUnicode) o).getString();
+            return ((PyUnicode) o).asString();
         } else if (o instanceof PyString) {
             return ((PyString) o).decode().toString();
 //        } else if (o instanceof BufferProtocol) {
@@ -521,7 +386,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 //            // We ought to be able to call codecs.decode on o but see Issue #2164
 //            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
 //                PyString s = new PyString(buf);
-//                // For any sensible codec, the return is unicode and toString() is getString().
+//                // For any sensible codec, the return is unicode and toString() is asString().
 //                return s.decode().toString();
 //            }
         } else {
@@ -568,52 +433,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     private static PyException errorCoercingToUnicode(Object o) {
         return Abstract.requiredTypeError("coercing to Unicode: a string or buffer",
                 o == null ? Py.None : o);
-    }
-
-    /**
-     * Interpret the object as a {@code PyUnicode}, or return {@code null} if the type
-     * does not admit this conversion. From a {@code PyUnicode} we return itself. A byte
-     * argument is decoded with the default encoding.
-     *
-     * @param o the object to coerce
-     * @return an equivalent {@code PyUnicode} (or o itself)
-     */
-    private static PyUnicode coerceToUnicodeOrNull(Object o) {
-        if (o instanceof PyUnicode) {
-            return (PyUnicode) o;
-        } else if (o instanceof PyString) {
-            // For any sensible codec, the return here is unicode.
-            Object u = ((PyString) o).decode();
-            return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(o.toString());
-//        } else if (o instanceof BufferProtocol) {
-//            // PyByteArray, PyMemoryView, Py2kBuffer ...
-//            // We ought to be able to call codecs.decode on o but see Issue #2164
-//            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
-//                PyString s = new PyString(buf);
-//                // For any sensible codec, the return is unicode and toString() is getString().
-//                Object u = s.decode();
-//                return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(o.toString());
-//            }
-        } else {
-            // o is some type not allowed:
-            return null;
-        }
-    }
-
-    /**
-     * Interpret the object as a {@code PyUnicode}, or raise a {@code TypeError} if the
-     * type does not admit this conversion. From a {@code PyUnicode} we return itself. A byte
-     * argument is decoded with the default encoding.
-     *
-     * @param o the object to coerce
-     * @return an equivalent {@code PyUnicode} (or o itself)
-     */
-    private static PyUnicode coerceToUnicode(Object o) {
-        PyUnicode u = coerceToUnicodeOrNull(o);
-        if (u == null) {
-            throw errorCoercingToUnicode(o);
-        }
-        return u;
     }
 
     /*
@@ -692,104 +511,22 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     @ExposedMethod(doc = BuiltinDocs.unicode___mod___doc)
     */
     final Object __mod__(Object other) {
-        StringFormatter fmt = new StringFormatter(getString(), true);
+        StringFormatter fmt = new StringFormatter(asString(), true);
         return fmt.format(other);
     }
 
     // Copied from PyString
     public Object __int__() {
         try {
-            return Py.newInteger(atoi(10));
-        } catch (PyException e) {
-            if (e.match(Py.OverflowError)) {
-                return atol(10);
-            }
-            throw e;
+            return atoi(10);
+        } catch (OverflowError e) {
+            return atol(10);
         }
     }
 
     // Copied from PyString
     public PyFloat __float__() {
         return new PyFloat(atof());
-    }
-
-    private static class StripIterator implements Iterator<Integer> {
-
-        private final Iterator<Integer> iter;
-        private int lookahead = -1;
-
-        public StripIterator(PyUnicode sep, Iterator<Integer> iter) {
-            this.iter = iter;
-            if (sep != null) {
-                Set<Integer> sepSet = new HashSet<>();
-                for (Iterator<Integer> sepIter = sep.newSubsequenceIterator(); sepIter.hasNext();) {
-                    sepSet.add(sepIter.next());
-                }
-                while (iter.hasNext()) {
-                    int codePoint = iter.next();
-                    if (!sepSet.contains(codePoint)) {
-                        lookahead = codePoint;
-                        return;
-                    }
-                }
-            } else {
-                while (iter.hasNext()) {
-                    int codePoint = iter.next();
-                    if (!isPythonSpace(codePoint)) {
-                        lookahead = codePoint;
-                        return;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return lookahead != -1;
-        }
-
-        @Override
-        public Integer next() {
-            int old = lookahead;
-            if (iter.hasNext()) {
-                lookahead = iter.next();
-            } else {
-                lookahead = -1;
-            }
-            return old;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    // Compliance requires a bit of inconsistency with other coercions used.
-    /**
-     * Helper used in {@code .strip()} to "coerce" a method argument into a
-     * {@code PyUnicode} (which it may already be). A {@code null} argument or a
-     * {@code PyNone} causes {@code null} to be returned. A buffer type is not acceptable
-     * to (Unicode) {@code .strip()}. This is the difference from
-     * {@link #coerceToUnicode(PyObject, boolean)}.
-     *
-     * @param o the object to coerce
-     * @param name of method
-     * @return an equivalent {@code PyUnicode} (or o itself, or {@code null})
-     */
-    private static PyUnicode coerceStripSepToUnicode(PyObject o, String name) {
-        if (o == null) {
-            return null;
-        } else if (o instanceof PyUnicode) {
-            return (PyUnicode) o;
-        } else if (o instanceof PyString) {
-            PyObject u = ((PyString) o).decode();
-            return (u instanceof PyUnicode) ? (PyUnicode) u : new PyUnicode(u.toString());
-        } else if (o == Py.None) {
-            return null;
-        } else {
-            throw new TypeError(name + " arg must be None, unicode or str");
-        }
     }
 
     /**
@@ -805,149 +542,106 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
     */
-    final PyObject strip(PyObject sepObj) {
-
-        PyUnicode sep = coerceStripSepToUnicode(sepObj, "strip");
-
-        if (isBasicPlane()) {
-            // this contains only basic plane characters
-            if (sep == null) {
-                // And we're stripping whitespace, so use the PyString implementation
-                return new PyUnicode(_strip());
-            } else if (sep.isBasicPlane()) {
-                // And the strip characters are basic plane too, so use the PyString implementation
-                return new PyUnicode(_strip(sep.getString()));
-            }
-        }
-
-        // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator<Integer>(new StripIterator(sep,
-                new ReversedIterator<>(new StripIterator(sep, newSubsequenceIterator())))));
+    Object strip(Object stripChars) throws Throwable {
+        return strip(delegate, stripChars);
     }
 
-    // Copied from PyString
+    static Object strip(String self, Object stripChars) throws Throwable {
+        return strip(adapt(self), stripChars);
+    }
+
     /**
-     * Implementation of Python {@code str.strip()} common to exposed and Java API, when
-     * stripping whitespace. Any whitespace byte/character will be discarded from either end of this
-     * {@code str}.
-     * <p>
-     * Implementation note: although a {@code str} contains only bytes, this method is also
-     * called by {@link PyUnicode#strip(PyObject)} when this is a basic-plane string.
+     * Inner implementation of Python {@code str.strip()} independent of
+     * the implementation type.
      *
-     * @return a new String, stripped of the whitespace characters/bytes
+     * @param s representing {@code self}
+     * @param stripChars to remove, or {@code null} or {@code None}
+     * @return the str stripped
+     * @throws Throwable on {@code stripChars} type errors
      */
-    protected final String _strip() {
-        // Rightmost non-whitespace
-        int right = _findRight();
-        if (right < 0) {
-            // They're all whitespace
-            return "";
+    private static Object strip(CodepointDelegate s, Object stripChars)
+            throws Throwable {
+        Set<Integer> p = adaptStripSet("strip", stripChars);
+        int left, right;
+        if (p == null) {
+            // Stripping spaces
+            right = findRight(s);
+            // If it's all spaces, we can save a job
+            left = right < 0 ? 0 : findLeft(s);
         } else {
-            // Leftmost non-whitespace character: right known not to be a whitespace
-            int left = _findLeft(right);
-            return getString().substring(left, right + 1);
+            // Stripping specified characters
+            right = findRight(s, p);
+            // If it all matches, we can save a job
+            left = right < 0 ? 0 : findLeft(s, p);
         }
+        // Substring from leftmost non-matching character up to and
+        // including the rightmost (or "")
+        PySlice.Indices slice = getSliceIndices(s, left, right + 1);
+        return slice.slicelength == 0 ? "" : s.getSlice(slice);
     }
 
-    // Copied from PyString
     /**
-     * Implementation of Python {@code str.strip()} common to exposed and Java API. Any
-     * byte/character matching one of those in {@code stripChars} will be discarded from either
-     * end of this {@code str}. If {@code stripChars == null}, whitespace will be
-     * stripped.
-     * <p>
-     * Implementation note: although a {@code str} contains only bytes, this method is also
-     * called by {@link PyUnicode#strip(PyObject)} when both arguments are basic-plane
-     * strings.
+     * Helper for {@code strip}, {@code lstrip} implementation, when
+     * stripping space.
      *
-     * @param stripChars characters to strip or null
-     * @return a new String, stripped of the specified characters/bytes
+     * @return index of leftmost non-space character or
+     *     {@code s.length()} if entirely spaces.
      */
-    protected final String _strip(String stripChars) {
-        if (stripChars == null) {
-            // Divert to the whitespace version
-            return _strip();
-        } else {
-            // Rightmost non-matching character
-            int right = _findRight(stripChars);
-            if (right < 0) {
-                // They all match
-                return "";
-            } else {
-                // Leftmost non-matching character: right is known not to match
-                int left = _findLeft(stripChars, right);
-                return getString().substring(left, right + 1);
-            }
+    private static int findLeft(CodepointDelegate s) {
+        CodepointIterator si = s.iterator(0);
+        while (si.hasNext()) {
+            if (!isPythonSpace(si.nextInt()))
+                return si.previousIndex();
         }
+        return s.length();
     }
 
-    // Copied from PyString
     /**
-     * Helper for {@code strip}, {@code lstrip} implementation, when stripping whitespace.
+     * Helper for {@code strip}, {@code lstrip} implementation, when
+     * stripping specified characters.
      *
-     * @param right rightmost extent of string search
-     * @return index of leftmost non-whitespace character or {@code right} if they all are.
+     * @param p specifies set of characters to strip
+     * @return index of leftmost non-{@code p} character or
+     *     {@code s.length()} if entirely found in {@code p}.
      */
-    protected int _findLeft_PyString(int right) {
-        String s = getString();
-        for (int left = 0; left < right; left++) {
-            if (!BaseBytes.isspace((byte) s.charAt(left))) {
-                return left;
-            }
+    private static int findLeft(CodepointDelegate s, Set<Integer> p) {
+        CodepointIterator si = s.iterator(0);
+        while (si.hasNext()) {
+            if (!p.contains(si.nextInt()))
+                return si.previousIndex();
         }
-        return right;
+        return s.length();
     }
 
-    // Copied from PyString
     /**
-     * Helper for {@code strip}, {@code lstrip} implementation, when stripping specified
-     * characters.
+     * Helper for {@code strip}, {@code rstrip} implementation, when
+     * stripping space.
      *
-     * @param stripChars specifies set of characters to strip
-     * @param right rightmost extent of string search
-     * @return index of leftmost character not in {@code stripChars} or {@code right} if
-     *         they all are.
+     * @return index of rightmost non-space character or {@code -1} if
+     *     entirely spaces.
      */
-    private int _findLeft(String stripChars, int right) {
-        String s = getString();
-        for (int left = 0; left < right; left++) {
-            if (stripChars.indexOf(s.charAt(left)) < 0) {
-                return left;
-            }
-        }
-        return right;
-    }
-
-    // Copied from PyString
-    /**
-     * Helper for {@code strip}, {@code rstrip} implementation, when stripping whitespace.
-     *
-     * @return index of rightmost non-whitespace character or -1 if they all are.
-     */
-    protected int _findRight_PyString() {
-        String s = getString();
-        for (int right = s.length(); --right >= 0;) {
-            if (!BaseBytes.isspace((byte) s.charAt(right))) {
-                return right;
-            }
+    private static int findRight(CodepointDelegate s) {
+        CodepointIterator si = s.iteratorLast();
+        while (si.hasPrevious()) {
+            if (!isPythonSpace(si.previousInt()))
+                return si.nextIndex();
         }
         return -1;
     }
 
-    // Copied from PyString
     /**
-     * Helper for {@code strip}, {@code rstrip} implementation, when stripping specified
-     * characters.
+     * Helper for {@code strip}, {@code rstrip} implementation, when
+     * stripping specified characters.
      *
-     * @param stripChars specifies set of characters to strip
-     * @return index of rightmost character not in {@code stripChars} or -1 if they all are.
+     * @param p specifies set of characters to strip
+     * @return index of rightmost non-{@code p} character or {@code -1}
+     *     if entirely found in {@code p}.
      */
-    private int _findRight(String stripChars) {
-        String s = getString();
-        for (int right = s.length(); --right >= 0;) {
-            if (stripChars.indexOf(s.charAt(right)) < 0) {
-                return right;
-            }
+    private static int findRight(CodepointDelegate s, Set<Integer> p) {
+        CodepointIterator si = s.iteratorLast();
+        while (si.hasPrevious()) {
+            if (!p.contains(si.previousInt()))
+                return si.nextIndex();
         }
         return -1;
     }
@@ -955,205 +649,75 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
     */
-    final PyObject lstrip(PyObject sepObj) {
-
-        PyUnicode sep = coerceStripSepToUnicode(sepObj, "lstrip");
-
-        if (isBasicPlane()) {
-            // this contains only basic plane characters
-            if (sep == null) {
-                // And we're stripping whitespace, so use the PyString implementation
-                return new PyUnicode(_lstrip());
-            } else if (sep.isBasicPlane()) {
-                // And the strip characters are basic plane too, so use the PyString implementation
-                return new PyUnicode(_lstrip(sep.getString()));
-            }
-        }
-
-        // Not basic plane: have to do real Unicode
-        return new PyUnicode(new StripIterator(sep, newSubsequenceIterator()));
+    Object lstrip(Object stripChars) throws Throwable {
+        return lstrip(delegate, stripChars);
     }
 
-    // Copied from PyString
-    /**
-     * Implementation of Python {@code str.lstrip()} common to exposed and Java API, when
-     * stripping whitespace. Any whitespace byte/character will be discarded from the left end of
-     * this {@code str}.
-     * <p>
-     * Implementation note: although a str contains only bytes, this method is also called by
-     * {@link PyUnicode#lstrip(PyObject)} when this is a basic-plane string.
-     *
-     * @return a new String, stripped of the whitespace characters/bytes
-     */
-    protected final String _lstrip() {
-        String s = getString();
-        // Leftmost non-whitespace character: cannot exceed length
-        int left = _findLeft(s.length());
-        return s.substring(left);
+    static Object lstrip(String self, Object stripChars) throws Throwable {
+        return lstrip(adapt(self), stripChars);
     }
 
-    // Copied from PyString
     /**
-     * Implementation of Python {@code str.lstrip()} common to exposed and Java API. Any
-     * byte/character matching one of those in {@code stripChars} will be discarded from the
-     * left end of this {@code str}. If {@code stripChars == null}, whitespace will be
-     * stripped.
-     * <p>
-     * Implementation note: although a {@code str} contains only bytes, this method is also
-     * called by {@link PyUnicode#lstrip(PyObject)} when both arguments are basic-plane
-     * strings.
+     * Inner implementation of Python {@code str.lstrip()} independent
+     * of the implementation type.
      *
-     * @param stripChars characters to strip or null
-     * @return a new String, stripped of the specified characters/bytes
+     * @param s representing {@code self}
+     * @param stripChars to remove, or {@code null} or {@code None}
+     * @return the str stripped
+     * @throws Throwable on {@code stripChars} type errors
      */
-    protected final String _lstrip(String stripChars) {
-        if (stripChars == null) {
-            // Divert to the whitespace version
-            return _lstrip();
+    private static Object lstrip(CodepointDelegate s, Object stripChars)
+            throws Throwable {
+        Set<Integer> p = adaptStripSet("lstrip", stripChars);
+        int left;
+        if (p == null) {
+            // Stripping spaces
+            left = findLeft(s);
         } else {
-            String s = getString();
-            // Leftmost matching character: cannot exceed length
-            int left = _findLeft(stripChars, s.length());
-            return s.substring(left);
+            // Stripping specified characters
+            left = findLeft(s, p);
         }
+        // Substring from this leftmost non-matching character (or "")
+        PySlice.Indices slice = getSliceIndices(s, left, null);
+        return s.getSlice(slice);
     }
 
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
     */
-    final PyObject rstrip(PyObject sepObj) {
-
-        PyUnicode sep = coerceStripSepToUnicode(sepObj, "rstrip");
-
-        if (isBasicPlane()) {
-            // this contains only basic plane characters
-            if (sep == null) {
-                // And we're stripping whitespace, so use the PyString implementation
-                return new PyUnicode(_rstrip());
-            } else if (sep.isBasicPlane()) {
-                // And the strip characters are basic plane too, so use the PyString implementation
-                return new PyUnicode(_rstrip(sep.getString()));
-            }
-        }
-
-        // Not basic plane: have to do real Unicode
-        return new PyUnicode(new ReversedIterator<Integer>(
-                new StripIterator(sep, new ReversedIterator<>(newSubsequenceIterator()))));
+    Object rstrip(Object stripChars) throws Throwable {
+        return rstrip(delegate, stripChars);
     }
 
-    // Copied from PyString
+    static Object rstrip(String self, Object stripChars) throws Throwable {
+        return rstrip(adapt(self), stripChars);
+    }
+
     /**
-     * Implementation of Python {@code str.rstrip()} common to exposed and Java API, when
-     * stripping whitespace. Any whitespace byte/character will be discarded from the right end of
-     * this {@code str}.
-     * <p>
-     * Implementation note: although a {@code str} contains only bytes, this method is also
-     * called by {@link PyUnicode#rstrip(PyObject)} when this is a basic-plane string.
+     * Inner implementation of Python {@code str.rstrip()} independent
+     * of the implementation type.
      *
-     * @return a new String, stripped of the whitespace characters/bytes
+     * @param s representing {@code self}
+     * @param stripChars to remove, or {@code null} or {@code None}
+     * @return the str stripped
+     * @throws Throwable on {@code stripChars} type errors
      */
-    protected final String _rstrip() {
-        // Rightmost non-whitespace
-        int right = _findRight();
-        if (right < 0) {
-            // They're all whitespace
-            return "";
+    private static Object rstrip(CodepointDelegate s, Object stripChars)
+            throws Throwable {
+        Set<Integer> p = adaptStripSet("rstrip", stripChars);
+        int right;
+        if (p == null) {
+            // Stripping spaces
+            right = findRight(s);
         } else {
-            // Substring up to and including this rightmost non-whitespace
-            return getString().substring(0, right + 1);
+            // Stripping specified characters
+            right = findRight(s, p);
         }
+        // Substring up to and including this rightmost non-matching
+        // character (or "")
+        PySlice.Indices slice = getSliceIndices(s, null, right + 1);
+        return s.getSlice(slice);
     }
-
-    // Copied from PyString
-    /**
-     * Implementation of Python {@code str.rstrip()} common to exposed and Java API. Any
-     * byte/character matching one of those in {@code stripChars} will be discarded from the
-     * right end of this {@code str}. If {@code stripChars == null}, whitespace will be
-     * stripped.
-     * <p>
-     * Implementation note: although a {@code str} contains only bytes, this method is also
-     * called by {@link PyUnicode#strip(PyObject)} when both arguments are basic-plane
-     * strings.
-     *
-     * @param stripChars characters to strip or null
-     * @return a new String, stripped of the specified characters/bytes
-     */
-    protected final String _rstrip(String stripChars) {
-        if (stripChars == null) {
-            // Divert to the whitespace version
-            return _rstrip();
-        } else {
-            // Rightmost non-matching character
-            int right = _findRight(stripChars);
-            // Substring up to and including this rightmost non-matching character (or "")
-            return getString().substring(0, right + 1);
-        }
-    }
-
-    // Docs copied from PyString
-    /**
-     * Helper for {@code strip}, {@code lstrip} implementation, when stripping whitespace.
-     *
-     * @param right rightmost extent of string search
-     * @return index of leftmost non-whitespace character or {@code right} if they all are.
-     */
-    protected int _findLeft(int right) {
-        String s = getString();
-        for (int left = 0; left < right; left++) {
-            if (!isPythonSpace(s.charAt(left))) {
-                return left;
-            }
-        }
-        return right;
-    }
-
-    // Docs copied from PyString
-    /**
-     * Helper for {@code strip}, {@code rstrip} implementation, when stripping whitespace.
-     *
-     * @return index of rightmost non-whitespace character or -1 if they all are.
-     */
-    protected int _findRight() {
-        String s = getString();
-        for (int right = s.length(); --right >= 0;) {
-            if (!isPythonSpace(s.charAt(right))) {
-                return right;
-            }
-        }
-        return -1;
-    }
-
-    // @formatter:on
-
-    private static class ReversedIterator<T> implements Iterator<T> {
-
-        private final List<T> reversed = new LinkedList<>();
-        private final Iterator<T> iter;
-
-        ReversedIterator(Iterator<T> iter) {
-            while (iter.hasNext()) {
-                reversed.add(iter.next());
-            }
-            Collections.reverse(reversed);
-            this.iter = reversed.iterator();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return iter.hasNext();
-        }
-
-        @Override
-        public T next() {
-            return iter.next();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
 
     // Find-like methods ----------------------------------------------
 
@@ -2124,8 +1688,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      * The inner implementation of {@code str.count}, returning the
      * number of occurrences of a substring. It accepts slice-like
      * arguments, which may be {@code None} or end-relative (negative).
-     * This method also supports
-     * {@link PyUnicode#count(PyObject, PyObject, PyObject)}.
      *
      * @param sub substring to find.
      * @param startObj start of slice.
@@ -2438,24 +2000,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         }
     }
 
-    private static String padding(int n, int pad) {
-        StringBuilder buffer = new StringBuilder(n);
-        for (int i = 0; i < n; i++) {
-            buffer.appendCodePoint(pad);
-        }
-        return buffer.toString();
-    }
-
-    private static int parse_fillchar(String function, String fillchar) {
-        if (fillchar == null) {
-            return ' ';
-        }
-        if (fillchar.codePointCount(0, fillchar.length()) != 1) {
-            throw Py.TypeError(function + "() argument 2 must be char, not str");
-        }
-        return fillchar.codePointAt(0);
-    }
-
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_ljust_doc)
     */
@@ -2518,7 +2062,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         if (left) {
             if (!right) {
                 // It is all on the left
-                leftPad = pad; rightPad = 0;
+                leftPad = pad;
+                rightPad = 0;
             } else {
                 // But sometimes you have to be Dutch
                 leftPad = pad / 2 + (pad & width & 1);
@@ -2589,7 +2134,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         return expandtabs( adapt(self), tabsize);
     }
 
-    /** Inner implementation of {@link #expandtabs() expandtabs}
+    /**
+     * Inner implementation of {@link #expandtabs() expandtabs}
      *
      * @param s the {@code self} string
      * @param tabsize number of spaces to tab to
@@ -2884,24 +2430,11 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         return true;
     }
 
-    // Doc copied from PyString
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode_translate_doc)
     */
-    final PyObject translate(PyObject table) {
+    final Object translate(Object table) {
         return translateCharmap(this, "ignore", table);
-    }
-
-    // Copied from PyString
-    // Note that unicode.translate, therefore Python 3 str.translate, differs a lot
-    /*
-    @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.str_translate_doc)
-    */
-    final String str_translate(PyObject tableObj, PyObject deletecharsObj) {
-        // Accept anything with the buffer API or null
-        String table = asU16BytesNullOrError(tableObj, null);
-        String deletechars = asU16BytesNullOrError(deletecharsObj, null);
-        return _translate(table, deletechars);
     }
 
     // Copied from PyString
@@ -2922,10 +2455,10 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             throw new ValueError("translation table must be 256 characters long");
         }
 
-        StringBuilder buf = new StringBuilder(getString().length());
+        StringBuilder buf = new StringBuilder(asString().length());
 
-        for (int i = 0; i < getString().length(); i++) {
-            char c = getString().charAt(i);
+        for (int i = 0; i < asString().length(); i++) {
+            char c = asString().charAt(i);
             if (deletechars != null && deletechars.indexOf(c) >= 0) {
                 continue;
             }
@@ -3153,29 +2686,16 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode_encode_doc)
     */
-    final String encode(Object[] args, String[] keywords) {
-        return str_encode(args, keywords);
+    Object encode(Object[] args, String[] keywords) {
+        return encode(delegate, args, keywords);
     }
 
-    // Copied from PyString
-    public String encode() {
-        return encode(null, null);
+    Object encode(String self, Object[] args, String[] keywords) {
+        return encode(adapt(self), args, keywords);
     }
 
-    // Copied from PyString
-    public String encode(String encoding, String errors) {
-        return codecs.encode(this, encoding, errors);
-    }
-
-    // Copied from PyString
-    /*
-    @ExposedMethod(doc = BuiltinDocs.str_encode_doc)
-    */
-    final String str_encode(Object[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("encode", args, keywords, "encoding", "errors");
-        String encoding = ap.getString(0, null);
-        String errors = ap.getString(1, null);
-        return encode(encoding, errors);
+    Object encode(CodepointDelegate s, Object[] args, String[] keywords) {
+        throw new MissingFeature("bytes, codecs, encoding ...");
     }
 
     /*
@@ -3190,13 +2710,29 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         return new PyTuple(self);
     }
 
-
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___format___doc)
     */
-    final PyObject __format__(PyObject formatSpec) {
-        // Re-use the str implementation, which adapts itself to unicode.
-        return str___format__(formatSpec);
+    final Object __format__(Object formatSpec) {
+        // Parse the specification
+        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+
+        // Get a formatter for the specification
+        TextFormatter f = prepareFormatter(spec);
+        if (f == null) {
+            // The type code was not recognised
+            throw Formatter.unknownFormat(spec.type, "string");
+        }
+
+        // Bytes mode if neither this nor formatSpec argument is Unicode.
+        boolean unicode = this instanceof PyUnicode || formatSpec instanceof PyUnicode;
+        f.setBytes(!unicode);
+
+        // Convert as per specification.
+        f.format(asString());
+
+        // Return a result that has the same type (str or unicode) as the formatSpec argument.
+        return f.pad().getPyResult();
     }
 
     /*
@@ -3219,29 +2755,11 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     */
     final Object format(Object[] args, String[] keywords) {
         try {
-            return new PyUnicode(buildFormattedString(args, keywords, null, null));
+            return buildFormattedString(args, keywords, null, null);
         } catch (IllegalArgumentException e) {
             throw new ValueError(e.getMessage());
         }
     }
-
-    // CharSequence interface ----------------------------------------
-
-    @Override
-    public char charAt(int index) {
-        return value[index];
-    }
-
-    @Override
-    public int length() {
-        return string.length();
-    }
-
-    @Override
-    public CharSequence subSequence(int start, int end) {
-        return string.subSequence(start, end);
-    }
-
 
     // @formatter:off
 
@@ -3268,6 +2786,13 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      * @return encoded string (possibly the same string if unchanged)
      */
     static String encode_UnicodeEscape(String str, char quote) {
+        /*
+         * XXX consider re-work. The quotation logic is useful for repr,
+         * but not escaping all the non-ascii characters: modern Python
+         * does not assume the console is acsii. OTOH we do need a couple
+         * of unicode escape encodings elsewhere. Calls to this in Jython 2
+         * are essentially PyUnicode.__repr__ (filenames mostly).
+         */
 
         // Choose whether to quote and the actual quote character
         boolean use_quotes;
@@ -3553,7 +3078,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     private static boolean storeUnicodeCharacter(int value, StringBuilder partialDecode) {
         if (value < 0 || (value >= 0xD800 && value <= 0xDFFF)) {
             return false;
-        } else if (value <= PySystemState.maxunicode) {
+        } else if (value <= Character.MAX_CODE_POINT) {
             partialDecode.appendCodePoint(value);
             return true;
         }
@@ -3568,28 +3093,28 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             Character.MIN_HIGH_SURROGATE
                     - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10);
 
-    /**
-     * The hash of a {@link PyUnicode} is the same as that of a Java
-     * {@code String} equal to it. This is so that a given Python
-     * {@code str} may be found as a match in hashed data structures,
-     * whichever representation is used for the key or query.
-     */
-    @Override
-    public int hashCode() throws PyException {
-        return PyDict.pythonHash(this);
-    }
-
-    /**
-     * Compare for equality with another Python {@code str}, or a
-     * {@link PyDict.Key} containing a {@code str}. If the other object
-     * is not a {@code str}, or a {@code Key} containing a {@code str},
-     * return {@code false}. If it is such an object, compare for
-     * equality of the code points.
-     */
-    @Override
-    public boolean equals(Object obj) {
-        return PyDict.pythonEquals(this, obj);
-    }
+    //    /**
+    //     * The hash of a {@link PyUnicode} is the same as that of a Java
+    //     * {@code String} equal to it. This is so that a given Python
+    //     * {@code str} may be found as a match in hashed data structures,
+    //     * whichever representation is used for the key or query.
+    //     */
+    //    @Override
+    //    public int hashCode() throws PyException {
+    //        return PyDict.pythonHash(this);
+    //    }
+    //
+    //    /**
+    //     * Compare for equality with another Python {@code str}, or a
+    //     * {@link PyDict.Key} containing a {@code str}. If the other object
+    //     * is not a {@code str}, or a {@code Key} containing a {@code str},
+    //     * return {@code false}. If it is such an object, compare for
+    //     * equality of the code points.
+    //     */
+    //    @Override
+    //    public boolean equals(Object obj) {
+    //        return PyDict.pythonEquals(this, obj);
+    //    }
 
     /**
      * Create a {@code str} from a format and arguments. Note Java
@@ -3633,8 +3158,15 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         if (v instanceof String)
             return (String)v;
         else if (v instanceof PyUnicode)
-            return ((PyUnicode)v).toString();
+            return ((PyUnicode)v).asString();
         throw Abstract.requiredTypeError("a str", v);
+    }
+
+    /** @return this {@code PyUnicode} as a Java {@code String} */
+    private String asString() {
+        StringBuilder b = new StringBuilder();
+        for (int c : delegate) { b.appendCodePoint(c); }
+        return b.toString();
     }
 
     // Plumbing ------------------------------------------------------
@@ -3757,19 +3289,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             return iterator(length());
         }
 
-        /**
-         * Return a sub-range of the delegate contents corresponding to
-         * the (opaque) indices given, which must have been obtained
-         * from calls to {@link CodepointIterator#nextRangeIndex()}.
-         * Since the maximum opaque range index is not easily available,
-         * {@code end} will be trimmed to fit.
-         *
-         * @param start range index of first element to include.
-         * @param end range index of first element not to include.
-         * @return the range as an array
-         */
-        abstract int[] getRange(int start, int end);
-
         @Override
         public Iterator<Integer> iterator() { return iterator(0); }
 
@@ -3789,8 +3308,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     }
 
     /**
-     * A {@code ListIterator} from which one can obtain an opaque index
-     * usable with {@link CodepointDelegate#getRange(int, int)}.
+     * A {@code ListIterator} working bidirectionally in code point
+     * indices.
      */
     interface CodepointIterator
             extends ListIterator<Integer>, PrimitiveIterator.OfInt {
@@ -3849,20 +3368,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
          */
         int previousInt(int n);
 
-        /**
-         * An opaque index for the next code point {@link #next()} will
-         * return, usable with
-         * {@link CodepointDelegate#getRange(int, int)}.
-         */
-        default int nextRangeIndex() { return nextIndex(); }
-
-        /**
-         * An opaque index for the next code point {@link #previous()}
-         * will return, usable with
-         * {@link CodepointDelegate#getRange(int, int)}.
-         */
-        default int previousRangeIndex() { return previousIndex(); }
-
         // Unsupported operations -----------------------------
 
         @Override
@@ -3879,6 +3384,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         default void add(Integer o) {
             throw new UnsupportedOperationException();
         }
+
+        // Iterator mark and restore --------------------------
 
         /**
          * Set a mark (a saved state) to which the iterator may be
@@ -4033,27 +3540,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 }
                 return new PyUnicode(TYPE, true, r);
             }
-        }
-
-        @Override
-        int[] getRange(int start, int end) {
-            // start and end are char indices
-            end = Math.min(end, s.length());
-            int n = s.codePointCount(start, end);
-            int[] r = new int[n];
-            if (end - start == n) {
-                // There are no surrogate pairs between them: easy.
-                for (int i = 0, j = start; i < n; i++) {
-                    r[i] = s.charAt(j++);
-                }
-            } else {
-                // Be prepared for surrogate pairs
-                for (int i = 0, j = start; i < n; i++) {
-                    j += Character.isBmpCodePoint(
-                            r[i] = s.codePointAt(j)) ? 1 : 2;
-                }
-            }
-            return r;
         }
 
         @Override
@@ -4358,9 +3844,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 throw noSuchElement(i);
             }
 
-            @Override
-            public int nextRangeIndex() { return index; }
-
             // The reverse iterator -------------------------------
 
             @Override
@@ -4394,13 +3877,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 index = indexSaved;
                 charIndex = charIndexSaved;
                 throw noSuchElement(i);
-            }
-
-            @Override
-            public int previousRangeIndex() {
-                int c = s.codePointBefore(charIndex);
-                return charIndex
-                        - (Character.isBmpCodePoint(c) ? 1 : 2);
             }
 
             // Diagnostic use -------------------------------------
@@ -4455,12 +3931,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 }
             }
             return new PyUnicode(TYPE, true, v);
-        }
-
-        @Override
-        int[] getRange(int start, int end) {
-            // start and end are array indices
-            return Arrays.copyOfRange(value, start, end);
         }
 
         @Override
@@ -4806,6 +4276,31 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             "the fill character must be exactly one character long";
 
     /**
+     * Adapt a Python {@code str}, intended as a list of characters to
+     * strip, as by {@link #adapt(Object)} then conversion to a set.
+     *
+     * @param method in which encountered
+     * @param chars characters defining the set (or {@code None} or
+     *     {@code null})
+     * @return {@code null} or characters adapted to a set
+     * @throws TypeError if {@code sep} cannot be wrapped as a delegate
+     */
+    static Set<Integer> adaptStripSet(String method, Object chars)
+            throws TypeError, ValueError {
+        if (chars == null || chars == Py.None) {
+            return null;
+        } else {
+            try {
+                return adapt(chars).asStream()
+                        .collect(Collectors.toCollection(HashSet::new));
+            } catch (NoConversion nc) {
+                throw Abstract.argumentTypeError(method, "chars",
+                        "str or None", chars);
+            }
+        }
+    }
+
+    /**
      * Convert slice end indices to a {@link PySlice.Indices} object.
      *
      * @param s sequence being sliced
@@ -4874,13 +4369,16 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 IntStream.concat(v, w).toArray());
     }
 
+
+    /** An empty array of int for builder initial state, etc.. */
+    private static final int[] EMPTY_INT_ARRAY = new int[0];
+
     /**
      * Accumulate {@code int} elements in an array, similar to
      * {@code StringBuilder}.
      */
     static class IntArrayBuilder {
         private static final int MINSIZE = 16;
-        private static final int[] EMPTY = new int[0];
         private int[] value;
         private int len = 0;
 
@@ -4891,7 +4389,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 
         /** Create an empty buffer of a default initial capacity. */
         IntArrayBuilder() {
-            value = EMPTY;
+            value = EMPTY_INT_ARRAY;
         }
 
         /** The number of elements currently. */
@@ -4966,7 +4464,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             if (len == value.length) {
                 // The array is exactly filled: use it without copy.
                 u = new PyUnicode(TYPE, true, value);
-                value = EMPTY;
+                value = EMPTY_INT_ARRAY;
             } else {
                 // The array is partly filled: copy it and re-use it.
                 int[] v = new int[len];
@@ -4991,7 +4489,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      */
     static class IntArrayReverseBuilder {
         private static final int MINSIZE = 16;
-        private static final int[] EMPTY = new int[0];
         private int[] value;
         private int ptr = 0;
 
@@ -5003,7 +4500,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 
         /** Create an empty buffer of a default initial capacity. */
         IntArrayReverseBuilder() {
-            value = EMPTY;
+            value = EMPTY_INT_ARRAY;
             ptr = value.length;
         }
 
@@ -5086,7 +4583,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             if (ptr == 0) {
                 // The array is exactly filled: use it without copy.
                 u = new PyUnicode(TYPE, true, value);
-                value = EMPTY;
+                value = EMPTY_INT_ARRAY;
             } else {
                 // The array is partly filled: copy it and re-use it.
                 int[] v = new int[value.length - ptr];
@@ -5182,21 +4679,16 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 
     // @formatter:off
 
-    @Override
-    public Iterator<Integer> iterator() {
-        return newSubsequenceIterator();
-    }
-
     public int atoi(int base) {
-        return atoi(new PyString(encodeDecimal()), base);
+        return atoi(encodeDecimal(), base);
     }
 
     public PyLong atol(int base) {
-        return atol(new PyString(encodeDecimal()), base);
+        return atol(encodeDecimal(), base);
     }
 
     public double atof() {
-        return atof(new PyString(encodeDecimal()));
+        return atof(encodeDecimal());
     }
 
     /**
@@ -5205,16 +4697,21 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      *
      * @return a valid decimal as an encoded String
      */
+    @Deprecated // See _PyUnicode_TransformDecimalAndSpaceToASCII
     private String encodeDecimal() {
-        if (isBasicPlane()) {
-            return encodeDecimalBasic();
-        }
+        
+        // XXX This all has a has a Jython 2 smell: bytes/str confusion.
+        // XXX Also, String and PyUnicode implementations are needed.
+        // XXX Follow CPython _PyUnicode_TransformDecimalAndSpaceToASCII
+//        if (isBasicPlane()) {
+//            return encodeDecimalBasic();
+//        }
 
         int digit;
         StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext(); i++) {
-            int codePoint = iter.next();
+        
+        for (CodepointIterator si = delegate.iterator(0); si.hasNext();) {
+            int codePoint = si.nextInt();
             if (isPythonSpace(codePoint)) {
                 sb.append(' ');
                 continue;
@@ -5229,7 +4726,9 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 continue;
             }
             // All other characters are considered unencodable
-            codecs.encoding_error("strict", "decimal", getString(), i, i + 1,
+            int i = si.previousIndex();
+            // Signature has a Jython 2 smell: String->String?
+            codecs.encoding_error("strict", "decimal", asString(), i, i + 1,
                     "invalid decimal Unicode string");
         }
         return sb.toString();
@@ -5244,8 +4743,8 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     private String encodeDecimalBasic() {
         int digit;
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < getString().length(); i++) {
-            char ch = getString().charAt(i);
+        for (int i = 0; i < asString().length(); i++) {
+            char ch = asString().charAt(i);
             if (isPythonSpace(ch)) {
                 sb.append(' ');
                 continue;
@@ -5260,7 +4759,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                 continue;
             }
             // All other characters are considered unencodable
-            codecs.encoding_error("strict", "decimal", getString(), i, i + 1,
+            codecs.encoding_error("strict", "decimal", asString(), i, i + 1,
                     "invalid decimal Unicode string");
         }
         return sb.toString();
@@ -5290,9 +4789,9 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      *
      * @return the value
      */
-    public static double atof(PyString self) {
+    public static double atof(String self) {
         double x = 0.0;
-        Matcher m = getFloatPattern().matcher(self.getString());
+        Matcher m = getFloatPattern().matcher(self);
         boolean valid = m.matches();
 
         if (valid) {
@@ -5317,7 +4816,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             return x;
         } else {
             String fmt = "invalid literal for float: %s";
-            throw new ValueError(String.format(fmt, self.getString().trim()));
+            throw new ValueError(String.format(fmt, self.trim()));
         }
     }
 
@@ -5405,7 +4904,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
      */
     private PyComplex atocx() {
         double x = 0.0, y = 0.0;
-        Matcher m = getComplexPattern().matcher(getString());
+        Matcher m = getComplexPattern().matcher(asString());
         boolean valid = m.matches();
 
         if (valid) {
@@ -5455,7 +4954,7 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             return new PyComplex(x, y);
         } else {
             String fmt = "complex() arg is a malformed string: %s";
-            throw new ValueError(String.format(fmt, getString().trim()));
+            throw new ValueError(String.format(fmt, asString().trim()));
         }
 
     }
@@ -5495,45 +4994,44 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     }
 
     // Copied from PyString with this -> self
-    private static BigInteger asciiToBigInteger(PyString self, int base, boolean isLong) {
-        String str = self.getString();
+    private static BigInteger asciiToBigInteger(String self, int base, boolean isLong) {
 
         int b = 0;
-        int e = str.length();
+        int e = self.length();
 
-        while (b < e && Character.isWhitespace(str.charAt(b))) {
+        while (b < e && Character.isWhitespace(self.charAt(b))) {
             b++;
         }
 
-        while (e > b && Character.isWhitespace(str.charAt(e - 1))) {
+        while (e > b && Character.isWhitespace(self.charAt(e - 1))) {
             e--;
         }
 
         char sign = 0;
         if (b < e) {
-            sign = str.charAt(b);
+            sign = self.charAt(b);
             if (sign == '-' || sign == '+') {
                 b++;
-                while (b < e && Character.isWhitespace(str.charAt(b))) {
+                while (b < e && Character.isWhitespace(self.charAt(b))) {
                     b++;
                 }
             }
 
             if (base == 16) {
-                if (str.charAt(b) == '0') {
-                    if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'X') {
+                if (self.charAt(b) == '0') {
+                    if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'X') {
                         b += 2;
                     }
                 }
             } else if (base == 0) {
-                if (str.charAt(b) == '0') {
-                    if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'X') {
+                if (self.charAt(b) == '0') {
+                    if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'X') {
                         base = 16;
                         b += 2;
-                    } else if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'O') {
+                    } else if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'O') {
                         base = 8;
                         b += 2;
-                    } else if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'B') {
+                    } else if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'B') {
                         base = 2;
                         b += 2;
                     } else {
@@ -5541,11 +5039,11 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
                     }
                 }
             } else if (base == 8) {
-                if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'O') {
+                if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'O') {
                     b += 2;
                 }
             } else if (base == 2) {
-                if (b < e - 1 && Character.toUpperCase(str.charAt(b + 1)) == 'B') {
+                if (b < e - 1 && Character.toUpperCase(self.charAt(b + 1)) == 'B') {
                     b += 2;
                 }
             }
@@ -5557,13 +5055,13 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
 
         // if the base >= 22, then an 'l' or 'L' is a digit!
         if (isLong && base < 22 && e > b
-                && (str.charAt(e - 1) == 'L' || str.charAt(e - 1) == 'l')) {
+                && (self.charAt(e - 1) == 'L' || self.charAt(e - 1) == 'l')) {
             e--;
         }
 
-        String s = str;
-        if (b > 0 || e < str.length()) {
-            s = str.substring(b, e);
+        String s = self;
+        if (b > 0 || e < self.length()) {
+            s = self.substring(b, e);
         }
 
         BigInteger bi;
@@ -5581,23 +5079,23 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     }
 
     // Copied from PyString with this -> self
-    public static int atoi(PyString self, int base) {
+    public static int atoi(String self, int base) {
         if ((base != 0 && base < 2) || (base > 36)) {
             throw new ValueError("invalid base for atoi()");
         }
 
         try {
             BigInteger bi = asciiToBigInteger(self, base, false);
-            if (bi.compareTo(PyInteger.MAX_INT) > 0 || bi.compareTo(PyInteger.MIN_INT) < 0) {
+            if (bi.compareTo(PyLong.MAX_INT) > 0 || bi.compareTo(PyLong.MIN_INT) < 0) {
                 throw new OverflowError("long int too large to convert to int");
             }
             return bi.intValue();
         } catch (NumberFormatException exc) {
             throw new ValueError(
-                    "invalid literal for int() with base " + base + ": '" + self.getString() + "'");
+                    "invalid literal for int() with base " + base + ": '" + self + "'");
         } catch (StringIndexOutOfBoundsException exc) {
             throw new ValueError(
-                    "invalid literal for int() with base " + base + ": '" + self.getString() + "'");
+                    "invalid literal for int() with base " + base + ": '" + self + "'");
         }
     }
 
@@ -5607,29 +5105,18 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     }
 
     // Copied from PyString with this -> self
-    public static PyLong atol(PyString self, int base) {
+    public static PyLong atol(String self, int base) {
+        // XXX Likely this belongs in PyLong
         if ((base != 0 && base < 2) || (base > 36)) {
             throw new ValueError("invalid base for long literal:" + base);
         }
 
         try {
             BigInteger bi = asciiToBigInteger(self, base, true);
-            return new PyLong(bi);
-        } catch (NumberFormatException exc) {
-            if (self instanceof PyUnicode) {
-                // TODO: here's a basic issue: do we use the BigInteger constructor
-                // above, or add an equivalent to CPython's PyUnicode_EncodeDecimal;
-                // we should note that the current error string does not quite match
-                // CPython regardless of the codec, that's going to require some more work
-                throw new UnicodeEncodeError("decimal", "codec can't encode character", 0, 0,
-                        "invalid decimal Unicode string");
-            } else {
-                throw new ValueError(
-                        "invalid literal for long() with base " + base + ": '" + self.getString() + "'");
-            }
-        } catch (StringIndexOutOfBoundsException exc) {
+            return new PyLong(PyLong.TYPE, bi); // XXX should return Object bi
+        } catch (NumberFormatException | StringIndexOutOfBoundsException exc) {
             throw new ValueError(
-                    "invalid literal for long() with base " + base + ": '" + self.getString() + "'");
+                    "invalid literal for long() with base " + base + ": '" + self + "'");
         }
     }
 
@@ -5794,33 +5281,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
     // @formatter:off
 
     // Copied from PyString
-    /*
-    @ExposedMethod(doc = BuiltinDocs.str___format___doc)
-    */
-    final Object str___format__(Object formatSpec) {
-
-        // Parse the specification
-        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
-
-        // Get a formatter for the specification
-        TextFormatter f = prepareFormatter(spec);
-        if (f == null) {
-            // The type code was not recognised
-            throw Formatter.unknownFormat(spec.type, "string");
-        }
-
-        // Bytes mode if neither this nor formatSpec argument is Unicode.
-        boolean unicode = this instanceof PyUnicode || formatSpec instanceof PyUnicode;
-        f.setBytes(!unicode);
-
-        // Convert as per specification.
-        f.format(getString());
-
-        // Return a result that has the same type (str or unicode) as the formatSpec argument.
-        return f.pad().getPyResult();
-    }
-
-    // Copied from PyString
     /**
      * Common code for {@link PyString} and {@link PyUnicode} to prepare a {@link TextFormatter}
      * from a parsed specification. The object returned has format method
@@ -5864,9 +5324,13 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
         }
     }
 
+    // @formatter:off
     // Copied from _codecs
     // parallel to CPython's PyUnicode_TranslateCharmap
     static Object translateCharmap(PyUnicode str, String errors, Object mapping) {
+        
+        throw new MissingFeature("str.translate");
+        /*
         StringBuilder buf = new StringBuilder(str.toString().length());
 
         for (Iterator<Integer> iter = str.newSubsequenceIterator(); iter.hasNext();) {
@@ -5896,82 +5360,6 @@ public class PyUnicode extends PyString implements CraftedPyObject, Iterable<Int
             }
         }
         return new PyUnicode(buf.toString());
+        */
     }
-
-    // Copied from PyString
-    /**
-     * Return a Java {@code String} that is the Jython-internal equivalent of the byte-like
-     * argument (a {@code str} or any object that supports a one-dimensional byte buffer). If
-     * the argument is not acceptable (this includes a {@code unicode} argument) return null.
-     *
-     * @param obj to coerce to a String
-     * @return coerced value or {@code null} if it can't be
-     */
-    private static String asU16BytesOrNull(Object obj) {
-        if (obj instanceof PyString) {
-            if (obj instanceof PyUnicode) {
-                return null;
-            }
-            // str but not unicode object: go directly to the String
-            return ((PyString) obj).getString();
-//        } else if (obj instanceof BufferProtocol) {
-//            // Other object with buffer API: briefly access the buffer
-//            try (PyBuffer buf = ((BufferProtocol) obj).getBuffer(PyBUF.FULL_RO)) {
-//                return buf.toString();
-//            }
-        } else {
-            return null;
-        }
-    }
-
-    // Copied from PyString
-    /**
-     * Return a String equivalent to the argument. This is a helper function to those methods that
-     * accept any byte array type (any object that supports a one-dimensional byte buffer), but
-     * <b>not</b> a {@code unicode}.
-     *
-     * @param obj to coerce to a String
-     * @return coerced value
-     * @throws PyException {@code TypeError} if the coercion fails (including {@code unicode})
-     */
-    protected static String asU16BytesOrError(Object obj) throws PyException {
-        String ret = asU16BytesOrNull(obj);
-        if (ret != null) {
-            return ret;
-        } else {
-            throw new TypeError("expected str, bytearray or other buffer compatible object");
-        }
-    }
-
-    // Copied from PyString
-    /**
-     * Return a String equivalent to the argument according to the calling conventions of methods
-     * that accept as a byte string anything bearing the buffer interface, or accept
-     * {@code PyNone}, but <b>not</b> a {@code unicode}. (Or the argument may be omitted,
-     * showing up here as null.) These include the {@code strip} and {@code split} methods
-     * of {@code str}, where a null indicates that the criterion is whitespace, and
-     * {@code str.translate}.
-     *
-     * @param obj to coerce to a String or null
-     * @param name of method
-     * @return coerced value or null
-     * @throws PyException if the coercion fails (including {@code unicode})
-     */
-    private static String asU16BytesNullOrError(Object obj, String name) throws PyException {
-        if (obj == null || obj == Py.None) {
-            return null;
-        } else {
-            String ret = asU16BytesOrNull(obj);
-            if (ret != null) {
-                return ret;
-            } else if (name == null) {
-                // A nameless method is the client
-                throw new TypeError("expected None, str or buffer compatible object");
-            } else {
-                // Tuned for .strip and its relations, which supply their name
-                throw new TypeError(name + " arg must be None, str or buffer compatible object");
-            }
-        }
-    }
-
 }
