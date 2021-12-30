@@ -5,10 +5,8 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -17,6 +15,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,7 +29,9 @@ import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
 import org.python.core.stringlib.FieldNameIterator;
 import org.python.core.stringlib.InternalFormat;
-import org.python.core.stringlib.InternalFormat.Formatter;
+import org.python.core.stringlib.InternalFormat.FormatError;
+import org.python.core.stringlib.InternalFormat.FormatOverflow;
+import org.python.core.stringlib.InternalFormat.AbstractFormatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 import org.python.core.stringlib.MarkupIterator;
 import org.python.core.stringlib.TextFormatter;
@@ -52,11 +53,7 @@ import org.python.modules.ucnhashAPI;
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
  */
-public class PyUnicode
-   // extends PyString
-    implements CraftedPyObject
-    //, CharSequence 
-    {
+public class PyUnicode implements CraftedPyObject {
 
     /** The type {@code str}. */
     static final PyType TYPE = PyType.fromSpec( //
@@ -255,9 +252,13 @@ public class PyUnicode
     @ExposedMethod(doc = BuiltinDocs.unicode___repr___doc)
     */
     @SuppressWarnings("unused")
-    private Object __repr__(Object self) {
-        // XXX make encode_UnicodeEscape (if needed) take a delegate
-        return "u" + encode_UnicodeEscape(asString(self), true);
+    private static Object __repr__(Object self) {
+        try {
+            // XXX make encode_UnicodeEscape (if needed) take a delegate
+            return "u" + encode_UnicodeEscape(convertToString(self), true);
+        } catch (NoConversion nc) {
+            throw Abstract.impossibleArgumentError("str", self);
+        }
     }
 
     /*
@@ -367,74 +368,6 @@ public class PyUnicode
         throw new MissingFeature("default __tojava__ behaviour for %s", c.getSimpleName());
     }
 
-    /**
-     * Interpret the object as a Java {@code String} representing characters as UTF-16, or
-     * return {@code null} if the type does not admit this conversion. From a
-     * {@code PyUnicode} we return its internal string. A byte argument is decoded with the
-     * default encoding.
-     *
-     * @param o the object to coerce
-     * @return an equivalent {@code String}
-     */
-    private static String coerceToStringOrNull(Object o) {
-        if (o instanceof PyUnicode) {
-            return ((PyUnicode) o).asString();
-        } else if (o instanceof PyString) {
-            return ((PyString) o).decode().toString();
-//        } else if (o instanceof BufferProtocol) {
-//            // PyByteArray, PyMemoryView, Py2kBuffer ...
-//            // We ought to be able to call codecs.decode on o but see Issue #2164
-//            try (PyBuffer buf = ((BufferProtocol) o).getBuffer(PyBUF.FULL_RO)) {
-//                PyString s = new PyString(buf);
-//                // For any sensible codec, the return is unicode and toString() is asString().
-//                return s.decode().toString();
-//            }
-        } else {
-            // o is some type not allowed:
-            return null;
-        }
-    }
-
-    /**
-     * Interpret the object as a Java {@code String} representing characters as UTF-16, or
-     * raise an error if the type does not admit this conversion. A byte argument is decoded with
-     * the default encoding.
-     *
-     * @param o the object to coerce
-     * @return an equivalent {@code String} (and never {@code null})
-     */
-    private static String coerceToString(Object o) {
-        String s = coerceToStringOrNull(o);
-        if (s == null) {
-            throw errorCoercingToUnicode(o);
-        }
-        return s;
-    }
-
-    /**
-     * Interpret the object as a Java {@code String} representing characters as UTF-16, or
-     * optionally as {@code null} (for a {@code null} or {@code None} argument if the
-     * second argument is {@code true}). Raise an error if the type does not admit this
-     * conversion.
-     *
-     * @param o the object to coerce
-     * @param allowNullArgument iff {@code true} allow a null or {@code none} argument
-     * @return an equivalent {@code String} or {@code null}
-     */
-    private static String coerceToString(Object o, boolean allowNullArgument) {
-        if (allowNullArgument && (o == null || o == Py.None)) {
-            return null;
-        } else {
-            return coerceToString(o);
-        }
-    }
-
-    /** Construct exception "coercing to Unicode: ..." */
-    private static PyException errorCoercingToUnicode(Object o) {
-        return Abstract.requiredTypeError("coercing to Unicode: a string or buffer",
-                o == null ? Py.None : o);
-    }
-
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___contains___doc)
     */
@@ -510,24 +443,12 @@ public class PyUnicode
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___mod___doc)
     */
-    final Object __mod__(Object other) {
-        StringFormatter fmt = new StringFormatter(asString(), true);
-        return fmt.format(other);
+    static Object __mod__(Object self, Object other) {
+        throw new MissingFeature("printf-style formatting");
     }
 
-    // Copied from PyString
-    public Object __int__() {
-        try {
-            return atoi(10);
-        } catch (OverflowError e) {
-            return atol(10);
-        }
-    }
 
-    // Copied from PyString
-    public PyFloat __float__() {
-        return new PyFloat(atof());
-    }
+    // Strip methods --------------------------------------------------
 
     /**
      * Equivalent of Python {@code str.strip()}. Any byte/character matching one of those in
@@ -1263,9 +1184,9 @@ public class PyUnicode
 
                 if (match == pLength) {
                     /*
-                     * We reached the end of p: it's a match. Create
-                     * emit the segment we have been accumulating, start
-                     * a new one, and lose a life.
+                     * We reached the end of p: it's a match. Emit the
+                     * segment we have been accumulating, start a new
+                     * one, and count a split.
                      */
                     list.add(segment.takeUnicode());
                     --maxsplit;
@@ -1484,9 +1405,9 @@ public class PyUnicode
 
                 if (match == pLength) {
                     /*
-                     * We reached the end of p: it's a match. Create
-                     * emit the segment we have been accumulating, start
-                     * a new one, and lose a life.
+                     * We reached the start of p: it's a match. Emit the
+                     * segment we have been accumulating, start a new
+                     * one, and count a split.
                      */
                     list.add(segment.takeUnicode());
                     --maxsplit;
@@ -2713,47 +2634,80 @@ public class PyUnicode
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___format___doc)
     */
-    final Object __format__(Object formatSpec) {
-        // Parse the specification
-        Spec spec = InternalFormat.fromText(formatSpec, "__format__");
+    static final Object __format__(Object self, Object formatSpec) {
 
-        // Get a formatter for the specification
-        TextFormatter f = prepareFormatter(spec);
-        if (f == null) {
-            // The type code was not recognised
-            throw Formatter.unknownFormat(spec.type, "string");
+        String stringFormatSpec = coerceToString(formatSpec,
+                () -> Abstract.argumentTypeError("__format__",
+                        "specification", "str", formatSpec));
+
+        try {
+            // Parse the specification
+            Spec spec = InternalFormat.fromText(stringFormatSpec);
+
+            // Get a formatter for the specification
+            TextFormatter f = new StrFormatter(spec);
+
+            /*
+             * Format, pad and return a result according to as the
+             * specification argument.
+             */
+            return f.format(self).pad().getResult();
+
+        } catch (FormatOverflow fe) {
+            throw new OverflowError(fe.getMessage());
+        } catch (FormatError fe) {
+            throw new ValueError(fe.getMessage());
+        } catch (NoConversion e) {
+            throw Abstract.impossibleArgumentError(TYPE.name, self);
         }
-
-        // Bytes mode if neither this nor formatSpec argument is Unicode.
-        boolean unicode = this instanceof PyUnicode || formatSpec instanceof PyUnicode;
-        f.setBytes(!unicode);
-
-        // Convert as per specification.
-        f.format(asString());
-
-        // Return a result that has the same type (str or unicode) as the formatSpec argument.
-        return f.pad().getPyResult();
     }
 
+    /**
+     * Implementation of {@code _string.formatter_parser}. Return an
+     * iterable that contains {@code tuple}s of the form:
+     * {@code (literal_text, field_name, format_spec, conversion)}.
+     * <p>
+     * For example, the iterator {@code formatter_parser("x={2:6.3f}
+     * y={y!r:>7s}.")} yields successively<pre>
+     * ('x=', '2', '6.3f', None)
+     * (' y=', 'y', '>7s', 'r')
+     * ('.', None, None, None)
+     * </pre> {@code literal_text} can be zero length, and
+     * {@code field_name} can be {@code None}, in which case there's no
+     * object to format and output. If {@code field_name} is not
+     * {@code None}, it is looked up, formatted with {@code format_spec}
+     * and {@code conversion} and then used.
+     * 
+     * @return an iterator of format {@code tuple}s
+     */
+    // Compare CPython formatter_parser in unicode_formatter.h
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_parser_doc)
     */
-    final PyObject _formatter_parser() {
-        return new MarkupIterator(this);
+    // XXX belongs to the _string module, but where does that belong?
+    static Object formatter_parser(Object s) {
+        return new MarkupIterator(asString(s));
     }
 
+    /**
+     * Implementation of {@code _string.formatter_field_name_split}.
+     * 
+     * @return a tuple of the first field name component and the rest
+     */
+    // Compare CPython formatter_field_name_split in unicode_formatter.h
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_field_name_split_doc)
     */
-    final PyObject _formatter_field_name_split() {
-        FieldNameIterator iterator = new FieldNameIterator(this);
-        return new PyTuple(iterator.pyHead(), iterator);
+    // XXX belongs to the _string module, but where does that belong?
+    static PyTuple formatter_field_name_split(Object s) {
+        FieldNameIterator iterator = new FieldNameIterator(asString(s));
+        return new PyTuple(iterator.head(), iterator);
     }
 
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode_format_doc)
     */
-    final Object format(Object[] args, String[] keywords) {
+    final Object format(Object[] args, String[] keywords) throws TypeError, Throwable {
         try {
             return buildFormattedString(args, keywords, null, null);
         } catch (IllegalArgumentException e) {
@@ -3087,34 +3041,43 @@ public class PyUnicode
 
     // Java-only API --------------------------------------------------
 
-    // @formatter:off
+    // @formatter:on
 
     private static final int HIGH_SURROGATE_OFFSET =
-            Character.MIN_HIGH_SURROGATE
-                    - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10);
+            Character.MIN_HIGH_SURROGATE - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10);
 
-    //    /**
-    //     * The hash of a {@link PyUnicode} is the same as that of a Java
-    //     * {@code String} equal to it. This is so that a given Python
-    //     * {@code str} may be found as a match in hashed data structures,
-    //     * whichever representation is used for the key or query.
-    //     */
-    //    @Override
-    //    public int hashCode() throws PyException {
-    //        return PyDict.pythonHash(this);
-    //    }
-    //
-    //    /**
-    //     * Compare for equality with another Python {@code str}, or a
-    //     * {@link PyDict.Key} containing a {@code str}. If the other object
-    //     * is not a {@code str}, or a {@code Key} containing a {@code str},
-    //     * return {@code false}. If it is such an object, compare for
-    //     * equality of the code points.
-    //     */
-    //    @Override
-    //    public boolean equals(Object obj) {
-    //        return PyDict.pythonEquals(this, obj);
-    //    }
+    /**
+     * The hash of a {@link PyUnicode} is the same as that of a Java
+     * {@code String} equal to it. This is so that a given Python
+     * {@code str} may be found as a match in hashed data structures,
+     * whichever representation is used for the key or query.
+     */
+    @Override
+    public int hashCode() throws PyException { return __hash__(); }
+
+    /**
+     * Compare for equality with another Python {@code str}, or a
+     * {@link PyDict.Key} containing a {@code str}. If the other object
+     * is not a {@code str}, or a {@code Key} containing a {@code str},
+     * return {@code false}. If it is such an object, compare for
+     * equality of the code points.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        try {
+            CodepointDelegate a = delegate, b = adapt(obj);
+            // Lengths must be equal
+            if (a.length() != b.length()) { return false; }
+            // Scan the code points in a and b
+            CodepointIterator ib = b.iterator(0);
+            for (int c : a) { if (c != ib.nextInt()) { return false; } }
+            return true;
+        } catch (NoConversion nc) {
+            return false;
+        }
+    }
+
+    // @formatter:off
 
     /**
      * Create a {@code str} from a format and arguments. Note Java
@@ -3162,12 +3125,6 @@ public class PyUnicode
         throw Abstract.requiredTypeError("a str", v);
     }
 
-    /** @return this {@code PyUnicode} as a Java {@code String} */
-    private String asString() {
-        StringBuilder b = new StringBuilder();
-        for (int c : delegate) { b.appendCodePoint(c); }
-        return b.toString();
-    }
 
     // Plumbing ------------------------------------------------------
 
@@ -3175,7 +3132,9 @@ public class PyUnicode
 
     /**
      * Convert a Python {@code str} to a Java {@code str} (or throw
-     * {@link NoConversion}).
+     * {@link NoConversion}). This is suitable for use where a method
+     * argument should be (exactly) a {@code str}, or an alternate path
+     * taken.
      * <p>
      * If the method throws the special exception {@link NoConversion},
      * the caller must deal with it by throwing an appropriate Python
@@ -3189,8 +3148,37 @@ public class PyUnicode
         if (v instanceof String)
             return (String)v;
         else if (v instanceof PyUnicode)
-            return ((PyUnicode)v).toString();
+            return ((PyUnicode)v).asString();
         throw PyObjectUtil.NO_CONVERSION;
+    }
+
+    /**
+     * Coerce a Python {@code str} to a Java String, or raise a
+     * specified exception. This is suitable for use where a method
+     * argument should be (exactly) a {@code str}, or a context specific
+     * exception has to be raised.
+     *
+     * @param <E> type of exception to throw
+     * @param arg to coerce
+     * @param exc supplier for actual exception
+     * @return {@code arg} as a {@code String}
+     */
+    static <E extends PyException> String coerceToString(Object arg,
+            Supplier<E> exc) {
+        if (arg instanceof String) {
+            return (String)arg;
+        } else if (arg instanceof PyUnicode) {
+            return ((PyUnicode)arg).asString();
+        } else {
+            throw exc.get();
+        }
+    }
+
+    /** @return this {@code PyUnicode} as a Java {@code String} */
+    private String asString() {
+        StringBuilder b = new StringBuilder();
+        for (int c : delegate) { b.appendCodePoint(c); }
+        return b.toString();
     }
 
     /**
@@ -4244,7 +4232,7 @@ public class PyUnicode
 
     /**
      * Adapt a Python {@code str} intended as a fill character in
-     * justification and centering operations. The behaviour is quite
+     * justification and centring operations. The behaviour is quite
      * like {@link #adapt(Object)}, but it returns a single code point.
      * A null argument returns the default choice, a space.
      *
@@ -5122,8 +5110,8 @@ public class PyUnicode
 
     // Copied from PyString
     /**
-     * Implements PEP-3101 {}-formatting methods {@code str.format()} and
-     * {@code unicode.format()}. When called with {@code enclosingIterator == null}, this
+     * Implements PEP-3101 {}-formatting method {@code str.format()}.
+     * When called with {@code enclosingIterator == null}, this
      * method takes this object as its formatting string. The method is also called (calls itself)
      * to deal with nested formatting specifications. In that case, {@code enclosingIterator}
      * is a {@link MarkupIterator} on this object and {@code value} is a substring of this
@@ -5134,14 +5122,17 @@ public class PyUnicode
      * @param enclosingIterator when used nested, null if subject is this {@code PyString}
      * @param value the format string when {@code enclosingIterator} is not null
      * @return the formatted string based on the arguments
+     * @throws TypeError if {@code __repr__} or {@code __str__} conversions returned a non-string.
+     * @throws Throwable from other errors in 
      */
-    protected String buildFormattedString(Object[] args, String[] keywords,
-            MarkupIterator enclosingIterator, String value) {
+    // XXX make this support format(String) too
+    private String buildFormattedString(Object[] args, String[] keywords,
+            MarkupIterator enclosingIterator, String value) throws TypeError, Throwable {
 
         MarkupIterator it;
         if (enclosingIterator == null) {
             // Top-level call acts on this object.
-            it = new MarkupIterator(this);
+            it = new MarkupIterator(this.asString());
         } else {
             // Nested call acts on the substring and some state from existing iterator.
             it = new MarkupIterator(enclosingIterator, value);
@@ -5170,17 +5161,11 @@ public class PyUnicode
 
                 // The conversion specifier is s = __str__ or r = __repr__.
                 if ("r".equals(chunk.conversion)) {
-                    fieldObj = fieldObj.__repr__();
+                    fieldObj = Abstract.repr(fieldObj);
                 } else if ("s".equals(chunk.conversion)) {
-                    fieldObj = fieldObj.__str__();
+                    fieldObj = Abstract.str(fieldObj);
                 } else if (chunk.conversion != null) {
-                    throw new ValueError("Unknown conversion specifier " + chunk.conversion);
-                }
-
-                // Check for "{}".format(u"abc")
-                if (fieldObj instanceof PyUnicode && !(this instanceof PyUnicode)) {
-                    // Down-convert to PyString, at the risk of raising UnicodeEncodingError
-                    fieldObj = ((PyUnicode) fieldObj).__str__();
+                    throw new ValueError("Unknown conversion specifier %s", chunk.conversion);
                 }
 
                 // The format_spec may be simple, or contained nested replacement fields.
@@ -5209,17 +5194,18 @@ public class PyUnicode
      * @param args argument list (positional then keyword arguments).
      * @param keywords naming the keyword arguments.
      * @return the object designated or {@code null}.
+     * @throws Throwable from errors accessing referenced fields
      */
     private Object getFieldObject(String fieldName, boolean bytes, Object[] args,
-            String[] keywords) {
+            String[] keywords) throws Throwable {
         FieldNameIterator iterator = new FieldNameIterator(fieldName, bytes);
-        Object head = iterator.pyHead();
+        Object head = iterator.head();
         Object obj = null;
         int positionalCount = args.length - keywords.length;
 
-        if (head.isIndex()) {
+        if (PyNumber.indexCheck(head)) {
             // The field name begins with an integer argument index (not a [n]-type index).
-            int index = head.asIndex();
+            int index = PyNumber.asSize(head, null);
             if (index >= positionalCount) {
                 throw new IndexError("tuple index out of range");
             }
@@ -5228,14 +5214,15 @@ public class PyUnicode
         } else {
             // The field name begins with keyword.
             for (int i = 0; i < keywords.length; i++) {
-                if (keywords[i].equals(head.asString())) {
+                if (Abstract.richCompareBool(obj, keywords[i], Comparison.EQ)) {
                     obj = args[positionalCount + i];
                     break;
                 }
             }
             // And if we don't find it, that's an error
             if (obj == null) {
-                throw new KeyError(head);
+                // throw new KeyError(head);
+                throw new MissingFeature("dictionary");
             }
         }
 
@@ -5248,15 +5235,11 @@ public class PyUnicode
             }
             Object key = chunk.value;
             if (chunk.is_attr) {
-                // key must be a String
-                obj = obj.__getattr__((String) key);
+                // key must be an attribute name
+                obj = Abstract.getAttr(obj, key);
             } else {
-                if (key instanceof Integer) {
-                    // Can this happen?
-                    obj = obj.__getitem__(((Integer) key).intValue());
-                } else {
-                    obj = obj.__getitem__(new PyString(key.toString()));
-                }
+                // obj = PySequence.getItem(obj, key);
+                throw new MissingFeature("dictionary");
             }
         }
 
@@ -5273,54 +5256,64 @@ public class PyUnicode
      * @param result to which the result will be appended.
      */
     private void renderField(Object fieldObj, String formatSpec, StringBuilder result) {
-        PyString formatSpecStr = formatSpec == null ? new PyString("") : new PyString(formatSpec);
+        String formatSpecStr = formatSpec == null ? "" : formatSpec;
         //result.append(fieldObj.__format__(formatSpecStr).asString());
         throw new MissingFeature("String formatting");
     }
 
-    // @formatter:off
+    // @formatter:on
 
-    // Copied from PyString
     /**
-     * Common code for {@link PyString} and {@link PyUnicode} to prepare a {@link TextFormatter}
-     * from a parsed specification. The object returned has format method
-     * {@link TextFormatter#format(String)} that treats its argument as UTF-16 encoded unicode (not
-     * just {@code char}s). That method will format its argument ( {@code str} or
-     * {@code unicode}) according to the PEP 3101 formatting specification supplied here. This
-     * would be used during {@code text.__format__(".5s")} or
-     * {@code "{:.5s}".format(text)} where {@code text} is this Python string.
-     *
-     * @param spec a parsed PEP-3101 format specification.
-     * @return a formatter ready to use, or null if the type is not a string format type.
-     * @throws PyException {@code ValueError} if the specification is faulty.
+     * A {@link AbstractFormatter}, constructed from a {@link Spec},
+     * with specific validations for {@code str.__format__}.
      */
-    @SuppressWarnings("fallthrough")
-    static TextFormatter prepareFormatter(Spec spec) throws PyException {
-        // Slight differences between format types
-        switch (spec.type) {
+    private static class StrFormatter extends TextFormatter {
 
-            case Spec.NONE:
-            case 's':
-                // Check for disallowed parts of the specification
-                // XXX API of InternalFormat has changed from Jython 2
-                // See org.python.core.PyFloat.formatDouble(double, Spec) for a clue.
-                if (spec.grouping) {
-                    throw Formatter.notAllowed("Grouping", "string", spec.type);
-                } else if (Spec.specified(spec.sign)) {
-                    throw Formatter.signNotAllowed("string", '\0');
-                } else if (spec.alternate) {
-                    throw Formatter.alternateFormNotAllowed("string");
-                } else if (spec.align == '=') {
-                    throw Formatter.alignmentNotAllowed('=', "string");
-                }
-                // spec may be incomplete. The defaults are those commonly used for string formats.
-                spec = spec.withDefaults(Spec.STRING);
-                // Get a formatter for the specification
-                return new TextFormatter(spec);
+        /**
+         * Prepare a {@link TextFormatter} in support of
+         * {@link PyUnicode#__format__(Object, Object) str.__format__}.
+         *
+         * @param spec a parsed PEP-3101 format specification.
+         * @return a formatter ready to use.
+         * @throws FormatOverflow if a value is out of range (including the
+         *     precision)
+         * @throws FormatError if an unsupported format character is
+         *     encountered
+         */
+        StrFormatter(Spec spec) throws FormatError { super(validated(spec)); }
 
-            default:
-                // The type code was not recognised
-                return null;
+        @Override
+        public TextFormatter format(Object self) throws NoConversion {
+            return format(convertToString(self));
+        }
+
+        private static Spec validated(Spec spec) throws FormatError {
+            String type = TYPE.name;
+            switch (spec.type) {
+
+                case Spec.NONE:
+                case 's':
+                    // Check for disallowed parts of the specification
+                    if (spec.grouping) {
+                        throw notAllowed("Grouping", type, spec.type);
+                    } else if (Spec.specified(spec.sign)) {
+                        throw signNotAllowed(type, '\0');
+                    } else if (spec.alternate) {
+                        throw alternateFormNotAllowed(type);
+                    } else if (spec.align == '=') { throw alignmentNotAllowed('=', type); }
+                    // Passed (whew!)
+                    break;
+
+                default:
+                    // The type code was not recognised
+                    throw unknownFormat(spec.type, type);
+            }
+
+            /*
+             * spec may be incomplete. The defaults are those commonly used for
+             * string formats.
+             */
+            return spec.withDefaults(Spec.STRING);
         }
     }
 

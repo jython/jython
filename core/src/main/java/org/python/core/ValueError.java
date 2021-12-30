@@ -3,7 +3,7 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 
 /** The Python {@code ValueError} exception. */
-class ValueError extends PyException {
+public class ValueError extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */

@@ -1,5 +1,8 @@
 # PyUnicode.py: A generator for Java files that define the Python str
 
+# Copyright (c)2021 Jython Developers.
+# Licensed to PSF under a contributor agreement.
+
 # This generator writes PyUnicodeMethods.java and PyUnicodeBinops.java .
 
 # At the time of this writing, only the comparison operations are
@@ -27,6 +30,7 @@ class StrTypeInfo(TypeInfo):
 itself = lambda x: x
 
 PY_UNICODE_CLASS = StrTypeInfo('PyUnicode', WorkingType.SEQ,
+                    lambda x: f'{x}.adapt()',
                     itself)
 STRING_CLASS = StrTypeInfo('String', WorkingType.STRING,
                     lambda x: f'adapt({x})',

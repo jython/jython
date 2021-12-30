@@ -238,7 +238,7 @@ public class PySequence extends Abstract {
      * A specialisation of {@link Of PySequence.Of&lt;Integer>} where
      * the elements may be consumed as primitive {@code int}.
      */
-    static interface OfInt extends Of<Integer> {
+    public static interface OfInt extends Of<Integer> {
 
         @Override
         Spliterator.OfInt spliterator();

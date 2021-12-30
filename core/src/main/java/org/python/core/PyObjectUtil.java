@@ -6,7 +6,7 @@ package org.python.core;
  * Miscellaneous static helpers commonly needed to implement Python objects in
  * Java.
  */
-class PyObjectUtil {
+public class PyObjectUtil {
 
     private PyObjectUtil() {} // no instances
 
@@ -33,7 +33,7 @@ class PyObjectUtil {
      * data type fails. This type of exception carries no stack context, since it is
      * used only as a sort of "alternative return value".
      */
-    static class NoConversion extends Exception {
+    public static class NoConversion extends Exception {
         private static final long serialVersionUID = 1L;
 
         private NoConversion() { super(null, null, false, false); }
@@ -43,5 +43,5 @@ class PyObjectUtil {
      * A statically allocated {@link NoConversion} used in conversion methods to
      * signal "cannot convert". No stack context is preserved in the exception.
      */
-    static final NoConversion NO_CONVERSION = new NoConversion();
+    public static final NoConversion NO_CONVERSION = new NoConversion();
 }

@@ -29,7 +29,7 @@ public class Py {
     }
 
     /** Python {@code None} object. */
-    static final Object None = new Singleton("None") {};
+    public static final Object None = new Singleton("None") {};
 
     /** Python {@code NotImplemented} object. */
     static final Object NotImplemented = new Singleton("NotImplemented") {};
