@@ -168,7 +168,7 @@ public class PyUnicode implements CraftedPyObject {
      * necessarily a {@code PyUnicode}, unless the argument contains
      * non-BMP code points.
      *
-     * @param cp to code point convert
+     * @param s to convert or return
      * @return a Python {@code str}
      */
     public static Object fromJavaString(String s) {
@@ -459,15 +459,16 @@ public class PyUnicode implements CraftedPyObject {
      * @param stripChars characters to strip from either end of this str/bytes, or null
      * @return a new {@code PyString} (or {@link PyUnicode}), stripped of the specified
      *         characters/bytes
+     * @throws TypeError on {@code stripChars} type errors
      */
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
     */
-    Object strip(Object stripChars) throws Throwable {
+    Object strip(Object stripChars) throws TypeError {
         return strip(delegate, stripChars);
     }
 
-    static Object strip(String self, Object stripChars) throws Throwable {
+    static Object strip(String self, Object stripChars) throws TypeError {
         return strip(adapt(self), stripChars);
     }
 
@@ -481,7 +482,7 @@ public class PyUnicode implements CraftedPyObject {
      * @throws Throwable on {@code stripChars} type errors
      */
     private static Object strip(CodepointDelegate s, Object stripChars)
-            throws Throwable {
+            throws TypeError {
         Set<Integer> p = adaptStripSet("strip", stripChars);
         int left, right;
         if (p == null) {
@@ -570,11 +571,11 @@ public class PyUnicode implements CraftedPyObject {
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
     */
-    Object lstrip(Object stripChars) throws Throwable {
+    Object lstrip(Object stripChars) throws TypeError {
         return lstrip(delegate, stripChars);
     }
 
-    static Object lstrip(String self, Object stripChars) throws Throwable {
+    static Object lstrip(String self, Object stripChars) throws TypeError {
         return lstrip(adapt(self), stripChars);
     }
 
@@ -585,10 +586,10 @@ public class PyUnicode implements CraftedPyObject {
      * @param s representing {@code self}
      * @param stripChars to remove, or {@code null} or {@code None}
      * @return the str stripped
-     * @throws Throwable on {@code stripChars} type errors
+     * @throws TypeError on {@code stripChars} type errors
      */
     private static Object lstrip(CodepointDelegate s, Object stripChars)
-            throws Throwable {
+            throws TypeError {
         Set<Integer> p = adaptStripSet("lstrip", stripChars);
         int left;
         if (p == null) {
@@ -606,11 +607,11 @@ public class PyUnicode implements CraftedPyObject {
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
     */
-    Object rstrip(Object stripChars) throws Throwable {
+    Object rstrip(Object stripChars) throws TypeError {
         return rstrip(delegate, stripChars);
     }
 
-    static Object rstrip(String self, Object stripChars) throws Throwable {
+    static Object rstrip(String self, Object stripChars) throws TypeError {
         return rstrip(adapt(self), stripChars);
     }
 
@@ -621,10 +622,10 @@ public class PyUnicode implements CraftedPyObject {
      * @param s representing {@code self}
      * @param stripChars to remove, or {@code null} or {@code None}
      * @return the str stripped
-     * @throws Throwable on {@code stripChars} type errors
+     * @throws TypeError on {@code stripChars} type errors
      */
     private static Object rstrip(CodepointDelegate s, Object stripChars)
-            throws Throwable {
+            throws TypeError {
         Set<Integer> p = adaptStripSet("rstrip", stripChars);
         int right;
         if (p == null) {
@@ -2667,10 +2668,10 @@ public class PyUnicode implements CraftedPyObject {
      * iterable that contains {@code tuple}s of the form:
      * {@code (literal_text, field_name, format_spec, conversion)}.
      * <p>
-     * For example, the iterator {@code formatter_parser("x={2:6.3f}
-     * y={y!r:>7s}.")} yields successively<pre>
+     * For example, the iterator <code>formatter_parser("x={2:6.3f}
+     * y={y!r:&gt;7s}.")</code> yields successively<pre>
      * ('x=', '2', '6.3f', None)
-     * (' y=', 'y', '>7s', 'r')
+     * (' y=', 'y', '&gt;7s', 'r')
      * ('.', None, None, None)
      * </pre> {@code literal_text} can be zero length, and
      * {@code field_name} can be {@code None}, in which case there's no
@@ -2678,6 +2679,7 @@ public class PyUnicode implements CraftedPyObject {
      * {@code None}, it is looked up, formatted with {@code format_spec}
      * and {@code conversion} and then used.
      * 
+     * @param formatString to parse
      * @return an iterator of format {@code tuple}s
      */
     // Compare CPython formatter_parser in unicode_formatter.h
@@ -2685,13 +2687,14 @@ public class PyUnicode implements CraftedPyObject {
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_parser_doc)
     */
     // XXX belongs to the _string module, but where does that belong?
-    static Object formatter_parser(Object s) {
-        return new MarkupIterator(asString(s));
+    static Object formatter_parser(Object formatString) {
+        return new MarkupIterator(asString(formatString));
     }
 
     /**
      * Implementation of {@code _string.formatter_field_name_split}.
      * 
+     * @param fieldName to split into components
      * @return a tuple of the first field name component and the rest
      */
     // Compare CPython formatter_field_name_split in unicode_formatter.h
@@ -2699,8 +2702,8 @@ public class PyUnicode implements CraftedPyObject {
     @ExposedMethod(doc = BuiltinDocs.unicode__formatter_field_name_split_doc)
     */
     // XXX belongs to the _string module, but where does that belong?
-    static PyTuple formatter_field_name_split(Object s) {
-        FieldNameIterator iterator = new FieldNameIterator(asString(s));
+    static PyTuple formatter_field_name_split(Object fieldName) {
+        FieldNameIterator iterator = new FieldNameIterator(asString(fieldName));
         return new PyTuple(iterator.head(), iterator);
     }
 
@@ -2735,8 +2738,8 @@ public class PyUnicode implements CraftedPyObject {
      * be wrapped in quotation marks, and whether Python rules are used to choose them through
      * {@code quote}.
      *
-     * @param str
-     * @param quoteChar '"' or '\'' use that, '?' = let Python choose, 0 or anything = no quotes
+     * @param str to process
+     * @param quote '"' or '\'' use that, '?' = let Python choose, 0 or anything = no quotes
      * @return encoded string (possibly the same string if unchanged)
      */
     static String encode_UnicodeEscape(String str, char quote) {
@@ -3055,12 +3058,17 @@ public class PyUnicode implements CraftedPyObject {
     @Override
     public int hashCode() throws PyException { return __hash__(); }
 
-    /**
+    /* *
      * Compare for equality with another Python {@code str}, or a
      * {@link PyDict.Key} containing a {@code str}. If the other object
      * is not a {@code str}, or a {@code Key} containing a {@code str},
      * return {@code false}. If it is such an object, compare for
      * equality of the code points.
+     */
+    /**
+     * Compare for equality with another Python {@code str}. If the
+     * other object is not a {@code str}, return {@code false}. If it is
+     * such an object, compare for equality of the code points.
      */
     @Override
     public boolean equals(Object obj) {
@@ -3268,9 +3276,6 @@ public class PyUnicode implements CraftedPyObject {
          * that the first call to {@code previous()} returns the last
          * element.
          *
-         * @param index starting position (code point index)
-         * @param start index of first element to include.
-         * @param end index of first element not to include.
          * @return the iterator
          */
         CodepointIterator iteratorLast() {
@@ -3286,6 +3291,14 @@ public class PyUnicode implements CraftedPyObject {
          * @return the object of which this is the delegate
          */
         abstract Object principal();
+
+        // Re-declared here to remove throws clause
+        @Override
+        public abstract Object getItem(int i);
+
+        // Re-declared here to remove throws clause
+        @Override
+        public abstract Object getSlice(Indices slice);
 
         @Override
         public String toString() {
@@ -3343,12 +3356,12 @@ public class PyUnicode implements CraftedPyObject {
          * Returns the previous {@code int} element in the iteration.
          * This is just previous specialised to a primitive {@code int}.
          *
-         * @return
+         * @return the previous {@code int}
          */
         int previousInt();
 
         /**
-         * Equivalent to {@code n} calls to {@link #prevousInt()}
+         * Equivalent to {@code n} calls to {@link #previousInt()}
          * returning the last result.
          *
          * @param n the number of steps to take (in reverse)
@@ -3484,7 +3497,7 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         @Override
-        public Object getSlice(Indices slice) throws Throwable {
+        public Object getSlice(Indices slice) {
             if (slice.slicelength == 0) {
                 return "";
             } else if (slice.step == 1 && isBMP()) {
@@ -4370,7 +4383,11 @@ public class PyUnicode implements CraftedPyObject {
         private int[] value;
         private int len = 0;
 
-        /** Create an empty buffer of a defined initial capacity. */
+        /**
+         * Create an empty buffer of a defined initial capacity.
+         *
+         * @param capacity initially
+         */
         IntArrayBuilder(int capacity) {
             value = new int[capacity];
         }
@@ -4380,7 +4397,11 @@ public class PyUnicode implements CraftedPyObject {
             value = EMPTY_INT_ARRAY;
         }
 
-        /** The number of elements currently. */
+        /**
+         * The number of elements currently
+         *
+         * @return the number of elements currently.
+         */
         int length() {
             return len;
         }
@@ -4388,13 +4409,19 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * An array of the elements in the buffer (not modified by
          * appends hereafter).
+         *
+         * @return the elements in the buffer
          */
         int[] value() {
             return len == value.length ? value
                     : Arrays.copyOf(value, len);
         }
 
-        /** Ensure there is room for another {@code n} elements. */
+        /**
+         * Ensure there is room for another {@code n} elements.
+         *
+         * @param n to make space for
+         */
         private void ensure(int n) {
             if (len + n > value.length) {
                 int newSize = Math.max(value.length * 2, MINSIZE);
@@ -4404,14 +4431,24 @@ public class PyUnicode implements CraftedPyObject {
             }
         }
 
-        /** Append one element. */
+        /**
+         * Append one element.
+         *
+         * @param v to append
+         * @return this builder
+         */
         IntArrayBuilder append(int v) {
             ensure(1);
             value[len++] = v;
             return this;
         }
 
-        /** Append all the elements from a sequence. */
+        /**
+         * Append all the elements from a sequence.
+         *
+         * @param seq from which to take items
+         * @return this builder
+         */
         IntArrayBuilder append(PySequence.OfInt seq) {
             ensure(seq.length());
             for (int v : seq) { value[len++] = v; }
@@ -4420,12 +4457,21 @@ public class PyUnicode implements CraftedPyObject {
 
         /**
          * Append up to the given number of elements from a sequence.
+         *
+         * @param seq from which to take items
+         * @param count the maximum number to take
+         * @return this builder
          */
         IntArrayBuilder append(PySequence.OfInt seq, int count) {
             return append(seq.iterator(), count);
         }
 
-        /** Append all the elements available from an iterator. */
+        /**
+         * Append all the elements available from an iterator.
+         *
+         * @param iter from which to take items
+         * @return this builder
+         */
         IntArrayBuilder append(Iterator<Integer> iter) {
             while (iter.hasNext()) { append(iter.next()); }
             return this;
@@ -4434,6 +4480,10 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Append up to the given number of elements available from an
          * iterator.
+         *
+         * @param iter from which to take items
+         * @param count the maximum number to take
+         * @return this builder
          */
         IntArrayBuilder append(Iterator<Integer> iter, int count) {
             ensure(count);
@@ -4446,6 +4496,8 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Provide the contents as a Python Unicode {@code str} and
          * reset the builder to empty. (This is a "destructive read".)
+         *
+         * @return the contents as a Python {@code str}
          */
         PyUnicode takeUnicode() {
             PyUnicode u;
@@ -4480,7 +4532,11 @@ public class PyUnicode implements CraftedPyObject {
         private int[] value;
         private int ptr = 0;
 
-        /** Create an empty buffer of a defined initial capacity. */
+        /**
+         * Create an empty buffer of a defined initial capacity.
+         *
+         * @param capacity initially
+         */
         IntArrayReverseBuilder(int capacity) {
             value = new int[capacity];
             ptr = value.length;
@@ -4492,7 +4548,11 @@ public class PyUnicode implements CraftedPyObject {
             ptr = value.length;
         }
 
-        /** The number of elements currently. */
+        /**
+         * The number of elements currently
+         *
+         * @return the number of elements currently.
+         */
         int length() {
             return value.length - ptr;
         }
@@ -4500,13 +4560,19 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * An array of the elements in the buffer (not modified by
          * appends hereafter).
+         *
+         * @return the elements in the buffer
          */
         int[] value() {
             return ptr == 0 ? value
                     : Arrays.copyOfRange(value, ptr, value.length);
         }
 
-        /** Ensure there is room for another {@code n} elements. */
+        /**
+         * Ensure there is room for another {@code n} elements.
+         *
+         * @param n to make space for
+         */
         private void ensure(int n) {
             if (n > ptr) {
                 int len = value.length - ptr;
@@ -4519,14 +4585,24 @@ public class PyUnicode implements CraftedPyObject {
             }
         }
 
-        /** Prepend one element. */
+        /**
+         * Prepend one element.
+         *
+         * @param v to append
+         * @return this builder
+         */
         IntArrayReverseBuilder prepend(int v) {
             ensure(1);
             value[--ptr] = v;
             return this;
         }
 
-        /** Prepend all the elements from a sequence. */
+        /**
+         * Prepend all the elements from a sequence.
+         *
+         * @param seq from which to take items
+         * @return this builder
+         */
         IntArrayReverseBuilder prepend(CodepointDelegate seq) {
             return prepend(seq.iteratorLast(), seq.length());
         }
@@ -4534,6 +4610,10 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Prepend up to the given number of elements from the end of a
          * sequence.
+         *
+         * @param seq from which to take items
+         * @param count the maximum number to take
+         * @return this builder
          */
         IntArrayReverseBuilder prepend(CodepointDelegate seq,
                 int count) {
@@ -4543,6 +4623,9 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Prepend all the elements available from an iterator, working
          * backwards with {@code iter.previous()}.
+         *
+         * @param iter from which to take items
+         * @return this builder
          */
         IntArrayReverseBuilder prepend(ListIterator<Integer> iter) {
             while (iter.hasPrevious()) { prepend(iter.previous()); }
@@ -4552,6 +4635,10 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Prepend up to the given number of elements available from an
          * iterator, working backwards with {@code iter.previous()}.
+         *
+         * @param iter from which to take items
+         * @param count the maximum number to take
+         * @return this builder
          */
         IntArrayReverseBuilder prepend(ListIterator<Integer> iter,
                 int count) {
@@ -4565,6 +4652,8 @@ public class PyUnicode implements CraftedPyObject {
         /**
          * Provide the contents as a Python Unicode {@code str} and
          * reset the builder to empty. (This is a "destructive read".)
+         *
+         * @return the contents as a Python {@code str}
          */
         PyUnicode takeUnicode() {
             PyUnicode u;
@@ -4773,8 +4862,9 @@ public class PyUnicode implements CraftedPyObject {
 
     // Copied from PyString with this -> self
     /**
-     * Convert this PyString to a floating-point value according to Python rules.
+     * Convert a {@code String} to a floating-point value according to Python rules.
      *
+     * @param self to convert
      * @return the value
      */
     public static double atof(String self) {

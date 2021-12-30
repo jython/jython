@@ -8,7 +8,7 @@ import org.python.core.Slot.EmptyException;
 
 /**
  * Selects a particular "rich comparison" operation from the
- * repertoire supported by {@link Opcode#COMPARE_OP}, the argument
+ * repertoire supported by {@code Opcode.COMPARE_OP}, the argument
  * to which is the {@code code} attribute of the name in this
  * {@code enum}.
  *
@@ -161,7 +161,7 @@ enum Comparison {
     public String toString() { return text; }
 
     /**
-     * Translate CPython {@link Opcode#COMPARE_OP} opcode argument to
+     * Translate CPython {@code Opcode.COMPARE_OP} opcode argument to
      * Comparison constant.
      *
      * @param oparg opcode argument

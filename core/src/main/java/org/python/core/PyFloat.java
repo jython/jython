@@ -744,15 +744,20 @@ public class PyFloat extends AbstractPyObject {
      */
     static class Formatter extends FloatFormatter {
 
+        /**
+         * If {@code true}, give {@code printf}-style meanings to
+         * {@link Spec#type}.
+         */
         final boolean printf;
 
         /**
-         * Prepare a {@link Formatter} in support of
-         * {@link PyUnicode#__mod__(Object, Object) str.__mod__}, that is,
-         * traditional {@code printf}-style formatting.
+         * Prepare a {@link Formatter} in support of {@code str.__mod__},
+         * that is, traditional {@code printf}-style formatting.
          *
-         * @param spec a parsed PEP-3101 format specification.
-         * @return a formatter ready to use.
+         * @param spec a parsed format specification.
+         * @param printf f {@code true}, interpret {@code spec}
+         *     {@code printf}-style, otherwise as
+         *     {@link Formatter#Formatter(Spec) Formatter(Spec)}
          * @throws FormatOverflow if a value is out of range (including the
          *     precision)
          * @throws FormatError if an unsupported format character is
@@ -768,7 +773,6 @@ public class PyFloat extends AbstractPyObject {
          * {@link PyFloat#__format__(Object, Object) float.__format__}.
          *
          * @param spec a parsed PEP-3101 format specification.
-         * @return a formatter ready to use.
          * @throws FormatOverflow if a value is out of range (including the
          *     precision)
          * @throws FormatError if an unsupported format character is
@@ -806,7 +810,7 @@ public class PyFloat extends AbstractPyObject {
 
                 case 'r':
                 case 's':
-                    // Only for printf-style formatting
+                    // Only allow for printf-style formatting
                     if (printf) { break; }
                     //$FALL-THROUGH$
 

@@ -177,8 +177,8 @@ public class PySequence extends Abstract {
      * @throws Throwable from the implementation of {@code o}.
      */
     // Compare CPython PySequence_Fast in abstract.c
-    static <E extends PyException> List<Object> fastList(Object o,
-            Supplier<E> exc) throws E, Throwable {
+    static <E extends PyException> List<Object> fastList(Object o, Supplier<E> exc)
+            throws E, Throwable {
 
         if (PyList.TYPE.checkExact(o)) {
             return (PyList)o;
@@ -253,16 +253,14 @@ public class PySequence extends Abstract {
         /**
          * {@inheritDoc}
          *
-         * @implNote The default implementation is the stream of values
-         *     from {@link #asIntStream()}, boxed to {@code Integer}.
-         *     Consumers that are able, will obtain improved efficiency
-         *     by preferring {@link #asIntStream()} and specialising
-         *     intermediate processing to {@code int}.
+         * @implNote The default implementation is the stream of values from
+         *     {@link #asIntStream()}, boxed to {@code Integer}. Consumers
+         *     that are able, will obtain improved efficiency by preferring
+         *     {@link #asIntStream()} and specialising intermediate
+         *     processing to {@code int}.
          */
         @Override
-        default Stream<Integer> asStream() {
-            return asIntStream().boxed();
-        }
+        default Stream<Integer> asStream() { return asIntStream().boxed(); }
     }
 
     /**
@@ -286,12 +284,14 @@ public class PySequence extends Abstract {
      * CPython implementation of {@code list_subscript} with that of
      * {@code bytes_subscript} or any other {@code *_subscript} method.)
      * <p>
-     * The client must override abstract methods declared here in the
-     * sub-class it defines, to specialise the behaviour of the
-     * delegate. A sub-class supporting a mutable sequence type must
-     * additionally override {@link #setImpl(int)},
-     * {@link #setImpl(Indices)}, {@link #delItem(int)} and
-     * {@link #delSlice(Indices)}.
+     * The client must override abstract methods declared here, in the
+     * delegate sub-class it defines, to specialise the behaviour. A
+     * sub-class supporting a mutable sequence type must additionally
+     * override {@link #setItem(int, Object)},
+     * {@link #setSlice(Indices, Object)} and
+     * {@link #delSlice(Indices)}. It <i>may</i> also override
+     * {@link #delItem(int)}, or rely on the default implementation
+     * using {@code delSlice}.
      *
      * @param <E> the element type returned by {@code iterator().next()}
      * @param <S> the slice type, and return type of
@@ -314,7 +314,7 @@ public class PySequence extends Abstract {
 
         /**
          * Provide the type of client sequence, primarily for use in error
-         * messages e.g. "&lt;TYPE> index out of bounds".
+         * messages e.g. "TYPE index out of bounds".
          *
          * @implNote This can simply return a constant characteristic of the
          *     the implementing class, the Python type implements or
@@ -343,7 +343,7 @@ public class PySequence extends Abstract {
          *
          * @param i index of item to return
          * @return the element from the client sequence
-         * @throws Throwable from errors other than indexing
+         * @throws Throwable from accessing the client data
          */
         public abstract Object getItem(int i) throws Throwable;
 
@@ -372,8 +372,10 @@ public class PySequence extends Abstract {
          * immutable types) does nothing.
          *
          * @param i index of item to set
-         * @throws Throwable from errors other than indexing
+         * @param value to set at {@code i}
+         * @throws Throwable from accessing the client data
          */
+        @SuppressWarnings("unused")
         public void setItem(int i, Object value) throws Throwable {};
 
         /**
@@ -423,8 +425,7 @@ public class PySequence extends Abstract {
          *
          * @param slice containing [start, stop, step, count] of the slice
          *     to delete
-         * @throws Throwable
-         * @throws TypeError
+         * @throws Throwable from accessing the client data
          */
         public void delSlice(PySlice.Indices slice) throws Throwable {}
 
@@ -525,8 +526,7 @@ public class PySequence extends Abstract {
         /**
          * Implementation of {@code __delitem__}. Delete either an element
          * or a slice of the client sequence, after checks, by calling
-         * either {@link #delItem(int)} or
-         * {@link #delImpl(Indices, Object)}.
+         * either {@link #delItem(int)} or {@link #delSlice(Indices)}.
          *
          * @param item (or slice) to delete in the client
          * @throws ValueError if {@code slice.step==0} or value is the wrong
@@ -609,7 +609,7 @@ public class PySequence extends Abstract {
 
         /**
          * Implementation of {@code __mul__} (repetition) and
-         * {@code __rmul__} by calling {@link #repeat(Object)}.
+         * {@code __rmul__} by calling {@link #repeat(int)}.
          * <p>
          * The wrapper attempts conversion of the argument to {@code int},
          * and if this cannot be achieved, it will return
@@ -653,6 +653,8 @@ public class PySequence extends Abstract {
          * either {@link #getItem(int)} or {@link #getSlice(Indices)}.
          *
          * @param v value to match in the client
+         * @param start index of first element in range
+         * @param stop index of first element not in range
          * @return the index at which found
          * @throws ValueError if {@code v} not found
          * @throws TypeError from bad {@code start} and {@code stop} types

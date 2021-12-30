@@ -7,7 +7,8 @@ public class BaseBytes {
     // Character class operations
     //
 
-    // Bit to twiddle (XOR) for lowercase letter to uppercase and vice-versa.
+    // Bit to twiddle (XOR) for lowercase letter to uppercase and
+    // vice-versa.
     private static final int SWAP_CASE = 0x20;
 
     // Bit masks and sets to use with the byte classification table
@@ -25,15 +26,14 @@ public class BaseBytes {
             ctype[0x80 + c] = UPPER;
             ctype[0x80 + SWAP_CASE + c] = LOWER;
         }
-        for (int c = '0'; c <= '9'; c++) {
-            ctype[0x80 + c] = DIGIT;
-        }
-        for (char c : " \t\n\u000b\f\r".toCharArray()) {
-            ctype[0x80 + c] = SPACE;
-        }
+        for (int c = '0'; c <= '9'; c++) { ctype[0x80 + c] = DIGIT; }
+        for (char c : " \t\n\u000b\f\r".toCharArray()) { ctype[0x80 + c] = SPACE; }
     }
 
-    /** @return b in ' \t\n\v\f\r' */
+    /**
+     * @param b to classify
+     * @return b in ' \t\n\v\f\r'
+     */
     static final boolean isspace(byte b) {
         return (ctype[0x80 + b] & SPACE) != 0;
     }
