@@ -1324,6 +1324,7 @@ class PyUnicodeTest extends UnitTestSupport {
                     joinExample("", List.of("a", "bb", "ccc")), //
                     // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
                     joinExample("🐍", List.of("🦓", "Zebra")),
+                    joinExample("-🐍-", List.of("🦓🦓", "(🦓)", "Zebras")),
                     // Avoid making a zebra
                     joinExample("\ud83e", List.of("Z", "\udd93")), //
                     joinExample("\udd93", List.of("\ud83e", "Z")) //
