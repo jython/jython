@@ -28,6 +28,8 @@ import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
 import org.python.core.stringlib.FieldNameIterator;
+import org.python.core.stringlib.IntArrayBuilder;
+import org.python.core.stringlib.IntArrayReverseBuilder;
 import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.InternalFormat.FormatError;
 import org.python.core.stringlib.InternalFormat.FormatOverflow;
@@ -40,15 +42,17 @@ import org.python.modules.ucnhashAPI;
 /**
  * The Python {@code str} object is implemented by both
  * {@code PyUnicode} and Java {@code String}. All operations will
- * produce the same result for Python, whichever representation is used.
- * Both types are treated as an array of code points in Python.
+ * produce the same result for Python, whichever representation is
+ * used. Both types are treated as an array of code points in
+ * Python.
  * <p>
- * Most strings used as names (keys) and text are quite satisfactorily
- * represented by Java {@code String}. Java {@code String}s are compact,
- * but where they contain non-BMP characters, these are represented by a
- * pair of code units. That makes certain operations (such as indexing
- * or slicing) relatively expensive compared to Java. Accessing the code
- * points of a {@code String} sequentially is still cheap.
+ * Most strings used as names (keys) and text are quite
+ * satisfactorily represented by Java {@code String}. Java
+ * {@code String}s are compact, but where they contain non-BMP
+ * characters, these are represented by a pair of code units. That
+ * makes certain operations (such as indexing or slicing) relatively
+ * expensive compared to Java. Accessing the code points of a
+ * {@code String} sequentially is still cheap.
  * <p>
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
@@ -57,8 +61,7 @@ public class PyUnicode implements CraftedPyObject {
 
     /** The type {@code str}. */
     static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("str", MethodHandles.lookup())
-                    .methods(PyUnicodeMethods.class)
+            new PyType.Spec("str", MethodHandles.lookup()).methods(PyUnicodeMethods.class)
                     .adopt(String.class));
 
     /**
@@ -75,7 +78,7 @@ public class PyUnicode implements CraftedPyObject {
      * Helper to implement {@code __getitem__} and other index-related
      * operations.
      */
-    private UnicodeDelegate delegate = new UnicodeDelegate();
+    private UnicodeAdapter delegate = new UnicodeAdapter();
 
     /**
      * Cached hash of the {@code str}, lazily computed in
@@ -97,8 +100,7 @@ public class PyUnicode implements CraftedPyObject {
      *     implementation array, otherwise the constructor takes a copy.
      * @param codePoints the array of code points
      */
-    private PyUnicode(PyType type, boolean iPromiseNotToModify,
-            int[] codePoints) {
+    private PyUnicode(PyType type, boolean iPromiseNotToModify, int[] codePoints) {
         this.type = type;
         if (iPromiseNotToModify)
             this.value = codePoints;
@@ -114,9 +116,7 @@ public class PyUnicode implements CraftedPyObject {
      * @param type actual type the instance should have
      * @param codePoints the array of code points
      */
-    protected PyUnicode(PyType type, int[] codePoints) {
-        this(type, false, codePoints);
-    }
+    protected PyUnicode(PyType type, int[] codePoints) { this(type, false, codePoints); }
 
     /**
      * Construct an instance of {@code PyUnicode}, a {@code str} or a
@@ -125,9 +125,7 @@ public class PyUnicode implements CraftedPyObject {
      *
      * @param codePoints the array of code points
      */
-    protected PyUnicode(int... codePoints) {
-        this(TYPE, false, codePoints);
-    }
+    protected PyUnicode(int... codePoints) { this(TYPE, false, codePoints); }
 
     /**
      * Construct an instance of {@code PyUnicode}, a {@code str} or a
@@ -139,12 +137,26 @@ public class PyUnicode implements CraftedPyObject {
      * @param value to have
      */
     protected PyUnicode(PyType type, String value) {
-        this(TYPE, value.codePoints().toArray());
+        this(TYPE, true, value.codePoints().toArray());
     }
 
- 
     // Factory methods ------------------------------------------------
     // These may return a Java String or a PyUnicode
+
+    /**
+     * Unsafely wrap an array of code points as a {@code PyUnicode}. The
+     * caller must not hold a reference to the argument array (and
+     * definitely not manipulate the contents).
+     *
+     * @param codePoints to wrap as a {@code str}
+     * @return the {@code str}
+     */
+    private static PyUnicode wrap(int[] codePoints) {
+        return new PyUnicode(TYPE, true, codePoints);
+    }
+
+    @Override
+    public PyType getType() { return type; }
 
     /**
      * Return a Python {@code str} representing the single character
@@ -159,7 +171,7 @@ public class PyUnicode implements CraftedPyObject {
         if (cp < Character.MIN_SUPPLEMENTARY_CODE_POINT)
             return String.valueOf((char)cp);
         else
-            return new PyUnicode(TYPE, true, new int[] {cp});
+            return wrap(new int[] {cp});
     }
 
     /**
@@ -175,12 +187,8 @@ public class PyUnicode implements CraftedPyObject {
         if (isBMP(s))
             return s;
         else
-            return new PyUnicode(TYPE, true, s.codePoints().toArray());
+            return wrap(s.codePoints().toArray());
     }
-
-    @Override
-    public PyType getType() { return type; }
-
 
     // ------------------------------------------------------------------------------------------
 
@@ -237,7 +245,7 @@ public class PyUnicode implements CraftedPyObject {
     */
 
 
-    // Special methods -----------------------------------------------
+    // Special methods ------------------------------------------------
 
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___str___doc)
@@ -901,10 +909,11 @@ public class PyUnicode implements CraftedPyObject {
                 // If we reached the end of p it's a match
                 if (match == pLength) {
                     // Grab what came before the match.
-                    Object before = buffer.takeUnicode();
+                    Object before = wrap(buffer.take());
                     // Now consume (the known length) after the match.
                     buffer = new IntArrayBuilder(lastPos - pos + 1);
-                    Object after = buffer.append(si).takeUnicode();
+                    buffer.append(si);
+                    Object after = wrap(buffer.take());
                     // Return a result tuple
                     return Py.tuple(before, sep, after);
                 }
@@ -987,10 +996,11 @@ public class PyUnicode implements CraftedPyObject {
                 // If we reached the end of p it's a match
                 if (match == pLength) {
                     // Grab what came after the match.
-                    Object after = buffer.takeUnicode();
+                    Object after = wrap(buffer.take());
                     // Now consume (the known length) before the match.
                     buffer = new IntArrayReverseBuilder(si.nextIndex());
-                    Object before = buffer.prepend(si).takeUnicode();
+                    buffer.prepend(si);
+                    Object before = wrap(buffer.take());
                     // Return a result
                     return Py.tuple(before, sep, after);
                 }
@@ -1115,7 +1125,7 @@ public class PyUnicode implements CraftedPyObject {
             if (segment.length() > 0) {
                 // We created a segment.
                 --maxsplit;
-                list.add(segment.takeUnicode());
+                list.add(wrap(segment.take()));
             }
         }
         return list;
@@ -1189,7 +1199,7 @@ public class PyUnicode implements CraftedPyObject {
                      * segment we have been accumulating, start a new
                      * one, and count a split.
                      */
-                    list.add(segment.takeUnicode());
+                    list.add(wrap(segment.take()));
                     --maxsplit;
                     // Catch pos up with si (matches do not overlap).
                     pos = si.nextIndex();
@@ -1218,7 +1228,7 @@ public class PyUnicode implements CraftedPyObject {
          * Add the segment we were building when s ran out, even if it
          * is empty.
          */
-        list.add(segment.takeUnicode());
+        list.add(wrap(segment.take()));
         return list;
     }
 
@@ -1332,7 +1342,7 @@ public class PyUnicode implements CraftedPyObject {
             if (segment.length() > 0) {
                 // We created a segment.
                 --maxsplit;
-                list.add(segment.takeUnicode());
+                list.add(wrap(segment.take()));
             }
         }
 
@@ -1410,7 +1420,7 @@ public class PyUnicode implements CraftedPyObject {
                      * segment we have been accumulating, start a new
                      * one, and count a split.
                      */
-                    list.add(segment.takeUnicode());
+                    list.add(wrap(segment.take()));
                     --maxsplit;
                     // Catch pos up with si (matches do not overlap).
                     pos = si.nextIndex();
@@ -1439,7 +1449,7 @@ public class PyUnicode implements CraftedPyObject {
          * Add the segment we were building when s ran out, even if it
          * is empty. Note the list is backwards and we must reverse it.
          */
-        list.add(segment.takeUnicode());
+        list.add(wrap(segment.take()));
         list.reverse();
         return list;
     }
@@ -1512,7 +1522,7 @@ public class PyUnicode implements CraftedPyObject {
                 // Optionally append the (single) line separator c
                 if (keepends) { line.append(c); }
                 // Emit the line (and start another)
-                list.add(line.takeUnicode());
+                list.add(wrap(line.take()));
 
             } else {
                 // c is part of the current line.
@@ -1524,7 +1534,7 @@ public class PyUnicode implements CraftedPyObject {
          * Add the segment we were building when s ran out, but not if
          * it is empty.
          */
-        if (line.length() > 0) { list.add(line.takeUnicode()); }
+        if (line.length() > 0) { list.add(wrap(line.take())); }
 
         return list;
     }
@@ -1742,7 +1752,7 @@ public class PyUnicode implements CraftedPyObject {
 
         // Now copy any remaining characters of s
         result.append(si);
-        return result.takeUnicode();
+        return wrap(result.take());
     }
 
     /**
@@ -1849,7 +1859,7 @@ public class PyUnicode implements CraftedPyObject {
             }
         }
 
-        return result.takeUnicode();
+        return wrap(result.take());
     }
 
     // @formatter:off
@@ -1900,7 +1910,7 @@ public class PyUnicode implements CraftedPyObject {
                     Character.isLowerCase(c) || Character.isUpperCase(c)
                             || Character.isTitleCase(c);
         }
-        return buffer.takeUnicode();
+        return wrap(buffer.take());
     }
 
     /*
@@ -1999,7 +2009,7 @@ public class PyUnicode implements CraftedPyObject {
         for (int i = 0; i < leftPad; i++) { buf.append(fill); }
         buf.append(s);
         for (int i = 0; i < rightPad; i++) { buf.append(fill); }
-        return buf.takeUnicode();
+        return wrap(buf.take());
     }
 
     /*
@@ -2042,7 +2052,7 @@ public class PyUnicode implements CraftedPyObject {
         // Now the computed number of zeros
         for (int i = 0; i < pad; i++) { buf.append('0'); }
         buf.append(si);
-        return buf.takeUnicode();
+        return wrap(buf.take());
     }
 
     /*
@@ -2081,7 +2091,7 @@ public class PyUnicode implements CraftedPyObject {
                 pos++;
             }
         }
-        return buf.takeUnicode();
+        return wrap(buf.take());
     }
 
     /*
@@ -2111,7 +2121,7 @@ public class PyUnicode implements CraftedPyObject {
             while (si.hasNext()) {
                 buf.append(Character.toLowerCase(si.nextInt()));
             }
-            return buf.takeUnicode();
+            return wrap(buf.take());
         } else {
             // String is empty
             return "";
@@ -2215,7 +2225,7 @@ public class PyUnicode implements CraftedPyObject {
             }
         }
 
-        return buf.takeUnicode();
+        return wrap(buf.take());
     }
 
     private static TypeError joinArgumentTypeError(Object item, int i) {
@@ -2625,7 +2635,7 @@ public class PyUnicode implements CraftedPyObject {
     */
     private PyTuple __getnewargs__() {
         /* This may be a sub-class but it should still be safe to share the value array. (I think.) */
-        return new PyTuple(new PyUnicode(TYPE, true, value));
+        return new PyTuple(wrap(value));
     }
 
     private static PyTuple __getnewargs__(String self) {
@@ -3058,8 +3068,8 @@ public class PyUnicode implements CraftedPyObject {
     @Override
     public int hashCode() throws PyException { return __hash__(); }
 
-    /* *
-     * Compare for equality with another Python {@code str}, or a
+    /*
+     * * Compare for equality with another Python {@code str}, or a
      * {@link PyDict.Key} containing a {@code str}. If the other object
      * is not a {@code str}, or a {@code Key} containing a {@code str},
      * return {@code false}. If it is such an object, compare for
@@ -3447,6 +3457,18 @@ public class PyUnicode implements CraftedPyObject {
         public int length() { return length; };
 
         @Override
+        public int getInt(int i) {
+            if (isBMP()) {
+                // No surrogate pairs.
+                return s.charAt(i);
+            } else {
+                // We have to count from the start
+                int k = toCharIndex(i);
+                return s.codePointAt(k);
+            }
+        }
+
+        @Override
         public PyType getType() { return TYPE; }
 
         @Override
@@ -3461,9 +3483,7 @@ public class PyUnicode implements CraftedPyObject {
                 // No surrogate pairs.
                 return String.valueOf(s.charAt(i));
             } else {
-                // We have to count from the start
-                int k = toCharIndex(i);
-                return PyUnicode.fromCodePoint(s.codePointAt(k));
+                return PyUnicode.fromCodePoint(getInt(i));
             }
         }
 
@@ -3539,7 +3559,7 @@ public class PyUnicode implements CraftedPyObject {
                         r[j] = cps.previous();
                     }
                 }
-                return new PyUnicode(TYPE, true, r);
+                return wrap(r);
             }
         }
 
@@ -3899,10 +3919,13 @@ public class PyUnicode implements CraftedPyObject {
      * need only specify the work specific to {@link PyUnicode}
      * instances.
      */
-    class UnicodeDelegate extends CodepointDelegate {
+    class UnicodeAdapter extends CodepointDelegate {
 
         @Override
         public int length() { return value.length; }
+
+        @Override
+        public int getInt(int i) { return value[i]; }
 
         @Override
         public PyType getType() { return TYPE; }
@@ -3931,7 +3954,7 @@ public class PyUnicode implements CraftedPyObject {
                     i += slice.step;
                 }
             }
-            return new PyUnicode(TYPE, true, v);
+            return wrap(v);
         }
 
         @Override
@@ -3944,7 +3967,7 @@ public class PyUnicode implements CraftedPyObject {
                 int[] r = new int[L + M];
                 System.arraycopy(value, 0, r, 0, L);
                 System.arraycopy(w.value, 0, r, L, M);
-                return new PyUnicode(TYPE, true, r);
+                return wrap(r);
             } else {
                 return concatUnicode(asIntStream(),
                         adapt(ow).asIntStream());
@@ -3961,7 +3984,7 @@ public class PyUnicode implements CraftedPyObject {
                 int[] r = new int[L + M];
                 System.arraycopy(v.value, 0, r, 0, L);
                 System.arraycopy(value, 0, r, L, M);
-                return new PyUnicode(TYPE, true, r);
+                return wrap(r);
             } else {
                 return concatUnicode(adapt(ov).asIntStream(),
                         asIntStream());
@@ -3980,7 +4003,7 @@ public class PyUnicode implements CraftedPyObject {
                 for (int i = 0, p = 0; i < n; i++, p += m) {
                     System.arraycopy(value, 0, b, p, m);
                 }
-                return new PyUnicode(TYPE, true, b);
+                return wrap(b);
             }
         }
 
@@ -4174,7 +4197,7 @@ public class PyUnicode implements CraftedPyObject {
      *
      * @return the delegate for sequence operations on this {@code str}
      */
-    UnicodeDelegate adapt() { return delegate; }
+    UnicodeAdapter adapt() { return delegate; }
 
     /**
      * Adapt a Python {@code str}, as by {@link #adapt(Object)}, that is
@@ -4366,319 +4389,7 @@ public class PyUnicode implements CraftedPyObject {
      */
     private static PyUnicode concatUnicode(IntStream v, IntStream w)
             throws OutOfMemoryError {
-        return new PyUnicode(TYPE, true,
-                IntStream.concat(v, w).toArray());
-    }
-
-
-    /** An empty array of int for builder initial state, etc.. */
-    private static final int[] EMPTY_INT_ARRAY = new int[0];
-
-    /**
-     * Accumulate {@code int} elements in an array, similar to
-     * {@code StringBuilder}.
-     */
-    static class IntArrayBuilder {
-        private static final int MINSIZE = 16;
-        private int[] value;
-        private int len = 0;
-
-        /**
-         * Create an empty buffer of a defined initial capacity.
-         *
-         * @param capacity initially
-         */
-        IntArrayBuilder(int capacity) {
-            value = new int[capacity];
-        }
-
-        /** Create an empty buffer of a default initial capacity. */
-        IntArrayBuilder() {
-            value = EMPTY_INT_ARRAY;
-        }
-
-        /**
-         * The number of elements currently
-         *
-         * @return the number of elements currently.
-         */
-        int length() {
-            return len;
-        }
-
-        /**
-         * An array of the elements in the buffer (not modified by
-         * appends hereafter).
-         *
-         * @return the elements in the buffer
-         */
-        int[] value() {
-            return len == value.length ? value
-                    : Arrays.copyOf(value, len);
-        }
-
-        /**
-         * Ensure there is room for another {@code n} elements.
-         *
-         * @param n to make space for
-         */
-        private void ensure(int n) {
-            if (len + n > value.length) {
-                int newSize = Math.max(value.length * 2, MINSIZE);
-                int[] newValue = new int[newSize];
-                System.arraycopy(value, 0, newValue, 0, len);
-                value = newValue;
-            }
-        }
-
-        /**
-         * Append one element.
-         *
-         * @param v to append
-         * @return this builder
-         */
-        IntArrayBuilder append(int v) {
-            ensure(1);
-            value[len++] = v;
-            return this;
-        }
-
-        /**
-         * Append all the elements from a sequence.
-         *
-         * @param seq from which to take items
-         * @return this builder
-         */
-        IntArrayBuilder append(PySequence.OfInt seq) {
-            ensure(seq.length());
-            for (int v : seq) { value[len++] = v; }
-            return this;
-        }
-
-        /**
-         * Append up to the given number of elements from a sequence.
-         *
-         * @param seq from which to take items
-         * @param count the maximum number to take
-         * @return this builder
-         */
-        IntArrayBuilder append(PySequence.OfInt seq, int count) {
-            return append(seq.iterator(), count);
-        }
-
-        /**
-         * Append all the elements available from an iterator.
-         *
-         * @param iter from which to take items
-         * @return this builder
-         */
-        IntArrayBuilder append(Iterator<Integer> iter) {
-            while (iter.hasNext()) { append(iter.next()); }
-            return this;
-        }
-
-        /**
-         * Append up to the given number of elements available from an
-         * iterator.
-         *
-         * @param iter from which to take items
-         * @param count the maximum number to take
-         * @return this builder
-         */
-        IntArrayBuilder append(Iterator<Integer> iter, int count) {
-            ensure(count);
-            while (--count >= 0 && iter.hasNext()) {
-                value[len++] = iter.next();
-            }
-            return this;
-        }
-
-        /**
-         * Provide the contents as a Python Unicode {@code str} and
-         * reset the builder to empty. (This is a "destructive read".)
-         *
-         * @return the contents as a Python {@code str}
-         */
-        PyUnicode takeUnicode() {
-            PyUnicode u;
-            if (len == value.length) {
-                // The array is exactly filled: use it without copy.
-                u = new PyUnicode(TYPE, true, value);
-                value = EMPTY_INT_ARRAY;
-            } else {
-                // The array is partly filled: copy it and re-use it.
-                int[] v = new int[len];
-                System.arraycopy(value, 0, v, 0, len);
-                u = new PyUnicode(TYPE, true, v);
-            }
-            len = 0;
-            return u;
-        }
-
-        /**
-         * Provide the contents as a Java {@code String}
-         * (non-destructively).
-         */
-        @Override
-        public String toString() { return new String(value, 0, len); }
-    }
-
-    /**
-     * Accumulate {@code int} elements in an array from the end, a sort
-     * of mirror image of {@link IntArrayBuilder}.
-     */
-    static class IntArrayReverseBuilder {
-        private static final int MINSIZE = 16;
-        private int[] value;
-        private int ptr = 0;
-
-        /**
-         * Create an empty buffer of a defined initial capacity.
-         *
-         * @param capacity initially
-         */
-        IntArrayReverseBuilder(int capacity) {
-            value = new int[capacity];
-            ptr = value.length;
-        }
-
-        /** Create an empty buffer of a default initial capacity. */
-        IntArrayReverseBuilder() {
-            value = EMPTY_INT_ARRAY;
-            ptr = value.length;
-        }
-
-        /**
-         * The number of elements currently
-         *
-         * @return the number of elements currently.
-         */
-        int length() {
-            return value.length - ptr;
-        }
-
-        /**
-         * An array of the elements in the buffer (not modified by
-         * appends hereafter).
-         *
-         * @return the elements in the buffer
-         */
-        int[] value() {
-            return ptr == 0 ? value
-                    : Arrays.copyOfRange(value, ptr, value.length);
-        }
-
-        /**
-         * Ensure there is room for another {@code n} elements.
-         *
-         * @param n to make space for
-         */
-        private void ensure(int n) {
-            if (n > ptr) {
-                int len = value.length - ptr;
-                int newSize = Math.max(value.length * 2, MINSIZE);
-                int newPtr = newSize - len;
-                int[] newValue = new int[newSize];
-                System.arraycopy(value, ptr, newValue, newPtr, len);
-                value = newValue;
-                ptr = newPtr;
-            }
-        }
-
-        /**
-         * Prepend one element.
-         *
-         * @param v to append
-         * @return this builder
-         */
-        IntArrayReverseBuilder prepend(int v) {
-            ensure(1);
-            value[--ptr] = v;
-            return this;
-        }
-
-        /**
-         * Prepend all the elements from a sequence.
-         *
-         * @param seq from which to take items
-         * @return this builder
-         */
-        IntArrayReverseBuilder prepend(CodepointDelegate seq) {
-            return prepend(seq.iteratorLast(), seq.length());
-        }
-
-        /**
-         * Prepend up to the given number of elements from the end of a
-         * sequence.
-         *
-         * @param seq from which to take items
-         * @param count the maximum number to take
-         * @return this builder
-         */
-        IntArrayReverseBuilder prepend(CodepointDelegate seq,
-                int count) {
-            return prepend(seq.iteratorLast(), count);
-        }
-
-        /**
-         * Prepend all the elements available from an iterator, working
-         * backwards with {@code iter.previous()}.
-         *
-         * @param iter from which to take items
-         * @return this builder
-         */
-        IntArrayReverseBuilder prepend(ListIterator<Integer> iter) {
-            while (iter.hasPrevious()) { prepend(iter.previous()); }
-            return this;
-        }
-
-        /**
-         * Prepend up to the given number of elements available from an
-         * iterator, working backwards with {@code iter.previous()}.
-         *
-         * @param iter from which to take items
-         * @param count the maximum number to take
-         * @return this builder
-         */
-        IntArrayReverseBuilder prepend(ListIterator<Integer> iter,
-                int count) {
-            ensure(count);
-            while (--count >= 0 && iter.hasPrevious()) {
-                value[--ptr] = iter.previous();
-            }
-            return this;
-        }
-
-        /**
-         * Provide the contents as a Python Unicode {@code str} and
-         * reset the builder to empty. (This is a "destructive read".)
-         *
-         * @return the contents as a Python {@code str}
-         */
-        PyUnicode takeUnicode() {
-            PyUnicode u;
-            if (ptr == 0) {
-                // The array is exactly filled: use it without copy.
-                u = new PyUnicode(TYPE, true, value);
-                value = EMPTY_INT_ARRAY;
-            } else {
-                // The array is partly filled: copy it and re-use it.
-                int[] v = new int[value.length - ptr];
-                System.arraycopy(value, ptr, v, 0, v.length);
-                u = new PyUnicode(TYPE, true, v);
-            }
-            ptr = value.length;
-            return u;
-        }
-
-        /**
-         * Provide the contents as a Java {@code String}
-         * (non-destructively).
-         */
-        @Override
-        public String toString() {
-            return new String(value, ptr, value.length - ptr);
-        }
+        return wrap(IntStream.concat(v, w).toArray());
     }
 
     /**
@@ -4690,8 +4401,7 @@ public class PyUnicode implements CraftedPyObject {
      * @return transformed string
      */
     private PyUnicode mapChars(IntUnaryOperator op) {
-        int[] v = delegate.asIntStream().map(op).toArray();
-        return new PyUnicode(TYPE, true, v);
+        return wrap(delegate.asIntStream().map(op).toArray());
     }
 
     /**
@@ -4780,13 +4490,10 @@ public class PyUnicode implements CraftedPyObject {
         // XXX This all has a has a Jython 2 smell: bytes/str confusion.
         // XXX Also, String and PyUnicode implementations are needed.
         // XXX Follow CPython _PyUnicode_TransformDecimalAndSpaceToASCII
-//        if (isBasicPlane()) {
-//            return encodeDecimalBasic();
-//        }
 
         int digit;
         StringBuilder sb = new StringBuilder();
-        
+
         for (CodepointIterator si = delegate.iterator(0); si.hasNext();) {
             int codePoint = si.nextInt();
             if (isPythonSpace(codePoint)) {
@@ -5411,7 +5118,7 @@ public class PyUnicode implements CraftedPyObject {
     // Copied from _codecs
     // parallel to CPython's PyUnicode_TranslateCharmap
     static Object translateCharmap(PyUnicode str, String errors, Object mapping) {
-        
+
         throw new MissingFeature("str.translate");
         /*
         StringBuilder buf = new StringBuilder(str.toString().length());
