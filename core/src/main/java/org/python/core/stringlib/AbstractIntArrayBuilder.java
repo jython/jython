@@ -5,17 +5,16 @@ import java.util.ListIterator;
 
 import org.python.core.PySequence;
 
-
 /**
- * The base of two classes that that provide elastic buffers of integer
- * values, somewhat like the {@code java.lang.StringBuilder}, but for
- * arrays of integers. There is an abstract base for arrays to which a
- * client appends, and one for arrays to which the client prepends new
- * values.
+ * The base of two classes that that provide elastic buffers of
+ * integer values, somewhat like the
+ * {@code java.lang.StringBuilder}, but for arrays of integers.
+ * There is an abstract base for arrays to which a client appends,
+ * and one for arrays to which the client prepends new values.
  * <p>
- * The particular virtue of these classes is that, if the ultimate size
- * of the built array may be known in advance, then the result may be
- * returned without a copy, using {@link #take()}.
+ * The particular virtue of these classes is that, if the ultimate
+ * size of the built array may be known in advance, then the result
+ * may be returned without a copy, using {@link #take()}.
  */
 public abstract class AbstractIntArrayBuilder {
 
@@ -82,12 +81,11 @@ public abstract class AbstractIntArrayBuilder {
      * content, building the result left to right. Implementations need
      * only define {@link #appendUnchecked(int)}.
      */
-    public static abstract class Forward
-            extends AbstractIntArrayBuilder {
+    public static abstract class Forward extends AbstractIntArrayBuilder {
         /**
          * Append one element without ensuring that there is space. This
-         * method is for use when it is known that there is space for
-         * the element, for example, inside a loop before which when
+         * method is for use when it is known that there is space for the
+         * element, for example, inside a loop before which when
          * {@link #ensure(int)} has been called.
          *
          * @param v to append
@@ -117,9 +115,7 @@ public abstract class AbstractIntArrayBuilder {
             int n = seq.length();
             ensure(n);
             // Fill (forwards) from the current position
-            for (int i = 0; i < n; i++) {
-                appendUnchecked(seq.getInt(i));
-            }
+            for (int i = 0; i < n; i++) { appendUnchecked(seq.getInt(i)); }
             return this;
         }
 
@@ -141,12 +137,11 @@ public abstract class AbstractIntArrayBuilder {
      * content, building the result right to left. Implementations need
      * only define {@link #prependUnchecked(int)}.
      */
-    public static abstract class Reverse
-            extends AbstractIntArrayBuilder {
+    public static abstract class Reverse extends AbstractIntArrayBuilder {
         /**
-         * Prepend one element without ensuring that there is space.
-         * This method is for use when it is known that there is space
-         * for the element, for example, inside a loop before which when
+         * Prepend one element without ensuring that there is space. This
+         * method is for use when it is known that there is space for the
+         * element, for example, inside a loop before which when
          * {@link #ensure(int)} has been called.
          *
          * @param v to prepend
@@ -167,8 +162,8 @@ public abstract class AbstractIntArrayBuilder {
 
         /**
          * Prepend all the elements from a sequence. The sequence is not
-         * reversed by this: it is prepended the right way around. After
-         * the call {@code seq[0]} is first in the buffer.
+         * reversed by this: it is prepended the right way around. After the
+         * call {@code seq[0]} is first in the buffer.
          *
          * @param seq from which to take items
          * @return this builder

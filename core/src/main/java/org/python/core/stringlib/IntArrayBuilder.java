@@ -2,8 +2,7 @@ package org.python.core.stringlib;
 
 import java.util.Arrays;
 
-public final class IntArrayBuilder
-        extends AbstractIntArrayBuilder.Forward {
+public final class IntArrayBuilder extends AbstractIntArrayBuilder.Forward {
     private int[] value;
     private int len = 0;
 
@@ -44,9 +43,7 @@ public final class IntArrayBuilder
     }
 
     @Override
-    protected int[] value() {
-        return Arrays.copyOf(value, len);
-    }
+    protected int[] value() { return Arrays.copyOf(value, len); }
 
     @Override
     public int[] take() {

@@ -192,12 +192,8 @@ public class PyUnicode implements CraftedPyObject {
 
     // ------------------------------------------------------------------------------------------
 
-    // @formatter:off
-
     public static String checkEncoding(String s) {
-        if (s == null || s.chars().allMatch(c->c<128)) {
-            return s;
-        }
+        if (s == null || s.chars().allMatch(c -> c < 128)) { return s; }
         return codecs.PyUnicode_EncodeASCII(s, s.length(), null);
     }
 
@@ -272,7 +268,6 @@ public class PyUnicode implements CraftedPyObject {
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___len___doc)
     */
-    @SuppressWarnings("unused")
     private int __len__() { return value.length; }
 
     @SuppressWarnings("unused")
@@ -283,13 +278,6 @@ public class PyUnicode implements CraftedPyObject {
     /*
     @ExposedMethod(doc = BuiltinDocs.unicode___hash___doc)
     */
-    /**
-     * The hash of a {@link PyUnicode} is the same as that of a Java
-     * {@code String} equal to it. This is so that a given Python
-     * {@code str} may be found as a match in hashed data structures,
-     * whichever representation is used for the key or query.
-     */
-    @SuppressWarnings("unused")
     private int __hash__() {
         // Reproduce on value the hash defined for java.lang.String
         if (hash == 0 && value.length > 0) {
@@ -3095,8 +3083,6 @@ public class PyUnicode implements CraftedPyObject {
         }
     }
 
-    // @formatter:off
-
     /**
      * Create a {@code str} from a format and arguments. Note Java
      * {@code String.format} semantics are applied, not the CPython
@@ -3115,8 +3101,7 @@ public class PyUnicode implements CraftedPyObject {
     public String toString() {
         StringBuilder b = new StringBuilder();
         for (int c : value) {
-            if (c >= Character.MIN_SURROGATE
-                    && c <= Character.MAX_SURROGATE) {
+            if (c >= Character.MIN_SURROGATE && c <= Character.MAX_SURROGATE) {
                 // This is a lone surrogate: show the code
                 b.append(String.format("\\u%04x", c));
             } else {
@@ -3143,10 +3128,9 @@ public class PyUnicode implements CraftedPyObject {
         throw Abstract.requiredTypeError("a str", v);
     }
 
-
     // Plumbing ------------------------------------------------------
 
-    // @formatter:off
+    // @formatter:on
 
     /**
      * Convert a Python {@code str} to a Java {@code str} (or throw
@@ -3181,8 +3165,7 @@ public class PyUnicode implements CraftedPyObject {
      * @param exc supplier for actual exception
      * @return {@code arg} as a {@code String}
      */
-    static <E extends PyException> String coerceToString(Object arg,
-            Supplier<E> exc) {
+    static <E extends PyException> String coerceToString(Object arg, Supplier<E> exc) {
         if (arg instanceof String) {
             return (String)arg;
         } else if (arg instanceof PyUnicode) {
@@ -3209,8 +3192,7 @@ public class PyUnicode implements CraftedPyObject {
      * @return whether contains no non-BMP characters
      */
     private static boolean isBMP(String s) {
-        return s.codePoints().dropWhile(Character::isBmpCodePoint)
-                .findFirst().isEmpty();
+        return s.codePoints().dropWhile(Character::isBmpCodePoint).findFirst().isEmpty();
     }
 
     /**
@@ -3255,20 +3237,18 @@ public class PyUnicode implements CraftedPyObject {
      * comparable with other instances of the same base, and is able to
      * supply point codes as a stream.
      */
-    static abstract class CodepointDelegate
-            extends PySequence.Delegate<Integer, Object>
+    static abstract class CodepointDelegate extends PySequence.Delegate<Integer, Object>
             implements PySequence.OfInt {
         /**
-         * A bidirectional iterator on the sequence of code points
-         * between two indices.
+         * A bidirectional iterator on the sequence of code points between
+         * two indices.
          *
          * @param index starting position (code point index)
          * @param start index of first element to include.
          * @param end index of first element not to include.
          * @return the iterator
          */
-        abstract CodepointIterator iterator(int index, int start,
-                int end);
+        abstract CodepointIterator iterator(int index, int start, int end);
 
         /**
          * A bidirectional iterator on the sequence of code points.
@@ -3276,21 +3256,16 @@ public class PyUnicode implements CraftedPyObject {
          * @param index starting position (code point index)
          * @return the iterator
          */
-        CodepointIterator iterator(int index) {
-            return iterator(index, 0, length());
-        }
+        CodepointIterator iterator(int index) { return iterator(index, 0, length()); }
 
         /**
          * A bidirectional iterator on the sequence of code points,
-         * positioned initially one beyond the end of the sequence, so
-         * that the first call to {@code previous()} returns the last
-         * element.
+         * positioned initially one beyond the end of the sequence, so that
+         * the first call to {@code previous()} returns the last element.
          *
          * @return the iterator
          */
-        CodepointIterator iteratorLast() {
-            return iterator(length());
-        }
+        CodepointIterator iteratorLast() { return iterator(length()); }
 
         @Override
         public Iterator<Integer> iterator() { return iterator(0); }
@@ -3322,26 +3297,24 @@ public class PyUnicode implements CraftedPyObject {
      * A {@code ListIterator} working bidirectionally in code point
      * indices.
      */
-    interface CodepointIterator
-            extends ListIterator<Integer>, PrimitiveIterator.OfInt {
+    interface CodepointIterator extends ListIterator<Integer>, PrimitiveIterator.OfInt {
 
         @Override
         default Integer next() { return nextInt(); }
 
         /**
-         * Returns {@code true} if this list iterator has the given
-         * number of elements when traversing the list in the forward
-         * direction.
+         * Returns {@code true} if this list iterator has the given number
+         * of elements when traversing the list in the forward direction.
          *
          * @param n number of elements needed
-         * @return {@code true} if has a further {@code n} elements
-         *     going forwards
+         * @return {@code true} if has a further {@code n} elements going
+         *     forwards
          */
         boolean hasNext(int n);
 
         /**
-         * Equivalent to {@code n} calls to {@link #nextInt()} returning
-         * the last result.
+         * Equivalent to {@code n} calls to {@link #nextInt()} returning the
+         * last result.
          *
          * @param n the number of advances
          * @return the {@code n}th next {@code int}
@@ -3352,27 +3325,26 @@ public class PyUnicode implements CraftedPyObject {
         default Integer previous() { return previousInt(); }
 
         /**
-         * Returns {@code true} if this list iterator has the given
-         * number of elements when traversing the list in the reverse
-         * direction.
+         * Returns {@code true} if this list iterator has the given number
+         * of elements when traversing the list in the reverse direction.
          *
          * @param n number of elements needed
-         * @return {@code true} if has a further {@code n} elements
-         *     going backwards
+         * @return {@code true} if has a further {@code n} elements going
+         *     backwards
          */
         boolean hasPrevious(int n);
 
         /**
-         * Returns the previous {@code int} element in the iteration.
-         * This is just previous specialised to a primitive {@code int}.
+         * Returns the previous {@code int} element in the iteration. This
+         * is just previous specialised to a primitive {@code int}.
          *
          * @return the previous {@code int}
          */
         int previousInt();
 
         /**
-         * Equivalent to {@code n} calls to {@link #previousInt()}
-         * returning the last result.
+         * Equivalent to {@code n} calls to {@link #previousInt()} returning
+         * the last result.
          *
          * @param n the number of steps to take (in reverse)
          * @return the {@code n}th previous {@code int}
@@ -3382,43 +3354,35 @@ public class PyUnicode implements CraftedPyObject {
         // Unsupported operations -----------------------------
 
         @Override
-        default void remove() {
-            throw new UnsupportedOperationException();
-        }
+        default void remove() { throw new UnsupportedOperationException(); }
 
         @Override
-        default void set(Integer o) {
-            throw new UnsupportedOperationException();
-        }
+        default void set(Integer o) { throw new UnsupportedOperationException(); }
 
         @Override
-        default void add(Integer o) {
-            throw new UnsupportedOperationException();
-        }
+        default void add(Integer o) { throw new UnsupportedOperationException(); }
 
         // Iterator mark and restore --------------------------
 
         /**
-         * Set a mark (a saved state) to which the iterator may be
-         * restored later.
+         * Set a mark (a saved state) to which the iterator may be restored
+         * later.
          *
          * @return the mark
          */
         Mark mark();
 
         /**
-         * An opaque object to hold and restore the position of a
-         * particular {@link CodepointIterator}.
+         * An opaque object to hold and restore the position of a particular
+         * {@link CodepointIterator}.
          */
         interface Mark {
             /**
-             * Restore the position of the iterator from which this
-             * {@code Mark} was obtained, to the position it had at the
-             * time.
+             * Restore the position of the iterator from which this {@code Mark}
+             * was obtained, to the position it had at the time.
              */
             void restore();
         }
-
     }
 
     /**
@@ -3446,8 +3410,8 @@ public class PyUnicode implements CraftedPyObject {
 
         /**
          * Return {@code true} iff the string contains only basic plane
-         * characters or, possibly, isolated surrogates. All
-         * {@code char}s may be treated as code points.
+         * characters or, possibly, isolated surrogates. All {@code char}s
+         * may be treated as code points.
          *
          * @return contains only BMP characters or isolated surrogates
          */
@@ -3488,9 +3452,9 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         /**
-         * Translate a (valid) code point index into a {@code char}
-         * index into {@code s}, when s contains surrogate pairs. A call
-         * is normally guarded by {@link #isBMP()}, since when that is
+         * Translate a (valid) code point index into a {@code char} index
+         * into {@code s}, when s contains surrogate pairs. A call is
+         * normally guarded by {@link #isBMP()}, since when that is
          * {@code true} we can avoid the work.
          *
          * @param cpIndex code point index
@@ -3524,11 +3488,10 @@ public class PyUnicode implements CraftedPyObject {
                 return s.substring(slice.start, slice.stop);
             } else {
                 /*
-                 * If the code points are not all BMP, it is less work
-                 * in future if we use a PyUnicode. If step != 1, there
-                 * is the possibility of creating an unintended
-                 * surrogate pair, so only a PyUnicode should be trusted
-                 * to represent the result.
+                 * If the code points are not all BMP, it is less work in future if
+                 * we use a PyUnicode. If step != 1, there is the possibility of
+                 * creating an unintended surrogate pair, so only a PyUnicode should
+                 * be trusted to represent the result.
                  */
                 int L = slice.slicelength, i = slice.start;
                 int[] r = new int[L];
@@ -3543,9 +3506,7 @@ public class PyUnicode implements CraftedPyObject {
                     ListIterator<Integer> cps = iterator(i);
                     r[0] = cps.next();
                     for (int j = 1; j < L; j++) {
-                        for (int k = 1; k < slice.step; k++) {
-                            cps.next();
-                        }
+                        for (int k = 1; k < slice.step; k++) { cps.next(); }
                         r[j] = cps.next();
                     }
                 } else { // slice.step < 0
@@ -3553,9 +3514,7 @@ public class PyUnicode implements CraftedPyObject {
                     ListIterator<Integer> cps = iterator(i + 1);
                     r[0] = cps.previous();
                     for (int j = 1; j < L; j++) {
-                        for (int k = -1; k > slice.step; --k) {
-                            cps.previous();
-                        }
+                        for (int k = -1; k > slice.step; --k) { cps.previous(); }
                         r[j] = cps.previous();
                     }
                 }
@@ -3564,8 +3523,7 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         @Override
-        Object add(Object ow)
-                throws OutOfMemoryError, NoConversion, Throwable {
+        Object add(Object ow) throws OutOfMemoryError, NoConversion, Throwable {
             if (ow instanceof String) {
                 return PyUnicode.concat(s, (String)ow);
             } else {
@@ -3575,8 +3533,7 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         @Override
-        Object radd(Object ov)
-                throws OutOfMemoryError, NoConversion, Throwable {
+        Object radd(Object ov) throws OutOfMemoryError, NoConversion, Throwable {
             if (ov instanceof String) {
                 return PyUnicode.concat((String)ov, s);
             } else {
@@ -3594,10 +3551,10 @@ public class PyUnicode implements CraftedPyObject {
             else if (Character.isLowSurrogate(s.charAt(0))
                     && Character.isHighSurrogate(s.charAt(length - 1)))
                 /*
-                 * s ends with a high surrogate and starts with a low
-                 * surrogate, so simply concatenated to itself by
-                 * String.repeat, these would merge into one character.
-                 * Only a PyUnicode properly represents the result.
+                 * s ends with a high surrogate and starts with a low surrogate, so
+                 * simply concatenated to itself by String.repeat, these would merge
+                 * into one character. Only a PyUnicode properly represents the
+                 * result.
                  */
                 return (new PyUnicode(TYPE, s)).delegate.repeat(n);
             else
@@ -3606,8 +3563,7 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         @Override
-        public int
-                compareTo(PySequence.Delegate<Integer, Object> other) {
+        public int compareTo(PySequence.Delegate<Integer, Object> other) {
             Iterator<Integer> ia = iterator();
             Iterator<Integer> ib = other.iterator();
             while (ia.hasNext()) {
@@ -3624,8 +3580,8 @@ public class PyUnicode implements CraftedPyObject {
                     return 1;
             }
             /*
-             * The sequences matched over the length of s. The other is
-             * the winner if it still has elements. Otherwise its a tie.
+             * The sequences matched over the length of s. The other is the
+             * winner if it still has elements. Otherwise its a tie.
              */
             return ib.hasNext() ? -1 : 0;
         }
@@ -3633,9 +3589,7 @@ public class PyUnicode implements CraftedPyObject {
         // PySequence.OfInt interface --------------------------------
 
         @Override
-        public Spliterator.OfInt spliterator() {
-            return s.codePoints().spliterator();
-        }
+        public Spliterator.OfInt spliterator() { return s.codePoints().spliterator(); }
 
         @Override
         public IntStream asIntStream() { return s.codePoints(); }
@@ -3643,8 +3597,7 @@ public class PyUnicode implements CraftedPyObject {
         // ListIterator provision ------------------------------------
 
         @Override
-        public CodepointIterator iterator(final int index, int start,
-                int end) {
+        public CodepointIterator iterator(final int index, int start, int end) {
             if (isBMP())
                 return new BMPIterator(index, start, end);
             else
@@ -3652,29 +3605,27 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         /**
-         * A {@code ListIterator} for use when the string in the
-         * surrounding adapter instance contains only basic multilingual
-         * plane (BMP) characters or isolated surrogates.
-         * {@link SMPIterator} extends this class for supplementary
-         * characters.
+         * A {@code ListIterator} for use when the string in the surrounding
+         * adapter instance contains only basic multilingual plane (BMP)
+         * characters or isolated surrogates. {@link SMPIterator} extends
+         * this class for supplementary characters.
          */
         class BMPIterator implements CodepointIterator {
             /**
-             * Index into {@code s} in code points, which is also its
-             * index in {@code s} in chars when {@code s} is a BMP
-             * string.
+             * Index into {@code s} in code points, which is also its index in
+             * {@code s} in chars when {@code s} is a BMP string.
              */
             protected int index;
             /**
              * First index at which {@link #next()} is allowable for the
-             * iterator in code points, which is also its index in
-             * {@code s} in chars when {@code s} is a BMP string.
+             * iterator in code points, which is also its index in {@code s} in
+             * chars when {@code s} is a BMP string.
              */
             protected final int start;
             /**
-             * First index at which {@link #next()} is not allowable for
-             * the iterator in code points, which is also its index in
-             * {@code s} in chars when {@code s} is a BMP string.
+             * First index at which {@link #next()} is not allowable for the
+             * iterator in code points, which is also its index in {@code s} in
+             * chars when {@code s} is a BMP string.
              */
             protected final int end;
 
@@ -3763,36 +3714,31 @@ public class PyUnicode implements CraftedPyObject {
 
             @Override
             public String toString() {
-                return String.format("[%s|%s]",
-                        s.substring(start, index),
-                        s.substring(index, end));
+                return String.format("[%s|%s]", s.substring(start, index), s.substring(index, end));
             }
         }
 
         /**
-         * A {@code ListIterator} for use when the string in the
-         * surrounding adapter instance contains one or more
-         * supplementary multilingual plane characters represented by
-         * surrogate pairs.
+         * A {@code ListIterator} for use when the string in the surrounding
+         * adapter instance contains one or more supplementary multilingual
+         * plane characters represented by surrogate pairs.
          */
         class SMPIterator extends BMPIterator {
 
             /**
-             * Index of the iterator position in {@code s} in chars.
-             * This always moves in synchrony with the base class index
-             * {@link BMPIterator#index}, which continues to represent
-             * the same position as a code point index. Both reference
-             * the same character.
+             * Index of the iterator position in {@code s} in chars. This always
+             * moves in synchrony with the base class index
+             * {@link BMPIterator#index}, which continues to represent the same
+             * position as a code point index. Both reference the same
+             * character.
              */
             private int charIndex;
             /**
-             * The double of {@link BMPIterator#start} in {@code s} in
-             * chars.
+             * The double of {@link BMPIterator#start} in {@code s} in chars.
              */
             final private int charStart;
             /**
-             * The double of {@link BMPIterator#end} in {@code s} in
-             * chars.
+             * The double of {@link BMPIterator#end} in {@code s} in chars.
              */
             final private int charEnd;
 
@@ -3800,11 +3746,20 @@ public class PyUnicode implements CraftedPyObject {
                 super(index, start, end);
                 // Convert the arguments to character indices
                 int p = 0, cp = 0;
-                while (p < start) { cp = nextCharIndex(cp); p += 1; }
+                while (p < start) {
+                    cp = nextCharIndex(cp);
+                    p += 1;
+                }
                 this.charStart = cp;
-                while (p < index) { cp = nextCharIndex(cp); p += 1; }
+                while (p < index) {
+                    cp = nextCharIndex(cp);
+                    p += 1;
+                }
                 this.charIndex = cp;
-                while (p < end) { cp = nextCharIndex(cp); p += 1; }
+                while (p < end) {
+                    cp = nextCharIndex(cp);
+                    p += 1;
+                }
                 this.charEnd = cp;
             }
 
@@ -3837,8 +3792,7 @@ public class PyUnicode implements CraftedPyObject {
                 if (charIndex < charEnd) {
                     char c = s.charAt(charIndex++);
                     index++;
-                    if (Character.isHighSurrogate(c)
-                            && charIndex < charEnd) {
+                    if (Character.isHighSurrogate(c) && charIndex < charEnd) {
                         // Expect a low surrogate
                         char d = s.charAt(charIndex);
                         if (Character.isLowSurrogate(d)) {
@@ -3854,8 +3808,7 @@ public class PyUnicode implements CraftedPyObject {
             @Override
             public int nextInt(int n) {
                 assert n >= 0;
-                int i = index + n, indexSaved = index,
-                        charIndexSaved = charIndex;
+                int i = index + n, indexSaved = index, charIndexSaved = charIndex;
                 while (hasNext()) {
                     int c = nextInt();
                     if (index == i) { return c; }
@@ -3872,13 +3825,10 @@ public class PyUnicode implements CraftedPyObject {
                 if (charIndex > charStart) {
                     --index;
                     char d = s.charAt(--charIndex);
-                    if (Character.isLowSurrogate(d)
-                            && charIndex > charStart) {
+                    if (Character.isLowSurrogate(d) && charIndex > charStart) {
                         // Expect a low surrogate
                         char c = s.charAt(--charIndex);
-                        if (Character.isHighSurrogate(c)) {
-                            return Character.toCodePoint(c, d);
-                        }
+                        if (Character.isHighSurrogate(c)) { return Character.toCodePoint(c, d); }
                         charIndex++;
                     }
                     return d;
@@ -3889,8 +3839,7 @@ public class PyUnicode implements CraftedPyObject {
             @Override
             public int previousInt(int n) {
                 assert n >= 0;
-                int i = index - n, indexSaved = index,
-                        charIndexSaved = charIndex;
+                int i = index - n, indexSaved = index, charIndexSaved = charIndex;
                 while (hasPrevious()) {
                     int c = previousInt();
                     if (index == i) { return c; }
@@ -3904,8 +3853,7 @@ public class PyUnicode implements CraftedPyObject {
 
             @Override
             public String toString() {
-                return String.format("[%s|%s]",
-                        s.substring(charStart, charIndex),
+                return String.format("[%s|%s]", s.substring(charStart, charIndex),
                         s.substring(charIndex, charEnd));
             }
         }
@@ -3937,9 +3885,7 @@ public class PyUnicode implements CraftedPyObject {
         Object principal() { return PyUnicode.this; }
 
         @Override
-        public Object getItem(int i) {
-            return PyUnicode.fromCodePoint(value[i]);
-        }
+        public Object getItem(int i) { return PyUnicode.fromCodePoint(value[i]); }
 
         @Override
         public Object getSlice(Indices slice) {
@@ -3958,8 +3904,7 @@ public class PyUnicode implements CraftedPyObject {
         }
 
         @Override
-        Object add(Object ow)
-                throws OutOfMemoryError, NoConversion, Throwable {
+        Object add(Object ow) throws OutOfMemoryError, NoConversion, Throwable {
             if (ow instanceof PyUnicode) {
                 // Optimisation (or is it?) over concatUnicode
                 PyUnicode w = (PyUnicode)ow;
@@ -3969,14 +3914,12 @@ public class PyUnicode implements CraftedPyObject {
                 System.arraycopy(w.value, 0, r, L, M);
                 return wrap(r);
             } else {
-                return concatUnicode(asIntStream(),
-                        adapt(ow).asIntStream());
+                return concatUnicode(asIntStream(), adapt(ow).asIntStream());
             }
         }
 
         @Override
-        Object radd(Object ov)
-                throws OutOfMemoryError, NoConversion, Throwable {
+        Object radd(Object ov) throws OutOfMemoryError, NoConversion, Throwable {
             if (ov instanceof PyUnicode) {
                 // Optimisation (or is it?) over concatUnicode
                 PyUnicode v = (PyUnicode)ov;
@@ -3986,8 +3929,7 @@ public class PyUnicode implements CraftedPyObject {
                 System.arraycopy(value, 0, r, L, M);
                 return wrap(r);
             } else {
-                return concatUnicode(adapt(ov).asIntStream(),
-                        asIntStream());
+                return concatUnicode(adapt(ov).asIntStream(), asIntStream());
             }
         }
 
@@ -4000,16 +3942,13 @@ public class PyUnicode implements CraftedPyObject {
                 return PyUnicode.this;
             else {
                 int[] b = new int[n * m];
-                for (int i = 0, p = 0; i < n; i++, p += m) {
-                    System.arraycopy(value, 0, b, p, m);
-                }
+                for (int i = 0, p = 0; i < n; i++, p += m) { System.arraycopy(value, 0, b, p, m); }
                 return wrap(b);
             }
         }
 
         @Override
-        public int
-                compareTo(PySequence.Delegate<Integer, Object> other) {
+        public int compareTo(PySequence.Delegate<Integer, Object> other) {
             Iterator<Integer> ib = other.iterator();
             for (int a : value) {
                 if (ib.hasNext()) {
@@ -4024,9 +3963,8 @@ public class PyUnicode implements CraftedPyObject {
                     return 1;
             }
             /*
-             * The sequences matched over the length of value. The other
-             * is the winner if it still has elements. Otherwise its a
-             * tie.
+             * The sequences matched over the length of value. The other is the
+             * winner if it still has elements. Otherwise its a tie.
              */
             return ib.hasNext() ? -1 : 0;
         }
@@ -4035,31 +3973,28 @@ public class PyUnicode implements CraftedPyObject {
 
         @Override
         public Spliterator.OfInt spliterator() {
-            final int flags = Spliterator.IMMUTABLE | Spliterator.SIZED
-                    | Spliterator.ORDERED;
+            final int flags = Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.ORDERED;
             return Spliterators.spliterator(value, flags);
         }
 
         @Override
         public IntStream asIntStream() {
             int flags = Spliterator.IMMUTABLE | Spliterator.SIZED;
-            Spliterator.OfInt s =
-                    Spliterators.spliterator(value, flags);
+            Spliterator.OfInt s = Spliterators.spliterator(value, flags);
             return StreamSupport.intStream(s, false);
         }
 
         // ListIterator provision ------------------------------------
 
         @Override
-        public CodepointIterator iterator(final int index, int start,
-                int end) {
+        public CodepointIterator iterator(final int index, int start, int end) {
             return new UnicodeIterator(index, start, end);
         }
 
         /**
-         * A {@code ListIterator} for use when the string in the
-         * surrounding adapter instance contains only basic multilingual
-         * plane characters or isolated surrogates.
+         * A {@code ListIterator} for use when the string in the surrounding
+         * adapter instance contains only basic multilingual plane
+         * characters or isolated surrogates.
          */
         class UnicodeIterator implements CodepointIterator {
 
@@ -4151,8 +4086,7 @@ public class PyUnicode implements CraftedPyObject {
 
             @Override
             public String toString() {
-                return String.format("[%s|%s]",
-                        new String(value, start, index - start),
+                return String.format("[%s|%s]", new String(value, start, index - start),
                         new String(value, index, end - index));
             }
         }
@@ -4188,9 +4122,7 @@ public class PyUnicode implements CraftedPyObject {
      * @param v to wrap
      * @return new StringAdapter(v)
      */
-    static StringAdapter adapt(String v) {
-        return new StringAdapter(v);
-    }
+    static StringAdapter adapt(String v) { return new StringAdapter(v); }
 
     /**
      * Short-cut {@link #adapt(Object)} when type statically known.
@@ -4212,13 +4144,11 @@ public class PyUnicode implements CraftedPyObject {
      * @return adapted to a sequence
      * @throws TypeError if {@code sub} cannot be wrapped as a delegate
      */
-    static CodepointDelegate adaptSub(String method, Object sub)
-            throws TypeError {
+    static CodepointDelegate adaptSub(String method, Object sub) throws TypeError {
         try {
             return adapt(sub);
         } catch (NoConversion nc) {
-            throw Abstract.argumentTypeError(method, "string to find",
-                    "str", sub);
+            throw Abstract.argumentTypeError(method, "string to find", "str", sub);
         }
     }
 
@@ -4232,13 +4162,11 @@ public class PyUnicode implements CraftedPyObject {
      * @return adapted to a sequence
      * @throws TypeError if {@code sub} cannot be wrapped as a delegate
      */
-    static CodepointDelegate adaptRep(String method, Object replacement)
-            throws TypeError {
+    static CodepointDelegate adaptRep(String method, Object replacement) throws TypeError {
         try {
             return adapt(replacement);
         } catch (NoConversion nc) {
-            throw Abstract.argumentTypeError(method, "replacement",
-                    "str", replacement);
+            throw Abstract.argumentTypeError(method, "replacement", "str", replacement);
         }
     }
 
@@ -4256,13 +4184,10 @@ public class PyUnicode implements CraftedPyObject {
             throws TypeError, ValueError {
         try {
             CodepointDelegate p = adapt(sep);
-            if (p.length() == 0) {
-                throw new ValueError("%s(): empty separator", method);
-            }
+            if (p.length() == 0) { throw new ValueError("%s(): empty separator", method); }
             return p;
         } catch (NoConversion nc) {
-            throw Abstract.argumentTypeError(method, "separator",
-                    "str or None", sep);
+            throw Abstract.argumentTypeError(method, "separator", "str or None", sep);
         }
     }
 
@@ -4291,13 +4216,11 @@ public class PyUnicode implements CraftedPyObject {
                 throw new TypeError(BAD_FILLCHAR);
             return u.value[0];
         } else {
-            throw Abstract.argumentTypeError(method, "fill",
-                    "a character", fill);
+            throw Abstract.argumentTypeError(method, "fill", "a character", fill);
         }
     }
 
-    private static String BAD_FILLCHAR =
-            "the fill character must be exactly one character long";
+    private static String BAD_FILLCHAR = "the fill character must be exactly one character long";
 
     /**
      * Adapt a Python {@code str}, intended as a list of characters to
@@ -4309,17 +4232,14 @@ public class PyUnicode implements CraftedPyObject {
      * @return {@code null} or characters adapted to a set
      * @throws TypeError if {@code sep} cannot be wrapped as a delegate
      */
-    static Set<Integer> adaptStripSet(String method, Object chars)
-            throws TypeError, ValueError {
+    static Set<Integer> adaptStripSet(String method, Object chars) throws TypeError, ValueError {
         if (chars == null || chars == Py.None) {
             return null;
         } else {
             try {
-                return adapt(chars).asStream()
-                        .collect(Collectors.toCollection(HashSet::new));
+                return adapt(chars).asStream().collect(Collectors.toCollection(HashSet::new));
             } catch (NoConversion nc) {
-                throw Abstract.argumentTypeError(method, "chars",
-                        "str or None", chars);
+                throw Abstract.argumentTypeError(method, "chars", "str or None", chars);
             }
         }
     }
@@ -4334,8 +4254,8 @@ public class PyUnicode implements CraftedPyObject {
      * @throws TypeError if {@code start} or {@code end} cannot be
      *     considered an index
      */
-    private static PySlice.Indices getSliceIndices(CodepointDelegate s,
-            Object start, Object end) throws TypeError {
+    private static PySlice.Indices getSliceIndices(CodepointDelegate s, Object start, Object end)
+            throws TypeError {
         try {
             return (new PySlice(start, end)).getIndices(s.length());
         } catch (PyException pye) {
@@ -4358,11 +4278,10 @@ public class PyUnicode implements CraftedPyObject {
      * @param w second string to concatenate
      * @return the concatenation {@code v + w}
      */
-    private static Object concat(String v, String w)
-            throws OutOfMemoryError {
+    private static Object concat(String v, String w) throws OutOfMemoryError {
         /*
-         * Since we have to guard against empty strings, we may as well
-         * take the optimisation these paths invite.
+         * Since we have to guard against empty strings, we may as well take
+         * the optimisation these paths invite.
          */
         int vlen = v.length();
         if (vlen == 0)
@@ -4387,8 +4306,7 @@ public class PyUnicode implements CraftedPyObject {
      * @return the concatenation {@code v + w}
      * @throws OutOfMemoryError when the concatenated string is too long
      */
-    private static PyUnicode concatUnicode(IntStream v, IntStream w)
-            throws OutOfMemoryError {
+    private static PyUnicode concatUnicode(IntStream v, IntStream w) throws OutOfMemoryError {
         return wrap(IntStream.concat(v, w).toArray());
     }
 
@@ -4432,11 +4350,11 @@ public class PyUnicode implements CraftedPyObject {
      * @param len of sequence
      * @throws IndexOutOfBoundsException if the condition is violated
      */
-    private static void checkIndexRange(int index, int start, int end,
-            int len) throws IndexOutOfBoundsException {
+    private static void checkIndexRange(int index, int start, int end, int len)
+            throws IndexOutOfBoundsException {
         if ((0 <= start && start <= end && end <= len) == false)
-            throw new IndexOutOfBoundsException(String.format(
-                    "start=%d, end=%d, len=%d", start, end, len));
+            throw new IndexOutOfBoundsException(
+                    String.format("start=%d, end=%d, len=%d", start, end, len));
         else if (index < start)
             throw new IndexOutOfBoundsException("before start");
         else if (index > end)
@@ -4452,15 +4370,13 @@ public class PyUnicode implements CraftedPyObject {
      * @return {@code index} if non-negative
      * @throws ValueError if argument is negative
      */
-    private static final int checkIndexReturn(int index)
-            throws ValueError {
+    private static final int checkIndexReturn(int index) throws ValueError {
         if (index >= 0) {
             return index;
         } else {
             throw new ValueError("substring not found");
         }
     }
-
 
     // Plumbing (Jython 2) -------------------------------------------
 
