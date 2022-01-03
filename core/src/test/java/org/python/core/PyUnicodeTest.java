@@ -1,10 +1,14 @@
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -51,7 +55,7 @@ class PyUnicodeTest extends UnitTestSupport {
                      * 🦓=U+1F993, each of which Python must consider to be a single
                      * character, but in the Java String realisation each is two chars.
                      */
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     findExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}),
                     findExample("Left 🐍🦓🐍🦓: right.", "🐍🦓:", new int[] {7}));
         }
@@ -386,7 +390,7 @@ class PyUnicodeTest extends UnitTestSupport {
                      * 🦓=U+1F993, each of which Python must consider to be a single
                      * character, but in the Java String realisation each is two chars.
                      */
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     rfindExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}),
                     rfindExample("Left 🐍🦓🐍🦓: right.", "🐍🦓:", new int[] {7}));
         }
@@ -685,7 +689,7 @@ class PyUnicodeTest extends UnitTestSupport {
                      * 🦓=U+1F993, each of which Python must consider to be a single
                      * character, but in the Java String realisation each is two chars.
                      */
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     replaceExample("One 🐍, a 🦓, two 🐍🐍.", "🐍", new int[] {4, 16, 17}, "🦓"),
                     replaceExample("Swap 🐍🦓.", "🐍🦓", new int[] {5}, "(🦓🐍)"));
         }
@@ -883,7 +887,7 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         // Cases where simulation by Java String is too hard.
-        // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+        // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
 
         @Test
         void surrogatePairNotSplit_SS() {
@@ -936,7 +940,7 @@ class PyUnicodeTest extends UnitTestSupport {
         }
 
         @Test
-        @DisplayName("🐍 is not dissected as \\ud802\\udc40")
+        @DisplayName("🐍 is not dissected as \\ud83d\\udc0d")
         void supplementaryCharacterNotSplit_SS() {
             // No high surrogate (D800-DBFF) accidental replacement
             String s = "🐍🐍", needle = "\ud83d", pin = "#";
@@ -1016,7 +1020,7 @@ class PyUnicodeTest extends UnitTestSupport {
                      * 🦓=U+1F993, each of which Python must consider to be a single
                      * character, but in the Java String realisation each is two chars.
                      */
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     splitExample("One 🐍, a 🦓, two 🐍🐍."), //
                     splitExample("Left 🐍🦓🐍🦓: right.") //
             );
@@ -1192,7 +1196,7 @@ class PyUnicodeTest extends UnitTestSupport {
                      * 🦓=U+1F993, each of which Python must consider to be a single
                      * character, but in the Java String realisation each is two chars.
                      */
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     splitExample("One 🐍\na 🦓,\ftwo 🐍🐍.", "One 🐍\n", "a 🦓,\f", "two 🐍🐍."), //
                     splitExample("Left 🐍🦓\r🐍🦓: right.\r", "Left 🐍🦓\r", "🐍🦓: right.\r") //
             );
@@ -1322,7 +1326,7 @@ class PyUnicodeTest extends UnitTestSupport {
                     joinExample("123", List.of("a", "bb", "ccc")), //
                     joinExample("", List.of()), //
                     joinExample("", List.of("a", "bb", "ccc")), //
-                    // 🐍=\ud802\udc40, 🦓=\ud83e\udd93
+                    // 🐍=\ud83d\udc0d, 🦓=\ud83e\udd93
                     joinExample("🐍", List.of("🦓", "Zebra")),
                     joinExample("-🐍-", List.of("🦓🦓", "(🦓)", "Zebras")),
                     // Avoid making a zebra
@@ -1784,6 +1788,64 @@ class PyUnicodeTest extends UnitTestSupport {
             Object r = u.strip(UCHARS);
             assertEquals(expected, r);
         }
+    }
+
+    /**
+     * This isn't a test of our implementation at all. It simply
+     * validates our understanding of how Java treats lone surrogates
+     * and SMP characters.
+     */
+    @SuppressWarnings("static-method")
+    @Test
+    @DisplayName("Java UTF-16 behaves as expected")
+    void javaUTF16Expectations() {
+
+        // This is a valid string in Java and Python ------------------
+
+        String snake = "🐍";
+
+        // "🐍" (one character in Python) is two chars to Java.
+        assertEquals(2, snake.length());
+        char head = snake.charAt(0);
+        char tail = snake.charAt(1);
+        assert Character.isHighSurrogate(head);
+        assert Character.isLowSurrogate(tail);
+
+        // But it is still one code point, even to Java.
+        assertEquals(1, snake.codePointCount(0, snake.length()));
+        assertEquals(1L, snake.codePoints().count());
+
+        // We can encode "🐍" in UTF-16
+        Charset u16 = Charset.forName("UTF-16LE");
+        ByteBuffer snakeBB = u16.encode(snake);
+        assertEquals(4, snakeBB.remaining());
+
+        // A round-trip is successful
+        CharBuffer snakeCB = u16.decode(snakeBB);
+        assertEquals(snake, snakeCB.toString());
+
+        // Java (and Python) will tolerate lone surrogates ------------
+
+        String loners = new String(new char[] {head, head, tail, tail, head});
+
+        // But in Java, surrogates may make one character
+        assertEquals("\ud83d🐍\udc0d\ud83d", loners);
+
+        // Encoding lone surrogates in UTF-16 does not throw
+        ByteBuffer lonersBB = u16.encode(loners);
+        assertEquals(10, lonersBB.remaining());
+
+        // But the round-trip loses information
+        CharBuffer lonersCB = u16.decode(lonersBB);
+        assertNotEquals(loners, lonersCB.toString());
+
+        // A lone surrogate becomes a UNICODE REPLACEMENT
+        final char REPLACEMENT = '\ufffd';
+        assertEquals(REPLACEMENT, lonersCB.get());
+        assertEquals(head, lonersCB.get());
+        assertEquals(tail, lonersCB.get());
+        assertEquals(REPLACEMENT, lonersCB.get());
+        assertEquals(REPLACEMENT, lonersCB.get());
     }
 
     // Support code --------------------------------------------------
