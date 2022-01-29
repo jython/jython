@@ -69,6 +69,7 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
      * zero or more {@link Object} arguments. The argument is copied for
      * use, so it is safe to modify an array passed in.
      *
+     * @param <E> Actual element type
      * @param elements of the tuple
      */
     @SafeVarargs
@@ -476,6 +477,9 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
 
         @Override
         public Object getItem(int i) { return value[i]; }
+
+        @Override
+        public Object get(int i) { return value[i]; }
 
         @Override
         public Object getSlice(Indices slice) throws Throwable {

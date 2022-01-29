@@ -2,11 +2,15 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.python.base.MissingFeature;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
 import org.python.core.Slot.EmptyException;
@@ -153,6 +157,41 @@ public class PySequence extends Abstract {
         }
     }
 
+    /**
+     * Return the sequence or iterable {@code o} as a Java {@code List}.
+     * If {@code o} is one of several built-in types that implement Java
+     * {@code List<Object>}, this will be the object itself. Otherwise,
+     * it will be a copy in a Java list that supports efficient random
+     * access.
+     * <p>
+     * If the object is not a Python sequence (defines
+     * {@code __getitem__}) or Python iterable (defines
+     * {@code __iter__}), call {@code exc} to raise an exception
+     * (typically a {@link TypeError}).
+     *
+     * @param <E> the type of exception to throw
+     * @param o to present as a list
+     * @param exc a supplier (e.g. lambda expression) for the exception
+     * @return the iterable or its contents as a list
+     * @throws E to throw if an iterator cannot be formed
+     * @throws Throwable from the implementation of {@code o}.
+     */
+    // Compare CPython PySequence_Fast in abstract.c
+    static <E extends PyException> List<Object> fastList(Object o, Supplier<E> exc)
+            throws E, Throwable {
+
+        if (PyList.TYPE.checkExact(o)) {
+            return (PyList)o;
+
+        } else if (PyTuple.TYPE.checkExact(o)) {
+            return (PyTuple)o;
+
+        } else {
+            // Not one of the ready-made lists
+            throw new MissingFeature("fastList() from  iterable or sequence");
+        }
+    }
+
     // Convenience functions constructing errors ----------------------
 
     protected static final String HAS_NO_LEN = "object of type '%.200s' has no len()";
@@ -171,7 +210,7 @@ public class PySequence extends Abstract {
      *
      * @param <E> the type of element returned by the iterators
      */
-    static interface Of<E> extends Iterable<E> {
+    public static interface Of<E> extends Iterable<E> {
 
         /**
          * The length of this sequence.
@@ -179,6 +218,14 @@ public class PySequence extends Abstract {
          * @return the length of this sequence
          */
         int length();
+
+        /**
+         * Get an item from the sequence at a given index {@code i}.
+         * 
+         * @param i index
+         * @return item at index {@code i}.
+         */
+        E get(int i);
 
         /**
          * {@inheritDoc} The characteristics {@code SIZED} and
@@ -193,6 +240,46 @@ public class PySequence extends Abstract {
          * @return the elements of this sequence as a {@code Stream}
          */
         default Stream<E> asStream() { return StreamSupport.stream(spliterator(), false); }
+    }
+
+    /**
+     * A specialisation of {@link Of PySequence.Of&lt;Integer>} where
+     * the elements may be consumed as primitive {@code int}.
+     */
+    public static interface OfInt extends Of<Integer> {
+
+        /**
+         * Get the int item from the sequence at a given index {@code i}.
+         * 
+         * @param i index
+         * @return item at index {@code i}.
+         */
+        int getInt(int i);
+
+        @Override
+        default Integer get(int i) { return getInt(i); }
+
+        @Override
+        Spliterator.OfInt spliterator();
+
+        /**
+         * Provide a stream specialised to primitive {@code int}.
+         *
+         * @return a stream of primitive {@code int}
+         */
+        IntStream asIntStream();
+
+        /**
+         * {@inheritDoc}
+         *
+         * @implNote The default implementation is the stream of values from
+         *     {@link #asIntStream()}, boxed to {@code Integer}. Consumers
+         *     that are able, will obtain improved efficiency by preferring
+         *     {@link #asIntStream()} and specialising intermediate
+         *     processing to {@code int}.
+         */
+        @Override
+        default Stream<Integer> asStream() { return asIntStream().boxed(); }
     }
 
     /**
@@ -216,12 +303,14 @@ public class PySequence extends Abstract {
      * CPython implementation of {@code list_subscript} with that of
      * {@code bytes_subscript} or any other {@code *_subscript} method.)
      * <p>
-     * The client must override abstract methods declared here in the
-     * sub-class it defines, to specialise the behaviour of the
-     * delegate. A sub-class supporting a mutable sequence type must
-     * additionally override {@link #setImpl(int)},
-     * {@link #setImpl(Indices)}, {@link #delItem(int)} and
-     * {@link #delSlice(Indices)}.
+     * The client must override abstract methods declared here, in the
+     * delegate sub-class it defines, to specialise the behaviour. A
+     * sub-class supporting a mutable sequence type must additionally
+     * override {@link #setItem(int, Object)},
+     * {@link #setSlice(Indices, Object)} and
+     * {@link #delSlice(Indices)}. It <i>may</i> also override
+     * {@link #delItem(int)}, or rely on the default implementation
+     * using {@code delSlice}.
      *
      * @param <E> the element type returned by {@code iterator().next()}
      * @param <S> the slice type, and return type of
@@ -244,7 +333,7 @@ public class PySequence extends Abstract {
 
         /**
          * Provide the type of client sequence, primarily for use in error
-         * messages e.g. "&lt;TYPE> index out of bounds".
+         * messages e.g. "TYPE index out of bounds".
          *
          * @implNote This can simply return a constant characteristic of the
          *     the implementing class, the Python type implements or
@@ -273,7 +362,7 @@ public class PySequence extends Abstract {
          *
          * @param i index of item to return
          * @return the element from the client sequence
-         * @throws Throwable from errors other than indexing
+         * @throws Throwable from accessing the client data
          */
         public abstract Object getItem(int i) throws Throwable;
 
@@ -302,8 +391,10 @@ public class PySequence extends Abstract {
          * immutable types) does nothing.
          *
          * @param i index of item to set
-         * @throws Throwable from errors other than indexing
+         * @param value to set at {@code i}
+         * @throws Throwable from accessing the client data
          */
+        @SuppressWarnings("unused")
         public void setItem(int i, Object value) throws Throwable {};
 
         /**
@@ -353,8 +444,7 @@ public class PySequence extends Abstract {
          *
          * @param slice containing [start, stop, step, count] of the slice
          *     to delete
-         * @throws Throwable
-         * @throws TypeError
+         * @throws Throwable from accessing the client data
          */
         public void delSlice(PySlice.Indices slice) throws Throwable {}
 
@@ -455,8 +545,7 @@ public class PySequence extends Abstract {
         /**
          * Implementation of {@code __delitem__}. Delete either an element
          * or a slice of the client sequence, after checks, by calling
-         * either {@link #delItem(int)} or
-         * {@link #delImpl(Indices, Object)}.
+         * either {@link #delItem(int)} or {@link #delSlice(Indices)}.
          *
          * @param item (or slice) to delete in the client
          * @throws ValueError if {@code slice.step==0} or value is the wrong
@@ -539,7 +628,7 @@ public class PySequence extends Abstract {
 
         /**
          * Implementation of {@code __mul__} (repetition) and
-         * {@code __rmul__} by calling {@link #repeat(Object)}.
+         * {@code __rmul__} by calling {@link #repeat(int)}.
          * <p>
          * The wrapper attempts conversion of the argument to {@code int},
          * and if this cannot be achieved, it will return
@@ -583,6 +672,8 @@ public class PySequence extends Abstract {
          * either {@link #getItem(int)} or {@link #getSlice(Indices)}.
          *
          * @param v value to match in the client
+         * @param start index of first element in range
+         * @param stop index of first element not in range
          * @return the index at which found
          * @throws ValueError if {@code v} not found
          * @throws TypeError from bad {@code start} and {@code stop} types

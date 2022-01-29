@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from core import ImplementationGenerator
 from core import PyFloatGenerator
 from core import PyLongGenerator
-#from core import PyUnicodeGenerator
+from core import PyUnicodeGenerator
 
 
 class ImplementationTemplateProcessorFactory:

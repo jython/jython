@@ -20,7 +20,7 @@ import org.python.core.stringlib.IntegerFormatter;
 import org.python.core.stringlib.InternalFormat;
 import org.python.core.stringlib.InternalFormat.FormatError;
 import org.python.core.stringlib.InternalFormat.FormatOverflow;
-import org.python.core.stringlib.InternalFormat.Formatter;
+import org.python.core.stringlib.InternalFormat.AbstractFormatter;
 import org.python.core.stringlib.InternalFormat.Spec;
 
 /**
@@ -40,9 +40,14 @@ public class PyLong extends AbstractPyObject {
                     .accept(Boolean.class) //
                     .methods(PyLongMethods.class));
 
-    public static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
-    public static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
-    public static final BigInteger MAX_ULONG = ONE.shiftLeft(64).subtract(ONE);
+    /** The minimum Java {@code int} as a {@code BigInteger}. */
+    static final BigInteger MIN_INT = BigInteger.valueOf(Integer.MIN_VALUE);
+    /** The maximum Java {@code int} as a {@code BigInteger}. */
+    static final BigInteger MAX_INT = BigInteger.valueOf(Integer.MAX_VALUE);
+    /** The minimum Java {@code long} as a {@code BigInteger}. */
+    static final BigInteger MIN_LONG = BigInteger.valueOf(Long.MIN_VALUE);
+    /** The maximum Java {@code long} as a {@code BigInteger}. */
+    static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
 
     /**
      * The value of this Python {@code int} (in sub-class instances).
@@ -63,7 +68,7 @@ public class PyLong extends AbstractPyObject {
      * @param subType actual Python sub-class being created
      * @param v of the {@code int}
      */
-    private PyLong(PyType subType, BigInteger v) {
+    PyLong(PyType subType, BigInteger v) {
         super(subType);
         value = v;
     }
@@ -504,56 +509,37 @@ public class PyLong extends AbstractPyObject {
     }
 
     // @ExposedMethod(doc = BuiltinDocs.long___format___doc)
-    static Object __format__(Object self, Object formatSpec) {
+    static final Object __format__(Object self, Object formatSpec) {
+
+        String stringFormatSpec = PyUnicode.coerceToString(formatSpec,
+                () -> Abstract.argumentTypeError("__format__",
+                        "specification", "str", formatSpec));
+
         try {
-            /* Parse the specification, which must at least sub-class str in
-            * Python.*/
-            if (!PyUnicode.TYPE.check(formatSpec)) {
-                throw Abstract.argumentTypeError("__format__", 0, "str", formatSpec);
-            }
+            // Parse the specification
+            Spec spec = InternalFormat.fromText(stringFormatSpec);
 
-            BigInteger value = convertToBigInteger(self);
-            Spec spec = InternalFormat.fromText(formatSpec.toString());
-            InternalFormat.Formatter f;
-
-            // Try to make an integer formatter from the specification
-            IntegerFormatter fi = IntegerFormatter.prepareFormatter(spec);
-            if (fi != null) {
-                // Bytes mode if formatSpec argument is not unicode.
-                fi.setBytes(!(formatSpec instanceof PyUnicode));
-                // Convert as per specification.
-                fi.format(value);
-                f = fi;
-
+            // Get a formatter for the specification
+            AbstractFormatter f;
+            if ("efgEFG%".indexOf(spec.type) >= 0) {
+                // These are floating-point formats
+                f = new PyFloat.Formatter(spec);
             } else {
-                // Try to make a float formatter from the specification
-                FloatFormatter ff = FloatFormatter.prepareFormatter(spec);
-                if (ff != null) {
-                    // Bytes mode if formatSpec argument is not str.
-                    ff.setBytes(!(formatSpec instanceof PyUnicode));
-                    // Convert as per specification.
-                    ff.format(value.doubleValue());
-                    f = ff;
-
-                } else {
-                    // The type code was not recognised in either prepareFormatter
-                    throw Formatter.unknownFormat(spec.type, "integer");
-                }
+                f = new PyLong.Formatter(spec);
             }
 
             /*
-             * Return a result that has the same type (str or unicode) as the
-             * formatSpec argument.
+             * Format, pad and return a result according to as the
+             * specification argument.
              */
-            // XXX For Jython 3: re-think the way we choose str/bytes returns
-            return f.pad().getResult();
+            return f.format(self).pad().getResult();
 
         } catch (FormatOverflow fe) {
             throw new OverflowError(fe.getMessage());
         } catch (FormatError fe) {
             throw new ValueError(fe.getMessage());
         } catch (NoConversion e) {
-            throw impossible(self);
+            throw Abstract.impossibleArgumentError(TYPE.name, self);
         }
     }
 
@@ -572,6 +558,89 @@ public class PyLong extends AbstractPyObject {
 
         @Override
         public Map<Object, Object> getDict() { return null; }
+    }
+
+    // formatter ------------------------------------------------------
+
+    /**
+     * An {@link IntegerFormatter}, constructed from a {@link Spec},
+     * with validations customised for {@code int.__format__}.
+     */
+    private static class Formatter extends IntegerFormatter {
+
+        /**
+         * Prepare an {@link IntegerFormatter} in support of
+         * {@link PyLong#__format__(Object, Object) int.__format__}.
+         *
+         * @param spec a parsed PEP-3101 format specification.
+         * @return a formatter ready to use.
+         * @throws FormatOverflow if a value is out of range (including
+         *     the precision)
+         * @throws FormatError if an unsupported format character is
+         *     encountered
+         */
+        Formatter(Spec spec) throws FormatError {
+            super(validated(spec));
+        }
+
+        /**
+         * Validations and defaults specific to {@code int.__format__}.
+         * (Note that {@code int.__mod__} has slightly different rules.)
+         *
+         * @param spec to validate
+         * @return validated spec with defaults filled
+         * @throws FormatError on failure to validate
+         */
+        private static Spec validated(Spec spec) throws FormatError {
+            String type = TYPE.name;
+            switch (spec.type) {
+
+                case 'c':
+                    // Character data: specific prohibitions.
+                    if (Spec.specified(spec.sign)) {
+                        throw signNotAllowed("integer", spec.type);
+                    } else if (spec.alternate) {
+                        throw alternateFormNotAllowed("integer",
+                                spec.type);
+                    }
+                    //$FALL-THROUGH$
+
+                case 'x':
+                case 'X':
+                case 'o':
+                case 'b':
+                case 'n':
+                    if (spec.grouping) {
+                        throw notAllowed("Grouping", ',', "integer",
+                                spec.type);
+                    }
+                    //$FALL-THROUGH$
+
+                case Spec.NONE:
+                case 'd':
+                    // Check for disallowed parts of the specification
+                    if (Spec.specified(spec.precision)) {
+                        throw precisionNotAllowed("integer");
+                    }
+                    break;
+
+                default:
+                    // The type code was not recognised
+                    throw unknownFormat(spec.type, type);
+            }
+
+            /*
+             * spec may be incomplete. The defaults are those commonly
+             * used for numeric formats.
+             */
+            return spec.withDefaults(Spec.NUMERIC);
+        }
+
+        @Override
+        public IntegerFormatter format(Object o)
+                throws NoConversion, FormatError {
+            return format(convertToBigInteger(o));
+        }
     }
 
     // plumbing -------------------------------------------------------

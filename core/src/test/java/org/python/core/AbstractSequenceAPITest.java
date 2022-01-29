@@ -8,8 +8,10 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -29,9 +31,9 @@ class AbstractSequenceAPITest extends UnitTestSupport {
 
     /**
      * Provide a stream of examples as parameter sets to the tests of
-     * methods that do not mutate their arguments. Each argument object
-     * provides a reference value and a test object compatible with the
-     * parameterised test methods.
+     * methods that search or concatenate their arguments. Each argument
+     * object provides a reference value and a test object compatible
+     * with the parameterised test methods.
      *
      * @return the examples for non-mutating tests.
      */
@@ -42,7 +44,28 @@ class AbstractSequenceAPITest extends UnitTestSupport {
                 tupleExample( //
                         List.of(-1, 0, 1, 42 * 42, "y", -1e42, 42 * 42), //
                         List.of("y", -1, 42 * 42)),
-                tupleExample(List.of(Py.None, 1, PyLong.TYPE), List.of("other", List.of(1, 2, 3))));
+                tupleExample(List.of(Py.None, 1, PyLong.TYPE), List.of("other", List.of(1, 2, 3))),
+                stringExample("a", "bc"), //
+                stringExample("", "abc"), //
+                stringExample("Σωκρατικὸς", " λόγος"), //
+                unicodeExample("a", "bc"), //
+                unicodeExample("", "abc"), //
+                unicodeExample("Σωκρατικὸς", " λόγος"), //
+                unicodeExample("画蛇", "添足"), //
+                /*
+                 * The following contain non-BMP characters 🐍=U+1F40D and
+                 * 🦓=U+1F993, each of which Python must consider to be a single
+                 * character.
+                 */
+                // In the Java String realisation each is two chars
+                stringExample("one 🐍", "🦓 two"),  // 🐍=\ud83d\udc0d
+                stringExample("🐍🦓", ""), // 🐍=\ud83d\udc0d
+                // In the PyUnicode realisation each is one int
+                unicodeExample("one 🐍", "🦓 two"), // 🐍=U+1F40D
+                unicodeExample("🐍🦓", ""),  // 🐍=U+1F40D
+                // Surrogate concatenation should not create U+1F40D
+                stringExample("\udc0d A \ud83d", "\udc0d B"),
+                unicodeExample("\udc0d A \ud83d", "\udc0d B"));
     }
 
     /**
@@ -58,6 +81,46 @@ class AbstractSequenceAPITest extends UnitTestSupport {
     static Arguments tupleExample(List<?> a, List<?> b) {
         Object v = new PyTuple(a), w = new PyTuple(b);
         return arguments(PyType.of(v).name, a, v, b, w);
+    }
+
+    /**
+     * Construct an example with two Python {@code str}, each
+     * implemented by a Java {@code String}. One is {@code self} in the
+     * test, and the other is to be a second argument when needed (for
+     * testing {@code concatenation}, say).
+     *
+     * @param a the String to treat as a Python sequence
+     * @param b a second Python sequence as the other argument
+     * @return the example (a reference value, test object, and other)
+     */
+    static Arguments stringExample(String a, String b) {
+        // The sequence element of a str is a str of one char.
+        List<Object> aa = listCodePoints(a);
+        List<Object> bb = listCodePoints(b);
+        return arguments("str(String)", aa, a, bb, b);
+    }
+
+    /**
+     * Construct an example with two Python {@code str}, each
+     * implemented by a {@code PyUnicode}. One is {@code self} in the
+     * test, and the other is to be a second argument when needed (for
+     * testing {@code concatenation}, say).
+     *
+     * @param a the String to treat as a Python sequence
+     * @param b a second Python sequence as the other argument
+     * @return the example (a reference value, test object, and other)
+     */
+    static Arguments unicodeExample(String a, String b) {
+        // The sequence element of a str is a str of one code point.
+        List<Object> vv = listCodePoints(a);
+        List<Object> ww = listCodePoints(b);
+        Object v = newPyUnicode(a), w = newPyUnicode(b);
+        return arguments("str(PyUnicode)", vv, v, ww, w);
+    }
+
+    /** Break the String into Python {@code str} code points */
+    private static List<Object> listCodePoints(String a) {
+        return a.codePoints().mapToObj(PyUnicode::fromCodePoint).collect(Collectors.toList());
     }
 
     /**
@@ -183,7 +246,7 @@ class AbstractSequenceAPITest extends UnitTestSupport {
      * @param type unused (for parameterised name only)
      * @param ref a list having elements equal to those of {@code obj}
      * @param obj Python object under test
-     * @param ref a list having elements equal to those of {@code obj2}
+     * @param ref2 a list having elements equal to those of {@code obj2}
      * @param obj2 argument to method
      * @throws Throwable from the implementation
      */
@@ -351,15 +414,91 @@ class AbstractSequenceAPITest extends UnitTestSupport {
     // */
     // void supports_delSlice(String type, List<Object> ref, Object obj)
     // throws Throwable {fail("not implemented");}
-    //
-    // /** Test {@link PySequence#tuple(Object) PySequence.tuple} */
+
+    // XXX AWaits implementation of PySequence.tuple
+    // /**
+    // * Test {@link PySequence#tuple(Object) PySequence.tuple}
+    // *
+    // * @param type unused (for parameterised name only)
+    // * @param ref a list having elements equal to those of {@code obj}
+    // * @param obj Python object under test
+    // * @throws Throwable from the implementation
+    // */
+    // @DisplayName("PySequence.tuple")
+    // @ParameterizedTest(name = "{0}: tuple({2})")
+    // @MethodSource("readableProvider")
+    // @SuppressWarnings("static-method")
     // void supports_tuple(String type, List<Object> ref, Object obj)
-    // throws Throwable {fail("not implemented");}
-    //
-    // /** Test {@link PySequence#list(Object) PySequence.list} */
+    // throws Throwable {
+    // PyTuple result = PySequence.tuple(obj);
+    // checkItems(ref, result);
+    // }
+
+    // XXX AWaits implementation of PySequence.tuple
+    // /**
+    // * Test {@link PySequence#list(Object) PySequence.list}
+    // *
+    // * @param type unused (for parameterised name only)
+    // * @param ref a list having elements equal to those of {@code obj}
+    // * @param obj Python object under test
+    // * @throws Throwable from the implementation
+    // */
+    // @DisplayName("PySequence.list")
+    // @ParameterizedTest(name = "{0}: list({2})")
+    // @MethodSource("readableProvider")
+    // @SuppressWarnings("static-method")
     // void supports_list(String type, List<Object> ref, Object obj)
-    // throws Throwable {fail("not implemented");}
-    //
+    // throws Throwable {
+    // PyList result = PySequence.list(obj);
+    // checkItems(ref, result);
+    // }
+
+    /**
+     * Check a test result for size and content. The result must allow
+     * indexing with {@link PySequence#getItem(Object, Object)}.
+     *
+     * @param ref a list having elements expected of {@code result}
+     * @param result Python object under test
+     * @throws Throwable from the implementation
+     */
+    private static void checkItems(List<Object> ref, Object result) throws Throwable {
+        int L = ref.size();
+        assertEquals(L, PySequence.size(result));
+        for (int i = 0; i < L; i++) { assertEquals(ref.get(i), PySequence.getItem(result, i)); }
+    }
+
+    /**
+     * Test {@link PySequence#list(Object) PySequence.list}
+     *
+     * @param type unused (for parameterised name only)
+     * @param ref a list having elements equal to those of {@code obj}
+     * @param obj Python object under test
+     * @throws Throwable from the implementation
+     */
+    @Disabled("Missing feature: fastList() from  iterable or sequence (str/bytes)")
+    @DisplayName("PySequence.fastList (Java API)")
+    @ParameterizedTest(name = "{0}: fastList({2})")
+    @MethodSource("readableProvider")
+    @SuppressWarnings("static-method")
+    void supports_fastList(String type, List<Object> ref, Object obj) throws Throwable {
+        List<Object> result = PySequence.fastList(obj, () -> new ValueError(""));
+        checkItems(ref, result);
+    }
+
+    /**
+     * Check a test result for size and content. The result must be a
+     * Java List<Object>.
+     *
+     * @param ref a list having elements expected of {@code result}
+     * @param result Python object under test
+     * @throws Throwable from the implementation
+     */
+    private static void checkItems(List<Object> ref, List<Object> result) throws Throwable {
+        int L = ref.size();
+        assertEquals(L, result.size());
+        for (int i = 0; i < L; i++) { assertEquals(ref.get(i), result.get(i)); }
+    }
+
     // /**
     // * Test {@link PySequence#count(Object, Object) PySequence.count}
     // */

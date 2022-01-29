@@ -6,7 +6,7 @@
  * Originally written by Marc-Andre Lemburg (mal@lemburg.com).
  */
 
-package org.python.core;
+package org.python.modules;
 
 public interface ucnhashAPI {
     public int getCchMax();

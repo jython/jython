@@ -67,10 +67,10 @@ public class PyType extends Operations implements DictPyObject {
                 // And sometimes things go wrong :(
                 BaseException.class, //
                 // Types with multiple/adopted implementations
-                // PyUnicode.class, //
+                PyUnicode.class, //
                 PyLong.class, //
                 PyBool.class, //
-                // PyFloat.class, //
+                PyFloat.class, //
         };
         // Fill the map from the list.
         for (Class<?> c : bootstrapClasses) {
@@ -282,7 +282,7 @@ public class PyType extends Operations implements DictPyObject {
      * @param spec specification
      * @return the constructed {@code PyType}
      */
-    static PyType fromSpec(Spec spec) {
+    public static PyType fromSpec(Spec spec) {
 
         // Construct a type with an empty dictionary
         PyType type;
@@ -843,7 +843,7 @@ public class PyType extends Operations implements DictPyObject {
      * determine behaviours or provide quick answers to frequent
      * questions such as "are you a data descriptor".
      */
-    enum Flag {
+    public enum Flag {
         /**
          * Special methods may be assigned new meanings in the {@code type},
          * after creation.
@@ -877,7 +877,7 @@ public class PyType extends Operations implements DictPyObject {
      * the mutators. A fluent interface makes this configuration
      * readable as a single, long statement.
      */
-    static class Spec {
+    public static class Spec {
 
         /** Name of the class being specified. */
         final String name;
@@ -1001,7 +1001,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param name of the type
          * @param lookup authorisation to access {@code implClass}
          */
-        Spec(String name, Lookup lookup) { this(name, lookup.lookupClass(), lookup); }
+        public Spec(String name, Lookup lookup) { this(name, lookup.lookupClass(), lookup); }
 
         /**
          * Create (begin) a specification for a {@link PyType} representing
@@ -1192,7 +1192,7 @@ public class PyType extends Operations implements DictPyObject {
          * through the Spec and are derived in construction, or as a side
          * effect of setting something else.
          */
-        Spec flag(Flag f) {
+        public Spec flag(Flag f) {
             flags.add(f);
             return this;
         }
@@ -1203,7 +1203,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param f to remove from the current flags
          * @return {@code this}
          */
-        Spec flagNot(Flag f) {
+        public Spec flagNot(Flag f) {
             flags.remove(f);
             return this;
         }

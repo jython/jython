@@ -508,8 +508,8 @@ public class PyFloat extends AbstractPyObject {
      * @return formatted value
      */
     private static String formatDouble(double value, Spec spec) {
-        FloatFormatter f = new FloatFormatter(spec);
         try {
+            FloatFormatter f = new Formatter(spec, true);
             return f.format(value).getResult();
         } catch (FormatOverflow fe) {
             throw new OverflowError(fe.getMessage());
@@ -688,6 +688,35 @@ public class PyFloat extends AbstractPyObject {
         }
     }
 
+    // Java-only API -------------------------------------------------
+
+    /**
+     * Convert a Python {@code float}, {@code int} or {@code bool} to a
+     * Java {@code double} (or throw {@link NoConversion}). Conversion
+     * from an {@code int} may overflow.
+     * <p>
+     * If the method throws the special non-Python exception
+     * {@link NoConversion}, the caller must deal with it by throwing an
+     * appropriate Python exception or taking an alternative course of
+     * action. OverlowError could be allowed to propagate since it is a
+     * Python exception.
+     *
+     * @param v to convert
+     * @return converted to {@code double}
+     * @throws NoConversion if v is not a {@code float}, {@code int} or
+     *     {@code bool}
+     * @throws OverflowError if v is an {@code int} out of range
+     */
+    static double convertToDouble(Object v) throws NoConversion, OverflowError {
+        if (v instanceof Double)
+            return ((Double)v).doubleValue();
+        else if (v instanceof PyUnicode)
+            return ((PyFloat)v).value;
+        else
+            // BigInteger, PyLong, Boolean, etc. or throw
+            return PyLong.convertToDouble(v);
+    }
+
     // Python sub-class -----------------------------------------------
 
     /**
@@ -705,6 +734,102 @@ public class PyFloat extends AbstractPyObject {
 
         @Override
         public Map<Object, Object> getDict() { return null; }
+    }
+
+    // formatter ------------------------------------------------------
+
+    /**
+     * A {@link Formatter}, constructed from a {@link Spec}, with
+     * specific validations for {@code int.__format__}.
+     */
+    static class Formatter extends FloatFormatter {
+
+        /**
+         * If {@code true}, give {@code printf}-style meanings to
+         * {@link Spec#type}.
+         */
+        final boolean printf;
+
+        /**
+         * Prepare a {@link Formatter} in support of {@code str.__mod__},
+         * that is, traditional {@code printf}-style formatting.
+         *
+         * @param spec a parsed format specification.
+         * @param printf f {@code true}, interpret {@code spec}
+         *     {@code printf}-style, otherwise as
+         *     {@link Formatter#Formatter(Spec) Formatter(Spec)}
+         * @throws FormatOverflow if a value is out of range (including the
+         *     precision)
+         * @throws FormatError if an unsupported format character is
+         *     encountered
+         */
+        Formatter(Spec spec, boolean printf) throws FormatError {
+            super(validated(spec, printf));
+            this.printf = printf;
+        }
+
+        /**
+         * Prepare a {@link Formatter} in support of
+         * {@link PyFloat#__format__(Object, Object) float.__format__}.
+         *
+         * @param spec a parsed PEP-3101 format specification.
+         * @throws FormatOverflow if a value is out of range (including the
+         *     precision)
+         * @throws FormatError if an unsupported format character is
+         *     encountered
+         */
+        Formatter(Spec spec) throws FormatError { this(spec, false); }
+
+        /**
+         * Validations and defaults specific to {@code float}.
+         *
+         * @param spec to validate
+         * @return validated spec with defaults filled
+         * @throws FormatError on failure to validate
+         */
+        private static Spec validated(Spec spec, boolean printf) throws FormatError {
+            String type = TYPE.name;
+
+            switch (spec.type) {
+
+                case 'n':
+                    if (spec.grouping) { throw notAllowed("Grouping", type, spec.type); }
+                    //$FALL-THROUGH$
+
+                case Spec.NONE:
+                case 'e':
+                case 'f':
+                case 'g':
+                case 'E':
+                case 'F':
+                case 'G':
+                case '%':
+                    // Check for disallowed parts of the specification
+                    if (spec.alternate) { throw alternateFormNotAllowed(type); }
+                    break;
+
+                case 'r':
+                case 's':
+                    // Only allow for printf-style formatting
+                    if (printf) { break; }
+                    //$FALL-THROUGH$
+
+                default:
+                    // The type code was not recognised
+                    throw unknownFormat(spec.type, type);
+            }
+
+            /*
+             * spec may be incomplete. The defaults are those commonly used for
+             * numeric formats.
+             */
+            return spec.withDefaults(Spec.NUMERIC);
+        }
+
+        @Override
+        public FloatFormatter format(Object o) throws NoConversion, FormatError {
+            return format(convertToDouble(o));
+        }
     }
 
     // plumbing ------------------------------------------------------

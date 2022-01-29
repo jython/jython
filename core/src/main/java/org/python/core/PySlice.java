@@ -46,6 +46,17 @@ public class PySlice extends AbstractPyObject {
     }
 
     /**
+     * Create a Python {@code slice} from two {@code object} arguments.
+     * The step is implicitly {@code None}.
+     *
+     * @param start index or {@code null} (for {@code None}).
+     * @param stop index or {@code null} (for {@code None}).
+     */
+    public PySlice(Object start, Object stop) {
+        this(start, stop, null);
+    }
+
+    /**
      * Create a Python {@code slice} from Java {@code int} arguments.
      *
      * @param start index of first item in slice.

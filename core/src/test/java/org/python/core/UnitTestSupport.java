@@ -2,10 +2,14 @@
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
+
+import org.junit.jupiter.api.function.Executable;
 
 /**
  * A base class for unit tests that defines some common convenience
@@ -71,7 +75,7 @@ class UnitTestSupport {
      * @param value to assign
      * @return from this value.
      */
-    static PyLong newPyLong(BigInteger value) { return new PyLong.Derived(PyLong.TYPE, value); }
+    static PyLong newPyLong(BigInteger value) { return new PyLong(PyLong.TYPE, value); }
 
     /**
      * Force creation of an actual {@link PyLong} from Object
@@ -112,22 +116,21 @@ class UnitTestSupport {
         else if (v instanceof Boolean)
             return (Boolean)v ? 1. : 0.;
 
-        throw new IllegalArgumentException(
-                String.format("cannot convert '%s' to double", v));
+        throw new IllegalArgumentException(String.format("cannot convert '%s' to double", v));
     }
 
     /**
      * Force creation of an actual {@link PyFloat}
      *
+     * @param value to wrap
      * @return from this value.
      */
-    static PyFloat newPyFloat(double value) {
-        return new PyFloat.Derived(PyFloat.TYPE, value);
-    }
+    static PyFloat newPyFloat(double value) { return new PyFloat(PyFloat.TYPE, value); }
 
     /**
      * Force creation of an actual {@link PyFloat} from Object
      *
+     * @param value to wrap
      * @return from this value.
      */
     static PyFloat newPyFloat(Object value) {
@@ -141,14 +144,37 @@ class UnitTestSupport {
     }
 
     /**
+     * Force creation of an actual {@link PyUnicode} from a
+     * {@code String} to be treated as in the usual Java encoding.
+     * Surrogate pairs will be interpreted as their characters, unless
+     * lone.
+     *
+     * @param value to wrap
+     * @return from this value.
+     */
+    static PyUnicode newPyUnicode(String value) { return new PyUnicode(PyUnicode.TYPE, value); }
+
+    /**
+     * Force creation of an actual {@link PyUnicode} from an array of
+     * code points, which could include surrogates, even in pairs.
+     *
+     * @param value the code points
+     * @return from this value.
+     */
+    static PyUnicode newPyUnicode(int[] value) {
+        return new PyUnicode(PyUnicode.TYPE, value);
+    }
+
+    /**
      * The Python type of {@code o} is exactly the one expected.
      *
      * @param expected type
      * @param o to test
      */
     static void assertPythonType(PyType expected, Object o) {
-        assertTrue(expected.checkExact(o), () -> String.format("Java %s not a Python '%s'",
-                o.getClass().getSimpleName(), expected.name));
+        assertTrue(expected.checkExact(o),
+                () -> String.format("Java %s not a Python '%s'",
+                        o.getClass().getSimpleName(), expected.name));
     }
 
     /**
@@ -159,6 +185,25 @@ class UnitTestSupport {
      * @param actual result to match
      */
     static void assertStartsWith(String expected, String actual) {
-        assertTrue(actual.startsWith(expected), "should start with " + expected);
+        assertTrue(actual.startsWith(expected),
+                "should start with " + expected);
+    }
+
+    /**
+     * Invoke an action expected to raise a Python exception and check
+     * the message. The return value may be the subject of further
+     * assertions.
+     *
+     * @param <E> type of exception
+     * @param expected type of exception
+     * @param action to invoke
+     * @param expectedMessage expected message text
+     * @return what was thrown
+     */
+    static <T extends PyException> T assertRaises(Class<T> expected,
+            Executable action, String expectedMessage) {
+        T t = assertThrows(expected, action);
+        assertEquals(expectedMessage, t.getMessage());
+        return t;
     }
 }
