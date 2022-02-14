@@ -110,8 +110,8 @@ NI_IDN_ALLOW_UNASSIGNED     = 128
 NI_IDN_USE_STD3_ASCII_RULES = 256
 NI_MAXHOST                  = 1025
 
-SOCK_DGRAM     = 1
-SOCK_STREAM    = 2
+SOCK_STREAM    = 1
+SOCK_DGRAM     = 2
 SOCK_RAW       = 3 # not supported
 SOCK_RDM       = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
