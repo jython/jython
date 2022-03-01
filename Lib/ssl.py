@@ -1129,7 +1129,7 @@ class SSLContext(object):
         if self._ciphers is not None:
             context_builder = context_builder.ciphers(self._ciphers)
 
-        if self._check_hostname:
+        if self.verify_mode != CERT_NONE and hostname:
             engine = context_builder.build().newEngine(ByteBufAllocator.DEFAULT, hostname, addr[1])
             if HAS_SNI:
                 params = engine.getSSLParameters()

@@ -11,6 +11,7 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-97 ] Failures in SNI support affecting pip
     - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
     - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
     - [ GH-139 ] Make gradlew executable on Unix/Mac
