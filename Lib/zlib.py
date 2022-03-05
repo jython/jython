@@ -19,7 +19,6 @@ import jarray
 import struct
 import sys
 from cStringIO import StringIO
-from org.python.core.util import StringUtil
 
 from java.lang import Long, String, System
 from java.util.zip import Adler32, CRC32, Deflater, Inflater, DataFormatException
@@ -149,7 +148,7 @@ class compressobj(object):
         self.deflater.setInput(string, 0, len(string))
         deflated = _get_deflate_data(self.deflater)
         self._size += len(string)
-        self._crc32.update(StringUtil.toBytes(string), 0, len(string))
+        self._crc32.update(string, 0, len(string))
         if self._gzip:
             return self.GZIP_HEADER + deflated
         else:
@@ -227,7 +226,7 @@ class decompressobj(object):
 
         self.inflater.setInput(string)
         inflated = _get_inflate_data(self.inflater, max_length)
-        self._crc32.update(StringUtil.toBytes(inflated), 0, len(inflated))
+        self._crc32.update(inflated, 0, len(inflated))
 
         r = self.inflater.getRemaining()
         if r:
