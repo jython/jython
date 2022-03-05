@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
       - run: pip install bandit black codespell flake8 isort mypy pytest pyupgrade safety
       #- run: bandit -r . || true  # Not so helpful
       #- run: black --check . || true  # Disable because it takes too long.
