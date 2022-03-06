@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
 import org.python.compiler.Module;
 import org.python.core.util.FileUtil;
 import org.python.core.util.PlatformUtil;
+import org.python.core.util.importer;
 
 /**
  * Utility functions for "import" support.
@@ -782,32 +784,34 @@ public class imp {
      * @return the module named
      */
     private static PyObject loadBuiltin(String name) {
+        Objects.requireNonNull(name, "name must not be null");
         final String MSG = "import {0} # builtin";
-        if (name == "sys") {
-            logger.log(Level.CONFIG, MSG, name);
-            return Py.java2py(Py.getSystemState());
-        }
-        if (name == "__builtin__") {
-            logger.log(Level.CONFIG, MSG, new Object[] {name, name});
-            return new PyModule("__builtin__", Py.getSystemState().builtins);
-        }
-        String mod = PySystemState.getBuiltin(name);
-        if (mod != null) {
-            Class<?> c = Py.findClassEx(mod, "builtin module");
-            if (c != null) {
-                logger.log(Level.CONFIG, "import {0} # builtin {1}", new Object[] {name, mod});
-                try {
-                    if (PyObject.class.isAssignableFrom(c)) { // xxx ok?
-                        return PyType.fromClass(c);
+        switch (name) {
+            case "sys":
+                logger.log(Level.CONFIG, MSG, name);
+                return Py.java2py(Py.getSystemState());
+            case "__builtin__":
+                logger.log(Level.CONFIG, MSG, new Object[]{name, name});
+                return new PyModule("__builtin__", Py.getSystemState().builtins);
+            default:
+                String mod = PySystemState.getBuiltin(name);
+                if (mod != null) {
+                    Class<?> c = Py.findClassEx(mod, "builtin module");
+                    if (c != null) {
+                        logger.log(Level.CONFIG, "import {0} # builtin {1}", new Object[]{name, mod});
+                        try {
+                            if (PyObject.class.isAssignableFrom(c)) { // xxx ok?
+                                return PyType.fromClass(c);
+                            }
+                            return createFromClass(name, c);
+                        } catch (NoClassDefFoundError e) {
+                            throw Py.ImportError(
+                                    "Cannot import " + name + ", missing class " + c.getName());
+                        }
                     }
-                    return createFromClass(name, c);
-                } catch (NoClassDefFoundError e) {
-                    throw Py.ImportError(
-                            "Cannot import " + name + ", missing class " + c.getName());
                 }
-            }
+                return null;
         }
-        return null;
     }
 
     static PyObject loadFromLoader(PyObject importer, String name) {

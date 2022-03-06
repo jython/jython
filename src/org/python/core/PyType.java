@@ -644,8 +644,8 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
     }
 
     @ExposedNew
-    static final PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
+    static PyObject type___new__(PyNewWrapper new_, boolean init, PyType subtype,
+                                 PyObject[] args, String[] keywords) {
         // Special case: type(x) should return x.getType()
         if (args.length == 1 && keywords.length == 0) {
             PyObject obj = args[0];
@@ -1058,7 +1058,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         // special case __new__, if function => static method
         PyObject new_ = dict.__finditem__("__new__");
         // XXX: java functions?
-        if (new_ != null && new_ instanceof PyFunction) {
+        if (new_ instanceof PyFunction) {
             dict.__setitem__("__new__", new PyStaticMethod(new_));
         }
 
@@ -1328,7 +1328,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         String proxyName = name;
         PyObject module = dict.__finditem__("__module__");
         if (module != null) {
-            proxyName = module.toString() + "$" + proxyName;
+            proxyName = module + "$" + proxyName;
         }
         Class<?> proxyClass =
                 MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName, dict);
@@ -1466,14 +1466,14 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             throw Py.TypeError(
                     "can only assign non-empty tuple to __bases__, not " + newBasesTuple);
         }
-        for (int i = 0; i < newBases.length; i++) {
-            if (!(newBases[i] instanceof PyType)) {
-                if (!(newBases[i] instanceof PyClass)) {
+        for (PyObject pyObject : newBases) {
+            if (!(pyObject instanceof PyType)) {
+                if (!(pyObject instanceof PyClass)) {
                     throw Py.TypeError(name + ".__bases__ must be a tuple of old- or new-style "
-                            + "classes, not " + newBases[i]);
+                            + "classes, not " + pyObject);
                 }
             } else {
-                if (((PyType) newBases[i]).isSubType(this)) {
+                if (((PyType) pyObject).isSubType(this)) {
                     throw Py.TypeError("a __bases__ item causes an inheritance cycle");
                 }
             }
@@ -2047,7 +2047,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
                  * http://bugs.jython.org/issue1540 Also ignore this if we're doing super during
                  * __init__ as we want it to behave Fixes http://bugs.jython.org/issue2375
                  */
-                if (name != "__init__" && !name.startsWith("super__")) {
+                if (!"__init__".equals(name) && !name.startsWith("super__")) {
                     lookupName = "super__" + name;
                 } else {
                     lookupName = name;
@@ -2241,51 +2241,40 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     void postSetattr(String name) {
         invalidateMethodCache();
-        if (name == "__get__") {
-            if (!hasGet && lookup("__get__") != null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+        if (name == null) {
+            return;
+        }
+        switch (name) {
+            case "__get__":
+                if (!hasGet && lookup("__get__") != null) {
+                    traverse_hierarchy(false, type -> {
                         boolean old = type.hasGet;
                         type.hasGet = true;
                         return old;
-                    }
-                });
-            }
-        } else if (name == "__set__") {
-            if (!hasSet && lookup("__set__") != null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+                    });
+                }
+                break;
+            case "__set__":
+                if (!hasSet && lookup("__set__") != null) {
+                    traverse_hierarchy(false, type -> {
                         boolean old = type.hasSet;
                         type.hasSet = true;
                         return old;
-                    }
-                });
-            }
-        } else if (name == "__delete__") {
-            if (!hasDelete && lookup("__delete__") != null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+                    });
+                }
+                break;
+            case "__delete__":
+                if (!hasDelete && lookup("__delete__") != null) {
+                    traverse_hierarchy(false, type -> {
                         boolean old = type.hasDelete;
                         type.hasDelete = true;
                         return old;
-                    }
-                });
-            }
-        } else if (name == "__getattribute__") {
-            traverse_hierarchy(false, new OnType() {
-
-                @Override
-                public boolean onType(PyType type) {
-                    return (type.usesObjectGetattribute = false);
+                    });
                 }
-
-            });
+                break;
+            case "__getattribute__":
+                traverse_hierarchy(false, type -> (type.usesObjectGetattribute = false));
+                break;
         }
     }
 
@@ -2312,60 +2301,49 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
     void postDelattr(String name) {
         invalidateMethodCache();
-        if (name == "__get__") {
-            if (hasGet && lookup("__get__") == null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+        if (name == null) {
+            return;
+        }
+        switch (name) {
+            case "__get__":
+                if (hasGet && lookup("__get__") == null) {
+                    traverse_hierarchy(false, type -> {
                         boolean absent = type.getDict().__finditem__("__get__") == null;
                         if (absent) {
                             type.hasGet = false;
                             return false;
                         }
                         return true;
-                    }
-                });
-            }
-        } else if (name == "__set__") {
-            if (hasSet && lookup("__set__") == null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+                    });
+                }
+                break;
+            case "__set__":
+                if (hasSet && lookup("__set__") == null) {
+                    traverse_hierarchy(false, type -> {
                         boolean absent = type.getDict().__finditem__("__set__") == null;
                         if (absent) {
                             type.hasSet = false;
                             return false;
                         }
                         return true;
-                    }
-                });
-            }
-        } else if (name == "__delete__") {
-            if (hasDelete && lookup("__delete__") == null) {
-                traverse_hierarchy(false, new OnType() {
-
-                    @Override
-                    public boolean onType(PyType type) {
+                    });
+                }
+                break;
+            case "__delete__":
+                if (hasDelete && lookup("__delete__") == null) {
+                    traverse_hierarchy(false, type -> {
                         boolean absent = type.getDict().__finditem__("__delete__") == null;
                         if (absent) {
                             type.hasDelete = false;
                             return false;
                         }
                         return true;
-                    }
-                });
-            }
-        } else if (name == "__getattribute__") {
-            traverse_hierarchy(false, new OnType() {
-
-                @Override
-                public boolean onType(PyType type) {
-                    return (type.usesObjectGetattribute = false);
+                    });
                 }
-
-            });
+                break;
+            case "__getattribute__":
+                traverse_hierarchy(false, type -> (type.usesObjectGetattribute = false));
+                break;
         }
     }
 
@@ -2374,13 +2352,9 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
      * __dict__ (or anything else affecting attribute lookups).
      */
     protected void invalidateMethodCache() {
-        traverse_hierarchy(false, new OnType() {
-
-            @Override
-            public boolean onType(PyType type) {
-                type.versionTag = new Object();
-                return false;
-            }
+        traverse_hierarchy(false, type -> {
+            type.versionTag = new Object();
+            return false;
         });
     }
 
@@ -2653,7 +2627,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
 
         String module;
 
-        private String name;
+        private final String name;
 
         TypeResolver(Class<?> underlying_class, String module, String name) {
             /*
@@ -2850,7 +2824,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             }
 
             public boolean isValid(Object version, String name) {
-                return this.version == version && this.name == name;
+                return this.version == version && this.name.equals(name);
             }
 
             public PyObject get(PyObject[] where) {

@@ -52,7 +52,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
         "a zipfile. ZipImportError is raised if 'archivepath' doesn't point to\n" +
         "a valid Zip archive.");
 
-    private static Logger log = Logger.getLogger("org.python.import");
+    private static final Logger log = Logger.getLogger("org.python.import");
 
     /** Path to the Zip archive */
     public String archive;
@@ -134,7 +134,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
             throw zipimport.ZipImportError("not a Zip file: " + path);
         }
 
-        if (prefix != "" && !prefix.endsWith(File.separator)) {
+        if (!"".equals(prefix) && !prefix.endsWith(File.separator)) {
             prefix += File.separator;
         }
     }
@@ -539,7 +539,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
      * ZipBundle is a ZipFile and one of its InputStreams, bundled together so the ZipFile can be
      * closed when finished with its InputStream.
      */
-    private class ZipBundle extends Bundle {
+    private static class ZipBundle extends Bundle {
         ZipFile zipFile;
 
         public ZipBundle(ZipFile zipFile, InputStream inputStream) {

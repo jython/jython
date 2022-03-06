@@ -87,7 +87,7 @@ public class PySuper extends PyObject implements Traverseproc {
         } else {
             // Try the slow way
             PyObject classAttr = obj.__findattr__("__class__");
-            if (classAttr != null && classAttr instanceof PyType) {
+            if (classAttr instanceof PyType) {
                 if (((PyType)classAttr).isSubType(type)) {
                     return (PyType)classAttr;
                 }
@@ -101,7 +101,7 @@ public class PySuper extends PyObject implements Traverseproc {
     }
 
     final PyObject super___findattr_ex__(String name) {
-        if (objType != null && name != "__class__") {
+        if (objType != null && !"__class__".equals(name)) {
             PyObject descr = objType.super_lookup(superType, name);
             if (descr != null) {
                 return descr.__get__(objType == obj ? null : obj, objType);

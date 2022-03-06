@@ -66,7 +66,7 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
         String remainder = null;
         if (dot != -1) {
             firstName = name.substring(0, dot);
-            remainder = name.substring(dot + 1, name.length());
+            remainder = name.substring(dot + 1);
         }
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage) __dict__.__finditem__(firstName);
@@ -123,6 +123,9 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
 
     @Override
     public PyObject __findattr_ex__(String name) {
+        if (name == null) {
+            return null;
+        }
 
         PyObject ret = __dict__.__finditem__(name);
 
@@ -137,30 +140,32 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
             Class<?> c = __mgr__.findClass(__name__, name);
             if (c != null) {
                 return addClass(name, c);
-            } else if (name == "__name__") {
-                return new PyString(__name__);
-            } else if (name == "__dict__") {
-                return __dict__;
-            } else if (name == "__mgr__") {
-                return Py.java2py(__mgr__);
-            } else if (name == "__file__") {
-                // Stored as UTF-16 for Java but expected as bytes in Python
-                return __file__ == null ? Py.None : Py.fileSystemEncode(__file__);
-            } else {
-                return null;
+            }
+            switch (name) {
+                case "__name__":
+                    return new PyString(__name__);
+                case "__dict__":
+                    return __dict__;
+                case "__mgr__":
+                    return Py.java2py(__mgr__);
+                case "__file__":
+                    // Stored as UTF-16 for Java but expected as bytes in Python
+                    return __file__ == null ? Py.None : Py.fileSystemEncode(__file__);
+                default:
+                    return null;
             }
         }
     }
 
     @Override
     public void __setattr__(String attr, PyObject value) {
-        if (attr == "__mgr__") {
+        if ("__mgr__".equals(attr)) {
             PackageManager newMgr = Py.tojava(value, PackageManager.class);
             if (newMgr == null) {
                 throw Py.TypeError("cannot set java package __mgr__ to None");
             }
             __mgr__ = newMgr;
-        } else if (attr == "__file__") {
+        } else if ("__file__".equals(attr)) {
             // Stored as UTF-16 for Java but presented as bytes from Python
             __file__ = Py.fileSystemDecode(value);
         } else {

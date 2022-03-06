@@ -106,62 +106,68 @@ public class PyClass extends PyObject implements Traverseproc {
 
     @Override
     public PyObject __findattr_ex__(String name) {
-        if (name == "__dict__") {
-            return __dict__;
+        if (name == null) {
+            return null;
         }
-        if (name == "__bases__") {
-            return __bases__;
+        switch (name) {
+            case "__dict__":
+                return __dict__;
+            case "__bases__":
+                return __bases__;
+            case "__name__":
+                return Py.newString(__name__);
+            default:
+                PyObject result = lookup(name);
+                if (result == null) {
+                    return result;
+                }
+                return result.__get__(null, this);
         }
-        if (name == "__name__") {
-            return Py.newString(__name__);
-        }
-
-        PyObject result = lookup(name);
-        if (result == null) {
-            return result;
-        }
-        return result.__get__(null, this);
     }
 
     @Override
     public void __setattr__(String name, PyObject value) {
-        if (name == "__dict__") {
-            setDict(value);
-            return;
-        } else if (name == "__bases__") {
-            setBases(value);
-            return;
-        } else if (name == "__name__") {
-            setName(value);
-            return;
-        } else if (name == "__getattr__") {
-            __getattr__ = value;
-            return;
-        } else if (name == "__setattr__") {
-            __setattr__ = value;
-            return;
-        } else if (name == "__delattr__") {
-            __delattr__ = value;
-            return;
-        } else if (name == "__tojava__") {
-            __tojava__ = value;
-            return;
-        } else if (name == "__del__") {
-            __del__ = value;
-            return;
-        } else if (name == "__contains__") {
-            __contains__ = value;
+        if (name == null) {
             return;
         }
-
-        if (value == null) {
-            try {
-                __dict__.__delitem__(name);
-            } catch (PyException pye) {
-                noAttributeError(name);
-            }
+        switch (name) {
+            case "__dict__":
+                setDict(value);
+                return;
+            case "__bases__":
+                setBases(value);
+                return;
+            case "__name__":
+                setName(value);
+                return;
+            case "__getattr__":
+                __getattr__ = value;
+                return;
+            case "__setattr__":
+                __setattr__ = value;
+                return;
+            case "__delattr__":
+                __delattr__ = value;
+                return;
+            case "__tojava__":
+                __tojava__ = value;
+                return;
+            case "__del__":
+                __del__ = value;
+                return;
+            case "__contains__":
+                __contains__ = value;
+                return;
+            default:
+                if (value == null) {
+                    try {
+                        __dict__.__delitem__(name);
+                    } catch (PyException pye) {
+                        noAttributeError(name);
+                    }
+                }
+                __dict__.__setitem__(name, value);
         }
-        __dict__.__setitem__(name, value);
     }
 
     @Override
@@ -206,7 +212,7 @@ public class PyClass extends PyObject implements Traverseproc {
             return -2;
         }
         int c = __name__.compareTo(((PyClass) other).__name__);
-        return c < 0 ? -1 : c > 0 ? 1 : 0;
+        return Integer.compare(c, 0);
     }
 
     @Override
@@ -218,7 +224,7 @@ public class PyClass extends PyObject implements Traverseproc {
             return new PyString(__name__);
         }
         PyObject mod = __dict__.__finditem__("__module__");
-        if (mod == null || !(mod instanceof PyString)) {
+        if (!(mod instanceof PyString)) {
             return new PyString(__name__);
         }
         String smod = ((PyString) mod).toString();
@@ -248,14 +254,14 @@ public class PyClass extends PyObject implements Traverseproc {
     }
 
     public void setDict(PyObject value) {
-        if (value == null || !(value instanceof AbstractDict)) {
+        if (!(value instanceof AbstractDict)) {
             throw Py.TypeError("__dict__ must be a dictionary object");
         }
         __dict__ = value;
     }
 
     public void setBases(PyObject value) {
-        if (value == null || !(value instanceof PyTuple)) {
+        if (!(value instanceof PyTuple)) {
             throw Py.TypeError("__bases__ must be a tuple object");
         }
 
@@ -320,7 +326,7 @@ public class PyClass extends PyObject implements Traverseproc {
                 return retVal;
             }
         }
-        
+
         /* Jython-only */
         if (__tojava__ != null) {
             retVal = visit.visit(__tojava__, arg);

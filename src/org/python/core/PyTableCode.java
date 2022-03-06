@@ -13,7 +13,7 @@ public class PyTableCode extends PyBaseCode
     int func_id;
     public String co_code = ""; // only used by inspect
 
-    public PyTableCode(int argcount, String varnames[],
+    public PyTableCode(int argcount, String[] varnames,
                        String filename, String name,
                        int firstlineno,
                        boolean varargs, boolean varkwargs,
@@ -23,7 +23,7 @@ public class PyTableCode extends PyBaseCode
              varkwargs, funcs, func_id, null, null, 0, 0);
     }
 
-    public PyTableCode(int argcount, String varnames[],
+    public PyTableCode(int argcount, String[] varnames,
                        String filename, String name,
                        int firstlineno,
                        boolean varargs, boolean varkwargs,
@@ -65,7 +65,7 @@ public class PyTableCode extends PyBaseCode
 
     @Override
     public PyObject __dir__() {
-        PyString members[] = new PyString[__members__.length];
+        PyString[] members = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++) {
             members[i] = new PyString(__members__[i]);
         }
@@ -73,8 +73,8 @@ public class PyTableCode extends PyBaseCode
     }
 
     private void throwReadonly(String name) {
-        for (int i = 0; i < __members__.length; i++) {
-            if (__members__[i] == name) {
+        for (String s : __members__) {
+            if (s.equals(name)) {
                 throw Py.TypeError("readonly attribute");
             }
         }
@@ -106,24 +106,23 @@ public class PyTableCode extends PyBaseCode
 
     @Override
     public PyObject __findattr_ex__(String name) {
+        if (name == null) {
+            return null;
+        }
         // have to craft co_varnames specially
-        if (name == "co_varnames") {
-            return toPyStringTuple(co_varnames);
-        }
-        if (name == "co_cellvars") {
-            return toPyStringTuple(co_cellvars);
-        }
-        if (name == "co_freevars") {
-            return toPyStringTuple(co_freevars);
-        }
-        if (name == "co_filename") {
-            return Py.fileSystemEncode(co_filename); // bytes object expected by clients
-        }
-        if (name == "co_name") {
-            return new PyString(co_name);
-        }
-        if (name == "co_flags") {
-            return Py.newInteger(co_flags.toBits());
+        switch (name) {
+            case "co_varnames":
+                return toPyStringTuple(co_varnames);
+            case "co_cellvars":
+                return toPyStringTuple(co_cellvars);
+            case "co_freevars":
+                return toPyStringTuple(co_freevars);
+            case "co_filename":
+                return Py.fileSystemEncode(co_filename); // bytes object expected by clients
+            case "co_name":
+                return new PyString(co_name);
+            case "co_flags":
+                return Py.newInteger(co_flags.toBits());
         }
         return super.__findattr_ex__(name);
     }

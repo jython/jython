@@ -3,6 +3,7 @@ package org.python.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import static org.python.core.Opcode.*;
 
 public class PyBytecode extends PyBaseCode implements Traverseproc {
@@ -51,8 +52,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     // follows new.code's interface
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
-            String codestring, PyObject[] constants, String[] names, String varnames[],
-            String filename, String name, int firstlineno, String lnotab) {
+                      String codestring, PyObject[] constants, String[] names, String[] varnames,
+                      String filename, String name, int firstlineno, String lnotab) {
         this(argcount, nlocals, stacksize, flags, codestring,
                 constants, names, varnames, filename, name, firstlineno, lnotab,
                 null, null);
@@ -60,9 +61,9 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     // XXX - intern names HERE instead of in marshal
     public PyBytecode(int argcount, int nlocals, int stacksize, int flags,
-            String codestring, PyObject[] constants, String[] names, String varnames[],
-            String filename, String name, int firstlineno, String lnotab,
-            String[] cellvars, String[] freevars) {
+                      String codestring, PyObject[] constants, String[] names, String[] varnames,
+                      String filename, String name, int firstlineno, String lnotab,
+                      String[] cellvars, String[] freevars) {
 
         debug = defaultDebug;
 
@@ -92,15 +93,15 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     private static final String[] __members__ = {
-        "co_name", "co_argcount",
-        "co_varnames", "co_filename", "co_firstlineno",
-        "co_flags", "co_cellvars", "co_freevars", "co_nlocals",
-        "co_code", "co_consts", "co_names", "co_lnotab", "co_stacksize"
+            "co_name", "co_argcount",
+            "co_varnames", "co_filename", "co_firstlineno",
+            "co_flags", "co_cellvars", "co_freevars", "co_nlocals",
+            "co_code", "co_consts", "co_names", "co_lnotab", "co_stacksize"
     };
 
     @Override
     public PyObject __dir__() {
-        PyString members[] = new PyString[__members__.length];
+        PyString[] members = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++) {
             members[i] = new PyString(__members__[i]);
         }
@@ -108,8 +109,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     }
 
     private void throwReadonly(String name) {
-        for (int i = 0; i < __members__.length; i++) {
-            if (__members__[i] == name) {
+        for (String s : __members__) {
+            if (s.equals(name)) {
                 throw Py.TypeError("readonly attribute");
             }
         }
@@ -141,35 +142,32 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     @Override
     public PyObject __findattr_ex__(String name) {
+        if (name == null) {
+            return null;
+        }
         // have to craft co_varnames specially
-        if (name == "co_varnames") {
-            return toPyStringTuple(co_varnames);
+        switch (name) {
+            case "co_varnames":
+                return toPyStringTuple(co_varnames);
+            case "co_cellvars":
+                return toPyStringTuple(co_cellvars);
+            case "co_freevars":
+                return toPyStringTuple(co_freevars);
+            case "co_filename":
+                return Py.fileSystemEncode(co_filename); // bytes object expected by clients
+            case "co_name":
+                return new PyString(co_name);
+            case "co_code":
+                return new PyString(getString(co_code));
+            case "co_lnotab":
+                return new PyString(getString(co_lnotab));
+            case "co_consts":
+                return new PyTuple(co_consts);
+            case "co_flags":
+                return Py.newInteger(co_flags.toBits());
+            default:
+                return super.__findattr_ex__(name);
         }
-        if (name == "co_cellvars") {
-            return toPyStringTuple(co_cellvars);
-        }
-        if (name == "co_freevars") {
-            return toPyStringTuple(co_freevars);
-        }
-        if (name == "co_filename") {
-            return Py.fileSystemEncode(co_filename); // bytes object expected by clients
-        }
-        if (name == "co_name") {
-            return new PyString(co_name);
-        }
-        if (name == "co_code") {
-            return new PyString(getString(co_code));
-        }
-        if (name == "co_lnotab") {
-            return new PyString(getString(co_lnotab));
-        }
-        if (name == "co_consts") {
-            return new PyTuple(co_consts);
-        }
-        if (name == "co_flags") {
-            return Py.newInteger(co_flags.toBits());
-        }
-        return super.__findattr_ex__(name);
     }
 
     enum Why {
@@ -181,7 +179,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         CONTINUE,  /* 'continue' statement */
         YIELD      /* 'yield' operator */
 
-    };
+    }
 
     // to enable why's to be stored on a PyStack
     @Untraversable
@@ -241,7 +239,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     private void print_debug(int count, int next_instr, int line, int opcode, int oparg, PyStack stack, PyFrame f) {
         if (debug) {
             System.err.println(co_name + " " + line + ":" +
-                    count + "," + f.f_lasti + "> " + opcode+" "+
+                    count + "," + f.f_lasti + "> " + opcode + " " +
                     get_opname().__getitem__(Py.newInteger(opcode)) +
                     (opcode >= HAVE_ARGUMENT ? " " + oparg : "") +
                     ", stack: " + stack.toString() +
@@ -253,7 +251,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     // in their place we implement the block stack for PBC-VM, as mapped below in the comments of pushBlock
 
     private static PyTryBlock popBlock(PyFrame f) {
-        return (PyTryBlock)(((PyList)f.f_exits[0]).pop());
+        return (PyTryBlock) (((PyList) f.f_exits[0]).pop());
     }
 
     private static void pushBlock(PyFrame f, PyTryBlock block) {
@@ -261,12 +259,12 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
             f.f_exits = new PyObject[1]; // f_blockstack in CPython - a simple ArrayList might be best
             f.f_exits[0] = new PyList();
         }
-        ((PyList)f.f_exits[0]).append(block);
+        ((PyList) f.f_exits[0]).append(block);
     }
 
     private boolean blocksLeft(PyFrame f) {
         if (f.f_exits != null) {
-            return ((PyList)f.f_exits[0]).__nonzero__();
+            return f.f_exits[0].__nonzero__();
         } else {
             return false;
         }
@@ -787,7 +785,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
                     case BUILD_CLASS: {
                         PyObject methods = stack.pop();
-                        PyObject bases[] = ((PySequenceList) (stack.pop())).getArray();
+                        PyObject[] bases = ((PySequenceList) (stack.pop())).getArray();
                         String name = stack.pop().toString();
                         stack.push(Py.makeClass(name, bases, methods));
                         break;
@@ -1168,15 +1166,15 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                             v = w = Py.None;
                         } else if (u instanceof PyStackWhy) {
                             switch (((PyStackWhy) u).why) {
-                            case RETURN:
-                            case CONTINUE:
-                                exit = stack.top(2);
-                                stack.set_top(2, stack.top());
-                                stack.set_top(u);
-                                break;
-                            default:
-                                exit = stack.top();
-                                stack.set_top(u);
+                                case RETURN:
+                                case CONTINUE:
+                                    exit = stack.top(2);
+                                    stack.set_top(2, stack.top());
+                                    stack.set_top(u);
+                                    break;
+                                default:
+                                    exit = stack.top();
+                                    stack.set_top(u);
                             }
                             u = v = w = Py.None;
                         } else {
@@ -1274,8 +1272,8 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                     default:
                         Py.print(Py.getSystemState().stderr,
                                 Py.newString(
-                                String.format("XXX lineno: %d, opcode: %d\n",
-                                f.f_lasti, opcode)));
+                                        String.format("XXX lineno: %d, opcode: %d\n",
+                                                f.f_lasti, opcode)));
                         throw Py.SystemError("unknown opcode");
 
                 } // end switch
@@ -1415,7 +1413,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
                 break;
             }
             default: {
-                PyObject args[] = stack.popN(na);
+                PyObject[] args = stack.popN(na);
                 PyObject callable = stack.pop();
                 stack.push(callable.__call__(args));
             }
@@ -1424,11 +1422,11 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
 
     private static void call_function(int na, int nk, PyStack stack) {
         int n = na + nk * 2;
-        PyObject params[] = stack.popN(n);
+        PyObject[] params = stack.popN(n);
         PyObject callable = stack.pop();
 
-        PyObject args[] = new PyObject[na + nk];
-        String keywords[] = new String[nk];
+        PyObject[] args = new PyObject[na + nk];
+        String[] keywords = new String[nk];
         int i;
         for (i = 0; i < na; i++) {
             args[i] = params[i];
@@ -1595,9 +1593,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         private String upto(String x, int n) {
             x = x.replace('\n', '|');
             if (x.length() > n) {
-                StringBuilder item = new StringBuilder(x.substring(0, n));
-                item.append("...");
-                return item.toString();
+                return x.substring(0, n) + "...";
             } else {
                 return x;
             }
@@ -1722,7 +1718,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
     public int traverse(Visitproc visit, Object arg) {
         int retValue;
         if (co_consts != null) {
-            for (PyObject ob: co_consts) {
+            for (PyObject ob : co_consts) {
                 if (ob != null) {
                     retValue = visit.visit(ob, arg);
                     if (retValue != 0) {
@@ -1739,7 +1735,7 @@ public class PyBytecode extends PyBaseCode implements Traverseproc {
         if (ob == null || co_consts == null) {
             return false;
         } else {
-            for (PyObject obj: co_consts) {
+            for (PyObject obj : co_consts) {
                 if (obj == ob) {
                     return true;
                 }

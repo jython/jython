@@ -186,28 +186,33 @@ public class MatchObject extends PyObject implements Traverseproc {
     }
 
     public PyObject __findattr_ex__(String key) {
+        if (key == null) {
+            return null;
+        }
         //System.out.println("__findattr__:" + key);
-        if (key == "flags")
-            return Py.newInteger(pattern.flags);
-        if (key == "groupindex")
-            return pattern.groupindex;
-        if (key == "re")
-            return pattern;
-        if (key == "pos")
-            return Py.newInteger(pos);
-        if (key == "endpos")
-            return Py.newInteger(endpos);
-        if (key == "lastindex")
-            return lastindex == -1 ? Py.None : Py.newInteger(lastindex);
-        if (key == "lastgroup"){
-            if(pattern.indexgroup != null && lastindex >= 0)
-                return pattern.indexgroup.__getitem__(lastindex);
-            return Py.None;
+        switch (key) {
+            case "flags":
+                return Py.newInteger(pattern.flags);
+            case "groupindex":
+                return pattern.groupindex;
+            case "re":
+                return pattern;
+            case "pos":
+                return Py.newInteger(pos);
+            case "endpos":
+                return Py.newInteger(endpos);
+            case "lastindex":
+                return lastindex == -1 ? Py.None : Py.newInteger(lastindex);
+            case "lastgroup":
+                if (pattern.indexgroup != null && lastindex >= 0) {
+                    return pattern.indexgroup.__getitem__(lastindex);
+                }
+                return Py.None;
+            case "regs":
+                return regs();
+            default:
+                return super.__findattr_ex__(key);
         }
-        if ( key == "regs" ){
-            return regs();
-        }
-        return super.__findattr_ex__(key);
     }
 
 

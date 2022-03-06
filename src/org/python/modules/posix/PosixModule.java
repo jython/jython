@@ -27,6 +27,7 @@ import java.nio.file.attribute.FileTime;
 import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import jnr.constants.Constant;
@@ -933,7 +934,7 @@ public class PosixModule implements ClassDictInit {
         if (errno == Errno.__UNKNOWN_CONSTANT__) {
             return new PyString("Unknown error: " + code);
         }
-        if (errno.name() == errno.toString()) {
+        if (Objects.equals(errno.name(), errno.toString())) {
             // Fake constant or just lacks a description, fallback to Linux's
             // XXX: have jnr-constants handle this fallback
             errno = Enum.valueOf(jnr.constants.platform.linux.Errno.class,

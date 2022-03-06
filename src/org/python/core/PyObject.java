@@ -1971,7 +1971,7 @@ public class PyObject implements Serializable {
         // situations
         // XXX: This method isn't expensive but could (and maybe
         // should?) be optimized for worst case scenarios
-        return (op == "+") && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE)
+        return ("+".equals(op)) && (t1 == PyString.TYPE || t1 == PyUnicode.TYPE)
                 && (t2.isSubType(PyString.TYPE) || t2.isSubType(PyUnicode.TYPE));
     }
 

@@ -164,17 +164,23 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
     }
 
     protected PyObject ifindlocal(String name) {
-        if (name == "__dict__") return __dict__;
-        if (name == "__class__") return instclass;
-        if (name == "__ensure_finalizer__") {
-            if (__ensure_finalizer__Function == null) {
-                __ensure_finalizer__Function = makeFunction__ensure_finalizer__();
-            }
-            return new PyMethod(__ensure_finalizer__Function, this, instclass);
+        if (name == null) {
+            return null;
         }
-        if (__dict__ == null) return null;
-
-        return __dict__.__finditem__(name);
+        switch (name) {
+            case "__dict__":
+                return __dict__;
+            case "__class__":
+                return instclass;
+            case "__ensure_finalizer__":
+                if (__ensure_finalizer__Function == null) {
+                    __ensure_finalizer__Function = makeFunction__ensure_finalizer__();
+                }
+                return new PyMethod(__ensure_finalizer__Function, this, instclass);
+            default:
+                if (__dict__ == null) return null;
+                return __dict__.__finditem__(name);
+        }
     }
 
     protected PyObject ifindclass(String name) {
@@ -282,18 +288,18 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
 
     @ExposedMethod
     final void instance___setattr__(String name, PyObject value) {
-        if (name == "__class__") {
+        if ("__class__".equals(name)) {
             if (value instanceof PyClass) {
                 instclass = (PyClass) value;
                 if (instclass.__del__ != null &&
-                    !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+                        !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
                     FinalizeTrigger.ensureFinalizer(this);
                 }
             } else {
                 throw Py.TypeError("__class__ must be set to a class");
             }
             return;
-        } else if (name == "__dict__") {
+        } else if ("__dict__".equals(name)) {
             __dict__ = value;
             return;
         }
@@ -304,7 +310,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
         } else {
             __dict__.__setitem__(name, value);
         }
-        if (name == "__del__" && !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
+        if ("__del__".equals(name) && !JyAttribute.hasAttr(this, JyAttribute.FINALIZE_TRIGGER_ATTR)) {
             FinalizeTrigger.ensureFinalizer(this);
         }
     }
@@ -335,7 +341,6 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
                     throw Py.AttributeError("class " + instclass.__name__ +
                             " has no attribute '" + name + "'");
             }
-            ;
         }
     }
 
@@ -456,7 +461,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
         if (ret instanceof PyInteger) {
             return ((PyInteger) ret).getValue();
         } else if (ret instanceof PyLong) {
-            return ((PyLong) ret).hashCode();
+            return ret.hashCode();
         }
         throw Py.TypeError("__hash__() must really return int" + ret.getType());
     }
@@ -488,7 +493,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
             if (ret != null) {
                 if (ret instanceof PyInteger) {
                     int result = ((PyInteger) ret).getValue();
-                    return result < 0 ? -1 : result > 0 ? 1 : 0;
+                    return Integer.compare(result, 0);
                 }
                 throw Py.TypeError("__cmp__() must return int");
             }
@@ -498,7 +503,7 @@ public class PyInstance extends PyObject implements FinalizablePyObject, Travers
             if (ret != null) {
                 if (ret instanceof PyInteger) {
                     int result = ((PyInteger) ret).getValue();
-                    return -(result < 0 ? -1 : result > 0 ? 1 : 0);
+                    return -(Integer.compare(result, 0));
                 }
                 throw Py.TypeError("__cmp__() must return int");
             }

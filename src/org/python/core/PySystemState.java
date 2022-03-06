@@ -13,7 +13,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ImmutableSet;
 import org.python.Version;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
@@ -203,11 +204,17 @@ public class PySystemState extends PyObject
     // long_info
     public static final PyObject long_info = LongInfo.getInfo();
 
+    private static final Set<String> READONLY_ATTRIBUTES =
+            ImmutableSet.of("__dict__", "__class__", "registry", "exec_prefix", "packageManager");
+    private static final Set<String> REQUIRED_ATTRIBUTES =
+            ImmutableSet.of("__dict__", "__class__", "registry", "exec_prefix", "platform", "packageManager",
+                    "builtins", "warnoptions");
+
     public PySystemState() {
         initialize();
         closer = new PySystemStateCloser(this);
         modules = new PyStringMap();
-        modules_reloading = new HashMap<String, PyModule>();
+        modules_reloading = new HashMap<>();
         importLock = new ReentrantLock();
         syspathJavaLoader = new SyspathJavaLoader(imp.getParentClassLoader());
 
@@ -268,16 +275,13 @@ public class PySystemState extends PyObject
     }
 
     private static void checkReadOnly(String name) {
-        if (name == "__dict__" || name == "__class__" || name == "registry" || name == "exec_prefix"
-                || name == "packageManager") {
+        if (READONLY_ATTRIBUTES.contains(name)) {
             throw Py.TypeError("readonly attribute");
         }
     }
 
     private static void checkMustExist(String name) {
-        if (name == "__dict__" || name == "__class__" || name == "registry" || name == "exec_prefix"
-                || name == "platform" || name == "packageManager" || name == "builtins"
-                || name == "warnoptions") {
+        if (REQUIRED_ATTRIBUTES.contains(name)) {
             throw Py.TypeError("readonly attribute");
         }
     }
@@ -377,46 +381,53 @@ public class PySystemState extends PyObject
     // xxx fix this accessors
     @Override
     public PyObject __findattr_ex__(String name) {
-        if (name == "exc_value") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) {
-                return null;
-            }
-            return exc.value;
-        } else if (name == "exc_type") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) {
-                return null;
-            }
-            return exc.type;
-        } else if (name == "exc_traceback") {
-            PyException exc = Py.getThreadState().exception;
-            if (exc == null) {
-                return null;
-            }
-            return exc.traceback;
-        } else {
-            PyObject ret = super.__findattr_ex__(name);
-            if (ret != null) {
-                if (ret instanceof PyMethod) {
-                    if (__dict__.__finditem__(name) instanceof PyReflectedFunction) {
-                        return ret; // xxx depends on nonstandard __dict__
-                    }
-                } else if (ret == PyAttributeDeleted.INSTANCE) {
+        if (name == null) {
+            return null;
+        }
+        switch (name) {
+            case "exc_value": {
+                PyException exc = Py.getThreadState().exception;
+                if (exc == null) {
                     return null;
-                } else {
-                    return ret;
                 }
+                return exc.value;
             }
+            case "exc_type": {
+                PyException exc = Py.getThreadState().exception;
+                if (exc == null) {
+                    return null;
+                }
+                return exc.type;
+            }
+            case "exc_traceback": {
+                PyException exc = Py.getThreadState().exception;
+                if (exc == null) {
+                    return null;
+                }
+                return exc.traceback;
+            }
+            default:
+                PyObject ret = super.__findattr_ex__(name);
+                if (ret != null) {
+                    if (ret instanceof PyMethod) {
+                        if (__dict__.__finditem__(name) instanceof PyReflectedFunction) {
+                            return ret; // xxx depends on nonstandard __dict__
+                        }
+                    } else if (ret == PyAttributeDeleted.INSTANCE) {
+                        return null;
+                    } else {
+                        return ret;
+                    }
+                }
 
-            return __dict__.__finditem__(name);
+                return __dict__.__finditem__(name);
         }
     }
 
     @Override
     public void __setattr__(String name, PyObject value) {
         checkReadOnly(name);
-        if (name == "builtins") {
+        if ("builtins".equals(name)) {
             setBuiltins(value);
         } else {
             PyObject ret = getType().lookup(name); // xxx fix fix fix
@@ -1039,24 +1050,19 @@ public class PySystemState extends PyObject
                 // pre (e.g. system) properties should override the registry,
                 // therefore only add missing properties from this registry file
                 Properties fileProperties = new Properties();
-                try {
-                    FileInputStream fp = new FileInputStream(file);
-                    try {
-                        fileProperties.load(fp);
-                        for (Entry kv : fileProperties.entrySet()) {
-                            Object key = kv.getKey();
-                            if (!registry.containsKey(key)) {
-                                registry.put(key, kv.getValue());
-                            }
+                try (FileInputStream fp = new FileInputStream(file)) {
+                    fileProperties.load(fp);
+                    for (Entry<Object, Object> kv : fileProperties.entrySet()) {
+                        Object key = kv.getKey();
+                        if (!registry.containsKey(key)) {
+                            registry.put(key, kv.getValue());
                         }
-                    } finally {
-                        fp.close();
                     }
                 } catch (IOException e) {
-                    System.err.println("couldn't open registry file: " + file.toString());
+                    System.err.println("couldn't open registry file: " + file);
                 }
             } else {
-                System.err.println("warning: " + file.toString() + " is a directory, not a file");
+                System.err.println("warning: " + file + " is a directory, not a file");
             }
         }
     }
@@ -1149,7 +1155,7 @@ public class PySystemState extends PyObject
                     "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
             return false;
         }
-        BufferedReader r = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
+        BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         String className;
         try {
             className = r.readLine();
@@ -1487,22 +1493,13 @@ public class PySystemState extends PyObject
     private static boolean isStandalone(String jarFileName) {
         boolean standalone = false;
         if (jarFileName != null) {
-            JarFile jarFile = null;
-            try {
-                jarFile = new JarFile(jarFileName);
+            try (JarFile jarFile = new JarFile(jarFileName)) {
                 JarEntry jarEntry = jarFile.getJarEntry("Lib/os.py");
                 standalone = jarEntry != null;
             } catch (IOException ioe) {
                 // Continue
-            } finally {
-                if (jarFile != null) {
-                    try {
-                        jarFile.close();
-                    } catch (IOException e) {
-                        // Continue
-                    }
-                }
             }
+            // Continue
         }
         return standalone;
     }
