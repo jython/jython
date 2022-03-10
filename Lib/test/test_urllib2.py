@@ -4,9 +4,14 @@ from test import test_support
 import os
 import socket
 import StringIO
+import sys
 
 import urllib2
 from urllib2 import Request, OpenerDirector
+
+# Work out this is Windows, even for Jython.
+WINDOWS = sys.platform == 'win32' or (
+    sys.platform[:4] == 'java' and os._name == 'nt')
 
 # XXX
 # Request
@@ -29,7 +34,7 @@ class TrivialTests(unittest.TestCase):
             fname = os.expand(fname)
             fname = fname.translate(string.maketrans("/.", "./"))
 
-        if os.name == 'nt':
+        if WINDOWS:
             file_url = "file:///%s" % fname
         else:
             file_url = "file://%s" % fname
@@ -598,7 +603,7 @@ class OpenerDirectorTests(unittest.TestCase):
 def sanepathname2url(path):
     import urllib
     urlpath = urllib.pathname2url(path)
-    if os.name == "nt" and urlpath.startswith("///"):
+    if WINDOWS and urlpath.startswith("///"):
         urlpath = urlpath[2:]
     # XXX don't ask me about the mac...
     return urlpath
