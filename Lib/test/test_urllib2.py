@@ -9,7 +9,7 @@ import StringIO
 import sys
 
 import urllib2
-from urllib2 import Request, OpenerDirector
+from urllib2 import Request, OpenerDirector, AbstractDigestAuthHandler
 import httplib
 
 try:
@@ -35,7 +35,7 @@ class TrivialTests(unittest.TestCase):
         self.assertRaises(ValueError, urllib2.urlopen, 'bogus url')
 
         # XXX Name hacking to get this to work on Windows.
-        fname = os.path.abspath(urllib2.__file__).replace('\\', '/')
+        fname = os.path.abspath(urllib2.__file__).replace(os.sep, '/')
 
         # And more hacking to get it to work on MacOS. This assumes
         # urllib.pathname2url works, unfortunately...
@@ -614,8 +614,8 @@ class OpenerDirectorTests(unittest.TestCase):
                 self.assertIsInstance(args[0], Request)
                 # response from opener.open is None, because there's no
                 # handler that defines http_open to handle it
-                self.assertTrue(args[1] is None or
-                             isinstance(args[1], MockResponse))
+                if args[1] is not None:
+                    self.assertIsInstance(args[1], MockResponse)
 
 
 def sanepathname2url(path):
@@ -952,7 +952,8 @@ class HandlerTests(unittest.TestCase):
                            MockHeaders({"location": to_url}))
                 except urllib2.HTTPError:
                     # 307 in response to POST requires user OK
-                    self.assertTrue(code == 307 and data is not None)
+                    self.assertEqual(code, 307)
+                    self.assertIsNotNone(data)
                 self.assertEqual(o.req.get_full_url(), to_url)
                 try:
                     self.assertEqual(o.req.get_method(), "GET")
@@ -1049,6 +1050,22 @@ class HandlerTests(unittest.TestCase):
         o = build_test_opener(hh, hdeh, hrh)
         fp = o.open('http://www.example.com')
         self.assertEqual(fp.geturl(), redirected_url.strip())
+
+    def test_redirect_no_path(self):
+        # Issue 14132: Relative redirect strips original path
+        real_class = httplib.HTTPConnection
+        response1 = b"HTTP/1.1 302 Found\r\nLocation: ?query\r\n\r\n"
+        httplib.HTTPConnection = test_urllib.fakehttp(response1)
+        self.addCleanup(setattr, httplib, "HTTPConnection", real_class)
+        urls = iter(("/path", "/path?query"))
+        def request(conn, method, url, *pos, **kw):
+            self.assertEqual(url, next(urls))
+            real_class.request(conn, method, url, *pos, **kw)
+            # Change response for subsequent connection
+            conn.__class__.fakedata = b"HTTP/1.1 200 OK\r\n\r\nHello!"
+        httplib.HTTPConnection.request = request
+        fp = urllib2.urlopen("http://python.org/path")
+        self.assertEqual(fp.geturl(), "http://python.org/path?query")
 
     def test_proxy(self):
         o = OpenerDirector()
@@ -1304,6 +1321,15 @@ class MiscTests(unittest.TestCase, FakeHTTPMixin):
         else:
             self.assertTrue(False)
 
+    def test_unsupported_algorithm(self):
+        handler = AbstractDigestAuthHandler()
+        with self.assertRaises(ValueError) as exc:
+            handler.get_algorithm_impls('invalid')
+        self.assertEqual(
+            str(exc.exception),
+            "Unsupported digest authentication algorithm 'invalid'"
+        )
+
     @unittest.skipUnless(ssl, "ssl module required")
     def test_url_path_with_control_char_rejected(self):
         for char_no in range(0, 0x21) + range(0x7f, 0x100):
@@ -1428,6 +1454,11 @@ class RequestTests(unittest.TestCase):
         url = 'http://docs.python.org/library/urllib2.html#OK'
         req = Request(url)
         self.assertEqual(req.get_full_url(), url)
+
+    def test_private_attributes(self):
+        self.assertFalse(hasattr(self.get, '_Request__r_xxx'))
+        # Issue #6500: infinite recursion
+        self.assertFalse(hasattr(self.get, '_Request__r_method'))
 
     def test_HTTPError_interface(self):
         """
