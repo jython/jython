@@ -1,4 +1,5 @@
-"""Regresssion tests for urllib"""
+# Adapted for Jython from CPython 2.7 test.test_urllib
+"""Regression tests for urllib"""
 
 import collections
 import urllib
@@ -258,6 +259,31 @@ class urlopen_HttpTests(unittest.TestCase, FakeHTTPMixin):
         try:
             fp = urllib.urlopen(url)
             self.assertEqual(fp.geturl(), url)
+        finally:
+            self.unfakehttp()
+
+    def test_url_with_control_char_rejected(self):
+        for char_no in range(0, 0x21) + range(0x7f, 0x100):
+            char = chr(char_no)
+            schemeless_url = "//localhost:7777/test%s/" % char
+            self.fakehttp(b"HTTP/1.1 200 OK\r\n\r\nHello.")
+            try:
+                # urllib quotes the URL so there is no injection.
+                resp = urllib.urlopen("http:" + schemeless_url)
+                self.assertNotIn(char, resp.geturl())
+            finally:
+                self.unfakehttp()
+
+    def test_url_with_newline_header_injection_rejected(self):
+        self.fakehttp(b"HTTP/1.1 200 OK\r\n\r\nHello.")
+        host = "localhost:7777?a=1 HTTP/1.1\r\nX-injected: header\r\nTEST: 123"
+        schemeless_url = "//" + host + ":8080/test/?test=a"
+        try:
+            # urllib quotes the URL so there is no injection.
+            resp = urllib.urlopen("http:" + schemeless_url)
+            self.assertNotIn(' ', resp.geturl())
+            self.assertNotIn('\r', resp.geturl())
+            self.assertNotIn('\n', resp.geturl())
         finally:
             self.unfakehttp()
 

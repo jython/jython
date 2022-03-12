@@ -1,3 +1,4 @@
+# Adapted for Jython from CPython 2.7 test.test_xmlrpc
 import base64
 import datetime
 import gc
@@ -613,11 +614,14 @@ class SimpleServerTestCase(BaseServerTestCase):
     def test_partial_post(self):
         # Check that a partial POST doesn't make the server loop: issue #14001.
         conn = httplib.HTTPConnection(ADDR, PORT)
-        conn.request('POST', '/RPC2 HTTP/1.0\r\nContent-Length: 100\r\n\r\nbye')
-        try:
-            conn.close()
-        except Exception, e:
-            print "Got this exception", type(e), e
+        conn.send('POST /RPC2 HTTP/1.0\r\n'
+                  'Content-Length: 100\r\n\r\n'
+                  'bye HTTP/1.1\r\n'
+                  'Host: %s:%s\r\n'
+                  'Accept-Encoding: identity\r\n'
+                  'Content-Length: 0\r\n\r\n'
+                  % (ADDR, PORT))
+        conn.close()
 
 class MultiPathServerTestCase(BaseServerTestCase):
     threadFunc = staticmethod(http_multi_server)

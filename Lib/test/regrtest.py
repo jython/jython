@@ -1361,7 +1361,6 @@ _failures = {
         # Failing tests here are because of lack of STARTTLS; see http://bugs.jython.org/issue2447
         # (which produces "'NoneType' is not iterable" in the server accept loop)
         test_ftplib
-        test_httplib
         test_poplib
         test_smtplib
 
