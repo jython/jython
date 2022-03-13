@@ -153,7 +153,26 @@ class XMLRPCTestCase(unittest.TestCase):
                          xmlrpclib.loads(strg)[0][0])
         self.assertRaises(TypeError, xmlrpclib.dumps, (arg1,))
 
-    @unittest.skipIf(test_support.is_jython, "FIXME: #1875 not working in Jython")
+    @test_support.requires_unicode
+    def test_dump_encoding(self):
+        value = {test_support.u(r'key\u20ac\xa4'):
+                 test_support.u(r'value\u20ac\xa4')}
+        strg = xmlrpclib.dumps((value,), encoding='iso-8859-15')
+        strg = "<?xml version='1.0' encoding='iso-8859-15'?>" + strg
+        self.assertEqual(xmlrpclib.loads(strg)[0][0], value)
+
+        strg = xmlrpclib.dumps((value,), encoding='iso-8859-15',
+                               methodresponse=True)
+        self.assertEqual(xmlrpclib.loads(strg)[0][0], value)
+
+        methodname = test_support.u(r'method\u20ac\xa4')
+        strg = xmlrpclib.dumps((value,), encoding='iso-8859-15',
+                               methodname=methodname)
+        self.assertEqual(xmlrpclib.loads(strg)[0][0], value)
+        self.assertEqual(xmlrpclib.loads(strg)[1], methodname)
+
+    @unittest.skipIf(test_support.is_jython, "sys.setdefaultencoding unavailable in Jython")
+    # Policy, not a bug.
     def test_default_encoding_issues(self):
         # SF bug #1115989: wrong decoding in '_stringify'
         utf8 = """<?xml version='1.0' encoding='iso-8859-1'?>
@@ -195,6 +214,20 @@ class XMLRPCTestCase(unittest.TestCase):
         else:
             self.assertEqual(s, "abc \xc2\x95")
             self.assertEqual(items, [("def \xc2\x96", "ghi \xc2\x97")])
+
+    def test_loads_unsupported(self):
+        ResponseError = xmlrpclib.ResponseError
+        data = '<params><param><value><spam/></value></param></params>'
+        self.assertRaises(ResponseError, xmlrpclib.loads, data)
+        data = ('<params><param><value><array>'
+                '<value><spam/></value>'
+                '</array></value></param></params>')
+        self.assertRaises(ResponseError, xmlrpclib.loads, data)
+        data = ('<params><param><value><struct>'
+                '<member><name>a</name><value><spam/></value></member>'
+                '<member><name>b</name><value><spam/></value></member>'
+                '</struct></value></param></params>')
+        self.assertRaises(ResponseError, xmlrpclib.loads, data)
 
 
 class HelperTestCase(unittest.TestCase):
@@ -286,7 +319,7 @@ ADDR = PORT = URL = None
 # The evt is set twice.  First when the server is ready to serve.
 # Second when the server has been shutdown.  The user must clear
 # the event after it has been set the first time to catch the second set.
-def http_server(evt, numrequests, requestHandler=None):
+def http_server(evt, numrequests, requestHandler=None, encoding=None):
     class TestInstanceClass:
         def div(self, x, y):
             return x // y
@@ -319,6 +352,7 @@ def http_server(evt, numrequests, requestHandler=None):
     if not requestHandler:
         requestHandler = SimpleXMLRPCServer.SimpleXMLRPCRequestHandler
     serv = MyXMLRPCServer(("localhost", 0), requestHandler,
+                          encoding=encoding,
                           logRequests=False, bind_and_activate=False)
     try:
         serv.socket.settimeout(3)
@@ -335,6 +369,7 @@ def http_server(evt, numrequests, requestHandler=None):
         serv.register_multicall_functions()
         serv.register_function(pow)
         serv.register_function(lambda x,y: x+y, 'add')
+        serv.register_function(lambda x: x, test_support.u(r't\xea\u0161t'))
         serv.register_function(my_function)
         serv.register_instance(TestInstanceClass())
         evt.set()
@@ -502,6 +537,33 @@ class SimpleServerTestCase(BaseServerTestCase):
         server = xmlrpclib.ServerProxy(u"http://%s:%d/RPC2"%(ADDR, PORT))
         self.assertEqual(server.add("a", u"\xe9"), u"a\xe9")
 
+    @test_support.requires_unicode
+    def test_client_encoding(self):
+        start_string = unichr(0x20ac)
+        end_string = unichr(0xa4)
+
+        try:
+            p = xmlrpclib.ServerProxy(URL, encoding='iso-8859-15')
+            self.assertEqual(p.add(start_string, end_string),
+                             start_string + end_string)
+        except (xmlrpclib.ProtocolError, socket.error) as e:
+            # ignore failures due to non-blocking socket unavailable errors.
+            if not is_unavailable_exception(e):
+                # protocol error; provide additional information in test output
+                self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
+
+    @test_support.requires_unicode
+    def test_nonascii_methodname(self):
+        try:
+            p = xmlrpclib.ServerProxy(URL, encoding='iso-8859-15')
+            m = getattr(p, 't\xea\xa8t')
+            self.assertEqual(m(42), 42)
+        except (xmlrpclib.ProtocolError, socket.error) as e:
+            # ignore failures due to non-blocking socket unavailable errors.
+            if not is_unavailable_exception(e):
+                # protocol error; provide additional information in test output
+                self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
+
     # [ch] The test 404 is causing lots of false alarms.
     def XXXtest_404(self):
         # send POST with httplib, it should return 404 header and
@@ -519,6 +581,7 @@ class SimpleServerTestCase(BaseServerTestCase):
             p = xmlrpclib.ServerProxy(URL)
             meth = p.system.listMethods()
             expected_methods = set(['pow', 'div', 'my_function', 'add',
+                                    test_support.u(r't\xea\u0161t'),
                                     'system.listMethods', 'system.methodHelp',
                                     'system.methodSignature', 'system.multicall'])
             self.assertEqual(set(meth), expected_methods)
@@ -626,6 +689,27 @@ class SimpleServerTestCase(BaseServerTestCase):
                   'Content-Length: 0\r\n\r\n'
                   % (ADDR, PORT))
         conn.close()
+
+class SimpleServerEncodingTestCase(BaseServerTestCase):
+    @staticmethod
+    def threadFunc(evt, numrequests, requestHandler=None, encoding=None):
+        http_server(evt, numrequests, requestHandler, 'iso-8859-15')
+
+    @test_support.requires_unicode
+    def test_server_encoding(self):
+        start_string = unichr(0x20ac)
+        end_string = unichr(0xa4)
+
+        try:
+            p = xmlrpclib.ServerProxy(URL)
+            self.assertEqual(p.add(start_string, end_string),
+                             start_string + end_string)
+        except (xmlrpclib.ProtocolError, socket.error) as e:
+            # ignore failures due to non-blocking socket unavailable errors.
+            if not is_unavailable_exception(e):
+                # protocol error; provide additional information in test output
+                self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
+
 
 class MultiPathServerTestCase(BaseServerTestCase):
     threadFunc = staticmethod(http_multi_server)
@@ -798,13 +882,9 @@ class GzipServerTestCase(BaseServerTestCase):
 class ServerProxyTestCase(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
-        if threading:
-            self.url = URL
-        else:
-            # Without threading, http_server() and http_multi_server() will not
-            # be executed and URL is still equal to None. 'http://' is a just
-            # enough to choose the scheme (HTTP)
-            self.url = 'http://'
+        # Actual value of the URL doesn't matter if it is a string in
+        # the correct format.
+        self.url = 'http://fake.localhost'
 
     def test_close(self):
         p = xmlrpclib.ServerProxy(self.url)
@@ -1059,6 +1139,7 @@ def test_main():
     xmlrpc_tests = [XMLRPCTestCase, HelperTestCase, DateTimeTestCase,
          BinaryTestCase, FaultTestCase, TransportSubclassTestCase]
     xmlrpc_tests.append(SimpleServerTestCase)
+    xmlrpc_tests.append(SimpleServerEncodingTestCase)
     xmlrpc_tests.append(KeepaliveServerTestCase1)
     xmlrpc_tests.append(KeepaliveServerTestCase2)
     xmlrpc_tests.append(GzipServerTestCase)
