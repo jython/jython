@@ -21,11 +21,9 @@ except ImportError:
     threading = None
 
 try:
-    unicode
-except NameError:
-    have_unicode = False
-else:
-    have_unicode = True
+    import gzip
+except ImportError:
+    gzip = None
 
 if test_support.is_jython:
     import _socket
@@ -38,14 +36,18 @@ alist = [{'astring': 'foo@bar.baz.spam',
           'anotherlist': ['.zyx.41'],
           'abase64': xmlrpclib.Binary("my dog has fleas"),
           'boolean': xmlrpclib.False,
-          'unicode': u'\u4000\u6000\u8000',
-          u'ukey\u4000': 'regular value',
           'datetime1': xmlrpclib.DateTime('20050210T11:41:23'),
           'datetime2': xmlrpclib.DateTime(
                         (2005, 02, 10, 11, 41, 23, 0, 1, -1)),
           'datetime3': xmlrpclib.DateTime(
                         datetime.datetime(2005, 02, 10, 11, 41, 23)),
           }]
+
+if test_support.have_unicode:
+    alist[0].update({
+          'unicode': test_support.u(r'\u4000\u6000\u8000'),
+          test_support.u(r'ukey\u4000'): 'regular value',
+    })
 
 class XMLRPCTestCase(unittest.TestCase):
 
@@ -184,7 +186,7 @@ class XMLRPCTestCase(unittest.TestCase):
                 temp_sys.setdefaultencoding(old_encoding)
 
         items = d.items()
-        if have_unicode:
+        if test_support.have_unicode:
             self.assertEqual(s, u"abc \x95")
             self.assertIsInstance(s, unicode)
             self.assertEqual(items, [(u"def \x96", u"ghi \x97")])
@@ -480,9 +482,10 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
+    @test_support.requires_unicode
     def test_nonascii(self):
-        start_string = 'P\N{LATIN SMALL LETTER Y WITH CIRCUMFLEX}t'
-        end_string = 'h\N{LATIN SMALL LETTER O WITH HORN}n'
+        start_string = test_support.u(r'P\N{LATIN SMALL LETTER Y WITH CIRCUMFLEX}t')
+        end_string = test_support.u(r'h\N{LATIN SMALL LETTER O WITH HORN}n')
 
         try:
             p = xmlrpclib.ServerProxy(URL)
@@ -494,6 +497,7 @@ class SimpleServerTestCase(BaseServerTestCase):
                 # protocol error; provide additional information in test output
                 self.fail("%s\n%s" % (e, getattr(e, "headers", "")))
 
+    @test_support.requires_unicode
     def test_unicode_host(self):
         server = xmlrpclib.ServerProxy(u"http://%s:%d/RPC2"%(ADDR, PORT))
         self.assertEqual(server.add("a", u"\xe9"), u"a\xe9")
@@ -709,6 +713,7 @@ class KeepaliveServerTestCase2(BaseKeepaliveServerTestCase):
 
 #A test case that verifies that gzip encoding works in both directions
 #(for a request and the response)
+@unittest.skipUnless(gzip, 'gzip not available')
 class GzipServerTestCase(BaseServerTestCase):
     #a request handler that supports keep-alive and logs requests into a
     #class variable
@@ -759,7 +764,7 @@ class GzipServerTestCase(BaseServerTestCase):
         with cm:
             p.pow(6, 8)
 
-    def test_gsip_response(self):
+    def test_gzip_response(self):
         t = self.Transport()
         p = xmlrpclib.ServerProxy(URL, transport=t)
         old = self.requestHandler.encode_threshold
@@ -771,6 +776,23 @@ class GzipServerTestCase(BaseServerTestCase):
         b = t.response_length
         self.requestHandler.encode_threshold = old
         self.assertTrue(a>b)
+
+    def test_gzip_decode_limit(self):
+        max_gzip_decode = 20 * 1024 * 1024
+        data = '\0' * max_gzip_decode
+        encoded = xmlrpclib.gzip_encode(data)
+        decoded = xmlrpclib.gzip_decode(encoded)
+        self.assertEqual(len(decoded), max_gzip_decode)
+
+        data = '\0' * (max_gzip_decode + 1)
+        encoded = xmlrpclib.gzip_encode(data)
+
+        with self.assertRaisesRegexp(ValueError,
+                                     "max gzipped payload length exceeded"):
+            xmlrpclib.gzip_decode(encoded)
+
+        xmlrpclib.gzip_decode(encoded, max_decode=-1)
+
 
 #Test special attributes of the ServerProxy object
 class ServerProxyTestCase(unittest.TestCase):
@@ -901,6 +923,7 @@ class CGIHandlerTestCase(unittest.TestCase):
 
             self.assertEqual(status, '400')
             self.assertEqual(message, 'Bad Request')
+
 
     def test_cgi_xmlrpc_response(self):
         data = """<?xml version='1.0'?>
@@ -1038,11 +1061,7 @@ def test_main():
     xmlrpc_tests.append(SimpleServerTestCase)
     xmlrpc_tests.append(KeepaliveServerTestCase1)
     xmlrpc_tests.append(KeepaliveServerTestCase2)
-    try:
-        import gzip
-        xmlrpc_tests.append(GzipServerTestCase)
-    except ImportError:
-        pass #gzip not supported in this build
+    xmlrpc_tests.append(GzipServerTestCase)
     xmlrpc_tests.append(MultiPathServerTestCase)
     xmlrpc_tests.append(ServerProxyTestCase)
     xmlrpc_tests.append(FailingServerTestCase)
