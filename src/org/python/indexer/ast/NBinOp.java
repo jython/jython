@@ -54,7 +54,7 @@ public class NBinOp extends NNode {
         }
 
         if (rtype == null) {
-            return setType(ltype == null ? new NUnknownType() : ltype);
+            return setType(new NUnknownType());
         }
 
         return setType(NUnionType.union(ltype, rtype));

@@ -195,7 +195,7 @@ public abstract class importer<T> extends PyObject {
         String path = makeFilename(fullname);
         String fullPath = makeFilePath(fullname);
 
-        if (path.length() < 0) {
+        if (path.length() == 0) {
             return null;
         }
 

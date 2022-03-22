@@ -1202,9 +1202,6 @@ public class struct implements ClassDictInit {
                 while (++j < flen && Character.isDigit((c = format.charAt(j)))) {
                     num = num * 10 + Character.digit(c, 10);
                 }
-                if (j > flen) {
-                    break;
-                }
             }
 
             FormatDef e = getentry(c, f);
