@@ -1361,7 +1361,6 @@ _failures = {
         # Failing tests here are because of lack of STARTTLS; see http://bugs.jython.org/issue2447
         # (which produces "'NoneType' is not iterable" in the server accept loop)
         test_ftplib
-        test_httplib
         test_poplib
         test_smtplib
 
@@ -1379,7 +1378,6 @@ _failures = {
         test_strptime           # Fails on JDK 9+ due to locale strings change
                                 # Covered by test_strptime_jy until the beta locale 
                                 # behaviour becomes the default
-        test_urllib2            # file not on local host (likely Windows only)
         """,
 
     'java.posix':   # Expected to fail on Linux

@@ -22,7 +22,7 @@ from types import MethodType, NoneType
 import java
 from java.io import IOException, InterruptedIOException
 from java.lang import Thread, ArrayIndexOutOfBoundsException, IllegalStateException
-from java.net import InetAddress, InetSocketAddress
+from java.net import InetAddress, InetSocketAddress, ConnectException, NoRouteToHostException
 from java.nio.channels import ClosedChannelException
 from java.security.cert import CertificateException
 from java.util import NoSuchElementException
@@ -110,8 +110,8 @@ NI_IDN_ALLOW_UNASSIGNED     = 128
 NI_IDN_USE_STD3_ASCII_RULES = 256
 NI_MAXHOST                  = 1025
 
-SOCK_DGRAM     = 1
-SOCK_STREAM    = 2
+SOCK_STREAM    = 1
+SOCK_DGRAM     = 2
 SOCK_RAW       = 3 # not supported
 SOCK_RDM       = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
@@ -297,9 +297,10 @@ _exception_map = {
     InterruptedIOException : lambda x: timeout(errno.ETIMEDOUT, 'timed out'),
     IllegalStateException  : lambda x: error(errno.EPIPE, 'Illegal state exception'),
 
+    NoRouteToHostException : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
+    ConnectException       : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
+
     java.net.BindException            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
-    java.net.ConnectException         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
-    java.net.NoRouteToHostException   : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
     java.net.PortUnreachableException : None,
     java.net.ProtocolException        : None,
     java.net.SocketException          : java_net_socketexception_handler,
@@ -350,16 +351,16 @@ def _map_exception(java_exception):
             msg = java_exception.message
         py_exception = SSLError(SSL_ERROR_SSL, msg)
     else:
-        # Netty 4.1.6 or higher wraps the connection exception in a
-        # private static class that inherits from ConnectException, so
-        # need to work around.
-        if isinstance(java_exception, java.net.ConnectException):
-            mapped_exception = _exception_map.get(java.net.ConnectException)
-        # Netty AnnotatedNoRouteToHostException extends NoRouteToHostException
-        # so also needs work around.
-        elif isinstance(java_exception, java.net.NoRouteToHostException):
-            mapped_exception = _exception_map.get(java.net.NoRouteToHostException)
+        # Netty defines its own sub-types of java... exceptions that are not
+        # public, so we look up the public version.
+        if isinstance(java_exception, ConnectException):
+            mapped_exception = _exception_map.get(ConnectException)
+        elif isinstance(java_exception, NoRouteToHostException):
+            mapped_exception = _exception_map.get(NoRouteToHostException)
+        elif isinstance(java_exception, ClosedChannelException):
+            mapped_exception = _exception_map.get(ClosedChannelException)
         else:
+            # Look-up the exact Python class
             mapped_exception = _exception_map.get(java_exception.__class__)
         if mapped_exception:
             py_exception = mapped_exception(java_exception)

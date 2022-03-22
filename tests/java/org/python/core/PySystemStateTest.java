@@ -2,6 +2,7 @@ package org.python.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -170,6 +171,21 @@ public class PySystemStateTest extends TestCase {
             assertEquals("vfszip:/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart, url.toString());
             result = Py.getJarFileNameFromURL(url);
             assertEquals("/någon/katalog/rätt.jar", result);
+        }
+    }
+
+    /**
+     * Test case for finding the path in the local file system of the file located by a JAR-file URL
+     * as reported by a JavaWebStart application. As the path points to a HTTP resource, there is no
+     * way to find the jar in the local file system: in this case, the method must return null.
+     */
+    public void testGetJarFileNameFromURL_javaWebStart() throws MalformedURLException {
+        // Examples from the table
+        for (JarExample ex : jarExamples) {
+            // Something like jar:file:/some_dir/some.jar!/a/package/with/A.class
+            URL url = new URL("jar:http://server:8080/signedWebApp/" + ex.urlJarPath + "!/"
+                    + ex.urlClassPath);
+            assertNull(PrePy.getJarFileNameFromURL(url));
         }
     }
 
