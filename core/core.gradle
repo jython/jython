@@ -28,12 +28,22 @@ test {
 
 // Sources and destinations when generating Java object implementations
 
-def genOutputDir = "$buildDir/generated/sources/javaTemplate"
+def genSourcesDir = "$buildDir/generated/sources"
+def genOutputDir = "$genSourcesDir/javaTemplate"
 def genJavaDir = "$genOutputDir/java/main"
 def genTestJavaDir = "$genOutputDir/java/test"
 
 def genInputDir = getProject().file('src/main/javaTemplate')
-def genTestInputDir = getProject().file('src/main/javaTemplate')
+def genTestInputDir = getProject().file('src/test/javaTemplate')
+
+
+// Source and destinations of Python source test material
+
+// We compile these to code objects to test the CPython interpreter.
+def testPythonExampleInputDir = getProject().file('src/test/pythonExample')
+
+def pythonExampleOutput = "$buildDir/generated/sources/pythonExample"
+def testPythonExampleOutputDir = "$pythonExampleOutput/test"
 
 
 sourceSets {
@@ -48,8 +58,12 @@ sourceSets {
         java {
             srcDir genTestJavaDir
         }
+        resources {
+            srcDir testPythonExampleOutputDir
+        }
     }
 }
+
 
 
 // A task that runs Python with the tools library on the path
@@ -84,6 +98,24 @@ task pythonVersion(type: PythonExec) {
 }
 generateObjectDefinitions.dependsOn(pythonVersion)
 
+
+// Copy and compile Python source examples to the build tree
+
+task compileTestPythonExamples(type: PythonExec,
+        description: 'Copy and compile Python test examples') {
+    // Clues for the incremental build
+    inputs.files(
+        fileTree(testPythonExampleInputDir) {
+            include '**/*.py'
+        })
+    outputs.dir(testPythonExampleOutputDir)
+    // Exec task is python -m compile_examples <src> <dst>
+    args '-m'
+    args 'compile_examples'
+    args testPythonExampleInputDir
+    args testPythonExampleOutputDir
+}
+processTestResources.dependsOn(compileTestPythonExamples)
 
 
 // Some adjustments to Javadoc to ensure complex tables readable
