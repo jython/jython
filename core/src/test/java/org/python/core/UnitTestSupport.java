@@ -16,7 +16,7 @@ import org.junit.jupiter.api.function.Executable;
  * functions for which the need recurs. A unit test that extends
  * this base will initialise the type system before running.
  */
-class UnitTestSupport {
+public class UnitTestSupport {
 
     /** The {@link PyType} {@code object}. */
     /*

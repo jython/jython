@@ -7,7 +7,7 @@ import java.util.Collection;
 import org.python.core.PyType.Spec;
 
 /** Stop-gap definition to satisfy references in the project. */
-class PyList extends ArrayList<Object> {
+public class PyList extends ArrayList<Object> {
     private static final long serialVersionUID = 1L;
 
     static PyType TYPE =
