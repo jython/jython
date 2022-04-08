@@ -690,7 +690,8 @@ public class PySequence extends Abstract {
          * @throws TypeError from bad {@code start} and {@code stop} types
          * @throws Throwable from errors other than indexing
          */
-        public int index(Object v, Object start, Object stop) throws TypeError, Throwable {
+        public int index(Object v, Object start, Object stop)
+                throws TypeError, ValueError, Throwable {
             int iStart = boundedIndex(start, 0);
             int iStop = boundedIndex(stop, length());
             /*

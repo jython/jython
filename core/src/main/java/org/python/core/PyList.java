@@ -6,7 +6,6 @@ package org.python.core;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,9 +13,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.StringJoiner;
+import java.util.function.Function;
 
 import org.python.base.InterpreterError;
-import org.python.base.MissingFeature;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySlice.Indices;
 import org.python.core.PyType.Spec;
@@ -53,57 +52,91 @@ public class PyList implements List<Object>, CraftedPyObject {
     private final List<Object> list;
 
     /** Implementation help for sequence methods. */
-    private final ListDelegate delegate;
+    private final ListDelegate delegate = new ListDelegate();
 
-    // XXX bizarrely-named variable used to detect change concurrent with sort
-    public volatile int gListAllocatedStatus = -1;
+    /**
+     * Synchronisation prevents modification by competing threads during
+     * an operation, but does not defend against actions within that
+     * operation by the same thread. One context where this occurs is
+     * {@code sort()}, where the implementation of {@code __lt__} on
+     * elements can, in principle, mutate the list being sorted. This
+     * variable is cleared at the beginning of {@code sort()} and set by
+     * any operation that modifies the list.
+     */
+    private boolean changed = false;
 
+    /**
+     * Fundamental constructor, specifying actual type and the list that
+     * will become the storage object.
+     * 
+     * @param type actual type
+     * @param list storage object
+     */
     private PyList(PyType type, List<Object> list) {
         this.type = type;
         this.list = list;
-        this.delegate = new ListDelegate();
     }
 
-    PyList(PyType type, int initialCapacity) {
+    /**
+     * Construct a Python {@code list} object, specifying actual type
+     * and initial capacity.
+     * 
+     * @param type actual type
+     * @param initialCapacity capacity
+     */
+    public PyList(PyType type, int initialCapacity) {
         this(type, new ArrayList<>(initialCapacity));
     }
 
-    public PyList() {
-        this(TYPE, 0);
-    }
+    /**
+     * Construct a Python {@code list} object, specifying initial
+     * capacity.
+     * 
+     * @param initialCapacity capacity
+     */
+    public PyList(int initialCapacity) { this(TYPE, new ArrayList<>(initialCapacity)); }
 
-    public PyList(PyType type) {
-        this(type, 0);
-    }
+    /**
+     * Construct an empty Python {@code list} object, specifying actual
+     * type.
+     * 
+     * @param type actual type
+     */
+    public PyList(PyType type) { this(type, 0); }
 
-    public PyList(Collection<?> c) {
-        this(TYPE, c);
-    }
+    /** Construct an empty Python {@code list} object. */
+    public PyList() { this(TYPE, 0); }
 
+    /**
+     * Construct a Python {@code list} object, specifying actual type
+     * and initial contents. The contents will be a (shallow) copy of
+     * the collection.
+     * 
+     * @param type actual type
+     * @param c initial contents
+     */
     public PyList(PyType type, Collection<?> c) {
         this(type, c.size());
         addAll(c);
     }
 
-    public PyList(Object[] elements) {
-        this(TYPE, elements);
-    }
+    /**
+     * Construct a Python {@code list} object, specifying initial
+     * contents. The contents will be a (shallow) copy of the
+     * collection.
+     * 
+     * @param c initial contents
+     */
+    public PyList(Collection<?> c) { this(TYPE, c); }
 
-    public PyList(PyType type, Object[] elements) {
-        this(type, Arrays.asList(elements));
-    }
-
-    private static List<Object> listify(Iterator<Object> iter) {
-        List<Object> list = new ArrayList<>();
-        while (iter.hasNext()) {
-            list.add(iter.next());
-        }
-        return list;
-    }
-
-    public PyList(Iterator<Object> iter) {
-        this(TYPE, listify(iter));
-    }
+    /**
+     * Return a Python {@code list} object, specifying initial
+     * contents.
+     * 
+     * @param elements initial element values
+     * @return list of elements
+     */
+    public static PyList of(Object... elements) { return new PyList(List.of(elements)); }
 
     @Override
     public PyType getType() { return type; }
@@ -223,7 +256,6 @@ public class PyList implements List<Object>, CraftedPyObject {
     // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___add___doc)
     synchronized Object __add__(Object o) throws Throwable { return delegate.__add__(o); }
 
-    @SuppressWarnings("unchecked")
     // @ExposedMethod(type = MethodType.BINARY)
     synchronized Object __radd__(Object o) throws Throwable { return delegate.__radd__(o); }
 
@@ -233,10 +265,14 @@ public class PyList implements List<Object>, CraftedPyObject {
     }
 
     // @ExposedMethod(doc = BuiltinDocs.list___delitem___doc)
-    synchronized void __delitem__(Object index) throws Throwable { delegate.__delitem__(index); }
+    synchronized void __delitem__(Object index) throws Throwable {
+        changed = true;
+        delegate.__delitem__(index);
+    }
 
     // @ExposedMethod(doc = BuiltinDocs.list___setitem___doc)
     synchronized void __setitem__(Object index, Object value) throws Throwable {
+        changed = true;
         delegate.__setitem__(index, value);
     }
 
@@ -297,26 +333,29 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Add a single element to the end of list.
      *
-     * @param o
-     *            the element to add.
+     * @param o the element to add.
      */
     // @ExposedMethod(doc = BuiltinDocs.list_append_doc)
-    final synchronized void list_append(Object o) throws Throwable {
+    final synchronized void list_append(Object o) {
+        changed = true;
         list.add(o);
-        gListAllocatedStatus = list.size();
     }
 
     /**
      * Remove all items from the list (same as {@code del s[:]})
      */
     // @ExposedMethod in Python 3
-    final synchronized void list_clear() { list.clear(); }
+    final synchronized void list_clear() {
+        changed = true;
+        list.clear();
+    }
 
     /**
      * Return the number elements in the list that are Python-equal to
      * the argument.
      *
      * @param v the value to test for.
+     * @return the number of occurrences.
      * @throws Throwable from the implementation of {@code __eq__}
      */
     // @ExposedMethod(doc = BuiltinDocs.list_count_doc)
@@ -328,15 +367,14 @@ public class PyList implements List<Object>, CraftedPyObject {
      * @param v the value to look for.
      * @param start first index to test
      * @param stop first index not to test
+     * @return index of the occurrence
      * @throws ValueError if {@code v} not found
      * @throws TypeError from bad {@code start} and {@code stop} types
      * @throws Throwable from errors other than indexing
      */
     // @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.list_index_doc)
     final synchronized int list_index(Object v, Object start, Object stop) throws TypeError, Throwable {
-        int index = delegate.index(v, start, stop);
-        gListAllocatedStatus = list.size();
-        return index;
+        return delegate.index(v, start, stop);
     }
 
     /**
@@ -345,12 +383,11 @@ public class PyList implements List<Object>, CraftedPyObject {
      *
      * @param index the position where the element will be inserted.
      * @param o the element to insert.
-     * @throws Throwable
      */
     // @ExposedMethod(doc = BuiltinDocs.list_insert_doc)
-    final synchronized void list_insert(int index, Object o) throws Throwable {
+    final synchronized void list_insert(int index, Object o) {
+        changed = true;
         list.add(boundedIndex(index), o);
-        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -364,11 +401,11 @@ public class PyList implements List<Object>, CraftedPyObject {
     final synchronized void list_remove(Object v) throws Throwable {
         int i = find(v);
         if (i >= 0) {
+            changed = true;
             list.remove(i);
         } else {
             throw new ValueError("%s.remove(x): x not in list", getType().name);
         }
-        gListAllocatedStatus = list.size();
     }
 
     /**
@@ -392,47 +429,29 @@ public class PyList implements List<Object>, CraftedPyObject {
      * of space when reversing a large list. It doesn't return the reversed list to remind you of
      * this side effect.
      */
-    public void reverse() {
-        list_reverse();
-    }
-
     // @ExposedMethod(doc = BuiltinDocs.list_reverse_doc)
-    final synchronized void list_reverse() {
+    final synchronized void reverse() {
         Collections.reverse(list);
-        gListAllocatedStatus = list.size();
+        changed = true;
     }
 
     /**
-     * Removes and return the last element in the list.
-     */
-    public Object pop() {
-        return pop(-1);
-    }
-
-    /**
-     * Removes and return the <code>n</code> indexed element in the list.
+     * Remove and return a specified element from the list.
      *
-     * @param n
-     *            the index of the element to remove and return.
+     * @param n the index of the element to remove and return.
+     * @return the popped item
      */
-    public Object pop(int n) {
-        return list_pop(n);
-    }
-
     // @ExposedMethod(defaults = "-1", doc = BuiltinDocs.list_pop_doc)
     final synchronized Object list_pop(int n) {
-        int length = size();
-        if (length == 0) {
+        int size = size();
+        if (size == 0) {
             throw new IndexError("pop from empty list");
+        } else {
+            if (n < 0) { n += size; }
+            if (n < 0 || n >= size) { throw new IndexError("pop index out of range"); }
+            changed = true;
+            return list.remove(n);
         }
-        if (n < 0) {
-            n += length;
-        }
-        if (n < 0 || n >= length) {
-            throw new IndexError("pop index out of range");
-        }
-        Object v = list.remove(n);
-        return v;
     }
 
     /**
@@ -444,12 +463,13 @@ public class PyList implements List<Object>, CraftedPyObject {
      */
     // @ExposedMethod(doc = BuiltinDocs.list_extend_doc)
     final synchronized void list_extend(Object o) throws Throwable {
+        changed = true;
         list.addAll(PySequence.fastList(o, null));
-        gListAllocatedStatus = list.size();
     }
 
     // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___iadd___doc)
     synchronized Object __iadd__(Object o) throws Throwable {
+        changed = true;
         list_extend(o);
         return this;
     }
@@ -468,89 +488,39 @@ public class PyList implements List<Object>, CraftedPyObject {
      * @throws Throwable from object comparison
      */
     // @ExposedMethod(doc = BuiltinDocs.list_sort_doc)
-    final synchronized void list_sort(Object key, boolean reverse) throws Throwable {
+    final synchronized void sort(Function<Object, Object> key, boolean reverse)
+            throws Throwable {
         // Python: sort(*, key=None, reverse=False)
-        // XXX cmp is gone in Python 3: remove later
-        Object cmp = Py.None;
-
-        if (key == Py.None || key == null) {
-            sort(reverse);
+        if (key == null) {
+            sortOnValue(reverse);
         } else {
-            throw new MissingFeature("sort(key=key)");
-            // sort(cmp, key, reverse);
+            sortOnKey(key, reverse);
         }
     }
 
-    /*
-     * a bunch of optimized paths for sort to avoid unnecessary work,
-     * such as DSU or checking compare functions for null
+    private synchronized void sortOnValue(boolean reverse) throws Throwable {
+
+        // We shall sort on values using this (Python) comparator
+        final ListElementComparator<Object> cmp = new ListElementComparator<Object>(reverse) {
+
+            @Override
+            boolean lessThan(Object o1, Object o2) throws Throwable {
+                return Abstract.richCompareBool(o1, o2, Comparison.LT);
+            }
+
+        };
+
+        // Now sort the list, failing on any change
+        changed = false;
+        Collections.sort(list, cmp);
+        if (cmp.raisedException()) { throw cmp.getRaisedException(); }
+        changed = true;
+    }
+
+    /**
+     * During {@link PyList#sortOnKey(Function, boolean)}, we actually
+     * sort a list of these key-value objects.
      */
-
-    private synchronized void sort(boolean reverse) throws Throwable {
-        gListAllocatedStatus = -1;
-        if (reverse) {
-            Collections.reverse(list); // maintain stability of sort by reversing first
-        }
-        final PyObjectDefaultComparator comparator = new PyObjectDefaultComparator(this);
-        Collections.sort(list, comparator);
-        if (comparator.raisedException()) {
-            throw comparator.getRaisedException();
-        }
-        if (reverse) {
-            Collections.reverse(list); // maintain stability of sort by reversing first
-        }
-        gListAllocatedStatus = list.size();
-    }
-
-    private static class PyObjectDefaultComparator implements Comparator<Object> {
-
-        private final PyList list;
-        private Throwable comparatorException;
-
-        PyObjectDefaultComparator(PyList list) {
-            this.list = list;
-        }
-
-        public Throwable getRaisedException() {
-            return comparatorException;
-        }
-
-        public boolean raisedException() {
-            return comparatorException != null;
-        }
-
-        @Override
-        public int compare(Object o1, Object o2) {
-            // PEP 207 specifies that sort should only depend on "less-than" (Issue #1767)
-            int result = 0; // If exception is raised return objects are equal
-            try {
-                if (Abstract.richCompareBool(o1, o2, Comparison.LT)) {
-                    result = -1;
-                } else if (Abstract.richCompareBool(o2, o1, Comparison.LT)) {
-                    result = 1;
-                }
-            } catch (Throwable pye) {
-                // #2399 Stash the exception so we can rethrow it later, and allow the sort to continue
-                comparatorException = pye;
-            }
-            if (this.list.gListAllocatedStatus >= 0) {
-                throw new ValueError("list modified during sort");
-            }
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == this) {
-                return true;
-            }
-            if (o instanceof PyObjectDefaultComparator) {
-                return true;
-            }
-            return false;
-        }
-    }
-
     private static class KV {
 
         private final Object key;
@@ -562,123 +532,69 @@ public class PyList implements List<Object>, CraftedPyObject {
         }
     }
 
-    private static class KVComparator implements Comparator<KV> {
+    private synchronized void sortOnKey(Function<Object, Object> keyfunc, boolean reverse)
+            throws Throwable {
 
-        private final PyList list;
-        private final Object cmp;
-        private Throwable comparatorException;
-
-        KVComparator(PyList list, Object cmp) {
-            this.list = list;
-            this.cmp = cmp;
-        }
-
-        public Throwable getRaisedException() {
-            return comparatorException;
-        }
-
-        public int compare(KV o1, KV o2) {
-            int result = 0; // If exception is raised return objects are equal
-            try {
-                if (Abstract.richCompareBool(o1, o2, Comparison.LT)) {
-                    result = -1;
-                } else if (Abstract.richCompareBool(o2, o1, Comparison.LT)) {
-                    result = 1;
-                }
-            } catch (Throwable pye) {
-                // #2399 Stash the exception so we can rethrow it later, and allow the sort to continue
-                comparatorException = pye;
-            }
-             if (this.list.gListAllocatedStatus >= 0) {
-                throw new ValueError("list modified during sort");
-            }
-            return result;
-        }
-
-        public boolean equals(Object o) {
-            if (o == this) {
-                return true;
-            }
-
-            if (o instanceof KVComparator) {
-                return cmp.equals(((KVComparator) o).cmp);
-            }
-            return false;
-        }
-    }
-
-    // @formatter:off
-    /*
-     * This is needed for sort(key=key), but we need callables before
-     * we can do that.
-     *
-    private synchronized void sort(Object cmp, Object key, boolean reverse) {
-        gListAllocatedStatus = -1;
-
+        // Make a copy of the list as key-value pairs in kvList
         int size = list.size();
-        final ArrayList<KV> decorated = new ArrayList<KV>(size);
+        final ArrayList<KV> kvList = new ArrayList<KV>(size);
         for (Object value : list) {
-            decorated.add(new KV(key.__call__(value), value));
+            Object k = keyfunc.apply(value);
+            kvList.add(new KV(k, value));
         }
-        list.clear();
-        KVComparator c = new KVComparator(this, cmp);
-        if (reverse) {
-            Collections.reverse(decorated); // maintain stability of sort by reversing first
-        }
-        Collections.sort(decorated, c);
-        if (reverse) {
-            Collections.reverse(decorated);
-        }
-        if (list instanceof ArrayList) {
-            ((ArrayList<Object>) list).ensureCapacity(size);
-        }
-        for (KV kv : decorated) {
-            list.add(kv.value);
-        }
-        gListAllocatedStatus = list.size();
-    }
-    */
-    // @formatter:on
 
-    public int hashCode() {
-        return __hash__();
-    }
+        // We shall sort kvList comparing keys
+        final ListElementComparator<KV> cmp = new ListElementComparator<KV>(reverse) {
 
-    // @ExposedMethod(doc = BuiltinDocs.list___hash___doc)
-    synchronized int __hash__() {
-        throw new TypeError("unhashable type: '%.200s'", getType().getName());
+            @Override
+            boolean lessThan(KV o1, KV o2) throws Throwable {
+                return Abstract.richCompareBool(o1.key, o2.key, Comparison.LT);
+            }
+
+        };
+
+        // Now sort the kvList, failing on any change
+        changed = false;
+        Collections.sort(kvList, cmp);
+        if (cmp.raisedException()) { throw cmp.getRaisedException(); }
+
+        // Copy values from kvList (sorted on key)
+        assert kvList.size() == size;
+        for (int i = 0; i < size; i++) { list.set(i, kvList.get(i).value); }
+        changed = true;
     }
 
-    public PyTuple __getnewargs__() {
-        return new PyTuple(new PyTuple(list));
-    }
-
+    public PyTuple __getnewargs__() { return new PyTuple(new PyTuple(list)); }
 
     // List interface ------------------------------------------------
 
     @Override
     public synchronized void add(int index, Object element) {
+        changed = true;
         list.add(index, element);
     }
 
     @Override
     public synchronized boolean add(Object o) {
-        list.add(o);
-        return true;
+        changed = true;
+        return list.add(o);
     }
 
     @Override
     public synchronized boolean addAll(int index, Collection<?> c) {
+        changed = true;
         return list.addAll(index, c);
     }
 
     @Override
     public boolean addAll(Collection<?> c) {
+        changed = true;
         return addAll(0, c);
     }
 
     @Override
     public synchronized void clear() {
+        changed = true;
         list.clear();
     }
 
@@ -704,29 +620,6 @@ public class PyList implements List<Object>, CraftedPyObject {
             return false;
         }
     }
-
-    // @formatter:off
-    /*
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-
-        if (other instanceof Object) {
-            synchronized (this) {
-                return _eq((Object)other).__nonzero__();
-            }
-        }
-        if (other instanceof List) {
-            synchronized (this) {
-                return list.equals(other);
-            }
-        }
-        return false;
-    }
-    */
-    // @formatter:on
 
     @Override
     public synchronized Object get(int index) {
@@ -759,6 +652,7 @@ public class PyList implements List<Object>, CraftedPyObject {
 
             public void remove() {
                 synchronized (PyList.this) {
+                    changed = true;
                     iter.remove();
                 }
             }
@@ -801,22 +695,23 @@ public class PyList implements List<Object>, CraftedPyObject {
 
             public int previousIndex() { return iter.previousIndex(); }
 
-            // XXX Relies on underlying list to detect concurrent change
-
             public void remove() {
                 synchronized (PyList.this) {
+                    changed = true;
                     iter.remove();
                 }
             }
 
             public void set(Object o) {
                 synchronized (PyList.this) {
+                    changed = true;
                     iter.set(o);
                 }
             }
 
             public void add(Object o) {
                 synchronized (PyList.this) {
+                    changed = true;
                     iter.add(o);
                 }
             }
@@ -826,6 +721,7 @@ public class PyList implements List<Object>, CraftedPyObject {
 
     @Override
     public synchronized Object remove(int index) {
+        changed = true;
         return list.remove(index);
     }
 
@@ -879,6 +775,7 @@ public class PyList implements List<Object>, CraftedPyObject {
 
     @Override
     public synchronized Object set(int index, Object element) {
+        changed = true;
         return list.set(index, element);
     }
 
@@ -904,36 +801,120 @@ public class PyList implements List<Object>, CraftedPyObject {
     }
 
     @Override
-    public synchronized Object[] toArray() {
-        return list.toArray();
-     }
+    public synchronized Object[] toArray() { return list.toArray(); }
 
+    @SuppressWarnings("unchecked")
     @Override
     public synchronized <T> T[] toArray(T[] a) {
 
-        int size = size();
-        Class<?> type = a.getClass().getComponentType();
+        Class<T> type = (Class<T>)a.getClass().getComponentType();
 
-        if (a.length < size) {
-            a = (T[])Array.newInstance(type, size);
+        if (Object.class.equals(type)) {
+            // Special-case a request for Object[]
+            a = list.toArray(a);
+
         } else {
-            for (int i = size; i < a.length; i++) { a[i] = null; }
-        }
+            // Ensure we have a space the right size
+            int size = size();
+            if (a.length < size) {
+                a = (T[])Array.newInstance(type, size);
+            } else if (a.length > size) { a[size] = null; }
 
-        for (int i = 0; i <size; i++) {
-            // XXX Should we __tojava__ the elements? Like:
-            a[i] = (T) list.get(i);  // Py.__tojava__(list.get(i), type)
+            // Copy list into the array with conversion to T
+            for (int i = 0; i < size; i++) { a[i] = Abstract.tojava(list.get(i), type); }
         }
         return a;
     }
 
     @Override
     public synchronized boolean remove(Object o) {
+        changed = true;
         return list.remove(o);
     }
 
+    // Java hash and equals ------------------------------------------
+
+    @Override
+    public int hashCode() { return list.hashCode(); }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) { return true; }
+        synchronized (this) {
+            if (other instanceof List) {
+                return list.equals(other);
+            } else {
+                try {
+                    return Abstract.richCompareBool(other, this, Comparison.EQ);
+                } catch (Throwable t) {
+                    return false;
+                }
+            }
+        }
+    }
 
     // Supporting code -----------------------------------------------
+
+    /**
+     * This comparator is used in
+     * {@link PyList#sort(Function, boolean)}, sub-classed for the type
+     * of sort.
+     * 
+     * @param <T> type of element to sort (on practice {@code Object} or
+     *     {@code KV}.
+     */
+    private abstract class ListElementComparator<T> implements Comparator<T> {
+
+        private Throwable comparatorException;
+        private final int less;
+
+        /**
+         * @param reverse whether comparisons will be in reveres sense
+         */
+        ListElementComparator(boolean reverse) { this.less = reverse ? 1 : -1; }
+
+        /**
+         * @return the exception raised by any application of
+         *     {@link #lessThan(Object, Object)}
+         */
+        Throwable getRaisedException() {
+            return comparatorException;
+        }
+
+        /**
+         * @return whether an exception was raised by any application of
+         *     {@link #lessThan(Object, Object)}
+         */
+        boolean raisedException() {
+            return comparatorException != null;
+        }
+
+        /**
+         * Defines the comparison operation to use.
+         * 
+         * @param o1 left operand
+         * @param o2 right operand
+         * @return true iff o1 is less than o2
+         * @throws Throwable on errors in the comparison
+         */
+        abstract boolean lessThan(T o1, T o2) throws Throwable;
+
+        @Override
+        public int compare(T o1, T o2) {
+            try {
+                // PEP 207: sort should only depend on "less-than"
+                return lessThan(o1, o2) ? less : (lessThan(o2, o1) ? -less : 0);
+            } catch (Throwable pye) {
+                // Stash the exception to rethrow later
+                comparatorException = pye;
+                // XXX made up answer may violate contract of compare. Why stash?
+                return 0;
+            } finally {
+                // Detect change occurring during the comparisons
+                if (changed) { throw new ValueError("list modified during sort"); }
+            }
+        }
+    }
 
     /**
      * Accept an index, treating negative values as end-relative, and
@@ -960,6 +941,7 @@ public class PyList implements List<Object>, CraftedPyObject {
         // Copy list to itself skipping each erasure
         if (erasures.isEmpty()) { return false; }
         Iterator<Integer> ei = erasures.iterator();
+        changed = true;
 
         /*
          * p, q are pointers into the list. We copy elements from list[q] to
@@ -1273,7 +1255,7 @@ public class PyList implements List<Object>, CraftedPyObject {
         /**
          * Compare this delegate with the delegate of the other
          * {@code list}, or return {@code NotImplemented} if the other is
-         * not a {@code tuple}.
+         * not a {@code list}.
          *
          * @param other list at right of comparison
          * @param op type of operation
