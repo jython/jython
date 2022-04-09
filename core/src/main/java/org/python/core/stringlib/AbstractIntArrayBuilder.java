@@ -32,6 +32,17 @@ public abstract class AbstractIntArrayBuilder {
     public abstract int length();
 
     /**
+     * The maximum value stored.
+     *
+     * @implNote The motivation for this is to know the range of code
+     *     point values when representing a string. An over-estimate
+     *     would be ok.)
+     *
+     * @return The maximum int stored.
+     */
+    public abstract int max();
+
+    /**
      * Ensure there is room for another {@code n} elements. In general,
      * this will mean allocating new storage (of a carefully-chosen size
      * &ge; {@code n+length()}) and copying the existing contents to it.
@@ -89,9 +100,8 @@ public abstract class AbstractIntArrayBuilder {
          * {@link #ensure(int)} has been called.
          *
          * @param v to append
-         * @return this builder
          */
-        abstract protected Forward appendUnchecked(int v);
+        abstract protected void appendUnchecked(int v);
 
         /**
          * Append one element.
@@ -101,7 +111,8 @@ public abstract class AbstractIntArrayBuilder {
          */
         public Forward append(int v) {
             ensure(1);
-            return appendUnchecked(v);
+            appendUnchecked(v);
+            return this;
         }
 
         /**
@@ -145,9 +156,8 @@ public abstract class AbstractIntArrayBuilder {
          * {@link #ensure(int)} has been called.
          *
          * @param v to prepend
-         * @return this builder
          */
-        protected abstract Reverse prependUnchecked(int v);
+        protected abstract void prependUnchecked(int v);
 
         /**
          * Prepend one element.
@@ -157,7 +167,8 @@ public abstract class AbstractIntArrayBuilder {
          */
         public Reverse prepend(int v) {
             ensure(1);
-            return prependUnchecked(v);
+            prependUnchecked(v);
+            return this;
         }
 
         /**
