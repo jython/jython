@@ -31,7 +31,7 @@ import org.python.core.stringlib.InternalFormat.Spec;
  */
 // @Untraversable
 // @ExposedType(name = "long", doc = BuiltinDocs.long_doc)
-public class PyLong extends AbstractPyObject {
+public class PyLong extends AbstractPyObject implements PyDict.Key {
 
     /** The type {@code int}. */
     public static final PyType TYPE = PyType.fromSpec( //
@@ -76,13 +76,17 @@ public class PyLong extends AbstractPyObject {
     // Instance methods on PyLong -------------------------------------
 
     @Override
+    public String toString() { return Py.defaultToString(this); }
+
+    @Override
     public boolean equals(Object obj) {
-        try {
-            // XXX Use Dict.pythonEquals when available
-            return getValue().equals(asBigInteger(convertToInt(obj)));
-        } catch (Throwable e) {
-            return false;
-        }
+        return PyDict.pythonEquals(this, obj);
+    }
+
+    @Override
+    public int hashCode() throws PyException {
+        // XXX or return value.hashCode() if not a sub-class?
+        return PyDict.pythonHash(this);
     }
 
     // Constructor from Python ----------------------------------------

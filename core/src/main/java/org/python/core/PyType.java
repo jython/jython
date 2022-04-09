@@ -838,6 +838,15 @@ public class PyType extends Operations implements DictPyObject {
     }
 
     /**
+     * Equivalent to {@link #lookup(String)}, accepting
+     * {@link PyUnicode}.
+     *
+     * @param name to look up, must be exactly a {@code str}
+     * @return dictionary entry or null
+     */
+    Object lookup(PyUnicode name) { return lookup(name.toString()); }
+
+    /**
      * Enumeration of the characteristics of a type. These are the
      * members that appear appear in the {@link PyType#flags} to
      * determine behaviours or provide quick answers to frequent

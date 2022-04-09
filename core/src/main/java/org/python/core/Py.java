@@ -75,6 +75,13 @@ public class Py {
         return PyTuple.from(values);
     }
 
+    /**
+     * Return empty Python {@code dict}.
+     *
+     * @return {@code dict()}
+     */
+    public static PyDict dict() { return new PyDict(); }
+
     /** Empty (zero-length) array of {@link Object}. */
     static final Object[] EMPTY_ARRAY = new Object[0];
 

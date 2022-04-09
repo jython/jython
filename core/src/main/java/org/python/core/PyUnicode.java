@@ -57,7 +57,7 @@ import org.python.modules.ucnhashAPI;
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
  */
-public class PyUnicode implements CraftedPyObject {
+public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /** The type {@code str}. */
     static final PyType TYPE = PyType.fromSpec( //
@@ -3054,34 +3054,17 @@ public class PyUnicode implements CraftedPyObject {
      * whichever representation is used for the key or query.
      */
     @Override
-    public int hashCode() throws PyException { return __hash__(); }
+    public int hashCode() throws PyException { return PyDict.pythonHash(this); }
 
-    /*
-     * * Compare for equality with another Python {@code str}, or a
+    /**
+     * Compare for equality with another Python {@code str}, or a
      * {@link PyDict.Key} containing a {@code str}. If the other object
      * is not a {@code str}, or a {@code Key} containing a {@code str},
      * return {@code false}. If it is such an object, compare for
      * equality of the code points.
      */
-    /**
-     * Compare for equality with another Python {@code str}. If the
-     * other object is not a {@code str}, return {@code false}. If it is
-     * such an object, compare for equality of the code points.
-     */
     @Override
-    public boolean equals(Object obj) {
-        try {
-            CodepointDelegate a = delegate, b = adapt(obj);
-            // Lengths must be equal
-            if (a.length() != b.length()) { return false; }
-            // Scan the code points in a and b
-            CodepointIterator ib = b.iterator(0);
-            for (int c : a) { if (c != ib.nextInt()) { return false; } }
-            return true;
-        } catch (NoConversion nc) {
-            return false;
-        }
-    }
+    public boolean equals(Object obj) { return PyDict.pythonEquals(this, obj); }
 
     /**
      * Create a {@code str} from a format and arguments. Note Java
