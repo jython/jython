@@ -155,9 +155,6 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return new PyUnicode(TYPE, true, codePoints);
     }
 
-    @Override
-    public PyType getType() { return type; }
-
     /**
      * Return a Python {@code str} representing the single character
      * with the given code point. The return may be a Java
@@ -176,19 +173,19 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /**
      * Return a Python {@code str} representing the same sequence of
-     * characters as the given Java {@code String}. The result is not
-     * necessarily a {@code PyUnicode}, unless the argument contains
-     * non-BMP code points.
+     * characters as the given Java {@code String} and implemented as a
+     * {@code PyUnicode}.
      *
-     * @param s to convert or return
+     * @param s to convert
      * @return a Python {@code str}
      */
-    public static Object fromJavaString(String s) {
-        if (isBMP(s))
-            return s;
-        else
-            return wrap(s.codePoints().toArray());
+    public static PyUnicode fromJavaString(String s) {
+        // XXX share simple cases len==0 len==1 & ascii?
+        return new PyUnicode(TYPE, s);
     }
+
+    @Override
+    public PyType getType() { return type; }
 
     // ------------------------------------------------------------------------------------------
 

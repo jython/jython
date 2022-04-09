@@ -22,7 +22,7 @@ import org.python.core.Slot.EmptyException;
  */
 public class PySequence extends Abstract {
 
-    private PySequence() {} // only static methods here
+    protected PySequence() {}   // only static methods here
 
     /**
      * {@code len(o)} with Python semantics.
