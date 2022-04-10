@@ -248,7 +248,7 @@ public abstract class PyCode implements CraftedPyObject {
     public PyType getType() { return TYPE; }
 
     /**
-     * Create a {@code PyFrame} suitable to execute this {@code PyCode}
+     * Create a {@code PyFrame} that will execute this {@code PyCode}
      * (adequate for module-level code).
      *
      * @param <C> specific type of code object supported
@@ -257,7 +257,7 @@ public abstract class PyCode implements CraftedPyObject {
      * @param locals name space to treat as local variables
      * @return the frame
      */
-    abstract <C extends PyCode> PyFrame<C> createFrame(Interpreter interpreter, PyDict globals,
+    abstract  PyFrame<? extends PyCode> createFrame(Interpreter interpreter, PyDict globals,
             Object locals);
 
     // Plumbing -------------------------------------------------------
