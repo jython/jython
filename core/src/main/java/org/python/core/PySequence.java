@@ -32,7 +32,7 @@ public class PySequence extends Abstract {
      * @throws Throwable from invoked method implementations
      */
     // Compare CPython PyObject_Size in abstract.c
-    static int size(Object o) throws Throwable {
+    public static int size(Object o) throws Throwable {
         // Note that the slot is called op_len but this method, size.
         try {
             return (int)Operations.of(o).op_len.invokeExact(o);
@@ -80,7 +80,7 @@ public class PySequence extends Abstract {
      * @throws Throwable from invoked method implementations
      */
     // Compare CPython PyObject_GetItem in abstract.c
-    static Object getItem(Object o, Object key) throws Throwable {
+    public static Object getItem(Object o, Object key) throws Throwable {
         // Decisions are based on types of o and key
         try {
             Operations ops = Operations.of(o);

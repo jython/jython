@@ -251,7 +251,6 @@ public abstract class PyCode implements CraftedPyObject {
      * Create a {@code PyFrame} that will execute this {@code PyCode}
      * (adequate for module-level code).
      *
-     * @param <C> specific type of code object supported
      * @param interpreter providing the module context
      * @param globals name space to treat as global variables
      * @param locals name space to treat as local variables

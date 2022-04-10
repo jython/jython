@@ -483,10 +483,10 @@ public class Abstract {
 
     /**
      * Create a {@link TypeError} with a message along the lines "F()
-     * [name] argument must be T, not X", involving a function name,
-     * an argument name, an expected type description T and the
-     * type X of {@code o}, e.g. "split() separator argument must be str
-     * or None, 'tuple'".
+     * [name] argument must be T, not X", involving a function name, an
+     * argument name, an expected type description T and the type X of
+     * {@code o}, e.g. "split() separator argument must be str or None,
+     * 'tuple'".
      *
      * @param f name of function or operation
      * @param name of argument
@@ -494,7 +494,7 @@ public class Abstract {
      * @param o actual argument (not its type)
      * @return exception to throw
      */
-    static TypeError argumentTypeError(String f, String name, String t, Object o) {
+    public static TypeError argumentTypeError(String f, String name, String t, Object o) {
         String space = name.length() == 0 ? "" : " ";
         return new TypeError(ARGUMENT_MUST_BE, f, space, name, t, PyType.of(o).getName());
     }
@@ -513,7 +513,7 @@ public class Abstract {
      * @param o actual argument (not its type)
      * @return exception to throw
      */
-    static TypeError argumentTypeError(String f, int n, String t, Object o) {
+    public static TypeError argumentTypeError(String f, int n, String t, Object o) {
         return argumentTypeError(f, ordinal(n), t, o);
     }
 
@@ -523,13 +523,13 @@ public class Abstract {
             case 0:
                 return "";
             case 1:
-                return "first";
+                return " first";
             case 2:
-                return "second";
+                return " second";
             case 3:
-                return "third";
+                return " third";
             default:
-                return String.format("%dth", n);
+                return String.format(" %dth", n);
         }
     }
 

@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.function.Executable;
+import org.python.base.InterpreterError;
 
 /**
  * A base class for unit tests that defines some common convenience
@@ -166,12 +168,69 @@ public class UnitTestSupport {
     }
 
     /**
+     * The object {@code o} is equal to the expected value according to
+     * Python (e.g. {@code True == 1} and strings may be equal even if
+     * one is {@code String} and the other {@link PyUnicode}). An
+     * unchecked exception may be thrown if the comparison goes badly
+     * enough.
+     *
+     * @param expected value
+     * @param o to test
+     */
+    public static void assertPythonEquals(Object expected, Object o) {
+        if (pythonEquals(expected, o)) {
+            return;
+        } else {
+            // This saves making a message ourselves
+            assertEquals(expected, o);
+        }
+    }
+
+    /**
+     * As {@link #assertPythonEquals(Object, Object)} but with a message
+     * supplied by the caller.
+     *
+     * @param expected value
+     * @param o to test
+     * @param messageSupplier supplies the message seen in failures
+     */
+    public static void assertPythonEquals(Object expected, Object o,
+            Supplier<String> messageSupplier) {
+        if (pythonEquals(expected, o)) {
+            return;
+        } else {
+            fail(messageSupplier);
+        }
+    }
+
+    /**
+     * Test whether the object {@code o} is equal to the expected value
+     * according to Python (e.g. {@code True == 1} and strings may be
+     * equal even if one is a {@link PyUnicode}. An unchecked exception
+     * may be thrown if the comparison goes badly enough.
+     *
+     * @param x value
+     * @param o to test
+     */
+    private static boolean pythonEquals(Object x, Object o) {
+        try {
+            return Abstract.richCompareBool(x, o, Comparison.EQ);
+        } catch (RuntimeException | Error e) {
+            // Let unchecked exception fly
+            throw e;
+        } catch (Throwable t) {
+            // Wrap checked exception
+            throw new InterpreterError(t);
+        }
+    }
+
+    /**
      * The Python type of {@code o} is exactly the one expected.
      *
      * @param expected type
      * @param o to test
      */
-    static void assertPythonType(PyType expected, Object o) {
+    public static void assertPythonType(PyType expected, Object o) {
         assertTrue(expected.checkExact(o),
                 () -> String.format("Java %s not a Python '%s'",
                         o.getClass().getSimpleName(), expected.name));

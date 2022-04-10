@@ -21,7 +21,7 @@ import org.python.core.PyType.Spec;
 public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
 
     /** The Python type object for {@code tuple}. */
-    static final PyType TYPE = PyType.fromSpec( //
+    public static final PyType TYPE = PyType.fromSpec( //
             new Spec("tuple", MethodHandles.lookup()));
 
     /** The Python type of this instance. */
@@ -62,6 +62,26 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
             this.value = new Object[n];
             System.arraycopy(value, 0, this.value, 0, n);
         }
+    }
+
+    /**
+     * Unsafely wrap an array of {@code Object} in a "tuple view".
+     * <p>
+     * The method is unsafe insofar as the array becomes embedded as the
+     * value of the tuple. <b>The client therefore promises not to
+     * modify the content.</b> For this reason, this method should only
+     * ever be private. If you feel tempted to make it otherwise,
+     * consider using (or improving) {@link Builder}.
+     *
+     * @param <E> component type of the array in the new tuple
+     * @param value of the new tuple or {@code null}
+     * @return a tuple with the given contents or {@link #EMPTY}
+     */
+    private static <E> PyTuple wrap(E[] value) throws ArrayStoreException {
+        if (value == null)
+            return EMPTY;
+        else
+            return new PyTuple(TYPE, true, value);
     }
 
     /**
@@ -449,6 +469,113 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
             @Override
             public void add(Object o) { throw new UnsupportedOperationException(); }
         };
+    }
+
+    /**
+     * A class for constructing a tuple element-wise. Sometimes the
+     * elements of a {@code tuple} have to be generated sequentially.
+     * The natural thing is to allocate and fill an array, and then for
+     * the sake of efficiency, to make that array the storage of a
+     * {@code PyTuple}. The direct approach breaks the encapsulation
+     * that guarantees a {@code PyTuple} is immutable.
+     * <p>
+     * This class lets a client allocate and write an array
+     * element-wise, that becomes the storage of a {@code tuple},
+     * without ever having a direct reference to the array.
+     */
+    public static class Builder {
+        private static final int MINSIZE = 16;
+        private Object[] value;
+        private int len = 0;
+
+        /**
+         * Create an empty buffer of a defined initial capacity.
+         *
+         * @param capacity initially
+         */
+        public Builder(int capacity) { value = new Object[capacity]; }
+
+        /**
+         * Create an empty buffer of a default initial capacity.
+         */
+        Builder() { this.value = Py.EMPTY_ARRAY; }
+
+        /** @return the number of elements currently. */
+        public int length() { return len; }
+
+        /** Ensure there is room for another {@code n} elements. */
+        private void ensure(int n) {
+            if (len + n > value.length) {
+                int newSize = Math.max(value.length * 2, MINSIZE);
+                Object[] newValue = new Object[newSize];
+                System.arraycopy(value, 0, newValue, 0, len);
+                value = newValue;
+            }
+        }
+
+        /**
+         * Append one element.
+         *
+         * @param v to append
+         * @return this builder
+         */
+        public Object append(Object v) {
+            ensure(1);
+            value[len++] = v;
+            return this;
+        }
+
+        /**
+         * Append all the elements from a sequence.
+         *
+         * @param seq supplying elements to append
+         * @return this builder
+         */
+        public Builder append(Collection<?> seq) {
+            ensure(seq.size());
+            for (Object v : seq) { value[len++] = v; }
+            return this;
+        }
+
+        /**
+         * Append all the elements available from an iterator.
+         *
+         * @param iter supplying elements to append
+         * @return this builder
+         */
+        public Builder append(Iterator<?> iter) {
+            while (iter.hasNext()) { append(iter.next()); }
+            return this;
+        }
+
+        /**
+         * Provide the contents as a Python {@code tuple} and reset the
+         * builder to empty. (This is a "destructive read".)
+         *
+         * @return the contents as a Python {@code tuple}
+         */
+        public PyTuple take() {
+            Object[] v;
+            if (len == 0) {
+                return EMPTY;
+            } else if (len == value.length) {
+                // The array is exactly filled: use it without copy.
+                v = value;
+                value = Py.EMPTY_ARRAY;
+            } else {
+                // The array is partly filled: copy the part used.
+                v = Arrays.copyOf(value, len);
+            }
+            len = 0;
+            return wrap(v);
+        }
+
+        /**
+         * Provide the contents as a Java {@code String}
+         * (non-destructively).
+         */
+        @Override
+        public String toString() { return (new PyTuple(TYPE, value, 0, len)).toString(); }
     }
 
     // Plumbing ------------------------------------------------------

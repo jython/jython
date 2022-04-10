@@ -15,7 +15,7 @@ import java.lang.invoke.MethodHandles;
 public final class PyBool {
 
     /** The type of Python object this class implements. */
-    static final PyType TYPE = PyType.fromSpec( //
+    public static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("bool", MethodHandles.lookup()) //
                     .canonical(Boolean.class) //
                     .base(PyLong.TYPE) //

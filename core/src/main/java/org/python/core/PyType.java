@@ -83,7 +83,7 @@ public class PyType extends Operations implements DictPyObject {
     /** Lookup object on {@code PyType}. */
     private static Lookup LOOKUP = MethodHandles.lookup();
     /** The type object of {@code type} objects. */
-    static final PyType TYPE = new PyType();
+    public static final PyType TYPE = new PyType();
     /** The type object of {@code object} objects. */
     static final PyType OBJECT_TYPE = TYPE.base;
     /** An array containing only 'object', the bases of many types. */
@@ -688,7 +688,7 @@ public class PyType extends Operations implements DictPyObject {
      * @param o object to test
      * @return {@code true} iff {@code o} is of a sub-type of this type
      */
-    boolean check(Object o) {
+    public boolean check(Object o) {
         PyType t = PyType.of(o);
         return t == this || t.isSubTypeOf(this);
     }
@@ -704,7 +704,7 @@ public class PyType extends Operations implements DictPyObject {
      * @param o object to test
      * @return {@code true} iff {@code o} is exactly of this type
      */
-    boolean checkExact(Object o) { return PyType.of(o) == this; }
+    public boolean checkExact(Object o) { return PyType.of(o) == this; }
 
     /**
      * Determine if this type is a Python sub-type of {@code b} (if

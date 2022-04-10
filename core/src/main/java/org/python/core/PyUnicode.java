@@ -60,7 +60,7 @@ import org.python.modules.ucnhashAPI;
 public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /** The type {@code str}. */
-    static final PyType TYPE = PyType.fromSpec( //
+    public static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("str", MethodHandles.lookup()).methods(PyUnicodeMethods.class)
                     .adopt(String.class));
 
@@ -129,6 +129,24 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /**
      * Construct an instance of {@code PyUnicode}, a {@code str} or a
+     * sub-class, from a given {@link IntArrayBuilder}. This will reset
+     * the builder to empty.
+     *
+     * @param value from which to take the code points
+     */
+    protected PyUnicode(IntArrayBuilder value) { this(TYPE, true, value.take()); }
+
+    /**
+     * Construct an instance of {@code PyUnicode}, a {@code str} or a
+     * sub-class, from a given {@link IntArrayReverseBuilder}. This will
+     * reset the builder to empty.
+     *
+     * @param value from which to take the code points
+     */
+    protected PyUnicode(IntArrayReverseBuilder value) { this(TYPE, true, value.take()); }
+
+    /**
+     * Construct an instance of {@code PyUnicode}, a {@code str} or a
      * sub-class, from a given Java {@code String}. The constructor
      * interprets surrogate pairs as defining one code point. Lone
      * surrogates are preserved (e.g. for byte smuggling).
@@ -153,6 +171,17 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      */
     private static PyUnicode wrap(int[] codePoints) {
         return new PyUnicode(TYPE, true, codePoints);
+    }
+
+    /**
+     * Safely wrap the contents of an {@link IntArrayBuilder} of code
+     * points as a {@code PyUnicode}.
+     *
+     * @param codePoints to wrap as a {@code str}
+     * @return the {@code str}
+     */
+    public static PyUnicode wrap(IntArrayBuilder codePoints) {
+        return new PyUnicode(codePoints);
     }
 
     /**
@@ -2478,12 +2507,12 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return true;
     }
 
-    boolean isascii() {
+    public boolean isascii() {
         for (int c : value) { if (c >>> 7 != 0) { return false; } }
         return true;
     }
 
-    static boolean isascii(String self) {
+    public static boolean isascii(String self) {
         // We can test chars since any surrogate will fail.
         return self.chars().dropWhile(c -> c >>> 7 == 0)
                 .findFirst().isEmpty();
@@ -3043,6 +3072,15 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     private static final int HIGH_SURROGATE_OFFSET =
             Character.MIN_HIGH_SURROGATE - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10);
+
+    /**
+     * The code points of this PyUnicode as a {@link PySequence.OfInt}.
+     * This interface will allow the code points to be streamed or
+     * iterated (but not modified, obviously).
+     *
+     * @return the code point sequence
+     */
+    public PySequence.OfInt asSequence() { return delegate; }
 
     /**
      * The hash of a {@link PyUnicode} is the same as that of a Java

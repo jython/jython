@@ -10,12 +10,26 @@ import org.python.core.PyType.Spec;
 public class PyList extends ArrayList<Object> {
     private static final long serialVersionUID = 1L;
 
-    static PyType TYPE =
+    public static PyType TYPE =
             PyType.fromSpec(new Spec("list", MethodHandles.lookup()));
 
+    /** Construct an empty {@code list}. */
     PyList() {}
 
-    PyList(Collection<?> c) { super(c); }
+    /**
+     * Construct an empty {@code list} with the specified initial
+     * capacity.
+     *
+     * @param initialCapacity the initial capacity of the list
+     */
+    public PyList(int initialCapacity) { super(Math.max(0, initialCapacity)); }
+
+    /**
+     * Construct a {@code list} with initial contents.
+     *
+     * @param c initial contents
+     */
+    public PyList(Collection<?> c) { super(c); }
 
     /** Reverse this list in-place. */
     void reverse() {

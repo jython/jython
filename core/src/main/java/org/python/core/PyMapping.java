@@ -19,8 +19,6 @@ public class PyMapping extends PySequence {
      * {@code Map<Object, Object>}, this will be the object itself.
      * Otherwise, it will be an adapter on the provided object.
      *
-     * @param <K> Object (distinguished here for readability)
-     * @param <V> Object (distinguished here for readability)
      * @param o to present as a map
      * @return the map
      */
