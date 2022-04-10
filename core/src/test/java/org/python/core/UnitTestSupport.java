@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.function.Executable;
@@ -264,5 +267,43 @@ public class UnitTestSupport {
         T t = assertThrows(expected, action);
         assertEquals(expectedMessage, t.getMessage());
         return t;
+    }
+
+    /**
+     * Find the (Gradle) build directory by ascending the file structure
+     * from the path to this class as a resource. Several files we need
+     * in tests are to be found at a well-defined location relative to
+     * the build directory.
+     *
+     * This may be used from classes build by the IDE, as long as a
+     * Gradle build has been run too. *
+     *
+     * @return the build directory
+     */
+    public static Path buildDirectory() {
+        // Start at the resources for this class
+        Class<?> c = UnitTestSupport.class;
+        try {
+            URI rsc = c.getResource("").toURI();
+            Path path = Path.of(rsc);
+            // Navigate up by the length of the package name
+            String pkg = c.getPackage().getName();
+            int k = -1;
+            do { path = path.getParent(); } while ((k = pkg.indexOf('.', k + 1)) >= 0);
+
+            // path is now the folder that contains project classes
+            // System.err.println(" ... contains classes");
+
+            // Continue up until path/build exists
+            while ((path = path.getParent()) != null) {
+                Path buildPath = path.resolve("build");
+                if (buildPath.toFile().isDirectory()) { return buildPath; }
+            }
+
+            // We reached the root: maybe we did a "clean"
+            throw new InterpreterError("build directory not found from %s", rsc.toString());
+        } catch (URISyntaxException e) {
+            throw new InterpreterError(e);
+        }
     }
 }
