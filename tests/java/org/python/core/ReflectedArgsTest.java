@@ -96,13 +96,13 @@ public class ReflectedArgsTest extends TestCase {
      * even if the final arg is a PySequenceList if the number of arguments not equal to the
      * expected number of arguments.
      *
-     * eg foo(1, [1, 2, 3]) should be valid for a call to void foo(int i, int[] j, int... rest) but
-     * should be boxed as foo(1, [1, 2, 3], [])
+     * eg bar(1, [1, 2, 3]) should be valid for a call to void bar(int i, int[] j, int... rest) but
+     * should be boxed as bar(1, [1, 2, 3], [])
      */
 
     /**
      * Calling {@code foo(Object... args)} as Python {@code foo(3, 4, ["bar"])} calls Java
-     * {@code foo(3, 4, strlist})} where {@code strlist} is the representation of Python
+     * {@code foo(3, 4, strlist)} where {@code strlist} is the representation of Python
      * {@code ["bar"]}.
      */
     public void testVarargsBoxedWithTooManyArgs() {
