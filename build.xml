@@ -1269,7 +1269,7 @@ The text for an official release would continue like ...
 
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
@@ -1287,13 +1287,13 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
+    <target name="importest" depends="developer-build"
+            description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
             <classpath refid="test.classpath"/>
             <classpath>
                 <pathelement location="${basedir}/tests/python"/>
