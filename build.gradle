@@ -60,11 +60,9 @@ group = 'org.python'
 // ---------------- Miscellaneous configuration --------------------------------
 
 /*
- * We support Java 8 onwards officially, up to v2.7.2, but retain the option of
- * compiling for Java 7 (in v2.7.2) by maintaining compatibility in the code
- * base and in the choice of JARs.
+ * We support Java 8 onwards.
  */
-sourceCompatibility = '1.7' // Make both 1.8 after 2.7.2 released
+sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 project.compileJava.options.debug = true
@@ -159,18 +157,15 @@ dependencies {
 
     implementation 'org.apache.commons:commons-compress:1.21'
 
-    implementation 'org.bouncycastle:bcpkix-jdk15on:1.62'
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.62'
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.69'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.69'
 
     implementation 'org.ow2.asm:asm:7.1'
     implementation 'org.ow2.asm:asm-commons:7.1'
     implementation 'org.ow2.asm:asm-util:7.1'
 
-    // The Android Guava and "failureaccess" are necessary to support Java 7.
-    implementation 'com.google.guava:guava:28.0-android'
-    implementation 'com.google.guava:failureaccess:1.0.1'
-    // Swap for regular Guava at Java 8.
-
+    implementation 'com.google.guava:guava:31.0.1-jre'
+ 
     implementation 'com.ibm.icu:icu4j:59.1'
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'
@@ -183,12 +178,12 @@ dependencies {
 
     implementation 'jline:jline:2.14.5'
 
-    implementation 'io.netty:netty-buffer:4.1.45.Final'
-    implementation 'io.netty:netty-codec:4.1.45.Final'
-    implementation 'io.netty:netty-common:4.1.45.Final'
-    implementation 'io.netty:netty-handler:4.1.45.Final'
-    implementation 'io.netty:netty-resolver:4.1.45.Final'
-    implementation 'io.netty:netty-transport:4.1.45.Final'
+    implementation 'io.netty:netty-buffer:4.1.73.Final'
+    implementation 'io.netty:netty-codec:4.1.73.Final'
+    implementation 'io.netty:netty-common:4.1.73.Final'
+    implementation 'io.netty:netty-handler:4.1.73.Final'
+    implementation 'io.netty:netty-resolver:4.1.73.Final'
+    implementation 'io.netty:netty-transport:4.1.73.Final'
 
     // Used implicitly in the Ant build, must be explicit here
     implementation 'org.apache.ant:ant:1.9.7'

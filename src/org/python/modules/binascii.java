@@ -254,7 +254,7 @@ public class binascii {
                 int ch = textBuf.intAt(index + 1);
                 int sixBits;
 
-                if (ch == '\n' || ch == '\r' || textLen <= 0) {
+                if (ch == '\n' || ch == '\r') {
                     // Whitespace. Assume some spaces got eaten at end-of-line.
                     // (We check this later.)
                     sixBits = 0;

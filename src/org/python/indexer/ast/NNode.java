@@ -357,7 +357,7 @@ public abstract class NNode implements java.io.Serializable {
                 return false;  // don't traverse children, but do keep going
             }
 
-            if (offset >= node.start && offset <= node.end) {
+            if (offset >= node.start) {
                 deepest = node;
                 return true;  // visit kids
             }
