@@ -98,5 +98,5 @@ script:
     # Echo versions of Jython, Java and OS
     #- ant -emacs versions
     # Fairly full regression test
-    - ant regrtest-travis
+    - ant regrtest-ci
 

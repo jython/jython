@@ -1448,11 +1448,11 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-travis"
-            depends="developer-build, regrtest-unix-travis, regrtest-windows-travis"
-            description="run Python tests expected to work on Jython for Travis intergration"/>
+    <target name="regrtest-ci"
+            depends="developer-build, regrtest-unix-ci, regrtest-windows-ci"
+            description="run Python tests expected to work on Jython for CI"/>
 
-    <target name="regrtest-unix-travis" if="os.family.unix">
+    <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
@@ -1473,7 +1473,7 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-windows-travis" if="os.family.windows">
+    <target name="regrtest-windows-ci" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
