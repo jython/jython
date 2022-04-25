@@ -1785,8 +1785,7 @@ public class PySystemState extends PyObject
             // "Microsoft Windows [版本 10.0.17134.472]"
             // We match the dots and digits within square brackets.
             Pattern p = Pattern.compile("\\[.* ([\\d.]+)\\]");
-            Matcher m = p.matcher(Py.getCommandResult(
-                    System.getenv("SystemRoot") + "\\System32\\cmd.exe", "/c", "ver"));
+            Matcher m = p.matcher(Py.getCommandResult(System.getenv("ComSpec"), "/c", "ver"));
             return m.find() ? m.group(1) : "";
         } else {
             return Py.getCommandResult("uname", "-v");
