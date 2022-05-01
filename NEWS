@@ -15,6 +15,7 @@ Jython 2.7.3a1
     - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
     - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
     - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-128 ] Support PYTHONDONTWRITEBYTECODE environment variable
     - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
     - [ GH-102 ] Fix CRC32.update calls in zlib.py
@@ -30,6 +31,8 @@ Jython 2.7.3a1
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
+
+    - The jython command respects the PYTHONDONTWRITEBYTECODE environment variable (GH-128).
 
     - Under PR GH-101, the matching of sequence arguments to the parameters of Java methods is
       improved. A Java varargs parameter does not match a final sequence in the call
