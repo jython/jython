@@ -583,8 +583,9 @@ public class jython {
                 sts = Status.OK;
 
             } else if (opts.module != null) {
-                // The script is a module
-                sys.argv.set(0, Py.newString("-m"));
+                // The script is a module (and yet CPython has -c here)
+                sys.argv.set(0, Py.newString("-c")); // "-m" in CPython3
+                sys.path.insert(0, Py.EmptyString);
                 sts = runModule(opts.module, true);
 
             } else if (opts.filename != null) {

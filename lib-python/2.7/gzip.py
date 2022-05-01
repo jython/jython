@@ -55,7 +55,7 @@ class GzipFile(io.BufferedIOBase):
         a file object.
 
         When fileobj is not None, the filename argument is only used to be
-        included in the gzip file header, which may includes the original
+        included in the gzip file header, which may include the original
         filename of the uncompressed file.  It defaults to the filename of
         fileobj, if discernible; otherwise, it defaults to the empty string,
         and in this case the original filename is not included in the header.
@@ -95,9 +95,8 @@ class GzipFile(io.BufferedIOBase):
         if filename is None:
             # Issue #13781: os.fdopen() creates a fileobj with a bogus name
             # attribute. Avoid saving this in the gzip header's filename field.
-            if hasattr(fileobj, 'name') and fileobj.name != '<fdopen>':
-                filename = fileobj.name
-            else:
+            filename = getattr(fileobj, 'name', '')
+            if not isinstance(filename, basestring) or filename == '<fdopen>':
                 filename = ''
         if mode is None:
             if hasattr(fileobj, 'mode'): mode = fileobj.mode

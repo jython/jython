@@ -4123,7 +4123,7 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Convert this object longo an long. Throws a PyException on failure.
+     * Convert this object into a long. Throws a PyException on failure.
      *
      * @return an long value
      */

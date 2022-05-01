@@ -241,8 +241,7 @@ public class FileIO extends RawIOBase {
             return false;
         }
         try {
-            return PosixModule.getPOSIX().isatty(file != null
-                                                 ? file.getFD() : fileOutputStream.getFD());
+            return PosixModule.getPOSIX().isatty(file.getFD());
         } catch (IOException e) {
             return false;
         }

@@ -11,7 +11,6 @@ import org.python.core.PyArray;
 import org.python.core.PyBUF;
 import org.python.core.PyBuffer;
 import org.python.core.PyObject;
-import org.python.core.PyString;
 
 /**
  * Base class for text I/O.
@@ -102,16 +101,11 @@ public abstract class TextIOBase extends IOBase {
      */
     public int readinto(PyObject buf) {
 
-        // This is an inefficient version of readinto: but readinto is
-        // not recommended for use in Python 2.x anyway
-
         if (buf instanceof PyArray) {
-            // PyArray has the buffer interface but it only works for bytes at present
-            PyArray array = (PyArray)buf;
-            String read = read(array.__len__());
-            for (int i = 0; i < read.length(); i++) {
-                array.set(i, new PyString(read.charAt(i)));
-            }
+            // PyArray has the buffer interface (for bytes) but this way we can read any type
+            PyArray array = (PyArray) buf;
+            String read = read(array.__len__() * array.getItemsize());
+            array.fromstring(0, read);
             return read.length();
 
         } else if (buf instanceof BufferProtocol) {

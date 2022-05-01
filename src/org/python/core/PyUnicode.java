@@ -81,21 +81,58 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     public PyUnicode(int codepoint) {
-        this(TYPE, new String(new int[] {codepoint}, 0, 1));
+        this(TYPE, checkedCPString(codepoint));
     }
 
     public PyUnicode(int[] codepoints) {
-        this(new String(codepoints, 0, codepoints.length));
+        this(TYPE, checkedCPString(codepoints));
     }
 
     PyUnicode(StringBuilder buffer) {
         this(TYPE, buffer.toString());
     }
 
+    /**
+     * Translate a code point to a Java String, guaranteeing validity. (This avoids a Java stack
+     * dump.)
+     *
+     * @param codePoint to translate
+     * @return String from codepoint
+     * @throws PyException(ValueError) if not a valid Unicode codepoint.
+     */
+    private static String checkedCPString(int codePoint) throws PyException {
+        if (Character.isValidCodePoint(codePoint)) {
+            return new String(Character.toChars(codePoint));
+        } else {
+            throw Py.ValueError(
+                    String.format("character U+%08x is not in Unicode range", codePoint));
+        }
+    }
+
+    /**
+     * Translate a code point to a Java String, guaranteeing validity. (This avoids a Java stack
+     * dump.)
+     *
+     * @param codePoints to translate
+     * @return String from codepoint
+     * @throws PyException(ValueError) if any element is not a valid Unicode codepoint.
+     */
+    private static String checkedCPString(int[] codePoints) throws PyException {
+        try {
+            return new String(codePoints, 0, codePoints.length);
+        } catch (IllegalArgumentException e) {
+            // Scan it again because the other call produces a better error message
+            for (int c : codePoints) {
+                checkedCPString(c);
+            }
+            return ""; // never reached in practice
+        }
+    }
+
     private static StringBuilder fromCodePoints(Iterator<Integer> iter) {
         StringBuilder buffer = new StringBuilder();
         while (iter.hasNext()) {
-            buffer.appendCodePoint(iter.next());
+            buffer.append(checkedCPString(iter.next()));
         }
         return buffer;
     }
@@ -2011,7 +2048,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 SplitIterator iter = newSplitIterator(oldPiece, count);
                 int numSplits = 0;
                 while (iter.hasNext()) {
-                    buffer.append(((PyUnicode) iter.next()).getString());
+                    buffer.append(iter.next().getString());
                     if (iter.hasNext()) {
                         buffer.append(newPiece.getString());
                     }

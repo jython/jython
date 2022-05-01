@@ -11,7 +11,17 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-160 ] Improve context of "Cannot create PyString with non-byte value"
+    - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
+    - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
+    - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
+    - [ GH-102 ] Fix CRC32.update calls in zlib.py
+    - [ GH-101 ] Improve boxing of arguments to vararg methods
+    - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
+    - [ GH-97 ] Failures in SNI support affecting pip
+    - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
     - [ GH-27 ] -Q new always fails
@@ -20,6 +30,20 @@ Jython 2.7.3a1
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
+
+    - Under PR GH-101, the matching of sequence arguments to the parameters of Java methods is
+      improved. A Java varargs parameter does not match a final sequence in the call
+      if an array parameter could do so. (Thanks Peter Holloway.)
+
+    - array.array itemsize of unsigned types is now the same as their signed counterparts, where 
+      previously it was mostly double. Internal representations have changed. Anomalies have been
+      eliminated between itemsize and the serialisation (tostring() etc.) for unsigned types,
+      and in the range of values accepted in different contexts. The size of type 'u' (unicode
+      character) is 4 on all platforms. Client code that was working around these anomalies may
+      have to change. Overall, the experience should be closer to that with CPython.
+
+    - We no longer aspire to compile Jython with Java 7. (We may use Java 8 features.)
+
     - The project has moved its home to GitHub (twice).
 
 Jython 2.7.2

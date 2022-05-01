@@ -67,10 +67,15 @@ try:
 except ImportError:
     HAS_SNI = False
 
-log = logging.getLogger("_socket")
+log = logging.getLogger("_ssl")
 
 
 # Pretend to be OpenSSL
+#
+# These are constants that CPython mostly re-sells from OpenSSL.
+# We emulate that, although not all features have been implemented.
+# Compare CPython _ssl.c (and ssl.py, obviously).
+
 OPENSSL_VERSION = "OpenSSL 1.0.0 (as emulated by Java SSL)"
 OPENSSL_VERSION_NUMBER = 0x1000000L
 OPENSSL_VERSION_INFO = (1, 0, 0, 0, 0)
@@ -92,8 +97,22 @@ _PROTOCOL_NAMES = {
     PROTOCOL_TLSv1_2: 'TLSv1.2'
 }
 
-OP_ALL, OP_NO_SSLv2, OP_NO_SSLv3, OP_NO_TLSv1 = range(4)
-OP_SINGLE_DH_USE, OP_NO_COMPRESSION, OP_CIPHER_SERVER_PREFERENCE, OP_SINGLE_ECDH_USE = 1048576, 131072, 4194304, 524288
+# These are not supported in the current implementation.
+# CPython (ssl.c) would not *define* these if they cannot be used.
+# See also https://wiki.openssl.org/index.php/List_of_SSL_OP_Flags
+OP_NO_COMPRESSION           = 0x20000
+OP_SINGLE_ECDH_USE          = 0x80000
+OP_SINGLE_DH_USE            = 0x100000
+# Not defined: OP_ENABLE_MIDDLEBOX_COMPAT  = 0x200000
+OP_CIPHER_SERVER_PREFERENCE = 0x400000
+
+OP_NO_SSLv2 = 0x1000000
+OP_NO_SSLv3 = 0x2000000
+OP_NO_TLSv1 = 0x4000000
+
+# CPython OP_ALL = 0x800003ff is entirely options we don't emulate
+OP_ALL = 0
+
 
 VERIFY_DEFAULT, VERIFY_CRL_CHECK_LEAF, VERIFY_CRL_CHECK_CHAIN, VERIFY_X509_STRICT = 0, 4, 12, 32
 
@@ -1052,7 +1071,7 @@ class SSLContext(object):
         self.protocol = protocol
         self._check_hostname = False
 
-        # defaults from _ssl.c
+        # supported subset of defaults from _ssl.c
         self.options = OP_ALL | OP_NO_SSLv2 | OP_NO_SSLv3
         self._verify_flags = VERIFY_DEFAULT
         self._verify_mode = CERT_NONE
@@ -1110,7 +1129,7 @@ class SSLContext(object):
         if self._ciphers is not None:
             context_builder = context_builder.ciphers(self._ciphers)
 
-        if self._check_hostname:
+        if self.verify_mode != CERT_NONE and hostname:
             engine = context_builder.build().newEngine(ByteBufAllocator.DEFAULT, hostname, addr[1])
             if HAS_SNI:
                 params = engine.getSSLParameters()
