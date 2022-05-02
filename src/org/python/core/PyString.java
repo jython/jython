@@ -54,7 +54,9 @@ public class PyString extends PyBaseString implements BufferProtocol {
         if (string == null) {
             throw new IllegalArgumentException("Cannot create PyString from null");
         } else if (!isBytes && !isBytes(string)) {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
+            throw new IllegalArgumentException(
+                    String.format("Cannot create PyString with non-byte value: %.500s",
+                            encode_UnicodeEscape(string, true)));
         }
         this.string = string;
     }
@@ -95,12 +97,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param isBytes true if the client guarantees we are dealing with bytes
      */
     private PyString(String string, boolean isBytes) {
-        super(TYPE);
-        if (isBytes || isBytes(string)) {
-            this.string = string;
-        } else {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
-        }
+        this(TYPE, string, isBytes);
     }
 
     /**

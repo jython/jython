@@ -556,7 +556,7 @@ public class Indexer {
             return;
         }
         // the parent package of an __init__.py file is the grandparent dir
-        if (parent != null && f.isFile() && "__init__.py".equals(f.getName())) {
+        if (f.isFile() && "__init__.py".equals(f.getName())) {
             parent = parent.getParentFile();
         }
         if (parent == null || isInLoadPath(parent)) {

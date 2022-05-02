@@ -180,6 +180,8 @@ class ThreadedNetworkedTestsSSL(BaseThreadedNetworkedTests):
     imap_class = IMAP4_SSL
 
 
+@unittest.skipIf(is_jython, "Failing on Jython issue gh-126")
+# https://github.com/jython/jython/issues/126
 class RemoteIMAPTest(unittest.TestCase):
     host = 'cyrus.andrew.cmu.edu'
     port = 143
