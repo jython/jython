@@ -1003,7 +1003,7 @@ public class PySystemState extends PyObject
 
         } else if (os != null && os.startsWith("Windows")) {
             // Go via the Windows code page built-in command "chcp".
-            String output = Py.getCommandResult("cmd", "/c", "chcp");
+            String output = Py.getCommandResultWindows("chcp");
             /*
              * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
              * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
@@ -1785,24 +1785,11 @@ public class PySystemState extends PyObject
             // "Microsoft Windows [版本 10.0.17134.472]"
             // We match the dots and digits within square brackets.
             Pattern p = Pattern.compile("\\[.* ([\\d.]+)\\]");
-            Matcher m = p.matcher(Py.getCommandResult(System.getenv("ComSpec"), "/c", "ver"));
+            Matcher m = p.matcher(Py.getCommandResultWindows("ver"));
             return m.find() ? m.group(1) : "";
         } else {
             return Py.getCommandResult("uname", "-v");
         }
-    }
-
-    /**
-     * Run a command as a sub-process and return as the result the first line of output that
-     * consists of more than white space. It returns "" on any kind of error.
-     *
-     * @param command as strings (as for <code>ProcessBuilder</code>)
-     * @return the first line with content, or ""
-     * @deprecated Use {@link Py#getCommandResult(String...)} instead
-     */
-    @Deprecated
-    private static String getCommandResult(String... command) {
-        return PrePy.getCommandResult(command);
     }
 
     /* Traverseproc implementation */

@@ -490,4 +490,25 @@ public class PrePy {
         }
         return result;
     }
+
+    /**
+     * A specialised wrapper on {@link #getCommandResult(String...)} for the Windows platform, where
+     * we have to consult the environment variable {@code ComSpec} to locate the command processor.
+     *
+     * @param command as strings (as for <code>ProcessBuilder</code>)
+     * @return the first line with content, or ""
+     */
+    public static String getCommandResultWindows(String... command) {
+        String[] c = new String[command.length + 2];
+        c[1] = "/c";
+        System.arraycopy(command, 0, c, 2, command.length);
+        String comSpec = null;
+        try {
+            comSpec = System.getenv("ComSpec");
+        } catch (SecurityException e) {}
+        // If no ComSpec for us ... use the default full path (not just cmd.exe).
+        c[0] = comSpec != null ? comSpec : "C:\\WINDOWS\\System32\\cmd.exe";
+        return getCommandResult(c);
+    }
+
 }
