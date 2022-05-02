@@ -15,6 +15,7 @@ Jython 2.7.3a1
     - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
     - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
     - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-129 ] Only attempt to open source/bytecode if readable (GH-93)
     - [ GH-128 ] Support PYTHONDONTWRITEBYTECODE environment variable
     - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
@@ -22,6 +23,7 @@ Jython 2.7.3a1
     - [ GH-101 ] Improve boxing of arguments to vararg methods
     - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
     - [ GH-97 ] Failures in SNI support affecting pip
+    - [ GH-93 ] Permissions problems with compiled source files ($py.class)
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
