@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -394,7 +394,6 @@ public class PySequence extends Abstract {
          * @param value to set at {@code i}
          * @throws Throwable from accessing the client data
          */
-        @SuppressWarnings("unused")
         public void setItem(int i, Object value) throws Throwable {};
 
         /**
@@ -451,34 +450,46 @@ public class PySequence extends Abstract {
         /**
          * Inner implementation of {@code __add__} on the client sequence,
          * called by {@link #__add__(Object)}.
+         * <p>
+         * The implementation of this method is responsible for validating
+         * the argument. If an {@code __add__} is being attempted between
+         * incompatible types it should return {@link Py#NotImplemented}, or
+         * throw a {@link NoConversion} exception, which will cause
+         * {@code __add__} to return {@code NotImplemented}.
          *
          * @param ow the right operand
-         * @return concatenation {@code self+ow}
+         * @return concatenation {@code self+ow} or
+         *     {@link Py#NotImplemented}
          * @throws OutOfMemoryError when allocating the result fails.
          *     {@link #__add__(Object) __add__} will raise a Python
          *     {@code OverflowError}.
-         * @throws NoConversion when the client does not support the type of
-         *     {@code ow}. {@link #__add__(Object) __add__} will return a
-         *     Python {@code NotImplemented}.
+         * @throws NoConversion (optionally) when the client does not
+         *     support the type of {@code ow}.
          * @throws Throwable from other causes in the implementation
          */
-        abstract S add(Object ow) throws OutOfMemoryError, NoConversion, Throwable;
+        abstract Object add(Object ow) throws OutOfMemoryError, NoConversion, Throwable;
 
         /**
          * Inner implementation of {@code __radd__} on the client sequence,
          * called by {@link #__radd__(Object)}.
+         * <p>
+         * The implementation of this method is responsible for validating
+         * the argument. If an {@code __radd__} is being attempted between
+         * incompatible types it should return {@link Py#NotImplemented}, or
+         * throw a {@link NoConversion} exception, which will cause
+         * {@code __radd__} to return {@code NotImplemented}.
          *
          * @param ov the left operand
-         * @return concatenation {@code ov+self}
+         * @return concatenation {@code ov+self} or
+         *     {@link Py#NotImplemented}
          * @throws OutOfMemoryError when allocating the result fails.
          *     {@link #__radd__(Object) __radd__} will raise a Python
          *     {@code OverflowError}.
-         * @throws NoConversion when the client does not support the type of
-         *     {@code ov}. {@link #__radd__(Object) __radd__} will return a
-         *     Python {@code NotImplemented}.
+         * @throws NoConversion (optionally) when the client does not
+         *     support the type of {@code ov}.
          * @throws Throwable from other causes in the implementation
          */
-        abstract S radd(Object ov) throws OutOfMemoryError, NoConversion, Throwable;
+        abstract Object radd(Object ov) throws OutOfMemoryError, NoConversion, Throwable;
 
         /**
          * Inner implementation of {@code __mul__} on the client sequence,
@@ -679,9 +690,14 @@ public class PySequence extends Abstract {
          * @throws TypeError from bad {@code start} and {@code stop} types
          * @throws Throwable from errors other than indexing
          */
-        public int index(Object v, Object start, Object stop) throws TypeError, Throwable {
+        public int index(Object v, Object start, Object stop)
+                throws TypeError, ValueError, Throwable {
             int iStart = boundedIndex(start, 0);
             int iStop = boundedIndex(stop, length());
+            /*
+             * Note it is possible for iStart to be length(), but then
+             * iStop<=iStart so the loop doesn't run.
+             */
             for (int i = iStart; i < iStop; i++) {
                 if (Abstract.richCompareBool(v, getItem(i), Comparison.EQ)) { return i; }
             }
@@ -793,7 +809,7 @@ public class PySequence extends Abstract {
                 i += L;
                 return Math.max(0, i);
             } else {
-                return Math.min(L - 1, i);
+                return Math.min(L, i);
             }
         }
     }
