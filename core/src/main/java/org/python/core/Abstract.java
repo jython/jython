@@ -87,6 +87,34 @@ public class Abstract {
     }
 
     /**
+     * Convert a given {@code Object} to an instance of a Java class.
+     * Raise a {@code TypeError} if the conversion fails.
+     * 
+     * @param <T> target type defined by {@code c}
+     * @param o the {@code Object} to convert.
+     * @param c the class to convert it to.
+     * @return converted value
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T tojava(Object o, Class<T> c) {
+        try {
+            // XXX Stop-gap implementation (just cast it)
+            if (c.isAssignableFrom(o.getClass())) {
+                return (T)o;
+            } else {
+                throw new Slot.EmptyException();
+            }
+            // XXX Replace when this slot is defined:
+            // return (T)Operations.of(o).op_tojava.invokeExact(o, c);
+        } catch (NullPointerException npe) {
+            // Probably an error, but easily converted.
+            return null;
+        } catch (Slot.EmptyException e) {
+            throw typeError("cannot convert %s to %s", o, c.getName());
+        }
+    }
+
+    /**
      * Compute and return the hash value of an object. This is the
      * equivalent of the Python expression {@code hash(v)}.
      *
