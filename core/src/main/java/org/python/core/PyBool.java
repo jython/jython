@@ -12,10 +12,10 @@ import java.lang.invoke.MethodHandles;
  * instances of Java {@code Boolean} will generally behave as
  * {@code False} or {@code True} but may fail identity tests.)
  */
-final class PyBool {
+public final class PyBool {
 
     /** The type of Python object this class implements. */
-    static final PyType TYPE = PyType.fromSpec( //
+    public static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("bool", MethodHandles.lookup()) //
                     .canonical(Boolean.class) //
                     .base(PyLong.TYPE) //

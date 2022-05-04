@@ -2,13 +2,13 @@ package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
-/** The Python {@code TypeError} exception. */
-public class TypeError extends PyException {
+/** The Python {@code StopIteration} exception. */
+public class StopIteration extends PyException {
     private static final long serialVersionUID = 1L;
 
     /** The type of Python object this class implements. */
-    static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("TypeError", MethodHandles.lookup()) //
+    public static final PyType TYPE = PyType.fromSpec(
+            new PyType.Spec("StopIteration", MethodHandles.lookup())
                     .base(PyException.TYPE));
 
     /**
@@ -18,7 +18,9 @@ public class TypeError extends PyException {
      * @param msg a Java format string for the message
      * @param args to insert in the format string
      */
-    protected TypeError(PyType type, String msg, Object... args) { super(type, msg, args); }
+    protected StopIteration(PyType type, String msg, Object... args) {
+        super(type, msg, args);
+    }
 
     /**
      * Constructor specifying a message.
@@ -26,5 +28,12 @@ public class TypeError extends PyException {
      * @param msg a Java format string for the message
      * @param args to insert in the format string
      */
-    public TypeError(String msg, Object... args) { this(TYPE, msg, args); }
+    public StopIteration(String msg, Object... args) {
+        this(TYPE, msg, args);
+    }
+
+    /**
+     * Constructor specifying no arguments.
+     */
+    public StopIteration() { this(TYPE, ""); }
 }

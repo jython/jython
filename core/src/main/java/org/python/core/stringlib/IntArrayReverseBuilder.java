@@ -2,10 +2,16 @@ package org.python.core.stringlib;
 
 import java.util.Arrays;
 
-public final class IntArrayReverseBuilder
-        extends AbstractIntArrayBuilder.Reverse {
+/**
+ * An elastic buffer of integer values, somewhat like the
+ * {@code java.lang.StringBuilder}, but for arrays of integers. The
+ * client prepends data, so the array builds right to left, and may
+ * finally take the built array, often without copying the data.
+ */
+public final class IntArrayReverseBuilder extends AbstractIntArrayBuilder.Reverse {
     private int[] value;
     private int ptr = 0;
+    private int max = 0;
 
     /**
      * Create an empty buffer of a defined initial capacity.
@@ -23,31 +29,38 @@ public final class IntArrayReverseBuilder
     }
 
     @Override
-    protected Reverse prependUnchecked(int v) {
+    protected void prependUnchecked(int v) {
         value[--ptr] = v;
-        return this;
+        max = Math.max(max, v);
     }
 
     @Override
     public int length() { return value.length - ptr; }
 
     @Override
+    public int max() { return max; }
+
+    @Override
     protected void ensure(int n) {
         if (n > ptr) {
-            int len = value.length - ptr;
-            int newSize = Math.max(value.length * 2, MINSIZE);
-            int newPtr = newSize - len;
-            int[] newValue = new int[newSize];
-            System.arraycopy(value, ptr, newValue, newPtr, len);
-            value = newValue;
-            ptr = newPtr;
+            if (ptr == value.length) {
+                // Adding to empty: try exact fit.
+                value = new int[n];
+                ptr = n;
+            } else {
+                int len = value.length - ptr;
+                int newSize = Math.max(value.length * 2, MINSIZE);
+                int newPtr = newSize - len;
+                int[] newValue = new int[newSize];
+                System.arraycopy(value, ptr, newValue, newPtr, len);
+                value = newValue;
+                ptr = newPtr;
+            }
         }
     }
 
     @Override
-    protected int[] value() {
-        return Arrays.copyOfRange(value, ptr, value.length);
-    }
+    protected int[] value() { return Arrays.copyOfRange(value, ptr, value.length); }
 
     @Override
     public int[] take() {
@@ -61,6 +74,7 @@ public final class IntArrayReverseBuilder
             v = Arrays.copyOfRange(value, ptr, value.length);
             ptr = value.length;
         }
+        max = 0;
         return v;
     }
 }

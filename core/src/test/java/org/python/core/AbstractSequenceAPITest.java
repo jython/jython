@@ -3,8 +3,10 @@ package org.python.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +41,9 @@ class AbstractSequenceAPITest extends UnitTestSupport {
      */
     static Stream<Arguments> readableProvider() {
         return Stream.of(//
+                bytesExample("", "abc"), //
+                bytesExample("a", "bc"), //
+                bytesExample("café", " crème"), // bytes > 127
                 tupleExample(Collections.emptyList(), List.of(42)), //
                 tupleExample(List.of(42), Collections.emptyList()), //
                 tupleExample( //
@@ -66,6 +71,44 @@ class AbstractSequenceAPITest extends UnitTestSupport {
                 // Surrogate concatenation should not create U+1F40D
                 stringExample("\udc0d A \ud83d", "\udc0d B"),
                 unicodeExample("\udc0d A \ud83d", "\udc0d B"));
+    }
+
+    /**
+     * Construct an example with two Python {@code bytes} objects, from
+     * text. One is {@code self} in the test, and the other is to be a
+     * second argument when needed (for testing {@code concatenation},
+     * say).
+     *
+     * @param s to encode to bytes ({@code self})
+     * @param t to encode to bytes ({@code other})
+     * @return the example (a reference value, test object, and other)
+     */
+    static Arguments bytesExample(String s, String t) {
+        try {
+            return bytesExample(s.getBytes("UTF-8"), t.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            fail("failed to encode bytes");
+            return arguments();
+        }
+    }
+
+    /**
+     * Construct an example with two Python {@code bytes} objects, from
+     * bytes. One is {@code self} in the test, and the other is to be a
+     * second argument when needed (for testing {@code concatenation},
+     * say).
+     *
+     * @param a the "self" bytes
+     * @param b the other bytes
+     * @return the example (a reference value, test object, and other)
+     */
+    static Arguments bytesExample(byte[] a, byte[] b) {
+        ArrayList<Object> vv = new ArrayList<>(a.length);
+        for (byte x : a) { vv.add(x & 0xff); }
+        ArrayList<Object> ww = new ArrayList<>(b.length);
+        for (byte x : b) { ww.add(x & 0xff); }
+        Object v = new PyBytes(a), w = new PyBytes(b);
+        return arguments(PyType.of(v).name, vv, v, ww, w);
     }
 
     /**

@@ -53,10 +53,10 @@ public class Py {
     public static BigInteger val(long value) { return BigInteger.valueOf(value); }
 
     /** Python {@code False} object. */
-    static final Boolean False = false;
+    public static final Boolean False = false;
 
     /** Python {@code True} object. */
-    static final Boolean True = true;
+    public static final Boolean True = true;
 
     /**
      * Return a Python {@code object}.
@@ -71,9 +71,14 @@ public class Py {
      * @param values to contain
      * @return equivalent {@code tuple} object
      */
-    static PyTuple tuple(Object... values) {
-        return PyTuple.from(values);
-    }
+    public static PyTuple tuple(Object... values) { return PyTuple.from(values); }
+
+    /**
+     * Return empty Python {@code dict}.
+     *
+     * @return {@code dict()}
+     */
+    public static PyDict dict() { return new PyDict(); }
 
     /** Empty (zero-length) array of {@link Object}. */
     static final Object[] EMPTY_ARRAY = new Object[0];

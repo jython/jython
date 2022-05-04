@@ -57,10 +57,10 @@ import org.python.modules.ucnhashAPI;
  * By contrast, a {@code PyUnicode} is time-efficient, but each
  * character occupies one {@code int}.
  */
-public class PyUnicode implements CraftedPyObject {
+public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /** The type {@code str}. */
-    static final PyType TYPE = PyType.fromSpec( //
+    public static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("str", MethodHandles.lookup()).methods(PyUnicodeMethods.class)
                     .adopt(String.class));
 
@@ -129,6 +129,24 @@ public class PyUnicode implements CraftedPyObject {
 
     /**
      * Construct an instance of {@code PyUnicode}, a {@code str} or a
+     * sub-class, from a given {@link IntArrayBuilder}. This will reset
+     * the builder to empty.
+     *
+     * @param value from which to take the code points
+     */
+    protected PyUnicode(IntArrayBuilder value) { this(TYPE, true, value.take()); }
+
+    /**
+     * Construct an instance of {@code PyUnicode}, a {@code str} or a
+     * sub-class, from a given {@link IntArrayReverseBuilder}. This will
+     * reset the builder to empty.
+     *
+     * @param value from which to take the code points
+     */
+    protected PyUnicode(IntArrayReverseBuilder value) { this(TYPE, true, value.take()); }
+
+    /**
+     * Construct an instance of {@code PyUnicode}, a {@code str} or a
      * sub-class, from a given Java {@code String}. The constructor
      * interprets surrogate pairs as defining one code point. Lone
      * surrogates are preserved (e.g. for byte smuggling).
@@ -155,8 +173,16 @@ public class PyUnicode implements CraftedPyObject {
         return new PyUnicode(TYPE, true, codePoints);
     }
 
-    @Override
-    public PyType getType() { return type; }
+    /**
+     * Safely wrap the contents of an {@link IntArrayBuilder} of code
+     * points as a {@code PyUnicode}.
+     *
+     * @param codePoints to wrap as a {@code str}
+     * @return the {@code str}
+     */
+    public static PyUnicode wrap(IntArrayBuilder codePoints) {
+        return new PyUnicode(codePoints);
+    }
 
     /**
      * Return a Python {@code str} representing the single character
@@ -176,19 +202,19 @@ public class PyUnicode implements CraftedPyObject {
 
     /**
      * Return a Python {@code str} representing the same sequence of
-     * characters as the given Java {@code String}. The result is not
-     * necessarily a {@code PyUnicode}, unless the argument contains
-     * non-BMP code points.
+     * characters as the given Java {@code String} and implemented as a
+     * {@code PyUnicode}.
      *
-     * @param s to convert or return
+     * @param s to convert
      * @return a Python {@code str}
      */
-    public static Object fromJavaString(String s) {
-        if (isBMP(s))
-            return s;
-        else
-            return wrap(s.codePoints().toArray());
+    public static PyUnicode fromJavaString(String s) {
+        // XXX share simple cases len==0 len==1 & ascii?
+        return new PyUnicode(TYPE, s);
     }
+
+    @Override
+    public PyType getType() { return type; }
 
     // ------------------------------------------------------------------------------------------
 
@@ -2481,12 +2507,12 @@ public class PyUnicode implements CraftedPyObject {
         return true;
     }
 
-    boolean isascii() {
+    public boolean isascii() {
         for (int c : value) { if (c >>> 7 != 0) { return false; } }
         return true;
     }
 
-    static boolean isascii(String self) {
+    public static boolean isascii(String self) {
         // We can test chars since any surrogate will fail.
         return self.chars().dropWhile(c -> c >>> 7 == 0)
                 .findFirst().isEmpty();
@@ -3048,40 +3074,32 @@ public class PyUnicode implements CraftedPyObject {
             Character.MIN_HIGH_SURROGATE - (Character.MIN_SUPPLEMENTARY_CODE_POINT >>> 10);
 
     /**
+     * The code points of this PyUnicode as a {@link PySequence.OfInt}.
+     * This interface will allow the code points to be streamed or
+     * iterated (but not modified, obviously).
+     *
+     * @return the code point sequence
+     */
+    public PySequence.OfInt asSequence() { return delegate; }
+
+    /**
      * The hash of a {@link PyUnicode} is the same as that of a Java
      * {@code String} equal to it. This is so that a given Python
      * {@code str} may be found as a match in hashed data structures,
      * whichever representation is used for the key or query.
      */
     @Override
-    public int hashCode() throws PyException { return __hash__(); }
+    public int hashCode() throws PyException { return PyDict.pythonHash(this); }
 
-    /*
-     * * Compare for equality with another Python {@code str}, or a
+    /**
+     * Compare for equality with another Python {@code str}, or a
      * {@link PyDict.Key} containing a {@code str}. If the other object
      * is not a {@code str}, or a {@code Key} containing a {@code str},
      * return {@code false}. If it is such an object, compare for
      * equality of the code points.
      */
-    /**
-     * Compare for equality with another Python {@code str}. If the
-     * other object is not a {@code str}, return {@code false}. If it is
-     * such an object, compare for equality of the code points.
-     */
     @Override
-    public boolean equals(Object obj) {
-        try {
-            CodepointDelegate a = delegate, b = adapt(obj);
-            // Lengths must be equal
-            if (a.length() != b.length()) { return false; }
-            // Scan the code points in a and b
-            CodepointIterator ib = b.iterator(0);
-            for (int c : a) { if (c != ib.nextInt()) { return false; } }
-            return true;
-        } catch (NoConversion nc) {
-            return false;
-        }
-    }
+    public boolean equals(Object obj) { return PyDict.pythonEquals(this, obj); }
 
     /**
      * Create a {@code str} from a format and arguments. Note Java
@@ -3120,12 +3138,27 @@ public class PyUnicode implements CraftedPyObject {
      * @return {@code String} value
      * @throws TypeError if {@code v} is not a Python {@code str}
      */
-    static String asString(Object v) throws TypeError {
+    public static String asString(Object v) throws TypeError {
+        return asString(v, () -> Abstract.requiredTypeError("a str", v));
+    }
+
+    /**
+     * Present a Python {@code str} as a Java {@code String} value or
+     * throw the specified exception. This is for use when the argument
+     * is expected to be a Python {@code str} or a sub-class of it.
+     *
+     * @param <E> type of exception to throw
+     * @param v claimed {@code str}
+     * @param exc supplier for the exception to throw
+     * @return {@code String} value
+     * @throws E if {@code v} is not a Python {@code str}
+     */
+    public static <E extends PyException> String asString(Object v, Supplier<E> exc) throws E {
         if (v instanceof String)
             return (String)v;
         else if (v instanceof PyUnicode)
             return ((PyUnicode)v).asString();
-        throw Abstract.requiredTypeError("a str", v);
+        throw exc.get();
     }
 
     // Plumbing ------------------------------------------------------
