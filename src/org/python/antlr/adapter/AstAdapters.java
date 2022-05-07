@@ -62,7 +62,9 @@ public class AstAdapters {
 
     public static Integer py2int(Object o) {
         if (o == null || o instanceof Integer) {
-            return (Integer)o;
+            return (Integer) o;
+        } else if (o instanceof PyInteger) {
+            return ((PyInteger) o).getValue();
         }
         return null;
     }
@@ -282,8 +284,10 @@ public class AstAdapters {
     }
 
     public static Boolean py2bool(Object o) {
-        if (o instanceof Boolean) {
+        if (o == null || o instanceof Boolean) {
             return (Boolean)o;
+        } else if (o instanceof PyBoolean) {
+            return ((PyBoolean) o).getBooleanValue();
         }
         return null;
     }
