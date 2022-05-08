@@ -1,0 +1,39 @@
+# Test launcher for Jython 2.7 (GitHub action)
+
+name: launcher test 2.7
+
+on:
+  push:
+    branches: [ master, macos-launcher ]
+  pull_request:
+    branches: [ master ]
+
+
+jobs:
+
+  launcher-test-macos-jdk8:
+
+    runs-on: macos-11
+
+    steps:
+    - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
+
+    # Some tests require exactly-expected line endings
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    - name: Build with Ant
+      run: ant -noinput -buildfile build.xml
+
+    - run: java -version
+    - run: dist/bin/jython -c 'import platform; print platform.java_ver()'
+    - run: python2 dist/bin/jython.py -c 'import platform; print platform.java_ver()'
+
+
