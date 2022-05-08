@@ -18,6 +18,7 @@ Jython 2.7.3a1
     - [ GH-136 ] Use full path of cmd.exe (CVE-2019-17664)
     - [ GH-129 ] Only attempt to open source/bytecode if readable (GH-93)
     - [ GH-128 ] Support PYTHONDONTWRITEBYTECODE environment variable
+    - [ GH-125 ] Launch fails on Mac OS Big Sur (MacOS 11) (GH-172)
     - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
     - [ GH-102 ] Fix CRC32.update calls in zlib.py
