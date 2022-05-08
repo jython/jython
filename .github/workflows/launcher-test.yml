@@ -37,10 +37,10 @@ jobs:
       run: ant -noinput -buildfile build.xml
 
     - name: Show JVM arguments when launched by script
-    - run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+      run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
     - name: Show JVM arguments when launched by Python
-    - run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+      run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
     - name: Regression tests for invocation of the interpreter with various command line arguments
       run: dist/bin/jython -m test.test_cmd_line
