@@ -29,11 +29,16 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
+    - run: java -version
+
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
 
-    - run: java -version
+    # Probe JVM properties (launched by script)
     - run: dist/bin/jython -c 'import platform; print platform.java_ver()'
-    - run: python2 dist/bin/jython.py -c 'import platform; print platform.java_ver()'
+    - run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
+    # Probe JVM properties (launched by Python)
+    - run: python2 dist/bin/jython.py -c 'import platform; print platform.java_ver()'
+    - run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
