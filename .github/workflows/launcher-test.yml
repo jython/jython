@@ -1,7 +1,7 @@
 # Test launcher for Jython 2.7 (GitHub action)
 
-# The motivation for the test was the mis-handling of JVM arguments,
-# but we use the escuse to run a few tests on macOS,
+# The motivation for the test was the mis-handling of JVM arguments
+# in jython.py, but we take this excuse to run a few tests on macOS,
 # where we don't currently run the regression test in full.
 
 name: launcher test 2.7
