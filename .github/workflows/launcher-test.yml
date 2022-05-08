@@ -1,10 +1,14 @@
 # Test launcher for Jython 2.7 (GitHub action)
 
+# The motivation for the test was the mis-handling of JVM arguments,
+# but we use the escuse to run a few tests on macOS,
+# where we don't currently run the regression test in full.
+
 name: launcher test 2.7
 
 on:
   push:
-    branches: [ master, macos-launcher ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -13,7 +17,7 @@ jobs:
 
   launcher-test-macos-jdk8:
 
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
@@ -29,16 +33,18 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - run: java -version
-
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
 
-    # Probe JVM properties (launched by script)
-    - run: dist/bin/jython -c 'import platform; print platform.java_ver()'
+    - name: Show JVM arguments when launched by script
     - run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
-    # Probe JVM properties (launched by Python)
-    - run: python2 dist/bin/jython.py -c 'import platform; print platform.java_ver()'
+    - name: Show JVM arguments when launched by Python
     - run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+
+    - name: Regression tests for invocation of the interpreter with various command line arguments
+      run: dist/bin/jython -m test.test_cmd_line
+
+    - name: Regression tests for command line execution of scripts
+      run: python2 dist/bin/jython.py -m test.test_cmd_line_script
 
