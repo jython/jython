@@ -105,8 +105,8 @@ public class jython {
     static final String usageBody =
             "Options and arguments:\n"
             // + "(and corresponding environment variables):\n"
-            + "-B       : don't write bytecode files on import\n"
-            // + "also PYTHONDONTWRITEBYTECODE=x\n" +
+            + "-B       : don't write bytecode files on import;\n"
+            + "           also PYTHONDONTWRITEBYTECODE=x\n"
             + "-c cmd   : program passed in as string (terminates option list)\n"
             // + "-d       : debug output from parser (also PYTHONDEBUG=x)\n"
             + "-Dprop=v : Set the property `prop' to value `v'\n"
@@ -583,8 +583,9 @@ public class jython {
                 sts = Status.OK;
 
             } else if (opts.module != null) {
-                // The script is a module
-                sys.argv.set(0, Py.newString("-m"));
+                // The script is a module (and yet CPython has -c here)
+                sys.argv.set(0, Py.newString("-c")); // "-m" in CPython3
+                sys.path.insert(0, Py.EmptyString);
                 sts = runModule(opts.module, true);
 
             } else if (opts.filename != null) {
@@ -722,6 +723,11 @@ public class jython {
         addDefault(registry, "python.startup", getenv("JYTHONSTARTUP"));
         // Go interactive after script. (PYTHONINSPECT because Python scripts may set it.)
         addDefault(registry, "python.inspect", getenv("PYTHONINSPECT"));
+
+        // PYTHONDONTWRITEBYTECODE
+        if (getenv("PYTHONDONTWRITEBYTECODE") != null) {
+            Options.dont_write_bytecode = true;
+        }
 
         // Read environment variable PYTHONIOENCODING into properties (registry)
         String pythonIoEncoding = getenv("PYTHONIOENCODING");

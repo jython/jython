@@ -66,9 +66,9 @@ An example ant.properties file:
 oracle.jar = ../support/ojdbc6.jar
 informix.jar = ../support/jdbc-4.10.12.jar
 
-# - option for javac (build.compiler=modern is a global option to use standard jdk 1.7/1.8)
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.8)
 #build.compiler=modern
-#jdk.target.version=1.7
+#jdk.target.version=1.8
 #debug=false
 #deprecation=off
         </echo>
@@ -92,11 +92,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
         <property name="jython.java.version" value="1.8" />
-
-        <!-- Temporarily fix the source compatibility at Java 7 to keep open the possibility of
-        compiling for that target. After v2.7.2 is out, delete this assignment, and this comment,
-        reconsider choice of JARs, and feel free to use Java 8 syntax. -->
-        <property name="jdk.source.version" value="1.7" />
+        <property name="jdk.source.version" value="1.8" />
 
         <!-- Designate the official release encoded in parts. In normal times, this is the *next*
              official release, e.g. 2.7.2b2 while working towards 2.7.2b2, and sys.version will be
@@ -252,9 +248,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-7.1.jar" />
                 <file name="asm-commons-7.1.jar" />
                 <file name="asm-util-7.1.jar" />
-                <file name="commons-compress-1.19.jar"/>
+                <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-28.0-android.jar" />
+                <file name="guava-31.0.1-jre.jar" />
                 <file name="icu4j-59_1.jar" />
                 <file name="jffi-1.2.20.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
@@ -263,12 +259,12 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="jnr-posix-3.0.50.jar"/>
                 <file name="jnr-constants-0.9.12.jar"/>
                 <file name="jline-2.14.5.jar"/>
-                <file name="netty-buffer-4.1.45.Final.jar"/>
-                <file name="netty-codec-4.1.45.Final.jar"/>
-                <file name="netty-common-4.1.45.Final.jar"/>
-                <file name="netty-handler-4.1.45.Final.jar"/>
-                <file name="netty-resolver-4.1.45.Final.jar"/>
-                <file name="netty-transport-4.1.45.Final.jar"/>
+                <file name="netty-buffer-4.1.73.Final.jar"/>
+                <file name="netty-codec-4.1.73.Final.jar"/>
+                <file name="netty-common-4.1.73.Final.jar"/>
+                <file name="netty-handler-4.1.73.Final.jar"/>
+                <file name="netty-resolver-4.1.73.Final.jar"/>
+                <file name="netty-transport-4.1.73.Final.jar"/>
             </filelist>
         </path>
 
@@ -840,28 +836,27 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/asm-commons-7.1.jar"/>
             <zipfileset src="extlibs/asm-util-7.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.62.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk15on-1.69.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk15on-1.69.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
-            <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.19.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-28.0-android.jar"/>
+            <zipfileset src="extlibs/guava-31.0.1-jre.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-59_1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-resolver-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
@@ -1274,7 +1269,7 @@ The text for an official release would continue like ...
 
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
@@ -1292,13 +1287,13 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
+    <target name="importest" depends="developer-build"
+            description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
             <classpath refid="test.classpath"/>
             <classpath>
                 <pathelement location="${basedir}/tests/python"/>
@@ -1369,6 +1364,25 @@ The text for an official release would continue like ...
       </exec>
     </target>
 
+    <target name="versions" depends="init, versions-unix, versions-windows"
+        description="identify the versions of Jython and its platform (needs developer-build)"/>
+
+    <target name="versions-unix" if="os.family.unix">
+        <exec executable="${dist.dir}/bin/jython">
+            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
+    </target>
+
+    <target name="versions-windows" if="os.family.windows">
+        <mkdir dir="${junit.reports}"/>
+        <exec executable="${dist.dir}/bin/jython.exe">
+            <arg value="-c"/>
+            <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
+        </exec>
+    </target>
+
     <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"
         description="run Python tests expected to work on Jython"/>
 
@@ -1434,11 +1448,11 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-travis"
-            depends="developer-build, regrtest-unix-travis, regrtest-windows-travis"
-            description="run Python tests expected to work on Jython for Travis intergration"/>
+    <target name="regrtest-ci"
+            depends="developer-build, regrtest-unix-ci, regrtest-windows-ci"
+            description="run Python tests expected to work on Jython for CI"/>
 
-    <target name="regrtest-unix-travis" if="os.family.unix">
+    <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
@@ -1459,7 +1473,7 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-windows-travis" if="os.family.windows">
+    <target name="regrtest-windows-ci" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>

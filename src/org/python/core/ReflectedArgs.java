@@ -164,8 +164,8 @@ public class ReflectedArgs {
             return new PyObject[] {new PyList()};
         }
         PyObject lastArg = pyArgs[pyArgs.length - 1];
-        if (lastArg instanceof PySequenceList || lastArg instanceof PyArray
-                || lastArg instanceof PyXRange || lastArg instanceof PyIterator) {
+        if (pyArgs.length == n && (lastArg instanceof PySequenceList || lastArg instanceof PyArray
+                || lastArg instanceof PyXRange || lastArg instanceof PyIterator)) {
             // NOTE that the check is against PySequenceList, not PySequence,
             // because certain Java <=> Python semantics currently require this
             // additional strictness. Perhaps this can be relaxed.
@@ -174,6 +174,11 @@ public class ReflectedArgs {
             // excluding only PyBaseString, PyMemoryView, Py2kBuffer, BaseBytes,
             // and AstList, many/most of which seem likely to be problematic for
             // varargs usage.
+
+            // This is only relevant if the number of arguments would be correct if a final sequence
+            // argument was treated as a vararg argument. eg, if two lists are passed to a function
+            // that accepts (Object...), they should be boxed and passed as a single list, even though
+            // the final arg is a sequence.
 
             // FIXME also check if lastArg is sequence-like
             return pyArgs; // will be boxed in an array once __tojava__ is called

@@ -76,7 +76,7 @@ class BaseTest(unittest.TestCase):
 
     def test_byteswap(self):
         if test_support.is_jython and self.typecode == 'u':
-            self.skipTest("Jython unicode byteswap not implemented")
+            self.skipTest("byteswap results in illegal characters")
         a = array.array(self.typecode, self.example)
         self.assertRaises(TypeError, a.byteswap, 42)
         if a.itemsize in (1, 2, 4, 8):
@@ -1040,13 +1040,7 @@ class UnsignedNumberTest(NumberTest):
         a = array.array(self.typecode)
         lower = 0
         itemsize = a.itemsize
-        if test_support.is_jython:
-            #  unsigned itemsizes are larger than would be expected
-            # in CPython because Jython promotes to the next size
-            # (Java has no unsiged integers except for char)
-            upper = long(pow(2, a.itemsize * 8 - 1)) - 1L
-        else:
-            upper = long(pow(2, a.itemsize * 8)) - 1L
+        upper = long(pow(2, a.itemsize * 8)) - 1L
         self.check_overflow(lower, upper)
 
 
