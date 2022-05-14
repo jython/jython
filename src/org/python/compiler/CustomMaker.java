@@ -37,15 +37,10 @@ public class CustomMaker extends JavaMaker {
             saveBytes(bytes);
             List<Class<?>> secondary = new LinkedList(Arrays.asList(interfaces));
             List<Class<?>> referents = null;
-            if (secondary != null) {
-                if (superclass != null) {
-                    secondary.add(0, superclass);
-                }
-                referents = secondary;
-            } else if (superclass != null) {
-                referents = new ArrayList<Class<?>>(1);
-                referents.add(superclass);
+            if (superclass != null) {
+                secondary.add(0, superclass);
             }
+            referents = secondary;
             return BytecodeLoader.makeClass(myClass, referents, bytes.toByteArray());
         } catch (Exception exc) {
             throw Py.JavaError(exc);

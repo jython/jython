@@ -1,0 +1,50 @@
+# Test launcher for Jython 2.7 (GitHub action)
+
+# The motivation for the test was the mis-handling of JVM arguments
+# in jython.py, but we take this excuse to run a few tests on macOS,
+# where we don't currently run the regression test in full.
+
+name: launcher test 2.7
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+
+jobs:
+
+  launcher-test-macos-jdk8:
+
+    runs-on: macos-latest
+
+    steps:
+    - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
+
+    # Some tests require exactly-expected line endings
+    - run: git config --global core.autocrlf input
+
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    - name: Build with Ant
+      run: ant -noinput -buildfile build.xml
+
+    - name: Show JVM arguments when launched by script
+      run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+
+    - name: Show JVM arguments when launched by Python
+      run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+
+    - name: Regression tests for invocation of the interpreter with various command line arguments
+      run: dist/bin/jython -m test.test_cmd_line
+
+    - name: Regression tests for command line execution of scripts
+      run: python2 dist/bin/jython.py -m test.test_cmd_line_script
+

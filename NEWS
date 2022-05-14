@@ -11,13 +11,22 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
-    - [ GH-102 ] Fix CRC32.update calls in zlib.py
-    - [ GH-97 ] Failures in SNI support affecting pip
+    - [ GH-160 ] Improve context of "Cannot create PyString with non-byte value"
     - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
     - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
     - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-136 ] Use full path of cmd.exe (CVE-2019-17664)
+    - [ GH-129 ] Only attempt to open source/bytecode if readable (GH-93)
+    - [ GH-128 ] Support PYTHONDONTWRITEBYTECODE environment variable
+    - [ GH-125 ] Launch fails on Mac OS Big Sur (MacOS 11) (GH-172)
     - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
+    - [ GH-102 ] Fix CRC32.update calls in zlib.py
+    - [ GH-101 ] Improve boxing of arguments to vararg methods
+    - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
+    - [ GH-97 ] Failures in SNI support affecting pip
+    - [ GH-93 ] Permissions problems with compiled source files ($py.class)
+    - [ GH-77 ] Broken AST adapter
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
@@ -27,6 +36,12 @@ Jython 2.7.3a1
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
 
   New Features
+
+    - The jython command respects the PYTHONDONTWRITEBYTECODE environment variable (GH-128).
+
+    - Under PR GH-101, the matching of sequence arguments to the parameters of Java methods is
+      improved. A Java varargs parameter does not match a final sequence in the call
+      if an array parameter could do so. (Thanks Peter Holloway.)
 
     - array.array itemsize of unsigned types is now the same as their signed counterparts, where 
       previously it was mostly double. Internal representations have changed. Anomalies have been

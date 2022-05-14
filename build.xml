@@ -1269,7 +1269,7 @@ The text for an official release would continue like ...
 
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
@@ -1287,13 +1287,13 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
+    <target name="importest" depends="developer-build"
+            description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
             <classpath refid="test.classpath"/>
             <classpath>
                 <pathelement location="${basedir}/tests/python"/>
@@ -1448,11 +1448,11 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-travis"
-            depends="developer-build, regrtest-unix-travis, regrtest-windows-travis"
-            description="run Python tests expected to work on Jython for Travis intergration"/>
+    <target name="regrtest-ci"
+            depends="developer-build, regrtest-unix-ci, regrtest-windows-ci"
+            description="run Python tests expected to work on Jython for CI"/>
 
-    <target name="regrtest-unix-travis" if="os.family.unix">
+    <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
@@ -1473,7 +1473,7 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-windows-travis" if="os.family.windows">
+    <target name="regrtest-windows-ci" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>

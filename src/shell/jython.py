@@ -574,7 +574,8 @@ def main(sys_args):
                 # but if tried, they also fail very badly by hanging.
                 # So don't even try!
                 command = encode_list(command)
-                os.execvp(command[0], command[1:])
+                # Note pass complete argv (including verb) as 2nd argument
+                os.execvp(command[0], command)
             else:
                 result = 1
                 try:

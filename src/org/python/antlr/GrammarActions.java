@@ -721,11 +721,7 @@ public class GrammarActions {
         }
         if (sliceop != null) {
             isSlice = true;
-            if (sliceop != null) {
-                o = castExpr(sliceop);
-            } else {
-                o = new Name(sliceop, "None", expr_contextType.Load);
-            }
+            o = castExpr(sliceop);
         }
 
         PythonTree tok = lower;
