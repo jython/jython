@@ -9,23 +9,22 @@ import java.io.StringWriter;
 
 import static org.junit.Assert.*;
 
-public class Issue2007Test
-{
+public class Issue2007Test {
+
     /**
-     * Verify that print_function works in scripts.  This was always the case.
+     * Verify that {@code print_function} works in scripts. This was always the case.
      */
     @Test
     public void testPrintFunctionInScript() {
         CapturingInterpreter interp = new CapturingInterpreter();
-        interp.exec("from __future__ import print_function\n" +
-                    "print(1, 2, 3)\n");
+        interp.exec("from __future__ import print_function\n" + "print(1, 2, 3)\n");
         assertEquals("1 2 3\n", interp.getOutput());
     }
 
     /**
-     * Verify that print_function works when passing individual statements to
-     * an interactive interpreter.  If issue 2007 is present, this will fail
-     * as the second statement will print '(1, 2, 3)' instead of '1 2 3'.
+     * Verify that print_function works when passing individual statements to an interactive
+     * interpreter. If issue 2007 is present, this will fail as the second statement will print
+     * {@code '(1, 2, 3)'} instead of {@code '1 2 3'}.
      */
     @Test
     public void testPrintFunctionInInteractive() {
@@ -36,10 +35,10 @@ public class Issue2007Test
     }
 
     private static class CapturingInterpreter extends InteractiveInterpreter {
+
         private final StringWriter writer = new StringWriter();
 
-        CapturingInterpreter()
-        {
+        CapturingInterpreter() {
             super(new PyStringMap(), new PySystemState());
             setOut(writer);
         }
