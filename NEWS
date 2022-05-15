@@ -4,7 +4,7 @@ The features new in a given release are generally listed under the section for t
 of that version.
 
 For more details, three sources are available according to type:
- - [ n ], please see https://hg.python.org/jython.
+ - [ n ], please see old bug tracker at https://bugs.jython.org.
  - [ GH-n ], please see https://github.com/jython/jython.
  - [ FM-n ], please see https://github.com/jython/frozen-mirror.
 

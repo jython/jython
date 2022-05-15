@@ -38,5 +38,5 @@ these tests are known to fail (spuriously) on an installed Jython:
     test_java_visibility
     test_jy_internals
     test_ssl_jy
-Please report reproducible failures at http://bugs.jython.org .
+Please report reproducible failures at https://github.com/jython/jython/issues .
 
