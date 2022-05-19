@@ -252,7 +252,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-31.0.1-jre.jar" />
                 <file name="icu4j-59_1.jar" />
-                <file name="jffi-1.2.20.jar"/>
+                <file name="jffi-1.3.9.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
                 <file name="jnr-ffi-2.1.10.jar"/>
                 <file name="jnr-netdb-1.1.6.jar"/>
@@ -883,7 +883,7 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.2.20.jar"/>
+            <zipfileset src="extlibs/jffi-1.3.9.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.10.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.0.50.jar"/>
