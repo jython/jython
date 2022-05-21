@@ -888,7 +888,7 @@ The text for an official release would continue like ...
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.2.12.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.2.0.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-posix-3.1.15.jar"/>
-            <zipfileset src="extlibs/xercesImpl-2.12.0.jar" excludes="META-INF/services/*"/>
+            <zipfileset src="extlibs/xercesImpl-2.12.2.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
