@@ -12,6 +12,7 @@ For more details, three sources are available according to type:
 Jython 2.7.3a1
   Bugs fixed
     - [ GH-160 ] Improve context of "Cannot create PyString with non-byte value"
+    - [ GH-157 ] Upgrade ASM to 9.3
     - [ GH-151 ] Upgrade Apache Xerces to 2.12.2 (CVE-2022-23437)
     - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
     - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
