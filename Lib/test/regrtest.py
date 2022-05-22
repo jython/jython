@@ -413,6 +413,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         except ImportError:
             pass
 
+    # Avoid false alarm on first test
+    cleanup_test_droppings("some previous test", not quiet)
+
     for test in tests:
         if not quiet:
             print test
@@ -578,7 +581,7 @@ def runtest(test, verbose, quiet, test_times,
         return runtest_inner(test, verbose, quiet, test_times,
                              testdir, huntrleaks, junit_xml)
     finally:
-        cleanup_test_droppings(test, verbose)
+        cleanup_test_droppings(test, not quiet)
 
 def runtest_inner(test, verbose, quiet, test_times,
                   testdir=None, huntrleaks=False, junit_xml_dir=None):
@@ -701,9 +704,15 @@ def cleanup_test_droppings(testname, verbose):
     # since if a test leaves a file open, it cannot be deleted by name (while
     # there's nothing we can do about that here either, we can display the
     # name of the offending test, which is a real help).
-    for name in (test_support.TESTFN,
-                 "db_home",
-                ):
+
+    nuisances = ["db_home", "bar$py.class", "longlist$py.class"]
+    jffijars = re.compile(r'jffi\d+\.dll')
+    nuisances.extend(
+        n for n in os.listdir('.') if
+            n.startswith(test_support.TESTFN) or
+            jffijars.match(n))
+
+    for name in nuisances:
         if not os.path.exists(name):
             continue
 
@@ -720,11 +729,11 @@ def cleanup_test_droppings(testname, verbose):
                               "directory nor file" % name)
 
         if verbose:
-            print "%r left behind %s %r" % (testname, kind, name)
+            print " -- %s left behind %s %r" % (testname, kind, name)
         try:
             nuker(name)
         except Exception, msg:
-            print >> sys.stderr, ("%r left behind %s %r and it couldn't be "
+            print >> sys.stderr, (" -- %s left behind %s %r and it couldn't be "
                 "removed: %s" % (testname, kind, name, msg))
 
 def dash_R(the_module, test, indirect_test, huntrleaks):
