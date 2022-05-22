@@ -245,19 +245,19 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.2.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-7.1.jar" />
-                <file name="asm-commons-7.1.jar" />
-                <file name="asm-util-7.1.jar" />
+                <file name="asm-9.3.jar" />
+                <file name="asm-commons-9.3.jar" />
+                <file name="asm-util-9.3.jar" />
                 <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
                 <file name="guava-31.0.1-jre.jar" />
                 <file name="icu4j-59_1.jar" />
-                <file name="jffi-1.2.20.jar"/>
+                <file name="jffi-1.3.9.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
-                <file name="jnr-ffi-2.1.10.jar"/>
-                <file name="jnr-netdb-1.1.6.jar"/>
-                <file name="jnr-posix-3.0.50.jar"/>
-                <file name="jnr-constants-0.9.12.jar"/>
+                <file name="jnr-constants-0.10.3.jar"/>
+                <file name="jnr-ffi-2.2.12.jar"/>
+                <file name="jnr-netdb-1.2.0.jar"/>
+                <file name="jnr-posix-3.1.15.jar"/>
                 <file name="jline-2.14.5.jar"/>
                 <file name="netty-buffer-4.1.73.Final.jar"/>
                 <file name="netty-codec-4.1.73.Final.jar"/>
@@ -832,12 +832,12 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-7.1.jar"/>
-            <zipfileset src="extlibs/asm-commons-7.1.jar"/>
-            <zipfileset src="extlibs/asm-util-7.1.jar"/>
+            <zipfileset src="extlibs/asm-9.3.jar"/>
+            <zipfileset src="extlibs/asm-commons-9.3.jar"/>
+            <zipfileset src="extlibs/asm-util-9.3.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.69.jar" excludes="META-INF/**"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.69.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk18on-1.71.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
@@ -883,12 +883,12 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.2.20.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.10.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-posix-3.0.50.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-constants-0.9.12.jar"/>
-            <zipfileset src="extlibs/xercesImpl-2.12.0.jar" excludes="META-INF/services/*"/>
+            <zipfileset src="extlibs/jffi-1.3.9.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.10.3.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-2.2.12.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-netdb-1.2.0.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.1.15.jar"/>
+            <zipfileset src="extlibs/xercesImpl-2.12.2.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
