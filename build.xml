@@ -836,8 +836,8 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/asm-commons-9.3.jar"/>
             <zipfileset src="extlibs/asm-util-9.3.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.69.jar" excludes="META-INF/**"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.69.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk18on-1.71.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
