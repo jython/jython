@@ -166,7 +166,7 @@ dependencies {
 
     implementation 'com.google.guava:guava:31.0.1-jre'
  
-    implementation 'com.ibm.icu:icu4j:59.1'
+    implementation 'com.ibm.icu:icu4j:71.1'
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'
 
