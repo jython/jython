@@ -1,0 +1,9 @@
+name: codespell
+on: [pull_request, push]
+jobs:
+  codespell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install codespell
+      - run: codespell --count jython/NEWS --ignore-words-list="sur"  # --skip="*.css,*.js,*.lock,*.po"
