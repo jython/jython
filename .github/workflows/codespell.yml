@@ -6,4 +6,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: pip install codespell
-      - run: codespell --count jython/NEWS --ignore-words-list="statics,sur"  # --skip="*.css,*.js,*.lock,*.po"
+      - run: codespell --count ./NEWS --ignore-words-list="statics,sur"  # --skip="*.css,*.js,*.lock,*.po"
