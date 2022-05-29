@@ -1,5 +1,6 @@
-# https://pypi.org/project/codespell will fix common misspellings in text files. It’s designed primarily
-# for checking misspelled words in source code, but it can be used with other files as well.
+# https://pypi.org/project/codespell will fix common misspellings in text files.
+# It’s designed primarily for checking misspelled words in source code, but
+# it can be used with other files as well.
 name: codespell
 on: [pull_request, push]
 jobs:
