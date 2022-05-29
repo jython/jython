@@ -1497,7 +1497,7 @@ Jython 2.2 beta1
     - new-style classes and their instances are Java serializable
     - most new-style builtin types can be pickleds
     - __slots__ for new-style classes
-    - xml modules from pyxml read
+    - xml modules from pyxml re-added
     - comparison operations between subclasses of
         builtin types tries the subclass first even if it's on the right side 
   Bugs fixed.
