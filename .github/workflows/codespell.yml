@@ -13,4 +13,5 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: pip install codespell
-    - run: codespell . --ignore-words=Misc/codespell/words.ignore --skip="*.decTest,*.g,*.ht,*.java,*.pem,*.py,*.uue,*.xml"
+    - run: codespell . --count --ignore-words=Misc/codespell/words.ignore
+                       --skip="*.decTest,*.g,*.ht,*.java,*.pem,*.py,*.uue,*.xml"
