@@ -13,4 +13,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: pip install codespell
-    - run: codespell NEWS README.md README.txt LICENSE --ignore-words=Misc/codespell/words.ignore
+    - run: codespell . --ignore-words=Misc/codespell/words.ignore --skip="*.g,*.ht,*.java,*.py,*.xml"
