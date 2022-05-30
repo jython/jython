@@ -14,7 +14,7 @@ jobs:
     - uses: actions/checkout@v3
     - run: pip install codespell
     - run: codespell . --count --ignore-words=Misc/codespell/words.ignore
-                       --skip="lib-python/*,*.decTest,*.g,*.ht,*.java,*.pem,*.py,*.uue,*.xml"
+                       --skip="./extlibs/*,./lib-python/*,*.decTest,*.g,*.ht,*.java,*.pem,*.py,*.uue,*.xml"
 
   codespell-java:
 
