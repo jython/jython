@@ -1,12 +1,14 @@
-# https://pypi.org/project/codespell will fix common misspellings in text files.
-# It’s designed primarily for checking misspelled words in source code, but
-# it can be used with other files as well.
+# Check text for common misspellings and report them (GitHub Action)
+# https://pypi.org/project/codespell
+
 name: codespell
+
 on: [pull_request, push]
+
 jobs:
   codespell:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: pip install codespell
-      - run: codespell --count ./NEWS --ignore-words-list="statics,sur" --skip="*.java"
+    - uses: actions/checkout@v3
+    - run: pip install codespell
+    - run: codespell NEWS, README.md, README.txt, LICENSE --ignore-words=Misc/codespell/words.ignore

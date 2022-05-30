@@ -1,6 +1,8 @@
 Jython: Python for the Java Platform
 ------------------------------------
 
+A delibrate speling misstake.
+
 Welcome to Jython @jython.version@.
 @snapshot.banner@
 This is @readme.release@ release of version @jython.version.short@ of Jython.
