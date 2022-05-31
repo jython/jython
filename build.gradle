@@ -190,6 +190,11 @@ dependencies {
 
     // Pin to 4.10 until dependency on hamcrest classes resolved.
     testImplementation 'junit:junit:4.10'
+
+    // We choose only to cite these as only used by javadoc.
+    // They are proprietary and necessary only if certain modules are used.
+    compileOnly 'com.ibm.informix:jdbc:4.50.1'
+    compileOnly 'com.oracle.database.jdbc:ojdbc8:19.14.0.0'
 }
 
 
@@ -315,7 +320,7 @@ task generateVersionInfo(
          * those used by CPython to create constants configure.ac, but do not
          * correspond very well to their names.
          */
-        
+
         // Not much like a branch. Used only if git_tag is blank.
         def branch = 'git name-rev --name-only HEAD'.execute().text.split('\n', 2)[0]
         property('jython.build.git_branch', branch)
@@ -694,6 +699,7 @@ task testJar(type: Jar) {
 javadoc {
     options.encoding = 'UTF-8'
     source = fileTree(dir: 'src', include: '**/*.java')
+    mustRunAfter(pycompile)
 }
 
 // ---------------- Publication ------------------------------------------------
