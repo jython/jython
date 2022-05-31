@@ -741,22 +741,21 @@ publishing {
                     'language Python written in 100% Pure Java, and seamlessly integrated with\n' +
                     'the Java platform. It thus allows you to run Python on any Java platform.'
                 url = 'https://www.jython.org/'
+                inceptionYear = '1997'
+
+                organization {
+                    name = 'Python Software Foundation'
+                    url = 'https://www.python.org'
+                }
 
                 // We use the PSF 2.0, but only most recently, and actually a bundle.
                 licenses {
                     license {
                         name = 'Jython Software License'
-                        // Not actually the license URL, but linked from here.
-                        url = 'https://www.jython.org/'
+                        // Link to a stable version (defined by release tag in repo).
+                        url = 'https://raw.githubusercontent.com/jython/jython/v' + project.version + '/LICENSE.txt'
                         distribution = 'repo'
                     }
-                }
-
-                // Point to Git repositories hosted on GitHub.
-                scm {
-                    connection = 'scm:git:https://github.com/jython/jython.git'
-                    developerConnection = 'scm:git:ssh://git@github.com:jython/jython.git'
-                    url = 'https://github.com/jython/jython'
                 }
 
                 // Could list us all, but why not just the list for now?
@@ -766,6 +765,29 @@ publishing {
                         name = 'Jython Developers'
                         email = 'jython-dev@lists.sourceforge.net'
                     }
+                }
+
+                mailingLists {
+                    mailingList {
+                        name = 'Jython Users'
+                        post = 'jython-users@lists.sourceforge.net'
+                    }
+                    mailingList {
+                        name = 'Jython Developers'
+                        post = 'jython-dev@lists.sourceforge.net'
+                    }
+                }
+
+                // Point to Git repositories hosted on GitHub.
+                scm {
+                    connection = 'scm:git:https://github.com/jython/jython.git'
+                    developerConnection = 'scm:git:git@github.com:jython/jython.git'
+                    url = 'https://github.com/jython/jython'
+                }
+
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/jython/jython/issues'
                 }
             }
         }
