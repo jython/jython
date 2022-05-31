@@ -8,29 +8,29 @@
     <groupId>org.python</groupId>
     <artifactId>@ARTIFACT-ID@</artifactId>
     <packaging>jar</packaging>
-    <name>Jython</name>
     <version>@PROJECT-VERSION@</version>
-    <url>https://www.jython.org/</url>
 
+    <name>Jython</name>
     <description>
         Jython is an implementation of the high-level, dynamic, object-oriented
         language Python written in 100% Pure Java, and seamlessly integrated with
         the Java platform. It thus allows you to run Python on any Java platform.
     </description>
+    <url>https://www.jython.org/</url>
+    <inceptionYear>1997</inceptionYear>
+
+    <organization>
+        <name>Python Software Foundation</name>
+        <url>https://www.python.org</url>
+    </organization>
 
     <licenses>
         <license>
             <name>Jython Software License</name>
-            <url>https://www.jython.org/Project/license.html</url>
+            <url>https://raw.githubusercontent.com/jython/jython/v@PROJECT-VERSION@/LICENSE.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <scm>
-        <connection>scm:hg:https://hg.python.org/jython</connection>
-        <developerConnection>scm:hg:ssh://hg@hg.python.org/jython</developerConnection>
-        <url>https://hg.python.org/jython</url>
-    </scm>
 
     <developers>
         <developer>
@@ -39,4 +39,27 @@
             <email>jython-dev@lists.sourceforge.net</email>
         </developer>
     </developers>
+
+    <mailingLists>
+        <mailingList>
+            <name>Jython Users</name>
+            <post>jython-users@lists.sourceforge.net</post>
+        </mailingList>
+        <mailingList>
+            <name>Jython Developers</name>
+            <post>jython-dev@lists.sourceforge.net</post>
+        </mailingList>
+    </mailingLists>
+
+    <scm>
+        <connection>scm:git:https://github.com/jython/jython.git</connection>
+        <developerConnection>scm:git:git@github.com:jython/jython.git</developerConnection>
+        <url>https://github.com/jython/jython</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/jython/jython/issues</url>
+    </issueManagement>
+
 </project>
