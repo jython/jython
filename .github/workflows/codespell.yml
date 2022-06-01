@@ -6,21 +6,13 @@ name: codespell
 on: [pull_request, push]
 
 jobs:
-  codespell:
+  codespell-text:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
     - run: pip install codespell
-    - run: codespell . --count --ignore-words=Misc/codespell/words.ignore
-                       --skip="./extlibs/*,./lib-python/*,*.decTest,*.g,*.ht,*.java,*.pem,*.py,*.uue,*.xml"
+    - run: codespell --count --ignore-words-list="sur,statics"
+                  NEWS README.md README.txt LICENSE Misc/INDEX
 
-  codespell-java:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - run: pip install codespell
-    - run: shopt -s globstar && codespell **/*.java --count --ignore-words=Misc/codespell/words.ignore || true
