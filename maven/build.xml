@@ -175,6 +175,9 @@
         <attribute name="stageDir" default="${build.maven}" />
         <attribute name="basename" default="@{artifactId}-@{version}" />
         <sequential>
+            <!-- Validate the POM -->
+            <validate-pom file="@{fromdir}/@{basename}.pom" />
+
             <!-- Clean the staging directory. -->
             <delete dir="@{stageDir}" />
             <mkdir dir="@{stageDir}" />
@@ -224,21 +227,34 @@
         </sequential>
     </macrodef>
 
-    <!-- Performs POM Schema validation. -->
-    <target name="validate-pom">
-        <xmlvalidate failonerror="true" file="maven/pom-template.xml">
-            <attribute name="http://xml.org/sax/features/validation" value="true" />
-            <attribute name="http://apache.org/xml/features/validation/schema" value="true" />
-            <attribute name="http://xml.org/sax/features/namespaces" value="true" />
-            <property name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation" value="maven/maven-v4_0_0.xsd" />
-        </xmlvalidate>
+    <!-- Validate a Maven POM . -->
+    <macrodef name="validate-pom">
+        <attribute name="file" />
+        <sequential>
+            <xmlvalidate failonerror="true" file="@{file}">
+                <attribute name="http://xml.org/sax/features/validation" value="true" />
+                <attribute name="http://apache.org/xml/features/validation/schema" value="true" />
+                <attribute name="http://xml.org/sax/features/namespaces" value="true" />
+                <property name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation" value="maven/maven-v4_0_0.xsd" />
+            </xmlvalidate>
+        </sequential>
+    </macrodef>
+
+    <!-- Validate the POM template. -->
+    <target name="validate-template-pom">
+        <validate-pom file="maven/pom-template.xml"/>
+    </target>
+
+    <!-- Validate the base POM produced by Gradle task generatePomFileForMainPublication. -->
+    <target name="validate-gradle-pom" depends="version">
+        <validate-pom file="${gradle.base}/publications/main/pom-default.xml"/>
     </target>
 
     <target name="build-jython" if="do.build">
         <ant antfile="build.xml" target="all-jars" />
     </target>
 
-    <target name="prepare" depends="build-jython, validate-pom, version">
+    <target name="prepare" depends="build-jython, validate-template-pom, version">
         <local name="artifacts" />
         <property name="artifacts" value="${gradle.repo}/${m2.groupDir}/jython-slim/${jython.version}" />
         <condition property="gradle.published">

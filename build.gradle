@@ -190,6 +190,11 @@ dependencies {
 
     // Pin to 4.10 until dependency on hamcrest classes resolved.
     testImplementation 'junit:junit:4.10'
+
+    // We choose only to cite these as only used by javadoc.
+    // They are proprietary and necessary only if certain modules are used.
+    compileOnly 'com.ibm.informix:jdbc:4.50.8'
+    compileOnly 'com.oracle.database.jdbc:ojdbc8:19.14.0.0'
 }
 
 
@@ -315,7 +320,7 @@ task generateVersionInfo(
          * those used by CPython to create constants configure.ac, but do not
          * correspond very well to their names.
          */
-        
+
         // Not much like a branch. Used only if git_tag is blank.
         def branch = 'git name-rev --name-only HEAD'.execute().text.split('\n', 2)[0]
         property('jython.build.git_branch', branch)
@@ -694,6 +699,7 @@ task testJar(type: Jar) {
 javadoc {
     options.encoding = 'UTF-8'
     source = fileTree(dir: 'src', include: '**/*.java')
+    mustRunAfter(pycompile)
 }
 
 // ---------------- Publication ------------------------------------------------
@@ -741,22 +747,21 @@ publishing {
                     'language Python written in 100% Pure Java, and seamlessly integrated with\n' +
                     'the Java platform. It thus allows you to run Python on any Java platform.'
                 url = 'https://www.jython.org/'
+                inceptionYear = '1997'
+
+                organization {
+                    name = 'Python Software Foundation'
+                    url = 'https://www.python.org'
+                }
 
                 // We use the PSF 2.0, but only most recently, and actually a bundle.
                 licenses {
                     license {
                         name = 'Jython Software License'
-                        // Not actually the license URL, but linked from here.
-                        url = 'https://www.jython.org/'
+                        // Link to a stable version (defined by release tag in repo).
+                        url = 'https://raw.githubusercontent.com/jython/jython/v' + project.version + '/LICENSE.txt'
                         distribution = 'repo'
                     }
-                }
-
-                // Point to Git repositories hosted on GitHub.
-                scm {
-                    connection = 'scm:git:https://github.com/jython/jython.git'
-                    developerConnection = 'scm:git:ssh://git@github.com:jython/jython.git'
-                    url = 'https://github.com/jython/jython'
                 }
 
                 // Could list us all, but why not just the list for now?
@@ -766,6 +771,29 @@ publishing {
                         name = 'Jython Developers'
                         email = 'jython-dev@lists.sourceforge.net'
                     }
+                }
+
+                mailingLists {
+                    mailingList {
+                        name = 'Jython Users'
+                        post = 'jython-users@lists.sourceforge.net'
+                    }
+                    mailingList {
+                        name = 'Jython Developers'
+                        post = 'jython-dev@lists.sourceforge.net'
+                    }
+                }
+
+                // Point to Git repositories hosted on GitHub.
+                scm {
+                    connection = 'scm:git:https://github.com/jython/jython.git'
+                    developerConnection = 'scm:git:git@github.com:jython/jython.git'
+                    url = 'https://github.com/jython/jython'
+                }
+
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/jython/jython/issues'
                 }
             }
         }
