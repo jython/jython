@@ -4,31 +4,32 @@ package org.python.modules;
  *  Copyright 2011 Gaurav Raje
  *  Licensed to PSF under a Contributor Agreement.
  */
+
 import java.security.MessageDigest;
 
 /**
  * SHA-224 as described in RFC 3874. This introduces the SHA224 Digest which has
  * been omitted from the JDK <code>java.security</code>.
- * 
+ * <p>
  * This implementation has been borrowed from the Bouncy Castle implementation
  * of SHA2 algorithms.
- * 
+ * <p>
  * Since they are MIT Licensed, they are compatible with
  * this project. Their mandatory copyright notice follows.
  * <pre>
  * Copyright (c) 2000 - 2011 The Legion Of The Bouncy Castle
  * (http://www.bouncycastle.org)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -37,10 +38,12 @@ import java.security.MessageDigest;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * </pre>
+ *
+ * @deprecated use the SHA224 implementation provided in Java 8 and later
  */
+@Deprecated
 public class SHA224Digest
-        extends MessageDigest
-{
+        extends MessageDigest {
 
     private static final int BYTE_LENGTH = 64;
     private byte[] xBuf;
@@ -50,12 +53,10 @@ public class SHA224Digest
 
     @Override
     public void update(
-            byte in)
-    {
+            byte in) {
         xBuf[xBufOff++] = in;
 
-        if (xBufOff == xBuf.length)
-        {
+        if (xBufOff == xBuf.length) {
             processWord(xBuf, 0);
             xBufOff = 0;
         }
@@ -67,13 +68,11 @@ public class SHA224Digest
     public void update(
             byte[] in,
             int inOff,
-            int len)
-    {
+            int len) {
         //
         // fill the current word
         //
-        while ((xBufOff != 0) && (len > 0))
-        {
+        while ((xBufOff != 0) && (len > 0)) {
             update(in[inOff]);
 
             inOff++;
@@ -83,8 +82,7 @@ public class SHA224Digest
         //
         // process whole words.
         //
-        while (len > xBuf.length)
-        {
+        while (len > xBuf.length) {
             processWord(in, inOff);
 
             inOff += xBuf.length;
@@ -95,8 +93,7 @@ public class SHA224Digest
         //
         // load in the remainder.
         //
-        while (len > 0)
-        {
+        while (len > 0) {
             update(in[inOff]);
 
             inOff++;
@@ -104,8 +101,7 @@ public class SHA224Digest
         }
     }
 
-    public void finish()
-    {
+    public void finish() {
         long bitLength = (byteCount << 3);
 
         //
@@ -113,8 +109,7 @@ public class SHA224Digest
         //
         update((byte) 128);
 
-        while (xBufOff != 0)
-        {
+        while (xBufOff != 0) {
             update((byte) 0);
         }
 
@@ -123,8 +118,7 @@ public class SHA224Digest
         processBlock();
     }
 
-    public int getByteLength()
-    {
+    public int getByteLength() {
         return BYTE_LENGTH;
     }
 
@@ -138,8 +132,7 @@ public class SHA224Digest
     /**
      * Standard constructor
      */
-    public SHA224Digest()
-    {
+    public SHA224Digest() {
         super("SHA-224");
         xBuf = new byte[4];
         xBufOff = 0;
@@ -150,8 +143,7 @@ public class SHA224Digest
      * Copy constructor. This will copy the state of the provided message
      * digest.
      */
-    public SHA224Digest(SHA224Digest t)
-    {
+    public SHA224Digest(SHA224Digest t) {
         super("SHA-224");
         xBuf = new byte[t.xBuf.length];
         System.arraycopy(t.xBuf, 0, xBuf, 0, t.xBuf.length);
@@ -172,20 +164,17 @@ public class SHA224Digest
         xOff = t.xOff;
     }
 
-    public String getAlgorithmName()
-    {
+    public String getAlgorithmName() {
         return "SHA-224";
     }
 
-    public int getDigestSize()
-    {
+    public int getDigestSize() {
         return DIGEST_LENGTH;
     }
 
     protected void processWord(
             byte[] in,
-            int inOff)
-    {
+            int inOff) {
         // Note: Inlined for performance
         // X[xOff] = Pack.bigEndianToInt(in, inOff);
         int n = in[inOff] << 24;
@@ -194,17 +183,14 @@ public class SHA224Digest
         n |= (in[++inOff] & 0xff);
         X[xOff] = n;
 
-        if (++xOff == 16)
-        {
+        if (++xOff == 16) {
             processBlock();
         }
     }
 
     protected void processLength(
-            long bitLength)
-    {
-        if (xOff > 14)
-        {
+            long bitLength) {
+        if (xOff > 14) {
             processBlock();
         }
 
@@ -214,8 +200,7 @@ public class SHA224Digest
 
     public int doFinal(
             byte[] out,
-            int outOff)
-    {
+            int outOff) {
         finish();
 
         intToBigEndian(H1, out, outOff);
@@ -232,13 +217,11 @@ public class SHA224Digest
     }
 
     @Override
-    public void reset()
-    {
+    public void reset() {
         byteCount = 0;
 
         xBufOff = 0;
-        for (int i = 0; i < xBuf.length; i++)
-        {
+        for (int i = 0; i < xBuf.length; i++) {
             xBuf[i] = 0;
         }
 
@@ -256,19 +239,16 @@ public class SHA224Digest
         H8 = 0xbefa4fa4;
 
         xOff = 0;
-        for (int i = 0; i != X.length; i++)
-        {
+        for (int i = 0; i != X.length; i++) {
             X[i] = 0;
         }
     }
 
-    protected void processBlock()
-    {
+    protected void processBlock() {
         //
         // expand 16 word block into 64 word blocks.
         //
-        for (int t = 16; t <= 63; t++)
-        {
+        for (int t = 16; t <= 63; t++) {
             X[t] = Theta1(X[t - 2]) + X[t - 7] + Theta0(X[t - 15]) + X[t - 16];
         }
 
@@ -285,8 +265,7 @@ public class SHA224Digest
         int h = H8;
 
         int t = 0;
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++) {
             // t = 8 * i
             h += Sum1(e) + Ch(e, f, g) + K[t] + X[t];
             d += h;
@@ -349,8 +328,7 @@ public class SHA224Digest
         // reset the offset and clean out the word buffer.
         //
         xOff = 0;
-        for (int i = 0; i < 16; i++)
-        {
+        for (int i = 0; i < 16; i++) {
             X[i] = 0;
         }
     }
@@ -359,42 +337,36 @@ public class SHA224Digest
     private int Ch(
             int x,
             int y,
-            int z)
-    {
+            int z) {
         return ((x & y) ^ ((~x) & z));
     }
 
     private int Maj(
             int x,
             int y,
-            int z)
-    {
+            int z) {
         return ((x & y) ^ (x & z) ^ (y & z));
     }
 
     private int Sum0(
-            int x)
-    {
+            int x) {
         return ((x >>> 2) | (x << 30)) ^ ((x >>> 13) | (x << 19))
                 ^ ((x >>> 22) | (x << 10));
     }
 
     private int Sum1(
-            int x)
-    {
+            int x) {
         return ((x >>> 6) | (x << 26)) ^ ((x >>> 11) | (x << 21))
                 ^ ((x >>> 25) | (x << 7));
     }
 
     private int Theta0(
-            int x)
-    {
+            int x) {
         return ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
     }
 
     private int Theta1(
-            int x)
-    {
+            int x) {
         return ((x >>> 17) | (x << 15)) ^ ((x >>> 19) | (x << 13))
                 ^ (x >>> 10);
     }
@@ -447,14 +419,12 @@ public class SHA224Digest
 
     @Override
     public Object clone()
-            throws CloneNotSupportedException
-    {
+            throws CloneNotSupportedException {
         SHA224Digest d = new SHA224Digest(this);
         return d;
     }
 
-    public static int bigEndianToInt(byte[] bs, int off)
-    {
+    public static int bigEndianToInt(byte[] bs, int off) {
         int n = bs[off] << 24;
         n |= (bs[++off] & 0xff) << 16;
         n |= (bs[++off] & 0xff) << 8;
@@ -462,23 +432,20 @@ public class SHA224Digest
         return n;
     }
 
-    public static void intToBigEndian(int n, byte[] bs, int off)
-    {
+    public static void intToBigEndian(int n, byte[] bs, int off) {
         bs[off] = (byte) (n >>> 24);
         bs[++off] = (byte) (n >>> 16);
         bs[++off] = (byte) (n >>> 8);
         bs[++off] = (byte) (n);
     }
 
-    public static long bigEndianToLong(byte[] bs, int off)
-    {
+    public static long bigEndianToLong(byte[] bs, int off) {
         int hi = bigEndianToInt(bs, off);
         int lo = bigEndianToInt(bs, off + 4);
         return ((hi & 0xffffffffL) << 32) | (lo & 0xffffffffL);
     }
 
-    public static void longToBigEndian(long n, byte[] bs, int off)
-    {
+    public static void longToBigEndian(long n, byte[] bs, int off) {
         intToBigEndian((int) (n >>> 32), bs, off);
         intToBigEndian((int) (n & 0xffffffffL), bs, off + 4);
     }
