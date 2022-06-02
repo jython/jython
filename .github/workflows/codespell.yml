@@ -1,0 +1,18 @@
+# Check text for common misspellings and report them (GitHub Action)
+# https://pypi.org/project/codespell
+
+name: codespell
+
+on: [pull_request, push]
+
+jobs:
+  codespell-text:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install codespell
+    - run: codespell --count --ignore-words-list="sur,statics"
+                  NEWS README.md README.txt LICENSE Misc/INDEX Misc/codespell/README
+
