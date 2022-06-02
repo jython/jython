@@ -13,6 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: pip install codespell
-    - run: codespell --count --ignore-words-list="sur,statics"
-                  NEWS README.md README.txt LICENSE Misc/INDEX Misc/codespell/README
+    - run: codespell --count --ignore-words=Misc/codespell/words.ignore
+                  NEWS README.md README.txt LICENSE.txt Misc/INDEX Misc/codespell/README
 
