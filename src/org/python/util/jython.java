@@ -11,9 +11,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -61,6 +61,9 @@ public class jython {
      * </pre> Depending on your shell, the argument may need quoting or escaping.
      */
     public static final String CONSOLE_LOG_FORMAT = "%3$s %4$s %5$s%n";
+
+    /** The console handler we normally attach to "org.python". See {@link #getConsoleHandler()} */
+    private static ConsoleHandler consoleHandler;
 
     // An instance of this class will provide the console (python.console) by default.
     private static final String PYTHON_CONSOLE_CLASS = "org.python.util.JLineConsole";
@@ -163,18 +166,23 @@ public class jython {
     }
 
     /**
-     * Customise the logger so that it does not propagate to its parent and has its own
-     * {@code Handler} accepting all messages. The level set on the logger alone therefore controls
-     * whether messages are emitted to the console.
+     * Get or lazily create the console handler we normally attach to "org.python", which uses
+     * {@code SimpleFormatter} and accepts all levels of message. The format will be that currently
+     * assigned in the system property {@code java.util.logging.SimpleFormatter.format}, which in
+     * turn is a succinct format {@link #CONSOLE_LOG_FORMAT}, if no other configuration mechanism
+     * has been provided by the application.
      *
-     * @param logger to adjust (always "python.org")
+     * @return Configured {@link #consoleHandler}
      * @throws SecurityException if no permission to adjust logging
      */
-    private static void setConsoleHandler(Logger logger) throws SecurityException {
-        logger.setUseParentHandlers(false);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
-        logger.addHandler(handler);
+    private static synchronized ConsoleHandler getConsoleHandler() throws SecurityException {
+        ConsoleHandler h = consoleHandler;
+        if (h == null) {
+            consoleHandler = h = new ConsoleHandler();
+            h.setFormatter(new SimpleFormatter());
+            h.setLevel(Level.ALL);
+        }
+        return h;
     }
 
     /**
@@ -199,7 +207,7 @@ public class jython {
      * The level of logger {@code org.python} and its child loggers by default, which determines
      * admission of logging, reflects the "verbosity" set by the `-v` option.
      */
-    private static void loggingToConsole() {
+    public static void loggingToConsole() {
         SecurityException exception = null;
         try {
             // Jython console messages (-v option) are emitted using SimpleFormatter
@@ -213,7 +221,13 @@ public class jython {
         if (exception == null) {
             try {
                 // Make our "org.python" logger do its own output and not propagate to root.
-                setConsoleHandler(logger);
+                /*
+                 * Customise the logger so that it does not propagate to its parent and has its own
+                 * {@code Handler} accepting all messages. The level set on the logger alone
+                 * therefore controls whether messages are emitted to the console.
+                 */
+                logger.addHandler(getConsoleHandler());
+                logger.setUseParentHandlers(false);
             } catch (SecurityException se) {
                 // This probably means no logging finer than INFO (so none enabled by -v)
                 exception = se;
@@ -223,6 +237,23 @@ public class jython {
         if (exception != null) {
             logger.log(Level.WARNING, "Unable to format console messages: {0}",
                     exception.getMessage());
+        }
+    }
+
+    /**
+     * Mostly reverse the effects of {@link #loggingToConsole()}, by removing from the "org.python"
+     * logger the handler that prints to the console, and setting the "org.python" logger to
+     * propagate records to its parent handlers. The method does not try to reset the property
+     * {@code java.util.logging.SimpleFormatter.format}, which is in any case only read during
+     * static initialisation by {@code SimpleFormatter}.
+     */
+    public static void loggingToDefault() {
+        try {
+            logger.config("Revert logging to default hierarchy");
+            logger.setUseParentHandlers(true);
+            logger.removeHandler(consoleHandler);
+        } catch (SecurityException se) {
+            logger.log(Level.WARNING, "Unable to revert logging to default: {0}", se.getMessage());
         }
     }
 

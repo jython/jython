@@ -11,6 +11,7 @@ For more details, three sources are available according to type:
 
 Jython 2.7.3a1
   Bugs fixed
+    - [ GH-183 ] Console messages do not reach root logger (bjo 2896)
     - [ GH-178 ] Update icu4j JAR to 71.1
     - [ GH-177 ] Update Ant to 1.10.12 (Gradle build) (CVE-2020-1945, 2021-36374)
     - [ GH-160 ] Improve context of "Cannot create PyString with non-byte value"
