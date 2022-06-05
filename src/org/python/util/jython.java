@@ -43,16 +43,17 @@ public class jython {
     }
 
     /** The root of the Jython Logger hierarchy, named "org.python". */
-    public static final Logger logger;// = Logger.getLogger("org.python");
+    private static final Logger logger = Logger.getLogger("org.python");
 
     /**
      * The default format for console log messages in the command-line Jython. See
      * {@code java.util.logging.SimpleFormatter} for an explanation of the syntax.
      * <p>
-     * This format is used in the absence of other logging preferences. Jython tests for definitions
-     * in the system properties of {@code java.util.logging.config.class},
-     * {@code java.util.logging.config.file}, and {@code java.util.logging.SimpleFormatter.format}
-     * and if none of these is defined, it sets the last of them to this value.
+     * This format is used in the absence of other logging preferences, and only if property
+     * {@code python.logging.default} is not defined. Jython tests for definitions in the system
+     * properties of {@code java.util.logging.config.class}, {@code java.util.logging.config.file},
+     * and {@code java.util.logging.SimpleFormatter.format} and if none of these is defined, it sets
+     * the last of them to this value.
      * <p>
      * You can choose something else, for example to log with millisecond time stamps, launch Jython
      * as: <pre>
@@ -60,35 +61,6 @@ public class jython {
      * </pre> Depending on your shell, the argument may need quoting or escaping.
      */
     public static final String CONSOLE_LOG_FORMAT = "%3$s %4$s %5$s%n";
-
-    static {
-        SecurityException exception = null;
-        try {
-            // Jython console messages (-v option) are emitted using SimpleFormatter
-            configureSimpleFormatter(CONSOLE_LOG_FORMAT);
-        } catch (SecurityException se) {
-            // Unable to access the necessary system properties. Give up on custom logging.
-            exception = se;
-        }
-
-        // Whether we can configure it or not, we can still _use_ logging.
-        logger = Logger.getLogger("org.python");
-
-        if (exception == null) {
-            try {
-                // Make our "org.python" logger do its own output and not propagate to root.
-                setConsoleHandler(logger);
-            } catch (SecurityException se) {
-                // This probably means no logging finer than INFO (so none enabled by -v)
-                exception = se;
-            }
-        }
-
-        if (exception != null) {
-            logger.log(Level.WARNING, "Unable to format console messages: {0}",
-                    exception.getMessage());
-        }
-    }
 
     // An instance of this class will provide the console (python.console) by default.
     private static final String PYTHON_CONSOLE_CLASS = "org.python.util.JLineConsole";
@@ -165,10 +137,10 @@ public class jython {
     }
 
     /**
-     * Try to set the format for SimpleFormatter if no other mechanism has been provided, and
-     * security allows it. Note that the absolute fall-back format is:
-     * {@code "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS %1$Tp %2$s%n%4$s: %5$s%6$s%n"},
-     * defined ultimately in {@code sun.util.logging.LoggingSupport}.
+     * Try to set the format for {@code SimpleFormatter} if no other mechanism has been provided,
+     * and security allows it. Note that the absolute fall-back format is:
+     * {@code "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS %1$Tp %2$s%n%4$s: %5$s%6$s%n"}, defined
+     * ultimately in {@code sun.util.logging.LoggingSupport}.
      *
      * @param format to set for {@code java.util.logging.SimpleFormatter}
      * @throws SecurityException if not allowed to read or set necessary properties.
@@ -203,6 +175,55 @@ public class jython {
         Handler handler = new ConsoleHandler();
         handler.setLevel(Level.ALL);
         logger.addHandler(handler);
+    }
+
+    /**
+     * Events from within the Jython implementation are surfaced through the
+     * {@code java.util.logging.Logger} {@code org.python} or a child of it. When Jython is used
+     * interactively, we normally want these to emerge on the console, in a succinct form, not via
+     * the java.util.logging root logger. This method is called by {@link #main(String[])} to
+     * achieve that.
+     * <p>
+     * The root logger format is hard to read for humans. The logging level of the handler defaults
+     * to {@code INFO}, and does not respond to the {@code -v} option. (It could be made to, but
+     * then all logging would be be turned up together.) This method makes these adjustments to
+     * logging:
+     * <ul>
+     * <li>The format {@code SimpleFormatter} is replaced with a simpler format (but only if no
+     * other logging customisation is present). (Affects all logging.)</li>
+     * <li>A console handler is installed for logger {@code org.python} using that a
+     * {@code SimpleFormatter} and accepts all levels.</li>
+     * <li>Logger {@code org.python} is told not to propagate records to parent handlers (so that
+     * messages are not emitted twice.</li>
+     * </ul>
+     * The level of logger {@code org.python} and its child loggers by default, which determines
+     * admission of logging, reflects the "verbosity" set by the `-v` option.
+     */
+    private static void loggingToConsole() {
+        SecurityException exception = null;
+        try {
+            // Jython console messages (-v option) are emitted using SimpleFormatter
+            configureSimpleFormatter(CONSOLE_LOG_FORMAT);
+        } catch (SecurityException se) {
+            // Unable to access the necessary system properties. Give up on custom format.
+            exception = se;
+        }
+
+        // Whether we can choose a format or not, we can still _use_ logging.
+        if (exception == null) {
+            try {
+                // Make our "org.python" logger do its own output and not propagate to root.
+                setConsoleHandler(logger);
+            } catch (SecurityException se) {
+                // This probably means no logging finer than INFO (so none enabled by -v)
+                exception = se;
+            }
+        }
+
+        if (exception != null) {
+            logger.log(Level.WARNING, "Unable to format console messages: {0}",
+                    exception.getMessage());
+        }
     }
 
     /**
@@ -499,6 +520,14 @@ public class jython {
         Properties preProperties = PrePy.getSystemProperties();
         addDefaultsFromEnvironment(preProperties);
 
+        /*
+         * Normally we divert org.python.* logging to the console (but can suppress with property).
+         * Note we have not read the registry at this point, so setting it there has no effect.
+         */
+        if (!preProperties.containsKey("python.logging.default")) {
+            loggingToConsole();
+        }
+
         // Treat the apparent filename "-" as no filename
         boolean haveDash = "-".equals(opts.filename);
         if (haveDash) {
@@ -721,6 +750,7 @@ public class jython {
 
         // Runs at the start of each (wholly) interactive session.
         addDefault(registry, "python.startup", getenv("JYTHONSTARTUP"));
+
         // Go interactive after script. (PYTHONINSPECT because Python scripts may set it.)
         addDefault(registry, "python.inspect", getenv("PYTHONINSPECT"));
 
@@ -741,7 +771,13 @@ public class jython {
         }
     }
 
-    /** The same as {@code getenv(name, null)}. */
+    /**
+     * The same as {@link} {@link #getenv(String, String) getenv} with a null default value.
+     *
+     * @param name to access in the environment (if allowed by
+     *            {@link Options#ignore_environment}=={@code false}).
+     * @return the corresponding value or <code>defaultValue</code>.
+     */
     private static String getenv(String name) {
         return getenv(name, null);
     }
@@ -757,7 +793,7 @@ public class jython {
      *
      * @param name to access in the environment (if allowed by
      *            {@link Options#ignore_environment}=={@code false}).
-     * @param defaultValue to return if {@code name} is not defined or "" or access is forbidden.
+     * @param defaultValue to return if {@code name} is not defined, is "" or access is forbidden.
      * @return the corresponding value or <code>defaultValue</code>.
      */
     private static String getenv(String name, String defaultValue) {

@@ -51,7 +51,12 @@ public class PrePy {
     /** {@link Options#verbose} level providing detail in support of debugging or tracing. */
     public static final int DEBUG = 3;
 
-    static final Level[] LEVELS = {//
+    /**
+     * A mapping from the traditional "verbosity" found in {@link Options#verbose} to the JUL Level,
+     * offset such that verbosity {@link #ERROR} maps to element 1 which contains
+     * {@code Level.SEVERE}.
+     */
+    private static final Level[] LEVELS = {//
             Level.OFF,      //
             Level.SEVERE,   // Legacy: ERROR
             Level.WARNING,  // Legacy: WARNING
