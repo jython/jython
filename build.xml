@@ -832,9 +832,9 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-9.3.jar"/>
-            <zipfileset src="extlibs/asm-commons-9.3.jar"/>
-            <zipfileset src="extlibs/asm-util-9.3.jar"/>
+            <zipfileset src="extlibs/asm-9.3.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-commons-9.3.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-util-9.3.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <zipfileset src="extlibs/bcprov-jdk18on-1.71.jar" excludes="META-INF/**"/>
