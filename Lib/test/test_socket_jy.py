@@ -2,12 +2,14 @@ import errno
 import os
 import socket
 import ssl
+import sys
 import threading
 import time
 import unittest
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 from test import test_support
+from test.test_socket import SocketConnectedTest
 
 
 def data_file(*name):
@@ -154,8 +156,38 @@ class SocketOptionsTest(unittest.TestCase):
         self.assertEqual(socket.SOL_TCP, socket.IPPROTO_TCP)
 
 
+class TimedBasicTCPTest(SocketConnectedTest):
+
+    def __init__(self, methodName='runTest'):
+        SocketConnectedTest.__init__(self, methodName=methodName)
+
+    def testSendAll(self):
+        # Testing sendall() with a max-size string over TCP
+        msg = bytearray()
+        t0 = time.clock()
+        while 1:
+            read = self.cli_conn.recv(8192)
+            if not read:
+                break
+            msg += read
+        t = time.clock() - t0
+        if test_support.verbose:
+            print>>sys.stderr, "%d bytes in %5.3f sec ... " % (len(msg), t),
+        self.assertEqual(''.join(map(chr, set(msg))), 'x')
+        self.assertEqual(len(msg), test_support.SOCK_MAX_SIZE)
+
+    def _testSendAll(self):
+        big_chunk = 'x' * test_support.SOCK_MAX_SIZE
+        self.serv_conn.sendall(big_chunk)
+
+
 def test_main():
-    test_support.run_unittest(SocketConnectTest, SSLSocketConnectTest, SocketOptionsTest)
+    test_support.run_unittest(
+            SocketConnectTest,
+            SSLSocketConnectTest,
+            SocketOptionsTest,
+            TimedBasicTCPTest,
+    )
 
 
 if __name__ == "__main__":
