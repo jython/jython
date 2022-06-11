@@ -1219,7 +1219,13 @@ class _realsocket(object):
 
         return len(sent_data)
 
-    sendall = send   # FIXME see note above!
+    def sendall(self, data, flags=0):
+        #print "\n_socket._realsocket.sendall", len(data), "bytes"
+        with memoryview(data) as buf:
+            # Limit the amount per send to L because of copies made in send.
+            k, n, L = 0, len(buf), 8192
+            while k < n:
+                k += self.send(buf[k:k+L], flags)
 
     def _get_incoming_msg(self, reason):
         log.debug("head=%s incoming=%s" % (self.incoming_head, self.incoming), extra={"sock": self})
@@ -1500,7 +1506,14 @@ class ChildSocket(_realsocket):
         self._make_active()
         return super(ChildSocket, self).send(data)
 
-    sendall = send
+    def sendall(self, data):
+        #print "\n_socket.ChildSocket.sendall", len(data), "bytes"
+        # We could inherit sendall were it not for the flags argument.
+        with memoryview(data) as buf:
+            # Limit the amount per send to L because of copies made in send.
+            k, n, L = 0, len(buf), 8192
+            while k < n:
+                k += self.send(buf[k:k+L])
 
     def recv(self, bufsize, flags=0):
         self._make_active()
