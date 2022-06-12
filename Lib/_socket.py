@@ -1191,12 +1191,9 @@ class _realsocket(object):
 
     @raises_java_exception
     def send(self, data, flags=0):
-        # FIXME this almost certainly needs to chunk things
         self._verify_channel()
-        if isinstance(data, memoryview):
-            data = data.tobytes()
-        data = str(data)  # FIXME temporary fix if data is of type buffer
-        log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
 
         if self.socket_type == DATAGRAM_SOCKET:
             packet = DatagramPacket(Unpooled.wrappedBuffer(data), self.channel.remoteAddress())
@@ -1207,22 +1204,20 @@ class _realsocket(object):
         if not self._can_write:
             raise error(errno.ENOTCONN, 'Socket not connected')
 
-        bytes_writable = self.channel.bytesBeforeUnwritable()
-        if bytes_writable > len(data):
-            bytes_writable = len(data)
+        with memoryview(data) as data:
+            bytes_writable = self.channel.bytesBeforeUnwritable()
 
-        sent_data = data[:bytes_writable]
-
-        future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(sent_data))
-        self._handle_channel_future(future, "send")
-        log.debug("Sent data <<<{!r:.20}>>>".format(sent_data), extra={"sock": self})
-
-        return len(sent_data)
+            with data[:bytes_writable] as buf:
+                future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(buf))
+                self._handle_channel_future(future, "send")
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("Sent data <<<{!r:.20}>>>".format(buf),
+                              extra={"sock": self})
+                return len(buf)
 
     def sendall(self, data, flags=0):
-        #print "\n_socket._realsocket.sendall", len(data), "bytes"
         with memoryview(data) as buf:
-            # Limit the amount per send to L because of copies made in send.
+            # Limit the amount per send to L to control data movement
             k, n, L = 0, len(buf), 8192
             while k < n:
                 k += self.send(buf[k:k+L], flags)
@@ -1507,10 +1502,9 @@ class ChildSocket(_realsocket):
         return super(ChildSocket, self).send(data)
 
     def sendall(self, data):
-        #print "\n_socket.ChildSocket.sendall", len(data), "bytes"
         # We could inherit sendall were it not for the flags argument.
         with memoryview(data) as buf:
-            # Limit the amount per send to L because of copies made in send.
+            # Limit the amount per send to L to control data movement
             k, n, L = 0, len(buf), 8192
             while k < n:
                 k += self.send(buf[k:k+L])
@@ -2053,26 +2047,23 @@ class _fileobject(object):
 
     def flush(self):
         if self._wbuf:
-            data = "".join(self._wbuf)
+            data = bytearray().join(self._wbuf)
             self._wbuf = []
             self._wbuf_len = 0
-            buffer_size = max(self._rbufsize, self.default_bufsize)
-            data_size = len(data)
-            write_offset = 0
-            # FIXME apparently this doesn't yet work on jython,
-            # despite our work on memoryview/buffer support
-            view = data # memoryview(data)
-            try:
-                while write_offset < data_size:
-                    chunk = view[write_offset:write_offset+buffer_size]
-                    self._sock.sendall(chunk)
-                    write_offset += buffer_size
-            finally:
-                if write_offset < data_size:
-                    remainder = data[write_offset:]
-                    del view, data  # explicit free
-                    self._wbuf.append(remainder)
-                    self._wbuf_len = len(remainder)
+            size = max(self._rbufsize, self.default_bufsize)
+            ptr, limit = 0, len(data)
+
+            with memoryview(data) as view:
+                try:
+                    while ptr < limit:
+                        with view[ptr:ptr+size] as chunk:
+                            self._sock.sendall(chunk)
+                            ptr += size
+                finally:
+                    if ptr < limit:
+                        with view[ptr:] as remainder:
+                            self._wbuf.append(remainder)
+                            self._wbuf_len = len(remainder)
 
     def fileno(self):
         return self._sock.fileno()

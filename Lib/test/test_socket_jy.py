@@ -158,10 +158,12 @@ class SocketOptionsTest(unittest.TestCase):
 
 class TimedBasicTCPTest(SocketConnectedTest):
 
+    BIG_SIZE = test_support.SOCK_MAX_SIZE // 3 + 1
+
     def __init__(self, methodName='runTest'):
         SocketConnectedTest.__init__(self, methodName=methodName)
 
-    def testSendAll(self):
+    def receiveAll(self):
         # Testing sendall() with a max-size string over TCP
         msg = bytearray()
         t0 = time.clock()
@@ -173,12 +175,32 @@ class TimedBasicTCPTest(SocketConnectedTest):
         t = time.clock() - t0
         if test_support.verbose:
             print>>sys.stderr, "%d bytes in %5.3f sec ... " % (len(msg), t),
-        self.assertEqual(''.join(map(chr, set(msg))), 'x')
-        self.assertEqual(len(msg), test_support.SOCK_MAX_SIZE)
+        self.assertEqual(''.join(map(chr, sorted(set(msg)))), 'xyz')
+        self.assertEqual(len(msg), TimedBasicTCPTest.BIG_SIZE*3)
 
-    def _testSendAll(self):
-        big_chunk = 'x' * test_support.SOCK_MAX_SIZE
-        self.serv_conn.sendall(big_chunk)
+    def testSendAllBytes(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllBytes(self):
+        big = bytearray('xyz') * TimedBasicTCPTest.BIG_SIZE
+        self.serv_conn.sendall(big)
+
+    def testSendAllStr(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllStr(self):
+        big = 'xyz' * TimedBasicTCPTest.BIG_SIZE
+        self.serv_conn.sendall(big)
+
+    def testSendAllBuffer(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllBuffer(self):
+        big = buffer('xyz' * TimedBasicTCPTest.BIG_SIZE)
+        self.serv_conn.sendall(big)
 
 
 def test_main():
