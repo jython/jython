@@ -28,12 +28,14 @@ Jython 2.7.3a1
     - [ GH-125 ] Launch fails on Mac OS Big Sur (MacOS 11) (GH-172)
     - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
+    - [ GH-105 ] from java.util import * (etc.) not working in JDK 14+ (bjo 2792)
     - [ GH-102 ] Fix CRC32.update calls in zlib.py
     - [ GH-101 ] Improve boxing of arguments to vararg methods
     - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
     - [ GH-97 ] Failures in SNI support affecting pip
     - [ GH-93 ] Permissions problems with compiled source files ($py.class)
     - [ GH-77 ] Broken AST adapter
+    - [ GH-74 ] Clarify license position in relation to zxJDBC.
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
