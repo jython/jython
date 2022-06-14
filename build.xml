@@ -75,7 +75,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
     </target>
 
     <target name="developer-build"
-            depends="jar, copy-dev, pycompile"
+            depends="jar, compile-test, copy-dev, pycompile"
             description="a local build for developers" />
 
     <target name="installer"
@@ -164,6 +164,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <!-- Intermediate products including generated code and compiled classews go here: -->
         <property name="build.dir" value="${basedir}/build" />
         <property name="compile.dir" value="${build.dir}/classes" />
+        <property name="test.compile.dir" value="${build.dir}/testclasses" />
         <property name="exposed.dir" value="${build.dir}/exposed" />
         <property name="gensrc.dir" value="${build.dir}/gensrc" />
 
@@ -276,6 +277,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
             </filelist>
             <pathelement location="${exposed.dir}" />
             <pathelement location="${compile.dir}" />
+            <pathelement location="${test.compile.dir}" />
             <pathelement location="${cpptasks.jar.dir}" />
         </path>
     </target>
@@ -373,6 +375,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>source.dir                = '${source.dir}'</echo>
         <echo>build.dir                 = '${build.dir}'</echo>
         <echo>compile.dir               = '${compile.dir}'</echo>
+        <echo>test.compile.dir          = '${test.compile.dir}'</echo>
         <echo>exposed.dir               = '${exposed.dir}'</echo>
         <echo>gensrc.dir                = '${gensrc.dir}'</echo>
         <echo>dist.dir                  = '${dist.dir}'</echo>
@@ -731,6 +734,7 @@ The text for an official release would continue like ...
     <target name="jarless" depends="compile, pycompile"/>
 
     <target name="compile" depends="init, antlr-gen, brand-version">
+        <mkdir dir="${compile.dir}"/>
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -761,9 +765,29 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
         </javac>
 
+        <copy file="${source.dir}/org/python/modules/ucnhash.dat"
+              todir="${compile.dir}/org/python/modules"
+              preservelastmodified="true" />
+
+        <copy todir="${compile.dir}" preservelastmodified="true">
+            <fileset dir="${source.dir}">
+                <include name="**/*.properties" />
+            </fileset>
+        </copy>
+
+        <!-- grammar must now be up to date -->
+        <property name="antlr-up-to-date" value="true" />
+
+        <copy todir="${compile.dir}/META-INF/services">
+            <fileset dir="${source.dir}/META-INF/services" />
+        </copy>
+    </target>
+
+    <target name="compile-test" depends="compile">
         <!-- java files used by tests -->
+        <mkdir dir="${test.compile.dir}"/>
         <javac srcdir="${test.source.dir}"
-               destdir="${compile.dir}"
+               destdir="${test.compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -774,21 +798,6 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
             <classpath refid="test.classpath" />
         </javac>
-        <copy file="${source.dir}/org/python/modules/ucnhash.dat"
-              todir="${compile.dir}/org/python/modules"
-              preservelastmodified="true" />
-
-        <copy todir="${compile.dir}" preservelastmodified="true">
-            <fileset dir="${source.dir}">
-                <include name="**/*.properties" />
-            </fileset>
-        </copy>
-        <!-- grammar must now be up to date -->
-        <property name="antlr-up-to-date" value="true" />
-
-        <copy todir="${compile.dir}/META-INF/services">
-            <fileset dir="${source.dir}/META-INF/services" />
-        </copy>
     </target>
 
     <!--
@@ -944,15 +953,18 @@ The text for an official release would continue like ...
 
     <target name="jar" depends="compile, expose"
             description="build the jython-dev.jar (requiring main classpath and Lib to use).">
+
        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
            <classpath>
                <path refid="main.classpath" />
                <pathelement path="${compile.dir}" />
            </classpath>
        </typedef>
+
        <jar destfile="${dist.dir}/callbacker_test.jar" update="${jar.update}">
            <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
        </jar>
+
        <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail" update="${jar.update}">
           <!-- If only nameunion is used, ant issues a spurious warning about no files being
                included.  Use a fileset for version.properties just to shut that up. -->
@@ -1263,7 +1275,7 @@ The text for an official release would continue like ...
         </delete>
     </target>
 
-    <target name="javatest" depends="javatest-basepath, importest"
+    <target name="javatest" depends="javatest-basepath, javatest-import"
             description="run all the JUnit tests">
     </target>
 
@@ -1279,7 +1291,7 @@ The text for an official release would continue like ...
                     <exclude name="**/InterpTestCase.java" />
                     <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
                     <exclude name="org/python/antlr/**" />
-                    <exclude name="org/python/tests/imp/**" /> <!-- See importest -->
+                    <exclude name="org/python/tests/imp/**" /> <!-- See javatest-import -->
                     <exclude name=".classpath" />
                     <exclude name=".project" />
                 </fileset>
@@ -1287,7 +1299,7 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="importest" depends="developer-build"
+    <target name="javatest-import" depends="developer-build"
             description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
