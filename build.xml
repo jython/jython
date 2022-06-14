@@ -75,7 +75,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
     </target>
 
     <target name="developer-build"
-            depends="jar, compile-test, copy-dev, pycompile"
+            depends="jar, jar-test, copy-dev, pycompile"
             description="a local build for developers" />
 
     <target name="installer"
@@ -183,9 +183,14 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
     <target name="common-jars" depends="common-dirs">
         <!-- Names of JARs we (may) produce according to target. -->
- 
-        <!-- Target: jar. Just the Jython code: needs main.classpath to work. For dev & test. -->
+
+        <!-- Target: jar. Just the Jython code: needs main.classpath to work. Material in this JAR
+             will be copied to distributable JARs. -->
         <property name="jython.dev.jar" value="jython-dev.jar" />
+
+        <!-- Target: jar-test. Jython test code: needs jython-dev.jar and main.classpath to work.
+              Material in this JAR will *not* be copied to distributable JARs.  -->
+        <property name="jython.test.jar" value="jython-test.jar" />
 
         <!-- Target: jar-complete. jython.deploy.jar subsumes jython.dev.jar, and adds shaded
              dependencies. For directory-based installations with a home, library, etc..  -->
@@ -954,43 +959,68 @@ The text for an official release would continue like ...
     <target name="jar" depends="compile, expose"
             description="build the jython-dev.jar (requiring main classpath and Lib to use).">
 
-       <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
-           <classpath>
-               <path refid="main.classpath" />
-               <pathelement path="${compile.dir}" />
-           </classpath>
-       </typedef>
+        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${compile.dir}" />
+            </classpath>
+        </typedef>
 
-       <jar destfile="${dist.dir}/callbacker_test.jar" update="${jar.update}">
-           <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
-       </jar>
+        <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail" update="${jar.update}">
+            <!-- If only nameunion is used, ant issues a spurious warning about no files being
+                 included.  Use a fileset for version.properties just to shut that up. -->
+            <fileset dir="${compile.dir}" includes="org/python/version.properties"/>
+            <nameunion>
+                <fileset dir="${exposed.dir}"/>
+                <fileset dir="${compile.dir}"
+                    excludes="org/python/expose/generate/**,org/python/version.properties"/>
+            </nameunion>
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
+                <attribute name="Implementation-Title" value="Jython"/>
+                <attribute name="Implementation-Version" value="${jython.version}"/>
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="git-build" value="${git.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
+        </jar>
+    </target>
 
-       <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail" update="${jar.update}">
-          <!-- If only nameunion is used, ant issues a spurious warning about no files being
-               included.  Use a fileset for version.properties just to shut that up. -->
-          <fileset dir="${compile.dir}" includes="org/python/version.properties"/>
-          <nameunion>
-             <fileset dir="${exposed.dir}"/>
-             <fileset dir="${compile.dir}"
-                 excludes="org/python/expose/generate/**,org/python/version.properties"/>
-          </nameunion>
-          <manifest>
-              <attribute name="Main-Class" value="org.python.util.jython" />
-              <attribute name="Built-By" value="${user.name}" />
-              <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
-              <attribute name="Implementation-Title" value="Jython"/>
-              <attribute name="Implementation-Version" value="${jython.version}"/>
-              <!-- info section. ATTN: no blanks, no '.' in the names -->
-              <section name="Build-Info">
-                  <attribute name="version" value="${jython.version}" />
-                  <attribute name="git-build" value="${git.present}" />
-                  <attribute name="oracle" value="${oracle.present}" />
-                  <attribute name="informix" value="${informix.present}" />
-                  <attribute name="build-compiler" value="${build.compiler}" />
-                  <attribute name="jdk-target-version" value="${jdk.target.version}" />
-                  <attribute name="debug" value="${debug}" />
-              </section>
-          </manifest>
+    <target name="jar-test" depends="compile-test"
+            description="build the jython-test.jar supplementary to jython-dev (and 'callbacker'.">
+
+        <jar destfile="${dist.dir}/callbacker_test.jar" update="${jar.update}">
+            <fileset dir="${test.compile.dir}" includes="org/python/tests/Callbacker*"/>
+        </jar>
+
+        <jar destfile="${dist.dir}/${jython.test.jar}" duplicate="fail" update="${jar.update}">
+            <fileset dir="${test.compile.dir}" />
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
+                <attribute name="Implementation-Title" value="Jython Test JAR"/>
+                <attribute name="Implementation-Version" value="${jython.version}"/>
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="git-build" value="${git.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
         </jar>
     </target>
 

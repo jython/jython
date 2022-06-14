@@ -625,18 +625,27 @@ class CloneInput(ObjectInputStream):
 
 
 def find_jython_jars():
-    # Uses the same classpath resolution as bin/jython
+    # Uses the same classpath resolution as bin/jython.py
     jython_bin = os.path.normpath(os.path.dirname(sys.executable))
-    jython_top = os.path.dirname(jython_bin)
-    jython_jar_path = os.path.join(jython_top, 'jython.jar')
-    jython_jar_dev_path = os.path.join(jython_top, 'jython-dev.jar')
-    if os.path.exists(jython_jar_dev_path):
-        jars = [jython_jar_dev_path]
-        jars.extend(glob.glob(os.path.join(jython_top, 'javalib', '*.jar')))
-    elif os.path.exists(jython_jar_path):
-        jars = [jython_jar_path]
-    else:
+
+    home = os.path.dirname(jython_bin)
+    jython_jar = os.path.join(home, 'jython.jar')
+    jython_dev_jar = os.path.join(home, 'jython-dev.jar')
+
+    if os.path.exists(jython_dev_jar):
+        # We are running in the development environment.
+        # Add -test and -dev JARs to path.
+        jython_test_jar = os.path.join(home, 'jython-test.jar')
+        jars = [jython_dev_jar,
+                os.path.join(home, 'jython-test.jar'),
+                os.path.join(home, "javalib", "*")]
+    elif not os.path.exists(jython_jar): 
         raise Exception("Cannot find jython jar")
+    else:
+        # We are running in the deployment environment.
+        # Add only the main JAR (not tests) to path.
+        jars = [jython_jar]
+
     return jars
 
 
