@@ -217,6 +217,7 @@ processResources {
     from(file('src')) {
         include 'META-INF/**'
         include 'org/python/modules/ucnhash.dat'
+        include 'com/ziclix/python/sql/resource/zxJDBCMessages.properties'
     }
 }
 
