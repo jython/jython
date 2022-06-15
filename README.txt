@@ -26,18 +26,8 @@ changes, email and conversation in any media. See ACKNOWLEDGMENTS for a
 list of contributors. We are grateful to the PSF for continuing practical
 help and support of the project.
 
-Testing
--------
-You can test your installation of Jython (not the standalone jar) by
-running the regression tests, with the command:
+Bug Reports
+-----------
 
-jython -m test.regrtest -e
-
-The regression tests can take about fifty minutes. At the time of writing,
-these tests are known to fail (spuriously) on an installed Jython:
-    test___all__
-    test_java_visibility
-    test_jy_internals
-    test_ssl_jy
 Please report reproducible failures at https://github.com/jython/jython/issues .
 

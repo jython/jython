@@ -41,6 +41,7 @@ Jython 2.7.3a1
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
     - [ GH-49 ] Update Darwin jffi library dependency
     - [ GH-27 ] -Q new always fails
+    - [ GH-12 ] Test classes in distributed artifacts
     - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
     - [ 2924 ] module-info.class in root of JAR causes problems (also GH-54?)
