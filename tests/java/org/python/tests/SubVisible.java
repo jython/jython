@@ -29,10 +29,19 @@ public class SubVisible extends Visible implements VisibleOverride {
     /**
      * Ensure that overloading {@link Visible#visibleInstance(int, String)} gets mapped correctly
      */
+    @Override
     public int visibleInstance(double input, String sinput) {
         return SUBCLASS_OVERLOAD;
     }
 
+    /**
+     * Ensure that overloading {@link Visible#overloadedName} gets mapped correctly
+     */
+    public int overloadedName() {
+        return SUBCLASS_OVERLOAD;
+    }
+
+    @Override
     public int getSharedNameField() {
         return sharedNameField * 10;
     }
@@ -40,6 +49,7 @@ public class SubVisible extends Visible implements VisibleOverride {
     /**
      * Increase the visibility of {@link Invisible#packageMethod()}.
      */
+    @Override
     public int packageMethod() {
         return super.packageMethod();
     }
