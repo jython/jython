@@ -46,14 +46,14 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     // for PyJavaClass.init()
     public PyString() {
-        this("", true);
+        this(TYPE, "", true);
     }
 
     protected PyString(PyType subType, String string, boolean isBytes) {
         super(subType);
         if (string == null) {
             throw new IllegalArgumentException("Cannot create PyString from null");
-        } else if (!isBytes && !isBytes(string)) {
+        } else if (!isBytes && !charsFitWidth(string, 8)) {
             throw new IllegalArgumentException(
                     String.format("Cannot create PyString with non-byte value: %.500s",
                             encode_UnicodeEscape(string, true)));
@@ -77,7 +77,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     public PyString(char c) {
-        this(TYPE, String.valueOf(c));
+        this(TYPE, String.valueOf(c), c < 256);
     }
 
     PyString(StringBuilder buffer) {
@@ -85,7 +85,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     PyString(PyBuffer buffer) {
-        this(TYPE, buffer.toString());
+        this(TYPE, buffer.toString(), true);
     }
 
     /**
@@ -96,41 +96,41 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param string a Java String to be wrapped (not null)
      * @param isBytes true if the client guarantees we are dealing with bytes
      */
-    private PyString(String string, boolean isBytes) {
+    PyString(String string, boolean isBytes) {
         this(TYPE, string, isBytes);
     }
 
     /**
-     * Determine whether a string consists entirely of characters in the range 0 to 255. Only such
-     * characters are allowed in the <code>PyString</code> (<code>str</code>) type, when it is not a
-     * {@link PyUnicode}.
+     * Determine whether a Java {@code String} consists entirely of characters in the range 0 to
+     * 2<sup>width</sup>-1. We use this to test for "byte-like" or ASCII.
      *
-     * @return true if and only if every character has a code less than 256
+     * @param s string to test
+     * @param width number of bits within which each character must fit (<16)
+     * @return true if and only if every character has a code less than 2^width
      */
-    private static boolean isBytes(String s) {
-        int k = s.length();
-        if (k == 0) {
-            return true;
+    static boolean charsFitWidth(String s, int width) {
+
+        // We work in blocks of 8 to reduce loop tests.
+        final int N = s.length(), M = N - (N % 8), W = 1 << width;
+        int c = 0, p = 0;
+
+        // M is a multiple of 8 and M < N.
+        for (; p < M && c < W; p += 8) {
+            // Bitwise-or 8 character codes together in order to test once.
+            c = s.charAt(p) | s.charAt(p + 1) | s.charAt(p + 2) | s.charAt(p + 3) | s.charAt(p + 4)
+                    | s.charAt(p + 5) | s.charAt(p + 6) | s.charAt(p + 7);
+        }
+
+        if (c >= W) {
+            // Early result
+            return false;
         } else {
-            // Bitwise-or the character codes together in order to test once.
-            char c = 0;
-            // Blocks of 8 to reduce loop tests
-            while (k > 8) {
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
+            // Scan the rest, from M to N-1
+            for (; p < N; p++) {
+                c |= s.charAt(p);
             }
-            // Now the rest
-            while (k > 0) {
-                c |= s.charAt(--k);
-            }
-            // We require there to be no bits set from 0x100 upwards
-            return c < 0x100;
+            // Test is we reached the end with every character less than W.
+            return c < W && p == N;
         }
     }
 

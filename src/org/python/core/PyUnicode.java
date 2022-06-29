@@ -155,7 +155,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      * @param isBasic true if it is known that only BMP characters are present.
      */
     private PyUnicode(PyType subtype, String string, boolean isBasic) {
-        super(subtype, "");
+        super(subtype, "", true);
         this.string = string;
         translator = isBasic ? BASIC : this.chooseIndexTranslator();
     }

@@ -1,6 +1,16 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import static org.python.core.RegistryKey.PYTHON_CACHEDIR;
+import static org.python.core.RegistryKey.PYTHON_CACHEDIR_SKIP;
+import static org.python.core.RegistryKey.PYTHON_CONSOLE;
+import static org.python.core.RegistryKey.PYTHON_CONSOLE_ENCODING;
+import static org.python.core.RegistryKey.PYTHON_IO_ENCODING;
+import static org.python.core.RegistryKey.PYTHON_IO_ERRORS;
+import static org.python.core.RegistryKey.PYTHON_MODULES_BUILTIN;
+import static org.python.core.RegistryKey.PYTHON_PATH;
+import static org.python.core.RegistryKey.USER_HOME;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -49,8 +59,6 @@ import com.carrotsearch.sizeof.RamUsageEstimator;
 
 import jnr.posix.util.Platform;
 
-import static org.python.core.RegistryKey.*;
-
 
 /**
  * The "sys" module.
@@ -70,7 +78,7 @@ public class PySystemState extends PyObject
     public static final PyString version = new PyString(Version.getVersion());
 
     public static final PyTuple subversion =
-            new PyTuple(new PyString("Jython"), Py.newString(""), Py.newString(""));
+            new PyTuple(new PyString("Jython"), Py.EmptyString, Py.EmptyString);
 
     public static final int hexversion = ((Version.PY_MAJOR_VERSION << 24)
             | (Version.PY_MINOR_VERSION << 16) | (Version.PY_MICRO_VERSION << 8)
