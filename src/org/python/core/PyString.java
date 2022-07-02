@@ -134,12 +134,19 @@ public class PyString extends PyBaseString implements BufferProtocol {
         }
     }
 
+
     /**
-     * Creates a PyString from an already interned String. Just means it won't be reinterned if used
-     * in a place that requires interned Strings.
+     * Creates a {@code PyString} from an already interned {@code String} representing bytes. The
+     * caller guarantees that the character codes are all &lt; 256. (The method is used frequently
+     * from compiled code, and with identifiers, where this is guaranteed.) Just means it won't be
+     * re-interned if used in a place that requires interned Strings.
+     *
+     * @param interned {@code String} representing bytes
+     * @return {@code PyString} for those bytes
      */
     public static PyString fromInterned(String interned) {
-        PyString str = new PyString(TYPE, interned);
+        assert charsFitWidth(interned, 8);
+        PyString str = new PyString(TYPE, interned, true);
         str.interned = true;
         return str;
     }
