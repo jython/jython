@@ -222,7 +222,7 @@ public class SyspathJavaLoader extends ClassLoader {
         try {
             // this has the side effect of adding the jar to the PackageManager during the
             // initialization of the SyspathArchive
-            path = new SyspathArchive(sys.getPath(Py.fileSystemDecode(path)));
+            path = SyspathArchive.fromPath(sys.getPath(Py.fileSystemDecode(path)));
         } catch (Exception e) {
             return path;
         }
