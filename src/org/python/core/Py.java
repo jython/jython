@@ -80,15 +80,15 @@ public final class Py extends PrePy {
     /** The Python boolean True **/
     public final static PyBoolean True = new PyBoolean(true);
     /** A zero-length Python byte string **/
-    public final static PyString EmptyString = new PyString("", true);
+    public final static PyString EmptyString = PyString.fromInterned("");
     /** A zero-length Python Unicode string **/
     public final static PyUnicode EmptyUnicode = new PyUnicode("");
     /** A Python string containing '\n' **/
-    public final static PyString Newline = new PyString("\n", true);
+    public final static PyString Newline = PyString.fromInterned("\n");
     /** A Python unicode string containing '\n' **/
     public final static PyUnicode UnicodeNewline = new PyUnicode("\n");
     /** A Python string containing ' ' **/
-    public final static PyString Space = new PyString(" ", true);
+    public final static PyString Space = PyString.fromInterned(" ");
     /** A Python unicode string containing ' ' **/
     public final static PyUnicode UnicodeSpace = new PyUnicode(" ");
     /** Set if the type object is dynamically allocated */
@@ -714,7 +714,7 @@ public final class Py extends PrePy {
     public static String fileSystemDecode(PyString filename) {
         String s = filename.getString();
         if (filename instanceof PyUnicode || PyString.charsFitWidth(s, 7)) {
-            // Already encoded or usable as ASCII
+            // Already decoded or bytes usable as ASCII
             return s;
         } else {
             // It's bytes, so must decode properly

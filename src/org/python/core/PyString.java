@@ -54,11 +54,20 @@ public class PyString extends PyBaseString implements BufferProtocol {
         if (string == null) {
             throw new IllegalArgumentException("Cannot create PyString from null");
         } else if (!isBytes && !charsFitWidth(string, 8)) {
-            throw new IllegalArgumentException(
-                    String.format("Cannot create PyString with non-byte value: %.500s",
-                            encode_UnicodeEscape(string, true)));
+            throw new IllegalArgumentException(nonByteStringMsg(string));
         }
         this.string = string;
+    }
+
+    /**
+     * Create the dreaded "non-byte value" error message.
+     *
+     * @param s problematic string
+     * @return the message
+     */
+    private static String nonByteStringMsg(String s) {
+        return String.format("Cannot create PyString with non-byte value: %.500s",
+                encode_UnicodeEscape(s, true));
     }
 
     /**
@@ -110,30 +119,37 @@ public class PyString extends PyBaseString implements BufferProtocol {
      */
     static boolean charsFitWidth(String s, int width) {
 
-        // We work in blocks of 8 to reduce loop tests.
-        final int N = s.length(), M = N - (N % 8), W = 1 << width;
-        int c = 0, p = 0;
+        final int N = s.length();
 
-        // M is a multiple of 8 and M < N.
-        for (; p < M && c < W; p += 8) {
-            // Bitwise-or 8 character codes together in order to test once.
-            c = s.charAt(p) | s.charAt(p + 1) | s.charAt(p + 2) | s.charAt(p + 3) | s.charAt(p + 4)
-                    | s.charAt(p + 5) | s.charAt(p + 6) | s.charAt(p + 7);
-        }
+        if (N == 0) {
+            return true;
 
-        if (c >= W) {
-            // Early result
-            return false;
         } else {
-            // Scan the rest, from M to N-1
-            for (; p < N; p++) {
-                c |= s.charAt(p);
+            // A pointer into the string and the logical-or of characters so far
+            int p = 0, c = 0;
+            // We work in blocks of 8 to reduce loop tests.
+            int M = N - (N % 8), W = 1 << width;
+
+            // M is a multiple of 8 and M < N.
+            for (; p < M && c < W; p += 8) {
+                // Bitwise-or 8 character codes together in order to test once.
+                c = s.charAt(p) | s.charAt(p + 1) | s.charAt(p + 2) | s.charAt(p + 3)
+                        | s.charAt(p + 4) | s.charAt(p + 5) | s.charAt(p + 6) | s.charAt(p + 7);
             }
-            // Test is we reached the end with every character less than W.
-            return c < W && p == N;
+
+            if (c < W) {
+                // Scan the rest, fewer than 8, from M to N-1
+                for (; p < N; p++) {
+                    c |= s.charAt(p);
+                }
+                // Test is we reached the end with every character less than W.
+                return c < W && p == N;
+            } else {
+                // Blocks of 8 loop already gave the answer.
+                return false;
+            }
         }
     }
-
 
     /**
      * Creates a {@code PyString} from an already interned {@code String} representing bytes. The

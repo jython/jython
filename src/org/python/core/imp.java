@@ -88,7 +88,7 @@ public class imp {
     }
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
-    private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
+    private static final PyObject nonEmptyFromlist = new PyTuple(PyString.fromInterned("__doc__"));
 
     public static ClassLoader getSyspathJavaLoader() {
         return Py.getSystemState().getSyspathJavaLoader();
