@@ -21,7 +21,7 @@ import org.python.modules._functools._functools;
 @Untraversable
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
-    public static final PyObject module = Py.newString("__builtin__");
+    public static final PyObject module = PyString.fromInterned("__builtin__");
 
     public BuiltinFunctions(String name, int index, int argcount) {
         this(name, index, argcount, argcount);
@@ -686,7 +686,7 @@ public class __builtin__ {
     }
 
     public static PyObject input() {
-        return input(new PyString(""));
+        return input(Py.EmptyString);
     }
 
     public static PyString intern(PyObject obj) {
@@ -1139,7 +1139,7 @@ public class __builtin__ {
         }
     }
 
-    public static PyString __doc__zip = new PyString(
+    public static PyString __doc__zip = PyString.fromInterned(
         "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n\n" +
         "Return a list of tuples, where each tuple contains the i-th element\n" +
         "from each of the argument sequences.  The returned list is\n" +

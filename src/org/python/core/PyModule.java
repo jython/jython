@@ -14,7 +14,7 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "module")
 public class PyModule extends PyObject implements Traverseproc {
-    private final PyObject moduleDoc = new PyString( //FIXME: not used (and not static)
+    private final PyObject moduleDoc = Py.newBytes( //FIXME: not used (and not static)
         "module(name[, doc])\n" +
         "\n" +
         "Create a module object.\n" +
@@ -60,7 +60,7 @@ public class PyModule extends PyObject implements Traverseproc {
         ensureDict();
         __dict__.__setitem__("__name__", name);
         __dict__.__setitem__("__doc__", doc);
-        if (name.equals(new PyString("__main__"))) {
+        if (name.equals(Py.newBytes("__main__"))) {
             __dict__.__setitem__("__builtins__", Py.getSystemState().modules.__finditem__("__builtin__"));
             __dict__.__setitem__("__package__", Py.None);
         }
@@ -250,7 +250,7 @@ public class PyModule extends PyObject implements Traverseproc {
             filename = __dict__.__finditem__("__file__");
         }
         if (name == null) {
-            name = new PyString("?");
+            name = Py.newString('?');
         }
         if (filename == null) {
             return String.format("<module '%s' (built-in)>", name);
