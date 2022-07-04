@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import org.python.compiler.Module;
 import org.python.core.util.FileUtil;
+import org.python.core.util.LimitedCache;
 import org.python.core.util.PlatformUtil;
 
 /**
@@ -1400,6 +1401,15 @@ public class imp {
     }
 
     /**
+     * This cache supports {@link #fileSystemDecode(PyObject)} and
+     * {@link #fileSystemDecode(PyObject, boolean)}. Observation shows the import mechanism converts
+     * the same file name hundreds of times during any use of Jython, so we use this to remember the
+     * conversions of recent file names.
+     */
+    // 20 is plenty
+    private static LimitedCache<PyObject, String> fileSystemDecodeCache = new LimitedCache<>(20);
+
+    /**
      * A wrapper for {@link Py#fileSystemDecode(PyObject)} for <b>project internal use</b> within
      * the import mechanism to convert decoding errors that occur during import to either
      * {@code null} or {@link Py#ImportError(String)} calls (and a log message), which usually
@@ -1411,7 +1421,12 @@ public class imp {
      */
     public static String fileSystemDecode(PyObject p, boolean raiseImportError) {
         try {
-            return Py.fileSystemDecode(p);
+            String decoded = fileSystemDecodeCache.get(p);
+            if (decoded == null) {
+                decoded = Py.fileSystemDecode(p);
+                fileSystemDecodeCache.add(p, decoded);
+            }
+            return decoded;
         } catch (PyException e) {
             if (e.match(Py.UnicodeDecodeError)) {
                 // p is bytes we cannot convert to a String using the FS encoding
