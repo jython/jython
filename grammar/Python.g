@@ -191,6 +191,12 @@ import java.util.ListIterator;
         this.encoding = encoding;
     }
 
+    public PythonParser(TokenStream input, String encoding, boolean printFunction, boolean unicodeLiterals) {
+        this(input, encoding);
+        this.printFunction = printFunction;
+        this.unicodeLiterals = unicodeLiterals;
+    }
+
     @Override
     public void reportError(RecognitionException e) {
       // Update syntax error count and output error.

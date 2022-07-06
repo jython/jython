@@ -35,6 +35,7 @@ Jython 2.7.3a1
     - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
     - [ GH-97 ] Failures in SNI support affecting pip
     - [ GH-93 ] Permissions problems with compiled source files ($py.class)
+    - [ 2892 ] from __future__ import print_function doesn't work interactively (GH-81)
     - [ GH-77 ] Broken AST adapter
     - [ GH-74 ] Clarify license position in relation to zxJDBC.
     - [ GH-57 ] JavaWebStart compatibility broken
