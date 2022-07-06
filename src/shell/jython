@@ -77,20 +77,19 @@ CP_DELIMITER=":"
 CP=$JYTHON_HOME/jython-dev.jar
 
 if [ -f "$CP" ] ; then
-  # add necessary jars for command-line execution
-  for j in "$JYTHON_HOME"/javalib/*.jar; do
-    if [ "$CP" ]; then
-      CP="$CP$CP_DELIMITER$j"
-    else
-      CP="$j"
-    fi
-  done
+  # We are running in the development environment.
+  # Add -test JAR to class path.
+  CP="$CP$CP_DELIMITER$JYTHON_HOME/jython-test.jar"
+  # Add necessary jar dir for command-line execution
+  CP="$CP$CP_DELIMITER$JYTHON_HOME/javalib/*"
 elif [ ! -f "$JYTHON_HOME"/jython.jar ] ; then
   echo "$0: $JYTHON_HOME contains neither jython-dev.jar nor jython.jar." >&2
   echo "Try running this script from the 'bin' directory of an installed Jython or " >&2
   echo 'setting $JYTHON_HOME.' >&2
   exit 1
 else
+  # We are running in the deployment environment.
+  # Class path is just the main JAR (not tests).
   CP=$JYTHON_HOME/jython.jar
 fi
 

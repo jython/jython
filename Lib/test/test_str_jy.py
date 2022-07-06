@@ -35,6 +35,23 @@ class StrConstructorTest(unittest.TestCase):
         self.assertRaises(UnicodeEncodeError, str, java.lang.String(u"caf\xe9 noir"))
         self.assertRaises(UnicodeEncodeError, str, java.lang.String(u"abc\u0111efgh"))
 
+    def test_unicode_acceptance(self):
+        # Issue GH-192: for characters >127 repr returns unicode
+        # Note that repr(java.lang.String) does not get quotes (and never did).
+        s = java.lang.String(u"cafe noir") 
+        self.assertEquals('cafe noir', repr(s))
+        self.assertEquals('[cafe noir, 0]', repr([s, 0]))
+        self.assertEquals('(cafe noir, 0)', repr((s, 0)))
+
+        t = java.lang.String(u"caf\xe9 noir") 
+        self.assertEquals(u'café noir', repr(t))
+        self.assertEquals(u'[café noir, 0]', repr([t, 0]))
+        self.assertEquals(u'(café noir, 0)', repr((t, 0)))
+
+        u = java.lang.String(u"Way \u51fa")
+        self.assertEquals(u'Way 出', repr(u))
+        self.assertEquals(u'[Way 出, 0]', repr([u, 0]))
+        self.assertEquals(u'(Way 出, 0)', repr((u, 0)))
 
 class StringSlicingTest(unittest.TestCase):
 

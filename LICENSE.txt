@@ -113,7 +113,7 @@ JPython version 1.1.x
      publicly, prepare derivative works, distribute, and otherwise use the
      Software alone or in any derivative version, provided, however, that
      CNRI's License Agreement and CNRI's notice of copyright, i.e.,
-     "Copyright ©1996-1999 Corporation for National Research Initiatives;
+     "Copyright (c)1996-1999 Corporation for National Research Initiatives;
      All Rights Reserved" are both retained in the Software, alone or in any
      derivative version prepared by Licensee.
 
@@ -184,17 +184,19 @@ In October 2000 Barry helped move the software to SourceForge
 where it was renamed to Jython. Jython 2.0 and 2.1 were developed
 under the Jython specific license below.
 
-From the 2.2 release on, Jython contributors have signed
-Python Software Foundation contributor agreements and releases are
-covered under the Python Software Foundation license version 2.
+From the 2.2 release on, Jython contributors have licensed their
+contributions to the Python Software Foundation under a Contributor
+Agreement, so as to permit distribution under the Python Software Foundation
+license.
 
 The Python standard library developed for CPython is also used in Jython, and
 (like Jython itself) is provided under the Python Software Foundation
 license. See the file LICENSE_CPython.txt for details.
 
 The zxJDBC package was written by Brian Zimmer and originally licensed
-under the GNU Public License.  The package is now covered by the Jython
-Software License.
+under the GNU Public License. The package is now licensed to the Python
+Software Foundation under a Contributor Agreement, so as to permit
+distribution under the Python Software Foundation license.
 
 Elements of the supporting libraries (appearing renamed in some Jython JARs)
 are covered by the Apache Software License.  See the file LICENSE_Apache.txt

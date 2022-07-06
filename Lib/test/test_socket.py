@@ -1640,7 +1640,7 @@ class FileObjectClassTestCase(SocketConnectedTest):
 
     def testClosedAttr(self):
         self.assert_(not self.serv_file.closed)
-        
+
     def _testClosedAttr(self):
         self.assert_(not self.cli_file.closed)
 
@@ -1651,11 +1651,16 @@ class PrivateFileObjectTestCase(unittest.TestCase):
 
     E.g. urllib2 wraps an httplib.HTTPResponse object with _fileobject.
     """
+    def sendall(self, data):
+        # StringIO doesn't respect bytes nature of memoryview
+        if isinstance(data, memoryview):
+            data = data.tobytes()
+        self.socket_like.write(data)
 
     def setUp(self):
         self.socket_like = StringIO()
         self.socket_like.recv = self.socket_like.read
-        self.socket_like.sendall = self.socket_like.write
+        self.socket_like.sendall = self.sendall
 
     def testPrivateFileObject(self):
         fileobject = socket._fileobject(self.socket_like, 'rb')

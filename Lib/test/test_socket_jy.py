@@ -2,12 +2,14 @@ import errno
 import os
 import socket
 import ssl
+import sys
 import threading
 import time
 import unittest
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 from test import test_support
+from test.test_socket import SocketConnectedTest
 
 
 def data_file(*name):
@@ -154,8 +156,60 @@ class SocketOptionsTest(unittest.TestCase):
         self.assertEqual(socket.SOL_TCP, socket.IPPROTO_TCP)
 
 
+class TimedBasicTCPTest(SocketConnectedTest):
+
+    BIG_SIZE = test_support.SOCK_MAX_SIZE // 3 + 1
+
+    def __init__(self, methodName='runTest'):
+        SocketConnectedTest.__init__(self, methodName=methodName)
+
+    def receiveAll(self):
+        # Testing sendall() with a max-size string over TCP
+        msg = bytearray()
+        t0 = time.clock()
+        while 1:
+            read = self.cli_conn.recv(8192)
+            if not read:
+                break
+            msg += read
+        t = time.clock() - t0
+        if test_support.verbose:
+            print>>sys.stderr, "%d bytes in %5.3f sec ... " % (len(msg), t),
+        self.assertEqual(''.join(map(chr, sorted(set(msg)))), 'xyz')
+        self.assertEqual(len(msg), TimedBasicTCPTest.BIG_SIZE*3)
+
+    def testSendAllBytes(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllBytes(self):
+        big = bytearray('xyz') * TimedBasicTCPTest.BIG_SIZE
+        self.serv_conn.sendall(big)
+
+    def testSendAllStr(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllStr(self):
+        big = 'xyz' * TimedBasicTCPTest.BIG_SIZE
+        self.serv_conn.sendall(big)
+
+    def testSendAllBuffer(self):
+        # Testing sendall() with a max-size string over TCP
+        self.receiveAll()
+
+    def _testSendAllBuffer(self):
+        big = buffer('xyz' * TimedBasicTCPTest.BIG_SIZE)
+        self.serv_conn.sendall(big)
+
+
 def test_main():
-    test_support.run_unittest(SocketConnectTest, SSLSocketConnectTest, SocketOptionsTest)
+    test_support.run_unittest(
+            SocketConnectTest,
+            SSLSocketConnectTest,
+            SocketOptionsTest,
+            TimedBasicTCPTest,
+    )
 
 
 if __name__ == "__main__":

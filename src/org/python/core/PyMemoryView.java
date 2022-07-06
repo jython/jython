@@ -1,6 +1,8 @@
 // Copyright (c) 2013 Jython Developers
 package org.python.core;
 
+import java.nio.ByteBuffer;
+
 import org.python.core.buffer.BaseBuffer;
 import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
@@ -76,6 +78,16 @@ public class PyMemoryView extends PySequence implements BufferProtocol, Traverse
         }
         throw Py.TypeError(
                 "cannot make memory view because object does not have the buffer interface");
+    }
+
+    @Override
+    public Object __tojava__(Class<?> c) {
+        if (c == ByteBuffer.class) {
+            // Present the memoryview as a Java NIO buffer
+            checkNotReleased();
+            return backing.getNIOByteBuffer();
+        }
+        return super.__tojava__(c);
     }
 
     // @ExposedGet(doc = obj_doc) // Not exposed in Python 2.7
