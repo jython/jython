@@ -9,7 +9,7 @@ For more details, three sources are available according to type:
  - [ FM-n ], please see https://github.com/jython/frozen-mirror.
 
 
-Jython 2.7.3a1
+Jython 2.7.3b1
   Bugs fixed
     - [ GH-192 ] PyString with non-byte value in formatting of collections
     - [ GH-183 ] Console messages do not reach root logger (bjo 2896)
