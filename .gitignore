@@ -46,6 +46,7 @@ publications
 reports
 jffi*.dll
 $test_*
+*.tests
 
 profile.txt
 out

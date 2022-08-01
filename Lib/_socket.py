@@ -22,7 +22,7 @@ from types import MethodType, NoneType
 import java
 from java.io import IOException, InterruptedIOException
 from java.lang import Thread, ArrayIndexOutOfBoundsException, IllegalStateException
-from java.net import InetAddress, InetSocketAddress
+from java.net import InetAddress, InetSocketAddress, ConnectException, NoRouteToHostException
 from java.nio.channels import ClosedChannelException
 from java.security.cert import CertificateException
 from java.util import NoSuchElementException
@@ -110,8 +110,8 @@ NI_IDN_ALLOW_UNASSIGNED     = 128
 NI_IDN_USE_STD3_ASCII_RULES = 256
 NI_MAXHOST                  = 1025
 
-SOCK_DGRAM     = 1
-SOCK_STREAM    = 2
+SOCK_STREAM    = 1
+SOCK_DGRAM     = 2
 SOCK_RAW       = 3 # not supported
 SOCK_RDM       = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
@@ -297,9 +297,10 @@ _exception_map = {
     InterruptedIOException : lambda x: timeout(errno.ETIMEDOUT, 'timed out'),
     IllegalStateException  : lambda x: error(errno.EPIPE, 'Illegal state exception'),
 
+    NoRouteToHostException : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
+    ConnectException       : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
+
     java.net.BindException            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
-    java.net.ConnectException         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
-    java.net.NoRouteToHostException   : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
     java.net.PortUnreachableException : None,
     java.net.ProtocolException        : None,
     java.net.SocketException          : java_net_socketexception_handler,
@@ -350,16 +351,16 @@ def _map_exception(java_exception):
             msg = java_exception.message
         py_exception = SSLError(SSL_ERROR_SSL, msg)
     else:
-        # Netty 4.1.6 or higher wraps the connection exception in a
-        # private static class that inherits from ConnectException, so
-        # need to work around.
-        if isinstance(java_exception, java.net.ConnectException):
-            mapped_exception = _exception_map.get(java.net.ConnectException)
-        # Netty AnnotatedNoRouteToHostException extends NoRouteToHostException
-        # so also needs work around.
-        elif isinstance(java_exception, java.net.NoRouteToHostException):
-            mapped_exception = _exception_map.get(java.net.NoRouteToHostException)
+        # Netty defines its own sub-types of java... exceptions that are not
+        # public, so we look up the public version.
+        if isinstance(java_exception, ConnectException):
+            mapped_exception = _exception_map.get(ConnectException)
+        elif isinstance(java_exception, NoRouteToHostException):
+            mapped_exception = _exception_map.get(NoRouteToHostException)
+        elif isinstance(java_exception, ClosedChannelException):
+            mapped_exception = _exception_map.get(ClosedChannelException)
         else:
+            # Look-up the exact Python class
             mapped_exception = _exception_map.get(java_exception.__class__)
         if mapped_exception:
             py_exception = mapped_exception(java_exception)
@@ -1190,12 +1191,9 @@ class _realsocket(object):
 
     @raises_java_exception
     def send(self, data, flags=0):
-        # FIXME this almost certainly needs to chunk things
         self._verify_channel()
-        if isinstance(data, memoryview):
-            data = data.tobytes()
-        data = str(data)  # FIXME temporary fix if data is of type buffer
-        log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
 
         if self.socket_type == DATAGRAM_SOCKET:
             packet = DatagramPacket(Unpooled.wrappedBuffer(data), self.channel.remoteAddress())
@@ -1206,19 +1204,23 @@ class _realsocket(object):
         if not self._can_write:
             raise error(errno.ENOTCONN, 'Socket not connected')
 
-        bytes_writable = self.channel.bytesBeforeUnwritable()
-        if bytes_writable > len(data):
-            bytes_writable = len(data)
+        with memoryview(data) as data:
+            bytes_writable = self.channel.bytesBeforeUnwritable()
 
-        sent_data = data[:bytes_writable]
+            with data[:bytes_writable] as buf:
+                future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(buf))
+                self._handle_channel_future(future, "send")
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("Sent data <<<{!r:.20}>>>".format(buf),
+                              extra={"sock": self})
+                return len(buf)
 
-        future = self.channel.writeAndFlush(Unpooled.wrappedBuffer(sent_data))
-        self._handle_channel_future(future, "send")
-        log.debug("Sent data <<<{!r:.20}>>>".format(sent_data), extra={"sock": self})
-
-        return len(sent_data)
-
-    sendall = send   # FIXME see note above!
+    def sendall(self, data, flags=0):
+        with memoryview(data) as buf:
+            # Limit the amount per send to L to control data movement
+            k, n, L = 0, len(buf), 8192
+            while k < n:
+                k += self.send(buf[k:k+L], flags)
 
     def _get_incoming_msg(self, reason):
         log.debug("head=%s incoming=%s" % (self.incoming_head, self.incoming), extra={"sock": self})
@@ -1499,7 +1501,13 @@ class ChildSocket(_realsocket):
         self._make_active()
         return super(ChildSocket, self).send(data)
 
-    sendall = send
+    def sendall(self, data):
+        # We could inherit sendall were it not for the flags argument.
+        with memoryview(data) as buf:
+            # Limit the amount per send to L to control data movement
+            k, n, L = 0, len(buf), 8192
+            while k < n:
+                k += self.send(buf[k:k+L])
 
     def recv(self, bufsize, flags=0):
         self._make_active()
@@ -2039,26 +2047,23 @@ class _fileobject(object):
 
     def flush(self):
         if self._wbuf:
-            data = "".join(self._wbuf)
+            data = bytearray().join(self._wbuf)
             self._wbuf = []
             self._wbuf_len = 0
-            buffer_size = max(self._rbufsize, self.default_bufsize)
-            data_size = len(data)
-            write_offset = 0
-            # FIXME apparently this doesn't yet work on jython,
-            # despite our work on memoryview/buffer support
-            view = data # memoryview(data)
-            try:
-                while write_offset < data_size:
-                    chunk = view[write_offset:write_offset+buffer_size]
-                    self._sock.sendall(chunk)
-                    write_offset += buffer_size
-            finally:
-                if write_offset < data_size:
-                    remainder = data[write_offset:]
-                    del view, data  # explicit free
-                    self._wbuf.append(remainder)
-                    self._wbuf_len = len(remainder)
+            size = max(self._rbufsize, self.default_bufsize)
+            ptr, limit = 0, len(data)
+
+            with memoryview(data) as view:
+                try:
+                    while ptr < limit:
+                        with view[ptr:ptr+size] as chunk:
+                            self._sock.sendall(chunk)
+                            ptr += size
+                finally:
+                    if ptr < limit:
+                        with view[ptr:] as remainder:
+                            self._wbuf.append(remainder)
+                            self._wbuf_len = len(remainder)
 
     def fileno(self):
         return self._sock.fileno()

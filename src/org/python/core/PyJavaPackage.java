@@ -3,9 +3,9 @@
 
 package org.python.core;
 
-import org.python.core.packagecache.PackageManager;
-
 import java.util.Collection;
+
+import org.python.core.packagecache.PackageManager;
 
 /** A representation of java package. */
 public class PyJavaPackage extends PyObject implements Traverseproc {
@@ -41,7 +41,7 @@ public class PyJavaPackage extends PyObject implements Traverseproc {
         clsSet = new PyStringMap();
 
         __dict__ = new PyStringMap();
-        __dict__.__setitem__("__name__", new PyString(__name__));
+        __dict__.__setitem__("__name__", Py.newString(__name__));
     }
 
     public PyJavaPackage addPackage(String name) {

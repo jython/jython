@@ -66,16 +66,16 @@ An example ant.properties file:
 oracle.jar = ../support/ojdbc6.jar
 informix.jar = ../support/jdbc-4.10.12.jar
 
-# - option for javac (build.compiler=modern is a global option to use standard jdk 1.7/1.8)
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.8)
 #build.compiler=modern
-#jdk.target.version=1.7
+#jdk.target.version=1.8
 #debug=false
 #deprecation=off
         </echo>
     </target>
 
     <target name="developer-build"
-            depends="jar, copy-dev, pycompile"
+            depends="jar, jar-test, copy-dev, pycompile"
             description="a local build for developers" />
 
     <target name="installer"
@@ -92,11 +92,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
         <property name="jython.java.version" value="1.8" />
-
-        <!-- Temporarily fix the source compatibility at Java 7 to keep open the possibility of
-        compiling for that target. After v2.7.2 is out, delete this assignment, and this comment,
-        reconsider choice of JARs, and feel free to use Java 8 syntax. -->
-        <property name="jdk.source.version" value="1.7" />
+        <property name="jdk.source.version" value="1.8" />
 
         <!-- Designate the official release encoded in parts. In normal times, this is the *next*
              official release, e.g. 2.7.2b2 while working towards 2.7.2b2, and sys.version will be
@@ -106,7 +102,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="3"/>
-        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
+        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
 
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
         <property name="jython.release_serial" value="1"/>
@@ -168,6 +164,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <!-- Intermediate products including generated code and compiled classews go here: -->
         <property name="build.dir" value="${basedir}/build" />
         <property name="compile.dir" value="${build.dir}/classes" />
+        <property name="test.compile.dir" value="${build.dir}/testclasses" />
         <property name="exposed.dir" value="${build.dir}/exposed" />
         <property name="gensrc.dir" value="${build.dir}/gensrc" />
 
@@ -186,9 +183,14 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
     <target name="common-jars" depends="common-dirs">
         <!-- Names of JARs we (may) produce according to target. -->
- 
-        <!-- Target: jar. Just the Jython code: needs main.classpath to work. For dev & test. -->
+
+        <!-- Target: jar. Just the Jython code: needs main.classpath to work. Material in this JAR
+             will be copied to distributable JARs. -->
         <property name="jython.dev.jar" value="jython-dev.jar" />
+
+        <!-- Target: jar-test. Jython test code: needs jython-dev.jar and main.classpath to work.
+              Material in this JAR will *not* be copied to distributable JARs.  -->
+        <property name="jython.test.jar" value="jython-test.jar" />
 
         <!-- Target: jar-complete. jython.deploy.jar subsumes jython.dev.jar, and adds shaded
              dependencies. For directory-based installations with a home, library, etc..  -->
@@ -249,26 +251,26 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.2.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-7.1.jar" />
-                <file name="asm-commons-7.1.jar" />
-                <file name="asm-util-7.1.jar" />
+                <file name="asm-9.3.jar" />
+                <file name="asm-commons-9.3.jar" />
+                <file name="asm-util-9.3.jar" />
                 <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-28.0-android.jar" />
-                <file name="icu4j-59_1.jar" />
-                <file name="jffi-1.2.20.jar"/>
+                <file name="guava-31.0.1-jre.jar" />
+                <file name="icu4j-71.1.jar" />
+                <file name="jffi-1.3.9.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
-                <file name="jnr-ffi-2.1.10.jar"/>
-                <file name="jnr-netdb-1.1.6.jar"/>
-                <file name="jnr-posix-3.0.50.jar"/>
-                <file name="jnr-constants-0.9.12.jar"/>
+                <file name="jnr-constants-0.10.3.jar"/>
+                <file name="jnr-ffi-2.2.12.jar"/>
+                <file name="jnr-netdb-1.2.0.jar"/>
+                <file name="jnr-posix-3.1.15.jar"/>
                 <file name="jline-2.14.5.jar"/>
-                <file name="netty-buffer-4.1.45.Final.jar"/>
-                <file name="netty-codec-4.1.45.Final.jar"/>
-                <file name="netty-common-4.1.45.Final.jar"/>
-                <file name="netty-handler-4.1.45.Final.jar"/>
-                <file name="netty-resolver-4.1.45.Final.jar"/>
-                <file name="netty-transport-4.1.45.Final.jar"/>
+                <file name="netty-buffer-4.1.73.Final.jar"/>
+                <file name="netty-codec-4.1.73.Final.jar"/>
+                <file name="netty-common-4.1.73.Final.jar"/>
+                <file name="netty-handler-4.1.73.Final.jar"/>
+                <file name="netty-resolver-4.1.73.Final.jar"/>
+                <file name="netty-transport-4.1.73.Final.jar"/>
             </filelist>
         </path>
 
@@ -280,6 +282,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
             </filelist>
             <pathelement location="${exposed.dir}" />
             <pathelement location="${compile.dir}" />
+            <pathelement location="${test.compile.dir}" />
             <pathelement location="${cpptasks.jar.dir}" />
         </path>
     </target>
@@ -377,6 +380,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>source.dir                = '${source.dir}'</echo>
         <echo>build.dir                 = '${build.dir}'</echo>
         <echo>compile.dir               = '${compile.dir}'</echo>
+        <echo>test.compile.dir          = '${test.compile.dir}'</echo>
         <echo>exposed.dir               = '${exposed.dir}'</echo>
         <echo>gensrc.dir                = '${gensrc.dir}'</echo>
         <echo>dist.dir                  = '${dist.dir}'</echo>
@@ -735,6 +739,7 @@ The text for an official release would continue like ...
     <target name="jarless" depends="compile, pycompile"/>
 
     <target name="compile" depends="init, antlr-gen, brand-version">
+        <mkdir dir="${compile.dir}"/>
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -765,9 +770,29 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
         </javac>
 
+        <copy file="${source.dir}/org/python/modules/ucnhash.dat"
+              todir="${compile.dir}/org/python/modules"
+              preservelastmodified="true" />
+
+        <copy todir="${compile.dir}" preservelastmodified="true">
+            <fileset dir="${source.dir}">
+                <include name="**/*.properties" />
+            </fileset>
+        </copy>
+
+        <!-- grammar must now be up to date -->
+        <property name="antlr-up-to-date" value="true" />
+
+        <copy todir="${compile.dir}/META-INF/services">
+            <fileset dir="${source.dir}/META-INF/services" />
+        </copy>
+    </target>
+
+    <target name="compile-test" depends="compile">
         <!-- java files used by tests -->
+        <mkdir dir="${test.compile.dir}"/>
         <javac srcdir="${test.source.dir}"
-               destdir="${compile.dir}"
+               destdir="${test.compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -778,21 +803,6 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
             <classpath refid="test.classpath" />
         </javac>
-        <copy file="${source.dir}/org/python/modules/ucnhash.dat"
-              todir="${compile.dir}/org/python/modules"
-              preservelastmodified="true" />
-
-        <copy todir="${compile.dir}" preservelastmodified="true">
-            <fileset dir="${source.dir}">
-                <include name="**/*.properties" />
-            </fileset>
-        </copy>
-        <!-- grammar must now be up to date -->
-        <property name="antlr-up-to-date" value="true" />
-
-        <copy todir="${compile.dir}/META-INF/services">
-            <fileset dir="${source.dir}/META-INF/services" />
-        </copy>
     </target>
 
     <!--
@@ -836,32 +846,31 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-7.1.jar"/>
-            <zipfileset src="extlibs/asm-commons-7.1.jar"/>
-            <zipfileset src="extlibs/asm-util-7.1.jar"/>
+            <zipfileset src="extlibs/asm-9.3.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-commons-9.3.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-util-9.3.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk15on-1.62.jar" excludes="META-INF/**"/>
-            <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/bcprov-jdk15on-1.62.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk18on-1.71.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-28.0-android.jar"/>
+            <zipfileset src="extlibs/guava-31.0.1-jre.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
-            <zipfileset src="extlibs/icu4j-59_1.jar"/>
+            <zipfileset src="extlibs/icu4j-71.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
-            <zipfileset src="extlibs/netty-buffer-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-buffer-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-codec-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-codec-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-common-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-common-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-handler-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-handler-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-resolver-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-resolver-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
-            <zipfileset src="extlibs/netty-transport-4.1.45.Final.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/netty-transport-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="${extlibs.dir}/java-sizeof-0.0.5.jar"/>
             <rule pattern="com.carrotsearch.sizeof.**" result="org.python.sizeof.@1"/>
@@ -888,12 +897,12 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/jffi-x86_64-SunOS.jar"/>
             <zipfileset src="extlibs/jffi-x86_64-Windows.jar"/>
             <!-- remainder of JNR, JFFI -->
-            <zipfileset src="extlibs/jffi-1.2.20.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-ffi-2.1.10.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-netdb-1.1.6.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-posix-3.0.50.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-constants-0.9.12.jar"/>
-            <zipfileset src="extlibs/xercesImpl-2.12.0.jar" excludes="META-INF/services/*"/>
+            <zipfileset src="extlibs/jffi-1.3.9.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-constants-0.10.3.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-ffi-2.2.12.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-netdb-1.2.0.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.1.15.jar"/>
+            <zipfileset src="extlibs/xercesImpl-2.12.2.jar" excludes="META-INF/services/*"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
@@ -949,41 +958,69 @@ The text for an official release would continue like ...
 
     <target name="jar" depends="compile, expose"
             description="build the jython-dev.jar (requiring main classpath and Lib to use).">
-       <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
-           <classpath>
-               <path refid="main.classpath" />
-               <pathelement path="${compile.dir}" />
-           </classpath>
-       </typedef>
-       <jar destfile="${dist.dir}/callbacker_test.jar" update="${jar.update}">
-           <fileset dir="${compile.dir}" includes="org/python/tests/Callbacker*"/>
-       </jar>
-       <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail" update="${jar.update}">
-          <!-- If only nameunion is used, ant issues a spurious warning about no files being
-               included.  Use a fileset for version.properties just to shut that up. -->
-          <fileset dir="${compile.dir}" includes="org/python/version.properties"/>
-          <nameunion>
-             <fileset dir="${exposed.dir}"/>
-             <fileset dir="${compile.dir}"
-                 excludes="org/python/expose/generate/**,org/python/version.properties"/>
-          </nameunion>
-          <manifest>
-              <attribute name="Main-Class" value="org.python.util.jython" />
-              <attribute name="Built-By" value="${user.name}" />
-              <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
-              <attribute name="Implementation-Title" value="Jython"/>
-              <attribute name="Implementation-Version" value="${jython.version}"/>
-              <!-- info section. ATTN: no blanks, no '.' in the names -->
-              <section name="Build-Info">
-                  <attribute name="version" value="${jython.version}" />
-                  <attribute name="git-build" value="${git.present}" />
-                  <attribute name="oracle" value="${oracle.present}" />
-                  <attribute name="informix" value="${informix.present}" />
-                  <attribute name="build-compiler" value="${build.compiler}" />
-                  <attribute name="jdk-target-version" value="${jdk.target.version}" />
-                  <attribute name="debug" value="${debug}" />
-              </section>
-          </manifest>
+
+        <typedef name="nameunion" classname="org.python.util.NameUnionAntType">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${compile.dir}" />
+            </classpath>
+        </typedef>
+
+        <jar destfile="${dist.dir}/${jython.dev.jar}" duplicate="fail" update="${jar.update}">
+            <!-- If only nameunion is used, ant issues a spurious warning about no files being
+                 included.  Use a fileset for version.properties just to shut that up. -->
+            <fileset dir="${compile.dir}" includes="org/python/version.properties"/>
+            <nameunion>
+                <fileset dir="${exposed.dir}"/>
+                <fileset dir="${compile.dir}"
+                    excludes="org/python/expose/generate/**,org/python/version.properties"/>
+            </nameunion>
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
+                <attribute name="Implementation-Title" value="Jython"/>
+                <attribute name="Implementation-Version" value="${jython.version}"/>
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="git-build" value="${git.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="jar-test" depends="compile-test"
+            description="build the jython-test.jar supplementary to jython-dev (and 'callbacker'.">
+
+        <jar destfile="${dist.dir}/callbacker_test.jar" update="${jar.update}">
+            <fileset dir="${test.compile.dir}" includes="org/python/tests/Callbacker*"/>
+        </jar>
+
+        <jar destfile="${dist.dir}/${jython.test.jar}" duplicate="fail" update="${jar.update}">
+            <fileset dir="${test.compile.dir}" />
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
+                <attribute name="Implementation-Title" value="Jython Test JAR"/>
+                <attribute name="Implementation-Version" value="${jython.version}"/>
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${jython.version}" />
+                    <attribute name="git-build" value="${git.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                    <attribute name="debug" value="${debug}" />
+                </section>
+            </manifest>
         </jar>
     </target>
 
@@ -1268,13 +1305,13 @@ The text for an official release would continue like ...
         </delete>
     </target>
 
-    <target name="javatest" depends="javatest-basepath, importest"
+    <target name="javatest" depends="javatest-basepath, javatest-import"
             description="run all the JUnit tests">
     </target>
 
     <target name="javatest-basepath" depends="developer-build">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
@@ -1284,7 +1321,7 @@ The text for an official release would continue like ...
                     <exclude name="**/InterpTestCase.java" />
                     <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
                     <exclude name="org/python/antlr/**" />
-                    <exclude name="org/python/tests/imp/**" /> <!-- See importest -->
+                    <exclude name="org/python/tests/imp/**" /> <!-- See javatest-import -->
                     <exclude name=".classpath" />
                     <exclude name=".project" />
                 </fileset>
@@ -1292,13 +1329,13 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="importest" depends="developer-build" description="run all the JUnit tests that need tests/python in the path.">
+    <target name="javatest-import" depends="developer-build"
+            description="run all the JUnit tests that need tests/python in the path.">
         <mkdir dir="${junit.reports}"/>
-        <junit fork="true" printsummary="true">
+        <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
-            <classpath refid="test.classpath"/>
             <classpath refid="test.classpath"/>
             <classpath>
                 <pathelement location="${basedir}/tests/python"/>
@@ -1453,11 +1490,11 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-travis"
-            depends="developer-build, regrtest-unix-travis, regrtest-windows-travis"
-            description="run Python tests expected to work on Jython for Travis intergration"/>
+    <target name="regrtest-ci"
+            depends="developer-build, regrtest-unix-ci, regrtest-windows-ci"
+            description="run Python tests expected to work on Jython for CI"/>
 
-    <target name="regrtest-unix-travis" if="os.family.unix">
+    <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
@@ -1478,7 +1515,7 @@ The text for an official release would continue like ...
         </exec>
     </target>
 
-    <target name="regrtest-windows-travis" if="os.family.windows">
+    <target name="regrtest-windows-ci" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
             <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>

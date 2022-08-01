@@ -72,6 +72,7 @@ class VisibilityTest(unittest.TestCase):
     def test_visible(self):
         v = Visible()
         self.assertEquals(Results.PUBLIC_FIELD, v.visibleField)
+        self.assertEquals(Results.PUBLIC_FIELD, v.overloadedName)
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, Visible.visibleStaticField)
         Visible.visibleStaticField = Results.PUBLIC_STATIC_FIELD + 1
         self.assertEquals(Results.PUBLIC_STATIC_FIELD + 1, Visible.visibleStaticField)
@@ -100,11 +101,14 @@ class VisibilityTest(unittest.TestCase):
     def test_java_subclass(self):
         s = SubVisible()
         self.assertEquals(Results.PUBLIC_FIELD, s.visibleField)
+        # TODO: Shadowed by *method* SubVisible.overloadedName() (in Jython 2.7)
+        #self.assertEquals(Results.PUBLIC_FIELD, s.overloadedName)
         self.assertEquals(Results.PUBLIC_STATIC_FIELD, SubVisible.visibleStaticField)
         self.assertEquals(Results.SUBCLASS_STATIC_OVERRIDE, SubVisible.visibleStatic(3))
         self.assertEquals(Results.SUBCLASS_STATIC_OVERLOAD, SubVisible.visibleStatic(3.0, 'a'))
         self.assertEquals(Results.SUBCLASS_OVERRIDE, s.visibleInstance(3))
         self.assertEquals(Results.SUBCLASS_OVERLOAD, s.visibleInstance(3.0, 'a'))
+        self.assertEquals(Results.SUBCLASS_OVERLOAD, s.overloadedName())
         self.assertEquals(Results.PACKAGE_METHOD, s.packageMethod())
         # Java methods don't allow direct calling of the superclass method, so it should
         # return the subclass value here.

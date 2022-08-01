@@ -259,20 +259,27 @@ class JythonCommand(object):
     def jython_jars(self):
         if hasattr(self, "_jython_jars"):
             return self._jython_jars
-        if os.path.exists(os.path.join(self.jython_home, "jython-dev.jar")):
-            jars = [os.path.join(self.jython_home, "jython-dev.jar")]
-            if self.args.boot:
-                # Wildcard expansion does not work for bootclasspath
-                for jar in glob.glob(os.path.join(self.jython_home, "javalib", "*.jar")):
-                    jars.append(jar)
-            else:
-                jars.append(os.path.join(self.jython_home, "javalib", "*"))
-        elif not os.path.exists(os.path.join(self.jython_home, "jython.jar")): 
+
+        home = self.jython_home
+        jython_jar = os.path.join(home, 'jython.jar')
+        jython_dev_jar = os.path.join(home, 'jython-dev.jar')
+
+        if os.path.exists(jython_dev_jar):
+            # We are running in the development environment.
+            # Add -test and -dev JARs to path.
+            jython_test_jar = os.path.join(home, 'jython-test.jar')
+            jars = [jython_dev_jar,
+                    os.path.join(home, 'jython-test.jar'),
+                    os.path.join(home, "javalib", "*")]
+        elif not os.path.exists(jython_jar): 
             bad_option(u"""{} contains neither jython-dev.jar nor jython.jar.
 Try running this script from the 'bin' directory of an installed Jython or 
 setting JYTHON_HOME.""".format(self.jython_home))
         else:
-            jars = [os.path.join(self.jython_home, "jython.jar")]
+            # We are running in the deployment environment.
+            # Add only the main JAR (not tests) to path.
+            jars = [jython_jar]
+
         self._jython_jars = jars
         return self._jython_jars
 
@@ -336,7 +343,7 @@ setting JYTHON_HOME.""".format(self.jython_home))
 
     @property
     def command(self):
-        # Set default file encoding for just for Darwin (?)
+        # Set default file encoding just for Darwin (?)
         self.set_encoding()
 
         # Begin to build the Java part of the ultimate command
@@ -554,7 +561,7 @@ def main(sys_args):
     if args.print_requested and not args.help:
         if jython_command.uname == u"windows":
             # Add escapes and quotes necessary to Windows.
-            # Normally used for a byte strings but Python is tolerant :)
+            # Normally used for byte strings but Python is tolerant :)
             command_line = subprocess.list2cmdline(command)
         else:
             # Transform any element that seems to need quotes
@@ -574,7 +581,8 @@ def main(sys_args):
                 # but if tried, they also fail very badly by hanging.
                 # So don't even try!
                 command = encode_list(command)
-                os.execvp(command[0], command[1:])
+                # Note pass complete argv (including verb) as 2nd argument
+                os.execvp(command[0], command)
             else:
                 result = 1
                 try:

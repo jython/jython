@@ -154,7 +154,7 @@ public class ParserFacade {
                                  // validPartialSentence
         if (kind != null) {
             CharStream cs = new NoCloseReaderStream(reader);
-            BaseParser parser = new BaseParser(cs, filename, cflags.encoding);
+            BaseParser parser = new BaseParser(cs, filename, cflags);
             return kind.dispatch(parser);
         } else {
             throw Py.ValueError("parse kind must be eval, exec, or single");

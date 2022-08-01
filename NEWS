@@ -4,23 +4,70 @@ The features new in a given release are generally listed under the section for t
 of that version.
 
 For more details, three sources are available according to type:
- - [ n ], please see https://hg.python.org/jython.
+ - [ n ], please see old bug tracker at https://bugs.jython.org.
  - [ GH-n ], please see https://github.com/jython/jython.
  - [ FM-n ], please see https://github.com/jython/frozen-mirror.
 
 
-Jython 2.7.3a1
+Jython 2.7.3b1
   Bugs fixed
+    - [ GH-192 ] PyString with non-byte value in formatting of collections
+    - [ GH-183 ] Console messages do not reach root logger (bjo 2896)
+    - [ GH-178 ] Update icu4j JAR to 71.1
+    - [ GH-177 ] Update Ant to 1.10.12 (Gradle build) (CVE-2020-1945, 2021-36374)
+    - [ GH-160 ] Improve context of "Cannot create PyString with non-byte value"
+    - [ GH-159 ] Non-byte PyString error during initialisation in Turkish locale
+    - [ GH-158 ] Upgrade Bouncy Castle to 1.71
+    - [ GH-157 ] Upgrade ASM to 9.3
+    - [ GH-156 ] Replace custom SHA224 digest with Java's
+    - [ GH-151 ] Upgrade Apache Xerces to 2.12.2 (CVE-2022-23437)
+    - [ GH-150 ] Upgrade Netty to 4.1.73 (various CVEs)
+    - [ GH-138 ] Upgrade Guava to 31.0.1 (CVE-2020-8908)
+    - [ GH-139 ] Make gradlew executable on Unix/Mac
+    - [ GH-136 ] Use full path of cmd.exe (CVE-2019-17664)
+    - [ GH-129 ] Only attempt to open source/bytecode if readable (GH-93)
+    - [ GH-128 ] Support PYTHONDONTWRITEBYTECODE environment variable
+    - [ GH-125 ] Launch fails on Mac OS Big Sur (MacOS 11) (GH-172)
+    - [ GH-119 ] array.array itemsize and serialisation anomalies for unsigned types
     - [ GH-122 ] Upgrade Apache commons-compress to 1.21
+    - [ GH-105 ] from java.util import * (etc.) not working in JDK 14+ (bjo 2792)
+    - [ GH-102 ] Fix CRC32.update calls in zlib.py
+    - [ GH-101 ] Improve boxing of arguments to vararg methods
+    - [ GH-98 ] CVE-2019-9740: CRLF injection by url parameter
+    - [ GH-97 ] Failures in SNI support affecting pip
+    - [ GH-93 ] Permissions problems with compiled source files ($py.class)
+    - [ 2892 ] from __future__ import print_function doesn't work interactively (GH-81)
+    - [ GH-77 ] Broken AST adapter
+    - [ GH-74 ] Clarify license position in relation to zxJDBC.
     - [ GH-57 ] JavaWebStart compatibility broken
     - [ GH-35 ] Travis CI on JDKs 8, 11, 13 and add Windows to OSes
     - [ GH-50 ] (First) migration from Mercurial corrupted project history
+    - [ GH-49 ] Update Darwin jffi library dependency
     - [ GH-27 ] -Q new always fails
-    - [ 2892 ] Migrate from hg.python.org to GitHub
+    - [ GH-12 ] Test classes in distributed artifacts
     - [ GH-4 ] Swap from Mercurial to Git as our SCM tool
     - [ GH-2 ] Transfer closed-fixed issues in NEWS from frozen-mirror
+    - [ 2924 ] module-info.class in root of JAR causes problems (also GH-54?)
+    - [ 2918 ] slim jar: missing resource file for zxJDBC (also GH-187)
+    - [ 2892 ] Migrate from hg.python.org to GitHub
 
   New Features
+
+    - The jython command respects the PYTHONDONTWRITEBYTECODE environment variable (GH-128).
+
+    - Under PR GH-101, the matching of sequence arguments to the parameters of Java methods is
+      improved. A Java varargs parameter does not match a final sequence in the call
+      if an array parameter could do so. (Thanks Peter Holloway.)
+
+    - array.array itemsize of unsigned types is now the same as their signed counterparts, where 
+      previously it was mostly double. Internal representations have changed. Anomalies have been
+      eliminated between itemsize and the serialisation (tostring() etc.) for unsigned types,
+      and in the range of values accepted in different contexts. The size of type 'u' (unicode
+      character) is 4 on all platforms. Client code that was working around these anomalies may
+      have to change. Overall, the experience should be closer to that with CPython.
+
+    - We no longer aspire to compile Jython with Java 7. (We may use Java 8 features.)
+
     - The project has moved its home to GitHub (twice).
 
 Jython 2.7.2
@@ -471,7 +518,7 @@ Jython 2.7b4
     - [ 2190 ] Raise ValueError when unichr() is called with isolated surrogate codepoint
     - [ 1057 ] Finalizer support (__del__) for new style classes
     - [ 2192 ] Server requests were hanging using jython, django and django-jython
-    - [ 2204 ] Minimum (core) install will now suport Jython console
+    - [ 2204 ] Minimum (core) install will now support Jython console
     - [ 2184 ] inspect.callargs, including anonymous tuples in function params
     - [ 2100 ] Fix deficiencies in PyUnicode beyond the BMP
     - Fix bug in supporting meta path importers for six
@@ -527,7 +574,7 @@ Jython 2.7b4
   Potentially backwards breaking changes, removing silent errors:
 
     - remove method on proxied List objects now follows Python
-      sematics: a ValueError is raised if the item is not found in the
+      semantics: a ValueError is raised if the item is not found in the
       java.util.List. In the past, Java semantics were used, with a
       boolean returned indicating if the item was removed or
       not. Given how this interacted with Jython, such remove
@@ -553,7 +600,7 @@ Jython 2.7b4
 Jython 2.7b3
   Bugs Fixed
     - [ 2225 ] Jython+django-jython - no module named site
-    - [ 1497 ] ast classes do not have appropiate base classes
+    - [ 1497 ] ast classes do not have appropriate base classes
     - [ 1980 ] ast.Eq, ast.Gt, ast.GtE, ast.In, ast.Is, ast.IsNot, ast.Lt, ast.LtE, ast.NotEq and ast.NotIn should be subclasses of ast.cmpop
     - [ 1981 ] ast.And and ast.Or should be subclasses of ast.boolop
     - [ 2130 ] Fix max such that any raised ValueError uses the correct error message text
@@ -562,7 +609,7 @@ Jython 2.7b3
     - [ 2178 ] Update Apache Commons Compression to 1.8.1 for jar-complete builds
     - [ 2176 ] Fix bz2.BZ2File.read so it reads the number of requested bytes
     - [ 2028 ] Implement unicode._formatter_parser and unicode._formatter_parser
-    - [ 1747 ] Synchonize runClosers upon shutdown
+    - [ 1747 ] Synchronize runClosers upon shutdown
     - [ 1898 ] Support subprocess termination vs terminate/kill methods
     - [ 2096 ] Fix subprocess construction such that handles are inherited if not set
     - [ 2123 ] Preserve original name of console encoding
@@ -719,7 +766,7 @@ Jython 2.5.3b2
 
 Jython 2.5.3b1
   Bugs Fixed
-    - [ 1835 ] s/occured/occurred/ :)
+    - [ 1835 ] Fix typo: occurred
     - [ 1727 ] Error in Jython 2.5.2 with os.stat and varargs
     - [ 1735 ] return type of os.read is unicode, not str
     - [ 1755 ] os.utime('/tmp/nonexistent-file', None) fails to raise OSError
@@ -863,7 +910,7 @@ Jython 2.5.2b1
     - [ 1278 ] socket.py error wording nitpick
     - [ 1249 ] Trace function is not called with an exception event exactly when the exception occurs
     - [ 1282 ] Java serialization problem
-    - [ 1289 ] os.path.isdir(path) return 0 istead of False
+    - [ 1289 ] os.path.isdir(path) return 0 instead of False
     - [ 1290 ] 600x slower network download speed with urllib.urlretrieve() or urllib2.urlopen() compared to CPython
     - [ 1299 ] NullPointerException without any clues
     - [ 1277 ] jython applets & jythonc
@@ -933,7 +980,7 @@ Jython 2.5.1rc1
     - [ 1366 ] parsing of lamda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
-    - [ 1381 ] Redundant declarations of interface implementation hides overriden methods
+    - [ 1381 ] Redundant declarations of interface implementation hides overridden methods
     - [ 1189 ] MD5 hash is incorrectly calculated when string contains non-latin chars and using python md5 lib
     - [ 1802339 ] Problem printing unicode when stdout intercepted
     - [ 1145 ] Jython 2.5 compatibility problem with JSR 223
@@ -976,7 +1023,7 @@ Jython 2.5.0 rc4
     recompiling due to stale bytecode
     - Fixed minor short term memory leaks in functions on some lists allocated
     inline
-    - Updated imp.APIVersion to 23 as some compiler changes occured since the
+    - Updated imp.APIVersion to 23 as some compiler changes occurred since the
     last update.
 
 Jython 2.5.0 rc3
@@ -988,7 +1035,7 @@ Jython 2.5.0 rc3
 Jython 2.5.0 a0 - rc2
   Bugs fixed (new numbering due to move to Roundup)
     - [ 1188 ] Patch against trunk to handle SecurityExceptions
-    - [ 1271 ] Bean property accessors in derived class overide methods in base class
+    - [ 1271 ] Bean property accessors in derived class override methods in base class
     - [ 1264 ] 'is not' test exhibits incorrect behaviour when wrapping Java objects
     - [ 1295 ] Setting a write-only bean property causes a NPE
     - [ 1272 ] ASTList ClassCastException
@@ -1004,7 +1051,7 @@ Jython 2.5.0 a0 - rc2
     - [ 1192 ] deserialization of Jython classes extending Java classes fails when called from Java
     - [ 1243 ] Running scripts from standalone jar with __run__.py broken
     - [ 1237 ] Asnycore does not seem to work in Jython 2.5 (b0 or b1)
-    - [ 1257 ] Pickling (protocol 2) doesn't use overriden itervalues() on dict-derived classes
+    - [ 1257 ] Pickling (protocol 2) doesn't use overridden itervalues() on dict-derived classes
     - [ 1245 ] modjy passes HTTP headers as unicode objects to the WSGI app
     - [ 1258 ] select() semantics differ from CPython, causing pydoc HTTPd to fail
     - [ 1043 ] Special broadcast host address <broadcast> is not supported.
@@ -1016,7 +1063,7 @@ Jython 2.5.0 a0 - rc2
     - [ 1230 ] importing with '*' from java packages does not work with 2.5b1
     - [ 1242 ] Tuples allow member assignment
     - [ 1239 ] Package scanning seems to depend on import order in jython-2.5b1
-    - [ 1235 ] java.awt.Frame - problem w/ attibutes
+    - [ 1235 ] java.awt.Frame - problem w/ attributes
     - [ 1240 ] Can't import _jython, but it's listed in the built-in modules
     - [ 1217 ] decompressing a malformed stream with zlib results in a java.util.zip.DataFormatException instead of a zlib.error
     - [ 1227 ] The cStringIO.StringIO.write implementation does not handle write/seek/write's correctly.
@@ -1171,7 +1218,7 @@ Jython 2.5.0 a0 - rc2
     - [ 1039 ] AttributeError message on type instances doesn't match the CPython message
     - [ 1048 ] List Comprehension in finally throws NPE
     - [ 1037 ] float(None) throws AttributeError instead of TypeError
-    - [ 1814929 ] Patch for [ 1814904 ] dict.update() doesnt accept arguments
+    - [ 1814929 ] Patch for [ 1814904 ] dict.update() doesn't accept arguments
     - [ 1814904 ] dict.update() doent accept the same arguments as constructor
     - [ 947306 ] 2.3a0 bug in weakref.WeakValueDictionary
     - [ 1016 ] Support socket.TCP_NODELAY
@@ -1189,7 +1236,7 @@ Jython 2.5.0 a0 - rc2
     - [ 1768979 ] hasattr, getattr allow unicode identifiers
     - [ 1780153 ] Fix for [ 1768075 ] %c formats values outside of the
     - [ 1768075 ] %c formats values outside of the size of a single char
-    - [ 1803425 ] new builtin funcion :- sorted() - a new builtin sorted() act
+    - [ 1803425 ] new builtin function :- sorted() - a new builtin sorted() act
     - [ 1758282 ] complex missing __coerce__
     - [ 1777684 ] int and long types are missing __coerce__
     - [ 1785415 ] patch for : [ 1777684 ] int and long types are missing __coe
@@ -1342,7 +1389,7 @@ Jython 2.2.1 rc2
 Jython 2.2.1 rc1
   Bugs fixed
     - Reading and writing on files would run data through the JVM's default charset
-    - Include the row number where an exception occured while using a zxJDBC cursor
+    - Include the row number where an exception occurred while using a zxJDBC cursor
     - [ 1766527 ] in keyword doesn't work on os.environ
     - [ 1767194 ] xmllib applies default namespace to attributes incorrectly
     - [ 1768074 ] str.replace doesn't handle an empty string to be replaced
@@ -1440,7 +1487,7 @@ Jython 2.2 beta2
     - [ 1699556 ] SAXException descends from Java's Exception instead of Python's
     - [ 1603686 ] Unmarshaling long-error
     - [ 1230674 ] eval with from future does not work through import
-    - [ 663592 ] Problems calling an overriden class in the constructor
+    - [ 663592 ] Problems calling an overridden class in the constructor
     - [ 448398 ] open('test.txt', 'w').write('test') fails
     - [ 1671373 ] A "$_PyInner.class" file in a package causes import to fail
     - [ 1671431 ] dir function does not work with database connection object
@@ -1461,7 +1508,7 @@ Jython 2.2 beta1
     - new-style classes and their instances are Java serializable
     - most new-style builtin types can be pickleds
     - __slots__ for new-style classes
-    - xml modules from pyxml readded
+    - xml modules from pyxml re-added
     - comparison operations between subclasses of
         builtin types tries the subclass first even if it's on the right side 
   Bugs fixed.
@@ -1725,7 +1772,7 @@ Jython 2.2 beta1
 17-Jan-2001 Jython 2.0 final release
 
   Bug fixes.
-   - Install the correct image for the local documention.
+   - Install the correct image for the local documentation.
    - Added os.linesep field.
 
 15-Jan-2001 Jython 2.0 release candidate 1
@@ -1745,7 +1792,7 @@ Jython 2.2 beta1
 
   Bug fixes.
    - Fixed innerclass names with '$' #127200
-   - Fixed a bug where final methods were overriden in proxy #127201.
+   - Fixed a bug where final methods were overridden in proxy #127201.
    - Fixed a bug in exec which allow a fileobject to be passed in.
      Thanks to Brian Zimmer for the patch.
 
@@ -1760,7 +1807,7 @@ Jython 2.2 beta1
   Bug fixes.
     - Fixed a NPE when a class is defined in non-module namespace.
     - Fixed a compilation problem when using JDK1.2.x
-    - The installer now creates a useable Uninstall.class.
+    - The installer now creates a usable Uninstall.class.
 
 25-Dec-2000 Jython 2.0 alpha 3
 
@@ -1787,7 +1834,7 @@ Jython 2.2 beta1
       Long running applications that unloads classes can avoid a
       memory leak by setting the property to "weak" or "soft".
       That will use a table implementation which use weak or soft
-      refrences.
+      references.
     - Use a SecureClassLoader for loading compiled python modules.
       This should allow jython to be used with the java plugin and
       its fine grained security.

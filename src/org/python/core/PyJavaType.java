@@ -2,9 +2,6 @@
 // Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
-import org.python.core.util.StringUtil;
-import org.python.util.Generic;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,15 +34,20 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+import org.python.core.util.StringUtil;
+import org.python.util.Generic;
+
 public class PyJavaType extends PyType {
 
     private final static Class<?>[] OO = {PyObject.class, PyObject.class};
+    private static final String CORE_PY = "org.python.core.Py";
+    private static final int CORE_PY_LENGTH = CORE_PY.length();
 
     // @formatter:off
     /** Deprecated methods in java.awt.* that have bean property equivalents we prefer. */
@@ -374,8 +376,8 @@ public class PyJavaType extends PyType {
         name = forClass.getName();
 
         // Strip the java fully qualified class name from Py classes in core
-        if (name.startsWith("org.python.core.Py")) {
-            name = name.substring("org.python.core.Py".length()).toLowerCase();
+        if (name.startsWith(CORE_PY)) {
+            name = name.substring(CORE_PY_LENGTH).toLowerCase(Locale.ROOT);
         }
         dict = new PyStringMap();
 

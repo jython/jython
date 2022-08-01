@@ -432,7 +432,7 @@ public class cmath {
              * Normal case, without risk of overflow. The basic expression is z =
              * 0.5*ln((1+w)/(1-w)), which for positive u we rearrange as 0.5*ln(1+2w/(1-w)) and for
              * negative u as -0.5*ln(1-2w/(1+w)). By use of absu, we reduce the difference between
-             * the expressions fo u>=0 and u<0 to a sign transfer.
+             * the expressions for u>=0 and u<0 to a sign transfer.
              */
             double lmu = (1. - absu), lpu = (1. + absu), v2 = v * v;
             double d = lmu * lmu + v2;

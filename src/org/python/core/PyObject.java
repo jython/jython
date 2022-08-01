@@ -228,7 +228,7 @@ public class PyObject implements Serializable {
      */
     @ExposedMethod(names = "__str__", doc = BuiltinDocs.object___str___doc)
     public PyString __repr__() {
-        return new PyString(toString());
+        return Py.newStringOrUnicode(toString());
     }
 
     @Override
@@ -4123,7 +4123,7 @@ public class PyObject implements Serializable {
     }
 
     /**
-     * Convert this object longo an long. Throws a PyException on failure.
+     * Convert this object into a long. Throws a PyException on failure.
      *
      * @return an long value
      */

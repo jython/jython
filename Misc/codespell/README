@@ -1,0 +1,35 @@
+Files in this folder support use of codespell [1], a utility that looks
+for common misspellings in files. You can use it in the development
+environment (pip install codespell to a venv) or from the CI. Typical
+usage is:
+
+    codespell --count --ignore-words-list="sur,statics" \
+        NEWS README.md README.txt LICENSE
+
+The --ignore-words-list option *removes* matching entries from the
+dictionary of misspellings codespell attempts to correct.
+
+When let loose on the code base, codespell finds a lot of the mistakes
+in our javadoc and comments. The false alarm rate is low, but on a
+large body of code, high enough to drown out the useful reports. It is
+always necessary to prepare it with a list of known exceptions for the
+sub-set of the code base being inspected, e.g.:
+
+    codespell --count --ignore-words=Misc/codespell/Lib.ignore Lib
+    codespell --count --ignore-words=Misc/codespell/src.ignore src
+
+The --ignore-words option *removes* matching entries from the
+dictionary used for correction: one word per line in the file named.
+The idea is to use a different one for each source set.
+
+File here named *.ignore are intended (for now) for use interactively
+ when checking a specified subset of source.
+
+words.ignore    : words in our text files
+Lib.ignore      : identifiers etc. in our Python Lib
+src.ignore      : identifiers etc. in our main Java source
+
+
+References:
+
+[1] https://pypi.org/project/codespell

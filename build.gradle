@@ -45,7 +45,7 @@ import java.text.SimpleDateFormat
 // Versions are specified in this grammar:
 // <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( - <word> )?
 
-version = '2.7.3a1'
+version = '2.7.3b1'
 
 // Valid examples (please preserve in comments):
 //version = '2.7.2a2'
@@ -60,11 +60,9 @@ group = 'org.python'
 // ---------------- Miscellaneous configuration --------------------------------
 
 /*
- * We support Java 8 onwards officially, up to v2.7.2, but retain the option of
- * compiling for Java 7 (in v2.7.2) by maintaining compatibility in the code
- * base and in the choice of JARs.
+ * We support Java 8 onwards.
  */
-sourceCompatibility = '1.7' // Make both 1.8 after 2.7.2 released
+sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 project.compileJava.options.debug = true
@@ -159,42 +157,44 @@ dependencies {
 
     implementation 'org.apache.commons:commons-compress:1.21'
 
-    implementation 'org.bouncycastle:bcpkix-jdk15on:1.62'
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.62'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.71'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.71'
 
-    implementation 'org.ow2.asm:asm:7.1'
-    implementation 'org.ow2.asm:asm-commons:7.1'
-    implementation 'org.ow2.asm:asm-util:7.1'
+    implementation 'org.ow2.asm:asm:9.3'
+    implementation 'org.ow2.asm:asm-commons:9.3'
+    implementation 'org.ow2.asm:asm-util:9.3'
 
-    // The Android Guava and "failureaccess" are necessary to support Java 7.
-    implementation 'com.google.guava:guava:28.0-android'
-    implementation 'com.google.guava:failureaccess:1.0.1'
-    // Swap for regular Guava at Java 8.
-
-    implementation 'com.ibm.icu:icu4j:59.1'
+    implementation 'com.google.guava:guava:31.0.1-jre'
+ 
+    implementation 'com.ibm.icu:icu4j:71.1'
 
     implementation 'com.carrotsearch:java-sizeof:0.0.5'
 
-    implementation 'com.github.jnr:jffi:1.2.20'
-    implementation 'com.github.jnr:jnr-netdb:1.1.6'
-    implementation 'com.github.jnr:jnr-ffi:2.1.10'
-    implementation 'com.github.jnr:jnr-posix:3.0.50'
-    implementation 'com.github.jnr:jnr-constants:0.9.12'
+    implementation 'com.github.jnr:jffi:1.3.9'
+    implementation 'com.github.jnr:jnr-constants:0.10.3'
+    implementation 'com.github.jnr:jnr-ffi:2.2.12'
+    implementation 'com.github.jnr:jnr-netdb:1.2.0'
+    implementation 'com.github.jnr:jnr-posix:3.1.15'
 
     implementation 'jline:jline:2.14.5'
 
-    implementation 'io.netty:netty-buffer:4.1.45.Final'
-    implementation 'io.netty:netty-codec:4.1.45.Final'
-    implementation 'io.netty:netty-common:4.1.45.Final'
-    implementation 'io.netty:netty-handler:4.1.45.Final'
-    implementation 'io.netty:netty-resolver:4.1.45.Final'
-    implementation 'io.netty:netty-transport:4.1.45.Final'
+    implementation 'io.netty:netty-buffer:4.1.73.Final'
+    implementation 'io.netty:netty-codec:4.1.73.Final'
+    implementation 'io.netty:netty-common:4.1.73.Final'
+    implementation 'io.netty:netty-handler:4.1.73.Final'
+    implementation 'io.netty:netty-resolver:4.1.73.Final'
+    implementation 'io.netty:netty-transport:4.1.73.Final'
 
     // Used implicitly in the Ant build, must be explicit here
-    implementation 'org.apache.ant:ant:1.9.7'
+    implementation 'org.apache.ant:ant:1.10.12'
 
     // Pin to 4.10 until dependency on hamcrest classes resolved.
     testImplementation 'junit:junit:4.10'
+
+    // We choose only to cite these as only used by javadoc.
+    // They are proprietary and necessary only if certain modules are used.
+    compileOnly 'com.ibm.informix:jdbc:4.50.8'
+    compileOnly 'com.oracle.database.jdbc:ojdbc8:19.14.0.0'
 }
 
 
@@ -217,6 +217,7 @@ processResources {
     from(file('src')) {
         include 'META-INF/**'
         include 'org/python/modules/ucnhash.dat'
+        include 'com/ziclix/python/sql/resource/zxJDBCMessages.properties'
     }
 }
 
@@ -320,7 +321,7 @@ task generateVersionInfo(
          * those used by CPython to create constants configure.ac, but do not
          * correspond very well to their names.
          */
-        
+
         // Not much like a branch. Used only if git_tag is blank.
         def branch = 'git name-rev --name-only HEAD'.execute().text.split('\n', 2)[0]
         property('jython.build.git_branch', branch)
@@ -699,6 +700,7 @@ task testJar(type: Jar) {
 javadoc {
     options.encoding = 'UTF-8'
     source = fileTree(dir: 'src', include: '**/*.java')
+    mustRunAfter(pycompile)
 }
 
 // ---------------- Publication ------------------------------------------------
@@ -746,22 +748,21 @@ publishing {
                     'language Python written in 100% Pure Java, and seamlessly integrated with\n' +
                     'the Java platform. It thus allows you to run Python on any Java platform.'
                 url = 'https://www.jython.org/'
+                inceptionYear = '1997'
+
+                organization {
+                    name = 'Python Software Foundation'
+                    url = 'https://www.python.org'
+                }
 
                 // We use the PSF 2.0, but only most recently, and actually a bundle.
                 licenses {
                     license {
                         name = 'Jython Software License'
-                        // Not actually the license URL, but linked from here.
-                        url = 'https://www.jython.org/'
+                        // Link to a stable version (defined by release tag in repo).
+                        url = 'https://raw.githubusercontent.com/jython/jython/v' + project.version + '/LICENSE.txt'
                         distribution = 'repo'
                     }
-                }
-
-                // Point to Git repositories hosted on GitHub.
-                scm {
-                    connection = 'scm:git:https://github.com/jython/jython.git'
-                    developerConnection = 'scm:git:ssh://git@github.com:jython/jython.git'
-                    url = 'https://github.com/jython/jython'
                 }
 
                 // Could list us all, but why not just the list for now?
@@ -771,6 +772,29 @@ publishing {
                         name = 'Jython Developers'
                         email = 'jython-dev@lists.sourceforge.net'
                     }
+                }
+
+                mailingLists {
+                    mailingList {
+                        name = 'Jython Users'
+                        post = 'jython-users@lists.sourceforge.net'
+                    }
+                    mailingList {
+                        name = 'Jython Developers'
+                        post = 'jython-dev@lists.sourceforge.net'
+                    }
+                }
+
+                // Point to Git repositories hosted on GitHub.
+                scm {
+                    connection = 'scm:git:https://github.com/jython/jython.git'
+                    developerConnection = 'scm:git:git@github.com:jython/jython.git'
+                    url = 'https://github.com/jython/jython'
+                }
+
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/jython/jython/issues'
                 }
             }
         }

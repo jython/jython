@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,6 +16,7 @@ import java.util.logging.Logger;
 
 import org.python.compiler.Module;
 import org.python.core.util.FileUtil;
+import org.python.core.util.LimitedCache;
 import org.python.core.util.PlatformUtil;
 
 /**
@@ -31,7 +33,7 @@ public class imp {
 
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
-    private static final int APIVersion = 38;
+    private static final int APIVersion = 39;
 
     public static final int NO_MTIME = -1;
 
@@ -87,7 +89,7 @@ public class imp {
     }
 
     /** A non-empty fromlist for __import__'ing sub-modules. */
-    private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
+    private static final PyObject nonEmptyFromlist = new PyTuple(PyString.fromInterned("__doc__"));
 
     public static ClassLoader getSyspathJavaLoader() {
         return Py.getSystemState().getSyspathJavaLoader();
@@ -875,8 +877,8 @@ public class imp {
 
                 // Check the directory name is ok according to case-matching option and platform.
                 if (caseok(dir, name)) {
-                    haveSource = sourceFile.isFile();
-                    haveCompiled = compiledFile.isFile();
+                    haveSource = sourceFile.isFile() && Files.isReadable(sourceFile.toPath());
+                    haveCompiled = compiledFile.isFile() && Files.isReadable(compiledFile.toPath());
                 }
 
                 if (haveSource || haveCompiled) {
@@ -907,9 +909,9 @@ public class imp {
                 compiledFile = new File(dirName, compiledName); // location/name$py.class
                 displayCompiledName = new File(displayLocation, compiledName).getPath();
 
-                // Check file names exist and ok according to case-matching option and platform.
-                haveSource = sourceFile.isFile() && caseok(sourceFile, sourceName);
-                haveCompiled = compiledFile.isFile() && caseok(compiledFile, compiledName);
+                // Check file names exist (and readable) and ok according to case-matching option and platform.
+                haveSource = sourceFile.isFile() && caseok(sourceFile, sourceName) && Files.isReadable(sourceFile.toPath());
+                haveCompiled = compiledFile.isFile() && caseok(compiledFile, compiledName) && Files.isReadable(compiledFile.toPath());
             }
 
             /*
@@ -1399,6 +1401,15 @@ public class imp {
     }
 
     /**
+     * This cache supports {@link #fileSystemDecode(PyObject)} and
+     * {@link #fileSystemDecode(PyObject, boolean)}. Observation shows the import mechanism converts
+     * the same file name hundreds of times during any use of Jython, so we use this to remember the
+     * conversions of recent file names.
+     */
+    // 20 is plenty
+    private static LimitedCache<PyObject, String> fileSystemDecodeCache = new LimitedCache<>(20);
+
+    /**
      * A wrapper for {@link Py#fileSystemDecode(PyObject)} for <b>project internal use</b> within
      * the import mechanism to convert decoding errors that occur during import to either
      * {@code null} or {@link Py#ImportError(String)} calls (and a log message), which usually
@@ -1410,7 +1421,12 @@ public class imp {
      */
     public static String fileSystemDecode(PyObject p, boolean raiseImportError) {
         try {
-            return Py.fileSystemDecode(p);
+            String decoded = fileSystemDecodeCache.get(p);
+            if (decoded == null) {
+                decoded = Py.fileSystemDecode(p);
+                fileSystemDecodeCache.add(p, decoded);
+            }
+            return decoded;
         } catch (PyException e) {
             if (e.match(Py.UnicodeDecodeError)) {
                 // p is bytes we cannot convert to a String using the FS encoding

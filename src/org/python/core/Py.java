@@ -28,8 +28,6 @@ import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.posix.PosixModule;
 
-import com.google.common.base.CharMatcher;
-
 import jline.console.UserInterruptException;
 import jnr.constants.Constant;
 import jnr.constants.platform.Errno;
@@ -82,15 +80,15 @@ public final class Py extends PrePy {
     /** The Python boolean True **/
     public final static PyBoolean True = new PyBoolean(true);
     /** A zero-length Python byte string **/
-    public final static PyString EmptyString = new PyString("");
+    public final static PyString EmptyString = PyString.fromInterned("");
     /** A zero-length Python Unicode string **/
     public final static PyUnicode EmptyUnicode = new PyUnicode("");
     /** A Python string containing '\n' **/
-    public final static PyString Newline = new PyString("\n");
+    public final static PyString Newline = PyString.fromInterned("\n");
     /** A Python unicode string containing '\n' **/
     public final static PyUnicode UnicodeNewline = new PyUnicode("\n");
     /** A Python string containing ' ' **/
-    public final static PyString Space = new PyString(" ");
+    public final static PyString Space = PyString.fromInterned(" ");
     /** A Python unicode string containing ' ' **/
     public final static PyUnicode UnicodeSpace = new PyUnicode(" ");
     /** Set if the type object is dynamically allocated */
@@ -639,8 +637,26 @@ public final class Py extends PrePy {
         return makeCharacter(c);
     }
 
+    /**
+     * Create a {@link PyString} from a Java {@code String}. Thethe character codes must all be all
+     * &lt; 256. (This is checked.)
+     *
+     * @param s character codes are all &lt; 256.
+     * @return a new {@code PyString}
+     */
     public static PyString newString(String s) {
-        return new PyString(s);
+        return s.length() == 0 ? Py.EmptyString : new PyString(s);
+    }
+
+    /**
+     * Create a {@link PyString} from a Java {@code String} where the caller guarantees that the
+     * character codes are all &lt; 256. (This is <b>not</b> checked.)
+     *
+     * @param s character codes are all &lt; 256.
+     * @return a new {@code PyString}
+     */
+    static PyString newBytes(String s) {
+        return s.length() == 0 ? Py.EmptyString : new PyString(s, true);
     }
 
     /**
@@ -667,19 +683,19 @@ public final class Py extends PrePy {
      *         <code>s</code>.
      */
     public static PyString newStringOrUnicode(PyObject precedent, String s) {
-        if (!(precedent instanceof PyUnicode) && CharMatcher.ascii().matchesAllOf(s)) {
-            return Py.newString(s);
+        if (!(precedent instanceof PyUnicode) && PyString.charsFitWidth(s, 7)) {
+            return Py.newBytes(s);
         } else {
             return Py.newUnicode(s);
         }
     }
 
     public static PyString newStringUTF8(String s) {
-        if (CharMatcher.ascii().matchesAllOf(s)) {
+        if (PyString.charsFitWidth(s, 7)) {
             // ascii of course is a subset of UTF-8
-            return Py.newString(s);
+            return Py.newBytes(s);
         } else {
-            return Py.newString(codecs.PyUnicode_EncodeUTF8(s, null));
+            return Py.newBytes(codecs.PyUnicode_EncodeUTF8(s, null));
         }
     }
 
@@ -697,8 +713,8 @@ public final class Py extends PrePy {
      */
     public static String fileSystemDecode(PyString filename) {
         String s = filename.getString();
-        if (filename instanceof PyUnicode || CharMatcher.ascii().matchesAllOf(s)) {
-            // Already encoded or usable as ASCII
+        if (filename instanceof PyUnicode || PyString.charsFitWidth(s, 7)) {
+            // Already decoded or bytes usable as ASCII
             return s;
         } else {
             // It's bytes, so must decode properly
@@ -741,13 +757,13 @@ public final class Py extends PrePy {
      * @return encoded bytes version of path
      */
     public static PyString fileSystemEncode(String filename) {
-        if (CharMatcher.ascii().matchesAllOf(filename)) {
+        if (PyString.charsFitWidth(filename, 7)) {
             // Just wrap it as US-ASCII is a subset of the file system encoding
-            return Py.newString(filename);
+            return Py.newBytes(filename);
         } else {
             // It's non just US-ASCII, so must encode properly
             assert "utf-8".equals(PySystemState.FILE_SYSTEM_ENCODING.toString());
-            return Py.newString(codecs.PyUnicode_EncodeUTF8(filename, null));
+            return Py.newBytes(codecs.PyUnicode_EncodeUTF8(filename, null));
         }
     }
 
@@ -2024,6 +2040,7 @@ public final class Py extends PrePy {
         }
     }
 
+    /** Table used by {@link #makeCharacter(char)} to intern single character strings. */
     private final static PyString[] letters = new PyString[256];
 
     static {
@@ -2037,7 +2054,7 @@ public final class Py extends PrePy {
     }
 
     public static final PyString makeCharacter(char c) {
-        if (c <= 255) {
+        if (c < 256) {
             return letters[c];
         } else {
             // This will throw IllegalArgumentException since non-byte value

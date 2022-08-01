@@ -46,17 +46,28 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     // for PyJavaClass.init()
     public PyString() {
-        this("", true);
+        this(TYPE, "", true);
     }
 
     protected PyString(PyType subType, String string, boolean isBytes) {
         super(subType);
         if (string == null) {
             throw new IllegalArgumentException("Cannot create PyString from null");
-        } else if (!isBytes && !isBytes(string)) {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
+        } else if (!isBytes && !charsFitWidth(string, 8)) {
+            throw new IllegalArgumentException(nonByteStringMsg(string));
         }
         this.string = string;
+    }
+
+    /**
+     * Create the dreaded "non-byte value" error message.
+     *
+     * @param s problematic string
+     * @return the message
+     */
+    private static String nonByteStringMsg(String s) {
+        return String.format("Cannot create PyString with non-byte value: %.500s",
+                encode_UnicodeEscape(s, true));
     }
 
     /**
@@ -75,7 +86,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     public PyString(char c) {
-        this(TYPE, String.valueOf(c));
+        this(TYPE, String.valueOf(c), c < 256);
     }
 
     PyString(StringBuilder buffer) {
@@ -83,7 +94,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
     }
 
     PyString(PyBuffer buffer) {
-        this(TYPE, buffer.toString());
+        this(TYPE, buffer.toString(), true);
     }
 
     /**
@@ -94,55 +105,64 @@ public class PyString extends PyBaseString implements BufferProtocol {
      * @param string a Java String to be wrapped (not null)
      * @param isBytes true if the client guarantees we are dealing with bytes
      */
-    private PyString(String string, boolean isBytes) {
-        super(TYPE);
-        if (isBytes || isBytes(string)) {
-            this.string = string;
-        } else {
-            throw new IllegalArgumentException("Cannot create PyString with non-byte value");
-        }
+    PyString(String string, boolean isBytes) {
+        this(TYPE, string, isBytes);
     }
 
     /**
-     * Determine whether a string consists entirely of characters in the range 0 to 255. Only such
-     * characters are allowed in the <code>PyString</code> (<code>str</code>) type, when it is not a
-     * {@link PyUnicode}.
+     * Determine whether a Java {@code String} consists entirely of characters in the range 0 to
+     * 2<sup>width</sup>-1. We use this to test for "byte-like" or ASCII.
      *
-     * @return true if and only if every character has a code less than 256
+     * @param s string to test
+     * @param width number of bits within which each character must fit (<16)
+     * @return true if and only if every character has a code less than 2^width
      */
-    private static boolean isBytes(String s) {
-        int k = s.length();
-        if (k == 0) {
+    static boolean charsFitWidth(String s, int width) {
+
+        final int N = s.length();
+
+        if (N == 0) {
             return true;
+
         } else {
-            // Bitwise-or the character codes together in order to test once.
-            char c = 0;
-            // Blocks of 8 to reduce loop tests
-            while (k > 8) {
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
-                c |= s.charAt(--k);
+            // A pointer into the string and the logical-or of characters so far
+            int p = 0, c = 0;
+            // We work in blocks of 8 to reduce loop tests.
+            int M = N - (N % 8), W = 1 << width;
+
+            // M is a multiple of 8 and M < N.
+            for (; p < M && c < W; p += 8) {
+                // Bitwise-or 8 character codes together in order to test once.
+                c = s.charAt(p) | s.charAt(p + 1) | s.charAt(p + 2) | s.charAt(p + 3)
+                        | s.charAt(p + 4) | s.charAt(p + 5) | s.charAt(p + 6) | s.charAt(p + 7);
             }
-            // Now the rest
-            while (k > 0) {
-                c |= s.charAt(--k);
+
+            if (c < W) {
+                // Scan the rest, fewer than 8, from M to N-1
+                for (; p < N; p++) {
+                    c |= s.charAt(p);
+                }
+                // Test is we reached the end with every character less than W.
+                return c < W && p == N;
+            } else {
+                // Blocks of 8 loop already gave the answer.
+                return false;
             }
-            // We require there to be no bits set from 0x100 upwards
-            return c < 0x100;
         }
     }
 
     /**
-     * Creates a PyString from an already interned String. Just means it won't be reinterned if used
-     * in a place that requires interned Strings.
+     * Creates a {@code PyString} from an already interned {@code String} representing bytes. The
+     * caller guarantees that the character codes are all &lt; 256. (The method is used frequently
+     * from compiled code, and with identifiers, where this is guaranteed.) Just means it won't be
+     * re-interned if used in a place that requires interned Strings.
+     *
+     * @param interned {@code String} representing bytes
+     * @return {@code PyString} for those bytes
      */
     public static PyString fromInterned(String interned) {
-        PyString str = new PyString(TYPE, interned);
+        assert charsFitWidth(interned, 8);
+        PyString str = new PyString(TYPE, interned, true);
         str.interned = true;
         return str;
     }

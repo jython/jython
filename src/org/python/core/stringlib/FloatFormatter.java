@@ -870,7 +870,7 @@ public class FloatFormatter extends InternalFormat.Formatter {
                 }
 
                 // f is now the number of fractional digits we wish to retain.
-                if (f == 0 && lenPoint > 0) {
+                if (f == 0) {
                     // We will be stripping all the fractional digits. Take the decimal point too.
                     lenPoint = lenFraction = 0;
                     f = -1;

@@ -6,6 +6,8 @@ package org.python.tests;
 public class Visible extends Invisible {
     public int visibleField;
 
+    public int overloadedName; // see SubVisible.overloadedName()
+
     public static final int sharedNameField = VISIBLE_SHARED_NAME_FIELD;
 
     public static int visibleStaticField = PUBLIC_STATIC_FIELD;
@@ -23,8 +25,8 @@ public class Visible extends Invisible {
         this(PUBLIC_FIELD);
     }
 
-    public Visible(int visibileFieldValue) {
-        visibleField = visibileFieldValue;
+    public Visible(int visibleFieldValue) {
+        overloadedName = visibleField = visibleFieldValue;
     }
 
     public int visibleInstance(int input) {
