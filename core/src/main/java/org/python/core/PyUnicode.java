@@ -61,7 +61,8 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /** The type {@code str}. */
     public static final PyType TYPE = PyType.fromSpec( //
-            new PyType.Spec("str", MethodHandles.lookup()).methods(PyUnicodeMethods.class)
+            new PyType.Spec("str", MethodHandles.lookup()) //
+                    .methods(PyUnicodeMethods.class) //
                     .adopt(String.class));
 
     /**
@@ -473,25 +474,25 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
     // Strip methods --------------------------------------------------
 
     /**
-     * Equivalent of Python {@code str.strip()}. Any byte/character matching one of those in
-     * {@code stripChars} will be discarded from either end of this {@code str}. If
-     * {@code stripChars == null}, whitespace will be stripped. If {@code stripChars} is a
-     * {@code PyUnicode}, the result will also be a {@code PyUnicode}.
+     * Python {@code str.strip()}. Any character matching one of those
+     * in {@code chars} will be discarded from either end of this
+     * {@code str}. If {@code chars == None}, whitespace will be
+     * stripped.
      *
-     * @param stripChars characters to strip from either end of this str/bytes, or null
-     * @return a new {@code PyString} (or {@link PyUnicode}), stripped of the specified
-     *         characters/bytes
-     * @throws TypeError on {@code stripChars} type errors
+     * @param chars characters to strip from either end of this
+     *     {@code str}, or {@code None}
+     * @return a new {@code str}, stripped of the specified characters
+     * @throws TypeError on {@code chars} type errors
      */
     /*
     @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
     */
-    Object strip(Object stripChars) throws TypeError {
-        return strip(delegate, stripChars);
+    Object strip(Object chars) throws TypeError {
+        return strip(delegate, chars);
     }
 
-    static Object strip(String self, Object stripChars) throws TypeError {
-        return strip(adapt(self), stripChars);
+    static Object strip(String self, Object chars) throws TypeError {
+        return strip(adapt(self), chars);
     }
 
     /**
@@ -499,27 +500,29 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * the implementation type.
      *
      * @param s representing {@code self}
-     * @param stripChars to remove, or {@code null} or {@code None}
-     * @return the str stripped
-     * @throws Throwable on {@code stripChars} type errors
+     * @param chars to remove, or {@code null} or {@code None}
+     * @return the {@code str} stripped
+     * @throws TypeError on {@code chars} type errors
      */
-    private static Object strip(CodepointDelegate s, Object stripChars)
+    private static Object strip(CodepointDelegate s, Object chars)
             throws TypeError {
-        Set<Integer> p = adaptStripSet("strip", stripChars);
+        Set<Integer> p = adaptStripSet("strip", chars);
         int left, right;
         if (p == null) {
             // Stripping spaces
             right = findRight(s);
-            // If it's all spaces, we can save a job
+            // If it's all spaces, we know left==0
             left = right < 0 ? 0 : findLeft(s);
         } else {
             // Stripping specified characters
             right = findRight(s, p);
-            // If it all matches, we can save a job
+            // If it all matches, we know left==0
             left = right < 0 ? 0 : findLeft(s, p);
         }
-        // Substring from leftmost non-matching character up to and
-        // including the rightmost (or "")
+        /*
+         * Substring from leftmost non-matching character up to and
+         * including the rightmost (or "")
+         */
         PySlice.Indices slice = getSliceIndices(s, left, right + 1);
         return slice.slicelength == 0 ? "" : s.getSlice(slice);
     }
@@ -590,15 +593,24 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return -1;
     }
 
-    /*
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_lstrip_doc)
-    */
-    Object lstrip(Object stripChars) throws TypeError {
-        return lstrip(delegate, stripChars);
+    /**
+     * Python {@code str.lstrip()}. Any character matching one of those
+     * in {@code chars} will be discarded from the left of this
+     * {@code str}. If {@code chars == None}, whitespace will be
+     * stripped.
+     *
+     * @param chars characters to strip from this {@code str}, or
+     *     {@code None}
+     * @return a new {@code str}, left-stripped of the specified
+     *     characters
+     * @throws TypeError on {@code chars} type errors
+     */
+    Object lstrip(Object chars) throws TypeError {
+        return lstrip(delegate, chars);
     }
 
-    static Object lstrip(String self, Object stripChars) throws TypeError {
-        return lstrip(adapt(self), stripChars);
+    static Object lstrip(String self, Object chars) throws TypeError {
+        return lstrip(adapt(self), chars);
     }
 
     /**
@@ -606,13 +618,13 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * of the implementation type.
      *
      * @param s representing {@code self}
-     * @param stripChars to remove, or {@code null} or {@code None}
+     * @param chars to remove, or {@code null} or {@code None}
      * @return the str stripped
-     * @throws TypeError on {@code stripChars} type errors
+     * @throws TypeError on {@code chars} type errors
      */
-    private static Object lstrip(CodepointDelegate s, Object stripChars)
+    private static Object lstrip(CodepointDelegate s, Object chars)
             throws TypeError {
-        Set<Integer> p = adaptStripSet("lstrip", stripChars);
+        Set<Integer> p = adaptStripSet("lstrip", chars);
         int left;
         if (p == null) {
             // Stripping spaces
@@ -621,20 +633,31 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
             // Stripping specified characters
             left = findLeft(s, p);
         }
-        // Substring from this leftmost non-matching character (or "")
+        /*
+         * Substring from this leftmost non-matching character (or "")
+         */
         PySlice.Indices slice = getSliceIndices(s, left, null);
         return s.getSlice(slice);
     }
 
-    /*
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_rstrip_doc)
-    */
-    Object rstrip(Object stripChars) throws TypeError {
-        return rstrip(delegate, stripChars);
+    /**
+     * Python {@code str.rstrip()}. Any character matching one of those
+     * in {@code chars} will be discarded from the right of this
+     * {@code str}. If {@code chars == None}, whitespace will be
+     * stripped.
+     *
+     * @param chars characters to strip from this {@code str}, or
+     *     {@code None}
+     * @return a new {@code str}, right-stripped of the specified
+     *     characters
+     * @throws TypeError on {@code chars} type errors
+     */
+    Object rstrip(Object chars) throws TypeError {
+        return rstrip(delegate, chars);
     }
 
-    static Object rstrip(String self, Object stripChars) throws TypeError {
-        return rstrip(adapt(self), stripChars);
+    static Object rstrip(String self, Object chars) throws TypeError {
+        return rstrip(adapt(self), chars);
     }
 
     /**
@@ -642,13 +665,13 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * of the implementation type.
      *
      * @param s representing {@code self}
-     * @param stripChars to remove, or {@code null} or {@code None}
+     * @param chars to remove, or {@code null} or {@code None}
      * @return the str stripped
-     * @throws TypeError on {@code stripChars} type errors
+     * @throws TypeError on {@code chars} type errors
      */
-    private static Object rstrip(CodepointDelegate s, Object stripChars)
+    private static Object rstrip(CodepointDelegate s, Object chars)
             throws TypeError {
-        Set<Integer> p = adaptStripSet("rstrip", stripChars);
+        Set<Integer> p = adaptStripSet("rstrip", chars);
         int right;
         if (p == null) {
             // Stripping spaces
@@ -657,8 +680,10 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
             // Stripping specified characters
             right = findRight(s, p);
         }
-        // Substring up to and including this rightmost non-matching
-        // character (or "")
+        /*
+         * Substring up to and including this rightmost non-matching
+         * character (or "")
+         */
         PySlice.Indices slice = getSliceIndices(s, null, right + 1);
         return s.getSlice(slice);
     }
@@ -694,6 +719,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * @param start start of slice.
      * @param end end of slice.
      * @return index of {@code sub} in this object or -1 if not found.
+     * @throws TypeError on {@code sub} type errors
      */
     /*
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_find_doc)
@@ -1058,7 +1084,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     private static PyList split(CodepointDelegate s, Object sep,
             int maxsplit) {
-        if (sep == null) {
+        if (sep == null || sep == Py.None) {
             // Split on runs of whitespace
             return splitAtSpaces(s, maxsplit);
         } else if (maxsplit == 0) {
@@ -1275,7 +1301,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     private static PyList rsplit(CodepointDelegate s, Object sep,
             int maxsplit) {
-        if (sep == null) {
+        if (sep == null || sep == Py.None) {
             // Split on runs of whitespace
             return rsplitAtSpaces(s, maxsplit);
         } else if (maxsplit == 0) {
@@ -1625,7 +1651,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         CodepointDelegate p = adaptSub("count", sub);
         PySlice.Indices slice = getSliceIndices(s, start, end);
         if (p.length() == 0)
-            return slice.start;
+            return slice.slicelength + 1;
         else
             return count(s, p, slice);
     }
@@ -2386,14 +2412,14 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
     // Copied from PyString
     /**
      * Helper common to the Python and Java API implementing {@code str.translate} returning a
-     * copy of this string where all characters (bytes) occurring in the argument
+     * copy of this string where all characters  occurring in the argument
      * {@code deletechars} are removed (if it is not {@code null}), and the remaining
      * characters have been mapped through the translation {@code table}, which must be
      * equivalent to a string of length 256 (if it is not {@code null}).
      *
-     * @param table of character (byte) translations (or {@code null})
+     * @param table of character  translations (or {@code null})
      * @param deletechars set of characters to remove (or {@code null})
-     * @return transformed byte string
+     * @return transformed  string
      */
     private final String _translate(String table, String deletechars) {
 
@@ -3115,6 +3141,12 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return new PyUnicode(TYPE, String.format(fmt, args));
     }
 
+    /**
+     * Represent the `str` value in readable form, escaping lone
+     * surrogates. The {@code PyUnicode.toString()} is intended to
+     * produce a readable output, not always the closest Java
+     * {@code String}, for which {@link #asString()} is a better choice.
+     */
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
@@ -3208,8 +3240,15 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         }
     }
 
-    /** @return this {@code PyUnicode} as a Java {@code String} */
-    private String asString() {
+    /**
+     * Convert this {@code PyUnicode} to a Java {@code String} built
+     * from its code point values. If the code point value of a
+     * character in Python is a lone surrogate, it will become that
+     * UTF-16 unit in the result.
+     *
+     * @return this {@code PyUnicode} as a Java {@code String}
+     */
+    String asString() {
         StringBuilder b = new StringBuilder();
         for (int c : delegate) { b.appendCodePoint(c); }
         return b.toString();
