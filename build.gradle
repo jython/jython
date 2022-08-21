@@ -48,6 +48,12 @@ allprojects {
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
         options.debug = true
+
+        // deprecation is noisy
+        options.deprecation = true
+
+        // Use only public API
+        options.compilerArgs.addAll(['--release', '11'])
     }
 
     tasks.withType(Javadoc) {

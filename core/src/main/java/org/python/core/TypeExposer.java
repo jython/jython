@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.python.base.InterpreterError;
+import org.python.core.Exposed.PythonMethod;
+import org.python.core.Exposed.PythonStaticMethod;
 import org.python.core.Operations.BinopGrid;
 import org.python.core.Slot.Signature;
 
@@ -85,12 +87,23 @@ class TypeExposer extends Exposer {
 
         // Iterate over methods looking for those to expose
         for (Method m : defsClass.getDeclaredMethods()) {
+            /*
+             * Note: method annotations (and special names) are not treated as
+             * alternatives, to catch exposure of methods by multiple routes.
+             */
+
+            // Check for instance method
+            PythonMethod pm = m.getDeclaredAnnotation(PythonMethod.class);
+            if (pm != null) { addMethodSpec(m, pm); }
+
+            // Check for static method
+            PythonStaticMethod psm = m.getDeclaredAnnotation(PythonStaticMethod.class);
+            if (psm != null) { addStaticMethodSpec(m, psm); }
+
             // If it has a special method name record that definition.
             String name = m.getName();
             Slot slot = Slot.forMethodName(name);
-            if (slot != null) {
-                addWrapperSpec(m, slot);
-            }
+            if (slot != null) { addWrapperSpec(m, slot); }
         }
     }
 
@@ -142,9 +155,13 @@ class TypeExposer extends Exposer {
         }
 
         @Override
+        public void checkFormation() throws InterpreterError {
+            // XXX Check the signature instead of in createDescr?
+        }
+
+        @Override
         void add(Method method) {
             super.add(method);
-            // XXX Check the signature instead of in createDescr?
         }
 
         @Override

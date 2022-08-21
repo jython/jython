@@ -33,7 +33,7 @@ import org.python.base.MethodKind;
  * positional arguments and their names are essentially those of a
  * {@code code} object ({@link PyCode}). Defaults are provided
  * values that mirror the defaults built into a {@code function}
- * object ({@link PyFunction}).
+ * object ({@code PyFunction}).
  * <p>
  * The most readable way of specifying a parser (although one that
  * is a little costly to construct) is to list the parameters as
