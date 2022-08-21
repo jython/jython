@@ -141,3 +141,12 @@ tasks.withType(Javadoc) {
         "since", "version", "serialData", "see")
 }
 
+
+// Particular things we ask of the compiler in this sub-project.
+// See also ~/build.gradle for tweaks applying to all projects.
+
+tasks.withType(JavaCompile) {
+    // retain parameter names (for use by exposer)
+    options.compilerArgs.add('-parameters')
+}
+
