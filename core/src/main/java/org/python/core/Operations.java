@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -340,6 +340,13 @@ abstract class Operations {
      */
     boolean isDataDescr() { return false; }
 
+    /**
+     * Fast check that the target is a method descriptor.
+     *
+     * @return target is a method descriptor
+     */
+    boolean isMethodDescr() { return false; }
+
     // ---------------------------------------------------------------
 
     /**
@@ -378,6 +385,9 @@ abstract class Operations {
 
         @Override
         PyType uniqueType() { return type; }
+
+        @Override
+        boolean isIntExact() { return type == PyLong.TYPE; }
 
         @Override
         int getIndex() { return index; }
@@ -504,6 +514,9 @@ abstract class Operations {
         PyType uniqueType() {
             throw new IllegalArgumentException("Python type not uniquely defined by Operations");
         }
+
+        @Override
+        boolean isIntExact() { return false; }
 
         @Override
         Class<?> getJavaClass() { return null; }
