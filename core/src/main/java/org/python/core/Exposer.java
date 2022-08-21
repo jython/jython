@@ -347,6 +347,9 @@ abstract class Exposer {
             if (ac == Annotation.class) {
                 // Special methods recognised by name, so no annotation
                 return "special method";
+                // } else if (ac == Getter.class) {
+                // // Since could also be @Setter or @Deleter
+                // return "get-set attribute";
             } else {
                 return ac.getSimpleName();
             }
@@ -606,7 +609,7 @@ abstract class Exposer {
 
         /**
          * Add a method implementation. (A test that the signature is
-         * acceptable follows when we construct the {@code PyMethodDescr}.)
+         * acceptable follows when we construct the {@link PyMethodDescr}.)
          *
          * @param method to add to {@link #methods}
          * @param primary definition is the primary one
@@ -1078,24 +1081,74 @@ abstract class Exposer {
         @Override
         Class<? extends Annotation> annoClass() { return PythonMethod.class; }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * In a type, the attribute must be represented by a descriptor for
+         * the Python method from this specification. This method create a
+         * {@code PyMethodDescr} from the specification.
+         * <p>
+         * Note that a specification describes the methods as declared, and
+         * that there may be any number of them, even if there is only one
+         * implementation of the target type. The specification may
+         * therefore have collected multiple Java definitions of the same
+         * name.
+         *
+         * This method creates a descriptor that matches them to the
+         * accepted implementations of the owning class. The descriptor
+         * returned will contain one method handle for each accepted Java
+         * implementation of the owning Python class, chosen most closely to
+         * match the Java class of {@code self}.
+         *
+         * @param objclass Python type that owns the descriptor
+         * @param lookup authorisation to access members
+         * @return descriptor for access to the method
+         * @throws InterpreterError if the method type is not supported
+         */
         @Override
-        Object asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
-            // TODO Auto-generated method stub
-            return null;
+        PyMethodDescr asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
+
+            ArgParser ap = new ArgParser(name, scopeKind, MethodKind.INSTANCE, varArgsIndex >= 0,
+                    varKeywordsIndex >= 0, posonlyargcount, kwonlyargcount, parameterNames,
+                    regargcount);
+            ap.defaults(defaults).kwdefaults(kwdefaults);
+
+            // Methods have self + this many args:
+            final int L = regargcount;
+
+            /*
+             * There could be any number of candidates in the implementation. An
+             * implementation method "self" could match multiple accepted
+             * implementations of the type (e.g. Number matching Long and
+             * Integer).
+             */
+            LinkedList<MethodHandle> candidates = new LinkedList<>();
+            for (Method m : methods) {
+                // Convert m to a handle (if L args and accessible)
+                try {
+                    MethodHandle mh = lookup.unreflect(m);
+                    if (mh.type().parameterCount() == 1 + L)
+                        addOrdered(candidates, mh);
+                } catch (IllegalAccessException e) {
+                    throw cannotGetHandle(m, e);
+                }
+            }
+
+            return PyMethodDescr.fromParser(objclass, ap, candidates);
         }
     }
 
     /**
      * Specification in which we assemble information about a Python
      * static method in advance of creating a method definition
-     * {@code MethodDef} or method descriptor {@code PyMethodDescr}.
+     * {@code MethodDef} or method descriptor {@link PyMethodDescr}.
      */
     static class StaticMethodSpec extends CallableSpec {
 
         StaticMethodSpec(String name, ScopeKind scopeKind) { super(name, scopeKind); }
 
         @Override
-        Object asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
+        PyJavaMethod asAttribute(PyType objclass, Lookup lookup) {
             // TODO Auto-generated method stub
             return null;
         }

@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
 import org.python.core.PyType.Flag;
+import org.python.core.Slot.Signature;
 
 /**
  * A {@link Descriptor} for a particular definition <b>in Java</b>
@@ -66,6 +67,18 @@ public abstract class PyWrapperDescr extends MethodDescriptor {
         this.slot = slot;
     }
 
+    // Exposed attributes ---------------------------------------------
+
+    //@Getter
+    // Compare CPython wrapperdescr_get_doc in descrobject.c
+    protected Object __doc__() { return PyType.getDocFromInternalDoc(slot.methodName, slot.doc); }
+
+    //@Getter
+    // Compare CPython wrapperdescr_get_text_signature in descrobject.c
+    protected Object __text_signature__() {
+        return PyType.getTextSignatureFromInternalDoc(slot.methodName, slot.doc);
+    }
+
     // Special methods ------------------------------------------------
 
     // Compare CPython wrapperdescr_repr in descrobject.c
@@ -114,7 +127,6 @@ public abstract class PyWrapperDescr extends MethodDescriptor {
      * @throws Throwable from the implementation of the special method
      */
     // Compare CPython wrapperdescr_call in descrobject.c
-    @Override
     public Object __call__(Object[] args, String[] names) throws TypeError, Throwable {
 
         int argc = args.length;
@@ -143,6 +155,39 @@ public abstract class PyWrapperDescr extends MethodDescriptor {
         }
     }
 
+    @Override
+    public Object call(Object[] args, String[] names) throws TypeError, Throwable {
+
+        int n = args.length, m = n - 1;
+
+        if (m < 0) {
+            // Not even one argument
+            throw new TypeError(DESCRIPTOR_NEEDS_ARGUMENT, name, objclass.name);
+        } else {
+            // Split the leading element self from rest of args
+            Object self = args[0], rest[];
+            if (m == 0) {
+                rest = Py.EMPTY_ARRAY;
+            } else {
+                rest = new Object[m];
+                System.arraycopy(args, 1, rest, 0, m);
+            }
+
+            try {
+                // Call this as a method bound to self.
+                Signature sig = slot.signature;
+                MethodHandle wrapped = getWrapped(self.getClass());
+                return sig.callWrapped(wrapped, self, rest, names);
+            } catch (ArgumentError ae) {
+                /*
+                 * Implementations may throw ArgumentError as a simplified encoding
+                 * of a TypeError.
+                 */
+                throw typeError(ae, rest);
+            }
+        }
+    }
+
     /**
      * Invoke the method described by this {@code PyWrapperDescr} the
      * given target {@code self}, and the arguments supplied.
@@ -162,7 +207,7 @@ public abstract class PyWrapperDescr extends MethodDescriptor {
             Slot.Signature sig = slot.signature;
             return sig.callWrapped(wrapped, self, args, names);
         } catch (ArgumentError ae) {
-            throw typeError(ae, args);
+            throw typeError(ae, args, names);
         }
     }
 
@@ -206,7 +251,7 @@ public abstract class PyWrapperDescr extends MethodDescriptor {
 
     /**
      * A {@link PyWrapperDescr} for use when the owning Python type has
-     * multiple accepted implementation.
+     * multiple accepted implementations.
      */
     static class Multiple extends PyWrapperDescr {
 

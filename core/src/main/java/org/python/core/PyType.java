@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -63,7 +63,7 @@ public class PyType extends Operations implements DictPyObject {
                 // PyMemberDescr.class, //
                 // PyGetSetDescr.class, //
                 PyWrapperDescr.class, //
-                // PyMethodDescr.class, //
+                PyMethodDescr.class, //
                 // And sometimes things go wrong :(
                 BaseException.class, //
                 // Types with multiple/adopted implementations
@@ -73,9 +73,7 @@ public class PyType extends Operations implements DictPyObject {
                 PyFloat.class, //
         };
         // Fill the map from the list.
-        for (Class<?> c : bootstrapClasses) {
-            bootstrapTasks.put(c, new BootstrapTask());
-        }
+        for (Class<?> c : bootstrapClasses) { bootstrapTasks.put(c, new BootstrapTask()); }
     }
 
     /** An empty array of type objects */
@@ -423,9 +421,7 @@ public class PyType extends Operations implements DictPyObject {
          */
         static boolean allReady() {
             for (BootstrapTask t : bootstrapTasks.values()) {
-                if (t.spec == null) {
-                    return false;
-                }
+                if (t.spec == null) { return false; }
             }
             return true;
         }
@@ -650,9 +646,7 @@ public class PyType extends Operations implements DictPyObject {
     int indexAccepted(Class<?> c) {
         // Try the non-canonical accepted classes first (if any)
         for (int i = 1; i < acceptedCount; i++) {
-            if (classes[i].isAssignableFrom(c)) {
-                return i;
-            }
+            if (classes[i].isAssignableFrom(c)) { return i; }
         }
         // Try the canonical class last
         return classes[0].isAssignableFrom(c) ? 0 : -1;
@@ -670,9 +664,7 @@ public class PyType extends Operations implements DictPyObject {
     int indexOperand(Class<?> c) {
         // Try the non-canonical known operand classes first (if any)
         for (int i = 1; i < classes.length; i++) {
-            if (classes[i].isAssignableFrom(c)) {
-                return i;
-            }
+            if (classes[i].isAssignableFrom(c)) { return i; }
         }
         // Try the canonical class last
         return classes[0].isAssignableFrom(c) ? 0 : -1;
@@ -688,7 +680,7 @@ public class PyType extends Operations implements DictPyObject {
      * @param o object to test
      * @return {@code true} iff {@code o} is of a sub-type of this type
      */
-    public boolean check(Object o) {
+    boolean check(Object o) {
         PyType t = PyType.of(o);
         return t == this || t.isSubTypeOf(this);
     }
@@ -743,9 +735,7 @@ public class PyType extends Operations implements DictPyObject {
         PyType t = this;
         while (t != b) {
             t = t.base;
-            if (t == null) {
-                return b == OBJECT_TYPE;
-            }
+            if (t == null) { return b == OBJECT_TYPE; }
         }
         return true;
     }
@@ -769,12 +759,31 @@ public class PyType extends Operations implements DictPyObject {
     final boolean isDataDescr() { return flags.contains(Flag.IS_DATA_DESCR); }
 
     /**
+     * Return whether an instance of this type defines {@code __get__}
+     * participates in the optimised call pattern supported by
+     * {@link Opcode#LOAD_METHOD}.
+     *
+     * @return whether a method descriptor
+     */
+    @Override
+    final boolean isMethodDescr() { return flags.contains(Flag.IS_METHOD_DESCR); }
+
+    /**
      * Return whether an instance of this type is a descriptor (defines
      * {@code __get__}).
      *
      * @return whether a descriptor
      */
     final boolean isDescr() { return flags.contains(Flag.IS_DESCR); }
+
+    /**
+     * Return whether this type uses object.__getattribute__ from .
+     *
+     * @return whether a descriptor
+     */
+    final boolean hasGenericGetAttr() {
+        return op_getattribute == PyBaseObject.TYPE.op_getattribute;
+    }
 
     /**
      * Get the {@code __base__} of this type. The {@code __base__} is a
@@ -844,7 +853,7 @@ public class PyType extends Operations implements DictPyObject {
      * @param name to look up, must be exactly a {@code str}
      * @return dictionary entry or null
      */
-    Object lookup(PyUnicode name) { return lookup(name.toString()); }
+    Object lookup(PyUnicode name) { return lookup(name.asString()); }
 
     /**
      * Enumeration of the characteristics of a type. These are the
@@ -876,7 +885,12 @@ public class PyType extends Operations implements DictPyObject {
          * {@code __get__} and at least one of {@code __set__} or
          * {@code __delete__}).
          */
-        IS_DATA_DESCR
+        IS_DATA_DESCR,
+        /**
+         * An object of this type is a method descriptor (participates in an
+         * optimised call pattern supported by {@link Opcode#LOAD_METHOD}).
+         */
+        IS_METHOD_DESCR,
     }
 
     /**
@@ -974,8 +988,11 @@ public class PyType extends Operations implements DictPyObject {
          * @param name of the type
          * @param definingClass in which operations are defined
          * @param lookup authorisation to access {@code implClass}
+         *
+         * @deprecated Use {@link #Spec(String, Lookup)} instead
          */
-        private Spec(String name, Class<?> definingClass, Lookup lookup) {
+        @Deprecated
+        Spec(String name, Class<?> definingClass, Lookup lookup) {
             this.name = name;
             this.definingClass = definingClass;
             this.lookup = lookup;
@@ -1023,7 +1040,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param name of the type
          * @param implClass in which operations are defined
          */
-        Spec(String name, Class<? extends DerivedPyObject> implClass) {
+        public Spec(String name, Class<? extends DerivedPyObject> implClass) {
             this(name, implClass, null);
         }
 
@@ -1042,7 +1059,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param impl replacement canonical implementation class
          * @return {@code this}
          */
-        Spec canonical(Class<?> impl) {
+        public Spec canonical(Class<?> impl) {
             classes.set(0, impl);
             return this;
         }
@@ -1160,9 +1177,7 @@ public class PyType extends Operations implements DictPyObject {
          */
         private int indexOf(Class<?> c) {
             for (int i = classes.size(); --i >= 0;) {
-                if (classes.get(i).isAssignableFrom(c)) {
-                    return i;
-                }
+                if (classes.get(i).isAssignableFrom(c)) { return i; }
             }
             return -1;
         }
@@ -1174,7 +1189,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param base to append to the bases
          * @return {@code this}
          */
-        Spec base(PyType base) {
+        public Spec base(PyType base) {
             if (base == null)
                 throw new InterpreterError("null base specified for %s. (Base not ready?)", name);
             bases.add(base);
@@ -1201,8 +1216,19 @@ public class PyType extends Operations implements DictPyObject {
          * through the Spec and are derived in construction, or as a side
          * effect of setting something else.
          */
-        public Spec flag(Flag f) {
+        Spec flag(Flag f) {
             flags.add(f);
+            return this;
+        }
+
+        /**
+         * Specify a characteristic (type flag), or several, to be added.
+         *
+         * @param f to add to the current flags
+         * @return {@code this}
+         */
+        Spec flag(Flag... f) {
+            for (Flag x : f) { flags.add(x); }
             return this;
         }
 
@@ -1212,6 +1238,8 @@ public class PyType extends Operations implements DictPyObject {
          * @param f to remove from the current flags
          * @return {@code this}
          */
+        // XXX mostly used as flagNot(BASETYPE). Consider specific call.
+        // XXX Consider also reversing that default.
         public Spec flagNot(Flag f) {
             flags.remove(f);
             return this;
@@ -1225,7 +1253,7 @@ public class PyType extends Operations implements DictPyObject {
          * @param metaclass to specify (or null for {@code type}
          * @return {@code this}
          */
-        Spec metaclass(PyType metaclass) {
+        public Spec metaclass(PyType metaclass) {
             this.metaclass = metaclass;
             return this;
         }
@@ -1237,7 +1265,7 @@ public class PyType extends Operations implements DictPyObject {
          *
          * @return the defining class for the type
          */
-        Class<?> definingClass() { return definingClass; }
+        public Class<?> definingClass() { return definingClass; }
 
         /**
          * Set the class additionally defining methods for the type. This
@@ -1315,7 +1343,7 @@ public class PyType extends Operations implements DictPyObject {
          *
          * @return array of the bases of this type
          */
-        PyType[] getBases() {
+        public PyType[] getBases() {
             if (bases.isEmpty()) {
                 /*
                  * No bases specified: that means 'object' is the implicit base,
@@ -1335,7 +1363,7 @@ public class PyType extends Operations implements DictPyObject {
          *
          * @return the proper meta-class
          */
-        PyType getMetaclass() { return metaclass != null ? metaclass : TYPE; }
+        public PyType getMetaclass() { return metaclass != null ? metaclass : TYPE; }
 
         // Something helpful in debugging (__repr__ is different)
         @Override
@@ -1431,8 +1459,9 @@ public class PyType extends Operations implements DictPyObject {
         }
 
         /*
-         * The name wasn't in the type dictionary. We are now left with the
-         * results of look-up on the meta-type.
+         * The name wasn't in the type dictionary. metaAttr is now the
+         * result of look-up on the meta-type: a value, a non-data
+         * descriptor, or null if the attribute was not found.
          */
         if (descrGet != null) {
             // metaAttr may be a non-data descriptor: call __get__.
@@ -1491,9 +1520,7 @@ public class PyType extends Operations implements DictPyObject {
                 // Try descriptor __set__
                 try {
                     metaAttrOps.op_set.invokeExact(metaAttr, (Object)this, value);
-                    if (special) {
-                        updateAfterSetAttr(name);
-                    }
+                    if (special) { updateAfterSetAttr(name); }
                     return;
                 } catch (Slot.EmptyException e) {
                     // We do not catch AttributeError: it's definitive.
@@ -1509,9 +1536,7 @@ public class PyType extends Operations implements DictPyObject {
          */
         // Use the privileged put
         dict.put(name, value);
-        if (special) {
-            updateAfterSetAttr(name);
-        }
+        if (special) { updateAfterSetAttr(name); }
     }
 
     /**
@@ -1544,9 +1569,7 @@ public class PyType extends Operations implements DictPyObject {
                 // Try descriptor __delete__
                 try {
                     metaAttrOps.op_delete.invokeExact(metaAttr, (Object)this);
-                    if (special) {
-                        updateAfterSetAttr(name);
-                    }
+                    if (special) { updateAfterSetAttr(name); }
                     return;
                 } catch (Slot.EmptyException e) {
                     // We do not catch AttributeError: it's definitive.
@@ -1568,9 +1591,7 @@ public class PyType extends Operations implements DictPyObject {
             throw Abstract.noAttributeError(this, name);
         }
 
-        if (special) {
-            updateAfterSetAttr(name);
-        }
+        if (special) { updateAfterSetAttr(name); }
         return;
     }
 
@@ -1616,5 +1637,21 @@ public class PyType extends Operations implements DictPyObject {
         else {
             return bases[0];
         }
+    }
+
+    // Compare CPython _PyType_GetDocFromInternalDoc
+    // in typeobject.c
+    // XXX Consider implementing in ArgParser instead
+    static Object getDocFromInternalDoc(String name, String doc) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    // Compare CPython: PyType_GetTextSignatureFromInternalDoc
+    // in typeobject.c
+    // XXX Consider implementing in ArgParser instead
+    static Object getTextSignatureFromInternalDoc(String name, String doc) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
