@@ -24,6 +24,9 @@ import java.util.stream.StreamSupport;
 
 import org.python.base.InterpreterError;
 import org.python.base.MissingFeature;
+import org.python.core.Exposed.Default;
+import org.python.core.Exposed.Name;
+import org.python.core.Exposed.PythonMethod;
 import org.python.core.PyObjectUtil.NoConversion;
 import org.python.core.PySequence.Delegate;
 import org.python.core.PySlice.Indices;
@@ -484,14 +487,13 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * @return a new {@code str}, stripped of the specified characters
      * @throws TypeError on {@code chars} type errors
      */
-    /*
-    @ExposedMethod(defaults = "null", doc = BuiltinDocs.unicode_strip_doc)
-    */
+    @PythonMethod(primary = false)
     Object strip(Object chars) throws TypeError {
         return strip(delegate, chars);
     }
 
-    static Object strip(String self, Object chars) throws TypeError {
+    @PythonMethod
+    static Object strip(String self, @Default("None") Object chars) throws TypeError {
         return strip(adapt(self), chars);
     }
 
@@ -1071,13 +1073,13 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      *     {@code maxsplit+1} parts) or {@code -1} for all possible.
      * @return list(str) result
      */
-    /*
-    @ExposedMethod(defaults = {"null", "-1"}, doc = BuiltinDocs.unicode_split_doc)
-    */
-    PyList split(Object sep, int maxsplit) {
+    // split(self, /, sep=None, maxsplit=-1)
+    @PythonMethod(positionalOnly = false)
+    PyList split(@Default("None") Object sep, @Default("-1") int maxsplit) {
         return split(delegate, sep, maxsplit);
     }
 
+    @PythonMethod(primary = false)
     static PyList split(String self, Object sep, int maxsplit) {
         return split(adapt(self), sep, maxsplit);
     }
@@ -1727,13 +1729,12 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      *     meaning all of them.
      * @return {@code self} string after replacements.
      */
-    /*
-    @ExposedMethod(defaults = "-1", doc = BuiltinDocs.unicode_replace_doc)
-    */
-    Object replace(Object old, Object rep, int count) {
+    @PythonMethod
+    Object replace(Object old, @Name("new") Object rep, @Default("-1") int count) {
         return replace(delegate, old, rep, count);
     }
 
+    @PythonMethod(primary = false)
     static Object replace(String self, Object old, Object rep, int count) {
         return replace(adapt(self), old, rep, count);
     }
@@ -1921,11 +1922,10 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return mapChars(self, Character::toLowerCase);
     }
 
-    /*
-    @ExposedMethod(doc = BuiltinDocs.unicode_upper_doc)
-    */
+    @PythonMethod
     PyUnicode upper() { return mapChars(Character::toUpperCase); }
 
+    @PythonMethod(primary = false)
     static String upper(String self) {
         return mapChars(self, Character::toUpperCase);
     }
@@ -2533,11 +2533,13 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
         return true;
     }
 
+    @PythonMethod(primary = false)
     public boolean isascii() {
         for (int c : value) { if (c >>> 7 != 0) { return false; } }
         return true;
     }
 
+    @PythonMethod
     public static boolean isascii(String self) {
         // We can test chars since any surrogate will fail.
         return self.chars().dropWhile(c -> c >>> 7 == 0)

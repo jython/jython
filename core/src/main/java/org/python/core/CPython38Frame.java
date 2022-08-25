@@ -160,6 +160,17 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
+                    case Opcode.BUILD_MAP:
+                        // k1 | v1 | ... | kN | vN | -> | map |
+                        // -------------------------^sp -------^sp
+                        // Build dictionary from the N=oparg key-value
+                        // pairs on the stack in order.
+                        oparg |= opword & 0xff;
+                        sp -= oparg * 2;
+                        s[sp] = PyDict.fromKeyValuePairs(s, sp++, oparg);
+                        oparg = 0;
+                        break;
+
                     case Opcode.LOAD_NAME:
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
@@ -178,6 +189,90 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                             }
                         }
                         s[sp++] = v; // PUSH
+                        break;
+
+                    case Opcode.LOAD_ATTR:
+                        // v | -> | v.name |
+                        // ---^sp ----------^sp
+                        name = names[oparg | opword & 0xff];
+                        oparg = 0;
+                        s[sp - 1] = Abstract.getAttr(s[sp - 1], name);
+                        break;
+
+                    case Opcode.LOAD_METHOD:
+                        // Designed to work in tandem with CALL_METHOD.
+                        // If we can bypass temporary bound method:
+                        // obj | -> | desc | self |
+                        // -----^sp ---------------^sp
+                        // Otherwise almost conventional LOAD_ATTR:
+                        // obj | -> | null | meth |
+                        // -----^sp ---------------^sp
+                        name = names[oparg | opword & 0xff];
+                        oparg = 0;
+                        getMethod(s[--sp], name, sp);
+                        sp += 2;
+                        break;
+
+                    case Opcode.CALL_METHOD:
+                        // Designed to work in tandem with LOAD_METHOD.
+                        // If bypassed the method binding:
+                        // desc | self | arg[n] | -> | res |
+                        // ----------------------^sp -------^sp
+                        // Otherwise:
+                        // null | meth | arg[n] | -> | res |
+                        // ----------------------^sp -------^sp
+                        oparg |= opword & 0xff; // = N of args
+                        sp -= oparg + 2;
+                        if (s[sp] != null) {
+                            // We bypassed the method binding. Stack:
+                            // desc | self | arg[n] |
+                            // ^sp
+                            // call desc(self, arg1 ... argN)
+                            s[sp] = Callables.vectorcall(s[sp++], s, sp, oparg + 1);
+                        } else {
+                            // meth is the bound method self.name
+                            // null | meth | arg[n] |
+                            // ^sp
+                            // call meth(arg1 ... argN)
+                            s[sp++] = Callables.vectorcall(s[sp], s, sp + 1, oparg);
+                        }
+                        oparg = 0;
+                        break;
+
+                    case Opcode.CALL_FUNCTION:
+                        // Call with positional args only. Stack:
+                        // f | arg[n] | -> res |
+                        // ------------^sp -----^sp
+                        oparg |= opword & 0xff; // = N of args
+                        sp -= oparg + 1;
+                        s[sp] = Callables.vectorcall(s[sp++], s, sp, oparg);
+                        oparg = 0;
+                        break;
+
+                    case Opcode.CALL_FUNCTION_KW: {
+                        // Call with n positional & m by kw. Stack:
+                        // f | arg[n] | kwnames | -> res |
+                        // ----------------------^sp -----^sp
+                        // knames is a tuple of m names
+                        assert PyTuple.TYPE.checkExact(s[sp - 1]);
+                        PyTuple kwnames = (PyTuple)s[sp - 1];
+                        oparg |= opword & 0xff; // = n+m
+                        assert kwnames.size() <= oparg;
+                        sp -= oparg + 2;
+                        s[sp] = Callables.vectorcall(s[sp++], s, sp, oparg, kwnames);
+                        oparg = 0;
+                        break;
+                    }
+
+                    case Opcode.CALL_FUNCTION_EX:
+                        // Call with positional & kw args. Stack:
+                        // f | args | kwdict? | -> res |
+                        // ---------------------^sp -----^sp
+                        // opword is 0 (no kwdict) or 1 (kwdict present)
+                        w = (opword & 0x1) == 0 ? null : s[--sp];
+                        v = s[--sp]; // args tuple
+                        s[sp - 1] = Callables.callEx(s[sp - 1], v, w);
+                        oparg = 0;
                         break;
 
                     case Opcode.EXTENDED_ARG:
@@ -237,4 +332,135 @@ class CPython38Frame extends PyFrame<CPython38Code> {
     private static final PyCell[] EMPTY_CELL_ARRAY = PyCell.EMPTY_ARRAY;
 
     private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";
+
+    /**
+     * A specialised version of
+     * {@link PyBaseObject#__getattribute__(Object, String)
+     * object.__getattribute__} specifically to support the
+     * {@code LOAD_METHOD} and {@code CALL_METHOD} opcode pair generated
+     * by the CPython byte code compiler. This method will place two
+     * entries in the stack at the offset given that are either:
+     * <ol>
+     * <li>an unbound method and the object passed ({@code obj}),
+     * or</li>
+     * <li>{@code null} and a bound method object.</li>
+     * </ol>
+     * <p>
+     * The normal behaviour of {@code object.__getattribute__} is
+     * represented by case 2.
+     * <p>
+     * Case 1 supports an optimisation that is possible when the type of
+     * the self object {@code obj} has not overridden
+     * {@code __getattribute__}, and the {@code name} resolves to a
+     * regular method in it. {@code CALL_METHOD} will detect and use
+     * this optimised form if the first element is not {@code null}.
+     *
+     * @param obj of whichg the callable is an attribute
+     * @param name of callable attribute
+     * @param offset in stack at which to place results
+     * @throws AttributeError ifthe named attribute does not exist
+     * @throws Throwable from other errors
+     */
+    // Compare CPython _PyObject_GetMethod in object.c
+    private void getMethod(Object obj, String name, int offset) throws AttributeError, Throwable {
+
+        PyType objType = PyType.of(obj);
+
+        // If type(obj) defines its own __getattribute__ use that.
+        if (!objType.hasGenericGetAttr()) {
+            valuestack[offset] = null;
+            valuestack[offset + 1] = Abstract.getAttr(obj, name);
+            return;
+        }
+
+        /*
+         * From here, the code is a version of the default attribute access
+         * mechanism PyBaseObject.__getattribute__ in which, if the look-up
+         * leads to a method descriptor, we avoid binding the descriptor
+         * into a short-lived bound method object.
+         */
+
+        MethodHandle descrGet = null;
+        boolean methFound = false;
+
+        // Look up the name in the type (null if not found).
+        Object typeAttr = objType.lookup(name);
+        if (typeAttr != null) {
+            // Found in the type, it might be a descriptor
+            Operations typeAttrOps = Operations.of(typeAttr);
+            descrGet = typeAttrOps.op_get;
+            if (typeAttrOps.isMethodDescr()) {
+                /*
+                 * We found a method descriptor, but will check the instance
+                 * dictionary for a shadowing definition.
+                 */
+                methFound = true;
+            } else if (typeAttrOps.isDataDescr()) {
+                // typeAttr is a data descriptor so call its __get__.
+                try {
+                    valuestack[offset] = null;
+                    valuestack[offset + 1] = descrGet.invokeExact(typeAttr, obj, objType);
+                    return;
+                } catch (Slot.EmptyException e) {
+                    /*
+                     * Only __set__ or __delete__ was defined. We do not catch
+                     * AttributeError: it's definitive. Suppress trying __get__ again.
+                     */
+                    descrGet = null;
+                }
+            }
+        }
+
+        /*
+         * At this stage: typeAttr is the value from the type, or a non-data
+         * descriptor, or null if the attribute was not found. It's time to
+         * give the object instance dictionary a chance.
+         */
+        if (obj instanceof DictPyObject) {
+            Map<Object, Object> d = ((DictPyObject)obj).getDict();
+            Object instanceAttr = d.get(name);
+            if (instanceAttr != null) {
+                // Found the callable in the instance dictionary.
+                valuestack[offset] = null;
+                valuestack[offset + 1] = instanceAttr;
+                return;
+            }
+        }
+
+        /*
+         * The name wasn't in the instance dictionary (or there wasn't an
+         * instance dictionary). typeAttr is the result of look-up on the
+         * type: a value , a non-data descriptor, or null if the attribute
+         * was not found.
+         */
+        if (methFound) {
+            /*
+             * typeAttr is a method descriptor and was not shadowed by an entry
+             * in the instance dictionary.
+             */
+            valuestack[offset] = typeAttr;
+            valuestack[offset + 1] = obj;
+            return;
+        } else if (descrGet != null) {
+            // typeAttr may be a non-data descriptor: call __get__.
+            try {
+                valuestack[offset] = null;
+                valuestack[offset + 1] = descrGet.invokeExact(typeAttr, obj, objType);
+                return;
+            } catch (Slot.EmptyException e) {}
+        }
+
+        if (typeAttr != null) {
+            /*
+             * The attribute obtained from the type, and that turned out not to
+             * be a descriptor, is the callable.
+             */
+            valuestack[offset] = null;
+            valuestack[offset + 1] = typeAttr;
+            return;
+        }
+
+        // All the look-ups and descriptors came to nothing :(
+        throw Abstract.noAttributeError(obj, name);
+    }
 }
