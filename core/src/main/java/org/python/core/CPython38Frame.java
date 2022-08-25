@@ -1,6 +1,10 @@
+// Copyright (c)2022 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
+import java.lang.invoke.MethodHandle;
 import java.util.EnumSet;
+import java.util.Map;
 
 import org.python.base.InterpreterError;
 
@@ -75,7 +79,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
         int sp = this.stacktop;
 
         // Cached references from code
-        final PyUnicode[] names = code.names;
+        final String[] names = code.names;
         final Object[] consts = code.consts;
         final char[] wordcode = code.wordcode;
         final int END = wordcode.length;
@@ -88,12 +92,22 @@ class CPython38Frame extends PyFrame<CPython38Code> {
 
         // Local variables used repeatedly in the loop
         Object v, w;
-        PyUnicode name;
+        String name;
 
         loop: for (int ip = 0; ip < END; ip++) {
-
-            // Pick up the next instruction
+            /*
+             * Pick up the next instruction. Because we use a word array, our ip
+             * is half the CPython ip. The latter, and all jump arguments, are
+             * always even.
+             */
             int opword = wordcode[ip];
+
+            // Comparison with CPython macros in c.eval:
+            // TOP() : s[sp-1]
+            // PEEK(n) : s[sp-n]
+            // POP() : s[--sp]
+            // PUSH(v) : s[sp++] = v
+            // SET_TOP(v) : s[sp-1] = v
 
             try {
                 // Interpret opcode
@@ -148,6 +162,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
 
                     case Opcode.LOAD_NAME:
                         name = names[oparg | opword & 0xff];
+                        oparg = 0;
                         try {
                             v = locals.get(name);
                         } catch (NullPointerException npe) {
@@ -163,7 +178,6 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                             }
                         }
                         s[sp++] = v; // PUSH
-                        oparg = 0;
                         break;
 
                     case Opcode.EXTENDED_ARG:
@@ -195,7 +209,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                 // Should handle within Python, but for now, stop.
                 System.err.println(pye);
                 throw pye;
-            } catch (InterpreterError ie) {
+            } catch (InterpreterError | AssertionError ie) {
                 /*
                  * An InterpreterError signals an internal error, recognised by our
                  * implementation: stop.
@@ -209,7 +223,8 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                  */
                 // Should handle within Python, but for now, stop.
                 t.printStackTrace();
-                throw new InterpreterError(t, "Non-PyException");
+                throw new InterpreterError(t, "Non-PyException at ip: %d, opcode: %d", 2 * ip,
+                        opword >> 8);
             }
         } // loop
 
@@ -222,5 +237,4 @@ class CPython38Frame extends PyFrame<CPython38Code> {
     private static final PyCell[] EMPTY_CELL_ARRAY = PyCell.EMPTY_ARRAY;
 
     private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";
-
 }

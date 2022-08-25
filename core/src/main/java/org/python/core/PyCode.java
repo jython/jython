@@ -1,3 +1,5 @@
+// Copyright (c)2022 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
@@ -63,26 +65,26 @@ public abstract class PyCode implements CraftedPyObject {
      * Names referenced in the code (elements guaranteed to be of type
      * {@code str}), not {@code null}.
      */
-    final PyUnicode[] names;
+    final String[] names;
 
     /**
      * Args and non-cell locals (elements guaranteed to be of type
      * {@code str}), not {@code null}.
      */
-    final PyUnicode[] varnames;
+    final String[] varnames;
 
     /**
      * Names referenced but not defined here (elements guaranteed to be
      * of type {@code str}), not {@code null}. These variables will be
      * set from the closure of the function.
      */
-    final PyUnicode[] freevars;
+    final String[] freevars;
 
     /**
      * Names defined here and referenced elsewhere (elements guaranteed
      * to be of type {@code str}), not {@code null}.
      */
-    final PyUnicode[] cellvars;
+    final String[] cellvars;
 
     /* ---------------------- See CPython code.h ------------------ */
     /** Constant to be stored in {@link #cell2arg} as default. */
@@ -263,25 +265,20 @@ public abstract class PyCode implements CraftedPyObject {
 
     /**
      * Check that all the objects in the tuple are {@code str}, and
-     * return them as an array of {@code PyUnicode}.
+     * return them as an array of {@code String}.
      *
      * @param tuple of names
      * @param tupleName the name of the argument (for error production)
-     * @return the names as {@code PyUnicode[]}
+     * @return the names as {@code String[]}
      */
-    protected static PyUnicode[] names(PyTuple tuple, String tupleName) {
-        PyUnicode[] u = new PyUnicode[tuple.size()];
+    protected static String[] names(PyTuple tuple, String tupleName) {
+        String[] s = new String[tuple.size()];
         int i = 0;
         for (Object name : tuple) {
-            if (name instanceof PyUnicode) {
-                u[i++] = (PyUnicode)name;
-            } else if (name instanceof String) {
-                u[i++] = PyUnicode.fromJavaString((String)name);
-            } else {
-                throw Abstract.typeError(NAME_TUPLES_STRING, name, tupleName);
-            }
+            s[i++] = PyUnicode.asString(name, () -> Abstract
+                    .typeError(NAME_TUPLES_STRING, name, tupleName));
         }
-        return u;
+        return s;
     }
 
     private static final String NAME_TUPLES_STRING =
@@ -297,13 +294,14 @@ public abstract class PyCode implements CraftedPyObject {
         int ncells = cellvars.length;
         if (ncells > 0) {
             // This many of the varnames are arguments
-            int nargs = argcount + kwonlyargcount + (traits.contains(Trait.VARARGS) ? 1 : 0)
+            int nargs = argcount + kwonlyargcount
+                    + (traits.contains(Trait.VARARGS) ? 1 : 0)
                     + (traits.contains(Trait.VARKEYWORDS) ? 1 : 0);
             // For each cell name, see if it matches an argument
             for (int i = 0; i < ncells; i++) {
-                PyUnicode cellName = cellvars[i];
+                String cellName = cellvars[i];
                 for (int j = 0; j < nargs; j++) {
-                    PyUnicode argName = varnames[j];
+                    String argName = varnames[j];
                     if (cellName.equals(argName)) {
                         // A match: enter it in the cell2arg array
                         if (cell2arg == null) {
@@ -361,11 +359,13 @@ public abstract class PyCode implements CraftedPyObject {
                     traits.add(Trait.ASYNC_GENERATOR);
                     break;
                 default:
-                    throw new IllegalArgumentException("Undefined bit set in 'flags' argument");
+                    throw new IllegalArgumentException(
+                            "Undefined bit set in 'flags' argument");
             }
             // Ensure the bit we just tested is clear
             flags &= ~m;
         }
         return EnumSet.copyOf(traits);
     }
+
 }

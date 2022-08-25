@@ -338,7 +338,8 @@ class marshalTest extends UnitTestSupport {
          * the bytes should be equal to this argument.
          * <p>
          * The examples were generated programmatically from a list of the
-         * expressions.
+         * expressions using the script at
+         * {@code ~/build-tools/python/tool/marshal_test.py}.
          *
          * @return the examples for object loading tests.
          */
@@ -403,11 +404,11 @@ class marshalTest extends UnitTestSupport {
                             Double.NaN),
                     loadExample("'hello'", // tc='Z'
                             bytes(0xda, 0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f), "hello"),
-                    loadExample("'sæll'", // tc='u'
-                            bytes(0xf5, 0x05, 0x00, 0x00, 0x00, 0x73, 0xc3, 0xa6, 0x6c, 0x6c),
+                    loadExample("'sæll'", // tc='t'
+                            bytes(0x74, 0x05, 0x00, 0x00, 0x00, 0x73, 0xc3, 0xa6, 0x6c, 0x6c),
                             "sæll"),
-                    loadExample("'🐍'", // tc='u'
-                            bytes(0xf5, 0x04, 0x00, 0x00, 0x00, 0xf0, 0x9f, 0x90, 0x8d), "🐍"),
+                    loadExample("'🐍'", // tc='t'
+                            bytes(0x74, 0x04, 0x00, 0x00, 0x00, 0xf0, 0x9f, 0x90, 0x8d), "🐍"),
                     loadExample("()", // tc=')'
                             bytes(0xa9, 0x00), Py.tuple()),
                     loadExample("(sa,sa,sa)", // tc=')'

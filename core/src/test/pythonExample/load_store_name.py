@@ -1,8 +1,10 @@
 # load_store_name.py
 
 a = 1
-b = 2
+β = 2 # non-ascii
 
-c = b
-b = 4
+c = β
+β = 4
 a = c
+
+ਛਲ = β
