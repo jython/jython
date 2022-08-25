@@ -1,3 +1,5 @@
+// Copyright (c)2022 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
@@ -46,14 +48,28 @@ public class PyDict extends AbstractMap<Object, Object> implements CraftedPyObje
      */
     protected <K, V> PyDict(PyType type, Map<K, V> map) {
         this(type);
-        for (Map.Entry<K, V> e : map.entrySet()) {
-            // Cannot bulk add since keys may need Pythonising
-            put(e.getKey(), e.getValue());
-        }
+        // Cannot bulk add since keys may need Pythonising
+        for (Map.Entry<K, V> e : map.entrySet()) { put(e.getKey(), e.getValue()); }
     }
 
     /** Construct an empty {@code dict}. */
     public PyDict() { this(TYPE); }
+
+    /**
+     * Create a {@code dict} and add entries from key-value pairs that
+     * are supplied as successive values in an array slice. (This method
+     * supports the CPython byte code interpreter.)
+     *
+     * @param stack array containing key-value pairs
+     * @param start index of first key
+     * @param count number of pairs
+     * @return a new {@code dict}
+     */
+    static PyDict fromKeyValuePairs(Object[] stack, int start, int count) {
+        PyDict dict = new PyDict(TYPE);
+        for (int i = 0, p = start; i < count; i++) { dict.put(stack[p++], stack[p++]); }
+        return dict;
+    }
 
     /**
      * Create a {@code dict} and add entries from key-value pairs.

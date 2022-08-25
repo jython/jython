@@ -22,15 +22,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.python.base.InterpreterError;
 import org.python.modules.marshal;
 
-
 /**
  * Tests that read code objects from prepared {@code .pyc} files and
  * execute the byte code.
  *
  * These files are prepared in the Gradle build using a compatible
  * version of CPython, from Python source in
- * {@code core/src/test/pythonExample}. To run these in the
- * IDE, first execute the task:<pre>
+ * {@code core/src/test/pythonExample}. To run these in the IDE,
+ * first execute the task:<pre>
  * .\gradlew --console=plain core:compileTestPythonExamples
  * </pre>
  */
@@ -66,9 +65,7 @@ class CPython38CodeTest extends UnitTestSupport {
         }
 
         @Test
-        void co_cellvars() {
-            assertEquals(0, code.co_cellvars().size());
-        }
+        void co_cellvars() { assertEquals(0, code.co_cellvars().size()); }
 
         @Test
         void co_code() {
@@ -77,9 +74,7 @@ class CPython38CodeTest extends UnitTestSupport {
         }
 
         @Test
-        void co_freevars() {
-            assertEquals(0, code.co_freevars().size());
-        }
+        void co_freevars() { assertEquals(0, code.co_freevars().size()); }
 
         @Test
         void co_filename() {
@@ -88,16 +83,12 @@ class CPython38CodeTest extends UnitTestSupport {
         }
 
         @Test
-        protected void co_name() {
-            assertEquals("<module>", code.name);
-        }
+        protected void co_name() { assertEquals("<module>", code.name); }
 
         abstract void co_names();
 
         @Test
-        void co_varnames() {
-            assertEquals(0, code.co_varnames().size());
-        }
+        void co_varnames() { assertEquals(0, code.co_varnames().size()); }
     }
 
     @Nested
@@ -126,7 +117,7 @@ class CPython38CodeTest extends UnitTestSupport {
     @SuppressWarnings("static-method")
     @DisplayName("We can execute ...")
     @ParameterizedTest(name = "{0}.py")
-    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op"})
+    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "call_method_builtin"})
     void executeSimple(String name) {
         CPython38Code code = readCode(name);
         PyDict globals = new PyDict();
@@ -150,8 +141,7 @@ class CPython38CodeTest extends UnitTestSupport {
             .resolve("test");
 
     /** Where compiled files are placed by CPython. */
-    private static final Path PYC_DIR =
-            PYTHON_DIR.resolve("__pycache__");
+    private static final Path PYC_DIR = PYTHON_DIR.resolve("__pycache__");
 
     /**
      * The name fragment used by the compiler in the supported version
@@ -181,8 +171,7 @@ class CPython38CodeTest extends UnitTestSupport {
     static CPython38Code readCode(String progName) {
         String name = progName + "." + CPYTHON_VER + "." + PYC_SUFFIX;
         File f = PYC_DIR.resolve(name).toFile();
-        try (
-                FileInputStream fs = new FileInputStream(f);
+        try (FileInputStream fs = new FileInputStream(f);
                 BufferedInputStream s = new BufferedInputStream(fs);) {
 
             // Wrap a marshal reader around the input stream
@@ -200,8 +189,7 @@ class CPython38CodeTest extends UnitTestSupport {
             if (o instanceof PyCode) {
                 return (CPython38Code)o;
             } else {
-                throw new InterpreterError(
-                        "Not a CPython code object: %s", name);
+                throw new InterpreterError("Not a CPython code object: %s", name);
             }
 
         } catch (IOException ioe) {
@@ -223,8 +211,7 @@ class CPython38CodeTest extends UnitTestSupport {
     static PyDict readResultDict(String progName) {
         String name = progName + "." + CPYTHON_VER + "." + VAR_SUFFIX;
         File f = PYC_DIR.resolve(name).toFile();
-        try (
-                FileInputStream fs = new FileInputStream(f);
+        try (FileInputStream fs = new FileInputStream(f);
                 BufferedInputStream s = new BufferedInputStream(fs);) {
 
             // Wrap a marshal reader around the input stream
@@ -235,8 +222,7 @@ class CPython38CodeTest extends UnitTestSupport {
             if (o instanceof PyDict) {
                 return (PyDict)o;
             } else {
-                throw new InterpreterError("Not a dict object: %s",
-                        name);
+                throw new InterpreterError("Not a dict object: %s", name);
             }
 
         } catch (IOException ioe) {
@@ -252,16 +238,13 @@ class CPython38CodeTest extends UnitTestSupport {
      * @param ref dictionary of reference results
      * @param test dictionary of results to test
      */
-    private static void assertExpectedVariables(Map<Object, Object> ref,
-            Map<Object, Object> test) {
+    private static void assertExpectedVariables(Map<Object, Object> ref, Map<Object, Object> test) {
         for (Map.Entry<Object, Object> e : ref.entrySet()) {
             Object k = e.getKey();
             Object x = ref.get(k);
             Object v = test.get(k);
-            assertNotNull(v, () -> String
-                    .format("variable %s missing from result", k));
-            assertPythonEquals(x, v,
-                    () -> String.format("%s = %s (not %s)", k, v, x));
+            assertNotNull(v, () -> String.format("variable %s missing from result", k));
+            assertPythonEquals(x, v, () -> String.format("%s = %s (not %s)", k, v, x));
         }
     }
 }

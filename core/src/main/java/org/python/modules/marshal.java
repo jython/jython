@@ -20,6 +20,8 @@ import java.util.Map;
 import org.python.core.Abstract;
 import org.python.core.CPython38Code;
 import org.python.core.EOFError;
+import org.python.core.Exposed;
+import org.python.core.Exposed.Default;
 import org.python.core.OSError;
 import org.python.core.Py;
 import org.python.core.PyBaseObject;
@@ -266,9 +268,9 @@ public class marshal /* extends JavaModule */ {
      *     has) an unsupported type
      * @throws OSError from file operations
      */
-    // @Exposed.PythonStaticMethod
+    @Exposed.PythonStaticMethod
     public static void dump(Object value, Object file,
-            /*@Default("4")*/ int version) throws ValueError, OSError {
+            @Default("4") int version) throws ValueError, OSError {
         try (OutputStream os = StreamWriter.adapt(file)) {
             Writer writer = new StreamWriter(os, version);
             writer.writeObject(value);
@@ -294,7 +296,7 @@ public class marshal /* extends JavaModule */ {
      * @throws EOFError when a partial object is read
      * @throws OSError from file operations generally
      */
-    // @Exposed.PythonStaticMethod
+    @Exposed.PythonStaticMethod
     public static Object load(Object file) {
         try (InputStream is = StreamReader.adapt(file)) {
             Reader reader = new StreamReader(is);
@@ -317,8 +319,8 @@ public class marshal /* extends JavaModule */ {
      * @throws ValueError if the value has (or contains an object that
      *     has) an unsupported type
      */
-    // @Exposed.PythonStaticMethod
-    public static PyBytes dumps(Object value, /*@Default("4")*/ int version)
+    @Exposed.PythonStaticMethod
+    public static PyBytes dumps(Object value, @Default("4") int version)
             throws ValueError {
         ByteArrayBuilder bb = new ByteArrayBuilder();
         Writer writer = new BytesWriter(bb, version);
@@ -338,7 +340,7 @@ public class marshal /* extends JavaModule */ {
      * @throws TypeError when a container contains a null element.
      * @throws EOFError when a partial object is read
      */
-    // @Exposed.PythonStaticMethod
+    @Exposed.PythonStaticMethod
     public static Object loads(Object bytes) {
         try {
             ByteBuffer bb = BytesReader.adapt(bytes);
