@@ -1332,10 +1332,12 @@ public class marshal /* extends JavaModule */ {
                 boolean interned) {
             ByteBuffer buf = r.readByteBuffer(n);
             CharBuffer cb = ASCII.decode(buf);
-            return r.defineRef(cb.toString(), ref);
+            String s = cb.toString();
+            if (interned) { s = s.intern(); }
+            return r.defineRef(s, ref);
         }
 
-        private static PyUnicode readUtf8(Reader r, boolean ref, int n,
+        private static String readUtf8(Reader r, boolean ref, int n,
                 boolean interned) {
             ByteBuffer buf = r.readByteBuffer(n);
             // XXX use our own codec (& 'surrogatepass') when available
@@ -1343,7 +1345,10 @@ public class marshal /* extends JavaModule */ {
             // Note cb is chars, not code points so cp-length unknown
             IntArrayBuilder builder = new IntArrayBuilder();
             builder.append(cb.codePoints());
-            return r.defineRef(PyUnicode.wrap(builder), ref);
+            // ??? Always a String, even if not BMP
+            String s = builder.toString();
+            if (interned) { s = s.intern(); }
+            return r.defineRef(s, ref);
         }
     }
 

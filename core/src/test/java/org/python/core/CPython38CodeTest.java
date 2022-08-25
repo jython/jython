@@ -28,9 +28,13 @@ import org.python.modules.marshal;
  * execute the byte code.
  *
  * These files are prepared in the Gradle build using a compatible
- * version of CPython, from Python source in .
+ * version of CPython, from Python source in
+ * {@code core/src/test/pythonExample}. To run these in the
+ * IDE, first execute the task:<pre>
+ * .\gradlew --console=plain core:compileTestPythonExamples
+ * </pre>
  */
-@DisplayName("Given programs compiled by CPython 3.8")
+@DisplayName("Given programs compiled by CPython 3.8 ...")
 class CPython38CodeTest extends UnitTestSupport {
 
     @SuppressWarnings("static-method")
@@ -107,8 +111,9 @@ class CPython38CodeTest extends UnitTestSupport {
         void co_names() {
             // Names in order encountered
             assertPythonEquals("a", code.names[0]);
-            assertPythonEquals("b", code.names[1]);
+            assertPythonEquals("β", code.names[1]);
             assertPythonEquals("c", code.names[2]);
+            assertPythonEquals("ਛਲ", code.names[3]);
         }
 
         @Test
@@ -168,7 +173,7 @@ class CPython38CodeTest extends UnitTestSupport {
      * ({@link #PYC_DIR}}, being provided only the base name of the
      * program. So for example, {@code "unary_op"} will retrieve a code
      * object from {@code unary_op.cpython-38.pyc} in
-     * {@code generated/sources/pythonExample/test/vsj3/evo1/__pycache__}.
+     * {@code generated/sources/pythonExample/test/__pycache__}.
      *
      * @param progName base name of program
      * @return {@code code} object read in
