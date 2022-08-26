@@ -19,9 +19,9 @@ New Features
       variable (GH-128).
 
     - Under PR GH-101, the matching of sequence arguments to the parameters of
-      Java methods is improved. A Java varargs parameter does not match a final
-      sequence in the call if an array parameter could do so. (Thanks Peter
-      Holloway.)
+      Java methods is improved (and in constructors under GH-201). A Java
+      varargs parameter does not match a final sequence in the call if an array
+      parameter could do so. (Thanks Peter Holloway.)
 
     - array.array itemsize of unsigned types is now the same as their signed
       counterparts, where previously it was mostly double. Internal
@@ -39,7 +39,7 @@ New Features
 
 
 Jython 2.7.3b2-DEV Bugs fixed
-    - [ GH- ] 
+    - [ GH-201 ] Support vararg constructors
 
 Jython 2.7.3b1 Bugs fixed
     - [ GH-192 ] PyString with non-byte value in formatting of collections
