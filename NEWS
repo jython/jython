@@ -38,6 +38,9 @@ New Features
     - The project has moved its home to GitHub (twice).
 
 
+Jython 2.7.3rc2 Bugs fixed
+    - [ GH- ] 
+
 Jython 2.7.3rc1 Bugs fixed
     - [ GH-201 ] Support vararg constructors
 
