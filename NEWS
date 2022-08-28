@@ -38,7 +38,7 @@ New Features
     - The project has moved its home to GitHub (twice).
 
 
-Jython 2.7.3b2-DEV Bugs fixed
+Jython 2.7.3rc1 Bugs fixed
     - [ GH-201 ] Support vararg constructors
 
 Jython 2.7.3b1 Bugs fixed
@@ -997,7 +997,7 @@ Jython 2.5.1rc1
     - Jython "-J-classpath cp_args_here" now works as expected for unix shell.
   Bugs Fixed
     - [ 645615 ] cannot import through symbolic links
-    - [ 1366 ] parsing of lamda expression fails
+    - [ 1366 ] parsing of lambda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
     - [ 1381 ] Redundant declarations of interface implementation hides overridden methods
@@ -1142,7 +1142,7 @@ Jython 2.5.0 a0 - rc2
     - [ 513713 ] PyTableCode != PyCode
     - [ 526672 ] inspect not supported
     - [ 1754240 ] Error Message when attempting to bind to an in use Port
-    - [ 1159 ] custum number and float: unsupported operand type(s) for *
+    - [ 1159 ] custom number and float: unsupported operand type(s) for *
     - [ 1158 ] compile() fails to recognize initial AST arg
     - [ 1155 ] inet_ntoa missing from socket
     - [ 1150 ] Nested generator expressions do not compile
