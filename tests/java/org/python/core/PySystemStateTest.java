@@ -171,6 +171,14 @@ public class PySystemStateTest extends TestCase {
             assertEquals("vfszip:/n%c3%a5gon/katalog/r%c3%a4tt.jar" + classPart, url.toString());
             result = Py.getJarFileNameFromURL(url);
             assertEquals("/någon/katalog/rätt.jar", result);
+            // relative path
+            String currentPath = new File("").getAbsolutePath();
+            String parrentPath = (new File(currentPath)).getParent();
+            file =  "../some_dir/some.jar" + classPart;
+            url = new URL(protocol, host, port, file, handler);
+            assertEquals("vfszip:../some_dir/some.jar" + classPart, url.toString());
+            result = Py.getJarFileNameFromURL(url);
+            assertEquals(parrentPath+"/some_dir/some.jar", result);
         }
     }
 
