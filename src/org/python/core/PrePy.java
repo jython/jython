@@ -416,9 +416,8 @@ public class PrePy {
                     if (m.find()) {
                         // path contains the target class in a JAR (named in group 1).
                         // Make a file URL from all the text up to the end of group 1.
-                        fileURI = new URL("file:" + path.substring(0, m.end(1))).toURI();
-                        // When URL is Relative,convert to Absolute path
-                        fileURI = new URI("file:"+(new File(fileURI.toString().substring(5))).getCanonicalPath());
+                        File jarFile = new File(path.substring(0, m.end(1)));
+                        fileURI = new URI("file:"+jarFile.getCanonicalPath());
                     }
                     break;
 
