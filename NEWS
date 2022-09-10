@@ -35,11 +35,12 @@ New Features
     - We no longer aspire to compile Jython with Java 7. (We may use Java 8
       features.)
 
-    - The project has moved its home to GitHub (twice).
+    - The project has moved its home to GitHub (twice), and invites issue
+      reports there (not at bugs.jython.org).
 
 
-Jython 2.7.3rc2 Bugs fixed
-    - [ GH- ] 
+Jython 2.7.3
+    The release is the same as the rc1 (apart from the version number). 
 
 Jython 2.7.3rc1 Bugs fixed
     - [ GH-201 ] Support vararg constructors
