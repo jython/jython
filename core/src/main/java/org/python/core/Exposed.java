@@ -234,4 +234,37 @@ public interface Exposed {
     @Retention(RUNTIME)
     @Target(PARAMETER)
     @interface KeywordCollector {}
+
+    /**
+     * Identify a field (of supported type) of a Python object as an
+     * exposed member. Get, set and delete operations are provided
+     * automatically on a descriptor that will be entered in the
+     * dictionary of the type being defined.
+     */
+    @Documented
+    @Retention(RUNTIME)
+    @Target(FIELD)
+    @interface Member {
+
+        /**
+         * Exposed name of the member if different from the field.
+         *
+         * @return name of the attribute
+         */
+        String value() default "";
+
+        /** @return true if read-only. */
+        boolean readonly() default false;
+
+        /**
+         * Member can be deleted and subsequently it is an
+         * {@link AttributeError} to get or delete it, until it is set
+         * again. By default, when a member implemented by a reference type
+         * is deleted, it behaves as if set to {@code None}.
+         *
+         * @return true if access following delete will raise an error
+         */
+        boolean optional() default false;
+    }
+
 }

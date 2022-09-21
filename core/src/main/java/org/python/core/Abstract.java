@@ -333,6 +333,90 @@ public class Abstract {
     }
 
     /**
+     * {@code o.name = value} with Python semantics.
+     *
+     * @param o object to operate on
+     * @param name of attribute
+     * @param value to set
+     * @throws AttributeError if non-existent etc.
+     * @throws Throwable on other errors
+     */
+    // Compare CPython PyObject_SetAttr in object.c
+    public static void setAttr(Object o, String name, Object value)
+            throws AttributeError, Throwable {
+        // Decisions are based on type of o (that of name is known)
+        try {
+            Operations.of(o).op_setattr.invokeExact(o, name, value);
+        } catch (EmptyException e) {
+            throw attributeAccessError(o, name, Slot.op_setattr);
+        }
+    }
+
+    /**
+     * {@code o.name = value} with Python semantics.
+     *
+     * @param o object to operate on
+     * @param name of attribute
+     * @param value to set
+     * @throws AttributeError if non-existent etc.
+     * @throws TypeError if the name is not a {@code str}
+     * @throws Throwable on other errors
+     */
+    // Compare CPython PyObject_SetAttr in object.c
+    public static void setAttr(Object o, Object name, Object value)
+            throws AttributeError, TypeError, Throwable {
+        if (name instanceof String) {
+            setAttr(o, name, value);
+        } else if (name instanceof PyUnicode) {
+            setAttr(o, name.toString(), value);
+        } else {
+            throw attributeNameTypeError(name);
+        }
+    }
+
+    /**
+     * {@code del o.name} with Python semantics.
+     *
+     * @param o object to operate on
+     * @param name of attribute
+     * @throws AttributeError if non-existent etc.
+     * @throws Throwable on other errors
+     *
+     */
+    // Compare CPython PyObject_DelAttr in abstract.h
+    // which is a macro for PyObject_SetAttr in object.c
+    public static void delAttr(Object o, String name)
+            throws AttributeError, Throwable {
+        // Decisions are based on type of o (that of name is known)
+        try {
+            Operations.of(o).op_delattr.invokeExact(o, name);
+        } catch (EmptyException e) {
+            throw attributeAccessError(o, name, Slot.op_delattr);
+        }
+    }
+
+    /**
+     * {@code del o.name} with Python semantics.
+     *
+     * @param o object to operate on
+     * @param name of attribute
+     * @throws AttributeError if non-existent etc.
+     * @throws TypeError if the name is not a {@code str}
+     * @throws Throwable on other errors
+     */
+    // Compare CPython PyObject_SetAttr in object.c
+    public static void delAttr(Object o, Object name)
+            throws AttributeError, TypeError, Throwable {
+        if (name instanceof String) {
+            delAttr(o, name);
+        } else if (name instanceof PyUnicode) {
+            delAttr(o, name.toString());
+        } else {
+            throw attributeNameTypeError(name);
+        }
+    }
+
+    /**
      * Get {@code cls.__bases__}, a Python {@code tuple}, by name from
      * the object invoking {@code __getattribute__}. If {@code cls} does
      * not define {@code __bases__}, or it is not a {@code tuple},
@@ -420,6 +504,42 @@ public class Abstract {
             }
         }
         return true;
+    }
+
+    // Plumbing -------------------------------------------------------
+
+    /**
+     * Crafted error supporting {@link #getAttr(Object, PyUnicode)},
+     * {@link #setAttr(Object, PyUnicode, Object)}, and
+     * {@link #delAttr(Object, PyUnicode)}.
+     *
+     * @param o object accessed
+     * @param name of attribute
+     * @param slot operation
+     * @return an error to throw
+     */
+    private static TypeError attributeAccessError(Object o, String name,
+            Slot slot) {
+        String mode, kind,
+                fmt = "'%.100s' object has %s attributes (%s.%.50s)";
+        // What were we trying to do?
+        switch (slot) {
+            case op_delattr:
+                mode = "delete ";
+                break;
+            case op_setattr:
+                mode = "assign to ";
+                break;
+            default:
+                mode = "";
+                break;
+        }
+        // Can we even read this object's attributes?
+        Operations ops = Operations.of(o);
+        kind = Slot.op_getattribute.isDefinedFor(ops) ? "only read-only"
+                : "no";
+        // Now we know what to say
+        return new TypeError(fmt, ops, kind, mode, name);
     }
 
     // Convenience functions constructing errors --------------------
@@ -600,6 +720,35 @@ public class Abstract {
     static AttributeError noAttributeOnType(PyType type, Object name) {
         String fmt = "'%.50s' object has no attribute '%.50s'";
         return new AttributeError(fmt, type.getName(), name);
+    }
+
+    /**
+     * Create a {@link TypeError} with a message along the lines "N must
+     * be set to T, not a X object" involving the name N of the
+     * attribute, any descriptive phrase T and the type X of
+     * {@code value}, e.g. "<u>__dict__</u> must be set to <u>a
+     * dictionary</u>, not a '<u>list</u>' object".
+     *
+     * @param name of the attribute
+     * @param kind expected kind of thing
+     * @param value provided to set this attribute in some object
+     * @return exception to throw
+     */
+    static TypeError attrMustBe(String name, String kind, Object value) {
+        String msg = "%.50s must be set to %.50s, not a '%.50s' object";
+        return new TypeError(msg, name, kind, PyType.of(value).getName());
+    }
+
+    /**
+     * Create a {@link TypeError} with a message along the lines "N must
+     * be set to a string, not a X object".
+     *
+     * @param name of the attribute
+     * @param value provided to set this attribute in some object
+     * @return exception to throw
+     */
+    static TypeError attrMustBeString(String name, Object value) {
+        return attrMustBe(name, "a string", value);
     }
 
     /**
