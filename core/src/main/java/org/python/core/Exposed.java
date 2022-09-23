@@ -13,9 +13,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Annotations that may be placed on elements of a Java class intended
- * as the implementation of a Python type, and that the {@link Exposer}
- * will look for when during the definition of a {@link PyType}.
+ * Annotations that may be placed on elements of a Java class
+ * intended as the implementation of a Python type, and that the
+ * {@link Exposer} will look for when during the definition of a
+ * {@link PyType}.
  */
 public interface Exposed {
 
@@ -59,8 +60,8 @@ public interface Exposed {
         String value() default "";
 
         /**
-         * The element {@code primary=false} is used to indicate that
-         * the annotated method is <b>not</b> the primary definition.
+         * The element {@code primary=false} is used to indicate that the
+         * annotated method is <b>not</b> the primary definition.
          *
          * @return {@code true} (the default) if and only if this is the
          *     primary definition of the method
@@ -68,10 +69,10 @@ public interface Exposed {
         boolean primary() default true;
 
         /**
-         * The element {@code positionalOnly=false} is used to indicate
-         * that the arguments in a call to the annotated method may be
-         * provided by keyword. This provides the call with the
-         * semantics of a method defined in Python, where <pre>
+         * The element {@code positionalOnly=false} is used to indicate that
+         * the arguments in a call to the annotated method may be provided
+         * by keyword. This provides the call with the semantics of a method
+         * defined in Python, where <pre>
          * def g(a, b, c):
          *     print(a, b, c)
          * </pre> may be called as <pre>
@@ -79,14 +80,14 @@ public interface Exposed {
          * 1 2 3
          * &gt;&gt;&gt; g(**dict(b=2, c=3, a=1))
          * 1 2 3
-         * </pre> It is as if we had annotated an imaginary parameter
-         * before the first declared parameter (or {@code self}) with
+         * </pre> It is as if we had annotated an imaginary parameter before
+         * the first declared parameter (or {@code self}) with
          * &#064;{@link PositionalOnly}.
          * <p>
-         * The default {@code positional=true} is the more frequent case
-         * for built-in methods, although it is the opposite of the
-         * default for methods defined in Python where it would have to
-         * be expressed as {@code def g(a, b, c, /)}.
+         * The default {@code positional=true} is the more frequent case for
+         * built-in methods, although it is the opposite of the default for
+         * methods defined in Python where it would have to be expressed as
+         * {@code def g(a, b, c, /)}.
          *
          * @return {@code true} (the default) if and only if this is the
          *     primary definition of the method
@@ -123,18 +124,17 @@ public interface Exposed {
     @interface PythonStaticMethod {
 
         /**
-         * Exposed name of the function if different from the
-         * declaration.
+         * Exposed name of the function if different from the declaration.
          *
          * @return name of the function
          */
         String value() default "";
 
         /**
-         * The element {@code positionalOnly=false} is used to indicate
-         * that the arguments in a call to the annotated method may be
-         * provided by keyword. This provides the call with the
-         * semantics of a function defined in Python, where <pre>
+         * The element {@code positionalOnly=false} is used to indicate that
+         * the arguments in a call to the annotated method may be provided
+         * by keyword. This provides the call with the semantics of a
+         * function defined in Python, where <pre>
          * def g(a, b, c):
          *     print(a, b, c)
          * </pre> may be called as <pre>
@@ -142,14 +142,14 @@ public interface Exposed {
          * 1 2 3
          * &gt;&gt;&gt; g(**dict(b=2, c=3, a=1))
          * 1 2 3
-         * </pre> It is as if we had annotated an imaginary parameter
-         * before the first declared parameter (or {@code self}) with
+         * </pre> It is as if we had annotated an imaginary parameter before
+         * the first declared parameter (or {@code self}) with
          * &#064;{@link PositionalOnly}.
          * <p>
-         * The default {@code positional=true} is the more frequent case
-         * for built-in function, although it is the opposite of the
-         * default for methods defined in Python where it would have to
-         * be expressed as {@code def g(a, b, c, /)}.
+         * The default {@code positional=true} is the more frequent case for
+         * built-in function, although it is the opposite of the default for
+         * methods defined in Python where it would have to be expressed as
+         * {@code def g(a, b, c, /)}.
          *
          * @return {@code true} (the default) if and only if this is the
          *     primary definition of the method
@@ -164,7 +164,9 @@ public interface Exposed {
     @Documented
     @Retention(RUNTIME)
     @Target({METHOD, FIELD, TYPE})
-    @interface DocString { String value(); }
+    @interface DocString {
+        String value();
+    }
 
     /**
      * Override the name of an parameter to a method defined in Java, as
@@ -176,7 +178,9 @@ public interface Exposed {
     @Documented
     @Retention(RUNTIME)
     @Target(PARAMETER)
-    @interface Name { String value(); }
+    @interface Name {
+        String value();
+    }
 
     /**
      * Declare that the annotated parameter is the last positional only
@@ -213,7 +217,9 @@ public interface Exposed {
     @Documented
     @Retention(RUNTIME)
     @Target(PARAMETER)
-    @interface Default { String value(); }
+    @interface Default {
+        String value();
+    }
 
     /**
      * Declare that the annotated parameter is the collector for excess
@@ -267,4 +273,83 @@ public interface Exposed {
         boolean optional() default false;
     }
 
+    /**
+     * Identify a method as that to be called during a Python call to
+     * {@code __getattribute__} naming an exposed attribute.
+     * <p>
+     * The signature must be ()PyObject.
+     */
+    @Documented
+    @Retention(RUNTIME)
+    @Target(METHOD)
+    @interface Getter {
+
+        /**
+         * Exposed name of the attribute, if different from the Java method
+         * name.
+         *
+         * {@link Deleter} in a single descriptor.
+         *
+         * @return name of the attribute
+         */
+        String value() default "";
+    }
+
+    /**
+     * Identify a method as that to be called during a Python call to
+     * {@code __setattr__} naming an exposed attribute.
+     * <p>
+     * The signature must be (PyObject)void.
+     */
+    @Documented
+    @Retention(RUNTIME)
+    @Target(METHOD)
+    @interface Setter {
+
+        /**
+         * Exposed name of the attribute, if different from the Java method
+         * name.
+         *
+         * This name will relate the {@link Getter}, {@link Setter} and
+         * {@link Deleter} in a single descriptor.
+         *
+         * @return name of the attribute
+         */
+        String value() default "";
+    }
+
+    /**
+     * Identify a method as that to be called during a Python call to
+     * {@code __delattr__} naming an exposed attribute.
+     * <p>
+     * The signature must be {@code ()void}.
+     */
+    @Documented
+    @Retention(RUNTIME)
+    @Target(METHOD)
+    @interface Deleter {
+
+        /**
+         * Exposed name of the attribute, if different from the Java method
+         * name.
+         *
+         * This name will relate the {@link Getter}, {@link Setter} and
+         * {@link Deleter} in a single descriptor.
+         *
+         * @return name of the attribute
+         */
+        String value() default "";
+    }
+
+    /**
+     * Documentation-only annotation reminding us that <b>the defining
+     * class guarantees not to change the contents.</b> If a new value
+     * is assigned, it will be a new array. It is therefore safe to take
+     * a reference to this array and treat it as frozen (e.g. to expose
+     * it as a tuple). There is no enforcement of this contract at run
+     * time.
+     */
+    @Documented
+    @Target(FIELD)
+    @interface FrozenArray {}
 }
