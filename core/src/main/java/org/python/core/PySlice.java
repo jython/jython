@@ -1,10 +1,11 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Copyright (c) Corporation for National Research Initiatives
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.core.Exposed.Member;
 import org.python.core.PyType.Flag;
 
 /**
@@ -16,19 +17,13 @@ public class PySlice extends AbstractPyObject {
     static final PyType TYPE = PyType.fromSpec( //
             new PyType.Spec("slice", MethodHandles.lookup()).flagNot(Flag.BASETYPE));
 
-    /*
-     * @ExposedGet(doc = BuiltinDocs.slice_start_doc)
-     */
+    @Member
     final private Object start;
 
-    /*
-     * @ExposedGet(doc = BuiltinDocs.slice_stop_doc)
-     */
+    @Member
     final private Object stop;
 
-    /*
-     * @ExposedGet(doc = BuiltinDocs.slice_step_doc)
-     */
+    @Member
     final private Object step;
 
     /**
@@ -52,9 +47,7 @@ public class PySlice extends AbstractPyObject {
      * @param start index or {@code null} (for {@code None}).
      * @param stop index or {@code null} (for {@code None}).
      */
-    public PySlice(Object start, Object stop) {
-        this(start, stop, null);
-    }
+    public PySlice(Object start, Object stop) { this(start, stop, null); }
 
     /**
      * Create a Python {@code slice} from Java {@code int} arguments.
