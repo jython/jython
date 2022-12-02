@@ -14,11 +14,11 @@ public class Reflection {
         public String test(boolean... args) {
             return "booleans...:" + Arrays.toString(args);
         }
-        
+
         public String testOneFixedArg(boolean arg1, boolean... args) {
             return "boolean arg1:" + arg1 + " booleans...:" + Arrays.toString(args);
         }
-        
+
         public String testTwoFixedArg(boolean arg1, boolean arg2, boolean... args) {
             return "boolean arg1:" + arg1 + " boolean arg2:" + arg2 + " booleans...:" + Arrays.toString(args);
         }
@@ -29,11 +29,11 @@ public class Reflection {
         public String test(String... args) {
             return "String...:" + Arrays.toString(args);
         }
-        
+
         public String testOneFixedArg(String arg1, String... args) {
             return "String arg1:" + arg1 + " String...:" + Arrays.toString(args);
         }
-        
+
         public String testTwoFixedArg(String arg1, String arg2, String... args) {
             return "String arg1:" + arg1 + " String arg2:" + arg2 + " String...:" + Arrays.toString(args);
         }
