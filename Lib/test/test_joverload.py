@@ -197,6 +197,23 @@ class VarargsDispatchTests(unittest.TestCase):
 
 
 class ComplexOverloadingTests(unittest.TestCase):
+    def test_constructor_overloading(self):
+        self.assertEqual(Reflection.Overloaded(1).constructorVersion, 'int')
+        self.assertEqual(Reflection.Overloaded(1, 1).constructorVersion, 'int, int')
+        self.assertEqual(Reflection.Overloaded(1, 1, 1).constructorVersion, 'int, int, Object')
+        self.assertEqual(Reflection.Overloaded(1, 1, 1, 1).constructorVersion, 'int, int...')
+
+        self.assertEqual(Reflection.Overloaded(1, [2,3,4]).constructorVersion, 'int, int...')
+
+    def test_method_overloading(self):
+        over = Reflection.Overloaded()
+        self.assertEqual(over.foo(), "int...")
+        self.assertEqual(over.foo(1), "int, int...")
+        self.assertEqual(over.foo(1, 2), "int, int")
+        self.assertEqual(over.foo(1, 2, 3), "int, int, Object")
+        self.assertEqual(over.foo(1, 2, 3, 4), "int, int...")
+
+        self.assertEqual(over.foo(1, [2, 3, 4]), 'int, int...')
 
     def test_complex(self):
         o = Reflection.Overloaded()

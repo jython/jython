@@ -47,6 +47,38 @@ public class Reflection {
     }
 
     public static class Overloaded {
+        private final String constructorVersion;
+        public Overloaded() {
+            constructorVersion = "";
+        }
+        public Overloaded(int a) {
+            constructorVersion = "int";
+        }
+        public Overloaded(int a, int b) {
+            constructorVersion = "int, int";
+        }
+        public Overloaded(int a, int b, Object c) {
+            constructorVersion = "int, int, Object";
+        }
+        public Overloaded(int a, int... others) {
+            constructorVersion = "int, int...";
+        }
+        public String getConstructorVersion() {
+            return constructorVersion;
+        }
+
+        public String foo(int a, int b) {
+            return "int, int";
+        }
+        public String foo(int a, int... b) {
+            return "int, int...";
+        }
+        public String foo(int a, int b, Object c) {
+            return "int, int, Object";
+        }
+        public String foo(int... a) {
+            return "int...";
+        }
 
         public PyObject __call__(float x) {
             return dump(x);
