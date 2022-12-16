@@ -113,17 +113,40 @@ abstract class DataDescriptor extends Descriptor {
     }
 
     /**
-     * Create a {@link TypeError} with a message along the lines "N must
-     * be set to T, not a X object" involving the name N of this
+     * Create a {@link TypeError} with a message along the lines "'N'
+     * must be T, not 'X' as received" involving the name N of the
      * attribute, any descriptive phrase T and the type X of
-     * {@code value}, e.g. "<u>__dict__</u> must be set to <u>a
-     * dictionary</u>, not a '<u>list</u>' object".
+     * {@code value}, e.g. "'<u>__dict__</u>' must be <u>a
+     * dictionary</u>, not '<u>list</u>' as received".
      *
      * @param kind expected kind of thing
      * @param value provided to set this attribute in some object
      * @return exception to throw
      */
     protected TypeError attrMustBe(String kind, Object value) {
+        return Abstract.attrMustBe(name, kind, value);
+    }
+
+    /**
+     * Create a {@link TypeError} with a message along the lines "'N'
+     * must be T, not 'X' as received" involving the name N of the
+     * attribute, a description T based on the expected Java class
+     * {@code attrClass}, and the type X of {@code value}, e.g.
+     * "'<u>__dict__</u>' must be <u>a dictionary</u>, not '<u>list</u>'
+     * as received".
+     *
+     * @param attrClass expected kind of thing
+     * @param value provided to set this attribute in some object
+     * @return exception to throw
+     */
+    protected TypeError attrMustBe(Class<?> attrClass, Object value) {
+        String kind;
+        PyType pyType = PyType.fromClass(attrClass);
+        if (pyType.acceptedCount == 1) {
+            kind = String.format("'%.50s'", pyType.getName());
+        } else {
+            kind = String.format("'%.50s' (as %.50s)", attrClass.getSimpleName());
+        }
         return Abstract.attrMustBe(name, kind, value);
     }
 }

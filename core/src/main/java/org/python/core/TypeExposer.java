@@ -103,6 +103,7 @@ class TypeExposer extends Exposer {
             // type may only properly be null during certain tests
             throw new InterpreterError("Cannot generate descriptors for type 'null'");
         for (Spec spec : specs.values()) {
+            spec.checkFormation();
             Object attr = spec.asAttribute(type, lookup);
             dict.put(spec.name, attr);
         }
@@ -116,35 +117,38 @@ class TypeExposer extends Exposer {
      * @param defsClass to introspect for methods
      * @throws InterpreterError on duplicates or unsupported types
      */
+    @Override
     void scanJavaMethods(Class<?> defsClass) throws InterpreterError {
 
         // Iterate over methods looking for those to expose
-        for (Method m : defsClass.getDeclaredMethods()) {
-            /*
-             * Note: method annotations (and special names) are not treated as
-             * alternatives, to catch exposure of methods by multiple routes.
-             */
+        for (Class<?> c : superClasses(defsClass)) {
+            for (Method m : c.getDeclaredMethods()) {
+                /*
+                 * Note: method annotations (and special names) are not treated as
+                 * alternatives, to catch exposure of methods by multiple routes.
+                 */
 
-            // Check for instance method
-            PythonMethod pm = m.getDeclaredAnnotation(PythonMethod.class);
-            if (pm != null) { addMethodSpec(m, pm); }
+                // Check for instance method
+                PythonMethod pm = m.getDeclaredAnnotation(PythonMethod.class);
+                if (pm != null) { addMethodSpec(m, pm); }
 
-            // Check for static method
-            PythonStaticMethod psm = m.getDeclaredAnnotation(PythonStaticMethod.class);
-            if (psm != null) { addStaticMethodSpec(m, psm); }
+                // Check for static method
+                PythonStaticMethod psm = m.getDeclaredAnnotation(PythonStaticMethod.class);
+                if (psm != null) { addStaticMethodSpec(m, psm); }
 
-            // Check for getter, setter, deleter methods
-            Getter get = m.getAnnotation(Getter.class);
-            if (get != null) { addGetter(m, get); }
-            Setter set = m.getAnnotation(Setter.class);
-            if (set != null) { addSetter(m, set); }
-            Deleter del = m.getAnnotation(Deleter.class);
-            if (del != null) { addDeleter(m, del); }
+                // Check for getter, setter, deleter methods
+                Getter get = m.getAnnotation(Getter.class);
+                if (get != null) { addGetter(m, get); }
+                Setter set = m.getAnnotation(Setter.class);
+                if (set != null) { addSetter(m, set); }
+                Deleter del = m.getAnnotation(Deleter.class);
+                if (del != null) { addDeleter(m, del); }
 
-            // If it has a special method name record that definition.
-            String name = m.getName();
-            Slot slot = Slot.forMethodName(name);
-            if (slot != null) { addWrapperSpec(m, slot); }
+                // If it has a special method name record that definition.
+                String name = m.getName();
+                Slot slot = Slot.forMethodName(name);
+                if (slot != null) { addWrapperSpec(m, slot); }
+            }
         }
     }
 
@@ -159,7 +163,7 @@ class TypeExposer extends Exposer {
      */
     private void addGetter(Method m, Getter anno) {
         addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
-                ms -> { getSetSpecs.add(ms); }, GetSetSpec::addGetter);
+                ms -> getSetSpecs.add(ms), GetSetSpec::addGetter);
     }
 
     /**
@@ -174,7 +178,7 @@ class TypeExposer extends Exposer {
      */
     private void addSetter(Method m, Setter anno) {
         addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
-                ms -> { getSetSpecs.add(ms); }, GetSetSpec::addSetter);
+                ms -> getSetSpecs.add(ms), GetSetSpec::addSetter);
     }
 
     /**
@@ -189,7 +193,7 @@ class TypeExposer extends Exposer {
      */
     private void addDeleter(Method m, Deleter anno) {
         addSpec(m, anno.value(), TypeExposer::castGetSet, GetSetSpec::new,
-                ms -> { getSetSpecs.add(ms); }, GetSetSpec::addDeleter);
+                ms -> getSetSpecs.add(ms), GetSetSpec::addDeleter);
     }
 
     /**
@@ -230,12 +234,12 @@ class TypeExposer extends Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     void scanJavaFields(Class<?> defsClass) throws InterpreterError {
-
-        // Iterate over methods looking for those to expose
-        for (Field f : defsClass.getDeclaredFields()) {
-            // Check for instance method
-            Member m = f.getDeclaredAnnotation(Member.class);
-            if (m != null) { addMemberSpec(f, m); }
+        // Iterate over fields looking for the relevant annotations
+        for (Class<?> c : superClasses(defsClass)) {
+            for (Field f : c.getDeclaredFields()) {
+                Member m = f.getDeclaredAnnotation(Member.class);
+                if (m != null) { addMemberSpec(f, m); }
+            }
         }
     }
 
@@ -347,7 +351,7 @@ class TypeExposer extends Exposer {
         }
 
         private static final String CANNOT_BE_JAVA_STATIC =
-                "The definition of '%s' cannot be Java static " + "because it is a Python member";
+                "The definition of '%s' cannot be Java static because it is a Python member";
         private static final String CANNOT_BE_OPTIONAL = "%s field '%s' cannot be optional";
 
         @Override
@@ -426,6 +430,8 @@ class TypeExposer extends Exposer {
         final List<Method> setters;
         /** Collects the deleters declared (often just one). */
         final List<Method> deleters;
+        /** Java class of attribute from setter parameter. */
+        Class<?> klass = Object.class;
 
         GetSetSpec(String name) {
             super(name, ScopeKind.TYPE);
@@ -470,6 +476,8 @@ class TypeExposer extends Exposer {
             setters.add(method);
             // There may be a @DocString annotation
             maybeAddDoc(method);
+            // Process parameters of the Setter
+            determineAttrType(method);
         }
 
         /**
@@ -482,6 +490,29 @@ class TypeExposer extends Exposer {
             deleters.add(method);
             // There may be a @DocString annotation
             maybeAddDoc(method);
+        }
+
+        /**
+         * Deduce the attribute type from the (raw) set method signature. We
+         * do this in order to give a sensible {@link TypeError} when a cast
+         * fails for the {@link PyGetSetDescr#__set__} operation.
+         *
+         * @param method annotated with a {@code Setter}
+         */
+        private void determineAttrType(Method method) {
+            // Save class of value accepted (if signature is sensible)
+            int modifiers = method.getModifiers();
+            int v = (modifiers & Modifier.STATIC) != 0 ? 1 : 0;
+            Class<?>[] paramClasses = method.getParameterTypes();
+            if (paramClasses.length == v + 1) {
+                Class<?> valueClass = paramClasses[v];
+                if (valueClass == klass) {
+                    // No change
+                } else if (klass.isAssignableFrom(valueClass)) {
+                    // The parameter is more specific than klass
+                    klass = valueClass;
+                }
+            }
         }
 
         @Override
@@ -532,7 +563,7 @@ class TypeExposer extends Exposer {
                 }
             }
 
-            return new PyGetSetDescr.Multiple(objclass, name, g, s, d, doc);
+            return new PyGetSetDescr.Multiple(objclass, name, g, s, d, doc, klass);
         }
 
         private MethodHandle[] unreflect(PyType objclass, Lookup lookup, MethodType mt,
@@ -594,7 +625,8 @@ class TypeExposer extends Exposer {
 
                 // We should have a value in each of method[]
                 if (method[i] == null) {
-                    throw new InterpreterError("'%s.%s' not defined for %s", objclass.name, name,
+                    PyGetSetDescr.Type dt = PyGetSetDescr.Type.fromMethodType(mt);
+                    throw new InterpreterError(ATTR_NOT_IMPL, dt, name, objclass.name,
                             objclass.classes[i]);
                 }
             }
@@ -607,6 +639,9 @@ class TypeExposer extends Exposer {
              */
             return method;
         }
+
+        private static String ATTR_NOT_IMPL =
+                "%s of attribute '%s' of '%s' objects is not defined for implementation %s";
 
         @Override
         Class<? extends Annotation> annoClass() {
@@ -693,7 +728,7 @@ class TypeExposer extends Exposer {
             // Acceptable methods can be coerced to this signature
             MethodType slotType = slot.getType();
             final int L = slotType.parameterCount();
-            assert (L >= 1);
+            assert L >= 1;
 
             /*
              * There could be any number of candidates in the implementation. An

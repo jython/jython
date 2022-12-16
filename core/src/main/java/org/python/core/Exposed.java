@@ -242,10 +242,35 @@ public interface Exposed {
     @interface KeywordCollector {}
 
     /**
-     * Identify a field (of supported type) of a Python object as an
-     * exposed member. Get, set and delete operations are provided
-     * automatically on a descriptor that will be entered in the
-     * dictionary of the type being defined.
+     * Identify a field of a Python object as an exposed attribute. Get,
+     * set and delete operations are provided automatically on a
+     * descriptor that will be entered in the dictionary of the type
+     * being defined. If the field is Java {@code final} it will be
+     * read-only.
+     * <p>
+     * Some primitive types and {@code String} receive special support
+     * for conversion from Python objects. A field of type
+     * {@code Object} may easily be made a member and will then receive
+     * any Python object.
+     * <p>
+     * The annotated field may have any Java reference type. In that
+     * case, an attempt to assign a Python object of the wrong Java type
+     * will raise a {@link TypeError}. This makes it possible to declare
+     * an attribute of a specific Python type. For example one enforce
+     * {@code tuple} values by declaring the field as a {@link PyTuple}.
+     * The field would also accept Python sub-classes of the attribute
+     * type, since they must be sub-classes in Java too.
+     * <p>
+     * This approach creates a limitation where the corresponding Python
+     * type has multiple Java implementations not related by Java
+     * inheritance and is not specially provided for (like
+     * {@code String}). The set operation of the {@link Member}
+     * attribute will reject instances that have the intended Python
+     * type but non-matching Java type (with a confusing
+     * {@link TypeError} to boot). A writable attribute of that type
+     * should be implemented as {@code Object} or using explicit
+     * {@link Getter}, {@link Setter} and {@link Deleter} methods.
+     *
      */
     @Documented
     @Retention(RUNTIME)
@@ -263,10 +288,15 @@ public interface Exposed {
         boolean readonly() default false;
 
         /**
-         * Member can be deleted and subsequently it is an
-         * {@link AttributeError} to get or delete it, until it is set
-         * again. By default, when a member implemented by a reference type
-         * is deleted, it behaves as if set to {@code None}.
+         * A member may be {@code null} from Java or deleted from Python (if
+         * not read-only). In this condition:
+         * <ul>
+         * <li>for a member annotated with {@code optional=true}, attempts
+         * to {@code get} or {@code delete} the member will produce an
+         * {@link AttributeError}, until it is set again.</li>
+         * <li>where {@code optional=false} (default), a {@code get} will
+         * return {@code None} and {@code delete} will have no effect.</li>
+         * </ul>
          *
          * @return true if access following delete will raise an error
          */
@@ -277,7 +307,12 @@ public interface Exposed {
      * Identify a method as that to be called during a Python call to
      * {@code __getattribute__} naming an exposed attribute.
      * <p>
-     * The signature must be ()PyObject.
+     * The signature must be {@code ()T} where {@code T} can be
+     * {@code Object} if the implementor has no reason to do otherwise.
+     * (One reason might be type safety when calling the same method
+     * from Java.) The annotated method is responsible for converting to
+     * {@code T} from however the attribute is represented internally to
+     * the type.
      */
     @Documented
     @Retention(RUNTIME)
@@ -288,6 +323,7 @@ public interface Exposed {
          * Exposed name of the attribute, if different from the Java method
          * name.
          *
+         * This name will relate the {@link Getter}, {@link Setter} and
          * {@link Deleter} in a single descriptor.
          *
          * @return name of the attribute
@@ -299,7 +335,13 @@ public interface Exposed {
      * Identify a method as that to be called during a Python call to
      * {@code __setattr__} naming an exposed attribute.
      * <p>
-     * The signature must be (PyObject)void.
+     * The signature must be {@code (T)V} where {@code T} is often
+     * {@code Object}. The annotated method is responsible for
+     * converting this to the form in which the attribute is represented
+     * internally to the type. If {@code T}is something more specific
+     * than {@code Object}, a cast occurs to this Java type during the
+     * descriptor call, which if it fails will raise a Python
+     * {@link TypeError}.
      */
     @Documented
     @Retention(RUNTIME)
@@ -322,7 +364,7 @@ public interface Exposed {
      * Identify a method as that to be called during a Python call to
      * {@code __delattr__} naming an exposed attribute.
      * <p>
-     * The signature must be {@code ()void}.
+     * The signature must be {@code ()V}.
      */
     @Documented
     @Retention(RUNTIME)

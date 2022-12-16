@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.python.base.InterpreterError;
 import org.python.base.MethodKind;
 import org.python.core.Exposed.Default;
 import org.python.core.Exposed.DocString;
+import org.python.core.Exposed.Getter;
 import org.python.core.Exposed.KeywordCollector;
 import org.python.core.Exposed.KeywordOnly;
 import org.python.core.Exposed.Name;
@@ -49,7 +51,7 @@ abstract class Exposer {
 
     /**
      * The table of intermediate descriptions for methods (instance,
-     * static and class). They will become {@code MethodDef}s, and
+     * static and class). They will become {@link MethodDef}s, and
      * eventually either descriptors in a built-in object type or
      * methods bound to instances of a module type. Every entry here is
      * also a value in {@link #specs}.
@@ -112,12 +114,31 @@ abstract class Exposer {
      * @throws InterpreterError on duplicates or unsupported types
      */
     void scanJavaMethods(Class<?> defsClass) throws InterpreterError {
-
         // Iterate over methods looking for the relevant annotations
-        for (Method m : defsClass.getDeclaredMethods()) {
-            PythonMethod a = m.getDeclaredAnnotation(PythonMethod.class);
-            if (a != null) { addMethodSpec(m, a); }
+        for (Class<?> c : superClasses(defsClass)) {
+            for (Method m : c.getDeclaredMethods()) {
+                PythonMethod a = m.getDeclaredAnnotation(PythonMethod.class);
+                if (a != null) { addMethodSpec(m, a); }
+            }
         }
+    }
+
+    /**
+     * Walk down to a given class through all super-classes that might
+     * contain items to expose. We do not need to include classes not
+     * created with a knowledge of Jython. (This is why it doesn't start
+     * with {@code java.lang.Object}).
+     *
+     * @param c given ending class
+     * @return super-classes descending to {@code c}
+     */
+    static Collection<Class<?>> superClasses(Class<?> c) {
+        LinkedList<Class<?>> classes = new LinkedList<>();
+        while (c != null && c != Object.class) {
+            classes.addFirst(c);
+            c = c.getSuperclass();
+        }
+        return classes;
     }
 
     /**
@@ -141,9 +162,8 @@ abstract class Exposer {
                 // Test and cast a found Spec to MethodSpec
                 spec -> spec instanceof MethodSpec ? (MethodSpec)spec : null;
         // Now use the generic create/update
-        addSpec(meth, anno.value(), cast, (String name) -> new MethodSpec(name, kind()), ms -> {
-            methodSpecs.add(ms);
-        }, addMethod);
+        addSpec(meth, anno.value(), cast, (String name) -> new MethodSpec(name, kind()),
+                ms -> methodSpecs.add(ms), addMethod);
     }
 
     /**
@@ -167,9 +187,7 @@ abstract class Exposer {
                 spec -> spec instanceof StaticMethodSpec ? (StaticMethodSpec)spec : null;
         // Now use the generic create/update
         addSpec(meth, anno.value(), cast, (String name) -> new StaticMethodSpec(name, kind()),
-                ms -> {
-                    methodSpecs.add(ms);
-                }, addMethod);
+                ms -> methodSpecs.add(ms), addMethod);
     }
 
     /**
@@ -347,9 +365,9 @@ abstract class Exposer {
             if (ac == Annotation.class) {
                 // Special methods recognised by name, so no annotation
                 return "special method";
-                // } else if (ac == Getter.class) {
-                // // Since could also be @Setter or @Deleter
-                // return "get-set attribute";
+            } else if (ac == Getter.class) {
+                // Since could also be @Setter or @Deleter
+                return "get-set attribute";
             } else {
                 return ac.getSimpleName();
             }
@@ -485,7 +503,7 @@ abstract class Exposer {
      * <p>
      * Objects described by this class are defined by a Java signature
      * in which parameters may be annotated to modify their treatment by
-     * Python. An argument parser and a {@code MethodDef} will be
+     * Python. An argument parser and a {@link MethodDef} will be
      * created to specify that treatment.
      */
     static abstract class CallableSpec extends BaseMethodSpec {
@@ -1141,7 +1159,7 @@ abstract class Exposer {
     /**
      * Specification in which we assemble information about a Python
      * static method in advance of creating a method definition
-     * {@code MethodDef} or method descriptor {@link PyMethodDescr}.
+     * {@link MethodDef} or method descriptor {@link PyMethodDescr}.
      */
     static class StaticMethodSpec extends CallableSpec {
 
