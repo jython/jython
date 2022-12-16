@@ -11,6 +11,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,11 +26,26 @@ import org.python.core.Exposed.Getter;
 import org.python.core.Exposed.Setter;
 
 /**
- * Test that get-set attributes, that is, exposed by a Python
- * <b>type</b> defined in Java, using the annotations
+ * Test that get-set attributes exposed by a Python <i>type</i>
+ * defined in Java, that is, using methods annotated with
  * {@link Exposed.Getter}, {@link Exposed.Setter} and
  * {@link Exposed.Deleter}, result in data descriptors with
  * characteristics that correspond to the definitions.
+ * <p>
+ * This gets a bit complicated, but if it works, should cover
+ * anything we want to do in real life. The test object is a Python
+ * type {@code ObjectWithGetSets} defined by the inner Java class
+ * {@link ObjectWithGetSets}. This definition adopts a second Java
+ * class {@link AdoptedWithGetSets}, so that instances of either
+ * Java type are accepted as Python objects of type
+ * {@code ObjectWithGetSets}.
+ * <p>
+ * For simplicity, in the test both implementations get most of
+ * their definition by inheritance from a common base class
+ * {@link BaseGetSets}. Note that implementations of get-set methods
+ * operating on the state of an {@code AdoptedWithGetSets}, have to
+ * reside in the defining class {@code ObjectWithGetSets} or the
+ * base.
  * <p>
  * There is a nested test suite for each pattern of characteristics.
  * For test purposes, we mostly mimic the behaviour of identified
@@ -60,15 +78,15 @@ import org.python.core.Exposed.Setter;
  * <td class="row-label">optional</td>
  * <td>yes</td>
  * <td>yes</td>
- * <td>sets default</td>
- * <td>gets default</td>
- * </tr>
- * <tr>
- * <td class="row-label">optional</td>
- * <td>yes</td>
- * <td>yes</td>
  * <td>removes</td>
  * <td>AttributeError</td>
+ * </tr>
+ * <tr>
+ * <td class="row-label">not optional</td>
+ * <td>yes</td>
+ * <td>yes</td>
+ * <td>sets default</td>
+ * <td>gets default</td>
  * </tr>
  * </table>
  */
@@ -80,23 +98,18 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             "Nigel Incubator-Jones", "Gervaise Brook-Hampster", "Oliver St. John-Mollusc"};
 
     /**
-     * A Python type definition that exhibits a range of get-set
-     * attribute definitions explored in the tests.
+     * Java base class of a Python type definition. We use this class to
+     * prepare two classes that jointly define the get-set attributes of
+     * a type {@code ObjectWithGetSets}.
+     * <p>
+     * As well as giving us less to type, using a base allows us to show
+     * that some of the get-set attribute definitions explored in the
+     * tests can be Java-inherited.
      */
-    private static class ObjectWithGetSets {
+    private static abstract class BaseGetSets {
 
-        static PyType TYPE =
-                PyType.fromSpec(new PyType.Spec("ObjectWithGetSets", MethodHandles.lookup())
-                        .adopt(DerivedWithGetSets.class));
-
-        /** Primitive integer attribute (not optional). */
-        int i;
-
-        @Getter
-        Object i() { return i; }
-
-        @Setter
-        void i(Object v) { i = PyLong.asInt(v); }
+        /** The actual Python type */
+        protected PyType type;
 
         /** Primitive double attribute (not optional). */
         double x;
@@ -110,6 +123,24 @@ class TypeExposerGetSetTest extends UnitTestSupport {
 
         @Deleter("x")
         void _x() { x = Double.NaN; }
+
+        /**
+         * Optional {@code String} attribute that can be properly deleted
+         * without popping up as {@code None}.
+         */
+        String s;
+
+        @Getter
+        Object s() { return errorIfNull(s, (o) -> Abstract.noAttributeError(this, "s")); }
+
+        @Setter
+        void s(Object v) { s = PyUnicode.asString(v); }
+
+        @Deleter("s")
+        void _s() {
+            errorIfNull(s, (o) -> Abstract.noAttributeError(this, "s"));
+            s = null;
+        }
 
         /**
          * String with change of name. Deletion leads to a distinctive
@@ -126,62 +157,21 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         @Deleter("text")
         void _t() { t = "<deleted>"; }
 
-        /** String can be properly deleted without popping up as None */
-        String s;
+        /**
+         * Read-only double attribute. {@code DocString} after
+         * {@code Getter}
+         */
+        final double x2;
 
         @Getter
-        Object s() {
-            if (s == null) { throw new AttributeError("s"); }
-            return s;
-        }
+        @DocString("Another x")
+        Object x2() { return x2; }
 
-        @Setter
-        void s(Object v) { s = PyUnicode.asString(v); }
+        /** Read-only {@code String} attribute. */
+        String t2;
 
-        @Deleter("s")
-        void _s() {
-            if (s == null) { throw new AttributeError("s"); }
-            s = null;
-        }
-
-        /**
-         * {@code Object} get-set attribute, acting as a non-optional
-         * member. That is {@code null} represents deleted and appears as
-         * {@code None} externally.
-         */
-        Object obj;
-
-        @Getter
-        Object obj() { return obj == null ? Py.None : obj; }
-
-        @Setter
-        void obj(Object v) { obj = v; }
-
-        @Deleter("obj")
-        void _obj() { obj = null; }
-
-        /**
-         * Strongly-typed String array internally, but {@code tuple} to
-         * Python.
-         */
-        @FrozenArray
-        private String[] nameArray;
-
-        @Getter
-        Object names() { return new PyTuple(nameArray); }
-
-        @Setter
-        void names(Object v) { nameArray = fromTuple(v, String[].class); }
-
-        @Deleter("names")
-        void _names() { nameArray = new String[0]; }
-
-        /**
-         * Create new array value for {@link #nameArray}.
-         *
-         * @param v new value
-         */
-        void setNameArray(String[] v) { nameArray = Arrays.copyOf(v, v.length); }
+        @Getter("text2")
+        Object t2() { return t2; }
 
         /**
          * Strongly-typed primitive ({@code double}) array internally, but
@@ -204,11 +194,145 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         void _doubles() { doubleArray = new double[0]; }
 
         /**
+         * Strongly-typed {@code String} array internally, but {@code tuple}
+         * to Python or {@code None} when deleted.
+         */
+        @FrozenArray
+        String[] nameArray;
+
+        @Getter
+        Object names() { return new PyTuple(nameArray); }
+
+        @Setter
+        void names(Object v) { nameArray = fromTuple(v, String[].class); }
+
+        @Deleter("names")
+        void _names() { nameArray = new String[0]; }
+
+        /**
+         * Create new array value for {@link #nameArray}.
+         *
+         * @param v new value
+         */
+        void setNameArray(String[] v) { nameArray = Arrays.copyOf(v, v.length); }
+
+        /**
          * Create new array value for {@link #doubleArray}.
          *
          * @param v new value
          */
         void setDoubleArray(double[] v) { doubleArray = Arrays.copyOf(v, v.length); }
+
+        /**
+         * {@code Object} get-set attribute, acting as a non-optional
+         * member. That is {@code null} represents deleted and appears as
+         * {@code None} externally.
+         */
+        Object obj;
+
+        @Getter
+        Object obj() { return defaultIfNull(obj, Py.None); }
+
+        @Setter
+        void obj(Object v) { obj = v; }
+
+        @Deleter("obj")
+        void _obj() { obj = null; }
+
+        /*
+         * Attribute with tuple value will be implemented at Java level
+         * through this abstract interface.
+         */
+        /** @return notional field {@code tup}. */
+        abstract PyTuple getTup();
+
+        /**
+         * Strongly-typed {@code PyTuple} attribute with default value
+         * {@code None}. The attribute is defined through a pair of abstract
+         * methods {@link #getTup()} and {@link #setTup(PyTuple)}. This
+         * allows us to have quite different implementations in the two
+         * subclasses while defining the get-set methods in the base.
+         */
+        @Getter
+        Object tup() { return defaultIfNull(getTup(), Py.None); }
+
+        /*
+         * Notice the strongly typed argument to the Setter. This makes
+         * checks in the method body unnecessary. PyGetSetDescr.__set__ will
+         * check the supplied value and report a mismatch in terms of Python
+         * types.
+         *
+         */
+        @Setter
+        void tup(PyTuple v) { setTup(v); }
+
+        @Deleter("tup")
+        void _tup() { setTup(null); }
+
+        /**
+         * Assign or delete notional field {@code tup}.
+         *
+         * @param tup new value ({@code null} for delete)
+         */
+        abstract void setTup(PyTuple tup);
+
+        BaseGetSets(PyType type, double value) {
+            this.type = type;
+            x2 = x = value;
+            doubleArray = new double[] {1, x, x * x, x * x * x};
+            nameArray = TWITS.clone();
+        }
+
+        /**
+         * Return a default value if {@code v} is {@code null}.
+         *
+         * @param <T> type of {@code v}
+         * @param v to return if not {@code null}
+         * @param defaultValue to return if {@code v} is {@code null}
+         * @return {@code v} or {@code defaultValue}
+         */
+        static <T> T defaultIfNull(T v, T defaultValue) { return v != null ? v : defaultValue; }
+
+        /**
+         * Throw an exception if {@code v} is {@code null}.
+         *
+         * @param <T> type of {@code v}
+         * @param <E> type of exception to throw
+         * @param v to return if not {@code null}
+         * @param exc supplier of exception to throw
+         * @return {@code v}
+         * @throws E if {@code v} is {@code null}
+         */
+        static <T, E extends PyException> T errorIfNull(T v, Function<T, E> exc) throws E {
+            if (v != null) { return v; }
+            throw exc.apply(v);
+        }
+    }
+
+    /**
+     * A Python type definition that exhibits a range of get-set
+     * attribute definitions explored in the tests.
+     */
+    private static class ObjectWithGetSets extends BaseGetSets {
+
+        static PyType TYPE =
+                PyType.fromSpec(new PyType.Spec("ObjectWithGetSets", MethodHandles.lookup())
+                        .adopt(AdoptedWithGetSets.class));
+
+        /** Primitive integer attribute (not optional). */
+        int i;
+
+        @Getter
+        Integer i() { return i; }
+
+        @Getter
+        static BigInteger i(AdoptedWithGetSets self) { return self.i; }
+
+        @Setter
+        void i(Object v) { i = PyLong.asInt(v); }
+
+        @Setter
+        static void i(AdoptedWithGetSets self, Object v) { self.i = PyLong.asBigInteger(v); }
 
         /** Read-only access. */
         int i2;
@@ -216,27 +340,70 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         @Getter
         Object i2() { return i2; }
 
-        /** Read-only double. DocString after Getter */
-        final double x2;
-
         @Getter
-        @DocString("Another x")
-        Object x2() { return x2; }
+        static BigInteger i2(AdoptedWithGetSets self) { return self.i2; }
 
-        /** Read-only String. */
-        String t2;
+        /**
+         * Strongly-typed {@code PyTuple} attribute with default value
+         * {@code None}.
+         */
+        PyTuple tup;
 
-        @Getter("text2")
-        Object t2() { return t2; }
-
-        ObjectWithGetSets(double value) {
-            x2 = x = value;
-            i2 = i = Math.round((float)value);
-            t2 = t = s = String.format("%d", i);
+        ObjectWithGetSets(PyType type, double value) {
+            super(type, value);
+            i2 = i = BigInteger.valueOf(Math.round(value)).intValueExact();
             obj = i;
-            doubleArray = new double[] {1, x, x * x, x * x * x};
-            nameArray = TWITS.clone();
+            t2 = t = s = String.format("%d", i);
+            tup = new PyTuple(i, x, t);
         }
+
+        ObjectWithGetSets(double value) { this(TYPE, value); }
+
+        @Override
+        PyTuple getTup() { return tup; }
+
+        @Override
+        void setTup(PyTuple tup) { this.tup = tup; }
+    }
+
+    /**
+     * A class that represents an <i>adopted</i> implementation of the
+     * Python class {@code ObjectWithGetSets} defined above. Attribute
+     * access methods implemented in the common base class
+     * {@link BaseGetSets} also apply to this class. This class and the
+     * canonical class {@link ObjectWithGetSets} implement certain
+     * attributes each in their own way. The attribute access methods
+     * for this class are implemented as {@code static} methods in the
+     * canonical {@code ObjectWithGetSets}.
+     */
+    private static class AdoptedWithGetSets extends BaseGetSets {
+        // FIXME not used in tests
+
+        /** Primitive integer attribute (not optional). */
+        BigInteger i;
+
+        /** Read-only access. */
+        BigInteger i2;
+
+        /**
+         * Strongly-typed {@code PyTuple} attribute with default value
+         * {@code None}.
+         */
+        Object[] aTuple;
+
+        AdoptedWithGetSets(double value) {
+            super(ObjectWithGetSets.TYPE, value);
+            i2 = i = BigInteger.valueOf(Math.round(value));
+            obj = i;
+            t2 = t = s = String.format("%d", i);
+            aTuple = new Object[] {i, x, t};
+        }
+
+        @Override
+        PyTuple getTup() { return aTuple == null ? null : PyTuple.from(aTuple); }
+
+        @Override
+        void setTup(PyTuple tup) { this.aTuple = tup == null ? null : tup.toArray(); }
     }
 
     /**
@@ -298,16 +465,6 @@ class TypeExposerGetSetTest extends UnitTestSupport {
     }
 
     /**
-     * A class that extends the above, with the same Python type. We
-     * want to check that what we're doing to reflect on the parent
-     * produces descriptors we can apply to a sub-class.
-     */
-    private static class DerivedWithGetSets extends ObjectWithGetSets {
-
-        DerivedWithGetSets(double value) { super(value); }
-    }
-
-    /**
      * Certain nested test classes implement these as standard. A base
      * class here is just a way to describe the tests once that reappear
      * in each nested case.
@@ -320,31 +477,38 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         /** Documentation string. */
         String doc;
         /** The value set by delete. */
-        Object none;
+        Object deleted;
         /** Unbound descriptor by type access to examine or call. */
         PyGetSetDescr gsd;
         /** The object on which to attempt access. */
         ObjectWithGetSets o;
         /**
-         * Another object on which to attempt access (in case we are getting
-         * instances mixed up).
+         * An object of the adopted implementation on which to attempt the
+         * same kind of access (in case we are getting instances mixed up).
          */
-        ObjectWithGetSets p;
+        AdoptedWithGetSets p;
 
-        void setup(String name, String doc, Object none, double oValue, double pValue) {
+        void setup(String name, String doc, Object deleted, double oValue, double pValue)
+                throws Throwable {
             this.name = name;
             this.doc = doc;
-            this.none = none;
-            this.gsd = (PyGetSetDescr)ObjectWithGetSets.TYPE.lookup(name);
-            this.o = new ObjectWithGetSets(oValue);
-            this.p = new ObjectWithGetSets(pValue);
+            this.deleted = deleted;
+            try {
+                this.gsd = (PyGetSetDescr)ObjectWithGetSets.TYPE.lookup(name);
+                this.o = new ObjectWithGetSets(oValue);
+                this.p = new AdoptedWithGetSets(pValue);
+            } catch (ExceptionInInitializerError eie) {
+                // Errors detected by the Exposer get wrapped so:
+                Throwable t = eie.getCause();
+                throw t == null ? eie : t;
+            }
         }
 
-        void setup(String name, String doc, double oValue, double pValue) {
+        void setup(String name, String doc, double oValue, double pValue) throws Throwable {
             setup(name, doc, null, oValue, pValue);
         }
 
-        void setup(String name, double oValue, double pValue) {
+        void setup(String name, double oValue, double pValue) throws Throwable {
             setup(name, null, null, oValue, pValue);
         }
 
@@ -433,6 +597,8 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         void rejects_descr_delete() {
             assertThrows(TypeError.class, () -> gsd.__delete__(o));
             assertThrows(TypeError.class, () -> gsd.__set__(o, null));
+            assertThrows(TypeError.class, () -> gsd.__delete__(p));
+            assertThrows(TypeError.class, () -> gsd.__set__(p, null));
         }
 
         /**
@@ -445,6 +611,104 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         void rejects_abstract_delAttr() {
             assertThrows(TypeError.class, () -> Abstract.delAttr(o, name));
             assertThrows(TypeError.class, () -> Abstract.setAttr(o, name, null));
+            assertThrows(TypeError.class, () -> Abstract.delAttr(p, name));
+            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, null));
+        }
+    }
+
+    /**
+     * Base test of an optional attribute. Instances will raise
+     * {@link AttributeError} on access after deletion.
+     */
+    abstract static class BaseOptionalReference extends BaseSettable {
+
+        /**
+         * The get-set descriptor may be used to delete a field from an
+         * instance of the object, causing it to disappear externally.
+         *
+         * @throws Throwable unexpectedly
+         */
+        @Test
+        void descr_delete_removes() throws Throwable {
+            gsd.__delete__(o);
+            gsd.__delete__(p);
+            // After deletion, ...
+            // ... __get__ raises AttributeError
+            assertThrows(AttributeError.class, () -> gsd.__get__(o, null));
+            assertThrows(AttributeError.class, () -> gsd.__get__(p, null));
+            // ... __delete__ raises AttributeError
+            assertThrows(AttributeError.class, () -> gsd.__delete__(o));
+            assertThrows(AttributeError.class, () -> gsd.__delete__(p));
+        }
+
+        /**
+         * {@link Abstract#delAttr(Object, String)} to delete a field from
+         * an instance of the object, causing it to disappear externally.
+         *
+         * @throws Throwable unexpectedly
+         */
+        @Test
+        void abstract_delAttr_removes() throws Throwable {
+            Abstract.delAttr(o, name);
+            Abstract.delAttr(p, name);
+            // After deletion, ...
+            // ... getAttr and delAttr raise AttributeError
+            assertThrows(AttributeError.class, () -> Abstract.getAttr(o, name));
+            assertThrows(AttributeError.class, () -> Abstract.getAttr(p, name));
+            assertThrows(AttributeError.class, () -> Abstract.delAttr(o, name));
+            assertThrows(AttributeError.class, () -> Abstract.delAttr(p, name));
+        }
+    }
+
+    /**
+     * Base test of settable attribute where deletion sets a particular
+     * value.
+     */
+    abstract static class BaseSettableDefault extends BaseSettable {
+
+        /**
+         * The get-set descriptor may be used to delete a field from an
+         * instance of the object, meaning whatever the {@code Deleter}
+         * chooses. For test purposes, we set a distinctive {@code deleted}
+         * value.
+         *
+         * @throws Throwable unexpectedly
+         */
+        @Test
+        void descr_delete_sets_deleted() throws Throwable {
+            gsd.__delete__(o);
+            assertEquals(deleted, gsd.__get__(o, null));
+            // __delete__ is idempotent
+            gsd.__delete__(o);
+            assertEquals(deleted, gsd.__get__(o, null));
+            // And again for the adopted implementation
+            gsd.__delete__(p);
+            assertEquals(deleted, gsd.__get__(p, null));
+            gsd.__delete__(p);
+            assertEquals(deleted, gsd.__get__(p, null));
+        }
+
+        /**
+         * {@link Abstract#delAttr(Object, String)} to delete a field from
+         * an instance of the object, meaning whatever the {@code deleter}
+         * chooses. For test purposes, we mimic the behaviour of an optional
+         * member: ({@code null} internally appears as {@code None}
+         * externally.
+         *
+         * @throws Throwable unexpectedly
+         */
+        @Test
+        void abstract_delAttr_sets_deleted() throws Throwable {
+            Abstract.delAttr(o, name);
+            assertEquals(deleted, Abstract.getAttr(o, name));
+            // delAttr is idempotent
+            Abstract.delAttr(o, name);
+            assertEquals(deleted, Abstract.getAttr(o, name));
+            // And again for the adopted implementation
+            Abstract.delAttr(p, name);
+            assertEquals(deleted, Abstract.getAttr(p, name));
+            Abstract.delAttr(p, name);
+            assertEquals(deleted, Abstract.getAttr(p, name));
         }
     }
 
@@ -459,14 +723,14 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         @Test
         void descr_get_works() throws Throwable {
             assertEquals(42, gsd.__get__(o, null));
-            assertEquals(-1, gsd.__get__(p, null));
+            assertPythonEquals(-1, gsd.__get__(p, null));
         }
 
         @Override
         @Test
         void abstract_getAttr_works() throws Throwable {
             assertEquals(42, Abstract.getAttr(o, name));
-            assertEquals(-1, Abstract.getAttr(p, name));
+            assertPythonEquals(-1, Abstract.getAttr(p, name));
         }
 
         @Override
@@ -475,7 +739,7 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             gsd.__set__(o, 43);
             gsd.__set__(p, BigInteger.valueOf(44));
             assertEquals(43, o.i);
-            assertEquals(44, p.i);
+            assertPythonEquals(44, p.i);
         }
 
         @Override
@@ -484,7 +748,7 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             Abstract.setAttr(o, name, 43);
             Abstract.setAttr(p, name, BigInteger.valueOf(44));
             assertEquals(43, o.i);
-            assertEquals(44, p.i);
+            assertPythonEquals(44, p.i);
         }
 
         @Override
@@ -494,8 +758,8 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertThrows(TypeError.class, () -> gsd.__set__(o, "Gumby"));
             assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, 1.0));
             assertThrows(TypeError.class, () -> gsd.__set__(o, Py.None));
+            assertThrows(TypeError.class, () -> gsd.__set__(p, Py.None));
         }
-
     }
 
     @Nested
@@ -544,6 +808,7 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertThrows(TypeError.class, () -> gsd.__set__(o, "Gumby"));
             assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, "42"));
             assertThrows(TypeError.class, () -> gsd.__set__(o, Py.None));
+            assertThrows(TypeError.class, () -> gsd.__set__(p, Py.None));
         }
 
         /**
@@ -554,12 +819,18 @@ class TypeExposerGetSetTest extends UnitTestSupport {
          * @throws Throwable unexpectedly
          */
         @Test
-        void descr_delete_sets_None() throws Throwable {
+        void descr_delete_sets_NaN() throws Throwable {
             gsd.__delete__(o);
             assertEquals(Double.NaN, gsd.__get__(o, null));
             // __delete__ is idempotent
             gsd.__delete__(o);
             assertEquals(Double.NaN, gsd.__get__(o, null));
+
+            // And again for the adopted implementation
+            gsd.__delete__(p);
+            assertEquals(Double.NaN, gsd.__get__(p, null));
+            gsd.__delete__(p);
+            assertEquals(Double.NaN, gsd.__get__(p, null));
         }
 
         /**
@@ -567,58 +838,20 @@ class TypeExposerGetSetTest extends UnitTestSupport {
          * an instance of the object, meaning in this case, set it to
          * {@code NaN}.
          *
-         *
          * @throws Throwable unexpectedly
          */
         @Test
-        void abstract_delAttr_sets_None() throws Throwable {
+        void abstract_delAttr_sets_NaN() throws Throwable {
             Abstract.delAttr(o, name);
             assertEquals(Double.NaN, Abstract.getAttr(o, name));
             // delAttr is idempotent
             Abstract.delAttr(o, name);
             assertEquals(Double.NaN, Abstract.getAttr(o, name));
-        }
-    }
-
-    /**
-     * Base test of settable attribute where deletion sets a particular
-     * value.
-     */
-    abstract static class BaseSettableDefault extends BaseSettable {
-
-        /**
-         * The get-set descriptor may be used to delete a field from an
-         * instance of the object, meaning whatever the {@code deleter}
-         * chooses. For test purposes, we set a distinctive {@code none}
-         * value.
-         *
-         * @throws Throwable unexpectedly
-         */
-        @Test
-        void descr_delete_sets_none() throws Throwable {
-            gsd.__delete__(o);
-            assertEquals(none, gsd.__get__(o, null));
-            // __delete__ is idempotent
-            gsd.__delete__(o);
-            assertEquals(none, gsd.__get__(o, null));
-        }
-
-        /**
-         * {@link Abstract#delAttr(Object, String)} to delete a field from
-         * an instance of the object, meaning whatever the {@code deleter}
-         * chooses. For test purposes, we mimic the behaviour of an optional
-         * member ({@code null} internally, appearing as {@code None}
-         * externally.
-         *
-         * @throws Throwable unexpectedly
-         */
-        @Test
-        void abstract_delAttr_sets_none() throws Throwable {
-            Abstract.delAttr(o, name);
-            assertEquals(none, Abstract.getAttr(o, name));
-            // delAttr is idempotent
-            Abstract.delAttr(o, name);
-            assertEquals(none, Abstract.getAttr(o, name));
+            // And again for the adopted implementation
+            Abstract.delAttr(p, name);
+            assertEquals(Double.NaN, Abstract.getAttr(p, name));
+            Abstract.delAttr(p, name);
+            assertEquals(Double.NaN, Abstract.getAttr(p, name));
         }
     }
 
@@ -652,7 +885,7 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertEquals("Gumby", p.t);
             // __set__ works after delete
             gsd.__delete__(o);
-            assertEquals(none, o.t);
+            assertEquals(deleted, o.t);
             gsd.__set__(o, "Palin");
             assertEquals("Palin", o.t);
         }
@@ -666,9 +899,14 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertEquals("Gumby", p.t);
             // setAttr works after delete
             Abstract.delAttr(o, name);
-            assertEquals(none, o.t);
+            assertEquals(deleted, o.t);
             Abstract.setAttr(o, name, "Palin");
             assertEquals("Palin", o.t);
+            // And again for the adopted implementation
+            Abstract.delAttr(p, name);
+            assertEquals(deleted, p.t);
+            Abstract.setAttr(p, name, "Palin");
+            assertEquals("Palin", p.t);
         }
 
         @Override
@@ -678,46 +916,8 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertThrows(TypeError.class, () -> gsd.__set__(o, 1));
             assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, 10.0));
             assertThrows(TypeError.class, () -> gsd.__set__(o, new Object()));
+            assertThrows(TypeError.class, () -> gsd.__set__(p, new Object()));
         }
-    }
-
-    /**
-     * Base test of an optional attribute. Instances will raise
-     * {@link AttributeError} on access after deletion.
-     */
-    abstract static class BaseOptionalReference extends BaseSettable {
-
-        /**
-         * The get-set descriptor may be used to delete a field from an
-         * instance of the object, causing it to disappear externally.
-         *
-         * @throws Throwable unexpectedly
-         */
-        @Test
-        void descr_delete_removes() throws Throwable {
-            gsd.__delete__(o);
-            // After deletion, ...
-            // ... __get__ raises AttributeError
-            assertThrows(AttributeError.class, () -> gsd.__get__(o, null));
-            // ... __delete__ raises AttributeError
-            assertThrows(AttributeError.class, () -> gsd.__delete__(o));
-        }
-
-        /**
-         * {@link Abstract#delAttr(Object, String)} to delete a field from
-         * an instance of the object, causing it to disappear externally.
-         *
-         * @throws Throwable unexpectedly
-         */
-        @Test
-        void abstract_delAttr_removes() throws Throwable {
-            Abstract.delAttr(o, name);
-            // After deletion, ...
-            // ... getAttr and delAttr raise AttributeError
-            assertThrows(AttributeError.class, () -> Abstract.getAttr(o, name));
-            assertThrows(AttributeError.class, () -> Abstract.delAttr(o, name));
-        }
-
     }
 
     @Nested
@@ -753,6 +953,11 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertNull(o.s);
             gsd.__set__(o, "Palin");
             assertEquals("Palin", o.s);
+            // And again for the adopted implementation
+            gsd.__delete__(p);
+            assertNull(p.s);
+            gsd.__set__(p, "Palin");
+            assertEquals("Palin", p.s);
         }
 
         @Override
@@ -767,6 +972,11 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             assertNull(o.s);
             Abstract.setAttr(o, name, "Palin");
             assertEquals("Palin", o.s);
+            // And again for the adopted implementation
+            Abstract.delAttr(p, name);
+            assertNull(p.s);
+            Abstract.setAttr(p, name, "Palin");
+            assertEquals("Palin", p.s);
         }
 
         @Override
@@ -790,14 +1000,14 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         @Test
         void descr_get_works() throws Throwable {
             assertEquals(42, gsd.__get__(o, null));
-            assertEquals(-1, gsd.__get__(p, null));
+            assertPythonEquals(-1, gsd.__get__(p, null));
         }
 
         @Override
         @Test
         void abstract_getAttr_works() throws Throwable {
             assertEquals(42, Abstract.getAttr(o, name));
-            assertEquals(-1, Abstract.getAttr(p, name));
+            assertPythonEquals(-1, Abstract.getAttr(p, name));
         }
 
         @Override
@@ -812,9 +1022,14 @@ class TypeExposerGetSetTest extends UnitTestSupport {
             // __set__ works after delete
             gsd.__delete__(o);
             assertNull(o.obj);
-            final Object palin = "Palin";
-            gsd.__set__(o, palin);
-            assertSame(palin, o.obj);
+            final Object nonPython = new HashMap<String, Integer>();
+            gsd.__set__(o, nonPython);
+            assertSame(nonPython, o.obj);
+            // And again for the adopted implementation
+            gsd.__delete__(p);
+            assertNull(p.obj);
+            gsd.__set__(p, nonPython);
+            assertSame(nonPython, p.obj);
         }
 
         @Override
@@ -843,6 +1058,85 @@ class TypeExposerGetSetTest extends UnitTestSupport {
                     () -> { gsd.__set__(o, everything); Abstract.setAttr(p, name, System.err); });
             assertSame(everything, o.obj);
             assertSame(System.err, p.obj);
+        }
+    }
+
+    @Nested
+    @DisplayName("implemented as a PyTuple")
+    class TestTuple extends BaseSettableDefault {
+
+        PyTuple oRef, pRef;
+
+        @BeforeEach
+        void setup() throws AttributeError, Throwable {
+            setup("tup", null, Py.None, 42, -1);
+            oRef = new PyTuple(42, 42.0, "42");
+            pRef = new PyTuple(-1, -1.0, "-1");
+        }
+
+        @Override
+        @Test
+        void descr_get_works() throws Throwable {
+            assertEquals(oRef, gsd.__get__(o, null));
+            assertEquals(pRef, gsd.__get__(p, null));
+        }
+
+        @Override
+        @Test
+        void abstract_getAttr_works() throws Throwable {
+            assertEquals(oRef, Abstract.getAttr(o, name));
+            assertEquals(pRef, Abstract.getAttr(p, name));
+        }
+
+        @Override
+        @Test
+        void descr_set_works() throws Throwable {
+            final Object tup2 = new PyTuple(2, 3, 4);
+            gsd.__set__(o, tup2);
+            assertEquals(tup2, o.tup);
+            // __set__ works after delete
+            final Object[] tup3array = new Object[] {3, 4, 5};
+            final Object tup3 = PyTuple.from(tup3array);
+            gsd.__delete__(o);
+            assertNull(o.tup);
+            gsd.__set__(o, tup3);
+            assertEquals(tup3, o.tup);
+            // And again for the adopted implementation
+            gsd.__delete__(p);
+            assertNull(p.aTuple);
+            gsd.__set__(p, tup3);
+            assertArrayEquals(tup3array, p.aTuple);
+        }
+
+        @Override
+        @Test
+        void abstract_setAttr_works() throws Throwable {
+            final Object gumby = PyTuple.from(List.of("D", "P", "Gumby"));
+            Abstract.setAttr(o, name, gumby);
+            // Should get the same object
+            assertSame(gumby, o.tup);
+            // setAttr works after delete
+            final Object[] tup3array = new Object[] {3, 4, 5};
+            final Object tup3 = PyTuple.from(tup3array);
+            Abstract.delAttr(o, name);
+            assertNull(o.tup);
+            Abstract.setAttr(o, name, tup3);
+            assertSame(tup3, o.tup);
+            // And again for the adopted implementation
+            Abstract.delAttr(p, name);
+            assertNull(p.aTuple);
+            Abstract.setAttr(p, name, tup3);
+            assertArrayEquals(tup3array, p.aTuple);
+        }
+
+        @Override
+        @Test
+        void set_detects_TypeError() {
+            // Things that are not a Python tuple
+            assertThrows(TypeError.class, () -> gsd.__set__(o, 1));
+            assertThrows(TypeError.class, () -> Abstract.setAttr(p, name, ""));
+            assertThrows(TypeError.class, () -> gsd.__set__(o, new Object()));
+            assertThrows(TypeError.class, () -> gsd.__set__(p, new Object()));
         }
     }
 
@@ -1040,14 +1334,14 @@ class TypeExposerGetSetTest extends UnitTestSupport {
         @Test
         void descr_get_works() throws Throwable {
             assertEquals(42, gsd.__get__(o, null));
-            assertEquals(-1, gsd.__get__(p, null));
+            assertPythonEquals(-1, gsd.__get__(p, null));
         }
 
         @Override
         @Test
         void abstract_getAttr_works() throws Throwable {
             assertEquals(42, Abstract.getAttr(o, name));
-            assertEquals(-1, Abstract.getAttr(p, name));
+            assertPythonEquals(-1, Abstract.getAttr(p, name));
         }
     }
 
