@@ -1,9 +1,10 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2022 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import java.lang.invoke.MethodHandles;
 
+import org.python.core.Exposed.Member;
 import org.python.core.PyType.Flag;
 
 /**
@@ -31,6 +32,7 @@ class PyMethodWrapper extends AbstractPyObject implements FastCall {
     public PyType getType() { return TYPE; }
 
     /** Descriptor for the method being bound. */
+    @Member
     PyWrapperDescr descr;
 
     /**
@@ -38,6 +40,7 @@ class PyMethodWrapper extends AbstractPyObject implements FastCall {
      * {@link #__call__(Object[], String[]) __call__} is invoked on this
      * object. This is exposed to Python as {@code __self__}.
      */
+    @Member("__self__")
     final Object self;
 
     /**

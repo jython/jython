@@ -45,6 +45,7 @@ abstract class Descriptor extends AbstractPyObject {
      * is exposed to Python as {@code __name__}.
      */
     // In CPython, called d_name
+    @Exposed.Member(value="__name__", readonly=true)
     protected final String name;
 
     /**
