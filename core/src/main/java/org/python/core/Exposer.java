@@ -36,6 +36,7 @@ import org.python.core.Exposed.PositionalCollector;
 import org.python.core.Exposed.PositionalOnly;
 import org.python.core.Exposed.PythonMethod;
 import org.python.core.Exposed.PythonStaticMethod;
+import org.python.core.ModuleDef.MethodDef;
 
 /**
  * An object for tabulating the attributes of classes that define
@@ -66,6 +67,25 @@ abstract class Exposer {
 
     /** @return which {@link ScopeKind} of {@code Exposer} is this? */
     abstract ScopeKind kind();
+
+    /**
+     * On behalf of the given module defined in Java, build a
+     * description of the attributes discovered by introspection of the
+     * class provided.
+     * <p>
+     * Attributes are identified by annotations. (See {@link Exposed}.)
+     *
+     * @param definingClass to introspect for members
+     * @return exposure result
+     * @throws InterpreterError on errors of definition
+     */
+    static ModuleExposer exposeModule(Class<?> definingClass) throws InterpreterError {
+        // Create an instance of Exposer to hold specs, type, etc.
+        ModuleExposer exposer = new ModuleExposer();
+        // Let the exposer control the logic
+        exposer.expose(definingClass);
+        return exposer;
+    }
 
     /**
      * On behalf of the given type defined in Java, build a description
@@ -617,12 +637,33 @@ abstract class Exposer {
         ArgParser getParser() {
             if (parser == null && parameterNames != null
                     && parameterNames.length >= posonlyargcount) {
-                parser = new ArgParser(name, scopeKind, methodKind, varArgsIndex >= 0,
-                        varKeywordsIndex >= 0, posonlyargcount, kwonlyargcount, parameterNames,
-                        regargcount);
+                parser = new ArgParser(name, scopeKind, methodKind, parameterNames, regargcount,
+                        posonlyargcount, kwonlyargcount, varArgsIndex >= 0, varKeywordsIndex >= 0);
                 parser.defaults(defaults).kwdefaults(kwdefaults);
             }
             return parser;
+        }
+
+        /**
+         * Produce a method definition from this specification that
+         * references a method handle on the (single) defining method and
+         * the parser created from this specification. This is used in the
+         * construction of a module defined in Java (a {@link ModuleDef}).
+         *
+         * @param lookup authorisation to access methods
+         * @return corresponding method definition
+         * @throws InterpreterError on lookup prohibited
+         */
+        MethodDef getMethodDef(Lookup lookup) throws InterpreterError {
+            assert methods.size() == 1;
+            Method m = methods.get(0);
+            MethodHandle mh;
+            try {
+                mh = lookup.unreflect(m);
+            } catch (IllegalAccessException e) {
+                throw cannotGetHandle(m, e);
+            }
+            return new MethodDef(getParser(), mh);
         }
 
         /**
@@ -1126,9 +1167,9 @@ abstract class Exposer {
         @Override
         PyMethodDescr asAttribute(PyType objclass, Lookup lookup) throws InterpreterError {
 
-            ArgParser ap = new ArgParser(name, scopeKind, MethodKind.INSTANCE, varArgsIndex >= 0,
-                    varKeywordsIndex >= 0, posonlyargcount, kwonlyargcount, parameterNames,
-                    regargcount);
+            ArgParser ap = new ArgParser(name, scopeKind, MethodKind.INSTANCE, parameterNames,
+                    regargcount, posonlyargcount, kwonlyargcount, varArgsIndex >= 0,
+                    varKeywordsIndex >= 0);
             ap.defaults(defaults).kwdefaults(kwdefaults);
 
             // Methods have self + this many args:
