@@ -15,7 +15,7 @@ import org.python.base.MethodKind;
  * sub-classes represent either a built-in function or a built-in
  * method bound to a particular object.
  */
-public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
+public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
 
     /** The type of Python object this class implements. */
     static final PyType TYPE = PyType.fromSpec( //
@@ -40,14 +40,14 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
     /**
      * A Java {@code MethodHandle} that implements the function or bound
      * method. The type of this handle varies according to the sub-class
-     * of {@code PyJavaMethod}, but it is definitely "prepared" to
+     * of {@code PyJavaFunction}, but it is definitely "prepared" to
      * accept {@code Object.class} instances or arrays, not the actual
      * parameter types of the method definition in Java.
      */
     final MethodHandle handle;
 
     /**
-     * An argument parser supplied to this {@code PyJavaMethod} at
+     * An argument parser supplied to this {@code PyJavaFunction} at
      * construction, from Java reflection of the definition in Java and
      * from annotations on it. Full information on the signature is
      * available from this structure, and it is available to parse the
@@ -72,7 +72,7 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
      *     method)
      * @param module name of the module supplying the definition
      */
-    protected PyJavaMethod(ArgParser argParser, MethodHandle handle, Object self, String module) {
+    protected PyJavaFunction(ArgParser argParser, MethodHandle handle, Object self, String module) {
         this.argParser = argParser;
         this.handle = handle;
         this.self = self;
@@ -80,7 +80,7 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
     }
 
     /**
-     * Construct a {@code PyJavaMethod} from an {@link ArgParser} and
+     * Construct a {@code PyJavaFunction} from an {@link ArgParser} and
      * {@code MethodHandle} for the implementation method. The arguments
      * described by the parser do not include "self". This is the
      * factory we use to create a function in a module.
@@ -94,7 +94,8 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
      * @return A method descriptor supporting the signature
      */
     // Compare CPython PyCFunction_NewEx in methodobject.c
-    static PyJavaMethod fromParser(ArgParser ap, MethodHandle method, Object self, String module) {
+    static PyJavaFunction fromParser(ArgParser ap, MethodHandle method, Object self,
+            String module) {
         /*
          * Note this is a recommendation on the assumption all optimisations
          * are supported. The actual choice is made in the switch statement.
@@ -130,11 +131,11 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
     }
 
     /**
-     * Construct a {@code PyJavaMethod} from a {@link PyMethodDescr} and
-     * optional object to bind. The {@link PyMethodDescr} provides the
-     * parser and unbound prepared {@code MethodHandle}. The arguments
-     * described by the parser do not include "self". This is the
-     * factory that supports descriptor {@code __get__}.
+     * Construct a {@code PyJavaFunction} from a {@link PyMethodDescr}
+     * and optional object to bind. The {@link PyMethodDescr} provides
+     * the parser and unbound prepared {@code MethodHandle}. The
+     * arguments described by the parser do not include "self". This is
+     * the factory that supports descriptor {@code __get__}.
      *
      * @param descr descriptor being bound
      * @param self object to which bound (or {@code null} if a static
@@ -145,7 +146,7 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
      * @throws Throwable on other errors while chasing the MRO
      */
     // Compare CPython PyCFunction_NewEx in methodobject.c
-    static PyJavaMethod from(PyMethodDescr descr, Object self) throws TypeError, Throwable {
+    static PyJavaFunction from(PyMethodDescr descr, Object self) throws TypeError, Throwable {
         ArgParser ap = descr.argParser;
         assert ap.methodKind == MethodKind.INSTANCE;
         MethodHandle handle = descr.getHandle(self).bindTo(self);
@@ -255,7 +256,7 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
      * The implementation may have any signature allowed by
      * {@link ArgParser}.
      */
-    private static class General extends PyJavaMethod {
+    private static class General extends PyJavaFunction {
 
         /**
          * Construct a method object, identifying the implementation by a
@@ -302,7 +303,7 @@ public abstract class PyJavaMethod implements CraftedPyObject, FastCall {
      * @ImplNote Sub-classes must define {@link #call(Object[])}: the
      *     default definition in {@link FastCall} is not enough.
      */
-    private static abstract class AbstractPositional extends PyJavaMethod {
+    private static abstract class AbstractPositional extends PyJavaFunction {
 
         /** Default values of the trailing arguments. */
         protected final Object[] d;

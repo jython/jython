@@ -17,7 +17,7 @@ import org.python.core.Slot.EmptyException;
  * from Python. A {@code PyMethodDescr} is a callable object itself,
  * and provides binding behaviour through
  * {@link #__get__(Object, PyType) __get__}, which usually creates a
- * {@link PyJavaMethod}.
+ * {@link PyJavaFunction}.
  * <p>
  * It suits us to sub-class {@code PyMethodDescr} to express the
  * multiplicity of implementations and to respond to the signature
@@ -70,8 +70,8 @@ abstract class PyMethodDescr extends MethodDescriptor {
 
     /**
      * Deduced method signature (useful to have cached when constructing
-     * a {@link PyJavaMethod}). Note that this is allowed to differ from
-     * {@link MethodSignature#fromParser(ArgParser)
+     * a {@link PyJavaFunction}). Note that this is allowed to differ
+     * from {@link MethodSignature#fromParser(ArgParser)
      * MethodSignature.fromParser(argParser)}.
      */
     final MethodSignature signature;
@@ -376,7 +376,7 @@ abstract class PyMethodDescr extends MethodDescriptor {
     /**
      * Return the described method, bound to {@code obj} as its "self"
      * argument, or if {@code obj==null}, return this descriptor. In the
-     * non-null case, {@code __get__} returns a {@link PyJavaMethod}.
+     * non-null case, {@code __get__} returns a {@link PyJavaFunction}.
      * Calling the returned object invokes the same Java method as this
      * descriptor, with {@code obj} as first argument, and other
      * arguments to the call appended.
@@ -396,7 +396,7 @@ abstract class PyMethodDescr extends MethodDescriptor {
         else {
             // Return a callable binding the method and the target
             check(obj);
-            return PyJavaMethod.from(this, obj);
+            return PyJavaFunction.from(this, obj);
         }
     }
 

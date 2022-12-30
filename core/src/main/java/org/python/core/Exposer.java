@@ -1166,7 +1166,7 @@ abstract class Exposer {
         StaticMethodSpec(String name, ScopeKind scopeKind) { super(name, scopeKind); }
 
         @Override
-        PyJavaMethod asAttribute(PyType objclass, Lookup lookup) {
+        PyJavaFunction asAttribute(PyType objclass, Lookup lookup) {
             // TODO Auto-generated method stub
             return null;
         }
