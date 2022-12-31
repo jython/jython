@@ -213,8 +213,8 @@ class ModuleExposerTest extends UnitTestSupport {
         assertTrue(k > 0);
         String name = spec.substring(0, k);
         String expect = spec.substring(k);
-        PyJavaFunction pjm = (PyJavaFunction)dict.get(name);
-        assertEquals(expect, pjm.argParser.textSignature());
+        PyJavaFunction pjf = (PyJavaFunction)dict.get(name);
+        assertEquals(expect, pjf.argParser.textSignature());
     }
 
 }

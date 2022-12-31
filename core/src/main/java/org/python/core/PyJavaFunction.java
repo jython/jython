@@ -180,38 +180,11 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
 
     Object __call__(Object[] args, String[] names) throws TypeError, Throwable {
         try {
-            if (names != null && names.length != 0) {
-                return call(args, names);
-            } else {
-                int n = args.length;
-                switch (n) {
-                    // case 0 (an error) handled by default clause
-                    case 1:
-                        return call(args[0]);
-                    case 2:
-                        return call(args[0], args[1]);
-                    case 3:
-                        return call(args[0], args[1], args[2]);
-                    case 4:
-                        return call(args[0], args[1], args[2], args[3]);
-                    default:
-                        return call(args);
-                }
-            }
+            // It is *not* worth unpacking the array here
+            return call(args, names);
         } catch (ArgumentError ae) {
             throw typeError(ae, args, names);
         }
-    }
-
-    /*
-     * A simplified __call__ used in the narrative. To use, rename this
-     * to __call__, rename the real __call__ to something else, and
-     * force fromParser() and from() always to select General as the
-     * implementation type.
-     */
-    Object simple__call__(Object[] args, String[] names) throws TypeError, Throwable {
-        Object[] frame = argParser.parse(args, names);
-        return handle.invokeExact(frame);
     }
 
     // exposed methods -----------------------------------------------
@@ -341,7 +314,23 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
         public Object call(Object[] args) throws TypeError, Throwable {
             // Make sure we find out if this is missing
             throw new InterpreterError(
-                    "Sub-classes of AbstractPositional " + "must define call(Object[])");
+                    "Sub-classes of AbstractPositional must define call(Object[])");
+        }
+
+        // Save some indirection by specialising to positional
+        @Override
+        Object __call__(Object[] args, String[] names)
+                throws TypeError, Throwable {
+            try {
+                if (names == null || names.length == 0) {
+                    // It is *not* worth unpacking the array here
+                    return call(args);
+                } else {
+                    throw new ArgumentError(Mode.NOKWARGS);
+                }
+            } catch (ArgumentError ae) {
+                throw typeError(ae, args, names);
+            }
         }
     }
 
@@ -499,7 +488,7 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
             int n = a.length, k;
             if (n == 3) {
                 // Number of arguments matches number of parameters
-                return handle.invokeExact(a[0], a[1], a[3]);
+                return handle.invokeExact(a[0], a[1], a[2]);
             } else if ((k = n - min) >= 0) {
                 if (n == 2) {
                     return handle.invokeExact(a[0], a[1], d[k]);
@@ -515,7 +504,7 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
 
         @Override
         public Object call() throws Throwable {
-            if (min == 0) { return handle.invokeExact(d[0], d[1], d[3]); }
+            if (min == 0) { return handle.invokeExact(d[0], d[1], d[2]); }
             throw new ArgumentError(min, max);
         }
 
