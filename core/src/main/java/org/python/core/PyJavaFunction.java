@@ -6,9 +6,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-import org.python.core.ArgumentError.Mode;
 import org.python.base.InterpreterError;
 import org.python.base.MethodKind;
+import org.python.core.ArgumentError.Mode;
+import org.python.core.Exposed.Getter;
+import org.python.core.Exposed.Member;
 
 /**
  * The Python {@code builtin_function_or_method} object. Java
@@ -35,6 +37,7 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
      * ({@code object} or {@code type}). A function obtained from a
      * module may be a method bound to an instance of that module.
      */
+    @Member("__self__")
     final Object self;
 
     /**
@@ -191,7 +194,7 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
 
     /** @return name of the function or method */
     // Compare CPython meth_get__name__ in methodobject.c
-    // @Exposed.Getter
+    @Getter
     String __name__() { return argParser.name; }
 
     // plumbing ------------------------------------------------------
@@ -319,8 +322,7 @@ public abstract class PyJavaFunction implements CraftedPyObject, FastCall {
 
         // Save some indirection by specialising to positional
         @Override
-        Object __call__(Object[] args, String[] names)
-                throws TypeError, Throwable {
+        Object __call__(Object[] args, String[] names) throws TypeError, Throwable {
             try {
                 if (names == null || names.length == 0) {
                     // It is *not* worth unpacking the array here
