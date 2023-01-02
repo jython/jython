@@ -1,3 +1,5 @@
+// Copyright (c)2023 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import org.python.base.InterpreterError;
@@ -30,7 +32,7 @@ class Interpreter {
     /** Create a new {@code Interpreter}. */
     Interpreter() {
         // builtinsModule = new BuiltinsModule();
-        // builtinsModule.init();
+        // builtinsModule.exec();
         // addModule(builtinsModule);
         builtinsModule = null;
     }

@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -43,13 +43,18 @@ class ModuleExposerMethodTest {
 
         // Working variables for the tests
         /** The module we create. */
-        PyModule module = new ExampleModule();
+        final PyModule module;
         /** The function to examine or call. */
         PyJavaFunction func;
         /** The parser in the function we examine. */
         ArgParser ap;
         /** The expected result of calling the function */
         Object[] exp;
+
+        Standard() {
+            this.module = new ExampleModule();
+            this.module.exec();
+        }
 
         /**
          * A parser attached to the function object should have field values
@@ -390,9 +395,8 @@ class ModuleExposerMethodTest {
         @Override
         @Test
         void raises_TypeError_on_unexpected_keyword() {
-            // We call func(o, a=42.0)
-            Object o = new ExampleModule();
-            Object[] args = {o, 42.0};
+            // We call func(42.0, a=5)
+            Object[] args = {42.0, 5};
             String[] names = {"a"};
 
             assertThrows(TypeError.class, () -> func.__call__(args, names));
@@ -473,9 +477,8 @@ class ModuleExposerMethodTest {
         @Override
         @Test
         void raises_TypeError_on_unexpected_keyword() {
-            // We call func(o, 1, '2', c=3)
-            Object o = new ExampleModule();
-            Object[] args = {o, 1, "2", 3};
+            // We call func(1, '2', c=3)
+            Object[] args = {1, "2", 3};
             String[] names = {"c"};
 
             assertThrows(TypeError.class, () -> func.__call__(args, names));
