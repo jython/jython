@@ -1,7 +1,7 @@
 # Reading compiled Python files
 
 import sys, os.path
-import marshal, py_compile
+import marshal, py_compile, dis
 
 # Normally you don't get a .pyc file if you just run a program.
 # You do get a .pyc file from compiling a module.
@@ -59,21 +59,31 @@ def filetime(path_elements, name_elements):
 def copy(srcfile, dstfile):
     "Copy one text file to another"
     print(f"  Copy: {os.path.basename(srcfile)}")
-    with open(srcfile, 'rt') as s:
+    with open(srcfile, 'rt', encoding='utf-8') as s:
         ensure_dir(os.path.dirname(dstfile))
-        with open(dstfile, 'wt') as d:
+        with open(dstfile, 'wt', encoding='utf-8') as d:
             for line in s:
                 d.write(line)
 
 
-def execute(pycfile, varfile):
+def execute(pycfile, varfile, disfile):
     "Execute a program and save the local variables"
-    print(f"  Generate: {os.path.basename(varfile)}")
+    print(f"  Generate: {os.path.basename(disfile)}")
     co = getcode(pycfile)
-    lcl, gbl = dict(), dict()
-    exec(co, gbl, lcl)
+    with open(disfile, 'wt', encoding='utf-8') as f:
+        # Dumps code blocks of nested functions
+        dis.dis(co, file=f)
+    print(f"  Generate: {os.path.basename(varfile)}")
+    gbl = dict()
+    exec(co, gbl)
+    # Remove items forced in by exec
+    del gbl['__builtins__']
+    # try:
+    #     print("   ", list(gbl.keys()))
+    # except UnicodeEncodeError:
+    #     pass
     with open(varfile, 'wb') as f:
-        marshal.dump(lcl, f)
+        marshal.dump(gbl, f)
 
 
 def generate(reldir, name, source, generated):
@@ -85,6 +95,7 @@ def generate(reldir, name, source, generated):
     generated:  directory of the compiled/generated files
     """
     srcfile, srctime = filetime([source, reldir], [name, 'py'])
+    #print(f"   {name}.py")
     #print(f"      source: {srctime:15.3f}")
 
     dstfile, dsttime = filetime([generated, reldir], [name, 'py'])
@@ -98,6 +109,10 @@ def generate(reldir, name, source, generated):
                   [name, COMPILER, 'var'])
     #print(f"        .var: {vartime:15.3f}")
 
+    disfile, distime = filetime([generated, reldir, CACHE],
+                  [name, COMPILER, 'dis'])
+    #print(f"        .dis: {distime:15.3f}")
+
     if dsttime < srctime:
         # Copy, compile, run and store
         copy(srcfile, dstfile)
@@ -109,9 +124,9 @@ def generate(reldir, name, source, generated):
         py_compile.compile(dstfile)
         pyctime = os.path.getmtime(pycfile)
 
-    if vartime < pyctime:
+    if vartime < pyctime or distime < pyctime:
         # Run and store
-        execute(pycfile, varfile)
+        execute(pycfile, varfile, disfile)
 
 
 def ensure_dir(d):
