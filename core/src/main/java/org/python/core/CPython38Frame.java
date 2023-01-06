@@ -155,6 +155,21 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         s[sp - 1] = PyNumber.subtract(s[sp - 1], w);
                         break;
 
+                    case Opcode.BINARY_SUBSCR: // w[v]
+                        // w | v | -> | w[v] |
+                        // -------^sp --------^sp
+                        v = s[--sp];
+                        s[sp - 1] = PySequence.getItem(s[sp - 1], v);
+                        break;
+
+                    case Opcode.STORE_SUBSCR: // w[v] = u
+                        // u | w | v | -> |
+                        // -----------^sp -^sp
+                        sp -= 3;
+                        // setItem(w, v, u)
+                        PySequence.setItem(s[sp + 1], s[sp + 2], s[sp]);
+                        break;
+
                     case Opcode.RETURN_VALUE:
                         returnValue = s[--sp]; // POP
                         // ip = END; ?
@@ -201,26 +216,34 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         s[sp++] = v; // PUSH
                         break;
 
+                    case Opcode.BUILD_TUPLE:
+                        // w[0] | ... | w[oparg-1] | -> | tpl |
+                        // -------------------------^sp -------^sp
+                        // Group the N=oparg elements on the stack
+                        // into a single tuple.
+                        oparg |= opword & 0xff;
+                        sp -= oparg;
+                        s[sp] = new PyTuple(s, sp++, oparg);
+                        oparg = 0;
+                        break;
+
+                    case Opcode.BUILD_LIST:
+                        // w[0] | ... | w[oparg-1] | -> | lst |
+                        // -------------------------^sp -------^sp
+                        // Group the N=oparg elements on the stack
+                        // into a single list.
+                        oparg |= opword & 0xff;
+                        sp -= oparg;
+                        s[sp] = new PyList(s, sp++, oparg);
+                        oparg = 0;
+                        break;
+
                     case Opcode.LOAD_ATTR:
                         // v | -> | v.name |
                         // ---^sp ----------^sp
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
                         s[sp - 1] = Abstract.getAttr(s[sp - 1], name);
-                        break;
-
-                    case Opcode.LOAD_METHOD:
-                        // Designed to work in tandem with CALL_METHOD.
-                        // If we can bypass temporary bound method:
-                        // obj | -> | desc | self |
-                        // -----^sp ---------------^sp
-                        // Otherwise almost conventional LOAD_ATTR:
-                        // obj | -> | null | meth |
-                        // -----^sp ---------------^sp
-                        name = names[oparg | opword & 0xff];
-                        oparg = 0;
-                        getMethod(s[--sp], name, sp);
-                        sp += 2;
                         break;
 
                     case Opcode.JUMP_FORWARD:
@@ -263,6 +286,20 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                     case Opcode.JUMP_ABSOLUTE:
                         ip = ((oparg | opword & 0xff) >> 1) - 1;
                         oparg = 0;
+                        break;
+
+                    case Opcode.LOAD_METHOD:
+                        // Designed to work in tandem with CALL_METHOD.
+                        // If we can bypass temporary bound method:
+                        // obj | -> | desc | self |
+                        // -----^sp ---------------^sp
+                        // Otherwise almost conventional LOAD_ATTR:
+                        // obj | -> | null | meth |
+                        // -----^sp ---------------^sp
+                        name = names[oparg | opword & 0xff];
+                        oparg = 0;
+                        getMethod(s[--sp], name, sp);
+                        sp += 2;
                         break;
 
                     case Opcode.CALL_METHOD:

@@ -126,7 +126,7 @@ class CPython38CodeTest extends UnitTestSupport {
     @DisplayName("We can execute simple ...")
     @ParameterizedTest(name = "{0}.py")
     @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "bool_left_arith",
-            "bool_right_arith", "call_method_builtin"})
+            "bool_right_arith", "tuple_index", "list_index", "call_method_builtin"})
     void executeSimple(String name) {
         CPython38Code code = readCode(name);
         PyDict globals = new PyDict();
