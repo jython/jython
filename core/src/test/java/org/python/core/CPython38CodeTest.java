@@ -39,7 +39,8 @@ class CPython38CodeTest extends UnitTestSupport {
     @SuppressWarnings("static-method")
     @DisplayName("marshal can read a code object")
     @ParameterizedTest(name = "from {0}")
-    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op"})
+    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "bool_left_arith",
+            "bool_right_arith", "simple_if", "multi_if"})
     void loadCodeObject(String name) {
         PyCode code = readCode(name);
         assertPythonType(PyCode.TYPE, code);
@@ -48,7 +49,8 @@ class CPython38CodeTest extends UnitTestSupport {
     @SuppressWarnings("static-method")
     @DisplayName("marshal can read a result object")
     @ParameterizedTest(name = "from {0}")
-    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op"})
+    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "bool_left_arith",
+            "bool_right_arith", "simple_if", "multi_if"})
     void loadResultDict(String name) {
         PyDict dict = readResultDict(name);
         assertPythonType(PyDict.TYPE, dict);
@@ -114,11 +116,34 @@ class CPython38CodeTest extends UnitTestSupport {
         }
     }
 
+    /**
+     * Tests of individual operations up to calling a built-in method,
+     * without control structures in Python.
+     *
+     * @param name of the Python example
+     */
     @SuppressWarnings("static-method")
-    @DisplayName("We can execute ...")
+    @DisplayName("We can execute simple ...")
     @ParameterizedTest(name = "{0}.py")
-    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "call_method_builtin"})
+    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "bool_left_arith",
+            "bool_right_arith", "call_method_builtin"})
     void executeSimple(String name) {
+        CPython38Code code = readCode(name);
+        PyDict globals = new PyDict();
+        code.createFrame(null, globals, globals).eval();
+        assertExpectedVariables(readResultDict(name), globals);
+    }
+
+    /**
+     * Tests involving transfer of control.
+     *
+     * @param name of the Python example
+     */
+    @SuppressWarnings("static-method")
+    @DisplayName("We can execute branches ...")
+    @ParameterizedTest(name = "{0}.py")
+    @ValueSource(strings = {"simple_if", "multi_if"})
+    void executeBranchAndLoop(String name) {
         CPython38Code code = readCode(name);
         PyDict globals = new PyDict();
         code.createFrame(null, globals, globals).eval();
