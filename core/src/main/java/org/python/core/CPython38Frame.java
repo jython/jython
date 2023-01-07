@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -244,6 +244,15 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
                         s[sp - 1] = Abstract.getAttr(s[sp - 1], name);
+                        break;
+
+                    case Opcode.COMPARE_OP:
+                        // v | w | -> | op(v,w) |
+                        // -------^sp -----------^sp
+                        w = s[--sp]; // POP
+                        v = s[sp - 1]; // TOP
+                        s[sp - 1] = Comparison.from(opword & 0xff).apply(v, w);
+                        oparg = 0;
                         break;
 
                     case Opcode.JUMP_FORWARD:

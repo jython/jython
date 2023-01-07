@@ -126,7 +126,7 @@ class CPython38CodeTest extends UnitTestSupport {
     @DisplayName("We can execute simple ...")
     @ParameterizedTest(name = "{0}.py")
     @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "bool_left_arith",
-            "bool_right_arith", "tuple_index", "list_index", "call_method_builtin"})
+            "bool_right_arith", "comparison", "tuple_index", "list_index", "call_method_builtin"})
     void executeSimple(String name) {
         CPython38Code code = readCode(name);
         PyDict globals = new PyDict();
@@ -140,9 +140,10 @@ class CPython38CodeTest extends UnitTestSupport {
      * @param name of the Python example
      */
     @SuppressWarnings("static-method")
-    @DisplayName("We can execute branches ...")
+    @DisplayName("We can execute branches and while loops ...")
     @ParameterizedTest(name = "{0}.py")
-    @ValueSource(strings = {"simple_if", "multi_if"})
+    @ValueSource(strings = {"simple_if", "multi_if", "simple_loop", "tuple_dot_product",
+            "list_dot_product"})
     void executeBranchAndLoop(String name) {
         CPython38Code code = readCode(name);
         PyDict globals = new PyDict();
