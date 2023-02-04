@@ -1,8 +1,12 @@
+// Copyright (c)2022 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -208,58 +212,105 @@ class ArgParserTest {
     }
 
     @Nested
-    @DisplayName("Example 1 from the Javadoc")
-    class FromJavadoc1 extends Standard {
+    @DisplayName("A parser for a positional collector")
+    class PositionalCollector extends Standard {
 
-        ArgParser ap = //
-                new ArgParser("func", "aa", "kk", //
-                        4, 3, //
-                        "a", "b", "c", "d", "e", "f", "g", "h", "i")//
-                                .defaults(3, 4, 5, 6) //
-                                .kwdefaults(77, null, 99);
-        private String SIG = "func(a, b, c=3, d=4, /, e=5, f=6, *aa, g=77, h, i=99, **kk)";
+        ArgParser ap = ArgParser.fromSignature("func", "*aa");
 
         @Override
         @Test
         void has_expected_fields() {
             assertEquals("func", ap.name);
-            assertEquals(11, ap.argnames.length);
-            assertEquals(6, ap.argcount);
-            assertEquals(4, ap.posonlyargcount);
-            assertEquals(3, ap.kwonlyargcount);
-            assertEquals(9, ap.regargcount);
-            assertEquals(9, ap.varArgsIndex);
-            assertEquals(10, ap.varKeywordsIndex);
+            assertEquals(1, ap.argnames.length);
+            assertEquals(0, ap.argcount);
+            assertEquals(0, ap.posonlyargcount);
+            assertEquals(0, ap.kwonlyargcount);
+            assertEquals(0, ap.regargcount);
+            assertEquals(0, ap.varArgsIndex);
+            assertEquals(-1, ap.varKeywordsIndex);
         }
 
         @Override
         @Test
         void parses_classic_args() {
-            PyTuple args = Py.tuple(10, 20, 30);
+            PyTuple args = Py.tuple(1, 2, 3);
             PyDict kwargs = Py.dict();
-            kwargs.put("g", 70);
-            kwargs.put("h", 80);
-
-            PyTuple expectedTuple = PyTuple.EMPTY;
-            PyDict expectedDict = Py.dict();
-            Object[] expected =
-                    new Object[] {10, 20, 30, 4, 5, 6, 70, 80, 99, expectedTuple, expectedDict};
 
             Object[] frame = ap.parse(args, kwargs);
-            assertArrayEquals(expected, frame);
+            assertEquals(1, frame.length);
+            assertEquals(List.of(1, 2, 3), frame[0]);
+        }
+
+        @Test
+        void throws_on_keyword() {
+            PyTuple args = Py.tuple(1);
+            PyDict kwargs = Py.dict();
+            kwargs.put("c", 3);
+            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
         }
 
         @Override
         @Test
-        void has_expected_toString() { assertEquals(SIG, ap.toString()); }
+        void has_expected_toString() { assertEquals("func(*aa)", ap.toString()); }
     }
 
     @Nested
-    @DisplayName("Example 2 from the Javadoc")
-    class FromJavadoc2 extends Standard {
+    @DisplayName("A parser for a keyword collector")
+    class KeywordCollector extends Standard {
+
+        ArgParser ap = ArgParser.fromSignature("func", "**kk");
+
+        @Override
+        @Test
+        void has_expected_fields() {
+            assertEquals("func", ap.name);
+            assertEquals(1, ap.argnames.length);
+            assertEquals(0, ap.argcount);
+            assertEquals(0, ap.posonlyargcount);
+            assertEquals(0, ap.kwonlyargcount);
+            assertEquals(0, ap.regargcount);
+            assertEquals(-1, ap.varArgsIndex);
+            assertEquals(0, ap.varKeywordsIndex);
+        }
+
+        @Override
+        @Test
+        void parses_classic_args() {
+            PyTuple args = Py.tuple();
+            PyDict kwargs = Py.dict();
+            kwargs.put("b", 2);
+            kwargs.put("c", 3);
+            kwargs.put("a", 1);
+
+            Object[] frame = ap.parse(args, kwargs);
+            assertEquals(1, frame.length);
+            PyDict kk = (PyDict)frame[0];
+            assertEquals(1, kk.get("a"));
+            assertEquals(2, kk.get("b"));
+            assertEquals(3, kk.get("c"));
+        }
+
+        @Test
+        void throws_on_positional() {
+            PyTuple args = Py.tuple(1);
+            PyDict kwargs = Py.dict();
+            kwargs.put("b", 2);
+            kwargs.put("c", 3);
+            kwargs.put("a", 1);
+            assertThrows(TypeError.class, () -> ap.parse(args, kwargs));
+        }
+
+        @Override
+        @Test
+        void has_expected_toString() { assertEquals("func(**kk)", ap.toString()); }
+    }
+
+    @Nested
+    @DisplayName("Example from the Javadoc")
+    class FromJavadoc extends Standard {
 
         String[] names = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "aa", "kk"};
-        ArgParser ap = new ArgParser("func", true, true, 4, 3, names, names.length - 2) //
+        ArgParser ap = new ArgParser("func", names, names.length - 2, 4, 3, true, true) //
                 .defaults(3, 4, 5, 6) //
                 .kwdefaults(77, null, 99);
         private String SIG = "func(a, b, c=3, d=4, /, e=5, f=6, *aa, g=77, h, i=99, **kk)";

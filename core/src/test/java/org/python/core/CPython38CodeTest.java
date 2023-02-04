@@ -1,3 +1,5 @@
+// Copyright (c)2023 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -117,11 +119,14 @@ class CPython38CodeTest extends UnitTestSupport {
     @SuppressWarnings("static-method")
     @DisplayName("We can execute ...")
     @ParameterizedTest(name = "{0}.py")
-    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "call_method_builtin"})
+    @ValueSource(strings = {"load_store_name", "unary_op", "binary_op", "call_method_builtin",
+            "builtins_module"})
     void executeSimple(String name) {
         CPython38Code code = readCode(name);
+        Interpreter interp = new Interpreter();
         PyDict globals = new PyDict();
-        code.createFrame(null, globals, globals).eval();
+        PyFrame<?> f = code.createFrame(interp, globals, globals);
+        f.eval();
         assertExpectedVariables(readResultDict(name), globals);
     }
 

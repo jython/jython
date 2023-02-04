@@ -46,7 +46,7 @@ class TypeExposerMethodTest {
         /** The object on which to invoke the method. */
         Object obj;
         /** The function to examine or call (bound to {@code obj}). */
-        PyJavaMethod func;
+        PyJavaFunction func;
         /** The parser we examine. */
         ArgParser ap;
         /** The expected result of calling the method. */
@@ -157,7 +157,7 @@ class TypeExposerMethodTest {
             descr = (PyMethodDescr)PyType.of(o).lookup(name);
             ap = descr.argParser;
             obj = o;
-            func = (PyJavaMethod)Abstract.getAttr(obj, name);
+            func = (PyJavaFunction)Abstract.getAttr(obj, name);
         }
 
         /**

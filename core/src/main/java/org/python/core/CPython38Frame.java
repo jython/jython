@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -155,9 +155,19 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         try {
                             locals.put(name, s[--sp]);
                         } catch (NullPointerException npe) {
-                            throw new SystemError("no locals found when storing '%s'", name);
+                            throw noLocals("storing", name);
                         }
                         oparg = 0;
+                        break;
+
+                    case Opcode.DELETE_NAME:
+                        name = names[oparg | opword & 0xff];
+                        oparg = 0;
+                        try {
+                            locals.remove(name);
+                        } catch (NullPointerException npe) {
+                            throw noLocals("deleting", name);
+                        }
                         break;
 
                     case Opcode.BUILD_MAP:
@@ -355,7 +365,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
      * regular method in it. {@code CALL_METHOD} will detect and use
      * this optimised form if the first element is not {@code null}.
      *
-     * @param obj of whichg the callable is an attribute
+     * @param obj of which the callable is an attribute
      * @param name of callable attribute
      * @param offset in stack at which to place results
      * @throws AttributeError ifthe named attribute does not exist
@@ -462,5 +472,16 @@ class CPython38Frame extends PyFrame<CPython38Code> {
 
         // All the look-ups and descriptors came to nothing :(
         throw Abstract.noAttributeError(obj, name);
+    }
+
+    /**
+     * Generate error to throw when we cannot access locals.
+     *
+     * @param action "loading", "storing" or "deleting"
+     * @param name variable name
+     * @return
+     */
+    private static SystemError noLocals(String action, String name) {
+        return new SystemError("no locals found when %s '%s'", name);
     }
 }

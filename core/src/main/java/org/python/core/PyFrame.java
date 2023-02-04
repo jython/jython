@@ -172,6 +172,8 @@ public abstract class PyFrame<C extends PyCode> {
              */
             this.locals = PyMapping.map(locals);
         }
+        // Fix up the builtins module dictionary (simplified)
+        this.builtins = interpreter.builtinsModule.getDict();
     }
 
     /**
