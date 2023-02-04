@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.python.base.InterpreterError;
+import org.python.core.Exposed.Getter;
 import org.python.core.Slot.Signature;
 
 /**
@@ -624,6 +625,7 @@ public class PyType extends Operations implements DictPyObject {
      *
      * @return name of this type
      */
+    @Getter("__name__")
     public String getName() { return name; }
 
     /**

@@ -289,7 +289,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
     private static Object __repr__(Object self) {
         try {
             // XXX make encode_UnicodeEscape (if needed) take a delegate
-            return "u" + encode_UnicodeEscape(convertToString(self), true);
+            return encode_UnicodeEscape(convertToString(self), true);
         } catch (NoConversion nc) {
             throw Abstract.impossibleArgumentError("str", self);
         }
