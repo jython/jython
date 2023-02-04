@@ -85,8 +85,18 @@ class CPython38Frame extends PyFrame<CPython38Code> {
         final int END = wordcode.length;
 
         /*
+         * We read each 16-bit instruction from wordcode[] into opword. Bits
+         * 8-15 are the opcode itself. The bottom 8 bits are an argument
+         * that (in principle) must be or-ed into the existing value of
+         * oparg to complete the argument. (oparg may contain bits already
+         * thanks to EXTENDED_ARG processing.) For some opcodes 8 bits are
+         * enough to express the argument and all we need is opword & 0xff.
+         */
+        int opword;
+        /*
          * Opcode argument (where needed). See also case EXTENDED_ARG. Every
-         * opcode that consumes oparg must set it to zero.
+         * opcode that consumes oparg must set it to zero, even if all it
+         * uses is opword & 0xff.
          */
         int oparg = 0;
 
@@ -100,7 +110,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
              * is half the CPython ip. The latter, and all jump arguments, are
              * always even.
              */
-            int opword = wordcode[ip];
+            opword = wordcode[ip];
 
             // Comparison with CPython macros in c.eval:
             // TOP() : s[sp-1]
@@ -143,6 +153,21 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                     case Opcode.BINARY_SUBTRACT:
                         w = s[--sp]; // POP
                         s[sp - 1] = PyNumber.subtract(s[sp - 1], w);
+                        break;
+
+                    case Opcode.BINARY_SUBSCR: // w[v]
+                        // w | v | -> | w[v] |
+                        // -------^sp --------^sp
+                        v = s[--sp];
+                        s[sp - 1] = PySequence.getItem(s[sp - 1], v);
+                        break;
+
+                    case Opcode.STORE_SUBSCR: // w[v] = u
+                        // u | w | v | -> |
+                        // -----------^sp -^sp
+                        sp -= 3;
+                        // setItem(w, v, u)
+                        PySequence.setItem(s[sp + 1], s[sp + 2], s[sp]);
                         break;
 
                     case Opcode.RETURN_VALUE:
@@ -201,12 +226,85 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         s[sp++] = v; // PUSH
                         break;
 
+                    case Opcode.BUILD_TUPLE:
+                        // w[0] | ... | w[oparg-1] | -> | tpl |
+                        // -------------------------^sp -------^sp
+                        // Group the N=oparg elements on the stack
+                        // into a single tuple.
+                        oparg |= opword & 0xff;
+                        sp -= oparg;
+                        s[sp] = new PyTuple(s, sp++, oparg);
+                        oparg = 0;
+                        break;
+
+                    case Opcode.BUILD_LIST:
+                        // w[0] | ... | w[oparg-1] | -> | lst |
+                        // -------------------------^sp -------^sp
+                        // Group the N=oparg elements on the stack
+                        // into a single list.
+                        oparg |= opword & 0xff;
+                        sp -= oparg;
+                        s[sp] = new PyList(s, sp++, oparg);
+                        oparg = 0;
+                        break;
+
                     case Opcode.LOAD_ATTR:
                         // v | -> | v.name |
                         // ---^sp ----------^sp
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
                         s[sp - 1] = Abstract.getAttr(s[sp - 1], name);
+                        break;
+
+                    case Opcode.COMPARE_OP:
+                        // v | w | -> | op(v,w) |
+                        // -------^sp -----------^sp
+                        w = s[--sp]; // POP
+                        v = s[sp - 1]; // TOP
+                        s[sp - 1] = Comparison.from(opword & 0xff).apply(v, w);
+                        oparg = 0;
+                        break;
+
+                    case Opcode.JUMP_FORWARD:
+                        ip += (oparg | opword & 0xff) >> 1;
+                        oparg = 0;
+                        break;
+
+                    case Opcode.POP_JUMP_IF_FALSE:
+                        v = s[--sp]; // POP
+                        if (!Abstract.isTrue(v))
+                            ip = ((oparg | opword & 0xff) >> 1) - 1;
+                        oparg = 0;
+                        break;
+
+                    case Opcode.POP_JUMP_IF_TRUE:
+                        v = s[--sp]; // POP
+                        if (Abstract.isTrue(v))
+                            ip = ((oparg | opword & 0xff) >> 1) - 1;
+                        oparg = 0;
+                        break;
+
+                    case Opcode.JUMP_IF_FALSE_OR_POP:
+                        v = s[--sp]; // POP
+                        if (!Abstract.isTrue(v)) {
+                            sp += 1;    // UNPOP
+                            ip = ((oparg | opword & 0xff) >> 1) - 1;
+                        }
+                        oparg = 0;
+                        break;
+
+                    case Opcode.JUMP_IF_TRUE_OR_POP:
+                        v = s[--sp]; // POP
+                        if (Abstract.isTrue(v)) {
+                            sp += 1;    // UNPOP
+                            ip = ((oparg | opword & 0xff) >> 1) - 1;
+                        }
+                        oparg = 0;
+                        break;
+
+                    case Opcode.JUMP_ABSOLUTE:
+                        ip = ((oparg | opword & 0xff) >> 1) - 1;
+                        oparg = 0;
                         break;
 
                     case Opcode.LOAD_METHOD:

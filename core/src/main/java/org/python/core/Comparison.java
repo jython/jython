@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -61,39 +61,48 @@ enum Comparison {
         boolean toBool(int c) { return c >= 0; }
     },
 
-    /** The (reflected) {@code __contains__} operation. */
+    /**
+     * The {@code in} operation (reflected {@code __contains__}). Note
+     * that "{@code v in seq}" compiles to<pre>
+     *    LOAD_NAME    0 (v)
+     *    LOAD_NAME    1 (seq)
+     *    COMPARE_OP   6 (in)
+     * </pre> which must lead to {@code seq.__contains__(v)}.
+     */
     IN("in", Slot.op_contains) {
 
         @Override
         boolean toBool(int c) { return c >= 0; }
 
         @Override
-        Object apply(Object v, Object w) throws Throwable {
-            Operations vOps = Operations.of(v);
+        Object apply(Object v, Object seq) throws Throwable {
+            Operations ops = Operations.of(seq);
             try {
-                MethodHandle contains = slot.getSlot(vOps);
-                return (boolean)contains.invokeExact(w, v);
+                MethodHandle contains = slot.getSlot(ops);
+                return (boolean)contains.invokeExact(seq, v);
             } catch (Slot.EmptyException e) {
-                throw new TypeError(NOT_CONTAINER, vOps.type(v).name);
+                throw new TypeError(NOT_CONTAINER, ops.type(seq).name);
             }
         }
     },
 
-    /** The inverted (reflected) {@code __contains__} operation. */
+    /**
+     * The inverted {@code in} operation (reflected
+     * {@code __contains__}).
+     */
     NOT_IN("not in", Slot.op_contains) {
 
         @Override
         boolean toBool(int c) { return c < 0; }
 
         @Override
-        Object apply(Object v, Object w) throws Throwable {
-            Operations vOps = Operations.of(v);
-            ;
+        Object apply(Object v, Object seq) throws Throwable {
+            Operations ops = Operations.of(seq);
             try {
-                MethodHandle contains = slot.getSlot(vOps);
-                return (boolean)contains.invokeExact(w, v);
+                MethodHandle contains = slot.getSlot(ops);
+                return !(boolean)contains.invokeExact(seq, v);
             } catch (Slot.EmptyException e) {
-                throw new TypeError(NOT_CONTAINER, vOps.type(v).name);
+                throw new TypeError(NOT_CONTAINER, ops.type(seq).name);
             }
         }
     },
@@ -161,7 +170,7 @@ enum Comparison {
     public String toString() { return text; }
 
     /**
-     * Translate CPython {@code Opcode.COMPARE_OP} opcode argument to
+     * Translate CPython {@link Opcode#COMPARE_OP} opcode argument to
      * Comparison constant.
      *
      * @param oparg opcode argument

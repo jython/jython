@@ -409,13 +409,16 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     private static boolean contains(CodepointDelegate s, Object o) {
         try {
-            CodepointDelegate p = adapt(s);
+            CodepointDelegate p = adapt(o);
             PySlice.Indices slice = getSliceIndices(s, null, null);
             return find(s, p, slice) >= 0;
         } catch (NoConversion nc) {
-            throw Abstract.requiredTypeError("a string", o);
+            throw Abstract.typeError(IN_STRING_TYPE, o);
         }
     }
+
+    private static final String IN_STRING_TYPE =
+            "'in <string>' requires string as left operand, not %s";
 
     /*
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___add___doc)
@@ -2730,7 +2733,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * object to format and output. If {@code field_name} is not
      * {@code None}, it is looked up, formatted with {@code format_spec}
      * and {@code conversion} and then used.
-     * 
+     *
      * @param formatString to parse
      * @return an iterator of format {@code tuple}s
      */
@@ -2745,7 +2748,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
 
     /**
      * Implementation of {@code _string.formatter_field_name_split}.
-     * 
+     *
      * @param fieldName to split into components
      * @return a tuple of the first field name component and the rest
      */
@@ -4476,7 +4479,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      */
     @Deprecated // See _PyUnicode_TransformDecimalAndSpaceToASCII
     private String encodeDecimal() {
-        
+
         // XXX This all has a has a Jython 2 smell: bytes/str confusion.
         // XXX Also, String and PyUnicode implementations are needed.
         // XXX Follow CPython _PyUnicode_TransformDecimalAndSpaceToASCII
@@ -4910,7 +4913,7 @@ public class PyUnicode implements CraftedPyObject, PyDict.Key {
      * @param value the format string when {@code enclosingIterator} is not null
      * @return the formatted string based on the arguments
      * @throws TypeError if {@code __repr__} or {@code __str__} conversions returned a non-string.
-     * @throws Throwable from other errors in 
+     * @throws Throwable from other errors in {@code __repr__} or {@code __str__}
      */
     // XXX make this support format(String) too
     private String buildFormattedString(Object[] args, String[] keywords,

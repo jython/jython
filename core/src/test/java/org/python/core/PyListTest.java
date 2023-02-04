@@ -1,3 +1,5 @@
+// Copyright (c)2023 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -159,7 +161,7 @@ class PyListTest extends UnitTestSupport {
 
         /**
          * A toString that limits the array size
-         * 
+         *
          * @param a the array to return as a string
          * @param n maximum number of array elements to show
          * @return string representation of {@code a}
@@ -176,7 +178,7 @@ class PyListTest extends UnitTestSupport {
 
     /**
      * Randomise the order of elements in a list.
-     * 
+     *
      * @param m to randomise
      * @param r random generator
      */

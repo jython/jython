@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
@@ -32,7 +32,7 @@ import org.python.core.PyType.Spec;
  * detect modification from within the current thread as a side
  * effect of comparison. Java brings its own safeguard within
  * iterators against structural concurrent modification.
- * 
+ *
  * @implNote The design follows that in Jython 2 with a private Java
  *     list member to which operations are delegated directly or
  *     indirectly. In the present design, the indirect delegation is
@@ -68,7 +68,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Fundamental constructor, specifying actual type and the list that
      * will become the storage object.
-     * 
+     *
      * @param type actual type
      * @param list storage object
      */
@@ -80,7 +80,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Construct a Python {@code list} object, specifying actual type
      * and initial capacity.
-     * 
+     *
      * @param type actual type
      * @param initialCapacity capacity
      */
@@ -91,7 +91,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Construct a Python {@code list} object, specifying initial
      * capacity.
-     * 
+     *
      * @param initialCapacity capacity
      */
     public PyList(int initialCapacity) { this(TYPE, new ArrayList<>(initialCapacity)); }
@@ -99,7 +99,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Construct an empty Python {@code list} object, specifying actual
      * type.
-     * 
+     *
      * @param type actual type
      */
     public PyList(PyType type) { this(type, 0); }
@@ -111,7 +111,7 @@ public class PyList implements List<Object>, CraftedPyObject {
      * Construct a Python {@code list} object, specifying actual type
      * and initial contents. The contents will be a (shallow) copy of
      * the collection.
-     * 
+     *
      * @param type actual type
      * @param c initial contents
      */
@@ -124,15 +124,29 @@ public class PyList implements List<Object>, CraftedPyObject {
      * Construct a Python {@code list} object, specifying initial
      * contents. The contents will be a (shallow) copy of the
      * collection.
-     * 
+     *
      * @param c initial contents
      */
     public PyList(Collection<?> c) { this(TYPE, c); }
 
     /**
+     * Construct a {@code list} with initial contents from an array
+     * slice.
+     *
+     * @param a the array
+     * @param start of slice
+     * @param count of elements to take
+     */
+    PyList(Object[] a, int start, int count) {
+        this(TYPE, count);
+        int stop = start + count;
+        for (int i = start; i < stop; i++) { add(a[i]); }
+    }
+
+    /**
      * Return a Python {@code list} object, specifying initial
      * contents.
-     * 
+     *
      * @param elements initial element values
      * @return list of elements
      */
@@ -383,11 +397,13 @@ public class PyList implements List<Object>, CraftedPyObject {
      *
      * @param index the position where the element will be inserted.
      * @param o the element to insert.
+     * @throws TypeError from bad {@code index} type
+     * @throws Throwable from other conversion errors
      */
     // @ExposedMethod(doc = BuiltinDocs.list_insert_doc)
-    final synchronized void list_insert(int index, Object o) {
+    final synchronized void list_insert(Object index, Object o) throws TypeError, Throwable {
         changed = true;
-        list.add(boundedIndex(index), o);
+        delegate.insert(index, o);
     }
 
     /**
@@ -411,7 +427,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Return the index of {@code v} in {@link #list} or -1 if not
      * found.
-     * 
+     *
      * @param v the element to search for and remove.
      * @return the index of {@code v} or -1 if not found.
      * @throws Throwable from the implementation of {@code __eq__}
@@ -642,14 +658,17 @@ public class PyList implements List<Object>, CraftedPyObject {
 
             private final Iterator<Object> iter = list.iterator();
 
+            @Override
             public boolean hasNext() { return iter.hasNext(); }
 
+            @Override
             public Object next() {
                 synchronized (PyList.this) {
                     return iter.next();
                 }
             }
 
+            @Override
             public void remove() {
                 synchronized (PyList.this) {
                     changed = true;
@@ -675,26 +694,33 @@ public class PyList implements List<Object>, CraftedPyObject {
 
             private final ListIterator<Object> iter = list.listIterator(index);
 
+            @Override
             public boolean hasNext() { return iter.hasNext(); }
 
+            @Override
             public Object next() {
                 synchronized (PyList.this) {
                     return iter.next();
                 }
             }
 
+            @Override
             public boolean hasPrevious() { return iter.hasPrevious(); }
 
+            @Override
             public Object previous() {
                 synchronized (PyList.this) {
                     return iter.previous();
                 }
             }
 
+            @Override
             public int nextIndex() { return iter.nextIndex(); }
 
+            @Override
             public int previousIndex() { return iter.previousIndex(); }
 
+            @Override
             public void remove() {
                 synchronized (PyList.this) {
                     changed = true;
@@ -702,6 +728,7 @@ public class PyList implements List<Object>, CraftedPyObject {
                 }
             }
 
+            @Override
             public void set(Object o) {
                 synchronized (PyList.this) {
                     changed = true;
@@ -709,6 +736,7 @@ public class PyList implements List<Object>, CraftedPyObject {
                 }
             }
 
+            @Override
             public void add(Object o) {
                 synchronized (PyList.this) {
                     changed = true;
@@ -859,7 +887,7 @@ public class PyList implements List<Object>, CraftedPyObject {
      * This comparator is used in
      * {@link PyList#sort(Function, boolean)}, sub-classed for the type
      * of sort.
-     * 
+     *
      * @param <T> type of element to sort (on practice {@code Object} or
      *     {@code KV}.
      */
@@ -891,7 +919,7 @@ public class PyList implements List<Object>, CraftedPyObject {
 
         /**
          * Defines the comparison operation to use.
-         * 
+         *
          * @param o1 left operand
          * @param o2 right operand
          * @return true iff o1 is less than o2
@@ -933,7 +961,7 @@ public class PyList implements List<Object>, CraftedPyObject {
     /**
      * Given an ordered ascending list of indices into {@link #list},
      * remove the elements at those indices.
-     * 
+     *
      * @param erasures to remove
      * @return {@code true} if {@code erasures} is not empty
      */
@@ -1004,8 +1032,10 @@ public class PyList implements List<Object>, CraftedPyObject {
             return v;
         }
 
-        public void setItem(int i, Object value) throws Throwable { list.add(i, value); }
+        @Override
+        public void setItem(int i, Object value) throws Throwable { list.set(i, value); }
 
+        @Override
         public void setSlice(PySlice.Indices slice, Object value) throws Throwable {
             /*
              * Accept iterables (and iterators) by creating a Java List Jython 2
@@ -1048,10 +1078,12 @@ public class PyList implements List<Object>, CraftedPyObject {
             }
         }
 
+        @Override
         public void delItem(int i) throws Throwable {
             list.remove(i);
         }
 
+        @Override
         public void delSlice(PySlice.Indices slice) throws Throwable {
             final int M = slice.slicelength;
             if (M > 0) {
@@ -1153,9 +1185,10 @@ public class PyList implements List<Object>, CraftedPyObject {
          * @param index position to insert
          * @param v value to insert
          * @return the number of times found
-         * @throws Throwable from the implementation of {@code __eq__}
+         * @throws TypeError from bad {@code index} type
+         * @throws Throwable from other conversion errors
          */
-        public void insert(Object index, Object v) throws Throwable {
+        public void insert(Object index, Object v) throws TypeError, Throwable {
             list.add(boundedIndex(index), v);
         }
 
