@@ -42,7 +42,7 @@ allprojects {
 
     apply plugin: 'java'
     // We support Java 11 onwards officially.
-    sourceCompatibility = '11'
+    sourceCompatibility = '17'
 
     // Same configuiration all sub-projects
     tasks.withType(JavaCompile) {
@@ -53,7 +53,7 @@ allprojects {
         options.deprecation = true
 
         // Use only public API
-        options.compilerArgs.addAll(['--release', '11'])
+        options.compilerArgs.addAll(['--release', '17'])
     }
 
     tasks.withType(Javadoc) {
