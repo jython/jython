@@ -170,7 +170,7 @@ enum Comparison {
     public String toString() { return text; }
 
     /**
-     * Translate CPython {@link Opcode#COMPARE_OP} opcode argument to
+     * Translate CPython {@link Opcode311#COMPARE_OP} opcode argument to
      * Comparison constant.
      *
      * @param oparg opcode argument

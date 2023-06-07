@@ -1,4 +1,4 @@
-// Copyright (c)2022 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
 
@@ -10,7 +10,7 @@ import org.python.core.stringlib.ByteArrayBuilder;
  * Our equivalent to the Python code object ({@code PyCodeObject} in
  * CPython's C API).
  */
-public class CPython38Code extends PyCode {
+public class CPython311Code extends PyCode {
 
     /** Number of entries needed for evaluation stack. */
     final int stacksize;
@@ -51,7 +51,7 @@ public class CPython38Code extends PyCode {
      * @param firstlineno value of {@link PyCode#firstlineno}
      * @param lnotab value of {@link #lnotab}
      */
-    public CPython38Code( //
+    public CPython311Code( //
             int argcount,           // co_argcount
             int posonlyargcount,    // co_posonlyargcount
             int kwonlyargcount,     // co_kwonlyargcount
@@ -108,7 +108,7 @@ public class CPython38Code extends PyCode {
      * @param lnotab value of {@link #lnotab}
      * @return the frame ready for use
      */
-    public static CPython38Code create(int argcount, int posonlyargcount, int kwonlyargcount,
+    public static CPython311Code create(int argcount, int posonlyargcount, int kwonlyargcount,
             int nlocals, int stacksize, int flags, Object bytecode, Object consts, Object names,
             Object varnames, Object freevars, Object cellvars, Object filename, Object name,
             int firstlineno, Object lnotab) {
@@ -127,7 +127,7 @@ public class CPython38Code extends PyCode {
 
         PyBytes _lnotab = castBytes(lnotab, "lnotab");
 
-        return new CPython38Code(argcount, posonlyargcount, kwonlyargcount, nlocals, stacksize,
+        return new CPython311Code(argcount, posonlyargcount, kwonlyargcount, nlocals, stacksize,
                 flags, _bytecode, _consts, _names, _varnames, _freevars, _cellvars, _filename,
                 _name, firstlineno, _lnotab);
     }
@@ -156,15 +156,15 @@ public class CPython38Code extends PyCode {
     // Java API -------------------------------------------------------
 
     @Override
-    CPython38Frame createFrame(Interpreter interpreter, PyDict globals, Object locals) {
-        return new CPython38Frame(interpreter, this, globals, locals);
+    CPython311Frame createFrame(Interpreter interpreter, PyDict globals, Object locals) {
+        return new CPython311Frame(interpreter, this, globals, locals);
     }
 
     // Plumbing -------------------------------------------------------
 
     /**
      * Convert the contents of a Python {@code bytes} to 16-bit word
-     * code as expected by the eval-loop in {@link CPython38Frame}.
+     * code as expected by the eval-loop in {@link CPython311Frame}.
      *
      * @param bytecode as compiled by Python as bytes
      * @return 16-bit word code

@@ -1,4 +1,4 @@
-// Copyright (c)2021 Jython Developers.
+// Copyright (c)2023 Jython Developers.
 // Copyright (c) Corporation for National Research Initiatives
 // Licensed to PSF under a contributor agreement.
 package org.python.core;
@@ -366,7 +366,7 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
     @SuppressWarnings("unused")
     private int __hash__() throws Throwable {
         /*
-         * Ported from C in CPython 3.8, which in turn is based on the
+         * Ported from C in CPython 3.11, which in turn is based on the
          * xxHash specification. We do not attempt to maintain historic
          * hash of () or avoid returning -1. Seed the accumulator based
          * on the length.
