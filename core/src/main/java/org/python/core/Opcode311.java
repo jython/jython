@@ -1,7 +1,9 @@
+// Copyright (c)2023 Jython Developers.
+// Licensed to PSF under a contributor agreement.
 package org.python.core;
 
 /** Constants for opcodes taken from CPython {@code opcode.h} */
-class Opcode {
+class Opcode311 {
 
     static final int POP_TOP = 1;
     static final int ROT_TWO = 2;

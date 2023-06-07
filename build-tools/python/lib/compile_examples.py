@@ -5,10 +5,10 @@ import marshal, py_compile, dis
 
 # Normally you don't get a .pyc file if you just run a program.
 # You do get a .pyc file from compiling a module.
-# It is written in ./__pycache__ and called NAME.cpython-38.pyc
+# It is written in ./__pycache__ and called NAME.cpython-311.pyc
 
 CACHE = '__pycache__'
-COMPILER = 'cpython-38'
+COMPILER = 'cpython-311'
 
 
 HELP =  """Command: compile_examples srcdir dstdir

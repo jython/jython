@@ -763,7 +763,7 @@ public class PyType extends Operations implements DictPyObject {
     /**
      * Return whether an instance of this type defines {@code __get__}
      * participates in the optimised call pattern supported by
-     * {@link Opcode#LOAD_METHOD}.
+     * {@link Opcode311#LOAD_METHOD}.
      *
      * @return whether a method descriptor
      */

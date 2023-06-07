@@ -8,8 +8,8 @@ import java.util.Map;
 
 import org.python.base.InterpreterError;
 
-/** A {@link PyFrame} for executing CPython 3.8 byte code. */
-class CPython38Frame extends PyFrame<CPython38Code> {
+/** A {@link PyFrame} for executing CPython 3.11 byte code. */
+class CPython311Frame extends PyFrame<CPython311Code> {
 
     /*
      * Translation note: NB: in a CPython frame all local storage
@@ -47,7 +47,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
     /**
      * Create a {@code CPythonFrame}, which is a {@code PyFrame} with
      * the storage and mechanism to execute a module or isolated code
-     * object (compiled to a {@link CPython38Code}.
+     * object (compiled to a {@link CPython311Code}.
      *
      * The caller specifies the local variables dictionary explicitly:
      * it may be the same as the {@code globals}.
@@ -57,7 +57,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
      * @param globals global name space
      * @param locals local name space
      */
-    CPython38Frame(Interpreter interpreter, CPython38Code code, PyDict globals, Object locals) {
+    CPython311Frame(Interpreter interpreter, CPython311Code code, PyDict globals, Object locals) {
         super(interpreter, code, globals, locals);
         valuestack = new Object[code.stacksize];
         freevars = EMPTY_CELL_ARRAY;
@@ -124,45 +124,45 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                 switch (opword >> 8) {
                     // Cases ordered as CPython to aid comparison
 
-                    case Opcode.NOP:
+                    case Opcode311.NOP:
                         break;
 
-                    case Opcode.LOAD_CONST:
+                    case Opcode311.LOAD_CONST:
                         s[sp++] = consts[oparg | opword & 0xff];
                         oparg = 0;
                         break;
 
-                    case Opcode.UNARY_NEGATIVE:
+                    case Opcode311.UNARY_NEGATIVE:
                         s[sp - 1] = PyNumber.negative(s[sp - 1]);
                         break;
 
-                    case Opcode.UNARY_INVERT:
+                    case Opcode311.UNARY_INVERT:
                         s[sp - 1] = PyNumber.invert(s[sp - 1]);
                         break;
 
-                    case Opcode.BINARY_MULTIPLY:
+                    case Opcode311.BINARY_MULTIPLY:
                         w = s[--sp]; // POP
                         s[sp - 1] = PyNumber.multiply(s[sp - 1], w);
                         break;
 
-                    case Opcode.BINARY_ADD:
+                    case Opcode311.BINARY_ADD:
                         w = s[--sp]; // POP
                         s[sp - 1] = PyNumber.add(s[sp - 1], w);
                         break;
 
-                    case Opcode.BINARY_SUBTRACT:
+                    case Opcode311.BINARY_SUBTRACT:
                         w = s[--sp]; // POP
                         s[sp - 1] = PyNumber.subtract(s[sp - 1], w);
                         break;
 
-                    case Opcode.BINARY_SUBSCR: // w[v]
+                    case Opcode311.BINARY_SUBSCR: // w[v]
                         // w | v | -> | w[v] |
                         // -------^sp --------^sp
                         v = s[--sp];
                         s[sp - 1] = PySequence.getItem(s[sp - 1], v);
                         break;
 
-                    case Opcode.STORE_SUBSCR: // w[v] = u
+                    case Opcode311.STORE_SUBSCR: // w[v] = u
                         // u | w | v | -> |
                         // -----------^sp -^sp
                         sp -= 3;
@@ -170,12 +170,12 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         PySequence.setItem(s[sp + 1], s[sp + 2], s[sp]);
                         break;
 
-                    case Opcode.RETURN_VALUE:
+                    case Opcode311.RETURN_VALUE:
                         returnValue = s[--sp]; // POP
                         // ip = END; ?
                         break loop;
 
-                    case Opcode.STORE_NAME:
+                    case Opcode311.STORE_NAME:
                         name = names[oparg | opword & 0xff];
                         try {
                             locals.put(name, s[--sp]);
@@ -185,7 +185,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.DELETE_NAME:
+                    case Opcode311.DELETE_NAME:
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
                         try {
@@ -195,7 +195,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         }
                         break;
 
-                    case Opcode.BUILD_MAP:
+                    case Opcode311.BUILD_MAP:
                         // k1 | v1 | ... | kN | vN | -> | map |
                         // -------------------------^sp -------^sp
                         // Build dictionary from the N=oparg key-value
@@ -206,7 +206,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.LOAD_NAME:
+                    case Opcode311.LOAD_NAME:
                         name = names[oparg | opword & 0xff];
                         oparg = 0;
                         try {
@@ -226,7 +226,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         s[sp++] = v; // PUSH
                         break;
 
-                    case Opcode.BUILD_TUPLE:
+                    case Opcode311.BUILD_TUPLE:
                         // w[0] | ... | w[oparg-1] | -> | tpl |
                         // -------------------------^sp -------^sp
                         // Group the N=oparg elements on the stack
@@ -237,7 +237,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.BUILD_LIST:
+                    case Opcode311.BUILD_LIST:
                         // w[0] | ... | w[oparg-1] | -> | lst |
                         // -------------------------^sp -------^sp
                         // Group the N=oparg elements on the stack
@@ -248,7 +248,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.LOAD_ATTR:
+                    case Opcode311.LOAD_ATTR:
                         // v | -> | v.name |
                         // ---^sp ----------^sp
                         name = names[oparg | opword & 0xff];
@@ -256,7 +256,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         s[sp - 1] = Abstract.getAttr(s[sp - 1], name);
                         break;
 
-                    case Opcode.COMPARE_OP:
+                    case Opcode311.COMPARE_OP:
                         // v | w | -> | op(v,w) |
                         // -------^sp -----------^sp
                         w = s[--sp]; // POP
@@ -265,26 +265,26 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.JUMP_FORWARD:
+                    case Opcode311.JUMP_FORWARD:
                         ip += (oparg | opword & 0xff) >> 1;
                         oparg = 0;
                         break;
 
-                    case Opcode.POP_JUMP_IF_FALSE:
+                    case Opcode311.POP_JUMP_IF_FALSE:
                         v = s[--sp]; // POP
                         if (!Abstract.isTrue(v))
                             ip = ((oparg | opword & 0xff) >> 1) - 1;
                         oparg = 0;
                         break;
 
-                    case Opcode.POP_JUMP_IF_TRUE:
+                    case Opcode311.POP_JUMP_IF_TRUE:
                         v = s[--sp]; // POP
                         if (Abstract.isTrue(v))
                             ip = ((oparg | opword & 0xff) >> 1) - 1;
                         oparg = 0;
                         break;
 
-                    case Opcode.JUMP_IF_FALSE_OR_POP:
+                    case Opcode311.JUMP_IF_FALSE_OR_POP:
                         v = s[--sp]; // POP
                         if (!Abstract.isTrue(v)) {
                             sp += 1;    // UNPOP
@@ -293,7 +293,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.JUMP_IF_TRUE_OR_POP:
+                    case Opcode311.JUMP_IF_TRUE_OR_POP:
                         v = s[--sp]; // POP
                         if (Abstract.isTrue(v)) {
                             sp += 1;    // UNPOP
@@ -302,12 +302,12 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.JUMP_ABSOLUTE:
+                    case Opcode311.JUMP_ABSOLUTE:
                         ip = ((oparg | opword & 0xff) >> 1) - 1;
                         oparg = 0;
                         break;
 
-                    case Opcode.LOAD_METHOD:
+                    case Opcode311.LOAD_METHOD:
                         // Designed to work in tandem with CALL_METHOD.
                         // If we can bypass temporary bound method:
                         // obj | -> | desc | self |
@@ -321,7 +321,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         sp += 2;
                         break;
 
-                    case Opcode.CALL_METHOD:
+                    case Opcode311.CALL_METHOD:
                         // Designed to work in tandem with LOAD_METHOD.
                         // If bypassed the method binding:
                         // desc | self | arg[n] | -> | res |
@@ -347,7 +347,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.CALL_FUNCTION:
+                    case Opcode311.CALL_FUNCTION:
                         // Call with positional args only. Stack:
                         // f | arg[n] | -> res |
                         // ------------^sp -----^sp
@@ -357,7 +357,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.CALL_FUNCTION_KW: {
+                    case Opcode311.CALL_FUNCTION_KW: {
                         // Call with n positional & m by kw. Stack:
                         // f | arg[n] | kwnames | -> res |
                         // ----------------------^sp -----^sp
@@ -372,7 +372,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         break;
                     }
 
-                    case Opcode.CALL_FUNCTION_EX:
+                    case Opcode311.CALL_FUNCTION_EX:
                         // Call with positional & kw args. Stack:
                         // f | args | kwdict? | -> res |
                         // ---------------------^sp -----^sp
@@ -383,7 +383,7 @@ class CPython38Frame extends PyFrame<CPython38Code> {
                         oparg = 0;
                         break;
 
-                    case Opcode.EXTENDED_ARG:
+                    case Opcode311.EXTENDED_ARG:
                         /*
                          * This opcode extends the effective opcode argument of the next
                          * opcode that has one.

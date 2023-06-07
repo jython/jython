@@ -22,11 +22,11 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           # This has to match the language version we're targeting
-          python-version: '3.8'
+          python-version: '3.11'
 
       - name: Unit test with Gradle
         run: ./gradlew --no-daemon test
