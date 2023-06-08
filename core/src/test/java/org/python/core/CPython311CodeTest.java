@@ -36,8 +36,6 @@ import org.python.modules.marshal;
  * .\gradlew --console=plain core:compileTestPythonExamples
  * </pre>
  */
-@Disabled("Content of code object changed from 3.8: see marshal mod")
-// FIXME and re-enable test
 @DisplayName("Given programs compiled by CPython 3.11 ...")
 class CPython311CodeTest extends UnitTestSupport {
 
@@ -127,6 +125,8 @@ class CPython311CodeTest extends UnitTestSupport {
      *
      * @param name of the Python example
      */
+    @Disabled("Not yet implementing 3.11 byte code")
+    // FIXME and re-enable test
     @SuppressWarnings("static-method")
     @DisplayName("We can execute simple ...")
     @ParameterizedTest(name = "{0}.py")
@@ -135,10 +135,10 @@ class CPython311CodeTest extends UnitTestSupport {
             "builtins_module"})
     void executeSimple(String name) {
         CPython311Code code = readCode(name);
-        Interpreter interp = new Interpreter();
         PyDict globals = new PyDict();
-        PyFrame<?> f = code.createFrame(interp, globals, globals);
-        f.eval();
+        Interpreter interp = new Interpreter();
+        Object r = interp.eval(code, globals);
+        assertEquals(Py.None, r);
         assertExpectedVariables(readResultDict(name), globals);
     }
 
@@ -147,6 +147,8 @@ class CPython311CodeTest extends UnitTestSupport {
      *
      * @param name of the Python example
      */
+    @Disabled("Not yet implementing 3.11 byte code")
+    // FIXME and re-enable test
     @SuppressWarnings("static-method")
     @DisplayName("We can execute branches and while loops ...")
     @ParameterizedTest(name = "{0}.py")
@@ -154,10 +156,10 @@ class CPython311CodeTest extends UnitTestSupport {
             "list_dot_product"})
     void executeBranchAndLoop(String name) {
         CPython311Code code = readCode(name);
-        Interpreter interp = new Interpreter();
         PyDict globals = new PyDict();
-        PyFrame<?> f = code.createFrame(interp, globals, globals);
-        f.eval();
+        Interpreter interp = new Interpreter();
+        Object r = interp.eval(code, globals);
+        assertEquals(Py.None, r);
         assertExpectedVariables(readResultDict(name), globals);
     }
 
@@ -188,7 +190,7 @@ class CPython311CodeTest extends UnitTestSupport {
      * The magic number placed by the supported version of CPython, in
      * the header of compiled files.
      */
-    private static final int MAGIC_NUMBER = 3413;
+    private static final int MAGIC_NUMBER = 3495;
 
     private static final String PYC_SUFFIX = "pyc";
     private static final String VAR_SUFFIX = "var";
@@ -213,20 +215,22 @@ class CPython311CodeTest extends UnitTestSupport {
             // Wrap a marshal reader around the input stream
             marshal.Reader reader = new marshal.StreamReader(s);
 
-            // First 16 bytes is a header
+            // First 4 bytes is a magic header
             int magic = reader.readShort();
-            assert magic == MAGIC_NUMBER;
             int magic2 = reader.readShort();
-            assert magic2 == 0x0a0d;
+            boolean good = magic == MAGIC_NUMBER && magic2 == 0x0a0d;
+
+            // Undocumented
             for (int i = 0; i < 3; i++) { reader.readInt(); }
 
             // Next should be a code object
-            Object o = reader.readObject();
-            if (o instanceof PyCode) {
-                return (CPython311Code)o;
-            } else {
-                throw new InterpreterError("Not a CPython code object: %s", name);
+            if (good) {
+                Object o = reader.readObject();
+                if (o instanceof PyCode) { return (CPython311Code)o; }
             }
+
+            // Didn't return a code object
+            throw new InterpreterError("Not a CPython code object: %s", name);
 
         } catch (IOException ioe) {
             throw new InterpreterError(ioe);
@@ -277,7 +281,7 @@ class CPython311CodeTest extends UnitTestSupport {
     private static void assertExpectedVariables(Map<Object, Object> ref, Map<Object, Object> test) {
         for (Map.Entry<Object, Object> e : ref.entrySet()) {
             Object k = e.getKey();
-            Object x = ref.get(k);
+            Object x = e.getValue();
             Object v = test.get(k);
             assertNotNull(v, () -> String.format("variable %s missing from result", k));
             assertPythonEquals(x, v, () -> String.format("%s = %s (not %s)", k, v, x));

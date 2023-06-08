@@ -36,33 +36,50 @@ class Interpreter {
         // addModule(builtinsModule);
     }
 
+    /**
+     * Add the given module to the interpreter's list of modules
+     * (effectively the source of {@code sys.modules}).
+     *
+     * @param m to add
+     */
     void addModule(PyModule m) {
         if (modules.putIfAbsent(m.name, m) != null)
             throw new InterpreterError("Interpreter.addModule: Module already added %s", m.name);
     }
 
     /**
-     * Execute the code object and return the result.
+     * Execute the code object and return the result. This is quite like
+     * {@link BuiltinsModule#exec(Object, Object, Object, Object)
+     * builtins.exec()}, except that it works without a surrounding
+     * {@link PyFrame}, from which it could infer {@code globals} and
+     * {@code locals}. It will create a frame, but it may be on an empty
+     * stack.
      *
      * @param code compiled code object
      * @param globals global context dictionary
-     * @param locals local variables (may be same as {@code globals})
+     * @param locals local variables (a Python mapping), may be the same
+     *     as {@code globals} or {@code null}
      * @return result of evaluation
      */
-    Object evalCode(PyCode code, PyDict globals, Object locals) {
+    // Compare CPython PyEval_EvalCode in ceval.c
+    Object eval(PyCode code, PyDict globals, Object locals) {
+        if (locals == null) { locals = globals; }
         globals.putIfAbsent("__builtins__", builtinsModule);
-        PyFrame<?> f = code.createFrame(this, globals, locals);
+        PyFunction<?> func = code.createFunction(this, globals);
+        PyFrame<?> f = func.createFrame(locals);
         return f.eval();
     }
 
     /**
-     * Get the value of an attribute of the built-in module, equivalent
-     * to {@code builtinsModule.dict.get(name)}.
+     * Execute the code object and return the result. This is the
+     * equivalent of {@link #eval(PyCode, PyDict, Object) eval(code,
+     * globals, globals)}
      *
-     * @param name of the attribute ({@code String} or {@code str})
-     * @return value of the attribute
+     * @param code compiled code object
+     * @param globals global context dictionary
+     * @return result of evaluation
      */
-    Object getBuiltin(PyUnicode name) { return builtinsModule.dict.get(name); }
+    Object eval(PyCode code, PyDict globals) { return eval(code, globals, globals); }
 
     /**
      * Get the value of an attribute of the built-in module, equivalent
@@ -72,27 +89,4 @@ class Interpreter {
      * @return value of the attribute
      */
     Object getBuiltin(String name) { return builtinsModule.dict.get(name); }
-
-    /**
-     * Get the current frame or null in there is none. The current frame
-     * is the one at the top of the stack in the current ThreadState.
-     *
-     * @return the current frame or null
-     */
-    static PyFrame<?> getFrame() {
-        // return ThreadState.get().frame;
-        return null;
-    }
-
-    /**
-     * Get the current {@code Interpreter} (via the top stack-frame of
-     * the current {@code ThreadState}). There is no current interpreter
-     * if the stack is empty.
-     *
-     * @return current {@code Interpreter} or {@code null}
-     */
-    static Interpreter get() {
-        PyFrame<?> f = null; // ThreadState.get().frame;
-        return f != null ? f.interpreter : null;
-    }
 }

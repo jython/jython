@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import org.python.base.InterpreterError;
 import org.python.core.PyObjectUtil.NoConversion;
@@ -123,6 +124,13 @@ public class PyTuple extends AbstractList<Object> implements CraftedPyObject {
     protected PyTuple(PyType type, Collection<?> c) {
         this(type, true, c.toArray(new Object[c.size()]));
     }
+
+    /**
+     * Construct a {@code PyTuple} from the elements of a stream.
+     *
+     * @param s source of element values for this {@code tuple}
+     */
+    PyTuple(Stream<?> s) { this(TYPE, true, s.toArray()); }
 
     /**
      * As {@link #PyTuple(Object[], int, int)} for Python sub-class
