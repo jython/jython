@@ -315,6 +315,14 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         s[sp] = new PyList(s, sp++, oparg);
                         break;
 
+                    case Opcode311.LIST_EXTEND: {
+                        Object iterable = s[--sp];
+                        PyList list = (PyList)s[sp - oparg];
+                        list.list_extend(iterable,
+                                () -> Abstract.typeError(VALUE_AFTER_STAR, iterable));
+                        break;
+                    }
+
                     case Opcode311.BUILD_MAP:
                         // k1 | v1 | ... | kN | vN | -> | map |
                         // -------------------------^sp -------^sp
@@ -386,6 +394,86 @@ class CPython311Frame extends PyFrame<CPython311Code> {
                         Object v = s[top]; // TOP
                         Comparison op = oparg == 0 ? Comparison.IN : Comparison.NOT_IN;
                         s[top] = op.apply(v, w);
+                        break;
+                    }
+
+                    case Opcode311.JUMP_FORWARD:
+                        ip += oparg;
+                        break;
+
+                    case Opcode311.JUMP_BACKWARD: {
+                        ip -= oparg;
+                        break;
+                    }
+
+                    case Opcode311.POP_JUMP_BACKWARD_IF_FALSE: {
+                        if (!Abstract.isTrue(s[--sp])) { ip -= oparg; }
+                        break;
+                    }
+                    case Opcode311.POP_JUMP_FORWARD_IF_FALSE: {
+                        if (!Abstract.isTrue(s[--sp])) { ip += oparg; }
+                        break;
+                    }
+
+                    case Opcode311.POP_JUMP_BACKWARD_IF_TRUE: {
+                        if (Abstract.isTrue(s[--sp])) { ip -= oparg; }
+                        break;
+
+                    }
+
+                    case Opcode311.POP_JUMP_FORWARD_IF_TRUE: {
+                        if (Abstract.isTrue(s[--sp])) { ip += oparg; }
+                        break;
+
+                    }
+
+                    case Opcode311.POP_JUMP_BACKWARD_IF_NOT_NONE: {
+                        if (s[--sp] != Py.None) { ip -= oparg; }
+                        break;
+                    }
+
+                    case Opcode311.POP_JUMP_FORWARD_IF_NOT_NONE: {
+                        if (s[--sp] != Py.None) { ip += oparg; }
+                        break;
+                    }
+
+                    case Opcode311.POP_JUMP_BACKWARD_IF_NONE: {
+                        if (s[--sp] == Py.None) { ip -= oparg; }
+                        break;
+                    }
+
+                    case Opcode311.POP_JUMP_FORWARD_IF_NONE: {
+                        if (s[--sp] == Py.None) { ip += oparg; }
+                        break;
+                    }
+
+                    case Opcode311.JUMP_IF_FALSE_OR_POP: {
+                        Object v = s[--sp]; // POP
+                        if (!Abstract.isTrue(v)) {
+                            sp += 1;    // UNPOP
+                            ip += oparg;
+                        }
+                        break;
+                    }
+
+                    case Opcode311.JUMP_IF_TRUE_OR_POP: {
+                        Object v = s[--sp]; // POP
+                        if (Abstract.isTrue(v)) {
+                            sp += 1;    // UNPOP
+                            ip += oparg;
+                        }
+                        break;
+                    }
+
+                    case Opcode311.JUMP_BACKWARD_NO_INTERRUPT: {
+                        // Same as plain JUMP_BACKWARD for us
+                        ip -= oparg;
+                        break;
+                    }
+
+                    case Opcode311.JUMP_BACKWARD_QUICK: {
+                        // Same as plain JUMP_BACKWARD for us
+                        ip -= oparg;
                         break;
                     }
 
@@ -571,8 +659,8 @@ class CPython311Frame extends PyFrame<CPython311Code> {
     // Supporting definitions and methods -----------------------------
 
     private static final Object[] EMPTY_OBJECT_ARRAY = Py.EMPTY_ARRAY;
-
     private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";
+    private static final String VALUE_AFTER_STAR = "Value after * must be an iterable, not %.200s";
 
     /**
      * A specialised version of {@code object.__getattribute__}
