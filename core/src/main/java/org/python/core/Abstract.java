@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.function.Supplier;
 
 import org.python.base.InterpreterError;
+import org.python.base.MissingFeature;
 import org.python.core.Slot.EmptyException;
 
 /**
@@ -385,8 +386,7 @@ public class Abstract {
      */
     // Compare CPython PyObject_DelAttr in abstract.h
     // which is a macro for PyObject_SetAttr in object.c
-    public static void delAttr(Object o, String name)
-            throws AttributeError, Throwable {
+    public static void delAttr(Object o, String name) throws AttributeError, Throwable {
         // Decisions are based on type of o (that of name is known)
         try {
             Operations.of(o).op_delattr.invokeExact(o, name);
@@ -405,8 +405,7 @@ public class Abstract {
      * @throws Throwable on other errors
      */
     // Compare CPython PyObject_SetAttr in object.c
-    public static void delAttr(Object o, Object name)
-            throws AttributeError, TypeError, Throwable {
+    public static void delAttr(Object o, Object name) throws AttributeError, TypeError, Throwable {
         if (name instanceof String) {
             delAttr(o, name);
         } else if (name instanceof PyUnicode) {
@@ -469,6 +468,142 @@ public class Abstract {
     }
 
     /**
+     * This is equivalent to the Python expression {@code iter(o)}. It
+     * returns a new Python iterator for the object argument, or the
+     * object itself if it is already an iterator.
+     * <p>
+     * {@code o} must either define {@code __iter__}, which will be
+     * called to obtain an iterator, or define {@code __getitem__}, on
+     * which an iterator will be created. It is guaranteed that the
+     * object returned defines {@code __next__}.
+     *
+     * @param o the claimed iterable object
+     * @return an iterator on {@code o}
+     * @throws TypeError if the object cannot be iterated
+     * @throws Throwable from errors in {@code o.__iter__}
+     */
+    // Compare CPython PyObject_GetIter in abstract.c
+    static Object getIterator(Object o) throws TypeError, Throwable { return getIterator(o, null); }
+
+    /**
+     * Equivalent to {@link #getIterator(Object)}, with the opportunity
+     * to specify the kind of Python exception to raise.
+     *
+     * @param <E> the type of exception to throw
+     * @param o the claimed iterable object
+     * @param exc a supplier (e.g. lambda expression) for the exception
+     * @return an iterator on {@code o}
+     * @throws E to throw if an iterator cannot be formed
+     * @throws Throwable from errors in {@code o.__iter__}
+     */
+    // Compare CPython PyObject_GetIter in abstract.c
+    static <E extends PyException> Object getIterator(Object o, Supplier<E> exc)
+            throws TypeError, Throwable {
+        Operations ops = Operations.of(o);
+        if (Slot.op_iter.isDefinedFor(ops)) {
+            // o defines __iter__, call it.
+            Object r = ops.op_iter.invokeExact(o);
+            // Did that return an iterator? Check r defines __next__.
+            if (Slot.op_next.isDefinedFor(Operations.of(r))) {
+                return r;
+            } else if (exc == null) { throw returnTypeError("iter", "iterator", r); }
+        } else if (Slot.op_getitem.isDefinedFor(ops)) {
+            // o defines __getitem__: make a (Python) iterator.
+            throw new MissingFeature("PyIterator");
+        }
+
+        // Out of possibilities: throw caller-defined exception
+        if (exc != null) {
+            throw exc.get();
+        } else {
+            throw typeError(NOT_ITERABLE, o);
+        }
+    }
+
+    /**
+     * Return {@code true} if the object {@code o} supports the iterator
+     * protocol (has {@code __iter__}).
+     *
+     * @param o to test
+     * @return true if {@code o} supports the iterator protocol
+     */
+    static boolean iterableCheck(Object o) {
+        return Slot.op_iter.isDefinedFor(Operations.of(o));
+    }
+
+    /**
+     * Return true if the object {@code o} is an iterator (has
+     * {@code __next__}).
+     *
+     * @param o to test
+     * @return true if {@code o} is an iterator
+     */
+    // Compare CPython PyIter_Check in abstract.c
+    static boolean iteratorCheck(Object o) { return Slot.op_next.isDefinedFor(Operations.of(o)); }
+
+    /**
+     * Return the next value from the Python iterator {@code iter}. If
+     * there are no remaining values, returns {@code null}. If an error
+     * occurs while retrieving the item, the exception propagates.
+     *
+     * @param iter the iterator
+     * @return the next item
+     * @throws Throwable from {@code iter.__next__}
+     */
+    // Compare CPython PyIter_Next in abstract.c
+    static Object next(Object iter) throws Throwable {
+        Operations o = Operations.of(iter);
+        try {
+            return o.op_next.invokeExact(iter);
+        } catch (StopIteration e) {
+            return null;
+        } catch (EmptyException e) {
+            throw typeError(NOT_ITERABLE, iter);
+        }
+    }
+
+    // Plumbing -------------------------------------------------------
+
+    /**
+     * Crafted error supporting {@link #getAttr(Object, PyUnicode)},
+     * {@link #setAttr(Object, PyUnicode, Object)}, and
+     * {@link #delAttr(Object, PyUnicode)}.
+     *
+     * @param o object accessed
+     * @param name of attribute
+     * @param slot operation
+     * @return an error to throw
+     */
+    private static TypeError attributeAccessError(Object o, String name, Slot slot) {
+        String mode, kind, fmt = "'%.100s' object has %s attributes (%s.%.50s)";
+        // What were we trying to do?
+        switch (slot) {
+            case op_delattr:
+                mode = "delete ";
+                break;
+            case op_setattr:
+                mode = "assign to ";
+                break;
+            default:
+                mode = "";
+                break;
+        }
+        // Can we even read this object's attributes?
+        Operations ops = Operations.of(o);
+        kind = Slot.op_getattribute.isDefinedFor(ops) ? "only read-only" : "no";
+        // Now we know what to say
+        return new TypeError(fmt, ops, kind, mode, name);
+    }
+
+    // Convenience functions constructing errors --------------------
+
+    private static final String IS_REQUIRED_NOT = "%.200s is required, not '%.100s'";
+    private static final String RETURNED_NON_TYPE = "%.200s returned non-%.200s (type %.200s)";
+    private static final String ARGUMENT_MUST_BE = "%s()%s%s argument must be %s, not '%.200s'";
+    protected static final String NOT_MAPPING = "%.200s is not a mapping";
+    protected static final String NOT_ITERABLE = "%.200s object is not iterable";
+
+    /**
      * Return {@code true} iff {@code derived} is a Python sub-class of
      * {@code cls} (including where it is the same class). The answer is
      * found by traversing the {@code __bases__} tuples recursively,
@@ -505,48 +640,6 @@ public class Abstract {
         }
         return true;
     }
-
-    // Plumbing -------------------------------------------------------
-
-    /**
-     * Crafted error supporting {@link #getAttr(Object, PyUnicode)},
-     * {@link #setAttr(Object, PyUnicode, Object)}, and
-     * {@link #delAttr(Object, PyUnicode)}.
-     *
-     * @param o object accessed
-     * @param name of attribute
-     * @param slot operation
-     * @return an error to throw
-     */
-    private static TypeError attributeAccessError(Object o, String name,
-            Slot slot) {
-        String mode, kind,
-                fmt = "'%.100s' object has %s attributes (%s.%.50s)";
-        // What were we trying to do?
-        switch (slot) {
-            case op_delattr:
-                mode = "delete ";
-                break;
-            case op_setattr:
-                mode = "assign to ";
-                break;
-            default:
-                mode = "";
-                break;
-        }
-        // Can we even read this object's attributes?
-        Operations ops = Operations.of(o);
-        kind = Slot.op_getattribute.isDefinedFor(ops) ? "only read-only"
-                : "no";
-        // Now we know what to say
-        return new TypeError(fmt, ops, kind, mode, name);
-    }
-
-    // Convenience functions constructing errors --------------------
-
-    private static final String IS_REQUIRED_NOT = "%.200s is required, not '%.100s'";
-    private static final String RETURNED_NON_TYPE = "%.200s returned non-%.200s (type %.200s)";
-    private static final String ARGUMENT_MUST_BE = "%s()%s%s argument must be %s, not '%.200s'";
 
     /**
      * Create a {@link TypeError} with a message involving the type of

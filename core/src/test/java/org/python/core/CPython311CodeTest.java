@@ -125,8 +125,6 @@ class CPython311CodeTest extends UnitTestSupport {
      *
      * @param name of the Python example
      */
-    @Disabled("Not yet implementing 3.11 byte code")
-    // FIXME and re-enable test
     @SuppressWarnings("static-method")
     @DisplayName("We can execute simple ...")
     @ParameterizedTest(name = "{0}.py")
