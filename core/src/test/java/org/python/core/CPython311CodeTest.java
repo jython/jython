@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -90,10 +89,32 @@ class CPython311CodeTest extends UnitTestSupport {
         @Test
         protected void co_name() { assertEquals("<module>", code.name); }
 
-        abstract void co_names();
+        void co_names() { checkNames(code.co_names(), EMPTY_STRINGS); }
 
         @Test
-        void co_varnames() { assertEquals(0, code.co_varnames().size()); }
+        void co_varnames() { checkNames(code.co_varnames(), EMPTY_STRINGS); }
+
+        /**
+         * Check {@code code} name enquiry against the expected list.
+         *
+         * @param names result from code object
+         * @param exp expected names in expected order
+         */
+        void checkNames(PyTuple names, String... exp) {
+            assertEquals(exp.length, names.size());
+            for (int i = 0; i < exp.length; i++) { assertPythonEquals(exp[i], names.get(i)); }
+        }
+
+        /**
+         * Check {@code code} values enquiry against the expected list.
+         *
+         * @param values result from code object
+         * @param exp expected values in expected order
+         */
+        void checkValues(PyTuple values, Object... exp) {
+            assertEquals(exp.length, values.size());
+            for (int i = 0; i < exp.length; i++) { assertPythonEquals(exp[i], values.get(i)); }
+        }
     }
 
     @Nested
@@ -145,8 +166,6 @@ class CPython311CodeTest extends UnitTestSupport {
      *
      * @param name of the Python example
      */
-    @Disabled("Not yet implementing 3.11 byte code")
-    // FIXME and re-enable test
     @SuppressWarnings("static-method")
     @DisplayName("We can execute branches and while loops ...")
     @ParameterizedTest(name = "{0}.py")
@@ -192,6 +211,7 @@ class CPython311CodeTest extends UnitTestSupport {
 
     private static final String PYC_SUFFIX = "pyc";
     private static final String VAR_SUFFIX = "var";
+    private static final String[] EMPTY_STRINGS = {};
 
     /**
      * Read a {@code code} object with {@code marshal}. The method looks

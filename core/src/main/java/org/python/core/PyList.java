@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.StringJoiner;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.python.base.InterpreterError;
 import org.python.core.PyObjectUtil.NoConversion;
@@ -27,11 +28,11 @@ import org.python.core.PyType.Spec;
  * <p>
  * It is {@code synchronized} so that competing threads should be
  * able to access it with roughly the same protection against
- * concurrent modification that CPython offers.
- * There are also necessary safeguards during {@code sort()} to
- * detect modification from within the current thread as a side
- * effect of comparison. Java brings its own safeguard within
- * iterators against structural concurrent modification.
+ * concurrent modification that CPython offers. There are also
+ * necessary safeguards during {@code sort()} to detect modification
+ * from within the current thread as a side effect of comparison.
+ * Java brings its own safeguard within iterators against structural
+ * concurrent modification.
  *
  * @implNote The design follows that in Jython 2 with a private Java
  *     list member to which operations are delegated directly or
@@ -479,8 +480,24 @@ public class PyList implements List<Object>, CraftedPyObject {
      */
     // @ExposedMethod(doc = BuiltinDocs.list_extend_doc)
     final synchronized void list_extend(Object o) throws Throwable {
+        list_extend(o, null);
+    }
+
+    /**
+     * Append the elements in the argument sequence to the end of the
+     * list, {@code s[len(s):len(s)] = o}.
+     *
+     * @param <E> the type of exception to throw
+     * @param o the sequence of items to append to the list.
+     * @param exc a supplier (e.g. lambda expression) for the exception
+     *     to throw if an iterator cannot be formed (or {@code null} for
+     *     a default {@code TypeError})
+     * @throws E to throw if an iterator cannot be formed
+     * @throws Throwable from the implementation of {@code o}.
+     */
+    final <E extends PyException> void list_extend(Object o, Supplier<E> exc) throws E, Throwable {
         changed = true;
-        list.addAll(PySequence.fastList(o, null));
+        list.addAll(PySequence.fastList(o, exc));
     }
 
     // @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.list___iadd___doc)
