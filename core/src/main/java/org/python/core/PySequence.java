@@ -221,7 +221,7 @@ public class PySequence extends Abstract {
 
         /**
          * Get an item from the sequence at a given index {@code i}.
-         * 
+         *
          * @param i index
          * @return item at index {@code i}.
          */
@@ -250,7 +250,7 @@ public class PySequence extends Abstract {
 
         /**
          * Get the int item from the sequence at a given index {@code i}.
-         * 
+         *
          * @param i index
          * @return item at index {@code i}.
          */

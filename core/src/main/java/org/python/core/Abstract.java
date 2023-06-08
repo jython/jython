@@ -89,7 +89,7 @@ public class Abstract {
     /**
      * Convert a given {@code Object} to an instance of a Java class.
      * Raise a {@code TypeError} if the conversion fails.
-     * 
+     *
      * @param <T> target type defined by {@code c}
      * @param o the {@code Object} to convert.
      * @param c the class to convert it to.
@@ -550,15 +550,16 @@ public class Abstract {
 
     /**
      * Create a {@link TypeError} with a message involving the type of
-     * {@code o} and optionally other arguments.
+     * {@code args[0]} and optionally other arguments.
      *
-     * @param fmt format for message with at least one {@code %s}
-     * @param o object whose type name will fill the first {@code %s}
-     * @param args extra arguments to the formatted message
+     * @param fmt format for message with a {@code %s} first
+     * @param args arguments to the formatted message, where Python type
+     *     name of {@code args[0]} will replace it
      * @return exception to throw
      */
-    static TypeError typeError(String fmt, Object o, Object... args) {
-        return new TypeError(fmt, PyType.of(o).getName(), args);
+    public static TypeError typeError(String fmt, Object... args) {
+        args[0] = PyType.of(args[0]).getName();
+        return new TypeError(fmt, args);
     }
 
     /**
