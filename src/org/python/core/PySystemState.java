@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -193,7 +194,7 @@ public class PySystemState extends PyObject
 
     private int checkinterval = 100;
 
-    private codecs.CodecState codecState;
+    private volatile codecs.CodecState codecState;
 
     /** Whether bytecode should be written to disk on import. */
     public boolean dont_write_bytecode = false;
@@ -360,15 +361,21 @@ public class PySystemState extends PyObject
         return WinVersion.getWinVersion();
     }
 
-    public synchronized codecs.CodecState getCodecState() {
+    public codecs.CodecState getCodecState() {
         if (codecState == null) {
-            codecState = new codecs.CodecState();
+            importLock.lock();
             try {
-                imp.load("encodings");
+                if (codecState == null) {
+                    codecState = new codecs.CodecState();
+                    // we have the importLock locked
+                    imp.load("encodings", false);
+                }
             } catch (PyException exc) {
                 if (exc.type != Py.ImportError) {
                     throw exc;
                 }
+            } finally {
+                importLock.unlock();
             }
         }
         return codecState;
