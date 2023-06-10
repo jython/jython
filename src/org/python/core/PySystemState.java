@@ -368,7 +368,7 @@ public class PySystemState extends PyObject
                 if (codecState == null) {
                     codecState = new codecs.CodecState();
                     // we have the importLock locked
-                    imp.load("encodings", false);
+                    imp.load("encodings");
                 }
             } catch (PyException exc) {
                 if (exc.type != Py.ImportError) {

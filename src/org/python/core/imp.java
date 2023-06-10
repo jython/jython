@@ -1008,12 +1008,12 @@ public class imp {
      * Load the module by name. Upon loading the module it will be added to sys.modules.
      *
      * @param name the name of the module to load
-     * @param needToLock true if importLock should be locked
      * @return the loaded module
      */
-    public static PyObject load(String name, boolean needToLock) {
+    public static PyObject load(String name) {
         checkName(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
+        boolean needToLock = !importLock.isLocked();
         if (needToLock) {
             importLock.lock();
         }
@@ -1024,15 +1024,6 @@ public class imp {
                 importLock.unlock();
             }
         }
-    }
-    /**
-     * Load the module by name. Upon loading the module it will be added to sys.modules.
-     *
-     * @param name the name of the module to load
-     * @return the loaded module
-     */
-    public static PyObject load(String name) {
-        return load(name, true);
     }
 
     /**
