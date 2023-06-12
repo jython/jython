@@ -1013,16 +1013,11 @@ public class imp {
     public static PyObject load(String name) {
         checkName(name);
         ReentrantLock importLock = Py.getSystemState().getImportLock();
-        boolean needToLock = !importLock.isLocked();
-        if (needToLock) {
-            importLock.lock();
-        }
+        importLock.lock();
         try {
             return import_first(name, new StringBuilder());
         } finally {
-            if (needToLock) {
-                importLock.unlock();
-            }
+            importLock.unlock();
         }
     }
 
