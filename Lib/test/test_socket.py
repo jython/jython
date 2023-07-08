@@ -2397,8 +2397,11 @@ class UnicodeTest(ThreadedTCPSocketTest):
 
 class IDNATest(unittest.TestCase):
 
+    # This site must exist in DNS as an IDN, hopefully with a long future.
+    DOMAIN = u'\u043c\u0430\u0442\u0435\u043c\u0430\u0442\u0438\u043a\u0430.\u0443\u043a\u0440'
+
     def testGetAddrInfoIDNAHostname(self):
-        idna_domain = u"al\u00e1n.com"
+        idna_domain = IDNATest.DOMAIN
         if socket.supports('idna'):
             try:
                 addresses = socket.getaddrinfo(idna_domain, 80)
@@ -2416,7 +2419,7 @@ class IDNATest(unittest.TestCase):
                 self.fail("Non ascii domain '%s' should have raised UnicodeEncodeError: no exception raised" % repr(idna_domain))
 
     def testAddrTupleIDNAHostname(self):
-        idna_domain = u"al\u00e1n.com"
+        idna_domain = IDNATest.DOMAIN
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if socket.supports('idna'):
             try:

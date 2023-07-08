@@ -1511,7 +1511,6 @@ The text for an official release would continue like ...
             <arg value="test_py_compile"/> <!-- test_relative_path (on osx) -->
             <arg value="test_select_new"/>
             <arg value="test_smtpnet"/>
-            <arg value="test_socket"/>
         </exec>
     </target>
 
@@ -1532,7 +1531,6 @@ The text for an official release would continue like ...
             <arg value="test_os_jy"/> <!-- locale command (on git bash) -->
             <arg value="test_select_new"/>
             <arg value="test_smtpnet"/>
-            <arg value="test_socket"/>
         </exec>
     </target>
 
