@@ -4,9 +4,6 @@ import unittest
 from test import test_support
 
 import errno
-import gc
-import jarray
-import os
 import Queue
 import platform
 import pprint
