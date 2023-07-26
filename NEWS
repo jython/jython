@@ -1,16 +1,64 @@
 Jython NEWS
 
-The features new in a given release are generally listed under the section for the "b1" release
-of that version.
+The features new in a given version are listed at the head of the section for
+the final release of that version. Bugs fixed are listed under the next release
+(frequently a beta) after they were fixed.
 
 For more details, three sources are available according to type:
  - [ n ], please see old bug tracker at https://bugs.jython.org.
  - [ GH-n ], please see https://github.com/jython/jython.
  - [ FM-n ], please see https://github.com/jython/frozen-mirror.
 
+==============================================================================
+Jython 2.7.4
+==============================================================================
 
-Jython 2.7.3b1
-  Bugs fixed
+New Features
+
+    - Nothing yet.
+
+
+Jython 2.7.4a1 Bugs fixed
+    - [ GH- ] 
+
+
+==============================================================================
+Jython 2.7.3
+==============================================================================
+
+New Features
+
+    - The jython command respects the PYTHONDONTWRITEBYTECODE environment
+      variable (GH-128).
+
+    - Under PR GH-101, the matching of sequence arguments to the parameters of
+      Java methods is improved (and in constructors under GH-201). A Java
+      varargs parameter does not match a final sequence in the call if an array
+      parameter could do so. (Thanks Peter Holloway.)
+
+    - array.array itemsize of unsigned types is now the same as their signed
+      counterparts, where previously it was mostly double. Internal
+      representations have changed. Anomalies have been eliminated between
+      itemsize and the serialisation (tostring() etc.) for unsigned types, and
+      in the range of values accepted in different contexts. The size of type
+      'u' (unicode character) is 4 on all platforms. Client code that was
+      working around these anomalies may have to change. Overall, the
+      experience should be closer to that with CPython.
+
+    - We no longer aspire to compile Jython with Java 7. (We may use Java 8
+      features.)
+
+    - The project has moved its home to GitHub (twice), and invites issue
+      reports there (not at bugs.jython.org).
+
+
+Jython 2.7.3
+    The release is the same as the rc1 (apart from the version number). 
+
+Jython 2.7.3rc1 Bugs fixed
+    - [ GH-201 ] Support vararg constructors
+
+Jython 2.7.3b1 Bugs fixed
     - [ GH-192 ] PyString with non-byte value in formatting of collections
     - [ GH-183 ] Console messages do not reach root logger (bjo 2896)
     - [ GH-178 ] Update icu4j JAR to 71.1
@@ -51,36 +99,66 @@ Jython 2.7.3b1
     - [ 2918 ] slim jar: missing resource file for zxJDBC (also GH-187)
     - [ 2892 ] Migrate from hg.python.org to GitHub
 
-  New Features
 
-    - The jython command respects the PYTHONDONTWRITEBYTECODE environment variable (GH-128).
-
-    - Under PR GH-101, the matching of sequence arguments to the parameters of Java methods is
-      improved. A Java varargs parameter does not match a final sequence in the call
-      if an array parameter could do so. (Thanks Peter Holloway.)
-
-    - array.array itemsize of unsigned types is now the same as their signed counterparts, where 
-      previously it was mostly double. Internal representations have changed. Anomalies have been
-      eliminated between itemsize and the serialisation (tostring() etc.) for unsigned types,
-      and in the range of values accepted in different contexts. The size of type 'u' (unicode
-      character) is 4 on all platforms. Client code that was working around these anomalies may
-      have to change. Overall, the experience should be closer to that with CPython.
-
-    - We no longer aspire to compile Jython with Java 7. (We may use Java 8 features.)
-
-    - The project has moved its home to GitHub (twice).
-
+==============================================================================
 Jython 2.7.2
-  same as 2.7.2rc1
+==============================================================================
 
-Jython 2.7.2rc1
-  Bugs fixed
+  New Features
+    - The main program behaves more like CPython in many small ways, including
+      a more correct treatment of the -i option. This simplifies support, and
+      may also make it unnecessary for users to work around differences from
+      CPython.
+    - python.startup registry property (and JYTHONSTARTUP environment variable)
+      added.
+    - Only the Jython command (class org.python.util.jython) now reads the
+      environment variable JYTHONPATH, not the core runtime, and it respects
+      the -E option (ignore environment). This change is for consistency with
+      CPython and with our handling of other environment variables. A pure Java
+      application that creates its own interpreter may use the system or
+      registry key "python.path" to add to sys.path, as documented.
+    - We no longer recommend overriding toString in PyObject sub-classes as a
+      way of defining string forms. Override __repr__, and if necessary __str__,
+      as is usual in Python. We recommend toString should return the same as
+      __str__ (or __unicode__).
+    - Experimentally, we use Gradle to build a JAR and POM that may be cited as
+      a dependency by other projects. The Jython project would like to know if
+      this is being done suitably for downstream use.
+    - The registry setting (or Java property) "python.verbose", and direct use
+      of the global org.python.core.Options.verbose are DEPRECATED: use a Java
+      logging properties file instead. Console messages are now produced via
+      java.util.logging (JUL), and the logger "org.python" or its descendants.
+      The jython command configures a ConsoleLogger for "org.python" and by
+      default a format for messages generally similar to that in v2.7.1,
+      preceded by the logger name and JUL severity. The volume of messages is
+      controlled by your logging preferences, but by default is unchanged from
+      v2.7.1. Each -v option on the command line makes the logging one step
+      finer on the JUL scale. Error messages from Python and stack traces are
+      unaffected. When embedded in your application, Jython makes no logging
+      configuration changes: messages from the "org.python" name space merge
+      with those of your application.
+    - There is much improved support for locale, but as a backward-incompatible
+      change, it is provided as an opt-in. Define property
+      python.locale.control=settable on the command line or via the Jython
+      registry, to enable. This  may become the default in a later version.
+    - The default location of the Jython package cache has moved from the
+      installation directory to the current working directory and is called
+      ".jython_cache". Previously, Jython installed system-wide either exposed
+      the cache as world read-write (a security risk) or disabled it.
+    - BouncyCastle SSL support is incomplete as bundled. The Jython JAR is not
+      signed, and may not be trusted by your JVM as a security provider. This
+      manifests as a PEMException: "Unable to create OpenSSL PBDKF:
+      PBKDF-OpenSSL SecretKeyFactory not available" during certain operations.
+      If this is a problem, place genuine BouncyCastle JARs on the class path,
+      and Jython will use those in preference to the classes we include.
+      The slim JAR does not suffer this problem.
+
+Jython 2.7.2rc1 Bugs fixed
     - [ 2858 ] test_ssl failure due to embedding Bouncy Castle (doc change only)
     - [ FM-156 ] Race condition in PyStringMap keys method
     - [ 2862 ] Jython fails on Linux for normal user when installed by root
 
-Jython 2.7.2b3
-  Bugs fixed
+Jython 2.7.2b3 Bugs fixed
     - [ 2810 ] NoSuchMethodError in test_jython_initializer (Java 10+)
     - [ 2808 ] lib2to3 test failures on Windows JDK 11
     - [ 2846 ] Main module __name __ is not "__main__" under Java Scripting API
@@ -91,12 +169,10 @@ Jython 2.7.2b3
     - [ 2826 ] Unicode hex string decode failure
     - [ 2836 ] Java Swing library works only in interactive jython session
 
-Jython 2.7.2b2
-  Bugs fixed
+Jython 2.7.2b2 Bugs fixed
     - [ 2814 ] maven/build.xml does not PGP-sign the publication
-2)
-Jython 2.7.2b1
-  Bugs fixed
+
+Jython 2.7.2b1 Bugs fixed
     - [ 2806 ] Installer contains dependencies unshaded (Java 8)
     - [ 2666 ] Oracle JDK 7 out of support so no longer available on Travis
     - [ 2294 ] Importation of modules from directories with non-ASCII characters fails
@@ -162,46 +238,7 @@ Jython 2.7.2b1
     - [ 2403 ] VerifyError when implementing interfaces containing default methods (Java 8)
     - [ 2715 ] Restrict array.array support for buffer protocol
 
-  New Features
-    - The main program behaves more like CPython in many small ways, including a more correct
-      treatment of the -i option. This simplifies support, and may also make it unnecessary for
-      users to work around differences from CPython.
-    - python.startup registry property (and JYTHONSTARTUP environment variable) added.
-    - Only the Jython command (class org.python.util.jython) now reads the environment variable
-      JYTHONPATH, not the core runtime, and it respects the -E option (ignore environment). This
-      change is for consistency with CPython and with our handling of other environment variables.
-      A pure Java application that creates its own interpreter may use the system or registry
-      key "python.path" to add to sys.path, as documented.
-    - We no longer recommend overriding toString in PyObject sub-classes as a way of defining
-      string forms. Override __repr__, and if necessary __str__, as is usual in Python. We
-      recommend toString should return the same as __str__ (or __unicode__).
-    - Experimentally, we use Gradle to build a JAR and POM that may be cited as a dependency by
-      other projects. The Jython project would like to know if this is being done suitably
-      for downstream use.
-    - The registry setting (or Java property) "python.verbose", and direct use of the global
-      org.python.core.Options.verbose are DEPRECATED: use a Java logging properties file instead.
-      Console messages are now produced via java.util.logging (JUL), and the logger "org.python"
-      or its descendants. The jython command configures a ConsoleLogger for "org.python" and by
-      default a format for messages generally similar to that in v2.7.1, preceded by the logger
-      name and JUL severity. The volume of messages is controlled by your logging preferences, but
-      by default is unchanged from v2.7.1. Each -v option on the command line makes the logging
-      one step finer on the JUL scale. Error messages from Python and stack traces are unaffected.
-      When embedded in your application, Jython makes no logging configuration changes: messages
-      from the "org.python" name space merge with those of your application.
-    - There is much improved support for locale, but as a backward-incompatible change, it is
-      provided as an opt-in. Define property python.locale.control=settable on the command line
-      or via the Jython registry, to enable. This  may become the default in a later version.
-    - The default location of the Jython package cache has moved from the installation directory
-      to the current working directory and is called ".jython_cache". Previously, Jython installed
-      system-wide either exposed the cache as world read-write (a security risk) or disabled it.
-    - BouncyCastle SSL support is incomplete as bundled. The Jython JAR is not signed, and may not
-      be trusted by your JVM as a security provider. This manifests as a PEMException: "Unable to
-      create OpenSSL PBDKF: PBKDF-OpenSSL SecretKeyFactory not available" during certain
-      operations. If this is a problem, place genuine BouncyCastle JARs on the class path, and
-      Jython will use those in preference to the classes we include. The slim JAR is not affected.
-
-Jython 2.7.2a1
-  Bugs fixed
+Jython 2.7.2a1 Bugs fixed
     - [ 2632 ] Handle unicode data appropriately in csv module
     - [ 2638 ] str not default-decoded in str-unicode operations
     - [ 2622 ] json dumps error (use of AbstractDict)
@@ -213,11 +250,10 @@ Jython 2.7.2a1
     - [ 2600 ] subprocess doesn't have _args_from_interpreter_flags (blocks support for multiprocessing)
     - [ 2602 ] NumberFormatException in terminal on OSX 10.12.5 (ncurses related)
 
-  New Features
-    - Updated JLine to 2.14.5
 
+==============================================================================
 Jython 2.7.1
-  same as 2.7.1rc3
+==============================================================================
 
 Jython 2.7.1rc3
   Bugs fixed
@@ -432,8 +468,9 @@ Jython 2.7.1b1
    - [ 2058 ] ClasspathPyImporter implements PEP 302 get_data (and others)
    - [ 2364 ] bytearray and str: isalpha(), isupper() etc. now match Python 2
 
+==============================================================================
 Jython 2.7
-  same as 2.7rc3
+==============================================================================
 
 Jython 2.7rc3
   Bugs fixed
@@ -977,7 +1014,7 @@ Jython 2.5.1rc1
     - Jython "-J-classpath cp_args_here" now works as expected for unix shell.
   Bugs Fixed
     - [ 645615 ] cannot import through symbolic links
-    - [ 1366 ] parsing of lamda expression fails
+    - [ 1366 ] parsing of lambda expression fails
     - [ 1365 ] continuation lines fail in interactive interpreter
     - [ 1377 ] Event names shadowed by a field name on Java types leads to a NPE
     - [ 1381 ] Redundant declarations of interface implementation hides overridden methods
@@ -1122,7 +1159,7 @@ Jython 2.5.0 a0 - rc2
     - [ 513713 ] PyTableCode != PyCode
     - [ 526672 ] inspect not supported
     - [ 1754240 ] Error Message when attempting to bind to an in use Port
-    - [ 1159 ] custum number and float: unsupported operand type(s) for *
+    - [ 1159 ] custom number and float: unsupported operand type(s) for *
     - [ 1158 ] compile() fails to recognize initial AST arg
     - [ 1155 ] inet_ntoa missing from socket
     - [ 1150 ] Nested generator expressions do not compile

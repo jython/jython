@@ -21,7 +21,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
     }
 
     private ReflectedArgs makeArgs(Constructor<?> m) {
-        return new ReflectedArgs(m, m.getParameterTypes(), m.getDeclaringClass(), true);
+        return new ReflectedArgs(m, m.getParameterTypes(), m.getDeclaringClass(), true, m.isVarArgs());
     }
 
     public void addConstructor(Constructor<?> m) {
