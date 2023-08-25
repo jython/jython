@@ -488,7 +488,7 @@ decorator
       RPAREN
     |
       {
-          $etype = $dotted_attr.etype;
+          $etype = actions.makeCall($LPAREN, $dotted_attr.etype);
       }
     ) NEWLINE
     ;
