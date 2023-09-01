@@ -19,7 +19,9 @@ New Features
 
 
 Jython 2.7.4a1 Bugs fixed
-    - [ GH- ] 
+    - [ GH-269 ] Upgrade Google Guava to 32.0.1 (CVE-2023-2976)
+    - [ GH-264 ] Create a security policy
+    - [ GH-254 ] Regression in socket.socket.sendall for sending Unicode
 
 
 ==============================================================================
