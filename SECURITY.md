@@ -2,7 +2,9 @@
 
 ## Supported Versions
 
-Security updates are applied only to the latest release.
+Security updates are applied only to releases under development.
+Normally there is only one release under active development (the default branch).
+
 
 ## Reporting a Vulnerability
 
@@ -10,4 +12,5 @@ If you have discovered a security vulnerability in this project, please report i
 
 Please disclose it at our [security advisory](https://github.com/jython/jython/security/advisories/new).
 
-This project is maintained by a team of volunteers on a reasonable-effort basis. As such, vulnerabilities will be disclosed in a best effort base.
+This project is maintained by a small team of volunteers.
+As such, vulnerabilities will be handled and disclosed on a best efforts basis.
