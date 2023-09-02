@@ -8,7 +8,8 @@ This is @readme.release@ release of version @jython.version.short@ of Jython.
 Along with language and runtime compatibility with CPython 2.7, Jython 2.7
 provides substantial support of the Python ecosystem. This includes built-in
 support of pip/setuptools (you can use with bin/pip) and a native launcher
-for Windows (bin/jython.exe).
+for Windows (bin/jython.exe). Python 2.7 is out of support. Running on Jython
+should not be considered an alternative to porting to Python 3.
 
 Jim Baker presented a talk at PyCon 2015 about Jython 2.7, including demos
 of new features: https://www.youtube.com/watch?v=hLm3garVQFo
