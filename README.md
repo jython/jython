@@ -25,6 +25,11 @@ backward breaking changes, and new features.
 We sincerely thank all who contribute to Jython, by bug reports, patches,
 pull requests, documentation changes and e-mail discussions.
 
+## Downloads
+
+Binary downloads are available from https://www.jython.org/download
+along with Maven and Gradle dependency information.
+
 ## How to build Jython
 
 The project uses Git for version-control,

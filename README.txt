@@ -26,6 +26,13 @@ changes, email and conversation in any media. See ACKNOWLEDGMENTS for a
 list of contributors. We are grateful to the PSF for continuing practical
 help and support of the project.
 
+Downloads
+---------
+
+Binary downloads are available from https://www.jython.org/download
+along with Maven and Gradle dependency information.
+
+
 Bug Reports
 -----------
 
