@@ -38,6 +38,9 @@ jobs:
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
 
+    - name: Run Java tests with Ant
+      run: ant javatest
+
     - name: Show JVM arguments when launched by script
       run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
