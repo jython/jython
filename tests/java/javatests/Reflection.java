@@ -63,6 +63,12 @@ public class Reflection {
         public Overloaded(int a, int... others) {
             constructorVersion = "int, int...";
         }
+        public Overloaded(String s, String s2, Object... objs) {
+            constructorVersion = "string, string, object...";
+        }
+        public Overloaded(String s, Object... objs) {
+            constructorVersion = "string, object...";
+        }
         public String getConstructorVersion() {
             return constructorVersion;
         }
