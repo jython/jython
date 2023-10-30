@@ -129,7 +129,7 @@ public class PySystemStateTest extends TestCase {
             String result = Py.getJarFileNameFromURL(url);
             assertEquals("C:\\some_dir\\some.jar", result);
             // jboss url to decode
-            file = "/C:/some%20dir/some.jar" + classPart;
+            file = "/C:/some dir/some.jar" + classPart;  // FIXME: does not match expected result
             url = new URL(protocol, host, port, file, handler);
             assertEquals("vfszip:/C:/some%20dir/some.jar" + classPart, url.toString());
             result = Py.getJarFileNameFromURL(url);

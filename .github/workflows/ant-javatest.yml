@@ -41,5 +41,5 @@ jobs:
       run: ant -noinput -buildfile build.xml developer-build
 
     - name: Unit test with Ant on ${{ matrix.os }}
-      run: ant -noinput -buildfile build.xml javatest
+      run: ant javatest-ci
 
