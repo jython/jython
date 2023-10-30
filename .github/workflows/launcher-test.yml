@@ -19,7 +19,8 @@ jobs:
 
   launcher-test-macos-jdk8:
 
-    runs-on: macos-latest
+    # Pin at 12 for Python 2 support
+    runs-on: macos-12
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
@@ -37,6 +38,9 @@ jobs:
 
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
+
+    - name: Run Java tests with Ant
+      run: ant javatest-ci
 
     - name: Show JVM arguments when launched by script
       run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'

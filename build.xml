@@ -1278,7 +1278,7 @@ The text for an official release would continue like ...
     <target name="test" depends="clean-test, javatest, launchertest, regrtest, modjytest"
         description="run all the tests"/>
 
-    <target name="singlejavatest" depends="compile, expose"
+    <target name="singlejavatest" depends="compile-test, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
@@ -1342,6 +1342,25 @@ The text for an official release would continue like ...
             </classpath>
             <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="org/python/tests/imp/*Test*.java">
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="javatest-ci" depends="developer-build">
+        <junit haltonfailure="true" fork="true">
+            <formatter type="brief" usefile="false"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
+            <classpath refid="test.classpath"/>
+            <batchtest skipNonTests="true">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="**/InterpTestCase.java" />
+                    <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
+                    <exclude name="org/python/antlr/**" />
+                    <exclude name="org/python/tests/imp/**" /> <!-- See javatest-import -->
+                    <exclude name=".classpath" />
+                    <exclude name=".project" />
                 </fileset>
             </batchtest>
         </junit>
