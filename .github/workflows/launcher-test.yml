@@ -40,18 +40,20 @@ jobs:
     - name: Set up Python 2
       shell: bash
       run: |
-         # Use the default Python to install pip2.7
-         python -V
-         curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-         python get-pip.py
-         # Get a 2.7 virtual environment
-         python -m pip install virtualenv
-         venv="/tmp/python27/venv"
-         python -m virtualenv ${venv}
-         source ${venv}/bin/activate
-         # See what we got
-         echo "${venv}/bin" >> $GITHUB_PATH
-         python -V
+        python -V
+        # Install using pyenv
+        brew install pyenv
+        export PATH="$(pyenv root)/shims:$(pyenv root)/bin:$PATH"
+        pyenv install 2.7.18
+
+        # Get a 2.7 virtual environment
+        python -m pip install virtualenv
+        venv="/tmp/python27/venv"
+        python -m virtualenv ${venv}
+        source ${venv}/bin/activate
+        # See what we got
+        echo "${venv}/bin" >> $GITHUB_PATH
+        python -V
 
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
