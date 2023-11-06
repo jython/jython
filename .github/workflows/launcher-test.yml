@@ -8,7 +8,7 @@ name: launcher test 2.7
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, macos-force-python-2 ]
   pull_request:
     branches: [ master ]
 
@@ -19,8 +19,7 @@ jobs:
 
   launcher-test-macos-jdk8:
 
-    # Pin at 12 for Python 2 available
-    runs-on: macos-12
+    runs-on: macos-latest
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
@@ -36,11 +35,26 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
+    # We have to install Python 2.7 explicitly
+    # Simplified from https://github.com/LizardByte/setup-python-action specialised for MacOS
+    - name: Set up Python 2
+      shell: bash
+      run: |
+         # Use the default Python to install pip2.7
+         python -V
+         curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+         python get-pip.py
+         # Get a 2.7 virtual environment
+         python -m pip install virtualenv
+         venv="/tmp/python27/venv"
+         python -m virtualenv ${venv}
+         source ${venv}/bin/activate
+         # See what we got
+         echo "${venv}/bin" >> $GITHUB_PATH
+         python -V
+
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
-
-    - name: Run Java tests with Ant
-      run: ant javatest-ci
 
     - name: Show JVM arguments when launched by script
       run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
@@ -57,4 +71,7 @@ jobs:
       run: |
           python -V
           python dist/bin/jython.py -m test.test_cmd_line_script
+
+    - name: Run Java tests with Ant
+      run: ant javatest-ci
 
