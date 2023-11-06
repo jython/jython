@@ -45,6 +45,7 @@ jobs:
         brew install pyenv
         export PATH="$(pyenv root)/shims:$(pyenv root)/bin:$PATH"
         pyenv install 2.7.18
+        pyenv global 2.7.18
 
         # Get a 2.7 virtual environment
         python -m pip install virtualenv
