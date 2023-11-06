@@ -8,7 +8,7 @@ name: launcher test 2.7
 
 on:
   push:
-    branches: [ master, macos-force-python-2 ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -52,7 +52,8 @@ jobs:
         venv="/tmp/python27/venv"
         python -m virtualenv ${venv}
         source ${venv}/bin/activate
-        # See what we got
+
+        # Check we got the version we hoped for
         echo "${venv}/bin" >> $GITHUB_PATH
         python -V
 
