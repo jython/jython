@@ -1,5 +1,6 @@
 Jython NEWS
 
+
 The features new in a given version are listed at the head of the section for
 the final release of that version. Bugs fixed are listed under the next release
 (frequently a beta) after they were fixed.
@@ -19,7 +20,11 @@ New Features
 
 
 Jython 2.7.4a1 Bugs fixed
-    - [ GH- ] 
+    - [ GH-269 ] Upgrade Google Guava to 32.0.1 (CVE-2023-2976)
+    - [ GH-264 ] Create a security policy
+    - [ GH-254 ] Regression in socket.socket.sendall for sending Unicode
+    - [ GH-247 ] PySystemStateTest fails on Mac
+    - [ GH-245 ] Document download/binaries location
 
 
 ==============================================================================
@@ -319,7 +324,7 @@ Jython 2.7.1rc1
     - [ 2527 ] cStringIO throws IllegalArgumentException with non-ASCII values
     - [ 2511 ] Percent operator calls __getattr__('__getitem__')
     - [ FM-28 ] zipimporter supports multi-byte characters in pathnames
-    - [ 2228 ] Re-use "makeCompiledFilename" function where possible
+    - [ 2228 ] Reuse "makeCompiledFilename" function where possible
     - [ 608632 ] __doc__foo should accept java String
     - [ 2523 ] defaultdict.__getitem__() does not propagate exceptions raised by calling
                default_factory
@@ -1140,7 +1145,7 @@ Jython 2.5.0 a0 - rc2
     - [ 1222918 ] -C NONE causes exception
     - [ 1604258 ] copy.copy doesn't work on subclasses of newstyle classes
     - [ 1798554 ] zlib.__doc__ is not showing any output
-    - [ 1798556 ] patch for :[ 1798554 ] zlib.__doc__ is not showing any outpu
+    - [ 1798556 ] patch for :[ 1798554 ] zlib.__doc__ is not showing any output
     - [ 1003 ] struct packing inconsistent with CPython
     - [ 1052 ] __int__ returning PyLong = ClassCastException mayhem
     - [ 1167 ] random.py in standard library is broken in 2.5beta0

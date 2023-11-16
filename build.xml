@@ -251,12 +251,12 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.2.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-9.3.jar" />
-                <file name="asm-commons-9.3.jar" />
-                <file name="asm-util-9.3.jar" />
-                <file name="commons-compress-1.24.0.jar"/>
+                <file name="asm-9.6.jar" />
+                <file name="asm-commons-9.6.jar" />
+                <file name="asm-util-9.6.jar" />
+                <file name="commons-compress-1.21.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-32.1.1-jre.jar" />
+                <file name="guava-32.1.3-jre.jar" />
                 <file name="icu4j-71.1.jar" />
                 <file name="jffi-1.3.9.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
@@ -846,17 +846,17 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.2.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-9.3.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-commons-9.3.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-util-9.3.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-9.6.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-commons-9.6.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-util-9.6.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <zipfileset src="extlibs/bcprov-jdk18on-1.71.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
-            <zipfileset src="extlibs/commons-compress-1.24.0.jar"/>
+            <zipfileset src="extlibs/commons-compress-1.21.jar"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-32.1.1-jre.jar"/>
+            <zipfileset src="extlibs/guava-32.1.3-jre.jar"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-71.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
@@ -1278,7 +1278,7 @@ The text for an official release would continue like ...
     <target name="test" depends="clean-test, javatest, launchertest, regrtest, modjytest"
         description="run all the tests"/>
 
-    <target name="singlejavatest" depends="compile, expose"
+    <target name="singlejavatest" depends="compile-test, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
@@ -1342,6 +1342,25 @@ The text for an official release would continue like ...
             </classpath>
             <batchtest todir="${junit.reports}">
                 <fileset dir="${test.source.dir}" includes="org/python/tests/imp/*Test*.java">
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="javatest-ci" depends="developer-build">
+        <junit haltonfailure="true" fork="true">
+            <formatter type="brief" usefile="false"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
+            <classpath refid="test.classpath"/>
+            <batchtest skipNonTests="true">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="**/InterpTestCase.java" />
+                    <exclude name="**/jythonTest*" /> <!-- Must run interactively -->
+                    <exclude name="org/python/antlr/**" />
+                    <exclude name="org/python/tests/imp/**" /> <!-- See javatest-import -->
+                    <exclude name=".classpath" />
+                    <exclude name=".project" />
                 </fileset>
             </batchtest>
         </junit>
