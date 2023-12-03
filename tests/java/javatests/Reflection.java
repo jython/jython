@@ -157,6 +157,26 @@ public class Reflection {
             return "int...";
         }
 
+        public String bar(int a) {
+            return "int";
+        }
+
+        public String bar(long a) {
+            return "long";
+        }
+
+        public String bar(boolean a) {
+            return "boolean";
+        }
+
+        public String bar(float a) {
+            return "float";
+        }
+
+        public String bar(Number a) {
+            return "Number";
+        }
+
         public PyObject __call__(float x) {
             return dump(x);
         }
