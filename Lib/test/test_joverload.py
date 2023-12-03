@@ -7,6 +7,7 @@ import sys
 import unittest
 
 import java
+from java.lang import Float, Double, Integer, Long, Boolean
 from java.util import ArrayList
 from javatests import JOverload, Reflection
 from org.python.core import PyReflectedFunction
@@ -217,6 +218,20 @@ class ComplexOverloadingTests(unittest.TestCase):
         # Note in Java these match both foo(int,int...) and foo(int...):
         self.assertEqual(over.foo(1), "int, int...")
         self.assertEqual(over.foo(1, 2, 3, 4), "int, int...")
+
+    def test_method_most_specific(self):
+        over = Reflection.Overloaded()
+        # Java constructors may be used to specify argument types
+        self.assertEqual(over.bar(Integer(1)), "int")
+        self.assertEqual(over.bar(Long(1)), "long")
+        self.assertEqual(over.bar(Boolean(True)), "boolean")
+        self.assertEqual(over.bar(Float(1.)), "float")
+        self.assertEqual(over.bar(Double(1.)), "Number")
+        # For better or worse (for 25yrs), function returns are coerced to Python:
+        self.assertEqual(over.bar(Integer.valueOf(1)), "long")
+        self.assertEqual(over.bar(Boolean.valueOf(True)), "long")
+        self.assertEqual(over.bar(Float.valueOf(1.)), "float")
+        self.assertEqual(over.bar(Double(1.).valueOf(1.)), "float")
 
     def test_complex(self):
         o = Reflection.Overloaded()
