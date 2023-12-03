@@ -162,13 +162,30 @@ public class PyReflectedFunction extends PyObject implements Traverseproc {
     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords) {
         ReflectedCallData callData = new ReflectedCallData();
         ReflectedArgs match = null;
+        // varargs methods should always have lower precedence than a non-varargs
+        // method that also applies but as they will always have <= arguments than an
+        // alternative non-vararg method, they will appear first in the list of options.
+        // Keep track of the first vararg method but don't use it unless no other
+        // method matches.
+        ReflectedArgs varargMatch = null;
+        ReflectedCallData varargData = null;
         for (int i = 0; i < nargs && match == null; i++) {
             if (argslist[i].matches(self, args, keywords, callData)) {
-                match = argslist[i];
+                if (!argslist[i].isVarArgs) {
+                    match = argslist[i];
+                } else {
+                    varargMatch = argslist[i];
+                    varargData = callData;
+                    callData = new ReflectedCallData();
+                }
             }
         }
         if (match == null) {
-            throwError(callData.errArg, args.length, self != null, keywords.length != 0);
+            if (varargMatch == null) {
+                throwError(callData.errArg, args.length, self != null, keywords.length != 0);
+            }
+            match = varargMatch;
+            callData = varargData;
         }
         Object cself = callData.self;
         Method m = (Method)match.method;

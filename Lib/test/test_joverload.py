@@ -138,14 +138,14 @@ class VarargsDispatchTests(unittest.TestCase):
                          "String...:[abc]")
         self.assertEqual(t.test([]),
                          "String...:[]")
-        
+
         self.assertEqual(t.testOneFixedArg("abc"),
                          "String arg1:abc String...:[]");
         self.assertEqual(t.testOneFixedArg("abc", "xyz"),
                          "String arg1:abc String...:[xyz]");
         self.assertEqual(t.testOneFixedArg("abc", "xyz", "123"),
                          "String arg1:abc String...:[xyz, 123]");
-                         
+
         self.assertEqual(t.testTwoFixedArg("fix1", "fix2"),
                          "String arg1:fix1 String arg2:fix2 String...:[]");
         self.assertEqual(t.testTwoFixedArg("fix1", "fix2", "var1"),
@@ -169,25 +169,25 @@ class VarargsDispatchTests(unittest.TestCase):
                          "List...:[[1, 2, 3]]")
         self.assertEqual(t.test([]),
                          "List...:[]")
-        
+
     def test_booleans(self):
         t = Reflection.BooleanVarargs()
-        
-                
+
+
         self.assertEqual(t.test(True, False),
                          "booleans...:[true, false]")
         self.assertEqual(t.test(True),
                          "booleans...:[true]")
         self.assertEqual(t.test(),
                          "booleans...:[]")
-        
+
         self.assertEqual(t.testOneFixedArg(True),
                          "boolean arg1:true booleans...:[]");
         self.assertEqual(t.testOneFixedArg(True, False),
                          "boolean arg1:true booleans...:[false]");
         self.assertEqual(t.testOneFixedArg(True, False, True),
                          "boolean arg1:true booleans...:[false, true]");
-                         
+
         self.assertEqual(t.testTwoFixedArg(True, False),
                          "boolean arg1:true boolean arg2:false booleans...:[]");
         self.assertEqual(t.testTwoFixedArg(True, False, True),
@@ -197,6 +197,26 @@ class VarargsDispatchTests(unittest.TestCase):
 
 
 class ComplexOverloadingTests(unittest.TestCase):
+    def test_constructor_overloading(self):
+        self.assertEqual(Reflection.Overloaded().constructorVersion, '')
+        self.assertEqual(Reflection.Overloaded(1).constructorVersion, 'int')
+        self.assertEqual(Reflection.Overloaded(1, 1).constructorVersion, 'int, int')
+        self.assertEqual(Reflection.Overloaded(1, 1, 1).constructorVersion, 'int, int, Object')
+        self.assertEqual(Reflection.Overloaded(1, 1, 1, 1).constructorVersion, 'int, int...')
+
+        self.assertEqual(Reflection.Overloaded(1, [2,3,4]).constructorVersion, 'int, int...')
+
+        self.assertEqual(Reflection.Overloaded("aa", "bb", "cc").constructorVersion, "String, String, Object...")
+
+    def test_method_overloading(self):
+        over = Reflection.Overloaded()
+        self.assertEqual(over.foo(), "int...")
+        self.assertEqual(over.foo(1, 2), "int, int")
+        self.assertEqual(over.foo(1, 2, 3), "int, int, Object")
+        self.assertEqual(over.foo(1, [2, 3, 4]), 'int, int...')
+        # Note in Java these match both foo(int,int...) and foo(int...):
+        self.assertEqual(over.foo(1), "int, int...")
+        self.assertEqual(over.foo(1, 2, 3, 4), "int, int...")
 
     def test_complex(self):
         o = Reflection.Overloaded()
@@ -210,10 +230,13 @@ def printout(meth_dict,lbl,rng,args):
         print meth_dict['ov_%s%s' % (lbl,i)](jo,args)
 
 
-if __name__ == '__main__' and not sys.argv[1:] == ['break-out']:
-    try:
-        import test_support
-    except ImportError:
-        unittest.main()
-    else:
-        test_support.run_unittest(OverloadedDispatchTests, VarargsDispatchTests, ComplexOverloadingTests)
+def test_main():
+    from test import test_support
+    test_support.run_unittest(
+        OverloadedDispatchTests,
+        VarargsDispatchTests,
+        ComplexOverloadingTests,
+    )
+
+if __name__ == '__main__':
+    test_main()
