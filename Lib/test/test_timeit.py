@@ -11,11 +11,11 @@ NUMBER = 10000  # Of times to execute in each test
 class TestTimeit(unittest.TestCase):
 
     def test_oct(self):
-        timing = timeit.Timer('for i in xrange(100): oct(i)', 'gc.enable()').timeit(number=NUMBER)
+        timing = timeit.Timer('for i in xrange(10): oct(i)', 'gc.enable()').timeit(number=NUMBER)
         print timing
         self.assertGreater(timing, 0.)
 
-        timing_vector = timeit.Timer('for i in xrange(100): oct(i)').repeat(number=NUMBER)
+        timing_vector = timeit.Timer('for i in xrange(10): oct(i)').repeat(number=NUMBER)
         print timing_vector
         self.assertEqual(len(timing_vector), 3)
         self.assertGreater(min(timing_vector), 0.)
