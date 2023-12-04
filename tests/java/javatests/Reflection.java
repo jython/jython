@@ -129,12 +129,20 @@ public class Reflection {
             constructorVersion = "int, int...";
         }
 
-        public Overloaded(String s, String s2, Object... objs) {
-            constructorVersion = "String, String, Object...";
+        public Overloaded(String s) {
+            constructorVersion = "String";
         }
 
         public Overloaded(String s, Object... objs) {
             constructorVersion = "String, Object...";
+        }
+
+        public Overloaded(String s, Throwable t) {
+            constructorVersion = "String, Throwable";
+        }
+
+        public Overloaded(String s, Throwable t, Object... objs) {
+            constructorVersion = "String, Throwable, Object...";
         }
 
         public String getConstructorVersion() {
@@ -200,8 +208,14 @@ public class Reflection {
             System.out.println((new Overloaded(1, 1)).constructorVersion);
             System.out.println((new Overloaded(1, 1, 1)).constructorVersion);
             System.out.println((new Overloaded(1, 1, 1, 1)).constructorVersion);
+
             System.out.println((new Overloaded(1, new int[] {2, 3, 4})).constructorVersion);
-            System.out.println((new Overloaded("a", "b", "c")).constructorVersion);
+
+            Exception b = new Exception("Oops");
+            System.out.println((new Overloaded("a")).constructorVersion);
+            System.out.println((new Overloaded("a", 2)).constructorVersion);
+            System.out.println((new Overloaded("a", b)).constructorVersion);
+            System.out.println((new Overloaded("a", b, 3)).constructorVersion);
         }
 
         /** Compare {@code ComplexOverloadingTests.test_method_overloading}. */

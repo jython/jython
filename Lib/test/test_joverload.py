@@ -7,7 +7,7 @@ import sys
 import unittest
 
 import java
-from java.lang import Float, Double, Integer, Long, Boolean
+from java.lang import Float, Double, Integer, Long, Boolean, Exception
 from java.util import ArrayList
 from javatests import JOverload, Reflection
 from org.python.core import PyReflectedFunction
@@ -207,7 +207,11 @@ class ComplexOverloadingTests(unittest.TestCase):
 
         self.assertEqual(Reflection.Overloaded(1, [2,3,4]).constructorVersion, 'int, int...')
 
-        self.assertEqual(Reflection.Overloaded("aa", "bb", "cc").constructorVersion, "String, String, Object...")
+        b = Exception("Oops")
+        self.assertEqual(Reflection.Overloaded("aa").constructorVersion, "String")
+        self.assertEqual(Reflection.Overloaded("aa", 2).constructorVersion, "String, Object...")
+        self.assertEqual(Reflection.Overloaded("aa", b).constructorVersion, "String, Throwable")
+        self.assertEqual(Reflection.Overloaded("aa", b, 3).constructorVersion, "String, Throwable, Object...")
 
     def test_method_overloading(self):
         over = Reflection.Overloaded()
