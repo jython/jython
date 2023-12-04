@@ -14,7 +14,7 @@ class TestTimeit(unittest.TestCase):
         timing = timeit.Timer('for i in xrange(100): oct(i)', 'gc.enable()').timeit(number=NUMBER)
         self.assertGreater(timing, 0.)
 
-        timing_vector = timeit.Timer('for i in xrange(10): oct(i)').repeat(number=NUMBER)
+        timing_vector = timeit.Timer('for i in xrange(100): oct(i)').repeat(number=NUMBER)
         self.assertEqual(len(timing_vector), 3)
         self.assertGreater(min(timing_vector), 0.)
 
