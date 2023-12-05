@@ -23,12 +23,15 @@ class TestJavaDecimal(unittest.TestCase):
         x = Decimal("1.1")
         y = x.__tojava__(Float)
         self.assertTrue(isinstance(y, Float))
-    
+
     def test_double(self):
         x = Decimal("1.1")
         y = x.__tojava__(Double)
         self.assertTrue(isinstance(y, Double))
 
 
+def test_main():
+    test_support.run_unittest(TestJavaDecimal)
+
 if __name__ == '__main__':
-    unittest.main()
+    test_main()

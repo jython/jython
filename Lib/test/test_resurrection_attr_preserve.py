@@ -3,6 +3,8 @@ import gc
 import time
 import weakref
 
+from test import test_support
+
 class ReferentDummy:
     def __init__(self, name):
         self.name = name
@@ -93,5 +95,8 @@ class GCTests(unittest.TestCase):
 
 
 
+def test_main():
+    test_support.run_unittest(GCTests)
+
 if __name__ == '__main__':
-    unittest.main()
+    test_main()
