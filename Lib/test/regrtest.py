@@ -619,6 +619,8 @@ def runtest_inner(test, verbose, quiet, test_times,
             # explicitly invoke their test_main() function (if it exists).
             indirect_test = getattr(the_module, "test_main", None)
             test_time = None
+            if indirect_test is None:                   # JA Temporary
+                print "%s has no test_main" % test      #
             if indirect_test is not None:
                 indirect_test()
             elif junit_xml_dir:

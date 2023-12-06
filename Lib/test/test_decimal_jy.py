@@ -17,7 +17,7 @@ class TestJavaDecimal(unittest.TestCase):
     def test_object(self):
         x = Decimal("1.1")
         y = x.__tojava__(Object)
-        self.assertTrue(isinstance(y, BigDecimal))        
+        self.assertTrue(isinstance(y, BigDecimal))
 
     def test_float(self):
         x = Decimal("1.1")

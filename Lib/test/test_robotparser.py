@@ -317,9 +317,9 @@ def load_tests(loader, suite, pattern):
 def test_main():
     support.run_unittest(tests)
     support.run_unittest(
-        PasswordProtectedSiteTestCase,
         NetworkTestCase,
-        )
+        PasswordProtectedSiteTestCase,
+    )
 
 if __name__=='__main__':
     support.verbose = 1
