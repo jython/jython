@@ -2091,7 +2091,7 @@ public final class Py extends PrePy {
         }
     }
 
-    static final PyUnicode makeUnicodeCharacter(int codepoint) {
+    public static final PyUnicode makeUnicodeCharacter(int codepoint) {
         if (codepoint >= 128 || codepoint < 0) {
             return new PyUnicode(codepoint);
         } else {
