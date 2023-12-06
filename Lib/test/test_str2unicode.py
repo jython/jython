@@ -1,5 +1,7 @@
 import unittest
 
+from test import test_support
+
 
 class TestStrReturnsUnicode(unittest.TestCase):
 
@@ -14,10 +16,7 @@ class TestStrReturnsUnicode(unittest.TestCase):
         self.assertEquals(unicode, type('%s %s' % (u'x', 'y')))
         self.assertEquals(unicode, type('%(x)s' % {'x' : u'x'}))
 
-    def test_string_formatting_r(self):
-        self.assertEquals(unicode, type('%r' % u'x'))
-        self.assertEquals(unicode, type('%r %r' % (u'x', 'y')))
-        self.assertEquals(unicode, type('%(x)r' % {'x' : u'x'}))
+    # Note: no test_string_formatting_r as %r always produces bytes
 
     def test_string_formatting_c(self):
         self.assertEquals(unicode, type('%c' % u'x'))
@@ -86,5 +85,12 @@ class TestUnicodeReturnsUnicode(unittest.TestCase):
         self.assertEquals(unicode, type(u'%(x)c' % {'x' : 'x'}))
 
 
+def test_main():
+    test_support.run_unittest(
+        TestStrReturnsUnicode,
+        TestStrReturnsStr,
+        TestUnicodeReturnsUnicode,
+    )
+
 if __name__ == '__main__':
-    unittest.main()
+    test_main()
