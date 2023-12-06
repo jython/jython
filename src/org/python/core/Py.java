@@ -633,30 +633,56 @@ public final class Py extends PrePy {
         return new PyFloat(v);
     }
 
+    /**
+     * Return a not-necessarily new {@link PyString} from a Java {@code char}. The character code
+     * must &lt; 256. (This is checked.)
+     *
+     * @param c character codes &lt; 256.
+     * @return a new or re-used {@code PyString}
+     */
     public static PyString newString(char c) {
         return makeCharacter(c);
     }
 
     /**
-     * Create a {@link PyString} from a Java {@code String}. Thethe character codes must all be all
-     * &lt; 256. (This is checked.)
+     * Return a not-necessarily new {@link PyString} from a Java {@code String}. The character codes
+     * must all be all &lt; 256.
      *
      * @param s character codes are all &lt; 256.
-     * @return a new {@code PyString}
+     * @param promise is true if the caller promises the codes are all &lt; 256.
+     * @return a new or re-used {@code PyString}
      */
-    public static PyString newString(String s) {
-        return s.length() == 0 ? Py.EmptyString : new PyString(s);
+    static PyString newString(String s, boolean promise) {
+        int n = s.length();
+        if (n > 1) {
+            return new PyString(s, promise);
+        } else if (n == 1) {
+            return makeCharacter(s.charAt(0));
+        } else {
+            return Py.EmptyString;
+        }
     }
 
     /**
-     * Create a {@link PyString} from a Java {@code String} where the caller guarantees that the
+     * Return a not-necessarily new {@link PyString} from a Java {@code String}. The character codes
+     * must all be all &lt; 256. (This is checked.)
+     *
+     * @param s character codes should all be &lt; 256 or an error occurs.
+     * @return a new or re-used {@code PyString}
+     */
+    public static PyString newString(String s) {
+        return newString(s, false);
+    }
+
+    /**
+     * Return a not-necessarily new  {@link PyString} from a Java {@code String} where the caller guarantees that the
      * character codes are all &lt; 256. (This is <b>not</b> checked.)
      *
      * @param s character codes are all &lt; 256.
      * @return a new {@code PyString}
      */
     static PyString newBytes(String s) {
-        return s.length() == 0 ? Py.EmptyString : new PyString(s, true);
+        return newString(s, true);
     }
 
     /**
@@ -867,11 +893,7 @@ public final class Py extends PrePy {
     }
 
     public static PyUnicode newUnicode(char c) {
-        return (PyUnicode) makeCharacter(c, true);
-    }
-
-    static PyObject newUnicode(int codepoint) {
-        return makeCharacter(codepoint, true);
+        return makeUnicodeCharacter(c);
     }
 
     public static PyUnicode newUnicode(String s) {
@@ -2040,12 +2062,19 @@ public final class Py extends PrePy {
         }
     }
 
-    /** Table used by {@link #makeCharacter(char)} to intern single character strings. */
-    private final static PyString[] letters = new PyString[256];
+    /** Table used by {@link #makeCharacter(char)} to intern single byte strings. */
+    private final static PyString[] bytes = new PyString[256];
+
+    /** Table used by {@link #makeUnicodeCharacter(char)} to intern single byte strings. */
+    private final static PyUnicode[] unichars = new PyUnicode[128];
 
     static {
-        for (char j = 0; j < 256; j++) {
-            letters[j] = new PyString(j);
+        for (char j = 0; j < 128; j++) {
+            bytes[j] = new PyString(j);
+            unichars[j] = new PyUnicode(j);
+        }
+        for (char j = 128; j < 256; j++) {
+            bytes[j] = new PyString(j);
         }
     }
 
@@ -2055,21 +2084,19 @@ public final class Py extends PrePy {
 
     public static final PyString makeCharacter(char c) {
         if (c < 256) {
-            return letters[c];
+            return bytes[c];
         } else {
             // This will throw IllegalArgumentException since non-byte value
             return new PyString(c);
         }
     }
 
-    static final PyString makeCharacter(int codepoint, boolean toUnicode) {
-        if (toUnicode) {
+    static final PyUnicode makeUnicodeCharacter(int codepoint) {
+        if (codepoint >= 128 || codepoint < 0) {
             return new PyUnicode(codepoint);
-        } else if (codepoint < 0 || codepoint > 255) {
-            // This will throw IllegalArgumentException since non-byte value
-            return new PyString('\uffff');
+        } else {
+            return unichars[codepoint];
         }
-        return letters[codepoint];
     }
 
     /**

@@ -69,7 +69,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             case 5:
                 return __builtin__.hash(arg1);
             case 6:
-                return Py.newUnicode(__builtin__.unichr(arg1));
+                return Py.makeUnicodeCharacter(__builtin__.unichr(arg1));
             case 7:
                 return __builtin__.abs(arg1);
             case 9:

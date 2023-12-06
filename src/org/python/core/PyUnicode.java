@@ -872,7 +872,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @Override
     protected PyObject pyget(int i) {
         int codepoint = getString().codePointAt(translator.utf16Index(i));
-        return Py.makeCharacter(codepoint, true);
+        return Py.makeUnicodeCharacter(codepoint);
     }
 
     @Override
