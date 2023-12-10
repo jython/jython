@@ -74,7 +74,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 
             @Override
             public PyObject adapt(Object o) {
-                return Py.makeUnicodeCharacter((Character)o);
+                return PyUnicode.from((Character)o);
             }
 
         });

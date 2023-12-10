@@ -892,16 +892,33 @@ public final class Py extends PrePy {
         return new PyStringMap();
     }
 
+    /**
+     * Return a not-necessarily new {@link PyUnicode} from a Java {@code char}. Some low index chars
+     * (ASCII) return a re-used {@code PyUnicode}. This method does not assume the character is
+     * basic-plane.
+     *
+     * @param c to convert to a {@code PyUnicode}.
+     * @return a new or re-used {@code PyUnicode}
+     */
     public static PyUnicode newUnicode(char c) {
-        return makeUnicodeCharacter(c);
+        return PyUnicode.from(c);
     }
 
+    /**
+     * Return a not-necessarily new {@link PyUnicode} from a Java {@code String}. Empty and some
+     * single-character strings return a re-used {@code PyUnicode}. This method does not assume the
+     * character codes are basic-plane, but scans the string to find out. (See
+     * {@link #newUnicode(String, boolean)} for one that allows the caller to assert that it is.
+     *
+     * @param s to wrap as a {@code PyUnicode}.
+     * @return a new or re-used {@code PyUnicode}
+     */
     public static PyUnicode newUnicode(String s) {
-        return new PyUnicode(s);
+        return PyUnicode.fromString(s, false);
     }
 
     public static PyUnicode newUnicode(String s, boolean isBasic) {
-        return new PyUnicode(s, isBasic);
+        return PyUnicode.fromString(s, isBasic);
     }
 
     public static PyBoolean newBoolean(boolean t) {
@@ -2065,15 +2082,8 @@ public final class Py extends PrePy {
     /** Table used by {@link #makeCharacter(char)} to intern single byte strings. */
     private final static PyString[] bytes = new PyString[256];
 
-    /** Table used by {@link #makeUnicodeCharacter(char)} to intern single byte strings. */
-    private final static PyUnicode[] unichars = new PyUnicode[128];
-
     static {
-        for (char j = 0; j < 128; j++) {
-            bytes[j] = new PyString(j);
-            unichars[j] = new PyUnicode(j);
-        }
-        for (char j = 128; j < 256; j++) {
+        for (char j = 0; j < 256; j++) {
             bytes[j] = new PyString(j);
         }
     }
@@ -2092,11 +2102,7 @@ public final class Py extends PrePy {
     }
 
     public static final PyUnicode makeUnicodeCharacter(int codepoint) {
-        if (codepoint >= 128 || codepoint < 0) {
-            return new PyUnicode(codepoint);
-        } else {
-            return unichars[codepoint];
-        }
+        return PyUnicode.fromCodepoint(codepoint);
     }
 
     /**
