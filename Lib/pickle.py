@@ -489,45 +489,18 @@ class Pickler:
         self.memoize(obj)
     dispatch[StringType] = save_string
 
+    UNICODE_ESCAPES = {ord(c) : u"\\u%04x" % ord(c) for c in ['\\', '\0', '\r', '\n', '\x1a']}
+
     def save_unicode(self, obj, pack=struct.pack):
         if self.bin:
             encoding = obj.encode('utf-8')
             n = len(encoding)
             self.write(BINUNICODE + pack("<i", n) + encoding)
         else:
-            obj = obj.replace("\\", "\\u005c")
-            obj = obj.replace("\n", "\\u000a")
-            self.write(UNICODE + obj.encode('raw-unicode-escape') + '\n')
+            esc = obj.translate(Pickler.UNICODE_ESCAPES)
+            self.write(UNICODE + esc.encode('raw-unicode-escape') + '\n')
         self.memoize(obj)
     dispatch[UnicodeType] = save_unicode
-
-    if StringType is UnicodeType:
-        # This is true for Jython
-        def save_string(self, obj, pack=struct.pack):
-            unicode = obj.isunicode()
-
-            if self.bin:
-                if unicode:
-                    obj = obj.encode("utf-8")
-                l = len(obj)
-                if l < 256 and not unicode:
-                    self.write(SHORT_BINSTRING + chr(l) + obj)
-                else:
-                    s = pack("<i", l)
-                    if unicode:
-                        self.write(BINUNICODE + s + obj)
-                    else:
-                        self.write(BINSTRING + s + obj)
-            else:
-                if unicode:
-                    obj = obj.replace("\\", "\\u005c")
-                    obj = obj.replace("\n", "\\u000a")
-                    obj = obj.encode('raw-unicode-escape')
-                    self.write(UNICODE + obj + '\n')
-                else:
-                    self.write(STRING + repr(obj) + '\n')
-            self.memoize(obj)
-        dispatch[StringType] = save_string
 
     def save_tuple(self, obj):
         write = self.write
