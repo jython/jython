@@ -25,7 +25,9 @@ Jython 2.7.4a1 Bugs fixed
     - [ GH-254 ] Regression in socket.socket.sendall for sending Unicode
     - [ GH-247 ] PySystemStateTest fails on Mac
     - [ GH-245 ] Document download/binaries location
+    - [ GH-223 ] JPasswordField no longer works due to 'bullet' echo char
     - [ GH-221 ] Incorrect method precedence with overloading and variable arity
+    - [ GH-204 ] IllegalArgumentException: where char method returns non-byte value
 
 
 ==============================================================================
