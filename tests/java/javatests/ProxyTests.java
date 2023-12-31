@@ -1,5 +1,7 @@
 package javatests;
 
+import java.util.function.Consumer;
+
 public class ProxyTests {
 
     public static class Person {
@@ -39,4 +41,16 @@ public class ProxyTests {
         public String toString() { return null; }
     }
 
+    public static class ConsumerCaller implements Runnable {
+        protected final Consumer<Object> target;
+
+        public ConsumerCaller(Consumer<Object> target) {
+            this.target = target;
+        }
+
+        @Override
+        public void run() {
+            target.accept(42);
+        }
+    }
 }
