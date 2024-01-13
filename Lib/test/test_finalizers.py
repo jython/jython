@@ -5,6 +5,10 @@ Created on 06.08.2014
 import unittest
 import types
 import time
+
+from test import test_support
+
+
 try:
     from java.lang import System
 except:
@@ -12,7 +16,7 @@ except:
 
 class GCDetector():
     gcIndex = 0
-    
+
     def __del__(self):
         GCDetector.gcIndex += 1
 
@@ -117,22 +121,22 @@ delN = __del__N
 
 
 class DummyClass():
-    
+
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return self.name
 
 
 class DummyClassDel():
-    
+
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return self.name
-    
+
     def __del__(self):
         finalizeMsgList.append(str(self)+" finalized (DummyClassDel)")
         if verbose:
@@ -140,31 +144,31 @@ class DummyClassDel():
 
 
 class DummyClassNew(object):
-    
+
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return self.name
 
 class DummyClassDelNew(object):
-    
+
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return self.name
-    
+
     def __del__(self):
         finalizeMsgList.append(str(self)+" finalized (DummyClassDelNew)")
         if verbose:
             print str(self)+" finalized (DummyClassDelNew)"
 
 class DummyFileClassNew(file):
-    
+
     def __init__(self, name):
         self.name0 = name
-    
+
     def __str__(self):
         return self.name0
 
@@ -295,7 +299,7 @@ class TestFinalizers(unittest.TestCase):
         ResurrectableDummyClass.__del__ = delJ
         J = ResurrectableDummyClass("J")
         J = None
-        
+
         runGCIfJython()
         self.assertIn("J finalized (ResurrectableDummyClass)", finalizeMsgList)
         global resurrectedObject_J
@@ -321,10 +325,10 @@ class TestFinalizers(unittest.TestCase):
         except:
             pass
         resurrectedObject_J = None
-        
+
         runGCIfJython()
         self.assertIsNone(resurrectedObject_J)
-        
+
 
     def test_objectDoubleResurrectionAndFinalize_oldStyleClass(self):
         #okay to fail in Jython without the manual __ensure_finalizer__ calls
@@ -413,6 +417,9 @@ class TestFinalizers(unittest.TestCase):
         runGCIfJython()
         self.assertIn("O finalized (DummyFileClassNew)", finalizeMsgList)
 
-if __name__ == '__main__':
-    unittest.main()
 
+def test_main():
+    test_support.run_unittest(TestFinalizers)
+
+if __name__ == '__main__':
+    test_main()

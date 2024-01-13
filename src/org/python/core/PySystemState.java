@@ -193,7 +193,7 @@ public class PySystemState extends PyObject
 
     private int checkinterval = 100;
 
-    private codecs.CodecState codecState;
+    private volatile codecs.CodecState codecState;
 
     /** Whether bytecode should be written to disk on import. */
     public boolean dont_write_bytecode = false;
@@ -360,15 +360,21 @@ public class PySystemState extends PyObject
         return WinVersion.getWinVersion();
     }
 
-    public synchronized codecs.CodecState getCodecState() {
+    public codecs.CodecState getCodecState() {
         if (codecState == null) {
-            codecState = new codecs.CodecState();
+            importLock.lock();
             try {
-                imp.load("encodings");
+                if (codecState == null) {
+                    codecState = new codecs.CodecState();
+                    // we have the importLock locked
+                    imp.load("encodings");
+                }
             } catch (PyException exc) {
                 if (exc.type != Py.ImportError) {
                     throw exc;
                 }
+            } finally {
+                importLock.unlock();
             }
         }
         return codecState;

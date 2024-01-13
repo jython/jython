@@ -940,7 +940,7 @@ class _realsocket(object):
             self.incoming.put(_PEER_CLOSED)
             self._notify_selectors(hangup=True)
 
-        log.debug("Add _peer_closed to channel close", extra={"sock": self}) 
+        log.debug("Add _peer_closed to channel close", extra={"sock": self})
         self.channel.closeFuture().addListener(_peer_closed)
 
     def connect(self, addr):
@@ -1191,6 +1191,9 @@ class _realsocket(object):
 
     @raises_java_exception
     def send(self, data, flags=0):
+        if isinstance(data, unicode):
+            data = data.encode()
+
         self._verify_channel()
         if log.isEnabledFor(logging.DEBUG):
             log.debug("Sending data <<<{!r:.20}>>>".format(data), extra={"sock": self})
@@ -1216,6 +1219,9 @@ class _realsocket(object):
                 return len(buf)
 
     def sendall(self, data, flags=0):
+        if isinstance(data, unicode):
+            data = data.encode()
+
         with memoryview(data) as buf:
             # Limit the amount per send to L to control data movement
             k, n, L = 0, len(buf), 8192

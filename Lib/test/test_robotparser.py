@@ -295,9 +295,9 @@ class PasswordProtectedSiteTestCase(unittest.TestCase):
     def __str__(self):
         return '%s' % self.__class__.__name__
 
+
 class NetworkTestCase(unittest.TestCase):
 
-    @unittest.skip('does not handle the gzip encoding delivered by pydotorg')
     def testPythonOrg(self):
         support.requires('network')
         with support.transient_internet('www.python.org'):
@@ -313,5 +313,14 @@ def load_tests(loader, suite, pattern):
     suite.addTest(PasswordProtectedSiteTestCase())
     return suite
 
+
+def test_main():
+    support.run_unittest(tests)
+    support.run_unittest(
+        NetworkTestCase,
+        PasswordProtectedSiteTestCase,
+    )
+
 if __name__=='__main__':
-    unittest.main()
+    support.verbose = 1
+    test_main()

@@ -9,8 +9,7 @@ import unittest
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 from test import test_support
-from test.test_socket import SocketConnectedTest
-
+from test.test_socket import SocketConnectedTest, ThreadedUDPSocketTest
 
 def data_file(*name):
     return os.path.join(os.path.dirname(__file__), *name)
@@ -18,6 +17,8 @@ def data_file(*name):
 CERTFILE = data_file("keycert.pem")
 ONLYCERT = data_file("ssl_cert.pem")
 ONLYKEY = data_file("ssl_key.pem")
+
+MSG = 'Michael Gilfix was here\n'
 
 def start_server():
     server_address = ('127.0.0.1', 0)
@@ -203,12 +204,200 @@ class TimedBasicTCPTest(SocketConnectedTest):
         self.serv_conn.sendall(big)
 
 
+class BasicTCPUnicodeTest(SocketConnectedTest):
+
+    def __init__(self, methodName='runTest'):
+        SocketConnectedTest.__init__(self, methodName=methodName)
+
+    def testRecv(self):
+        # Testing large receive over TCP
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testRecv(self):
+        self.serv_conn.send(MSG.decode())
+
+    def testRecvTimeoutMode(self):
+        # Do this test in timeout mode, because the code path is different
+        self.cli_conn.settimeout(10)
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testRecvTimeoutMode(self):
+        self.serv_conn.settimeout(10)
+        self.serv_conn.send(MSG.decode())
+
+    def testOverFlowRecv(self):
+        # Testing receive in chunks over TCP
+        seg1 = self.cli_conn.recv(len(MSG) - 3)
+        seg2 = self.cli_conn.recv(1024)
+        msg = seg1 + seg2
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testOverFlowRecv(self):
+        self.serv_conn.send(MSG.decode())
+
+    def testRecvFrom(self):
+        # Testing large recvfrom() over TCP
+        msg, addr = self.cli_conn.recvfrom(1024)
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testRecvFrom(self):
+        self.serv_conn.send(MSG.decode())
+
+    def testOverFlowRecvFrom(self):
+        # Testing recvfrom() in chunks over TCP
+        seg1, addr = self.cli_conn.recvfrom(len(MSG)-3)
+        seg2, addr = self.cli_conn.recvfrom(1024)
+        msg = seg1 + seg2
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testOverFlowRecvFrom(self):
+        self.serv_conn.send(MSG.decode())
+
+    def testSendAll(self):
+        # Testing sendall() with a 2048 byte string over TCP
+        msg = ''
+        while 1:
+            read = self.cli_conn.recv(1024)
+            if not read:
+                break
+            msg += read
+        self.assertEqual(msg, 'f' * 2048)
+        self.assertEqual(type(msg), str)
+
+    def _testSendAll(self):
+        big_chunk = u'f' * 2048
+        self.serv_conn.sendall(big_chunk)
+
+    def _testFromFd(self):
+        self.serv_conn.send(MSG.decode())
+
+    def testShutdown(self):
+        # Testing shutdown()
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testShutdown(self):
+        self.serv_conn.send(MSG.decode())
+        self.serv_conn.shutdown(2)
+
+    def testSendAfterRemoteClose(self):
+        self.cli_conn.close()
+
+    def _testSendAfterRemoteClose(self):
+        for x in range(5):
+            try:
+                self.serv_conn.send(u"spam")
+            except socket.error, se:
+                self.failUnlessEqual(se[0], errno.ECONNRESET)
+                return
+            except Exception, x:
+                self.fail("Sending on remotely closed socket raised wrong exception: %s" % x)
+            time.sleep(0.5)
+        self.fail("Sending on remotely closed socket should have raised exception")
+
+    def testDup(self):
+        msg = self.cli_conn.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+        dup_conn = self.cli_conn.dup()
+        msg = dup_conn.recv(len(u'and ' + MSG))
+        self.assertEqual(msg, u'and ' +  MSG)
+        dup_conn.close()  # need to ensure all sockets are closed
+
+    def _testDup(self):
+        self.serv_conn.send(MSG.decode())
+        self.serv_conn.send(u'and ' + MSG)
+
+
+class BasicUDPUnicodeTest(ThreadedUDPSocketTest):
+
+    def __init__(self, methodName='runTest'):
+        ThreadedUDPSocketTest.__init__(self, methodName=methodName)
+
+    def testSendtoAndRecv(self):
+        # Testing sendto() and recv() over UDP
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testSendtoAndRecv(self):
+        self.cli.sendto(MSG.decode(), 0, (self.HOST.decode(), self.PORT))
+
+    def testSendtoAndRecvTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(1)
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testSendtoAndRecvTimeoutMode(self):
+        self.cli.settimeout(10)
+        self.cli.sendto(MSG.decode(), 0, (self.HOST.decode(), self.PORT))
+
+    def testSendAndRecv(self):
+        # Testing send() and recv() over connect'ed UDP
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testSendAndRecv(self):
+        self.cli.connect( (self.HOST.decode(), self.PORT) )
+        self.cli.send(MSG.decode(), 0)
+
+    def testSendAndRecvTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(5)
+        # Testing send() and recv() over connect'ed UDP
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testSendAndRecvTimeoutMode(self):
+        self.cli.connect( (self.HOST.decode(), self.PORT) )
+        self.cli.settimeout(5)
+        time.sleep(1)
+        self.cli.send(MSG.decode(), 0)
+
+    def testRecvFrom(self):
+        # Testing recvfrom() over UDP
+        msg, addr = self.serv.recvfrom(len(MSG))
+        self.assertEqual(msg, MSG)
+        self.assertEqual(type(msg), str)
+
+    def _testRecvFrom(self):
+        self.cli.sendto(MSG.decode(), 0, (self.HOST.decode(), self.PORT))
+
+    def testRecvFromTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(1)
+        msg, addr = self.serv.recvfrom(len(MSG))
+        self.assertEqual(msg.decode(), MSG)
+
+    def _testRecvFromTimeoutMode(self):
+        self.cli.settimeout(1)
+        self.cli.sendto(MSG.decode(), 0, (self.HOST.decode(), self.PORT))
+
+
 def test_main():
     test_support.run_unittest(
             SocketConnectTest,
             SSLSocketConnectTest,
             SocketOptionsTest,
             TimedBasicTCPTest,
+            BasicTCPUnicodeTest,
+            BasicUDPUnicodeTest,
     )
 
 

@@ -36,14 +36,10 @@ class IsattyTest(unittest.TestCase):
         self.assertEqual(subprocess.check_call(args_list(*args), **kw), 0)
 
     def test_isatty(self):
-        if os.name == 'java': # Jython doesn't allocate ptys here
-            self.check_call(False, False, False)
-            # XXX not sure how to test anything else
-        else:
-            self.check_call(True, True, True)
-            self.check_call(False, True, True, stdin=subprocess.PIPE)
-            self.check_call(True, False, True, stdout=subprocess.PIPE)
-            self.check_call(True, True, False, stderr=subprocess.PIPE)
+        self.check_call(True, True, True)
+        self.check_call(False, True, True, stdin=subprocess.PIPE)
+        self.check_call(True, False, True, stdout=subprocess.PIPE)
+        self.check_call(True, True, False, stderr=subprocess.PIPE)
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:

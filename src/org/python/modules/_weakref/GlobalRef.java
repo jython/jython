@@ -57,7 +57,7 @@ public class GlobalRef extends WeakReference<PyObject> implements ReferenceBacke
 
     private static ReferenceQueue<PyObject> referenceQueue = new ReferenceQueue<>();
 
-    private static Thread reaperThread;
+    private static volatile Thread reaperThread;
     private static ReentrantReadWriteLock reaperLock = new ReentrantReadWriteLock();
 
     private static ConcurrentMap<GlobalRef, ReferenceBackend> objects = Generic.concurrentMap();
@@ -330,13 +330,13 @@ public class GlobalRef extends WeakReference<PyObject> implements ReferenceBacke
             if (reaperThread == null || !reaperThread.isAlive()) {
                 reaperLock.readLock().unlock();
                 reaperLock.writeLock().lock();
-                if (reaperThread == null || !reaperThread.isAlive()) {
-                    try {
+                try {
+                    if (reaperThread == null || !reaperThread.isAlive()) {
                         initReaperThread();
-                    } finally {
-                        reaperLock.readLock().lock();
-                        reaperLock.writeLock().unlock();
                     }
+                } finally {
+                    reaperLock.readLock().lock();
+                    reaperLock.writeLock().unlock();
                 }
             }
         } finally {

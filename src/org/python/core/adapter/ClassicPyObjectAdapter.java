@@ -28,37 +28,43 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
     public ClassicPyObjectAdapter() {
         addPreClass(new PyObjectAdapter() {
 
+            @Override
             public PyObject adapt(Object o) {
                 return (PyObject)o;
             }
 
+            @Override
             public boolean canAdapt(Object o) {
                 return o instanceof PyObject;
             }
         });
         addPreClass(new PyObjectAdapter() {
 
+            @Override
             public PyObject adapt(Object o) {
                 return ((PyProxy)o)._getPyInstance();
             }
 
+            @Override
             public boolean canAdapt(Object o) {
                 return o instanceof PyProxy;
             }
         });
         addPreClass(new PyObjectAdapter() {
 
+            @Override
             public boolean canAdapt(Object o) {
                 return o == null;
             }
 
+            @Override
             public PyObject adapt(Object o) {
                 return Py.None;
             }
         });
-
         add(new ClassAdapter(String.class) {
 
+            @Override
             public PyObject adapt(Object o) {
                 return new PyUnicode((String)o);
             }
@@ -66,13 +72,15 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
         });
         add(new ClassAdapter(Character.class) {
 
+            @Override
             public PyObject adapt(Object o) {
-                return Py.makeCharacter((Character)o);
+                return PyUnicode.from((Character)o);
             }
 
         });
         add(new ClassAdapter(Class.class) {
 
+            @Override
             public PyObject adapt(Object o) {
                 return PyType.fromClass((Class<?>)o, false);
             }
@@ -85,6 +93,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
         add(new NumberToPyInteger(Short.class));
         add(new ClassAdapter(Long.class) {
 
+            @Override
             public PyObject adapt(Object o) {
                 return new PyLong(((Number)o).longValue());
             }
@@ -93,6 +102,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 
         add(new ClassAdapter(BigInteger.class) {
 
+            @Override
             public PyObject adapt(Object o) {
                 return new PyLong((BigInteger)o);
             }
@@ -101,6 +111,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 
         add(new ClassAdapter(Boolean.class) {
 
+            @Override
             public PyObject adapt(Object o) {
                 return ((Boolean)o).booleanValue() ? Py.True : Py.False;
             }
@@ -109,10 +120,12 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 
         addPostClass(new PyObjectAdapter() {
 
+            @Override
             public PyObject adapt(Object o) {
                 return new PyArray(o.getClass().getComponentType(), o);
             }
 
+            @Override
             public boolean canAdapt(Object o) {
                 return o.getClass().isArray();
             }
@@ -123,10 +136,12 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
      * Always returns true as we just return new PyJavaInstance(o) if the adapters added to the
      * superclass can't handle o.
      */
+    @Override
     public boolean canAdapt(Object o) {
         return true;
     }
 
+    @Override
     public PyObject adapt(Object o) {
         PyObject result = super.adapt(o);
         if (result != null) {
@@ -141,6 +156,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
             super(c);
         }
 
+        @Override
         public PyObject adapt(Object o) {
             return new PyInteger(((Number)o).intValue());
         }
@@ -153,6 +169,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
             super(c);
         }
 
+        @Override
         public PyObject adapt(Object o) {
             return new PyFloat(((Number)o).doubleValue());
         }
