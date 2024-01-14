@@ -979,6 +979,7 @@ class SingleMethodInterfaceTest(unittest.TestCase):
         future.get()
         self.assertEqual(obj.data, [42])
 
+
 def test_main():
     test_support.run_unittest(
         BeanPropertyTest,
@@ -1002,6 +1003,7 @@ def test_main():
         UnicodeTest,
         SingleMethodInterfaceTest,
         )
+
 
 if __name__ == "__main__":
     test_main()

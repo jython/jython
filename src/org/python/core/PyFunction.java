@@ -518,8 +518,9 @@ public class PyFunction extends PyObject implements InvocationHandler, Traversep
                 String name = null;
                 for (Method method : c.getMethods()) {
                     if (method.getDeclaringClass() != Object.class) {
-                        if (method.isDefault())
+                        if (method.isDefault()) {
                             continue;
+                        }
                         if (name == null || name.equals(method.getName())) {
                             name = method.getName();
                         } else {
