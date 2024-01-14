@@ -35,6 +35,28 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
+    # We have to install Python 2.7 explicitly
+    # Simplified from https://github.com/LizardByte/setup-python-action specialised for MacOS
+    - name: Set up Python 2
+      shell: bash
+      run: |
+        python -V
+        # Install using pyenv
+        brew install pyenv
+        export PATH="$(pyenv root)/shims:$(pyenv root)/bin:$PATH"
+        pyenv install 2.7.18
+        pyenv global 2.7.18
+
+        # Get a 2.7 virtual environment
+        python -m pip install virtualenv
+        venv="/tmp/python27/venv"
+        python -m virtualenv ${venv}
+        source ${venv}/bin/activate
+
+        # Check we got the version we hoped for
+        echo "${venv}/bin" >> $GITHUB_PATH
+        python -V
+
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
 
@@ -42,11 +64,18 @@ jobs:
       run: dist/bin/jython -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
     - name: Show JVM arguments when launched by Python
-      run: python2 dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
+      run: |
+          python -V
+          python dist/bin/jython.py -c 'from java.lang.management import ManagementFactory; print ManagementFactory.getRuntimeMXBean().getInputArguments()'
 
     - name: Regression tests for invocation of the interpreter with various command line arguments
       run: dist/bin/jython -m test.test_cmd_line
 
     - name: Regression tests for command line execution of scripts
-      run: python2 dist/bin/jython.py -m test.test_cmd_line_script
+      run: |
+          python -V
+          python dist/bin/jython.py -m test.test_cmd_line_script
+
+    - name: Run Java tests with Ant
+      run: ant javatest-ci
 

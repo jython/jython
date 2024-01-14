@@ -6,14 +6,17 @@ import test.test_support
 # changed number=10000 so we don't spend too much time testing this
 # module in the regrtest
 
+NUMBER = 10000  # Of times to execute in each test
+
 class TestTimeit(unittest.TestCase):
 
     def test_oct(self):
-        timing = timeit.Timer('for i in xrange(10): oct(i)', 'gc.enable()').timeit(number=10000)
-        self.assertTrue(timing > 0.)
-        timing_vector = timeit.Timer('for i in xrange(10): oct(i)').repeat(number=10000)
+        timing = timeit.Timer('for i in xrange(100): oct(i)', 'gc.enable()').timeit(number=NUMBER)
+        self.assertGreater(timing, 0.)
+
+        timing_vector = timeit.Timer('for i in xrange(100): oct(i)').repeat(number=NUMBER)
         self.assertEqual(len(timing_vector), 3)
-        self.assertTrue(min(timing_vector) > 0.)
+        self.assertGreater(min(timing_vector), 0.)
 
     def test_str(self):
         s = """\
@@ -23,11 +26,12 @@ class TestTimeit(unittest.TestCase):
                 pass
             """
         t = timeit.Timer(stmt=s)
-        self.assertTrue(t.timeit(number=10000) > 0.)
+        timing = t.timeit(number=NUMBER)
+        self.assertGreater(timing, 0.)
 
-        timing_vector = t.repeat(number=10000, repeat=10)
+        timing_vector = t.repeat(number=NUMBER, repeat=10)
         self.assertEqual(len(timing_vector), 10)
-        self.assertTrue(min(timing_vector) > 0.)
+        self.assertGreater(min(timing_vector), 0.)
 
 
 def test_main():

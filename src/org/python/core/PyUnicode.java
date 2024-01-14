@@ -591,6 +591,17 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
 
     // ------------------------------------------------------------------------------------------
 
+    /** Table used by {@link #from(char)} to intern single byte strings. */
+    private static final PyUnicode[] unichars = new PyUnicode[128];
+
+    static {
+        for (char j = 0; j < 128; j++) {
+            PyUnicode uni = new PyUnicode(TYPE, String.valueOf(j).intern(), true);
+            uni.interned = true;
+            unichars[j] = uni;
+        }
+    }
+
     /**
      * {@inheritDoc} The indices are code point indices, not UTF-16 (<code>char</code>) indices. For
      * example:
@@ -608,13 +619,68 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     /**
-     * Creates a PyUnicode from an already interned String. Just means it won't be reinterned if
+     * Returns a PyUnicode from an already interned String. Just means it won't be re-interned if
      * used in a place that requires interned Strings.
      */
-    public static PyUnicode fromInterned(String interned) {
-        PyUnicode uni = new PyUnicode(TYPE, interned);
-        uni.interned = true;
-        return uni;
+    public static PyUnicode fromInterned(String s) {
+        int n = s.length();
+        if (n > 1) {
+            PyUnicode uni = new PyUnicode(TYPE, s, false);
+            uni.interned = true;
+            return uni;
+        } else if (n == 1) {
+            return from(s.charAt(0));
+        } else {
+            return Py.EmptyUnicode;
+        }
+    }
+
+    /**
+     * Return a not-necessarily new {@link PyUnicode} from a Java {@code String}.
+     * @param s UTF-16 string encoding the characters (as Java).
+     * @param isBasic true if it is known that only BMP characters are present.
+     * @return a new or re-used {@code PyUnicode}
+     */
+    public static PyUnicode fromString(String s, boolean isBasic) {
+        int n = s.length();
+        if (n > 1) {
+            PyUnicode uni = new PyUnicode(TYPE, s, isBasic);
+            return uni;
+        } else if (n == 1) {
+            return from(s.charAt(0));
+        } else {
+            return Py.EmptyUnicode;
+        }
+    }
+
+    /**
+     * Return a not-necessarily new {@link PyUnicode} from a Java {@code char}. Some low index chars
+     * (ASCII) return a re-used {@code PyUnicode}. This method does not assume the character is
+     * basic-plane.
+     *
+     * @param c to convert to a {@code PyUnicode}.
+     * @return a new or re-used {@code PyUnicode}
+     */
+    public static PyUnicode from(char c) {
+        if (c >= 0 && c < unichars.length) {
+            return unichars[c];
+        } else {
+            return new PyUnicode(c);
+        }
+    }
+
+    /**
+     * Return a not-necessarily new {@code PyUnicode} from a Java code point.
+     *
+     * @param codepoint of the single character required
+     * @return a new or cached {@code PyUnicode} for the character
+     */
+    public static PyUnicode fromCodepoint(int codepoint) {
+        if (codepoint >= 0 && codepoint < unichars.length) {
+            return unichars[codepoint];
+        } else {
+            return new PyUnicode(codepoint);
+        }
     }
 
     /**
@@ -659,9 +725,9 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 }
                 PyObject decoded = codecs.decode((PyString) S, encoding, errors);
                 if (decoded instanceof PyUnicode) {
-                    return new PyUnicode((PyUnicode) decoded);
+                    return new PyUnicode(((PyUnicode) decoded).getString());
                 } else {
-                    throw Py.TypeError("decoder did not return an unicode object (type="
+                    throw Py.TypeError("decoder did not return a unicode object (type="
                             + decoded.getType().fastGetName() + ")");
                 }
             }
@@ -679,8 +745,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     }
 
     @Override
-    public PyString createInstance(String str) {
-        return new PyUnicode(str);
+    public PyString createInstance(String string) {
+        return new PyUnicode(string);
     }
 
     /**
@@ -689,7 +755,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
      */
     @Override
     protected PyString createInstance(String string, boolean isBasic) {
-        return new PyUnicode(string, isBasic);
+        return fromString(string, false);
     }
 
     @Override
@@ -872,7 +938,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @Override
     protected PyObject pyget(int i) {
         int codepoint = getString().codePointAt(translator.utf16Index(i));
-        return Py.makeCharacter(codepoint, true);
+        return PyUnicode.fromCodepoint(codepoint);
     }
 
     @Override
@@ -1847,7 +1913,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @Override
     protected PyString fromSubstring(int begin, int end) {
         assert (isBasicPlane()); // can only be used on a codepath from str_ equivalents
-        return new PyUnicode(getString().substring(begin, end), true);
+        return fromString(getString().substring(begin, end), true);
     }
 
     @ExposedMethod(defaults = {"null", "null"}, doc = BuiltinDocs.unicode_index_doc)
@@ -2042,7 +2108,6 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 while (iter.hasNext()) {
                     buffer.appendCodePoint(iter.next());
                 }
-                return new PyUnicode(buffer);
 
             } else {
                 SplitIterator iter = newSplitIterator(oldPiece, count);
@@ -2057,8 +2122,8 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
                 if (iter.getEndsWithSeparator() && (count == -1 || numSplits <= count)) {
                     buffer.append(newPiece.getString());
                 }
-                return new PyUnicode(buffer);
             }
+            return new PyUnicode(buffer);
         }
     }
 

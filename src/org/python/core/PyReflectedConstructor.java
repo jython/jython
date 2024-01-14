@@ -152,25 +152,49 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                 // Remove the keyword args
                 args = new PyObject[allArgs.length - nkeywords];
                 System.arraycopy(allArgs, 0, args, 0, args.length);
+                Object varargMatch = null;
+                ReflectedCallData varargData = null;
 
                 // Look for a constructor with no keyword args
                 for (int i = 0; i < n; i++) {
                     rargs = argslist[i];
                     if (rargs.matches(null, args, Py.NoKeywords, callData)) {
-                        method = rargs.method;
-                        break;
+                        if (!argslist[i].isVarArgs) {
+                            method = argslist[i].method;
+                            break;
+                        } else {
+                            varargMatch = argslist[i].method;
+                            varargData = callData;
+                            callData = new ReflectedCallData();
+                        }
                     }
+                }
+                if (method == null && varargMatch != null) {
+                    method = varargMatch;
+                    callData = varargData;
                 }
             }
        } else {
            // Just look for a constructor with no keyword args
+           Object varargMatch = null;
+           ReflectedCallData varargData = null;
            int n = nargs;
            for (int i = 0; i < n; i++) {
                rargs = argslist[i];
                if (rargs.matches(null, args, Py.NoKeywords, callData)) {
-                   method = rargs.method;
-                   break;
+                    if (!argslist[i].isVarArgs) {
+                        method = argslist[i].method;
+                        break;
+                    } else {
+                        varargMatch = argslist[i].method;
+                        varargData = callData;
+                        callData = new ReflectedCallData();
+                    }
                }
+           }
+           if (method == null && varargMatch != null) {
+               method = varargMatch;
+               callData = varargData;
            }
        }
 
