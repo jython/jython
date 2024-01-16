@@ -382,6 +382,9 @@ public class PyMethod extends PyObject implements InvocationHandler, Traversepro
                 String name = null;
                 for (Method method : c.getMethods()) {
                     if (method.getDeclaringClass() != Object.class) {
+                        if (method.isDefault()) {
+                            continue;
+                        }
                         if (name == null || name.equals(method.getName())) {
                             name = method.getName();
                         } else {
@@ -404,7 +407,7 @@ public class PyMethod extends PyObject implements InvocationHandler, Traversepro
 
     public Object invoke( Object proxy, Method method, Object[] args ) throws Throwable {
         // Handle invocation when invoked through Proxy (as coerced to single method interface)
-        if (method.getDeclaringClass() == Object.class) {
+        if (method.getDeclaringClass() == Object.class || method.isDefault()) {
             return method.invoke( this, args );
         } else if (args == null || args.length == 0) {
             return __call__().__tojava__(method.getReturnType());

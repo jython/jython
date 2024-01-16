@@ -42,7 +42,7 @@ import java
 import org.python.core.Options
 
 from javatests import Issue1833
-from javatests.ProxyTests import NullToString, Person
+from javatests.ProxyTests import NullToString, Person, ConsumerCaller
 
 from clamp import SerializableProxies
 from unittest.case import skip
@@ -914,6 +914,13 @@ class CallableObject(object):
         self.data.append(42)
 
 
+class ConsumerMethod(object):
+    def __init__(self):
+        self.data = list()
+    def doit(self, item):
+        self.data.append(item)
+
+
 class SingleMethodInterfaceTest(unittest.TestCase):
 
     def setUp(self):
@@ -958,6 +965,20 @@ class SingleMethodInterfaceTest(unittest.TestCase):
             exc.exception, TypeError,
             "submit(): 1st arg can't be coerced to java.util.concurrent.Callable, java.lang.Runnable")
 
+    def test_consumer_function(self):
+        x = list()
+        def f(item):
+            x.append(item)
+        future = self.executor.submit(ConsumerCaller(f))
+        future.get()
+        self.assertEqual(x, [42])
+
+    def test_consumer_method(self):
+        obj = ConsumerMethod()
+        future = self.executor.submit(ConsumerCaller(obj.doit))
+        future.get()
+        self.assertEqual(obj.data, [42])
+
 
 def test_main():
     test_support.run_unittest(
@@ -982,6 +1003,7 @@ def test_main():
         UnicodeTest,
         SingleMethodInterfaceTest,
         )
+
 
 if __name__ == "__main__":
     test_main()
