@@ -276,17 +276,31 @@ public class PySystemState extends PyObject
     }
 
     private static void checkReadOnly(String name) {
-        if (name == "__dict__" || name == "__class__" || name == "registry" || name == "exec_prefix"
-                || name == "packageManager") {
-            throw Py.TypeError("readonly attribute");
+        switch (name) {
+            case "__dict__":
+            case "__class__":
+            case "registry":
+            case "exec_prefix":
+            case "packageManager":
+                throw Py.TypeError("readonly attribute");
+            default:
+                // pass
         }
     }
 
     private static void checkMustExist(String name) {
-        if (name == "__dict__" || name == "__class__" || name == "registry" || name == "exec_prefix"
-                || name == "platform" || name == "packageManager" || name == "builtins"
-                || name == "warnoptions") {
-            throw Py.TypeError("readonly attribute");
+        switch (name) {
+            case "__dict__":
+            case "__class__":
+            case "registry":
+            case "exec_prefix":
+            case "platform":
+            case "packageManager":
+            case "builtins":
+            case "warnoptions":
+                throw Py.TypeError("readonly attribute");
+            default:
+                // pass
         }
     }
 
@@ -430,7 +444,7 @@ public class PySystemState extends PyObject
     @Override
     public void __setattr__(String name, PyObject value) {
         checkReadOnly(name);
-        if (name == "builtins") {
+        if ("builtins".equals(name)) {
             setBuiltins(value);
         } else {
             PyObject ret = getType().lookup(name); // xxx fix fix fix
