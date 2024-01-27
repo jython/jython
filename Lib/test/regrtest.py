@@ -1345,7 +1345,6 @@ _failures = {
 
         # fails on Windows standalone too, but more embarassing as java specific
         test_subprocess_jy
-        test_sys_jy            # OSError handling wide-character filename
 
         test_asyncore 
         test_compileall
