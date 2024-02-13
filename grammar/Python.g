@@ -549,7 +549,8 @@ defparameter
           if ($ASSIGN != null) {
               defaults.add($test.tree);
           } else if (!defaults.isEmpty()) {
-              throw new ParseException("non-default argument follows default argument", $fpdef.tree);
+              throw new ParseException("non-default argument follows default argument",
+                  $fpdef.tree, true);
           }
       }
     ;
@@ -878,7 +879,8 @@ continue_stmt
     : CONTINUE
       {
           if (!$suite.isEmpty() && $suite::continueIllegal) {
-              errorHandler.error("'continue' not supported inside 'finally' clause", new PythonTree($continue_stmt.start));
+              errorHandler.error("'continue' not supported inside 'finally' clause",
+                  new PythonTree($continue_stmt.start), true);
           }
           stype = new Continue($CONTINUE);
       }
@@ -2129,7 +2131,7 @@ argument
                   Object oldkey = list.get(0);
                   if (oldkey instanceof Name && newkey instanceof Name) {
                       if (((Name)oldkey).getId().equals(((Name)newkey).getId())) {
-                          errorHandler.error("keyword arguments repeated", $t1.tree);
+                          errorHandler.error("keyword arguments repeated", $t1.tree, true);
                       }
                   }
               }
@@ -2151,9 +2153,9 @@ argument
         |
           {
               if (kws.size() > 0) {
-                  errorHandler.error("non-keyword arg after keyword arg", $t1.tree);
+                  errorHandler.error("non-keyword arg after keyword arg", $t1.tree, true);
               } else if (afterStar) {
-                  errorHandler.error("only named arguments may follow *expression", $t1.tree);
+                  errorHandler.error("only named arguments may follow *expression", $t1.tree, true);
               }
               $arguments.add($t1.tree);
           }
