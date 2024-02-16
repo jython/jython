@@ -20,8 +20,8 @@ New Features
 
 
 Jython 2.7.4a1 Bugs fixed
-    - [ GH-277 ] Fix automatic conversions of function/method args for java
-                 interfaces with default methods.
+    - [ GH-302 ] Interactive interpreter awaits input instead of raising syntax error
+    - [ GH-277 ] Argument coercion fails for Java interface with default methods
     - [ GH-269 ] Upgrade Google Guava to 32.0.1 (CVE-2023-2976)
     - [ GH-264 ] Create a security policy
     - [ GH-254 ] Regression in socket.socket.sendall for sending Unicode

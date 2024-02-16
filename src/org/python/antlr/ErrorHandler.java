@@ -38,13 +38,15 @@ interface ErrorHandler {
     /**
      * Handle (normally throw a {@code ParseException}) specifying whether to treat as a final
      * decision. In the REPL, when {@code definite=true}, Jython will signal a definite syntax or
-     * semantic error,not recoverable by waiting for further input.
+     * semantic error, not recoverable by waiting for further input.
      *
      * @param message text to include.
      * @param t not {@code null}, root of the {@link PythonTree} provoking the error.
      * @param definite true if we cannot recover with more input.
      */
-    void error(String message, PythonTree t, boolean definite);
+    default void error(String message, PythonTree t, boolean definite) {
+        error(message, t);
+    }
 
     /**
      * Handle (normally throw a {@code ParseException}) possibly recoverable by waiting for further
