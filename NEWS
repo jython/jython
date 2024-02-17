@@ -20,6 +20,8 @@ New Features
 
 
 Jython 2.7.4a1 Bugs fixed
+    - [ GH-304 ] from java import * not working in Java 21
+    - [ GH-280 ] LineNumberTable deprecated for removal in 2.6 still there
     - [ GH-277 ] Fix automatic conversions of function/method args for java
                  interfaces with default methods.
     - [ GH-269 ] Upgrade Google Guava to 32.0.1 (CVE-2023-2976)
