@@ -92,7 +92,14 @@ public class ParserFacade {
             if (e.getType() == Py.IndentationError) {
                 return new PyIndentationError(msg, line, col, text, filename);
             }
-            return new PySyntaxError(msg, line, col, text, filename);
+            PyException pye = new PySyntaxError(msg, line, col, text, filename);
+            if (e.definite) {
+                // The error cannot be fixed by reading more input
+                throw pye;
+            } else {
+                // The error might be fixed by reading more input
+                return pye;
+            }
         } else if (t instanceof CharacterCodingException) {
             String msg;
             if (reader.encoding == null) {
