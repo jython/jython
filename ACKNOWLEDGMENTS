@@ -66,7 +66,7 @@ Cyrille Morvan contributed the code for the Jythonc ant task.
 Alan Kennedy contributed modjy, which bridges WSGI to the Servlet API
 
 Chris Gokey, David Syer and Finn Bock added PyServlet.
-    
+
 Yin Wang and Steve Yegge contributed the static analyzer from Google
 (also called indexer).
 
@@ -74,8 +74,14 @@ The Jython bash startup script (fallback for bin/jython) was adapted
 from the similar script written for JRuby.
 
 A huge thanks goes to all the members of the jpython/jython
-mailing lists.  Other folks who have contributed to JPython and 
-Jython in ways large and small, in no particular order:
+mailing lists.  A list follows of other folks who have contributed to
+JPython and Jython in ways large and small.
+
+In no particular order they are:
+
+    Barry Warsaw (GitHub: warsaw)                   B, 2024-02-20
+    Alan Kennedy (GitHub: amak)                     X, 2024-02-20
+    Brian Zimmer (GitHub: bzimmer)                  B, 2024-02-20
 
     Kevin Butler
     Harry Mantakos
@@ -85,7 +91,7 @@ Jython in ways large and small, in no particular order:
     Drew Morrissey
     John Mudd
     Bryn Keller
-    dsyer
+    Dave Syer (GitHub: dsyer)                       X, 2024-02-20
     Tim Hochberg
     Bernhard Bablok
     Dj Walker-Morgan
@@ -114,12 +120,12 @@ Jython in ways large and small, in no particular order:
     Tobias Ivarsson
     Lino Mastrodomenico
     Sébastien Boisgérault
-    Jim Baker
-    Charlie Groves
-    Otmar Humbel
-    Philip Jenvey
+    Jim Baker (GitHub: jimbaker)                    B, 2024-02-20
+    Charlie Groves (GitHub: groves)                 X, 2024-02-20
+    Otmar Humbel (GitHub: ohumbel)                  X, 2024-02-20
+    Philip Jenvey (GitHub: pjenvey)                 B, 2024-02-20
     Nicholas Riley
-    Frank Wierzbicki
+    Frank Wierzbicki (GitHub: fwierzbicki)          X, 2024-02-20
     Khalid Zuberi
     Sean McGrath
     Clark Updike
@@ -134,9 +140,9 @@ Jython in ways large and small, in no particular order:
     Andreas Stührk
     Dmitry Jemerov
     Miki Tebeka
-    Jeff Allen
+    Jeff Allen (GitHub: jeff5),                     A, 2023-12-25
     Julian Kennedy
-    Arfrever Frehtes Taifersar Arahesis
+    Arfrever Frehtes Taifersar Arahesis (GitHub: Arfrever)  X, 2024-02-20
     Andreas Stührk
     Christian Klein
     Jezreel Ng
@@ -147,7 +153,7 @@ Jython in ways large and small, in no particular order:
     Michael Büsch
     Richard Eckart de Castilho
     Timothée Lecomte
-    Peter Holloway
+    Peter Holloway (GitHub: tpoliaw)                B, 2024-02-20
     Werner Mendizabal
     Henning Jacobs
     Darjus Loktevic
@@ -159,7 +165,7 @@ Jython in ways large and small, in no particular order:
     Dieter Vandenbussche
     Paolo Dina
     Eliya Sadan
-    Stefan Richthofer
+    Stefan Richthofer (GitHub: Stewori)             B, 2024-02-20
     Jason Madden
     Daniel Martin
     Richard Fearn
@@ -176,31 +182,37 @@ Jython in ways large and small, in no particular order:
     Nick Bailey
     Doug Clayton
     Carl Wicklow
-    James Mudd
+    James Mudd (GitHub: jamesmudd)                  B, 2024-02-20
     Mat Booth
     Alex Gaman
     Tom Bech
     Richie Bendall
-    Raymond Ferguson
-    yishenggudou (愧僧)
-    Andrew Kuchling
-    Jim Peterson
-    Christian Clauss
-    Han Siang Phua
-    Elisha Hollander
-    Thierry Guérin
-    Xiaoyin Liu
-    Joe Shannon
-    Dominik Broj
-    shoaniki (GitHub name)
-    Chris Clark (GitHub: clach04)
-    Zhihong (Ted) Yu
-    Matthew Schweiss (GitHub: TheMatt2)
-    Diogo Teles Sant'Anna (GitHub: diogoteles08)
-    Phil Turmel (GitHub: pturmel)
+    Raymond Ferguson (GitHub: devendor)             B, 2024-02-20
+    yishenggudou (愧僧) (GitHub: yishenggudou)        X, 2024-02-20
+    Andrew Kuchling (GitHub: akuchling)             A, 2021-02-22
+    Jim Peterson (GitHub: Elkniwt)                  C, 2019-03-20
+    Christian Clauss (GitHub: cclauss)              B, 2024-02-20
+    Han Siang Phua (GitHub: hansiang93)             B, 2024-02-20
+    Elisha Hollander (GitHub: donno2048)            B, 2024-02-20
+    Thierry Guérin (GitHub: SchwingSK)              B, 2024-02-20
+    Xiaoyin Liu (GitHub: xiaoyinl)                  B, 2024-02-20
+    Joe Shannon (GitHub: joeshannon)                C, 2022-04-29
+    Dominik Broj (GitHub: thetric)                  C, 2022-05-31
+    shoaniki (GitHub: shoaniki)                     C, 2022-07-05
+    Chris Clark (GitHub: clach04)                   C, 2023-09-02
+    Zhihong (Ted) Yu (GitHub: datavisortedyu, GitHub: tedyu)    C, 2023-06-14
+    Matthew Schweiss (GitHub: TheMatt2)             C, 2023-07-23
+    Diogo Teles Sant'Anna (GitHub: diogoteles08)    C, 2023-08-10
+    Phil Turmel (GitHub: pturmel)                   C, 2023-12-30
 
 
-Local Variables:
-mode: indented-text
-indent-tabs-mode: nil
-End:
+Since about 2012 we have been asking contributors to sign the Python
+Contributor Agreement. The part following names above records evidence
+of that using the codes:
+
+A. CPython API (or checked in a CPython PR) at <date>.
+B. checked in bugs.python.org at <date>.
+C. self-reported at <date> (e.g. reply on GitHub).
+X. last search unsuccessful at <date>.
+
+Blank and X mean we don't know, not that the contributor hasn't signed.
