@@ -30,8 +30,9 @@ help and support of the project.
 Downloads
 ---------
 
-Binary downloads are available from https://www.jython.org/download
-along with Maven and Gradle dependency information.
+Downloads (JAR, source and dependency metadata) are available from Maven
+Central (Sonatype) at https://central.sonatype.com/search?q=g:org.python
+and linked from https://www.jython.org/download.
 
 
 Bug Reports
