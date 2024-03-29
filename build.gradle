@@ -155,10 +155,11 @@ dependencies {
     antlr 'org.antlr:antlr:3.5.2'
     implementation 'org.antlr:antlr-runtime:3.5.2'
 
-    implementation 'org.apache.commons:commons-compress:1.21'
+    implementation 'org.apache.commons:commons-compress:1.26.0'
+    implementation 'commons-io:commons-io:2.15.1'
 
-    implementation 'org.bouncycastle:bcpkix-jdk18on:1.71'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.71'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
 
     implementation 'org.ow2.asm:asm:9.6'
     implementation 'org.ow2.asm:asm-commons:9.6'
