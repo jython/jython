@@ -20,10 +20,11 @@ New Features
 
 
 Jython 2.7.4a1 Bugs fixed
-    - [ GH-316 ] PR313 cause regression
+    - [ GH-316 ] Clash over META-INF in shaded JARs
     - [ GH-310 ] CVE-2024-25710 and CVE-2024-26308 (commons-compress)
     - [ GH-304 ] from java import * not working in Java 21
     - [ GH-302 ] Interactive interpreter awaits input instead of raising syntax error
+    - [ GH-298 ] Keep better accounts of contribution and CLA
     - [ GH-288 ] Build fails when using modules (duplicate org.w3c from JARs)
     - [ GH-281 ] Invoking the wrong overloaded Java constructor
     - [ GH-280 ] LineNumberTable deprecated for removal in 2.6 still there
