@@ -859,7 +859,7 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/commons-io-2.15.1.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.io.**" result="org.python.apache.commons.io.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-32.1.2-jre.jar"/>
+            <zipfileset src="extlibs/guava-32.1.2-jre.jar" excludes="META-INF/**"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-71.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
