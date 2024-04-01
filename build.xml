@@ -102,7 +102,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property name="jython.major_version" value="2"/>
         <property name="jython.minor_version" value="7"/>
         <property name="jython.micro_version" value="4"/>
-        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_ALPHA}"/>
+        <property name="jython.release_level" value="${PY_RELEASE_LEVEL_BETA}"/>
 
         <!-- Zero at full release: one-up number for alpha, beta and candidate versions. -->
         <property name="jython.release_serial" value="1"/>
