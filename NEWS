@@ -18,6 +18,8 @@ New Features
 
     - Bug fixes only.
 
+Jython 2.7.4b2 Bugs fixed
+
 
 Jython 2.7.4b1 Bugs fixed
     - [ GH-316 ] Clash over META-INF in shaded JARs
