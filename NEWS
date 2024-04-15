@@ -16,10 +16,12 @@ Jython 2.7.4
 
 New Features
 
-    - Bug fixes only.
+    - In a module Java project, Jython now appears as the automatic module
+      org.python.jython (whichever JAR you use) thanks to GH-325.
 
 Jython 2.7.4b2 Bugs fixed
 
+    - [ GH-325 ] Upward compatibility to Java 9 Modularity
 
 Jython 2.7.4b1 Bugs fixed
     - [ GH-316 ] Clash over META-INF in shaded JARs
