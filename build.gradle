@@ -649,7 +649,7 @@ jar {
         attributes ([
             'Main-Class': 'org.python.util.jython',
             'Built-By': 'build.gradle',
-            'Automatic-Module-Name': 'org.python.jython'
+            'Automatic-Module-Name': 'org.python.jython2.slim'
         ])
 
         attributes( [ // Build-Info section

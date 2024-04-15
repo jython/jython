@@ -16,8 +16,10 @@ Jython 2.7.4
 
 New Features
 
-    - In a module Java project, Jython now appears as the automatic module
-      org.python.jython (whichever JAR you use) thanks to GH-325.
+    - When using Java 9+ modules, a Jython jar on the module path now appears
+      as an automatic module org.python.jython2, org.python.jython2.standalone,
+      or org.python.jython2.slim, according to the JAR [GH-325]. These modules
+      overlap in content and may not be used together.
 
 Jython 2.7.4b2 Bugs fixed
 
