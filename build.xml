@@ -916,7 +916,7 @@ The text for an official release would continue like ...
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
-                <attribute name="Automatic-Module-Name" value="org.python.jython2"/>
+                <attribute name="Automatic-Module-Name" value="org.python.jython2.shaded"/>
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>

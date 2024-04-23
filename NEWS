@@ -16,14 +16,24 @@ Jython 2.7.4
 
 New Features
 
-    - When using Java 9+ modules, a Jython jar on the module path now appears
-      as an automatic module org.python.jython2, org.python.jython2.standalone,
-      or org.python.jython2.slim, according to the JAR [GH-325]. These modules
-      overlap in content and may not be used together.
+    - When building a modular application or library, the jython-slim JAR may
+      be placed on the module path [GH-325]. It will export its usual packages
+      in an automatic module org.python.jython2. Application build tools that
+      create a run script, will generally add the dependencies of Jython to
+      the module path automatically. The developer may have to add (via the
+      build script) --add-modules ALL-MODULE-PATH to the java command to
+      ensure that these dependencies are resolved.
 
-Jython 2.7.4b2 Bugs fixed
+    - The jython-standalone JAR (module org.python.jython2.standalone) may
+      also be used. Many shaded (and some unshaded) dependencies are then
+      duplicated in its module, which can be a problem. It may be necessary to
+      --add-modules ALL-DEFAULT to ensure JDK classes are resolved.
+
+
+Jython 2.7.4b2 Bugs fixed and features
 
     - [ GH-325 ] Upward compatibility to Java 9 Modularity
+
 
 Jython 2.7.4b1 Bugs fixed
     - [ GH-316 ] Clash over META-INF in shaded JARs
