@@ -916,6 +916,7 @@ The text for an official release would continue like ...
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Automatic-Module-Name" value="org.python.jython2.shaded"/>
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
@@ -939,6 +940,7 @@ The text for an official release would continue like ...
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Automatic-Module-Name" value="org.python.jython2.standalone"/>
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar with stdlib"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
@@ -982,6 +984,7 @@ The text for an official release would continue like ...
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Automatic-Module-Name" value="org.python.jython2"/>
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
@@ -1011,6 +1014,7 @@ The text for an official release would continue like ...
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
                 <attribute name="Built-By" value="${user.name}" />
+                <attribute name="Automatic-Module-Name" value="org.python.jython2.test"/>
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython Test JAR"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
