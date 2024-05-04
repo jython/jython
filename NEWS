@@ -17,12 +17,12 @@ Jython 2.7.4
 New Features
 
     - When building a modular application or library, the jython-slim JAR may
-      be placed on the module path [GH-325]. It will export its usual packages
-      in an automatic module org.python.jython2. Application build tools that
-      create a run script, will generally add the dependencies of Jython to
-      the module path automatically. The developer may have to add (via the
-      build script) --add-modules ALL-MODULE-PATH to the java command to
-      ensure that these dependencies are resolved.
+      be placed on the *module* path [GH-325]. It will export its usual
+      packages in an automatic module org.python.jython2. Application build
+      tools that create a run script will generally add the dependencies of
+      Jython to the module path automatically. The developer may have to add
+      (via the build script) --add-modules ALL-MODULE-PATH to the java command
+      to ensure that these dependencies are resolved.
 
     - The jython-standalone JAR (module org.python.jython2.standalone) may
       also be used. Many shaded (and some unshaded) dependencies are then
@@ -30,10 +30,9 @@ New Features
       --add-modules ALL-DEFAULT to ensure JDK classes are resolved.
 
 
-Jython 2.7.4b2 Bugs fixed and features
+Jython 2.7.4b2 Feature added
 
     - [ GH-325 ] Upward compatibility to Java 9 Modularity
-
 
 Jython 2.7.4b1 Bugs fixed
     - [ GH-316 ] Clash over META-INF in shaded JARs
