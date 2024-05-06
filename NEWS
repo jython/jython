@@ -30,6 +30,10 @@ New Features
       --add-modules ALL-DEFAULT to ensure JDK classes are resolved.
 
 
+Jython 2.7.4b3 Bugs fixed
+
+
+
 Jython 2.7.4b2 Feature added
 
     - [ GH-325 ] Upward compatibility to Java 9 Modularity
