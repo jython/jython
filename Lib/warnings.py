@@ -224,7 +224,7 @@ def warn(message, category=None, stacklevel=1):
         if module == "__main__":
             try:
                 filename = sys.argv[0]
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, IndexError):
                 # embedded interpreters don't have sys.argv, see bug #839151
                 filename = '__main__'
         if not filename:
