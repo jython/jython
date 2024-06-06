@@ -12,7 +12,7 @@ make_cmp.py: generates code for compare nodes for CodeCompiler.java
 make_excs.py: generate code for exceptions and for the types module
 make_math.py: generate most of the code for the math module
 make_operations.py: Generate most of the code for the operator module
-make_visitor.py: generate vistor code for javacc grammar.  code goes in SimpleNode.java
+make_visitor.py: generate visitor code for javacc grammar.  code goes in SimpleNode.java
 reportTemplate.html: template html file used by bughtml.py
 webformat.py: script to generate jpython's web pages
 xml2py.py: utility module to make xml easier for jpython (used by bughtml.py)
