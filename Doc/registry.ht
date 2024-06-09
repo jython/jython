@@ -53,20 +53,6 @@ file for details.
     <em>you are using Java 1.2</em> then Jython can access non-public 
     fields, methods, and constructors.
 
-    <dt><b>python.jythonc.compiler</b>
-    <dd>The Java compiler to use with the <tt>jythonc</tt> tool,
-    which now generates Java source code.  This should be the absolute 
-    path to a Java compiler, or the name of a compiler on your
-    standard PATH.
-
-    <dt><b>python.jythonc.classpath</b>
-    <dd>Extensions to the standard <tt>java.class.path</tt> property
-    for use with jythonc.  This is useful if you use Jikes as your
-    compiler.
-
-    <dt><b>python.jythonc.compileropts</b>
-    <dd>Options to pass to the Java compiler when using jythonc.
-
     <dt><b>python.console</b>
     <dd>The name of a console class. An alternative console class
     that supports <a href="http://www.bablokb.de/java/readline.html">

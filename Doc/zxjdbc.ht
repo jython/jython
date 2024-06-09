@@ -3,11 +3,10 @@ Title: zxJDBC
 <h3>Database connectivity in Jython</h3>
 
 <p>The zxJDBC package provides a nearly 100% <a
-href="http://www.python.org">Python</a> <a
-href="http://www.python.org/dev/peps/pep-0249/">
+href="https://www.python.org">Python</a> <a href="https://peps.python.org/pep-0249/">
 DB API 2.0</a> compliant interface for database connectivity in <a
-href="http://jython.sourceforge.net/">Jython</a>. It is implemented
-entirely in <a href="http://www.javasoft.com">Java</a> and makes
+href="https://jython.org">Jython</a>. It is implemented
+entirely in <a href="https://openjdk.org">Java</a> and makes
 use of the <a href="http://www.javasoft.com/jdbc">JDBC</a> API.
 This means any database capable of being accessed through JDBC,
 either directly or using the JDBC-ODBC bridge, can be manipulated
@@ -52,7 +51,7 @@ Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; params['user'] = None
 &gt;&gt;&gt; params['password'] = None
 &gt;&gt;&gt; params['port'] = 3306
-&gt;&gt;&gt; db = apply(zxJDBC.connectx, ("org.gjt.mm.mysql.MysqlDataSource",), params)
+&gt;&gt;&gt; db = zxJDBC.connectx("org.gjt.mm.mysql.MysqlDataSource", **params)
 &gt;&gt;&gt;
 </pre>
 
@@ -146,7 +145,7 @@ Type "copyright", "credits" or "license" for more information.
 	NOTE: The name of the stored procedure can either be a string or tuple.  This is NOT portable to
 	other DB API implementations.
 <pre>
-<b><i>SQL Server</b></i>
+<b><i>SQL Server</i></b>
 &gt;&gt;&gt; c = db.cursor() # open the database as in the examples above
 &gt;&gt;&gt; c.execute("use northwind")
 &gt;&gt;&gt; c.callproc(("northwind", "dbo", "SalesByCategory"), ["Seafood", "1998"], maxrows=2)
@@ -170,7 +169,7 @@ Type "copyright", "credits" or "license" for more information.
 </pre>
 
 <pre>
-<b><i>Oracle</b></i>
+<b><i>Oracle</i></b>
 &gt;&gt;&gt; c = db.cursor() # open the database as in the examples above
 &gt;&gt;&gt; c.execute("create or replace function funcout (y out varchar2) return varchar2 is begin y := 'tested'; return 'returned'; end;")
 &gt;&gt;&gt; params = [None]

@@ -34,7 +34,7 @@ Type "copyright", "credits" or "license" for more information.
 
 <P>Hopefully, this example should make it clear that there are very
 few differences between using Java packages and using Python packages
-when working under Jython.  There are a few things to keep in mind.
+when working under Jython. There are a few things to keep in mind.
 
 <H4>Importing</H4>
 
@@ -53,125 +53,161 @@ Type "copyright", "credits" or "license" for more information.
 <H4>Creating Class Instances</H4>
 
 <P>You can create an instance of a Java class exactly the way you
-would create an instance of a Python class.  You must &quot;call&quot;
+would create an instance of a Python class. You must &quot;call&quot;
 the class with a set of arguments that is appropriate for one of the
-Java class's constructors.  See the section below for more details on
+Java class's constructors. See the section below for more details on
 what constitutes appropriate arguments.
 
 <H4>Calling Java Methods and Functions</H4>
 
-<P>Java classes have both static and instance methods this makes them
-behave much like a cross between a Python module and class.  As a
+<P>Java classes have both static and instance methods, which makes them
+behave much like a cross between a Python module and class. As a
 user, you should rarely need to be concerned with this difference.</P>
 
 <P>Java methods and functions are called just exactly like their
-Python counterparts.  There is some automatic type coercion that goes
+Python counterparts. There is some automatic type coercion that goes
 on both for the types being passed in and for the value returned by
-the method.  The following table shows how Python objects are coerced
-to Java objects when passed as arguments in a function call.  The
+the method. The following table shows how Python objects are coerced
+to Java objects when passed as arguments in a function call. The
 <em>Java Types</em> show the expected Java type for the argument,
 and the <em>Allowed Python Types</em>
 shows what Python objects can be converted to the given
-Java type.  Notice the special behavior of <tt>String</tt>'s when a
-<tt>java.lang.Object</tt> is expected.  This behavior might change if
-it is shown to cause problems.
-  
-<p><TABLE BORDER="1" WIDTH="100%">
-    <TR>
-	<TH>Java Types</TH>
-	<TH>Allowed Python Types</TH>
-    </TR>
-    <TR>
-	<TD>char</TD>
-	<TD>String (must have length 1) </TD>
-    </TR>
-    <TR>
-	<TD>boolean</TD>
-	<TD>Integer (true = nonzero) </TD>
-    </TR>
-    <TR>
-	<TD>byte, short, int, long</TD>
-	<TD>Integer</TD>
-    </TR>
-    <TR>
-	<TD>float, double</TD>
-	<TD>Float</TD>
-    </TR>
-    <TR>
-	<TD>java.lang.String,<br>byte[], char[]</TD>
-	<TD>String </TD>
-    </TR>
-    <TR>
-	<TD>java.lang.Class</TD>
-	<TD>Class or JavaClass (only if class subclasses from exactly
-	    one Java class; mutiple inheritance from more than one
-	    Java class is now illegal)</TD>
-    </TR>
-    <TR>
-	<TD>Foo[]</TD>
-	<TD>Array (must contain objects of class or subclass of Foo)</TD>
-    </TR>
-    <TR>
-	<TD>java.lang.Object</TD>
-	<TD>String-&gt;java.lang.String, all others unchanged </TD>
-    </TR>
-    <TR>
-	<TD>org.python.core.PyObject</TD>
-	<TD>All unchanged </TD>
-    </TR>
-    <TR>
-	<TD>Foo</TD>
-	<TD>Instance-&gt;Foo (if Instance is subclass of Foo);  <BR>
-	    JavaInstance -&gt; Foo (if JavaInstance is instance of Foo
-	    or subclass) </TD>
-    </TR>
-</TABLE>
+Java type. Notice the special behavior of <code>String</code>s when a
+<code>java.lang.Object</code> is expected. This behavior might change if
+it turns out to cause problems.
+
+<p><table border="1">
+<colgroup>
+<col width="20%"/>
+<col width="70%"/>
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Java Types</th>
+<th class="head">Allowed Python Types</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>char</td>
+<td>str (must have length 1)</td>
+</tr>
+<tr><td>boolean</td>
+<td>bool, int (true = nonzero)</td>
+</tr>
+<tr><td>byte, short, int, long</td>
+<td>int</td>
+</tr>
+<tr><td>float, double</td>
+<td>float</td>
+</tr>
+<tr><td>java.lang.String, byte[], char[]</td>
+<td>string (will be encoded), unicode</td>
+</tr>
+<tr><td>java.lang.Class Class
+or JavaClass</td>
+<td>(only if class subclasses from exactly one Java class; mutiple inheritance from more than one Java
+class is illegal)</td>
+</tr>
+<tr><td>Foo[]</td>
+<td>array (must contain objects of class or subclass of Foo), jarray (legacy)</td>
+</tr>
+<tr><td>java.lang.Object</td>
+<td>string or unicode -&gt; java.lang.String, all others unchanged</td>
+</tr>
+<tr><td>org.python.core.PyObject</td>
+<td>All unchanged</td>
+</tr>
+<tr><td>Foo</td>
+<td>Instance-&gt;Foo (if Instance is subclass of Foo);
+JavaInstance -&gt; Foo (if JavaInstance is instance of Foo or subclass)</td>
+</tr>
+</tbody>
+</table>
 
 <p>Returned values from a Java method are also possibly coerced back to
-an object that is more readily usable in Python.  The following table
+an object that is more readily usable in Python. The following table
 shows those coercions.
-  
+<p><table border="1">
+<colgroup>
+<col width="35%" />
+<col width="55%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Java Type</th>
+<th class="head">Returned Python Type</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>char</td>
+<td>unicode (of length 1)</td>
+</tr>
+<tr><td>boolean</td>
+<td>bool</td>
+</tr>
+<tr><td>byte, short, int, long</td>
+<td>int</td>
+</tr>
+<tr><td>float, double</td>
+<td>float</td>
+</tr>
+<tr><td>java.lang.String</td>
+<td>unicode</td>
+</tr>
+<tr><td>java.lang.Class</td>
+<td>type for the given Java class</td>
+</tr>
+<tr><td>Foo[]</td>
+<td>array (containing objects of class or subclass of Foo)</td>
+</tr>
+<tr><td>org.python.core.PyObject (or subclass)</td>
+<td>Unchanged</td>
+</tr>
+<tr><td>Foo</td>
+<td>instance which represents the Java Class Foo</td>
+</tr>
+</tbody>
+</table>
+
 <p><TABLE BORDER="1" WIDTH="100%">
-    <TR>
+ <TR>
 	<TH>Java Type</TH>
 	<TH>Returned Python Type</TH>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>char</TD>
 	<TD>String (of length 1) </TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>boolean</TD>
 	<TD>Integer (true = 1, false = 0) </TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>byte, short, int, long</TD>
 	<TD>Integer</TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>float, double</TD>
 	<TD>Float</TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>java.lang.String</TD>
 	<TD>String </TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>java.lang.Class</TD>
 	<TD>JavaClass which represents given Java class</TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>Foo[]</TD>
 	<TD>Array (containing objects of class or subclass of Foo)</TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>org.python.core.PyObject (or subclass)</TD>
 	<TD>Unchanged </TD>
-    </TR>
-    <TR>
+ </TR>
+ <TR>
 	<TD>Foo</TD>
 	<TD>JavaInstance which represents the Java Class Foo</TD>
-    </TR>
+ </TR>
 </TABLE>
  
 <H4>Overloaded Java Method Signatures</H4>
@@ -183,16 +219,15 @@ method can be easily determined from the number of arguments passed to
 the method.</P>
 
 <P>When the difference is instead in the types of the arguments, more
-work is required.  The possible signatures are sorted in a consistent
+work is required. The possible signatures are sorted in a consistent
 order that should ensure the appropriate method is chosen first.
-<b>TBD: documentation this order!</b>
 
 <P>If you need to call a Java method with a particular signature and
 this is not happening in the easy way, you can use the following
 workaround:</P>
 
 <P>Assume that foo has two methods, &quot;void foo(int x); void
-foo(byte x);&quot;.  To call the second method you could write the
+foo(byte x);&quot;. To call the second method you could write the
 following:</P>
 
 <blockquote><PRE>
@@ -200,28 +235,25 @@ from java.lang import Byte
 foo(Byte(10))
 </PRE></blockquote>
 
-<P>I'm not convinced that any better solution to this problem is possible.
-
 <H4>Naming Conflicts with Python Keywords</H4>
 
 <P>Because Java has a different set of keywords than Python, there are
 many Java classes that have method and function names that conflict
-with Python's keyword set.  Where the intent can be unambiguously
+with Python's keyword set. Where the intent can be unambiguously
 determined, no identifier mangling is necessary, such as when keywords 
-are used as attributes on objects.  Thus you can naturally write:
+are used as attributes on objects. Thus you can naturally write:
 
 <blockquote><PRE>
-java.lang.System.out.print("hi")
+<code>java.lang.System.out.print("hi")</code>
 </PRE></blockquote>
 
 or
 
 <blockquote><PRE>
-java.lang.Runtime.getRuntime().exec(cmd)</tt>
+<code>java.lang.Runtime.getRuntime().exec(cmd)</code>
 </PRE></blockquote>
 
 <p>In the rare case where the conflict can't be resolved due to Python's
 grammar, you should modify the reserved word by appended an underscore 
-to the end of it, e.g. <tt>print_</tt>
+to the end of it, e.g. <code>print_</code>.
 
-<p>
