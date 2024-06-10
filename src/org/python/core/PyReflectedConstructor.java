@@ -162,7 +162,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                         if (!argslist[i].isVarArgs) {
                             method = argslist[i].method;
                             break;
-                        } else {
+                        } else if (varargMatch == null) {
                             varargMatch = argslist[i].method;
                             varargData = callData;
                             callData = new ReflectedCallData();
