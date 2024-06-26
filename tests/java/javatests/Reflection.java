@@ -129,6 +129,10 @@ public class Reflection {
             constructorVersion = "int, int...";
         }
 
+        public Overloaded(boolean a, boolean... others) {
+            constructorVersion = "boolean, boolean...";
+        }
+
         public Overloaded(String s) {
             constructorVersion = "String";
         }
@@ -163,6 +167,10 @@ public class Reflection {
 
         public String foo(int... a) {
             return "int...";
+        }
+
+        public String foo(boolean a, boolean... b) {
+            return "boolean, boolean...";
         }
 
         public String bar(int a) {

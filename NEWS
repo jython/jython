@@ -32,7 +32,7 @@ New Features
 
 Jython 2.7.4b3 Bugs fixed
 
-
+    - [ GH-335 ] Method resolution for overridden variable arity changed as a result of PR #282
 
 Jython 2.7.4b2 Feature added
 
