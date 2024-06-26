@@ -3,11 +3,11 @@ Title: What is Jython?
 <h3>What is Jython?</h3>
 
 <P>Jython is an implementation of the high-level, dynamic,
-object-oriented language <A HREF="http://www.python.org">Python</A>
+object-oriented language <A HREF="https://www.python.org">Python</A>
 seamlessly integrated with the
-<A HREF="http://www.javasoft.com">Java</A> platform. 
+<A HREF="https://openjdk.org">Java</A> platform. 
 The predecessor to Jython, JPython, is certified as
-<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>.
+<A HREF="https://web.archive.org/web/20000815054021/java.sun.com/100percent/">100% Pure Java</A>.
 
 Jython is freely available for both commercial and non-commercial 
 use and is distributed with source code. Jython is complementary 
@@ -34,7 +34,7 @@ to Java and is especially suited for the following tasks:</P>
 </UL>
 
 <P>There are numerous
-<A HREF="http://grunge.cs.tu-berlin.de/~tolk/vmlanguages.html">
+<A HREF="https://web.archive.org/web/20000815230935/grunge.cs.tu-berlin.de/~tolk/vmlanguages.html">
 alternative languages</A>
 implemented for the Java VM. The following features help to separate
 Jython from the rest:</P>
@@ -51,7 +51,7 @@ Jython from the rest:</P>
 
     <LI><B>Bean Properties</B> - make use of Java packages much easier.
 
-    <LI><B><A HREF="http://www.python.org/doc/Summary.html">
+    <LI><B><A HREF="https://legacy.python.org/about/">
 	Python Language</A></B> - combines remarkable power with
 	very clear syntax. It also supports a full object-oriented
 	programming model which makes it a natural fit for Java's OO

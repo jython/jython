@@ -78,7 +78,7 @@ class InfiniteOnes(InputStream):
         if len(args) > 0:
 	    # int read(byte[])
 	    # int read(byte[], int, int)
-            return apply(InputStream.read, (self,)+args)
+            return InputStream.read(self, *args)
         return 1
 
 io = InfiniteOnes()
