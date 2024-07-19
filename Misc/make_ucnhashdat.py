@@ -377,6 +377,7 @@ if __name__ == "__main__":
     wordmap = {}
 
     # Called 2017 with UnicodeData.txt for Unicode 9.0
+    # Called 2024 with https://www.unicode.org/Public/15.1.0/ucd/UnicodeData.txt
     unicodeDataFile = "UnicodeData.txt"
     if len(sys.argv) > 1:
         unicodeDataFile = sys.argv[1]
