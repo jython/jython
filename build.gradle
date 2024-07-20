@@ -152,8 +152,8 @@ dependencies {
     //implementation 'org.postgresql:postgresql:42.1.1.jre7'
 
     // pin to Antlr 3 until we upgrade parsing
-    antlr 'org.antlr:antlr:3.5.2'
-    implementation 'org.antlr:antlr-runtime:3.5.2'
+    antlr 'org.antlr:antlr:3.5.3'
+    implementation 'org.antlr:antlr-runtime:3.5.3'
 
     implementation 'org.apache.commons:commons-compress:1.26.0'
     implementation 'commons-io:commons-io:2.15.1'
