@@ -251,9 +251,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.3.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-9.6.jar" />
-                <file name="asm-commons-9.6.jar" />
-                <file name="asm-util-9.6.jar" />
+                <file name="asm-9.7.jar" />
+                <file name="asm-commons-9.7.jar" />
+                <file name="asm-util-9.7.jar" />
                 <file name="commons-compress-1.26.0.jar"/>
                 <file name="commons-io-2.15.1.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
@@ -847,9 +847,9 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-9.6.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-commons-9.6.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-util-9.6.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-9.7.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-commons-9.7.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-util-9.7.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk18on-1.77.jar" excludes="META-INF/**"/>
             <zipfileset src="extlibs/bcprov-jdk18on-1.77.jar" excludes="META-INF/**"/>
