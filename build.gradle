@@ -177,7 +177,7 @@ dependencies {
     implementation 'com.github.jnr:jnr-netdb:1.2.0'
     implementation 'com.github.jnr:jnr-posix:3.1.19'
 
-    implementation 'jline:jline:2.14.5'
+    implementation 'jline:jline:2.14.6'
 
     implementation 'io.netty:netty-buffer:4.1.73.Final'
     implementation 'io.netty:netty-codec:4.1.73.Final'
