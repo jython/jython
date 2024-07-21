@@ -265,7 +265,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="jnr-ffi-2.2.16.jar"/>
                 <file name="jnr-netdb-1.2.0.jar"/>
                 <file name="jnr-posix-3.1.19.jar"/>
-                <file name="jline-2.14.5.jar"/>
+                <file name="jline-2.14.6.jar"/>
                 <file name="netty-buffer-4.1.73.Final.jar"/>
                 <file name="netty-codec-4.1.73.Final.jar"/>
                 <file name="netty-common-4.1.73.Final.jar"/>
@@ -911,7 +911,7 @@ The text for an official release would continue like ...
             <rule pattern="org.apache.xerces.**" result="org.python.apache.xerces.@1"/>
             <rule pattern="org.apache.wml.**" result="org.python.apache.wml.@1"/>
             <rule pattern="org.apache.html.**" result="org.python.apache.html.@1"/>
-            <zipfileset src="extlibs/jline-2.14.5.jar"/>
+            <zipfileset src="extlibs/jline-2.14.6.jar"/>
             <rule pattern="jline.**" result="org.python.jline.@1"/>
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.jython" />
