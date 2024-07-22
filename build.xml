@@ -255,9 +255,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="asm-commons-9.7.jar" />
                 <file name="asm-util-9.7.jar" />
                 <file name="commons-compress-1.26.2.jar"/>
-                <file name="commons-io-2.15.1.jar"/>
+                <file name="commons-io-2.16.1.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
-                <file name="guava-32.1.2-jre.jar" />
+                <file name="guava-33.2.1-jre.jar" />
                 <file name="icu4j-71.1.jar" />
                 <file name="jffi-1.3.13.jar"/>
                 <file name="java-sizeof-0.0.5.jar"/>
@@ -856,10 +856,10 @@ The text for an official release would continue like ...
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.26.2.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
-            <zipfileset src="extlibs/commons-io-2.15.1.jar" excludes="META-INF/versions/9/module-info.class"/>
+            <zipfileset src="extlibs/commons-io-2.16.1.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.io.**" result="org.python.apache.commons.io.@1"/>
             <zipfileset src="extlibs/failureaccess-1.0.1.jar"/>
-            <zipfileset src="extlibs/guava-32.1.2-jre.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/guava-33.2.1-jre.jar" excludes="META-INF/**"/>
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-71.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
