@@ -158,8 +158,8 @@ dependencies {
     implementation 'org.apache.commons:commons-compress:1.26.2'
     implementation 'commons-io:commons-io:2.16.1'
 
-    implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'org.ow2.asm:asm-commons:9.7'
