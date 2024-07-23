@@ -179,6 +179,8 @@ dependencies {
 
     implementation 'jline:jline:2.14.6'
 
+    // Netty JARs currently pinned at 4.1.73 by issue #349.
+    // Later versions (tried .80, .112) produce test failures.
     implementation 'io.netty:netty-buffer:4.1.73.Final'
     implementation 'io.netty:netty-codec:4.1.73.Final'
     implementation 'io.netty:netty-common:4.1.73.Final'
