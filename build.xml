@@ -266,6 +266,8 @@ informix.jar = ../support/jdbc-4.10.12.jar
                 <file name="jnr-netdb-1.2.0.jar"/>
                 <file name="jnr-posix-3.1.19.jar"/>
                 <file name="jline-2.14.6.jar"/>
+                <!-- Netty JARs currently pinned at 4.1.73 by issue #349.
+                     Later versions (tried .80, .112) produce test failures. -->
                 <file name="netty-buffer-4.1.73.Final.jar"/>
                 <file name="netty-codec-4.1.73.Final.jar"/>
                 <file name="netty-common-4.1.73.Final.jar"/>
@@ -863,6 +865,8 @@ The text for an official release would continue like ...
             <rule pattern="com.google.**" result="org.python.google.@1"/>
             <zipfileset src="extlibs/icu4j-75.1.jar"/>
             <rule pattern="com.ibm.icu.**" result="org.python.icu.@1"/>
+            <!-- Netty JARs currently pinned at 4.1.73 by issue #349.
+                 Later versions (tried .80, .112) produce test failures. -->
             <zipfileset src="extlibs/netty-buffer-4.1.73.Final.jar" excludes="META-INF/**"/>
             <rule pattern="io.netty.**" result="org.python.netty.@1"/>
             <zipfileset src="extlibs/netty-codec-4.1.73.Final.jar" excludes="META-INF/**"/>
