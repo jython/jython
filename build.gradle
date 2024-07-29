@@ -45,7 +45,7 @@ import java.text.SimpleDateFormat
 // Versions are specified in this grammar:
 // <major> . <minor> ( . <micro> )? ( <release> <serial> )? ( - <word> )?
 
-version = '2.7.4b3'
+version = '2.7.4rc1'
 
 // Valid examples (please preserve in comments):
 //version = '2.7.2a2'
