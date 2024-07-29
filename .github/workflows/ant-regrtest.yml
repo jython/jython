@@ -16,6 +16,7 @@ jobs:
   ant-regrtest-ubuntu-jdk8:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
@@ -38,6 +39,7 @@ jobs:
   ant-regrtest-windows-jdk11:
 
     runs-on: windows-latest
+    timeout-minutes: 5
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
