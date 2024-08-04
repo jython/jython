@@ -29,6 +29,10 @@ New Features
       duplicated in its module, which can be a problem. It may be necessary to
       --add-modules ALL-DEFAULT to ensure JDK classes are resolved.
 
+Jython 2.7.4rc2 Bugs fixed
+
+
+
 Jython 2.7.4rc1 Bugs fixed
     - [ GH-344 ] Updated ucnhash.dat to Unicode 15.1.
     - [ GH-343 ] Export xml.parsers and xml.etree in xml.__all__.
