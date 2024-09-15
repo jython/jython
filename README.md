@@ -1,6 +1,7 @@
 # Jython: Python for the Java Platform
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.python/jython-standalone/badge.svg)](https://search.maven.org/artifact/org.python/jython-standalone/)
 [![Javadocs](https://www.javadoc.io/badge/org.python/jython-standalone.svg)](https://www.javadoc.io/doc/org.python/jython-standalone)
+[![APIdia](https://apidia.net/java/Jython/badge.svg)](https://apidia.net/java/Jython)
 
 This is the development repository of Jython,
 the implementation of Python in Java.
