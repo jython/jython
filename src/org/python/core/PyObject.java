@@ -31,8 +31,8 @@ public class PyObject implements Serializable {
      * This should have been suited at {@link org.python.modules.gc}, but that would cause a
      * dependency cycle in the init-phases of {@code gc.class} and {@code PyObject.class}. Now this
      * boolean mirrors the presence of the {@link org.python.modules.gc#MONITOR_GLOBAL}-flag in
-     * Jython's gc module.<br>
-     * <br>
+     * Jython's gc module.
+     * <p>
      * <b>Do not change manually.</b>
      */
     public static boolean gcMonitorGlobal = false;
@@ -52,7 +52,8 @@ public class PyObject implements Serializable {
      * @see org.python.core.JyAttribute#JAVA_PROXY_ATTR
      * @see #getJavaProxy()
      */
-    protected Object attributes;
+    // See explanation in JyAttribute.getAttr for why this field has to be volatile.
+    protected volatile Object attributes;
 
     /** Primitives classes their wrapper classes. */
     private static final Map<Class<?>, Class<?>> primitiveMap = Generic.map();
