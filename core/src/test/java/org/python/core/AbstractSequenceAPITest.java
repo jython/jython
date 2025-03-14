@@ -510,7 +510,7 @@ class AbstractSequenceAPITest extends UnitTestSupport {
         for (int i = 0; i < L; i++) { assertEquals(ref.get(i), PySequence.getItem(result, i)); }
     }
 
-    /**
+    /*
      * Test {@link PySequence#list(Object) PySequence.list}
      *
      * @param type unused (for parameterised name only)
