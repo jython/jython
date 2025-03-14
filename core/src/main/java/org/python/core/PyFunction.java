@@ -66,10 +66,7 @@ public abstract class PyFunction<C extends PyCode> extends AbstractPyObject
     /** The {@code __kwdefaults__} or {@code null}. */
     protected PyDict kwdefaults;
 
-    /**
-     * The read-only {@code __closure__} attribute, or {@code null}. See
-     * {@link #setClosure(Collection) __closure__} access method
-     */
+    /** The read-only {@code __closure__} attribute, or {@code null}. */
     @FrozenArray
     protected PyCell[] closure;
 

@@ -264,7 +264,6 @@ class SlotWrapperTestBase {
          *
          * @param type under test
          * @param name of the special method
-         * @param signature required of the slot method
          * @param cases list of values to use as self
          * @throws IllegalArgumentException if not a unary slot method name
          * @throws AttributeError if method not found

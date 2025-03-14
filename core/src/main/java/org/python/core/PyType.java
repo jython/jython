@@ -890,7 +890,7 @@ public class PyType extends Operations implements DictPyObject {
         IS_DATA_DESCR,
         /**
          * An object of this type is a method descriptor (participates in an
-         * optimised call pattern supported by {@link Opcode#LOAD_METHOD}).
+         * optimised call pattern).
          */
         IS_METHOD_DESCR,
     }
