@@ -1,28 +1,103 @@
 /*
  * core.gradle
  *
- * Sub-project of Jython: interpreter core. We to generate and compile the
- * implementation of the core Python objects, exporting a minimal API.
+ * Sub-project of Jython: interpreter and runtime. This script generates
+ * and compiles the implementation of the core Python objects.
+ *
+ * We use the Java module system to control visibility.
  */
 
 plugins {
     id 'java-library'
+    id 'jvm-test-suite'
 }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
 
 dependencies {
-    //implementation 'org.ow2.asm:asm:9.+'
-
-    // JUnit 5 dependencies
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.+'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.+'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.+'
+    // We generate byte code with ASM
+    implementation 'org.ow2.asm:asm:9.7'
+    implementation 'org.ow2.asm:asm-tree:9.7'
+    // We standardise on SLF4J for logging from the library
+    implementation 'org.slf4j:slf4j-api:2.0.13'
 }
 
 
-test {
-    useJUnitPlatform {  // JUnit5 as standard
-        includeEngines 'junit-jupiter'
+// Configure the jvm-test-suite plug-in
+testing {
+    suites {
+        // The pre-defined test suite.
+        test {
+            useJUnitJupiter()
+            dependencies {
+                // Include a logging provider (JDK 1.4)
+                runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.13'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        // Log output will show when kernel is re-used
+                        systemProperty(
+                            'java.util.logging.config.file',
+                            getProject().file('config/test.logging.properties') )
+                        testLogging.showStandardStreams = true
+                    }
+                }
+            }
+        }
+
+        /*
+         * A test suite where each test runs in its own JVM.
+         * We follow the Gradle 8.8 notes on the JVM Test Suite Plugin.
+         * and the example of configuring integration tests.
+         */
+        kernelTest(JvmTestSuite) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation project()
+                implementation 'org.slf4j:slf4j-api:2.0.13'
+                // Include a logging provider (JDK 1.4)
+                runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.13'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        // Important: fresh JVM with every kernel test
+                        forkEvery = 1
+                        // Log output will prove kernel is recreated
+                        systemProperty(
+                            'java.util.logging.config.file',
+                            getProject().file('config/kernelTest.logging.properties') )
+                        systemProperty(
+                            'org.python.runtime.BootstrapTest.times',
+                            'false')
+                        testLogging.showStandardStreams = true
+                    }
+                }
+            }
+        }
     }
+}
+
+test.dependsOn(kernelTest)
+
+
+tasks.named('check') { 
+    dependsOn(testing.suites.kernelTest)
 }
 
 
@@ -118,11 +193,82 @@ task compileTestPythonExamples(type: PythonExec,
 processTestResources.dependsOn(compileTestPythonExamples)
 
 
-// Some adjustments to Javadoc to ensure complex tables readable
+// Task to generate javadoc for project maintainers (down to private)
+task internalJavadoc(type:Javadoc,
+        description: 'Generate project internal Javadoc') {
 
-tasks.withType(Javadoc) {
+    source(sourceSets.main.allJava)
+    title = "core Project Internal"
+    destinationDir = file("${buildDir}/docs/internalJavadoc")
+
+    def ccp = sourceSets.main.compileClasspath
+    //println "ccp.files = ${ccp.files}"
+    classpath.from(ccp)
 
     options.showFromPackage()
+    //options.showFromPrivate()
+}
+
+
+// Task to generate javadoc for the module API (that client apps use)
+task moduleJavadoc(type:Javadoc,
+        description: 'Generate Javadoc for module API') {
+    source = sourceSets.main.allJava
+    title = "core Client API"
+    destinationDir = file("${buildDir}/docs/api")
+
+    // addStringOption adds a "-" for us so "--module" is spelled:/
+    //options.addStringOption("-module", "org.python.core")
+    options.addStringOption("-show-packages", "exported")
+    options.addStringOption("-show-module-contents", "api")
+}
+
+
+javadoc {
+    title = "core Public API"
+    options.addStringOption("-show-packages", "exported")
+    options.addStringOption("-show-module-contents", "api")
+}
+
+
+// Task to generate javadoc for test code
+task testJavadoc(type:Javadoc,
+        description: 'Generate Javadoc for tests',
+        dependsOn: internalJavadoc) {
+
+    source(sourceSets.test.allJava, sourceSets.kernelTest.allJava)
+    title = "core Unit Tests"
+    destinationDir = file("${buildDir}/docs/testJavadoc")
+
+    // Ensure the test support (JUnit) is on the class path
+    def tccp = sourceSets.test.compileClasspath
+    //println "tccp.files = ${tccp.files}"
+
+    classpath.from(tccp)
+
+    /* We have used the class path not the module path because
+     * otherwise javadoc complains the JUnit API is not in the
+     * module graph (not in module-info.java) and fails badly.
+     * This way we get non-modular Javadoc for the tests :( and
+     * a warning about linked classes in the same package being
+     * modular, but it is only a warning.
+     */
+    //modularity.inferModulePath = false
+    //options.modulePath(new ArrayList(tccp.files))
+    //println "options.modulePath = ${options.modulePath}"
+
+    options.showFromPackage()
+
+    // internal javadoc already at ${buildDir}/docs/javadoc
+    // We want to click through to the objects under test
+    options.links.add("../internalJavadoc")
+}
+
+
+// Some adjustments to Javadoc to ensure complex tables readable
+// and to confirm the module path being used.
+
+tasks.withType(Javadoc) {
 
     // addStringOption inserts one "-" for us :/
     // CSS adjustments (initially only for table style)
@@ -139,6 +285,8 @@ tasks.withType(Javadoc) {
         // so they come after the ones we want to enable.
         "param", "return", "throws",
         "since", "version", "serialData", "see")
+
+
 }
 
 
@@ -147,6 +295,8 @@ tasks.withType(Javadoc) {
 
 tasks.withType(JavaCompile) {
     // retain parameter names (for use by exposer)
+    // The IDE may have a compiler setting necessary for the exposer:
+    // "Store information about method parameters"
     options.compilerArgs.add('-parameters')
 }
 
