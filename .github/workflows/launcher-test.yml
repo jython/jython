@@ -19,8 +19,9 @@ jobs:
 
   launcher-test-macos-jdk8:
 
-    runs-on: macos-12 # macos-latest (now >12) no longer installs Java 8
-                      # Options at https://github.com/actions/runner-images
+    runs-on: macos-latest
+       # macos-latest (now >12) no longer installs Java 8
+       # Options at https://github.com/actions/runner-images
 
     steps:
     - run: echo "Branch ${{ github.ref }} of repository ${{ github.repository }}."
