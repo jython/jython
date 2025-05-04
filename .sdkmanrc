@@ -1,0 +1,8 @@
+# Enable auto-env through the sdkman_auto_env config
+# Add key=value pairs of SDKs to use below
+
+# Ant
+ant=1.10.14
+
+# Java
+java=8.0.452-tem
