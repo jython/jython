@@ -17,10 +17,10 @@ permissions:
 
 jobs:
 
-  launcher-test-macos-jdk8:
+  launcher-test-macos-jdk11:
 
     runs-on: macos-latest
-       # macos-latest (now >12) no longer installs Java 8
+       # macos-latest (now 14) supports at minimum Java 11
        # Options at https://github.com/actions/runner-images
 
     steps:
@@ -31,10 +31,10 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Set up JDK 8
+    - name: Set up JDK 11
       uses: actions/setup-java@v4
       with:
-        java-version: '8'
+        java-version: '11'
         distribution: 'temurin'
 
     # We have to install Python 2.7 explicitly
@@ -80,4 +80,5 @@ jobs:
 
     - name: Run Java tests with Ant
       run: ant javatest-ci
+
 
