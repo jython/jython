@@ -3,7 +3,6 @@ package org.python.core;
 import java.io.Serializable;
 
 /**
- * <p>
  * Manages a linked list of general purpose Object-attributes that
  * can be attached to arbitrary {@link org.python.core.PyObject}s.
  * This method replaces the formerly used method of maintaining weak
@@ -13,12 +12,10 @@ import java.io.Serializable;
  * to attach
  * {@link org.python.modules._weakref.GlobalRef}-objects in the
  * {@link org.python.modules._weakref.WeakrefModule}.
- * </p>
  * <p>
  * Attributes attached via the weak hash-map-method break, if the
  * {@code PyObject} is resurrected in its finalizer. The
  * {@code JyAttribute}-method is resurrection-safe.
- * </p>
  * <p>
  * To reduce memory footprint of {@code PyObject}s, the fields for
  * {@link org.python.core.finalization.FinalizeTrigger}s and
@@ -26,7 +23,6 @@ import java.io.Serializable;
  * on top so there is no speed-regression,
  * {@link org.python.core.finalization.FinalizeTrigger} on bottom,
  * as it is usually never accessed.
- * </p>
  */
 public abstract class JyAttribute implements Serializable {
     /* ordered by priority; indices >= 0 indicate transient attributes.
@@ -48,7 +44,7 @@ public abstract class JyAttribute implements Serializable {
     public static final byte WEAK_REF_ATTR = 0; //first transient
 
     /**
-     * Reserved for use by <a href="http://www.jyni.org" target="_blank">JyNI</a>.
+     * Reserved for use by <a href="https://jyni.12hp.de" target="_blank">JyNI</a>.
      */
     public static final byte JYNI_HANDLE_ATTR = 1;
 
@@ -87,15 +83,15 @@ public abstract class JyAttribute implements Serializable {
     public static final byte GC_DELAYED_FINALIZE_CRITICAL_MARK_ATTR = 6;
 
     public static final byte FINALIZE_TRIGGER_ATTR = Byte.MAX_VALUE;
-    private static byte nonBuiltinAttrTypeOffset = Byte.MIN_VALUE+1;
-    private static byte nonBuiltinTransientAttrTypeOffset = 7;
+    private static volatile byte nonBuiltinAttrTypeOffset = Byte.MIN_VALUE+1;
+    private static volatile byte nonBuiltinTransientAttrTypeOffset = 7;
 
     /**
      * Reserves and returns a new non-transient attr type for custom use.
      *
      * @return a non-transient attr type for custom use
      */
-    public static byte reserveCustomAttrType() {
+    public static synchronized byte reserveCustomAttrType() {
         if (nonBuiltinAttrTypeOffset == 0) {
             throw new IllegalStateException("No more attr types available.");
         }
@@ -107,18 +103,18 @@ public abstract class JyAttribute implements Serializable {
      *
      * @return a transient attr type for custom use
      */
-    public static byte reserveTransientCustomAttrType() {
+    public static synchronized byte reserveTransientCustomAttrType() {
         if (nonBuiltinTransientAttrTypeOffset == Byte.MAX_VALUE) {
             throw new IllegalStateException("No more transient attr types available.");
         }
         return nonBuiltinTransientAttrTypeOffset++;
     }
 
-    byte attr_type;
+    final byte attr_type;
 
     static class AttributeLink extends JyAttribute {
-        JyAttribute next;
-        Object value;
+        volatile JyAttribute next;
+        volatile Object value;
 
         protected AttributeLink(byte attr_type, Object value) {
             super(attr_type);
@@ -147,8 +143,8 @@ public abstract class JyAttribute implements Serializable {
     }
 
     static class TransientAttributeLink extends JyAttribute {
-        transient JyAttribute next;
-        transient Object value;
+        volatile transient JyAttribute next;
+        volatile transient Object value;
 
         protected TransientAttributeLink(byte attr_type, Object value) {
             super(attr_type);
@@ -197,18 +193,51 @@ public abstract class JyAttribute implements Serializable {
      * Retrieves the attribute of the given type from the given
      * {@link org.python.core.PyObject}.
      * If no attribute of the given type is attached, null is returned.
+     * 
+     * This class is generally thread safe, but this method is not synchronized with
+     * concurrent write access to avoid performance issues for multithreaded scenarios.
+     * The trade-off for that choice is that in case of concurrent write access, it is
+     * unspecified whether this method returns according to the old state or the new state.
+     * This method is thread safe in the sense that a concurrent write access never exposes
+     * an invalid intermediate state to this read access.
      */
     public static Object getAttr(PyObject ob, byte attr_type) {
-        synchronized (ob) {
-            if (ob.attributes instanceof JyAttribute) {
-                JyAttribute att = (JyAttribute) ob.attributes;
-                while (att != null && att.attr_type < attr_type) {
-                    att = att.getNext();
-                }
-                return att != null && att.attr_type == attr_type ? att.getValue() : null;
+        /*
+        Here used to be a synchronized(ob) block encapsulating the whole method code.
+        It has been removed due to performance issues reported in
+        github.com/jython/jython/issues/360.
+        By making ob.attributes in PyObject and next and value in AttributeLink and
+        TransientAttributeLink volatile, the read access in this method does not
+        fatally interfere with a concurrent write operation.
+        (Write operations continue to be synchronized against each other.)
+        https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.4.4 states:
+        "A write to a volatile variable v (§8.3.1.4) synchronizes-with all subsequent reads
+         of v by any thread"
+        This induces an x happens-before y relation hb(x, y) according to
+        https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.4.5:
+        "If an action x synchronizes-with a following action y, then we also have hb(x, y)."
+        Also see https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html,
+        which confirms the anticipated behavior of volatile fields for Java 5 and onwards.
+        Write accesses in the linked attribute list are designed to update the list tail
+        such that a concurrent read access would iterate either through the old state or
+        the new state. No invalid intermediate state is exposed to the read access.
+        Due to volatile semantics, this assumption cannot be broken by code reordering
+        issues like pointed out in the linked DoubleCheckedLocking document.
+        */
+        Object oatt = ob.attributes; // atomic one-time access to ob.attributes, which is volatile
+        if (oatt instanceof JyAttribute) {
+            JyAttribute att = (JyAttribute) oatt;
+            while (att != null && att.attr_type < attr_type) {
+                att = att.getNext(); // atomic access to next, which is volatile
+                // Perhaps att is affected by a concurrent write access, perhaps not.
+                // Since the next-field is volatile, att is always a properly initialized
+                // attribute sequence head at this point.
+                // The overall iteration is therefore either according to the old state
+                // or according to the new state.
             }
-            return attr_type == JAVA_PROXY_ATTR ? ob.attributes : null;
+            return att != null && att.attr_type == attr_type ? att.getValue() : null;
         }
+        return attr_type == JAVA_PROXY_ATTR ? oatt : null;
     }
 
     /**
