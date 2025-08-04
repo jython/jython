@@ -403,7 +403,7 @@ public class Builtins {
      * Loads (if necessary) and returns the specified built-in module.
      */
     public NModuleType get(String name) {
-        if (name.indexOf(".") == -1) {  // unqualified
+        if (!name.contains(".")) {  // unqualified
             return getModule(name);
         }
 

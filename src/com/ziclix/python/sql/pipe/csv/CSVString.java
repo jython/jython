@@ -36,7 +36,7 @@ public class CSVString {
 
         String res = replace(string, "\"", "\"\"");
 
-        if ((res.indexOf("\"") >= 0) || (string.indexOf(delimiter) >= 0)) {
+        if ((res.contains("\"")) || (string.contains(delimiter))) {
             res = "\"" + res + "\"";
         }
 
