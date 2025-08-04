@@ -59,7 +59,7 @@ public class PyArgParser {
      * How many keywords?
      */
     public int numKw() {
-        return keywords.keySet().size();
+        return keywords.size();
     }
 
     /**
