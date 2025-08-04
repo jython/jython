@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1177,7 +1178,7 @@ public class PySystemState extends PyObject
                     "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
             return false;
         }
-        BufferedReader r = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
+        BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         String className;
         try {
             className = r.readLine();

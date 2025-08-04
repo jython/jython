@@ -340,9 +340,9 @@ public class ParserFacade {
             // Use ascii for the raw bytes when no encoding was specified
             if (encoding == null) {
                 if (fromString) {
-                    cs = Charset.forName("ISO-8859-1");
+                    cs = StandardCharsets.ISO_8859_1;
                 } else {
-                    cs = Charset.forName("ascii");
+                    cs = StandardCharsets.US_ASCII;
                 }
             } else {
                 cs = Charset.forName(encoding);

@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -460,11 +461,7 @@ public class Issue1972 {
         if (addSeparator) {
             // Each expected string must be treated as if the lineSeparator were appended
             String escapedSeparator = "";
-            try {
-                escapedSeparator = escape(lineSeparator.getBytes("US-ASCII"));
-            } catch (UnsupportedEncodingException e) {
-                fail("Could not encode line separator as ASCII"); // Never happens
-            }
+            escapedSeparator = escape(lineSeparator.getBytes(StandardCharsets.US_ASCII));
             // ... so append one
             for (int i = 0; i < expected.length; i++) {
                 expected[i] += escapedSeparator;
