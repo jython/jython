@@ -321,7 +321,7 @@ public class Issue1972 {
         }
 
         if (VERBOSE >= 1) {
-            System.out.println(String.format("  count = %4d", count));
+            System.out.printf("  count = %4d%n", count);
         }
 
         toProc.close();
@@ -581,7 +581,7 @@ public class Issue1972 {
      */
     static void announceTest(int verbose, String name) {
         if (verbose >= 1) {
-            System.out.println(String.format("------- Test: %-40s -------", name));
+            System.out.printf("------- Test: %-40s -------%n", name);
         }
     }
 
