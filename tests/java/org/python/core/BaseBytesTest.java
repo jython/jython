@@ -429,9 +429,7 @@ public class BaseBytesTest extends TestCase {
             // Reference answer
             int[] bRef = new int[count * L];
             for (int i = 0; i < count; i++) {
-                for (int j = 0; j < L; j++) {
-                    bRef[i * L + j] = aRef[j];
-                }
+                System.arraycopy(aRef, 0, bRef, i * L, L);
             }
             // Test
             BaseBytes b = a.repeat(count);
