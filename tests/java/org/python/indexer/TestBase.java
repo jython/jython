@@ -168,7 +168,7 @@ public class TestBase extends TestCase {
     public void testLoadDataFile() throws Exception {
         String path = abspath("test-load.txt");
         BufferedReader in = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get(path))));
-        assertEquals(in.readLine().trim(), "hello");
+        assertEquals("hello", in.readLine().trim());
         in.close();
     }
 
