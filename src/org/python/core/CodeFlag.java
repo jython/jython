@@ -62,7 +62,7 @@ public enum CodeFlag {
 
 
     public final int flag;
-    private static Iterable<CodeFlag> allFlags = Collections.unmodifiableList(Arrays.asList(values()));
+    private static final Iterable<CodeFlag> allFlags = Collections.unmodifiableList(Arrays.asList(values()));
 
     private CodeFlag(int flag) {
         this.flag = flag;
@@ -73,43 +73,36 @@ public enum CodeFlag {
     }
 
     static Iterable<CodeFlag> parse(final int flags) {
-        return new Iterable<CodeFlag>() {
+        return () -> new Iterator<CodeFlag>() {
+            final Iterator<CodeFlag> all = allFlags.iterator();
+            CodeFlag next = null;
 
-            public Iterator<CodeFlag> iterator() {
-                return new Iterator<CodeFlag>() {
-                    Iterator<CodeFlag> all = allFlags.iterator();
-                    CodeFlag next = null;
-
-                    public boolean hasNext() {
-                        if (next != null) {
-                            return true;
-                        }
-                        while (all.hasNext()) {
-                            CodeFlag flag = all.next();
-                            if (flag.isFlagBitSetIn(flags)) {
-                                next = flag;
-                                return true;
-                            }
-                        }
-                        return false;
+            public boolean hasNext() {
+                if (next != null) {
+                    return true;
+                }
+                while (all.hasNext()) {
+                    CodeFlag flag = all.next();
+                    if (flag.isFlagBitSetIn(flags)) {
+                        next = flag;
+                        return true;
                     }
-
-                    public CodeFlag next() {
-                        if (hasNext()) try {
-                            return next;
-                        } finally {
-                            next = null;
-                        }
-                        throw new IllegalStateException();
-                    }
-
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-
-                };
+                }
+                return false;
             }
 
+            public CodeFlag next() {
+                if (hasNext()) try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+                throw new IllegalStateException();
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }

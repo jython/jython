@@ -1254,7 +1254,7 @@ for line in sys.stdin:
 
     private enum CACHE {
         INSTANCE(Options.sreCacheSpec);
-        private LoadingCache<PyString, int[]> cache;
+        private final LoadingCache<PyString, int[]> cache;
 
         private CACHE(String spec) {
             CacheLoader<PyString, int[]> loader = new CacheLoader<PyString, int[]>() {
