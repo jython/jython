@@ -23,7 +23,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
@@ -836,10 +835,10 @@ public class PySystemState extends PyObject
         }
         String lversion = version.toLowerCase();
         if (lversion.startsWith("java")) {
-            version = version.substring(4, version.length());
+            version = version.substring(4);
         }
         if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
-            version = version.substring(3, version.length());
+            version = version.substring(3);
         }
         if (version.equals("12")) {
             version = "1.2";
@@ -1071,7 +1070,7 @@ public class PySystemState extends PyObject
                 try {
                     try (FileInputStream fp = new FileInputStream(file)) {
                         fileProperties.load(fp);
-                        for (Entry kv : fileProperties.entrySet()) {
+                        for (Entry<Object, Object> kv : fileProperties.entrySet()) {
                             Object key = kv.getKey();
                             if (!registry.containsKey(key)) {
                                 registry.put(key, kv.getValue());
@@ -1169,16 +1168,16 @@ public class PySystemState extends PyObject
     private static boolean initialize(Properties pre, Properties post, String[] argv,
             ClassLoader sysClassLoader, ExtensiblePyObjectAdapter adapter,
             ClassLoader initializerClassLoader) {
-        InputStream in = initializerClassLoader.getResourceAsStream(INITIALIZER_SERVICE);
-        if (in == null) {
-            Py.writeDebug("initializer",
-                    "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
-            return false;
-        }
-        BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         String className;
-        try {
-            className = r.readLine();
+        try (InputStream in = initializerClassLoader.getResourceAsStream(INITIALIZER_SERVICE)) {
+            if (in == null) {
+                Py.writeDebug("initializer",
+                        "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
+                return false;
+            }
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                className = r.readLine();
+            }
         } catch (IOException e) {
             Py.writeWarning("initializer",
                     "Failed reading '" + INITIALIZER_SERVICE + "' from " + initializerClassLoader);
@@ -1411,7 +1410,6 @@ public class PySystemState extends PyObject
         try {
             // Default is a plain console
             Py.installConsole(new PlainConsole(encoding));
-            return;
         } catch (Exception e) {
             /*
              * May end up here if prior console won't uninstall: but then at least we have a

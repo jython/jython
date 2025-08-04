@@ -59,10 +59,10 @@ public class ModjyJServlet extends HttpServlet {
     protected HttpServlet modjyServlet;
 
     /**
-     * Read configuration 
+     * Read configuration
      * 1. Both context and servlet parameters are included in the set, so that
      * the definition of some parameters (e.g python.*) can be shared between multiple WSGI
-     * servlets. 
+     * servlets.
      * 2. servlet params take precedence over context parameters
      */
     protected Properties readConfiguration() {
@@ -71,13 +71,13 @@ public class ModjyJServlet extends HttpServlet {
         ServletContext context = getServletContext();
         Enumeration<?> e = context.getInitParameterNames();
         while (e.hasMoreElements()) {
-            String name = (String)e.nextElement();
+            String name = (String) e.nextElement();
             props.put(name, context.getInitParameter(name));
         }
         // Servlet parameters override context parameters
         e = getInitParameterNames();
         while (e.hasMoreElements()) {
-            String name = (String)e.nextElement();
+            String name = (String) e.nextElement();
             props.put(name, getInitParameter(name));
         }
         // Check if python home is relative, in which case find it in the servlet context
@@ -92,10 +92,10 @@ public class ModjyJServlet extends HttpServlet {
     }
 
     /**
-     * Initialise the modjy servlet. 
-     * 1. Read the configuration 
-     * 2. Initialise the jython runtime 
-     * 3. Setup, in relation to the J2EE servlet environment 
+     * Initialise the modjy servlet.
+     * 1. Read the configuration
+     * 2. Initialise the jython runtime
+     * 3. Setup, in relation to the J2EE servlet environment
      * 4. Create the jython-implemented servlet
      * 5. Initialise the jython-implemented servlet
      */
@@ -144,17 +144,16 @@ public class ModjyJServlet extends HttpServlet {
 
     /**
      * Close down the modjy servlet.
-     *
      */
     @Override
-    public void destroy( ) {
+    public void destroy() {
         interp.cleanup();
     }
 
     /**
      * Setup the modjy environment, i.e.
-     *    1. Find the location of the modjy.jar file and add it to sys.path
-     *    2. Process the WEB-INF/lib-python directory, if it exists
+     * 1. Find the location of the modjy.jar file and add it to sys.path
+     * 2. Process the WEB-INF/lib-python directory, if it exists
      *
      * @param interp
      *            - The PythonInterpreter used to service requests
@@ -229,9 +228,8 @@ public class ModjyJServlet extends HttpServlet {
                                   PySystemState systemState,
                                   String pythonLibPath,
                                   String pthFilename) {
-        try {
-            LineNumberReader lineReader = new LineNumberReader(new FileReader(new File(pythonLibPath,
-                                                                                       pthFilename)));
+        try (LineNumberReader lineReader = new LineNumberReader(new FileReader(new File(pythonLibPath,
+                pthFilename)))) {
             String line;
             while ((line = lineReader.readLine()) != null) {
                 line = line.trim();

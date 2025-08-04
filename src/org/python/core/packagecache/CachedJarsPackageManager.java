@@ -515,9 +515,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      */
     private void writeCacheFile(JarXEntry entry, String jarcanon, Map<String, String> zipPackages,
             boolean brandNew) {
-        DataOutputStream ostream = null;
-        try {
-            ostream = outCreateCacheFile(entry, brandNew);
+        try (DataOutputStream ostream = outCreateCacheFile(entry, brandNew)) {
             ostream.writeUTF(jarcanon);
             ostream.writeLong(entry.mtime);
             comment("rewriting cache for ''{0}''", jarcanon);
@@ -533,14 +531,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("failed to write cache for ''{0}'' ({1})", jarcanon, ioe.getMessage());
-        } finally {
-            if (ostream != null) {
-                try {
-                    ostream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -660,9 +650,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         this.indexModified = false;
         this.index = Generic.map();
 
-        DataInputStream istream = null;
-        try {
-            istream = inOpenIndex();
+        try (DataInputStream istream = inOpenIndex()) {
             if (istream == null) {
                 return;
             }
@@ -679,14 +667,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("invalid index file");
-        } finally {
-            if (istream != null) {
-                try {
-                    istream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -705,9 +685,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         comment("writing modified index file");
 
-        DataOutputStream ostream = null;
-        try {
-            ostream = outOpenIndex();
+        try (DataOutputStream ostream = outOpenIndex()) {
             for (Entry<String, JarXEntry> entry : index.entrySet()) {
                 String jarcanon = entry.getKey();
                 JarXEntry xentry = entry.getValue();
@@ -717,14 +695,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("failed to write index file ({0})", ioe.getMessage());
-        } finally {
-            if (ostream != null) {
-                try {
-                    ostream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -825,7 +795,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
             file = FileUtil.makePrivateRW(file);
             entry.cachefile = file.getCanonicalPath();
-
         } else {
             // Use an existing cache file named in the entry
             file = new File(entry.cachefile);
