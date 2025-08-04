@@ -17,7 +17,7 @@ import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Return;
 import org.python.antlr.base.expr;
 
-public class ScopeInfo extends Object implements ScopeConstants {
+public class ScopeInfo implements ScopeConstants {
 
     static final Logger LOGGER = Logger.getLogger("org.python.compiler");
 

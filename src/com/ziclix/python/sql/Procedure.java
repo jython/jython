@@ -25,7 +25,7 @@ import java.util.BitSet;
  *
  * @author brian zimmer
  */
-public class Procedure extends Object {
+public class Procedure {
 
     /**
      * Field NAME

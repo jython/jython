@@ -18,7 +18,7 @@ import java.util.Map;
  *
  * @author brian zimmer
  */
-public class PyArgParser extends Object {
+public class PyArgParser {
 
     /** Field keywords. */
     protected Map<String, PyObject> keywords;

@@ -735,7 +735,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * created for each JAR processed for classes, and corresponds to a file in the package cache
      * directory. The name is based on the name of the JAR.
      */
-    public static class JarXEntry extends Object {
+    public static class JarXEntry {
 
         /** Specifies the actual cache file once that is created or opened. */
         public String cachefile;

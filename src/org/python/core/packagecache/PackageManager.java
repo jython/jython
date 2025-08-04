@@ -21,7 +21,7 @@ import java.util.StringTokenizer;
 /**
  * Abstract package manager.
  */
-public abstract class PackageManager extends Object {
+public abstract class PackageManager {
 
     /** Nominal top-level package of all (Java) packages, containing "java", "com", "org", etc.. */
     public PyJavaPackage topLevelPackage;
