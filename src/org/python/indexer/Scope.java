@@ -741,7 +741,7 @@ public class Scope {
      * known to be a parameter name.
      */
     public String extendPathForParam(String name) {
-        if (path.equals("")) {
+        if (path.isEmpty()) {
             throw new IllegalStateException("Not inside a function");
         }
         return path + "@" + name;
@@ -767,7 +767,7 @@ public class Scope {
         if (name.endsWith(".py")) {
             name = Util.moduleNameFor(name);
         }
-        if (path.equals("")) {
+        if (path.isEmpty()) {
             return name;
         }
         String sep = null;

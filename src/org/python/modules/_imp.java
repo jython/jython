@@ -86,7 +86,7 @@ public class _imp {
         // displayDirName is for identification purposes: when null it
         // forces java.io.File to be a relative path (e.g. foo/bar.py
         // instead of /tmp/foo/bar.py)
-        String displayDirName = entry.equals("") ? null : entry;
+        String displayDirName = entry.isEmpty() ? null : entry;
 
         // First check for packages
         File dir = findingPackage ? new File(directoryName) : new File(directoryName, name);

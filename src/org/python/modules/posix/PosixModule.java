@@ -1315,7 +1315,7 @@ public class PosixModule implements ClassDictInit {
      */
     private static Path absolutePath(PyObject pathObj) {
         String pathStr = asPath(pathObj);
-        if (pathStr.equals("")) {
+        if (pathStr.isEmpty()) {
             // Returning current working directory would be wrong in our context (chdir, etc.).
             throw Py.OSError(Errno.ENOENT, pathObj);
         }

@@ -21,7 +21,7 @@ public class PyNullImporter extends PyObject {
     public PyNullImporter(PyObject pathObj) {
         super();
         String pathStr = imp.fileSystemDecode(pathObj);
-        if (pathStr.equals("")) {
+        if (pathStr.isEmpty()) {
             throw Py.ImportError("empty pathname");
         } else if (isDir(pathStr)) {
             throw Py.ImportError("existing directory: " + pathStr);
@@ -42,7 +42,7 @@ public class PyNullImporter extends PyObject {
     }
 
     private static boolean isDir(String pathStr) {
-        if (pathStr.equals("")) {
+        if (pathStr.isEmpty()) {
             return false;
         }
         try {

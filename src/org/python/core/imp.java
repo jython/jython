@@ -848,7 +848,7 @@ public class imp {
         boolean haveSource = false, haveCompiled = false;
 
         // display* names are for mainly identification purposes (e.g. __file__)
-        String displayLocation = (location.equals("") || location.equals(",")) ? null : location;
+        String displayLocation = (location.isEmpty() || location.equals(",")) ? null : location;
         String displaySourceName, displayCompiledName;
 
         try {

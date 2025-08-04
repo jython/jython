@@ -799,7 +799,7 @@ public class PySystemState extends PyObject
             return null;
         }
         // If install.root is undefined find JYTHON_JAR in class.path
-        if (root == null || root.equals("")) {
+        if (root == null || root.isEmpty()) {
             String classpath = preProperties.getProperty("java.class.path");
             if (classpath != null) {
                 String lowerCaseClasspath = classpath.toLowerCase();

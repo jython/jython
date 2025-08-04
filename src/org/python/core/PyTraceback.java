@@ -73,7 +73,7 @@ public class PyTraceback extends PyObject implements Traverseproc {
         try {
             for (i = 0; i < tb_lineno; i++) {
                 line = pyFile.readline().asString();
-                if (line.equals("")) {
+                if (line.isEmpty()) {
                     break;
                 }
             }
