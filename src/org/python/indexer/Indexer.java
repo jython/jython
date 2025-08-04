@@ -342,15 +342,11 @@ public class Indexer {
         if (ref == null) {
             return;
         }
-        List<NBinding> bindings = locations.get(ref);
-        if (bindings == null) {
-            // The indexer is heavily memory-constrained, so we need small overhead.
-            // Empirically using a capacity-1 ArrayList for the binding set
-            // uses about 1/2 the memory of a LinkedList, and 1/4 the memory
-            // of a default HashSet.
-            bindings = new ArrayList<NBinding>(1);
-            locations.put(ref, bindings);
-        }
+        List<NBinding> bindings = locations.computeIfAbsent(ref, k -> new ArrayList<NBinding>(1));
+        // The indexer is heavily memory-constrained, so we need small overhead.
+        // Empirically using a capacity-1 ArrayList for the binding set
+        // uses about 1/2 the memory of a LinkedList, and 1/4 the memory
+        // of a default HashSet.
         if (!bindings.contains(b)) {
             bindings.add(b);
             // Having > 1 is often an indicator of an indexer bug:
@@ -470,11 +466,7 @@ public class Indexer {
     }
 
     List<Diagnostic> getFileErrs(String file, Map<String, List<Diagnostic>> map) {
-        List<Diagnostic> msgs = map.get(file);
-        if (msgs == null) {
-            msgs = new ArrayList<Diagnostic>();
-            map.put(file, msgs);
-        }
+        List<Diagnostic> msgs = map.computeIfAbsent(file, k -> new ArrayList<Diagnostic>());
         return msgs;
     }
 
@@ -851,11 +843,7 @@ public class Indexer {
      * @param file the file where the unresolved import occurred
      */
     public void recordUnresolvedModule(String qname, String file) {
-        Set<String> importers = unresolvedModules.get(qname);
-        if (importers == null) {
-            importers = new TreeSet<String>();
-            unresolvedModules.put(qname, importers);
-        }
+        Set<String> importers = unresolvedModules.computeIfAbsent(qname, k -> new TreeSet<String>());
         importers.add(file);
     }
 

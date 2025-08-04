@@ -99,11 +99,7 @@ public class PyBeanEventProperty extends PyObject {
     }
 
     private void putAdapter(Object o, String evc, Object ad) {
-        Map<String, WeakReference<Object>> ads = adapters.get(o);
-        if (ads == null) {
-            ads = Generic.map();
-            adapters.put(o, ads);
-        }
+        Map<String, WeakReference<Object>> ads = adapters.computeIfAbsent(o, k -> Generic.map());
         ads.put(evc, new WeakReference<Object>(ad));
     }
 
