@@ -356,7 +356,7 @@ public class JythoncAntTask extends MatchingTask {
    * get the compiler option, null if none.
    */
   public String getCompilerOptions() {
-    StringBuffer aStringBuffer = new StringBuffer();
+    StringBuilder aStringBuffer = new StringBuilder();
     if( destDir != null ) {
       aStringBuffer.append("-d \"");
       aStringBuffer.append( destDir );

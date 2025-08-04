@@ -110,7 +110,7 @@ public class DBSink extends BaseDB implements Sink {
 
         int index = 0, len = row.__len__();
         PyObject entry = Py.None, col = Py.None, pyIndex = Py.None;
-        StringBuffer sb = new StringBuffer("insert into ").append(this.tableName).append(" (");
+        StringBuilder sb = new StringBuilder("insert into ").append(this.tableName).append(" (");
 
         /*
          * Iterate through the columns and pull out the names for use in the insert

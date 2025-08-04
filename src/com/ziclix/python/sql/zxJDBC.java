@@ -286,7 +286,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             }
         } else {
             String sep = System.getProperty("line.separator");
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (i = 0; i < lines.size() - 1; i++) {
                 sb.append(lines.get(i)).append(sep);
             }
@@ -393,7 +393,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
             return (PyException) t;
         } else if (t instanceof SQLException) {
             SQLException sqlException = (SQLException) t;
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             do {
                 buffer.append(sqlException.getMessage());
                 buffer.append(" [SQLCode: " + sqlException.getErrorCode() + "]");

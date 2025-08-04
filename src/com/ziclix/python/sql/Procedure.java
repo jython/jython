@@ -280,7 +280,7 @@ public class Procedure {
             }
         }
 
-        StringBuffer sql = new StringBuffer("{");
+        StringBuilder sql = new StringBuilder("{");
 
         if (colReturn > 0) {
             PyList list = new PyList();
@@ -376,7 +376,7 @@ public class Procedure {
      */
     protected String getProcedureName() {
 
-        StringBuffer proc = new StringBuffer();
+        StringBuilder proc = new StringBuilder();
 
         if (this.procedureCatalog.__nonzero__()) {
             proc.append(this.procedureCatalog.toString()).append(".");

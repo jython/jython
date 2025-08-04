@@ -103,7 +103,7 @@ public class ProxyCodeHelpers {
         if (index == -1) {
             return name;
         }
-        StringBuffer buf = new StringBuffer(name.length());
+        StringBuilder buf = new StringBuilder(name.length());
         int last_index = 0;
         while (index != -1) {
             buf.append(name.substring(last_index, index));

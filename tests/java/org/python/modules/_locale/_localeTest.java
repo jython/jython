@@ -336,7 +336,7 @@ public class _localeTest {
      * happens in this unit test, when troubleshooting.
      */
     private String byteStr(byte[] bytes, boolean lePadding) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             sb.append("~h");
             sb.append(Integer.toHexString(bytes[i]));

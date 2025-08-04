@@ -225,7 +225,7 @@ public class PythonTree extends AST implements Traverseproc {
         if (children == null || children.size() == 0) {
             return this.toString();// + "[" + this.info() + "]";
         }
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (!isNil()) {
             buf.append("(");
             buf.append(this);// + "[" + this.info() + "]");
@@ -256,7 +256,7 @@ public class PythonTree extends AST implements Traverseproc {
     }
 
     protected String dumpThis(Object[] s) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (s == null) {
             sb.append("null");
         } else {
