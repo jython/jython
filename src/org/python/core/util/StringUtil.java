@@ -3,6 +3,7 @@ package org.python.core.util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.python.core.BaseBytes;
 import org.python.core.Py;
@@ -22,12 +23,7 @@ public class StringUtil {
      * @return a byte array with one byte for each char in string
      */
     public static byte[] toBytes(String string) {
-        try {
-            return string.getBytes("ISO-8859-1");
-        } catch (UnsupportedEncodingException uee) {
-            // This JVM is whacked, it doesn't even have iso-8859-1
-            throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
-        }
+        return string.getBytes(StandardCharsets.ISO_8859_1);
     }
 
     /**
