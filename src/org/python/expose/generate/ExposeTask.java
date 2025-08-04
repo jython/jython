@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Set;
 
 import org.apache.tools.ant.BuildException;
@@ -37,7 +38,7 @@ public class ExposeTask extends GlobMatchingTask {
         for (File f : toExpose) {
             ExposedTypeProcessor etp;
             try {
-                etp = new ExposedTypeProcessor(new FileInputStream(f));
+                etp = new ExposedTypeProcessor(Files.newInputStream(f.toPath()));
             } catch (IOException e) {
                 throw new BuildException("Unable to read '" + f + "' to expose it", e);
             } catch (InvalidExposingException iee) {

@@ -215,7 +215,7 @@ public class imp {
     /** Open a file, raising a {@code PyException} on error. */
     private static InputStream makeStream(File file) {
         try {
-            return new FileInputStream(file);
+            return Files.newInputStream(file.toPath());
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }

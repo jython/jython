@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Iterator;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
@@ -116,7 +118,7 @@ public class PyBZ2File extends PyObject implements FinalizablePyObject, Finaliza
                 }
 
                 BZip2CompressorOutputStream writeStream = new BZip2CompressorOutputStream(
-                        new FileOutputStream(fileName), compresslevel);
+                        Files.newOutputStream(Paths.get(fileName)), compresslevel);
                 buffer = new BinaryIOWrapper(
                             new BufferedWriter(
                                 new SkippableStreamIO(writeStream, true),

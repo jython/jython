@@ -25,6 +25,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -394,7 +395,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 InputStream jarin = null;
                 try {
                     if (jarconn == null) {
-                        jarin = new BufferedInputStream(new FileInputStream(jarfile));
+                        jarin = new BufferedInputStream(Files.newInputStream(jarfile.toPath()));
                     } else {
                         // We were given a URL originally so use that.
                         jarin = jarconn.getInputStream();
@@ -784,7 +785,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * is part of the off-the-shelf local file-system cache implementation. Can be overridden.
      */
     protected DataInputStream inOpenCacheFile(String cachefile) throws IOException {
-        return new DataInputStream(new BufferedInputStream(new FileInputStream(cachefile)));
+        return new DataInputStream(new BufferedInputStream(Files.newInputStream(Paths.get(cachefile))));
     }
 
     /**
@@ -830,7 +831,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             file = new File(entry.cachefile);
         }
 
-        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+        return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath())));
     }
 
     /** Directory in which cache files are stored. */

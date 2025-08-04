@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,7 +60,7 @@ public class _imp {
 
     private static PyObject newFile(File file) {
         try {
-            return new PyFile(new FileInputStream(file));
+            return new PyFile(Files.newInputStream(file.toPath()));
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
