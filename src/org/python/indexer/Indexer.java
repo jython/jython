@@ -875,9 +875,9 @@ public class Indexer {
                 .append(unresolvedModules.size())
                 .append("\n");
 
-        for (String s : unresolvedModules.keySet()) {
-            sb.append(s).append(": ");
-            Set<String> importers = unresolvedModules.get(s);
+        for (Entry<String, Set<String>> s : unresolvedModules.entrySet()) {
+            sb.append(s.getKey()).append(": ");
+            Set<String> importers = s.getValue();
             if (importers.size() > 5) {
                 sb.append(importers.iterator().next());
                 sb.append(" and " );
