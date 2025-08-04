@@ -26,7 +26,7 @@ import java.util.Map;
 public class PyList extends PySequenceList {
 
     public static final PyType TYPE = PyType.fromClass(PyList.class);
-    {
+    static {
         // Ensure list is not Hashable
         TYPE.object___setattr__("__hash__", Py.None);
     }
