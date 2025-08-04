@@ -32,7 +32,7 @@ public class ScopeInfo implements ScopeConstants {
             for (int i = 0; i < level; i++) {
                 m.append(' ');
             }
-            m.append(((kind != CLASSSCOPE) ? scope_name : "class " + scope_name) + ": ");
+            m.append((kind != CLASSSCOPE) ? scope_name : "class " + scope_name).append(": ");
             for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
                 String name = entry.getKey();
                 SymInfo info = entry.getValue();
