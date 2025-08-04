@@ -57,7 +57,7 @@ public class CSVString {
      */
     public static String replace(String original, String search, String replace, boolean all) {
 
-        String valReturn = new String("");
+        String valReturn = "";
         int l = original.length();
         int lo = search.length();
         int i = 0;

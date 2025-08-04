@@ -328,13 +328,16 @@ public class ReflectedArgs {
 
     @Override
     public String toString() {
-        String s = declaringClass + ", static=" + isStatic + ", varargs=" + isVarArgs + ",flags="
-                + flags + ", " + method + "\n";
-        s = s + "\t(";
+        StringBuilder s = new StringBuilder(declaringClass
+                                            + ", static=" + isStatic
+                                            + ", varargs=" + isVarArgs
+                                            + ",flags=" + flags
+                                            + ", " + method + "\n");
+        s.append("\t(");
         for (Class<?> arg : args) {
-            s += arg.getName() + ", ";
+            s.append(arg.getName()).append(", ");
         }
-        s += ")";
-        return s;
+        s.append(")");
+        return s.toString();
     }
 }
