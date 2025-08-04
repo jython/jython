@@ -144,7 +144,7 @@ public class _localeTest {
                 + "{'mon_decimal_point': '.', 'int_frac_digits': 2, "
                 + " 'p_sep_by_space': 0, 'frac_digits': 2, "
                 + " 'thousands_sep': ',', "
-                + " 'n_sign_posn': " + String.valueOf(nSignPosition) + " , "
+                + " 'n_sign_posn': " + nSignPosition + " , "
                 + "'decimal_point': '.', 'int_curr_symbol': 'USD', "
                 + "'n_cs_precedes': 1, 'p_sign_posn': 3, "
                 + "'mon_thousands_sep': ',', 'negative_sign': '-', "

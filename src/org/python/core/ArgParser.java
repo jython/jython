@@ -372,7 +372,7 @@ public class ArgParser {
         case 3:
             return "3rd";
         default:
-            return Integer.toString(n + 1) + "th";
+            return (n + 1) + "th";
         }
     }
 }
