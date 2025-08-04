@@ -544,7 +544,7 @@ class JavaProxyList {
                 ldel.checkIdxAndDelItem(object);
                 return Py.None;
             }
-            throw Py.ValueError(object.toString() + " is not in list");
+            throw Py.ValueError(object + " is not in list");
         }
     };
     private static final PyBuiltinMethodNarrow listRAddProxy = new ListMethod("__radd__", 1) {

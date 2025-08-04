@@ -1498,7 +1498,7 @@ public class imp {
             }
 
             if (mod.__findattr__((PyString)item) == null) {
-                String fullName = modNameBuffer.toString() + "." + item.toString();
+                String fullName = modNameBuffer + "." + item;
                 import_next(mod, modNameBuffer, item.toString(), fullName, null);
             }
         }

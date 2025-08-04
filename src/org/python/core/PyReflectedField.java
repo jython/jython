@@ -47,7 +47,7 @@ public class PyReflectedField extends PyObject {
         Object iself = null;
         if (!Modifier.isStatic(field.getModifiers())) {
             if (self == null) {
-                throw Py.AttributeError("set instance variable as static: " + field.toString());
+                throw Py.AttributeError("set instance variable as static: " + field);
             }
             iself = self.getJavaProxy();
             if (iself == null) {

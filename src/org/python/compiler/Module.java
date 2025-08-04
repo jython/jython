@@ -826,7 +826,7 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
                         exc = e;
                     }
                 }
-                reason = exc != null ? "of " + exc.toString() : "of a bad return: " + result;
+                reason = exc != null ? "of " + exc : "of a bad return: " + result;
                 String exc_msg = String.format(LARGE_METHOD_MSG, filename)
                         + String.format(TRIED_CREATE_PYC_MSG, command, reason)
                         + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG;

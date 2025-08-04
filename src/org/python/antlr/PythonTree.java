@@ -228,7 +228,7 @@ public class PythonTree extends AST implements Traverseproc {
         StringBuffer buf = new StringBuffer();
         if (!isNil()) {
             buf.append("(");
-            buf.append(this.toString());// + "[" + this.info() + "]");
+            buf.append(this);// + "[" + this.info() + "]");
             buf.append(' ');
         }
         for (int i = 0; children != null && i < children.size(); i++) {

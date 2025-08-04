@@ -1328,7 +1328,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
         String proxyName = name;
         PyObject module = dict.__finditem__("__module__");
         if (module != null) {
-            proxyName = module.toString() + "$" + proxyName;
+            proxyName = module + "$" + proxyName;
         }
         Class<?> proxyClass =
                 MakeProxies.makeProxy(baseProxyClass, interfaces, name, proxyName, dict);
@@ -2572,7 +2572,7 @@ public class PyType extends PyObject implements Serializable, Traverseproc {
             // Normal path
             PyObject module = getModule();
             if (module instanceof PyString && !module.toString().equals("__builtin__")) {
-                return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
+                return String.format("<%s '%s.%s'>", kind, module, getName());
             }
             return String.format("<%s '%s'>", kind, getName());
         }

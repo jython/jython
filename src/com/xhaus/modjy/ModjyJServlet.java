@@ -124,7 +124,7 @@ public class ModjyJServlet extends HttpServlet {
             modjyServlet = (HttpServlet)temp;
             modjyServlet.init(this);
         } catch (PyException pyx) {
-            throw new ServletException("Exception creating modjy servlet: " + pyx.toString(), pyx);
+            throw new ServletException("Exception creating modjy servlet: " + pyx, pyx);
         }
     }
 
@@ -250,7 +250,7 @@ public class ModjyJServlet extends HttpServlet {
                 systemState.path.append(new PyString(archiveRealpath));
             }
         } catch (IOException iox) {
-            System.err.println("IOException: " + iox.toString());
+            System.err.println("IOException: " + iox);
         }
     }
 }

@@ -1123,10 +1123,10 @@ public class PosixModule implements ClassDictInit {
                 if (!Files.isWritable(nioPath)) {
                     throw Py.OSError(Errno.EACCES, path);
                 }
-                throw Py.OSError("unlink(): an unknown error occurred: " + nioPath.toString());
+                throw Py.OSError("unlink(): an unknown error occurred: " + nioPath);
             }
         } catch (IOException ex) {
-            PyException pyError = Py.OSError("unlink(): an unknown error occurred: " + nioPath.toString());
+            PyException pyError = Py.OSError("unlink(): an unknown error occurred: " + nioPath);
             pyError.initCause(ex);
             throw pyError;
         }

@@ -588,7 +588,7 @@ public class __builtin__ {
                 throw Py.TypeError(String.format("can't filter %s to %s: __getitem__ returned "
                                                  + "different type", name, name));
             }
-            builder.append(item.toString());
+            builder.append(item);
         }
 
         String result = builder.toString();

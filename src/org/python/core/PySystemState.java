@@ -1085,7 +1085,7 @@ public class PySystemState extends PyObject
                     System.err.println("couldn't open registry file: " + file.toString());
                 }
             } else {
-                System.err.println("warning: " + file.toString() + " is a directory, not a file");
+                System.err.println("warning: " + file + " is a directory, not a file");
             }
         }
     }

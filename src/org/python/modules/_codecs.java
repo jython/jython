@@ -441,7 +441,7 @@ public class _codecs {
                 }
                 buf.appendCodePoint(value);
             } else if (result instanceof PyUnicode) {
-                buf.append(result.toString());
+                buf.append(result);
             } else {
                 // wrong return value
                 throw Py.TypeError("character mapping must return integer, None or unicode");
@@ -549,7 +549,7 @@ public class _codecs {
             } else if (x instanceof PyString && !(x instanceof PyUnicode)) {
                 // Look-up had str or unicode result: output as Java String
                 // XXX: (Py3k) Look-up had bytes or str result: output as ... this is a problem
-                v.append(x.toString());
+                v.append(x);
 
             } else if (x instanceof PyNone) {
                 i = handleBadMapping(str, errors, mapping, v, size, i);
