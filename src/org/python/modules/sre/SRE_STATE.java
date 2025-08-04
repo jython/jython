@@ -24,6 +24,8 @@ import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyString;
 
+import java.util.Arrays;
+
 public class SRE_STATE {
 
     /*
@@ -1355,8 +1357,7 @@ for line in sys.stdin:
         lastmark = 0;
 
         /* FIXME: dynamic! */
-        for (int i = 0; i < mark.length; i++)
-            mark[i] = -1;
+        Arrays.fill(mark, -1);
 
         lastindex = -1;
         repeat = null;

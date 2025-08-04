@@ -3015,9 +3015,7 @@ public class PyString extends PyBaseString implements BufferProtocol {
 
     private static String padding(int n, char pad) {
         char[] chars = new char[n];
-        for (int i = 0; i < n; i++) {
-            chars[i] = pad;
-        }
+        Arrays.fill(chars, pad);
         return new String(chars);
     }
 
