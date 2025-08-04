@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Set;
@@ -122,15 +123,9 @@ public class Util {
     }
 
     public static void writeFile(String path, String contents) throws Exception {
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new BufferedWriter(new FileWriter(path)));
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path)))) {
             out.print(contents);
             out.flush();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
     }
 
@@ -145,30 +140,24 @@ public class Util {
     }
 
     public static byte[] getBytesFromFile(File file) throws IOException {
-        InputStream is = null;
 
-        try {
-            is = new FileInputStream(file);
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             long length = file.length();
             if (length > Integer.MAX_VALUE) {
                 throw new IOException("file too large: " + file);
             }
 
-            byte[] bytes = new byte[(int)length];
+            byte[] bytes = new byte[(int) length];
             int offset = 0;
             int numRead = 0;
             while (offset < bytes.length
-                   && (numRead = is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                   && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
                 offset += numRead;
             }
             if (offset < bytes.length) {
                 throw new IOException("Failed to read whole file " + file);
             }
             return bytes;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
         }
     }
 

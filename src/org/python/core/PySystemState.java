@@ -1069,8 +1069,7 @@ public class PySystemState extends PyObject
                 // therefore only add missing properties from this registry file
                 Properties fileProperties = new Properties();
                 try {
-                    FileInputStream fp = new FileInputStream(file);
-                    try {
+                    try (FileInputStream fp = new FileInputStream(file)) {
                         fileProperties.load(fp);
                         for (Entry kv : fileProperties.entrySet()) {
                             Object key = kv.getKey();
@@ -1078,8 +1077,6 @@ public class PySystemState extends PyObject
                                 registry.put(key, kv.getValue());
                             }
                         }
-                    } finally {
-                        fp.close();
                     }
                 } catch (IOException e) {
                     System.err.println("couldn't open registry file: " + file.toString());
@@ -1516,22 +1513,13 @@ public class PySystemState extends PyObject
     private static boolean isStandalone(String jarFileName) {
         boolean standalone = false;
         if (jarFileName != null) {
-            JarFile jarFile = null;
-            try {
-                jarFile = new JarFile(jarFileName);
+            try (JarFile jarFile = new JarFile(jarFileName)) {
                 JarEntry jarEntry = jarFile.getJarEntry("Lib/os.py");
                 standalone = jarEntry != null;
             } catch (IOException ioe) {
                 // Continue
-            } finally {
-                if (jarFile != null) {
-                    try {
-                        jarFile.close();
-                    } catch (IOException e) {
-                        // Continue
-                    }
-                }
             }
+            // Continue
         }
         return standalone;
     }
