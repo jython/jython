@@ -539,7 +539,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
      * ZipBundle is a ZipFile and one of its InputStreams, bundled together so the ZipFile can be
      * closed when finished with its InputStream.
      */
-    private class ZipBundle extends Bundle {
+    private static class ZipBundle extends Bundle {
         ZipFile zipFile;
 
         public ZipBundle(ZipFile zipFile, InputStream inputStream) {

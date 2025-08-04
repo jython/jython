@@ -788,7 +788,7 @@ public class PyStringMap extends AbstractDict implements Traverseproc {
             this.backend = backend;
         }
 
-        class PyStringMapKeySetIter implements Iterator<PyObject> {
+        static class PyStringMapKeySetIter implements Iterator<PyObject> {
             Iterator<Object> itr;
 
             PyStringMapKeySetIter(Iterator<Object> itr) {

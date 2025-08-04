@@ -160,7 +160,7 @@ public abstract class NType {
     /**
      * Internal class to support printing in the presence of type-graph cycles.
      */
-    protected class CyclicTypeRecorder {
+    protected static class CyclicTypeRecorder {
         int count = 0;
         private Map<NType, Integer> elements = new HashMap<NType, Integer>();
 

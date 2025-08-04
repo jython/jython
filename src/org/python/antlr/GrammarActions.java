@@ -441,7 +441,7 @@ public class GrammarActions {
         return Py.newInteger((int) l);
     }
 
-    class StringPair {
+    static class StringPair {
         private String s;
         private boolean unicode;
 

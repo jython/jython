@@ -2709,7 +2709,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * href=http://stackoverflow.com/questions/4332264/wrapping-a-bytebuffer-with-an-inputstream>
      * Stackoverflow question 4332264</a>.
      */
-    private class ByteBufferBackedInputStream extends InputStream {
+    private static class ByteBufferBackedInputStream extends InputStream {
 
         ByteBuffer buf;
 
