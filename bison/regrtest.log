@@ -1,7 +1,7 @@
-➜  jython git:(feature/reinstall_finalizers) ✗ ./dist/bin/jython -m test.regrtest -e
-== 2.7.5a1-DEV (heads/feature/reinstall_finalizers-dirty:93d3afdab, Apr 15 2025, 16:07:02)
+➜  jython git:(2.7.bison) ./dist/bin/jython -m test.regrtest -e
+== 2.7.5a1-DEV (heads/2.7.bison:6eb937f15, Sept 30 2025, 18:58:58)
 == [OpenJDK 64-Bit Server VM (Eclipse Adoptium)]
-== platform: java21.0.6
+== platform: java21.0.8
 == encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
 == locale: default=('en_CH', 'UTF-8'), actual=(None, None)
 test_grammar
@@ -16,10 +16,10 @@ test_doctest2
 test_MimeWriter
 test_SimpleHTTPServer
 test_SimpleXMLRPCServer
-127.0.0.1 - - [15/Apr/2025 16:09:53] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [15/Apr/2025 16:09:53] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [15/Apr/2025 16:09:53] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [15/Apr/2025 16:09:53] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
 test_StringIO
 test_StringIO_jy
 test___all__
@@ -187,7 +187,8 @@ test_hmac
 test_htmllib
 test_htmlparser
 test_httplib
-io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x525a057e, L:/127.0.0.1:51409 - R:/127.0.0.1:51410]
+io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x9a5bcdec, L:/127.0.0.1:49605 - R:/127.0.0.1:49608]
+io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x66f7ccfd, L:/127.0.0.1:49615 - R:/127.0.0.1:49616]
 test_imaplib
 test_imp
 test_import
@@ -417,4 +418,4 @@ test_zlib_jy
 6 tests skipped:
     test_codecmaps_hk test_curses test_smtpnet test_subprocess
     test_urllib2net test_urllibnet
-➜  jython git:(feature/reinstall_finalizers) ✗ 
+➜  jython git:(2.7.bison) 
