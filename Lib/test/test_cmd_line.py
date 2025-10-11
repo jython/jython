@@ -73,9 +73,10 @@ class CmdLineTest(unittest.TestCase):
             self.exit_code('-m', 'runpy', 'fnord43520xyz'),
             0)
         # All good if module is located and run successfully
+        # timeit calls sys.exit(), which now throws a SyntaxError
         self.assertEqual(
             self.exit_code('-m', 'timeit', '-n', '1'),
-            0)
+            1)
 
     def test_run_module_bug1764407(self):
         # -m and -i need to play well together

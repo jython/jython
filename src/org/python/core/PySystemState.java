@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import static org.python.core.PrePy.isInteractive;
 import static org.python.core.RegistryKey.PYTHON_CACHEDIR;
 import static org.python.core.RegistryKey.PYTHON_CACHEDIR_SKIP;
 import static org.python.core.RegistryKey.PYTHON_CONSOLE;
@@ -1626,7 +1627,15 @@ public class PySystemState extends PyObject
      *             the program will exit.
      */
     public static void exit(PyObject status) {
-        throw new PyException(Py.SystemExit, status);
+        if (preventExit(status)) {
+            throw Py.SyntaxError("exit() not allowed in embedded mode");
+        } else {
+            throw new PyException(Py.SystemExit, status);
+        }
+    }
+
+    private static boolean preventExit(PyObject exitStatus) {
+        return !isInteractive() && (Py.None.equals(exitStatus) || exitStatus instanceof PyInteger);
     }
 
     /**

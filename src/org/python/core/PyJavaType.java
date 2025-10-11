@@ -1354,6 +1354,10 @@ public class PyJavaType extends PyType {
                 return true;
             }
         }
+        // prevent java.lang.System.exit() from being called
+        if ("java.lang.System".equals(meth.getDeclaringClass().getCanonicalName()) && "exit".equals(meth.getName())) {
+            return true;
+        }
         return false;
     }
 
