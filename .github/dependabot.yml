@@ -7,7 +7,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "maven"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+    ignore:
+        - dependency-name: "jline:jline"
+        - dependency-name: "junit:junit"
+          versions: ["5.x", "6.x"]
+        - dependency-name: "org.antlr:antlr*"
+          versions: ["4.x"]
+        - dependency-name: "org.ow2.asm:asm*"
+          versions: ["10.x"]
