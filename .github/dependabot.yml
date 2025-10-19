@@ -7,11 +7,21 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      asm:
+        patterns:
+          "org.ow2.asm:asm*"
+      bouncycastle:
+        patterns:
+          "org.bouncycastle:bc*"
+      netty:
+        patterns:
+          "io.netty:netty-*"
     ignore:
-        - dependency-name: "jline:jline"
-        - dependency-name: "junit:junit"
+      - dependency-name: "jline:jline"
+      - dependency-name: "junit:junit"
           versions: ["5.x", "6.x"]
-        - dependency-name: "org.antlr:antlr*"
+      - dependency-name: "org.antlr:antlr*"
           versions: ["4.x"]
-        - dependency-name: "org.ow2.asm:asm*"
+      - dependency-name: "org.ow2.asm:asm*"
           versions: ["10.x"]
