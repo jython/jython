@@ -26,6 +26,7 @@
 - remove `getSecurityManager()`
 - PyString now can contain 8 bit Unicode characters (in both conversion directions)
 - fix (or mute) some regression tests
+- prevent System.exit(n) and sys.exit() from being called (the latter only in embedded mode)
 
 # Running regrtest
 - run the following commands in a shell with JDK 21

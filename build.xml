@@ -64,7 +64,6 @@ An example ant.properties file:
 
 # - zxJDBC
 oracle.jar = ../support/ojdbc6.jar
-informix.jar = ../support/jdbc-4.10.12.jar
 
 # - option for javac (build.compiler=modern is a global option to use standard jdk 1.8)
 #build.compiler=modern
@@ -207,15 +206,6 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
     <target name="common-paths" depends="common-dirs">
 
-        <!-- ${informix.jar}, if defined, denotes a non-free JAR to be added to the class path. -->
-        <condition property="informix.present" else="false">
-            <and>
-                <isset property="informix.jar"/>
-                <available classname="com.informix.jdbc.IfxDriver"
-                           classpath="${informix.jar}" />
-            </and>
-        </condition>
-
         <!-- ${oracle.jar}, if defined, denotes a non-free JAR to be added to the class path. -->
         <condition property="oracle.present" else="false">
             <and>
@@ -227,11 +217,6 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
         <!-- classpaths -->
 
-        <local name="informix.location"/>
-        <condition property="informix.location" value="${informix.jar}" else="">
-            <istrue value="${informix.present}"/>
-        </condition>
-
         <local name="oracle.location"/>
         <condition property="oracle.location" value="${oracle.jar}" else="">
             <istrue value="${oracle.present}"/>
@@ -239,11 +224,12 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
         <path id="main.classpath">
             <!-- The non-free database driver JARs, if not present. -->
-            <filelist files="${informix.location} ${oracle.location}" />
+            <filelist files="${oracle.location}" />
 
             <!-- Further database and Java EE-related JARs -->
             <filelist dir="${extlibs.dir}">
                 <file name="jakartaee-api-10.0.0.jar" />
+            	<file name="jdbc-15.0.0.2.jar" />
                 <file name="mysql-connector-java-5.1.42-bin.jar" />
                 <file name="postgresql-42.1.1.jre7.jar" />
             </filelist>
@@ -348,7 +334,6 @@ informix.jar = ../support/jdbc-4.10.12.jar
     <target name="full-check" depends="full-preinit, force-snapshot-if-polluted, init, full-dump"
             description="check the viability of a full build without running it" >
         <!-- Require all of the optional jars for a full build -->
-        <fail unless="${informix.present}" message="informix jar not present" />
         <fail unless="${oracle.present}" message="oracle jar not present" />
         <!-- Require all git for a full build -->
         <fail unless="${git.present}" message="A Git repository is required" />
@@ -374,8 +359,6 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <echo>jython.sources.jar        = '${jython.sources.jar}'</echo>
         <echo>jar.update                = '${jar.update}'</echo>
         <echo>--- optional libraries ---</echo>
-        <echo>informix                  = '${informix.jar}'</echo>
-        <echo>informix.present          = '${informix.present}'</echo>
         <echo>oracle                    = '${oracle.jar}'</echo>
         <echo>oracle.present            = '${oracle.present}'</echo>
         <echo>--- properties ---</echo>
@@ -756,7 +739,6 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
-            <exclude name="**/handler/InformixDataHandler.java" unless="${informix.present}" />
             <exclude name="**/handler/OracleDataHandler.java" unless="${oracle.present}" />
             <classpath refid="main.classpath" />
         </javac>
@@ -926,7 +908,6 @@ The text for an official release would continue like ...
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -951,7 +932,6 @@ The text for an official release would continue like ...
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -995,7 +975,6 @@ The text for an official release would continue like ...
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -1025,7 +1004,6 @@ The text for an official release would continue like ...
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -1276,7 +1254,6 @@ The text for an official release would continue like ...
                 <section name="Build-Info">
                     <attribute name="git-build" value="${git.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
