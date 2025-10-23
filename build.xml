@@ -1,6 +1,6 @@
 <!--
     Original Copyright 2000 Dj Walker-Morgan
-    Further development (c)2019 Jython Developers
+    Further development (c) 2019 Jython Developers
     Licensed to the PSF under a Contributor Agreement.
 -->
 <project name="jython" default="developer-build" basedir=".">
@@ -61,9 +61,6 @@ The first setting of a property wins. Further settings are ignored.
 
 An example ant.properties file:
 -------------------------------
-
-# - zxJDBC
-oracle.jar = ../support/ojdbc6.jar
 
 # - option for javac (build.compiler=modern is a global option to use standard jdk 1.8)
 #build.compiler=modern
@@ -206,31 +203,15 @@ oracle.jar = ../support/ojdbc6.jar
 
     <target name="common-paths" depends="common-dirs">
 
-        <!-- ${oracle.jar}, if defined, denotes a non-free JAR to be added to the class path. -->
-        <condition property="oracle.present" else="false">
-            <and>
-                <isset property="oracle.jar"/>
-                <available classname="oracle.jdbc.driver.OracleDriver"
-                           classpath="${oracle.jar}" />
-            </and>
-        </condition>
-
-        <!-- classpaths -->
-
-        <local name="oracle.location"/>
-        <condition property="oracle.location" value="${oracle.jar}" else="">
-            <istrue value="${oracle.present}"/>
-        </condition>
+    	<!-- classpaths -->
 
         <path id="main.classpath">
-            <!-- The non-free database driver JARs, if not present. -->
-            <filelist files="${oracle.location}" />
-
             <!-- Further database and Java EE-related JARs -->
             <filelist dir="${extlibs.dir}">
                 <file name="jakartaee-api-10.0.0.jar" />
             	<file name="jdbc-15.0.0.2.jar" />
                 <file name="mysql-connector-java-5.1.42-bin.jar" />
+            	<file name="ojdbc8-23.9.0.25.07.jar" />
                 <file name="postgresql-42.1.1.jre7.jar" />
             </filelist>
 
@@ -333,8 +314,6 @@ oracle.jar = ../support/ojdbc6.jar
 
     <target name="full-check" depends="full-preinit, force-snapshot-if-polluted, init, full-dump"
             description="check the viability of a full build without running it" >
-        <!-- Require all of the optional jars for a full build -->
-        <fail unless="${oracle.present}" message="oracle jar not present" />
         <!-- Require all git for a full build -->
         <fail unless="${git.present}" message="A Git repository is required" />
     </target>
@@ -358,9 +337,6 @@ oracle.jar = ../support/ojdbc6.jar
         <echo>jython.javadoc.jar        = '${jython.javadoc.jar}'</echo>
         <echo>jython.sources.jar        = '${jython.sources.jar}'</echo>
         <echo>jar.update                = '${jar.update}'</echo>
-        <echo>--- optional libraries ---</echo>
-        <echo>oracle                    = '${oracle.jar}'</echo>
-        <echo>oracle.present            = '${oracle.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>basedir                   = '${basedir}'</echo>
         <echo>source.dir                = '${source.dir}'</echo>
@@ -739,7 +715,6 @@ The text for an official release would continue like ...
             <compilerarg line="${javac.Xlint}"/>
             <src path="${source.dir}"/>
             <src path="${gensrc.dir}"/>
-            <exclude name="**/handler/OracleDataHandler.java" unless="${oracle.present}" />
             <classpath refid="main.classpath" />
         </javac>
 
@@ -907,7 +882,6 @@ The text for an official release would continue like ...
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
-                    <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -931,7 +905,6 @@ The text for an official release would continue like ...
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
-                    <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -974,7 +947,6 @@ The text for an official release would continue like ...
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
-                    <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -1003,7 +975,6 @@ The text for an official release would continue like ...
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
                     <attribute name="git-build" value="${git.present}" />
-                    <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
@@ -1030,7 +1001,7 @@ The text for an official release would continue like ...
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         >
-            <link href="http://docs.oracle.com/javase/7/docs/api/" />
+            <link href="https://docs.oracle.com/en/java/javase/21/docs/api/index.html" />
             <classpath refid="javadoc.classpath" />
         </javadoc>
     </target>
@@ -1253,7 +1224,6 @@ The text for an official release would continue like ...
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="git-build" value="${git.present}" />
-                    <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />

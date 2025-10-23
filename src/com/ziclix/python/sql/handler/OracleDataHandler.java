@@ -7,18 +7,15 @@
  */
 package com.ziclix.python.sql.handler;
 
+import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-
-import oracle.jdbc.OracleResultSet;
-import oracle.jdbc.OracleTypes;
-import oracle.sql.BLOB;
-import oracle.sql.ROWID;
 
 import org.python.core.Py;
 import org.python.core.PyInteger;
@@ -92,12 +89,12 @@ public class OracleDataHandler extends FilterDataHandler {
                 super.setJDBCObject(stmt, index, object, Types.DOUBLE);
                 break;
 
-            case OracleTypes.ROWID:
+            case Types.ROWID:
                 stmt.setString(index, (String) object.__tojava__(String.class));
                 break;
 
-            case OracleTypes.TIMESTAMPLTZ:
-            case OracleTypes.TIMESTAMPTZ:
+            case Types.TIMESTAMP:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
                 // XXX: We should include time zone information, but cx_Oracle currently
                 // doesn't either
                 super.setJDBCObject(stmt, index, object, Types.TIMESTAMP);
@@ -163,22 +160,22 @@ public class OracleDataHandler extends FilterDataHandler {
                 break;
 
             case Types.BLOB:
-                BLOB blob = ((OracleResultSet) set).getBLOB(col);
+                Blob blob = set.getBlob(col);
                 obj = blob == null ? Py.None : Py.java2py(read(blob.getBinaryStream()));
                 break;
 
-            case OracleTypes.TIMESTAMPLTZ:
-            case OracleTypes.TIMESTAMPTZ:
+            case Types.TIMESTAMP:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
                 // XXX: We should include time zone information, but cx_Oracle currently
                 // doesn't either
                 obj = super.getPyObject(set, col, Types.TIMESTAMP);
                 break;
                 
-            case OracleTypes.ROWID:
-                ROWID rowid = ((OracleResultSet) set).getROWID(col);
+            case Types.ROWID:
+                RowId rowid = set.getRowId(col);
 
                 if (rowid != null) {
-                    obj = Py.java2py(rowid.stringValue());
+                    obj = Py.java2py(rowid.toString());
                 }
                 break;
 
@@ -206,11 +203,11 @@ public class OracleDataHandler extends FilterDataHandler {
 
         if (dataType == Types.OTHER) {
             if ("REF CURSOR".equals(dataTypeName)) {
-                statement.registerOutParameter(index, OracleTypes.CURSOR);
+                statement.registerOutParameter(index, -10); // CURSOR
 
                 return;
             } else if ("PL/SQL RECORD".equals(dataTypeName)) {
-                statement.registerOutParameter(index, OracleTypes.CURSOR);
+                statement.registerOutParameter(index, -10); // CURSOR
 
                 return;
             }
