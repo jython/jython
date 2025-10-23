@@ -10,12 +10,12 @@ updates:
     groups:
       asm:
         patterns:
-          "org.ow2.asm:asm*"
+          - "org.ow2.asm:asm*"
       bouncycastle:
         patterns:
-          "org.bouncycastle:bc*"
+          - "org.bouncycastle:bc*"
       netty:
         patterns:
-          "io.netty:netty-*"
+          - "io.netty:netty-*"
     ignore:
       - dependency-name: "jline:jline"
