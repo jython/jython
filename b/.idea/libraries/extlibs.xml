@@ -2,12 +2,13 @@
   <library name="extlibs">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/extlibs/antlr-complete-3.5.3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/asm-9.7.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/asm-commons-9.7.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/asm-util-9.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-9.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-commons-9.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/asm-util-9.9.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/bcpkix-jdk18on-1.80.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/bcprov-jdk18on-1.80.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/commons-compress-1.27.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/commons-io-2.20.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/guava-33.4.8-jre.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/icu4j-77.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jarjar-1.7.2.jar!/" />
@@ -37,7 +38,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-constants-0.10.4.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-ffi-2.2.16.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-netdb-1.2.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.1.19.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.1.20.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/junit-4.13.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/mysql-connector-java-5.1.42-bin.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/netty-buffer-4.1.119.Final.jar!/" />
