@@ -28,12 +28,12 @@
 	<classpathentry kind="lib" path="extlibs/jnr-ffi-2.2.16.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-posix-3.1.20.jar"/>
 	<classpathentry kind="lib" path="extlibs/junit-4.13.2.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-buffer-4.1.119.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-codec-4.1.119.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-common-4.1.119.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-handler-4.1.119.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-resolver-4.1.119.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/netty-transport-4.1.119.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-buffer-4.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-codec-base-4.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-common-4.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-handler-4.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-resolver-4.2.7.Final.jar"/>
+	<classpathentry kind="lib" path="extlibs/netty-transport-4.2.7.Final.jar"/>
 	<classpathentry kind="lib" path="extlibs/ojdbc8-23.9.0.25.07.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
