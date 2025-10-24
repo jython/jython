@@ -221,8 +221,8 @@ An example ant.properties file:
                 <file name="asm-9.9.jar" />
                 <file name="asm-commons-9.9.jar" />
                 <file name="asm-util-9.9.jar" />
-                <file name="bcpkix-jdk18on-1.80.jar" />
-                <file name="bcprov-jdk18on-1.80.jar" />
+                <file name="bcpkix-jdk18on-1.82.jar" />
+                <file name="bcprov-jdk18on-1.82.jar" />
                 <file name="commons-compress-1.27.1.jar"/>
                 <file name="commons-io-2.20.0.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
@@ -810,8 +810,8 @@ The text for an official release would continue like ...
             <zipfileset src="extlibs/asm-commons-9.9.jar" excludes="module-info.class"/>
             <zipfileset src="extlibs/asm-util-9.9.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
-            <zipfileset src="extlibs/bcpkix-jdk18on-1.80.jar" excludes="META-INF/**"/>
-            <zipfileset src="extlibs/bcprov-jdk18on-1.80.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcpkix-jdk18on-1.82.jar" excludes="META-INF/**"/>
+            <zipfileset src="extlibs/bcprov-jdk18on-1.82.jar" excludes="META-INF/**"/>
             <rule pattern="org.bouncycastle.**" result="org.python.bouncycastle.@1"/>
             <zipfileset src="extlibs/commons-compress-1.27.1.jar" excludes="META-INF/versions/9/module-info.class"/>
             <rule pattern="org.apache.commons.compress.**" result="org.python.apache.commons.compress.@1"/>
