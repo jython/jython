@@ -36,7 +36,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-x86_64-Windows.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jline-2.14.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-constants-0.10.4.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/jnr-ffi-2.2.16.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jnr-ffi-2.2.18.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-netdb-1.2.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.1.21.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/junit-4.13.2.jar!/" />
