@@ -233,7 +233,7 @@ An example ant.properties file:
                 <file name="jnr-constants-0.10.4.jar"/>
                 <file name="jnr-ffi-2.2.16.jar"/>
                 <file name="jnr-netdb-1.2.0.jar"/>
-                <file name="jnr-posix-3.1.20.jar"/>
+                <file name="jnr-posix-3.1.21.jar"/>
                 <file name="jline-2.14.6.jar"/>
                 <file name="netty-buffer-4.2.7.Final.jar"/>
                 <file name="netty-codec-base-4.2.7.Final.jar"/>
@@ -863,7 +863,7 @@ The text for an official release would continue like ...
             <zipfileset src="${extlibs.dir}/jnr-constants-0.10.4.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-ffi-2.2.16.jar"/>
             <zipfileset src="${extlibs.dir}/jnr-netdb-1.2.0.jar"/>
-            <zipfileset src="${extlibs.dir}/jnr-posix-3.1.20.jar"/>
+            <zipfileset src="${extlibs.dir}/jnr-posix-3.1.21.jar"/>
             <zipfileset src="extlibs/xercesImpl-2.12.2.jar"
                 excludes="META-INF/services/*, org/w3c/**"/>
             <rule pattern="org.apache.xml.**" result="org.python.apache.xml.@1"/>

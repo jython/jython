@@ -26,7 +26,7 @@
 	<classpathentry kind="lib" path="extlibs/jline-2.14.6.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-constants-0.10.4.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-ffi-2.2.16.jar"/>
-	<classpathentry kind="lib" path="extlibs/jnr-posix-3.1.20.jar"/>
+	<classpathentry kind="lib" path="extlibs/jnr-posix-3.1.21.jar"/>
 	<classpathentry kind="lib" path="extlibs/junit-4.13.2.jar"/>
 	<classpathentry kind="lib" path="extlibs/netty-buffer-4.2.7.Final.jar"/>
 	<classpathentry kind="lib" path="extlibs/netty-codec-base-4.2.7.Final.jar"/>

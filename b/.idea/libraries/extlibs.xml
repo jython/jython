@@ -38,7 +38,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-constants-0.10.4.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-ffi-2.2.16.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jnr-netdb-1.2.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.1.20.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jnr-posix-3.1.21.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/junit-4.13.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/mysql-connector-java-5.1.42-bin.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/netty-buffer-4.2.7.Final.jar!/" />
