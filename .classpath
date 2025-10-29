@@ -22,7 +22,7 @@
 	<classpathentry kind="lib" path="extlibs/jakartaee-api-10.0.0.jar"/>
 	<classpathentry kind="lib" path="extlibs/java-sizeof-0.0.5.jar"/>
 	<classpathentry kind="lib" path="extlibs/jdbc-15.0.0.2.jar"/>
-	<classpathentry kind="lib" path="extlibs/jffi-1.3.13.jar"/>
+	<classpathentry kind="lib" path="extlibs/jffi-1.3.14.jar"/>
 	<classpathentry kind="lib" path="extlibs/jline-2.14.6.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-constants-0.10.4.jar"/>
 	<classpathentry kind="lib" path="extlibs/jnr-ffi-2.2.18.jar"/>
