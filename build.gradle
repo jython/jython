@@ -192,7 +192,7 @@ dependencies {
     // We choose only to cite these as only used by javadoc.
     // They are proprietary and necessary only if certain modules are used.
     compileOnly 'com.ibm.informix:jdbc:15.0.0.2'
-    compileOnly 'com.oracle.database.jdbc:ojdbc8:23.9.0.25.07'
+    compileOnly 'com.oracle.database.jdbc:ojdbc8:23.26.0.0.0'
 }
 
 

@@ -34,6 +34,6 @@
 	<classpathentry kind="lib" path="extlibs/netty-handler-4.2.7.Final.jar"/>
 	<classpathentry kind="lib" path="extlibs/netty-resolver-4.2.7.Final.jar"/>
 	<classpathentry kind="lib" path="extlibs/netty-transport-4.2.7.Final.jar"/>
-	<classpathentry kind="lib" path="extlibs/ojdbc8-23.9.0.25.07.jar"/>
+	<classpathentry kind="lib" path="extlibs/ojdbc8-23.26.0.0.0.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

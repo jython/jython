@@ -211,7 +211,7 @@ An example ant.properties file:
                 <file name="jakartaee-api-10.0.0.jar" />
             	<file name="jdbc-15.0.0.2.jar" />
                 <file name="mysql-connector-java-5.1.42-bin.jar" />
-            	<file name="ojdbc8-23.9.0.25.07.jar" />
+            	<file name="ojdbc8-23.26.0.0.0.jar" />
                 <file name="postgresql-42.1.1.jre7.jar" />
             </filelist>
 
