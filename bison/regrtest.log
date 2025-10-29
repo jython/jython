@@ -1,5 +1,5 @@
-➜  jython git:(2.7.bison) ./dist/bin/jython -m test.regrtest -e
-== 2.7.5a1-DEV (heads/2.7.bison:6eb937f15, Sept 30 2025, 18:58:58)
+➜  jython git:(2.7.bison) ./dist/bin/jython -m test.regrtest -e                                      
+== 2.7.5a1-DEV (heads/2.7.bison:f9b241b93, Oct 29 2025, 18:01:00)
 == [OpenJDK 64-Bit Server VM (Eclipse Adoptium)]
 == platform: java21.0.8
 == encodings: stdin=UTF-8, stdout=UTF-8, FS=utf-8
@@ -16,10 +16,10 @@ test_doctest2
 test_MimeWriter
 test_SimpleHTTPServer
 test_SimpleXMLRPCServer
-127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
-127.0.0.1 - - [30/Sep/2025 19:00:04] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2025 18:01:59] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2025 18:01:59] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2025 18:01:59] "POST /RPC2 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2025 18:01:59] "POST /RPC2 HTTP/1.1" 200 -
 test_StringIO
 test_StringIO_jy
 test___all__
@@ -47,6 +47,7 @@ test_bisect
 test_bool
 test_buffer
 test_bufio
+Some JDK modules may not be open to jnr-posix, which will break file descriptor and process APIs. See https://github.com/jnr/jnr-posix/wiki/Using-POSIX-with-Java-Modules
 test_builtin_jy
 test_bytecodetools_jy
 test_bytes
@@ -187,8 +188,8 @@ test_hmac
 test_htmllib
 test_htmlparser
 test_httplib
-io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x9a5bcdec, L:/127.0.0.1:49605 - R:/127.0.0.1:49608]
-io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x66f7ccfd, L:/127.0.0.1:49615 - R:/127.0.0.1:49616]
+io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x4594abb2, L:/127.0.0.1:53160 - R:/127.0.0.1:53163]
+io.netty.channel.ChannelInitializer WARNING Failed to initialize a channel. Closing: [id: 0x9e837a4a, L:/127.0.0.1:53171 - R:/127.0.0.1:53172]
 test_imaplib
 test_imp
 test_import
