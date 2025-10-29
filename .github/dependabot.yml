@@ -14,6 +14,9 @@ updates:
       bouncycastle:
         patterns:
           - "org.bouncycastle:bc*"
+      jnr:
+        patterns:
+          - "com.github.jnr:*"
       netty:
         patterns:
           - "io.netty:netty-*"
