@@ -10,7 +10,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/commons-compress-1.27.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/commons-io-2.20.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/guava-33.5.0-jre.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/icu4j-77.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/icu4j-78.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jarjar-1.7.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/java-sizeof-0.0.5.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/jffi-1.3.14.jar!/" />
