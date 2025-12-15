@@ -1023,7 +1023,7 @@ public class PySystemState extends PyObject
     private static String getConsoleEncoding(Properties props) {
 
         // From Java 8 onwards, the answer may already be to hand in the registry:
-        String encoding = props.getProperty("sun.stdout.encoding");
+        String encoding = props.getProperty("stdout.encoding");
         String os = props.getProperty("os.name");
 
         if (encoding != null) {
