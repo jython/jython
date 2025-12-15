@@ -1033,13 +1033,19 @@ public class PySystemState extends PyObject
             // Go via the Windows code page built-in command "chcp".
             String output = Py.getCommandResultWindows("chcp");
             /*
-             * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
+             * The output will be like "Active code page: 850" or maybe "Active Codepage: 1252." or
              * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
              */
             final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
             Matcher matcher = DIGITS_PATTERN.matcher(output);
             if (matcher.find()) {
-                return "cp".concat(output.substring(matcher.start(), matcher.end()));
+                String codePage = "cp".concat(output.substring(matcher.start(), matcher.end()));
+                // cp65001 is UTF-8
+                if (codePage.equals("cp65001")) {
+                    return "utf-8";
+                } else {
+                    return codePage;
+                }
             }
 
         } else {
