@@ -1022,16 +1022,29 @@ public class PySystemState extends PyObject
      */
     private static String getConsoleEncoding(Properties props) {
 
-        // From Java 8 onwards, the answer may already be to hand in the registry:
-        String encoding = props.getProperty("sun.stdout.encoding");
-        String os = props.getProperty("os.name");
-
+        // Java 19+
+        String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
+            // cp65001 is automatically mapped to UTF-8
+            // no additional processing is required
             return encoding;
+        }
 
-        } else if (os != null && os.startsWith("Windows")) {
+        // Java 8 to 18
+        encoding = props.getProperty("sun.stdout.encoding");
+        if (encoding != null) {
+            // These versions of Java return "cp65001" for UTF-8
+            if (encoding.equals("cp65001")) {
+                // Windows UTF-8 code page
+                encoding = "utf-8";
+            }
+            return encoding;
+        }
+
+        String os = props.getProperty("os.name");
+        if (os != null && os.startsWith("Windows")) {
             // Go via the Windows code page built-in command "chcp".
-            String output = Py.getCommandResultWindows("chcp");
+            String output = Py.getCommandResultWindows("chcp.com");
             /*
              * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
              * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
