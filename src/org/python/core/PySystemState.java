@@ -1042,7 +1042,7 @@ public class PySystemState extends PyObject
         String os = props.getProperty("os.name");
         if (os != null && os.startsWith("Windows")) {
             // Go via the Windows code page built-in command "chcp".
-            String output = Py.getCommandResultWindows("chcp.com");
+            String output = Py.getCommandResultWindows("chcp");
             /*
              * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
              * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
