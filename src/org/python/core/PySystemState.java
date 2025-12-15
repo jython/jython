@@ -1025,17 +1025,15 @@ public class PySystemState extends PyObject
         // Java 19+
         String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
-            // cp65001 is automatically mapped to UTF-8
-            // no additional processing is required
+            // Windows: cp65001 is automatically mapped to UTF-8, no additional processing is needed
             return encoding;
         }
 
         // Java 8 to 18
         encoding = props.getProperty("sun.stdout.encoding");
         if (encoding != null) {
-            // These versions of Java return "cp65001" for UTF-8
+            // Windows: these versions of Java return "cp65001" for UTF-8
             if (encoding.equals("cp65001")) {
-                // Windows UTF-8 code page
                 encoding = "utf-8";
             }
             return encoding;
