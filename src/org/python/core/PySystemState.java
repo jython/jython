@@ -1022,6 +1022,9 @@ public class PySystemState extends PyObject
      */
     private static String getConsoleEncoding(Properties props) {
 
+        String os = props.getProperty("os.name");
+        boolean isWindows = os != null && os.startsWith("Windows");
+
         // Java 19+
         String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
@@ -1033,14 +1036,13 @@ public class PySystemState extends PyObject
         encoding = props.getProperty("sun.stdout.encoding");
         if (encoding != null) {
             // Windows: these versions of Java return "cp65001" for UTF-8
-            if (encoding.equals("cp65001")) {
+            if (isWindows && encoding.equals("cp65001")) {
                 encoding = "utf-8";
             }
             return encoding;
         }
 
-        String os = props.getProperty("os.name");
-        if (os != null && os.startsWith("Windows")) {
+        if (isWindows) {
             // Go via the Windows code page built-in command "chcp".
             String output = Py.getCommandResultWindows("chcp");
             /*
