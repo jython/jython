@@ -1052,7 +1052,11 @@ public class PySystemState extends PyObject
             final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
             Matcher matcher = DIGITS_PATTERN.matcher(output);
             if (matcher.find()) {
-                return "cp".concat(output.substring(matcher.start(), matcher.end()));
+                encoding = "cp".concat(output.substring(matcher.start(), matcher.end()));
+                if (encoding.equals("cp65001")) {
+                    encoding = "utf-8";
+                }
+                return encoding;
             }
 
         } else {
