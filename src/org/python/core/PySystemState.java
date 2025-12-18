@@ -1035,7 +1035,7 @@ public class PySystemState extends PyObject
         // Java 8 to 18
         encoding = props.getProperty("sun.stdout.encoding");
         if (encoding != null) {
-            // Windows: these versions of Java return "cp65001" for UTF-8
+            // Windows: some of the older versions of Java return "cp65001" for UTF-8
             if (isWindows && encoding.equals("cp65001")) {
                 encoding = "utf-8";
             }
