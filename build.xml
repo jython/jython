@@ -924,6 +924,7 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -948,6 +949,7 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar with stdlib"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
