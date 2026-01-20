@@ -102,6 +102,7 @@ MapCRLF = re.compile(r'\r\n|\r|\n')
 Response_code = re.compile(r'\[(?P<type>[A-Z-]+)( (?P<data>[^\]]*))?\]')
 Untagged_response = re.compile(r'\* (?P<type>[A-Z-]+)( (?P<data>.*))?')
 Untagged_status = re.compile(r'\* (?P<data>\d+) (?P<type>[A-Z-]+)( (?P<data2>.*))?')
+_control_chars = re.compile(r'[\x00-\x1F\x7F]')
 
 
 
@@ -848,6 +849,8 @@ class IMAP4:
         data = '%s %s' % (tag, name)
         for arg in args:
             if arg is None: continue
+            if isinstance(arg, basestring) and _control_chars.search(arg):
+                raise ValueError("Control characters not allowed in commands")
             data = '%s %s' % (data, self._checkquote(arg))
 
         literal = self.literal
