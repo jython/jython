@@ -2,8 +2,8 @@ package org.python.util;
 
 import java.util.Properties;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 /**
  * Initializes the jython runtime inside a servlet engine. Should be used with {@link PyFilter} to

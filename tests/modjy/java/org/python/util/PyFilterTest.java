@@ -1,6 +1,6 @@
 package org.python.util;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.mockrunner.mock.web.MockFilterConfig;
 

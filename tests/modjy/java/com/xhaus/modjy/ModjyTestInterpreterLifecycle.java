@@ -20,7 +20,7 @@
 
 package com.xhaus.modjy;
 
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServlet;
 
 public class ModjyTestInterpreterLifecycle extends ModjyTestBase {
 

@@ -2,20 +2,20 @@ package org.python.util;
 
 import java.io.File;
 import java.io.IOException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import org.python.core.PyException;
-import org.python.util.PythonInterpreter;
 
 /**
- * Enables you to write Jython modules that inherit from <code>javax.servlet.Filter</code>, and to
- * insert them in your servlet container's filter chain, like any Java <code>Filter</code>.
+ * Enables you to write Jython modules that inherit from <code>jakarta.servlet.Filter</code>, and to insert them in your
+ * servlet container's filter chain, like any Java <code>Filter</code>.
  *
  * <p>
  * Example:
@@ -24,10 +24,10 @@ import org.python.util.PythonInterpreter;
  * <b>/WEB-INF/filters/HeaderFilter.py:</b>
  *
  * <pre>
- * from javax.servlet import Filter
+ * from jakarta.servlet import Filter
  *
  * # Module must contain a class with the same name as the module
- * # which in turn must implement javax.servlet.Filter
+ * # which in turn must implement jakarta.servlet.Filter
  * class HeaderFilter (Filter):
  *   def init(self, config):
  *       self.header = config.getInitParameter('header')

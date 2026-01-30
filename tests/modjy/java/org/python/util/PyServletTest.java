@@ -1,6 +1,6 @@
 package org.python.util;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.python.core.PyFile;
 import com.mockrunner.base.NestedApplicationException;
