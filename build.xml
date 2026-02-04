@@ -243,7 +243,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
 
             <!-- Further database and Java EE-related JARs -->
             <filelist dir="${extlibs.dir}">
-                <file name="servlet-api-2.5.jar" />
+                <file name="jakartaee-api-9.0.0.jar" />
                 <file name="mysql-connector-java-5.1.42-bin.jar" />
                 <file name="postgresql-42.1.1.jre7.jar" />
             </filelist>
@@ -1259,7 +1259,7 @@ The text for an official release would continue like ...
                 <exclude name="extlibs/asm*.jar" />
                 <exclude name="extlibs/jarjar*.jar" />
                 <exclude name="extlibs/junit*.jar" />
-                <exclude name="extlibs/servlet-api*.jar" />
+                <exclude name="extlibs/jakartaee-api-9.0.0.jar" />
                 <exclude name="extlibs/stringtemplate*.jar" />
                 <exclude name="extlibs/xerces*.jar" />
             </fileset>

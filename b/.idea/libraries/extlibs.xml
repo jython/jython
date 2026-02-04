@@ -49,7 +49,7 @@
       <root url="jar://$PROJECT_DIR$/extlibs/netty-transport-4.1.11.Final.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/postgresql-42.1.1.jre7.jar!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/profile.jar!/" />
-      <root url="jar://$PROJECT_DIR$/extlibs/servlet-api-2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/extlibs/jakartaee-api-9.0.0!/" />
       <root url="jar://$PROJECT_DIR$/extlibs/xercesImpl-2.11.0.jar!/" />
     </CLASSES>
     <JAVADOC />
