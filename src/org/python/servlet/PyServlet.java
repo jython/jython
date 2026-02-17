@@ -1,4 +1,4 @@
-package org.python.util;
+package org.python.servlet;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +24,8 @@ import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
+import org.python.util.Generic;
+import org.python.util.PythonInterpreter;
 
 /**
  * This servlet is used to re-serve Jython servlets. It stores bytecode for Jython servlets and
@@ -50,7 +52,7 @@ import org.python.core.PySystemState;
  * <web-app>
  *     <servlet>
  *         <servlet-name>PyServlet</servlet-name>
- *         <servlet-class>org.python.util.PyServlet</servlet-class>
+ *         <servlet-class>org.python.servlet.PyServlet</servlet-class>
  *         <init-param>
  *             <param-name>python.home</param-name>
  *             <param-value>/usr/home/jython-2.5</param-value>

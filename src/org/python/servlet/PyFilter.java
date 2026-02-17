@@ -1,4 +1,4 @@
-package org.python.util;
+package org.python.servlet;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 
 import org.python.core.PyException;
+import org.python.util.PythonInterpreter;
 
 /**
  * Enables you to write Jython modules that inherit from <code>jakarta.servlet.Filter</code>, and to insert them in your
@@ -44,14 +45,14 @@ import org.python.core.PyException;
  * <pre>
  * &lt;!-- Initialize the Jython runtime --&gt;
  *   &lt;listener&gt;
- *       &lt;listener-class&gt;org.python.util.PyServletInitializer&lt;/listener-class&gt;
+ *       &lt;listener-class&gt;org.python.servlet.PyServletInitializer&lt;/listener-class&gt;
  *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
  *   &lt;/listener&gt;
  *
  * &lt;!-- Declare a uniquely-named PyFilter --&gt;
  * &lt;filter&gt;
  *  &lt;filter-name&gt;HeaderFilter&lt;/filter-name&gt;
- *  &lt;filter-class&gt;org.python.util.PyFilter&lt;/filter-class&gt;
+ *  &lt;filter-class&gt;org.python.servlet.PyFilter&lt;/filter-class&gt;
  *
  *  &lt;!-- The special param __filter__ gives the context-relative path to the Jython source file --&gt;
  *  &lt;init-param&gt;
@@ -83,7 +84,7 @@ public class PyFilter implements Filter {
     public void init(FilterConfig config) throws ServletException {
         if (config.getServletContext().getAttribute(PyServlet.INIT_ATTR) == null) {
             throw new ServletException("Jython has not been initialized.  Add "
-                    + "org.python.util.PyServletInitializer as a listener to your "
+                    + "org.python.servlet.PyServletInitializer as a listener to your "
                     + "web.xml.");
         }
         this.config = config;

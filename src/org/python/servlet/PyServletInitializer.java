@@ -1,4 +1,4 @@
-package org.python.util;
+package org.python.servlet;
 
 import java.util.Properties;
 
@@ -12,7 +12,7 @@ import jakarta.servlet.ServletContextListener;
  *
  * <pre>
  *   &lt;listener&gt;
- *       &lt;listener-class&gt;org.python.util.PyServletInitializer&lt;/listener-class&gt;
+ *       &lt;listener-class&gt;org.python.servlet.PyServletInitializer&lt;/listener-class&gt;
  *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
  *   &lt;/listener&gt;
  *</pre>
