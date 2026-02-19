@@ -1,4 +1,4 @@
-package org.python.util;
+package org.python.servlet;
 
 import jakarta.servlet.ServletException;
 
