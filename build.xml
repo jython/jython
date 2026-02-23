@@ -1259,7 +1259,7 @@ The text for an official release would continue like ...
                 <exclude name="extlibs/asm*.jar" />
                 <exclude name="extlibs/jarjar*.jar" />
                 <exclude name="extlibs/junit*.jar" />
-                <exclude name="extlibs/jakarta.servlet-api-5.0.0.jar" />
+                <exclude name="extlibs/jakarta.servlet-api-*.jar" />
                 <exclude name="extlibs/stringtemplate*.jar" />
                 <exclude name="extlibs/xerces*.jar" />
             </fileset>
