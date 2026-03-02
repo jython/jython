@@ -25,9 +25,12 @@ New Features
       to the classpath on top of jython.jar without name conflict. In many cases
       this should suffice to retain workability of a legacy setup if needed.
 
+    - Upgrade of jffi to 1.3.14 eliminates the need for sun.misc.Unsafe, which is
+      deprecated for removal in Java 26. See https://github.com/jnr/jffi/issues/165
+
 Jython 2.7.5a1 Bugs fixed
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
-
+    - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
 
 
 ==============================================================================
