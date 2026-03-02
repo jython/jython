@@ -16,7 +16,17 @@ Jython 2.7.5
 
 New Features
 
+    - Servlet support is updated to use the jakarta namespace. As part of this
+      change, the classes org.python.util.PyServlet, org.python.util.PyFilter
+      and org.python.util.PyServletInitializer have been relocated to a new
+      package org.python.servlet. Users should double-check that this change is
+      adjusted in their config if necessary.
+      The relocation allows adding the old classes (with javax.servlet imports)
+      to the classpath on top of jython.jar without name conflict. In many cases
+      this should suffice to retain workability of a legacy setup if needed.
+
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
 
 
 
