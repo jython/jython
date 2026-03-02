@@ -1,4 +1,4 @@
-package org.python.sevlet;
+package org.python.servlet;
 
 import jakarta.servlet.http.HttpServletResponse;
 
