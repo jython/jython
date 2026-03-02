@@ -24,8 +24,8 @@ import junit.framework.TestSuite;
 
 import org.jdom.output.XMLOutputter;
 import org.python.core.PyObject;
-import org.python.util.PyFilterTest;
-import org.python.util.PyServletTest;
+import org.python.servlet.PyFilterTest;
+import org.python.servlet.PyServletTest;
 import org.python.util.PythonInterpreter;
 
 import com.mockrunner.mock.web.MockHttpServletRequest;
