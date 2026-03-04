@@ -29,8 +29,9 @@ New Features
       deprecated for removal in Java 26. See https://github.com/jnr/jffi/issues/165
 
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-388 ] @ExposedType annotation should be @Documented
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
-    - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
+    - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace
 
 
 ==============================================================================
