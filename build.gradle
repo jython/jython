@@ -650,7 +650,8 @@ jar {
         attributes ([
             'Main-Class': 'org.python.util.jython',
             'Built-By': 'build.gradle',
-            'Automatic-Module-Name': 'org.python.jython2'
+            'Automatic-Module-Name': 'org.python.jython2',
+            'Enable-Native-Access': 'ALL-UNNAMED'
         ])
 
         attributes( [ // Build-Info section
