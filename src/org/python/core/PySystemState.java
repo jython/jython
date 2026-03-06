@@ -1022,14 +1022,36 @@ public class PySystemState extends PyObject
      */
     private static String getConsoleEncoding(Properties props) {
 
-        // From Java 8 onwards, the answer may already be to hand in the registry:
-        String encoding = props.getProperty("sun.stdout.encoding");
-        String os = props.getProperty("os.name");
-
+        // Java 19+
+        String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
+            // Windows: cp65001 is automatically mapped to UTF-8
+            // See https://github.com/openjdk/jdk/blob/master/src/java.base/windows/native/libjava/java_props_md.c
+            // C function: getConsoleEncoding()
+            // 0129   ...
+            // 0130   } else if (cp == 65001) {
+            // 0131       snprintf(buf, buflen, "UTF-8");
+            // 0132   } else if (...) {
+            // 0133   ...
+            if (encoding.equals("UTF-8")) {
+                encoding = encoding.toLowerCase();
+            }
             return encoding;
+        }
 
-        } else if (os != null && os.startsWith("Windows")) {
+        // Java 8 to 18
+        String os = props.getProperty("os.name");
+        boolean isWindows = os != null && os.startsWith("Windows");
+        encoding = props.getProperty("sun.stdout.encoding");
+        if (encoding != null) {
+            // Windows: some of the older versions of Java return "cp65001" for UTF-8
+            if (isWindows && encoding.equals("cp65001")) {
+                encoding = "utf-8";
+            }
+            return encoding;
+        }
+
+        if (isWindows) {
             // Go via the Windows code page built-in command "chcp".
             String output = Py.getCommandResultWindows("chcp");
             /*
@@ -1039,7 +1061,11 @@ public class PySystemState extends PyObject
             final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
             Matcher matcher = DIGITS_PATTERN.matcher(output);
             if (matcher.find()) {
-                return "cp".concat(output.substring(matcher.start(), matcher.end()));
+                encoding = "cp".concat(output.substring(matcher.start(), matcher.end()));
+                if (encoding.equals("cp65001")) {
+                    encoding = "utf-8";
+                }
+                return encoding;
             }
 
         } else {

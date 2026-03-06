@@ -31,6 +31,7 @@ New Features
 Jython 2.7.5a1 Bugs fixed
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
     - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
+    - [ GH-404 ] Windows code page 65001 (UTF-8) not supported by Jython
 
 
 ==============================================================================
