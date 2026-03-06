@@ -852,7 +852,7 @@ public class jython {
      * @param args zero or more args
      */
     private static void printError(String format, Object... args) {
-        System.err.println(String.format("jython: " + format, args));
+        System.err.printf("jython: " + format + "%n", args);
     }
 
     /**

@@ -8,6 +8,7 @@ package org.python.modules;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 import org.python.core.Py;
@@ -440,7 +441,7 @@ public class _codecs {
                 }
                 buf.appendCodePoint(value);
             } else if (result instanceof PyUnicode) {
-                buf.append(result.toString());
+                buf.append(result);
             } else {
                 // wrong return value
                 throw Py.TypeError("character mapping must return integer, None or unicode");
@@ -548,7 +549,7 @@ public class _codecs {
             } else if (x instanceof PyString && !(x instanceof PyUnicode)) {
                 // Look-up had str or unicode result: output as Java String
                 // XXX: (Py3k) Look-up had bytes or str result: output as ... this is a problem
-                v.append(x.toString());
+                v.append(x);
 
             } else if (x instanceof PyNone) {
                 i = handleBadMapping(str, errors, mapping, v, size, i);
@@ -679,11 +680,11 @@ public class _codecs {
     public static String encode_UTF16(String str, String errors, int byteorder) {
         final Charset utf16;
         if (byteorder == 0) {
-            utf16 = Charset.forName("UTF-16");
+            utf16 = StandardCharsets.UTF_16;
         } else if (byteorder == -1) {
-            utf16 = Charset.forName("UTF-16LE");
+            utf16 = StandardCharsets.UTF_16LE;
         } else {
-            utf16 = Charset.forName("UTF-16BE");
+            utf16 = StandardCharsets.UTF_16BE;
         }
 
         // XXX errors argument ignored: Java's codecs implement "replace"

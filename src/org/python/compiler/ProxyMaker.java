@@ -421,7 +421,7 @@ public class ProxyMaker extends ProxyCodeHelpers implements ClassConstants, Opco
     }
 
     private String methodString(Method m) {
-        StringBuffer buf = new StringBuffer(m.getName());
+        StringBuilder buf = new StringBuilder(m.getName());
         buf.append(":");
         Class<?>[] params = m.getParameterTypes();
         for (Class<?> param : params) {

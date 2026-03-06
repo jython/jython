@@ -2328,17 +2328,17 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
                 throws IOException;
 
         /** Type name as it would appear in an {@code array.array} constructor. */
-        String typecode;
+        final String typecode;
         /** Type as it would appear in an error message. "" for OBJECT. */
         final String description;
         /** Class representing elements of this type (for primitive cases). "" for OBJECT. */
-        Class<?> itemClass;
+        final Class<?> itemClass;
         /** Number of bytes in serialised form (not necessarily in memory). */
-        int itemsize;
+        final int itemsize;
         /** Minimum value (only valid in integral and character types). */
-        long min;
+        final long min;
         /** Maximum value (only valid in integral and character types). */
-        long max;
+        final long max;
 
         /**
          * Do-it-all constructor.
@@ -2709,7 +2709,7 @@ public class PyArray extends PySequence implements Cloneable, BufferProtocol, Tr
      * href=http://stackoverflow.com/questions/4332264/wrapping-a-bytebuffer-with-an-inputstream>
      * Stackoverflow question 4332264</a>.
      */
-    private class ByteBufferBackedInputStream extends InputStream {
+    private static class ByteBufferBackedInputStream extends InputStream {
 
         ByteBuffer buf;
 

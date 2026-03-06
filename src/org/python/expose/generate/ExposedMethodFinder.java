@@ -116,7 +116,7 @@ public abstract class ExposedMethodFinder extends MethodVisitor implements PyTyp
         return super.visitAnnotation(desc, visible);
     }
 
-    private abstract class StringArrayBuilder extends RestrictiveAnnotationVisitor {
+    private abstract static class StringArrayBuilder extends RestrictiveAnnotationVisitor {
 
         @Override
         public void visit(String name, Object value) {

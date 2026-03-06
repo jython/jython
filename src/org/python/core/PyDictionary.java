@@ -33,7 +33,7 @@ import org.python.util.Generic;
 public class PyDictionary extends AbstractDict implements ConcurrentMap, Traverseproc {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
-    {
+    static {
         /* Ensure dict is not Hashable */
         TYPE.object___setattr__("__hash__", Py.None);
     }

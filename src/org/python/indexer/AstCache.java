@@ -10,6 +10,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +120,7 @@ public class AstCache {
         try {
             mod = parse(path, contents);
             if (mod != null) {
-                mod.setFileAndMD5(path, Util.getMD5(contents.getBytes("UTF-8")));
+                mod.setFileAndMD5(path, Util.getMD5(contents.getBytes(StandardCharsets.UTF_8)));
             }
         } finally {
             cache.put(path, mod);  // may be null
@@ -251,18 +254,8 @@ public class AstCache {
     // package-private for testing
     void serialize(NModule ast) throws Exception {
         String path = getCachePath(ast.getMD5(), new File(ast.getFile()).getName());
-        ObjectOutputStream oos = null;
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(path);
-            oos = new ObjectOutputStream(fos);
+        try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(Paths.get(path)))){
             oos.writeObject(ast);
-        } finally {
-            if (oos != null) {
-                oos.close();
-            } else if (fos != null) {
-                fos.close();
-            }
         }
     }
 
@@ -270,7 +263,7 @@ public class AstCache {
     NModule getSerializedModule(String sourcePath) {
         try {
             File sourceFile = new File(sourcePath);
-            if (sourceFile == null || !sourceFile.canRead()) {
+            if (!sourceFile.canRead()) {
                 return null;
             }
             File cached = new File(getCachePath(sourceFile));

@@ -51,7 +51,7 @@ public class izip extends PyIterator {
     @ExposedMethod
     final void izip___init__(PyObject[] args, String[] kwds) {
         if (kwds.length > 0) {
-            throw Py.TypeError(String.format("izip does not take keyword arguments"));
+            throw Py.TypeError("izip does not take keyword arguments");
         }
         izip___init__(args);
     }

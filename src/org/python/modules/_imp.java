@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,7 +60,7 @@ public class _imp {
 
     private static PyObject newFile(File file) {
         try {
-            return new PyFile(new FileInputStream(file));
+            return new PyFile(Files.newInputStream(file.toPath()));
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
@@ -85,7 +86,7 @@ public class _imp {
         // displayDirName is for identification purposes: when null it
         // forces java.io.File to be a relative path (e.g. foo/bar.py
         // instead of /tmp/foo/bar.py)
-        String displayDirName = entry.equals("") ? null : entry;
+        String displayDirName = entry.isEmpty() ? null : entry;
 
         // First check for packages
         File dir = findingPackage ? new File(directoryName) : new File(directoryName, name);

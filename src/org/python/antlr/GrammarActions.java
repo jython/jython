@@ -441,7 +441,7 @@ public class GrammarActions {
         return Py.newInteger((int) l);
     }
 
-    class StringPair {
+    static class StringPair {
         private String s;
         private boolean unicode;
 
@@ -461,7 +461,7 @@ public class GrammarActions {
     PyString extractStrings(List s, String encoding, boolean unicodeLiterals) {
         boolean ustring = false;
         Token last = null;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Iterator iter = s.iterator();
         while (iter.hasNext()) {
             last = (Token)iter.next();

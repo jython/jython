@@ -528,7 +528,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
     final String zipimporter_toString() {
         // __repr__ has to return bytes not unicode
         String bytesName = archive != null ? Py.fileSystemEncode(archive).getString() : "???";
-        if (prefix != null && !"".equals(prefix)) {
+        if (prefix != null && !prefix.isEmpty()) {
             return String.format("<zipimporter object \"%.300s%c%.150s\">", bytesName,
                     File.separatorChar, prefix);
         }
@@ -539,7 +539,7 @@ public class zipimporter extends importer<PyObject> implements Traverseproc {
      * ZipBundle is a ZipFile and one of its InputStreams, bundled together so the ZipFile can be
      * closed when finished with its InputStream.
      */
-    private class ZipBundle extends Bundle {
+    private static class ZipBundle extends Bundle {
         ZipFile zipFile;
 
         public ZipBundle(ZipFile zipFile, InputStream inputStream) {

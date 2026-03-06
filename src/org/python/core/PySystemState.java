@@ -23,7 +23,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -798,7 +798,7 @@ public class PySystemState extends PyObject
             return null;
         }
         // If install.root is undefined find JYTHON_JAR in class.path
-        if (root == null || root.equals("")) {
+        if (root == null || root.isEmpty()) {
             String classpath = preProperties.getProperty("java.class.path");
             if (classpath != null) {
                 String lowerCaseClasspath = classpath.toLowerCase();
@@ -835,10 +835,10 @@ public class PySystemState extends PyObject
         }
         String lversion = version.toLowerCase();
         if (lversion.startsWith("java")) {
-            version = version.substring(4, version.length());
+            version = version.substring(4);
         }
         if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
-            version = version.substring(3, version.length());
+            version = version.substring(3);
         }
         if (version.equals("12")) {
             version = "1.2";
@@ -1068,23 +1068,20 @@ public class PySystemState extends PyObject
                 // therefore only add missing properties from this registry file
                 Properties fileProperties = new Properties();
                 try {
-                    FileInputStream fp = new FileInputStream(file);
-                    try {
+                    try (FileInputStream fp = new FileInputStream(file)) {
                         fileProperties.load(fp);
-                        for (Entry kv : fileProperties.entrySet()) {
+                        for (Entry<Object, Object> kv : fileProperties.entrySet()) {
                             Object key = kv.getKey();
                             if (!registry.containsKey(key)) {
                                 registry.put(key, kv.getValue());
                             }
                         }
-                    } finally {
-                        fp.close();
                     }
                 } catch (IOException e) {
                     System.err.println("couldn't open registry file: " + file.toString());
                 }
             } else {
-                System.err.println("warning: " + file.toString() + " is a directory, not a file");
+                System.err.println("warning: " + file + " is a directory, not a file");
             }
         }
     }
@@ -1171,16 +1168,16 @@ public class PySystemState extends PyObject
     private static boolean initialize(Properties pre, Properties post, String[] argv,
             ClassLoader sysClassLoader, ExtensiblePyObjectAdapter adapter,
             ClassLoader initializerClassLoader) {
-        InputStream in = initializerClassLoader.getResourceAsStream(INITIALIZER_SERVICE);
-        if (in == null) {
-            Py.writeDebug("initializer",
-                    "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
-            return false;
-        }
-        BufferedReader r = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
         String className;
-        try {
-            className = r.readLine();
+        try (InputStream in = initializerClassLoader.getResourceAsStream(INITIALIZER_SERVICE)) {
+            if (in == null) {
+                Py.writeDebug("initializer",
+                        "'" + INITIALIZER_SERVICE + "' not found on " + initializerClassLoader);
+                return false;
+            }
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                className = r.readLine();
+            }
         } catch (IOException e) {
             Py.writeWarning("initializer",
                     "Failed reading '" + INITIALIZER_SERVICE + "' from " + initializerClassLoader);
@@ -1413,7 +1410,6 @@ public class PySystemState extends PyObject
         try {
             // Default is a plain console
             Py.installConsole(new PlainConsole(encoding));
-            return;
         } catch (Exception e) {
             /*
              * May end up here if prior console won't uninstall: but then at least we have a
@@ -1515,22 +1511,13 @@ public class PySystemState extends PyObject
     private static boolean isStandalone(String jarFileName) {
         boolean standalone = false;
         if (jarFileName != null) {
-            JarFile jarFile = null;
-            try {
-                jarFile = new JarFile(jarFileName);
+            try (JarFile jarFile = new JarFile(jarFileName)) {
                 JarEntry jarEntry = jarFile.getJarEntry("Lib/os.py");
                 standalone = jarEntry != null;
             } catch (IOException ioe) {
                 // Continue
-            } finally {
-                if (jarFile != null) {
-                    try {
-                        jarFile.close();
-                    } catch (IOException e) {
-                        // Continue
-                    }
-                }
             }
+            // Continue
         }
         return standalone;
     }

@@ -215,7 +215,7 @@ public class imp {
     /** Open a file, raising a {@code PyException} on error. */
     private static InputStream makeStream(File file) {
         try {
-            return new FileInputStream(file);
+            return Files.newInputStream(file.toPath());
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
@@ -848,7 +848,7 @@ public class imp {
         boolean haveSource = false, haveCompiled = false;
 
         // display* names are for mainly identification purposes (e.g. __file__)
-        String displayLocation = (location.equals("") || location.equals(",")) ? null : location;
+        String displayLocation = (location.isEmpty() || location.equals(",")) ? null : location;
         String displaySourceName, displayCompiledName;
 
         try {
@@ -1498,7 +1498,7 @@ public class imp {
             }
 
             if (mod.__findattr__((PyString)item) == null) {
-                String fullName = modNameBuffer.toString() + "." + item.toString();
+                String fullName = modNameBuffer + "." + item;
                 import_next(mod, modNameBuffer, item.toString(), fullName, null);
             }
         }

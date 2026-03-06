@@ -82,7 +82,7 @@ public class IBMMQChallengeMRO {
 
         public static class jms { // represents com.ibm.mq.jms
 
-            public abstract/* ? */ class MQDestination
+            public abstract static/* ? */ class MQDestination
                     extends msg.client.jms.admin.JmsJndiDestinationImpl implements
                     javax_jms.Destination, IBMMQChallengeMRO.jms.JMSDestination, Serializable {}
             /** Target class in the test **/

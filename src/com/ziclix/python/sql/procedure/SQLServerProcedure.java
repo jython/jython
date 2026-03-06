@@ -31,7 +31,7 @@ public class SQLServerProcedure extends Procedure {
 
     protected String getProcedureName() {
 
-        StringBuffer proc = new StringBuffer();
+        StringBuilder proc = new StringBuilder();
 
         if (this.procedureSchema.__nonzero__()) {
             proc.append(this.procedureSchema.toString()).append(".");

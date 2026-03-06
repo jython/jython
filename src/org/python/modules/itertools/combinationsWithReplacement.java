@@ -56,10 +56,7 @@ public class combinationsWithReplacement extends PyIterator {
     private void combinationsWithReplacement___init__(PyObject iterable, final int r) {
         final PyTuple pool = PyTuple.fromIterable(iterable);
         final int n = pool.__len__();
-        final int indices[] = new int[r];
-        for (int i = 0; i < r; i++) {
-            indices[i] = 0;
-        }
+        final int[] indices = new int[r];
 
         iter = new itertools.ItertoolsIterator() {
             boolean firstthru = true;

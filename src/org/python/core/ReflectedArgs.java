@@ -188,14 +188,12 @@ public class ReflectedArgs {
             return pyArgs;
         }
         PyObject[] boxedPyArgs = new PyObject[n];
-        for (int i = 0; i < non_varargs_len; i++) {
-            boxedPyArgs[i] = pyArgs[i];
+        if (non_varargs_len >= 0) {
+            System.arraycopy(pyArgs, 0, boxedPyArgs, 0, non_varargs_len);
         }
         int varargs_len = pyArgs.length - non_varargs_len;
         PyObject[] varargs = new PyObject[varargs_len];
-        for (int i = 0; i < varargs_len; i++) {
-            varargs[i] = pyArgs[non_varargs_len + i];
-        }
+        System.arraycopy(pyArgs, non_varargs_len, varargs, 0, varargs_len);
         boxedPyArgs[non_varargs_len] = new PyList(varargs);
         return boxedPyArgs;
     }
@@ -330,13 +328,16 @@ public class ReflectedArgs {
 
     @Override
     public String toString() {
-        String s = declaringClass + ", static=" + isStatic + ", varargs=" + isVarArgs + ",flags="
-                + flags + ", " + method + "\n";
-        s = s + "\t(";
+        StringBuilder s = new StringBuilder(declaringClass
+                                            + ", static=" + isStatic
+                                            + ", varargs=" + isVarArgs
+                                            + ",flags=" + flags
+                                            + ", " + method + "\n");
+        s.append("\t(");
         for (Class<?> arg : args) {
-            s += arg.getName() + ", ";
+            s.append(arg.getName()).append(", ");
         }
-        s += ")";
-        return s;
+        s.append(")");
+        return s.toString();
     }
 }

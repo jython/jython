@@ -6,6 +6,7 @@ package org.python.modules;
  */
 
 import java.security.MessageDigest;
+import java.util.Arrays;
 
 /**
  * SHA-224 as described in RFC 3874. This introduces the SHA224 Digest which has
@@ -221,9 +222,7 @@ public class SHA224Digest
         byteCount = 0;
 
         xBufOff = 0;
-        for (int i = 0; i < xBuf.length; i++) {
-            xBuf[i] = 0;
-        }
+        Arrays.fill(xBuf, (byte) 0);
 
         /*
          * SHA-224 initial hash value
@@ -239,9 +238,7 @@ public class SHA224Digest
         H8 = 0xbefa4fa4;
 
         xOff = 0;
-        for (int i = 0; i != X.length; i++) {
-            X[i] = 0;
-        }
+        Arrays.fill(X, 0);
     }
 
     protected void processBlock() {

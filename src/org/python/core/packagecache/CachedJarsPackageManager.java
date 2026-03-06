@@ -25,6 +25,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -394,7 +395,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 InputStream jarin = null;
                 try {
                     if (jarconn == null) {
-                        jarin = new BufferedInputStream(new FileInputStream(jarfile));
+                        jarin = new BufferedInputStream(Files.newInputStream(jarfile.toPath()));
                     } else {
                         // We were given a URL originally so use that.
                         jarin = jarconn.getInputStream();
@@ -514,9 +515,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      */
     private void writeCacheFile(JarXEntry entry, String jarcanon, Map<String, String> zipPackages,
             boolean brandNew) {
-        DataOutputStream ostream = null;
-        try {
-            ostream = outCreateCacheFile(entry, brandNew);
+        try (DataOutputStream ostream = outCreateCacheFile(entry, brandNew)) {
             ostream.writeUTF(jarcanon);
             ostream.writeLong(entry.mtime);
             comment("rewriting cache for ''{0}''", jarcanon);
@@ -532,14 +531,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("failed to write cache for ''{0}'' ({1})", jarcanon, ioe.getMessage());
-        } finally {
-            if (ostream != null) {
-                try {
-                    ostream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -659,9 +650,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         this.indexModified = false;
         this.index = Generic.map();
 
-        DataInputStream istream = null;
-        try {
-            istream = inOpenIndex();
+        try (DataInputStream istream = inOpenIndex()) {
             if (istream == null) {
                 return;
             }
@@ -678,14 +667,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("invalid index file");
-        } finally {
-            if (istream != null) {
-                try {
-                    istream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -704,9 +685,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         comment("writing modified index file");
 
-        DataOutputStream ostream = null;
-        try {
-            ostream = outOpenIndex();
+        try (DataOutputStream ostream = outOpenIndex()) {
             for (Entry<String, JarXEntry> entry : index.entrySet()) {
                 String jarcanon = entry.getKey();
                 JarXEntry xentry = entry.getValue();
@@ -716,14 +695,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
         } catch (IOException ioe) {
             warning("failed to write index file ({0})", ioe.getMessage());
-        } finally {
-            if (ostream != null) {
-                try {
-                    ostream.close();
-                } catch (IOException ignore) {
-                    // ignore
-                }
-            }
         }
     }
 
@@ -735,7 +706,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * created for each JAR processed for classes, and corresponds to a file in the package cache
      * directory. The name is based on the name of the JAR.
      */
-    public static class JarXEntry extends Object {
+    public static class JarXEntry {
 
         /** Specifies the actual cache file once that is created or opened. */
         public String cachefile;
@@ -784,7 +755,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * is part of the off-the-shelf local file-system cache implementation. Can be overridden.
      */
     protected DataInputStream inOpenCacheFile(String cachefile) throws IOException {
-        return new DataInputStream(new BufferedInputStream(new FileInputStream(cachefile)));
+        return new DataInputStream(new BufferedInputStream(Files.newInputStream(Paths.get(cachefile))));
     }
 
     /**
@@ -824,13 +795,12 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             }
             file = FileUtil.makePrivateRW(file);
             entry.cachefile = file.getCanonicalPath();
-
         } else {
             // Use an existing cache file named in the entry
             file = new File(entry.cachefile);
         }
 
-        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+        return new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath())));
     }
 
     /** Directory in which cache files are stored. */

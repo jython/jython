@@ -384,7 +384,7 @@ public class __builtin__ {
             for (int i = 0; i < n; i++) {
                 PyObject name = ik.next();
                 if (name.getClass() != PyString.class) {
-                    throw Py.TypeError(String.format("keywords must be strings"));
+                    throw Py.TypeError("keywords must be strings");
                 }
                 kw[i] = ((PyString)name).internedString();
                 a[i + offset] = iv.next();
@@ -588,7 +588,7 @@ public class __builtin__ {
                 throw Py.TypeError(String.format("can't filter %s to %s: __getitem__ returned "
                                                  + "different type", name, name));
             }
-            builder.append(item.toString());
+            builder.append(item);
         }
 
         String result = builder.toString();

@@ -127,10 +127,10 @@ public class Connectx extends PyObject {
      */
     protected void invoke(Object src, String methodName, Object value) {
         Method method = null;
-        StringBuffer exceptionMsg = new StringBuffer("method [");
+        StringBuilder exceptionMsg = new StringBuilder("method [");
         exceptionMsg.append(methodName).append("] using arg type [");
         exceptionMsg.append(value.getClass()).append("], value [");
-        exceptionMsg.append(value.toString()).append("]");
+        exceptionMsg.append(value).append("]");
 
         try {
             method = getMethod(src.getClass(), methodName, value.getClass());

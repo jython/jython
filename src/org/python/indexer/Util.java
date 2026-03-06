@@ -11,6 +11,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Collection;
 import java.util.Set;
@@ -18,7 +20,6 @@ import java.util.TreeSet;
 
 public class Util {
 
-    private static final String UTF_8 = "UTF-8";
     private static final char SEPCHAR = File.separatorChar;
     private static final String SEP = File.separator;
     private static final String INIT_PY = "__init__.py";
@@ -79,7 +80,7 @@ public class Util {
     }
 
     public static String arrayToString(Collection<String> strings) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (String s : strings) {
             sb.append(s).append("\n");
         }
@@ -122,15 +123,9 @@ public class Util {
     }
 
     public static void writeFile(String path, String contents) throws Exception {
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(new BufferedWriter(new FileWriter(path)));
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path)))) {
             out.print(contents);
             out.flush();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
     }
 
@@ -141,34 +136,28 @@ public class Util {
     public static String readFile(File path) throws Exception {
         // Don't use line-oriented file read -- need to retain CRLF if present
         // so the style-run and link offsets are correct.
-        return new String(getBytesFromFile(path), UTF_8);
+        return new String(getBytesFromFile(path), StandardCharsets.UTF_8);
     }
 
     public static byte[] getBytesFromFile(File file) throws IOException {
-        InputStream is = null;
 
-        try {
-            is = new FileInputStream(file);
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             long length = file.length();
             if (length > Integer.MAX_VALUE) {
                 throw new IOException("file too large: " + file);
             }
 
-            byte[] bytes = new byte[(int)length];
+            byte[] bytes = new byte[(int) length];
             int offset = 0;
             int numRead = 0;
             while (offset < bytes.length
-                   && (numRead = is.read(bytes, offset, bytes.length-offset)) >= 0) {
+                   && (numRead = is.read(bytes, offset, bytes.length - offset)) >= 0) {
                 offset += numRead;
             }
             if (offset < bytes.length) {
                 throw new IOException("Failed to read whole file " + file);
             }
             return bytes;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
         }
     }
 

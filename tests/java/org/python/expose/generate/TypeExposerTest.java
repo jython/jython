@@ -60,7 +60,7 @@ public class TypeExposerTest extends InterpTestCase {
     }
 
     @ExposedType
-    public class NonstaticNew {
+    public static class NonstaticNew {
 
         @ExposedNew
         public PyObject __new__(PyNewWrapper new_,

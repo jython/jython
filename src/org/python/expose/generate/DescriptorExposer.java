@@ -138,8 +138,9 @@ public class DescriptorExposer extends Exposer {
         startConstructor();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(name);
-        if(PRIMITIVES.containsKey(ofType)) {
-            mv.visitLdcInsn(PRIMITIVES.get(ofType));
+        Type primitiveType = PRIMITIVES.get(ofType);
+        if (primitiveType != null) {
+            mv.visitLdcInsn(primitiveType);
         } else {
             mv.visitLdcInsn(ofType);
         }
@@ -182,9 +183,10 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 2);
-        if(PRIMITIVES.containsKey(ofType)) {
-            mv.visitTypeInsn(CHECKCAST, PRIMITIVES.get(ofType).getInternalName());
-            call(PRIMITIVES.get(ofType), ofType.getClassName() + "Value", ofType);
+        Type primitiveType = PRIMITIVES.get(ofType);
+        if (primitiveType != null) {
+            mv.visitTypeInsn(CHECKCAST, primitiveType.getInternalName());
+            call(primitiveType, ofType.getClassName() + "Value", ofType);
         } else {
             mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
         }
@@ -197,9 +199,10 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 2);
-        if(PRIMITIVES.containsKey(ofType)) {
-            mv.visitTypeInsn(CHECKCAST, PRIMITIVES.get(ofType).getInternalName());
-            call(PRIMITIVES.get(ofType), ofType.getClassName() + "Value", ofType);
+        Type primitiveType = PRIMITIVES.get(ofType);
+        if (primitiveType != null) {
+            mv.visitTypeInsn(CHECKCAST, primitiveType.getInternalName());
+            call(primitiveType, ofType.getClassName() + "Value", ofType);
         } else {
             mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
         }

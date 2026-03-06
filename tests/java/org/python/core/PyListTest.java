@@ -34,7 +34,7 @@ public class PyListTest extends TestCase {
         // of the proper type.
         Object[] test = new String[1];
         String[] s = (String[])p.toArray(test);
-        assertEquals(s[0], "foo");
-        assertEquals(s[1], "bar");
+        assertEquals("foo", s[0]);
+        assertEquals("bar", s[1]);
     }
 }

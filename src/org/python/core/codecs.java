@@ -7,6 +7,7 @@
 package org.python.core;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -1136,7 +1137,7 @@ public class codecs {
     }
 
     public static String PyUnicode_EncodeUTF8(String str, String errors) {
-        return StringUtil.fromBytes(Charset.forName("UTF-8").encode(str));
+        return StringUtil.fromBytes(StandardCharsets.UTF_8.encode(str));
     }
 
     /* --- ASCII and Latin-1 Codecs --------------------------------------- */

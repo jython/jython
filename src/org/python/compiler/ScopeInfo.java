@@ -17,7 +17,7 @@ import org.python.antlr.PythonTree;
 import org.python.antlr.ast.Return;
 import org.python.antlr.base.expr;
 
-public class ScopeInfo extends Object implements ScopeConstants {
+public class ScopeInfo implements ScopeConstants {
 
     static final Logger LOGGER = Logger.getLogger("org.python.compiler");
 
@@ -32,7 +32,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
             for (int i = 0; i < level; i++) {
                 m.append(' ');
             }
-            m.append(((kind != CLASSSCOPE) ? scope_name : "class " + scope_name) + ": ");
+            m.append((kind != CLASSSCOPE) ? scope_name : "class " + scope_name).append(": ");
             for (Map.Entry<String, SymInfo> entry : tbl.entrySet()) {
                 String name = entry.getKey();
                 SymInfo info = entry.getValue();

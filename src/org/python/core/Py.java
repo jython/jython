@@ -37,7 +37,7 @@ public final class Py extends PrePy {
 
     static class SingletonResolver implements Serializable {
 
-        private String which;
+        private final String which;
 
         SingletonResolver(String which) {
             this.which = which;
@@ -1561,7 +1561,7 @@ public final class Py extends PrePy {
                     break;
                 }
                 offset -= nl + 1;
-                text = text.substring(nl + 1, text.length());
+                text = text.substring(nl + 1);
             }
 
             // lstrip
@@ -1573,7 +1573,7 @@ public final class Py extends PrePy {
                 }
                 offset--;
             }
-            text = text.substring(i, text.length());
+            text = text.substring(i);
         }
 
         buf.append("    ");
@@ -2375,11 +2375,9 @@ public final class Py extends PrePy {
         File dir = new File(dirname);
         File file = makeFilename(name, dir);
         new File(file.getParent()).mkdirs();
-        try {
-            FileOutputStream o = new FileOutputStream(file);
+        try(FileOutputStream o = new FileOutputStream(file)) {
             o.write(bytes);
-            o.close();
-        } catch (Throwable t) {
+        } catch (IOException t) {
             t.printStackTrace();
         }
     }
@@ -2390,7 +2388,7 @@ public final class Py extends PrePy {
             return new File(dir, name + ".class");
         }
 
-        return makeFilename(name.substring(index + 1, name.length()),
+        return makeFilename(name.substring(index + 1),
                 new File(dir, name.substring(0, index)));
     }
 
