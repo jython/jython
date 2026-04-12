@@ -6,16 +6,18 @@ to processes we apply during development.
 We aspire to processes and principles from
 the [Python Developer Guide](https://devguide.python.org/)
 where they are generic enough to apply to us.
-That guide, however, is oriented strongly towards
-the C implementation of Python.
-Here we aim to provide only what is different and specific to Jython,
+That guide, in its processes and cheat-sheets,
+is oriented strongly towards the C implementation of Python.
+Here we aim to provide versions of those things specific to Jython,
 our repositories, and a Java implementation[^1].
 
 It will not, to begin with,
 contain sections for everything that could be translated to Java.
 Where it falls short,
-make an intelligent interpretation of the (C)Python Dev Guide
-for a Java context.
+readers should make an intelligent interpretation of the (C)Python Dev Guide
+for a Java context,
+and consider contributing that here.
+
 
 ## Contents
 

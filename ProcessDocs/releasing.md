@@ -54,13 +54,14 @@ To complete a public release you need the following things:
 * The right to publish Jython at [Sonatype](https://oss.sonatype.org).
 * A PGP signing key pair (generated with `gpg --gen-key`).
 * Access to the channels where we announce releases (e.g. Twitter).
-* Access to modify the bug-tracker configuration.
 
 You can dry-run this process with only the first pre-requisite (driver JARs),
 and a Git clone of the official repository.
 In that case, be careful not to push any changes.
-(Hint: if you clone from `https://github.com/jython/jython.git`,
-that will prevent an unintended push.)
+
+> [!TIP]
+> If you clone from `https://github.com/jython/jython.git`,
+> that will prevent an unintended push.)
 
 
 ## Making a Releasable Jython
@@ -73,7 +74,7 @@ so aim for:
 
 * short (i.e. near a file system root), in the examples `D:\git`.
 * impersonal (not containing company or personal names).
-* ASCII (even though Jython is pretty good with Unicode now).
+* represenable in ASCII (even though Jython is pretty good with Unicode now).
 
 The examples in this text were mostly made in Windows PowerShell,
 but Git remote operations are in Git Bash.
@@ -171,13 +172,14 @@ The build script ensures that, until we actually tag a change set as a release,
 the version numbers set here will always appear with a "snapshot" suffix.
 
 You should run the `ant javatest` and `ant regrtest` targets at this point.
-These should run clean, or at least failures be explained and acceptable,
+These should run cleanly, or at least failures be explained and acceptable,
 e.g. known to be attributable to limitations in your network environment.
 If bugs are discovered that you need to fix,
-it would be best to abandon work on this repository and
-fix them in your usual development workbench.
+it would be best to abandon work on this repository,
+fix them in your usual development workbench,
+and push or PR them into the project.
 
-> [NOTE!]
+> [!TIP]
 > You can run the `ant bugtest` target, but it is deprecated.
 > (We haven't maintained it as Jython changed.)
 > It produces some failures known to be spurious.
@@ -287,17 +289,19 @@ that requires a password to unlock your signing key
 Note that `git tag -a` creates a sort of commit.
 It will need to be pushed eventually,
 but the current state of your repository is still at the change set tagged.
-If something goes wrong after this point but before the eventual push to the repository,
+If something goes wrong after this point,
+but before the eventual push to the repository,
 that requires changes and a fresh commit,
 it is possible to delete the tag with `git tag -d v2.7.4`,
 and make it again at the new tip when you're ready.
 The Git book explains why you should not
 [delete a tag after the push](https://git-scm.com/docs/git-tag#_discussion).
 
-We follow CPython in signing the tag with GPG as indicated in PEP-101
+We follow CPython in signing the tag with GPG as indicated in PEP 101
 and the [CPython release-tools](https://github.com/python/release-tools).
 See the section [PGP Signing](#pgp-signing) for how to generate a key.
-(If you are doing a dry-run you can avoid the signing by dropping the `-s` option.)
+(If you are doing a dry-run you can avoid signing it
+by dropping the `-s` option.)
 
 As explained in [signing Git commits with GPG](
 https://jamesmckay.net/2016/02/signing-git-commits-with-gpg-on-windows/),
@@ -334,16 +338,16 @@ because the source tree is clean and the tag corresponds to the version.
 
 The artifacts of interest are produced in the `./dist` directory and they are:
 
-#. `jython.jar`
-#. `jython-installer.jar`
-#. `jython-standalone.jar`
-#. `sources.jar`
-#. `javadoc.jar`
+1. `jython.jar`
+1. `jython-installer.jar`
+1. `jython-standalone.jar`
+1. `sources.jar`
+1. `javadoc.jar`
 
-> [NOTE!] At the time of writing, the `javadoc` sub-target produces many warnings.
+> [!NOTE] At the time of writing, the `javadoc` sub-target produces many warnings.
 > Java 8 is much stricter than Java 7 about correct Javadoc.
 > These are not fatal to the build:
-> they are a sign that our documentation is a bit shabby (and always was secretly).
+> they are a sign that our Javadoc is a bit shabby (and always was secretly).
 
 
 ### Gradle Build for Release
@@ -386,7 +390,7 @@ BUILD SUCCESSFUL in 6m 41s
 16 actionable tasks: 16 executed
 ```
 
-Don't worry, this doesn't actually *publish* Jython.
+Don't worry, despite the name, this doesn't actually *publish* Jython.
 When the build finishes, a JAR that is potentially fit to publish,
 and its subsidiary artifacts (source, javadoc, checksums),
 will have been created in `./build2/stagingRepo/org/python/jython-slim/2.7.4`.
@@ -395,7 +399,7 @@ It can also be "published" to your local Maven cache (usually `~/.m2/repository`
 with the task `publishMainPublicationToMavenLocal`.
 This need not be done as part of a release,
 but can be useful in verification using a Gradle or Maven build that references it
-(see the section :ref:`jython-slim-regrtest`).
+(see the section [Slim (Gradle) regrtest](#slim-gradle-regrtest).
 
 
 ### Test what you built
@@ -535,7 +539,7 @@ Others arise because we do not include certain JARs needed for the test.
 It is necessary to pick through the failures carefully
 to detect which are real.
 
->[NOTE!]
+> [!TIP]
 > We could probably do this better through skips in the tests,
 > sensitive to running stand-alone,
 > or (widely useful) a broader interpretation of "file path" in Jython,
@@ -560,7 +564,8 @@ PS work> .\gradlew --console=plain publishMainPublicationToMavenLocal
 
 This will deliver build artifacts to
 `~/.m2/repository/org/python/jython-slim/2.7.4`.
-One can construct an application to run with that as a dependency like this:
+One can construct an application to run with that as a dependency,
+by giving it a Gradle build file like this:
 
 ```Gradle
 // Application importing the jython-slim JAR.
@@ -629,7 +634,8 @@ One could improve the driver program, but it is complicated to do properly.
 
 ### Build the Bundles to Publish
 
-The artifacts for Maven are built using a separate script `maven/build.xml`.
+Back in the release working directory,
+the artifacts for Maven are built using a separate script `maven/build.xml`.
 
 ```posh
 PS work> ant -f maven\build.xml
@@ -660,7 +666,8 @@ In order to publish the bundles created in `./publications`,
 it is necessary to have an account with access to `groupId` `org.python`,
 which Sonatype will grant given the support of an existing owner.
 (This is a human process administered through JIRA.)
-There is an extensive `Sonatype OSSRH Guide`_
+There is an extensive
+[Sonatype OSSRH Guide](https://central.sonatype.org/pages/ossrh-guide.html)
 about getting and using an account.
 
 
@@ -675,8 +682,8 @@ this release of Jython is really from the project.
 
 The infrastructure of PGP has been overhauled
 since the previous version of these notes was written.
-Follow the Sonatype guide [Working with PGP Signatures]
-(https://central.sonatype.org/pages/ossrh-guide.html),
+Follow the Sonatype guide
+[Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/),
 which now appears to have been updated with the changes.
 
 ```posh
@@ -698,16 +705,16 @@ Sonatype consults.
 Generation and publication of a key are one-time actions,
 except that the key has a finite lifetime with possible extensions.
 (The key here has been extended twice.)
-See [Working with PGP Signatures]
-(https://central.sonatype.org/publish/requirements/gpg/)
+See
+[Working with PGP Signatures](https://central.sonatype.org/publish/requirements/gpg/)
 for how to extend the life of a key.
 
->[NOTE!]
+> [!IMPORTANT]
 > You may decide to create a new key for signing future releases.
 > The key that was used to sign past releases should remain valid
 > so that users can still validate those past releases.
 > Renewing an old key is a valid and useful thing to do.
-> (An exception might occur when the old *private* key is thought
+> (An exception to this rule is when the old *private* key is thought
 > to have been lost.)
 
 
@@ -715,7 +722,8 @@ for how to extend the life of a key.
 
 You are now ready to upload bundles acceptable to Sonatype.
 
-* Go to the Sonatype_ repository manager and log in.
+* Go to the [Sonatype](https://oss.sonatype.org) 
+  repository manager and log in.
 * Under "Build Promotion" select "Staging Upload".
 * On the "Staging Upload" tab, and the Upload Mode drop-down,
   select "Artifact Bundle".
@@ -730,12 +738,13 @@ You are now ready to upload bundles acceptable to Sonatype.
   but the name is correct.
   Each upload creates a "staging repository".
 
->[NOTE!]You may get a report (e-mail) from Sonatype Lift at this point
+> [!NOTE]You may get a report (e-mail) from Sonatype Lift at this point
 > reporting potential vulnerabilities in dependencies.
 > (It seems only to work on the `-slim` JAR, which is why we upload it first.)
 > If any vulnerability is sufficiently serious to warrant upgrading JARs,
 > treat this as a late test failure:
-> fix it in your normal development environment with a PR and repeat the process.
+> fix it in your normal development environment with a PR and repeat the process.  
+> 
 > Assuming you have deferred pushing the tag no publicly visible harm has been done.
 > (See [Push with tag](#only-now-is-it-safe-to-git-push) below.)
 > If you already pushed the tag,
@@ -759,7 +768,7 @@ from the "Staging Repositories" tab in the repository manager.
   [Central Repository](https://search.maven.org/)
   (takes an hour or two).
 
-> [WARNING!]
+> [!CAUTION]
 > Release at Sonatype is irreversible.
 
 
@@ -785,7 +794,7 @@ and painfully obvious if this is a final release.
 
 ### Announcement
 
->[NOTE!]
+> [!NOTE]
 > This section is untested since recent changes.
 
 * update files in (or make a PR against) the
@@ -801,19 +810,15 @@ and painfully obvious if this is a final release.
 
   Exactly what you do here will depend on the kind of release you just made.
 
-* change the `#jython` irc channel topic
-* announce on Twitter (as jython), irc channel, mailing lists, blog ...
-* In the bug tracker:
-
-  * add the new version, against which to report bugs.
-  * add a new milestone (future version), against which to plan delivery.
+* announce on Twitter (as jython), mailing lists, blog ...
 
 
 ## Ready for new work
 
 After a release,
 Jython in the development environment
-should no longer identify itself as the version just released, so we increment the version string.
+should no longer identify itself as the version just released,
+so we increment the version string.
 We do not know for sure the version next to be publicly released,
 so we use the smallest increment that results in a valid version number.
 
@@ -859,7 +864,7 @@ Jython <successor version>a1 Bugs fixed
 
 Commit and push this change upstream.
 
->[!NOTE]
+> [!IMPORTANT]
 > The description of a new feature is associated with
 > the prospective final release,
 > not the alpha or beta that introduced it.
