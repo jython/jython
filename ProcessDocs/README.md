@@ -24,7 +24,7 @@ and consider contributing that here.
 1. Setup and building (adapt from CPython)
 1. Git bootcamp (adapt from CPython)
 1. Contributor agreement (to be written)
-1. Coding style (to be added from wiki text)
+1. [Coding standard](coding_standard.md)
 1. Lifecycle of a change (adapt from CPython)
 1. [Releasing a version](releasing.md)
 
