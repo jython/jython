@@ -34,7 +34,7 @@ and then the value of your excellent work is lost.
 
 1.  Javadoc on any publicly exposed method or field.
 2.  4 spaces for indentation, no tabs.
-3.  No nested ternary statements (no ternary statments inside other ternaries).
+3.  No nested ternary statements (no ternary statements inside other ternaries).
 4.  A luxurious 100 characters per line.
 5.  No copy and pasted, repeated code:
     if you're doing the same thing twice, make a method.
