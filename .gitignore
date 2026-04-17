@@ -10,6 +10,9 @@
 
 .gradle
 
+# Freely create virtual environments
+**/*.venv
+
 # IntelliJ files
 *.eml
 *.ipr
