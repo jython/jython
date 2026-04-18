@@ -75,7 +75,7 @@ same language.  There are naturally some differences between
 the two implementations, sometimes reflecting undefined
 aspects of the Python language, sometimes reflecting quirks of 
 the independent implementations.  Here is a more detailed
-discussion and <a href="differences.html">comparision of
+discussion and <a href="differences.html">comparison of
 Jython and CPython</a>.
 
 <li>The <a HREF="https://wiki.python.org/jython">Jython Wiki</a>, which includes the

@@ -68,7 +68,7 @@ be related to the fact that Python doesn't have type signatures
 ;-)  In order to implement a subclass of java.io.InputStream that
 overrides the "read" method, a Python method must be implemented that
 handles all three possible cases.  The example below shows the easiest
-way to acheive this:
+way to achieve this:
 
 <blockquote><PRE>
 from java.io import InputStream
@@ -106,8 +106,8 @@ print dp.readInt()
 
 <h3>Invoking Your Superclass's Constructor</h3>
 
-You can explictly invoke your superclass's constructor using the
-standard Python syntax of explictly calling the "__init__" method on
+You can explicitly invoke your superclass's constructor using the
+standard Python syntax of explicitly calling the "__init__" method on
 the superclass and passing in "self" as the first argument.  If you
 wish to call your superclass's constructor, you must do so within your
 own "__init__" method.  When your "__init__" method finishes, if your
@@ -115,7 +115,7 @@ Java superclasses have not yet been explicitly initialized, their
 empty constructors will be called at this point.
 
 <P>It's important to realize that your superclass is not initialized
-until you either explictly call it's "__init__" method, or your own
+until you either explicitly call its "__init__" method, or your own
 "__init__" method terminates.  You must do one of these two things
 before accessing any methods in your superclass.
 
@@ -142,6 +142,6 @@ for i in range(10):
 </PRE></blockquote>
 
 This example shows how the superclass's constructor can be effectively
-called in order to explictly choose a non-empty version.
+called in order to explicitly choose a non-empty version.
 
 <p>
