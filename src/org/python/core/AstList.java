@@ -493,9 +493,14 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
                 }
                 value = newseq;
             }
-            int n = value.__len__();
+            int size = __len__(), n = value.__len__();
             for (int i = 0, j = start; i < n; i++, j += step) {
-                pyset(j, value.pyget(i));
+                PyObject item = value.pyget(i);
+                if (j < size) {
+                    pyset(j, item);
+                } else {
+                    pyadd(item);
+                }
             }
         }
     }
