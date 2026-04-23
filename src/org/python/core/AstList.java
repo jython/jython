@@ -1,8 +1,7 @@
 /*
- * I don't like that this is in org.python.core, but PySequence has package
- * private methods that I want to override. Hopefully we will clean up the
- * PyList hierarchy in the future, and then maybe we will find a more sensible
- * place for this class.
+ * I don't like that this is in org.python.core, but PySequence has package private methods that I
+ * want to override. Hopefully we will clean up the PyList hierarchy in the future, and then maybe
+ * we will find a more sensible place for this class.
  */
 package org.python.core;
 
@@ -27,8 +26,9 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     private final static PyString[] fields = new PyString[0];
 
     @ExposedGet(name = "_fields")
-    public PyString[] get_fields() { return fields; }
-
+    public PyString[] get_fields() {
+        return fields;
+    }
 
     /** The underlying Java List. */
     private List data;
@@ -104,7 +104,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     @ExposedMethod
     final PyObject astlist___getitem__(PyObject o) {
         PyObject ret = seq___finditem__(o);
-        if(ret == null) {
+        if (ret == null) {
             throw Py.IndexError("index out of range: " + o);
         }
         return ret;
@@ -127,7 +127,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
 
     @ExposedMethod(defaults = "null")
     final void astlist___setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
-        if(value == null) {
+        if (value == null) {
             value = step;
             step = null;
         }
@@ -139,6 +139,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         seq___delslice__(start, stop, step);
     }
 
+    @Override
     public PyObject __imul__(PyObject o) {
         return astlist___imul__(o);
     }
@@ -171,6 +172,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         return this;
     }
 
+    @Override
     public PyObject __mul__(PyObject o) {
         return astlist___mul__(o);
     }
@@ -183,6 +185,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         return repeat(o.asIndex(Py.OverflowError));
     }
 
+    @Override
     public PyObject __rmul__(PyObject o) {
         return astlist___rmul__(o);
     }
@@ -195,6 +198,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         return repeat(o.asIndex(Py.OverflowError));
     }
 
+    @Override
     public PyObject __iadd__(PyObject other) {
         return astlist___iadd__(other);
     }
@@ -220,6 +224,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         return this;
     }
 
+    @Override
     public PyObject __add__(PyObject other) {
         return astlist___add__(other);
     }
@@ -228,17 +233,18 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     final PyObject astlist___add__(PyObject o) {
         AstList sum = null;
         Object oList = o.__tojava__(List.class);
-        if(oList != Py.NoConversion && oList != null) {
+        if (oList != Py.NoConversion && oList != null) {
             List otherList = (List) oList;
             sum = new AstList();
             sum.extend(this);
-            for(Iterator i = otherList.iterator(); i.hasNext();) {
+            for (Iterator i = otherList.iterator(); i.hasNext();) {
                 sum.add(i.next());
             }
         }
         return sum;
     }
 
+    @Override
     public PyObject __radd__(PyObject o) {
         return astlist___radd__(o);
     }
@@ -255,6 +261,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         return sum;
     }
 
+    @Override
     public int __len__() {
         return data.size();
     }
@@ -278,6 +285,7 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         data.add(o);
     }
 
+    @Override
     public Object clone() {
         return new AstList(this);
     }
@@ -285,8 +293,8 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     @ExposedMethod
     final int astlist_count(PyObject value) {
         int count = 0;
-        for(Object o : data) {
-            if(o.equals(value)) {
+        for (Object o : data) {
+            if (o.equals(value)) {
                 count++;
             }
         }
@@ -332,34 +340,35 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         // Follow Python 2.3+ behavior
         int validStop = boundToSequence(stop);
         int validStart = boundToSequence(start);
-        for(int i = validStart; i < validStop && i < size(); i++) {
-            if(data.get(i).equals(o)) {
+        for (int i = validStart; i < validStop && i < size(); i++) {
+            if (data.get(i).equals(o)) {
                 return i;
             }
         }
         throw Py.ValueError(message);
     }
 
+    @Override
     protected void del(int i) {
         data.remove(i);
     }
 
     protected void delRange(int start, int stop, int step) {
-        if(step >= 1) {
-            for(int i = start; i < stop; i += step) {
+        if (step >= 1) {
+            for (int i = start; i < stop; i += step) {
                 remove(i);
                 i--;
                 stop--;
             }
-        } else if(step < 0) {
-            for(int i = start; i >= 0 && i >= stop; i += step) {
+        } else if (step < 0) {
+            for (int i = start; i >= 0 && i >= stop; i += step) {
                 remove(i);
             }
         }
     }
 
     @ExposedMethod
-    final void astlist_extend(PyObject iterable){
+    final void astlist_extend(PyObject iterable) {
         int length = size();
         setslice(length, length, 1, iterable);
     }
@@ -368,18 +377,19 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         astlist_extend(iterable);
     }
 
+    @Override
     protected PyObject getslice(int start, int stop, int step) {
-        if(step > 0 && stop < start) {
+        if (step > 0 && stop < start) {
             stop = start;
         }
         int n = sliceLength(start, stop, step);
         List newList = data.subList(start, stop);
-        if(step == 1) {
+        if (step == 1) {
             newList = data.subList(start, stop);
             return new AstList(newList, adapter);
         }
         int j = 0;
-        for(int i = start; j < n; i += step) {
+        for (int i = start; j < n; i += step) {
             newList.set(j, data.get(i));
             j++;
         }
@@ -392,17 +402,17 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
 
     @ExposedMethod
     final void astlist_insert(int index, PyObject o) {
-        if(index < 0) {
+        if (index < 0) {
             index = Math.max(0, size() + index);
         }
-        if(index > size()) {
+        if (index > size()) {
             index = size();
         }
         data.add(index, o);
     }
 
     @ExposedMethod
-    final void astlist_remove(PyObject value){
+    final void astlist_remove(PyObject value) {
         del(_index(value, "astlist.remove(x): x not in list", 0, size()));
     }
 
@@ -430,13 +440,14 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     @ExposedMethod(defaults = "-1")
     final PyObject astlist_pop(int n) {
         if (adapter == null) {
-            return (PyObject)data.remove(n);
+            return (PyObject) data.remove(n);
         }
         Object element = data.remove(n);
         return adapter.ast2py(element);
 
     }
 
+    @Override
     protected PyObject repeat(int count) {
         if (count < 0) {
             count = 0;
@@ -448,22 +459,23 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         }
 
         List newList = new ArrayList();
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             newList.addAll(data);
         }
         return new AstList(newList);
     }
 
+    @Override
     protected void setslice(int start, int stop, int step, PyObject value) {
-        if(stop < start) {
+        if (stop < start) {
             stop = start;
         }
         if (value instanceof PySequence) {
             PySequence sequence = (PySequence) value;
             setslicePySequence(start, stop, step, sequence);
         } else if (value instanceof List) {
-            List list = (List)value.__tojava__(List.class);
-            if(list != null && list != Py.NoConversion) {
+            List list = (List) value.__tojava__(List.class);
+            if (list != null && list != Py.NoConversion) {
                 setsliceList(start, stop, step, list);
             }
         } else {
@@ -473,10 +485,10 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
 
     protected void setslicePySequence(int start, int stop, int step, PySequence value) {
         if (step != 0) {
-            if(value == this) {
+            if (value == this) {
                 PyList newseq = new PyList();
                 PyObject iter = value.__iter__();
-                for(PyObject item = null; (item = iter.__iternext__()) != null;) {
+                for (PyObject item = null; (item = iter.__iternext__()) != null;) {
                     newseq.append(item);
                 }
                 value = newseq;
@@ -489,11 +501,11 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
     }
 
     protected void setsliceList(int start, int stop, int step, List value) {
-        if(step != 1) {
+        if (step != 1) {
             throw Py.TypeError("setslice with java.util.List and step != 1 not supported yet");
         }
         int n = value.size();
-        for(int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             data.add(i + start, value.get(i));
         }
     }
@@ -511,58 +523,72 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         setslicePySequence(start, stop, step, new PyList(seq));
     }
 
+    @Override
     public void add(int index, Object element) {
         data.add(index, element);
     }
 
+    @Override
     public boolean add(Object o) {
         return data.add(o);
     }
 
+    @Override
     public boolean addAll(int index, Collection c) {
         return data.addAll(index, c);
     }
 
+    @Override
     public boolean addAll(Collection c) {
         return data.addAll(c);
     }
 
+    @Override
     public void clear() {
         data.clear();
     }
 
+    @Override
     public boolean contains(Object o) {
         return data.contains(o);
     }
 
+    @Override
     public boolean containsAll(Collection c) {
         return data.containsAll(c);
     }
 
+    @Override
     public Object get(int index) {
         return data.get(index);
     }
 
+    @Override
     public int indexOf(Object o) {
         return data.indexOf(o);
     }
 
+    @Override
     public boolean isEmpty() {
         return data.isEmpty();
     }
 
+    @Override
     public Iterator iterator() {
         return data.iterator();
     }
 
+    @Override
     public int lastIndexOf(Object o) {
         return data.lastIndexOf(o);
     }
 
+    @Override
     public ListIterator listIterator() {
         return data.listIterator();
     }
 
+    @Override
     public ListIterator listIterator(int index) {
         return data.listIterator(index);
     }
@@ -576,13 +602,15 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         data.add(index, element);
     }
 
+    @Override
     public PyObject pyget(int index) {
         if (adapter == null) {
-            return (PyObject)data.get(index);
+            return (PyObject) data.get(index);
         }
         return adapter.ast2py(data.get(index));
     }
 
+    @Override
     public void pyset(int index, PyObject element) {
         if (adapter == null) {
             data.set(index, element);
@@ -592,58 +620,69 @@ public class AstList extends PySequence implements Cloneable, List, Traverseproc
         }
     }
 
+    @Override
     public Object remove(int index) {
         return data.remove(index);
     }
 
+    @Override
     public boolean remove(Object o) {
         return data.remove(o);
     }
 
+    @Override
     public boolean removeAll(Collection c) {
         return data.removeAll(c);
     }
 
+    @Override
     public boolean retainAll(Collection c) {
         return data.retainAll(c);
     }
 
+    @Override
     public Object set(int index, Object element) {
         return data.set(index, element);
     }
 
+    @Override
     public int size() {
         return data.size();
     }
 
+    @Override
     public List subList(int fromIndex, int toIndex) {
         return data.subList(fromIndex, toIndex);
     }
 
+    @Override
     public Object[] toArray() {
         return data.toArray();
     }
 
+    @Override
     public Object[] toArray(Object[] a) {
         return data.toArray(a);
     }
 
+    @Override
     public Object __tojava__(Class c) {
-        if(c.isInstance(this)) {
+        if (c.isInstance(this)) {
             return this;
         }
         return Py.NoConversion;
     }
 
-
     /* Traverseproc implementation */
     @Override
     public int traverse(Visitproc visit, Object arg) {
         int retVal;
-        for (Object ob: data) {
+        for (Object ob : data) {
             if (ob instanceof PyObject) {
                 retVal = visit.visit((PyObject) ob, arg);
-                if (retVal != 0) return retVal;
+                if (retVal != 0) {
+                    return retVal;
+                }
             }
         }
         return 0;
