@@ -151,19 +151,17 @@ class TestAstList(unittest.TestCase):
 
     def test_concat(self):
         # Issue gh-356 Java IndexOOB error on append
-        body = ast.parse('x=1').body    # _ast.AstList
-        p = [ast.Pass()]                # PyList
+        body = ast.parse('x=1; global y; y+=x*2').body  # _ast.AstList
+        p = [ast.Pass(), ast.Break()]                   # PyList
         x = body + p
-        self.assertEqual(2, len(x))
-        self.assertIsInstance(x[1], ast.Pass)
+        self.assertEqual(x[-2:], p)
 
     def test_append(self):
         # Issue gh-356 Java IndexOOB error on append
-        body = ast.parse('x=1').body    # _ast.AstList
-        p = [ast.Pass()]                # PyList
+        body = ast.parse('x=1; global y; y+=x*2').body  # _ast.AstList
+        p = [ast.Pass(), ast.Break()]                   # PyList
         body += p
-        self.assertEqual(2, len(body))
-        self.assertIsInstance(body[1], ast.Pass)
+        self.assertEqual(body[-2:], p)
 
 
 #==============================================================================
