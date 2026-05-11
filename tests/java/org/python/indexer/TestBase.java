@@ -94,15 +94,8 @@ public class TestBase extends TestCase {
 
     protected String getSource(String file) throws Exception {
         String path = getTestFilePath(file);
-        StringBuilder sb = new StringBuilder();
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
-        String line;
-        while ((line = in.readLine()) != null) {
-            sb.append(line);
-            sb.append("\n");
-        }
-        in.close();  // not overly worried about resource cleanup in unit tests
-        return sb.toString();
+        // Preserve raw line endings so source offsets match the indexer on Windows checkouts.
+        return Util.readFile(path);
     }
 
     /**
@@ -172,7 +165,7 @@ public class TestBase extends TestCase {
 
     public void testGetSource() throws Exception {
         String src = getSource("testsrc.txt");
-        assertEquals("one\ntwo\n\nthree\n", src);
+        assertEquals("one\ntwo\n\nthree\n", src.replace("\r\n", "\n"));
     }
 
     public void testStringModule() throws Exception {

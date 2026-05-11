@@ -264,14 +264,17 @@ class RespectJavaAccessibilityTest(unittest.TestCase):
         # Prepare to break the rules
         self.command.append("-J-Dpython.cachedir.skip=true")
         self.command.append("-J-Dpython.security.respectJavaAccessibility=false")
-        if test_support.get_java_version() >= (9,):
-            # See all the cases for which we have forgotten --add-opens
-            self.command.append("-J--illegal-access=warn")
+        java_version = test_support.get_java_version()
+        if java_version >= (9,):
+            # See all the cases for which we have forgotten --add-opens where
+            # the diagnostic flag still exists.
+            if java_version < (17,):
+                self.command.append("-J--illegal-access=warn")
             # Open the packages used in the scripts
             self.add_opens("java.desktop", "java.awt.geom")
             for package in ("lang", "util", "nio", "nio.charset"):
                 self.add_opens("java.base", "java." + package)
-            if test_support.get_java_version() >= (12,):
+            if java_version >= (12,):
                 self.add_opens("java.base", "java.lang.constant")
 
         self.command.append(fn)

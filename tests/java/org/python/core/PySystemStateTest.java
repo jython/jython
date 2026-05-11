@@ -9,6 +9,7 @@ import java.net.URLStreamHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import org.python.util.PythonInterpreter;
 
@@ -200,6 +201,31 @@ public class PySystemStateTest extends TestCase {
         } finally {
             Options.importSite = true;
         }
+    }
+
+    public void testConsoleEncodingPrefersStdoutEncoding() {
+        Properties props = new Properties();
+        props.setProperty("os.name", "Windows 11");
+        props.setProperty("sun.stdout.encoding", "cp1252");
+        props.setProperty("stdout.encoding", "UTF-8");
+
+        assertEquals("utf-8", PySystemState.getConsoleEncoding(props));
+    }
+
+    public void testConsoleEncodingFallsBackToSunStdoutEncoding() {
+        Properties props = new Properties();
+        props.setProperty("os.name", "Linux");
+        props.setProperty("sun.stdout.encoding", "UTF-8");
+
+        assertEquals("UTF-8", PySystemState.getConsoleEncoding(props));
+    }
+
+    public void testConsoleEncodingMapsWindowsUtf8CodePage() {
+        Properties props = new Properties();
+        props.setProperty("os.name", "Windows 11");
+        props.setProperty("sun.stdout.encoding", "cp65001");
+
+        assertEquals("utf-8", PySystemState.getConsoleEncoding(props));
     }
 
     /**

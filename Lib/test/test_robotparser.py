@@ -300,12 +300,14 @@ class NetworkTestCase(unittest.TestCase):
 
     def testPythonOrg(self):
         support.requires('network')
-        with support.transient_internet('www.python.org'):
+        with support.transient_internet('www.pythontest.net'):
             parser = robotparser.RobotFileParser(
-                "http://www.python.org/robots.txt")
+                "http://www.pythontest.net/robots.txt")
             parser.read()
             self.assertTrue(
-                parser.can_fetch("*", "http://www.python.org/robots.txt"))
+                parser.can_fetch("*", "http://www.pythontest.net/"))
+            self.assertFalse(
+                parser.can_fetch("*", "http://www.pythontest.net/no-robots-here/"))
 
 def load_tests(loader, suite, pattern):
     suite = unittest.makeSuite(NetworkTestCase)

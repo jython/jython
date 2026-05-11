@@ -1130,6 +1130,10 @@ class _realsocket(object):
                 log.debug("Closed child socket %s not yet accepted", child, extra={"sock": self})
                 child.close()
         else:
+            if self.incoming_head is not None:
+                if self.incoming_head is not _PEER_CLOSED:
+                    self.incoming_head.release()
+                self.incoming_head = None
             msgs = []
             self.incoming.drainTo(msgs)
             for msg in msgs:

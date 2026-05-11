@@ -12,13 +12,29 @@ SPACE_DIR="$TEST_DIR/directory with spaces"
 
 cp -Rp "$1" "$SPACE_DIR"
 
+java_major_version() {
+    local output version major
+    output="$("$1" -J-version 2>&1)"
+    version=`expr "$output" : '.*version "\([^"]*\)"'`
+    case "$version" in
+        1.*)
+            major=${version#1.}
+            major=${major%%.*}
+            ;;
+        *)
+            major=${version%%[!0-9]*}
+            ;;
+    esac
+    echo "$major"
+}
+
 for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
     JYTHON="$JYTHON_HOME/bin/jython"
     export JYTHON_HOME
     set -ex
 
     # -J passthrough
-    "$JYTHON" -J-version 2>&1 | [ `egrep -c "^java version "` == 1 ]
+    "$JYTHON" -J-version 2>&1 | [ `egrep -c "^(java|openjdk) version "` == 1 ]
 
     # Jython reports version
     "$JYTHON" --version 2>&1 | [ `egrep -c "^Jython "` == 1 ]
@@ -41,13 +57,31 @@ for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
     # Jython executable (don't include newline in case it's \r\n)
     [ `"$JYTHON" -c 'import sys; print sys.executable is not None,'` == True ]
 
+    JAVA_MAJOR=`java_major_version "$JYTHON"`
+
     # JDB
-    echo run | "$JYTHON" --jdb -c "print '\ntest'" | [ `egrep -c "^test"` == 1 ]
+    JDB_OUTPUT="$TEST_DIR/jdb.out"
+    set +e
+    (echo run; sleep 3) | "$JYTHON" --jdb -c "print '\ntest'" > "$JDB_OUTPUT" 2>&1
+    JDB_STATUS=$?
+    set -e
+    if [ `egrep -c "^test" "$JDB_OUTPUT"` == 1 ] ; then
+        :
+    else
+        cat "$JDB_OUTPUT" >&2
+        [ "$JDB_STATUS" -ne 0 ] && exit "$JDB_STATUS"
+        exit 1
+    fi
 
     # Jython profiling
-    "$JYTHON" --profile -c pass 2>&1 | \
-	[ `egrep -c "^\| Thread depth limit:"` == 1 ]
-    [ -f profile.txt ] && rm profile.txt
+    if [ "$JAVA_MAJOR" -lt 13 ] ; then
+        "$JYTHON" --profile -c pass 2>&1 | \
+	    [ `egrep -c "^\| Most expensive methods"` -ge 1 ]
+        [ -f profile.txt ] && rm profile.txt
+    else
+        "$JYTHON" --profile -c pass 2>&1 | \
+	    [ `egrep -c "^--profile is not supported on Java $JAVA_MAJOR;"` == 1 ]
+    fi
 
     # $CLASSPATH
     CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
@@ -55,9 +89,15 @@ for JYTHON_HOME in "$SPACE_DIR" "$1" ; do
 	  [ `egrep -c "Blob"` == 1 ]
 
     # $CLASSPATH + profiling
-    CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
-	"$JYTHON" --profile -c "print __import__('Blob')" | \
-	  [ `egrep -c "Blob"` == 1 ]
+    if [ "$JAVA_MAJOR" -lt 13 ] ; then
+        CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
+	    "$JYTHON" --profile -c "print __import__('Blob')" | \
+	      [ `egrep -c "Blob"` == 1 ]
+    else
+        CLASSPATH="$JYTHON_HOME/Lib/test/blob.jar" \
+	    "$JYTHON" --profile -c "print __import__('Blob')" 2>&1 | \
+	      [ `egrep -c "^--profile is not supported on Java $JAVA_MAJOR;"` == 1 ]
+    fi
 
     set +ex
 done
