@@ -3,7 +3,6 @@
 // Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
-import java.io.Serializable;
 import java.lang.reflect.Member;
 
 /** Map the signature of a method to the {@code Method} itself, within the context of a given simple name. This is used in support of signature polymorphism in Java methods and constructors reflected into Python. **/
@@ -309,8 +308,6 @@ public class ReflectedArgs {
             } else if (target == Short.class || target == Byte.class || target == Float.class
                     || target == Double.class || target == Number.class) {
                 return 2;
-            } else if (target == Serializable.class) {
-                return 10;
             } else if (target == Boolean.class) {
                 return 20;
             }
@@ -323,8 +320,6 @@ public class ReflectedArgs {
         } else if (pyArg instanceof PyString) {
             if (target == String.class) {
                 return 0;
-            } else if (target == Serializable.class) {
-                return 10;
             } else if (target == Character.class) {
                 return pyArg.__len__() == 1 ? 1 : 1000;
             }
