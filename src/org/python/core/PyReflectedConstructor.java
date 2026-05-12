@@ -153,6 +153,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                 args = new PyObject[allArgs.length - nkeywords];
                 System.arraycopy(allArgs, 0, args, 0, args.length);
                 Object varargMatch = null;
+                ReflectedArgs varargArgs = null;
                 ReflectedCallData varargData = null;
 
                 // Look for a constructor with no keyword args
@@ -162,11 +163,13 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                         if (!argslist[i].isVarArgs) {
                             method = argslist[i].method;
                             break;
-                        } else {
+                        } else if (varargMatch == null
+                                || argslist[i].betterVarargsMatchThan(varargArgs, null, args)) {
                             varargMatch = argslist[i].method;
+                            varargArgs = argslist[i];
                             varargData = callData;
-                            callData = new ReflectedCallData();
                         }
+                        callData = new ReflectedCallData();
                     }
                 }
                 if (method == null && varargMatch != null) {
@@ -177,6 +180,7 @@ public class PyReflectedConstructor extends PyReflectedFunction {
        } else {
            // Just look for a constructor with no keyword args
            Object varargMatch = null;
+           ReflectedArgs varargArgs = null;
            ReflectedCallData varargData = null;
            int n = nargs;
            for (int i = 0; i < n; i++) {
@@ -185,11 +189,13 @@ public class PyReflectedConstructor extends PyReflectedFunction {
                     if (!argslist[i].isVarArgs) {
                         method = argslist[i].method;
                         break;
-                    } else {
+                    } else if (varargMatch == null
+                            || argslist[i].betterVarargsMatchThan(varargArgs, null, args)) {
                         varargMatch = argslist[i].method;
+                        varargArgs = argslist[i];
                         varargData = callData;
-                        callData = new ReflectedCallData();
                     }
+                    callData = new ReflectedCallData();
                }
            }
            if (method == null && varargMatch != null) {

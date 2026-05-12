@@ -196,6 +196,25 @@ class VarargsDispatchTests(unittest.TestCase):
         self.assertEqual(t.testTwoFixedArg(True, False, True, False),
                          "boolean arg1:true boolean arg2:false booleans...:[true, false]");
 
+    def test_mixed_varargs_overload(self):
+        t = Reflection.MixedVarargs()
+        self.assertEqual(t.insert("name", "abc", "xyz"),
+                         "String name:[abc, xyz]")
+        self.assertEqual(t.insert("name", ["abc", "xyz"]),
+                         "String name:[abc, xyz]")
+        self.assertEqual(t.insert("flag", True, False),
+                         "boolean flag:[true, false]")
+        self.assertEqual(t.insert("flag", [True, False]),
+                         "boolean flag:[true, false]")
+        self.assertEqual(t.insert("int", 1, 2, 3),
+                         "int int:[1, 2, 3]")
+        self.assertEqual(t.insert("int", [1, 2, 3]),
+                         "int int:[1, 2, 3]")
+        self.assertEqual(t.insert("double", 1.0, 2.0, 3.14),
+                         "double double:[1.0, 2.0, 3.14]")
+        self.assertEqual(t.insert("double", [1.0, 2.0, 3.14]),
+                         "double double:[1.0, 2.0, 3.14]")
+
 
 class ComplexOverloadingTests(unittest.TestCase):
     def test_constructor_overloading(self):
@@ -206,6 +225,8 @@ class ComplexOverloadingTests(unittest.TestCase):
         self.assertEqual(Reflection.Overloaded(1, 1, 1, 1).constructorVersion, 'int, int...')
 
         self.assertEqual(Reflection.Overloaded(1, [2,3,4]).constructorVersion, 'int, int...')
+        self.assertEqual(Reflection.Overloaded(Boolean(True)).constructorVersion,
+                         'boolean, boolean...')
 
         b = Exception("Oops")
         self.assertEqual(Reflection.Overloaded("aa").constructorVersion, "String")
@@ -222,6 +243,8 @@ class ComplexOverloadingTests(unittest.TestCase):
         # Note in Java these match both foo(int,int...) and foo(int...):
         self.assertEqual(over.foo(1), "int, int...")
         self.assertEqual(over.foo(1, 2, 3, 4), "int, int...")
+        self.assertEqual(over.foo(True), "boolean, boolean...")
+        self.assertEqual(over.foo(Boolean(True)), "boolean, boolean...")
 
     def test_method_most_specific(self):
         over = Reflection.Overloaded()

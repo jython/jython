@@ -3,6 +3,7 @@
 // Licensed to PSF under a Contributor Agreement.
 package org.python.core;
 
+import java.io.Serializable;
 import java.lang.reflect.Member;
 
 /** Map the signature of a method to the {@code Method} itself, within the context of a given simple name. This is used in support of signature polymorphism in Java methods and constructors reflected into Python. **/
@@ -198,6 +199,184 @@ public class ReflectedArgs {
         }
         boxedPyArgs[non_varargs_len] = new PyList(varargs);
         return boxedPyArgs;
+    }
+
+    private int fixedArgCount() {
+        return isVarArgs ? args.length - 1 : args.length;
+    }
+
+    /**
+     * Compare matching varargs signatures for the same Python call.
+     *
+     * <p>The normal signature ordering is intentionally independent of a particular call. For
+     * overloaded varargs methods we need one more step because several signatures may match after
+     * the Python arguments are packed into the final array. Prefer the signature whose Java
+     * parameter types are a better fit for the actual Python objects, then prefer the signature
+     * with more fixed parameters, and finally keep the existing signature ordering as a stable
+     * fallback.
+     */
+    boolean betterVarargsMatchThan(ReflectedArgs other, PyObject self, PyObject[] pyArgs) {
+        int thisCost = varargsCallCost(methodPyArgs(self, pyArgs));
+        int otherCost = other.varargsCallCost(other.methodPyArgs(self, pyArgs));
+        if (thisCost != otherCost) {
+            return thisCost < otherCost;
+        }
+
+        int thisFixed = fixedArgCount();
+        int otherFixed = other.fixedArgCount();
+        if (thisFixed != otherFixed) {
+            return thisFixed > otherFixed;
+        }
+
+        return compareTo(other) > 0;
+    }
+
+    private PyObject[] methodPyArgs(PyObject self, PyObject[] pyArgs) {
+        if (!isStatic && self == null && pyArgs.length > 0) {
+            PyObject[] newArgs = new PyObject[pyArgs.length - 1];
+            System.arraycopy(pyArgs, 1, newArgs, 0, newArgs.length);
+            return newArgs;
+        }
+        return pyArgs;
+    }
+
+    private int varargsCallCost(PyObject[] pyArgs) {
+        int cost = 0;
+        int fixed = fixedArgCount();
+        for (int i = 0; i < fixed && i < pyArgs.length; i++) {
+            cost += conversionCost(pyArgs[i], args[i]);
+        }
+
+        Class<?> componentType = args[args.length - 1].getComponentType();
+        if (pyArgs.length == args.length && pyArgs.length > 0
+                && isSequenceVararg(pyArgs[pyArgs.length - 1])) {
+            return cost + arrayConversionCost(pyArgs[pyArgs.length - 1], componentType);
+        }
+        for (int i = fixed; i < pyArgs.length; i++) {
+            cost += conversionCost(pyArgs[i], componentType);
+        }
+        return cost;
+    }
+
+    private static boolean isSequenceVararg(PyObject pyArg) {
+        return pyArg instanceof PySequenceList || pyArg instanceof PyArray || pyArg instanceof PyXRange
+                || pyArg instanceof PyIterator;
+    }
+
+    /**
+     * Return a relative cost for converting {@code pyArg} to {@code target}.
+     *
+     * <p>These costs are used only to choose among overloads that have already matched, so the
+     * absolute values are arbitrary but their broad ranges are intentional:
+     *
+     * <ul>
+     * <li>0 is an exact or preferred Python-to-Java mapping, such as {@code PyBoolean} to
+     * {@code boolean} or {@code PyString} to {@code String}.
+     * <li>1-9 are close numeric conversions, such as widening or narrowing between numeric
+     * primitive types.
+     * <li>10-19 are compatible but less specific reference conversions.
+     * <li>20-49 are permissive conversions that should lose to type-specific matches, notably
+     * boolean truthiness of non-boolean values.
+     * <li>50 and above are broad fallback matches, with {@code Object} deliberately very expensive.
+     * </ul>
+     */
+    private static int conversionCost(PyObject pyArg, Class<?> target) {
+        target = boxedClass(target);
+
+        Object proxy = pyArg.getJavaProxy();
+        if (proxy != null) {
+            Class<?> proxyClass = proxy.getClass();
+            if (target == proxyClass) {
+                return 0;
+            } else if (target.isAssignableFrom(proxyClass)) {
+                return target == Object.class ? 100 : 10;
+            }
+        }
+
+        if (pyArg instanceof PyBoolean) {
+            if (target == Boolean.class) {
+                return 0;
+            } else if (target == Integer.class || target == Long.class || target == Short.class
+                    || target == Byte.class || target == Float.class || target == Double.class
+                    || target == Number.class) {
+                return 20;
+            }
+        } else if (pyArg instanceof PyInteger) {
+            if (target == Integer.class) {
+                return 0;
+            } else if (target == Long.class) {
+                return 1;
+            } else if (target == Short.class || target == Byte.class || target == Float.class
+                    || target == Double.class || target == Number.class) {
+                return 2;
+            } else if (target == Serializable.class) {
+                return 10;
+            } else if (target == Boolean.class) {
+                return 20;
+            }
+        } else if (pyArg instanceof PyFloat) {
+            if (target == Double.class) {
+                return 0;
+            } else if (target == Float.class || target == Number.class) {
+                return 1;
+            }
+        } else if (pyArg instanceof PyString) {
+            if (target == String.class) {
+                return 0;
+            } else if (target == Serializable.class) {
+                return 10;
+            } else if (target == Character.class) {
+                return pyArg.__len__() == 1 ? 1 : 1000;
+            }
+        }
+
+        if (target.isArray()) {
+            return arrayConversionCost(pyArg, target.getComponentType());
+        } else if (target.isInstance(pyArg)) {
+            return 0;
+        } else if (target == Object.class) {
+            return 3000;
+        } else {
+            return 50 + precedence(target);
+        }
+    }
+
+    private static int arrayConversionCost(PyObject pyArg, Class<?> componentType) {
+        componentType = boxedClass(componentType);
+        int cost = 5;
+        try {
+            int n = pyArg.__len__();
+            for (int i = 0; i < n; i++) {
+                cost += conversionCost(pyArg.__getitem__(i), componentType);
+            }
+            return cost;
+        } catch (Throwable t) {
+            return 1000;
+        }
+    }
+
+    private static Class<?> boxedClass(Class<?> c) {
+        if (!c.isPrimitive()) {
+            return c;
+        } else if (c == Boolean.TYPE) {
+            return Boolean.class;
+        } else if (c == Byte.TYPE) {
+            return Byte.class;
+        } else if (c == Short.TYPE) {
+            return Short.class;
+        } else if (c == Integer.TYPE) {
+            return Integer.class;
+        } else if (c == Long.TYPE) {
+            return Long.class;
+        } else if (c == Float.TYPE) {
+            return Float.class;
+        } else if (c == Double.TYPE) {
+            return Double.class;
+        } else if (c == Character.TYPE) {
+            return Character.class;
+        } else {
+            return c;
+        }
     }
 
     public static int precedence(Class<?> arg) {
