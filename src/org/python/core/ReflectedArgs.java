@@ -164,17 +164,7 @@ public class ReflectedArgs {
             return new PyObject[] {new PyList()};
         }
         PyObject lastArg = pyArgs[pyArgs.length - 1];
-        if (pyArgs.length == n && (lastArg instanceof PySequenceList || lastArg instanceof PyArray
-                || lastArg instanceof PyXRange || lastArg instanceof PyIterator)) {
-            // NOTE that the check is against PySequenceList, not PySequence,
-            // because certain Java <=> Python semantics currently require this
-            // additional strictness. Perhaps this can be relaxed.
-
-            // Empirically this list is exhaustive against the Jython runtime,
-            // excluding only PyBaseString, PyMemoryView, Py2kBuffer, BaseBytes,
-            // and AstList, many/most of which seem likely to be problematic for
-            // varargs usage.
-
+        if (pyArgs.length == n && isSequenceVararg(lastArg)) {
             // This is only relevant if the number of arguments would be correct if a final sequence
             // argument was treated as a vararg argument. eg, if two lists are passed to a function
             // that accepts (Object...), they should be boxed and passed as a single list, even though
@@ -258,6 +248,14 @@ public class ReflectedArgs {
     }
 
     private static boolean isSequenceVararg(PyObject pyArg) {
+        // NOTE that the check is against PySequenceList, not PySequence,
+        // because certain Java <=> Python semantics currently require this
+        // additional strictness. Perhaps this can be relaxed.
+
+        // Empirically this list is exhaustive against the Jython runtime,
+        // excluding only PyBaseString, PyMemoryView, Py2kBuffer, BaseBytes,
+        // and AstList, many/most of which seem likely to be problematic for
+        // varargs usage.
         return pyArg instanceof PySequenceList || pyArg instanceof PyArray || pyArg instanceof PyXRange
                 || pyArg instanceof PyIterator;
     }
