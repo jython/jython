@@ -534,6 +534,30 @@ class SymbolicLinkTestCase(unittest.TestCase):
             self.assertEqual(cm.exception.filename, nonexistent_file)
 
 
+class EnvironmentVarGuardTestCase(unittest.TestCase):
+
+    @unittest.skipUnless(getattr(os, '_name', os.name) == 'nt',
+                         "Windows environment names are case-insensitive")
+    def test_case_insensitive_unset_restore(self):
+        lower = "jy_envguard_case_test"
+        upper = "JY_ENVGUARD_CASE_TEST"
+        had_value = lower in os.environ or upper in os.environ
+        original_value = os.environ.get(lower)
+        os.environ[lower] = "original"
+        try:
+            with test_support.EnvironmentVarGuard() as env:
+                env.unset(lower)
+                env.unset(upper)
+            self.assertEqual(os.environ.get(lower), "original")
+            self.assertEqual(os.environ.get(upper), "original")
+        finally:
+            if had_value:
+                os.environ[lower] = original_value
+            else:
+                if lower in os.environ:
+                    del os.environ[lower]
+
+
 def test_main():
     test_support.run_unittest(
         OSFileTestCase,
@@ -545,6 +569,7 @@ def test_main():
         SystemTestCase,
         LinkTestCase,
         SymbolicLinkTestCase,
+        EnvironmentVarGuardTestCase,
     )
 
 if __name__ == '__main__':

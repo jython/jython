@@ -235,7 +235,7 @@ public class jython {
         }
 
         if (exception != null) {
-            logger.log(Level.WARNING, "Unable to format console messages: {0}",
+            logger.log(Level.FINE, "Unable to format console messages: {0}",
                     exception.getMessage());
         }
     }

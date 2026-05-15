@@ -93,6 +93,7 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <property file="${basedir}/ant.properties" />
         <property name="jython.java.version" value="1.8" />
         <property name="jdk.source.version" value="1.8" />
+        <property name="jython.test.java.opts" value="" />
 
         <!-- Designate the official release encoded in parts. In normal times, this is the *next*
              official release, e.g. 2.7.2b2 while working towards 2.7.2b2, and sys.version will be
@@ -251,9 +252,9 @@ informix.jar = ../support/jdbc-4.10.12.jar
             <!-- Other JARs (alphabetical) -->
             <filelist dir="${extlibs.dir}">
                 <file name="antlr-complete-3.5.3.jar" /> <!-- ANTLR 3 until we upgrade parsing -->
-                <file name="asm-9.7.jar" />
-                <file name="asm-commons-9.7.jar" />
-                <file name="asm-util-9.7.jar" />
+                <file name="asm-9.9.1.jar" />
+                <file name="asm-commons-9.9.1.jar" />
+                <file name="asm-util-9.9.1.jar" />
                 <file name="commons-compress-1.26.2.jar"/>
                 <file name="commons-io-2.16.1.jar"/>
                 <file name="failureaccess-1.0.1.jar" />
@@ -303,6 +304,30 @@ informix.jar = ../support/jdbc-4.10.12.jar
         <condition property="os.family.windows">
             <os family="windows"/>
         </condition>
+
+        <condition property="jython.test.jdk9.java.opts"
+                   value="--add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+                   else="">
+            <not>
+                <matches string="${ant.java.version}" pattern="^1\.[0-8]$" />
+            </not>
+        </condition>
+        <condition property="jython.test.jdk25.java.opts"
+                   value="--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
+                   else="">
+            <or>
+                <matches string="${ant.java.version}" pattern="^2[5-9]$" />
+                <matches string="${ant.java.version}" pattern="^[3-9][0-9]$" />
+            </or>
+        </condition>
+        <!-- Launcher-based exec tests do not use Ant's forked-JUnit <jvmarg>
+             path. Pass both caller-supplied test options and JDK-version
+             compatibility options through JAVA_OPTS so the Unix script launcher
+             and the Windows native launcher see the same Java command line.
+             The script launchers avoid adding duplicate module/native-access
+             options; the Windows launcher simply forwards JAVA_OPTS. -->
+        <property name="jython.launcher.test.java.opts"
+                  value="-Duser.language=en -Duser.region=US ${jython.test.java.opts} ${jython.test.jdk9.java.opts} ${jython.test.jdk25.java.opts}" />
 
         <!-- Options we use when compiling (if not beaten to it: see *-preinit) -->
         <property name="build.compiler" value="modern" />
@@ -849,9 +874,9 @@ The text for an official release would continue like ...
             <!-- pin to Antlr 3 until we upgrade parsing -->
             <zipfileset src="extlibs/antlr-runtime-3.5.3.jar"/>
             <rule pattern="org.antlr.runtime.**" result="org.python.antlr.runtime.@1"/>
-            <zipfileset src="extlibs/asm-9.7.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-commons-9.7.jar" excludes="module-info.class"/>
-            <zipfileset src="extlibs/asm-util-9.7.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-9.9.1.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-commons-9.9.1.jar" excludes="module-info.class"/>
+            <zipfileset src="extlibs/asm-util-9.9.1.jar" excludes="module-info.class"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
             <zipfileset src="extlibs/bcpkix-jdk18on-1.78.1.jar" excludes="META-INF/**"/>
             <zipfileset src="extlibs/bcprov-jdk18on-1.78.1.jar" excludes="META-INF/**"/>
@@ -924,6 +949,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -948,6 +975,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython fat jar with stdlib"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -992,6 +1021,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -1022,6 +1053,8 @@ The text for an official release would continue like ...
                 <attribute name="Implementation-Vendor" value="Python Software Foundation"/>
                 <attribute name="Implementation-Title" value="Jython Test JAR"/>
                 <attribute name="Implementation-Version" value="${jython.version}"/>
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
+                <attribute name="Add-Opens" value="java.base/java.io java.base/sun.nio.ch"/>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="version" value="${jython.version}" />
@@ -1200,9 +1233,7 @@ The text for an official release would continue like ...
              $dist.dir/javalib/*, to be available when using jython-dev.jar
         -->
         <copy todir="${dist.dir}/javalib">
-            <fileset dir="${basedir}/extlibs">
-                <exclude name="profile.properties"/>
-            </fileset>
+            <fileset dir="${basedir}/extlibs"/>
             <fileset dir="${build.dir}">
                 <include name="*.jar"/>
                 <include name="*.properties"/>
@@ -1290,10 +1321,17 @@ The text for an official release would continue like ...
     <target name="test" depends="clean-test, javatest, launchertest, regrtest, modjytest"
         description="run all the tests"/>
 
+    <target name="test-built"
+            depends="init, clean-test, javatest-built, launchertest-built, regrtest-built, modjytest-built"
+            description="run all the tests against an existing built dist without rebuilding"/>
+
     <target name="singlejavatest" depends="compile-test, expose"
         description="run a single JUnit test (specify with -Dtest=classname)">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.cachedir.skip" value="true"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1321,10 +1359,19 @@ The text for an official release would continue like ...
             description="run all the JUnit tests">
     </target>
 
-    <target name="javatest-basepath" depends="developer-build">
+    <target name="javatest-built" depends="javatest-basepath-built, javatest-import-built"
+            description="run all the JUnit tests against an existing built dist">
+    </target>
+
+    <target name="javatest-basepath" depends="developer-build, javatest-basepath-built"/>
+
+    <target name="javatest-basepath-built" depends="init">
         <mkdir dir="${junit.reports}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1341,11 +1388,17 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="javatest-import" depends="developer-build"
+    <target name="javatest-import" depends="developer-build, javatest-import-built"
             description="run all the JUnit tests that need tests/python in the path.">
+    </target>
+
+    <target name="javatest-import-built" depends="init">
         <mkdir dir="${junit.reports}"/>
         <junit haltonfailure="true" fork="true" printsummary="true">
             <formatter type="xml"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1362,6 +1415,9 @@ The text for an official release would continue like ...
     <target name="javatest-ci" depends="developer-build">
         <junit haltonfailure="true" fork="true">
             <formatter type="brief" usefile="false"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1382,6 +1438,9 @@ The text for an official release would continue like ...
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true" showoutput="true">
             <formatter type="xml"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1405,6 +1464,9 @@ The text for an official release would continue like ...
         <mkdir dir="${junit.reports}"/>
         <junit fork="true" printsummary="true">
             <formatter type="xml"/>
+            <jvmarg line="${jython.test.java.opts}"/>
+            <jvmarg line="${jython.test.jdk9.java.opts}"/>
+            <jvmarg line="${jython.test.jdk25.java.opts}"/>
             <sysproperty key="python.home" value="${dist.dir}"/>
             <sysproperty key="python.test.source.dir" value="${test.source.dir}"/>
             <classpath refid="test.classpath"/>
@@ -1424,15 +1486,19 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
-    <target name="modjytest" depends="developer-build">
+    <target name="modjytest" depends="developer-build, modjytest-built"/>
+
+    <target name="modjytest-built" depends="init">
         <ant dir="tests/modjy">
             <property name="jython_home" value="${dist.dir}"/>
             <property name="mockrunner_home" value="${extlibs.dir}/mockrunner-0.4.1"/>
         </ant>
     </target>
 
-    <target name="launchertest" depends="developer-build" if="os.family.unix">
-      <exec executable="${test.shell.dir}/test-jython.sh">
+    <target name="launchertest" depends="developer-build, launchertest-built" if="os.family.unix"/>
+
+    <target name="launchertest-built" depends="init" if="os.family.unix">
+      <exec executable="${test.shell.dir}/test-jython.sh" failonerror="true">
         <arg value="${dist.dir}"/>
       </exec>
     </target>
@@ -1441,8 +1507,8 @@ The text for an official release would continue like ...
         description="identify the versions of Jython and its platform (needs developer-build)"/>
 
     <target name="versions-unix" if="os.family.unix">
-        <exec executable="${dist.dir}/bin/jython">
-            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+        <exec executable="${dist.dir}/bin/jython" failonerror="true">
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="-c"/>
             <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
         </exec>
@@ -1450,19 +1516,23 @@ The text for an official release would continue like ...
 
     <target name="versions-windows" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython.exe">
+        <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="-c"/>
             <arg value="import sys, platform; print sys.version; print platform.java_ver()"/>
         </exec>
     </target>
 
-    <target name="regrtest" depends="developer-build, regrtest-unix, regrtest-windows"
+    <target name="regrtest" depends="developer-build, regrtest-built"
         description="run Python tests expected to work on Jython"/>
+
+    <target name="regrtest-built" depends="init, regrtest-unix, regrtest-windows"
+        description="run Python tests against an existing built dist"/>
 
     <target name="regrtest-unix" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython">
-            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+        <exec executable="${dist.dir}/bin/jython" failonerror="true">
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
@@ -1475,7 +1545,8 @@ The text for an official release would continue like ...
 
     <target name="regrtest-windows" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
-        <exec executable="${dist.dir}/bin/jython.exe">
+        <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <!-- Only run the tests that are expected to work on Jython -->
             <arg value="--expected"/>
@@ -1493,7 +1564,7 @@ The text for an official release would continue like ...
     <target name="regrtest-unix-file" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython">
-            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="--junit-xml"/>
             <arg value="${junit.reports}"/>
@@ -1509,6 +1580,7 @@ The text for an official release would continue like ...
     <target name="regrtest-windows-file" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe">
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="--junit-xml"/>
             <arg value="${junit.reports}"/>
@@ -1528,7 +1600,7 @@ The text for an official release would continue like ...
     <target name="regrtest-unix-ci" if="os.family.unix">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython" failonerror="true">
-            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="-w"/> <!-- re-run failed tests in verbose mode -->
             <!-- Only run the tests that are expected to work on Jython -->
@@ -1548,7 +1620,7 @@ The text for an official release would continue like ...
     <target name="regrtest-windows-ci" if="os.family.windows">
         <mkdir dir="${junit.reports}"/>
         <exec executable="${dist.dir}/bin/jython.exe" failonerror="true">
-            <env key="JAVA_OPTS" value="-Duser.language=en -Duser.region=US"/>
+            <env key="JAVA_OPTS" value="${jython.launcher.test.java.opts}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
             <arg value="-w"/> <!-- re-run failed tests in verbose mode -->
             <!-- Only run the tests that are expected to work on Jython -->

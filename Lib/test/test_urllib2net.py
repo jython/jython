@@ -32,6 +32,17 @@ skip_ftp_test_on_travis = unittest.skipIf('TRAVIS' in os.environ,
                                           'on Travis CI')
 
 
+def _external_http_proxy_configured():
+    return any(os.environ.get(name) for name in (
+        'http_proxy', 'https_proxy', 'all_proxy',
+        'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'))
+
+
+skip_ftp_test_with_http_proxy = unittest.skipIf(
+    _external_http_proxy_configured(),
+    'external FTP tests require direct FTP access, not an HTTP proxy')
+
+
 # Connecting to remote hosts is flaky.  Make it more robust by retrying
 # the connection several times.
 _urlopen_with_retry = _wrap_with_retry_thrice(urllib2.urlopen, urllib2.URLError)
@@ -107,6 +118,7 @@ class OtherNetworkTests(unittest.TestCase):
     # XXX The rest of these tests aren't very good -- they don't check much.
     # They do sometimes catch some major disasters, though.
 
+    @skip_ftp_test_with_http_proxy
     @skip_ftp_test_on_travis
     def test_ftp(self):
         urls = [
@@ -293,6 +305,7 @@ class TimeoutTest(unittest.TestCase):
 
     FTP_HOST = 'ftp://www.pythontest.net/'
 
+    @skip_ftp_test_with_http_proxy
     @skip_ftp_test_on_travis
     def test_ftp_basic(self):
         self.assertIsNone(socket.getdefaulttimeout())
@@ -300,6 +313,7 @@ class TimeoutTest(unittest.TestCase):
             u = _urlopen_with_retry(self.FTP_HOST)
             self.assertIsNone(u.fp.fp._sock.gettimeout())
 
+    @skip_ftp_test_with_http_proxy
     @skip_ftp_test_on_travis
     def test_ftp_default_timeout(self):
         self.assertIsNone(socket.getdefaulttimeout())
@@ -311,6 +325,7 @@ class TimeoutTest(unittest.TestCase):
                 socket.setdefaulttimeout(None)
             self.assertEqual(u.fp.fp._sock.gettimeout(), 60)
 
+    @skip_ftp_test_with_http_proxy
     @skip_ftp_test_on_travis
     def test_ftp_no_timeout(self):
         self.assertIsNone(socket.getdefaulttimeout(),)
@@ -322,6 +337,7 @@ class TimeoutTest(unittest.TestCase):
                 socket.setdefaulttimeout(None)
             self.assertIsNone(u.fp.fp._sock.gettimeout())
 
+    @skip_ftp_test_with_http_proxy
     @skip_ftp_test_on_travis
     def test_ftp_timeout(self):
         with test_support.transient_internet(self.FTP_HOST):

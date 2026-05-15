@@ -11,6 +11,9 @@ import time
 
 mimetools = test_support.import_module("mimetools", deprecated=True)
 
+# These urllib tests need a plain HTTP endpoint; www.python.org redirects to HTTPS.
+URL = test_support.TEST_HTTP_URL
+
 
 def _open_with_retry(func, host, *args, **kwargs):
     # Connecting to remote hosts is flaky.  Make it more robust
@@ -25,6 +28,12 @@ def _open_with_retry(func, host, *args, **kwargs):
     raise last_exc
 
 
+def _external_http_proxy_configured():
+    return any(os.environ.get(name) for name in (
+        'http_proxy', 'https_proxy', 'all_proxy',
+        'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'))
+
+
 class URLTimeoutTest(unittest.TestCase):
 
     TIMEOUT = 10.0
@@ -36,7 +45,7 @@ class URLTimeoutTest(unittest.TestCase):
         socket.setdefaulttimeout(None)
 
     def testURLread(self):
-        f = _open_with_retry(urllib.urlopen, "http://www.python.org/")
+        f = _open_with_retry(urllib.urlopen, URL)
         x = f.read()
 
 class urlopenNetworkTests(unittest.TestCase):
@@ -48,7 +57,7 @@ class urlopenNetworkTests(unittest.TestCase):
     for transparent redirection have been written.
 
     setUp is not used for always constructing a connection to
-    http://www.python.org/ since there a few tests that don't use that address
+    test_support.TEST_HTTP_URL since there a few tests that don't use that address
     and making a connection is expensive enough to warrant minimizing unneeded
     connections.
 
@@ -59,7 +68,7 @@ class urlopenNetworkTests(unittest.TestCase):
 
     def test_basic(self):
         # Simple test expected to pass.
-        open_url = self.urlopen("http://www.python.org/")
+        open_url = self.urlopen(URL)
         for attr in ("read", "readline", "readlines", "fileno", "close",
                      "info", "geturl"):
             self.assertTrue(hasattr(open_url, attr), "object returned from "
@@ -71,7 +80,7 @@ class urlopenNetworkTests(unittest.TestCase):
 
     def test_readlines(self):
         # Test both readline and readlines.
-        open_url = self.urlopen("http://www.python.org/")
+        open_url = self.urlopen(URL)
         try:
             self.assertIsInstance(open_url.readline(), basestring,
                                   "readline did not return a string")
@@ -82,7 +91,7 @@ class urlopenNetworkTests(unittest.TestCase):
 
     def test_info(self):
         # Test 'info'.
-        open_url = self.urlopen("http://www.python.org/")
+        open_url = self.urlopen(URL)
         try:
             info_obj = open_url.info()
         finally:
@@ -94,12 +103,8 @@ class urlopenNetworkTests(unittest.TestCase):
 
     def test_geturl(self):
         # Make sure same URL as opened is returned by geturl.
-        #
-        # This test has been changed from what's currently in our
-        # lib-python/2.7 for Jython due to recent updates at the
-        # python.org to use https; other tests can take advantate of
-        # URL redirection
-        URL = "https://www.python.org/"
+        # Keep this on HTTP: with an HTTP proxy configured, legacy urllib's
+        # HTTPS proxy path reports geturl() as http://... rather than https://...
         open_url = self.urlopen(URL)
         try:
             gotten_url = open_url.geturl()
@@ -109,8 +114,7 @@ class urlopenNetworkTests(unittest.TestCase):
 
     def test_getcode(self):
         # test getcode() with the fancy opener to get 404 error codes
-        URL = "http://www.python.org/XXXinvalidXXX"
-        open_url = urllib.FancyURLopener().open(URL)
+        open_url = urllib.FancyURLopener().open(URL + "/XXXinvalidXXX")
         try:
             code = open_url.getcode()
         finally:
@@ -125,7 +129,7 @@ class urlopenNetworkTests(unittest.TestCase):
             # test can't pass on Windows.
             return
         # Make sure fd returned by fileno is valid.
-        open_url = self.urlopen("http://www.python.org/")
+        open_url = self.urlopen(URL)
         fd = open_url.fileno()
         FILE = os.fdopen(fd)
         try:
@@ -137,6 +141,8 @@ class urlopenNetworkTests(unittest.TestCase):
     def test_bad_address(self):
         # Make sure proper exception is raised when connecting to a bogus
         # address.
+        if _external_http_proxy_configured():
+            self.skipTest("invalid-domain test requires direct DNS lookup")
         bogus_domain = "sadflkjsasf.i.nvali.d"
         try:
             socket.gethostbyname(bogus_domain)
@@ -163,7 +169,7 @@ class urlretrieveNetworkTests(unittest.TestCase):
 
     def test_basic(self):
         # Test basic functionality.
-        file_location,info = self.urlretrieve("http://www.python.org/")
+        file_location,info = self.urlretrieve(URL)
         self.assertTrue(os.path.exists(file_location), "file location returned by"
                         " urlretrieve is not a valid path")
         FILE = file(file_location)
@@ -176,7 +182,7 @@ class urlretrieveNetworkTests(unittest.TestCase):
 
     def test_specified_path(self):
         # Make sure that specifying the location of the file to write to works.
-        file_location,info = self.urlretrieve("http://www.python.org/",
+        file_location,info = self.urlretrieve(URL,
                                               test_support.TESTFN)
         self.assertEqual(file_location, test_support.TESTFN)
         self.assertTrue(os.path.exists(file_location))
@@ -189,14 +195,15 @@ class urlretrieveNetworkTests(unittest.TestCase):
 
     def test_header(self):
         # Make sure header returned as 2nd value from urlretrieve is good.
-        file_location, header = self.urlretrieve("http://www.python.org/")
+        file_location, header = self.urlretrieve(URL)
         os.unlink(file_location)
         self.assertIsInstance(header, mimetools.Message,
                               "header is not an instance of mimetools.Message")
 
     def test_data_header(self):
-        logo = "http://www.python.org/community/logos/python-logo-master-v3-TM.png"
-        file_location, fileheaders = self.urlretrieve(logo)
+        # TEST_HTTP_URL is the pythontest.net root document; urlretrieve stores
+        # it in a local temporary file, and this test only checks headers.
+        file_location, fileheaders = self.urlretrieve(URL)
         os.unlink(file_location)
         datevalue = fileheaders.getheader('Date')
         dateformat = '%a, %d %b %Y %H:%M:%S GMT'

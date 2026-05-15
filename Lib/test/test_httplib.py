@@ -6,6 +6,7 @@ import socket
 import errno
 import os
 import tempfile
+import urlparse
 
 import unittest
 TestCase = unittest.TestCase
@@ -21,6 +22,26 @@ CERT_fakehostname = os.path.join(here, 'keycert2.pem')
 CERT_selfsigned_pythontestdotnet = os.path.join(here, 'selfsigned_pythontestdotnet.pem')
 
 HOST = test_support.HOST
+
+def _external_https_connection(host, port=443, **kwargs):
+    proxy = _https_proxy()
+    if proxy is None:
+        return httplib.HTTPSConnection(host, port, **kwargs)
+    proxy_host, proxy_port = proxy
+    conn = httplib.HTTPSConnection(proxy_host, proxy_port, **kwargs)
+    conn.set_tunnel(host, port)
+    return conn
+
+def _https_proxy():
+    for name in ('https_proxy', 'HTTPS_PROXY', 'http_proxy', 'HTTP_PROXY'):
+        proxy = os.environ.get(name)
+        if proxy:
+            if '://' not in proxy:
+                proxy = '//' + proxy
+            parsed = urlparse.urlparse(proxy)
+            if parsed.hostname:
+                return parsed.hostname, parsed.port or 80
+    return None
 
 class FakeSocket:
     def __init__(self, text, fileclass=StringIO.StringIO, host=None, port=None):
@@ -827,7 +848,7 @@ class HTTPSTest(TestCase):
         import ssl
         test_support.requires('network')
         with test_support.transient_internet('self-signed.pythontest.net'):
-            h = httplib.HTTPSConnection('self-signed.pythontest.net', 443)
+            h = _external_https_connection('self-signed.pythontest.net', 443)
             with self.assertRaises(ssl.SSLError) as exc_info:
                 h.request('GET', '/')
             if test_support.is_jython:
@@ -840,8 +861,8 @@ class HTTPSTest(TestCase):
         test_support.requires('network')
         with test_support.transient_internet('self-signed.pythontest.net'):
             context = ssl._create_stdlib_context()
-            h = httplib.HTTPSConnection('self-signed.pythontest.net', 443,
-                                        context=context)
+            h = _external_https_connection('self-signed.pythontest.net', 443,
+                                           context=context)
             h.request('GET', '/')
             resp = h.getresponse()
             self.assertIn('nginx', resp.getheader('server'))
@@ -849,9 +870,10 @@ class HTTPSTest(TestCase):
     @test_support.system_must_validate_cert
     def test_networked_trusted_by_default_cert(self):
         # Default settings: requires a valid cert from a trusted CA
+        # www.pythontest.net intentionally uses a self-signed certificate.
         test_support.requires('network')
         with test_support.transient_internet('www.python.org'):
-            h = httplib.HTTPSConnection('www.python.org', 443)
+            h = _external_https_connection('www.python.org', 443)
             h.request('GET', '/')
             resp = h.getresponse()
             content_type = resp.getheader('content-type')
@@ -865,7 +887,7 @@ class HTTPSTest(TestCase):
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_REQUIRED
             context.load_verify_locations(CERT_selfsigned_pythontestdotnet)
-            h = httplib.HTTPSConnection('self-signed.pythontest.net', 443, context=context)
+            h = _external_https_connection('self-signed.pythontest.net', 443, context=context)
             h.request('GET', '/')
             resp = h.getresponse()
             server_string = resp.getheader('server')
@@ -879,7 +901,7 @@ class HTTPSTest(TestCase):
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_REQUIRED
             context.load_verify_locations(CERT_localhost)
-            h = httplib.HTTPSConnection('self-signed.pythontest.net', 443, context=context)
+            h = _external_https_connection('self-signed.pythontest.net', 443, context=context)
             with self.assertRaises(ssl.SSLError) as exc_info:
                 h.request('GET', '/')
             if test_support.is_jython:
@@ -996,6 +1018,13 @@ class TunnelTests(TestCase):
 
 @test_support.reap_threads
 def test_main(verbose=None):
+    if test_support.is_jython:
+        from java.util.logging import Logger, Level
+        # Netty logs noisy channel-initializer warnings when tests deliberately
+        # close localhost sockets in error paths.
+        Logger.getLogger("io.netty.channel.ChannelInitializer").setLevel(Level.SEVERE)
+        Logger.getLogger("io.netty.util.concurrent.DefaultPromise").setLevel(Level.OFF)
+
     test_support.run_unittest(HeaderTests, OfflineTest, BasicTest, TimeoutTest,
                               HTTPTest, HTTPSTest, SourceAddressTest,
                               TunnelTests)

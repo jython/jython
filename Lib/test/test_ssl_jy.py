@@ -3,6 +3,7 @@
 # directly in the original, but this reduces the diff and ongoing merge effort
 
 import errno
+import os
 import select
 import socket
 import ssl
@@ -14,6 +15,20 @@ from test.test_ssl import can_clear_options, support, skip_if_broken_ubuntu_ssl
 from test.test_ssl import CAPATH, CERTFILE, CAFILE_CACERT
 from test.test_ssl import REMOTE_HOST, REMOTE_ROOT_CERT
 
+
+def _errno_values(*names):
+    return tuple(getattr(errno, name) for name in names if hasattr(errno, name))
+
+
+TRANSIENT_CONNECT_EX = _errno_values(
+    'ECONNREFUSED', 'EHOSTUNREACH', 'ENETUNREACH', 'ETIMEDOUT',
+    'EHOSTDOWN', 'ENETDOWN')
+
+
+def _external_http_proxy_configured():
+    return any(os.environ.get(name) for name in (
+        'http_proxy', 'https_proxy', 'all_proxy',
+        'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'))
 
 
 class BasicSocketTests(test.test_ssl.BasicSocketTests):
@@ -142,7 +157,14 @@ class SSLErrorTests(test.test_ssl.SSLErrorTests):
         None
 
 
+@unittest.skipIf(_external_http_proxy_configured(),
+                 "external raw SSL socket tests require direct network access")
 class NetworkedTests(test.test_ssl.NetworkedTests):
+    def _skip_if_remote_unreachable(self, rc):
+        if rc in TRANSIENT_CONNECT_EX:
+            self.skipTest("%s is not reachable from this environment" %
+                          (REMOTE_HOST,))
+
     def test_connect_ex(self):
         # Issue #11326: check connect_ex() implementation
         with support.transient_internet(REMOTE_HOST):
@@ -151,7 +173,9 @@ class NetworkedTests(test.test_ssl.NetworkedTests):
                                 ca_certs=REMOTE_ROOT_CERT)
             try:
                 # Jython, errno.EISCONN expected per earlier 2.x versions, not 0
-                self.assertEqual(errno.EISCONN, s.connect_ex((REMOTE_HOST, 443)))
+                rc = s.connect_ex((REMOTE_HOST, 443))
+                self._skip_if_remote_unreachable(rc)
+                self.assertEqual(errno.EISCONN, rc)
                 self.assertTrue(s.getpeercert())
             finally:
                 s.close()
@@ -168,6 +192,7 @@ class NetworkedTests(test.test_ssl.NetworkedTests):
             try:
                 s.setblocking(False)
                 rc = s.connect_ex((REMOTE_HOST, 443))
+                self._skip_if_remote_unreachable(rc)
                 # EWOULDBLOCK under Windows, EINPROGRESS elsewhere
                 # Jython added EALREADY, as in Jython connect may have already happened
                 self.assertIn(rc, (0, errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
@@ -200,6 +225,7 @@ class NetworkedTests(test.test_ssl.NetworkedTests):
             try:
                 s.settimeout(0.0000001)
                 rc = s.connect_ex((REMOTE_HOST, 443))
+                self._skip_if_remote_unreachable(rc)
                 if rc == errno.EISCONN:
                     self.skipTest("REMOTE_HOST responded too quickly")
                 self.assertIn(rc, (errno.ETIMEDOUT, errno.EAGAIN, errno.EWOULDBLOCK))
@@ -229,4 +255,3 @@ def test_main(verbose=False):
 
 if __name__ == "__main__":
     test_main()
-

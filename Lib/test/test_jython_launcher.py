@@ -13,7 +13,13 @@ from test import test_support
 launcher = None
 uname = None
 is_windows = False
-some_jar = os.path.join(os.sep, "a", "b", "c", "some.jar")
+# Use forward slashes on Windows because these tests parse launcher --print
+# output back through Windows command-line rules, where bare backslashes in this
+# synthetic classpath element can be consumed as escapes.
+if os._name == "nt":
+    some_jar = "C:/a/b/c/some.jar"
+else:
+    some_jar = os.path.join(os.sep, "a", "b", "c", "some.jar")
 
 
 def get_launcher(executable):
@@ -114,8 +120,8 @@ class TestLauncher(unittest.TestCase):
         self.assertEqual(args[0], "java")
         self.assertEqual(args[1], "-Xmx2g")
         self.assertEqual(args[2], "-Xss2560k")
-        self.assertEqual(args[3], "-classpath", args)
-        self.assertEqual(args[4].split(classpath_delimiter())[-1], some_jar)
+        classpath_index = args.index("-classpath")
+        self.assertEqual(args[classpath_index + 1].split(classpath_delimiter())[-1], some_jar)
         self.assertEqual(args[-1], "org.python.util.jython")
         self.assertEqual(props["foo"], "bar")
         self.assertEqual(props["baz"], "some property")
@@ -132,6 +138,43 @@ class TestLauncher(unittest.TestCase):
         self.assertIn("python.executable", props)
         self.assertIn("python.launcher.uname", props)
         self.assertIn("python.launcher.tty", props)
+
+    def test_modern_java_options(self):
+        add_opens = [
+            "--add-opens=java.base/java.io=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        ]
+        native_access = [
+            "--enable-native-access=ALL-UNNAMED",
+            "--sun-misc-unsafe-memory-access=allow",
+        ]
+        java_version = test_support.get_java_version()
+
+        env = self.get_newenv()
+        if is_windows:
+            # The Windows launcher is a native executable. Unlike the script
+            # launchers, it does not inspect the Java version and synthesize
+            # module/native-access options, so Ant supplies those through
+            # JAVA_OPTS when it runs launcher-based tests on newer JDKs.
+            env["JAVA_OPTS"] = " ".join(add_opens + native_access)
+            args = self.get_cmdline([launcher, "--print"], env)
+            for option in add_opens + native_access:
+                self.assertIn(option, args)
+            return
+
+        args = self.get_cmdline([launcher, "--print"], env)
+        if java_version >= (9,):
+            for option in add_opens:
+                self.assertIn(option, args)
+        else:
+            for option in add_opens:
+                self.assertNotIn(option, args)
+        if java_version >= (25,):
+            for option in native_access:
+                self.assertIn(option, args)
+        else:
+            for option in native_access:
+                self.assertNotIn(option, args)
 
     def test_mem_env(self):
         env = self.get_newenv()
@@ -249,7 +292,10 @@ def test_main():
         return
     launcher = get_launcher(sys.executable)
     uname = get_uname()
-    is_windows = uname in ("cygwin", "windows")
+    # On Windows, Git/MSYS/Cygwin tools may put a uname executable on PATH.
+    # This test must still parse and assert according to the native launcher
+    # that Jython is actually using, so trust os._name for Windows first.
+    is_windows = os._name == "nt" or uname in ("cygwin", "windows")
     test_support.run_unittest(
         TestLauncher)
 

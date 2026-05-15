@@ -16,9 +16,10 @@
     <property name="jython_jar" value="jython-dev.jar" />
     <property name="jython_jar_path" location="${jython_home}/${jython_jar}" />
     <property name="jython_cachedir" location="${jython_home}/cachedir" />
+    <property name="jython.test.java.opts" value="" />
     <property name="mockrunner_home" location="${env.MOCKRUNNER_HOME}" />
 
-    <target name="init" depends="clean_py_class_files">
+    <target name="init" depends="clean">
         <available property="jython_home.exists" file="${jython_home}" />
         <fail unless="jython_home.exists" message="jython_home, ${jython_home}, doesn't exist" />
         <available property="mockrunner_home.exists" file="${mockrunner_home}" />
@@ -47,18 +48,63 @@
         <property name="mockrunner_home" value="${env.MOCKRUNNER_HOME}" />
         <property name="mockrunner_jar" location="${mockrunner_home}/jar" />
         <property name="mockrunner_lib" location="${mockrunner_home}/lib/jdk${jdk_version}/${servlet_version}" />
+        <property name="mockrunner_servlet_api_jakarta_jar"
+                  location="${build}/mockrunner-jakarta/servlet.jar" />
+        <property name="mockrunner_servlet_jakarta_jar"
+                  location="${build}/mockrunner-jakarta/mockrunner-servlet.jar" />
+
+        <taskdef name="jarjar" classname="org.pantsbuild.jarjar.JarJarTask">
+            <classpath>
+                <pathelement location="../../extlibs/jarjar-1.7.2.jar" />
+                <pathelement location="../../extlibs/asm-9.9.1.jar" />
+                <pathelement location="../../extlibs/asm-commons-9.9.1.jar" />
+            </classpath>
+        </taskdef>
+
+        <mkdir dir="${build}/mockrunner-jakarta" />
+        <jarjar destfile="${mockrunner_servlet_api_jakarta_jar}">
+            <zipfileset src="${mockrunner_jar}/${servlet_version}/servlet.jar" />
+            <rule pattern="javax.servlet.**" result="jakarta.servlet.@1" />
+        </jarjar>
+        <jarjar destfile="${mockrunner_servlet_jakarta_jar}">
+            <zipfileset src="${mockrunner_lib}/mockrunner-servlet.jar" />
+            <rule pattern="javax.servlet.**" result="jakarta.servlet.@1" />
+        </jarjar>
+
+        <condition property="modjy.jdk9.java.opts"
+                   value="--add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+                   else="">
+            <not>
+                <matches string="${ant.java.version}" pattern="^1\.[0-8]$" />
+            </not>
+        </condition>
+        <condition property="modjy.jdk25.java.opts"
+                   value="--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
+                   else="">
+            <or>
+                <matches string="${ant.java.version}" pattern="^2[5-9]$" />
+                <matches string="${ant.java.version}" pattern="^[3-9][0-9]$" />
+            </or>
+        </condition>
 
         <path id="test.classpath">
             <pathelement path="${build}" />
             <pathelement path="${jython_jar_path}" />
-            <fileset dir="${jython_home}/javalib" includes="**/*.jar" />
-            <fileset dir="${mockrunner_jar}" includes="**/*.jar" />
-            <fileset dir="${mockrunner_lib}" includes="**/*.jar" />
+            <pathelement path="${mockrunner_servlet_api_jakarta_jar}" />
+            <pathelement path="${mockrunner_servlet_jakarta_jar}" />
+            <fileset dir="${jython_home}/javalib" includes="**/*.jar"
+                     excludes="jakarta.servlet-api-*.jar" />
+            <fileset dir="${mockrunner_jar}" includes="**/*.jar" excludes="j2ee1.3/servlet.jar" />
+            <fileset dir="${mockrunner_lib}" includes="**/*.jar" excludes="mockrunner-servlet.jar" />
         </path>
 
         <javac srcdir="${test_src}" destdir="${build}" classpathref="test.classpath" debug="on" />
-        <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes" classpathref="test.classpath">
-            <jvmarg value="-XX:MaxPermSize=128m"/>
+        <java classname="com.xhaus.modjy.ModjyTestBase" dir="." fork="yes"
+              classpathref="test.classpath" failonerror="true">
+            <!-- Matrix runs pass proxy and socket JVM properties through this shared Ant property. -->
+            <jvmarg line="${jython.test.java.opts}" />
+            <jvmarg line="${modjy.jdk9.java.opts}" />
+            <jvmarg line="${modjy.jdk25.java.opts}" />
             <sysproperty key="JYTHON_HOME" value="${jython_home}" />
             <sysproperty key="python.cachedir.skip" value="true" />
         </java>
@@ -102,4 +148,3 @@
     </target>
 
 </project>
-

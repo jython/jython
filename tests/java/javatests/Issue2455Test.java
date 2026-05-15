@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyModule;
+import org.python.core.PyString;
 import org.python.util.PythonInterpreter;
 
 import javax.tools.JavaCompiler;
@@ -44,7 +45,8 @@ public class Issue2455Test {
 
         // Create an interpreter and import the example packages
         interpreter.exec("import sys");
-        interpreter.exec("sys.path.append('" + temporaryFolder.getRoot().toString() + "')");
+        // Append directly so Windows backslashes are not interpreted as Python string escapes.
+        interpreter.getSystemState().path.append(new PyString(temporaryFolder.getRoot().toString()));
         interpreter.exec("import " + example1.getName());
         interpreter.exec("import " + example2.getName());
         assertTrue(interpreter.eval(example1.getName()) instanceof PyJavaPackage);

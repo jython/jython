@@ -16,6 +16,10 @@ Jython 2.7.5
 
 New Features
 
+    - Java 25 is supported when running Jython built for its lowest supported
+      Java bytecode level. The launchers add the Java 25 native-access options
+      needed by Jython's native dependencies.
+
     - Servlet support is updated to use the jakarta namespace. As part of this
       change, the classes org.python.util.PyServlet, org.python.util.PyFilter
       and org.python.util.PyServletInitializer have been relocated to a new
@@ -29,6 +33,9 @@ New Features
       deprecated for removal in Java 26. See https://github.com/jnr/jffi/issues/165
 
 Jython 2.7.5a1 Bugs fixed
+    - [ GH-413 ] Fix Java 25 compatibility regressions, including console
+      encoding detection, Java package imports, locale expectations,
+      SecurityManager tests, and network tests behind an HTTPS proxy.
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
     - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
 
