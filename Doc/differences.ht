@@ -128,10 +128,10 @@ CPython 2.0</i>
     objects may raise <tt>AttributeError</tt> or
     <tt>TypeError</tt> differently.  <i>This is considered
     implementation dependent.  In Jython the following rules are
-    used: when getting a non-existant attribute,
+    used: when getting a non-existent attribute,
     <tt>AttributeError</tt> is raised; when setting or deleting a
     readonly attribute, <tt>TypeError</tt> is raised; when setting
-    or deleting a non-existant attribute, <tt>AttributeError</tt>
+    or deleting a non-existent attribute, <tt>AttributeError</tt>
     is raised.  Be aware though currently neither Jython nor
     CPython are completely consistent.</i>
 
@@ -166,7 +166,7 @@ CPython 2.0</i>
     value > 255. When the 'b' flag is specified, only the low-order half
     of each unicode character will written to the file and the high-order
     byte will be set to zero when reading from a file. 
-    Without the 'b' option, the unicode charecters will the passed 
+    Without the 'b' option, the unicode characters will the passed
     through the default codec before going to/from the file.
 
     <p><LI>The builtin 'chr' function allows values in the range [0..65535].

@@ -465,7 +465,7 @@ tuple consisting of (headers, results).
 <dt><p><code class="methodname">schema(table, full=0, sort=1)</code></p></dt>
 
 <dd>
-Displays the schema (indicies, foreign keys, primary keys and columns) for the
+Displays the schema (indices, foreign keys, primary keys and columns) for the
 table parameter.  If <code>full</code> is true, also compute the exported (or
 referenced) keys.  If <code>sort</code> is true (the default), sort the column names.
 <pre>
