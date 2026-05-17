@@ -1026,16 +1026,8 @@ public class PySystemState extends PyObject
         String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
             // Windows: cp65001 is automatically mapped to UTF-8
-            // See https://github.com/openjdk/jdk/blob/master/src/java.base/windows/native/libjava/java_props_md.c
+            // https://github.com/openjdk/jdk25u/blob/master/src/java.base/windows/native/libjava/java_props_md.c#L131
             // C function: getConsoleEncoding()
-            // 0129   ...
-            // 0130   } else if (cp == 65001) {
-            // 0131       snprintf(buf, buflen, "UTF-8");
-            // 0132   } else if (...) {
-            // 0133   ...
-            if (encoding.equals("UTF-8")) {
-                encoding = encoding.toLowerCase();
-            }
             return encoding;
         }
 
