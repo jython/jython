@@ -24,7 +24,7 @@ import traceback
 
 from java.lang import IllegalStateException
 from java.io import IOException
-from javax.servlet import ServletException
+from jakarta.servlet import ServletException
 
 class ModjyException(Exception): pass
 

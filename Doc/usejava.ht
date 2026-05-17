@@ -104,7 +104,7 @@ it turns out to cause problems.
 </tr>
 <tr><td>java.lang.Class Class
 or JavaClass</td>
-<td>(only if class subclasses from exactly one Java class; mutiple inheritance from more than one Java
+<td>(only if class subclasses from exactly one Java class; multiple inheritance from more than one Java
 class is illegal)</td>
 </tr>
 <tr><td>Foo[]</td>

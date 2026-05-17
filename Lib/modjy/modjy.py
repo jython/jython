@@ -23,8 +23,8 @@ import synchronize
 import sys
 import types
 
-sys.add_package("javax.servlet")
-sys.add_package("javax.servlet.http")
+sys.add_package("jakarta.servlet")
+sys.add_package("jakarta.servlet.http")
 sys.add_package("org.python.core")
 
 from modjy_exceptions import *
@@ -35,7 +35,7 @@ from modjy_response import start_response_object
 from modjy_impl import modjy_impl
 from modjy_publish import modjy_publisher
 
-from javax.servlet.http import HttpServlet
+from jakarta.servlet.http import HttpServlet
 
 class modjy_servlet(HttpServlet, modjy_publisher, modjy_wsgi, modjy_impl):
 

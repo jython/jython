@@ -1,4 +1,4 @@
-from javax.servlet.http import HttpServlet
+from jakarta.servlet.http import HttpServlet
 
 class basic(HttpServlet):
     def doGet(self, req, resp):

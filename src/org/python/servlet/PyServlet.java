@@ -1,4 +1,4 @@
-package org.python.util;
+package org.python.servlet;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,12 +10,12 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.python.Version;
 import org.python.core.PrePy;
@@ -24,6 +24,8 @@ import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
+import org.python.util.Generic;
+import org.python.util.PythonInterpreter;
 
 /**
  * This servlet is used to re-serve Jython servlets. It stores bytecode for Jython servlets and
@@ -32,7 +34,7 @@ import org.python.core.PySystemState;
  * e.g. {@code http://localhost:8080/test/hello.py}
  * <pre>{@literal
  *
- * from javax.servlet.http import HttpServlet
+ * from jakarta.servlet.http import HttpServlet
  * class hello(HttpServlet):
  *     def doGet(self, req, res):
  *         res.setContentType("text/html");
@@ -50,7 +52,7 @@ import org.python.core.PySystemState;
  * <web-app>
  *     <servlet>
  *         <servlet-name>PyServlet</servlet-name>
- *         <servlet-class>org.python.util.PyServlet</servlet-class>
+ *         <servlet-class>org.python.servlet.PyServlet</servlet-class>
  *         <init-param>
  *             <param-name>python.home</param-name>
  *             <param-value>/usr/home/jython-2.5</param-value>
@@ -124,10 +126,10 @@ public class PyServlet extends HttpServlet {
         }
 
         PySystemState.initialize(baseProps, props, new String[0]);
-        PySystemState.add_package("javax.servlet");
-        PySystemState.add_package("javax.servlet.http");
-        PySystemState.add_package("javax.servlet.jsp");
-        PySystemState.add_package("javax.servlet.jsp.tagext");
+        PySystemState.add_package("jakarta.servlet");
+        PySystemState.add_package("jakarta.servlet.http");
+        PySystemState.add_package("jakarta.servlet.jsp");
+        PySystemState.add_package("jakarta.servlet.jsp.tagext");
         PySystemState.add_classdir(rootPath + "WEB-INF" + File.separator + "classes");
         PySystemState.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
     }
@@ -157,7 +159,7 @@ public class PyServlet extends HttpServlet {
     {
         req.setAttribute("pyservlet", this);
 
-        String spath = (String) req.getAttribute("javax.servlet.include.servlet_path");
+        String spath = (String) req.getAttribute("jakarta.servlet.include.servlet_path");
         if (spath == null) {
             spath = ((HttpServletRequest)req).getServletPath();
             if (spath == null || spath.length() == 0) {

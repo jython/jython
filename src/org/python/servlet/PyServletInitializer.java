@@ -1,9 +1,9 @@
-package org.python.util;
+package org.python.servlet;
 
 import java.util.Properties;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 /**
  * Initializes the jython runtime inside a servlet engine. Should be used with {@link PyFilter} to
@@ -12,7 +12,7 @@ import javax.servlet.ServletContextListener;
  *
  * <pre>
  *   &lt;listener&gt;
- *       &lt;listener-class&gt;org.python.util.PyServletInitializer&lt;/listener-class&gt;
+ *       &lt;listener-class&gt;org.python.servlet.PyServletInitializer&lt;/listener-class&gt;
  *       &lt;load-on-startup&gt;1&lt;/load-on-startup&gt;
  *   &lt;/listener&gt;
  *</pre>
