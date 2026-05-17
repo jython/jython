@@ -1043,7 +1043,7 @@ public class PySystemState extends PyObject
             return encoding;
         }
 
-        // On Linux and macOS, sun.std.encoding and stdout.encoding are undefined for Java 8 and 11
+        // On Linux and macOS, sun.stdout.encoding and stdout.encoding are undefined for Java 8 and 11
         // Try a Unix-like "locale charmap".
         String output = Py.getCommandResult("locale", "charmap");
         // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
