@@ -1028,6 +1028,7 @@ public class PySystemState extends PyObject
             // Windows: cp65001 is automatically mapped to UTF-8
             // https://github.com/openjdk/jdk25u/blob/master/src/java.base/windows/native/libjava/java_props_md.c#L131
             // C function: getConsoleEncoding()
+            encoding = encoding.toLowerCase();
             return encoding;
         }
 
