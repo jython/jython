@@ -1,5 +1,7 @@
 package javatests;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -121,6 +123,41 @@ public class Reflection {
 
         public String insert(String name, double... values) {
             return "double " + name + ":" + Arrays.toString(values);
+        }
+    }
+
+    public static class OverloadConsistency {
+
+        public String singleArg(boolean value) {
+            return "boolean";
+        }
+
+        public String singleArg(BigInteger value) {
+            return "BigInteger";
+        }
+
+        public String singleArg(BigDecimal value) {
+            return "BigDecimal";
+        }
+
+        public String singleArg(Object value) {
+            return "Object";
+        }
+
+        public String varArgs(boolean... values) {
+            return "boolean";
+        }
+
+        public String varArgs(BigInteger... values) {
+            return "BigInteger";
+        }
+
+        public String varArgs(BigDecimal... values) {
+            return "BigDecimal";
+        }
+
+        public String varArgs(Object... values) {
+            return "Object";
         }
     }
 

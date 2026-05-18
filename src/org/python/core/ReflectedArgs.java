@@ -309,11 +309,20 @@ public class ReflectedArgs {
             } else if (target == Boolean.class) {
                 return 20;
             }
+        } else if (pyArg instanceof PyLong) {
+            if (target == Boolean.class) {
+                return 20;
+            }
         } else if (pyArg instanceof PyFloat) {
             if (target == Double.class) {
                 return 0;
             } else if (target == Float.class || target == Number.class) {
                 return 1;
+            } else if (target == Boolean.class) {
+                // Fixed-arity PyFloat overload resolution does not convert to boolean and instead
+                // prefers Object when that is the applicable fallback. Keep varargs ranking aligned
+                // by making boolean truthiness more expensive than Object for PyFloat.
+                return 4000;
             }
         } else if (pyArg instanceof PyString) {
             if (target == String.class) {
@@ -325,10 +334,10 @@ public class ReflectedArgs {
 
         if (target.isArray()) {
             return arrayConversionCost(pyArg, target.getComponentType());
-        } else if (target.isInstance(pyArg)) {
-            return 0;
         } else if (target == Object.class) {
             return 3000;
+        } else if (target.isInstance(pyArg)) {
+            return 0;
         } else {
             return 50 + precedence(target);
         }

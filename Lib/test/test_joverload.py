@@ -215,6 +215,30 @@ class VarargsDispatchTests(unittest.TestCase):
         self.assertEqual(t.insert("double", [1.0, 2.0, 3.14]),
                          "double double:[1.0, 2.0, 3.14]")
 
+    def test_pylong_single_and_varargs_consistent(self):
+        # This test only asserts consistency with non-varargs overload handling. The varargs
+        # ranking improvement is intended to match existing fixed-arity behavior, not to make a
+        # claim that the fixed-arity choice is itself the most correct resolution.
+        t = Reflection.OverloadConsistency()
+        expected = t.singleArg(21L)
+        self.assertEqual(t.varArgs(21L, 22L, 23L), expected)
+
+    def test_pyinteger_single_and_varargs_consistent(self):
+        # This test only asserts consistency with non-varargs overload handling. The varargs
+        # ranking improvement is intended to match existing fixed-arity behavior, not to make a
+        # claim that the fixed-arity choice is itself the most correct resolution.
+        t = Reflection.OverloadConsistency()
+        expected = t.singleArg(21)
+        self.assertEqual(t.varArgs(21, 22, 23), expected)
+
+    def test_pydouble_single_and_varargs_consistent(self):
+        # This test only asserts consistency with non-varargs overload handling. The varargs
+        # ranking improvement is intended to match existing fixed-arity behavior, not to make a
+        # claim that the fixed-arity choice is itself the most correct resolution.
+        t = Reflection.OverloadConsistency()
+        expected = t.singleArg(21.0)
+        self.assertEqual(t.varArgs(21.0, 22.0, 23.0), expected)
+
 
 class ComplexOverloadingTests(unittest.TestCase):
     def test_constructor_overloading(self):
