@@ -1033,7 +1033,6 @@ public class PySystemState extends PyObject
         }
 
         // Java 8 to 18
-        String os = props.getProperty("os.name");
         encoding = props.getProperty("sun.stdout.encoding");
         if (encoding != null) {
             // Windows: some of the older versions of Java return "cp65001" for UTF-8
@@ -1043,12 +1042,32 @@ public class PySystemState extends PyObject
             return encoding;
         }
 
-        // On Linux and macOS, sun.stdout.encoding and stdout.encoding are undefined for Java 8 and 11
-        // Try a Unix-like "locale charmap".
-        String output = Py.getCommandResult("locale", "charmap");
-        // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
-        if (output.length() > 0) {
-            return output;
+        String os = props.getProperty("os.name");
+        boolean isWindows = os != null && os.startsWith("Windows");
+        if (isWindows) {
+            // Go via the Windows code page built-in command "chcp".
+            String output = Py.getCommandResultWindows("chcp");
+            /*
+             * The output will be like "Active code page: 850" or maybe "Aktive Codepage: 1252." or
+             * "활성 코드 페이지: 949". Assume the first number with 2 or more digits is the code page.
+             */
+            final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
+            Matcher matcher = DIGITS_PATTERN.matcher(output);
+            if (matcher.find()) {
+                encoding = "cp".concat(output.substring(matcher.start(), matcher.end()));
+                if (encoding.equals("cp65001")) {
+                    encoding = "utf-8";
+                }
+                return encoding;
+            }
+        } else {
+            // On Linux and macOS, sun.stdout.encoding and stdout.encoding are undefined for Java 8 and 11
+            // Try a Unix-like "locale charmap".
+            String output = Py.getCommandResult("locale", "charmap");
+            // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
+            if (output.length() > 0) {
+                return output;
+            }
         }
 
         // If we land here it is because we found no answer, and we will assume UTF-8.
