@@ -1022,14 +1022,29 @@ public class PySystemState extends PyObject
      */
     private static String getConsoleEncoding(Properties props) {
 
-        // From Java 8 onwards, the answer may already be to hand in the registry:
-        String encoding = props.getProperty("sun.stdout.encoding");
-        String os = props.getProperty("os.name");
-
+        // Java 19+
+        String encoding = props.getProperty("stdout.encoding");
         if (encoding != null) {
+            // Windows: cp65001 is automatically mapped to UTF-8
+            // https://github.com/openjdk/jdk25u/blob/master/src/java.base/windows/native/libjava/java_props_md.c#L131
+            // C function: getConsoleEncoding()
+            encoding = encoding.toLowerCase();
             return encoding;
+        }
 
-        } else if (os != null && os.startsWith("Windows")) {
+        // Java 8 to 18
+        encoding = props.getProperty("sun.stdout.encoding");
+        if (encoding != null) {
+            // Windows: some of the older versions of Java return "cp65001" for UTF-8
+            if (encoding.equals("cp65001")) {
+                encoding = "utf-8";
+            }
+            return encoding;
+        }
+
+        String os = props.getProperty("os.name");
+        boolean isWindows = os != null && os.startsWith("Windows");
+        if (isWindows) {
             // Go via the Windows code page built-in command "chcp".
             String output = Py.getCommandResultWindows("chcp");
             /*
@@ -1039,10 +1054,14 @@ public class PySystemState extends PyObject
             final Pattern DIGITS_PATTERN = Pattern.compile("[1-9]\\d+");
             Matcher matcher = DIGITS_PATTERN.matcher(output);
             if (matcher.find()) {
-                return "cp".concat(output.substring(matcher.start(), matcher.end()));
+                encoding = "cp".concat(output.substring(matcher.start(), matcher.end()));
+                if (encoding.equals("cp65001")) {
+                    encoding = "utf-8";
+                }
+                return encoding;
             }
-
         } else {
+            // On Linux and macOS, sun.stdout.encoding and stdout.encoding are undefined for Java 8 and 11
             // Try a Unix-like "locale charmap".
             String output = Py.getCommandResult("locale", "charmap");
             // The result of "locale charmap" is just the charmap name ~ Charset or codec name.
