@@ -146,10 +146,31 @@ class TestCompile(unittest.TestCase):
         #ast.stmt()
         #ast.unaryop()
 
+class TestAstList(unittest.TestCase):
+    """Supplementary tests for org.python.core.AstList"""
+
+    def test_concat(self):
+        # Issue gh-356 Java IndexOOB error on append
+        body = ast.parse('x=1; global y; y+=x*2').body  # _ast.AstList
+        p = [ast.Pass(), ast.Break()]                   # PyList
+        x = body + p
+        self.assertEqual(x[-2:], p)
+
+    def test_append(self):
+        # Issue gh-356 Java IndexOOB error on append
+        body = ast.parse('x=1; global y; y+=x*2').body  # _ast.AstList
+        p = [ast.Pass(), ast.Break()]                   # PyList
+        body += p
+        self.assertEqual(body[-2:], p)
+
+
 #==============================================================================
 
 def test_main(verbose=None):
-    test_classes = [TestCompile]
+    test_classes = [
+        TestCompile,
+        TestAstList
+    ]
     test_support.run_unittest(*test_classes)
 
 if __name__ == "__main__":
