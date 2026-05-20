@@ -100,7 +100,7 @@ These conflicts are resolved so that:
 </blockquote>
 
 This means that a method will override a field with the same name. 
-Some carefull handling of properties and static fields allow for 
+Some careful handling of properties and static fields allow for
 the existence of, and access to, both an instance property and a 
 static field with the same name.
 

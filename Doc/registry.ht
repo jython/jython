@@ -3,8 +3,8 @@ Title: The Jython Registry
 <h3>The Jython Registry</h3>
 
 Because there is no good platform independent equivalent of the Windows
-Registry (or Unix envrionment variables) Java has it's own environment
-variable namespace.  Jython aquires it's namespace from the following
+Registry (or Unix environment variables) Java has its own environment
+variable namespace.  Jython acquires its namespace from the following
 three sources (later sources override defaults found in earlier
 places).
 
@@ -18,7 +18,7 @@ places).
 	algorithm Jython uses to find the registry file.
 
     <p><li>The user's personal registry file, which contains
-	similarly formated prop/value pairs.  The user's registry file 
+	similarly formatted prop/value pairs.  The user's registry file 
 	is at &quot;<tt>user.home</tt>&quot;+&quot;/.jython&quot;
 
     <p><LI>Jython properties: Specified on the command line as options
