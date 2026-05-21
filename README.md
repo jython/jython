@@ -110,3 +110,8 @@ Whereas the JARs delivered by the installer are somewhat "fat",
 embedding certain dependencies in shaded (renamed) form,
 the JAR from the Gradle build is "spare"
 and cites its dependencies externally through a POM.
+
+## Other Useful Documentation
+
+[Project Processes](ProcessDocs)
+

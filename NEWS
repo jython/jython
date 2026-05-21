@@ -30,8 +30,11 @@ New Features
 
 Jython 2.7.5a1 Bugs fixed
     - [ GH-388 ] @ExposedType annotation should be @Documented
+    - [ GH-404 ] Windows code page 65001 (UTF-8) not supported by Jython
+    - [ GH-384 ] Console encoding inferred incorrectly on Java 21
     - [ GH-382 ] Java EE Servlet Namespace Has Been Changed From javax.servlet to jakarta.servlet
-    - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace
+    - [ GH-356 ] _ast.astlist.__add__ leads to Java exception
+    - [ GH-84 ] PyServlet Will Need To Use The jakarta.servlet Namespace #84
 
 
 ==============================================================================
