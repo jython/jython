@@ -19,23 +19,26 @@ import org.python.core.PyType;
 public @interface ExposedType {
 
     /**
-     * @return the name to expose this item as. Defaults to the actual name of the class.
+     * Returns the name to expose this item as. Defaults to the actual name of the class.
      */
     String name() default "";
 
     /**
-     * @return the base type of this type. Must be another class annotated with {@code ExposedType}.
-     *         If unspecified, the base is set to {@code object}, or {@code PyObject.class}.
+     * Returns the base type of this type. This must be another class annotated with
+     * {@code ExposedType}. If not specified (or {@code Object.class} is given),
+     * the base is set to Python {@code object}, that is {@code PyObject.class}.
+     *
+     * @return the base type of this type.
      */
     Class base() default Object.class;
 
     /**
-     * @return whether this type allows subclassing.
+     * Returns whether this type allows subclassing.
      */
     boolean isBaseType() default true;
 
     /**
-     * @return the {@code __doc__} string for this type.
+     * Returns the {@code __doc__} string for this type.
      */
     String doc() default "";
 }
