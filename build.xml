@@ -1303,6 +1303,20 @@ The text for an official release would continue like ...
         </junit>
     </target>
 
+    <target name="debugjavatest" depends="compile-test, expose"
+        description="remotely debug a single JUnit test (specify with -Dtest=classname)">
+        <junit haltonfailure="true" fork="true">
+            <jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y"/>
+            <formatter type="brief" usefile="false"/>
+            <sysproperty key="python.cachedir.skip" value="true"/>
+            <sysproperty key="python.home" value="${dist.dir}"/>
+            <classpath refid="test.classpath"/>
+            <batchtest skipNonTests="true">
+                <fileset dir="${test.source.dir}" includes="**/${test}.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
     <target name="clean-test" depends="common-dirs"
             description="clean up old test output">
         <delete includeemptydirs="true" failonerror="false">
