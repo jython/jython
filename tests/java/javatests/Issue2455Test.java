@@ -44,7 +44,8 @@ public class Issue2455Test {
 
         // Create an interpreter and import the example packages
         interpreter.exec("import sys");
-        interpreter.exec("sys.path.append('" + temporaryFolder.getRoot().toString() + "')");
+        // Note use of r'' to avoid backslash simulating an escape sequence
+        interpreter.exec("sys.path.append(r'" + temporaryFolder.getRoot().toString() + "')");
         interpreter.exec("import " + example1.getName());
         interpreter.exec("import " + example2.getName());
         assertTrue(interpreter.eval(example1.getName()) instanceof PyJavaPackage);
