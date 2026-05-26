@@ -12,7 +12,7 @@ import java.lang.annotation.Documented;
  * <p>
  * In the first form, the method must be static and take the arguments
  * {@code PyNewWrapper new_, boolean init, PyType subtype, PyObject[] args, String[] keywords}.
- * In this case, the method has full responsibility for creating and initiating the object and
+ * In this case, the method has full responsibility for creating and initializing the object and
  * will be invoked for every subtype of this exposed type. Essentially it's for object
  * instantiation that must be called for every instance of that object.
  * See {@link org.python.core.PyInteger#int_new} for an example of this type of {@code ExposedNew}.

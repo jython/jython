@@ -14,7 +14,7 @@ public @interface ExposedGet {
     String name() default "";
 
     /**
-     * @return the {@code __doc__} string for this descriptor.
+     * Returns the {@code __doc__} string for this descriptor.
      */
     String doc() default "";
 }
