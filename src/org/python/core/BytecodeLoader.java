@@ -5,7 +5,9 @@ import org.objectweb.asm.ClassReader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -17,6 +19,62 @@ import java.util.List;
  * Utility class for loading compiled Python modules and Java classes defined in Python modules.
  */
 public class BytecodeLoader {
+
+    /**
+     * Backing field of {@link #getIgnoreSerialVersionUID()} and {@link #setIgnoreSerialVersionUID(boolean)}.
+     * Default value is {@code true}.
+     *
+     * @see #getIgnoreSerialVersionUID()
+     * @see #setIgnoreSerialVersionUID(boolean)
+     */
+    private static boolean ignoreSerialVersionUID = true;
+
+    /**
+     * Only relevant in presence of oversized methods or functions, this tells whether or not
+     * to ignore {@code serialVersionUID} associated with the corresponding code objects.
+     * Default value is {@code true}.
+     * See {@link #setIgnoreSerialVersionUID(boolean)} for details.
+     *
+     * @see #setIgnoreSerialVersionUID(boolean)
+     * @see #fixPyBytecode(Class)
+     *
+     * @return whether or not {@code serialVersionUID} data is ignored when {@link PyBytecode}
+     *         objects are parsed via Java serialization in {@link #fixPyBytecode(Class)},
+     *         default is {@code true}
+     */
+    public static boolean getIgnoreSerialVersionUID() {
+        return ignoreSerialVersionUID;
+    }
+
+    /**
+     * Only relevant in presence of oversized methods or functions, this controls whether or
+     * not to ignore {@code serialVersionUID} associated with the corresponding code objects.
+     * Methods and functions in Python might not be compilable to JVM bytecode if they exceed a
+     * certain size. In that case, Jython can use compiled CPython bytecode (as in {@code .pyc}
+     * files) instead. This bytecode is embedded into the module's {@code $py.class} file by
+     * storing the {@link PyBytecode} object via Java serialization in string constants.
+     * This mechanism can break compatibility with older Jython versions if computed values
+     * of {@code serialVersionUID} changed due to subtle code adjustments. Usually, compatibility
+     * is not actually broken, so Jython bypasses the check for {@code serialVersionUID} as far
+     * as objects comprised by a {@link PyBytecode} object are concerned.
+     * This option allows to control that behavior. By setting it to {@code false}, a strict check
+     * for {@code serialVersionUID} is required. By default, the value of this option is
+     * {@code true} and the check is bypassed.
+     *
+     * @see #getIgnoreSerialVersionUID()
+     * @see #fixPyBytecode(Class)
+     * @see <a href="https://github.com/jython/jython/issues/416">Solve serialization backward
+     *      incompatibility of oversized methods and functions.</a>
+     * @see <a href="https://github.com/jython/jython/issues/234">Clarification on compile
+     *      (Module or method too large)</a>
+     *
+     * @param value indicates whether or not {@code serialVersionUID} data is to be ignored when
+     *              {@link PyBytecode} objects are parsed via Java serialization in
+     *              {@link #fixPyBytecode(Class)}, default is {@code true}.
+     */
+    public static void setIgnoreSerialVersionUID(boolean value) {
+        ignoreSerialVersionUID = value;
+    }
 
     /**
      * Turn the Java class file data into a Java class.
@@ -61,16 +119,49 @@ public class BytecodeLoader {
         return makeClass(name, data);
     }
 
-    private static PyCode parseSerializedCode(String code_str)
+    /**
+     * See {@link #setIgnoreSerialVersionUID(boolean)} for details of this mechanism.
+     * Restores a {@link PyBytecode} object serialized into a string.
+     *
+     * @see #getIgnoreSerialVersionUID()
+     * @see #setIgnoreSerialVersionUID(boolean)
+     * @see #fixPyBytecode(Class)
+     */
+    private static PyBytecode parseSerializedCode(String code_str)
             throws IOException, ClassNotFoundException {
         // From Java 8 use: byte[] b = Base64.getDecoder().decode(code_str);
         byte[] b = base64decode(code_str);
         ByteArrayInputStream bi = new ByteArrayInputStream(b);
-        ObjectInputStream si = new ObjectInputStream(bi);
-        PyBytecode meth_code = (PyBytecode) si.readObject();
-        si.close();
-        bi.close();
-        return meth_code;
+        ObjectInputStream si;
+        if (ignoreSerialVersionUID) {
+            // https://github.com/jython/jython/issues/416
+            si = new ObjectInputStream(bi) {
+                @Override
+                protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
+                    ObjectStreamClass incoming = super.readClassDescriptor();
+                    ObjectStreamClass local = ObjectStreamClass.lookup(Class.forName(incoming.getName()));
+                    if (local != null) {
+                        if (incoming.getSerialVersionUID() != local.getSerialVersionUID()) {
+                            // Replace the descriptor to bypass serialVersionUID mismatch
+                            return local;
+                        }
+                    }
+                    return incoming;
+                }
+            };
+        } else {
+            si = new ObjectInputStream(bi);
+        }
+        try {
+            return (PyBytecode) si.readObject();
+        } catch (InvalidClassException e) {
+            throw Py.ImportError(
+                    "compiled unit contains incompatible serialized objects (for oversized function handling): "
+                    + e.getMessage());
+        } finally {
+            si.close();
+            bi.close();
+        }
     }
 
     /**
@@ -152,30 +243,36 @@ public class BytecodeLoader {
     }
 
     /**
-     * This method looks for Python-Bytecode stored in String literals.
+     * This method looks for Python bytecode stored in string literals.
      * While Java supports rather long strings, constrained only by
-     * int-addressing of arrays, it supports only up to 65535 characters
+     * {@code int}-addressing of arrays, it supports only up to 65535 characters
      * in literals (not sure how escape-sequences are counted).
-     * To circumvent this limitation, the code is automatically splitted
+     * To circumvent this limitation, the code is automatically split
      * into several literals with the following naming-scheme.
-     *
-     * - The marker-interface 'ContainsPyBytecode' indicates that a class
-     *   contains (static final) literals of the following scheme:
-     * - a prefix of '___' indicates a bytecode-containing string literal
-     * - a number indicating the number of parts follows
-     * - '0_' indicates that no splitting occurred
-     * - otherwise another number follows, naming the index of the literal
-     * - indexing starts at 0
-     *
+     * <p>
+     * The marker-interface {@link ContainsPyBytecode} indicates that a class
+     * contains ({@code static final}) literals of the following scheme:
+     * <ul>
+     * <li>a prefix of '{@code ___}' indicates a bytecode-containing string literal
+     * <li>a number indicating the number of parts follows
+     * <li>'{@code 0_}' indicates that no splitting occurred
+     * <li>otherwise another number follows, naming the index of the literal
+     * <li>indexing starts at {@code 0}
+     * </ul>
+     * <p>
      * Examples:
-     * ___0_method1   contains bytecode for method1
-     * ___2_0_method2 contains first part of method2's bytecode
-     * ___2_1_method2 contains second part of method2's bytecode
-     *
+     * <ul>
+     * <li>{@code ___0_method1}   contains bytecode for {@code method1}
+     * <li>{@code ___2_0_method2} contains first part of {@code method2}'s bytecode
+     * <li>{@code ___2_1_method2} contains second part of {@code method2}'s bytecode
+     * </ul>
+     * <p>
      * Note that this approach is provisional. In future, Jython might contain
-     * the bytecode directly as bytecode-objects. The current approach was
-     * feasible with much less complicated JVM bytecode-manipulation, but needs
-     * special treatment after class-loading.
+     * the bytecode directly as bytecode objects. The current approach was
+     * feasible with much less complicated JVM bytecode manipulation, but needs
+     * special treatment after class loading.
+     *
+     * @see ContainsPyBytecode
      */
     public static void fixPyBytecode(Class<? extends ContainsPyBytecode> c)
             throws IllegalAccessException, NoSuchFieldException, java.io.IOException,
@@ -266,7 +363,9 @@ public class BytecodeLoader {
             parents.add(imp.getSyspathJavaLoader());
         }
 
-        /** Add given loader at the front of the list of the parent list (if not {@code null}). */
+        /** 
+         * Add given loader at the front of the list of the parent list (if not {@code null}).
+         */
         public void addParent(ClassLoader referent) {
             if (referent != null && !parents.contains(referent)) {
                 parents.addFirst(referent);
@@ -290,8 +389,8 @@ public class BytecodeLoader {
 
         /**
          * Define the named class using the class file data provided, and resolve it. (See JVM
-         * specification.) For class names ending "$py", this method may adjust that name to that
-         * found in the class file itself.
+         * specification.) For class names ending "{@code $py}", this method may adjust that
+         * name to that found in the class file itself.
          *
          * @param name fully-qualified binary name of the class
          * @param data a class file as a byte array
