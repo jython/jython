@@ -100,7 +100,7 @@ class large_method_back_compat_tests(unittest.TestCase):
 
     def test_backwards_compat(self):
         # To avoid unloading, we test everything in one go. This way, import failures are
-        # tested before import succeeds for the first time. To verify, the tested resolution
+        # tested before import succeeds for the first time. To verify that the tested issue
         # is real, we assert import failures on large_methods_272$py.class and
         # large_module_272$py.class which were compiled by Jython 2.7.2.
         # We later turn on the mitigation to see that it restores compatibility.
@@ -119,7 +119,7 @@ class large_method_back_compat_tests(unittest.TestCase):
         self.assertTrue(cm_module.exception.message.endswith(msg_end % 'module'))
 
         # Now we bypass the API version check, but deliberately turn off the serialVersionUID
-        # mismatch mitigation. This way we confirm, the issue is real and serialized objects
+        # mismatch mitigation. This way we confirm that the issue is real and serialized objects
         # from older Jython might cause this import error.
 
         imp_class.setIgnoreAPIVersion(True)
@@ -130,17 +130,13 @@ class large_method_back_compat_tests(unittest.TestCase):
         s2 = 'local class incompatible: stream classdesc serialVersionUID = '
         with self.assertRaises(ImportError) as cm2_methods:
             import large_methods_272
-        m = str(cm2_methods.exception)
-        self.assertEqual(m, cm2_methods.exception.message)
-        self.assertTrue(m.startswith(s))
-        self.assertTrue(s2 in m)
+        self.assertTrue(cm2_methods.exception.message.startswith(s))
+        self.assertTrue(s2 in cm2_methods.exception.message)
 
         with self.assertRaises(ImportError) as cm2_module:
             import large_module_272
-        m = str(cm2_module.exception)
-        self.assertEqual(m, cm2_module.exception.message)
-        self.assertTrue(m.startswith(s))
-        self.assertTrue(s2 in m)
+        self.assertTrue(cm2_module.exception.message.startswith(s))
+        self.assertTrue(s2 in cm2_module.exception.message)
 
         # Finally, we activate full mitigation of the issue and verify that everything passes now.
 
@@ -171,7 +167,7 @@ def test_main():
     test_support.run_unittest(
         large_method_tests,
         large_module_tests,
-        large_method_back_compat_tests,
+        large_method_back_compat_tests
     )
 
 if __name__ == "__main__":

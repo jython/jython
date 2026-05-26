@@ -30,7 +30,7 @@ public class BytecodeLoader {
     private static boolean ignoreSerialVersionUID = true;
 
     /**
-     * Only relevant in presence of oversized methods and functions, this tells whether or not
+     * Only relevant in presence of oversized methods or functions, this tells whether or not
      * to ignore {@code serialVersionUID} associated with the corresponding code objects.
      * Default value is {@code true}.
      * See {@link #setIgnoreSerialVersionUID(boolean)} for details.
@@ -40,14 +40,14 @@ public class BytecodeLoader {
      *
      * @return whether or not {@code serialVersionUID} data is ignored when {@link PyBytecode}
      *         objects are parsed via Java serialization in {@link #fixPyBytecode(Class)},
-     *         default is {@code false}
+     *         default is {@code true}
      */
     public static boolean getIgnoreSerialVersionUID() {
         return ignoreSerialVersionUID;
     }
 
     /**
-     * Only relevant in presence of oversized methods and functions, this controls whether or
+     * Only relevant in presence of oversized methods or functions, this controls whether or
      * not to ignore {@code serialVersionUID} associated with the corresponding code objects.
      * Methods and functions in Python might not be compilable to JVM bytecode if they exceed a
      * certain size. In that case, Jython can use compiled CPython bytecode (as in {@code .pyc}
