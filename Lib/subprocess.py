@@ -1349,6 +1349,8 @@ class Popen(object):
             args = _escape_args(args)
 
             if shell:
+                if _shell_command is None:
+                    raise OSError("Unable to locate or access a valid system shell to execute shell=True commands.")
                 args = _shell_command + args
 
             if executable is not None:
@@ -1936,6 +1938,8 @@ def _os_system(command):
     Execute the command (a string) in a subshell."""
     args = _cmdline2listimpl(command)
     args = _escape_args(args)
+    if _shell_command is None:
+        raise OSError("Unable to locate or access a valid system shell to execute system() command.")
     args = _shell_command + args
     cwd = os.getcwdu()
 
