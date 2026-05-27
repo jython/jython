@@ -783,52 +783,84 @@ public class Module implements Opcodes, ClassConstants, CompilationContext {
         } else {
             String CPython_command = System.getProperty(PYTHON_CPYTHON);
             if (try_cpython && CPython_command != null) {
-                // check version...
-                String command_ver = CPython_command + " --version";
-                String command = CPython_command + " -m py_compile " + filename;
+                // check that the command is an absolute path or resolves to a standard system location...
+                File pythonExec = new File(CPython_command);
+                if (!pythonExec.isAbsolute()) {
+                    boolean foundSystemPython = false;
+                    // for convenience, some bare standard commands are still permitted in this case:
+                    if (CPython_command.equals("python") || CPython_command.equals("python2") 
+                            || CPython_command.equals("python2.7") || CPython_command.equals("python.exe")
+                            || CPython_command.equals("python2.exe")) {
+                        // canonical locations for these standard commands on Linux, macOS, and Windows
+                        String[] systemDirectories = {
+                            "/usr/bin", "/usr/local/bin", "/opt/homebrew/bin", // Linux & macOS
+                            "C:\\Python27", "C:\\Program Files\\Python27"};    // Windows
+                        for (String dir : systemDirectories) {
+                            pythonExec = new File(dir, CPython_command);
+                            if (!pythonExec.exists() && dir.startsWith("C:\\") && !CPython_command.endsWith(".exe")) {
+                                // one more try for Windows dirs by adding .exe postfix
+                                pythonExec = new File(dir, CPython_command+".exe");
+                            }
+                            if (pythonExec.exists() && pythonExec.isFile() && pythonExec.canExecute()) {
+                                // resolve absolute path
+                                CPython_command = pythonExec.getAbsolutePath();
+                                foundSystemPython = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!foundSystemPython) {
+                        throw new RuntimeException(
+                            "The CPython command must be an absolute path or resolve to a standard system location. " +
+                            "Please provide a full absolute path instead of: " + CPython_command);
+                    }
+                }
+
                 Exception exc = null;
-                int result = 0;
+                int result = -1;
                 String reason;
                 try {
-                    Process p = Runtime.getRuntime().exec(command_ver);
-                    // Python 2.7 writes version to error-stream for some reason:
-                    BufferedReader br =
-                            new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                    String cp_version = br.readLine();
-                    while (br.readLine() != null) {}
-                    br.close();
-                    if (cp_version == null) {
-                        // Also try input-stream as fallback, just in case...
-                        br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    // check version...
+                    ProcessBuilder pbVersion = new ProcessBuilder(CPython_command, "--version");
+                    // merge stderr into stdout to prevent stream buffer deadlocks
+                    pbVersion.redirectErrorStream(true); 
+                    Process pVersion = pbVersion.start();
+                    String cp_version = null;
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(pVersion.getInputStream()))) {
                         cp_version = br.readLine();
+                        // consume any remaining output so the process can terminate cleanly
                         while (br.readLine() != null) {}
-                        br.close();
                     }
-                    result = p.waitFor();
-                    if (!cp_version.startsWith("Python 2.7.")) {
-                        reason = cp_version + " has been provided, but 2.7.x is required.";
+                    result = pVersion.waitFor();
+                    if (cp_version == null || !cp_version.startsWith("Python 2.7.")) {
+                        reason  = (cp_version == null ? "No version output" : cp_version) 
+                                + " has been provided, but 2.7.x is required.";
                         throw new RuntimeException(String.format(LARGE_METHOD_MSG, filename)
-                                + String.format(TRIED_CREATE_PYC_MSG, command, reason)
+                                + String.format(TRIED_CREATE_PYC_MSG,
+                                CPython_command + " -m py_compile " + filename, reason)
                                 + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG);
+                    }
+                    // compile...
+                    if (result == 0) {
+                        ProcessBuilder pbCompile = new ProcessBuilder(CPython_command, "-m", "py_compile", filename);
+                        pbCompile.redirectErrorStream(true);
+                        Process pCompile = pbCompile.start();
+                        // consume stream to prevent hanging
+                        try (BufferedReader br = new BufferedReader(new InputStreamReader(pCompile.getInputStream()))) {
+                            while (br.readLine() != null) {}
+                        }
+                        result = pCompile.waitFor();
+                        if (result == 0) {
+                            return loadPyBytecode(filename, false);
+                        }
                     }
                 } catch (InterruptedException | IOException e) {
                     exc = e;
                 }
-
-                if (exc == null && result == 0) {
-                    try {
-                        Process p = Runtime.getRuntime().exec(command);
-                        result = p.waitFor();
-                        if (result == 0) {
-                            return loadPyBytecode(filename, false);
-                        }
-                    } catch (InterruptedException | IOException e) {
-                        exc = e;
-                    }
-                }
                 reason = exc != null ? "of " + exc.toString() : "of a bad return: " + result;
                 String exc_msg = String.format(LARGE_METHOD_MSG, filename)
-                        + String.format(TRIED_CREATE_PYC_MSG, command, reason)
+                        + String.format(TRIED_CREATE_PYC_MSG,
+                        CPython_command + " -m py_compile " + filename, reason)
                         + String.format(PLEASE_PROVIDE_MSG, filename) + CPYTHON_CMD_MSG;
                 throw exc != null ? new RuntimeException(exc_msg, exc)
                         : new RuntimeException(exc_msg);

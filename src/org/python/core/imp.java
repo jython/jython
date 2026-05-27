@@ -23,9 +23,9 @@ import org.python.core.util.PlatformUtil;
  * Utility functions for "import" support.
  *
  * Note that this class tries to match the names of the corresponding functions from CPython's
- * Python/import.c. In these cases we use CPython's function naming style (underscores and all
- * lowercase) instead of Java's typical camelCase style so that it's easier to compare with
- * import.c.
+ * {@code Python/import.c}. In these cases we use CPython's function naming style (underscores
+ * and all lowercase) instead of Java's typical camelCase style so that it's easier to compare
+ *  with {@code import.c}.
  */
 public class imp {
 
@@ -44,7 +44,17 @@ public class imp {
     private static final boolean IS_OSX = PySystemState.getNativePlatform().equals("darwin");
 
     /**
-     * A bundle of a file name, the file's content and a last modified time, with no behaviour. As
+     * Backing field of {@link #getIgnoreAPIVersion()} and {@link #setIgnoreAPIVersion(boolean)}.
+     * Default value is {@code false}.
+     *
+     * @see #getIgnoreAPIVersion()
+     * @see #setIgnoreAPIVersion(boolean)
+     * @see #getAPIVersion()
+     */
+    private static boolean ignoreAPIVersion = false;
+
+    /**
+     * A bundle of a file name, the file's content and a last modified time, with no behavior. As
      * used here, the file is a class file and the last modified time is that of the matching
      * source, while the filename is taken from the annotation in the class file. See
      * {@link imp#readCodeData(String, InputStream, boolean, long)}.
@@ -82,13 +92,15 @@ public class imp {
      * caller or the compiled file.
      */
     static enum CodeImport {
-        /** Take the filename from the {@code sourceName} argument */
+        /** Take the filename from the {@code sourceName} argument. */
         source,
-        /** Take filename from the compiler annotation */
+        /** Take filename from the compiler annotation. */
         compiled_only;
     }
 
-    /** A non-empty fromlist for __import__'ing sub-modules. */
+    /**
+     * A non-empty {@code fromlist} for {@code __import__}'ing sub-modules.
+     */
     private static final PyObject nonEmptyFromlist = new PyTuple(PyString.fromInterned("__doc__"));
 
     public static ClassLoader getSyspathJavaLoader() {
@@ -102,16 +114,16 @@ public class imp {
      *
      * <ul>
      * <li>If both are the same class loader, return that class loader.
-     * <li>If either is null, then the non-null one is selected.
-     * <li>If both are not null, and a parent/child relationship can be determined, then the child
-     * is selected.
+     * <li>If either is {@code null}, then the non-{@code null} one is selected.
+     * <li>If both are not {@code null}, and a parent/child relationship can be determined, then the
+     * child is selected.
      * <li>If both are not null and not on a parent/child relationship, then the current class
      * loader is returned (since it is likely for the context class loader to <b>not</b> see the
      * Jython classes)
      * </ul>
      *
-     * @return the parent class loader for Jython or null if both the current and context class
-     *         loaders are null.
+     * @return the parent class loader for Jython or {@code null} if both the current and context class
+     *         loaders are {@code null}.
      */
     public static ClassLoader getParentClassLoader() {
         ClassLoader current = imp.class.getClassLoader();
@@ -129,7 +141,9 @@ public class imp {
         }
     }
 
-    /** True iff a {@code possibleAncestor} is the ancestor of the {@code subject}. */
+    /**
+     * True iff a {@code possibleAncestor} is the ancestor of the {@code subject}.
+     */
     private static boolean isAncestor(ClassLoader possibleAncestor, ClassLoader subject) {
         try {
             ClassLoader parent = subject.getParent();
@@ -149,9 +163,9 @@ public class imp {
     private imp() {} // Prevent instantiation.
 
     /**
-     * If the given name is found in sys.modules, the entry from there is returned. Otherwise a new
-     * {@link PyModule} is created for the name and added to {@code sys.modules}. Creating the
-     * module does not execute the body of the module to initialise its attributes.
+     * If the given name is found in sys.modules, the entry from there is returned. Otherwise a
+     * new {@link PyModule} is created for the name and added to {@code sys.modules}. Creating
+     * the module does not execute the body of the module to initialize its attributes.
      *
      * @param name fully-qualified name of the module
      * @return created {@code PyModule}
@@ -173,7 +187,7 @@ public class imp {
     }
 
     /**
-     * Remove name from sys.modules if present.
+     * Remove name from {@code sys.modules} if present.
      *
      * @param name the module name
      */
@@ -373,6 +387,7 @@ public class imp {
      * class. On the way, the method checks the API version annotation matches the current process,
      * and that the {@code org.python.compiler.MTime} annotation matches the source-last-modified
      * time passed in.
+     * (At your own risk, you can opt out of this check via {@link #setIgnoreAPIVersion(boolean)}.)
      *
      * @param name of source file (used for identification in error/log messages)
      * @param fp stream from which to read class file (closed when read)
@@ -390,7 +405,7 @@ public class imp {
 
         // Check API version fossilised in the class file against that expected
         int api = ar.getVersion();
-        if (api != APIVersion) {
+        if (!ignoreAPIVersion && api != APIVersion) {
             if (testing) {
                 return null;
             } else {
@@ -420,7 +435,7 @@ public class imp {
     /**
      * Compile Python source in file to a class file represented by a byte array.
      *
-     * @param name of module (class name will be name$py)
+     * @param name of module (class name will be {@code name$py})
      * @param source file containing the source
      * @return Java byte code as array
      */
@@ -431,7 +446,7 @@ public class imp {
     /**
      * Compile Python source in file to a class file represented by a byte array.
      *
-     * @param name of module (class name will be name$py)
+     * @param name of module (class name will be {@code name$py})
      * @param source file containing the source
      * @param filename explicit source file name (or {@code null} to use that in source)
      * @return Java byte code as array
@@ -447,7 +462,7 @@ public class imp {
     /**
      * Compile Python source in file to a class file represented by a byte array.
      *
-     * @param name of module (class name will be name$py)
+     * @param name of module (class name will be {@code name$py})
      * @param source file containing the source
      * @param sourceFilename explicit source file name (or {@code null} to use that in source)
      * @param compiledFilename ignored (huh?)
@@ -460,20 +475,25 @@ public class imp {
         return compileSource(name, source, sourceFilename);
     }
 
-    /** Remove the last three characters of a file name and add the compiled suffix "$py.class". */
+    /**
+     * Remove the last three characters of a file name and add the compiled suffix "{@code $py.class}".
+     */
     public static String makeCompiledFilename(String filename) {
         return filename.substring(0, filename.length() - 3) + "$py.class";
     }
 
     /**
-     * Stores the bytes in compiledSource in compiledFilename.
+     * Stores the bytes in {@code compiledSource} in {@code compiledFilename}.
+     * <p>
+     * If {@code compiledFilename} is {@code null}, it's set to the results of
+     * {@link #makeCompiledFilename(String) makeCompiledFilename(sourcefileName)}.
+     * <p>
+     * If {@code sourceFilename} is {@code null} or set to {@link #UNKNOWN_SOURCEFILE},
+     * then {@code null} is returned.
      *
-     * If compiledFilename is null, it's set to the results of makeCompiledFilename(sourcefileName).
-     *
-     * If sourceFilename is null or set to UNKNOWN_SOURCEFILE, then null is returned.
-     *
-     * @return the compiledFilename eventually used; or null if a compiledFilename couldn't be
-     *         determined or if an error was thrown while writing to the cache file.
+     * @return the {@code compiledFilename} eventually used; or {@code null} if a
+     *         {@code compiledFilename} couldn't be determined or if an error was
+     *         thrown while writing to the cache file.
      */
     public static String cacheCompiledSource(String sourceFilename, String compiledFilename,
             byte[] compiledSource) {
@@ -513,7 +533,7 @@ public class imp {
     /**
      * Compile Python source to a class file represented by a byte array.
      *
-     * @param name of module (class name will be name$py)
+     * @param name of module (class name will be {@code name$py})
      * @param source open input stream (will be closed)
      * @param filename of source (or {@code null} if unknown)
      * @return Java byte code as array
@@ -525,7 +545,7 @@ public class imp {
     /**
      * Compile Python source to a class file represented by a byte array.
      *
-     * @param name of module (class name will be name$py)
+     * @param name of module (class name will be {@code name$py})
      * @param source open input stream (will be closed)
      * @param filename of source (or {@code null} if unknown)
      * @param mtime last-modified time of source, to annotate class
@@ -565,7 +585,7 @@ public class imp {
     /**
      * Compile Jython source (as an {@code InputStream}) to a module.
      *
-     * @param name of the module to create (class will be name$py)
+     * @param name of the module to create (class will be {@code name$py})
      * @param fp opened on the (Jython) source to compile (will be closed)
      * @param filename of the source backing {@code fp} (to embed in class as data)
      * @param outFilename in which to write the compiled class
@@ -664,7 +684,7 @@ public class imp {
 
     /**
      * Return an importer object for an element of {@code sys.path} or of a package's
-     * {@code __path__}, possibly by fetching it from the {@code cache}. If it wasn’t yet cached,
+     * {@code __path__}, possibly by fetching it from the {@code cache}. If it was not yet cached,
      * traverse {@code hooks} until a hook is found that can handle the path item. Return
      * {@link Py#None} if no hook could do so. This tells our caller it should fall back to the
      * built-in import mechanism. Cache the result in {@code cache}. Return a new reference to the
@@ -780,8 +800,8 @@ public class imp {
      * module names to class names. Special treatment is given to the modules {@code sys} and
      * {@code __builtin__}.
      *
-     * @param fully-qualified name of module
-     * @return the module named
+     * @param fully-qualified name of the module
+     * @return the named module
      */
     private static PyObject loadBuiltin(String name) {
         final String MSG = "import {0} # builtin";
@@ -831,9 +851,10 @@ public class imp {
 
     /**
      * Import a module defined in Python by loading it from source (or a compiled
-     * {@code name$pyclass}) file in the specified location (often an entry from {@code sys.path},
+     * {@code name$py.class}) file in the specified location (often an entry from {@code sys.path},
      * or a sub-directory of it named for the {@code modName}. For example, if {@code name} is
-     * "pkg1" and the {@code modName} is "pkg.pkg1", {@code location} might be "mylib/pkg".
+     * "{@code pkg1}" and the {@code modName} is "{@code pkg.pkg1}", {@code location} might be
+     * "{@code mylib/pkg}".
      *
      * @param sys the sys module of the interpreter importing the module.
      * @param name by which to look for files or a directory representing the module.
@@ -970,12 +991,10 @@ public class imp {
      * <p>
      * Algorithmically, we return {@code true} if any of the following is true:
      * <ul>
-     * <li>{@link Options#caseok} is {@code true} (default is {@code false}).</li>
-     * <li>The platform is case sensitive (according to
-     * {@link PlatformUtil#isCaseInsensitive()})</li>
-     * <li>The name part of the canonical path of {@code file} starts with {@code filename}</li>
-     * <li>The name of any sibling (in the same directory as) {@code file} equals
-     * {@code filename}</li>
+     * <li>{@link Options#caseok} is {@code true} (default is {@code false}).
+     * <li>The platform is case sensitive (according to {@link PlatformUtil#isCaseInsensitive()})
+     * <li>The name part of the canonical path of {@code file} starts with {@code filename}
+     * <li>The name of any sibling (in the same directory as) {@code file} equals {@code filename}
      * </ul>
      * and false otherwise.
      *
@@ -1005,7 +1024,7 @@ public class imp {
     }
 
     /**
-     * Load the module by name. Upon loading the module it will be added to sys.modules.
+     * Load the module by name. Upon loading the module it will be added to {@code sys.modules}.
      *
      * @param name the name of the module to load
      * @return the loaded module
@@ -1024,16 +1043,15 @@ public class imp {
     /**
      * Find the parent package name for a module.
      * <p>
-     * If __name__ does not exist in the module or if level is <code>0</code>, then the parent is
-     * <code>null</code>. If __name__ does exist and is not a package name, the containing package
-     * is located. If no such package exists and level is <code>-1</code>, the parent is
-     * <code>null</code>. If level is <code>-1</code>, the parent is the current name. Otherwise,
-     * <code>level-1</code> dotted parts are stripped from the current name. For example, the
-     * __name__ <code>"a.b.c"</code> and level <code>2</code> would return <code>"a.b"</code>, if
-     * <code>c</code> is a package and would return <code>"a"</code>, if <code>c</code> is not a
-     * package.
+     * If {@code __name__} does not exist in the module or if level is {@code 0}, then the parent
+     * is {@code null}. If {@code __name__} does exist and is not a package name, the containing
+     * package is located. If no such package exists and level is {@code -1}, the parent is
+     * {@code null}. If level is {@code -1}, the parent is the current name. Otherwise,
+     * {@code level-1} dotted parts are stripped from the current name. For example, the
+     * {@code __name__} {@code "a.b.c"} and level {@code 2} would return {@code "a.b"}, if
+     * {@code c} is a package and would return {@code "a"}, if {@code c} is not a package.
      *
-     * @param dict the __dict__ of a loaded module that is the context of the import statement
+     * @param dict the {@code __dict__} of a loaded module that is the context of the import statement
      * @param level used for relative and absolute imports. -1 means try both, 0 means absolute
      *            only, positive ints represent the level to look upward for a relative path (1
      *            means current package, 2 means one level up). See PEP 328 at
@@ -1113,17 +1131,17 @@ public class imp {
     }
 
     /**
-     * Try to import the module named by <i>parentName.name</i>. The method tries 3 ways, accepting
-     * the first that * succeeds:
+     * Try to import the module named by {@code parentName.name}. The method tries 3 ways, accepting
+     * the first that succeeds:
      * <ol>
-     * <li>Check for the module (by its fully-qualified name) in {@code sys.modules}.</li>
+     * <li>Check for the module (by its fully-qualified name) in {@code sys.modules}.
      * <li>If {@code mod==null}, try to load the module via
      * {@link #find_module(String, String, PyList)}. If {@code mod!=null}, find it as an attribute
      * of {@code mod} via its {@link PyObject#impAttr(String)} method (which then falls back to
      * {@code find_module} if {@code mod} has a {@code __path__}). Either way, add the loaded module
-     * to {@code sys.modules}.</li>
+     * to {@code sys.modules}.
      * <li>Try to load the module as a Java package by the name {@code outerFullName}
-     * {@link JavaImportHelper#tryAddPackage(String, PyObject)}.</li>
+     * {@link JavaImportHelper#tryAddPackage(String, PyObject)}.
      * </ol>
      * Finally, if one is found, If a module by the given name already exists in {@code sys.modules}
      * it will be returned from there directly. Otherwise, in {@code mod==null} (frequent case) it
@@ -1238,8 +1256,8 @@ public class imp {
      * Iterate through the components (after the first) of a fully-qualified module name
      * {@code a.b.c.m} finding the corresponding modules {@code a.b}, {@code a.b.c}, and
      * {@code a.b.c.m}, importing them if necessary. This is a helper to
-     * {@link #import_module_level(String, boolean, PyObject, PyObject, int)}, used when the module
-     * name involves more than one level.
+     * {@link #import_module_level(String, boolean, PyObject, PyObject, int)}, used when
+     * the module name involves more than one level.
      * <p>
      * This method may be called in support of (effectively) of a simple import statement like
      * {@code import a.b.c.m} or a complex statement {@code from a.b.c.m import n1, n2, n3}. This
@@ -1301,11 +1319,12 @@ public class imp {
 
     /**
      * Import a module by name. This supports the default {@code __import__()} function
-     * {@code __builtin__.__import__}. (Called with the import system locked.)
+     * {@link __builtin__#__import__(String) __builtin__.__import__}.
+     * (Called with the import system locked.)
      *
      * @param name qualified name of the package/module to import (may be relative)
      * @param top if true, return the top module in the name, otherwise the last
-     * @param modDict the __dict__ of the importing module (used to navigate a relative import)
+     * @param modDict the {@code __dict__} of the importing module (used to navigate a relative import)
      * @param fromlist list of names being imported
      * @param level 0=absolute, n&gt;0=relative levels to go up - 1, -1=try relative then absolute.
      * @return an imported module (Java or Python)
@@ -1417,7 +1436,7 @@ public class imp {
      *
      * @param p assumed to be a (partial) file path
      * @param raiseImportError if true and {@code p} cannot be decoded raise {@code ImportError}.
-     * @return String form of the object {@code p} (or {@code null}).
+     * @return string form of the object {@code p} (or {@code null}).
      */
     public static String fileSystemDecode(PyObject p, boolean raiseImportError) {
         try {
@@ -1443,19 +1462,19 @@ public class imp {
     }
 
     /**
-     * For <b>project internal use</b>, equivalent to {@code fileSystemDecode(p, true)} (see
-     * {@link #fileSystemDecode(PyObject, boolean)}).
+     * For <b>project internal use</b>, equivalent to
+     * {@link #fileSystemDecode(PyObject, boolean) fileSystemDecode(p, true)}.
      *
      * @param p assumed to be a (partial) file path
-     * @return String form of the object {@code p}.
+     * @return string form of the object {@code p}.
      */
     public static String fileSystemDecode(PyObject p) {
         return fileSystemDecode(p, true);
     }
 
     /**
-     * Ensure that the items mentioned in the from-list of an import are actually present, even if
-     * they are modules we have not imported yet.
+     * Ensure that the items mentioned in the from-list of an import are actually present,
+     * even if they are modules we have not imported yet.
      *
      * @param mod module we are importing from
      * @param fromlist tuple of names to import
@@ -1466,8 +1485,8 @@ public class imp {
     }
 
     /**
-     * Ensure that the items mentioned in the from-list of an import are actually present, even if
-     * they are modules we have not imported yet.
+     * Ensure that the items mentioned in the from-list of an import are actually present,
+     * even if they are modules we have not imported yet.
      *
      * @param mod module we are importing from
      * @param fromlist tuple of names to import
@@ -1529,7 +1548,7 @@ public class imp {
      *
      * @param name the fully-qualified name of the package/module to import
      * @param top if true, return the top module in the name, otherwise the last
-     * @param modDict the __dict__ of the importing module (used for name in relative import)
+     * @param modDict the {@code __dict__} of the importing module (used for name in relative import)
      * @param fromlist list of names being imported
      * @param level 0=absolute, n&gt;0=relative levels to go up, -1=try relative then absolute.
      * @return an imported module (Java or Python)
@@ -1548,7 +1567,10 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "import spam" is executed.
+     * Called from jython generated code when a statement like "{@code import spam}" is executed.
+     *
+     * @deprecated use {@link #importOne(String, PyFrame, int)}
+     *             with {@code level} parameter.
      */
     @Deprecated
     public static PyObject importOne(String mod, PyFrame frame) {
@@ -1556,7 +1578,7 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "import spam" is executed.
+     * Called from jython generated code when a statement like "{@code import spam}" is executed.
      */
     public static PyObject importOne(String mod, PyFrame frame, int level) {
         PyObject module =
@@ -1565,7 +1587,11 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "import spam as foo" is executed.
+     * Called from Jython-generated code when a statement like "{@code import spam as foo}"
+     * is executed.
+     *
+     * @deprecated use {@link #importOneAs(String, PyFrame, int)}
+     *             with {@code level} parameter.
      */
     @Deprecated
     public static PyObject importOneAs(String mod, PyFrame frame) {
@@ -1573,7 +1599,8 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "import spam as foo" is executed.
+     * Called from Jython-generated code when a statement like "{@code import spam as foo}"
+     * is executed.
      */
     public static PyObject importOneAs(String mod, PyFrame frame, int level) {
         PyObject module =
@@ -1594,9 +1621,11 @@ public class imp {
     }
 
     /**
-     * replaced by importFrom with level param. Kept for backwards compatibility.
+     * Replaced by {@link #importFrom(String, String[], PyFrame, int)}
+     * with {@code level} parameter. Kept for backwards compatibility.
      *
-     * @deprecated use importFrom with level param.
+     * @deprecated use {@link #importFrom(String, String[], PyFrame, int)}
+     *             with {@code level} parameter.
      */
     @Deprecated
     public static PyObject[] importFrom(String mod, String[] names, PyFrame frame) {
@@ -1604,17 +1633,19 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "from spam.eggs import foo, bar" is
-     * executed.
+     * Called from Jython-generated code when a statement like
+     * "{@code from spam.eggs import foo, bar}" is executed.
      */
     public static PyObject[] importFrom(String mod, String[] names, PyFrame frame, int level) {
         return importFromAs(mod, names, null, frame, level);
     }
 
     /**
-     * replaced by importFromAs with level param. Kept for backwards compatibility.
+     * Replaced by {@link #importFromAs(String, String[], String[], PyFrame, int)}
+     * with {@code level} parameter. Kept for backwards compatibility.
      *
-     * @deprecated use importFromAs with level param.
+     * @deprecated use {@link #importFromAs(String, String[], String[], PyFrame, int)}
+     *             with {@code level} parameter.
      */
     @Deprecated
     public static PyObject[] importFromAs(String mod, String[] names, PyFrame frame) {
@@ -1622,8 +1653,8 @@ public class imp {
     }
 
     /**
-     * Called from jython generated code when a statement like "from spam.eggs import foo as spam"
-     * is executed.
+     * Called from Jython-generated code when a statement like
+     * "{@code from spam.eggs import foo as spam}" is executed.
      */
     public static PyObject[] importFromAs(String mod, String[] names, String[] asnames,
             PyFrame frame, int level) {
@@ -1655,8 +1686,8 @@ public class imp {
     private final static PyTuple all = new PyTuple(Py.newString('*'));
 
     /**
-     * Called from jython generated code when a statement like "from spam.eggs import *" is
-     * executed.
+     * Called from Jython-generated code when a statement like "{@code from spam.eggs import *}"
+     * is executed.
      */
     public static void importAll(String mod, PyFrame frame, int level) {
         PyObject module =
@@ -1688,7 +1719,7 @@ public class imp {
     }
 
     /**
-     * From a module, load the attributes found in <code>names</code> into locals.
+     * From a module, load the attributes found in {@code names} into locals.
      *
      * @param filter if true, if the name starts with an underscore '_' do not add it to locals
      * @param locals the namespace into which names will be loaded
@@ -1778,5 +1809,38 @@ public class imp {
 
     public static int getAPIVersion() {
         return APIVersion;
+    }
+
+    /**
+     * Tells whether Jython accepts bytecode in {@code $py.class} files generated by older
+     * Jython with lower API version as indicated by {@link #getAPIVersion()}.
+     * If {@code true} is returned, old bytecode will be accepted, but might cause compatibility
+     * problems including a JVM crash. By default, the API version is not ignored.
+     *
+     * @see #getAPIVersion()
+     * @see #setIgnoreAPIVersion(boolean)
+     *
+     * @return whether or not API version is ignored, default is {@code false}
+     */
+    public static boolean getIgnoreAPIVersion() {
+        return ignoreAPIVersion;
+    }
+
+    /**
+     * Use at your own risk: Setting this option to {@code true} lets Jython bypass the
+     * API version check with respect to loading {@code $py.class} files, possibly generated
+     * by an older Jython version. Bytecode generated by older Jython versions might have an
+     * older API version, which is deemed incompatible to the running Jython version and would
+     * be rejected. However, in many cases the older bytecode would run just fine. Setting
+     * this option to {@code true} provides a simple yet risky way to experiment with older
+     * bytecode.
+     *
+     * @see #getAPIVersion()
+     * @see #getIgnoreAPIVersion()
+     *
+     * @param value indicates whether or not API version shall be ignored, default is {@code false}
+     */
+    public static void setIgnoreAPIVersion(boolean value) {
+        ignoreAPIVersion = value;
     }
 }
