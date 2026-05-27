@@ -95,7 +95,7 @@ public class PyBZ2Compressor extends PyObject {
         return finalData;
     }
 
-    private class CaptureStream extends OutputStream {
+    private static class CaptureStream extends OutputStream {
 
         private final ByteArrayOutputStream capturedData = new ByteArrayOutputStream();
 

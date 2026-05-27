@@ -2277,7 +2277,7 @@ public class CodeCompiler extends Visitor implements Opcodes, ClassConstants {
 
     // a marker class to distinguish this usage; future generator rewriting may likely
     // want to remove this support
-    private class LambdaSyntheticReturn extends Return {
+    private static class LambdaSyntheticReturn extends Return {
 
         private LambdaSyntheticReturn(PythonTree tree, expr value) {
             super(tree, value);

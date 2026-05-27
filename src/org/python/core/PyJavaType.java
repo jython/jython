@@ -1504,7 +1504,7 @@ public class PyJavaType extends PyType {
         return Collections.unmodifiableMap(postProxies);
     }
 
-    private class ClassComparator implements Comparator<Class<?>> {
+    private static class ClassComparator implements Comparator<Class<?>> {
 
         @Override
         public int compare(Class<?> c1, Class<?> c2) {

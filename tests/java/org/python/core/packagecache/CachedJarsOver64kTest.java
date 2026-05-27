@@ -18,7 +18,7 @@ public class CachedJarsOver64kTest extends TestCase {
     public void setUp() {
         // Find the jar to use
         packageManager = new TestCachePackageManager(new File(System
-                                                              .getProperty("java.io.tmpdir")));
+                .getProperty("java.io.tmpdir")));
         File cwd = new File(System.getProperty("python.test.source.dir"),
                             getClass().getPackage().getName().replace(".", "/"));
         jarFile = new File(cwd, "vim25-small.jar");
@@ -30,7 +30,7 @@ public class CachedJarsOver64kTest extends TestCase {
         assertFalse(packageManager.failed);
     }
 
-    private class TestCachePackageManager extends CachedJarsPackageManager {
+    private static class TestCachePackageManager extends CachedJarsPackageManager {
 
         public boolean failed;
 

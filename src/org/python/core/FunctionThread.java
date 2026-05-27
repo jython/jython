@@ -14,7 +14,7 @@ public class FunctionThread extends Thread
         this.func = func;
         this.args = args;
         this.systemState = Py.getSystemState();
-        this.setName("Thread-"+Integer.toString(counter.incrementAndGet()));
+        this.setName("Thread-" + counter.incrementAndGet());
     }
 
     public void run() {

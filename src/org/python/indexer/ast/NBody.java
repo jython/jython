@@ -30,7 +30,7 @@ public class NBody extends NBlock {
         super(seq, start, end);
     }
 
-    private class GlobalFinder extends DefaultNodeVisitor {
+    private static class GlobalFinder extends DefaultNodeVisitor {
         private Scope scope;  // starting scope
 
         public GlobalFinder(Scope scope) {

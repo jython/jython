@@ -144,7 +144,7 @@ public class _localeTest {
                 + "{'mon_decimal_point': '.', 'int_frac_digits': 2, "
                 + " 'p_sep_by_space': 0, 'frac_digits': 2, "
                 + " 'thousands_sep': ',', "
-                + " 'n_sign_posn': " + String.valueOf(nSignPosition) + " , "
+                + " 'n_sign_posn': " + nSignPosition + " , "
                 + "'decimal_point': '.', 'int_curr_symbol': 'USD', "
                 + "'n_cs_precedes': 1, 'p_sign_posn': 3, "
                 + "'mon_thousands_sep': ',', 'negative_sign': '-', "
@@ -336,7 +336,7 @@ public class _localeTest {
      * happens in this unit test, when troubleshooting.
      */
     private String byteStr(byte[] bytes, boolean lePadding) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bytes.length; i++) {
             sb.append("~h");
             sb.append(Integer.toHexString(bytes[i]));

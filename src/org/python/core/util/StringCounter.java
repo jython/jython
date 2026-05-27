@@ -38,8 +38,8 @@ public class StringCounter {
         // For speed, we cache here the lowest value on the list
         int min = 0, len = 0;
 
-        for (String key : counts.keySet()) {
-            int val = counts.get(key);
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            int val = entry.getValue();
             if (val > min) {
                 // We will add (key, val) to the list.
                 int p = len - 1;
@@ -55,7 +55,7 @@ public class StringCounter {
                 p += 1;
 
                 // p is 0 if we dropped out of the loop at the end.
-                keys.add(p, key);
+                keys.add(p, entry.getKey());
                 vals.add(p, val);
 
                 if (len == n) {

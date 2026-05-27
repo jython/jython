@@ -320,7 +320,7 @@ public class _locale implements ClassDictInit {
         String encoding = "UTF-8";
         if (localeParts.length >= 3) {
             throw LocaleException("Does not conform to [language]_[locality].[encoding] format: "
-                    + locale.toString());
+                                  + locale);
         }
         if (localeParts.length == 1) {
             language = localeStr;
@@ -336,7 +336,7 @@ public class _locale implements ClassDictInit {
             // Locale.toString() uses "_"
             newLocale = loadLocale(underscoreAlias);
             if (!isAvailableLocale(newLocale)) {
-                throw LocaleException("unsupported locale setting: " + locale.toString());
+                throw LocaleException("unsupported locale setting: " + locale);
             }
         }
         changeCurrentLocale(new JyLocale(newLocale, encoding));

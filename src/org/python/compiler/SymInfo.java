@@ -1,7 +1,7 @@
 
 package org.python.compiler;
 
-public class SymInfo extends Object {
+public class SymInfo {
 
     public SymInfo(int flags) {
         this.flags = flags;

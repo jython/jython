@@ -25,7 +25,7 @@ import java.util.BitSet;
  *
  * @author brian zimmer
  */
-public class Procedure extends Object {
+public class Procedure {
 
     /**
      * Field NAME
@@ -280,7 +280,7 @@ public class Procedure extends Object {
             }
         }
 
-        StringBuffer sql = new StringBuffer("{");
+        StringBuilder sql = new StringBuilder("{");
 
         if (colReturn > 0) {
             PyList list = new PyList();
@@ -376,7 +376,7 @@ public class Procedure extends Object {
      */
     protected String getProcedureName() {
 
-        StringBuffer proc = new StringBuffer();
+        StringBuilder proc = new StringBuilder();
 
         if (this.procedureCatalog.__nonzero__()) {
             proc.append(this.procedureCatalog.toString()).append(".");

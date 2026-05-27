@@ -173,8 +173,8 @@ public class ByteBufferTestSupport {
     protected static byte[] sliceBytes(byte[] b, int itemsize, int start, int length, int stride) {
         byte[] a = new byte[length];
         for (int i = 0, j = start; i < length; i++, j += stride) {
-            for (int k = 0; k < itemsize; k++) {
-                a[i + k] = b[j + k];
+            if (itemsize >= 0) {
+                System.arraycopy(b, j, a, i, itemsize);
             }
         }
         return a;

@@ -95,7 +95,7 @@ public class ArgListCompiler extends Visitor
 
     @Override
     public Object visitTuple(Tuple node) throws Exception {
-        StringBuffer name = new StringBuffer("(");
+        StringBuilder name = new StringBuilder("(");
         int n = node.getInternalElts().size();
         for (int i = 0; i < n-1; i++) {
             name.append(visit(node.getInternalElts().get(i)));

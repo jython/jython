@@ -115,7 +115,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
         callConstructor(superType, args);
     }
 
-    class Instantiator {
+    static class Instantiator {
 
         public Instantiator(Type... types) {
             this.types = types;

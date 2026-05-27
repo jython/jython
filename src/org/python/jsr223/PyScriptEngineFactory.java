@@ -20,7 +20,7 @@ public class PyScriptEngineFactory implements ScriptEngineFactory {
     }
 
     public List<String> getExtensions() {
-        return Collections.unmodifiableList(Arrays.asList("py"));
+        return Collections.singletonList("py");
     }
 
     public String getLanguageName() {

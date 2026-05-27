@@ -19,7 +19,7 @@ public abstract class AbstractDict extends PyObject {
     public abstract AbstractDict copy();
     public abstract PyObject get(PyObject key);
     public abstract PyObject get(PyObject key, PyObject defaultObj);
-    public abstract ConcurrentMap<? extends Object, PyObject> getMap();
+    public abstract ConcurrentMap<?, PyObject> getMap();
     public abstract boolean has_key(PyObject key);
     public abstract PyList items();
     public abstract PyObject iteritems();
@@ -35,7 +35,7 @@ public abstract class AbstractDict extends PyObject {
     public abstract PyObject setdefault(PyObject key);
     public abstract PyObject setdefault(PyObject key, PyObject failobj);
     public abstract void update(PyObject other);
-    public abstract Collection<? extends Object> values();
+    public abstract Collection<?> values();
     public abstract Set<PyObject> pyKeySet();
 
     public abstract Set entrySet();

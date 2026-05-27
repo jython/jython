@@ -77,8 +77,8 @@ public class ScriptEngineTest extends TestCase {
         try {
             pythonEngine.eval("5q");
         } catch (ScriptException e) {
-            assertEquals(e.getColumnNumber(), 1);
-            assertEquals(e.getLineNumber(), 1);
+            assertEquals(1, e.getColumnNumber());
+            assertEquals(1, e.getLineNumber());
             assertTrue(e.getMessage().startsWith("SyntaxError: "));
             return;
         }
@@ -92,7 +92,7 @@ public class ScriptEngineTest extends TestCase {
         try {
             pythonEngine.eval("pass\ndel undefined");
         } catch (ScriptException e) {
-            assertEquals(e.getLineNumber(), 2);
+            assertEquals(2, e.getLineNumber());
             assertTrue(e.getMessage().startsWith("NameError: "));
             return;
         }
@@ -292,7 +292,7 @@ public class ScriptEngineTest extends TestCase {
         Invocable invocableEngine = (Invocable)pythonEngine;
 
         Object newStringCapitalize = invocableEngine.invokeMethod("test", "capitalize");
-        assertEquals(newStringCapitalize, "Test");
+        assertEquals("Test", newStringCapitalize);
     }
 
     public void testPdb() {

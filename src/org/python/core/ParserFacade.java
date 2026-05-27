@@ -14,6 +14,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -339,9 +340,9 @@ public class ParserFacade {
             // Use ascii for the raw bytes when no encoding was specified
             if (encoding == null) {
                 if (fromString) {
-                    cs = Charset.forName("ISO-8859-1");
+                    cs = StandardCharsets.ISO_8859_1;
                 } else {
-                    cs = Charset.forName("ascii");
+                    cs = StandardCharsets.US_ASCII;
                 }
             } else {
                 cs = Charset.forName(encoding);
@@ -398,7 +399,7 @@ public class ParserFacade {
     private static String readEncoding(InputStream stream) throws IOException {
         stream.mark(MARK_LIMIT);
         String encoding = null;
-        BufferedReader br = new BufferedReader(new InputStreamReader(stream, "ISO-8859-1"), 512);
+        BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.ISO_8859_1), 512);
         encoding = findEncoding(br);
         // XXX: reset() can still raise an IOException if a line exceeds our large mark
         // limit

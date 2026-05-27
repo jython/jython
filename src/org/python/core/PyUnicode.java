@@ -1251,7 +1251,7 @@ public class PyUnicode extends PyString implements Iterable<Integer> {
     @ExposedMethod(doc = BuiltinDocs.unicode___contains___doc)
     final boolean unicode___contains__(PyObject o) {
         String other = coerceToString(o);
-        return getString().indexOf(other) >= 0;
+        return getString().contains(other);
     }
 
     @ExposedMethod(type = MethodType.BINARY, doc = BuiltinDocs.unicode___getslice___doc)
