@@ -1,5 +1,7 @@
 package javatests;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -105,6 +107,60 @@ public class Reflection {
         }
     }
 
+    public static class MixedVarargs {
+
+        public String insert(String name, String... values) {
+            return "String " + name + ":" + Arrays.toString(values);
+        }
+
+        public String insert(String name, boolean... values) {
+            return "boolean " + name + ":" + Arrays.toString(values);
+        }
+
+        public String insert(String name, int... values) {
+            return "int " + name + ":" + Arrays.toString(values);
+        }
+
+        public String insert(String name, double... values) {
+            return "double " + name + ":" + Arrays.toString(values);
+        }
+    }
+
+    public static class OverloadConsistency {
+
+        public String singleArg(boolean value) {
+            return "boolean";
+        }
+
+        public String singleArg(BigInteger value) {
+            return "BigInteger";
+        }
+
+        public String singleArg(BigDecimal value) {
+            return "BigDecimal";
+        }
+
+        public String singleArg(Object value) {
+            return "Object";
+        }
+
+        public String varArgs(boolean... values) {
+            return "boolean";
+        }
+
+        public String varArgs(BigInteger... values) {
+            return "BigInteger";
+        }
+
+        public String varArgs(BigDecimal... values) {
+            return "BigDecimal";
+        }
+
+        public String varArgs(Object... values) {
+            return "Object";
+        }
+    }
+
     public static class Overloaded {
 
         private final String constructorVersion;
@@ -127,6 +183,10 @@ public class Reflection {
 
         public Overloaded(int a, int... others) {
             constructorVersion = "int, int...";
+        }
+
+        public Overloaded(boolean a, boolean... others) {
+            constructorVersion = "boolean, boolean...";
         }
 
         public Overloaded(String s) {
@@ -163,6 +223,10 @@ public class Reflection {
 
         public String foo(int... a) {
             return "int...";
+        }
+
+        public String foo(boolean a, boolean... b) {
+            return "boolean, boolean...";
         }
 
         public String bar(int a) {
