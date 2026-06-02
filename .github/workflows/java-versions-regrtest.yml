@@ -7,7 +7,9 @@ name: Java versions regrtest 2.7
 
 # Only run manually as it takes quite a lot of cpu
 on:
-   workflow_dispatch
+  push:
+    branches: [ test-java-17-25 ]
+  workflow_dispatch:
 
 permissions:
   contents: read
