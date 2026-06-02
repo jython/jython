@@ -3,11 +3,12 @@
 # We expect this to fail (at the time of writing) and the purpose
 # is to tell us on which OSes and versions of Java that happens.
 
-name: Java versions regrtest 2.7
+name: ant regrtest 2.7 matrix
 
 # Only run manually as it takes quite a lot of cpu
 on:
   push:
+    branches: [ test-java-17-25 ]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +16,7 @@ permissions:
 
 jobs:
 
-  ant-regrtest:
+  ant-regrtest-matrix:
     strategy:
       max-parallel: 2
       matrix:
