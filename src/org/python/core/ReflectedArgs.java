@@ -4,6 +4,7 @@
 package org.python.core;
 
 import java.lang.reflect.Member;
+import java.math.BigInteger;
 
 /** Map the signature of a method to the {@code Method} itself, within the context of a given simple name. This is used in support of signature polymorphism in Java methods and constructors reflected into Python. **/
 public class ReflectedArgs {
@@ -22,11 +23,17 @@ public class ReflectedArgs {
 
     public int flags;
 
+    private static volatile boolean legacyMode = false;
+
     public static final int StandardCall = 0;
 
     public static final int PyArgsCall = 1;
 
     public static final int PyArgsKeywordsCall = 2;
+
+    public static void setLegacyMode(boolean legacyMode) {
+        ReflectedArgs.legacyMode = legacyMode;
+    }
 
     public ReflectedArgs(Member method, Class<?>[] args, Class<?> declaringClass, boolean isStatic) {
         this(method, args, declaringClass, isStatic, false);
@@ -205,6 +212,12 @@ public class ReflectedArgs {
      * fallback.
      */
     boolean betterVarargsMatchThan(ReflectedArgs other, PyObject self, PyObject[] pyArgs) {
+        if (legacyMode) {
+            // Legacy varargs dispatch overwrote the saved vararg candidate every time a later
+            // varargs signature matched, so the last matching vararg in argslist won.
+            return true;
+        }
+
         int thisCost = varargsCallCost(methodPyArgs(self, pyArgs));
         int otherCost = other.varargsCallCost(other.methodPyArgs(self, pyArgs));
         if (thisCost != otherCost) {
@@ -299,9 +312,9 @@ public class ReflectedArgs {
                 return 20;
             }
         } else if (pyArg instanceof PyInteger) {
-            if (target == Integer.class) {
+            if (target == Long.class) {
                 return 0;
-            } else if (target == Long.class) {
+            } else if (target == Integer.class) {
                 return 1;
             } else if (target == Short.class || target == Byte.class || target == Float.class
                     || target == Double.class || target == Number.class) {
@@ -310,7 +323,16 @@ public class ReflectedArgs {
                 return 20;
             }
         } else if (pyArg instanceof PyLong) {
-            if (target == Boolean.class) {
+            if (target == Long.class) {
+                return 0;
+            } else if (target == Integer.class) {
+                return 1;
+            } else if (target == Short.class || target == Byte.class || target == Float.class
+                    || target == Double.class || target == Number.class) {
+                return 2;
+            } else if (target == BigInteger.class) {
+                return 10;
+            } else if (target == Boolean.class) {
                 return 20;
             }
         } else if (pyArg instanceof PyFloat) {

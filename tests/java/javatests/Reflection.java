@@ -126,7 +126,7 @@ public class Reflection {
         }
     }
 
-    public static class OverloadConsistency {
+    public static class OverloadResolution {
 
         public String singleArg(boolean value) {
             return "boolean";
@@ -158,6 +158,46 @@ public class Reflection {
 
         public String varArgs(Object... values) {
             return "Object";
+        }
+
+        public String singleArg(int value) {
+            return "int";
+        }
+
+        public String singleArg(long value) {
+            return "long";
+        }
+
+        public String singleArg(double value) {
+            return "double";
+        }
+
+        public String varArgs(int... values) {
+            return "int";
+        }
+
+        public String varArgs(long... values) {
+            return "long";
+        }
+
+        public String varArgs(double... values) {
+            return "double";
+        }
+
+        public String varArgs(String name, int... values) {
+            return name + ": int";
+        }
+
+        public String varArgs(String name, long... values) {
+            return name + ": long";
+        }
+
+        public String varArgs(String name, double... values) {
+            return name + ": double";
+        }
+
+        public String varArgs(String name, boolean... values) {
+            return name + ": boolean";
         }
     }
 

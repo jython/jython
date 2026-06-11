@@ -10,7 +10,7 @@ import java
 from java.lang import Float, Double, Integer, Long, Boolean, Exception
 from java.util import ArrayList
 from javatests import JOverload, Reflection
-from org.python.core import PyReflectedFunction
+from org.python.core import PyReflectedFunction, ReflectedArgs
 
 class PyReflFuncEnvl:
 
@@ -124,6 +124,12 @@ class OverloadedDispatchTests(unittest.TestCase):
 
 class VarargsDispatchTests(unittest.TestCase):
 
+    def setUp(self):
+        ReflectedArgs.setLegacyMode(False)
+
+    def tearDown(self):
+        ReflectedArgs.setLegacyMode(True)
+
     def test_strings(self):
         t = Reflection.StringVarargs()
         self.assertEqual(t.test("abc", "xyz"),
@@ -215,11 +221,27 @@ class VarargsDispatchTests(unittest.TestCase):
         self.assertEqual(t.insert("double", [1.0, 2.0, 3.14]),
                          "double double:[1.0, 2.0, 3.14]")
 
+    def test_varargs_overload_resolution(self):
+        t = Reflection.OverloadResolution()
+        # Object... is available but should not steal a call that has a better primitive varargs
+        # match.
+        self.assertEqual(t.varArgs(1, 2L, 3.0), "double")
+        # PyFloat to boolean is deliberately expensive, so the double overload still wins even
+        # when a leading PyBoolean makes the boolean overload look plausible. Object... should also
+        # lose to the primitive overload that best preserves the rest of the numeric arguments.
+        self.assertEqual(t.varArgs(True, 1, 2L, 3.0), "double")
+
+        self.assertEqual(t.varArgs(1, 2, 3), "long")
+        self.assertEqual(t.varArgs([1, 2, 3]), "long")
+
+        self.assertEqual(t.varArgs("name", 1, 2L, 3.0), "name: double")
+        self.assertEqual(t.varArgs("flag", True, 1, 2L, 3.0), "flag: double")
+
     def test_pylong_single_and_varargs_consistent(self):
         # This test only asserts consistency with non-varargs overload handling. The varargs
         # ranking improvement is intended to match existing fixed-arity behavior, not to make a
         # claim that the fixed-arity choice is itself the most correct resolution.
-        t = Reflection.OverloadConsistency()
+        t = Reflection.OverloadResolution()
         expected = t.singleArg(21L)
         self.assertEqual(t.varArgs(21L, 22L, 23L), expected)
 
@@ -227,7 +249,7 @@ class VarargsDispatchTests(unittest.TestCase):
         # This test only asserts consistency with non-varargs overload handling. The varargs
         # ranking improvement is intended to match existing fixed-arity behavior, not to make a
         # claim that the fixed-arity choice is itself the most correct resolution.
-        t = Reflection.OverloadConsistency()
+        t = Reflection.OverloadResolution()
         expected = t.singleArg(21)
         self.assertEqual(t.varArgs(21, 22, 23), expected)
 
@@ -235,12 +257,47 @@ class VarargsDispatchTests(unittest.TestCase):
         # This test only asserts consistency with non-varargs overload handling. The varargs
         # ranking improvement is intended to match existing fixed-arity behavior, not to make a
         # claim that the fixed-arity choice is itself the most correct resolution.
-        t = Reflection.OverloadConsistency()
+        t = Reflection.OverloadResolution()
         expected = t.singleArg(21.0)
         self.assertEqual(t.varArgs(21.0, 22.0, 23.0), expected)
 
 
+class LegacyVarargsDispatchTests(unittest.TestCase):
+
+    def setUp(self):
+        ReflectedArgs.setLegacyMode(True)
+
+    def tearDown(self):
+        ReflectedArgs.setLegacyMode(True)
+
+    def test_legacy_single_and_varargs_can_disagree(self):
+        # Legacy varargs dispatch keeps the last matching varargs overload instead of ranking
+        # matches by conversion quality, so it can diverge from the fixed-arity overload choice.
+        t = Reflection.OverloadResolution()
+        self.assertEqual(t.singleArg(1), "long")
+        self.assertEqual(t.varArgs(1, 2, 3), "Object")
+        self.assertEqual(t.singleArg(1L), "long")
+        self.assertEqual(t.varArgs(1L, 2L, 3L), "Object")
+        self.assertEqual(t.singleArg(1.0), "double")
+        self.assertEqual(t.varArgs(1.0, 2.0, 3.0), "Object")
+
+    def test_legacy_mixed_numeric_varargs_can_pick_bad_overload(self):
+        # With legacy last-match behavior, mixed numeric inputs can resolve to Object or boolean
+        # even though the improved ranking chooses the overload that preserves the floating-point
+        # argument.
+        t = Reflection.OverloadResolution()
+        self.assertEqual(t.varArgs(1, 2L, 3.0), "Object")
+        self.assertEqual(t.varArgs("name", 1, 2L, 3.0), "name: boolean")
+
+
 class ComplexOverloadingTests(unittest.TestCase):
+
+    def setUp(self):
+        ReflectedArgs.setLegacyMode(False)
+
+    def tearDown(self):
+        ReflectedArgs.setLegacyMode(True)
+
     def test_constructor_overloading(self):
         self.assertEqual(Reflection.Overloaded().constructorVersion, '')
         self.assertEqual(Reflection.Overloaded(1).constructorVersion, 'int')
@@ -301,6 +358,7 @@ def test_main():
     test_support.run_unittest(
         OverloadedDispatchTests,
         VarargsDispatchTests,
+        LegacyVarargsDispatchTests,
         ComplexOverloadingTests,
     )
 
